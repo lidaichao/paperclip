@@ -1,0 +1,11 @@
+{
+  "upstreamPackage": "paperclipai",
+  "upstreamVersion": "2026.831.1",
+  "upstreamTag": "v2026.831.1",
+  "upstreamCommit": "65ec059bde30d98c92165b24a30a540800dd1f6f",
+  "npmIntegrity": "sha512-LUmhLIxWMpvI28pAj9NxUAsTA5nvZIJsbs7LAm7JEbZqH8eX6OVH0wzeKONSTcRWyE6tLTz2qziIPSoiscFK7Q==",
+  "defaultLocale": "zh-CN",
+  "fallbackLocale": "en",
+  "backendChanged": false,
+  "upgradePolicy": "Unknown upstream commits require source and text review before building or activating."
+}

@@ -1,0 +1,660 @@
+[
+  {
+    "key": "admonitions.caution",
+    "english": "Caution",
+    "sourceFile": "plugins/toolbar/components/ChangeAdmonitionType.js",
+    "line": 12,
+    "translation": "注意"
+  },
+  {
+    "key": "admonitions.changeType",
+    "english": "Select admonition type",
+    "sourceFile": "plugins/toolbar/components/ChangeAdmonitionType.js",
+    "line": 34,
+    "translation": "选择提示框类型"
+  },
+  {
+    "key": "admonitions.danger",
+    "english": "Danger",
+    "sourceFile": "plugins/toolbar/components/ChangeAdmonitionType.js",
+    "line": 10,
+    "translation": "危险"
+  },
+  {
+    "key": "admonitions.info",
+    "english": "Info",
+    "sourceFile": "plugins/toolbar/components/ChangeAdmonitionType.js",
+    "line": 11,
+    "translation": "信息"
+  },
+  {
+    "key": "admonitions.note",
+    "english": "Note",
+    "sourceFile": "plugins/toolbar/components/ChangeAdmonitionType.js",
+    "line": 8,
+    "translation": "说明"
+  },
+  {
+    "key": "admonitions.placeholder",
+    "english": "Admonition type",
+    "sourceFile": "plugins/toolbar/components/ChangeAdmonitionType.js",
+    "line": 35,
+    "translation": "提示框类型"
+  },
+  {
+    "key": "admonitions.tip",
+    "english": "Tip",
+    "sourceFile": "plugins/toolbar/components/ChangeAdmonitionType.js",
+    "line": 9,
+    "translation": "提示"
+  },
+  {
+    "key": "codeblock.delete",
+    "english": "Delete code block",
+    "sourceFile": "plugins/codemirror/CodeMirrorEditor.js",
+    "line": 122,
+    "translation": "删除代码块"
+  },
+  {
+    "key": "codeBlock.inlineLanguage",
+    "english": "Language",
+    "sourceFile": "plugins/codemirror/CodeMirrorEditor.js",
+    "line": 113,
+    "translation": "语言"
+  },
+  {
+    "key": "codeBlock.language",
+    "english": "Code block language",
+    "sourceFile": "plugins/toolbar/components/ChangeCodeMirrorLanguage.js",
+    "line": 32,
+    "translation": "代码块语言"
+  },
+  {
+    "key": "codeBlock.selectLanguage",
+    "english": "Select code block language",
+    "sourceFile": "plugins/codemirror/CodeMirrorEditor.js",
+    "line": 112,
+    "translation": "选择代码块语言"
+  },
+  {
+    "key": "contentArea.editableMarkdown",
+    "english": "editable markdown",
+    "sourceFile": "MDXEditor.js",
+    "line": 42,
+    "translation": "可编辑的 Markdown 内容"
+  },
+  {
+    "key": "createLink.cancelTooltip",
+    "english": "Cancel change",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 85,
+    "translation": "取消更改"
+  },
+  {
+    "key": "createLink.saveTooltip",
+    "english": "Set URL",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 76,
+    "translation": "设置 URL"
+  },
+  {
+    "key": "createLink.text",
+    "english": "Anchor text",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 70,
+    "translation": "链接文本"
+  },
+  {
+    "key": "createLink.textTooltip",
+    "english": "The text to be displayed for the link",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 70,
+    "translation": "链接显示的文本"
+  },
+  {
+    "key": "createLink.title",
+    "english": "Link title",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 71,
+    "translation": "链接标题"
+  },
+  {
+    "key": "createLink.titleTooltip",
+    "english": "The link's title attribute, shown on hover",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 71,
+    "translation": "悬停时显示的链接标题属性"
+  },
+  {
+    "key": "createLink.url",
+    "english": "URL",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 57,
+    "translation": "URL"
+  },
+  {
+    "key": "createLink.urlPlaceholder",
+    "english": "Select or paste an URL",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 66,
+    "translation": "选择或粘贴 URL"
+  },
+  {
+    "key": "dialog.close",
+    "english": "Close dialog",
+    "sourceFile": "plugins/toolbar/primitives/DialogButton.js",
+    "line": 110,
+    "translation": "关闭对话框"
+  },
+  {
+    "key": "dialogControls.cancel",
+    "english": "Cancel",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 89,
+    "translation": "取消"
+  },
+  {
+    "key": "dialogControls.save",
+    "english": "Save",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 80,
+    "translation": "保存"
+  },
+  {
+    "key": "frontmatterEditor.addEntry",
+    "english": "Add entry",
+    "sourceFile": "plugins/frontmatter/FrontmatterEditor.js",
+    "line": 96,
+    "translation": "添加条目"
+  },
+  {
+    "key": "frontmatterEditor.key",
+    "english": "Key",
+    "sourceFile": "plugins/frontmatter/FrontmatterEditor.js",
+    "line": 73,
+    "translation": "键"
+  },
+  {
+    "key": "frontmatterEditor.title",
+    "english": "Edit document frontmatter",
+    "sourceFile": "plugins/frontmatter/FrontmatterEditor.js",
+    "line": 61,
+    "translation": "编辑文档头部元数据"
+  },
+  {
+    "key": "frontmatterEditor.value",
+    "english": "Value",
+    "sourceFile": "plugins/frontmatter/FrontmatterEditor.js",
+    "line": 73,
+    "translation": "值"
+  },
+  {
+    "key": "imageEditor.deleteImage",
+    "english": "Delete image",
+    "sourceFile": "plugins/image/EditImageToolbar.js",
+    "line": 20,
+    "translation": "删除图片"
+  },
+  {
+    "key": "imageEditor.editImage",
+    "english": "Edit image",
+    "sourceFile": "plugins/image/EditImageToolbar.js",
+    "line": 36,
+    "translation": "编辑图片"
+  },
+  {
+    "key": "linkPreview.copied",
+    "english": "Copied!",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 217,
+    "translation": "已复制！"
+  },
+  {
+    "key": "linkPreview.copyToClipboard",
+    "english": "Copy to clipboard",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 205,
+    "translation": "复制到剪贴板"
+  },
+  {
+    "key": "linkPreview.edit",
+    "english": "Edit link URL",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 198,
+    "translation": "编辑链接 URL"
+  },
+  {
+    "key": "linkPreview.open",
+    "english": "Open {{url}} in new window",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 188,
+    "translation": "在新窗口中打开 {{url}}"
+  },
+  {
+    "key": "linkPreview.remove",
+    "english": "Remove link",
+    "sourceFile": "plugins/link-dialog/LinkDialog.js",
+    "line": 220,
+    "translation": "移除链接"
+  },
+  {
+    "key": "table.alignCenter",
+    "english": "Align center",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 412,
+    "translation": "居中对齐"
+  },
+  {
+    "key": "table.alignLeft",
+    "english": "Align left",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 411,
+    "translation": "左对齐"
+  },
+  {
+    "key": "table.alignRight",
+    "english": "Align right",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 413,
+    "translation": "右对齐"
+  },
+  {
+    "key": "table.columnMenu",
+    "english": "Column menu",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 387,
+    "translation": "列菜单"
+  },
+  {
+    "key": "table.deleteColumn",
+    "english": "Delete this column",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 428,
+    "translation": "删除此列"
+  },
+  {
+    "key": "table.deleteRow",
+    "english": "Delete this row",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 490,
+    "translation": "删除此行"
+  },
+  {
+    "key": "table.deleteTable",
+    "english": "Delete table",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 156,
+    "translation": "删除表格"
+  },
+  {
+    "key": "table.insertColumnLeft",
+    "english": "Insert a column to the left of this one",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 418,
+    "translation": "在此列左侧插入一列"
+  },
+  {
+    "key": "table.insertColumnRight",
+    "english": "Insert a column to the right of this one",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 425,
+    "translation": "在此列右侧插入一列"
+  },
+  {
+    "key": "table.insertRowAbove",
+    "english": "Insert a row above this one",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 480,
+    "translation": "在此行上方插入一行"
+  },
+  {
+    "key": "table.insertRowBelow",
+    "english": "Insert a row below this one",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 487,
+    "translation": "在此行下方插入一行"
+  },
+  {
+    "key": "table.rowMenu",
+    "english": "Row menu",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 463,
+    "translation": "行菜单"
+  },
+  {
+    "key": "table.textAlignment",
+    "english": "Text alignment",
+    "sourceFile": "plugins/table/TableEditor.js",
+    "line": 409,
+    "translation": "文本对齐方式"
+  },
+  {
+    "key": "toolbar.admonition",
+    "english": "Insert Admonition",
+    "sourceFile": "plugins/toolbar/components/InsertAdmonition.js",
+    "line": 19,
+    "translation": "插入提示框"
+  },
+  {
+    "key": "toolbar.blockTypes.heading",
+    "english": "Heading {{level}}",
+    "sourceFile": "plugins/toolbar/components/BlockTypeSelect.js",
+    "line": 28,
+    "translation": "{{level}} 级标题"
+  },
+  {
+    "key": "toolbar.blockTypes.paragraph",
+    "english": "Paragraph",
+    "sourceFile": "plugins/toolbar/components/BlockTypeSelect.js",
+    "line": 19,
+    "translation": "段落"
+  },
+  {
+    "key": "toolbar.blockTypes.quote",
+    "english": "Quote",
+    "sourceFile": "plugins/toolbar/components/BlockTypeSelect.js",
+    "line": 22,
+    "translation": "引用"
+  },
+  {
+    "key": "toolbar.blockTypeSelect.placeholder",
+    "english": "Block type",
+    "sourceFile": "plugins/toolbar/components/BlockTypeSelect.js",
+    "line": 55,
+    "translation": "内容块类型"
+  },
+  {
+    "key": "toolbar.blockTypeSelect.selectBlockTypeTooltip",
+    "english": "Select block type",
+    "sourceFile": "plugins/toolbar/components/BlockTypeSelect.js",
+    "line": 54,
+    "translation": "选择内容块类型"
+  },
+  {
+    "key": "toolbar.bold",
+    "english": "Bold",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 30,
+    "translation": "加粗"
+  },
+  {
+    "key": "toolbar.bulletedList",
+    "english": "Bulleted list",
+    "sourceFile": "plugins/toolbar/components/ListsToggle.js",
+    "line": 16,
+    "translation": "无序列表"
+  },
+  {
+    "key": "toolbar.checkList",
+    "english": "Check list",
+    "sourceFile": "plugins/toolbar/components/ListsToggle.js",
+    "line": 18,
+    "translation": "任务列表"
+  },
+  {
+    "key": "toolbar.codeBlock",
+    "english": "Insert Code Block",
+    "sourceFile": "plugins/toolbar/components/InsertCodeBlock.js",
+    "line": 13,
+    "translation": "插入代码块"
+  },
+  {
+    "key": "toolbar.diffMode",
+    "english": "Diff mode",
+    "sourceFile": "plugins/toolbar/components/DiffSourceToggleWrapper.js",
+    "line": 24,
+    "translation": "差异模式"
+  },
+  {
+    "key": "toolbar.editFrontmatter",
+    "english": "Edit frontmatter",
+    "sourceFile": "plugins/toolbar/components/InsertFrontmatter.js",
+    "line": 15,
+    "translation": "编辑头部元数据"
+  },
+  {
+    "key": "toolbar.highlight",
+    "english": "Highlight",
+    "sourceFile": "plugins/toolbar/components/HighlightToggle.js",
+    "line": 11,
+    "translation": "高亮"
+  },
+  {
+    "key": "toolbar.image",
+    "english": "Insert image",
+    "sourceFile": "plugins/toolbar/components/InsertImage.js",
+    "line": 23,
+    "translation": "插入图片"
+  },
+  {
+    "key": "toolbar.inlineCode",
+    "english": "Inline code format",
+    "sourceFile": "plugins/toolbar/components/CodeToggle.js",
+    "line": 11,
+    "translation": "行内代码格式"
+  },
+  {
+    "key": "toolbar.insertFrontmatter",
+    "english": "Insert frontmatter",
+    "sourceFile": "plugins/toolbar/components/InsertFrontmatter.js",
+    "line": 15,
+    "translation": "插入头部元数据"
+  },
+  {
+    "key": "toolbar.italic",
+    "english": "Italic",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 39,
+    "translation": "斜体"
+  },
+  {
+    "key": "toolbar.link",
+    "english": "Create link",
+    "sourceFile": "plugins/toolbar/components/CreateLink.js",
+    "line": 14,
+    "translation": "创建链接"
+  },
+  {
+    "key": "toolbar.numberedList",
+    "english": "Numbered list",
+    "sourceFile": "plugins/toolbar/components/ListsToggle.js",
+    "line": 17,
+    "translation": "有序列表"
+  },
+  {
+    "key": "toolbar.redo",
+    "english": "Redo {{shortcut}}",
+    "sourceFile": "plugins/toolbar/components/UndoRedo.js",
+    "line": 47,
+    "translation": "重做 {{shortcut}}"
+  },
+  {
+    "key": "toolbar.removeBold",
+    "english": "Remove bold",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 31,
+    "translation": "取消加粗"
+  },
+  {
+    "key": "toolbar.removeHighlight",
+    "english": "Remove highlight",
+    "sourceFile": "plugins/toolbar/components/HighlightToggle.js",
+    "line": 11,
+    "translation": "取消高亮"
+  },
+  {
+    "key": "toolbar.removeInlineCode",
+    "english": "Remove code format",
+    "sourceFile": "plugins/toolbar/components/CodeToggle.js",
+    "line": 11,
+    "translation": "取消代码格式"
+  },
+  {
+    "key": "toolbar.removeItalic",
+    "english": "Remove italic",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 40,
+    "translation": "取消斜体"
+  },
+  {
+    "key": "toolbar.removeStrikethrough",
+    "english": "Remove strikethrough",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 63,
+    "translation": "取消删除线"
+  },
+  {
+    "key": "toolbar.removeSubscript",
+    "english": "Remove subscript",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 81,
+    "translation": "取消下标"
+  },
+  {
+    "key": "toolbar.removeSuperscript",
+    "english": "Remove superscript",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 72,
+    "translation": "取消上标"
+  },
+  {
+    "key": "toolbar.removeUnderline",
+    "english": "Remove underline",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 49,
+    "translation": "取消下划线"
+  },
+  {
+    "key": "toolbar.richText",
+    "english": "Rich text",
+    "sourceFile": "plugins/toolbar/components/DiffSourceToggleWrapper.js",
+    "line": 16,
+    "translation": "富文本"
+  },
+  {
+    "key": "toolbar.source",
+    "english": "Source mode",
+    "sourceFile": "plugins/toolbar/components/DiffSourceToggleWrapper.js",
+    "line": 22,
+    "translation": "源码模式"
+  },
+  {
+    "key": "toolbar.strikethrough",
+    "english": "Strikethrough",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 62,
+    "translation": "删除线"
+  },
+  {
+    "key": "toolbar.subscript",
+    "english": "Subscript",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 80,
+    "translation": "下标"
+  },
+  {
+    "key": "toolbar.superscript",
+    "english": "Superscript",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 71,
+    "translation": "上标"
+  },
+  {
+    "key": "toolbar.table",
+    "english": "Insert Table",
+    "sourceFile": "plugins/toolbar/components/InsertTable.js",
+    "line": 14,
+    "translation": "插入表格"
+  },
+  {
+    "key": "toolbar.thematicBreak",
+    "english": "Insert thematic break",
+    "sourceFile": "plugins/toolbar/components/InsertThematicBreak.js",
+    "line": 13,
+    "translation": "插入分隔线"
+  },
+  {
+    "key": "toolbar.toggleGroup",
+    "english": "toggle group",
+    "sourceFile": "plugins/toolbar/primitives/toolbar.js",
+    "line": 81,
+    "translation": "切换选项组"
+  },
+  {
+    "key": "toolbar.underline",
+    "english": "Underline",
+    "sourceFile": "plugins/toolbar/components/BoldItalicUnderlineToggles.js",
+    "line": 48,
+    "translation": "下划线"
+  },
+  {
+    "key": "toolbar.undo",
+    "english": "Undo {{shortcut}}",
+    "sourceFile": "plugins/toolbar/components/UndoRedo.js",
+    "line": 40,
+    "translation": "撤销 {{shortcut}}"
+  },
+  {
+    "key": "uploadImage.addViaUrlInstructions",
+    "english": "Or add an image from an URL:",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 61,
+    "translation": "或通过 URL 添加图片："
+  },
+  {
+    "key": "uploadImage.addViaUrlInstructionsNoUpload",
+    "english": "Add an image from an URL:",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 61,
+    "translation": "通过 URL 添加图片："
+  },
+  {
+    "key": "uploadImage.alt",
+    "english": "Alt:",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 73,
+    "translation": "替代文本："
+  },
+  {
+    "key": "uploadImage.autoCompletePlaceholder",
+    "english": "Select or paste an image src",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 70,
+    "translation": "选择或粘贴图片地址"
+  },
+  {
+    "key": "uploadImage.dialogTitle",
+    "english": "Upload an image",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 48,
+    "translation": "上传图片"
+  },
+  {
+    "key": "uploadImage.height",
+    "english": "Height:",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 75,
+    "translation": "高度："
+  },
+  {
+    "key": "uploadImage.title",
+    "english": "Title:",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 74,
+    "translation": "标题："
+  },
+  {
+    "key": "uploadImage.uploadInstructions",
+    "english": "Upload an image from your device:",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 60,
+    "translation": "从设备上传图片："
+  },
+  {
+    "key": "uploadImage.width",
+    "english": "Width:",
+    "sourceFile": "plugins/image/ImageDialog.js",
+    "line": 75,
+    "translation": "宽度："
+  }
+]

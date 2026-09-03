@@ -1,0 +1,352 @@
+[
+  {
+    "key": "local._12_00_05_warn_rate_limit_approaching_80_9d4a7c6e",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "[12:00:05] WARN  Rate limit approaching (80%)"
+  },
+  {
+    "key": "local._12_00_12_sys_retrying_connection_in_5s_8244aca8",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "[12:00:12] SYS   Retrying connection in 5s..."
+  },
+  {
+    "key": "local._k_2f3c3f85",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "⌘K:"
+  },
+  {
+    "key": "local._lt_timestamp_gt_b99b635f",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "&lt;timestamp&gt;"
+  },
+  {
+    "key": "local._paperclipai_plugin_example_937e8b91",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "@paperclipai/plugin-example"
+  },
+  {
+    "key": "local._rdquo_637ea677",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "&rdquo;?"
+  },
+  {
+    "key": "local._v_0bb917d8",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "· v"
+  },
+  {
+    "key": "local._value_2d2088ca",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "→ {{v0}}"
+  },
+  {
+    "key": "local._value_637dfcf4",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "${{v0}}"
+  },
+  {
+    "key": "local._value_8dc5123a",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "@{{v0}}"
+  },
+  {
+    "key": "local._value_e7a5974b",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "— {{v0}}"
+  },
+  {
+    "key": "local._value_ff5dbd82",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "@ {{v0}}"
+  },
+  {
+    "key": "local._vvalue_26b24660",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "· v{{v0}}"
+  },
+  {
+    "key": "local.1_2m_4b3a5e07",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "1.2M"
+  },
+  {
+    "key": "local.500k_99781a8a",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "500k"
+  },
+  {
+    "key": "local.a_559aead0",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "A"
+  },
+  {
+    "key": "local.a_da822870",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "a ·"
+  },
+  {
+    "key": "local.a1b2c3d4_7dcf407f",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "a1b2c3d4"
+  },
+  {
+    "key": "local.acp_75ad69d7",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "ACP"
+  },
+  {
+    "key": "local.alias_paperclip_secrets_715b7239",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "alias/paperclip-secrets"
+  },
+  {
+    "key": "local.anthropic_api_key_8f2c257f",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "ANTHROPIC_API_KEY"
+  },
+  {
+    "key": "local.app_value_f0188837",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "app:{{v0}}"
+  },
+  {
+    "key": "local.application_octet_stream_1e86d1bc",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "application/octet-stream"
+  },
+  {
+    "key": "local.bash_scripts_provision_worktree_sh_a3f97112",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "bash ./scripts/provision-worktree.sh"
+  },
+  {
+    "key": "local.bg_chip_match_title_bg_text_chip_match_title_7b0292cb",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "bg-(--chip-match-title-bg) text-(--chip-match-title-fg) border-(--chip-match-title-border)"
+  },
+  {
+    "key": "local.bin_c73f954a",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "BIN"
+  },
+  {
+    "key": "local.brandbanner_0f383777",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "brandBanner"
+  },
+  {
+    "key": "local.claude_haiku_4_20250506_e7f937c5",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "claude-haiku-4-20250506"
+  },
+  {
+    "key": "local.client_secret_fdce8e4a",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "client-secret"
+  },
+  {
+    "key": "local.clientsecret_c3b26886",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "clientsecret"
+  },
+  {
+    "key": "local.cloudaccessgate_7ff6e9b4",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "CloudAccessGate"
+  },
+  {
+    "key": "local.code_review_717d32bb",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "code-review"
+  },
+  {
+    "key": "local.codespaces_554776af",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "codespaces"
+  },
+  {
+    "key": "local.codex_login_53b7014e",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "codex login"
+  },
+  {
+    "key": "local.cursor_api_key_92c76211",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "CURSOR_API_KEY"
+  },
+  {
+    "key": "local.deploymentexposure_quot_private_quot_be9e702e",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "deploymentExposure === &quot;private&quot;"
+  },
+  {
+    "key": "local.df_4a3161bb",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "DF"
+  },
+  {
+    "key": "local.ease_out_791c2d09",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "ease-out"
+  },
+  {
+    "key": "local.gemini_auth_e48faab3",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "gemini auth"
+  },
+  {
+    "key": "local.git_9a881b9b",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "git"
+  },
+  {
+    "key": "local.inlinebanner_5825a2ca",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "InlineBanner"
+  },
+  {
+    "key": "local.issuereferencepill_88d5a36c",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "IssueReferencePill"
+  },
+  {
+    "key": "local.kimi_model_name_kimi_model_api_key_e96b57ec",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "KIMI_MODEL_NAME + KIMI_MODEL_API_KEY"
+  },
+  {
+    "key": "local.lg_b870b780",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "LG"
+  },
+  {
+    "key": "local.md_7abcf6da",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "MD"
+  },
+  {
+    "key": "local.p_148de9c5",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "p"
+  },
+  {
+    "key": "local.pap_10114_e7c5dc2f",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "PAP-10114"
+  },
+  {
+    "key": "local.pap_946_workspace_0d34284a",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "PAP-946-workspace"
+  },
+  {
+    "key": "local.paperclip_prod_3a8b4613",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "paperclip/prod"
+  },
+  {
+    "key": "local.pl_16_ac35612e",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "pl-16"
+  },
+  {
+    "key": "local.secret_create_b526dd27",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "secret.create"
+  },
+  {
+    "key": "local.skills_sh_cf3a7045",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "skills.sh"
+  },
+  {
+    "key": "local.sm_6ff9250a",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "SM"
+  },
+  {
+    "key": "local.stderr_7e6b710b",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "stderr"
+  },
+  {
+    "key": "local.teamhierarchypreview_49f0bc97",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "TeamHierarchyPreview"
+  },
+  {
+    "key": "local.text_emerald_800_dark_text_emerald_200_1d3ba887",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "text-emerald-800 dark:text-emerald-200"
+  },
+  {
+    "key": "local.text_red_900_dark_text_red_200_8e23133a",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "text-red-900 dark:text-red-200"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "v"
+  },
+  {
+    "key": "local.value_29525469",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{v0}}•••"
+  },
+  {
+    "key": "local.value_58807f3e",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{runId}}"
+  },
+  {
+    "key": "local.value_8d32fb66",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{variable_name}}"
+  },
+  {
+    "key": "local.value_aa6ead74",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{skillName}}"
+  },
+  {
+    "key": "local.value_d4b55942",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{{{v0}}}}"
+  },
+  {
+    "key": "local.value_print_output_format_stream_json_verbose_850dc101",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{v0}} --print - --output-format stream-json --verbose"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{v0}} {{v1}}"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{v0}} · {{v1}}"
+  },
+  {
+    "key": "local.value_value_c5088e14",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{v0}} - {{v1}}"
+  },
+  {
+    "key": "local.value_value_value_6bc4856e",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{v0}}, {{v1}} {{v2}}"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "{{v0}}{{v1}}"
+  },
+  {
+    "key": "local.vault_3fcbe9b5",
+    "reason": "保留机器标识、命令、路径、样式类、格式占位符、技术缩写或无须翻译的符号；防止更改运行含义。",
+    "english": "vault://"
+  }
+]

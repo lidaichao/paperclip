@@ -1,0 +1,358 @@
+[
+  {
+    "key": "local._12_00_01_info_agent_started_successfully_3b0f8d84",
+    "reason": "原始日志示例，保留日志级别、时间、任务标识及原文，以免与真实日志混淆。"
+  },
+  {
+    "key": "local._12_00_08_info_task_pap_001_completed_f403504d",
+    "reason": "原始日志示例，保留日志级别、时间、任务标识及原文，以免与真实日志混淆。"
+  },
+  {
+    "key": "local._12_00_17_info_reconnected_successfully_ed2eba0b",
+    "reason": "原始日志示例，保留日志级别、时间、任务标识及原文，以免与真实日志混淆。"
+  },
+  {
+    "key": "local._d_6f803e5b",
+    "reason": "实际键盘快捷键标识，不进行翻译。"
+  },
+  {
+    "key": "local._deny_missing_membership_43419832",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local._k_dfe870d9",
+    "reason": "实际键盘快捷键标识，不进行翻译。"
+  },
+  {
+    "key": "local._openclaw_workspace_paperclip_claimed_api_key_9776c09e",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local._rdquo_c418451b",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local._responsible_user_unauthorized_fe7ff682",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local._rsaquo_1a5f9b7c",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local._v_10b6c68e",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local._value_36d5f17c",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local._value_69186e0f",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local._value_a5db9063",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local._vvalue_f8e4b343",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.1_7m_0fb33ae7",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.a_ca978112",
+    "reason": "实际键盘快捷键标识，不进行翻译。"
+  },
+  {
+    "key": "local.a2_c8361f9b",
+    "reason": "演示实体名称、标识或头像缩写，不修改用户内容或标识。"
+  },
+  {
+    "key": "local.agent_123_0e9a8c1b",
+    "reason": "演示实体名称、标识或头像缩写，不修改用户内容或标识。"
+  },
+  {
+    "key": "local.agent_alpha_d47b013c",
+    "reason": "演示实体名称、标识或头像缩写，不修改用户内容或标识。"
+  },
+  {
+    "key": "local.anthropic_claude_opus_4_8_cccbc1ce",
+    "reason": "产品、品牌、模型或软件名称，保留官方名称。"
+  },
+  {
+    "key": "local.api_70d84531",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.aws_secrets_manager_05ca6fb1",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.bash_scripts_teardown_worktree_sh_7861dfed",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.bg_yellow_40ebfdc4",
+    "reason": "源码组件、依赖包或样式类名称，保留技术标识供定位。"
+  },
+  {
+    "key": "local.claude_agent_acp_fdb4b34a",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.claude_login_1d839ac9",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.codex_616efbe9",
+    "reason": "产品、品牌、模型或软件名称，保留官方名称。"
+  },
+  {
+    "key": "local.css_b581e460",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.cto_cursor_eb5b4ad3",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.deploymentmode_quot_authenticated_quot_388d6ace",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.dev_github_9d3718ac",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.dotta_s_macbook_a2d8cd4f",
+    "reason": "演示实体名称、标识或头像缩写，不修改用户内容或标识。"
+  },
+  {
+    "key": "local.draft_config_f657b727",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.emptystate_a422df8c",
+    "reason": "源码组件、依赖包或样式类名称，保留技术标识供定位。"
+  },
+  {
+    "key": "local.esc_52f878ed",
+    "reason": "实际键盘快捷键标识，不进行翻译。"
+  },
+  {
+    "key": "local.externalsourceslist_f3b51cdf",
+    "reason": "源码组件、依赖包或样式类名称，保留技术标识供定位。"
+  },
+  {
+    "key": "local.gemini_acp_9b034d4e",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.gemini_cli_73173283",
+    "reason": "产品、品牌、模型或软件名称，保留官方名称。"
+  },
+  {
+    "key": "local.html_07239dbd",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.id_3843971d",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.img_d083ab05",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.markdown_0e52f6b9",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.minsize_240px_0210b75e",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.my_secret_c2bb479f",
+    "reason": "环境变量名称或名称模式，必须保持原值。"
+  },
+  {
+    "key": "local.needs_setup_a2989bf3",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.npx_y_acme_mcp_tool_e5c16cb2",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.onboarding_happy_path_252f373d",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.openai_api_key_1bd0074c",
+    "reason": "环境变量名称或名称模式，必须保持原值。"
+  },
+  {
+    "key": "local.opencode_3af0e55c",
+    "reason": "产品、品牌、模型或软件名称，保留官方名称。"
+  },
+  {
+    "key": "local.p_1df15572",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.pageskeleton_e86e1cc8",
+    "reason": "源码组件、依赖包或样式类名称，保留技术标识供定位。"
+  },
+  {
+    "key": "local.pap_12462_p7_a40f42aa",
+    "reason": "演示实体名称、标识或头像缩写，不修改用户内容或标识。"
+  },
+  {
+    "key": "local.paperclip_40dac43c",
+    "reason": "环境变量名称或名称模式，必须保持原值。"
+  },
+  {
+    "key": "local.paperclip_c34c3f73",
+    "reason": "产品、品牌、模型或软件名称，保留官方名称。"
+  },
+  {
+    "key": "local.paperclip_v_70fff45b",
+    "reason": "产品、品牌、模型或软件名称，保留官方名称。"
+  },
+  {
+    "key": "local.pdf_1d393b00",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.pending_approval_92950a08",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.personal_gh_token_f7003292",
+    "reason": "环境变量名称或名称模式，必须保持原值。"
+  },
+  {
+    "key": "local.pi_4d87941d",
+    "reason": "产品、品牌、模型或软件名称，保留官方名称。"
+  },
+  {
+    "key": "local.pid_3f302a2a",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.pkill_f_vite_true_b3bf6e78",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.pl_4_0c3bdb63",
+    "reason": "源码组件、依赖包或样式类名称，保留技术标识供定位。"
+  },
+  {
+    "key": "local.post_9aee6b1b",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.pr_value_a6eb3d27",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.react_resizable_panels_31744909",
+    "reason": "源码组件、依赖包或样式类名称，保留技术标识供定位。"
+  },
+  {
+    "key": "local.references_examples_b6247462",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.skill_md_0e95f5a3",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.text_muted_foreground_35f35c41",
+    "reason": "源码组件、依赖包或样式类名称，保留技术标识供定位。"
+  },
+  {
+    "key": "local.text_sky_800_dark_text_sky_200_2c5d3242",
+    "reason": "源码组件、依赖包或样式类名称，保留技术标识供定位。"
+  },
+  {
+    "key": "local.txt_d3dc6ac9",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.us_east_1_487d6534",
+    "reason": "程序状态、提供方标识、错误码或代码示例；保持精确原值。"
+  },
+  {
+    "key": "local.value_189e6ce7",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.value_7d534fff",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.value_exec_json_7fca7397",
+    "reason": "命令、路径、文件名或可执行配置示例；不能翻译机器内容。"
+  },
+  {
+    "key": "local.value_value_25a18c36",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.value_value_43cdd462",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.value_value_7a11adef",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.value_value_ef12155d",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.value_valuevalue_65ee5185",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.valueb_ead65af8",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "reason": "仅包含动态值、标点、版本号或单位格式，保持原样。"
+  },
+  {
+    "key": "local.wasm_4bec5a51",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.windows_d598026a",
+    "reason": "产品、品牌、模型或软件名称，保留官方名称。"
+  },
+  {
+    "key": "local.workspace_123_1a70162c",
+    "reason": "演示实体名称、标识或头像缩写，不修改用户内容或标识。"
+  },
+  {
+    "key": "local.xml_40658e9a",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  },
+  {
+    "key": "local.yo_b29e5ad5",
+    "reason": "演示实体名称、标识或头像缩写，不修改用户内容或标识。"
+  },
+  {
+    "key": "local.zip_eaca4b30",
+    "reason": "通用技术缩写或文件格式名称，无需汉化。"
+  }
+]

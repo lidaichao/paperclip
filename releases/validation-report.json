@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "checkedAt": "2026-09-03T09:29:57.670Z",
+  "backendVersion": "2026.831.1",
+  "fullUiRegression": {
+    "passed": 4539,
+    "failed": 0
+  },
+  "finalDisplayRegression": {
+    "passed": 56,
+    "failed": 0
+  },
+  "monitorRegression": {
+    "passed": 144,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "productionBuild": "passed",
+  "localeValidation": {
+    "passed": true,
+    "catalogEntries": 9784,
+    "sourceFiles": 486,
+    "translatedCallSites": 13869,
+    "placeholderAndSafetyErrors": 0,
+    "missingKeys": 0,
+    "unchangedDisplayEntries": 275,
+    "note": "Source coverage requires the independent residual audit and browser checks; catalog completeness alone is not a full-interface claim."
+  },
+  "editorMessages": 94,
+  "patchReplay": {
+    "passed": true,
+    "files": 505,
+    "normalizedLineEndingsOnly": true
+  },
+  "browserReview": "releases/browser-review.md: B01-B11 resolved",
+  "limitations": [
+    "Browser checks cover the documented pages and reachable states, not every possible plugin/runtime failure.",
+    "Raw user content, skills, logs, commands, model IDs and API values are preserved."
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "luna-paperclip-zh-cn",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {"inventory":"node scripts/inventory.mjs", "check":"node scripts/check-locales.mjs", "test":"node --test scripts/release-tools.test.mjs scripts/monitor-display-fix.test.mjs"},
+  "devDependencies": {"typescript":"5.9.3"}
+}

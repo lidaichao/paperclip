@@ -1,0 +1,21 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {stripTypeScriptTypes} from 'node:module';
+const kit='H:/Luna/tools/paperclip-zh-cn';
+const root='H:/Luna/tools/paperclip-source';
+const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
+const en=await read(path.join(root,'ui/src/i18n/locales/en.json'));
+const zh=await read(path.join(root,'ui/src/i18n/locales/zh-CN.json'));
+let validation=await fs.readFile(path.join(root,'ui/src/i18n/locale-validation.ts'),'utf8');
+validation=validation.replace('import en from "./locales/en.json";',`const en=${JSON.stringify(en)};`);
+const module=await import('data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(validation)).toString('base64'));
+const errors=module.validateLocaleMessages(zh,en);
+const files=await read(path.join(kit,'integration/applied-files.json'));
+const missing=[];let usages=0;
+for(const entry of files){const text=await fs.readFile(path.join(root,entry.file),'utf8');for(const match of text.matchAll(/l10n\("local\.([^" ]+)"/g)){usages++;if(!(match[1] in en.local))missing.push(`${entry.file}: ${match[1]}`);}}
+if(errors.length||missing.length)throw Error(JSON.stringify({errors,missing},null,2));
+const count=Object.keys(en.local).length;
+const unchanged=Object.keys(en.local).filter(key=>en.local[key]===zh.local[key]);
+const report={passed:true,catalogEntries:count,sourceFiles:files.length,translatedCallSites:usages,placeholderAndSafetyErrors:0,missingKeys:0,unchangedDisplayEntries:unchanged.length,note:'Source coverage requires the independent residual audit and browser checks; catalog completeness alone is not a full-interface claim.'};
+await fs.writeFile(path.join(kit,'releases/locale-validation.json'),JSON.stringify(report,null,2));
+console.log(JSON.stringify(report));

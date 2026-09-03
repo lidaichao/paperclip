@@ -1,0 +1,7132 @@
+[
+  {
+    "key": "local.codex_616efbe9",
+    "english": "Codex",
+    "sourceFile": "ui/src/adapters/adapter-display-registry.ts",
+    "line": 78,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2476,
+    "end": 2483,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.gemini_cli_73173283",
+    "english": "Gemini CLI",
+    "sourceFile": "ui/src/adapters/adapter-display-registry.ts",
+    "line": 90,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2772,
+    "end": 2784,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.hermes_66e0988d",
+    "english": "Hermes",
+    "sourceFile": "ui/src/adapters/adapter-display-registry.ts",
+    "line": 111,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3247,
+    "end": 3255,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.opencode_3af0e55c",
+    "english": "OpenCode",
+    "sourceFile": "ui/src/adapters/adapter-display-registry.ts",
+    "line": 116,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3348,
+    "end": 3358,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pi_4d87941d",
+    "english": "Pi",
+    "sourceFile": "ui/src/adapters/adapter-display-registry.ts",
+    "line": 121,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3475,
+    "end": 3479,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.cursor_2c014f8f",
+    "english": "Cursor",
+    "sourceFile": "ui/src/adapters/adapter-display-registry.ts",
+    "line": 126,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3565,
+    "end": 3573,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.cursor_cloud_95a2aa7e",
+    "english": "Cursor Cloud",
+    "sourceFile": "ui/src/adapters/adapter-display-registry.ts",
+    "line": 131,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3678,
+    "end": 3692,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.http_56d6f321",
+    "english": "HTTP",
+    "sourceFile": "ui/src/adapters/adapter-display-registry.ts",
+    "line": 150,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 4179,
+    "end": 4185,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.claude_cli_1ea01a21",
+    "english": "Claude CLI",
+    "sourceFile": "ui/src/adapters/claude-local/config-fields.tsx",
+    "line": 108,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 3545,
+    "end": 3555,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.acp_75ad69d7",
+    "english": "ACP",
+    "sourceFile": "ui/src/adapters/claude-local/config-fields.tsx",
+    "line": 109,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 3596,
+    "end": 3599,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.claude_agent_acp_fdb4b34a",
+    "english": "claude-agent-acp",
+    "sourceFile": "ui/src/adapters/claude-local/config-fields.tsx",
+    "line": 132,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 4491,
+    "end": 4509,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.acp_75ad69d7",
+    "english": "ACP",
+    "sourceFile": "ui/src/adapters/codex-local/config-fields.tsx",
+    "line": 78,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 3609,
+    "end": 3612,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.codex_616efbe9",
+    "english": "Codex",
+    "sourceFile": "ui/src/adapters/codex-local/config-fields.tsx",
+    "line": 84,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 3889,
+    "end": 3894,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.codex_acp_275c258e",
+    "english": "codex-acp",
+    "sourceFile": "ui/src/adapters/codex-local/config-fields.tsx",
+    "line": 108,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 4789,
+    "end": 4800,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.codex_616efbe9",
+    "english": "Codex",
+    "sourceFile": "ui/src/adapters/codex-local/index.ts",
+    "line": 8,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 354,
+    "end": 361,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.cursor_2c014f8f",
+    "english": "Cursor",
+    "sourceFile": "ui/src/adapters/cursor/index.ts",
+    "line": 8,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 355,
+    "end": 363,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.cursor_cloud_95a2aa7e",
+    "english": "Cursor Cloud",
+    "sourceFile": "ui/src/adapters/cursor-cloud/index.ts",
+    "line": 10,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 321,
+    "end": 335,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.gemini_cli_73173283",
+    "english": "Gemini CLI",
+    "sourceFile": "ui/src/adapters/gemini-local/config-fields.tsx",
+    "line": 49,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 1939,
+    "end": 1949,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.acp_75ad69d7",
+    "english": "ACP",
+    "sourceFile": "ui/src/adapters/gemini-local/config-fields.tsx",
+    "line": 50,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 1990,
+    "end": 1993,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.gemini_acp_9b034d4e",
+    "english": "gemini --acp",
+    "sourceFile": "ui/src/adapters/gemini-local/config-fields.tsx",
+    "line": 73,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 2856,
+    "end": 2870,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.gemini_cli_73173283",
+    "english": "Gemini CLI",
+    "sourceFile": "ui/src/adapters/gemini-local/index.ts",
+    "line": 8,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 361,
+    "end": 373,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.hermes_66e0988d",
+    "english": "Hermes",
+    "sourceFile": "ui/src/adapters/hermes-local/index.ts",
+    "line": 7,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 307,
+    "end": 315,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.http_webhook_676845ee",
+    "english": "HTTP Webhook",
+    "sourceFile": "ui/src/adapters/http/index.ts",
+    "line": 8,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 286,
+    "end": 300,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.ws_127_0_0_1_18789_0edbee82",
+    "english": "ws://127.0.0.1:18789",
+    "sourceFile": "ui/src/adapters/openclaw-gateway/config-fields.tsx",
+    "line": 159,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 4735,
+    "end": 4757,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.agent_123_0e9a8c1b",
+    "english": "agent-123",
+    "sourceFile": "ui/src/adapters/openclaw-gateway/config-fields.tsx",
+    "line": 201,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 5867,
+    "end": 5878,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_670d47cc",
+    "english": "paperclip",
+    "sourceFile": "ui/src/adapters/openclaw-gateway/config-fields.tsx",
+    "line": 240,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 7161,
+    "end": 7172,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.operator_admin_2cbaf865",
+    "english": "operator.admin",
+    "sourceFile": "ui/src/adapters/openclaw-gateway/config-fields.tsx",
+    "line": 298,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 8871,
+    "end": 8887,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._openclaw_workspace_paperclip_claimed_api_key_9776c09e",
+    "english": "~/.openclaw/workspace/paperclip-claimed-api-key.json",
+    "sourceFile": "ui/src/adapters/openclaw-gateway/config-fields.tsx",
+    "line": 382,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 11744,
+    "end": 11798,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.opencode_3af0e55c",
+    "english": "OpenCode",
+    "sourceFile": "ui/src/adapters/opencode-local/index.ts",
+    "line": 8,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 375,
+    "end": 385,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pi_4d87941d",
+    "english": "Pi",
+    "sourceFile": "ui/src/adapters/pi-local/index.ts",
+    "line": 8,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 333,
+    "end": 337,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_c5088e14",
+    "english": "{{v0}} - {{v1}}",
+    "sourceFile": "ui/src/components/ActiveAgentsPanel.tsx",
+    "line": 226,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 8468,
+    "end": 8534,
+    "expressions": [
+      "issue?.identifier ?? run.issueId.slice(0, 8)",
+      "issue.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_28683895",
+    "english": "- {{v0}}",
+    "sourceFile": "ui/src/components/ActiveAgentsPanel.tsx",
+    "line": 229,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 8691,
+    "end": 8710,
+    "expressions": [
+      "issue.title"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_37651ed4",
+    "english": "{{v0}}/{{v1}}",
+    "sourceFile": "ui/src/components/ActivityCharts.tsx",
+    "line": 15,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 436,
+    "end": 472,
+    "expressions": [
+      "d.getMonth() + 1",
+      "d.getDate()"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/components/ActivityFeed.tsx",
+    "line": 572,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 20254,
+    "end": 20319,
+    "expressions": [
+      "issueName ?? groupKey",
+      "issueTitle ? ` — ${issueTitle}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.shift_2e544a29",
+    "english": "Shift",
+    "sourceFile": "ui/src/components/agent-config-primitives.tsx",
+    "line": 418,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 15545,
+    "end": 15550,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_computer_f769e083",
+    "english": "Paperclip Computer",
+    "sourceFile": "ui/src/components/AgentConfigForm.tsx",
+    "line": 698,
+    "sourceContext": "display-variable",
+    "placeholders": [],
+    "start": 32356,
+    "end": 32376,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/components/AgentConfigForm.tsx",
+    "line": 836,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 38542,
+    "end": 38555,
+    "expressions": [
+      "model"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.you_are_agent_value_your_role_is_value_d325109b",
+    "english": "You are agent {{ agent.name }}. Your role is {{ agent.role }}...",
+    "sourceFile": "ui/src/components/AgentConfigForm.tsx",
+    "line": 1435,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 64230,
+    "end": 64296,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e50579e5",
+    "english": ": {{v0}}",
+    "sourceFile": "ui/src/components/AgentConfigForm.tsx",
+    "line": 2102,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 94404,
+    "end": 94418,
+    "expressions": [
+      "message"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/components/AgentSecretAccessEditor.tsx",
+    "line": 462,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 20814,
+    "end": 20815,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/components/BlockedInboxView.tsx",
+    "line": 231,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 8373,
+    "end": 8412,
+    "expressions": [
+      "group.label",
+      "group.rows.length"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_bc3d13e8",
+    "english": "{{v0}}",
+    "sourceFile": "ui/src/components/BuiltInAgentGate.tsx",
+    "line": 121,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 4846,
+    "end": 4860,
+    "expressions": [
+      "pausedAt"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_ef12155d",
+    "english": "{{v0}} → {{v1}}",
+    "sourceFile": "ui/src/components/CaseActivityFeed.tsx",
+    "line": 52,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1928,
+    "end": 2025,
+    "expressions": [
+      "(event.payload.previousStatus as string) ?? \"?\"",
+      "(event.payload.status as string) ?? \"?\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.true_b5bea41b",
+    "english": "true",
+    "sourceFile": "ui/src/components/CaseFieldsPanel.tsx",
+    "line": 188,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 6469,
+    "end": 6475,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._ldquo_c2dcdc8d",
+    "english": "&ldquo;",
+    "sourceFile": "ui/src/components/CommandPalette.tsx",
+    "line": 263,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 9448,
+    "end": 9455,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rdquo_d1fc8381",
+    "english": "&rdquo;",
+    "sourceFile": "ui/src/components/CommandPalette.tsx",
+    "line": 263,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 9468,
+    "end": 9475,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.c_6b23c0d5",
+    "english": "C",
+    "sourceFile": "ui/src/components/CommandPalette.tsx",
+    "line": 324,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 11821,
+    "end": 11822,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.g_f_cca77cde",
+    "english": "g f",
+    "sourceFile": "ui/src/components/CommandPalette.tsx",
+    "line": 335,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 12286,
+    "end": 12289,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_ef12155d",
+    "english": "{{v0}} → {{v1}}",
+    "sourceFile": "ui/src/components/DecisionDateChips.tsx",
+    "line": 44,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1704,
+    "end": 1749,
+    "expressions": [
+      "custom.from ?? \"…\"",
+      "custom.to ?? \"…\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_43cdd462",
+    "english": "{{v0}} ({{v1}})",
+    "sourceFile": "ui/src/components/DecisionShelf.tsx",
+    "line": 34,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1130,
+    "end": 1151,
+    "expressions": [
+      "label",
+      "count"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.secret_name_aa8474d7",
+    "english": "secret_name",
+    "sourceFile": "ui/src/components/environment-variables-editor/CreateSecretPopover.tsx",
+    "line": 92,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 3791,
+    "end": 3804,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/components/environment-variables-editor/index.tsx",
+    "line": 315,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 12594,
+    "end": 12666,
+    "expressions": [
+      "button.getAttribute(\"aria-label\") ?? \"\"",
+      "button.textContent ?? \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "english": "v{{v0}}",
+    "sourceFile": "ui/src/components/environment-variables-editor/Row.tsx",
+    "line": 196,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 7465,
+    "end": 7482,
+    "expressions": [
+      "row.version"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/components/environment-variables-editor/Row.tsx",
+    "line": 414,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 18970,
+    "end": 18971,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/components/environment-variables-editor/Row.tsx",
+    "line": 445,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 20687,
+    "end": 20712,
+    "expressions": [
+      "definition.status"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._ldquo_c2dcdc8d",
+    "english": "&ldquo;",
+    "sourceFile": "ui/src/components/environment-variables-editor/SecretPicker.tsx",
+    "line": 327,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 11829,
+    "end": 11836,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rdquo_d1fc8381",
+    "english": "&rdquo;",
+    "sourceFile": "ui/src/components/environment-variables-editor/SecretPicker.tsx",
+    "line": 327,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 11850,
+    "end": 11857,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pr_value_a6eb3d27",
+    "english": "PR {{v0}}",
+    "sourceFile": "ui/src/components/ExternalObjectPill.tsx",
+    "line": 42,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 1374,
+    "end": 1388,
+    "expressions": [
+      "number"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_valuevaluevalue_0af05d9d",
+    "english": "{{v0}} — {{v1}}{{v2}}{{v3}}",
+    "sourceFile": "ui/src/components/ExternalObjectPill.tsx",
+    "line": 124,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1",
+      "v2",
+      "v3"
+    ],
+    "start": 4612,
+    "end": 4799,
+    "expressions": [
+      "ariaKey",
+      "statusLabel",
+      "object.liveness === \"fresh\" || object.liveness === \"unknown\" ? \"\" : ` (${livenessLabel})`",
+      "object.displayTitle ? `: ${object.displayTitle}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/components/ExternalObjectStatusIcon.tsx",
+    "line": 62,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 2292,
+    "end": 2360,
+    "expressions": [
+      "label ?? externalObjectCategoryLabel(category)",
+      "livenessSuffix"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_a8a5aa4a",
+    "english": "-> {{v0}}",
+    "sourceFile": "ui/src/components/FinanceTimelineCard.tsx",
+    "line": 47,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 1970,
+    "end": 2012,
+    "expressions": [
+      "providerDisplayName(row.provider)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.yaml_9b6e8abe",
+    "english": "YAML",
+    "sourceFile": "ui/src/components/FrontmatterPanel.tsx",
+    "line": 383,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 13592,
+    "end": 13614,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.allowed_tools_e3b05e68",
+    "english": "allowed-tools",
+    "sourceFile": "ui/src/components/FrontmatterPanel.tsx",
+    "line": 511,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 17975,
+    "end": 17988,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_bc3d13e8",
+    "english": "{{v0}}",
+    "sourceFile": "ui/src/components/issue-properties/IssueProperties.tsx",
+    "line": 1933,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 85929,
+    "end": 85951,
+    "expressions": [
+      "parentIdentifier"
+    ],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_bc3d13e8",
+    "english": "{{v0}}",
+    "sourceFile": "ui/src/components/issue-properties/IssueProperties.tsx",
+    "line": 2000,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 88790,
+    "end": 88816,
+    "expressions": [
+      "candidate.identifier"
+    ],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_bc3d13e8",
+    "english": "{{v0}}",
+    "sourceFile": "ui/src/components/issue-properties/IssueProperties.tsx",
+    "line": 2077,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 91980,
+    "end": 92006,
+    "expressions": [
+      "candidate.identifier"
+    ],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_7a11adef",
+    "english": "{{v0}} — {{v1}}",
+    "sourceFile": "ui/src/components/IssueBlockedNotice.tsx",
+    "line": 61,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 2431,
+    "end": 2453,
+    "expressions": [
+      "label",
+      "detail"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_c34c3f73",
+    "english": "Paperclip",
+    "sourceFile": "ui/src/components/IssueChatThread.tsx",
+    "line": 2836,
+    "sourceContext": "display-variable",
+    "placeholders": [],
+    "start": 106621,
+    "end": 106632,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_c34c3f73",
+    "english": "Paperclip",
+    "sourceFile": "ui/src/components/IssueChatThread.tsx",
+    "line": 2841,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 106846,
+    "end": 106857,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.id_3843971d",
+    "english": "ID",
+    "sourceFile": "ui/src/components/IssueColumns.tsx",
+    "line": 28,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 1132,
+    "end": 1136,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_ff5dbd82",
+    "english": "@ {{v0}}",
+    "sourceFile": "ui/src/components/IssueRecoveryActionCard.tsx",
+    "line": 434,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 18252,
+    "end": 18267,
+    "expressions": [
+      "shortSha"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_ff5dbd82",
+    "english": "@ {{v0}}",
+    "sourceFile": "ui/src/components/IssueRecoveryActionCard.tsx",
+    "line": 576,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 23888,
+    "end": 23907,
+    "expressions": [
+      "expectedSha"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_ff5dbd82",
+    "english": "@ {{v0}}",
+    "sourceFile": "ui/src/components/IssueRecoveryActionCard.tsx",
+    "line": 583,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 24259,
+    "end": 24274,
+    "expressions": [
+      "liveSha"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._lt_timestamp_gt_b99b635f",
+    "english": "&lt;timestamp&gt;",
+    "sourceFile": "ui/src/components/IssueRecoveryActionCard.tsx",
+    "line": 728,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 30252,
+    "end": 30269,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/IssueRecoveryActionCard.tsx",
+    "line": 1307,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 54050,
+    "end": 54098,
+    "expressions": [
+      "formatTimeShort(action.resolvedAt) ?? \"\""
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._middot_7173e79e",
+    "english": "&middot;",
+    "sourceFile": "ui/src/components/IssueRow.tsx",
+    "line": 326,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 13913,
+    "end": 13937,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_7a11adef",
+    "english": "{{v0}} — {{v1}}",
+    "sourceFile": "ui/src/components/IssueRow.tsx",
+    "line": 378,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 16016,
+    "end": 16038,
+    "expressions": [
+      "label",
+      "detail"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/components/IssueScheduledRetryCard.tsx",
+    "line": 61,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 2410,
+    "end": 2441,
+    "expressions": [
+      "titleAction",
+      "titleSuffix"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/components/IssuesList.tsx",
+    "line": 2055,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 86010,
+    "end": 86080,
+    "expressions": [
+      "firstVisibleBlockerChip.chipLabel",
+      "additionalVisibleBlockerLabel"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/components/IssueThreadInteractionCard.tsx",
+    "line": 1397,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 53280,
+    "end": 53306,
+    "expressions": [
+      "target.key",
+      "revision"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/IssueThreadInteractionCard.tsx",
+    "line": 2123,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 80573,
+    "end": 80585,
+    "expressions": [
+      "when"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/IssueThreadInteractionCard.tsx",
+    "line": 2181,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 82922,
+    "end": 82934,
+    "expressions": [
+      "when"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.esc_52f878ed",
+    "english": "Esc",
+    "sourceFile": "ui/src/components/KeyboardShortcutsCheatsheet.tsx",
+    "line": 120,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 4427,
+    "end": 4430,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._language_127527c8",
+    "english": "语言 / Language",
+    "sourceFile": "ui/src/components/LanguageSwitcher.tsx",
+    "line": 21,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 870,
+    "end": 883,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._language_127527c8",
+    "english": "语言 / Language",
+    "sourceFile": "ui/src/components/LanguageSwitcher.tsx",
+    "line": 23,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 932,
+    "end": 947,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.english_ba118bf7",
+    "english": "English",
+    "sourceFile": "ui/src/components/LanguageSwitcher.tsx",
+    "line": 29,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 1303,
+    "end": 1310,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._reloads_the_page_a3506952",
+    "english": "切换将刷新页面 / Reloads the page",
+    "sourceFile": "ui/src/components/LanguageSwitcher.tsx",
+    "line": 32,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 1422,
+    "end": 1459,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.allow_browser_storage_to_save_your_language_p_1b7d5ba8",
+    "english": "Allow browser storage to save your language preference.",
+    "sourceFile": "ui/src/components/LanguageSwitcher.tsx",
+    "line": 39,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 1644,
+    "end": 1708,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/components/MembershipAction.tsx",
+    "line": 30,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 851,
+    "end": 897,
+    "expressions": [
+      "isLeft ? \"Join\" : \"Leave\"",
+      "resourceName"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._times_6e8883d9",
+    "english": "&times;",
+    "sourceFile": "ui/src/components/NewAgentDialog.tsx",
+    "line": 243,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8303,
+    "end": 8310,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rsaquo_1a5f9b7c",
+    "english": "&rsaquo;",
+    "sourceFile": "ui/src/components/NewGoalDialog.tsx",
+    "line": 130,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 4216,
+    "end": 4224,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._times_6e8883d9",
+    "english": "&times;",
+    "sourceFile": "ui/src/components/NewGoalDialog.tsx",
+    "line": 148,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 4975,
+    "end": 4982,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rsaquo_1a5f9b7c",
+    "english": "&rsaquo;",
+    "sourceFile": "ui/src/components/NewIssueDialog.tsx",
+    "line": 1447,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58104,
+    "end": 58112,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._times_6e8883d9",
+    "english": "&times;",
+    "sourceFile": "ui/src/components/NewIssueDialog.tsx",
+    "line": 1467,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58936,
+    "end": 58943,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/components/NewIssueDialog.tsx",
+    "line": 1914,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 81143,
+    "end": 81180,
+    "expressions": [
+      "parentExecutionWorkspaceLabel"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.application_octet_stream_1e86d1bc",
+    "english": "application/octet-stream",
+    "sourceFile": "ui/src/components/NewIssueDialog.tsx",
+    "line": 2097,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 90735,
+    "end": 90761,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rsaquo_1a5f9b7c",
+    "english": "&rsaquo;",
+    "sourceFile": "ui/src/components/NewProjectDialog.tsx",
+    "line": 227,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 7924,
+    "end": 7932,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._times_6e8883d9",
+    "english": "&times;",
+    "sourceFile": "ui/src/components/NewProjectDialog.tsx",
+    "line": 245,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8641,
+    "end": 8648,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/components/OnboardingChat.tsx",
+    "line": 60,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1977,
+    "end": 2010,
+    "expressions": [
+      "agentName",
+      "messages[idx]"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.anthropic_api_key_8f2c257f",
+    "english": "ANTHROPIC_API_KEY",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2195,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 107235,
+    "end": 107252,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_exec_json_7fca7397",
+    "english": "{{v0}} exec --json -",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2222,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 108767,
+    "end": 108809,
+    "expressions": [
+      "effectiveAdapterCommand"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_print_output_format_stream_json_verbose_850dc101",
+    "english": "{{v0}} --print - --output-format stream-json --verbose",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2229,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 109363,
+    "end": 109439,
+    "expressions": [
+      "effectiveAdapterCommand"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.cursor_api_key_92c76211",
+    "english": "CURSOR_API_KEY",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2244,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 110274,
+    "end": 110290,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.gemini_api_key_005ffd75",
+    "english": "GEMINI_API_KEY",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2246,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 110398,
+    "end": 110414,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.kimi_model_name_kimi_model_api_key_e96b57ec",
+    "english": "KIMI_MODEL_NAME + KIMI_MODEL_API_KEY",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2248,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 110524,
+    "end": 110562,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.openai_api_key_1bd0074c",
+    "english": "OPENAI_API_KEY",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2249,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 110602,
+    "end": 110618,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.codex_login_53b7014e",
+    "english": "codex login",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2256,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 110990,
+    "end": 111003,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.gemini_auth_e48faab3",
+    "english": "gemini auth",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2258,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 111115,
+    "end": 111128,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.kimi_login_45ee4d97",
+    "english": "kimi login",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2260,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 111242,
+    "end": 111254,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.opencode_auth_login_d6e307d1",
+    "english": "opencode auth login",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2261,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 111296,
+    "end": 111317,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.claude_login_1d839ac9",
+    "english": "claude login",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2268,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 111646,
+    "end": 111658,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.ws_127_0_0_1_18789_0edbee82",
+    "english": "ws://127.0.0.1:18789",
+    "sourceFile": "ui/src/components/OnboardingWizard.tsx",
+    "line": 2289,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 112647,
+    "end": 112669,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.opencode_3af0e55c",
+    "english": "OpenCode",
+    "sourceFile": "ui/src/components/OpenCodeLogoIcon.tsx",
+    "line": 12,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 273,
+    "end": 283,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.opencode_3af0e55c",
+    "english": "OpenCode",
+    "sourceFile": "ui/src/components/OpenCodeLogoIcon.tsx",
+    "line": 17,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 422,
+    "end": 432,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.windows_d598026a",
+    "english": "Windows",
+    "sourceFile": "ui/src/components/PathInstructionsModal.tsx",
+    "line": 16,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 455,
+    "end": 464,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.linux_4828e602",
+    "english": "Linux",
+    "sourceFile": "ui/src/components/PathInstructionsModal.tsx",
+    "line": 17,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 508,
+    "end": 515,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e50579e5",
+    "english": ": {{v0}}",
+    "sourceFile": "ui/src/components/PipelineLivenessBanner.tsx",
+    "line": 134,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 5140,
+    "end": 5169,
+    "expressions": [
+      "view.blockerLink.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/PipelineStageHistoryPanel.tsx",
+    "line": 124,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 5449,
+    "end": 5479,
+    "expressions": [
+      "revision.changeSummary"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._ldquo_c2dcdc8d",
+    "english": "&ldquo;",
+    "sourceFile": "ui/src/components/ProjectProperties.tsx",
+    "line": 214,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 7400,
+    "end": 7407,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rdquo_637ea677",
+    "english": "&rdquo;?",
+    "sourceFile": "ui/src/components/ProjectProperties.tsx",
+    "line": 214,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 7421,
+    "end": 7441,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.origin_main_e52d7adb",
+    "english": "origin/main",
+    "sourceFile": "ui/src/components/ProjectProperties.tsx",
+    "line": 1171,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 49402,
+    "end": 49415,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_ff681f5c",
+    "english": "{{issue.identifier}}-{{slug}}",
+    "sourceFile": "ui/src/components/ProjectProperties.tsx",
+    "line": 1195,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 50829,
+    "end": 50860,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._paperclip_worktrees_2ed5251a",
+    "english": ".paperclip/worktrees",
+    "sourceFile": "ui/src/components/ProjectProperties.tsx",
+    "line": 1219,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 52292,
+    "end": 52314,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bash_scripts_provision_worktree_sh_a3f97112",
+    "english": "bash ./scripts/provision-worktree.sh",
+    "sourceFile": "ui/src/components/ProjectProperties.tsx",
+    "line": 1243,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 53738,
+    "end": 53776,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bash_scripts_provision_worktree_runtime_sh_3de78b54",
+    "english": "bash ./scripts/provision-worktree-runtime.sh",
+    "sourceFile": "ui/src/components/ProjectProperties.tsx",
+    "line": 1267,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 55238,
+    "end": 55284,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bash_scripts_teardown_worktree_sh_7861dfed",
+    "english": "bash ./scripts/teardown-worktree.sh",
+    "sourceFile": "ui/src/components/ProjectProperties.tsx",
+    "line": 1294,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 56960,
+    "end": 56997,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_849f3b5e",
+    "english": "{{v0}} -",
+    "sourceFile": "ui/src/components/ReusableExecutionWorkspaceSelect.tsx",
+    "line": 61,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 2349,
+    "end": 2380,
+    "expressions": [
+      "option.workspace.status"
+    ],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_40dac43c",
+    "english": "PAPERCLIP_*",
+    "sourceFile": "ui/src/components/routine-sections/editable-sections.tsx",
+    "line": 647,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 24777,
+    "end": 24788,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_60b96d00",
+    "english": "• {{v0}}",
+    "sourceFile": "ui/src/components/RoutineHistoryTab.tsx",
+    "line": 476,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 17215,
+    "end": 17245,
+    "expressions": [
+      "revision.changeSummary"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/RoutineHistoryTab.tsx",
+    "line": 582,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 20820,
+    "end": 20850,
+    "expressions": [
+      "revision.changeSummary"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_60b96d00",
+    "english": "• {{v0}}",
+    "sourceFile": "ui/src/components/RoutineHistoryTab.tsx",
+    "line": 928,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 34546,
+    "end": 34576,
+    "expressions": [
+      "revision.changeSummary"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/RoutineList.tsx",
+    "line": 156,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 5544,
+    "end": 5598,
+    "expressions": [
+      "formatRoutineRunStatus(routine.lastRun.status)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._s_8cd003e6",
+    "english": "⌘S",
+    "sourceFile": "ui/src/components/RoutineSaveBar.tsx",
+    "line": 158,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 5615,
+    "end": 5635,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.webhook_4814f62c",
+    "english": "Webhook",
+    "sourceFile": "ui/src/components/RoutineTriggerCard.tsx",
+    "line": 98,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 3577,
+    "end": 3586,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_f03387ea",
+    "english": "{{name}}",
+    "sourceFile": "ui/src/components/RoutineVariablesEditor.tsx",
+    "line": 88,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 2861,
+    "end": 2871,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_d4b55942",
+    "english": "{{{{v0}}}}",
+    "sourceFile": "ui/src/components/RoutineVariablesEditor.tsx",
+    "line": 98,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 3466,
+    "end": 3488,
+    "expressions": [
+      "variable.name"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_8d32fb66",
+    "english": "{{variable_name}}",
+    "sourceFile": "ui/src/components/RoutineVariablesEditor.tsx",
+    "line": 278,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 11621,
+    "end": 11640,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_d4b55942",
+    "english": "{{{{v0}}}}",
+    "sourceFile": "ui/src/components/RoutineVariablesEditor.tsx",
+    "line": 342,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 15209,
+    "end": 15228,
+    "expressions": [
+      "entry.name"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_bc3d13e8",
+    "english": "{{v0}}",
+    "sourceFile": "ui/src/components/ScheduleEditor.tsx",
+    "line": 124,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 4387,
+    "end": 4396,
+    "expressions": [
+      "hour"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bg_chip_match_title_bg_text_chip_match_title_7b0292cb",
+    "english": "bg-(--chip-match-title-bg) text-(--chip-match-title-fg) border-(--chip-match-title-border)",
+    "sourceFile": "ui/src/components/search/MatchSourceChip.tsx",
+    "line": 7,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 196,
+    "end": 288,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._ldquo_c2dcdc8d",
+    "english": "&ldquo;",
+    "sourceFile": "ui/src/components/search/ZeroResultsRecovery.tsx",
+    "line": 44,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 1512,
+    "end": 1519,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rdquo_d1fc8381",
+    "english": "&rdquo;",
+    "sourceFile": "ui/src/components/search/ZeroResultsRecovery.tsx",
+    "line": 44,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 1526,
+    "end": 1533,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_7a11adef",
+    "english": "{{v0}} — {{v1}}",
+    "sourceFile": "ui/src/components/SecretBindingPicker.tsx",
+    "line": 200,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 7863,
+    "end": 7939,
+    "expressions": [
+      "missingHint.name",
+      "missingHint.companyName ?? \"another organization\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/components/SecretBindingPicker.tsx",
+    "line": 233,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 9536,
+    "end": 9537,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.openai_api_key_1bd0074c",
+    "english": "OPENAI_API_KEY",
+    "sourceFile": "ui/src/components/SecretBindingPicker.tsx",
+    "line": 297,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 12556,
+    "end": 12572,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_c34c3f73",
+    "english": "Paperclip",
+    "sourceFile": "ui/src/components/SidebarAccountMenu.tsx",
+    "line": 208,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8049,
+    "end": 8058,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_v_70fff45b",
+    "english": "Paperclip v",
+    "sourceFile": "ui/src/components/SidebarAccountMenu.tsx",
+    "line": 220,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8589,
+    "end": 8600,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/components/SidebarNavItem.tsx",
+    "line": 109,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 4028,
+    "end": 4075,
+    "expressions": [
+      "badge",
+      "badgeLabel ? ` ${badgeLabel}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevaluevalue_e73055c2",
+    "english": "{{v0}}{{v1}}{{v2}}",
+    "sourceFile": "ui/src/components/SidebarNavItem.tsx",
+    "line": 115,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1",
+      "v2"
+    ],
+    "start": 4237,
+    "end": 4337,
+    "expressions": [
+      "label",
+      "railStatusText ? `, ${railStatusText}` : \"\"",
+      "trailingLabel ? `, ${trailingLabel}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/components/SidebarServerInfo.tsx",
+    "line": 28,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1115,
+    "end": 1149,
+    "expressions": [
+      "git.shortSha",
+      "git.subject"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._vvalue_f8e4b343",
+    "english": "(v{{v0}})",
+    "sourceFile": "ui/src/components/skill-studio/AgentsUsingSkillDialog.tsx",
+    "line": 357,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 12601,
+    "end": 12624,
+    "expressions": [
+      "latestRevision"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/components/skill-studio/AgentsUsingSkillDialog.tsx",
+    "line": 361,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 12769,
+    "end": 12770,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/skill-studio/AgentsUsingSkillDialog.tsx",
+    "line": 362,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 12828,
+    "end": 12849,
+    "expressions": [
+      "version.label"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "english": "v{{v0}}",
+    "sourceFile": "ui/src/components/skill-studio/AgentsUsingSkillDialog.tsx",
+    "line": 369,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 13034,
+    "end": 13061,
+    "expressions": [
+      "pinnedRevision ?? \"?\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e50579e5",
+    "english": ": {{v0}}",
+    "sourceFile": "ui/src/components/SmokeLabDashboardCard.tsx",
+    "line": 79,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 3247,
+    "end": 3272,
+    "expressions": [
+      "failing.join(\", \")"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_40dac43c",
+    "english": "PAPERCLIP_*",
+    "sourceFile": "ui/src/components/StageSecretsPanel.tsx",
+    "line": 75,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 2909,
+    "end": 2920,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_c5088e14",
+    "english": "{{v0}} - {{v1}}",
+    "sourceFile": "ui/src/components/SummarySlotCard.tsx",
+    "line": 62,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 2392,
+    "end": 2469,
+    "expressions": [
+      "revisionLabel(revision)",
+      "formatRevisionTimestamp(revision.createdAt)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.text_muted_foreground_35f35c41",
+    "english": "text-muted-foreground",
+    "sourceFile": "ui/src/components/SystemNotice.tsx",
+    "line": 60,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 1994,
+    "end": 2017,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.text_sky_800_dark_text_sky_200_2c5d3242",
+    "english": "text-sky-800 dark:text-sky-200",
+    "sourceFile": "ui/src/components/SystemNotice.tsx",
+    "line": 69,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2327,
+    "end": 2359,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.text_emerald_800_dark_text_emerald_200_1d3ba887",
+    "english": "text-emerald-800 dark:text-emerald-200",
+    "sourceFile": "ui/src/components/SystemNotice.tsx",
+    "line": 78,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2743,
+    "end": 2783,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.text_amber_900_dark_text_amber_200_f2e396ad",
+    "english": "text-amber-900 dark:text-amber-200",
+    "sourceFile": "ui/src/components/SystemNotice.tsx",
+    "line": 87,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3157,
+    "end": 3193,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.text_red_900_dark_text_red_200_8e23133a",
+    "english": "text-red-900 dark:text-red-200",
+    "sourceFile": "ui/src/components/SystemNotice.tsx",
+    "line": 96,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3541,
+    "end": 3573,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.ease_out_791c2d09",
+    "english": "ease-out",
+    "sourceFile": "ui/src/components/task-chat/motion-tokens.ts",
+    "line": 73,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 4582,
+    "end": 4592,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.ease_in_out_16c2539d",
+    "english": "ease-in-out",
+    "sourceFile": "ui/src/components/task-chat/motion-tokens.ts",
+    "line": 74,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 4645,
+    "end": 4658,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pdf_1d393b00",
+    "english": "PDF",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 39,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 942,
+    "end": 947,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.markdown_0e52f6b9",
+    "english": "Markdown",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 43,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 1111,
+    "end": 1121,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.csv_eb6b42f5",
+    "english": "CSV",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 45,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 1208,
+    "end": 1213,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.zip_eaca4b30",
+    "english": "ZIP",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 49,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 1405,
+    "end": 1410,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.json_db1a21a0",
+    "english": "JSON",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 62,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2009,
+    "end": 2015,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.yaml_9b6e8abe",
+    "english": "YAML",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 63,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2053,
+    "end": 2059,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.yaml_9b6e8abe",
+    "english": "YAML",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 64,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2096,
+    "end": 2102,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.xml_40658e9a",
+    "english": "XML",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 65,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2139,
+    "end": 2144,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.html_07239dbd",
+    "english": "HTML",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 66,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2182,
+    "end": 2188,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.css_b581e460",
+    "english": "CSS",
+    "sourceFile": "ui/src/components/task-chat/task-chat-attachments.ts",
+    "line": 67,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2225,
+    "end": 2230,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_7a11adef",
+    "english": "{{v0}} — {{v1}}",
+    "sourceFile": "ui/src/components/task-chat/TaskChatBlockerLinks.tsx",
+    "line": 111,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 4371,
+    "end": 4439,
+    "expressions": [
+      "blocker.identifier ?? blocker.id.slice(0, 8)",
+      "blocker.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_7a11adef",
+    "english": "{{v0}} — {{v1}}",
+    "sourceFile": "ui/src/components/task-chat/TaskChatBlockerLinks.tsx",
+    "line": 157,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 5860,
+    "end": 5928,
+    "expressions": [
+      "blocker.identifier ?? blocker.id.slice(0, 8)",
+      "blocker.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuek_4899099f",
+    "english": "{{v0}}k",
+    "sourceFile": "ui/src/components/task-chat/transcript-adapter.ts",
+    "line": 420,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 16294,
+    "end": 16326,
+    "expressions": [
+      "(tokens / 1000).toFixed(1)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_bc3d13e8",
+    "english": "{{v0}}",
+    "sourceFile": "ui/src/components/task-chat/transcript-adapter.ts",
+    "line": 420,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 16329,
+    "end": 16340,
+    "expressions": [
+      "tokens"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_64614d6b",
+    "english": "{{v0}} / {{v1}}",
+    "sourceFile": "ui/src/components/WorkspaceFileBrowser.tsx",
+    "line": 1130,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 43076,
+    "end": 43129,
+    "expressions": [
+      "selectedProject.name",
+      "selectedWorkspace.name"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/WorkspaceRuntimeControls.tsx",
+    "line": 248,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 8538,
+    "end": 8564,
+    "expressions": [
+      "exposure.lastError"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/components/WorkspaceRuntimeControls.tsx",
+    "line": 309,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 11077,
+    "end": 11136,
+    "expressions": [
+      "exposureFailure.label",
+      "exposureFailure.remediation"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/components/WorkspaceRuntimeControls.tsx",
+    "line": 490,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 17784,
+    "end": 17806,
+    "expressions": [
+      "item.lifecycle"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_c5088e14",
+    "english": "{{v0}} - {{v1}}",
+    "sourceFile": "ui/src/context/LiveUpdatesProvider.tsx",
+    "line": 225,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 7900,
+    "end": 7933,
+    "expressions": [
+      "ref",
+      "truncate(title, 72)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/lib/activity-format.ts",
+    "line": 269,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 12354,
+    "end": 12380,
+    "expressions": [
+      "singular",
+      "labels[0]"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/lib/activity-format.ts",
+    "line": 270,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 12392,
+    "end": 12420,
+    "expressions": [
+      "labels.length",
+      "plural"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/lib/activity-format.ts",
+    "line": 491,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 21491,
+    "end": 21512,
+    "expressions": [
+      "details.title"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.linear_e6950b45",
+    "english": "Linear",
+    "sourceFile": "ui/src/lib/external-objects.ts",
+    "line": 168,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 4755,
+    "end": 4763,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.notion_73bcfe98",
+    "english": "Notion",
+    "sourceFile": "ui/src/lib/external-objects.ts",
+    "line": 170,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 4793,
+    "end": 4801,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.asana_ca96ecb6",
+    "english": "Asana",
+    "sourceFile": "ui/src/lib/external-objects.ts",
+    "line": 171,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 4813,
+    "end": 4820,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/lib/external-objects.ts",
+    "line": 207,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 5965,
+    "end": 6049,
+    "expressions": [
+      "externalObjectProviderLabel(providerKey)",
+      "externalObjectTypeLabel(objectType)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/lib/issue-monitor.ts",
+    "line": 91,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 2843,
+    "end": 2890,
+    "expressions": [
+      "eta.charAt(0).toUpperCase()",
+      "eta.slice(1)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.mov_3098b170",
+    "english": "MOV",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 187,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 5504,
+    "end": 5509,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pdf_1d393b00",
+    "english": "PDF",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 190,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 5668,
+    "end": 5673,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.zip_eaca4b30",
+    "english": "ZIP",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 192,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 5744,
+    "end": 5749,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.img_d083ab05",
+    "english": "IMG",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 194,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 5821,
+    "end": 5826,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.md_7abcf6da",
+    "english": "MD",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 195,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 5902,
+    "end": 5906,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.txt_d3dc6ac9",
+    "english": "TXT",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 196,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 5969,
+    "end": 5974,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.csv_eb6b42f5",
+    "english": "CSV",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 197,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 6065,
+    "end": 6070,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.html_07239dbd",
+    "english": "HTML",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 199,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 6206,
+    "end": 6212,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.json_db1a21a0",
+    "english": "JSON",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 201,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 6312,
+    "end": 6318,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.xml_40658e9a",
+    "english": "XML",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 203,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 6441,
+    "end": 6446,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.wasm_4bec5a51",
+    "english": "WASM",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 205,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 6520,
+    "end": 6526,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bin_c73f954a",
+    "english": "BIN",
+    "sourceFile": "ui/src/lib/issue-output.ts",
+    "line": 206,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 6562,
+    "end": 6567,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/lib/managed-sandbox-environment.ts",
+    "line": 27,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1190,
+    "end": 1235,
+    "expressions": [
+      "environment.name",
+      "environment.driver"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_5296dd69",
+    "english": "{{v0}}.",
+    "sourceFile": "ui/src/lib/pipeline-breakdown.ts",
+    "line": 166,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 6087,
+    "end": 6101,
+    "expressions": [
+      "sentence"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.new_skill_7fe2a91d",
+    "english": "New Skill",
+    "sourceFile": "ui/src/lib/skill-create.ts",
+    "line": 52,
+    "sourceContext": "display-variable",
+    "placeholders": [],
+    "start": 1452,
+    "end": 1463,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Generated skill content or trigger identifier, not interface copy"
+  },
+  {
+    "key": "local.describe_when_agents_should_use_this_skill_d4dcf23a",
+    "english": "Describe when agents should use this skill.",
+    "sourceFile": "ui/src/lib/skill-create.ts",
+    "line": 53,
+    "sourceContext": "display-variable",
+    "placeholders": [],
+    "start": 1502,
+    "end": 1547,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Generated skill content or trigger identifier, not interface copy"
+  },
+  {
+    "key": "local.skills_sh_cf3a7045",
+    "english": "skills.sh",
+    "sourceFile": "ui/src/lib/skill-fork.ts",
+    "line": 32,
+    "sourceContext": "display-return",
+    "placeholders": [],
+    "start": 1108,
+    "end": 1119,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.text_1d4ed8_dark_text_2563eb_1971f915",
+    "english": "text-[#1D4ED8] dark:text-[#2563EB]",
+    "sourceFile": "ui/src/lib/status-colors.ts",
+    "line": 183,
+    "sourceContext": "display-variable",
+    "placeholders": [],
+    "start": 9775,
+    "end": 9811,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.block_w_0_min_w_0_overflow_hidden_whitespace_63a99691",
+    "english": "block w-0 min-w-0 overflow-hidden whitespace-nowrap text-transparent select-none",
+    "sourceFile": "ui/src/lib/utils.ts",
+    "line": 21,
+    "sourceContext": "display-variable",
+    "placeholders": [],
+    "start": 1065,
+    "end": 1147,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/AdapterManager.tsx",
+    "line": 88,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 3772,
+    "end": 3773,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "english": "v{{v0}}",
+    "sourceFile": "ui/src/pages/AdapterManager.tsx",
+    "line": 224,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 8776,
+    "end": 8797,
+    "expressions": [
+      "adapter.version"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "english": "v{{v0}}",
+    "sourceFile": "ui/src/pages/AdapterManager.tsx",
+    "line": 233,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 9150,
+    "end": 9169,
+    "expressions": [
+      "latestVersion"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.alpha_b1a96dd6",
+    "english": "Alpha",
+    "sourceFile": "ui/src/pages/AdapterManager.tsx",
+    "line": 406,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 15456,
+    "end": 15473,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.npm_package_d6ee7108",
+    "english": "npm package",
+    "sourceFile": "ui/src/pages/AdapterManager.tsx",
+    "line": 438,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 16914,
+    "end": 16943,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.my_paperclip_adapter_be2c6c2b",
+    "english": "my-paperclip-adapter",
+    "sourceFile": "ui/src/pages/AdapterManager.tsx",
+    "line": 480,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 18816,
+    "end": 18838,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.npm_packages_will_be_cleaned_up_from_disk_d21135b5",
+    "english": "npm packages will be cleaned up from disk.",
+    "sourceFile": "ui/src/pages/AdapterManager.tsx",
+    "line": 652,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 26278,
+    "end": 26320,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_37651ed4",
+    "english": "{{v0}}/{{v1}}",
+    "sourceFile": "ui/src/pages/agent-skills/agent-skill-source.ts",
+    "line": 39,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1244,
+    "end": 1290,
+    "expressions": [
+      "sshMatch[1]",
+      "cleanRepoName(sshMatch[2])"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_37651ed4",
+    "english": "{{v0}}/{{v1}}",
+    "sourceFile": "ui/src/pages/agent-skills/agent-skill-source.ts",
+    "line": 43,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1446,
+    "end": 1506,
+    "expressions": [
+      "githubPathMatch[1]",
+      "cleanRepoName(githubPathMatch[2])"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_37651ed4",
+    "english": "{{v0}}/{{v1}}",
+    "sourceFile": "ui/src/pages/agent-skills/agent-skill-source.ts",
+    "line": 49,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 1695,
+    "end": 1753,
+    "expressions": [
+      "ownerRepoMatch[1]",
+      "cleanRepoName(ownerRepoMatch[2])"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.github_value_cb9dfc70",
+    "english": "GitHub · {{v0}}",
+    "sourceFile": "ui/src/pages/agent-skills/agent-skill-source.ts",
+    "line": 94,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 3086,
+    "end": 3104,
+    "expressions": [
+      "repo"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.skills_sh_value_5977cd4e",
+    "english": "skills.sh · {{v0}}",
+    "sourceFile": "ui/src/pages/agent-skills/agent-skill-source.ts",
+    "line": 99,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 3346,
+    "end": 3367,
+    "expressions": [
+      "repo"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.skills_sh_cf3a7045",
+    "english": "skills.sh",
+    "sourceFile": "ui/src/pages/agent-skills/agent-skill-source.ts",
+    "line": 99,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3370,
+    "end": 3381,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/agent-skills/AgentSkillRow.tsx",
+    "line": 96,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 3899,
+    "end": 3925,
+    "expressions": [
+      "data.locationLabel"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/pages/agent-skills/AgentSkillRow.tsx",
+    "line": 131,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 5099,
+    "end": 5147,
+    "expressions": [
+      "checked ? \"Disable\" : \"Enable\"",
+      "data.name"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_28683895",
+    "english": "- {{v0}}",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 1290,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 55333,
+    "end": 55352,
+    "expressions": [
+      "agent.title"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._middot_7173e79e",
+    "english": "&middot;",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 1708,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 71341,
+    "end": 71350,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_637dfcf4",
+    "english": "${{v0}}",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 1911,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 79906,
+    "end": 79935,
+    "expressions": [
+      "metrics.cost.toFixed(4)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 2207,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 91743,
+    "end": 91805,
+    "expressions": [
+      "issue.identifier ?? issue.id.slice(0, 8)",
+      "issue.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.tools_md_806f3d06",
+    "english": "TOOLS.md",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 2848,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 118092,
+    "end": 118102,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valueb_ead65af8",
+    "english": "{{v0}}b",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 2930,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 121594,
+    "end": 121609,
+    "expressions": [
+      "file.size"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rarr_2036ca77",
+    "english": "&rarr;",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 3489,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 145032,
+    "end": 145039,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rarr_2036ca77",
+    "english": "&rarr;",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 3494,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 145276,
+    "end": 145283,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_637dfcf4",
+    "english": "${{v0}}",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 3611,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 150981,
+    "end": 151010,
+    "expressions": [
+      "metrics.cost.toFixed(4)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.id_3843971d",
+    "english": "ID",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 3632,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 151985,
+    "end": 151989,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.stderr_7e6b710b",
+    "english": "stderr",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 3701,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 155383,
+    "end": 155389,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_36d5f17c",
+    "english": "[{{v0}}]",
+    "sourceFile": "ui/src/pages/AgentDetail.tsx",
+    "line": 4321,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 179773,
+    "end": 179790,
+    "expressions": [
+      "evt.stream"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_c5088e14",
+    "english": "{{v0}} - {{v1}}",
+    "sourceFile": "ui/src/pages/Agents.tsx",
+    "line": 144,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 5881,
+    "end": 5914,
+    "expressions": [
+      "environment.name",
+      "detail"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/pages/Agents.tsx",
+    "line": 396,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 16256,
+    "end": 16338,
+    "expressions": [
+      "roleLabels[agent.role] ?? agent.role",
+      "agent.title ? ` - ${agent.title}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_28683895",
+    "english": "- {{v0}}",
+    "sourceFile": "ui/src/pages/Agents.tsx",
+    "line": 685,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 27538,
+    "end": 27557,
+    "expressions": [
+      "agent.title"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/pages/Agents.tsx",
+    "line": 870,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 34303,
+    "end": 34320,
+    "expressions": [
+      "liveCount"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_valuevalue_65ee5185",
+    "english": "{{v0}} {{v1}}{{v2}}",
+    "sourceFile": "ui/src/pages/apps/app-detail/TestPanel.tsx",
+    "line": 104,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1",
+      "v2"
+    ],
+    "start": 3408,
+    "end": 3450,
+    "expressions": [
+      "label",
+      "n",
+      "n === 1 ? \" action\" : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_29525469",
+    "english": "{{v0}}•••",
+    "sourceFile": "ui/src/pages/apps/gateways/gateway-helpers.ts",
+    "line": 24,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 909,
+    "end": 934,
+    "expressions": [
+      "token.tokenPrefix"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/pages/apps/gateways/gateway-helpers.ts",
+    "line": 113,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 4517,
+    "end": 4561,
+    "expressions": [
+      "count",
+      "count === 1 ? \"tool\" : \"tools\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/pages/apps/gateways/panels/AppsToolsPanel.tsx",
+    "line": 22,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 806,
+    "end": 826,
+    "expressions": [
+      "profile.name"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_a5db9063",
+    "english": "— {{v0}}.",
+    "sourceFile": "ui/src/pages/apps/gateways/panels/AppsToolsPanel.tsx",
+    "line": 23,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 885,
+    "end": 920,
+    "expressions": [
+      "allowedToolsLabel(profile)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/apps/gateways/panels/OverviewPanel.tsx",
+    "line": 75,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 2594,
+    "end": 2628,
+    "expressions": [
+      "allowedToolsLabel(profile)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/apps/gateways/panels/OverviewPanel.tsx",
+    "line": 159,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 6143,
+    "end": 6170,
+    "expressions": [
+      "app.attentionReason"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.cto_cursor_eb5b4ad3",
+    "english": "cto-cursor",
+    "sourceFile": "ui/src/pages/apps/gateways/panels/TokensPanel.tsx",
+    "line": 172,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 6319,
+    "end": 6331,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/pages/Artifacts.tsx",
+    "line": 222,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 7611,
+    "end": 7671,
+    "expressions": [
+      "selectedGroup.issue.identifier",
+      "selectedGroup.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/pages/audit/AuditFeed.tsx",
+    "line": 159,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 6402,
+    "end": 6464,
+    "expressions": [
+      "issue.identifier",
+      "issue.title ? ` · ${issue.title}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.audit_view_agent_actions_a529a798",
+    "english": "audit:view_agent_actions",
+    "sourceFile": "ui/src/pages/audit/AuditFeed.tsx",
+    "line": 251,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 10537,
+    "end": 10561,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.jane_appliance_local_70a6a8bb",
+    "english": "jane@appliance.local",
+    "sourceFile": "ui/src/pages/BootstrapSetupUxLab.tsx",
+    "line": 88,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 3439,
+    "end": 3459,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.jane_appliance_local_70a6a8bb",
+    "english": "jane@appliance.local",
+    "sourceFile": "ui/src/pages/BootstrapSetupUxLab.tsx",
+    "line": 116,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 4455,
+    "end": 4475,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.jane_appliance_local_70a6a8bb",
+    "english": "jane@appliance.local",
+    "sourceFile": "ui/src/pages/BootstrapSetupUxLab.tsx",
+    "line": 134,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 5156,
+    "end": 5176,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.cloudaccessgate_7ff6e9b4",
+    "english": "CloudAccessGate",
+    "sourceFile": "ui/src/pages/BootstrapSetupUxLab.tsx",
+    "line": 216,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8581,
+    "end": 8596,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pap_10113_8f6b9ef8",
+    "english": "PAP-10113",
+    "sourceFile": "ui/src/pages/BootstrapSetupUxLab.tsx",
+    "line": 219,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8749,
+    "end": 8772,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pap_10114_e7c5dc2f",
+    "english": "PAP-10114",
+    "sourceFile": "ui/src/pages/BootstrapSetupUxLab.tsx",
+    "line": 223,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8939,
+    "end": 8962,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.deploymentmode_quot_authenticated_quot_388d6ace",
+    "english": "deploymentMode === &quot;authenticated&quot;",
+    "sourceFile": "ui/src/pages/BootstrapSetupUxLab.tsx",
+    "line": 226,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 9068,
+    "end": 9112,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.deploymentexposure_quot_private_quot_be9e702e",
+    "english": "deploymentExposure === &quot;private&quot;",
+    "sourceFile": "ui/src/pages/BootstrapSetupUxLab.tsx",
+    "line": 227,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 9170,
+    "end": 9212,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_7a11adef",
+    "english": "{{v0}} — {{v1}}",
+    "sourceFile": "ui/src/pages/CaseDetail.tsx",
+    "line": 497,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 18356,
+    "end": 18400,
+    "expressions": [
+      "caseData.identifier",
+      "caseData.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.id_3843971d",
+    "english": "ID",
+    "sourceFile": "ui/src/pages/Cases.tsx",
+    "line": 56,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 2910,
+    "end": 2914,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.id_3843971d",
+    "english": "ID",
+    "sourceFile": "ui/src/pages/Cases.tsx",
+    "line": 71,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 3250,
+    "end": 3254,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pl_4_0c3bdb63",
+    "english": "pl-4",
+    "sourceFile": "ui/src/pages/Cases.tsx",
+    "line": 200,
+    "sourceContext": "display-return",
+    "placeholders": [],
+    "start": 8296,
+    "end": 8302,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pl_8_75b27e81",
+    "english": "pl-8",
+    "sourceFile": "ui/src/pages/Cases.tsx",
+    "line": 201,
+    "sourceContext": "display-return",
+    "placeholders": [],
+    "start": 8331,
+    "end": 8337,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pl_12_68f4a8dd",
+    "english": "pl-12",
+    "sourceFile": "ui/src/pages/Cases.tsx",
+    "line": 202,
+    "sourceContext": "display-return",
+    "placeholders": [],
+    "start": 8366,
+    "end": 8373,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pl_16_ac35612e",
+    "english": "pl-16",
+    "sourceFile": "ui/src/pages/Cases.tsx",
+    "line": 203,
+    "sourceContext": "display-return",
+    "placeholders": [],
+    "start": 8385,
+    "end": 8392,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/pages/Cases.tsx",
+    "line": 327,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 12274,
+    "end": 12329,
+    "expressions": [
+      "treeCollapsed ? \"Expand\" : \"Collapse\"",
+      "row.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.ssh_01c4d3c2",
+    "english": "SSH",
+    "sourceFile": "ui/src/pages/CompanyEnvironments.tsx",
+    "line": 2261,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 92671,
+    "end": 92674,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/CompanyEnvironments.tsx",
+    "line": 2545,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 108239,
+    "end": 108275,
+    "expressions": [
+      "group.issueLabels.join(\", \")"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/pages/CompanyEnvironments.tsx",
+    "line": 2573,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 109910,
+    "end": 109985,
+    "expressions": [
+      "instanceDefaultEnvironment.name",
+      "instanceDefaultEnvironment.driver"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_69186e0f",
+    "english": "(~{{v0}})",
+    "sourceFile": "ui/src/pages/CompanyExport.tsx",
+    "line": 1091,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 39655,
+    "end": 39694,
+    "expressions": [
+      "formatBytes(estimatedZipBytes)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rarr_2036ca77",
+    "english": "&rarr;",
+    "sourceFile": "ui/src/pages/CompanyImport.tsx",
+    "line": 187,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 6931,
+    "end": 6938,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rarr_2036ca77",
+    "english": "&rarr;",
+    "sourceFile": "ui/src/pages/CompanyImport.tsx",
+    "line": 246,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 9077,
+    "end": 9084,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.skills_sh_cf3a7045",
+    "english": "skills.sh",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 264,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 8030,
+    "end": 8041,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.skills_sh_cf3a7045",
+    "english": "skills.sh",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 267,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 8185,
+    "end": 8196,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_c34c3f73",
+    "english": "Paperclip",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 274,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 8630,
+    "end": 8641,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "english": "v{{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 537,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 19036,
+    "end": 19057,
+    "expressions": [
+      "packageVersion"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "english": "v{{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 634,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 22190,
+    "end": 22216,
+    "expressions": [
+      "skill.packageVersion"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 867,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 30541,
+    "end": 30561,
+    "expressions": [
+      "card.version"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.skill_shortname_fa4b0ed9",
+    "english": "skill-shortname",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 1561,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 59268,
+    "end": 59285,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "english": "v{{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 2111,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 82485,
+    "end": 82506,
+    "expressions": [
+      "packageVersion"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvalue_5c36b4e7",
+    "english": "v{{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 2146,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 84524,
+    "end": 84545,
+    "expressions": [
+      "packageVersion"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 2312,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 91764,
+    "end": 91765,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 2312,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 91806,
+    "end": 91827,
+    "expressions": [
+      "version.label"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vvaluevalue_443683b0",
+    "english": "v{{v0}}{{v1}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 2569,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 102376,
+    "end": 102449,
+    "expressions": [
+      "version.revisionNumber",
+      "version.label ? ` · ${version.label}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_valuevalue_00fb36d5",
+    "english": "{{v0}}/{{v1}}{{v2}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 3007,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1",
+      "v2"
+    ],
+    "start": 120109,
+    "end": 120204,
+    "expressions": [
+      "githubSource.owner",
+      "githubSource.repo",
+      "githubSource.path ? `/${githubSource.path}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 3165,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 127563,
+    "end": 127633,
+    "expressions": [
+      "versions.length",
+      "versions.length === 1 ? \"version\" : \"versions\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 3225,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 129979,
+    "end": 130016,
+    "expressions": [
+      "versionLabel(selectedVersion)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 3494,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 143650,
+    "end": 143689,
+    "expressions": [
+      "githubSource.commit.slice(0, 7)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_bc3d13e8",
+    "english": "{{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 3550,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 146946,
+    "end": 146961,
+    "expressions": [
+      "latestPin"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_bc3d13e8",
+    "english": "{{v0}}",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 3852,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 159932,
+    "end": 159947,
+    "expressions": [
+      "latestPin"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.skill_md_0e95f5a3",
+    "english": "SKILL.md",
+    "sourceFile": "ui/src/pages/CompanySkills.tsx",
+    "line": 3927,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 164096,
+    "end": 164106,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._middot_7173e79e",
+    "english": "&middot;",
+    "sourceFile": "ui/src/pages/Dashboard.tsx",
+    "line": 537,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 23286,
+    "end": 23294,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.issuereferencepill_88d5a36c",
+    "english": "IssueReferencePill",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 690,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 26364,
+    "end": 26384,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.sm_5af308be",
+    "english": "sm",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 741,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 29694,
+    "end": 29696,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.md_21262a3c",
+    "english": "md",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 745,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 29921,
+    "end": 29923,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.lg_0e6ba33f",
+    "english": "lg",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 749,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 30148,
+    "end": 30150,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._d_6f803e5b",
+    "english": "⌘D",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 887,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 36102,
+    "end": 36104,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.sm_6ff9250a",
+    "english": "SM",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1278,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 52311,
+    "end": 52313,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.df_4a3161bb",
+    "english": "DF",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1279,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 52377,
+    "end": 52379,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.lg_b870b780",
+    "english": "LG",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1280,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 52453,
+    "end": 52455,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.a1_16a36e86",
+    "english": "A1",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1286,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 52623,
+    "end": 52625,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.a2_c8361f9b",
+    "english": "A2",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1287,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 52689,
+    "end": 52691,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.a3_1398b376",
+    "english": "A3",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1288,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 52755,
+    "end": 52757,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._12_00_01_info_agent_started_successfully_3b0f8d84",
+    "english": "[12:00:01] INFO  Agent started successfully",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1417,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58323,
+    "end": 58366,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._12_00_02_info_processing_task_pap_001_cfbefff2",
+    "english": "[12:00:02] INFO  Processing task PAP-001",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1418,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58417,
+    "end": 58457,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._12_00_05_warn_rate_limit_approaching_80_9d4a7c6e",
+    "english": "[12:00:05] WARN  Rate limit approaching (80%)",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1419,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58508,
+    "end": 58553,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._12_00_08_info_task_pap_001_completed_f403504d",
+    "english": "[12:00:08] INFO  Task PAP-001 completed",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1420,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58604,
+    "end": 58643,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._12_00_12_error_connection_timeout_to_upstrea_65dcd74c",
+    "english": "[12:00:12] ERROR Connection timeout to upstream service",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1421,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58691,
+    "end": 58746,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._12_00_12_sys_retrying_connection_in_5s_8244aca8",
+    "english": "[12:00:12] SYS   Retrying connection in 5s...",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1422,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58795,
+    "end": 58840,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._12_00_17_info_reconnected_successfully_ed2eba0b",
+    "english": "[12:00:17] INFO  Reconnected successfully",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1423,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 58891,
+    "end": 58932,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.a_559aead0",
+    "english": "A",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1453,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 60580,
+    "end": 60581,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.agent_alpha_d47b013c",
+    "english": "Agent Alpha",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1454,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 60649,
+    "end": 60660,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.claude_sonnet_4_20250514_8cb50e5c",
+    "english": "claude-sonnet-4-20250514",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1578,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 67045,
+    "end": 67069,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.1_2m_4b3a5e07",
+    "english": "1.2M",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1579,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 67128,
+    "end": 67132,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.claude_haiku_4_20250506_e7f937c5",
+    "english": "claude-haiku-4-20250506",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1583,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 67322,
+    "end": 67345,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.500k_99781a8a",
+    "english": "500k",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1584,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 67404,
+    "end": 67408,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.1_7m_0fb33ae7",
+    "english": "1.7M",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1589,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 67638,
+    "end": 67642,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.teamhierarchypreview_49f0bc97",
+    "english": "TeamHierarchyPreview",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1680,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 72117,
+    "end": 72139,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.requiredskillslist_eebc8535",
+    "english": "RequiredSkillsList",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1686,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 72305,
+    "end": 72325,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.envinputslist_e0e1d2ba",
+    "english": "EnvInputsList",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1692,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 72506,
+    "end": 72521,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.externalsourceslist_f3b51cdf",
+    "english": "ExternalSourcesList",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1698,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 72692,
+    "end": 72713,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.react_resizable_panels_31744909",
+    "english": "react-resizable-panels",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1963,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 85675,
+    "end": 85697,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.minsize_240px_0210b75e",
+    "english": "minSize=\"240px\"",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1965,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 85839,
+    "end": 85854,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.brandbanner_0f383777",
+    "english": "brandBanner",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 1996,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 87448,
+    "end": 87459,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bg_yellow_40ebfdc4",
+    "english": "bg-yellow-*",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 2000,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 87780,
+    "end": 87791,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bg_blue_ccd9ef46",
+    "english": "bg-blue-*",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 2000,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 87827,
+    "end": 87836,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.needs_setup_a2989bf3",
+    "english": "needs_setup",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 2040,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 89439,
+    "end": 89450,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pending_approval_92950a08",
+    "english": "pending_approval",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 2040,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 89488,
+    "end": 89504,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._lt_builtinagentgate_agentkey_gt_1538f9e7",
+    "english": "&lt;BuiltInAgentGate agentKey&gt;",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 2048,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 89887,
+    "end": 89920,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pageskeleton_e86e1cc8",
+    "english": "PageSkeleton",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 2049,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 89981,
+    "end": 89993,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.emptystate_a422df8c",
+    "english": "EmptyState",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 2049,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 90031,
+    "end": 90041,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.inlinebanner_5825a2ca",
+    "english": "InlineBanner",
+    "sourceFile": "ui/src/pages/DesignGuide.tsx",
+    "line": 2050,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 90095,
+    "end": 90107,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 497,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 19321,
+    "end": 19354,
+    "expressions": [
+      "formatDateTime(status.at)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 504,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 19562,
+    "end": 19595,
+    "expressions": [
+      "formatDateTime(status.at)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pap_946_workspace_0d34284a",
+    "english": "PAP-946-workspace",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 1261,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 51851,
+    "end": 51870,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.origin_main_e52d7adb",
+    "english": "origin/main",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 1270,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 52268,
+    "end": 52281,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bash_scripts_provision_worktree_sh_a3f97112",
+    "english": "bash ./scripts/provision-worktree.sh",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 1336,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 55537,
+    "end": 55575,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bash_scripts_provision_worktree_runtime_sh_3de78b54",
+    "english": "bash ./scripts/provision-worktree-runtime.sh",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 1348,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 56221,
+    "end": 56267,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.bash_scripts_teardown_worktree_sh_7861dfed",
+    "english": "bash ./scripts/teardown-worktree.sh",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 1357,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 56784,
+    "end": 56821,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pkill_f_vite_true_b3bf6e78",
+    "english": "pkill -f vite || true",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 1366,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 57318,
+    "end": 57341,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.valuevalue_255c5fea",
+    "english": "{{v0}}{{v1}}",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 1613,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 71099,
+    "end": 71212,
+    "expressions": [
+      "formatDateTime(workspace.cleanupEligibleAt)",
+      "workspace.cleanupReason ? ` · ${workspace.cleanupReason}` : \"\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_2d2088ca",
+    "english": "→ {{v0}}",
+    "sourceFile": "ui/src/pages/ExecutionWorkspaceDetail.tsx",
+    "line": 1643,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 72916,
+    "end": 72960,
+    "expressions": [
+      "formatDateTime(operation.finishedAt)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_43cdd462",
+    "english": "{{v0}} ({{v1}})",
+    "sourceFile": "ui/src/pages/Inbox.tsx",
+    "line": 268,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 9354,
+    "end": 9392,
+    "expressions": [
+      "requesterName",
+      "requesterEmail"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e7a5974b",
+    "english": "— {{v0}}",
+    "sourceFile": "ui/src/pages/Inbox.tsx",
+    "line": 370,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 13224,
+    "end": 13247,
+    "expressions": [
+      "linkedAgentName"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.post_9aee6b1b",
+    "english": "POST",
+    "sourceFile": "ui/src/pages/InviteLanding.tsx",
+    "line": 191,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 6997,
+    "end": 7002,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.codex_616efbe9",
+    "english": "Codex",
+    "sourceFile": "ui/src/pages/InviteUxLab.tsx",
+    "line": 341,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 11580,
+    "end": 11585,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.cursor_2c014f8f",
+    "english": "Cursor",
+    "sourceFile": "ui/src/pages/InviteUxLab.tsx",
+    "line": 343,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 11690,
+    "end": 11696,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.post_api_agents_claim_api_key_a64f024f",
+    "english": "POST /api/agents/claim-api-key",
+    "sourceFile": "ui/src/pages/InviteUxLab.tsx",
+    "line": 441,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 14977,
+    "end": 15007,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_c34c3f73",
+    "english": "Paperclip",
+    "sourceFile": "ui/src/pages/InviteUxLab.tsx",
+    "line": 462,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 15948,
+    "end": 15957,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.jane_example_eea33f8b",
+    "english": "Jane Example",
+    "sourceFile": "ui/src/pages/InviteUxLab.tsx",
+    "line": 851,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 35143,
+    "end": 35157,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.jane_example_eea33f8b",
+    "english": "Jane Example",
+    "sourceFile": "ui/src/pages/InviteUxLab.tsx",
+    "line": 874,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 35980,
+    "end": 35994,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.assignee_5e20d20e",
+    "english": "Assignee",
+    "sourceFile": "ui/src/pages/IssueDetail.tsx",
+    "line": 647,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 26156,
+    "end": 26166,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.originating_28d9df90",
+    "english": "Originating",
+    "sourceFile": "ui/src/pages/IssueDetail.tsx",
+    "line": 648,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 26243,
+    "end": 26256,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/pages/NewAgent.tsx",
+    "line": 335,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 13670,
+    "end": 13732,
+    "expressions": [
+      "issue.identifier ?? issue.id.slice(0, 8)",
+      "issue.title"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/pages/Pipelines.tsx",
+    "line": 228,
+    "sourceContext": "display-return",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 9504,
+    "end": 9548,
+    "expressions": [
+      "count",
+      "count === 1 ? \"item\" : \"items\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/pages/Pipelines.tsx",
+    "line": 3107,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 130874,
+    "end": 130908,
+    "expressions": [
+      "formatNumber(option.count)"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/Pipelines.tsx",
+    "line": 3464,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 147735,
+    "end": 147755,
+    "expressions": [
+      "startedLabel"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.j_189f4003",
+    "english": "j",
+    "sourceFile": "ui/src/pages/Pipelines.tsx",
+    "line": 5114,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 210038,
+    "end": 210039,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.k_8254c329",
+    "english": "k",
+    "sourceFile": "ui/src/pages/Pipelines.tsx",
+    "line": 5114,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 210079,
+    "end": 210080,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.a_ca978112",
+    "english": "a",
+    "sourceFile": "ui/src/pages/Pipelines.tsx",
+    "line": 5114,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 210197,
+    "end": 210198,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_25a18c36",
+    "english": "{{v0}}-{{v1}}",
+    "sourceFile": "ui/src/pages/Pipelines.tsx",
+    "line": 5202,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 213115,
+    "end": 213175,
+    "expressions": [
+      "formatNumber(firstVisible)",
+      "formatNumber(lastVisible)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_25a18c36",
+    "english": "{{v0}}-{{v1}}",
+    "sourceFile": "ui/src/pages/Pipelines.tsx",
+    "line": 5261,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 215746,
+    "end": 215806,
+    "expressions": [
+      "formatNumber(firstVisible)",
+      "formatNumber(lastVisible)"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_d4b55942",
+    "english": "{{{{v0}}}}",
+    "sourceFile": "ui/src/pages/PipelineSettings.tsx",
+    "line": 1116,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 41093,
+    "end": 41111,
+    "expressions": [
+      "field.key"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_d4b55942",
+    "english": "{{{{v0}}}}",
+    "sourceFile": "ui/src/pages/PipelineSettings.tsx",
+    "line": 1158,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 42618,
+    "end": 42639,
+    "expressions": [
+      "variable.key"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_value_6bc4856e",
+    "english": "{{v0}}, {{v1}} {{v2}}",
+    "sourceFile": "ui/src/pages/PipelineSettings.tsx",
+    "line": 2646,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1",
+      "v2"
+    ],
+    "start": 110652,
+    "end": 110731,
+    "expressions": [
+      "stage.name",
+      "warningCount",
+      "warningCount === 1 ? \"warning\" : \"warnings\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.npm_package_name_f207940a",
+    "english": "npm Package Name",
+    "sourceFile": "ui/src/pages/PluginManager.tsx",
+    "line": 215,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8407,
+    "end": 8423,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._paperclipai_plugin_example_937e8b91",
+    "english": "@paperclipai/plugin-example",
+    "sourceFile": "ui/src/pages/PluginManager.tsx",
+    "line": 218,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 8523,
+    "end": 8552,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._v_0bb917d8",
+    "english": "· v",
+    "sourceFile": "ui/src/pages/PluginManager.tsx",
+    "line": 401,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 17554,
+    "end": 17557,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/PluginSettings.tsx",
+    "line": 181,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 8134,
+    "end": 8135,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pid_3f302a2a",
+    "english": "PID",
+    "sourceFile": "ui/src/pages/PluginSettings.tsx",
+    "line": 318,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 14670,
+    "end": 14673,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/PluginSettings.tsx",
+    "line": 550,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 27513,
+    "end": 27514,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.origin_main_e52d7adb",
+    "english": "origin/main",
+    "sourceFile": "ui/src/pages/ProjectWorkspaceDetail.tsx",
+    "line": 573,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 23899,
+    "end": 23912,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.origin_main_e52d7adb",
+    "english": "origin/main",
+    "sourceFile": "ui/src/pages/ProjectWorkspaceDetail.tsx",
+    "line": 584,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 24452,
+    "end": 24465,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.codespaces_554776af",
+    "english": "codespaces",
+    "sourceFile": "ui/src/pages/ProjectWorkspaceDetail.tsx",
+    "line": 603,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 25499,
+    "end": 25511,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.workspace_123_1a70162c",
+    "english": "workspace-123",
+    "sourceFile": "ui/src/pages/ProjectWorkspaceDetail.tsx",
+    "line": 611,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 25993,
+    "end": 26008,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pnpm_install_pnpm_dev_32f62370",
+    "english": "pnpm install && pnpm dev",
+    "sourceFile": "ui/src/pages/ProjectWorkspaceDetail.tsx",
+    "line": 622,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 26621,
+    "end": 26647,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pkill_f_vite_true_b3bf6e78",
+    "english": "pkill -f vite || true",
+    "sourceFile": "ui/src/pages/ProjectWorkspaceDetail.tsx",
+    "line": 630,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 27190,
+    "end": 27213,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.a1b2c3d4_7dcf407f",
+    "english": "a1b2c3d4",
+    "sourceFile": "ui/src/pages/ResponsibleUserDenialUxLab.tsx",
+    "line": 55,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 1923,
+    "end": 1931,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.codex_local_6dde627e",
+    "english": "codex local",
+    "sourceFile": "ui/src/pages/ResponsibleUserDenialUxLab.tsx",
+    "line": 95,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 3834,
+    "end": 3855,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.anthropic_claude_opus_4_8_cccbc1ce",
+    "english": "anthropic/claude-opus-4-8",
+    "sourceFile": "ui/src/pages/ResponsibleUserDenialUxLab.tsx",
+    "line": 97,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 3878,
+    "end": 3903,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.pap_12462_p7_a40f42aa",
+    "english": "PAP-12462 · P7",
+    "sourceFile": "ui/src/pages/ResponsibleUserDenialUxLab.tsx",
+    "line": 115,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 4480,
+    "end": 4506,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._responsible_user_unauthorized_fe7ff682",
+    "english": "(RESPONSIBLE_USER_UNAUTHORIZED)",
+    "sourceFile": "ui/src/pages/ResponsibleUserDenialUxLab.tsx",
+    "line": 152,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 6117,
+    "end": 6148,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._deny_missing_membership_43419832",
+    "english": "(deny_missing_membership)",
+    "sourceFile": "ui/src/pages/ResponsibleUserDenialUxLab.tsx",
+    "line": 172,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 7034,
+    "end": 7059,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._responsible_user_unavailable_1a03b80f",
+    "english": "(RESPONSIBLE_USER_UNAVAILABLE)",
+    "sourceFile": "ui/src/pages/ResponsibleUserDenialUxLab.tsx",
+    "line": 191,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 7938,
+    "end": 7968,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_25a18c36",
+    "english": "{{v0}}-{{v1}}",
+    "sourceFile": "ui/src/pages/RoutineDetail.tsx",
+    "line": 481,
+    "sourceContext": "display-variable",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 19072,
+    "end": 19114,
+    "expressions": [
+      "newTrigger.kind",
+      "existingOfKind + 1"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Generated skill content or trigger identifier, not interface copy"
+  },
+  {
+    "key": "local._k_dfe870d9",
+    "english": "⌘K",
+    "sourceFile": "ui/src/pages/Search.tsx",
+    "line": 628,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 24819,
+    "end": 24833,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._k_2f3c3f85",
+    "english": "⌘K:",
+    "sourceFile": "ui/src/pages/Search.tsx",
+    "line": 844,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 33356,
+    "end": 33359,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rdquo_c418451b",
+    "english": "&rdquo;…",
+    "sourceFile": "ui/src/pages/Search.tsx",
+    "line": 878,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 34703,
+    "end": 34721,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._rdquo_d1fc8381",
+    "english": "&rdquo;",
+    "sourceFile": "ui/src/pages/Search.tsx",
+    "line": 905,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 35824,
+    "end": 35831,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/pages/secrets/proposal-review.tsx",
+    "line": 268,
+    "sourceContext": "ui-message",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 9962,
+    "end": 10037,
+    "expressions": [
+      "result.target?.name ?? \"Agent\"",
+      "bindingEnvKey(result) || \"binding\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.dev_github_9d3718ac",
+    "english": "dev/github",
+    "sourceFile": "ui/src/pages/secrets/proposal-review.tsx",
+    "line": 427,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 15579,
+    "end": 15591,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.client_secret_fdce8e4a",
+    "english": "client-secret",
+    "sourceFile": "ui/src/pages/secrets/proposal-review.tsx",
+    "line": 437,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 16046,
+    "end": 16061,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.text_violet_700_dark_text_violet_300_6ef59e45",
+    "english": "text-violet-700 dark:text-violet-300",
+    "sourceFile": "ui/src/pages/secrets/user-secret-presentation.tsx",
+    "line": 11,
+    "sourceContext": "display-variable",
+    "placeholders": [],
+    "start": 487,
+    "end": 525,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.personal_gh_token_f7003292",
+    "english": "PERSONAL_GH_TOKEN",
+    "sourceFile": "ui/src/pages/secrets/UserSecretDefinitionsTab.tsx",
+    "line": 270,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 10145,
+    "end": 10164,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_vvalue_90078736",
+    "english": "{{v0}} → v{{v1}}",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 1168,
+    "sourceContext": "ui-message",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 44426,
+    "end": 44471,
+    "expressions": [
+      "updated.name",
+      "updated.latestVersion"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 2107,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 83762,
+    "end": 83763,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 2180,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 87994,
+    "end": 87995,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 2279,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 92343,
+    "end": 92344,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.clientsecret_c3b26886",
+    "english": "clientsecret",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 2660,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 110685,
+    "end": 110699,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.arn_aws_secretsmanager_51a74417",
+    "english": "arn:aws:secretsmanager:...",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 2715,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 113116,
+    "end": 113144,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.personal_gh_token_f7003292",
+    "english": "PERSONAL_GH_TOKEN",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 2772,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 116051,
+    "end": 116070,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 2873,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 121137,
+    "end": 121156,
+    "expressions": [
+      "blockReason"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_e1823d38",
+    "english": "({{v0}})",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3106,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 132391,
+    "end": 132410,
+    "expressions": [
+      "blockReason"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.us_east_1_487d6534",
+    "english": "us-east-1",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3788,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 159088,
+    "end": 159099,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_670d47cc",
+    "english": "paperclip",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3790,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 159399,
+    "end": 159410,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.alias_paperclip_secrets_715b7239",
+    "english": "alias/paperclip-secrets",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3791,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 159537,
+    "end": 159562,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_prod_1533e439",
+    "english": "paperclip-prod",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3801,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 160120,
+    "end": 160136,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_670d47cc",
+    "english": "paperclip",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3804,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 160560,
+    "end": 160571,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_prod_3a8b4613",
+    "english": "paperclip/prod",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3814,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 161225,
+    "end": 161241,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.secret_provider_config_discovery_preview_9ab90e37",
+    "english": "secret_provider_config.discovery.preview",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3981,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 167518,
+    "end": 167560,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.aws_secrets_manager_05ca6fb1",
+    "english": "aws_secrets_manager",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3985,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 167704,
+    "end": 167725,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.draft_config_f657b727",
+    "english": "draft_config",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 3989,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 167886,
+    "end": 167900,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.secret_create_b526dd27",
+    "english": "secret.create",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 4084,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 171612,
+    "end": 171627,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.api_70d84531",
+    "english": "API ·",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 4542,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 190570,
+    "end": 190576,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.my_secret_c2bb479f",
+    "english": "MY_SECRET",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 4595,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 192689,
+    "end": 192700,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 4658,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 194976,
+    "end": 194977,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/Secrets.tsx",
+    "line": 4733,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 198276,
+    "end": 198277,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.git_9a881b9b",
+    "english": "git",
+    "sourceFile": "ui/src/pages/skills/ImportSkillsFromProjectDialog.tsx",
+    "line": 93,
+    "sourceContext": "display-return",
+    "placeholders": [],
+    "start": 2960,
+    "end": 2965,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/skills/ImportSkillsFromProjectDialog.tsx",
+    "line": 718,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 25394,
+    "end": 25407,
+    "expressions": [
+      "kinds"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.code_review_717d32bb",
+    "english": "code-review",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 571,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 19954,
+    "end": 19967,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 1154,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 39898,
+    "end": 39899,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._vvalue_26b24660",
+    "english": "· v{{v0}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 1499,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 52879,
+    "end": 52923,
+    "expressions": [
+      "skill.currentVersion.revisionNumber"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.references_examples_b6247462",
+    "english": "references/examples",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 1782,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 62218,
+    "end": 62239,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.references_examples_md_ef82de06",
+    "english": "references/examples.md",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 1782,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 62242,
+    "end": 62266,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.references_examples_b6247462",
+    "english": "references/examples",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 1862,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 64686,
+    "end": 64707,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.onboarding_happy_path_252f373d",
+    "english": "onboarding/happy-path",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 2248,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 79274,
+    "end": 79297,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_aa6ead74",
+    "english": "{{skillName}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 2887,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 103456,
+    "end": 103471,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_7d534fff",
+    "english": "{{skillKey}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 2887,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 103475,
+    "end": 103489,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_21391c91",
+    "english": "{{skillInvocation}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 2887,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 103493,
+    "end": 103514,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_a79d8ffe",
+    "english": "{{skillVersion}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 2887,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 103518,
+    "end": 103536,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_58807f3e",
+    "english": "{{runId}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 2887,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 103540,
+    "end": 103551,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_189e6ce7",
+    "english": "{{issueId}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 2887,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 103555,
+    "end": 103568,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_e7b7b02e",
+    "english": "{{outputDocumentKey}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 2887,
+    "sourceContext": "jsx-expression",
+    "placeholders": [],
+    "start": 103572,
+    "end": 103595,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 3121,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 111616,
+    "end": 111617,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_78735b8f",
+    "english": "{{v0}} · {{v1}}",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 3392,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 122167,
+    "end": 122204,
+    "expressions": [
+      "summary.kind",
+      "summary.status"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._v_10b6c68e",
+    "english": "→ v",
+    "sourceFile": "ui/src/pages/SkillStudio.tsx",
+    "line": 3511,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 126790,
+    "end": 126793,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/StatusCards/StatusCardDetailDrawer.tsx",
+    "line": 408,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 20875,
+    "end": 20895,
+    "expressions": [
+      "update.model"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.v_4c94485e",
+    "english": "v",
+    "sourceFile": "ui/src/pages/StatusCards/StatusCardDetailDrawer.tsx",
+    "line": 508,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 25448,
+    "end": 25449,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/StatusCards/StatusCardTile.tsx",
+    "line": 280,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 12863,
+    "end": 12882,
+    "expressions": [
+      "tokensLabel"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_6feeccec",
+    "english": "· {{v0}}",
+    "sourceFile": "ui/src/pages/StatusCards/StatusCardTile.tsx",
+    "line": 281,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 12917,
+    "end": 12934,
+    "expressions": [
+      "costLabel"
+    ],
+    "prefix": " ",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.paperclip_c34c3f73",
+    "english": "Paperclip",
+    "sourceFile": "ui/src/pages/SystemNoticeUxLab.tsx",
+    "line": 244,
+    "sourceContext": "display-property",
+    "placeholders": [],
+    "start": 10553,
+    "end": 10564,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.yo_b29e5ad5",
+    "english": "YO",
+    "sourceFile": "ui/src/pages/SystemNoticeUxLab.tsx",
+    "line": 298,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 12840,
+    "end": 12842,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local._value_8dc5123a",
+    "english": "@{{v0}}",
+    "sourceFile": "ui/src/pages/TeamCatalog.tsx",
+    "line": 293,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 9177,
+    "end": 9202,
+    "expressions": [
+      "team.packageVersion"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.a_da822870",
+    "english": "a ·",
+    "sourceFile": "ui/src/pages/TeamCatalog.tsx",
+    "line": 2085,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 78980,
+    "end": 78984,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.p_1df15572",
+    "english": "p ·",
+    "sourceFile": "ui/src/pages/TeamCatalog.tsx",
+    "line": 2085,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 79006,
+    "end": 79010,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.r_ec15ba13",
+    "english": "r ·",
+    "sourceFile": "ui/src/pages/TeamCatalog.tsx",
+    "line": 2085,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 79032,
+    "end": 79036,
+    "expressions": [],
+    "prefix": "",
+    "suffix": " ",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.vault_3fcbe9b5",
+    "english": "vault://",
+    "sourceFile": "ui/src/pages/tools/connection-dialogs.tsx",
+    "line": 478,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 20193,
+    "end": 20201,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.dotta_s_macbook_a2d8cd4f",
+    "english": "Dotta's MacBook",
+    "sourceFile": "ui/src/pages/tools/GatewaysTab.tsx",
+    "line": 418,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 19110,
+    "end": 19127,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.app_value_f0188837",
+    "english": "app:{{v0}}",
+    "sourceFile": "ui/src/pages/tools/ProfilesTab.tsx",
+    "line": 242,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 8925,
+    "end": 9011,
+    "expressions": [
+      "applicationsById.get(entry.applicationId ?? \"\") ?? entry.applicationId ?? \"?\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.conn_value_6cea4208",
+    "english": "conn:{{v0}}",
+    "sourceFile": "ui/src/pages/tools/ProfilesTab.tsx",
+    "line": 245,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0"
+    ],
+    "start": 9104,
+    "end": 9188,
+    "expressions": [
+      "connectionsById.get(entry.connectionId ?? \"\") ?? entry.connectionId ?? \"?\""
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.p_148de9c5",
+    "english": "p",
+    "sourceFile": "ui/src/pages/tools/ProfilesTab.tsx",
+    "line": 1322,
+    "sourceContext": "jsx-text",
+    "placeholders": [],
+    "start": 51982,
+    "end": 51983,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.npx_y_acme_mcp_tool_e5c16cb2",
+    "english": "npx -y @acme/mcp-tool",
+    "sourceFile": "ui/src/pages/tools/RunYourOwnTab.tsx",
+    "line": 120,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 4344,
+    "end": 4367,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.api_key_ccae6d91",
+    "english": "API_KEY",
+    "sourceFile": "ui/src/pages/tools/RunYourOwnTab.tsx",
+    "line": 147,
+    "sourceContext": "jsx-attribute",
+    "placeholders": [],
+    "start": 5706,
+    "end": 5715,
+    "expressions": [],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_64614d6b",
+    "english": "{{v0}} / {{v1}}",
+    "sourceFile": "ui/src/pages/UserProfile.tsx",
+    "line": 235,
+    "sourceContext": "display-property",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 9957,
+    "end": 10010,
+    "expressions": [
+      "providerDisplayName(row.provider)",
+      "row.model"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  },
+  {
+    "key": "local.value_value_42d3759b",
+    "english": "{{v0}} {{v1}}",
+    "sourceFile": "ui/src/plugins/launchers.tsx",
+    "line": 451,
+    "sourceContext": "jsx-expression",
+    "placeholders": [
+      "v0",
+      "v1"
+    ],
+    "start": 14582,
+    "end": 14655,
+    "expressions": [
+      "instance.launcher.pluginDisplayName",
+      "instance.launcher.displayName"
+    ],
+    "prefix": "",
+    "suffix": "",
+    "reason": "Protected literal, code example, or stable attribution identifier"
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "sourceFile": "ui/src/components/SourceTrustBadge.tsx",
+    "line": 22,
+    "english": "Promoted from low-trust{{v0}}.",
+    "translation": "已从低信任级别提升{{v0}}。",
+    "reason": "已由 root 的 manual 精确补丁覆盖，不重复导入 reviewed-extra。"
+  },
+  {
+    "sourceFile": "ui/src/components/SourceTrustBadge.tsx",
+    "line": 23,
+    "english": "Authored by a low-trust review agent. Raw {{v0}} is not auto-shared with higher-trust agents.",
+    "translation": "由低信任审查智能体撰写。原始{{v0}}不会自动分享给信任级别更高的智能体。",
+    "reason": "已由 root 的 manual 精确补丁覆盖，不重复导入 reviewed-extra。"
+  },
+  {
+    "sourceFile": "ui/src/lib/timeAgo.ts",
+    "line": 31,
+    "english": "{{v0}}mo ago",
+    "translation": "{{v0}} 个月前",
+    "reason": "已由 root 的 manual 精确补丁覆盖，不重复导入 reviewed-extra。"
+  },
+  {
+    "sourceFile": "ui/src/lib/timeAgo.ts",
+    "line": 13,
+    "english": "just now",
+    "translation": "刚刚",
+    "reason": "已由 root 的 manual 精确补丁覆盖，不重复导入 reviewed-extra。"
+  }
+]
