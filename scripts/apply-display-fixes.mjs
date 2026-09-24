@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-const root='H:/Luna/tools/paperclip-source/ui';
+const root='H:/AIagent/Luna/tools/paperclip-source/ui';
 async function edit(rel,fn,helpers=[]){const p=path.join(root,rel);let s=await fs.readFile(p,'utf8');const before=s;s=fn(s);if(s!==before&&helpers.length){let imp=path.relative(path.dirname(p),path.join(root,'src/i18n/display')).replaceAll('\\','/');if(!imp.startsWith('.'))imp='./'+imp;const line=new RegExp('^import \\{ ([^}]+) \\} from '+JSON.stringify(imp).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+';\\r?\\n','gm');const names=new Set(helpers);s=s.replace(line,(_,list)=>{for(const n of list.split(','))names.add(n.trim());return '';});s=`import { ${[...names].join(', ')} } from ${JSON.stringify(imp)};\n`+s;}if(s!==before)await fs.writeFile(p,s);}
 await edit('src/pages/apps/Connections.tsx',s=>s.replace('label: "Healthy" | "Needs attention" | "Paused" | "Not connected";','label: string;'));
 await edit('src/components/NewIssueDialog.tsx',s=>s.replace('className="w-6 shrink-0 text-center"','className="min-w-6 shrink-0 whitespace-nowrap text-center"'));

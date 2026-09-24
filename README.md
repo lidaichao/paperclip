@@ -51,4 +51,4 @@
 
 ## 本机启动与回退
 
-参见 `H:/Luna/scripts/paperclip/RELEASES.md`。默认官方安装保留；`active-release.json` 控制选用哪个已经通过核验的候选目录。选择器不会自动重启服务，切换由维护者按备份、停机、选择、启动、健康验证的顺序完成。
+参见 `H:/AIagent/Luna/scripts/paperclip/RELEASES.md`。默认官方安装保留；`active-release.json` 控制选用哪个已经通过核验的候选目录。选择器不会自动重启服务，切换由维护者按备份、停机、选择、启动、健康验证的顺序完成。

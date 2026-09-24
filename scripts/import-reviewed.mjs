@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import ts from 'typescript';
 import {createHash} from 'node:crypto';
-const kit='H:/Luna/tools/paperclip-zh-cn', root='H:/Luna/tools/paperclip-source';
+const kit='H:/AIagent/Luna/tools/paperclip-zh-cn', root='H:/AIagent/Luna/tools/paperclip-source';
 const read=async name=>JSON.parse(await fs.readFile(path.join(kit,name),'utf8'));
 const reviewed=await read('integration/reviewed-extra.json');
 const sourceMap=await read('integration/source-map.json');

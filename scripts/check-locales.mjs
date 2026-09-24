@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {stripTypeScriptTypes} from 'node:module';
-const kit='H:/Luna/tools/paperclip-zh-cn';
-const root='H:/Luna/tools/paperclip-source';
+const kit='H:/AIagent/Luna/tools/paperclip-zh-cn';
+const root='H:/AIagent/Luna/tools/paperclip-source';
 const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const en=await read(path.join(root,'ui/src/i18n/locales/en.json'));
 const zh=await read(path.join(root,'ui/src/i18n/locales/zh-CN.json'));

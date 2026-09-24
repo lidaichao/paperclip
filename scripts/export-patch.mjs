@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
-const source='H:/Luna/tools/paperclip-source';
-const target='H:/Luna/tools/paperclip-zh-cn/integration/patches';
+const source='H:/AIagent/Luna/tools/paperclip-source';
+const target='H:/AIagent/Luna/tools/paperclip-zh-cn/integration/patches';
 const git=(args,options={})=>execFileSync('git',['-c','core.safecrlf=false','-C',source,...args],{windowsHide:true,stdio:['ignore','pipe','pipe'],...options});
 const untracked=git(['ls-files','--others','--exclude-standard','ui/src'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
 if(untracked.length)git(['add','--intent-to-add','--',...untracked]);

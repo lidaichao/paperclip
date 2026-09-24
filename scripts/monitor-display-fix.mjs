@@ -3,7 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const KIT = path.resolve(import.meta.dirname, '..');
-const SOURCE = 'H:/Luna/tools/paperclip-source/ui/src';
+const SOURCE = 'H:/AIagent/Luna/tools/paperclip-source/ui/src';
 
 export const displayHelper = `
 /** Localize a known monitor display string; raw ETA/offset contracts stay English. */

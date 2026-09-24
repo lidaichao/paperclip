@@ -6,9 +6,9 @@ import { assertInside, parseArgs, readJson, sha256, treeInventory, writeJson } f
 
 const VERSION = '2026.831.1';
 const COMMIT = '65ec059bde30d98c92165b24a30a540800dd1f6f';
-const INSTALL = 'H:/Luna/tools/paperclip';
-const SOURCE = 'H:/Luna/tools/paperclip-source';
-const RELEASES = 'H:/Luna/tools/paperclip-releases';
+const INSTALL = 'H:/AIagent/Luna/tools/paperclip';
+const SOURCE = 'H:/AIagent/Luna/tools/paperclip-source';
+const RELEASES = 'H:/AIagent/Luna/tools/paperclip-releases';
 const ASSETS = path.resolve(import.meta.dirname, '..');
 const UI_PATH = 'node_modules/@paperclipai/server/ui-dist';
 

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-const kit=path.resolve('H:/Luna/tools/paperclip-zh-cn');
-const root=path.resolve('H:/Luna/tools/paperclip-source');
+const kit=path.resolve('H:/AIagent/Luna/tools/paperclip-zh-cn');
+const root=path.resolve('H:/AIagent/Luna/tools/paperclip-source');
 const en=JSON.parse(await fs.readFile(path.join(kit,'locale/en/catalog.json'),'utf8'));
 const entities={ldquo:'“',rdquo:'”',rsquo:'’',apos:"'",quot:'"',lt:'<',gt:'>',middot:'·',rarr:'→',rsaquo:'›',times:'×',amp:'&',hellip:'…'};
 function decode(s){return s.replace(/&([a-z]+);/g,(whole,key)=>entities[key]??whole);}

@@ -1,7 +1,7 @@
 # Shared, read-only validation. Dot-source this file from the launchers.
-$script:PaperclipOfficialRoot = 'H:/Luna/tools/paperclip'
-$script:PaperclipReleasesRoot = 'H:/Luna/tools/paperclip-releases'
-$script:PaperclipDataRoot = 'H:/Luna/.paperclip'
+$script:PaperclipOfficialRoot = 'H:/AIagent/Luna/tools/paperclip'
+$script:PaperclipReleasesRoot = 'H:/AIagent/Luna/tools/paperclip-releases'
+$script:PaperclipDataRoot = 'H:/AIagent/Luna/.paperclip'
 $script:PaperclipBackendVersion = '2026.831.1'
 $script:PaperclipNodePath = 'C:/Program Files/nodejs/node.exe'
 $script:PaperclipEntryRelative = 'node_modules/paperclipai/dist/index.js'
@@ -37,7 +37,16 @@ function Read-PaperclipReleaseJson {
 function Get-PaperclipFileHash {
     param([Parameter(Mandatory)][string]$Path)
     Assert-PaperclipUnlinkedPath $Path
-    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    # Use .NET directly. Some background Windows PowerShell sessions start
+    # without the Microsoft.PowerShell.Utility module that provides Get-FileHash.
+    $stream = [IO.File]::OpenRead((Get-PaperclipFullPath $Path))
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+        $stream.Dispose()
+    }
 }
 
 function Resolve-PaperclipRelease {
