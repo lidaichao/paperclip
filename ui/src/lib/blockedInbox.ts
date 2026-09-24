@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type {
   Issue,
   IssueBlockedInboxAttention,
@@ -38,27 +39,27 @@ export const BLOCKED_REASON_VARIANT_ORDER: BlockedReasonVariant[] = [
 ];
 
 export const BLOCKED_VARIANT_LABELS: Record<BlockedReasonVariant, string> = {
-  needs_decision: "Needs decision",
-  stalled: "Blocked chain stalled",
-  needs_attention: "Needs attention",
-  recovery_required: "Recovery required",
-  external_wait: "External wait",
-  owner_paused: "Owner paused",
+  needs_decision: l10n("local.needs_decision_a955b640"),
+  stalled: l10n("local.blocked_chain_stalled_51b7a915"),
+  needs_attention: l10n("local.needs_attention_c1ebc781"),
+  recovery_required: l10n("local.recovery_required_4f222673"),
+  external_wait: l10n("local.external_wait_102f4ce0"),
+  owner_paused: l10n("local.owner_paused_ae7c74c7"),
 };
 
 const REASON_LABELS: Record<IssueBlockedInboxReason, string> = {
-  pending_board_decision: "Pending board decision",
-  pending_user_decision: "Pending user decision",
-  missing_successful_run_disposition: "Pick disposition",
-  blocked_chain_stalled: "Blocked chain stalled",
-  blocked_by_unassigned_issue: "Unassigned blocker",
-  blocked_by_assigned_backlog_issue: "Parked blocker",
-  blocked_by_cancelled_issue: "Cancelled blocker",
-  in_review_without_action_path: "Review without action path",
-  invalid_review_participant: "Invalid review participant",
-  open_recovery_issue: "Recovery in progress",
-  external_owner_action: "External owner action",
-  blocked_by_uninvokable_assignee: "Owner paused",
+  pending_board_decision: l10n("local.pending_board_decision_f83b5672"),
+  pending_user_decision: l10n("local.pending_user_decision_f205d833"),
+  missing_successful_run_disposition: l10n("local.pick_disposition_db0d07fa"),
+  blocked_chain_stalled: l10n("local.blocked_chain_stalled_51b7a915"),
+  blocked_by_unassigned_issue: l10n("local.unassigned_blocker_1cddf9ce"),
+  blocked_by_assigned_backlog_issue: l10n("local.parked_blocker_8c12d55b"),
+  blocked_by_cancelled_issue: l10n("local.cancelled_blocker_9fb16b58"),
+  in_review_without_action_path: l10n("local.review_without_action_path_04ef214b"),
+  invalid_review_participant: l10n("local.invalid_review_participant_2d28a00f"),
+  open_recovery_issue: l10n("local.recovery_in_progress_93d357e3"),
+  external_owner_action: l10n("local.external_owner_action_63c27508"),
+  blocked_by_uninvokable_assignee: l10n("local.owner_paused_ae7c74c7"),
 };
 
 const SEVERITY_RANK: Record<IssueBlockedInboxSeverity, number> = {

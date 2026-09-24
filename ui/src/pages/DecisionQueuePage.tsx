@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Settings2, X } from "lucide-react";
@@ -126,7 +127,7 @@ export function DecisionQueuePage() {
   }, [agents]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Decisions", href: "/decisions" }, { label: queue?.title ?? queueKey }]);
+    setBreadcrumbs([{ label: l10n("local.decisions_cfa6a08a"), href: "/decisions" }, { label: queue?.title ?? queueKey }]);
   }, [setBreadcrumbs, queue?.title, queueKey]);
 
   // Re-hydrate per-company preferences when the company changes.
@@ -205,14 +206,14 @@ export function DecisionQueuePage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.decisionQueues.list(selectedCompanyId!) }),
     onError: (err) =>
       pushToast({
-        title: "Could not update seeding",
-        body: err instanceof Error ? err.message : "Please try again.",
+        title: l10n("local.could_not_update_seeding_24e5e1e9"),
+        body: err instanceof Error ? err.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
 
   if (!selectedCompanyId) {
-    return <p className="text-sm text-muted-foreground">Select an organization first.</p>;
+    return <p className="text-sm text-muted-foreground">{l10n("local.select_an_organization_first_0d7c81ff")}</p>;
   }
   if (isLoading) {
     return <PageSkeleton variant="approvals" />;
@@ -264,17 +265,16 @@ export function DecisionQueuePage() {
 
       {isEmpty ? (
         <div className="rounded-xl border border-dashed border-border py-14 text-center">
-          <p className="text-sm font-medium text-foreground">This queue is empty.</p>
+          <p className="text-sm font-medium text-foreground">{l10n("local.this_queue_is_empty_1c3c77cb")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Decisions land here when they match the queue's rules or an agent adds them.
-          </p>
+            {l10n("local.decisions_land_here_when_they_match_the_queue_b065343b")}</p>
         </div>
       ) : (
         <div className="space-y-4">
           {visibleCount === 0 ? (
             <div className="rounded-xl border border-dashed border-border py-10 text-center">
-              <p className="text-sm font-medium text-foreground">No decisions match your filters.</p>
-              <p className="mt-1 text-xs text-muted-foreground">Adjust or clear the filters to see the rest.</p>
+              <p className="text-sm font-medium text-foreground">{l10n("local.no_decisions_match_your_filters_080dd6d7")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{l10n("local.adjust_or_clear_the_filters_to_see_the_rest_955c4e3e")}</p>
             </div>
           ) : (
             groups.map((group) => {
@@ -320,14 +320,13 @@ export function DecisionQueuePage() {
 
           {agingItems.length > 0 && (
             <Curtain
-              label="Aging"
+              label={l10n("local.aging_90dd095d")}
               count={agingItems.length}
               open={agingOpen}
               onToggle={() => setAgingOpen((prev) => !prev)}
             >
               <p className="text-xs text-muted-foreground">
-                Idle past {ATTENTION_AGING_DAYS} days — kept off the queue. Keep any you still want surfaced.
-              </p>
+                {l10n("local.idle_past_ed89ccf7")}{" "}{ATTENTION_AGING_DAYS} {l10n("local.days_kept_off_the_queue_keep_any_you_still_wa_76882502")}</p>
               {agingItems.map((item) => (
                 <AgingItemRow
                   key={item.id}
@@ -374,11 +373,11 @@ function SeedRulesCard({
         <div className="flex min-w-0 items-start gap-2">
           <Settings2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 space-y-1">
-            <p className="text-sm font-medium text-foreground">Auto-seeding is {enabled ? "on" : "off"}</p>
+            <p className="text-sm font-medium text-foreground">{l10n("local.auto_seeding_is_39732e16")}{" "}{enabled ? l10n("local.on_b8d31e85") : l10n("local.off_b4dc66dd")}</p>
             <p className="text-xs text-muted-foreground">
               {enabled
-                ? "This queue fills itself automatically. Decisions are added the moment they match any of its rules:"
-                : "Automatic adds are paused. These rules would add decisions to the queue when on:"}
+                ? l10n("local.this_queue_fills_itself_automatically_decisio_da434ae6")
+                : l10n("local.automatic_adds_are_paused_these_rules_would_a_e92e243c")}
             </p>
             <ul className="mt-0.5 space-y-0.5">
               {rules.map((rule) => (
@@ -390,14 +389,14 @@ function SeedRulesCard({
             </ul>
             <p className="text-(length:--text-nano) text-muted-foreground">
               {enabled
-                ? "Turning it off stops new automatic adds only — decisions already here stay, and you can still add or remove decisions by hand."
-                : "Adding or removing decisions by hand still works while automatic seeding is off."}
+                ? l10n("local.turning_it_off_stops_new_automatic_adds_only_661f61f3")
+                : l10n("local.adding_or_removing_decisions_by_hand_still_wo_ba43f0ee")}
             </p>
           </div>
         </div>
         <Button type="button" variant="outline" size="xs" className="h-7 shrink-0" disabled={pending} onClick={onToggle}>
           {pending && <Loader2 className="h-3 w-3 animate-spin" />}
-          {enabled ? "Disable" : "Enable"}
+          {enabled ? l10n("local.disable_b7e3e4aa") : l10n("local.enable_5342e09f")}
         </Button>
       </div>
     </div>
@@ -445,13 +444,13 @@ function QueueItemRow({
     onSuccess: () => {
       setOpen(false);
       setReason("");
-      pushToast({ title: "Removed from queue", body: item.subject.title ?? undefined, tone: "info" });
+      pushToast({ title: l10n("local.removed_from_queue_6a332fb3"), body: item.subject.title ?? undefined, tone: "info" });
       onExcluded();
     },
     onError: (err) =>
       pushToast({
-        title: "Could not exclude",
-        body: err instanceof Error ? err.message : "Please try again.",
+        title: l10n("local.could_not_exclude_ce5519cb"),
+        body: err instanceof Error ? err.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
@@ -463,21 +462,19 @@ function QueueItemRow({
           <PopoverTrigger asChild>
             <Button type="button" variant="ghost" size="xs" className="h-7 gap-1 text-muted-foreground">
               <X className="h-3.5 w-3.5" />
-              Exclude
-            </Button>
+              {l10n("local.exclude_5b76f62e")}</Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-64 space-y-2 p-3">
-            <p className="text-xs font-medium text-foreground">Remove from this queue</p>
+            <p className="text-xs font-medium text-foreground">{l10n("local.remove_from_this_queue_e8cd13b5")}</p>
             <textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              placeholder="Reason (optional)…"
+              placeholder={l10n("local.reason_optional_395a1999")}
               className="min-h-16 w-full rounded-sm border border-border bg-background px-2 py-1 text-xs"
             />
             <div className="flex justify-end gap-1">
               <Button type="button" variant="ghost" size="xs" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
               <Button
                 type="button"
                 size="xs"
@@ -486,8 +483,7 @@ function QueueItemRow({
                 onClick={() => exclude.mutate()}
               >
                 {exclude.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
-                Exclude
-              </Button>
+                {l10n("local.exclude_5b76f62e")}</Button>
             </div>
           </PopoverContent>
         </Popover>

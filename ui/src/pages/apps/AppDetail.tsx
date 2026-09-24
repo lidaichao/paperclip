@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { isRetiredComposioConnection, RETIRED_COMPOSIO_MESSAGE, isRemoteMcpConnectorId, isRemoteMcpConnectorMethod } from "@paperclipai/shared";
 import { RemoteMcpManagement } from "@/features/connections/remote-mcp/RemoteMcpManagement";
 import { remoteMcpProviders } from "@/features/connections/remote-mcp/providers";
@@ -177,13 +178,13 @@ export function AppDetail({ renderActions, onReconnect }: {
     )
     : grantsQuery.data?.capabilities.canConfigure === true;
   const reconnectUnavailableMessage = grantsQuery.isLoading
-    ? "Checking who can reconnect this identity…"
+    ? l10n("local.checking_who_can_reconnect_this_identity_6e1a0df1")
     : grantsQuery.isError
-      ? "We couldn't verify who can reconnect this identity. Reload the page to try again."
+      ? l10n("local.we_couldn_t_verify_who_can_reconnect_this_ide_3dca45b9")
       : managedIdentityGrant?.kind === "user"
         && managedPersonalUserId !== grantsQuery.data?.currentUserId
-        ? "The person this connection belongs to must reconnect it."
-        : "You don't have permission to reconnect this identity.";
+        ? l10n("local.the_person_this_connection_belongs_to_must_re_f6a7ad9a")
+        : l10n("local.you_don_t_have_permission_to_reconnect_this_i_b611d45d");
   const logoEntry = useMemo(
     () => galleryEntryFor((galleryQuery.data?.apps ?? []) as AppGalleryDisplayEntry[], connection, application),
     [galleryQuery.data, connection, application],
@@ -213,8 +214,8 @@ export function AppDetail({ renderActions, onReconnect }: {
     ) return;
     successNoticeShownFor.current = connection.id;
     pushToast({
-      title: `${appName} connected`,
-      body: "The connection is ready. Review permissions or test an action below.",
+      title: l10n("local.value_connected_db4ed330", {v0: (appName)}),
+      body: l10n("local.the_connection_is_ready_review_permissions_or_8871194a"),
       tone: "success",
     });
     navigate(appTabHref(connection.id, "permissions"), { replace: true });
@@ -223,7 +224,7 @@ export function AppDetail({ renderActions, onReconnect }: {
   useEffect(() => {
     if (!activeTab) return;
     setBreadcrumbs([
-      { label: "Connectors", href: "/apps" },
+      { label: l10n("local.connectors_c3d2e79e"), href: "/apps" },
       { label: appName, href: appTabHref(connectionId, "permissions") },
       { label: appTabLabel(activeTab) },
     ]);
@@ -256,7 +257,7 @@ export function AppDetail({ renderActions, onReconnect }: {
       queryClient.invalidateQueries({ queryKey: queryKeys.apps.attention(selectedCompanyId!) });
       navigate("/apps");
     },
-    onError: (error) => pushToast({ title: "Couldn't disconnect", body: error instanceof Error ? error.message : "Please try again.", tone: "error" }),
+    onError: (error) => pushToast({ title: l10n("local.couldn_t_disconnect_a5ff5ce6"), body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"), tone: "error" }),
   });
   const [pending, setPending] = useState(false);
   const persist = useMutation({
@@ -288,8 +289,8 @@ export function AppDetail({ renderActions, onReconnect }: {
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't save that",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.couldn_t_save_that_4ee3e155"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
     onSettled: () => setPending(false),
@@ -307,8 +308,8 @@ export function AppDetail({ renderActions, onReconnect }: {
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't rename the app",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.couldn_t_rename_the_app_dba458bc"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
@@ -324,16 +325,16 @@ export function AppDetail({ renderActions, onReconnect }: {
         navigateTopLevel(target.url);
       } catch (error) {
         pushToast({
-          title: "Couldn't start sign-in",
-          body: error instanceof Error ? error.message : "Please try again.",
+          title: l10n("local.couldn_t_start_sign_in_3f9bac4a"),
+          body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
           tone: "error",
         });
       }
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't start sign-in",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.couldn_t_start_sign_in_3f9bac4a"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
@@ -366,16 +367,16 @@ export function AppDetail({ renderActions, onReconnect }: {
         navigateTopLevel(target.url);
       } catch (error) {
         pushToast({
-          title: "Couldn't start sign-in",
-          body: error instanceof Error ? error.message : "Please try again.",
+          title: l10n("local.couldn_t_start_sign_in_3f9bac4a"),
+          body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
           tone: "error",
         });
       }
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't start sign-in",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.couldn_t_start_sign_in_3f9bac4a"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
@@ -392,10 +393,10 @@ export function AppDetail({ renderActions, onReconnect }: {
       invalidateGrants();
       setAudienceOpenGrantId(null);
       pushToast({
-        title: "Audience saved",
+        title: l10n("local.audience_saved_b7ee24e0"),
         body: (grant.members?.length ?? 0) === 0
-          ? "Every organization member can use this identity."
-          : `${grant.members?.length} ${grant.members?.length === 1 ? "member" : "members"} can use this identity.`,
+          ? l10n("local.every_organization_member_can_use_this_identi_5c8fd994")
+          : l10n("local.value_value_can_use_this_identity_68b80c63", {v0: (grant.members?.length), v1: (grant.members?.length === 1 ? "member" : "members")}),
         tone: "success",
       });
     },
@@ -415,17 +416,17 @@ export function AppDetail({ renderActions, onReconnect }: {
       queryClient.invalidateQueries({ queryKey: queryKeys.tools.connections(selectedCompanyId!) });
       queryClient.invalidateQueries({ queryKey: queryKeys.apps.attention(selectedCompanyId!) });
       pushToast({
-        title: `Found ${result.discoveredCount} ${result.discoveredCount === 1 ? "action" : "actions"}`,
+        title: l10n("local.found_value_value_ca8d9bb0", {v0: (result.discoveredCount), v1: (result.discoveredCount === 1 ? "action" : "actions")}),
         body: result.quarantinedCount > 0
-          ? `${result.quarantinedCount} new ${result.quarantinedCount === 1 ? "action needs" : "actions need"} your OK.`
+          ? l10n("local.value_new_value_your_ok_d375e2e1", {v0: (result.quarantinedCount), v1: (result.quarantinedCount === 1 ? "action needs" : "actions need")})
           : undefined,
         tone: "success",
       });
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't refresh actions",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.couldn_t_refresh_actions_17b3912d"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
@@ -436,14 +437,14 @@ export function AppDetail({ renderActions, onReconnect }: {
       queryClient.invalidateQueries({ queryKey: queryKeys.tools.connectionGrants(connectionId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.apps.attention(selectedCompanyId!) });
       pushToast({
-        title: "GitHub access refreshed",
-        body: "Account, installation, and repository access are current.",
+        title: l10n("local.github_access_refreshed_477eae62"),
+        body: l10n("local.account_installation_and_repository_access_ar_6baf51ab"),
         tone: "success",
       });
     },
     onError: (error) => pushToast({
-      title: "Couldn't refresh GitHub access",
-      body: error instanceof Error ? error.message : "Please try again.",
+      title: l10n("local.couldn_t_refresh_github_access_f01f0fd3"),
+      body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
       tone: "error",
     }),
   });
@@ -483,7 +484,7 @@ export function AppDetail({ renderActions, onReconnect }: {
   }
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select an organization to manage apps.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{l10n("local.select_an_organization_to_manage_apps_c62bf64e")}</div>;
   }
   if (connectionQuery.isLoading) {
     return (
@@ -497,10 +498,9 @@ export function AppDetail({ renderActions, onReconnect }: {
   if (!connection) {
     return (
       <div className="max-w-3xl p-6">
-        <p className="text-sm text-muted-foreground">We couldn't find that app.</p>
+        <p className="text-sm text-muted-foreground">{l10n("local.we_couldn_t_find_that_app_3dffbbcc")}</p>
         <Button className="mt-4" variant="outline" onClick={() => navigate("/apps")}>
-          Back to connectors
-        </Button>
+          {l10n("local.back_to_connectors_4bb96fc6")}</Button>
       </div>
     );
   }
@@ -509,10 +509,10 @@ export function AppDetail({ renderActions, onReconnect }: {
     return <div className="max-w-4xl space-y-6 pb-12">
       <h1 className="text-xl font-semibold">{appName}</h1>
       <section role="status" className="space-y-3 rounded-lg border border-border bg-muted p-4">
-        <h2 className="text-sm font-semibold">Connection retired</h2>
+        <h2 className="text-sm font-semibold">{l10n("local.connection_retired_3e3a4449")}</h2>
         <p className="text-sm text-muted-foreground">{RETIRED_COMPOSIO_MESSAGE}</p>
-        <p className="text-sm text-muted-foreground">Remove each obsolete connection separately. Removing this one does not remove other connections.</p>
-        <Button variant="outline" onClick={() => navigate("/apps/connect?source=composio")}>Add Composio MCP connection</Button>
+        <p className="text-sm text-muted-foreground">{l10n("local.remove_each_obsolete_connection_separately_re_88588683")}</p>
+        <Button variant="outline" onClick={() => navigate("/apps/connect?source=composio")}>{l10n("local.add_composio_mcp_connection_bbc2fe79")}</Button>
       </section>
       {grantsQuery.data?.capabilities.canConfigure === true && <DangerZone
         appName={appName}
@@ -524,7 +524,7 @@ export function AppDetail({ renderActions, onReconnect }: {
 
   const aiGrantRevoked = connection.connectionPurpose === "ai"
     && grantRows.length > 0 && grantRows.every((grant) => grant.status === "revoked");
-  const status: StatusInfo = aiGrantRevoked ? { label: "Revoked", tone: "attention" } : statusFor(connection);
+  const status: StatusInfo = aiGrantRevoked ? { label: l10n("local.revoked_f6f738d0"), tone: "attention" } : statusFor(connection);
   const needsReconnect = connection.requiresReauthorization
     ?? (status.tone === "attention" && connection.healthStatus !== "unknown");
   const quarantined = catalog.filter((e) => e.status === "quarantined");
@@ -565,10 +565,9 @@ export function AppDetail({ renderActions, onReconnect }: {
 
       {status.tone === "attention" && connection.requiresReauthorization === false && (
         <div role="status">
-          <p>{connection.healthMessage || "GitHub access could not be checked. Try again."}</p>
+          <p>{connection.healthMessage || l10n("local.github_access_could_not_be_checked_try_again_68854351")}</p>
           <Button variant="outline" disabled={refreshGitHubAccess.isPending} onClick={() => refreshGitHubAccess.mutate()}>
-            Retry access
-          </Button>
+            {l10n("local.retry_access_e5222230")}</Button>
         </div>
       )}
       {needsReconnect && (
@@ -648,7 +647,7 @@ export function AppDetail({ renderActions, onReconnect }: {
                 onReplaceAudience={(grant, memberUserIds) =>
                   replaceAudience.mutate({ grantId: grant.id, memberUserIds })}
               />
-              {isRemoteMcpConnectorMethod(connection.config?.sourceTemplateKey, connection.config?.connectionMethodKey) && <p className="text-sm text-muted-foreground">Paperclip controls access to the tools listed here. App and action permissions inside these tools are managed in {baseAppName}.</p>}
+              {isRemoteMcpConnectorMethod(connection.config?.sourceTemplateKey, connection.config?.connectionMethodKey) && <p className="text-sm text-muted-foreground">{l10n("local.paperclip_controls_access_to_the_tools_listed_ba12d624")}{" "}{baseAppName}.</p>}
               <PermissionsPanel
                 actions={actionsContent}
                 connectionId={connectionId}
@@ -741,18 +740,17 @@ function AppDetailHeader({
               }}
             >
               <Input
-                aria-label="App name"
+                aria-label={l10n("local.app_name_e6ad3996")}
                 value={nameDraft}
                 onChange={(event) => onNameDraftChange(event.target.value)}
                 className="h-9 w-64 text-lg font-bold"
                 autoFocus
               />
               <Button type="submit" size="sm" disabled={renamePending || !nameDraft.trim()}>
-                {renamePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
+                {renamePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : l10n("local.save_1509f561")}
               </Button>
               <Button type="button" size="sm" variant="ghost" onClick={onRenameCancel} disabled={renamePending}>
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
             </form>
           ) : (
             <div className="flex items-center gap-1.5">
@@ -761,7 +759,7 @@ function AppDetailHeader({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-muted-foreground"
-                aria-label="Rename app"
+                aria-label={l10n("local.rename_app_5689214e")}
                 onClick={onRenameStart}
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -772,8 +770,7 @@ function AppDetailHeader({
             <StatusBadge status={status} />
             {connection.config?.provider !== "agentmail" && actionCount !== null && (
               <span className="text-xs text-muted-foreground">
-                {actionCount} {actionCount === 1 ? "action" : "actions"} available
-              </span>
+                {actionCount} {actionCount === 1 ? l10n("local.action_bd938c68") : l10n("local.actions_2b0dcdd4")} {l10n("local.available_ddd9818a")}</span>
             )}
             {connectionDisplaySecondaryHint(connection) ? (
               <span className="text-xs text-muted-foreground">
@@ -793,7 +790,7 @@ function ToolsLoading({ mcpActions = false }: { mcpActions?: boolean }) {
   return (
     <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground" role="status">
       <Loader2 className="h-4 w-4 animate-spin" />
-      {mcpActions ? "Loading MCP actions, this may take a minute." : "Loading tools…"}
+      {mcpActions ? l10n("local.loading_mcp_actions_this_may_take_a_minute_43a98d1a") : l10n("local.loading_tools_ff209730")}
     </div>
   );
 }
@@ -801,8 +798,8 @@ function ToolsLoading({ mcpActions = false }: { mcpActions?: boolean }) {
 function ToolsLoadError({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="space-y-3 py-8">
-      <p className="text-sm text-destructive">Couldn’t load tools for this app.</p>
-      <Button size="sm" variant="outline" onClick={onRetry}>Try again</Button>
+      <p className="text-sm text-destructive">{l10n("local.couldn_t_load_tools_for_this_app_6564a35d")}</p>
+      <Button size="sm" variant="outline" onClick={onRetry}>{l10n("local.try_again_d8b8392e")}</Button>
     </div>
   );
 }
@@ -833,12 +830,12 @@ type StatusInfo = { label: string; tone: "connected" | "attention" | "paused" };
 
 function statusFor(connection: ToolConnection): StatusInfo {
   if (connection.enabled === false || connection.status === "disabled") {
-    return { label: "Paused", tone: "paused" };
+    return { label: l10n("local.paused_e159b061"), tone: "paused" };
   }
   if (isAttentionHealthStatus(connection.healthStatus) || (connection.connectionPurpose === "ai" && (connection.healthStatus !== "ok" || aiSubscriptionNeedsIsolatedLogin(connection.config)))) {
-    return { label: "Needs attention", tone: "attention" };
+    return { label: l10n("local.needs_attention_c1ebc781"), tone: "attention" };
   }
-  return { label: "Connected", tone: "connected" };
+  return { label: l10n("local.connected_22965568"), tone: "connected" };
 }
 
 function StatusBadge({ status }: { status: StatusInfo }) {

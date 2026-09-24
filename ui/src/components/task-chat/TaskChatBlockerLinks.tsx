@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type {
   IssueBlockerAttentionIssueSummary,
   IssueRelationIssueSummary,
@@ -130,7 +131,7 @@ function BlockerRow({
 }
 
 function LiveWorkGlyph({ status }: { status: WaitingBlockerStatus }) {
-  const label = status === "done" ? "Done" : status === "running" ? "Running" : "Waiting";
+  const label = status === "done" ? l10n("local.done_11a6767d") : status === "running" ? l10n("local.running_f4ccae29") : l10n("local.waiting_6e293a8c");
   if (status === "done") {
     return (
       <CheckCircle2
@@ -193,13 +194,13 @@ export function TaskChatBlockerLinks({
   placement: "top" | "bottom";
 }) {
   const streamlined = useStreamlinedTaskChatPresentation();
-  const directLabel = streamlined && placement === "bottom" ? "Still blocked by" : "Blocked by";
+  const directLabel = streamlined && placement === "bottom" ? l10n("local.still_blocked_by_4f3b07f8") : l10n("local.blocked_by_36931a94");
   const rootLabel = streamlined
-    ? placement === "bottom" ? "Root blocker remains" : "Root blocker"
-    : "Ultimately blocked by";
+    ? placement === "bottom" ? l10n("local.root_blocker_remains_60eb36cb") : l10n("local.root_blocker_9c1c8ef5")
+    : l10n("local.ultimately_blocked_by_b2804867");
   return (
     <div
-      aria-label="Task blockers"
+      aria-label={l10n("local.task_blockers_036bb651")}
       data-placement={placement}
       data-testid="task-chat-blocker-links"
       className="flex min-w-0 flex-col gap-1 overflow-hidden text-(length:--text-micro) leading-4 text-amber-700 dark:text-amber-300"
@@ -220,10 +221,10 @@ export function TaskChatLiveWorkLinks({
   placement: "top" | "bottom";
 }) {
   const streamlined = useStreamlinedTaskChatPresentation();
-  const heading = streamlined && placement === "bottom" ? "Still waiting on live work" : "Waiting on live work";
+  const heading = streamlined && placement === "bottom" ? l10n("local.still_waiting_on_live_work_38efcfc0") : l10n("local.waiting_on_live_work_54a2de10");
   return (
     <div
-      aria-label="Tasks waiting on live work"
+      aria-label={l10n("local.tasks_waiting_on_live_work_1d80e4a7")}
       data-placement={placement}
       data-testid="task-chat-live-work-links"
       className="flex min-w-0 flex-col gap-1.5 overflow-hidden text-(length:--text-micro) leading-4 text-blue-700 dark:text-blue-300"
@@ -254,10 +255,10 @@ export function TaskChatLiveWorkLinks({
         ))}
       </ol>
       {liveWork.nowRunning.map((blocker) => streamlined ? (
-        <LiveWorkLink key={blocker.id} blocker={blocker} status="running" label="Now running" />
+        <LiveWorkLink key={blocker.id} blocker={blocker} status="running" label={l10n("local.now_running_44cdf357")} />
       ) : (
         <div key={blocker.id} className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
-          <span className="shrink-0 font-medium">Now running</span>
+          <span className="shrink-0 font-medium">{l10n("local.now_running_44cdf357")}</span>
           <LiveWorkLink blocker={blocker} status="running" />
         </div>
       ))}

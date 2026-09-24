@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,11 +43,10 @@ export function HoneycombRunLink({
         href={href}
         target="_blank"
         rel="noreferrer"
-        title="Open this run's task.run trace query in Honeycomb"
+        title={l10n("local.open_this_run_s_task_run_trace_query_in_honey_b056c270")}
       >
         <ExternalLink />
-        View in Honeycomb
-      </a>
+        {l10n("local.view_in_honeycomb_358cde94")}</a>
     </Button>
   );
 }

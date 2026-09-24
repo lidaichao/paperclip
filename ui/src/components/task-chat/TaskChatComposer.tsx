@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { AgentAvatar } from "../AgentAvatar";
 import {
   useEffect,
@@ -631,7 +632,7 @@ export function TaskChatComposer({
   );
   const assigneeValue = pendingAssignee ?? currentAssigneeValue;
   const assigneeLabel =
-    reassignOptions?.find((o) => o.id === assigneeValue)?.label ?? "Unassigned";
+    reassignOptions?.find((o) => o.id === assigneeValue)?.label ?? l10n("local.unassigned_14d33bd0");
   const assigneeName =
     assigneeLabel === "Unassigned" ? "the agent" : assigneeLabel;
   const effectivePlaceholder = queuedEdit
@@ -645,13 +646,13 @@ export function TaskChatComposer({
     name: "Goal",
     description:
       !runnerGoalCapability || runnerGoalCapability.verified === false
-        ? "Support will be verified when the session starts."
-        : "Pursue work across turns.",
+        ? l10n("local.support_will_be_verified_when_the_session_sta_12765256")
+        : l10n("local.pursue_work_across_turns_2f077b6b"),
     aliases: ["goal", "pursue", "continue"],
     disabled: goalUnavailable && runnerGoalCapability !== null,
     disabledReason:
       runnerGoalCapability?.reason ??
-      "Session goals are unsupported by this agent.",
+      l10n("local.session_goals_are_unsupported_by_this_agent_83fd8f12"),
   };
 
   function updatePendingAssignee(value: string | null) {
@@ -857,7 +858,7 @@ export function TaskChatComposer({
       ? ({ matched: false } as const)
       : parseRunnerGoalCommand(submittedBody);
     if (goalCommand.matched && conversationMode) {
-      setActionError("Create a separate task for work that needs an ongoing execution goal.");
+      setActionError(l10n("local.create_a_separate_task_for_work_that_needs_an_d677bb2b"));
       return;
     }
     if (goalCommand.matched) {
@@ -866,7 +867,7 @@ export function TaskChatComposer({
         return;
       }
       if (attachmentsRef.current.length > 0) {
-        setActionError("Remove attachments before using /goal.");
+        setActionError(l10n("local.remove_attachments_before_using_goal_9be2e865"));
         return;
       }
       if (!onRunnerGoalCommand) {
@@ -892,7 +893,7 @@ export function TaskChatComposer({
         if (hasReassignment && goalCommand.command.action !== "focus") {
           const reassignment = parseAssigneeValue(assigneeValue);
           if (!reassignment || !onRunnerGoalReassign) {
-            setActionError("Select an agent before starting a session goal.");
+            setActionError(l10n("local.select_an_agent_before_starting_a_session_goa_471042f7"));
             return;
           }
           await onRunnerGoalReassign(reassignment);
@@ -1115,8 +1116,7 @@ export function TaskChatComposer({
       {takeoverBusy ? (
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
       ) : null}
-      Skip
-    </Button>
+      {l10n("local.skip_28d03596")}</Button>
   ) : null;
 
   if (pause && (!conversationMode || queuedEdit)) {
@@ -1155,34 +1155,28 @@ export function TaskChatComposer({
           className="mb-3 space-y-2 rounded-md border border-border bg-muted p-3 text-sm"
         >
           <p>
-            We couldn’t confirm whether this comment was saved. It may already
-            be in the conversation. Review it before starting another draft.
-          </p>
+            {l10n("local.we_couldn_t_confirm_whether_this_comment_was_d18cbb20")}</p>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={reviewUncertainSubmission}
           >
-            Review conversation
-          </Button>
+            {l10n("local.review_conversation_f2f5723a")}</Button>
           {reviewError ? (
-            <p>Couldn’t refresh the conversation. Try reviewing it again.</p>
+            <p>{l10n("local.couldn_t_refresh_the_conversation_try_reviewi_57d51bf8")}</p>
           ) : null}
           {uncertainSubmission.reviewed ? (
             <>
               <p>
-                Discarding this draft does not remove any saved comment or
-                uploaded file.
-              </p>
+                {l10n("local.discarding_this_draft_does_not_remove_any_sav_fabd608b")}</p>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={discardUncertainDraft}
               >
-                Discard draft and start new
-              </Button>
+                {l10n("local.discard_draft_and_start_new_c6c7026b")}</Button>
             </>
           ) : null}
         </div>
@@ -1223,8 +1217,7 @@ export function TaskChatComposer({
                   className="h-7 px-2"
                   onClick={takeover.onShowNext}
                 >
-                  {takeover.pendingCount} pending
-                </Button>
+                  {takeover.pendingCount} {l10n("local.pending_62a2fed3")}</Button>
               ) : null}
               <div
                 ref={setTakeoverControlsSlot}
@@ -1236,7 +1229,7 @@ export function TaskChatComposer({
                 size="icon-xs"
                 variant="ghost"
                 className="text-muted-foreground hover:text-foreground"
-                aria-label={`Dismiss ${takeover.label}`}
+                aria-label={l10n("local.dismiss_value_277f0be3", {v0: (takeover.label)})}
                 disabled={takeoverBusy}
                 onClick={takeover.onDismiss}
               >
@@ -1291,17 +1284,16 @@ export function TaskChatComposer({
             >
               <CircleHelp className="h-4 w-4 shrink-0" aria-hidden />
               <span className="min-w-0 flex-1 truncate">
-                {pendingTakeover?.label ?? takeover?.label ?? "Pending input"}
+                {pendingTakeover?.label ?? takeover?.label ?? l10n("local.pending_input_bc6e0973")}
               </span>
               <span className="shrink-0 font-medium">
-                {pendingTakeover?.count ?? takeover?.pendingCount ?? 1} pending
-              </span>
+                {pendingTakeover?.count ?? takeover?.pendingCount ?? 1} {l10n("local.pending_62a2fed3")}</span>
             </button>
           ) : null}
           {pause && conversationMode ? (
             <div className="space-y-2">
               <TaskChatPausedTakeover {...pause} hasDraft={Boolean(body.trim() || attachments.length)} />
-              <p className="text-xs text-muted-foreground">Send /new to start a fresh session and resume this conversation.</p>
+              <p className="text-xs text-muted-foreground">{l10n("local.send_new_to_start_a_fresh_session_and_resume_bed063a1")}</p>
             </div>
           ) : null}
           <div data-testid="task-chat-composer-input">
@@ -1311,14 +1303,14 @@ export function TaskChatComposer({
               onChange={changeBody}
               placeholder={
                 disabled
-                  ? (disabledReason ?? "Composer disabled")
+                  ? (disabledReason ?? l10n("local.composer_disabled_72a59fae"))
                   : effectivePlaceholder
               }
               readOnly={disabled || !!uncertainSubmission}
               mentions={mentions}
               actionCommands={conversationMode ? [{
                 id: "action:new", kind: "action", command: "new", name: "New session",
-                description: "Start fresh context here, preserving conversation history.", aliases: ["new"],
+                description: l10n("local.start_fresh_context_here_preserving_conversat_130c3e63"), aliases: ["new"],
                 disabled,
               }] : [goalCommandOption]}
               onSubmit={() => void submit()}
@@ -1380,9 +1372,9 @@ export function TaskChatComposer({
                       </AttachmentTitle>
                       <AttachmentDescription className="max-w-48">
                         {attachment.status === "uploading"
-                          ? "Uploading…"
+                          ? l10n("local.uploading_5ce44dd7")
                           : attachment.status === "error"
-                            ? (attachment.error ?? "Upload failed")
+                            ? (attachment.error ?? l10n("local.upload_failed_6efc5d27"))
                             : [kind.label, sizeLabel]
                                 .filter(Boolean)
                                 .join(" · ")}
@@ -1390,7 +1382,7 @@ export function TaskChatComposer({
                     </AttachmentContent>
                     <AttachmentActions>
                       <AttachmentAction
-                        aria-label={`Remove ${attachment.name}`}
+                        aria-label={l10n("local.remove_value_86790c6d", {v0: (attachment.name)})}
                         disabled={!!uncertainSubmission}
                         onClick={() =>
                           setAttachments((prev) =>
@@ -1423,8 +1415,8 @@ export function TaskChatComposer({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={disabled}
-                  title="Attach file"
-                  aria-label="Attach file"
+                  title={l10n("local.attach_file_87fbe4fb")}
+                  aria-label={l10n("local.attach_file_87fbe4fb")}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
                   data-testid="task-chat-composer-attach"
                 >
@@ -1436,8 +1428,8 @@ export function TaskChatComposer({
             {queuedEdit ? (
               <span className="px-1 text-xs font-medium text-muted-foreground">
                 {queuedEdit.stale
-                  ? "Queued message changed"
-                  : "Editing queued message"}
+                  ? l10n("local.queued_message_changed_2dc0f5a6")
+                  : l10n("local.editing_queued_message_3bb5020b")}
               </span>
             ) : (
               <DropdownMenu>
@@ -1508,10 +1500,10 @@ export function TaskChatComposer({
               <InlineEntitySelector
                 value={assigneeValue}
                 options={reassignOptions ?? []}
-                placeholder="Assignee"
-                noneLabel="No assignee"
-                searchPlaceholder="Search assignees…"
-                emptyMessage="No matches."
+                placeholder={l10n("local.assignee_5e20d20e")}
+                noneLabel={l10n("local.no_assignee_d64d8cec")}
+                searchPlaceholder={l10n("local.search_assignees_12019555")}
+                emptyMessage={l10n("local.no_matches_d6572bd2")}
                 onChange={updatePendingAssignee}
                 disabled={disabled}
                 triggerTestId="task-chat-composer-assignee"
@@ -1558,8 +1550,7 @@ export function TaskChatComposer({
                 disabled={submitting}
                 className="h-8 shrink-0 rounded-md px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
               >
-                Cancel
-              </button>
+                {l10n("local.cancel_19766ed6")}</button>
             ) : null}
 
             <button
@@ -1579,28 +1570,28 @@ export function TaskChatComposer({
               title={
                 showStop
                   ? stopControl.stopping
-                    ? "Stopping…"
-                    : "Stop response"
+                    ? l10n("local.stopping_bbe85741")
+                    : l10n("local.stop_response_d5ca579c")
                   : queuedEdit
                     ? queuedEdit.stale
-                      ? "Queue as new message"
-                      : "Save queued message"
+                      ? l10n("local.queue_as_new_message_c4284a66")
+                      : l10n("local.save_queued_message_3d52a0db")
                     : uploadPending
-                      ? "Waiting for upload to finish"
+                      ? l10n("local.waiting_for_upload_to_finish_71fd6a43")
                       : uploadFailed
-                        ? "Remove the failed attachment to send"
-                        : "Send (⌘+Enter)"
+                        ? l10n("local.remove_the_failed_attachment_to_send_10d2ce8e")
+                        : l10n("local.send_enter_b5f7acc1")
               }
               aria-label={
                 showStop
                   ? stopControl.stopping
-                    ? "Stopping…"
-                    : "Stop"
+                    ? l10n("local.stopping_bbe85741")
+                    : l10n("local.stop_cae7d57b")
                   : queuedEdit
                     ? queuedEdit.stale
-                      ? "Queue as new message"
-                      : "Save queued message"
-                    : "Send"
+                      ? l10n("local.queue_as_new_message_c4284a66")
+                      : l10n("local.save_queued_message_3d52a0db")
+                    : l10n("local.send_f6f4688f")
               }
               className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-105 disabled:scale-100",

@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useId, useState } from "react";
 import {
   ArrowRight,
@@ -62,19 +63,18 @@ export function SlackAvatarContent({
           src={avatarUrl}
           width={512}
           height={512}
-          alt={`${agentName}’s Cliptoon avatar`}
+          alt={l10n("local.value_s_cliptoon_avatar_266fa3d9", {v0: (agentName)})}
           className="size-40 shrink-0 rounded-lg bg-muted object-contain"
         />
         <div className="space-y-3">
           <div className="space-y-1">
             <h2 id={`${id}-download`} className="text-sm font-semibold">
               {compact
-                ? "Download your agent’s avatar"
-                : "1. Download your agent’s avatar"}
+                ? l10n("local.download_your_agent_s_avatar_ce5bdd09")
+                : l10n("local.1_download_your_agent_s_avatar_fc5927ad")}
             </h2>
             <p className="text-xs text-muted-foreground">
-              PNG · 512 × 512 · Ready for Slack
-            </p>
+              {l10n("local.png_512_512_ready_for_slack_1439257c")}</p>
           </div>
           <Button variant="outline" asChild>
             <a
@@ -91,13 +91,11 @@ export function SlackAvatarContent({
               ) : (
                 <Download className="size-4" />
               )}
-              Download avatar
-            </a>
+              {l10n("local.download_avatar_e7dc2a1b")}</a>
           </Button>
           {downloadError && (
             <p role="alert" className="text-sm text-destructive">
-              Couldn’t download the avatar. Try downloading it again.
-            </p>
+              {l10n("local.couldn_t_download_the_avatar_try_downloading_f77ab7e7")}</p>
           )}
         </div>
       </section>
@@ -110,17 +108,14 @@ export function SlackAvatarContent({
               : "hidden"
           }
         >
-          How to upload in Slack
-        </summary>
+          {l10n("local.how_to_upload_in_slack_68a7030b")}</summary>
         <section aria-labelledby={`${id}-upload`} className="space-y-4">
           <div className="space-y-1">
             <h2 id={`${id}-upload`} className="text-sm font-semibold">
-              {compact ? "Upload it in Slack" : "2. Upload it in Slack"}
+              {compact ? l10n("local.upload_it_in_slack_9ef6fd05") : l10n("local.2_upload_it_in_slack_733c836b")}
             </h2>
             <p className="text-sm text-muted-foreground">
-              You’ll upload the downloaded image directly in Slack’s app
-              settings.
-            </p>
+              {l10n("local.you_ll_upload_the_downloaded_image_directly_i_19c451a3")}</p>
           </div>
           <ol className="list-decimal space-y-3 pl-5 text-sm">
             <li>
@@ -130,24 +125,21 @@ export function SlackAvatarContent({
                 rel="noopener noreferrer"
                 className="underline underline-offset-4"
               >
-                Open Slack app Settings{" "}
+                {l10n("local.open_slack_app_settings_30cfde1e")}{" "}
                 <ExternalLink className="inline size-3" />
               </a>{" "}
-              and choose <strong>{appName}</strong>.
+              {l10n("local.and_choose_566c1f30")}{" "}<strong>{appName}</strong>.
             </li>
             <li>
-              Choose <strong>Basic Information</strong>, then scroll to{" "}
-              <strong>Display Information</strong>.
+              {l10n("local.choose_c7f93783")}{" "}<strong>{l10n("local.basic_information_d094b334")}</strong>{l10n("local._then_scroll_to_9a940225")}{" "}
+              <strong>{l10n("local.display_information_6ad97855")}</strong>.
             </li>
             <li>
-              Under <strong>App icon &amp; Preview</strong>, click the app icon
-              and upload{" "}
+              {l10n("local.under_80e4ad05")}{" "}<strong>{l10n("local.app_icon_amp_preview_2ecc0fa4")}</strong>{l10n("local._click_the_app_icon_and_upload_ac8049f4")}{" "}
               <span className="break-all font-mono text-xs">{filename}</span>.
             </li>
             <li>
-              Confirm the crop, then click <strong>Save Changes</strong> in
-              Slack.
-            </li>
+              {l10n("local.confirm_the_crop_then_click_483a16f1")}{" "}<strong>{l10n("local.save_changes_35322b5b")}</strong> {l10n("local.in_slack_017245d5")}</li>
           </ol>
         </section>
       </details>
@@ -172,13 +164,11 @@ export function SlackAvatarStep({
       <div className="space-y-2">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold">
-            Give {props.agentName} a face in Slack
-          </h1>
-          <span className="text-xs text-muted-foreground">Optional</span>
+            {l10n("local.give_c6402106")}{" "}{props.agentName} {l10n("local.a_face_in_slack_5c31a82b")}</h1>
+          <span className="text-xs text-muted-foreground">{l10n("local.optional_59be7133")}</span>
         </div>
         <p className="text-sm text-muted-foreground">
-          Use {props.agentName}’s avatar so your team recognizes the agent
-        </p>
+          {l10n("local.use_c36d819e")}{" "}{props.agentName}{l10n("local._s_avatar_so_your_team_recognizes_the_agent_001b345b")}</p>
       </div>
       <SlackAvatarContent {...props} />
       {uploaded && (
@@ -187,15 +177,13 @@ export function SlackAvatarStep({
           className="flex items-center gap-2 rounded-lg bg-(--status-task-done)/10 p-3 text-sm"
         >
           <Check className="size-4 text-(--status-task-done)" />
-          You marked the avatar as uploaded in Slack.
-        </p>
+          {l10n("local.you_marked_the_avatar_as_uploaded_in_slack_bc4cad4b")}</p>
       )}
       <SetupWizardFooter onSaveExit={onSaveExit}>
         <Button variant="ghost" onClick={onSkip}>
-          Skip for now
-        </Button>
+          {l10n("local.skip_for_now_b58eb52c")}</Button>
         <Button onClick={onUploaded}>
-          {uploaded ? "Continue" : "I’ve uploaded the avatar"}
+          {uploaded ? l10n("local.continue_31fbef16") : l10n("local.i_ve_uploaded_the_avatar_6e475f8b")}
           <ArrowRight className="size-4" />
         </Button>
       </SetupWizardFooter>
@@ -205,12 +193,11 @@ export function SlackAvatarStep({
 
 export function SlackAvatarSettings(props: SlackAvatarProps) {
   return (
-    <section className="space-y-4" aria-label="Slack avatar">
+    <section className="space-y-4" aria-label={l10n("local.slack_avatar_761226ca")}>
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold">Agent avatar</h2>
+        <h2 className="text-lg font-semibold">{l10n("local.agent_avatar_fb65e8cf")}</h2>
         <p className="text-sm text-muted-foreground">
-          Use {props.agentName}’s avatar so your team recognizes the agent
-        </p>
+          {l10n("local.use_c36d819e")}{" "}{props.agentName}{l10n("local._s_avatar_so_your_team_recognizes_the_agent_001b345b")}</p>
       </div>
       <SlackAvatarContent {...props} compact />
     </section>

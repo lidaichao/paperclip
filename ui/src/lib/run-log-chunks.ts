@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { RunLogChunk } from "../adapters";
 
 /**
@@ -53,7 +54,7 @@ export interface ChunkRetentionBudget {
  * `buildTranscript`, so the affordance is adapter-agnostic.
  */
 export const TRIMMED_OUTPUT_MARKER_TEXT =
-  "⋯ earlier output trimmed to stay within the live transcript buffer ⋯";
+  l10n("local._earlier_output_trimmed_to_stay_within_the_li_482cf762");
 
 export function isTrimmedOutputMarkerChunk(chunk: RunLogChunk): boolean {
   return (

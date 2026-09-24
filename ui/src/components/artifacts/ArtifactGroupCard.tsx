@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../../i18n";
 import { Layers } from "lucide-react";
 import type { To } from "react-router-dom";
 import type { CompanyArtifactGroup } from "@/api/artifacts";
@@ -21,7 +22,7 @@ interface ArtifactGroupCardProps {
 export function ArtifactGroupCard({ group, to }: ArtifactGroupCardProps) {
   const stacked = group.count > 1;
   const preview = group.previewArtifacts[0];
-  const countLabel = `${group.count} artifact${group.count === 1 ? "" : "s"}`;
+  const countLabel = l10n("local.value_artifactvalue_b8a4816e", {v0: (group.count), v1: (englishPluralSuffix(group.count === 1 ? "" : "s"))});
 
   return (
     <div className="relative">
@@ -80,7 +81,7 @@ export function ArtifactGroupCard({ group, to }: ArtifactGroupCardProps) {
           <div className="mt-0.5 flex items-center gap-1.5 text-(length:--text-micro) text-muted-foreground/65">
             <span>{countLabel}</span>
             <span className="text-muted-foreground/50">·</span>
-            <span>Updated {formatDate(group.updatedAt)}</span>
+            <span>{l10n("local.updated_3a5ecca1")}{" "}{formatDate(group.updatedAt)}</span>
           </div>
         </div>
       </Link>

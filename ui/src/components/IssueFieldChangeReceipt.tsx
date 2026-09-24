@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import type { ActivityEvent } from "@paperclipai/shared";
 import {
@@ -66,8 +67,7 @@ export function IssueFieldChangeReceipt({
                     rather than implying the whole value is shown. */}
                 {row.truncated ? (
                   <span className="text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-                    preview
-                  </span>
+                    {l10n("local.preview_5975cf1b")}</span>
                 ) : null}
               </dd>
             </div>
@@ -85,11 +85,11 @@ export function IssueFieldChangeReceipt({
           />
           {responsibleUserName ? (
             <>
-              for <span className="text-foreground">{responsibleUserName}</span>
+              {l10n("local.for_10c22bcf")}{" "}<span className="text-foreground">{responsibleUserName}</span>
               {" · "}
             </>
           ) : null}
-          authorized by {reason}
+          {l10n("local.authorized_by_f2103e76")}{" "}{reason}
         </p>
       ) : null}
     </div>

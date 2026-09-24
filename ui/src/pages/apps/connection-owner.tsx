@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { ToolConnection } from "@paperclipai/shared";
 import { humanizeConnectionDisplayName } from "@paperclipai/shared";
 import { Identity } from "@/components/Identity";
@@ -11,7 +12,7 @@ export function connectionOwnerProfile(
 ): ConnectionOwnerProfile | null {
   if (!connection.createdByUserId) return null;
   return profiles.get(connection.createdByUserId) ?? {
-    label: connection.createdByUserId === "local-board" ? "Board" : "Board member",
+    label: connection.createdByUserId === "local-board" ? l10n("local.board_4816cbfd") : l10n("local.board_member_a2595acc"),
     image: null,
   };
 }
@@ -53,7 +54,7 @@ export function connectionDisplayNameForOwner(
 }
 
 export function ConnectionOwnerIdentity({ owner }: { owner: ConnectionOwnerProfile | null }) {
-  if (!owner) return <span className="text-xs text-muted-foreground">Unknown</span>;
+  if (!owner) return <span className="text-xs text-muted-foreground">{l10n("local.unknown_b764cdc0")}</span>;
   return (
     <Identity
       name={owner.label}

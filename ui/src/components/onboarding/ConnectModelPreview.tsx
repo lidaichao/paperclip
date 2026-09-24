@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { AgentCharacter } from "../AgentCharacter";
 import { useState } from "react";
 import { MotionConfig } from "motion/react";
@@ -47,7 +48,7 @@ import { Stepper } from "./Stepper";
 const MODEL_SOURCES: ModelSource[] = [
   {
     id: "claude_local",
-    label: "Claude Code",
+    label: l10n("local.claude_code_246ef8c1"),
     icon: <img src="/brands/claude-color.svg" alt="" className="size-full" />,
   },
   {
@@ -106,14 +107,14 @@ export function ConnectModelPreview({
         <div className="pt-6">
           <OnboardingHeading
             center
-            title="Connect a model"
+            title={l10n("local.connect_a_model_87bdaaf8")}
             lede="Paperclip works with your existing subscription or API keys."
           />
         </div>
 
         <div className="space-y-2 pt-12">
           <ModelSourceTiles
-            label="Model source"
+            label={l10n("local.model_source_9fb88c74")}
             sources={MODEL_SOURCES}
             mode={mode}
             selectedId={selectedId}
@@ -133,8 +134,7 @@ export function ConnectModelPreview({
                 onCheckedChange={(checked) => setUseApiKeys(checked === true)}
               />
               <span className="text-sm font-medium text-foreground">
-                Use API keys instead
-              </span>
+                {l10n("local.use_api_keys_instead_13febab4")}</span>
             </label>
           )}
         </div>
@@ -143,7 +143,7 @@ export function ConnectModelPreview({
             disabled rather than failing on press. */}
         <FooterNav
           onBack={() => {}}
-          primaryLabel="Connect"
+          primaryLabel={l10n("local.connect_1a2303ed")}
           primaryDisabled={selectedId === null}
           onPrimary={() => {}}
         />

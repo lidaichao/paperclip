@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { Link } from "react-router-dom";
 import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -18,17 +19,11 @@ export function SlackCapabilitiesView({
 }) {
   return (
     <section className="space-y-3">
-      <h3 className="text-sm font-semibold">Slack tools</h3>
+      <h3 className="text-sm font-semibold">{l10n("local.slack_tools_192c2528")}</h3>
       <p className="text-sm">
-        Invite the bot to a channel, then ask it to read the discussion and act
-        on it. Only linked people can direct these tools.
-      </p>
+        {l10n("local.invite_the_bot_to_a_channel_then_ask_it_to_re_b6286a43")}</p>
       <p className="text-sm text-muted-foreground">
-        The agent can read channels shared by the bot and the requester, even
-        when responses are disabled there. Allowed Channels below controls
-        replies and writes. Private research stays in its source channel or your
-        DM with the bot.
-      </p>
+        {l10n("local.the_agent_can_read_channels_shared_by_the_bot_deea995a")}</p>
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -36,43 +31,32 @@ export function SlackCapabilitiesView({
       )}
       {!capabilities && !error && (
         <p role="status" className="text-sm text-muted-foreground">
-          Checking Slack permissions…
-        </p>
+          {l10n("local.checking_slack_permissions_d85521cb")}</p>
       )}
       {capabilities && (
         <>
           <ul className="space-y-2 text-sm">
             <li>
-              Read channels, threads, messages, files and source links; search
-              available channel history.
-            </li>
+              {l10n("local.read_channels_threads_messages_files_and_sour_9ab0409c")}</li>
             <li>
-              Send messages and files, react, pin, bookmark, and work with
-              canvases and lists.
-            </li>
+              {l10n("local.send_messages_and_files_react_pin_bookmark_an_64d0b04e")}</li>
             <li>
-              Creating channels, inviting people and destructive changes require
-              approval.
-            </li>
+              {l10n("local.creating_channels_inviting_people_and_destruc_a8caa471")}</li>
           </ul>
           {capabilities.missingScopes.length > 0 && (
             <div className="rounded-lg border border-border bg-muted p-3 space-y-2">
               <p className="text-sm font-medium">
-                Add permissions to unlock more tools
-              </p>
+                {l10n("local.add_permissions_to_unlock_more_tools_a716eb3e")}</p>
               <p className="text-sm">
-                Your existing connection still works. In{" "}
+                {l10n("local.your_existing_connection_still_works_in_090a1069")}{" "}
                 <a
                   className="underline underline-offset-4"
                   href="https://api.slack.com/apps"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Slack app settings
-                </a>
-                , choose your app, open OAuth &amp; Permissions, add these Bot
-                Token Scopes, then reinstall the app to your workspace.
-              </p>
+                  {l10n("local.slack_app_settings_d811efd5")}</a>
+                {l10n("local._choose_your_app_open_oauth_amp_permissions_a_33f91f01")}</p>
               <p className="text-xs font-mono break-words">
                 {capabilities.missingScopes.join(", ")}
               </p>
@@ -80,8 +64,7 @@ export function SlackCapabilitiesView({
           )}
           <details className="text-sm">
             <summary className="cursor-pointer text-muted-foreground">
-              Tool permissions and availability
-            </summary>
+              {l10n("local.tool_permissions_and_availability_c1e8c898")}</summary>
             <ul className="mt-3 divide-y divide-border">
               {capabilities.tools.map((tool) => (
                 <li
@@ -93,22 +76,19 @@ export function SlackCapabilitiesView({
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {tool.available === false
-                      ? "Needs permissions"
+                      ? l10n("local.needs_permissions_fa8dc2e4")
                       : tool.available === null
-                        ? "Not verified"
+                        ? l10n("local.not_verified_15133907")
                         : tool.risk === "approval"
-                          ? "Ask first"
-                          : "Available"}
+                          ? l10n("local.ask_first_4a9e8cf3")
+                          : l10n("local.available_e6744473")}
                   </span>
                 </li>
               ))}
             </ul>
           </details>
           <p className="text-xs text-muted-foreground">
-            Slack plan, membership and per-action permissions still apply.
-            Native search availability depends on the app and runtime; history
-            scans report what they inspected.
-          </p>
+            {l10n("local.slack_plan_membership_and_per_action_permissi_1b5d79b2")}</p>
         </>
       )}
     </section>
@@ -149,12 +129,9 @@ export function SlackSearchView({
   };
   return (
     <section className="space-y-3">
-      <h3 className="text-sm font-semibold">Your Slack search access</h3>
+      <h3 className="text-sm font-semibold">{l10n("local.your_slack_search_access_c49a014b")}</h3>
       <p className="text-sm text-muted-foreground">
-        Optional personal authorization enables private search on supported
-        runtimes. It cannot read channels the bot hasn’t joined or let the bot
-        write as you. Basic channel reading works without it.
-      </p>
+        {l10n("local.optional_personal_authorization_enables_priva_5d5b66af")}</p>
       {!status.nativeSearchAvailable && (
         <p role="status" className="text-sm text-muted-foreground">
           {status.limitation}
@@ -162,15 +139,14 @@ export function SlackSearchView({
       )}
       {status.connected ? (
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm">Slack search connected</span>
+          <span className="text-sm">{l10n("local.slack_search_connected_7ce7998d")}</span>
           <Button
             variant="outline"
             size="sm"
             disabled={pending}
             onClick={() => void perform(onDisconnect)}
           >
-            Disconnect search
-          </Button>
+            {l10n("local.disconnect_search_1ae29196")}</Button>
         </div>
       ) : (
         <Button
@@ -178,20 +154,16 @@ export function SlackSearchView({
           disabled={pending || !status.configured}
           onClick={() => void perform(onConnect)}
         >
-          Connect Slack search
-        </Button>
+          {l10n("local.connect_slack_search_e8b57c08")}</Button>
       )}
       {!status.configured && (
         <p className="text-sm text-muted-foreground">
-          A connection manager needs to configure your Slack app’s OAuth
-          credentials first.
-        </p>
+          {l10n("local.a_connection_manager_needs_to_configure_your_c83c4076")}</p>
       )}
       {status.canConfigure && (
         <details className="text-sm">
           <summary className="cursor-pointer text-muted-foreground">
-            OAuth app configuration for connection managers
-          </summary>
+            {l10n("local.oauth_app_configuration_for_connection_manage_ee4c0f2a")}</summary>
           <form
             className="mt-3 space-y-3"
             onSubmit={(event) => {
@@ -203,17 +175,14 @@ export function SlackSearchView({
             }}
           >
             <p className="text-sm">
-              In Slack app settings, add this redirect URL under OAuth &amp;
-              Permissions. Add user scopes <code>search:read.public</code>,{" "}
-              <code>search:read.private</code> and{" "}
-              <code>search:read.files</code>. Find Client ID and Client Secret
-              under Basic Information.
-            </p>
+              {l10n("local.in_slack_app_settings_add_this_redirect_url_u_4b664522")}{" "}<code>search:read.public</code>,{" "}
+              <code>search:read.private</code> {l10n("local.and_6201111b")}{" "}
+              <code>search:read.files</code>{l10n("local._find_client_id_and_client_secret_under_basic_43c6d5ed")}</p>
             <p className="text-xs font-mono break-all">
-              {status.redirectUri ?? "Configure a public HTTPS URL first."}
+              {status.redirectUri ?? l10n("local.configure_a_public_https_url_first_a5716c99")}
             </p>
             <div className="space-y-2">
-              <label htmlFor={`${id}-client`}>Client ID</label>
+              <label htmlFor={`${id}-client`}>{l10n("local.client_id_8726db01")}</label>
               <Input
                 id={`${id}-client`}
                 value={clientId}
@@ -221,7 +190,7 @@ export function SlackSearchView({
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor={`${id}-secret`}>Client Secret</label>
+              <label htmlFor={`${id}-secret`}>{l10n("local.client_secret_ae21cf6d")}</label>
               <Input
                 id={`${id}-secret`}
                 type="password"
@@ -236,8 +205,7 @@ export function SlackSearchView({
                 size="sm"
                 disabled={pending || !clientId || !clientSecret}
               >
-                Save OAuth configuration
-              </Button>
+                {l10n("local.save_oauth_configuration_37b14848")}</Button>
             </div>
           </form>
         </details>
@@ -275,8 +243,7 @@ export function SlackToolsSettings({
           className="text-sm underline underline-offset-4"
           to={`/apps/${connectionId}/permissions`}
         >
-          Manage action permissions
-        </Link>
+          {l10n("local.manage_action_permissions_94d9b7f3")}</Link>
       )}
     </div>
   );
@@ -301,8 +268,7 @@ export function SlackSearchAccess({
   if (!query.data)
     return (
       <p role="status" className="text-sm text-muted-foreground">
-        Loading search access…
-      </p>
+        {l10n("local.loading_search_access_20c6a028")}</p>
     );
   return (
     <SlackSearchView

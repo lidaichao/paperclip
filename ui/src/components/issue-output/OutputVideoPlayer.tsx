@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { cn } from "@/lib/utils";
 
 interface OutputVideoPlayerProps {
@@ -25,7 +26,7 @@ export function OutputVideoPlayer({ src, poster, className, title }: OutputVideo
         controls
         preload="metadata"
         playsInline
-        aria-label={title ? `Video output: ${title}` : "Video output"}
+        aria-label={title ? l10n("local.video_output_value_b3e5704f", {v0: (title)}) : l10n("local.video_output_4dc9f1d0")}
         className="absolute inset-0 h-full w-full"
       />
     </div>

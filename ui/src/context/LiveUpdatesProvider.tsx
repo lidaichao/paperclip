@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { getPageVisibility, usePageVisibility } from "../lib/page-visibility";
 import {
   createContext,
@@ -184,11 +185,11 @@ function resolveActorLabel(
       `Agent ${shortId(actorId)}`
     );
   }
-  if (actorType === "system") return "System";
+  if (actorType === "system") return l10n("local.system_6725e7bb");
   if (actorType === "user" && actorId) {
     return resolveUserName(queryClient, companyId, actorId) ?? "Board";
   }
-  return "Someone";
+  return l10n("local.someone_864c855e");
 }
 
 interface IssueToastContext {
@@ -950,10 +951,10 @@ function buildActivityToast(
 
   if (action === "issue.created") {
     return {
-      title: `${actor} created ${issue.ref}`,
+      title: l10n("local.value_created_value_ce9227e5", {v0: (actor), v1: (issue.ref)}),
       body: issue.title ? truncate(issue.title, 96) : undefined,
       tone: "success",
-      action: { label: `View ${issue.ref}`, href: issue.href },
+      action: { label: l10n("local.view_value_da865c19", {v0: (issue.ref)}), href: issue.href },
       dedupeKey: `activity:${action}:${entityId}`,
     };
   }
@@ -972,10 +973,10 @@ function buildActivityToast(
         ? truncate(issue.title, 96)
         : issue.label;
     return {
-      title: `${actor} updated ${issue.ref}`,
+      title: l10n("local.value_updated_value_1e8c0c4e", {v0: (actor), v1: (issue.ref)}),
       body: truncate(body, 100),
       tone: "info",
-      action: { label: `View ${issue.ref}`, href: issue.href },
+      action: { label: l10n("local.view_value_da865c19", {v0: (issue.ref)}), href: issue.href },
       dedupeKey: `activity:${action}:${entityId}`,
     };
   }
@@ -987,14 +988,14 @@ function buildActivityToast(
   const reopenedFrom = readString(details?.reopenedFrom);
   const reopenedLabel = reopened
     ? reopenedFrom
-      ? `reopened from ${reopenedFrom.replace(/_/g, " ")}`
-      : "reopened"
+      ? l10n("local.reopened_from_value_67edf584", {v0: (reopenedFrom.replace(/_/g, " "))})
+      : l10n("local.reopened_d050aeb8")
     : null;
   const title = reopened
-    ? `${actor} reopened and commented on ${issue.ref}`
+    ? l10n("local.value_reopened_and_commented_on_value_7046215e", {v0: (actor), v1: (issue.ref)})
     : updated
-      ? `${actor} commented and updated ${issue.ref}`
-      : `${actor} commented on ${issue.ref}`;
+      ? l10n("local.value_commented_and_updated_value_eab536db", {v0: (actor), v1: (issue.ref)})
+      : l10n("local.value_commented_on_value_0f48c4ff", {v0: (actor), v1: (issue.ref)});
   const body = bodySnippet
     ? reopenedLabel
       ? `${reopenedLabel} - ${bodySnippet.replace(/^#+\s*/m, "").replace(/\n/g, " ")}`
@@ -1008,7 +1009,7 @@ function buildActivityToast(
     title,
     body: body ? truncate(body, 96) : undefined,
     tone: "info",
-    action: { label: `View ${issue.ref}`, href: issue.href },
+    action: { label: l10n("local.view_value_da865c19", {v0: (issue.ref)}), href: issue.href },
     dedupeKey: `activity:${action}:${entityId}:${commentId ?? "na"}`,
   };
 }
@@ -1026,13 +1027,13 @@ function buildJoinRequestToast(
     return null;
 
   const requestType = readString(details?.requestType);
-  const label = requestType === "agent" ? "Agent" : "Someone";
+  const label = requestType === "agent" ? l10n("local.agent_11b39c93") : l10n("local.someone_864c855e");
 
   return {
-    title: `${label} wants to join`,
+    title: l10n("local.value_wants_to_join_549c285e", {v0: (label)}),
     body: "A new join request is waiting for approval.",
     tone: "info",
-    action: { label: "View inbox", href: "/inbox/mine" },
+    action: { label: l10n("local.view_inbox_1c8264bf"), href: "/inbox/mine" },
     dedupeKey: `join-request:${entityId}`,
   };
 }
@@ -1049,7 +1050,7 @@ function buildAgentStatusToast(
 
   const tone = status === "error" ? "error" : "info";
   const name = nameOf(agentId) ?? `Agent ${shortId(agentId)}`;
-  const title = status === "running" ? `${name} started` : `${name} errored`;
+  const title = status === "running" ? l10n("local.value_started_d83eb38a", {v0: (name)}) : l10n("local.value_errored_0e6cd727", {v0: (name)});
 
   const agents = queryClient.getQueryData<Agent[]>(
     queryKeys.agents.list(companyId),
@@ -1061,7 +1062,7 @@ function buildAgentStatusToast(
     title,
     body,
     tone,
-    action: { label: "View agent", href: `/agents/${agentId}` },
+    action: { label: l10n("local.view_agent_7ce7832e"), href: `/agents/${agentId}` },
     dedupeKey: `agent-status:${agentId}:${status}`,
   };
 }
@@ -1096,7 +1097,7 @@ function buildRunStatusToast(
       body: "This external chat identity isn't linked, and isolated guest workspaces are disabled. Link the identity in Connectors or enable isolated workspaces, then start a new task.",
       tone: "warn",
       ttlMs: 10_000,
-      action: { label: "Open chat connections", href: "/apps" },
+      action: { label: l10n("local.open_chat_connections_9f7e518a"), href: "/apps" },
       dedupeKey: `run-status:${runId}:${status}`,
     };
   }
@@ -1108,13 +1109,13 @@ function buildRunStatusToast(
         : "error";
   const statusLabel =
     status === "succeeded"
-      ? "succeeded"
+      ? l10n("local.succeeded_5dceaece")
       : status === "failed"
-        ? "failed"
+        ? l10n("local.failed_5d28a90f")
         : status === "timed_out"
-          ? "timed out"
-          : "cancelled";
-  const title = `${name} run ${statusLabel}`;
+          ? l10n("local.timed_out_3dcd80f1")
+          : l10n("local.cancelled_8b47045e");
+  const title = l10n("local.value_run_value_a25dbfa5", {v0: (name), v1: (statusLabel)});
 
   let body: string | undefined;
   if (error) {
@@ -1128,7 +1129,7 @@ function buildRunStatusToast(
     body,
     tone,
     ttlMs: status === "succeeded" ? 5000 : 7000,
-    action: { label: "View run", href: `/agents/${agentId}/runs/${runId}` },
+    action: { label: l10n("local.view_run_aaf7fccc"), href: `/agents/${agentId}/runs/${runId}` },
     dedupeKey: `run-status:${runId}:${status}`,
   };
 }

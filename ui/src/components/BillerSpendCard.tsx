@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { useMemo } from "react";
 import type { CostByBiller, CostByProviderModel } from "@paperclipai/shared";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -62,13 +63,11 @@ export function BillerSpendCard({
               {providerDisplayName(row.biller)}
             </CardTitle>
             <CardDescription className="text-xs mt-0.5">
-              <span className="font-mono">{formatTokens(row.inputTokens + row.cachedInputTokens)}</span> in
+              <span className="font-mono">{formatTokens(row.inputTokens + row.cachedInputTokens)}</span> {l10n("local.in_58296753")}{" · "}
+              <span className="font-mono">{formatTokens(row.outputTokens)}</span> {l10n("local.out_762069bc")}{" · "}
+              {row.providerCount} {l10n("local.provider_5c4c1964")}{row.providerCount === 1 ? "" : englishPluralSuffix("s")}
               {" · "}
-              <span className="font-mono">{formatTokens(row.outputTokens)}</span> out
-              {" · "}
-              {row.providerCount} provider{row.providerCount === 1 ? "" : "s"}
-              {" · "}
-              {row.modelCount} model{row.modelCount === 1 ? "" : "s"}
+              {row.modelCount} {l10n("local.model_9372c470")}{row.modelCount === 1 ? "" : englishPluralSuffix("s")}
             </CardDescription>
           </div>
           <span className="text-xl font-bold tabular-nums shrink-0">
@@ -80,30 +79,28 @@ export function BillerSpendCard({
       <CardContent className="px-4 pb-4 pt-3 space-y-4">
         {budgetMonthlyCents > 0 && (
           <QuotaBar
-            label="Period spend"
+            label={l10n("local.period_spend_9c4819e6")}
             percentUsed={budgetPct}
             leftLabel={formatCents(row.costCents)}
-            rightLabel={`${Math.round(budgetPct)}% of allocation`}
+            rightLabel={l10n("local.value_of_allocation_4fcca3d6", {v0: (Math.round(budgetPct))})}
           />
         )}
 
         <div className="text-xs text-muted-foreground">
-          {row.apiRunCount > 0 ? `${row.apiRunCount} metered run${row.apiRunCount === 1 ? "" : "s"}` : "0 metered runs"}
+          {row.apiRunCount > 0 ? l10n("local.value_metered_runvalue_fa4928af", {v0: (row.apiRunCount), v1: (englishPluralSuffix(row.apiRunCount === 1 ? "" : "s"))}) : l10n("local.0_metered_runs_2f11c82e")}
           {" · "}
           {row.subscriptionRunCount > 0
-            ? `${row.subscriptionRunCount} subscription run${row.subscriptionRunCount === 1 ? "" : "s"}`
-            : "0 subscription runs"}
+            ? l10n("local.value_subscription_runvalue_bdf69999", {v0: (row.subscriptionRunCount), v1: (englishPluralSuffix(row.subscriptionRunCount === 1 ? "" : "s"))})
+            : l10n("local.0_subscription_runs_92a4a1c9")}
           {" · "}
-          {formatCents(weekSpendCents)} this week
-        </div>
+          {formatCents(weekSpendCents)} {l10n("local.this_week_7d76655e")}</div>
 
         {billingTypeBreakdown.length > 0 && (
           <>
             <div className="border-t border-border" />
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Billing types
-              </p>
+                {l10n("local.billing_types_2ebd3c26")}</p>
               <div className="space-y-1.5">
                 {billingTypeBreakdown.map(([billingType, costCents]) => (
                   <div key={billingType} className="flex items-center justify-between gap-2 text-xs">
@@ -121,8 +118,7 @@ export function BillerSpendCard({
             <div className="border-t border-border" />
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Upstream providers
-              </p>
+                {l10n("local.upstream_providers_89ad52e9")}</p>
               <div className="space-y-1.5">
                 {providerBreakdown.map((entry) => (
                   <div key={entry.provider} className="flex items-center justify-between gap-2 text-xs">
@@ -130,8 +126,7 @@ export function BillerSpendCard({
                     <div className="text-right tabular-nums">
                       <div className="font-medium">{formatCents(entry.costCents)}</div>
                       <div className="text-muted-foreground">
-                        {formatTokens(entry.inputTokens + entry.outputTokens)} tok
-                      </div>
+                        {formatTokens(entry.inputTokens + entry.outputTokens)} {l10n("local.tok_1a7674eb")}</div>
                     </div>
                   </div>
                 ))}

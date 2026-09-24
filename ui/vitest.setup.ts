@@ -38,3 +38,6 @@ if (typeof window !== "undefined" && window.localStorage !== globalThis.localSto
 if (typeof Element !== "undefined" && typeof Element.prototype.scrollIntoView !== "function") {
   Element.prototype.scrollIntoView = function scrollIntoView() {};
 }
+
+// Existing upstream assertions exercise English; Chinese behavior has dedicated tests.
+globalThis.localStorage.setItem("paperclip.locale", "en");

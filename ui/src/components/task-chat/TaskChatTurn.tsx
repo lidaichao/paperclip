@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useStreamlinedTaskChatPresentation } from "./presentation-mode";
@@ -46,7 +47,7 @@ export function turnSummaryMetrics(
 /** "✓ Worked · 38s · 3 tools · +34 −3 · 12.3k tokens" (parts omitted when unknown). */
 export function turnSummaryText(summary: TaskChatTurnItem["summary"]): string {
   const metrics = turnSummaryMetrics(summary);
-  const label = summary.failed ? "Stopped" : "Worked";
+  const label = summary.failed ? l10n("local.stopped_1a4f630a") : l10n("local.worked_e7f93aad");
   return metrics ? `${label} · ${metrics}` : label;
 }
 
@@ -100,12 +101,12 @@ export function TaskChatTurn({
             />
           ) : null}
           <span className="min-w-0 truncate">
-            {item.continuedAfterSteering ? "Continued after steering · " : ""}
+            {item.continuedAfterSteering ? (l10n("local.continued_after_steering_d964b95e") + " ") : ""}
             {item.summary.durationLabel
-              ? `${item.summary.failed ? "Stopped" : "Worked"} for ${item.summary.durationLabel}`
+              ? l10n("local.value_for_value_72c7a158", {v0: (item.summary.failed ? "Stopped" : "Worked"), v1: (item.summary.durationLabel)})
               : item.summary.failed
-                ? "Stopped"
-                : "Worked"}
+                ? l10n("local.stopped_1a4f630a")
+                : l10n("local.worked_e7f93aad")}
           </span>
         </div>
         {item.items.length > 0 ? (
@@ -206,10 +207,10 @@ export function TaskChatTurn({
       ) : null}
       <span>
         {item.standaloneHeader && item.summary.durationLabel
-          ? `${item.summary.failed ? "Stopped" : "Worked"} for ${item.summary.durationLabel}`
+          ? l10n("local.value_for_value_72c7a158", {v0: (item.summary.failed ? "Stopped" : "Worked"), v1: (item.summary.durationLabel)})
           : item.summary.failed
-            ? "Stopped"
-            : "Worked"}
+            ? l10n("local.stopped_1a4f630a")
+            : l10n("local.worked_e7f93aad")}
       </span>
       {!item.standaloneHeader && turnSummaryMetrics(item.summary) ? (
         // Time/tools/tokens is demoted, not deleted (PAP-502): it stays in the

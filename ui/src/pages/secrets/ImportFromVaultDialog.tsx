@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../../i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -115,12 +116,12 @@ function statusToneClasses(status: RemoteSecretImportCandidate["status"]) {
 function statusBadgeLabel(status: RemoteSecretImportCandidate["status"]) {
   switch (status) {
     case "duplicate":
-      return "Imported";
+      return l10n("local.imported_321f179c");
     case "conflict":
-      return "Conflict";
+      return l10n("local.conflict_014659ab");
     case "ready":
     default:
-      return "Ready";
+      return l10n("local.ready_5fa7aac5");
   }
 }
 
@@ -151,8 +152,7 @@ function RowResultBadge({ status }: { status: RemoteSecretImportRowResult["statu
           variant="outline"
           className="gap-1 px-1.5 py-0 font-normal text-emerald-600 border-emerald-500/40 dark:text-emerald-400"
         >
-          <CheckCircle2 className="h-3 w-3" /> Created
-        </Badge>
+          <CheckCircle2 className="h-3 w-3" /> {l10n("local.created_d70b9e24")}</Badge>
       );
     case "skipped":
       return (
@@ -160,8 +160,7 @@ function RowResultBadge({ status }: { status: RemoteSecretImportRowResult["statu
           variant="outline"
           className="gap-1 px-1.5 py-0 font-normal text-muted-foreground border-border/60"
         >
-          <Link2 className="h-3 w-3" /> Skipped
-        </Badge>
+          <Link2 className="h-3 w-3" /> {l10n("local.skipped_12698ce1")}</Badge>
       );
     case "error":
     default:
@@ -170,8 +169,7 @@ function RowResultBadge({ status }: { status: RemoteSecretImportRowResult["statu
           variant="outline"
           className="gap-1 px-1.5 py-0 font-normal text-destructive border-destructive/40"
         >
-          <XCircle className="h-3 w-3" /> Failed
-        </Badge>
+          <XCircle className="h-3 w-3" /> {l10n("local.failed_031a8f0f")}</Badge>
       );
   }
 }
@@ -205,7 +203,7 @@ function readableErrorMessage(error: unknown): string {
     return error.message || `Request failed: ${error.status}`;
   }
   if (error instanceof Error) return error.message;
-  return "Unexpected error";
+  return l10n("local.unexpected_error_d24c41ae");
 }
 
 function apiErrorCode(error: ApiError): string | null {
@@ -614,7 +612,7 @@ export function ImportFromVaultDialog({
     if (importMutation.isPending) return;
     if (!force && step !== "result" && selection.size > 0 && !importResult) {
       const ok = window.confirm(
-        `Discard ${selection.size} pending import${selection.size === 1 ? "" : "s"}?`,
+        l10n("local.discard_value_pending_importvalue_401217e6", {v0: (selection.size), v1: (englishPluralSuffix(selection.size === 1 ? "" : "s"))}),
       );
       if (!ok) return;
     }
@@ -655,18 +653,16 @@ export function ImportFromVaultDialog({
         <header className="flex items-start justify-between gap-3 border-b border-border/60 px-5 py-4">
           <div className="flex flex-col gap-1">
             <DialogTitle className="text-base font-semibold">
-              Import from AWS Secrets Manager
-            </DialogTitle>
+              {l10n("local.import_from_aws_secrets_manager_cdcfd8c6")}</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Bring AWS-managed secrets into Paperclip as external references.
-            </DialogDescription>
+              {l10n("local.bring_aws_managed_secrets_into_paperclip_as_e_0c781184")}</DialogDescription>
             <Stepper step={step} />
           </div>
           <button
             type="button"
             className="rounded-sm text-muted-foreground transition-opacity hover:opacity-100 opacity-70"
             onClick={() => handleClose()}
-            aria-label="Close import dialog"
+            aria-label={l10n("local.close_import_dialog_0dbadc41")}
           >
             <X className="h-4 w-4" />
           </button>
@@ -730,8 +726,7 @@ export function ImportFromVaultDialog({
           <div className="flex items-center gap-2">
             {step !== "result" && (
               <Button variant="ghost" size="sm" onClick={() => handleClose()}>
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
             )}
             {step === "review" && (
               <Button
@@ -740,8 +735,7 @@ export function ImportFromVaultDialog({
                 onClick={() => setStep("select")}
                 disabled={importMutation.isPending}
               >
-                Back
-              </Button>
+                {l10n("local.back_76900f1b")}</Button>
             )}
             {step === "select" && (
               <Button
@@ -749,8 +743,7 @@ export function ImportFromVaultDialog({
                 onClick={() => setStep("review")}
                 disabled={totalSelected === 0}
               >
-                Continue → Review
-              </Button>
+                {l10n("local.continue_review_fd1d4adb")}</Button>
             )}
             {step === "review" && (
               <Button
@@ -764,17 +757,15 @@ export function ImportFromVaultDialog({
               >
                 {importMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Importing…
-                  </>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> {l10n("local.importing_c01c4324")}</>
                 ) : (
-                  `Import ${draftList.length}`
+                  l10n("local.import_value_25c5c8ef", {v0: (draftList.length)})
                 )}
               </Button>
             )}
             {step === "result" && (
               <Button size="sm" onClick={() => handleClose(true)}>
-                Done
-              </Button>
+                {l10n("local.done_11a6767d")}</Button>
             )}
           </div>
         </footer>
@@ -785,9 +776,9 @@ export function ImportFromVaultDialog({
 
 function Stepper({ step }: { step: Step }) {
   const steps: { id: Step; label: string }[] = [
-    { id: "select", label: "Select" },
-    { id: "review", label: "Review" },
-    { id: "result", label: "Result" },
+    { id: "select", label: l10n("local.select_2a78025d") },
+    { id: "review", label: l10n("local.review_aff0766a") },
+    { id: "result", label: l10n("local.result_6e7d50e8") },
   ];
   const activeIndex = steps.findIndex((s) => s.id === step);
   return (
@@ -897,7 +888,7 @@ function SelectStep(props: SelectStepProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-border/60 px-5 py-3">
-        <label className="text-xs uppercase tracking-wide text-muted-foreground">Vault</label>
+        <label className="text-xs uppercase tracking-wide text-muted-foreground">{l10n("local.vault_5d55c415")}</label>
         {awsVaults.length === 1 && eligible.length === 1 ? (
           <span className="text-xs font-medium" data-testid="vault-static-label">
             {eligible[0].displayName}
@@ -907,8 +898,8 @@ function SelectStep(props: SelectStepProps) {
             value={vaultId ?? undefined}
             onValueChange={onVaultChange}
           >
-            <SelectTrigger size="sm" className="text-xs" aria-label="Select AWS vault">
-              <SelectValue placeholder="Select an AWS vault" />
+            <SelectTrigger size="sm" className="text-xs" aria-label={l10n("local.select_aws_vault_88ec6b21")}>
+              <SelectValue placeholder={l10n("local.select_an_aws_vault_f45bb374")} />
             </SelectTrigger>
             <SelectContent>
               {awsVaults.map((vault) => {
@@ -923,14 +914,14 @@ function SelectStep(props: SelectStepProps) {
                     <span className="flex items-center gap-2">
                       <span>{vault.displayName}</span>
                       {vault.isDefault && (
-                        <Badge variant="outline" className="px-1 py-0 text-(length:--text-nano)">default</Badge>
+                        <Badge variant="outline" className="px-1 py-0 text-(length:--text-nano)">{l10n("local.default_37a8eec1")}</Badge>
                       )}
                       {vault.status === "warning" && (
-                        <Badge variant="outline" className="px-1 py-0 text-(length:--text-nano) text-amber-500 border-amber-500/40">warning</Badge>
+                        <Badge variant="outline" className="px-1 py-0 text-(length:--text-nano) text-amber-500 border-amber-500/40">{l10n("local.warning_4bd9354b")}</Badge>
                       )}
                       {blocked && (
                         <Badge variant="outline" className="px-1 py-0 text-(length:--text-nano) text-muted-foreground">
-                          {vault.status === "coming_soon" ? "coming soon" : vault.status}
+                          {vault.status === "coming_soon" ? l10n("local.coming_soon_62bfdf0b") : vault.status}
                         </Badge>
                       )}
                     </span>
@@ -946,9 +937,9 @@ function SelectStep(props: SelectStepProps) {
           <Input
             value={searchInput}
             onChange={(event) => onSearchInput(event.target.value)}
-            placeholder="Search by name, ARN, tag"
+            placeholder={l10n("local.search_by_name_arn_tag_3e837ef5")}
             className="pl-7 pr-7 text-xs"
-            aria-label="Search remote secrets"
+            aria-label={l10n("local.search_remote_secrets_4ea13763")}
             data-testid="vault-search"
           />
           {showSearchSpinner && (
@@ -961,7 +952,7 @@ function SelectStep(props: SelectStepProps) {
           size="sm"
           onClick={onRefresh}
           disabled={previewLoading || !vaultId}
-          aria-label="Refresh remote secrets"
+          aria-label={l10n("local.refresh_remote_secrets_587837d1")}
         >
           <RefreshCw className={cn("h-3.5 w-3.5", previewLoading && "animate-spin")} />
         </Button>
@@ -970,15 +961,14 @@ function SelectStep(props: SelectStepProps) {
       {selectedNotVisible > 0 && (
         <div className="flex items-center justify-between border-b border-border/60 bg-muted/20 px-5 py-1.5 text-xs text-muted-foreground">
           <span>
-            {selection.size} selected · {selectedNotVisible} not visible with current search
-          </span>
+            {selection.size} {l10n("local.selected_c5e03c91")}{" "}{selectedNotVisible} {l10n("local.not_visible_with_current_search_37bc7606")}</span>
           <Button
             variant="ghost"
             size="sm"
             className="h-6 px-2 text-xs"
             onClick={() => onShowOnlySelectedChange(!showOnlySelected)}
           >
-            {showOnlySelected ? "Show all" : "Show selected"}
+            {showOnlySelected ? l10n("local.show_all_2150d8df") : l10n("local.show_selected_dbe29d57")}
           </Button>
         </div>
       )}
@@ -998,15 +988,15 @@ function SelectStep(props: SelectStepProps) {
                   <Checkbox
                     checked={headerCheckboxState}
                     onCheckedChange={() => toggleAllLoaded()}
-                    aria-label={`Select all loaded (${selectableInLoaded.length})`}
+                    aria-label={l10n("local.select_all_loaded_value_35c2c4e1", {v0: (selectableInLoaded.length)})}
                     disabled={selectableInLoaded.length === 0}
                   />
                 </th>
-                <th className="px-2 py-2 text-left font-medium">Remote name</th>
-                <th className="px-2 py-2 text-left font-medium">Reference</th>
-                <th className="px-2 py-2 text-left font-medium">Last changed</th>
-                <th className="px-2 py-2 text-left font-medium">Suggested name</th>
-                <th className="px-2 py-2 text-left font-medium">State</th>
+                <th className="px-2 py-2 text-left font-medium">{l10n("local.remote_name_96c1a5aa")}</th>
+                <th className="px-2 py-2 text-left font-medium">{l10n("local.reference_71bf9093")}</th>
+                <th className="px-2 py-2 text-left font-medium">{l10n("local.last_changed_d8c5670a")}</th>
+                <th className="px-2 py-2 text-left font-medium">{l10n("local.suggested_name_8483e3a2")}</th>
+                <th className="px-2 py-2 text-left font-medium">{l10n("local.state_a3b50c47")}</th>
               </tr>
             </thead>
             <tbody data-testid="vault-table-body">
@@ -1038,7 +1028,7 @@ function SelectStep(props: SelectStepProps) {
                         checked={isSelected}
                         onCheckedChange={() => toggleRow(candidate)}
                         disabled={!candidate.importable}
-                        aria-label={`Select ${candidate.remoteName}`}
+                        aria-label={l10n("local.select_value_58661820", {v0: (candidate.remoteName)})}
                       />
                     </td>
                     <td className="px-2 py-2.5">
@@ -1062,8 +1052,7 @@ function SelectStep(props: SelectStepProps) {
                         {candidate.status === "duplicate" &&
                           candidate.conflicts.find((c) => c.type === "exact_reference")?.existingSecretId && (
                             <span className="text-(length:--text-micro) text-muted-foreground">
-                              Already imported
-                            </span>
+                              {l10n("local.already_imported_e47fafe0")}</span>
                           )}
                       </div>
                       {candidate.status === "conflict" && candidate.conflicts.length > 0 && (
@@ -1089,9 +1078,8 @@ function SelectStep(props: SelectStepProps) {
         {hasNextPage && !previewError && (
           <div className="flex items-center justify-between border-t border-border/60 px-5 py-2 text-xs text-muted-foreground">
             <span>
-              {candidates.length} loaded
-              {selectableInLoaded.length > 0 && (
-                <span> · {selectableInLoaded.length} selectable</span>
+              {candidates.length} {l10n("local.loaded_2cab953f")}{selectableInLoaded.length > 0 && (
+                <span> · {selectableInLoaded.length} {l10n("local.selectable_1dcbe8c4")}</span>
               )}
             </span>
             <Button
@@ -1103,10 +1091,9 @@ function SelectStep(props: SelectStepProps) {
             >
               {pageLoading ? (
                 <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Loading…
-                </>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> {l10n("local.loading_ba3bbbe1")}</>
               ) : (
-                `Load ${PAGE_SIZE} more`
+                l10n("local.load_value_more_b6bd03e5", {v0: (PAGE_SIZE)})
               )}
             </Button>
           </div>
@@ -1130,20 +1117,19 @@ function PreviewErrorBanner({ error, onRetry }: { error: unknown; onRetry: () =>
       <div className="flex-1">
         <div className="font-medium">
           {isPermission
-            ? "AWS denied list access"
+            ? l10n("local.aws_denied_list_access_ed3bc497")
             : isThrottling
-              ? "AWS throttled the listing request"
-              : "Could not load remote secrets"}
+              ? l10n("local.aws_throttled_the_listing_request_fb98e4f7")
+              : l10n("local.could_not_load_remote_secrets_e7be5416")}
         </div>
         <div className="mt-1 text-xs leading-relaxed text-destructive/80">
           {isPermission
-            ? "The AWS principal behind this vault is missing secretsmanager:ListSecrets. Update IAM and try again."
+            ? l10n("local.the_aws_principal_behind_this_vault_is_missin_b7f1f15e")
             : message}
         </div>
         <div className="mt-2 flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={onRetry}>
-            <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Retry
-          </Button>
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> {l10n("local.retry_942087cc")}</Button>
           {isPermission && (
             <a
               href="https://docs.aws.amazon.com/service-authorization/latest/reference/list_awssecretsmanager.html"
@@ -1151,7 +1137,7 @@ function PreviewErrorBanner({ error, onRetry }: { error: unknown; onRetry: () =>
               rel="noreferrer"
               className="inline-flex items-center gap-1 text-xs font-medium underline"
             >
-              IAM reference <ExternalLink className="h-3 w-3" />
+              {l10n("local.iam_reference_404b953f")}{" "}<ExternalLink className="h-3 w-3" />
             </a>
           )}
         </div>
@@ -1213,11 +1199,10 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-3 border-b border-border/60 bg-muted/20 px-5 py-3 text-xs">
-        <span className="font-medium">{ready} secrets ready to import</span>
+        <span className="font-medium">{ready} {l10n("local.secrets_ready_to_import_936b9bf7")}</span>
         {blocked > 0 && (
           <span className="text-amber-600 dark:text-amber-400">
-            {blocked} need attention before import
-          </span>
+            {blocked} {l10n("local.need_attention_before_import_ef4be584")}</span>
         )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto" data-testid="review-list">
@@ -1245,7 +1230,7 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
                   </div>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <label className="flex flex-col gap-1 text-xs">
-                      <span className="text-muted-foreground">Paperclip name</span>
+                      <span className="text-muted-foreground">{l10n("local.paperclip_name_3e105c6d")}</span>
                       <Input
                         value={draft.name}
                         onChange={(e) =>
@@ -1258,7 +1243,7 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
                       />
                     </label>
                     <label className="flex flex-col gap-1 text-xs">
-                      <span className="text-muted-foreground">Key</span>
+                      <span className="text-muted-foreground">{l10n("local.key_99a52df3")}</span>
                       <Input
                         value={draft.key}
                         onChange={(e) =>
@@ -1276,7 +1261,7 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
                       />
                     </label>
                     <label className="flex flex-col gap-1 text-xs">
-                      <span className="text-muted-foreground">Description (optional)</span>
+                      <span className="text-muted-foreground">{l10n("local.description_optional_f6cbe2f0")}</span>
                       <Input
                         value={draft.description}
                         onChange={(e) =>
@@ -1305,7 +1290,7 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
                   variant="ghost"
                   size="icon"
                   onClick={() => removeDraft(draft.candidate.externalRef)}
-                  aria-label={`Remove ${draft.candidate.remoteName}`}
+                  aria-label={l10n("local.remove_value_86790c6d", {v0: (draft.candidate.remoteName)})}
                   className="h-7 w-7"
                   disabled={importing}
                 >
@@ -1346,30 +1331,30 @@ function ResultStep({ result, draftList }: ResultStepProps) {
 
   const heading =
     result.errorCount === result.results.length && result.errorCount > 0
-      ? "Import failed"
+      ? l10n("local.import_failed_0a26f41a")
       : result.errorCount === 0 && result.skippedCount === 0
-        ? `All ${result.importedCount} secrets imported`
-        : "Import complete";
+        ? l10n("local.all_value_secrets_imported_4466f5d0", {v0: (result.importedCount)})
+        : l10n("local.import_complete_a9c747fe");
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-border/60 px-5 py-3" data-testid="result-summary">
         <h3 className="text-sm font-semibold">{heading}</h3>
         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <span className="text-emerald-600 dark:text-emerald-400">✓ {result.importedCount} created</span>
-          <span>⊘ {result.skippedCount} skipped</span>
-          <span className="text-destructive">⨯ {result.errorCount} failed</span>
+          <span className="text-emerald-600 dark:text-emerald-400">✓ {result.importedCount} {l10n("local.created_406effb1")}</span>
+          <span>⊘ {result.skippedCount} {l10n("local.skipped_389595a4")}</span>
+          <span className="text-destructive">⨯ {result.errorCount} {l10n("local.failed_5d28a90f")}</span>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {grouped.created.length > 0 && (
-          <ResultGroup label="Created" rows={grouped.created} draftLookup={draftLookup} />
+          <ResultGroup label={l10n("local.created_d70b9e24")} rows={grouped.created} draftLookup={draftLookup} />
         )}
         {grouped.skipped.length > 0 && (
-          <ResultGroup label="Skipped" rows={grouped.skipped} draftLookup={draftLookup} />
+          <ResultGroup label={l10n("local.skipped_12698ce1")} rows={grouped.skipped} draftLookup={draftLookup} />
         )}
         {grouped.failed.length > 0 && (
-          <ResultGroup label="Failed" rows={grouped.failed} draftLookup={draftLookup} />
+          <ResultGroup label={l10n("local.failed_031a8f0f")} rows={grouped.failed} draftLookup={draftLookup} />
         )}
       </div>
     </div>
@@ -1455,19 +1440,17 @@ function FooterStatus({
     return (
       <div className="text-xs text-muted-foreground">
         {totalSelected === 0
-          ? "Select remote secrets to import"
-          : `${totalSelected} selected`}
+          ? l10n("local.select_remote_secrets_to_import_96579bae")
+          : l10n("local.value_selected_b3edc3b3", {v0: (totalSelected)})}
       </div>
     );
   }
   if (step === "review") {
     return (
       <div className="text-xs text-muted-foreground">
-        {readyReviewCount} ready
-        {blockedReviewCount > 0 && (
+        {readyReviewCount} {l10n("local.ready_b24d6d33")}{blockedReviewCount > 0 && (
           <span className="ml-2 text-amber-600 dark:text-amber-400">
-            · {blockedReviewCount} blocked
-          </span>
+            · {blockedReviewCount} {l10n("local.blocked_6973dddd")}</span>
         )}
       </div>
     );
@@ -1475,9 +1458,9 @@ function FooterStatus({
   if (result) {
     return (
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span>{result.importedCount} created</span>
-        <span>{result.skippedCount} skipped</span>
-        <span>{result.errorCount} failed</span>
+        <span>{result.importedCount} {l10n("local.created_406effb1")}</span>
+        <span>{result.skippedCount} {l10n("local.skipped_389595a4")}</span>
+        <span>{result.errorCount} {l10n("local.failed_5d28a90f")}</span>
       </div>
     );
   }

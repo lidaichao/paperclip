@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { isRetiredComposioConnection, RETIRED_COMPOSIO_MESSAGE } from "@paperclipai/shared";
 import { ManagedAiConnectionRow } from "@/components/ai-connections/ManagedAiConnectionDetails";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -165,26 +166,26 @@ function additionalConnectionHref(
 
 function connectionState(connection: ToolConnection): ConnectionState {
   if (isRetiredComposioConnection(connection)) {
-    return { kind: "attention", label: "Retired", message: RETIRED_COMPOSIO_MESSAGE };
+    return { kind: "attention", label: l10n("local.retired_a9f71bc2"), message: RETIRED_COMPOSIO_MESSAGE };
   }
   if (connection.status === "draft") {
     return {
       kind: "draft",
-      label: "Setup incomplete",
+      label: l10n("local.setup_incomplete_167fc0f3"),
       message: "Finish setup before agents can use this account.",
     };
   }
   if (connection.enabled === false || connection.status === "disabled") {
     return {
       kind: "paused",
-      label: "Paused",
+      label: l10n("local.paused_e159b061"),
       message: "Agents can’t use this account right now.",
     };
   }
   if ((connection.connectionPurpose === "ai" && (connection.healthStatus !== "ok" || aiSubscriptionNeedsIsolatedLogin(connection.config))) || isToolConnectionAttentionHealth(connection.healthStatus)) {
     return {
       kind: "attention",
-      label: "Needs attention",
+      label: l10n("local.needs_attention_c1ebc781"),
       message:
         connection.healthMessage ??
         connection.lastError ??
@@ -193,7 +194,7 @@ function connectionState(connection: ToolConnection): ConnectionState {
           : "Replace the credential to restore access."),
     };
   }
-  return { kind: "connected", label: "Connected", message: null };
+  return { kind: "connected", label: l10n("local.connected_22965568"), message: null };
 }
 
 function connectionRank(connection: ToolConnection): number {
@@ -227,32 +228,32 @@ function connectorAction(
       )
     : null;
   if (row.connections.length > 0 || row.chatEndpoints.length > 0) {
-    if (chatHref) return { label: "Add connection", href: chatHref };
+    if (chatHref) return { label: l10n("local.add_connection_685f88ae"), href: chatHref };
     if (row.entry && applicationId) {
       return {
-        label: "Add account",
+        label: l10n("local.add_account_ee7ee583"),
         href: additionalConnectionHref(row.entry, applicationId),
       };
     }
     return {
-      label: "Add account",
+      label: l10n("local.add_account_ee7ee583"),
       href: applicationId ? `/apps/app/${applicationId}/permissions` : null,
     };
   }
 
   if (row.entry?.availability?.available === false) {
     return {
-      label: "Unavailable",
+      label: l10n("local.unavailable_ca184496"),
       href: null,
       title:
         row.entry.availability.reason ??
-        "This connector is unavailable on this instance.",
+        l10n("local.this_connector_is_unavailable_on_this_instanc_1ff1cbc2"),
     };
   }
-  if (chatHref) return { label: "Connect", href: chatHref };
-  if (row.entry) return { label: "Connect", href: connectHrefFor(row.entry) };
+  if (chatHref) return { label: l10n("local.connect_1a2303ed"), href: chatHref };
+  if (row.entry) return { label: l10n("local.connect_1a2303ed"), href: connectHrefFor(row.entry) };
   return {
-    label: "Connect",
+    label: l10n("local.connect_1a2303ed"),
     href: applicationId ? `/apps/app/${applicationId}/permissions` : null,
   };
 }
@@ -289,7 +290,7 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
     useState<ConnectionRemovalTarget | null>(null);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Connectors" }]);
+    setBreadcrumbs([{ label: l10n("local.connectors_c3d2e79e") }]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs]);
 
@@ -342,21 +343,21 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
         queryKey: queryKeys.apps.attention(selectedCompanyId!),
       });
       pushToast({
-        title: "Connection removed",
+        title: l10n("local.connection_removed_2d806d0f"),
         body:
           target.kind === "chat"
-            ? `${target.providerName} is disconnected. Existing Paperclip tasks remain available.`
+            ? l10n("local.value_is_disconnected_existing_paperclip_task_4fe96b8f", {v0: (target.providerName)})
             : target.remainingConnectionCount > 0
-            ? `${target.providerName} still has ${target.remainingConnectionCount} active ${target.remainingConnectionCount === 1 ? "connection" : "connections"} available to agents.`
-            : `${target.providerName} is no longer available to agents through this connection. Its saved credentials were deleted.`,
+            ? l10n("local.value_still_has_value_active_value_available_cc4f89f0", {v0: (target.providerName), v1: (target.remainingConnectionCount), v2: (target.remainingConnectionCount === 1 ? "connection" : "connections")})
+            : l10n("local.value_is_no_longer_available_to_agents_throug_7b3c9ee7", {v0: (target.providerName)}),
         tone: "success",
       });
       setConnectionToRemove(null);
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't remove the connection",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.couldn_t_remove_the_connection_3999fa23"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
@@ -430,35 +431,35 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
       });
     }
     const nativeChatProviders = [
-      { provider: "imessage-photon", name: "iMessage Photon", description: "Message agents and share photos from Apple Messages with a dedicated Photon number." },
+      { provider: "imessage-photon", name: "iMessage Photon", description: l10n("local.message_agents_and_share_photos_from_apple_me_4d7f3767") },
       {
         provider: "slack",
         name: "Slack",
         description:
-          "Chat with agents from Slack channels and direct messages.",
+          l10n("local.chat_with_agents_from_slack_channels_and_dire_0af5aaac"),
       },
       {
         provider: "github",
         name: "GitHub",
         description:
-          "Chat with agents from issues, pull requests, and review threads.",
+          l10n("local.chat_with_agents_from_issues_pull_requests_an_7ca7c7e6"),
       },
       {
         provider: "discord",
         name: "Discord",
         description:
-          "Chat with agents from Discord channels, threads, and direct messages.",
+          l10n("local.chat_with_agents_from_discord_channels_thread_ceb5e587"),
       },
       {
         provider: "microsoft-teams",
         name: "Microsoft Teams",
-        description: "Chat with agents from Teams channels and conversations.",
+        description: l10n("local.chat_with_agents_from_teams_channels_and_conv_5c50f989"),
       },
       {
         provider: "telegram",
         name: "Telegram",
         description:
-          "Chat with agents from Telegram direct messages, groups, and topics.",
+          l10n("local.chat_with_agents_from_telegram_direct_message_a2dfd70f"),
       },
     ] as const;
     for (const item of chatConnectorsEnabled ? nativeChatProviders : []) {
@@ -561,7 +562,7 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
           key: `chat:${endpoint.provider}`,
           slug: endpoint.provider,
           name: names[endpoint.provider],
-          description: `Chat with agents through ${names[endpoint.provider]}.`,
+          description: l10n("local.chat_with_agents_through_value_98da9814", {v0: (names[endpoint.provider])}),
           brandKey: endpoint.provider,
           entry: null,
           applications: [],
@@ -621,8 +622,7 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
   if (!selectedCompanyId) {
     return (
       <div className="p-6 text-sm text-muted-foreground">
-        Select an organization to manage connectors.
-      </div>
+        {l10n("local.select_an_organization_to_manage_connectors_85993a68")}</div>
     );
   }
 
@@ -647,8 +647,8 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search connectors…"
-            aria-label="Search connectors"
+            placeholder={l10n("local.search_connectors_fad7e42d")}
+            aria-label={l10n("local.search_connectors_706a6068")}
             className="pl-9"
           />
         </div>
@@ -661,9 +661,7 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
         >
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <p className="min-w-0 flex-1">
-            Couldn’t load every connector. Existing accounts are shown where
-            available.
-          </p>
+            {l10n("local.couldn_t_load_every_connector_existing_accoun_513ced65")}</p>
           <Button
             type="button"
             size="sm"
@@ -675,13 +673,12 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
               if (chatConnectorsEnabled) void chatEndpointsQuery.refetch();
             }}
           >
-            Try again
-          </Button>
+            {l10n("local.try_again_d8b8392e")}</Button>
         </div>
       ) : null}
 
       {loading ? (
-        <div className="space-y-3" aria-label="Loading connectors">
+        <div className="space-y-3" aria-label={l10n("local.loading_connectors_2d1897ee")}>
           {Array.from({ length: 6 }).map((_, index) => (
             <Skeleton key={index} className="h-24 w-full rounded-xl" />
           ))}
@@ -689,10 +686,10 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
       ) : nothingMatches ? (
         <p className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground">
           <Link2 className="h-4 w-4" />
-          No connectors match “{query.trim()}”.
+          {l10n("local.no_connectors_match_faad7a56")}{query.trim()}”.
         </p>
       ) : (
-        <div className="space-y-3" role="list" aria-label="Connector list">
+        <div className="space-y-3" role="list" aria-label={l10n("local.connector_list_3bbef1f6")}>
           {visibleRows.map((row) => (
             <ConnectorCard
               renderAccountDetails={renderAccountDetails}
@@ -720,21 +717,19 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Remove {connectionToRemove?.accountName ?? "this"} connection?
-            </AlertDialogTitle>
+              {l10n("local.remove_c3812fc4")}{" "}{connectionToRemove?.accountName ?? l10n("local.this_1eb79602")} {l10n("local.connection_1df40080")}</AlertDialogTitle>
             <AlertDialogDescription>
               {connectionToRemove?.kind === "chat"
-                ? `This connection will stop receiving new work from ${connectionToRemove.providerName}. Existing Paperclip tasks and conversation history remain available. This does not delete the app, bot, or account in ${connectionToRemove.providerName}.`
+                ? l10n("local.this_connection_will_stop_receiving_new_work_bd89c384", {v0: (connectionToRemove.providerName), v1: (connectionToRemove.providerName)})
                 : connectionToRemove &&
                     connectionToRemove.remainingConnectionCount > 0
-                  ? `This connection's saved credentials are deleted and agents lose access through it immediately. They can still use ${connectionToRemove.providerName} through ${connectionToRemove.remainingConnectionCount} other active ${connectionToRemove.remainingConnectionCount === 1 ? "connection" : "connections"}.`
-                  : "The saved credentials are deleted and agents lose access immediately. Connecting it again later requires a new sign-in or key."}
+                  ? l10n("local.this_connection_s_saved_credentials_are_delet_5e2a6ebf", {v0: (connectionToRemove.providerName), v1: (connectionToRemove.remainingConnectionCount), v2: (connectionToRemove.remainingConnectionCount === 1 ? "connection" : "connections")})
+                  : l10n("local.the_saved_credentials_are_deleted_and_agents_9c0b82df")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={removeConnection.isPending}>
-              Cancel
-            </AlertDialogCancel>
+              {l10n("local.cancel_19766ed6")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={!connectionToRemove || removeConnection.isPending}
@@ -749,7 +744,7 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
               ) : (
                 <Trash2 />
               )}
-              {removeConnection.isPending ? "Removing…" : "Remove connection"}
+              {removeConnection.isPending ? l10n("local.removing_d4b09919") : l10n("local.remove_connection_e9e9e26c")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -867,12 +862,12 @@ export function ConnectorCard({
                     onNavigate(`/apps/chat/${endpoint.id}/settings`)
                   }
                 >
-                  {endpoint.assignedAgentName} · {endpoint.provider === "agentmail" ? "Email" : "Chat"}
+                  {endpoint.assignedAgentName} · {endpoint.provider === "agentmail" ? l10n("local.email_969ccbd3") : l10n("local.chat_460b3a7d")}
                 </button>
                 <p className="truncate text-xs text-muted-foreground">
                   {endpoint.providerAccountLabel ??
                     endpoint.botLabel ??
-                    "Provider identity"}
+                    l10n("local.provider_identity_656eefd9")}
                 </p>
               </div>
               <span className="text-xs text-muted-foreground">
@@ -885,8 +880,7 @@ export function ConnectorCard({
                     variant="outline"
                     onClick={() => onNavigate(`/apps/chat/connect?provider=${endpoint.provider}&purpose=chat&resume=${endpoint.id}`)}
                   >
-                    Finish setup
-                  </Button>
+                    {l10n("local.finish_setup_bc01ae77")}</Button>
                 ) : null}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -894,15 +888,14 @@ export function ConnectorCard({
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`Manage ${endpoint.assignedAgentName} ${row.name} connection`}
+                      aria-label={l10n("local.manage_value_value_connection_87d865dd", {v0: (endpoint.assignedAgentName), v1: (row.name)})}
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => onNavigate(`/apps/chat/${endpoint.id}/settings`)}>
-                      Manage
-                    </DropdownMenuItem>
+                      {l10n("local.manage_5a234448")}</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant="destructive"
@@ -915,8 +908,7 @@ export function ConnectorCard({
                       })}
                     >
                       <Trash2 />
-                      Remove connection
-                    </DropdownMenuItem>
+                      {l10n("local.remove_connection_e9e9e26c")}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -959,7 +951,7 @@ function ConnectionAccountRow({
           <button
             type="button"
             className="block max-w-full cursor-pointer truncate text-left text-sm font-medium text-foreground hover:underline focus-visible:underline"
-            aria-label={`Open ${accountName} permissions`}
+            aria-label={l10n("local.open_value_permissions_e8b9a594", {v0: (accountName)})}
             onClick={() => onNavigate(`/apps/${connection.id}/permissions`)}
           >
             {accountName}
@@ -981,7 +973,7 @@ function ConnectionAccountRow({
 
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span>Connected by</span>
+          <span>{l10n("local.connected_by_9952ce52")}</span>
           <ConnectionOwnerIdentity owner={owner} />
         </div>
         {state.kind === "attention" || state.kind === "draft" ? (
@@ -993,9 +985,9 @@ function ConnectionAccountRow({
           >
             {state.kind === "attention"
               ? connection.requiresReauthorization === false
-                ? "Retry access"
-                : "Reconnect"
-              : "Finish setup"}
+                ? l10n("local.retry_access_e5222230")
+                : l10n("local.reconnect_bf8a9eab")
+              : l10n("local.finish_setup_bc01ae77")}
           </Button>
         ) : null}
         <DropdownMenu>
@@ -1004,7 +996,7 @@ function ConnectionAccountRow({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label={`Manage ${accountName} connection`}
+              aria-label={l10n("local.manage_value_connection_a51254da", {v0: (accountName)})}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -1013,13 +1005,11 @@ function ConnectionAccountRow({
             <DropdownMenuItem
               onSelect={() => onNavigate(`/apps/${connection.id}/permissions`)}
             >
-              Permissions
-            </DropdownMenuItem>
+              {l10n("local.permissions_abccc78c")}</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onSelect={onRemove}>
               <Trash2 />
-              Remove connection
-            </DropdownMenuItem>
+              {l10n("local.remove_connection_e9e9e26c")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -1085,11 +1075,9 @@ function CustomConnectorCard({
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-foreground">
-            Connect your own tool
-          </h2>
+            {l10n("local.connect_your_own_tool_89af50f9")}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Add a custom MCP server or paste an existing configuration.
-          </p>
+            {l10n("local.add_a_custom_mcp_server_or_paste_an_existing_b1e88979")}</p>
         </div>
         <Button
           type="button"
@@ -1099,7 +1087,7 @@ function CustomConnectorCard({
           aria-controls="custom-connector-options"
           onClick={() => setExpanded((open) => !open)}
         >
-          {expanded ? "Close" : "Connect"}
+          {expanded ? l10n("local.close_7d9eb7ac") : l10n("local.connect_1a2303ed")}
         </Button>
       </div>
 
@@ -1110,14 +1098,14 @@ function CustomConnectorCard({
         >
           <CustomConnectorOption
             icon={ServerCog}
-            title="Connect your own MCP server"
-            description="Enter the URL for a custom or self-hosted MCP server."
+            title={l10n("local.connect_your_own_mcp_server_abb2409d")}
+            description={l10n("local.enter_the_url_for_a_custom_or_self_hosted_mcp_a5d7497c")}
             onClick={() => onNavigate("/apps/byo")}
           />
           <CustomConnectorOption
             icon={ClipboardPaste}
-            title="Paste a config"
-            description="Paste an existing setup snippet and connect it."
+            title={l10n("local.paste_a_config_27261473")}
+            description={l10n("local.paste_an_existing_setup_snippet_and_connect_i_3c42052a")}
             onClick={() => onNavigate("/apps/advanced/paste-config")}
           />
         </div>

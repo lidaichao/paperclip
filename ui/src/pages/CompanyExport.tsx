@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
@@ -404,8 +405,8 @@ function FrontmatterCard({
 // ── Client-side README generation ────────────────────────────────────
 
 const ROLE_LABELS: Record<string, string> = {
-  ceo: "CEO", cto: "CTO", cmo: "CMO", cfo: "CFO", coo: "COO",
-  vp: "VP", manager: "Manager", engineer: "Engineer", agent: "Agent",
+  ceo: l10n("local.ceo_57f0df0e"), cto: l10n("local.cto_e7f67dde"), cmo: l10n("local.cmo_d7edf1b9"), cfo: l10n("local.cfo_524821c6"), coo: l10n("local.coo_591e962e"),
+  vp: l10n("local.vp_ae949266"), manager: l10n("local.manager_8b2085f7"), engineer: l10n("local.engineer_d93352a7"), agent: l10n("local.agent_11b39c93"),
 };
 
 /**
@@ -576,8 +577,7 @@ function ExportPreviewPane({
           </pre>
         ) : (
           <div className="rounded-lg border border-border bg-accent/10 px-4 py-3 text-sm text-muted-foreground">
-            Binary asset preview is not available for this file type.
-          </div>
+            {l10n("local.binary_asset_preview_is_not_available_for_thi_0a5cc3ef")}</div>
         )}
       </div>
     </div>
@@ -733,9 +733,9 @@ export function CompanyExport() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Organization", href: "/dashboard" },
-      { label: "Settings", href: "/company/settings" },
-      { label: "Export" },
+      { label: selectedCompany?.name ?? l10n("local.organization_d764d425"), href: "/dashboard" },
+      { label: l10n("local.settings_74a883a0"), href: "/company/settings" },
+      { label: l10n("local.export_36648955") },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs]);
 
@@ -776,7 +776,7 @@ export function CompanyExport() {
       if (request.requestId !== previewRequestIdRef.current || isAbortError(err)) return;
       pushToast({
         tone: "error",
-        title: "Export failed",
+        title: l10n("local.export_failed_e94d3ee0"),
         body: previewErrorMessage(err),
       });
     },
@@ -810,15 +810,15 @@ export function CompanyExport() {
       downloadZip(result, resultCheckedFiles, result.files);
       pushToast({
         tone: "success",
-        title: "Export downloaded",
-        body: `${resultCheckedFiles.size} file${resultCheckedFiles.size === 1 ? "" : "s"} exported as ${result.rootPath}.zip`,
+        title: l10n("local.export_downloaded_6bf7c6fa"),
+        body: l10n("local.value_filevalue_exported_as_value_zip_0d69ebf7", {v0: (resultCheckedFiles.size), v1: (englishPluralSuffix(resultCheckedFiles.size === 1 ? "" : "s")), v2: (result.rootPath)}),
       });
     },
     onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Export failed",
-        body: err instanceof Error ? err.message : "Failed to build export package.",
+        title: l10n("local.export_failed_e94d3ee0"),
+        body: err instanceof Error ? err.message : l10n("local.failed_to_build_export_package_aaa09f6c"),
       });
     },
   });
@@ -1035,7 +1035,7 @@ export function CompanyExport() {
     return (
       <EmptyState
         icon={Package}
-        title="Export preview cancelled"
+        title={l10n("local.export_preview_cancelled_323b073a")}
         message="The preview request was cancelled. Your export settings are unchanged."
         action="Retry preview"
         onAction={startPreviewRequest}
@@ -1048,9 +1048,9 @@ export function CompanyExport() {
     return (
       <EmptyState
         icon={Package}
-        title="Export preview failed"
+        title={l10n("local.export_preview_failed_8b47150b")}
         message={previewErrorMessage(exportPreviewMutation.error)}
-        description="Retry the preview. You do not need to reload this page."
+        description={l10n("local.retry_the_preview_you_do_not_need_to_reload_t_734ae75d")}
         action="Retry preview"
         onAction={startPreviewRequest}
         hideActionIcon
@@ -1062,7 +1062,7 @@ export function CompanyExport() {
     return (
       <EmptyState
         icon={Package}
-        title="Export preview unavailable"
+        title={l10n("local.export_preview_unavailable_0bcf70b3")}
         message="No export preview is loaded."
         action="Load preview"
         onAction={startPreviewRequest}
@@ -1084,15 +1084,14 @@ export function CompanyExport() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <span className="font-medium">
-              {selectedCompany?.name ?? "Organization"} export
-            </span>
+              {selectedCompany?.name ?? l10n("local.organization_d764d425")} {l10n("local.export_d46aee08")}</span>
             <span className="text-muted-foreground">
-              Exporting {selectedCount.toLocaleString()} of {totalFiles.toLocaleString()} file{totalFiles === 1 ? "" : "s"}
+              {l10n("local.exporting_eb9b5119")}{" "}{selectedCount.toLocaleString()} {l10n("local.of_28391d3b")}{" "}{totalFiles.toLocaleString()} {l10n("local.file_3b9c358f")}{totalFiles === 1 ? "" : englishPluralSuffix("s")}
               {selectedCount > 0 && ` (~${formatBytes(estimatedZipBytes)})`}
             </span>
             {warnings.length > 0 && (
               <span className="text-amber-500">
-                {warnings.length} warning{warnings.length === 1 ? "" : "s"}
+                {warnings.length} {l10n("local.warning_4bd9354b")}{warnings.length === 1 ? "" : englishPluralSuffix("s")}
               </span>
             )}
           </div>
@@ -1109,8 +1108,8 @@ export function CompanyExport() {
           >
             <Download className="mr-1.5 h-3.5 w-3.5" />
             {downloadMutation.isPending
-              ? "Building export..."
-              : `Export ${selectedCount.toLocaleString()} file${selectedCount === 1 ? "" : "s"}`}
+              ? l10n("local.building_export_4d6949b8")
+              : l10n("local.export_value_filevalue_9f5d8502", {v0: (selectedCount.toLocaleString()), v1: (englishPluralSuffix(selectedCount === 1 ? "" : "s"))})}
           </Button>
         </div>
       </div>
@@ -1127,7 +1126,7 @@ export function CompanyExport() {
       {/* Export fidelity: data the bundle will not carry */}
       {fidelityReport && fidelityReport.warnings.length > 0 && (
         <div className="mx-5 mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-          <h3 className="mb-1.5 text-xs font-medium">Not included in this export</h3>
+          <h3 className="mb-1.5 text-xs font-medium">{l10n("local.not_included_in_this_export_13b26a14")}</h3>
           {fidelityReport.warnings.map((warning) => (
             <div
               key={warning.code}
@@ -1146,11 +1145,11 @@ export function CompanyExport() {
       <div className="grid gap-4 xl:h-(--sz-calc-30) xl:grid-cols-(--gtc-25) xl:gap-0">
         <aside className="flex max-h-(--sz-24rem) flex-col overflow-hidden border-b border-border xl:max-h-none xl:border-b-0 xl:border-r">
           <div className="border-b border-border px-4 py-3 shrink-0">
-            <h2 className="text-base font-semibold">Package files</h2>
+            <h2 className="text-base font-semibold">{l10n("local.package_files_0ae7e512")}</h2>
           </div>
           <div className="border-b border-border px-4 py-3 shrink-0">
-            <h3 className="mb-2 text-xs font-medium text-muted-foreground">What to include</h3>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5" role="group" aria-label="What to include">
+            <h3 className="mb-2 text-xs font-medium text-muted-foreground">{l10n("local.what_to_include_e53ffc0d")}</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5" role="group" aria-label={l10n("local.what_to_include_e53ffc0d")}>
               {EXPORT_CATEGORY_ORDER.map((key) => {
                 const isAttachments = key === "attachments";
                 const disabled = isAttachments && !isAttachmentsCategoryEnabled(categories);
@@ -1167,7 +1166,7 @@ export function CompanyExport() {
                     )}
                     title={
                       disabled
-                        ? "Attachments travel with tasks and routines; re-enable one of them to include attachments."
+                        ? l10n("local.attachments_travel_with_tasks_and_routines_re_4a6bbae0")
                         : undefined
                     }
                   >
@@ -1188,8 +1187,7 @@ export function CompanyExport() {
               })}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Task and routine history is opt-in because it can be large.
-            </p>
+              {l10n("local.task_and_routine_history_is_opt_in_because_it_f4c71db3")}</p>
           </div>
           <div className="border-b border-border px-3 py-2 shrink-0">
             <div className="flex items-center gap-2 rounded-md border border-border px-2 py-1">
@@ -1198,7 +1196,7 @@ export function CompanyExport() {
                 type="text"
                 value={treeSearch}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search files..."
+                placeholder={l10n("local.search_files_04470fc0")}
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 data-page-search-target="true"
               />
@@ -1222,7 +1220,7 @@ export function CompanyExport() {
                   onClick={() => setTaskLimit((prev) => prev + TASKS_PAGE_SIZE)}
                   className="w-full rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors"
                 >
-                  Show more tasks ({visibleTaskChildren} of {totalTaskChildren})
+                  {l10n("local.show_more_tasks_142284a6")}{visibleTaskChildren} {l10n("local.of_28391d3b")}{" "}{totalTaskChildren})
                 </button>
               </div>
             )}
@@ -1247,15 +1245,13 @@ export function CompanyExport() {
               <div className="flex max-w-md flex-col items-center gap-3">
                 <LoaderCircle className="h-6 w-6 animate-spin text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">Updating export preview…</p>
+                  <p className="text-sm font-medium">{l10n("local.updating_export_preview_cb20152d")}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Large task histories can take a minute. You can untick Tasks or cancel this update.
-                  </p>
+                    {l10n("local.large_task_histories_can_take_a_minute_you_ca_110b560a")}</p>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={handleCancelPreview}>
                   <X />
-                  Cancel update
-                </Button>
+                  {l10n("local.cancel_update_2b345aa4")}</Button>
               </div>
             </div>
           ) : previewCancelled ? (
@@ -1265,15 +1261,13 @@ export function CompanyExport() {
             >
               <div className="flex max-w-md flex-col items-center gap-3">
                 <div>
-                  <p className="text-sm font-medium">Preview update cancelled</p>
+                  <p className="text-sm font-medium">{l10n("local.preview_update_cancelled_73e0c706")}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    The previous preview remains available. Retry when you are ready.
-                  </p>
+                    {l10n("local.the_previous_preview_remains_available_retry_75f815c4")}</p>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={startPreviewRequest}>
                   <RotateCcw />
-                  Retry preview
-                </Button>
+                  {l10n("local.retry_preview_ceba3527")}</Button>
               </div>
             </div>
           ) : exportPreviewMutation.isError ? (
@@ -1284,15 +1278,14 @@ export function CompanyExport() {
             >
               <div className="flex max-w-md flex-col items-center gap-3">
                 <div>
-                  <p className="text-sm font-medium text-destructive">Export preview failed</p>
+                  <p className="text-sm font-medium text-destructive">{l10n("local.export_preview_failed_8b47150b")}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {previewErrorMessage(exportPreviewMutation.error)}
                   </p>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={startPreviewRequest}>
                   <RotateCcw />
-                  Retry preview
-                </Button>
+                  {l10n("local.retry_preview_ceba3527")}</Button>
               </div>
             </div>
           ) : null}

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { redactHomePathUserSegments, redactTranscriptEntryPaths } from "@paperclipai/adapter-utils";
 import type { TranscriptEntry, StdoutLineParser, TranscriptParserSource } from "./types";
 
@@ -60,7 +61,7 @@ function createTranscriptParseErrorEntry(
   error: unknown,
   redactionOptions: RedactionOptions,
 ): TranscriptEntry {
-  const errorText = formatTranscriptParserError(error) || "unknown parser error";
+  const errorText = formatTranscriptParserError(error) || l10n("local.unknown_parser_error_6c19d98e");
   const preview = truncateTranscriptLine(line);
   return {
     kind: "result",

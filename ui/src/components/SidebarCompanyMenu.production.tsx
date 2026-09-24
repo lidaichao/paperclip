@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -194,7 +195,7 @@ function SortableCompanyItem({
         <button
           type="button"
           ref={setActivatorNodeRef}
-          aria-label={`Reorder ${company.name}`}
+          aria-label={l10n("local.reorder_value_61d87a67", {v0: (company.name)})}
           className="inline-flex size-8 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-(length:--rad-2) focus-visible:ring-ring"
           onClick={(event) => {
             event.preventDefault();
@@ -386,8 +387,8 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
           className="h-9 min-w-0 flex-1 justify-start gap-2 px-4 text-left hover:bg-accent/50 hover:text-foreground has-[>svg]:px-4 dark:hover:bg-accent/50"
           aria-label={
             currentName
-              ? `Open ${currentName} ${switcherNoun} switcher`
-              : `Open ${switcherNoun} switcher`
+              ? l10n("local.open_value_value_switcher_fee3b008", {v0: (currentName), v1: (switcherNoun)})
+              : l10n("local.open_value_switcher_ad498096", {v0: (switcherNoun)})
           }
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -405,7 +406,7 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
               )}
               title={currentName ?? undefined}
             >
-              {currentName ?? (isCloud ? "Select organization" : "Select company")}
+              {currentName ?? (isCloud ? l10n("local.select_organization_99e5009d") : l10n("local.select_company_97716fab"))}
             </span>
           </span>
           {!rail && <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />}
@@ -418,8 +419,7 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
       >
         <div className="flex h-(--organization-popover-header-height) items-center justify-between gap-2 px-3.5">
           <DropdownMenuLabel className="p-0 text-(length:--text-compact) font-semibold text-foreground">
-            Organizations
-          </DropdownMenuLabel>
+            {l10n("local.organizations_2730183d")}</DropdownMenuLabel>
           {/* Stack order is owned by cloud's own portfolio in v1, so the
               drag-to-reorder affordance stays self-hosted-only. */}
           {isCloud ? null : (
@@ -432,7 +432,7 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
               }}
               className="rounded px-1.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              {isEditingOrder ? "Done" : "Edit"}
+              {isEditingOrder ? l10n("local.done_11a6767d") : l10n("local.edit_464c4ffd")}
             </button>
           )}
         </div>
@@ -450,10 +450,10 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
               {stacks.length === 0 ? (
                 <DropdownMenuItem disabled>
                   {stacksQuery.isLoading
-                    ? "Loading organizations..."
+                    ? l10n("local.loading_organizations_a47e333d")
                     : stacksQuery.isError
-                      ? "Could not load organizations"
-                      : "No organizations"}
+                      ? l10n("local.could_not_load_organizations_555dddc2")
+                      : l10n("local.no_organizations_c256efdc")}
                 </DropdownMenuItem>
               ) : null}
             </>
@@ -486,7 +486,7 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
                 // offer the way back.
                 companyListUnavailable ? (
                   <>
-                    <DropdownMenuItem disabled>Couldn&apos;t load companies</DropdownMenuItem>
+                    <DropdownMenuItem disabled>{l10n("local.couldn_apos_t_load_companies_ebe1a18d")}</DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={(event) => {
                         // Keep the menu open so the result of the retry is visible.
@@ -495,11 +495,10 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
                       }}
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
-                      Try again
-                    </DropdownMenuItem>
+                      {l10n("local.try_again_d8b8392e")}</DropdownMenuItem>
                   </>
                 ) : (
-                  <DropdownMenuItem disabled>No companies</DropdownMenuItem>
+                  <DropdownMenuItem disabled>{l10n("local.no_companies_4562e319")}</DropdownMenuItem>
                 )
               ) : null}
             </>
@@ -517,7 +516,7 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
               <span className="flex size-5 shrink-0 items-center justify-center text-muted-foreground">
                 <Plus className="size-4" />
               </span>
-              <span className="min-w-0 flex-1 truncate">Create organization</span>
+              <span className="min-w-0 flex-1 truncate">{l10n("local.create_organization_f14e1b22")}</span>
             </DropdownMenuItem>
           )}
           {showInvitePeople ? (
@@ -541,8 +540,8 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
                 </span>
                 <span className="min-w-0 flex-1 truncate">
                   {currentName
-                    ? `Invite people to ${currentName}`
-                    : "Invite people"}
+                    ? l10n("local.invite_people_to_value_6459c899", {v0: (currentName)})
+                    : l10n("local.invite_people_27bf0f2d")}
                 </span>
               </Link>
             </DropdownMenuItem>
@@ -557,7 +556,7 @@ function BuiltinCompanyMenu({ open: controlledOpen, onOpenChange }: SidebarCompa
                 <LogOut className="size-4" />
               </span>
               <span className="min-w-0 flex-1 truncate">
-                {signOutMutation.isPending ? "Signing out..." : "Sign out"}
+                {signOutMutation.isPending ? l10n("local.signing_out_04362316") : l10n("local.sign_out_48f0d3d3")}
               </span>
             </DropdownMenuItem>
           ) : null}

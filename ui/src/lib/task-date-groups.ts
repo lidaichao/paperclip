@@ -1,9 +1,10 @@
+import { l10n } from "../i18n";
 export type TaskDateGroup = "today" | "yesterday" | "earlier";
 
 export const taskDateGroupLabels: Record<TaskDateGroup, string> = {
-  today: "Today",
-  yesterday: "Yesterday",
-  earlier: "Earlier",
+  today: l10n("local.today_2b065c7c"),
+  yesterday: l10n("local.yesterday_56618125"),
+  earlier: l10n("local.earlier_e10ae990"),
 };
 
 function localCalendarOrdinal(date: Date): number {

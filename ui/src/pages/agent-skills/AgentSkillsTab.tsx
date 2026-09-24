@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/lib/router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -374,7 +375,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
         badge={
           showReleasePicker && pinnedRelease ? (
             <Badge variant="secondary" className="text-(length:--text-nano)">
-              Beta · {releaseShortLabel(pinnedRelease)}
+              {l10n("local.beta_0a55fc9b")}{" "}{releaseShortLabel(pinnedRelease)}
             </Badge>
           ) : undefined
         }
@@ -400,8 +401,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-foreground">
-            {enabledRows.length} of {libraryRows.length} enabled
-          </span>
+            {enabledRows.length} {l10n("local.of_28391d3b")}{" "}{libraryRows.length} {l10n("local.enabled_fb9cf756")}</span>
           {applicationLabel ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -425,23 +425,22 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search skills"
+                placeholder={l10n("local.search_skills_76c02b7e")}
                 className="h-8 w-full pl-8 sm:w-56"
-                aria-label="Search skills"
+                aria-label={l10n("local.search_skills_76c02b7e")}
               />
             </div>
             <Button asChild variant="outline" size="sm" className="shrink-0">
               <Link to="/skills" className="no-underline">
                 <Store className="h-3.5 w-3.5" />
-                Browse skills store
-              </Link>
+                {l10n("local.browse_skills_store_0b01a8a3")}</Link>
             </Button>
           </div>
         </div>
 
         {syncSkills.isError ? (
           <p className="text-xs text-destructive">
-            {syncSkills.error instanceof Error ? syncSkills.error.message : "Failed to update skills"}
+            {syncSkills.error instanceof Error ? syncSkills.error.message : l10n("local.failed_to_update_skills_6de194e3")}
           </p>
         ) : null}
       </div>
@@ -462,16 +461,14 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
               className="flex items-center justify-between gap-3 border-b border-amber-300/40 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 last:border-b-0 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200"
             >
               <span className="min-w-0 truncate">
-                <span className="font-medium">{key}</span> is enabled but missing from the organization library.
-              </span>
+                <span className="font-medium">{key}</span> {l10n("local.is_enabled_but_missing_from_the_organization_4bd2d0eb")}</span>
               <button
                 type="button"
                 onClick={() => toggleSkill(key, false)}
                 className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-400/50 px-2 py-0.5 font-medium transition-colors hover:bg-amber-100/60 dark:hover:bg-amber-900/30"
               >
                 <X className="h-3 w-3" />
-                Remove
-              </button>
+                {l10n("local.remove_c3812fc4")}</button>
             </div>
           ))}
         </div>
@@ -483,26 +480,26 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
         <EmptyLibraryCard />
       ) : (
         <div className="space-y-4">
-          <SkillSection title="Enabled on this agent" count={filteredEnabled.length}>
+          <SkillSection title={l10n("local.enabled_on_this_agent_ec0548eb")} count={filteredEnabled.length}>
             {filteredEnabled.length > 0 ? (
               filteredEnabled.map((row) => renderRow(row, "enabled"))
             ) : (
               <SectionEmpty>
-                {search ? "No enabled skills match your search." : "No skills enabled on this agent yet."}
+                {search ? l10n("local.no_enabled_skills_match_your_search_2c5631d3") : l10n("local.no_skills_enabled_on_this_agent_yet_de2fcde4")}
               </SectionEmpty>
             )}
           </SkillSection>
 
-          <SkillSection title="Available from the library" count={filteredAvailable.length}>
+          <SkillSection title={l10n("local.available_from_the_library_e90e50ff")} count={filteredAvailable.length}>
             {filteredAvailable.length > 0 ? (
               filteredAvailable.map((row) => renderRow(row, "available"))
             ) : (
               <SectionEmpty>
                 {search
-                  ? "No available skills match your search."
+                  ? l10n("local.no_available_skills_match_your_search_7bef998d")
                   : libraryEmpty
-                    ? "Import skills into the organization library to enable them here."
-                    : "Every library skill is enabled on this agent."}
+                    ? l10n("local.import_skills_into_the_organization_library_t_0a6dc3a5")
+                    : l10n("local.every_library_skill_is_enabled_on_this_agent_ad4ce52e")}
               </SectionEmpty>
             )}
           </SkillSection>
@@ -518,8 +515,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
                     )}
                   />
                   <span className="text-xs font-medium text-muted-foreground">
-                    Automatic and detected skills (read-only)
-                  </span>
+                    {l10n("local.automatic_and_detected_skills_read_only_1f07f74b")}</span>
                   <span className="text-xs text-muted-foreground/70">{filteredDetected.length}</span>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -528,7 +524,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
                       <AgentSkillRow key={row.key} variant="readonly" data={row} />
                     ))
                   ) : (
-                    <SectionEmpty>No detected skills match your search.</SectionEmpty>
+                    <SectionEmpty>{l10n("local.no_detected_skills_match_your_search_cb9b55e2")}</SectionEmpty>
                   )}
                 </CollapsibleContent>
               </div>
@@ -536,7 +532,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
           ) : null}
 
           <div className="text-xs text-muted-foreground">
-            Adapter: {adapterLabels[agent.adapterType] ?? agent.adapterType}
+            {l10n("local.adapter_6fada5c7")}{" "}{adapterLabels[agent.adapterType] ?? agent.adapterType}
           </div>
         </div>
       )}
@@ -557,31 +553,27 @@ function SaveStatusChip({
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Saving…
-      </span>
+        {l10n("local.saving_23e39291")}</span>
     );
   }
   if (error) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-destructive">
         <AlertCircle className="h-3.5 w-3.5" />
-        Couldn’t save
-      </span>
+        {l10n("local.couldn_t_save_a018b7a8")}</span>
     );
   }
   if (unsaved) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Saving soon…
-      </span>
+        {l10n("local.saving_soon_b9673b37")}</span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-(--status-task-done)">
       <CheckCircle2 className="h-3.5 w-3.5" />
-      Saved
-    </span>
+      {l10n("local.saved_b5c120b3")}</span>
   );
 }
 
@@ -614,16 +606,14 @@ function EmptyLibraryCard() {
     <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border px-6 py-10 text-center">
       <Store className="h-8 w-8 text-muted-foreground/60" />
       <div className="space-y-1">
-        <p className="text-sm font-medium text-foreground">No skills in the organization library</p>
+        <p className="text-sm font-medium text-foreground">{l10n("local.no_skills_in_the_organization_library_fe9778c7")}</p>
         <p className="text-xs text-muted-foreground">
-          Install skills to the organization, then enable them on this agent.
-        </p>
+          {l10n("local.install_skills_to_the_organization_then_enabl_20cac58d")}</p>
       </div>
       <Button asChild variant="outline" size="sm">
         <Link to="/skills" className="no-underline">
           <Store className="h-3.5 w-3.5" />
-          Browse skills store
-        </Link>
+          {l10n("local.browse_skills_store_0b01a8a3")}</Link>
       </Button>
     </div>
   );

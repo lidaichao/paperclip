@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useRef } from "react";
 import {
   Activity as ActivityIcon,
@@ -40,21 +41,21 @@ type NavGroup = {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Routine",
+    label: l10n("local.routine_0b5baf30"),
     items: [
-      { key: "overview", label: "Overview", icon: Circle },
-      { key: "triggers", label: "Triggers", icon: Clock3 },
-      { key: "variables", label: "Variables", icon: LayoutGrid },
-      { key: "secrets", label: "Secrets", icon: KeyRound },
-      { key: "delivery", label: "Delivery", icon: Send },
+      { key: "overview", label: l10n("local.overview_d4b1ea57"), icon: Circle },
+      { key: "triggers", label: l10n("local.triggers_e62f2148"), icon: Clock3 },
+      { key: "variables", label: l10n("local.variables_02db55ba"), icon: LayoutGrid },
+      { key: "secrets", label: l10n("local.secrets_d8707d41"), icon: KeyRound },
+      { key: "delivery", label: l10n("local.delivery_52bfe584"), icon: Send },
     ],
   },
   {
-    label: "Operate",
+    label: l10n("local.operate_58c3939c"),
     items: [
-      { key: "runs", label: "Runs", icon: Play },
-      { key: "activity", label: "Activity", icon: ActivityIcon },
-      { key: "history", label: "History", icon: HistoryIcon },
+      { key: "runs", label: l10n("local.runs_848f54e8"), icon: Play },
+      { key: "activity", label: l10n("local.activity_38da1505"), icon: ActivityIcon },
+      { key: "history", label: l10n("local.history_0e769600"), icon: HistoryIcon },
     ],
   },
 ];
@@ -109,7 +110,7 @@ export function RoutineSubSidebar({
 
   return (
     <nav
-      aria-label="Routine sections"
+      aria-label={l10n("local.routine_sections_05ddb20f")}
       className="hidden h-full w-52 shrink-0 flex-col gap-4 overflow-y-auto border-r border-border bg-background px-3 py-4 md:flex"
     >
       {NAV_GROUPS.map((group) => (
@@ -152,7 +153,7 @@ export function RoutineSubSidebar({
                   <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500 motion-safe:animate-pulse" />
                 ) : dirty ? (
                   <span
-                    aria-label="Unsaved changes"
+                    aria-label={l10n("local.unsaved_changes_a710c2b9")}
                     className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500 ring-2 ring-background"
                   />
                 ) : null}
@@ -185,7 +186,7 @@ export function RoutineSectionPicker({
           }
         }}
       >
-        <SelectTrigger className="h-11 w-full" aria-label="Routine section">
+        <SelectTrigger className="h-11 w-full" aria-label={l10n("local.routine_section_0f3c4f87")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

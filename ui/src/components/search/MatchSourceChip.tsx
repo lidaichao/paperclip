@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { cn } from "@/lib/utils";
 
 export type MatchSourceChipKind = "title" | "identifier" | "comment" | "document";
@@ -14,10 +15,10 @@ const chipStyles: Record<MatchSourceChipKind, string> = {
 };
 
 const chipLabels: Record<MatchSourceChipKind, string> = {
-  title: "Title",
-  identifier: "Identifier",
-  comment: "Comment",
-  document: "Doc",
+  title: l10n("local.title_7e8cd205"),
+  identifier: l10n("local.identifier_9b10587f"),
+  comment: l10n("local.comment_44f5e3fb"),
+  document: l10n("local.doc_49f4e57c"),
 };
 
 export interface MatchSourceChipProps {

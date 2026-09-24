@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ExternalObjectSummary } from "@paperclipai/shared";
 import {
   dominantExternalObjectTone,
@@ -36,7 +37,7 @@ function buildBreakdownTitle(summary: ExternalObjectSummary): string {
   }
   if (summary.staleCount > 0) parts.push(`${summary.staleCount} stale`);
   parts.push(`${summary.total} total`);
-  return `External objects: ${parts.join(", ")}`;
+  return l10n("local.external_objects_value_758ef502", {v0: (parts.join(", "))});
 }
 
 /**

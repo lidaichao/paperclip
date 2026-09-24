@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   COMPANY_SEARCH_SORTS,
   type CompanySearchSort,
@@ -14,17 +15,17 @@ import type { ParsedSearchQuery } from "./search-query-parser";
 export type SearchFilters = ParsedSearchQuery["filters"];
 
 export const SORT_LABELS: Record<CompanySearchSort, string> = {
-  relevance: "Relevance",
-  updated: "Recently updated",
-  created: "Newest created",
-  priority: "Priority",
+  relevance: l10n("local.relevance_e2736174"),
+  updated: l10n("local.recently_updated_474b2a86"),
+  created: l10n("local.newest_created_78d356ab"),
+  priority: l10n("local.priority_d60dbba0"),
 };
 
 export const UPDATED_WITHIN_LABELS: Record<string, string> = {
-  "24h": "Last 24 hours",
-  "7d": "Last 7 days",
-  "30d": "Last 30 days",
-  "90d": "Last 90 days",
+  "24h": l10n("local.last_24_hours_5c37cf8f"),
+  "7d": l10n("local.last_7_days_0603deca"),
+  "30d": l10n("local.last_30_days_f8f03fb4"),
+  "90d": l10n("local.last_90_days_9902d7ae"),
 };
 
 export function updatedWithinLabel(value: string): string {
@@ -109,15 +110,15 @@ function humanize(value: string): string {
 }
 
 function assigneeChipLabel(filters: SearchFilters, lookups: FilterChipLookups): string {
-  if (filters.assigneeAgentId === null) return "Unassigned";
+  if (filters.assigneeAgentId === null) return l10n("local.unassigned_14d33bd0");
   if (typeof filters.assigneeAgentId === "string") {
     return lookups.agentName(filters.assigneeAgentId) ?? "Agent";
   }
   if (filters.assigneeUserId) {
-    if (filters.assigneeUserId === lookups.currentUserId) return "Me";
+    if (filters.assigneeUserId === lookups.currentUserId) return l10n("local.me_d30af076");
     return lookups.userName(filters.assigneeUserId) ?? "User";
   }
-  return "Assignee";
+  return l10n("local.assignee_5e20d20e");
 }
 
 /** Removable chip descriptors for the active-filter row. */

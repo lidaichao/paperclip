@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Project } from "@paperclipai/shared";
@@ -29,10 +30,10 @@ type ProjectSortField = "name" | "updated" | "created" | "targetDate";
 type ProjectSortDir = "asc" | "desc";
 
 const PROJECT_SORT_OPTIONS: Array<{ field: ProjectSortField; label: string }> = [
-  { field: "name", label: "Name" },
-  { field: "updated", label: "Updated" },
-  { field: "created", label: "Created" },
-  { field: "targetDate", label: "Target date" },
+  { field: "name", label: l10n("local.name_dcd1d522") },
+  { field: "updated", label: l10n("local.updated_3a5ecca1") },
+  { field: "created", label: l10n("local.created_d70b9e24") },
+  { field: "targetDate", label: l10n("local.target_date_834cc86b") },
 ];
 
 function compareProjectNames(left: Project, right: Project) {
@@ -84,7 +85,7 @@ export function Projects() {
   const [sortDir, setSortDir] = useState<ProjectSortDir>("asc");
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Projects" }]);
+    setBreadcrumbs([{ label: l10n("local.projects_04e2a972") }]);
   }, [setBreadcrumbs]);
 
   const { data: allProjects, isLoading, error } = useQuery({
@@ -116,7 +117,7 @@ export function Projects() {
 
     return groups;
   }, [membershipsQuery.data, sortedProjects]);
-  const sortLabel = PROJECT_SORT_OPTIONS.find((option) => option.field === sortField)?.label ?? "Name";
+  const sortLabel = PROJECT_SORT_OPTIONS.find((option) => option.field === sortField)?.label ?? l10n("local.name_dcd1d522");
 
   if (!selectedCompanyId) {
     return <EmptyState icon={Hexagon} message="Select an organization to view projects." />;
@@ -131,9 +132,9 @@ export function Projects() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="w-fit text-xs" title="Sort">
+            <Button variant="ghost" size="sm" className="w-fit text-xs" title={l10n("local.sort_bec69036")}>
               <ArrowUpDown className="h-3.5 w-3.5 sm:h-3 sm:w-3 sm:mr-1" />
-              <span>Sort: {sortLabel}</span>
+              <span>{l10n("local.sort_8f3e7ea6")}{" "}{sortLabel}</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-44 p-0">
@@ -160,7 +161,7 @@ export function Projects() {
                   {sortField === option.field ? (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Check className="h-3 w-3" />
-                      {sortDir === "asc" ? "Asc" : "Desc"}
+                      {sortDir === "asc" ? l10n("local.asc_cddeba5c") : l10n("local.desc_5c4419a6")}
                     </span>
                   ) : null}
                 </button>
@@ -170,8 +171,7 @@ export function Projects() {
         </Popover>
         <Button size="sm" variant="outline" onClick={openNewProject}>
           <Plus className="h-4 w-4 mr-1" />
-          Add Project
-        </Button>
+          {l10n("local.add_project_44b7ce21")}</Button>
       </div>
 
       {error && <p className="text-sm text-destructive">{error.message}</p>}
@@ -198,7 +198,7 @@ export function Projects() {
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-medium">{label}</h2>
                   <span className="text-xs text-muted-foreground">
-                    {sectionProjects.length} project{sectionProjects.length === 1 ? "" : "s"}
+                    {sectionProjects.length} {l10n("local.project_244210e4")}{sectionProjects.length === 1 ? "" : englishPluralSuffix("s")}
                   </span>
                 </div>
                 <Card className="block py-0 overflow-hidden divide-y divide-border">
@@ -223,9 +223,9 @@ export function Projects() {
                           <div className="flex items-center gap-3">
                             <span
                               className="hidden text-xs text-muted-foreground tabular-nums sm:inline"
-                              title={`${formatNumber(project.taskCount ?? 0)} task${(project.taskCount ?? 0) === 1 ? "" : "s"}`}
+                              title={l10n("local.value_taskvalue_56eab638", {v0: (formatNumber(project.taskCount ?? 0)), v1: (englishPluralSuffix((project.taskCount ?? 0) === 1 ? "" : "s"))})}
                             >
-                              {formatNumber(project.taskCount ?? 0)} task{(project.taskCount ?? 0) === 1 ? "" : "s"}
+                              {formatNumber(project.taskCount ?? 0)} {l10n("local.task_0ebb429f")}{(project.taskCount ?? 0) === 1 ? "" : englishPluralSuffix("s")}
                             </span>
                             {project.budget && (
                               <span className="hidden text-xs text-muted-foreground tabular-nums sm:inline">

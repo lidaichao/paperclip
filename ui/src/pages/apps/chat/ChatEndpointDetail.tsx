@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { SlackToolsSettings, SlackSearchAccess } from "./SlackToolSettings";
 import { defaultSlackAppName } from "./slack-app-name";
 import { ChatCommunicationInstructions } from "./ChatCommunicationInstructions";
@@ -111,11 +112,11 @@ const providerLifecycleGuidance: Record<
 };
 
 const activityKindLabels: Record<ChatActivityItem["kind"], string> = {
-  delivery: "Inbound delivery",
-  publication: "Outbound publication",
-  action: "Provider action",
-  health: "Connection health",
-  repair: "Connection repair",
+  delivery: l10n("local.inbound_delivery_9ac4ff22"),
+  publication: l10n("local.outbound_publication_8dcc69d5"),
+  action: l10n("local.provider_action_58176e7e"),
+  health: l10n("local.connection_health_883d0e5c"),
+  repair: l10n("local.connection_repair_2c777c5f"),
 };
 
 const replayableFailureStates = new Set(["failed"]);
@@ -167,12 +168,12 @@ export function activityResolutionActions(item: ChatActivityItem) {
 export function activityResolutionDescription(item: ChatActivityItem): string {
   const phase = item.fileTransfer?.phase;
   if (phase === "file_info_unknown")
-    return "The file upload was confirmed, but its Teams notification was not. Check Teams first. Retrying sends only that notification, not the file bytes, and may create a duplicate card.";
+    return l10n("local.the_file_upload_was_confirmed_but_its_teams_n_cf8db300");
   if (phase === "consent_unknown")
-    return "The consent card may have reached Teams. File delivery is not confirmed. Cancelling here does not remove any card already sent.";
+    return l10n("local.the_consent_card_may_have_reached_teams_file_267408f1");
   if (phase)
-    return "The file may already exist in OneDrive. Cancelling stops this Paperclip transfer; it does not delete remote bytes. Uploads cannot be marked delivered or retried from this uncertain state.";
-  return "Paperclip lost confirmation after sending. Check the provider conversation first. Retrying can create a duplicate message.";
+    return l10n("local.the_file_may_already_exist_in_onedrive_cancel_b4025bda");
+  return l10n("local.paperclip_lost_confirmation_after_sending_che_1a7e11bb");
 }
 
 export function isResolutionEligible(item: ChatActivityItem): boolean {
@@ -245,7 +246,7 @@ export function ChatEndpointDetail() {
   useEffect(() => {
     if (!endpoint || !activeTab) return;
     setBreadcrumbs([
-      { label: "Connectors", href: "/apps" },
+      { label: l10n("local.connectors_c3d2e79e"), href: "/apps" },
       {
         label: `${endpoint.assignedAgentName} · ${providerNames[endpoint.provider]}`,
         href: `/apps/chat/${endpoint.id}/settings`,
@@ -253,7 +254,7 @@ export function ChatEndpointDetail() {
       {
         label:
           tabItems.find((item) => item.value === activeTab)?.label ??
-          "Settings",
+          l10n("local.settings_74a883a0"),
       },
     ]);
     return () => setBreadcrumbs([]);
@@ -265,18 +266,15 @@ export function ChatEndpointDetail() {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
-        Loading connection…
-      </div>
+        {l10n("local.loading_connection_ca5b56e4")}</div>
     );
   if (endpointQuery.isError || !endpoint)
     return (
       <div className="space-y-3">
         <p className="text-sm text-destructive">
-          This chat connection could not be loaded.
-        </p>
+          {l10n("local.this_chat_connection_could_not_be_loaded_89a518ff")}</p>
         <Button variant="outline" onClick={() => endpointQuery.refetch()}>
-          Try again
-        </Button>
+          {l10n("local.try_again_d8b8392e")}</Button>
       </div>
     );
   if (endpoint.provider === "agentmail") return <EmailEndpointSettings endpointId={endpoint.id} companyId={endpoint.companyId} />;
@@ -289,18 +287,18 @@ export function ChatEndpointDetail() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold">
-            {endpoint.assignedAgentName} in {providerNames[endpoint.provider]}
+            {endpoint.assignedAgentName} {l10n("local.in_58296753")}{" "}{providerNames[endpoint.provider]}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {endpoint.providerAccountLabel ?? "Chat connection"}
+            {endpoint.providerAccountLabel ?? l10n("local.chat_connection_c3b314ec")}
           </p>
           {endpoint.provider === "imessage-photon" && endpoint.botExternalId && endpoint.photonAllocation !== "shared" && (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
               <span>{endpoint.botExternalId}</span>
-              <Button variant="ghost" size="sm" aria-label="Copy dedicated number" onClick={async () => {
+              <Button variant="ghost" size="sm" aria-label={l10n("local.copy_dedicated_number_0a559caf")} onClick={async () => {
                 try { await copyTextToClipboard(endpoint.botExternalId!); setCopyStatus("Number copied"); }
                 catch { setCopyStatus("Could not copy the number. Select and copy it manually."); }
-              }}><Copy className="size-4" />Copy number</Button>
+              }}><Copy className="size-4" />{l10n("local.copy_number_f35c40de")}</Button>
               <span role="status" className="text-muted-foreground">{copyStatus}</span>
             </div>
           )}
@@ -315,8 +313,7 @@ export function ChatEndpointDetail() {
                 )
               }
             >
-              Continue setup
-            </Button>
+              {l10n("local.continue_setup_c5702c19")}</Button>
           ) : null}
           {endpoint.status !== "active" && <StatusBadge status={endpoint.status} />}
         </div>
@@ -361,7 +358,7 @@ function Settings({
     queryFn: () => agentsApi.get(endpoint.assignedAgentId, endpoint.companyId),
     enabled: endpoint.provider === "slack",
   });
-  const mentionMessage = `@${(endpoint.botUsername ?? endpoint.botLabel ?? endpoint.assignedAgentName).replace(/^@/, "")} you there?`;
+  const mentionMessage = l10n("local._value_you_there_e7d90d4d", {v0: ((endpoint.botUsername ?? endpoint.botLabel ?? endpoint.assignedAgentName).replace(/^@/, ""))});
   const resourcesQuery = useQuery({
     queryKey: queryKeys.chatEndpoints.resources(endpointId),
     queryFn: () => chatEndpointsApi.listResources(endpointId),
@@ -376,8 +373,8 @@ function Settings({
       ),
     onError: (error) =>
       pushToast({
-        title: "Couldn't update destination",
-        body: error instanceof Error ? error.message : "Try again.",
+        title: l10n("local.couldn_t_update_destination_f23b38cd"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_a0c2cc13"),
         tone: "error",
       }),
   });
@@ -390,8 +387,8 @@ function Settings({
       ),
     onError: (error) =>
       pushToast({
-        title: "Couldn't update settings",
-        body: error instanceof Error ? error.message : "Try again.",
+        title: l10n("local.couldn_t_update_settings_522457db"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_a0c2cc13"),
         tone: "error",
       }),
   });
@@ -404,22 +401,22 @@ function Settings({
     saveResources.mutate({ id: resource.id, enabled });
   return (
     <section className="max-w-3xl space-y-7">
-      {endpoint.provider === "imessage-photon" && <p className="text-sm text-muted-foreground">{endpoint.photonAllocation === "shared" ? "Shared Photon project · direct messages only. Enroll senders in Photon and link their Messages identities in Access. Groups cannot be enabled." : "Enable each group individually. Agent replies are visible to everyone in that group; only authorized senders can start work."}</p>}
+      {endpoint.provider === "imessage-photon" && <p className="text-sm text-muted-foreground">{endpoint.photonAllocation === "shared" ? l10n("local.shared_photon_project_direct_messages_only_en_bdbec108") : l10n("local.enable_each_group_individually_agent_replies_ade4297c")}</p>}
       {endpoint.provider === "slack" && (
         <div className="space-y-2 text-sm">
-          <h2 className="text-lg font-semibold">Chat in Slack</h2>
-          <p>Invite the bot to a channel, then mention it to start a conversation.</p>
+          <h2 className="text-lg font-semibold">{l10n("local.chat_in_slack_4d7c0afa")}</h2>
+          <p>{l10n("local.invite_the_bot_to_a_channel_then_mention_it_t_ec7e38b6")}</p>
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
             <code>{mentionMessage}</code>
-            <Button size="icon" variant="ghost" aria-label={messageCopied ? "Message copied" : "Copy message"} onClick={() => {
-              void copyTextToClipboard(mentionMessage).then(() => setMessageCopied(true), () => pushToast({ title: "Couldn’t copy the message", body: "Select and copy it manually.", tone: "error" }));
+            <Button size="icon" variant="ghost" aria-label={messageCopied ? l10n("local.message_copied_ed112278") : l10n("local.copy_message_457efe53")} onClick={() => {
+              void copyTextToClipboard(mentionMessage).then(() => setMessageCopied(true), () => pushToast({ title: l10n("local.couldn_t_copy_the_message_31ae0785"), body: l10n("local.select_and_copy_it_manually_0edc1f0c"), tone: "error" }));
             }}>{messageCopied ? <Check className="size-4" /> : <Copy className="size-4" />}</Button>
           </div>
         </div>
       )}
       {endpoint.provider === "slack" && (
-        avatarAgent.isPending ? <p role="status" className="text-sm text-muted-foreground">Loading agent avatar…</p>
-          : avatarAgent.isError ? <p role="alert" className="text-sm text-destructive">Couldn’t load the agent’s avatar. <button className="underline" onClick={() => void avatarAgent.refetch()}>Try again</button></p>
+        avatarAgent.isPending ? <p role="status" className="text-sm text-muted-foreground">{l10n("local.loading_agent_avatar_0a92b683")}</p>
+          : avatarAgent.isError ? <p role="alert" className="text-sm text-destructive">{l10n("local.couldn_t_load_the_agent_s_avatar_984c743c")}{" "}<button className="underline" onClick={() => void avatarAgent.refetch()}>{l10n("local.try_again_d8b8392e")}</button></p>
           : <SlackAvatarSettings
               agentName={avatarAgent.data?.name ?? endpoint.assignedAgentName}
               appName={endpoint.setup?.slackApp?.appName ?? defaultSlackAppName(avatarAgent.data?.name ?? endpoint.assignedAgentName)}
@@ -437,7 +434,7 @@ function Settings({
       />}
       {endpoint.provider === "telegram" && (
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Telegram group command</h2>
+          <h2 className="text-lg font-semibold">{l10n("local.telegram_group_command_a2c515a4")}</h2>
           <div className="rounded-lg border border-border p-3 text-sm">
             <code>
               /task@
@@ -445,24 +442,20 @@ function Settings({
               &lt;request&gt;
             </code>
             <p className="mt-2 text-muted-foreground">
-              Telegram&apos;s default privacy mode does not deliver ordinary
-              mentions to bots. Use this command to start or continue group
-              work, or reply directly to a message from the bot.
-            </p>
+              {l10n("local.telegram_apos_s_default_privacy_mode_does_not_f763116f")}</p>
           </div>
         </div>
       )}
       <div>
-        <h2 className="text-lg font-semibold">Where this agent can work</h2>
+        <h2 className="text-lg font-semibold">{l10n("local.where_this_agent_can_work_b3257820")}</h2>
       </div>
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold">{endpoint.provider === "slack" ? "Allowed Channels" : "Destinations"}</h3>
+        <h3 className="text-sm font-semibold">{endpoint.provider === "slack" ? l10n("local.allowed_channels_e57f04d7") : l10n("local.destinations_72eb63f0")}</h3>
         {resourcesQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading destinations…</p>
+          <p className="text-sm text-muted-foreground">{l10n("local.loading_destinations_b78eda5f")}</p>
         ) : destinationResources.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-            No provider destinations have been discovered yet.
-          </p>
+            {l10n("local.no_provider_destinations_have_been_discovered_44663dff")}</p>
         ) : (
           <div className="divide-y divide-border border-y border-border">
             {destinationResources.map((resource) => (
@@ -474,12 +467,12 @@ function Settings({
                   <p className="text-xs text-muted-foreground">
                     {resource.availability === "available"
                       ? (resource.detail ?? resource.type)
-                      : "Unavailable at the provider"}
+                      : l10n("local.unavailable_at_the_provider_b0c0c15c")}
                   </p>
-                  {resource.participants?.length ? <p className="mt-1 break-words text-xs text-muted-foreground">Participants: {resource.participants.join(", ")}</p> : null}
+                  {resource.participants?.length ? <p className="mt-1 break-words text-xs text-muted-foreground">{l10n("local.participants_92ac4b95")}{" "}{resource.participants.join(", ")}</p> : null}
                 </div>
                 <ToggleSwitch
-                  aria-label={`Enable ${resource.label}`}
+                  aria-label={l10n("local.enable_value_e24182f2", {v0: (resource.label)})}
                   checked={resource.enabled}
                   disabled={
                     endpoint.photonAllocation === "shared" ||
@@ -497,13 +490,13 @@ function Settings({
       </div>
       {endpoint.provider !== "github" && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold">Private conversations</h3>
+          <h3 className="text-sm font-semibold">{l10n("local.private_conversations_65f20ef7")}</h3>
           <SettingToggle
-            label="Allow direct messages"
+            label={l10n("local.allow_direct_messages_e2f7f14d")}
             detail={
               endpoint.provider === "discord"
-                ? "People must also enable Direct Messages in their shared Discord server’s Privacy Settings."
-                : "People can start or continue a task in a direct conversation."
+                ? l10n("local.people_must_also_enable_direct_messages_in_th_f78465c5")
+                : l10n("local.people_can_start_or_continue_a_task_in_a_dire_4464bb78")
             }
             checked={endpoint.allowDirectMessages ?? false}
             pending={updateEndpoint.isPending}
@@ -513,8 +506,8 @@ function Settings({
           />
           {endpoint.provider === "microsoft-teams" && (
             <SettingToggle
-              label="Allow group chats"
-              detail="The bot may participate in group chats where it is installed."
+              label={l10n("local.allow_group_chats_5fabb08f")}
+              detail={l10n("local.the_bot_may_participate_in_group_chats_where_a815e4ff")}
               checked={endpoint.allowGroupChats ?? false}
               pending={updateEndpoint.isPending}
               onChange={(allowGroupChats) =>
@@ -583,7 +576,7 @@ function Access({
         queryKeys.chatEndpoints.detail(endpointId),
         next,
       ),
-    onError: (error) => pushToast({ title: "Couldn’t update access", body: error instanceof Error ? error.message : "Try again.", tone: "error" }),
+    onError: (error) => pushToast({ title: l10n("local.couldn_t_update_access_14797075"), body: error instanceof Error ? error.message : l10n("local.try_again_a0c2cc13"), tone: "error" }),
   });
   const createIntent = useMutation({
     mutationFn: (principalId: string) =>
@@ -593,15 +586,15 @@ function Access({
         new URL(confirmationUrl, window.location.origin).toString(),
       );
       pushToast({
-        title: "Private identity-link URL created",
-        body: "Send it only to the person whose provider identity is shown.",
+        title: l10n("local.private_identity_link_url_created_ec92b406"),
+        body: l10n("local.send_it_only_to_the_person_whose_provider_ide_c0b6f302"),
         tone: "success",
       });
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't create identity link",
-        body: error instanceof Error ? error.message : "Try again.",
+        title: l10n("local.couldn_t_create_identity_link_619b3ffe"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_a0c2cc13"),
         tone: "error",
       }),
   });
@@ -617,38 +610,37 @@ function Access({
   return (
     <section className="max-w-3xl space-y-7">
       <div>
-        <h2 className="text-lg font-semibold">External identity access</h2>
+        <h2 className="text-lg font-semibold">{l10n("local.external_identity_access_742bdfc3")}</h2>
       </div>
       {endpoint.provider === "slack" && <SlackSearchAccess companyId={endpoint.companyId} endpointId={endpointId} />}
       {endpoint.provider === "slack" && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold">Invite others to connect their Slack accounts</h3>
+          <h3 className="text-sm font-semibold">{l10n("local.invite_others_to_connect_their_slack_accounts_a7e76666")}</h3>
           <ol className="list-decimal space-y-3 pl-5 text-sm">
             <li>
-              Ask them to send this command in your Slack workspace:
-              <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+              {l10n("local.ask_them_to_send_this_command_in_your_slack_w_7fb4fb01")}<div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-border p-3">
                 <code>{joinCommand}</code>
                 <Button size="sm" variant="ghost" onClick={() => {
-                  void copyTextToClipboard(joinCommand).then(() => setJoinCommandCopied(true), () => pushToast({ title: "Couldn't copy the command", body: "Select and copy it manually.", tone: "error" }));
-                }}><Copy className="size-4" />{joinCommandCopied ? "Copied" : "Copy command"}</Button>
+                  void copyTextToClipboard(joinCommand).then(() => setJoinCommandCopied(true), () => pushToast({ title: l10n("local.couldn_t_copy_the_command_f3a00b9a"), body: l10n("local.select_and_copy_it_manually_0edc1f0c"), tone: "error" }));
+                }}><Copy className="size-4" />{joinCommandCopied ? l10n("local.copied_8d525e5f") : l10n("local.copy_command_9a01feec")}</Button>
               </div>
             </li>
-            <li>Open the private link from the bot, sign into Paperclip, and confirm their Slack account. The link expires in 15 minutes and works once.</li>
-            <li>If they aren’t a member of this organization, choose <strong>Request access</strong>. An admin must approve their request before they can link their account.</li>
+            <li>{l10n("local.open_the_private_link_from_the_bot_sign_into_16dc3980")}</li>
+            <li>{l10n("local.if_they_aren_t_a_member_of_this_organization_bb882d5f")}{" "}<strong>{l10n("local.request_access_b06f1662")}</strong>{l10n("local._an_admin_must_approve_their_request_before_t_3ad41e92")}</li>
           </ol>
-          <p className="text-sm text-muted-foreground">Each person links their own account and uses their own Paperclip permissions. They don’t need to create another Slack app or share credentials.</p>
+          <p className="text-sm text-muted-foreground">{l10n("local.each_person_links_their_own_account_and_uses_3bc0efc6")}</p>
         </div>
       )}
       <SettingToggle
-        label="Allow unlinked people"
-        detail="They are restricted guests. Their tasks run only with an isolated workspace and sandbox environment; otherwise Paperclip safely refuses the request. They cannot approve, hire, spend, manage access, or reassign agents."
+        label={l10n("local.allow_unlinked_people_b61e32fc")}
+        detail={l10n("local.they_are_restricted_guests_their_tasks_run_on_89e4d44d")}
         checked={allowUnlinked}
         pending={updatePolicy.isPending}
         onChange={(value) => updatePolicy.mutate(value)}
       />
       {confirmationUrl && (
         <div className="space-y-2 border-y border-border py-3">
-          <p className="text-sm font-medium">Private confirmation link</p>
+          <p className="text-sm font-medium">{l10n("local.private_confirmation_link_a3503780")}</p>
           <p className="break-all text-xs text-muted-foreground">
             {confirmationUrl}
           </p>
@@ -659,29 +651,27 @@ function Access({
               void copyTextToClipboard(confirmationUrl).then(
                 () =>
                   pushToast({
-                    title: "Confirmation link copied",
+                    title: l10n("local.confirmation_link_copied_715f6111"),
                     tone: "success",
                   }),
                 () =>
                   pushToast({
-                    title: "Couldn't copy the link",
-                    body: "Select and copy it manually.",
+                    title: l10n("local.couldn_t_copy_the_link_6bad7bdb"),
+                    body: l10n("local.select_and_copy_it_manually_0edc1f0c"),
                     tone: "error",
                   }),
               );
             }}
           >
             <Copy />
-            Copy link
-          </Button>
+            {l10n("local.copy_link_dbf362d4")}</Button>
         </div>
       )}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold">Identity links</h3>
+        <h3 className="text-sm font-semibold">{l10n("local.identity_links_d0150db9")}</h3>
         {links.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-            External people appear here after they message the agent.
-          </p>
+            {l10n("local.external_people_appear_here_after_they_messag_9c471103")}</p>
         ) : (
           <div className="divide-y divide-border border-y border-border">
             {links.map((link) => (
@@ -693,8 +683,8 @@ function Access({
                   <p className="text-sm font-medium">{link.externalLabel}</p>
                   <p className="text-xs text-muted-foreground">
                     {link.paperclipUserLabel
-                      ? `Linked to ${link.paperclipUserLabel}`
-                      : (link.externalDetail ?? "Not linked")}
+                      ? l10n("local.linked_to_value_0ade31da", {v0: (link.paperclipUserLabel)})
+                      : (link.externalDetail ?? l10n("local.not_linked_1e31d959"))}
                   </p>
                 </div>
                 {link.status === "linked" ? (
@@ -705,8 +695,7 @@ function Access({
                     onClick={() => revoke.mutate(link.principalId)}
                   >
                     <Unlink />
-                    Revoke
-                  </Button>
+                    {l10n("local.revoke_87e6d00b")}</Button>
                 ) : (
                   <Button
                     size="sm"
@@ -714,8 +703,7 @@ function Access({
                     disabled={createIntent.isPending}
                     onClick={() => createIntent.mutate(link.principalId)}
                   >
-                    Create private link
-                  </Button>
+                    {l10n("local.create_private_link_d972bf78")}</Button>
                 )}
               </div>
             ))}
@@ -742,26 +730,24 @@ function Conversations({
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">Conversations</h2>
+        <h2 className="text-lg font-semibold">{l10n("local.conversations_1d432f58")}</h2>
       </div>
       {rows.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-          No conversations yet. Address the agent in an enabled destination to
-          start one.
-        </p>
+          {l10n("local.no_conversations_yet_address_the_agent_in_an_1c773a3d")}</p>
       ) : (
-        <ul aria-label="Conversations" className="divide-y divide-border overflow-x-auto border-y border-border">
+        <ul aria-label={l10n("local.conversations_1d432f58")} className="divide-y divide-border overflow-x-auto border-y border-border">
           {rows.map((row) => (
             <li key={row.id} className="flex min-w-xl items-center gap-3 px-2 py-3 text-sm transition-colors hover:bg-accent/50">
               <AppLogo name={providerNames[provider]} brandKey={provider} compact className="size-5! rounded-sm bg-transparent" />
               <div className="flex min-w-0 max-w-56 items-center gap-2">
                 <span className="truncate font-medium" title={row.externalLabel}>{row.externalLabel}</span>
-                {row.externalUrl && <a href={row.externalUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline">Open {providerNames[provider]}<ExternalLink className="size-3" /></a>}
+                {row.externalUrl && <a href={row.externalUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline">{l10n("local.open_ed077f3d")}{" "}{providerNames[provider]}<ExternalLink className="size-3" /></a>}
               </div>
               <span aria-hidden="true" className="text-muted-foreground">·</span>
               <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="truncate" title={row.issueTitle ?? undefined}>{row.issueTitle ?? "Waiting for task"}</span>
-                {row.issueId && <Link to={`/issues/${row.issueId}`} className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline">Open task<ExternalLink className="size-3" /></Link>}
+                <span className="truncate" title={row.issueTitle ?? undefined}>{row.issueTitle ?? l10n("local.waiting_for_task_2d3edb93")}</span>
+                {row.issueId && <Link to={`/issues/${row.issueId}`} className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline">{l10n("local.open_task_6b5c9394")}<ExternalLink className="size-3" /></Link>}
               </div>
               <span className="hidden shrink-0 text-xs text-muted-foreground xl:inline">{row.issueIdentifier}</span>
               {row.state !== "active" && <StatusBadge status={row.state} />}
@@ -806,14 +792,14 @@ function Activity({
         queryKey: queryKeys.chatEndpoints.activity(endpointId),
       });
       pushToast({
-        title: `${item.kind === "publication" ? "Publication" : "Delivery"} queued for replay`,
+        title: l10n("local.value_queued_for_replay_5eb4f5e1", {v0: (item.kind === "publication" ? "Publication" : "Delivery")}),
         tone: "success",
       });
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't replay activity",
-        body: error instanceof Error ? error.message : "Try again.",
+        title: l10n("local.couldn_t_replay_activity_e3eb4a33"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_a0c2cc13"),
         tone: "error",
       }),
   });
@@ -850,29 +836,29 @@ function Activity({
         title:
           input.item.actionType === "slash_task_start" &&
           input.action === "retry_anyway"
-            ? "Task start retried"
+            ? l10n("local.task_start_retried_bd8d39d8")
             : input.item.actionType === "slash_task_start"
-              ? "Task start cancelled"
+              ? l10n("local.task_start_cancelled_7153d36a")
               : input.item.actionType === "provider_effect" &&
                   input.action === "mark_delivered"
-                ? "Provider reply marked delivered"
+                ? l10n("local.provider_reply_marked_delivered_44de899e")
                 : input.item.actionType === "provider_effect" &&
                     input.action === "retry_anyway"
-                  ? "Provider reply retried"
+                  ? l10n("local.provider_reply_retried_989eb240")
                   : input.item.actionType === "provider_effect"
-                    ? "Provider reply cancelled"
+                    ? l10n("local.provider_reply_cancelled_91ea1f91")
                     : input.action === "mark_delivered"
-                      ? "Publication marked delivered"
+                      ? l10n("local.publication_marked_delivered_ac3242eb")
                       : input.action === "retry_anyway"
-                        ? "Publication queued for retry"
-                        : "Publication cancelled",
+                        ? l10n("local.publication_queued_for_retry_f9100c1e")
+                        : l10n("local.publication_cancelled_67f02b0a"),
         tone: "success",
       });
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't resolve activity",
-        body: error instanceof Error ? error.message : "Try again.",
+        title: l10n("local.couldn_t_resolve_activity_fce6f023"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_a0c2cc13"),
         tone: "error",
       }),
   });
@@ -892,14 +878,14 @@ function Activity({
         next,
       );
       pushToast({
-        title: action === "pause" ? "Connection paused" : "Connection resumed",
+        title: action === "pause" ? l10n("local.connection_paused_8870a331") : l10n("local.connection_resumed_e1032417"),
         tone: "success",
       });
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't update connection",
-        body: error instanceof Error ? error.message : "Try again.",
+        title: l10n("local.couldn_t_update_connection_a99084d8"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_a0c2cc13"),
         tone: "error",
       }),
   });
@@ -916,7 +902,7 @@ function Activity({
     : [];
   return (
     <section className="space-y-5">
-      <h2 className="text-lg font-semibold">Connection activity</h2>
+      <h2 className="text-lg font-semibold">{l10n("local.connection_activity_52520f2f")}</h2>
       {((status !== "active" && health.message) || health.error) && (
         <div
           className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${status === "attention" || status === "revoked" ? "border-destructive/40 bg-destructive/5 text-destructive" : "border-border bg-muted/30 text-foreground"}`}
@@ -928,7 +914,7 @@ function Activity({
             {health.message && <p>{health.message}</p>}
             {health.previousHealth && (
               <p className="mt-1 text-xs opacity-80">
-                <span className="font-medium">Last reported health:</span>{" "}
+                <span className="font-medium">{l10n("local.last_reported_health_1b2bf64e")}</span>{" "}
                 {health.previousHealth}
               </p>
             )}
@@ -943,9 +929,9 @@ function Activity({
       )}
       <details className="group rounded-lg border border-border">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-medium chat-connection-health-summary">
-          <span>Connection health and controls</span>
+          <span>{l10n("local.connection_health_and_controls_de3243d4")}</span>
           <span className="flex items-center gap-2">
-            {endpoint.setup?.callbacksNeedUpdate && <span className="text-xs text-(--status-task-blocked)">Callback URLs need attention</span>}
+            {endpoint.setup?.callbacksNeedUpdate && <span className="text-xs text-(--status-task-blocked)">{l10n("local.callback_urls_need_attention_081c6ae8")}</span>}
             <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
           </span>
         </summary>
@@ -954,11 +940,11 @@ function Activity({
         <div
           className="space-y-3 text-sm"
         >
-          <p className="font-medium">Slack callback health</p>
+          <p className="font-medium">{l10n("local.slack_callback_health_035e2b30")}</p>
           <p className="text-xs text-muted-foreground">
             {endpoint.setup?.callbacksNeedUpdate
-              ? "Slack callback URLs need an update. Save the current App Manifest, then exercise Events, Interactivity, and the registered command again."
-              : "Paperclip records each callback surface independently after Slack successfully calls it."}
+              ? l10n("local.slack_callback_urls_need_an_update_save_the_c_05d99d55")
+              : l10n("local.paperclip_records_each_callback_surface_indep_b49180a2")}
           </p>
           <div className="divide-y divide-border border-y border-border">
             {callbackSurfaceRows.map(([label, surface]) => (
@@ -966,14 +952,14 @@ function Activity({
                 <p className="text-xs font-medium">{label}</p>
                 <p className="text-xs text-muted-foreground">
                   {surface.status === "current"
-                    ? "Current"
+                    ? l10n("local.current_e0d1b682")
                     : surface.status === "stale"
-                      ? "Stale URL"
-                      : "Not observed"}
+                      ? l10n("local.stale_url_b095f498")
+                      : l10n("local.not_observed_1d3efcd6")}
                 </p>
                 {surface.observedAt && (
                   <p className="text-xs text-muted-foreground">
-                    Last observed{" "}
+                    {l10n("local.last_observed_ff418896")}{" "}
                     <time
                       dateTime={surface.observedAt}
                       title={surface.observedAt}
@@ -1004,8 +990,7 @@ function Activity({
                 ) : (
                   <Pause />
                 )}
-                Pause
-              </Button>
+                {l10n("local.pause_858e4ba7")}</Button>
             )}
             {status === "paused" && (
               <Button
@@ -1018,8 +1003,7 @@ function Activity({
                 ) : (
                   <Play />
                 )}
-                Resume
-              </Button>
+                {l10n("local.resume_d640c742")}</Button>
             )}
             {[
               "active",
@@ -1040,8 +1024,8 @@ function Activity({
               >
                 <RefreshCw />
                 {status === "draft" || status === "verifying"
-                  ? "Finish setup"
-                  : "Reconnect"}
+                  ? l10n("local.finish_setup_bc01ae77")
+                  : l10n("local.reconnect_bf8a9eab")}
               </Button>
             )}
             <Button
@@ -1051,8 +1035,7 @@ function Activity({
               onClick={() => setRemoveOpen(true)}
             >
               <Trash2 />
-              Remove connection
-            </Button>
+              {l10n("local.remove_connection_e9e9e26c")}</Button>
           </div>
           {status !== "draft" && status !== "verifying" && (
             <p className="text-xs text-muted-foreground">
@@ -1065,27 +1048,23 @@ function Activity({
       </details>
       <div className="space-y-2">
         <h3 className="text-sm font-semibold">
-          Recent activity
-        </h3>
+          {l10n("local.recent_activity_6cb44b56")}</h3>
         <div className="divide-y divide-border border-y border-border">
           {query.isLoading && (
             <div className="flex items-center gap-2 py-5 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading activity…
-            </div>
+              {l10n("local.loading_activity_a389c395")}</div>
           )}
           {query.isError && (
             <div className="flex flex-wrap items-center justify-between gap-3 py-4">
               <p className="text-sm text-destructive" role="alert">
-                Connection activity could not be loaded.
-              </p>
+                {l10n("local.connection_activity_could_not_be_loaded_65047eb0")}</p>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => query.refetch()}
               >
-                Try again
-              </Button>
+                {l10n("local.try_again_d8b8392e")}</Button>
             </div>
           )}
           {!query.isLoading &&
@@ -1126,7 +1105,7 @@ function Activity({
                   <Button
                     size="sm"
                     variant="outline"
-                    aria-label={`Replay failed ${item.kind}`}
+                    aria-label={l10n("local.replay_failed_value_c4981b33", {v0: (item.kind)})}
                     disabled={replay.isPending}
                     onClick={() => replay.mutate(item)}
                   >
@@ -1135,8 +1114,7 @@ function Activity({
                     ) : (
                       <RefreshCw />
                     )}
-                    Replay
-                  </Button>
+                    {l10n("local.replay_c8dae637")}</Button>
                 )}
                 {isResolutionEligible(item) && (
                   <Button
@@ -1144,23 +1122,21 @@ function Activity({
                     variant="outline"
                     onClick={() => setResolutionItem(item)}
                   >
-                    Resolve
-                  </Button>
+                    {l10n("local.resolve_c8f193b3")}</Button>
                 )}
               </div>
             ))}
           {!query.isLoading && !query.isError && rows.length === 0 && (
             <p className="py-5 text-sm text-muted-foreground">
-              No connection activity yet.
-            </p>
+              {l10n("local.no_connection_activity_yet_3ba50fcd")}</p>
           )}
         </div>
       </div>
-      <nav aria-label="Activity pagination" className="flex items-center justify-between gap-3">
-        <span className="text-xs text-muted-foreground">Page {cursors.length}</span>
+      <nav aria-label={l10n("local.activity_pagination_02756493")} className="flex items-center justify-between gap-3">
+        <span className="text-xs text-muted-foreground">{l10n("local.page_0a30a815")}{" "}{cursors.length}</span>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" disabled={cursors.length === 1 || query.isFetching} onClick={() => setCursors((pages) => pages.slice(0, -1))}>Previous</Button>
-          <Button size="sm" variant="outline" disabled={!query.data?.nextCursor || query.isFetching || query.isError} onClick={() => { if (query.data?.nextCursor) setCursors((pages) => [...pages, query.data.nextCursor!]); }}>Next</Button>
+          <Button size="sm" variant="outline" disabled={cursors.length === 1 || query.isFetching} onClick={() => setCursors((pages) => pages.slice(0, -1))}>{l10n("local.previous_a57b08a4")}</Button>
+          <Button size="sm" variant="outline" disabled={!query.data?.nextCursor || query.isFetching || query.isError} onClick={() => { if (query.data?.nextCursor) setCursors((pages) => [...pages, query.data.nextCursor!]); }}>{l10n("local.next_1ff57a29")}</Button>
         </div>
       </nav>
       <AlertDialog
@@ -1171,16 +1147,16 @@ function Activity({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {resolutionItem?.actionType === "slash_task_start"
-                ? "Resolve unconfirmed task start"
+                ? l10n("local.resolve_unconfirmed_task_start_24ac2c20")
                 : resolutionItem?.actionType === "provider_effect"
-                  ? "Resolve unconfirmed provider reply"
-                  : "Resolve unconfirmed delivery"}
+                  ? l10n("local.resolve_unconfirmed_provider_reply_51da03a7")
+                  : l10n("local.resolve_unconfirmed_delivery_a1666eb3")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {resolutionItem?.actionType === "slash_task_start"
-                ? "Paperclip lost confirmation after asking Slack to start the task. Check Slack first. Retrying can create a duplicate starter message and task."
+                ? l10n("local.paperclip_lost_confirmation_after_asking_slac_b30cde4a")
                 : resolutionItem?.actionType === "provider_effect"
-                  ? "Paperclip lost confirmation after sending this provider reply. Check the provider first. Marking it delivered applies any pending Paperclip state change; retrying can create a duplicate message."
+                  ? l10n("local.paperclip_lost_confirmation_after_sending_thi_cfdcf622")
                   : resolutionItem
                     ? activityResolutionDescription(resolutionItem)
                     : ""}
@@ -1188,8 +1164,7 @@ function Activity({
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-wrap">
             <AlertDialogCancel disabled={resolveActivity.isPending}>
-              Keep unresolved
-            </AlertDialogCancel>
+              {l10n("local.keep_unresolved_0de1079d")}</AlertDialogCancel>
             {resolutionItem &&
               activityResolutionActions(resolutionItem).includes("cancel") && (
                 <Button
@@ -1204,12 +1179,12 @@ function Activity({
                   }
                 >
                   {resolutionItem.actionType === "slash_task_start"
-                    ? "Cancel task start"
+                    ? l10n("local.cancel_task_start_a2029d82")
                     : resolutionItem.actionType === "provider_effect"
-                      ? "Cancel provider reply"
+                      ? l10n("local.cancel_provider_reply_7cb71ee3")
                       : resolutionItem.fileTransfer
-                        ? "Cancel file transfer"
-                        : "Cancel publication"}
+                        ? l10n("local.cancel_file_transfer_ad463f14")
+                        : l10n("local.cancel_publication_43d32931")}
                 </Button>
               )}
             {resolutionItem &&
@@ -1228,8 +1203,8 @@ function Activity({
                   }
                 >
                   {resolutionItem.fileTransfer
-                    ? "Retry file notification"
-                    : "Retry anyway"}
+                    ? l10n("local.retry_file_notification_a2a1662f")
+                    : l10n("local.retry_anyway_de469560")}
                 </Button>
               )}
             {resolutionItem &&
@@ -1248,8 +1223,7 @@ function Activity({
                     }
                   }}
                 >
-                  Mark delivered
-                </AlertDialogAction>
+                  {l10n("local.mark_delivered_3a47653e")}</AlertDialogAction>
               )}
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1257,16 +1231,14 @@ function Activity({
       <AlertDialog open={removeOpen} onOpenChange={setRemoveOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove this connection?</AlertDialogTitle>
+            <AlertDialogTitle>{l10n("local.remove_this_connection_e91e08c0")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {endpoint.assignedAgentName} will stop receiving new work from
-              {` ${providerNames[endpoint.provider]}`}. Existing Paperclip tasks
-              remain available.{" "}
+              {endpoint.assignedAgentName} {l10n("local.will_stop_receiving_new_work_from_b875c1b5")}{` ${providerNames[endpoint.provider]}`}{l10n("local._existing_paperclip_tasks_remain_available_74fb6a98")}{" "}
               {providerLifecycleGuidance[endpoint.provider].remove}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{l10n("local.cancel_19766ed6")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={lifecycle.isPending}
@@ -1275,8 +1247,7 @@ function Activity({
               {lifecycle.isPending && (
                 <Loader2 className="h-4 w-4 animate-spin" />
               )}
-              Remove connection
-            </AlertDialogAction>
+              {l10n("local.remove_connection_e9e9e26c")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

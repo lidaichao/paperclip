@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   ResourceMembershipResourceType,
@@ -177,8 +178,8 @@ export function useResourceMembershipMutation(companyId: string | null | undefin
         ? variables.starred ? "star" : "unstar"
         : variables.state === "left" ? "leave" : "join";
       pushToast({
-        title: `Couldn't ${verb} ${variables.resourceName}.`,
-        body: error instanceof Error ? error.message : "Try again.",
+        title: l10n("local.couldn_t_value_value_140f70b4", {v0: (verb), v1: (variables.resourceName)}),
+        body: error instanceof Error ? error.message : l10n("local.try_again_a0c2cc13"),
         tone: "error",
       });
     },

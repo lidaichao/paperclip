@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { isRetiredComposioConnection, RETIRED_COMPOSIO_MESSAGE } from "@paperclipai/shared";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -57,7 +58,7 @@ const BROWSE_HREF = "/apps";
 type StatusFilter = "all" | "attention";
 
 type AppStatus = {
-  label: "Healthy" | "Needs attention" | "Paused" | "Not connected" | "Retired";
+  label: string;
   tone: "connected" | "attention" | "paused" | "not_connected";
 };
 
@@ -81,21 +82,21 @@ type AppRow = {
  * pill's `attention` tone and the row highlight are now the *same* predicate.
  */
 function statusFor(application: ToolApplication, connections: ToolConnection[]): AppStatus {
-  if (connections.some(isRetiredComposioConnection)) return { label: "Retired", tone: "attention" };
+  if (connections.some(isRetiredComposioConnection)) return { label: l10n("local.retired_a9f71bc2"), tone: "attention" };
   if (connections.length === 0) {
-    return { label: "Not connected", tone: "not_connected" };
+    return { label: l10n("local.not_connected_0303e182"), tone: "not_connected" };
   }
   if (
     application.status === "disabled" ||
     application.status === "archived" ||
     connections.every((connection) => connection.enabled === false || connection.status === "disabled")
   ) {
-    return { label: "Paused", tone: "paused" };
+    return { label: l10n("local.paused_e159b061"), tone: "paused" };
   }
   if (connections.some((connection) => isAttentionHealthStatus(connection.healthStatus))) {
-    return { label: "Needs attention", tone: "attention" };
+    return { label: l10n("local.needs_attention_c1ebc781"), tone: "attention" };
   }
-  return { label: "Healthy", tone: "connected" };
+  return { label: l10n("local.healthy_7f1e323b"), tone: "connected" };
 }
 
 /** The single health-derived predicate that drives highlight, pill, banner, filter (F6). */
@@ -127,8 +128,8 @@ export function Connections() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Connectors", href: "/apps" },
-      { label: "Connections" },
+      { label: l10n("local.connectors_c3d2e79e"), href: "/apps" },
+      { label: l10n("local.connections_dc273117") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs]);
@@ -168,8 +169,8 @@ export function Connections() {
       if (status.verificationUrl) window.location.assign(status.verificationUrl);
     },
     onError: (error) => pushToast({
-      title: "Couldn’t reach Paperclip Cloud",
-      body: error instanceof Error ? error.message : "Try again in a moment.",
+      title: l10n("local.couldn_t_reach_paperclip_cloud_79f03565"),
+      body: error instanceof Error ? error.message : l10n("local.try_again_in_a_moment_29cc3339"),
       tone: "error",
     }),
   });
@@ -187,18 +188,18 @@ export function Connections() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tools.applications(selectedCompanyId!) });
       queryClient.invalidateQueries({ queryKey: queryKeys.apps.attention(selectedCompanyId!) });
       pushToast({
-        title: "Connection deleted",
+        title: l10n("local.connection_deleted_d0294a63"),
         body: target.remainingConnectionCount > 0
-          ? `${target.appName} still has ${target.remainingConnectionCount} active ${target.remainingConnectionCount === 1 ? "connection" : "connections"} available to agents.`
-          : `${target.appName} is no longer available to agents and its credentials are deleted. Connecting it again needs a new sign-in or key.`,
+          ? l10n("local.value_still_has_value_active_value_available_cc4f89f0", {v0: (target.appName), v1: (target.remainingConnectionCount), v2: (target.remainingConnectionCount === 1 ? "connection" : "connections")})
+          : l10n("local.value_is_no_longer_available_to_agents_and_it_38246371", {v0: (target.appName)}),
         tone: "success",
       });
       setConnectionToDelete(null);
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't delete the connection",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.couldn_t_delete_the_connection_1ef39603"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
@@ -304,7 +305,7 @@ export function Connections() {
   const visibleRows = filter === "attention" ? rowsNeedingAttention : rows;
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select an organization to manage apps.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{l10n("local.select_an_organization_to_manage_apps_c62bf64e")}</div>;
   }
 
   const loading = applicationsQuery.isLoading || connectionsQuery.isLoading || galleryQuery.isLoading;
@@ -334,17 +335,16 @@ export function Connections() {
         <div className="space-y-5">
           <header className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{l10n("local.connections_dc273117")}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                The tools you’ve connected, and whether they’re working.
-              </p>
+                {l10n("local.the_tools_you_ve_connected_and_whether_they_r_86c96136")}</p>
             </div>
-            <Button onClick={() => navigate(BROWSE_HREF)}>Connect an app</Button>
+            <Button onClick={() => navigate(BROWSE_HREF)}>{l10n("local.connect_an_app_bf6c07f8")}</Button>
           </header>
 
           <div className="flex flex-wrap items-center gap-2">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-              All ({rows.length})
+              {l10n("local.all_6ddbebad")}{rows.length})
             </FilterChip>
             <FilterChip
               active={filter === "attention"}
@@ -352,7 +352,7 @@ export function Connections() {
               disabled={rowsNeedingAttention.length === 0}
               onClick={() => setFilter("attention")}
             >
-              Needs attention ({rowsNeedingAttention.length})
+              {l10n("local.needs_attention_41b551ee")}{rowsNeedingAttention.length})
             </FilterChip>
           </div>
 
@@ -365,13 +365,11 @@ export function Connections() {
               <ShieldQuestion className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                  {reviewCount} {reviewCount === 1 ? "action is" : "actions are"} waiting for your OK
-                </div>
+                  {reviewCount} {reviewCount === 1 ? l10n("local.action_is_547602d8") : l10n("local.actions_are_5273e4e9")} {l10n("local.waiting_for_your_ok_ee8bba46")}</div>
                 <div className="truncate text-xs text-amber-700 dark:text-amber-300">
-                  Your agents paused to check with you before making a change.
-                </div>
+                  {l10n("local.your_agents_paused_to_check_with_you_before_m_c81a8bf4")}</div>
               </div>
-              <span className="shrink-0 text-xs font-semibold text-amber-800 dark:text-amber-200">Review →</span>
+              <span className="shrink-0 text-xs font-semibold text-amber-800 dark:text-amber-200">{l10n("local.review_ab7681ea")}</span>
             </button>
           )}
 
@@ -384,13 +382,12 @@ export function Connections() {
               <ShieldAlert className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-red-900 dark:text-red-100">
-                  {rowsNeedingAttention.length} {rowsNeedingAttention.length === 1 ? "connection needs" : "connections need"} attention
-                </div>
+                  {rowsNeedingAttention.length} {rowsNeedingAttention.length === 1 ? l10n("local.connection_needs_015cb247") : l10n("local.connections_need_9b7c9d6d")} {l10n("local.attention_e0787d27")}</div>
                 <div className="truncate text-xs text-red-700 dark:text-red-300">
                   {floatSummary(rowsNeedingAttention)}
                 </div>
               </div>
-              <span className="shrink-0 text-xs font-semibold text-red-800 dark:text-red-200">Fix →</span>
+              <span className="shrink-0 text-xs font-semibold text-red-800 dark:text-red-200">{l10n("local.fix_9049952f")}</span>
             </button>
           )}
 
@@ -398,12 +395,12 @@ export function Connections() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-left text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-2.5">Connection</th>
-                  <th className="px-4 py-2.5">Type</th>
-                  <th className="px-4 py-2.5">Connected by</th>
-                  <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5">Actions</th>
-                  <th className="px-4 py-2.5">Last used</th>
+                  <th className="px-4 py-2.5">{l10n("local.connection_639a40e8")}</th>
+                  <th className="px-4 py-2.5">{l10n("local.type_baaddf70")}</th>
+                  <th className="px-4 py-2.5">{l10n("local.connected_by_9952ce52")}</th>
+                  <th className="px-4 py-2.5">{l10n("local.status_920e413c")}</th>
+                  <th className="px-4 py-2.5">{l10n("local.actions_ff8059dc")}</th>
+                  <th className="px-4 py-2.5">{l10n("local.last_used_830ec7f8")}</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
@@ -415,12 +412,12 @@ export function Connections() {
                     connection && isRetiredComposioConnection(connection) ? RETIRED_COMPOSIO_MESSAGE :
                     status.tone === "attention"
                       ? connection?.authKind === "oauth"
-                        ? "Reconnect required — sign in again to restore access."
-                        : "The key stopped working — reconnect to fix."
+                        ? l10n("local.reconnect_required_sign_in_again_to_restore_a_50f21863")
+                        : l10n("local.the_key_stopped_working_reconnect_to_fix_012b6f58")
                       : status.tone === "paused"
-                        ? "Paused — agents can’t use it right now."
+                        ? l10n("local.paused_agents_can_t_use_it_right_now_dade03b2")
                         : status.tone === "not_connected"
-                          ? "Connect it so agents can use it."
+                          ? l10n("local.connect_it_so_agents_can_use_it_1b1eda62")
                           : row.displayName !== application.name
                             ? application.name
                             : null;
@@ -428,11 +425,11 @@ export function Connections() {
                     ? `/apps/${connection.id}/permissions`
                     : `/apps/app/${application.id}/permissions`;
                   const actionLabel = !connection
-                    ? "Connect"
-                    : connection && isRetiredComposioConnection(connection) ? "Review"
+                    ? l10n("local.connect_1a2303ed")
+                    : connection && isRetiredComposioConnection(connection) ? l10n("local.review_aff0766a")
                     : status.tone === "attention"
-                      ? "Reconnect"
-                      : "Permissions";
+                      ? l10n("local.reconnect_bf8a9eab")
+                      : l10n("local.permissions_abccc78c");
                   return (
                     <tr
                       key={connection?.id ?? application.id}
@@ -481,7 +478,7 @@ export function Connections() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-muted-foreground">{row.actionCount} on</span>
+                        <span className="text-xs text-muted-foreground">{row.actionCount} {l10n("local.on_b8d31e85")}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-muted-foreground">
@@ -505,7 +502,7 @@ export function Connections() {
                               variant="ghost"
                               size="icon-sm"
                               className="text-muted-foreground hover:text-destructive"
-                              aria-label={`Delete ${row.displayName} connection`}
+                              aria-label={l10n("local.delete_value_connection_51b7d922", {v0: (row.displayName)})}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 setConnectionToDelete({
@@ -530,8 +527,7 @@ export function Connections() {
 
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-xs text-muted-foreground">
-              Apps you connect become available to every agent unless you change “Who can use it”.
-            </p>
+              {l10n("local.apps_you_connect_become_available_to_every_ag_b1c276b4")}</p>
           </div>
         </div>
       )}
@@ -545,16 +541,15 @@ export function Connections() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {connectionToDelete?.appName ?? "this"} connection?
-            </AlertDialogTitle>
+              {l10n("local.delete_e2d0a549")}{" "}{connectionToDelete?.appName ?? l10n("local.this_1eb79602")} {l10n("local.connection_1df40080")}</AlertDialogTitle>
             <AlertDialogDescription>
               {connectionToDelete && connectionToDelete.remainingConnectionCount > 0
-                ? `This connection's saved credentials are deleted and agents lose access through it immediately. Agents can still use ${connectionToDelete.appName} through ${connectionToDelete.remainingConnectionCount} other active ${connectionToDelete.remainingConnectionCount === 1 ? "connection" : "connections"}.`
-                : "The saved credentials are deleted and agents lose access immediately. Connecting it again later needs a new sign-in or key."}
+                ? l10n("local.this_connection_s_saved_credentials_are_delet_de0446d5", {v0: (connectionToDelete.appName), v1: (connectionToDelete.remainingConnectionCount), v2: (connectionToDelete.remainingConnectionCount === 1 ? "connection" : "connections")})
+                : l10n("local.the_saved_credentials_are_deleted_and_agents_a1f881ce")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteConnection.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteConnection.isPending}>{l10n("local.cancel_19766ed6")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={!connectionToDelete || deleteConnection.isPending}
@@ -564,7 +559,7 @@ export function Connections() {
               }}
             >
               {deleteConnection.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {deleteConnection.isPending ? "Deleting..." : "Delete connection"}
+              {deleteConnection.isPending ? l10n("local.deleting_685ecb98") : l10n("local.delete_connection_e960651b")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -589,10 +584,9 @@ function CloudConnectorEnrollmentBanner({
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
         <ShieldCheck className="h-5 w-5 text-primary" />
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-foreground">Paperclip-managed sign-in is ready</div>
+          <div className="text-sm font-semibold text-foreground">{l10n("local.paperclip_managed_sign_in_is_ready_267735c5")}</div>
           <div className="truncate text-xs text-muted-foreground">
-            Provider authorization uses {status.brokerBaseUrl}; credentials stay in this instance.
-          </div>
+            {l10n("local.provider_authorization_uses_8a73b2b9")}{" "}{status.brokerBaseUrl}{l10n("local._credentials_stay_in_this_instance_d404b53a")}</div>
         </div>
       </div>
     );
@@ -601,7 +595,7 @@ function CloudConnectorEnrollmentBanner({
     return (
       <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
         <Cloud className="h-5 w-5 text-muted-foreground" />
-        <div className="text-sm text-muted-foreground">Paperclip Cloud enrollment status is unavailable.</div>
+        <div className="text-sm text-muted-foreground">{l10n("local.paperclip_cloud_enrollment_status_is_unavaila_92a8b207")}</div>
       </div>
     );
   }
@@ -610,15 +604,14 @@ function CloudConnectorEnrollmentBanner({
       <Cloud className="h-5 w-5 text-muted-foreground" />
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-foreground">
-          {status?.status === "pending" ? "Finish Paperclip Cloud enrollment" : "Enable Paperclip-managed sign-in"}
+          {status?.status === "pending" ? l10n("local.finish_paperclip_cloud_enrollment_7a2c43bc") : l10n("local.enable_paperclip_managed_sign_in_fd849c56")}
         </div>
         <div className="text-xs text-muted-foreground">
-          Confirm this server’s exact address before Cloud can return encrypted Google credentials to it.
-        </div>
+          {l10n("local.confirm_this_server_s_exact_address_before_cl_895b8776")}</div>
       </div>
       <Button variant="outline" size="sm" disabled={busy} onClick={onEnable}>
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-        {status?.status === "pending" ? "Continue enrollment" : "Enable"}
+        {status?.status === "pending" ? l10n("local.continue_enrollment_97317cdb") : l10n("local.enable_5342e09f")}
       </Button>
     </div>
   );
@@ -668,31 +661,27 @@ function enabledActionCount(profile: ToolProfileWithDetails): number {
 function floatSummary(rows: AppRow[]): string {
   const names = rows.map((row) => humanizeConnectionDisplayName(row.application.name));
   if (names.length <= 2) return names.join(" and ");
-  return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+  return l10n("local.value_and_value_more_5ecd806c", {v0: (names.slice(0, 2).join(", ")), v1: (names.length - 2)});
 }
 
 function EmptyConnections({ onBrowse }: { onBrowse: () => void }) {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{l10n("local.connections_dc273117")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          The tools you’ve connected, and whether they’re working.
-        </p>
+          {l10n("local.the_tools_you_ve_connected_and_whether_they_r_86c96136")}</p>
       </header>
 
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <AppWindow className="h-6 w-6 text-muted-foreground" />
         </div>
-        <p className="mt-4 text-sm font-medium text-foreground">No connections yet.</p>
+        <p className="mt-4 text-sm font-medium text-foreground">{l10n("local.no_connections_yet_643013cd")}</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Add one from <span className="font-medium text-foreground">Apps</span> to give your agents
-          the tools they need.
-        </p>
+          {l10n("local.add_one_from_9be40f98")}{" "}<span className="font-medium text-foreground">{l10n("local.apps_89dd7484")}</span> {l10n("local.to_give_your_agents_the_tools_they_need_cffbfb3f")}</p>
         <Button className="mt-6" onClick={onBrowse}>
-          Browse apps
-        </Button>
+          {l10n("local.browse_apps_cc28cdd0")}</Button>
       </div>
     </div>
   );

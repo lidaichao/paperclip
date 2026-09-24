@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { Brain, CirclePause, Gauge, Layers3 } from "lucide-react";
 import type { TaskChatActivityPhaseItem } from "./task-chat-model";
 import {
@@ -9,20 +10,20 @@ import { protocolActivityPresentation } from "./task-chat-activity-presentation"
 
 type Activity = TaskChatActivityPhaseItem["items"][number];
 const labels: Record<ToolFamily, string> = {
-  terminal: "Ran commands",
-  grep: "Searched files",
-  search: "Searched files",
-  read: "Read files",
-  edit: "Edited files",
-  web: "Searched the web",
-  plan: "Worked on a plan",
-  question: "Requested input",
-  agent: "Worked with agents",
-  safety: "Reviewed safety",
-  image: "Worked with images",
-  wait: "Waited",
-  mcp: "Used connected tools",
-  other: "Used tools",
+  terminal: l10n("local.ran_commands_80905baf"),
+  grep: l10n("local.searched_files_e82a2af2"),
+  search: l10n("local.searched_files_e82a2af2"),
+  read: l10n("local.read_files_4e792bee"),
+  edit: l10n("local.edited_files_5d9a85d7"),
+  web: l10n("local.searched_the_web_7d2580ce"),
+  plan: l10n("local.worked_on_a_plan_cc9edfa1"),
+  question: l10n("local.requested_input_9ac27bf4"),
+  agent: l10n("local.worked_with_agents_8e147106"),
+  safety: l10n("local.reviewed_safety_b9971493"),
+  image: l10n("local.worked_with_images_d8966505"),
+  wait: l10n("local.waited_a1b56198"),
+  mcp: l10n("local.used_connected_tools_084d9747"),
+  other: l10n("local.used_tools_836c94ab"),
 };
 
 /** Describe observed activities, never infer success from a finished group. */
@@ -89,7 +90,7 @@ export function completedActivitySummary(items: Activity[]) {
               workspace_file: "Referenced files",
               resource: "Added resources",
             } as Record<string, string>
-          )[family] ?? "Used tools";
+          )[family] ?? l10n("local.used_tools_836c94ab");
         add(label, p.icon, order);
       }
     }
@@ -102,9 +103,9 @@ export function completedActivitySummary(items: Activity[]) {
     const succeeded = completedFamilies.has(tool.family);
     const label =
       tool.family === "read" && !succeeded
-        ? "Checked files"
+        ? l10n("local.checked_files_5eccc3a1")
         : tool.family === "edit" && !succeeded
-          ? "Worked on files"
+          ? l10n("local.worked_on_files_624abb5d")
           : labels[tool.family];
     add(label, tool.icon, tool.order);
   }
@@ -124,7 +125,7 @@ export function completedActivitySummary(items: Activity[]) {
   return {
     label:
       values.length > 3
-        ? `${join(values.slice(0, 2).map((v) => v.label))}, and more`
+        ? l10n("local.value_and_more_46c4a86d", {v0: (join(values.slice(0, 2).map((v) => v.label)))})
         : fullLabel,
     fullLabel,
     icon: values.length === 1 ? values[0].icon : Layers3,

@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -69,9 +70,9 @@ export function CompanyAccess() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Organization", href: "/dashboard" },
-      { label: "Settings", href: "/company/settings" },
-      { label: "Members" },
+      { label: selectedCompany?.name ?? l10n("local.organization_d764d425"), href: "/dashboard" },
+      { label: l10n("local.settings_74a883a0"), href: "/company/settings" },
+      { label: l10n("local.members_1044a4c0") },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs]);
 
@@ -111,14 +112,14 @@ export function CompanyAccess() {
       setEditingMemberId(null);
       await refreshAccessData();
       pushToast({
-        title: "Member updated",
+        title: l10n("local.member_updated_06cfa34a"),
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to update member",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: l10n("local.failed_to_update_member_b5a62f4d"),
+        body: error instanceof Error ? error.message : l10n("local.unknown_error_27c2ccd9"),
         tone: "error",
       });
     },
@@ -129,14 +130,14 @@ export function CompanyAccess() {
     onSuccess: async () => {
       await refreshAccessData();
       pushToast({
-        title: "Join request approved",
+        title: l10n("local.join_request_approved_d1a4dcc6"),
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to approve join request",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: l10n("local.failed_to_approve_join_request_3b65e5b7"),
+        body: error instanceof Error ? error.message : l10n("local.unknown_error_27c2ccd9"),
         tone: "error",
       });
     },
@@ -147,14 +148,14 @@ export function CompanyAccess() {
     onSuccess: async () => {
       await refreshAccessData();
       pushToast({
-        title: "Join request rejected",
+        title: l10n("local.join_request_rejected_c8110f27"),
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to reject join request",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: l10n("local.failed_to_reject_join_request_4d68f6e1"),
+        body: error instanceof Error ? error.message : l10n("local.unknown_error_27c2ccd9"),
         tone: "error",
       });
     },
@@ -199,18 +200,18 @@ export function CompanyAccess() {
         await queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(selectedCompanyId) });
       }
       pushToast({
-        title: "Member removed",
+        title: l10n("local.member_removed_5dcec1a4"),
         body:
           result.reassignedIssueCount > 0
-            ? `${result.reassignedIssueCount} assigned task${result.reassignedIssueCount === 1 ? "" : "s"} cleaned up.`
+            ? l10n("local.value_assigned_taskvalue_cleaned_up_3b741cbd", {v0: (result.reassignedIssueCount), v1: (englishPluralSuffix(result.reassignedIssueCount === 1 ? "" : "s"))})
             : undefined,
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to remove member",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: l10n("local.failed_to_remove_member_1cff79b7"),
+        body: error instanceof Error ? error.message : l10n("local.unknown_error_27c2ccd9"),
         tone: "error",
       });
     },
@@ -228,20 +229,20 @@ export function CompanyAccess() {
   }, [removingMember]);
 
   if (!selectedCompanyId) {
-    return <div className="text-sm text-muted-foreground">Select an organization to manage access.</div>;
+    return <div className="text-sm text-muted-foreground">{l10n("local.select_an_organization_to_manage_access_62d9b06f")}</div>;
   }
 
   if (membersQuery.isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading organization access…</div>;
+    return <div className="text-sm text-muted-foreground">{l10n("local.loading_organization_access_d853e542")}</div>;
   }
 
   if (membersQuery.error) {
     const message =
       membersQuery.error instanceof ApiError && membersQuery.error.status === 403
-        ? "You do not have permission to manage organization members."
+        ? l10n("local.you_do_not_have_permission_to_manage_organiza_f9a456a5")
         : membersQuery.error instanceof Error
           ? membersQuery.error.message
-          : "Failed to load organization members.";
+          : l10n("local.failed_to_load_organization_members_693acd62");
     return <div className="text-sm text-destructive">{message}</div>;
   }
 
@@ -264,15 +265,15 @@ export function CompanyAccess() {
     <div className="max-w-6xl space-y-8">
       <div className="flex items-center gap-2">
         <ShieldCheck className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-lg font-semibold">Organization Members</h1>
+        <h1 className="text-lg font-semibold">{l10n("local.organization_members_51f5fdb4")}</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col gap-4">
         {!hideInvitesTab && (
           <PageTabBar
             items={[
-              { value: "members", label: "Members" },
-              { value: "invites", label: "Invites" },
+              { value: "members", label: l10n("local.members_1044a4c0") },
+              { value: "invites", label: l10n("local.invites_f212a985") },
             ]}
             align="start"
             value={activeTab}
@@ -283,8 +284,7 @@ export function CompanyAccess() {
 
       {access && !access.currentUserRole && (
         <div className="rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          This account can manage access here through instance-admin privileges, but it does not currently hold an active organization membership.
-        </div>
+          {l10n("local.this_account_can_manage_access_here_through_i_2a78a6a4")}</div>
       )}
 
       <section className="space-y-4">
@@ -292,12 +292,11 @@ export function CompanyAccess() {
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-semibold">Pending human joins</h3>
+                <h3 className="text-sm font-semibold">{l10n("local.pending_human_joins_0229ff9d")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Review pending join requests before they become active organization members.
-                </p>
+                  {l10n("local.review_pending_join_requests_before_they_beco_882e00be")}</p>
               </div>
-              <Badge variant="outline">{pendingHumanJoinRequests.length} pending</Badge>
+              <Badge variant="outline">{pendingHumanJoinRequests.length} {l10n("local.pending_62a2fed3")}</Badge>
             </div>
             <div className="space-y-3">
               {pendingHumanJoinRequests.map((request) => (
@@ -307,22 +306,22 @@ export function CompanyAccess() {
                     request.requesterUser?.name ||
                     request.requestEmailSnapshot ||
                     request.requestingUserId ||
-                    "Unknown human requester"
+                    l10n("local.unknown_human_requester_08c8b631")
                   }
                   subtitle={
                     request.requesterUser?.email ||
                     request.requestEmailSnapshot ||
                     request.requestingUserId ||
-                    "No email available"
+                    l10n("local.no_email_available_5b623554")
                   }
                   context={
                     request.invite
                       ? `${request.invite.allowedJoinTypes} join invite${request.invite.humanRole ? ` • default role ${request.invite.humanRole}` : ""}`
                       : "Invite metadata unavailable"
                   }
-                  detail={`Submitted ${new Date(request.createdAt).toLocaleString()}`}
-                  approveLabel="Approve human"
-                  rejectLabel="Reject human"
+                  detail={l10n("local.submitted_value_9640439c", {v0: (new Date(request.createdAt).toLocaleString())})}
+                  approveLabel={l10n("local.approve_human_e3db02e8")}
+                  rejectLabel={l10n("local.reject_human_ed2434ec")}
                   disabled={joinRequestActionPending}
                   onApprove={() => approveJoinRequestMutation.mutate(request.id)}
                   onReject={() => rejectJoinRequestMutation.mutate(request.id)}
@@ -336,19 +335,18 @@ export function CompanyAccess() {
           <table className="w-full min-w-(--sz-44rem) text-left text-sm">
             <thead>
               <tr className="border-b border-border text-muted-foreground">
-                <th className="px-3 py-2 font-medium">Name</th>
-                <th className="px-3 py-2 font-medium">Email</th>
-                <th className="px-3 py-2 font-medium">Role</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 text-right font-medium">Action</th>
+                <th className="px-3 py-2 font-medium">{l10n("local.name_dcd1d522")}</th>
+                <th className="px-3 py-2 font-medium">{l10n("local.email_969ccbd3")}</th>
+                <th className="px-3 py-2 font-medium">{l10n("local.role_14736a2e")}</th>
+                <th className="px-3 py-2 font-medium">{l10n("local.status_920e413c")}</th>
+                <th className="px-3 py-2 text-right font-medium">{l10n("local.action_64cff131")}</th>
               </tr>
             </thead>
             <tbody>
               {members.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-3 py-8 text-muted-foreground">
-                    No user memberships found for this organization yet.
-                  </td>
+                    {l10n("local.no_user_memberships_found_for_this_organizati_1a5d8214")}</td>
                 </tr>
               ) : members.map((member) => {
                 const removalReason = member.removal?.reason ?? null;
@@ -371,7 +369,7 @@ export function CompanyAccess() {
                     <td className="px-3 py-3">
                       {member.membershipRole
                         ? HUMAN_COMPANY_MEMBERSHIP_ROLE_LABELS[member.membershipRole]
-                        : "Unset"}
+                        : l10n("local.unset_8d2dd4e8")}
                     </td>
                     <td className="px-3 py-3">
                       <Badge variant={member.status === "active" ? "secondary" : member.status === "suspended" ? "destructive" : "outline"}>
@@ -381,8 +379,7 @@ export function CompanyAccess() {
                     <td className="px-3 py-3 text-right">
                       <div className="flex justify-end gap-2">
                         <Button size="sm" variant="outline" onClick={() => setEditingMemberId(member.id)}>
-                          Edit
-                        </Button>
+                          {l10n("local.edit_464c4ffd")}</Button>
                         <span
                           className="inline-flex"
                           title={!canArchive ? removalReason ?? undefined : undefined}
@@ -395,8 +392,7 @@ export function CompanyAccess() {
                             title={!canArchive ? removalReason ?? undefined : undefined}
                           >
                             <Trash2 className="mr-1 h-3.5 w-3.5" />
-                            Remove
-                          </Button>
+                            {l10n("local.remove_c3812fc4")}</Button>
                         </span>
                       </div>
                     </td>
@@ -411,16 +407,16 @@ export function CompanyAccess() {
       <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMemberId(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit member</DialogTitle>
+            <DialogTitle>{l10n("local.edit_member_a07deaf5")}</DialogTitle>
             <DialogDescription>
-              Update organization role and membership status for {editingMember?.user?.name || editingMember?.user?.email || editingMember?.principalId}.
+              {l10n("local.update_organization_role_and_membership_statu_ca2b3324")}{" "}{editingMember?.user?.name || editingMember?.user?.email || editingMember?.principalId}.
             </DialogDescription>
           </DialogHeader>
           {editingMember && (
             <div className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-2 text-sm">
-                  <span className="font-medium">Organization role</span>
+                  <span className="font-medium">{l10n("local.organization_role_a90b2f79")}</span>
                   <select
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                     value={draftRole ?? ""}
@@ -428,7 +424,7 @@ export function CompanyAccess() {
                       setDraftRole((event.target.value || null) as CompanyMember["membershipRole"])
                     }
                   >
-                    <option value="">Unset</option>
+                    <option value="">{l10n("local.unset_8d2dd4e8")}</option>
                     {Object.entries(HUMAN_COMPANY_MEMBERSHIP_ROLE_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -437,7 +433,7 @@ export function CompanyAccess() {
                   </select>
                 </label>
                 <label className="space-y-2 text-sm">
-                  <span className="font-medium">Membership status</span>
+                  <span className="font-medium">{l10n("local.membership_status_33ea2740")}</span>
                   <select
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                     value={draftStatus}
@@ -445,9 +441,9 @@ export function CompanyAccess() {
                       setDraftStatus(event.target.value as EditableMemberStatus)
                     }
                   >
-                    <option value="active">Active</option>
-                    <option value="pending">Pending</option>
-                    <option value="suspended">Suspended</option>
+                    <option value="active">{l10n("local.active_92340695")}</option>
+                    <option value="pending">{l10n("local.pending_331551b0")}</option>
+                    <option value="suspended">{l10n("local.suspended_e392a389")}</option>
                   </select>
                 </label>
               </div>
@@ -455,8 +451,7 @@ export function CompanyAccess() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingMemberId(null)}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               onClick={() => {
                 if (!editingMember) return;
@@ -468,7 +463,7 @@ export function CompanyAccess() {
               }}
               disabled={updateMemberMutation.isPending}
             >
-              {updateMemberMutation.isPending ? "Saving…" : "Save member"}
+              {updateMemberMutation.isPending ? l10n("local.saving_23e39291") : l10n("local.save_member_7a89d254")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -477,10 +472,9 @@ export function CompanyAccess() {
       <Dialog open={!!removingMember} onOpenChange={(open) => !open && setRemovingMemberId(null)}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Remove member</DialogTitle>
+            <DialogTitle>{l10n("local.remove_member_9438e0ba")}</DialogTitle>
             <DialogDescription>
-              Archive {memberDisplayName(removingMember)} and move active assignments before hiding this user from assignment fields.
-            </DialogDescription>
+              {l10n("local.archive_66f4804e")}{" "}{memberDisplayName(removingMember)} {l10n("local.and_move_active_assignments_before_hiding_thi_5968af2c")}</DialogDescription>
           </DialogHeader>
           {removingMember && (
             <div className="space-y-5">
@@ -489,22 +483,22 @@ export function CompanyAccess() {
                 <div className="text-sm text-muted-foreground">{removingMember.user?.email || removingMember.principalId}</div>
                 <div className="mt-2 text-sm text-muted-foreground">
                   {assignedIssuesQuery.isLoading
-                    ? "Checking assigned tasks..."
-                    : `${assignedIssues.length} open assigned task${assignedIssues.length === 1 ? "" : "s"}`}
+                    ? l10n("local.checking_assigned_tasks_12ce7101")
+                    : l10n("local.value_open_assigned_taskvalue_9864fb98", {v0: (assignedIssues.length), v1: (englishPluralSuffix(assignedIssues.length === 1 ? "" : "s"))})}
                 </div>
               </div>
 
               {assignedIssues.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="text-sm font-medium">Task reassignment</div>
+                  <div className="text-sm font-medium">{l10n("local.task_reassignment_d7a62538")}</div>
                   <select
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                     value={reassignmentTarget}
                     onChange={(event) => setReassignmentTarget(event.target.value)}
                   >
-                    <option value="__unassigned">Leave unassigned</option>
+                    <option value="__unassigned">{l10n("local.leave_unassigned_d15439ac")}</option>
                     {activeReassignmentUsers.length > 0 ? (
-                      <optgroup label="Humans">
+                      <optgroup label={l10n("local.humans_b370fddf")}>
                         {activeReassignmentUsers.map((member) => (
                           <option key={member.id} value={`user:${member.principalId}`}>
                             {memberDisplayName(member)}
@@ -513,7 +507,7 @@ export function CompanyAccess() {
                       </optgroup>
                     ) : null}
                     {activeReassignmentAgents.length > 0 ? (
-                      <optgroup label="Agents">
+                      <optgroup label={l10n("local.agents_279b44d2")}>
                         {activeReassignmentAgents.map((agent) => (
                           <option key={agent.id} value={`agent:${agent.id}`}>
                             {agent.name} ({agent.role})
@@ -531,7 +525,7 @@ export function CompanyAccess() {
                     ))}
                     {assignedIssues.length > 6 ? (
                       <div className="px-3 py-2 text-sm text-muted-foreground">
-                        {assignedIssues.length - 6} more task{assignedIssues.length - 6 === 1 ? "" : "s"}
+                        {assignedIssues.length - 6} {l10n("local.more_task_0c6cbd2c")}{assignedIssues.length - 6 === 1 ? "" : englishPluralSuffix("s")}
                       </div>
                     ) : null}
                   </div>
@@ -541,8 +535,7 @@ export function CompanyAccess() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setRemovingMemberId(null)}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               variant="destructive"
               onClick={() => {
@@ -554,7 +547,7 @@ export function CompanyAccess() {
               }}
               disabled={archiveMemberMutation.isPending || assignedIssuesQuery.isLoading}
             >
-              {archiveMemberMutation.isPending ? "Removing..." : "Remove member"}
+              {archiveMemberMutation.isPending ? l10n("local.removing_60d18e42") : l10n("local.remove_member_9438e0ba")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -581,8 +574,8 @@ export function CompanyAccessLegacyRoute() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Settings", href: "/company/settings" },
-      { label: "Access" },
+      { label: l10n("local.settings_74a883a0"), href: "/company/settings" },
+      { label: l10n("local.access_ec5ba0ab") },
     ]);
   }, [setBreadcrumbs]);
 
@@ -592,7 +585,7 @@ export function CompanyAccessLegacyRoute() {
   }
 
   if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Checking for advanced permission extensions...</div>;
+    return <div className="text-sm text-muted-foreground">{l10n("local.checking_for_advanced_permission_extensions_901c8b8a")}</div>;
   }
 
   return (
@@ -600,29 +593,27 @@ export function CompanyAccessLegacyRoute() {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg font-semibold">Advanced Permissions</h1>
+          <h1 className="text-lg font-semibold">{l10n("local.advanced_permissions_638876bf")}</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Advanced access, scoped assignment, and explicit grant controls are provided by installed organization settings extensions.
-        </p>
+          {l10n("local.advanced_access_scoped_assignment_and_explici_a27c92d5")}</p>
       </div>
 
       <div className="space-y-4 rounded-xl border border-border px-5 py-5">
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold">Advanced permissions unavailable</h2>
+          <h2 className="text-sm font-semibold">{l10n("local.advanced_permissions_unavailable_fc13de47")}</h2>
           <p className="text-sm text-muted-foreground">
-            Core Paperclip keeps enforcing organization boundaries and any existing restrictive policy data, but editing advanced permissions requires an installed extension.
-          </p>
+            {l10n("local.core_paperclip_keeps_enforcing_organization_b_66084850")}</p>
           {errorMessage ? (
-            <p className="text-sm text-destructive">Plugin extensions unavailable: {errorMessage}</p>
+            <p className="text-sm text-destructive">{l10n("local.plugin_extensions_unavailable_59f92a5c")}{" "}{errorMessage}</p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild>
-            <Link to="/company/settings/members">Open Members</Link>
+            <Link to="/company/settings/members">{l10n("local.open_members_44784b82")}</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/company/settings/members?tab=invites">Open Invites</Link>
+            <Link to="/company/settings/members?tab=invites">{l10n("local.open_invites_fcb62d82")}</Link>
           </Button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import {
   Check,
@@ -67,21 +68,21 @@ function formatServiceUrl(url: string | null | undefined) {
 function statusMeta(entry: WorkspaceServiceControlEntry): { label: string; unhealthy: boolean } {
   switch (entry.state) {
     case "provisioning":
-      return { label: "Provisioning…", unhealthy: false };
+      return { label: l10n("local.provisioning_62cd0e7d"), unhealthy: false };
     case "starting":
-      return { label: "Starting…", unhealthy: false };
+      return { label: l10n("local.starting_bbe5fc3b"), unhealthy: false };
     case "stopping":
-      return { label: "Stopping…", unhealthy: false };
+      return { label: l10n("local.stopping_bbe85741"), unhealthy: false };
     case "restarting":
-      return { label: "Restarting…", unhealthy: false };
+      return { label: l10n("local.restarting_75d0f146"), unhealthy: false };
     case "failed":
-      return { label: "Failed", unhealthy: false };
+      return { label: l10n("local.failed_031a8f0f"), unhealthy: false };
     case "running":
       return entry.healthStatus === "unhealthy"
-        ? { label: "Unhealthy", unhealthy: true }
-        : { label: "Running", unhealthy: false };
+        ? { label: l10n("local.unhealthy_317b1fbc"), unhealthy: true }
+        : { label: l10n("local.running_f4ccae29"), unhealthy: false };
     default:
-      return { label: "Stopped", unhealthy: false };
+      return { label: l10n("local.stopped_1a4f630a"), unhealthy: false };
   }
 }
 
@@ -114,7 +115,7 @@ function CopyUrlButton({ url, disabled }: { url: string; disabled?: boolean }) {
   useEffect(() => () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
   }, []);
-  const copyLabel = copyState === "copied" ? "URL copied" : copyState === "failed" ? "Copy failed" : "Copy URL";
+  const copyLabel = copyState === "copied" ? l10n("local.url_copied_0017bda4") : copyState === "failed" ? l10n("local.copy_failed_5b50e7a6") : l10n("local.copy_url_b26d1037");
   return (
     <Button
       variant="ghost"
@@ -151,7 +152,7 @@ function UrlSegment({ entry, compact }: { entry: WorkspaceServiceControlEntry; c
   const live = entry.state === "running" && Boolean(entry.url);
 
   if (!displayUrl) {
-    return <span className="font-mono text-xs text-muted-foreground/70">no url</span>;
+    return <span className="font-mono text-xs text-muted-foreground/70">{l10n("local.no_url_d36257bc")}</span>;
   }
   return (
     <>
@@ -181,10 +182,10 @@ function UrlSegment({ entry, compact }: { entry: WorkspaceServiceControlEntry; c
           size="icon-xs"
           disabled={!live}
           className="text-muted-foreground hover:text-foreground"
-          title="Open in new tab"
+          title={l10n("local.open_in_new_tab_e0af5c0b")}
         >
           {live ? (
-            <a href={entry.url ?? undefined} target="_blank" rel="noreferrer" aria-label="Open in new tab">
+            <a href={entry.url ?? undefined} target="_blank" rel="noreferrer" aria-label={l10n("local.open_in_new_tab_e0af5c0b")}>
               <ExternalLink className="size-3" />
             </a>
           ) : (
@@ -214,12 +215,11 @@ function ActionSlots({
         className="w-13 justify-center"
         disabled={!canStart}
         onClick={() => onAction("start")}
-        aria-label="Start"
-        title="Start"
+        aria-label={l10n("local.start_e4bb9f1e")}
+        title={l10n("local.start_e4bb9f1e")}
       >
         <Play className="size-3" />
-        Start
-      </Button>
+        {l10n("local.start_e4bb9f1e")}</Button>
     );
   }
 
@@ -231,8 +231,8 @@ function ActionSlots({
           size="icon-xs"
           disabled={!canStart}
           onClick={() => onAction("start")}
-          aria-label="Start"
-          title="Start"
+          aria-label={l10n("local.start_e4bb9f1e")}
+          title={l10n("local.start_e4bb9f1e")}
         >
           <Play className="size-3" />
         </Button>
@@ -241,8 +241,8 @@ function ActionSlots({
           size="icon-xs"
           disabled={!canStart}
           onClick={() => onAction("restart")}
-          aria-label="Restart"
-          title="Restart"
+          aria-label={l10n("local.restart_6b983a81")}
+          title={l10n("local.restart_6b983a81")}
           className="border border-border text-foreground"
         >
           <RotateCcw className="size-3" />
@@ -258,8 +258,8 @@ function ActionSlots({
         size="icon-xs"
         disabled={transitional}
         onClick={() => onAction("stop")}
-        aria-label="Stop"
-        title="Stop"
+        aria-label={l10n("local.stop_cae7d57b")}
+        title={l10n("local.stop_cae7d57b")}
         className="border border-border text-foreground"
       >
         <Square className="size-3" />
@@ -269,8 +269,8 @@ function ActionSlots({
         size="icon-xs"
         disabled={transitional || !canStart}
         onClick={() => onAction("restart")}
-        aria-label="Restart"
-        title="Restart"
+        aria-label={l10n("local.restart_6b983a81")}
+        title={l10n("local.restart_6b983a81")}
         className="border border-border text-foreground"
       >
         <RotateCcw className="size-3" />
@@ -300,8 +300,7 @@ function ServiceDetail({
             onClick={onViewLogs}
             className="font-medium text-foreground underline underline-offset-2 hover:text-foreground/80"
           >
-            View logs
-          </button>
+            {l10n("local.view_logs_9ec41ffd")}</button>
         </>
       ) : null}
     </div>
@@ -454,16 +453,16 @@ function MultiServiceBar({
               <button
                 type="button"
                 className="flex h-full items-center gap-2 rounded-l-lg pr-1 text-xs font-medium text-foreground hover:bg-accent"
-                aria-label={`${runningCount} of ${services.length} services running — show services`}
+                aria-label={l10n("local.value_of_value_services_running_show_services_2adde0fa", {v0: (runningCount), v1: (services.length)})}
               >
                 <StatusIndicator entry={aggregateEntry} />
-                <span className="whitespace-nowrap">{runningCount}/{services.length} running</span>
+                <span className="whitespace-nowrap">{runningCount}/{services.length} {l10n("local.running_c071cf5f")}</span>
                 <ChevronDown className="size-3 text-muted-foreground" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-96 p-0" onOpenAutoFocus={(event) => event.preventDefault()}>
               <div className="px-4 pb-1 pt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Services · {services.length}
+                {l10n("local.services_6b80b1d6")}{" "}{services.length}
               </div>
               <div className="divide-y divide-border px-4">
                 {services.map((entry) => (
@@ -471,9 +470,9 @@ function MultiServiceBar({
                 ))}
               </div>
               <div className="flex items-center gap-1 border-t border-border px-4 py-2">
-                <Button variant="ghost" size="xs" onClick={() => onAction("start", null)}>Start all</Button>
-                <Button variant="ghost" size="xs" onClick={() => onAction("stop", null)}>Stop all</Button>
-                <Button variant="ghost" size="xs" onClick={() => onAction("restart", null)}>Restart all</Button>
+                <Button variant="ghost" size="xs" onClick={() => onAction("start", null)}>{l10n("local.start_all_1a7e6299")}</Button>
+                <Button variant="ghost" size="xs" onClick={() => onAction("stop", null)}>{l10n("local.stop_all_ead4f70a")}</Button>
+                <Button variant="ghost" size="xs" onClick={() => onAction("restart", null)}>{l10n("local.restart_all_b2321525")}</Button>
                 {onManageServices ? (
                   <Button
                     variant="link"
@@ -481,8 +480,7 @@ function MultiServiceBar({
                     className="ml-auto text-muted-foreground"
                     onClick={onManageServices}
                   >
-                    Manage in Services tab →
-                  </Button>
+                    {l10n("local.manage_in_services_tab_84d3c11f")}</Button>
                 ) : null}
               </div>
             </PopoverContent>
@@ -495,7 +493,7 @@ function MultiServiceBar({
                 <UrlSegment entry={primary} />
               </>
             ) : (
-              <span className="font-mono text-xs text-muted-foreground/70">no url</span>
+              <span className="font-mono text-xs text-muted-foreground/70">{l10n("local.no_url_d36257bc")}</span>
             )}
           </div>
           <div className="mx-3 hidden h-5 w-px bg-border sm:block" />

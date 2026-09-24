@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate",
+  "releaseId": "2026.831.1-zh.1",
+  "upstreamVersion": "2026.831.1",
+  "sourceCommit": "65ec059bde30d98c92165b24a30a540800dd1f6f",
+  "packageIntegrity": "sha512-LUmhLIxWMpvI28pAj9NxUAsTA5nvZIJsbs7LAm7JEbZqH8eX6OVH0wzeKONSTcRWyE6tLTz2qziIPSoiscFK7Q==",
+  "lockfileSha256": "d2a3f4bf9e31339334d8f6a66b54d4bb324255f27152cc8b8fdfd895931db397",
+  "localizationVersion": "zh.1",
+  "catalogSha256": "d735d980cecb7ea3bc82ace4c7bfcae62b24f2e0aed261a2e9ed97e430e76c81",
+  "patchSha256": "954164702dedfb8f4125c61de38ea65edb9a2c91cfff77a749b10a59f95bdb9a",
+  "backendVersion": "2026.831.1",
+  "backendHash": "5b767ef84bd9b391a946fdcf4bb79537c40785d215231b7d0da9728aae9e9b86",
+  "backendHashScope": "Every file in the complete root node_modules tree except @paperclipai/server/ui-dist; identical to the installed official dependency tree.",
+  "uiAssetManifestSha256": "e77ea96510ed035020e7910786b7f5dcb81e7bc99f152d038bff5c3b6d32f0d2",
+  "uiTreeSha256": "94e3b9895ffe863520142246df1ba2376f77e31cd5f8adb61a97124dbe7d4378",
+  "testReportSha256": "77b2f652f6c157396d1c8a03d980a1797c3dbe1fb8da6101ceb3603483e6a4d8",
+  "entrypoint": "node_modules/paperclipai/dist/index.js",
+  "builtAt": "2026-09-03T09:31:03.244Z",
+  "deployment": "Not activated. Requires explicit release verification and switch by deployment owner."
+}

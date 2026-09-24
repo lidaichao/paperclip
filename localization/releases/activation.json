@@ -1,0 +1,41 @@
+{
+  "activatedAt": "2026-09-03T09:40:43.168Z",
+  "releaseId": "2026.831.1-zh.1",
+  "health": "ok",
+  "backendVersion": "2026.831.1",
+  "manifestSha256": "17dfb194f35c7d31a670450f6eeedd61d3140780adc2c58ee76d948375b4f666",
+  "liveEntryAssetsMatchRelease": true,
+  "verifiedAssets": [
+    "/assets/index-DAOcIHXi.js",
+    "/assets/rolldown-runtime-CPfWejcf.js",
+    "/assets/mention-chips-CcbmBwIH.js",
+    "/assets/preload-helper-BATLnrmA.js",
+    "/assets/index-C5TjA4oF.css"
+  ],
+  "indexNote": "Server applies branding to HTML; entry assets and their served bytes match the release.",
+  "settingsBrowserChineseVerified": true,
+  "rollbackDrill": {
+    "sequence": [
+      "2026.831.1-zh.1",
+      "official",
+      "2026.831.1-zh.1"
+    ],
+    "passed": true,
+    "officialHealth": "ok"
+  },
+  "retainedAcceptanceTasks": [
+    {
+      "identifier": "LUN-2",
+      "status": "done"
+    },
+    {
+      "identifier": "LUN-3",
+      "status": "done"
+    },
+    {
+      "identifier": "LUN-1",
+      "status": "done"
+    }
+  ],
+  "backup": "paperclip-20260903-171358.sql.gz"
+}

@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { AgentAvatar } from "../AgentAvatar";
 import { AgentIdentity } from "../AgentIdentity";
 import { memo, type ComponentType, type SVGProps } from "react";
@@ -15,10 +16,10 @@ type SnippetStyle = {
 };
 
 const SNIPPET_STYLES: Record<string, SnippetStyle> = {
-  comment: { Icon: MessageSquare, label: "Comment" },
-  document: { Icon: FileText, label: "Doc" },
-  artifact: { Icon: Paperclip, label: "Artifact" },
-  description: { Icon: Quote, label: "Description" },
+  comment: { Icon: MessageSquare, label: l10n("local.comment_44f5e3fb") },
+  document: { Icon: FileText, label: l10n("local.doc_49f4e57c") },
+  artifact: { Icon: Paperclip, label: l10n("local.artifact_e06171a1") },
+  description: { Icon: Quote, label: l10n("local.description_526e0087") },
 };
 
 function snippetStyle(field: string, fallbackLabel: string): SnippetStyle {
@@ -79,7 +80,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="agent"
-              fallbackLabel={result.sourceLabel ?? "Agent"}
+              fallbackLabel={result.sourceLabel ?? l10n("local.agent_11b39c93")}
             />
           ) : null}
         </div>
@@ -102,7 +103,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="project"
-              fallbackLabel={result.sourceLabel ?? "Project"}
+              fallbackLabel={result.sourceLabel ?? l10n("local.project_98595978")}
             />
           ) : null}
         </div>
@@ -134,7 +135,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="artifact"
-              fallbackLabel={result.sourceLabel ?? "Artifact"}
+              fallbackLabel={result.sourceLabel ?? l10n("local.artifact_e06171a1")}
               multiline
             />
           ) : null}

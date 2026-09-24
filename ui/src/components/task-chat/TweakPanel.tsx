@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCopyAction } from "@/lib/use-copy-action";
@@ -139,14 +140,14 @@ export function TweakPanel() {
         onPointerUp={onHeaderPointerUp}
       >
         <GripHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-        <span>Motion tweak panel</span>
+        <span>{l10n("local.motion_tweak_panel_1f577a8a")}</span>
         <div className="ml-auto flex items-center gap-1">
-          <button type="button" title="Reset all" onClick={resetAll} className="rounded p-0.5 hover:bg-accent">
+          <button type="button" title={l10n("local.reset_all_645982c5")} onClick={resetAll} className="rounded p-0.5 hover:bg-accent">
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
-            title={minimized ? "Expand" : "Minimize"}
+            title={minimized ? l10n("local.expand_07548c2c") : l10n("local.minimize_d72e311c")}
             onClick={() => setMinimized((m) => !m)}
             className="rounded p-0.5 hover:bg-accent"
           >
@@ -166,7 +167,7 @@ export function TweakPanel() {
                     <div className="flex items-center justify-between text-(length:--text-micro)">
                       <span className="truncate font-mono text-muted-foreground">{t.name.replace("--motion-", "")}</span>
                       <span className="ml-2 shrink-0 tabular-nums">
-                        {t.kind === "time" ? `${Math.round(parseCssTimeMs(values[t.name] ?? "0"))}ms` : ""}
+                        {t.kind === "time" ? l10n("local.valuems_7b9b98b7", {v0: (Math.round(parseCssTimeMs(values[t.name] ?? "0")))}) : ""}
                       </span>
                     </div>
                     {t.kind === "time" ? (
@@ -210,8 +211,7 @@ export function TweakPanel() {
               className="flex flex-1 items-center justify-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-accent"
             >
               <Copy className="h-3.5 w-3.5" />
-              Copy as @theme
-            </button>
+              {l10n("local.copy_as_theme_f312e316")}</button>
           </div>
 
           {exportText ? (
@@ -229,10 +229,10 @@ export function TweakPanel() {
               {/* Focusing the box copies it silently; say so, or the click looks inert. */}
               <p className="mt-1 text-(length:--text-nano) text-muted-foreground" aria-live="polite">
                 {exportCopy.copied
-                  ? "Copied to clipboard"
+                  ? l10n("local.copied_to_clipboard_d37078fe")
                   : exportCopy.failed
-                    ? "Copy failed — select the text and copy it manually"
-                    : "Click the box to copy"}
+                    ? l10n("local.copy_failed_select_the_text_and_copy_it_manua_60587f40")
+                    : l10n("local.click_the_box_to_copy_70ffaef9")}
               </p>
             </>
           ) : null}

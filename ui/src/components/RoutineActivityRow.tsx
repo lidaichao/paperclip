@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { ActivityEvent } from "@paperclipai/shared";
@@ -40,14 +41,14 @@ function formatDetailValue(value: unknown): string {
 }
 
 const actionLabels: Record<string, string> = {
-  "routine.webhook_test_received": "Connection test passed",
-  "routine.webhook_test_rejected": "Connection test rejected",
-  "routine.webhook_received": "Webhook event received",
-  "routine.webhook_rejected": "Webhook authentication failed",
-  "routine.created": "Routine created", "routine.updated": "Routine updated",
-  "routine.trigger_created": "Trigger added", "routine.trigger_updated": "Trigger updated",
-  "routine.trigger_deleted": "Trigger removed", "routine.trigger_removed": "Trigger removed", "routine.trigger_restored": "Trigger restored", "routine.trigger_setup_finished": "Webhook setup finished", "routine.trigger_secret_rotated": "Webhook key replaced",
-  "routine.run_triggered": "Routine started", "routine.run_created": "Run created",
+  "routine.webhook_test_received": l10n("local.connection_test_passed_97f70ab0"),
+  "routine.webhook_test_rejected": l10n("local.connection_test_rejected_e726428f"),
+  "routine.webhook_received": l10n("local.webhook_event_received_acc54100"),
+  "routine.webhook_rejected": l10n("local.webhook_authentication_failed_912bfefc"),
+  "routine.created": l10n("local.routine_created_73aa7818"), "routine.updated": l10n("local.routine_updated_72f4c9a3"),
+  "routine.trigger_created": l10n("local.trigger_added_bdfe6f71"), "routine.trigger_updated": l10n("local.trigger_updated_73c266d5"),
+  "routine.trigger_deleted": l10n("local.trigger_removed_7d0dec12"), "routine.trigger_removed": l10n("local.trigger_removed_7d0dec12"), "routine.trigger_restored": l10n("local.trigger_restored_ebac38f2"), "routine.trigger_setup_finished": l10n("local.webhook_setup_finished_64a3b5cd"), "routine.trigger_secret_rotated": l10n("local.webhook_key_replaced_404458cb"),
+  "routine.run_triggered": l10n("local.routine_started_768fcb18"), "routine.run_created": l10n("local.run_created_4c211da8"),
 };
 function actionLabel(action: string) {
   return actionLabels[action] ?? action.replace(/^routine[._]/, "").replaceAll("_", " ").replaceAll(".", " ").replace(/^./, (char) => char.toUpperCase());

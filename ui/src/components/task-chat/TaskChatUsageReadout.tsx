@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { cn } from "@/lib/utils";
 import { Gauge } from "lucide-react";
 import type { TaskChatUsageItem } from "./task-chat-model";
@@ -18,7 +19,7 @@ export function TaskChatUsageReadout({ item }: { item: TaskChatUsageItem }) {
         {item.label ? <span className="font-medium">{item.label}</span> : null}
         {contextWindowSize ? (
           <span>
-            {used.toLocaleString()}/{contextWindowSize.toLocaleString()} ctx ({pct}%)
+            {used.toLocaleString()}/{contextWindowSize.toLocaleString()} {l10n("local.ctx_06dd77ab")}{pct}%)
           </span>
         ) : null}
         {inputTokens != null || outputTokens != null ? (

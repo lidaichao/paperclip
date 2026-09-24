@@ -1,0 +1,12 @@
+import fs from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+const source='H:/AIagent/Luna/tools/paperclip-source';
+const target='H:/AIagent/Luna/tools/paperclip-zh-cn/integration/patches';
+const git=(args,options={})=>execFileSync('git',['-c','core.safecrlf=false','-C',source,...args],{windowsHide:true,stdio:['ignore','pipe','pipe'],...options});
+const untracked=git(['ls-files','--others','--exclude-standard','ui/src'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+if(untracked.length)git(['add','--intent-to-add','--',...untracked]);
+const patch=git(['diff','--binary','HEAD','--','ui/src','ui/vitest.setup.ts'],{maxBuffer:32*1024*1024});
+if(!patch.length)throw Error('No localization patch found');
+await fs.mkdir(target,{recursive:true});await fs.writeFile(target+'/0001-zh-cn.patch',patch);
+await fs.writeFile(target+'/series','0001-zh-cn.patch\n');
+console.log(JSON.stringify({patchBytes:patch.length,newFiles:untracked.length}));

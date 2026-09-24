@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useId, useState } from "react";
 import {
   ChevronDown,
@@ -88,7 +89,7 @@ export function TaskChatSystemNotice({
       data-testid="task-chat-system-notice"
       data-tone={streamlined ? tone : undefined}
       role={streamlined ? "group" : undefined}
-      aria-label={streamlined ? `System update: ${title}` : undefined}
+      aria-label={streamlined ? l10n("local.system_update_value_5d46a10f", {v0: (title)}) : undefined}
     >
       <div className="flex max-w-(--pct-85) items-center gap-1.5">
         <button
@@ -120,7 +121,7 @@ export function TaskChatSystemNotice({
             disabled={tryAgainNoLiveExecutionPathPending}
             data-testid="task-chat-no-live-path-try-again"
           >
-            {tryAgainNoLiveExecutionPathPending ? "Trying again..." : "Try again"}
+            {tryAgainNoLiveExecutionPathPending ? l10n("local.trying_again_80804141") : l10n("local.try_again_d8b8392e")}
           </Button>
         ) : null}
       </div>
@@ -156,7 +157,7 @@ export function TaskChatSystemNotice({
                 disabled={tryAgainNoLiveExecutionPathPending}
                 data-testid="task-chat-no-live-path-try-again"
               >
-                {tryAgainNoLiveExecutionPathPending ? "Trying again..." : "Try again"}
+                {tryAgainNoLiveExecutionPathPending ? l10n("local.trying_again_80804141") : l10n("local.try_again_d8b8392e")}
               </Button>
             </div>
           ) : null}

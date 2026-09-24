@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { ReactNode } from "react";
 import type {
   ToolRiskLevel,
@@ -12,7 +13,7 @@ import { ApiError } from "@/api/client";
 
 /** Risk classification badge for a catalog tool. */
 export function RiskBadge({ risk }: { risk: ToolRiskLevel | null | undefined }) {
-  if (!risk) return <Badge variant="outline">unknown</Badge>;
+  if (!risk) return <Badge variant="outline">{l10n("local.unknown_b23a6a84")}</Badge>;
   const variant =
     risk === "high" || risk === "critical"
       ? "destructive"
@@ -34,9 +35,9 @@ export function CapabilityBadges({
 }) {
   return (
     <span className="inline-flex flex-wrap gap-1">
-      {isReadOnly ? <Badge variant="outline">read-only</Badge> : null}
-      {isWrite ? <Badge variant="secondary">write</Badge> : null}
-      {isDestructive ? <Badge variant="destructive">destructive</Badge> : null}
+      {isReadOnly ? <Badge variant="outline">{l10n("local.read_only_4fed3970")}</Badge> : null}
+      {isWrite ? <Badge variant="secondary">{l10n("local.write_10fd874b")}</Badge> : null}
+      {isDestructive ? <Badge variant="destructive">{l10n("local.destructive_1b933329")}</Badge> : null}
     </span>
   );
 }
@@ -83,25 +84,25 @@ function decisionToStatusKey(decision: string): { key: string; label: string } {
   switch (decision) {
     case "allow":
     case "allowed":
-      return { key: "allowed", label: "allowed" };
+      return { key: "allowed", label: l10n("local.allowed_eabc01f1") };
     case "deny":
     case "denied":
-      return { key: "denied", label: "denied" };
+      return { key: "denied", label: l10n("local.denied_62d6c233") };
     case "block":
-      return { key: "block", label: "block" };
+      return { key: "block", label: l10n("local.block_496aca80") };
     case "require_approval":
     case "requires_approval":
-      return { key: "require-approval", label: "require approval" };
+      return { key: "require-approval", label: l10n("local.require_approval_ba46f298") };
     case "redact":
     case "redacted":
-      return { key: "redacted", label: "redacted" };
+      return { key: "redacted", label: l10n("local.redacted_b68919af") };
     case "rate_limited":
-      return { key: "rate-limit", label: "rate limited" };
+      return { key: "rate-limit", label: l10n("local.rate_limited_d292012e") };
     case "defer":
     case "deferred":
-      return { key: "deferred", label: "deferred" };
+      return { key: "deferred", label: l10n("local.deferred_a7060160") };
     case "hidden":
-      return { key: "hidden", label: "hidden" };
+      return { key: "hidden", label: l10n("local.hidden_e564b408") };
     default:
       return { key: decision, label: decision };
   }
@@ -116,7 +117,7 @@ export function DecisionBadge({ decision }: { decision: ToolPolicyDecision | str
 
 /** Compact relative time, falling back to absolute. */
 export function RelativeTime({ value }: { value: Date | string | null | undefined }) {
-  if (!value) return <span className="text-muted-foreground">never</span>;
+  if (!value) return <span className="text-muted-foreground">{l10n("local.never_6497e4b3")}</span>;
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return <span className="text-muted-foreground">—</span>;
   const diffMs = Date.now() - date.getTime();
@@ -189,7 +190,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
         <div className="flex items-start gap-2 text-sm text-destructive">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <p className="font-medium">Could not load this view</p>
+            <p className="font-medium">{l10n("local.could_not_load_this_view_fa92f926")}</p>
             <p className="text-destructive/80">{message}</p>
           </div>
         </div>
@@ -199,8 +200,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
             onClick={onRetry}
             className="self-start rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
           >
-            Retry
-          </button>
+            {l10n("local.retry_942087cc")}</button>
         ) : null}
       </CardContent>
     </Card>
@@ -231,7 +231,7 @@ export function PendingBackendNotice({
         <p className="max-w-2xl text-sm text-muted-foreground">{body}</p>
         {issue ? (
           <a href={issue.href} className="text-sm font-medium text-primary hover:underline">
-            Tracked in {issue.identifier} →
+            {l10n("local.tracked_in_39cc55d0")}{" "}{issue.identifier} →
           </a>
         ) : null}
       </CardContent>

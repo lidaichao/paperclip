@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -40,70 +41,70 @@ import type { EnvBinding, RoutineDetail as RoutineDetailType } from "@paperclipa
 const concurrencyPolicyOptions = [
   {
     value: "coalesce_if_active",
-    title: "Coalesce if active",
-    description: "Keep one follow-up run queued while an active run is still working.",
+    title: l10n("local.coalesce_if_active_ee3319ab"),
+    description: l10n("local.keep_one_follow_up_run_queued_while_an_active_f81f576d"),
   },
   {
     value: "always_enqueue",
-    title: "Always enqueue",
-    description: "Queue every trigger occurrence, even if several runs stack up.",
+    title: l10n("local.always_enqueue_14769882"),
+    description: l10n("local.queue_every_trigger_occurrence_even_if_severa_1d894457"),
   },
   {
     value: "skip_if_active",
-    title: "Skip if active",
-    description: "Drop overlapping trigger occurrences while the routine is already active.",
+    title: l10n("local.skip_if_active_128f844b"),
+    description: l10n("local.drop_overlapping_trigger_occurrences_while_th_ca321654"),
   },
 ];
 
 const catchUpPolicyOptions = [
   {
     value: "skip_missed",
-    title: "Skip missed",
-    description: "Ignore schedule windows that were missed while paused.",
+    title: l10n("local.skip_missed_23ab424e"),
+    description: l10n("local.ignore_schedule_windows_that_were_missed_whil_403c69b0"),
   },
   {
     value: "enqueue_missed_with_cap",
-    title: "Enqueue missed with cap",
-    description: "Catch up missed schedule windows after recovery; sub-hourly schedules are combined into one catch-up run, slower schedules replay each missed window up to a cap.",
+    title: l10n("local.enqueue_missed_with_cap_97c8825e"),
+    description: l10n("local.catch_up_missed_schedule_windows_after_recove_5137b633"),
   },
 ];
 
 const activityGatePolicyOptions = [
   {
     value: "always",
-    title: "Run on every scheduled tick",
-    description: "Fire on the schedule no matter what — the default behavior.",
+    title: l10n("local.run_on_every_scheduled_tick_6fa83c63"),
+    description: l10n("local.fire_on_the_schedule_no_matter_what_the_defau_4412186d"),
   },
   {
     value: "require_external_activity",
-    title: "Skip when there's been no activity since the last run",
+    title: l10n("local.skip_when_there_s_been_no_activity_since_the_e3bb529a"),
     description:
-      "On a scheduled tick, only run if something happened since the last run that finished. Lets a watcher-style routine stay asleep while the system is settled instead of burning tokens.",
+      l10n("local.on_a_scheduled_tick_only_run_if_something_hap_ca39b27c"),
   },
 ];
 
 const activityGateScopeOptions = [
   {
     value: "company",
-    title: "Company-wide",
-    description: "Any activity across the company counts as a reason to run.",
+    title: l10n("local.company_wide_e4010f5d"),
+    description: l10n("local.any_activity_across_the_company_counts_as_a_r_17fe520b"),
   },
   {
     value: "project",
-    title: "This project",
-    description: "Only activity in the routine's project counts as a reason to run.",
+    title: l10n("local.this_project_d0f62545"),
+    description: l10n("local.only_activity_in_the_routine_s_project_counts_bd022132"),
   },
 ];
 
 const triggerKinds = ["schedule", "webhook"];
 const signingModes = ["app_webhook", "bearer", "hmac_sha256", "github_hmac", "none"];
 const signingModeDescriptions: Record<string, string> = {
-  bearer: "Send Authorization: Bearer <secret> with each request.",
-  hmac_sha256: "Send X-Paperclip-Timestamp and X-Paperclip-Signature: sha256=<hex>, signing timestamp + a dot + the exact JSON body.",
-  github_hmac: "Accept GitHub-style X-Hub-Signature-256 header (HMAC over raw body, no timestamp).",
-  app_webhook: "Accept a bearer token or an HMAC-SHA256 signature over the exact request body in X-Hub-Signature or X-Hub-Signature-256.",
-  fireflies_hmac: "Signed webhook (legacy).",
-  none: "No authentication — the webhook URL itself acts as a shared secret.",
+  bearer: l10n("local.send_authorization_bearer_secret_with_each_re_fbfe388f"),
+  hmac_sha256: l10n("local.send_x_paperclip_timestamp_and_x_paperclip_si_c8a45d23"),
+  github_hmac: l10n("local.accept_github_style_x_hub_signature_256_heade_6de8205c"),
+  app_webhook: l10n("local.accept_a_bearer_token_or_an_hmac_sha256_signa_f25881c6"),
+  fireflies_hmac: l10n("local.signed_webhook_legacy_53410a8c"),
+  none: l10n("local.no_authentication_the_webhook_url_itself_acts_691cb625"),
 };
 const SIGNING_MODES_WITHOUT_REPLAY_WINDOW = new Set(["app_webhook", "bearer", "github_hmac", "fireflies_hmac", "none"]);
 
@@ -155,16 +156,16 @@ export function OverviewSection({
       {/* Assignment row */}
       <div className="overflow-x-auto overscroll-x-contain">
         <div className="inline-flex min-w-full flex-wrap items-center gap-2 text-sm text-muted-foreground sm:min-w-max sm:flex-nowrap">
-          <span>For</span>
+          <span>{l10n("local.for_ca15ebc0")}</span>
           <InlineEntitySelector
             ref={assigneeSelectorRef}
             value={editDraft.assigneeAgentId}
             options={assigneeOptions}
             recentOptionIds={recentAssigneeIds}
-            placeholder="Responsible"
-            noneLabel="No responsible"
-            searchPlaceholder="Search responsible..."
-            emptyMessage="No responsible found."
+            placeholder={l10n("local.responsible_bc110a6d")}
+            noneLabel={l10n("local.no_responsible_15abdee5")}
+            searchPlaceholder={l10n("local.search_responsible_9cb8d79f")}
+            emptyMessage={l10n("local.no_responsible_found_045a8ffe")}
             onChange={(assigneeAgentId) =>
               setEditDraft((current) => ({ ...current, assigneeAgentId }))
             }
@@ -186,7 +187,7 @@ export function OverviewSection({
                   <span className="truncate">{option.label}</span>
                 )
               ) : (
-                <span className="text-muted-foreground">Responsible</span>
+                <span className="text-muted-foreground">{l10n("local.responsible_bc110a6d")}</span>
               )
             }
             renderOption={(option) => {
@@ -202,16 +203,16 @@ export function OverviewSection({
               );
             }}
           />
-          <span>in</span>
+          <span>{l10n("local.in_58296753")}</span>
           <InlineEntitySelector
             ref={projectSelectorRef}
             value={editDraft.projectId}
             options={projectOptions}
             recentOptionIds={recentProjectIds}
-            placeholder="Project"
-            noneLabel="No project"
-            searchPlaceholder="Search projects..."
-            emptyMessage="No projects found."
+            placeholder={l10n("local.project_98595978")}
+            noneLabel={l10n("local.no_project_f34c2be0")}
+            searchPlaceholder={l10n("local.search_projects_c59dd5a3")}
+            emptyMessage={l10n("local.no_projects_found_26e92309")}
             onChange={(projectId) => setEditDraft((current) => ({ ...current, projectId }))}
             onConfirm={() => descriptionEditorRef.current?.focus()}
             renderTriggerValue={(option) =>
@@ -224,7 +225,7 @@ export function OverviewSection({
                   <span className="truncate">{option.label}</span>
                 </>
               ) : (
-                <span className="text-muted-foreground">Project</span>
+                <span className="text-muted-foreground">{l10n("local.project_98595978")}</span>
               )
             }
             renderOption={(option) => {
@@ -246,9 +247,7 @@ export function OverviewSection({
 
       {!routine.assigneeAgentId ? (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-900 dark:text-amber-200">
-          Default agent required. This routine can stay as a draft and still run manually, but
-          automation stays paused until you assign a default agent.
-        </div>
+          {l10n("local.default_agent_required_this_routine_can_stay_07c2de4a")}</div>
       ) : null}
 
       {/* Instructions */}
@@ -281,7 +280,7 @@ export function OverviewSection({
               ref={descriptionEditorRef}
               value={editDraft.description}
               onChange={(description) => setEditDraft((current) => ({ ...current, description }))}
-              placeholder="Add instructions..."
+              placeholder={l10n("local.add_instructions_d49e19c5")}
               bordered={false}
               contentClassName="min-h-(--sz-120px) text-sm leading-7"
               mentions={mentionOptions}
@@ -297,7 +296,7 @@ export function OverviewSection({
             ref={descriptionEditorRef}
             value={editDraft.description}
             onChange={(description) => setEditDraft((current) => ({ ...current, description }))}
-            placeholder="Add instructions..."
+            placeholder={l10n("local.add_instructions_d49e19c5")}
             bordered={false}
             contentClassName="min-h-(--sz-120px) text-sm leading-7"
             mentions={mentionOptions}
@@ -325,37 +324,36 @@ export function OverviewSection({
       <div className="grid gap-3 sm:grid-cols-3">
         <SummaryCard
           icon={Clock3}
-          label="Triggers"
+          label={l10n("local.triggers_e62f2148")}
           value={activeTriggers === 0 ? "None" : `${activeTriggers} active`}
-          hint={nextFire ? `Next fire ${nextFire}` : "No schedule"}
+          hint={nextFire ? l10n("local.next_fire_value_3fd50bc5", {v0: (nextFire)}) : l10n("local.no_schedule_44904077")}
           to={() => navigateToSection("triggers")}
-          ariaLabel={`${activeTriggers} triggers. Open triggers.`}
+          ariaLabel={l10n("local.value_triggers_open_triggers_83c01ed8", {v0: (activeTriggers)})}
         />
         <SummaryCard
           icon={KeyRound}
-          label="Secrets"
+          label={l10n("local.secrets_d8707d41")}
           value={boundSecrets === 0 ? "None" : `${boundSecrets} bound`}
-          hint="Manage bound secrets"
+          hint={l10n("local.manage_bound_secrets_0b00dd96")}
           to={() => navigateToSection("secrets")}
-          ariaLabel={`${boundSecrets} secrets bound. Open secrets.`}
+          ariaLabel={l10n("local.value_secrets_bound_open_secrets_68e0713c", {v0: (boundSecrets)})}
         />
         <SummaryCard
           icon={Play}
-          label="Last run"
+          label={l10n("local.last_run_512a4821")}
           value={lastRun ? lastRun.status.replaceAll("_", " ") : "No runs"}
-          hint={lastRun ? timeAgo(lastRun.triggeredAt) : "Trigger a run"}
+          hint={lastRun ? timeAgo(lastRun.triggeredAt) : l10n("local.trigger_a_run_177f8dfa")}
           to={() => navigateToSection("runs")}
-          ariaLabel={lastRun ? `Last run ${lastRun.status}. Open runs.` : "No runs. Open runs."}
+          ariaLabel={lastRun ? l10n("local.last_run_value_open_runs_52ffac04", {v0: (lastRun.status)}) : l10n("local.no_runs_open_runs_b6004279")}
         />
       </div>
 
       {/* Recent activity */}
       <div className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Recent activity
-        </p>
+          {l10n("local.recent_activity_6cb44b56")}</p>
         {recentActivity.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No activity yet.</p>
+          <p className="text-xs text-muted-foreground">{l10n("local.no_activity_yet_a288d2d0")}</p>
         ) : (
           <div className="divide-y divide-border/60">
             {recentActivity.map((event) => (
@@ -376,7 +374,7 @@ export function OverviewSection({
               onClick={() => navigateToSection("activity")}
               className="flex items-center gap-1 pt-2 text-xs text-muted-foreground hover:text-foreground"
             >
-              View all activity <ArrowRight className="h-3 w-3" />
+              {l10n("local.view_all_activity_b9db058f")}{" "}<ArrowRight className="h-3 w-3" />
             </button>
           </div>
         )}
@@ -440,8 +438,8 @@ export function TriggersSection() {
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">
           {routine.triggers.length === 0
-            ? "No triggers yet"
-            : `${routine.triggers.length} trigger${routine.triggers.length === 1 ? "" : "s"}`}
+            ? l10n("local.no_triggers_yet_362ec1f1")
+            : l10n("local.value_triggervalue_6b15f03a", {v0: (routine.triggers.length), v1: (englishPluralSuffix(routine.triggers.length === 1 ? "" : "s"))})}
         </p>
         <Button
           size="sm"
@@ -452,13 +450,11 @@ export function TriggersSection() {
           {addOpen ? (
             <>
               <X className="mr-1.5 h-3.5 w-3.5" />
-              Cancel
-            </>
+              {l10n("local.cancel_19766ed6")}</>
           ) : (
             <>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              New trigger
-            </>
+              {l10n("local.new_trigger_a38f4ea6")}</>
           )}
         </Button>
       </div>
@@ -466,10 +462,10 @@ export function TriggersSection() {
       {/* Add trigger form — expand-on-click drawer */}
       {addOpen ? (
       <div className="space-y-3 rounded-lg border border-border p-4">
-        <p className="text-sm font-medium">Add trigger</p>
+        <p className="text-sm font-medium">{l10n("local.add_trigger_58fd3089")}</p>
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1.5">
-            <Label className="text-xs">Kind</Label>
+            <Label className="text-xs">{l10n("local.kind_f5387f9b")}</Label>
             <Select
               value={newTrigger.kind}
               onValueChange={(kind) => setNewTrigger((current) => ({ ...current, kind }))}
@@ -488,7 +484,7 @@ export function TriggersSection() {
           </div>
           {newTrigger.kind === "schedule" && (
             <div className="space-y-1.5 md:col-span-2">
-              <Label className="text-xs">Schedule</Label>
+              <Label className="text-xs">{l10n("local.schedule_f4830a1d")}</Label>
               <ScheduleEditor
                 value={newTrigger.cronExpression}
                 onChange={(cronExpression) =>
@@ -501,7 +497,7 @@ export function TriggersSection() {
           {newTrigger.kind === "webhook" && (
             <>
               <div className="space-y-1.5">
-                <Label className="text-xs">Signing mode</Label>
+                <Label className="text-xs">{l10n("local.signing_mode_0ba52a43")}</Label>
                 <Select
                   value={newTrigger.signingMode}
                   onValueChange={(signingMode) =>
@@ -525,7 +521,7 @@ export function TriggersSection() {
               </div>
               {!SIGNING_MODES_WITHOUT_REPLAY_WINDOW.has(newTrigger.signingMode) && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Replay window (seconds)</Label>
+                  <Label className="text-xs">{l10n("local.replay_window_seconds_88c7ec0c")}</Label>
                   <Input
                     value={newTrigger.replayWindowSec}
                     onChange={(event) =>
@@ -539,8 +535,7 @@ export function TriggersSection() {
         </div>
         <div className="flex items-center justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={() => setAddOpen(false)}>
-            Cancel
-          </Button>
+            {l10n("local.cancel_19766ed6")}</Button>
           <Button
             size="sm"
             onClick={() =>
@@ -553,7 +548,7 @@ export function TriggersSection() {
             }
             disabled={addDisabled}
           >
-            {createTrigger.isPending ? "Adding..." : "Add trigger"}
+            {createTrigger.isPending ? l10n("local.adding_913a8849") : l10n("local.add_trigger_58fd3089")}
           </Button>
         </div>
       </div>
@@ -564,28 +559,25 @@ export function TriggersSection() {
           <div>
             <p className="font-medium">{secretMessage.title}</p>
             <p className="text-xs text-muted-foreground">
-              Save this now. Paperclip will not show the secret value again.
-            </p>
+              {l10n("local.save_this_now_paperclip_will_not_show_the_sec_70e97789")}</p>
           </div>
           <div className="space-y-3">
             {secretMessage.entries.map((entry, index) => (
               <div key={`${entry.webhookUrl}-${index}`} className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Input aria-label="New webhook URL" value={entry.webhookUrl} readOnly className="flex-1" />
+                  <Input aria-label={l10n("local.new_webhook_url_48f3ada2")} value={entry.webhookUrl} readOnly className="flex-1" />
                   <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook URL", entry.webhookUrl)}>
-                    URL
-                  </Button>
+                    {l10n("local.url_e7a241de")}</Button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input aria-label="New webhook secret" value={entry.webhookSecret} readOnly className="flex-1" />
+                  <Input aria-label={l10n("local.new_webhook_secret_2c422ebf")} value={entry.webhookSecret} readOnly className="flex-1" />
                   <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook secret", entry.webhookSecret)}>
-                    Secret
-                  </Button>
+                    {l10n("local.secret_7e32a729")}</Button>
                 </div>
               </div>
             ))}
           </div>
-          <Button variant="outline" size="sm" onClick={() => setSecretMessage(null)}>Done</Button>
+          <Button variant="outline" size="sm" onClick={() => setSecretMessage(null)}>{l10n("local.done_11a6767d")}</Button>
         </div>
       ) : null}
 
@@ -623,14 +615,10 @@ export function VariablesSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-3 rounded-md border border-border bg-muted/20 px-4 py-3 text-xs">
         <span className="flex-1 text-muted-foreground">
-          Variables are auto-detected from <code className="font-mono">{"{{placeholders}}"}</code> in
-          the title &amp; instructions. The variable name is read-only — rename by editing the
-          placeholder.
-        </span>
+          {l10n("local.variables_are_auto_detected_from_6ccf8839")}{" "}<code className="font-mono">{"{{placeholders}}"}</code> {l10n("local.in_the_title_amp_instructions_the_variable_na_1f604616")}</span>
         <Button variant="secondary" size="sm" onClick={() => navigateToSection("overview")}>
           <Edit3 className="mr-1.5 h-3.5 w-3.5" />
-          Edit instructions
-        </Button>
+          {l10n("local.edit_instructions_23e27511")}</Button>
       </div>
 
       {hasVariables ? (
@@ -674,9 +662,7 @@ export function SecretsSection() {
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-        Routine secrets apply to every task this routine creates. They override matching keys in
-        project and agent env. <span className="font-mono">PAPERCLIP_*</span> names are reserved.
-      </div>
+        {l10n("local.routine_secrets_apply_to_every_task_this_rout_2e503998")}{" "}<span className="font-mono">PAPERCLIP_*</span> {l10n("local.names_are_reserved_a23f67d3")}</div>
 
 
       <EnvironmentVariablesEditor
@@ -705,10 +691,9 @@ export function DeliverySection() {
     <div className="space-y-6">
       <div className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Concurrency
-        </p>
+          {l10n("local.concurrency_8708492f")}</p>
         <RadioCardGroup
-          ariaLabel="Concurrency policy"
+          ariaLabel={l10n("local.concurrency_policy_a8ac65f3")}
           value={editDraft.concurrencyPolicy}
           onValueChange={(concurrencyPolicy) =>
             setEditDraft((current) => ({ ...current, concurrencyPolicy }))
@@ -718,10 +703,9 @@ export function DeliverySection() {
       </div>
       <div className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Catch-up
-        </p>
+          {l10n("local.catch_up_1c2d0f8e")}</p>
         <RadioCardGroup
-          ariaLabel="Catch-up policy"
+          ariaLabel={l10n("local.catch_up_policy_7e194dbb")}
           value={editDraft.catchUpPolicy}
           onValueChange={(catchUpPolicy) =>
             setEditDraft((current) => ({ ...current, catchUpPolicy }))
@@ -731,10 +715,9 @@ export function DeliverySection() {
       </div>
       <div className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Advanced run policy
-        </p>
+          {l10n("local.advanced_run_policy_02eb5cf7")}</p>
         <RadioCardGroup
-          ariaLabel="Advanced run policy"
+          ariaLabel={l10n("local.advanced_run_policy_02eb5cf7")}
           value={editDraft.activityGatePolicy}
           onValueChange={(activityGatePolicy) =>
             setEditDraft((current) => ({ ...current, activityGatePolicy }))
@@ -744,14 +727,12 @@ export function DeliverySection() {
         />
         {!hasScheduleTrigger ? (
           <p className="text-xs text-muted-foreground">
-            Add a schedule trigger to gate runs on activity. Webhook, manual, and API fires always
-            run.
-          </p>
+            {l10n("local.add_a_schedule_trigger_to_gate_runs_on_activi_c62e42a1")}</p>
         ) : gateEnabled ? (
           <div className="space-y-2 rounded-lg border border-border p-3">
-            <Label className="text-xs font-medium">Activity scope</Label>
+            <Label className="text-xs font-medium">{l10n("local.activity_scope_98a37b44")}</Label>
             <RadioCardGroup
-              ariaLabel="Activity gate scope"
+              ariaLabel={l10n("local.activity_gate_scope_24e9df1a")}
               value={editDraft.activityGateScope}
               onValueChange={(activityGateScope) =>
                 setEditDraft((current) => ({ ...current, activityGateScope }))
@@ -809,8 +790,7 @@ function NextFiresPreview({
   return (
     <div className="space-y-3">
       <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-        Next 5 fires
-      </p>
+        {l10n("local.next_5_fires_10b02c89")}</p>
       {preview ? (
         <>
           <div className="space-y-1.5 rounded-lg border border-border p-3 font-mono text-xs">
@@ -829,15 +809,13 @@ function NextFiresPreview({
             ))}
           </div>
           <p className="text-(length:--text-micro) text-muted-foreground/60">
-            Preview assumes the previous run is still in flight when the next fires. Times shown in{" "}
+            {l10n("local.preview_assumes_the_previous_run_is_still_in_175c07ce")}{" "}
             {preview.timeZone}.
           </p>
         </>
       ) : (
         <p className="rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
-          No enabled schedule trigger to preview. Add a schedule in Triggers to see how this policy
-          treats upcoming fires.
-        </p>
+          {l10n("local.no_enabled_schedule_trigger_to_preview_add_a_54271cad")}</p>
       )}
     </div>
   );

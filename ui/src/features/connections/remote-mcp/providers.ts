@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 /** Presentation metadata only. Each provider will have its own catalog entry and connection. */
 export type RemoteMcpProviderId = "zapier" | "arcade" | "composio" | "executor";
 
@@ -18,17 +19,17 @@ export interface RemoteMcpProvider {
 export const remoteMcpProviders: Record<RemoteMcpProviderId, RemoteMcpProvider> = {
   zapier: {
     id: "zapier", name: "Zapier", supportsBrowserAuth: false,
-    description: "Use the apps and actions on your Zapier MCP server.",
+    description: l10n("local.use_the_apps_and_actions_on_your_zapier_mcp_s_81a62210"),
     instructions: ["Create an MCP server in Zapier and choose Other as the client.", "Connect your apps and select the actions to expose.", "Open Connect, generate a token, and copy the full server URL."],
     setupUrl: "https://docs.zapier.com/mcp/get-started/connect/other",
     dashboardUrl: "https://mcp.zapier.com",
-    defaultUrl: "", placeholder: "Paste the full URL from Zapier",
+    defaultUrl: "", placeholder: l10n("local.paste_the_full_url_from_zapier_2b71b0cf"),
     urlHelp: "The full server URL can contain a secret token. Paste it exactly as Zapier provides it.",
     authHelp: "For a separate token, use https://mcp.zapier.com/api/v1/connect and choose Bearer token.",
   },
   arcade: {
     id: "arcade", name: "Arcade", supportsBrowserAuth: true,
-    description: "Use the tools exposed by your Arcade gateway.",
+    description: l10n("local.use_the_tools_exposed_by_your_arcade_gateway_081210c3"),
     instructions: ["Create a gateway in Arcade and select its tools.", "Choose its User Source and copy the gateway URL.", "Paste the URL here, then sign in when prompted."],
     setupUrl: "https://docs.arcade.dev/en/operate/governance/mcp-gateways",
     dashboardUrl: "https://app.arcade.dev",
@@ -38,7 +39,7 @@ export const remoteMcpProviders: Record<RemoteMcpProviderId, RemoteMcpProvider> 
   },
   composio: {
     id: "composio", name: "Composio", supportsBrowserAuth: true,
-    description: "Discover and use your apps through Composio Connect.",
+    description: l10n("local.discover_and_use_your_apps_through_composio_c_8b7285b9"),
     instructions: ["Connect to Composio and sign in with your account.", "Connect underlying apps in Composio when prompted."],
     setupUrl: "https://docs.composio.dev/docs/composio-connect",
     dashboardUrl: "https://dashboard.composio.dev",
@@ -48,11 +49,11 @@ export const remoteMcpProviders: Record<RemoteMcpProviderId, RemoteMcpProvider> 
   },
   executor: {
     id: "executor", name: "Executor", supportsBrowserAuth: true,
-    description: "Run tools through your Executor workspace.",
+    description: l10n("local.run_tools_through_your_executor_workspace_b7bfda4a"),
     instructions: ["Connect your apps and configure action policies in Executor.", "Open Integrations and copy the URL under “Connect an agent”.", "Paste it here and sign in when prompted."],
     setupUrl: "https://executor.sh/docs/mcp-proxy",
     dashboardUrl: "https://executor.sh",
-    defaultUrl: "", placeholder: "Paste your Executor workspace MCP URL",
+    defaultUrl: "", placeholder: l10n("local.paste_your_executor_workspace_mcp_url_aa2d8df3"),
     urlHelp: "Use the hosted workspace URL or a self-hosted HTTP endpoint reachable from Paperclip. The server’s endpoint policy also applies.",
     authHelp: "Keep any options in the copied URL. If using an API key, use a user key; workspace and organization keys cannot open an MCP session.",
   },

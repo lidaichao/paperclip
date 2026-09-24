@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ProjectRepository } from "@paperclipai/shared";
@@ -36,7 +37,7 @@ export function NewProjectForm({ companyId, onClose }: { companyId: string; onCl
       className="flex max-h-(--sz-calc-18) flex-col gap-0 overflow-hidden p-0 shadow-sm sm:max-w-lg"
       onOpenAutoFocus={(event) => { event.preventDefault(); input.current?.focus(); }}>
       {connecting ? <div className="min-h-0 overflow-y-auto p-5">
-        <DialogTitle className="sr-only">Connect GitHub</DialogTitle>
+        <DialogTitle className="sr-only">{l10n("local.connect_github_4027e5b2")}</DialogTitle>
         <ConnectionSetupFlow host="dialog" serviceSlug="github" forceNewConnection onCancel={() => setConnecting(false)} onComplete={() => {
           void client.invalidateQueries({ queryKey: repositoryOptionsKey(companyId) });
           setConnecting(false);
@@ -44,22 +45,22 @@ export function NewProjectForm({ companyId, onClose }: { companyId: string; onCl
       </div> : <form className="flex min-h-0 flex-col overflow-hidden" onSubmit={(event) => { event.preventDefault(); if (name.trim() && !create.isPending) create.mutate(); }}>
         <div className="flex shrink-0 flex-col gap-4 px-5 pb-4 pt-5">
           <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-lg font-semibold">Create project</DialogTitle>
-            <Button type="button" variant="ghost" size="icon-sm" disabled={create.isPending} aria-label="Close new project" onClick={onClose}><X className="size-4" /></Button>
+            <DialogTitle className="text-lg font-semibold">{l10n("local.create_project_fa67e4d0")}</DialogTitle>
+            <Button type="button" variant="ghost" size="icon-sm" disabled={create.isPending} aria-label={l10n("local.close_new_project_7c518fef")} onClick={onClose}><X className="size-4" /></Button>
           </div>
           <div className="flex items-center gap-3 rounded-lg border border-input px-3 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
             <Folder className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <input ref={input} aria-label="Project name" value={name} disabled={create.isPending} onChange={(event) => setName(event.target.value)} placeholder="Project name" required
+            <input ref={input} aria-label={l10n("local.project_name_25498193")} value={name} disabled={create.isPending} onChange={(event) => setName(event.target.value)} placeholder={l10n("local.project_name_25498193")} required
               className="h-10 w-full min-w-0 border-0 bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm" />
           </div>
         </div>
-        <div role="region" aria-label="Source repositories" tabIndex={0} className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-1 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring">
+        <div role="region" aria-label={l10n("local.source_repositories_b7936ec4")} tabIndex={0} className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-1 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring">
           <ProjectRepositoryInput companyId={companyId} selected={repos} onChange={setRepos} onConnect={() => setConnecting(true)} disabled={create.isPending} />
         </div>
         {create.isError && <p role="alert" className="px-5 pt-3 text-sm text-destructive">{create.error.message}</p>}
         <div className="flex shrink-0 justify-end gap-2 px-5 py-5">
-          <Button type="button" variant="ghost" disabled={create.isPending} onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={!name.trim() || create.isPending}>{create.isPending ? "Creating…" : "Create project"}</Button>
+          <Button type="button" variant="ghost" disabled={create.isPending} onClick={onClose}>{l10n("local.cancel_19766ed6")}</Button>
+          <Button type="submit" disabled={!name.trim() || create.isPending}>{create.isPending ? l10n("local.creating_c79ed949") : l10n("local.create_project_fa67e4d0")}</Button>
         </div>
       </form>}
     </DialogContent>

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { cloneElement, isValidElement, useState } from "react";
 import { CalendarRange } from "lucide-react";
 import {
@@ -42,15 +43,14 @@ export function DecisionDateChips({ value, custom, onChange }: DecisionDateChips
               <CalendarRange className="h-3.5 w-3.5" />
               {value === "custom" && (custom.from || custom.to)
                 ? `${custom.from ?? "…"} → ${custom.to ?? "…"}`
-                : "Custom"}
+                : l10n("local.custom_494ca78f")}
             </button>
           </ChipButton>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-auto space-y-2 p-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-(length:--text-nano) font-medium uppercase tracking-wide text-muted-foreground">
-              From
-            </label>
+              {l10n("local.from_21819769")}</label>
             <input
               type="date"
               value={custom.from ?? ""}
@@ -61,8 +61,7 @@ export function DecisionDateChips({ value, custom, onChange }: DecisionDateChips
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-(length:--text-nano) font-medium uppercase tracking-wide text-muted-foreground">
-              To
-            </label>
+              {l10n("local.to_f4b06ef6")}</label>
             <input
               type="date"
               value={custom.to ?? ""}
@@ -81,8 +80,7 @@ export function DecisionDateChips({ value, custom, onChange }: DecisionDateChips
                 setOpen(false);
               }}
             >
-              Clear
-            </Button>
+              {l10n("local.clear_83b12c22")}</Button>
           </div>
         </PopoverContent>
       </Popover>

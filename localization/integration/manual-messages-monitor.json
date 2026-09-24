@@ -1,0 +1,14 @@
+{
+  "monitor_duration_s": ["{{v0}}s", "{{v0}}秒"],
+  "monitor_duration_m": ["{{v0}}m", "{{v0}}分钟"],
+  "monitor_duration_h": ["{{v0}}h", "{{v0}}小时"],
+  "monitor_duration_d": ["{{v0}}d", "{{v0}}天"],
+  "monitor_in": ["in {{v0}}", "{{v0}}后"],
+  "monitor_overdue": ["overdue by {{v0}}", "已逾期{{v0}}"],
+  "monitor_ago": ["{{v0}} ago", "{{v0}}前"],
+  "monitor_due_now": ["due now", "现已到期"],
+  "monitor_now": ["now", "现在"],
+  "monitor_resumes": ["Resumes {{v0}}", "{{v0}}恢复"],
+  "monitor_retry": ["Retry", "重试"],
+  "monitor_continuation": ["Continuation", "续接"]
+}

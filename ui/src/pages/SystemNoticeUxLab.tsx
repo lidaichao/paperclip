@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 // token-extraction: allowlisted — intentional one-off decoration (DECISION-SHEET.md B1
 // user ruling). The bg-[...gradient...] / shadow-[...] literals in this demo/UX-lab page
 // are deliberate one-off decoration, reverted from --gradient-extract-*/--shadow-extract-*
@@ -146,35 +147,26 @@ export function SystemNoticeUxLab() {
           <div className="p-6 sm:p-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/[0.08] px-3 py-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-caps) text-amber-700 dark:text-amber-300">
               <FlaskConical className="h-3.5 w-3.5" />
-              System Notice Lab
-            </div>
+              {l10n("local.system_notice_lab_5d7cd015")}</div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-              First-class system notice treatment
-            </h1>
+              {l10n("local.first_class_system_notice_treatment_cd72c6b9")}</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Replaces the current pattern where a Paperclip-authored warning renders inside a user-style
-              chat bubble. The notice is one container, system-styled, with hidden-by-default operational
-              metadata. Tone is conveyed by icon, label, and color together so it stays accessible.
-            </p>
+              {l10n("local.replaces_the_current_pattern_where_a_papercli_17231400")}</p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="rounded-full px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps)">
-                PAP-3525 plan
-              </Badge>
+                {l10n("local.pap_3525_plan_57612702")}</Badge>
               <Badge variant="outline" className="rounded-full px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps)">
-                phase 1 — UX
-              </Badge>
+                {l10n("local.phase_1_ux_b918e383")}</Badge>
               <Badge variant="outline" className="rounded-full px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps)">
-                tones: warning · danger · neutral
-              </Badge>
+                {l10n("local.tones_warning_danger_neutral_2752da20")}</Badge>
             </div>
           </div>
 
           <aside className="border-t border-border/60 bg-background/70 p-6 lg:border-l lg:border-t-0">
             <div className="mb-4 flex items-center gap-2 text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
               <ListChecks className="h-4 w-4 text-amber-700 dark:text-amber-300" />
-              What this lab proves
-            </div>
+              {l10n("local.what_this_lab_proves_61894cfc")}</div>
             <div className="space-y-3">
               {checklist.map((line) => (
                 <div
@@ -192,8 +184,8 @@ export function SystemNoticeUxLab() {
       <LabSection
         id="tones"
         eyebrow="Tone matrix"
-        title="Three tones, two states"
-        description="Each tone pairs a unique icon and tone label so the notice is recognizable without color. Collapsed is the default; the Details affordance reveals operational metadata only when reviewers ask for it."
+        title={l10n("local.three_tones_two_states_3a3b08ac")}
+        description={l10n("local.each_tone_pairs_a_unique_icon_and_tone_label_e23307ca")}
         accentClassName="bg-[linear-gradient(180deg,rgba(245,158,11,0.05),transparent_28%),var(--background)]"
       >
         <div className="space-y-5">
@@ -224,51 +216,51 @@ export function SystemNoticeUxLab() {
       <LabSection
         id="hierarchy"
         eyebrow="Hierarchy in thread"
-        title="Distinct from user and agent comments"
-        description="Side-by-side with adjacent comment types so reviewers can confirm the system row reads as a system row — full width, no avatar gutter, no chat bubble — while user and agent comments keep their existing rounded bubbles."
+        title={l10n("local.distinct_from_user_and_agent_comments_0b63fb91")}
+        description={l10n("local.side_by_side_with_adjacent_comment_types_so_r_3522305c")}
         accentClassName="bg-[linear-gradient(180deg,rgba(8,145,178,0.05),transparent_28%),var(--background)]"
       >
         <div className="space-y-4 rounded-2xl border border-border/70 bg-background/70 p-4">
           <MockUserBubble
             authorName="Riley Board"
-            body="Why does this issue keep waking back up without a clear next step?"
+            body={l10n("local.why_does_this_issue_keep_waking_back_up_witho_7b9f1835")}
             alignEnd
           />
           <MockAgentBubble
             agentName="CodexCoder"
-            body="The previous run completed without picking a disposition. I'll wait for the new system notice to surface so the recovery owner is unambiguous."
+            body={l10n("local.the_previous_run_completed_without_picking_a_2707e23a")}
           />
           <SystemNotice
             tone="danger"
-            label="System alert"
+            label={l10n("local.system_alert_2b1c663e")}
             source={{ label: "Paperclip", href: "/PAP/agents" }}
             timestamp="2026-05-04T16:48:00.000Z"
-            body="Paperclip could not resolve this issue's missing disposition automatically. The source assignment is unchanged and a board decision is required."
+            body={l10n("local.paperclip_could_not_resolve_this_issue_s_miss_c1bc4a74")}
             metadata={[
               {
-                title: "Recovery owner",
+                title: l10n("local.recovery_owner_27c6c04c"),
                 rows: [
                   {
                     kind: "issue",
-                    label: "Recovery issue",
+                    label: l10n("local.recovery_issue_52e39343"),
                     identifier: "PAP-3440",
                     href: "/PAP/issues/PAP-3440",
-                    title: "Successful run handoff missing disposition",
+                    title: l10n("local.successful_run_handoff_missing_disposition_4531b97c"),
                   },
                   {
                     kind: "agent",
-                    label: "Owner",
+                    label: l10n("local.owner_4b1b8aa3"),
                     name: "CTO",
                     href: "/PAP/agents/cto",
                   },
                 ],
               },
               {
-                title: "Run evidence",
+                title: l10n("local.run_evidence_96767cbe"),
                 rows: [
                   {
                     kind: "run",
-                    label: "Source run",
+                    label: l10n("local.source_run_bb84312e"),
                     runId: "9cdba892-c7ca-4d93-8604-4843873b127c",
                     href: "/PAP/agents/codexcoder/runs/9cdba892-c7ca-4d93-8604-4843873b127c",
                     status: "succeeded",
@@ -279,7 +271,7 @@ export function SystemNoticeUxLab() {
           />
           <MockUserBubble
             authorName="Riley Board"
-            body="Thanks — assigning the recovery owner now."
+            body={l10n("local.thanks_assigning_the_recovery_owner_now_44705c73")}
             alignEnd
           />
         </div>
@@ -288,8 +280,8 @@ export function SystemNoticeUxLab() {
       <div className="grid gap-5 xl:grid-cols-2">
         <LabSection
           eyebrow="Before"
-          title="Today's nested treatment"
-          description="The same content rendered through the existing user-bubble + warning-callout path. Two containers, same gray background as user comments, and the warning icon is forced inside a chat row."
+          title={l10n("local.today_s_nested_treatment_bc7b7e9b")}
+          description={l10n("local.the_same_content_rendered_through_the_existin_16e2fcb5")}
           accentClassName="bg-[linear-gradient(180deg,rgba(244,63,94,0.05),transparent_28%),var(--background)]"
         >
           <div className="space-y-3 rounded-2xl border border-border/70 bg-background/70 p-4">
@@ -298,21 +290,21 @@ export function SystemNoticeUxLab() {
                 <AvatarFallback>YO</AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 max-w-(--pct-85) flex-col">
-                <div className="mb-1 px-1 text-sm font-medium text-foreground">You</div>
+                <div className="mb-1 px-1 text-sm font-medium text-foreground">{l10n("local.you_08b04193")}</div>
                 <div className="min-w-0 max-w-full rounded-2xl bg-muted px-4 py-2.5 text-sm leading-6 text-foreground">
                   <div className="rounded-md border border-red-500/35 bg-red-500/10 px-3 py-2.5 text-sm text-red-950 dark:text-red-100">
                     <div className="flex items-start gap-2">
                       <Sparkles className="mt-1 h-4 w-4 shrink-0 text-red-600 dark:text-red-300" />
                       <div className="min-w-0">
-                        <p className="m-0 font-semibold">Successful run handoff missing</p>
+                        <p className="m-0 font-semibold">{l10n("local.successful_run_handoff_missing_95f02cf4")}</p>
                         <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-(length:--text-compact) leading-5">
-                          <li>Source issue: PAP-3440</li>
-                          <li>Source run: 9cdba892-c7ca-4d93-8604-4843873b127c</li>
-                          <li>Recovery run: 61fdb79b-8012-4676-ac71-2971830e126a</li>
-                          <li>Status before: in_progress</li>
-                          <li>Normalized cause: Run completed without disposition</li>
-                          <li>Recovery owner: CTO</li>
-                          <li>Suggested action: Reassign to recovery agent</li>
+                          <li>{l10n("local.source_issue_pap_3440_18be769d")}</li>
+                          <li>{l10n("local.source_run_9cdba892_c7ca_4d93_8604_4843873b12_6df60a08")}</li>
+                          <li>{l10n("local.recovery_run_61fdb79b_8012_4676_ac71_2971830e_76de5a04")}</li>
+                          <li>{l10n("local.status_before_in_progress_1d9d9ecb")}</li>
+                          <li>{l10n("local.normalized_cause_run_completed_without_dispos_a8f9afd5")}</li>
+                          <li>{l10n("local.recovery_owner_cto_4dd4c6bd")}</li>
+                          <li>{l10n("local.suggested_action_reassign_to_recovery_agent_04182b15")}</li>
                         </ul>
                       </div>
                     </div>
@@ -321,27 +313,21 @@ export function SystemNoticeUxLab() {
               </div>
             </div>
             <p className="px-1 text-xs text-muted-foreground">
-              Author reads as <span className="font-medium text-foreground">You</span> even though the
-              author is the Paperclip system. Two containers stack the warning inside a user-style
-              bubble, and operational evidence is always visible.
-            </p>
+              {l10n("local.author_reads_as_d474bd5f")}{" "}<span className="font-medium text-foreground">{l10n("local.you_08b04193")}</span> {l10n("local.even_though_the_author_is_the_paperclip_syste_3376c61a")}</p>
           </div>
         </LabSection>
 
         <LabSection
           eyebrow="After"
-          title="System notice replacement"
-          description="One container, system-authored label, hidden details. The chat surface keeps user and agent bubbles unchanged."
+          title={l10n("local.system_notice_replacement_3eae843c")}
+          description={l10n("local.one_container_system_authored_label_hidden_de_75815629")}
           accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.05),transparent_28%),var(--background)]"
         >
           <div className="space-y-3 rounded-2xl border border-border/70 bg-background/70 p-4">
             <SystemNotice {...dangerCollapsed} />
             <p className="px-1 text-xs text-muted-foreground">
-              Same content. The visible body is one short system sentence; reviewers expand{" "}
-              <span className="font-medium text-foreground">Details</span> only when they need run
-              evidence. Tone is reinforced by the octagon icon and the &quot;System alert&quot; label,
-              not just red.
-            </p>
+              {l10n("local.same_content_the_visible_body_is_one_short_sy_ddd0af11")}{" "}
+              <span className="font-medium text-foreground">{l10n("local.details_45989de4")}</span> {l10n("local.only_when_they_need_run_evidence_tone_is_rein_07ef16c7")}</p>
           </div>
         </LabSection>
       </div>
@@ -350,54 +336,48 @@ export function SystemNoticeUxLab() {
         <CardHeader className="px-5 pt-5 pb-0">
           <div className="flex items-center gap-2 text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
             <Layers className="h-4 w-4 text-amber-700 dark:text-amber-300" />
-            Implementation notes
-          </div>
-          <CardTitle className="text-lg">Handoff to engineering</CardTitle>
+            {l10n("local.implementation_notes_e853f378")}</div>
+          <CardTitle className="text-lg">{l10n("local.handoff_to_engineering_c294c924")}</CardTitle>
           <CardDescription>
-            What the Phase 4 UI implementation should preserve from this design.
-          </CardDescription>
+            {l10n("local.what_the_phase_4_ui_implementation_should_pre_4ae5dc22")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 px-5 pb-5 pt-0 text-sm text-muted-foreground">
           <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
-            <div className="mb-1 font-medium text-foreground">Component</div>
-            Use <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{`<SystemNotice />`}</code>{" "}
-            from <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">@/components/SystemNotice</code>.
-            It accepts <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">tone</code>,{" "}
+            <div className="mb-1 font-medium text-foreground">{l10n("local.component_ce54f0e2")}</div>
+            {l10n("local.use_c36d819e")}{" "}<code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{`<SystemNotice />`}</code>{" "}
+            {l10n("local.from_75857a45")}{" "}<code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">@/components/SystemNotice</code>{l10n("local._it_accepts_de713eb6")}{" "}<code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">tone</code>,{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">label</code>,{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">body</code>,{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">metadata</code>, and{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">metadata</code>{l10n("local._and_4aa9bfd2")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">detailsDefaultOpen</code>.
           </div>
           <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
-            <div className="mb-1 font-medium text-foreground">Routing in IssueChatThread</div>
-            Comments where{" "}
+            <div className="mb-1 font-medium text-foreground">{l10n("local.routing_in_issuechatthread_cce80338")}</div>
+            {l10n("local.comments_where_c6f7060a")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">authorType === &quot;system&quot;</code>{" "}
-            or{" "}
+            {l10n("local.or_7175517a")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">presentation.kind === &quot;system_notice&quot;</code>{" "}
-            should render as a SystemNotice row at full content width — never inside an{" "}
+            {l10n("local.should_render_as_a_systemnotice_row_at_full_c_d020b704")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">IssueChatUserMessage</code>{" "}
-            or assistant bubble.
-          </div>
+            {l10n("local.or_assistant_bubble_a1f0d247")}</div>
           <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
-            <div className="mb-1 font-medium text-foreground">Accessibility</div>
-            The Details button has{" "}
+            <div className="mb-1 font-medium text-foreground">{l10n("local.accessibility_d3368cbf")}</div>
+            {l10n("local.the_details_button_has_b7da1fb4")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">aria-expanded</code>{" "}
-            and{" "}
+            {l10n("local.and_6201111b")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">aria-controls</code>{" "}
-            wired to the panel id. The container exposes{" "}
+            {l10n("local.wired_to_the_panel_id_the_container_exposes_8d91d24b")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">role=&quot;status&quot;</code>{" "}
-            and an{" "}
+            {l10n("local.and_an_a62ccb1e")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">aria-label</code>{" "}
-            equal to the visible tone label so screen readers announce tone with text.
-          </div>
+            {l10n("local.equal_to_the_visible_tone_label_so_screen_rea_9bc1cb22")}</div>
           <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
-            <div className="mb-1 font-medium text-foreground">Legacy fallback</div>
-            Existing comments without{" "}
+            <div className="mb-1 font-medium text-foreground">{l10n("local.legacy_fallback_51f2b6ea")}</div>
+            {l10n("local.existing_comments_without_a2191655")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">presentation</code>{" "}
-            keep rendering through the current{" "}
+            {l10n("local.keep_rendering_through_the_current_13e32906")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">SuccessfulRunHandoffCommentCallout</code>{" "}
-            string-detector. The new contract is opt-in for the system generators in Phase 5.
-          </div>
+            {l10n("local.string_detector_the_new_contract_is_opt_in_fo_460d0fc9")}</div>
         </CardContent>
       </Card>
     </div>

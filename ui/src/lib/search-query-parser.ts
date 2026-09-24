@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   COMPANY_SEARCH_UPDATED_WITHIN_OPTIONS,
   ISSUE_PRIORITIES,
@@ -40,13 +41,13 @@ export interface SearchOperatorSuggestion {
 export const SEARCH_OPERATOR_QUICK_FILTERS = ["assignee:me", "is:open", "updated:>7d"] as const;
 
 export const SEARCH_OPERATOR_SUGGESTIONS: SearchOperatorSuggestion[] = [
-  { token: "status:todo", label: "Open todo tasks", description: "Filter by task status" },
-  { token: "status:blocked", label: "Blocked tasks", description: "Find blocked work" },
-  { token: "assignee:me", label: "Assigned to me", description: "Use your current board user" },
-  { token: "project:\"Paperclip App\"", label: "Project name", description: "Quote multi-word project names" },
-  { token: "label:bug", label: "Label", description: "Filter by issue label" },
-  { token: "priority:high", label: "High priority", description: "Filter by priority" },
-  { token: "updated:>7d", label: "Recently updated", description: "Updated in the last 7 days" },
+  { token: "status:todo", label: l10n("local.open_todo_tasks_b26fc880"), description: l10n("local.filter_by_task_status_979aaadd") },
+  { token: "status:blocked", label: l10n("local.blocked_tasks_fb016622"), description: l10n("local.find_blocked_work_3118bf05") },
+  { token: "assignee:me", label: l10n("local.assigned_to_me_82adb506"), description: l10n("local.use_your_current_board_user_65756130") },
+  { token: "project:\"Paperclip App\"", label: l10n("local.project_name_25498193"), description: l10n("local.quote_multi_word_project_names_cac260f3") },
+  { token: "label:bug", label: l10n("local.label_0e66373f"), description: l10n("local.filter_by_issue_label_649f2d50") },
+  { token: "priority:high", label: l10n("local.high_priority_b699a8c8"), description: l10n("local.filter_by_priority_48b74b8f") },
+  { token: "updated:>7d", label: l10n("local.recently_updated_474b2a86"), description: l10n("local.updated_in_the_last_7_days_a8503d73") },
 ];
 
 export interface SearchQueryParserContext {

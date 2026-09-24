@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useQuery } from "@tanstack/react-query";
 import { FolderGit2, GitFork } from "lucide-react";
 import type { CompanySkillDetail } from "@paperclipai/shared";
@@ -31,17 +32,17 @@ export function SkillLineageChip({
   if (!forkedFromSkillId) return null;
 
   const original = originalQuery.data;
-  const label = original ? formatLineageLabel(original) : "the original skill";
+  const label = original ? formatLineageLabel(original) : l10n("local.the_original_skill_e217e7a4");
 
   return (
     <Link
       to={skillStudioRoute(forkedFromSkillId)}
       className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      title={`Forked from ${label}`}
+      title={l10n("local.forked_from_value_1c813013", {v0: (label)})}
     >
       <GitFork className="h-3 w-3 shrink-0" />
       <span className="truncate">
-        Forked from <span className="font-medium text-foreground">{label}</span>
+        {l10n("local.forked_from_7ff4e6c3")}{" "}<span className="font-medium text-foreground">{label}</span>
       </span>
     </Link>
   );
@@ -67,9 +68,7 @@ export function ProjectScanNotice({
       <FolderGit2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
         <span>
-          This skill lives in <span className="font-mono text-foreground">{location}</span>.
-          Saves write to the project working tree and are not committed.
-        </span>{" "}
+          {l10n("local.this_skill_lives_in_b5a0b6b2")}{" "}<span className="font-mono text-foreground">{location}</span>{l10n("local._saves_write_to_the_project_working_tree_and_149814df")}</span>{" "}
         <Button
           type="button"
           variant="link"
@@ -77,8 +76,7 @@ export function ProjectScanNotice({
           className="h-auto p-0 text-xs"
           onClick={onEditACopy}
         >
-          Edit a copy instead
-        </Button>
+          {l10n("local.edit_a_copy_instead_533010cf")}</Button>
       </div>
     </div>
   );

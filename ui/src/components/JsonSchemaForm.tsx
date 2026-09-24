@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown,
@@ -528,12 +529,12 @@ const EnumField = React.memo(({
         disabled={disabled}
       >
         <SelectTrigger className="w-full" aria-label={label} aria-required={isRequired}>
-          <SelectValue placeholder="Select an option" />
+          <SelectValue placeholder={l10n("local.select_an_option_fb1cbc38")} />
         </SelectTrigger>
         <SelectContent>
           {showUnsetOption && (
             <SelectItem value={ENUM_UNSET_VALUE} textValue="None">
-              <span className="text-muted-foreground">None</span>
+              <span className="text-muted-foreground">{l10n("local.none_dc937b59")}</span>
             </SelectItem>
           )}
           {options.map((option) => (
@@ -666,7 +667,7 @@ const SecretField = React.memo(({
           <Eye className="h-4 w-4 text-muted-foreground" />
         )}
         <span className="sr-only">
-          {isVisible ? "Hide secret" : "Show secret"}
+          {isVisible ? l10n("local.hide_secret_3e674e08") : l10n("local.show_secret_c18cc133")}
         </span>
       </Button>
     </div>
@@ -697,7 +698,7 @@ const SecretField = React.memo(({
           <Eye className="h-4 w-4 text-muted-foreground" />
         )}
         <span className="sr-only">
-          {isVisible ? "Hide secret" : "Show secret"}
+          {isVisible ? l10n("local.hide_secret_3e674e08") : l10n("local.show_secret_c18cc133")}
         </span>
       </Button>
     </div>
@@ -708,7 +709,7 @@ const SecretField = React.memo(({
       label={label}
       description={
         description ||
-        "Pick an existing organization secret, or paste a raw value (Paperclip will store it as a secret on save)."
+        l10n("local.pick_an_existing_organization_secret_or_paste_2f7b8c63")
       }
       required={isRequired}
       error={error}
@@ -719,9 +720,9 @@ const SecretField = React.memo(({
           value={bindingValue}
           onChange={handlePickerChange}
           label=""
-          placeholder="Select an existing secret"
+          placeholder={l10n("local.select_an_existing_secret_485e4866")}
           allowVersionSelector={false}
-          emptyHint="No active secrets yet. Create one or paste a raw value below."
+          emptyHint={l10n("local.no_active_secrets_yet_create_one_or_paste_a_r_196de58c")}
           disabled={disabled}
         />
         {!isBoundToSecret ? (
@@ -738,8 +739,7 @@ const SecretField = React.memo(({
                   }}
                   disabled={disabled}
                 >
-                  Hide raw value input
-                </button>
+                  {l10n("local.hide_raw_value_input_7886a2cd")}</button>
               ) : null}
             </div>
           ) : (
@@ -749,8 +749,7 @@ const SecretField = React.memo(({
               onClick={() => setShowRawInput(true)}
               disabled={disabled}
             >
-              Or paste a raw value
-            </button>
+              {l10n("local.or_paste_a_raw_value_e04884c8")}</button>
           )
         ) : null}
       </div>
@@ -950,7 +949,7 @@ const ArrayField = React.memo(({
           }}
         >
           <Plus className="mr-2 h-4 w-4" />
-          {isComplex ? "Add item" : "Add"}
+          {isComplex ? l10n("local.add_item_d1a0b329") : l10n("local.add_9fd728c6")}
         </Button>
       </div>
 
@@ -962,7 +961,7 @@ const ArrayField = React.memo(({
           >
             <div className="flex-1">
               <div className="mb-2 text-xs font-medium text-muted-foreground">
-                Item {index + 1}
+                {l10n("local.item_652bcc3a")}{" "}{index + 1}
               </div>
               <FormField
                 propSchema={itemSchema}
@@ -995,14 +994,13 @@ const ArrayField = React.memo(({
               }}
             >
               <Trash2 className="h-4 w-4" />
-              <span className="sr-only">Remove item</span>
+              <span className="sr-only">{l10n("local.remove_item_5a89edf2")}</span>
             </Button>
           </div>
         ))}
         {items.length === 0 && (
           <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
-            No items added yet.
-          </div>
+            {l10n("local.no_items_added_yet_48dcdce6")}</div>
         )}
       </div>
       {error && (
@@ -1036,8 +1034,8 @@ function JsonObjectField({ value, onChange, disabled, label, error }: {
     onChange(next);
   };
   return <div className="space-y-2">
-    <Textarea aria-label={`${label} JSON`} aria-invalid={!!error} value={text} onChange={(event) => change(event.target.value)} disabled={disabled} rows={5} className="font-mono text-sm" />
-    <p className="text-xs text-muted-foreground">Enter a JSON object using the action's argument names.</p>
+    <Textarea aria-label={l10n("local.value_json_e5bf2b79", {v0: (label)})} aria-invalid={!!error} value={text} onChange={(event) => change(event.target.value)} disabled={disabled} rows={5} className="font-mono text-sm" />
+    <p className="text-xs text-muted-foreground">{l10n("local.enter_a_json_object_using_the_action_s_argume_ab7f07a9")}</p>
     {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
   </div>;
 }
@@ -1364,8 +1362,7 @@ export function JsonSchemaForm({
           className,
         )}
       >
-        No configuration options available.
-      </div>
+        {l10n("local.no_configuration_options_available_7027931a")}</div>
     );
   }
 

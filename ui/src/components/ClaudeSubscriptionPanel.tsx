@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { QuotaWindow } from "@paperclipai/shared";
 import { cn, quotaSourceDisplayName } from "@/lib/utils";
 
@@ -63,11 +64,9 @@ export function ClaudeSubscriptionPanel({
       <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
         <div className="min-w-0">
           <div className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-            Anthropic subscription
-          </div>
+            {l10n("local.anthropic_subscription_62da3e89")}</div>
           <div className="mt-1 text-sm text-muted-foreground">
-            Live Claude quota windows.
-          </div>
+            {l10n("local.live_claude_quota_windows_16a01c6b")}</div>
         </div>
         {source ? (
           <span className="shrink-0 border border-border px-2.5 py-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
@@ -120,8 +119,7 @@ export function ClaudeSubscriptionPanel({
                 </div>
                 {window.usedPercent != null ? (
                   <div className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
-                    {window.usedPercent}% used
-                  </div>
+                    {window.usedPercent}{l10n("local._used_19e8fbbc")}</div>
                 ) : null}
               </div>
 

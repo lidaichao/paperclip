@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, History, RotateCcw } from "lucide-react";
@@ -56,15 +57,15 @@ export function PipelineStageHistoryPanel({
       ]);
       onRestored(result.revision.body, result.revision.id);
       pushToast({
-        title: `Restored revision ${result.restoredFromRevisionNumber}`,
-        body: `Saved as revision ${result.revision.revisionNumber}.`,
+        title: l10n("local.restored_revision_value_2098b8ba", {v0: (result.restoredFromRevisionNumber)}),
+        body: l10n("local.saved_as_revision_value_e7f01c2f", {v0: (result.revision.revisionNumber)}),
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to restore revision",
-        body: error instanceof Error ? error.message : "Paperclip could not restore the revision.",
+        title: l10n("local.failed_to_restore_revision_2dcf4f54"),
+        body: error instanceof Error ? error.message : l10n("local.paperclip_could_not_restore_the_revision_a4aa014d"),
         tone: "error",
       });
     },
@@ -78,8 +79,8 @@ export function PipelineStageHistoryPanel({
         <div className="flex items-center gap-2">
           <History className="h-4 w-4 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">History</p>
-            <p className="text-xs text-muted-foreground">Past versions of these instructions.</p>
+            <p className="text-sm font-medium">{l10n("local.history_0e769600")}</p>
+            <p className="text-xs text-muted-foreground">{l10n("local.past_versions_of_these_instructions_9661a8c4")}</p>
           </div>
         </div>
         {open ? (
@@ -91,16 +92,15 @@ export function PipelineStageHistoryPanel({
       <CollapsibleContent className="border-t border-border/70">
         {!hasDocument ? (
           <p className="px-4 py-3 text-xs text-muted-foreground">
-            No history yet. Save the instructions to create the first revision.
-          </p>
+            {l10n("local.no_history_yet_save_the_instructions_to_creat_a948c526")}</p>
         ) : revisionsQuery.isLoading ? (
-          <p className="px-4 py-3 text-xs text-muted-foreground">Loading revisions…</p>
+          <p className="px-4 py-3 text-xs text-muted-foreground">{l10n("local.loading_revisions_c5c85196")}</p>
         ) : revisionsQuery.error ? (
           <p className="px-4 py-3 text-xs text-destructive">
-            {revisionsQuery.error instanceof Error ? revisionsQuery.error.message : "Could not load revisions."}
+            {revisionsQuery.error instanceof Error ? revisionsQuery.error.message : l10n("local.could_not_load_revisions_95456453")}
           </p>
         ) : revisions.length === 0 ? (
-          <p className="px-4 py-3 text-xs text-muted-foreground">No revisions recorded yet.</p>
+          <p className="px-4 py-3 text-xs text-muted-foreground">{l10n("local.no_revisions_recorded_yet_fbc3c414")}</p>
         ) : (
           <ul className="divide-y divide-border/70">
             {revisions.map((revision) => {
@@ -112,11 +112,10 @@ export function PipelineStageHistoryPanel({
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium">
-                      Revision {revision.revisionNumber}
+                      {l10n("local.revision_2e516d68")}{" "}{revision.revisionNumber}
                       {isCurrent ? (
                         <Badge variant="ghost" className="ml-2 bg-muted text-(length:--text-micro) text-muted-foreground">
-                          Current
-                        </Badge>
+                          {l10n("local.current_e0d1b682")}</Badge>
                       ) : null}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -133,8 +132,7 @@ export function PipelineStageHistoryPanel({
                       onClick={() => restore.mutate(revision.id)}
                     >
                       <RotateCcw className="h-3.5 w-3.5" />
-                      Restore
-                    </Button>
+                      {l10n("local.restore_a76e13b9")}</Button>
                   )}
                 </li>
               );

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "../lib/utils";
 
@@ -173,7 +174,7 @@ export function CompanyPatternIcon({
       {logo ? (
         <img
           src={logo}
-          alt={`${companyName} logo`}
+          alt={l10n("local.value_logo_78e75433", {v0: (companyName)})}
           onError={() => setImageError(true)}
           className={cn(
             "absolute inset-0 h-full w-full",

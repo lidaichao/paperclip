@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -123,34 +124,33 @@ function FinanceSummaryCard({
   return (
     <Card>
       <CardHeader className="px-5 pt-5 pb-2">
-        <CardTitle className="text-base">Finance ledger</CardTitle>
+        <CardTitle className="text-base">{l10n("local.finance_ledger_46bfab69")}</CardTitle>
         <CardDescription>
-          Account-level charges that do not map to a single inference request.
-        </CardDescription>
+          {l10n("local.account_level_charges_that_do_not_map_to_a_si_8ccd7735")}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 px-5 pb-5 pt-2 sm:grid-cols-2 xl:grid-cols-4">
         <MetricTile
-          label="Debits"
+          label={l10n("local.debits_a32f3e16")}
           value={formatCents(debitCents)}
-          subtitle={`${eventCount} total event${eventCount === 1 ? "" : "s"} in range`}
+          subtitle={l10n("local.value_total_eventvalue_in_range_4adfbd98", {v0: (eventCount), v1: (englishPluralSuffix(eventCount === 1 ? "" : "s"))})}
           icon={ArrowUpRight}
         />
         <MetricTile
-          label="Credits"
+          label={l10n("local.credits_2a6b24ad")}
           value={formatCents(creditCents)}
-          subtitle="Refunds, offsets, and credit returns"
+          subtitle={l10n("local.refunds_offsets_and_credit_returns_1183445a")}
           icon={ArrowDownLeft}
         />
         <MetricTile
-          label="Net"
+          label={l10n("local.net_660fb2c4")}
           value={formatCents(netCents)}
-          subtitle="Debit minus credit for the selected period"
+          subtitle={l10n("local.debit_minus_credit_for_the_selected_period_b2a026ee")}
           icon={ReceiptText}
         />
         <MetricTile
-          label="Estimated"
+          label={l10n("local.estimated_b774599a")}
           value={formatCents(estimatedDebitCents)}
-          subtitle="Estimated debits that are not yet invoice-authoritative"
+          subtitle={l10n("local.estimated_debits_that_are_not_yet_invoice_aut_c26f21d9")}
           icon={Coins}
         />
       </CardContent>
@@ -186,7 +186,7 @@ export function Costs({
   } = useDateRange();
 
   useEffect(() => {
-    if (!embedded) setBreadcrumbs([{ label: "Costs" }]);
+    if (!embedded) setBreadcrumbs([{ label: l10n("local.costs_b88fc5fc") }]);
   }, [embedded, setBreadcrumbs]);
 
   useEffect(() => {
@@ -486,7 +486,7 @@ export function Costs({
         value: "all",
         label: (
           <span className="flex items-center gap-1.5">
-            <span>All providers</span>
+            <span>{l10n("local.all_providers_20e56db7")}</span>
             {providerKeys.length > 0 ? (
               <>
                 <span className="font-mono text-xs text-muted-foreground">{formatTokens(allTokens)}</span>
@@ -518,7 +518,7 @@ export function Costs({
         value: "all",
         label: (
           <span className="flex items-center gap-1.5">
-            <span>All billers</span>
+            <span>{l10n("local.all_billers_b11f7995")}</span>
             {billerKeys.length > 0 ? (
               <>
                 <span className="font-mono text-xs text-muted-foreground">{formatTokens(allTokens)}</span>
@@ -564,13 +564,12 @@ export function Costs({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               {embedded ? (
-                <h2 className="text-lg font-semibold text-foreground">Costs</h2>
+                <h2 className="text-lg font-semibold text-foreground">{l10n("local.costs_b88fc5fc")}</h2>
               ) : (
-                <h1 className="text-3xl font-semibold tracking-tight">Costs</h1>
+                <h1 className="text-3xl font-semibold tracking-tight">{l10n("local.costs_b88fc5fc")}</h1>
               )}
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                Inference spend, platform fees, credits, and live quota windows.
-              </p>
+                {l10n("local.inference_spend_platform_fees_credits_and_liv_4141e6f6")}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -596,7 +595,7 @@ export function Costs({
                 onChange={(event) => setCustomFrom(event.target.value)}
                 className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
               />
-              <span className="text-sm text-muted-foreground">to</span>
+              <span className="text-sm text-muted-foreground">{l10n("local.to_663ea1bf")}</span>
               <input
                 type="date"
                 value={customTo}
@@ -608,37 +607,37 @@ export function Costs({
 
           <div className="grid gap-3 lg:grid-cols-4">
             <MetricTile
-              label="Inference spend"
+              label={l10n("local.inference_spend_e24719c4")}
               value={formatCents(spendData?.summary.spendCents ?? 0)}
-              subtitle={`${formatTokens(inferenceTokenTotal)} tokens across request-scoped events`}
+              subtitle={l10n("local.value_tokens_across_request_scoped_events_181520f9", {v0: (formatTokens(inferenceTokenTotal))})}
               icon={DollarSign}
             />
             <MetricTile
-              label="Budget"
+              label={l10n("local.budget_1c6225ec")}
               value={activeBudgetIncidents.length > 0 ? String(activeBudgetIncidents.length) : (
                 spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
                   ? `${spendData.summary.utilizationPercent}%`
-                  : "Open"
+                  : l10n("local.manual_budget_open")
               )}
               subtitle={
                 activeBudgetIncidents.length > 0
-                  ? `${budgetData?.pausedAgentCount ?? 0} agents paused · ${budgetData?.pausedProjectCount ?? 0} projects paused`
+                  ? l10n("local.value_agents_paused_value_projects_paused_0fd30417", {v0: (budgetData?.pausedAgentCount ?? 0), v1: (budgetData?.pausedProjectCount ?? 0)})
                   : spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
-                    ? `${formatCents(spendData.summary.spendCents)} of ${formatCents(spendData.summary.budgetCents)}`
-                    : "No monthly cap configured"
+                    ? l10n("local.value_of_value_64f93023", {v0: (formatCents(spendData.summary.spendCents)), v1: (formatCents(spendData.summary.budgetCents))})
+                    : l10n("local.no_monthly_cap_configured_0f009e79")
               }
               icon={Coins}
             />
             <MetricTile
-              label="Finance net"
+              label={l10n("local.finance_net_b6985edc")}
               value={formatCents(financeData?.summary.netCents ?? 0)}
-              subtitle={`${formatCents(financeData?.summary.debitCents ?? 0)} debits · ${formatCents(financeData?.summary.creditCents ?? 0)} credits`}
+              subtitle={l10n("local.value_debits_value_credits_de5f52d5", {v0: (formatCents(financeData?.summary.debitCents ?? 0)), v1: (formatCents(financeData?.summary.creditCents ?? 0))})}
               icon={ReceiptText}
             />
             <MetricTile
-              label="Finance events"
+              label={l10n("local.finance_events_6fbed76e")}
               value={String(financeData?.summary.eventCount ?? 0)}
-              subtitle={`${formatCents(financeData?.summary.estimatedDebitCents ?? 0)} estimated in range`}
+              subtitle={l10n("local.value_estimated_in_range_f269129b", {v0: (formatCents(financeData?.summary.estimatedDebitCents ?? 0))})}
               icon={ArrowUpRight}
             />
           </div>
@@ -648,17 +647,17 @@ export function Costs({
       <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as typeof mainTab)}>
         {!lockTab ? (
           <TabsList variant="line" className="justify-start">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            {!hideBudgetsTab ? <TabsTrigger value="budgets">Budgets</TabsTrigger> : null}
-            <TabsTrigger value="providers">Providers</TabsTrigger>
-            <TabsTrigger value="billers">Billers</TabsTrigger>
-            <TabsTrigger value="finance">Finance</TabsTrigger>
+            <TabsTrigger value="overview">{l10n("local.overview_d4b1ea57")}</TabsTrigger>
+            {!hideBudgetsTab ? <TabsTrigger value="budgets">{l10n("local.budgets_a1a06e04")}</TabsTrigger> : null}
+            <TabsTrigger value="providers">{l10n("local.providers_996c32b3")}</TabsTrigger>
+            <TabsTrigger value="billers">{l10n("local.billers_2ae0e2cd")}</TabsTrigger>
+            <TabsTrigger value="finance">{l10n("local.finance_b696d755")}</TabsTrigger>
           </TabsList>
         ) : null}
 
         <TabsContent value="overview" className="mt-4 space-y-4">
           {showCustomPrompt ? (
-            <p className="text-sm text-muted-foreground">Select a start and end date to load data.</p>
+            <p className="text-sm text-muted-foreground">{l10n("local.select_a_start_and_end_date_to_load_data_1288f512")}</p>
           ) : showOverviewLoading ? (
             <PageSkeleton variant="costs" />
           ) : overviewError ? (
@@ -687,10 +686,9 @@ export function Costs({
               <div className="grid gap-4 xl:grid-cols-(--gtc-31)">
                 <Card>
                   <CardHeader className="px-5 pt-5 pb-2">
-                    <CardTitle className="text-base">Inference ledger</CardTitle>
+                    <CardTitle className="text-base">{l10n("local.inference_ledger_41faba7c")}</CardTitle>
                     <CardDescription>
-                      Request-scoped inference spend for the selected period.
-                    </CardDescription>
+                      {l10n("local.request_scoped_inference_spend_for_the_select_5162c1fe")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 px-5 pb-5 pt-2">
                     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -700,12 +698,12 @@ export function Costs({
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground">
                           {spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
-                            ? `Budget ${formatCents(spendData.summary.budgetCents)}`
-                            : "Unlimited budget"}
+                            ? l10n("local.budget_value_b0ecf421", {v0: (formatCents(spendData.summary.budgetCents))})
+                            : l10n("local.unlimited_budget_3c771994")}
                         </div>
                       </div>
                       <div className="border border-border px-4 py-3 text-right">
-                        <div className="text-(length:--text-micro) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">usage</div>
+                        <div className="text-(length:--text-micro) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{l10n("local.usage_0a4e4c29")}</div>
                         <div className="mt-1 text-lg font-medium tabular-nums">
                           {formatTokens(inferenceTokenTotal)}
                         </div>
@@ -727,8 +725,7 @@ export function Costs({
                           />
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {spendData.summary.utilizationPercent}% of monthly budget consumed in this range.
-                        </div>
+                          {spendData.summary.utilizationPercent}{l10n("local._of_monthly_budget_consumed_in_this_range_d5b064f1")}</div>
                       </div>
                     ) : null}
                   </CardContent>
@@ -746,12 +743,12 @@ export function Costs({
               <div className="grid gap-4 xl:grid-cols-(--gtc-32)">
                 <Card>
                   <CardHeader className="px-5 pt-5 pb-2">
-                    <CardTitle className="text-base">By agent</CardTitle>
-                    <CardDescription>What each agent consumed in the selected period.</CardDescription>
+                    <CardTitle className="text-base">{l10n("local.by_agent_0cb8a702")}</CardTitle>
+                    <CardDescription>{l10n("local.what_each_agent_consumed_in_the_selected_peri_bea79d51")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2 px-5 pb-5 pt-2">
                     {(spendData?.byAgent.length ?? 0) === 0 ? (
-                      <p className="text-sm text-muted-foreground">No cost events yet.</p>
+                      <p className="text-sm text-muted-foreground">{l10n("local.no_cost_events_yet_219b9c37")}</p>
                     ) : (
                       spendData?.byAgent.map((row) => {
                         const modelRows = agentModelRows.get(row.agentId) ?? [];
@@ -777,15 +774,15 @@ export function Costs({
                               <div className="text-right text-sm tabular-nums">
                                 <div className="font-medium">{formatCents(row.costCents)}</div>
                                 <div className="text-xs text-muted-foreground">
-                                  in {formatTokens(row.inputTokens + row.cachedInputTokens)} · out {formatTokens(row.outputTokens)}
+                                  {l10n("local.manual_tokens_in")}{" "}{formatTokens(row.inputTokens + row.cachedInputTokens)} {l10n("local.manual_tokens_out")}{" "}{formatTokens(row.outputTokens)}
                                 </div>
                                 {(row.apiRunCount > 0 || row.subscriptionRunCount > 0) ? (
                                   <div className="text-xs text-muted-foreground">
-                                    {row.apiRunCount > 0 ? `${row.apiRunCount} api` : "0 api"}
+                                    {row.apiRunCount > 0 ? l10n("local.value_api_6d4102bf", {v0: (row.apiRunCount)}) : l10n("local.0_api_db4f52e4")}
                                     {" · "}
                                     {row.subscriptionRunCount > 0
-                                      ? `${row.subscriptionRunCount} subscription`
-                                      : "0 subscription"}
+                                      ? l10n("local.value_subscription_2ce00143", {v0: (row.subscriptionRunCount)})
+                                      : l10n("local.0_subscription_96f6025d")}
                                   </div>
                                 ) : null}
                               </div>
@@ -816,8 +813,7 @@ export function Costs({
                                           <span className="ml-1 font-normal text-muted-foreground">({sharePct}%)</span>
                                         </div>
                                         <div className="text-muted-foreground">
-                                          {formatTokens(modelRow.inputTokens + modelRow.cachedInputTokens + modelRow.outputTokens)} tok
-                                        </div>
+                                          {formatTokens(modelRow.inputTokens + modelRow.cachedInputTokens + modelRow.outputTokens)} {l10n("local.tok_1a7674eb")}</div>
                                       </div>
                                     </div>
                                   );
@@ -834,19 +830,19 @@ export function Costs({
                 <div className="space-y-4">
                   <Card>
                     <CardHeader className="px-5 pt-5 pb-2">
-                      <CardTitle className="text-base">By project</CardTitle>
-                      <CardDescription>Run costs attributed through project-linked tasks.</CardDescription>
+                      <CardTitle className="text-base">{l10n("local.by_project_9335958e")}</CardTitle>
+                      <CardDescription>{l10n("local.run_costs_attributed_through_project_linked_t_73072083")}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2 px-5 pb-5 pt-2">
                       {(spendData?.byProject.length ?? 0) === 0 ? (
-                        <p className="text-sm text-muted-foreground">No project-attributed run costs yet.</p>
+                        <p className="text-sm text-muted-foreground">{l10n("local.no_project_attributed_run_costs_yet_856de837")}</p>
                       ) : (
                         spendData?.byProject.map((row, index) => (
                           <div
                             key={row.projectId ?? `unattributed-${index}`}
                             className="flex items-center justify-between gap-3 border border-border px-3 py-2 text-sm"
                           >
-                            <span className="truncate">{row.projectName ?? row.projectId ?? "Unattributed"}</span>
+                            <span className="truncate">{row.projectName ?? row.projectId ?? l10n("local.unattributed_a5c4e03c")}</span>
                             <span className="font-medium tabular-nums">{formatCents(row.costCents)}</span>
                           </div>
                         ))
@@ -854,7 +850,7 @@ export function Costs({
                     </CardContent>
                   </Card>
 
-                  <FinanceTimelineCard rows={topFinanceEvents.slice(0, 6)} emptyMessage="No finance events yet. Add account-level charges once biller invoices or credits land." />
+                  <FinanceTimelineCard rows={topFinanceEvents.slice(0, 6)} emptyMessage={l10n("local.no_finance_events_yet_add_account_level_charg_f10b41da")} />
                 </div>
               </div>
             </>
@@ -870,34 +866,33 @@ export function Costs({
             <>
               <Card className="border-border/70 bg-(image:--gradient-extract-2)">
                 <CardHeader className="px-5 pt-5 pb-3">
-                  <CardTitle className="text-base">Budget control plane</CardTitle>
+                  <CardTitle className="text-base">{l10n("local.budget_control_plane_24583d5b")}</CardTitle>
                   <CardDescription>
-                    Hard-stop spend limits for agents and projects. Provider subscription quota stays separate and appears under Providers.
-                  </CardDescription>
+                    {l10n("local.hard_stop_spend_limits_for_agents_and_project_666a3a61")}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 px-5 pb-5 pt-0 md:grid-cols-4">
                   <MetricTile
-                    label="Active incidents"
+                    label={l10n("local.active_incidents_0d5b14c4")}
                     value={String(activeBudgetIncidents.length)}
-                    subtitle="Open soft or hard threshold crossings"
+                    subtitle={l10n("local.open_soft_or_hard_threshold_crossings_41ab14a5")}
                     icon={ReceiptText}
                   />
                   <MetricTile
-                    label="Pending approvals"
+                    label={l10n("local.pending_approvals_0405f4b6")}
                     value={String(budgetData?.pendingApprovalCount ?? 0)}
-                    subtitle="Budget override approvals awaiting board action"
+                    subtitle={l10n("local.budget_override_approvals_awaiting_board_acti_1792320c")}
                     icon={ArrowUpRight}
                   />
                   <MetricTile
-                    label="Paused agents"
+                    label={l10n("local.paused_agents_751e5a23")}
                     value={String(budgetData?.pausedAgentCount ?? 0)}
-                    subtitle="Agent heartbeats blocked by budget"
+                    subtitle={l10n("local.agent_heartbeats_blocked_by_budget_49bd0807")}
                     icon={Coins}
                   />
                   <MetricTile
-                    label="Paused projects"
+                    label={l10n("local.paused_projects_5be643e6")}
                     value={String(budgetData?.pausedProjectCount ?? 0)}
-                    subtitle="Project execution blocked by budget"
+                    subtitle={l10n("local.project_execution_blocked_by_budget_0628458b")}
                     icon={DollarSign}
                   />
                 </CardContent>
@@ -906,10 +901,9 @@ export function Costs({
               {activeBudgetIncidents.length > 0 ? (
                 <div className="space-y-3">
                   <div>
-                    <h2 className="text-lg font-semibold">Active incidents</h2>
+                    <h2 className="text-lg font-semibold">{l10n("local.active_incidents_0d5b14c4")}</h2>
                     <p className="text-sm text-muted-foreground">
-                      Resolve hard stops here by raising the budget or explicitly keeping the scope paused.
-                    </p>
+                      {l10n("local.resolve_hard_stops_here_by_raising_the_budget_6913c66b")}</p>
                   </div>
                   <div className="grid gap-4 xl:grid-cols-2">
                     {activeBudgetIncidents.map((incident) => (
@@ -937,13 +931,13 @@ export function Costs({
                   return (
                     <section key={scopeType} className="space-y-3">
                       <div>
-                        <h2 className="text-lg font-semibold capitalize">{scopeType === "company" ? "organization" : scopeType} budgets</h2>
+                        <h2 className="text-lg font-semibold capitalize">{scopeType === "company" ? l10n("local.organization_af3a1bb3") : scopeType} {l10n("local.budgets_eefa0849")}</h2>
                         <p className="text-sm text-muted-foreground">
                           {scopeType === "company"
-                            ? "Organization-wide monthly policy."
+                            ? l10n("local.organization_wide_monthly_policy_17c42f18")
                             : scopeType === "agent"
-                              ? "Recurring monthly spend policies for individual agents."
-                              : "Lifetime spend policies for execution-bound projects."}
+                              ? l10n("local.recurring_monthly_spend_policies_for_individu_8b1aa602")
+                              : l10n("local.lifetime_spend_policies_for_execution_bound_p_c340e83e")}
                         </p>
                       </div>
                       <div className="grid gap-4 xl:grid-cols-2">
@@ -969,8 +963,7 @@ export function Costs({
                 {budgetPolicies.length === 0 ? (
                   <Card>
                     <CardContent className="px-5 py-8 text-sm text-muted-foreground">
-                      No budget policies yet. Set agent and project budgets from their detail pages, or use the existing organization monthly budget control.
-                    </CardContent>
+                      {l10n("local.no_budget_policies_yet_set_agent_and_project_64167086")}</CardContent>
                   </Card>
                 ) : null}
               </div>
@@ -980,7 +973,7 @@ export function Costs({
 
         <TabsContent value="providers" className="mt-4 space-y-4">
           {showCustomPrompt ? (
-            <p className="text-sm text-muted-foreground">Select a start and end date to load data.</p>
+            <p className="text-sm text-muted-foreground">{l10n("local.select_a_start_and_end_date_to_load_data_1288f512")}</p>
           ) : (
             <>
               <Tabs value={effectiveProvider} onValueChange={setActiveProvider}>
@@ -988,7 +981,7 @@ export function Costs({
 
                 <TabsContent value="all" className="mt-4">
                   {providers.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No cost events in this period.</p>
+                    <p className="text-sm text-muted-foreground">{l10n("local.no_cost_events_in_this_period_5eeb3192")}</p>
                   ) : (
                     <div className="grid gap-4 md:grid-cols-2">
                       {providers.map((provider) => (
@@ -1035,7 +1028,7 @@ export function Costs({
 
         <TabsContent value="billers" className="mt-4 space-y-4">
           {showCustomPrompt ? (
-            <p className="text-sm text-muted-foreground">Select a start and end date to load data.</p>
+            <p className="text-sm text-muted-foreground">{l10n("local.select_a_start_and_end_date_to_load_data_1288f512")}</p>
           ) : (
             <>
               <Tabs value={effectiveBiller} onValueChange={setActiveBiller}>
@@ -1043,7 +1036,7 @@ export function Costs({
 
                 <TabsContent value="all" className="mt-4">
                   {billers.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No billable events in this period.</p>
+                    <p className="text-sm text-muted-foreground">{l10n("local.no_billable_events_in_this_period_408a4cc5")}</p>
                   ) : (
                     <div className="grid gap-4 md:grid-cols-2">
                       {billers.map((biller) => {
@@ -1088,7 +1081,7 @@ export function Costs({
 
         <TabsContent value="finance" className="mt-4 space-y-4">
           {showCustomPrompt ? (
-            <p className="text-sm text-muted-foreground">Select a start and end date to load data.</p>
+            <p className="text-sm text-muted-foreground">{l10n("local.select_a_start_and_end_date_to_load_data_1288f512")}</p>
           ) : financeLoading ? (
             <PageSkeleton variant="costs" />
           ) : financeError ? (
@@ -1107,12 +1100,12 @@ export function Costs({
                 <div className="space-y-4">
                   <Card>
                     <CardHeader className="px-5 pt-5 pb-2">
-                      <CardTitle className="text-base">By biller</CardTitle>
-                      <CardDescription>Account-level financial events grouped by who charged or credited them.</CardDescription>
+                      <CardTitle className="text-base">{l10n("local.by_biller_27b8241b")}</CardTitle>
+                      <CardDescription>{l10n("local.account_level_financial_events_grouped_by_who_cf37bd4e")}</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 px-5 pb-5 pt-2 md:grid-cols-2">
                       {(financeData?.byBiller.length ?? 0) === 0 ? (
-                        <p className="text-sm text-muted-foreground">No finance events yet.</p>
+                        <p className="text-sm text-muted-foreground">{l10n("local.no_finance_events_yet_40a93ddf")}</p>
                       ) : (
                         financeData?.byBiller.map((row) => <FinanceBillerCard key={row.biller} row={row} />)
                       )}

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useState, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, RotateCcw, Undo2 } from "lucide-react";
@@ -71,8 +72,8 @@ export function StalledReviewActions({
     },
     onError: (error) => {
       pushToast({
-        title: "Could not record the review decision",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.could_not_record_the_review_decision_ac26aaec"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       });
     },
@@ -104,7 +105,7 @@ export function StalledReviewActions({
       <Textarea
         value={note}
         onChange={(event) => setNote(event.target.value)}
-        placeholder="Add a note — required to request changes, optional otherwise…"
+        placeholder={l10n("local.add_a_note_required_to_request_changes_option_80f4b2f5")}
         className="min-h-16 text-sm"
         data-testid="stalled-review-note"
         disabled={pending}
@@ -126,15 +127,14 @@ export function StalledReviewActions({
             ) : (
               <Undo2 className="h-3.5 w-3.5" aria-hidden />
             )}
-            Send back to work
-          </Button>
+            {l10n("local.send_back_to_work_8009553b")}</Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
             className="w-full border-amber-400/70 text-amber-900 hover:bg-amber-100 dark:border-amber-500/50 dark:text-amber-100 dark:hover:bg-amber-500/15 sm:w-auto sm:flex-1 @xl:flex-none"
             disabled={pending || noteEmpty}
-            title={noteEmpty ? "Add a note to request changes" : undefined}
+            title={noteEmpty ? l10n("local.add_a_note_to_request_changes_83f340aa") : undefined}
             onClick={() => decide.mutate("request_changes")}
             data-testid="stalled-review-request-changes"
           >
@@ -143,8 +143,7 @@ export function StalledReviewActions({
             ) : (
               <RotateCcw className="h-3.5 w-3.5" aria-hidden />
             )}
-            Request changes
-          </Button>
+            {l10n("local.request_changes_cb5d9f98")}</Button>
           <Button
             type="button"
             size="sm"
@@ -158,8 +157,7 @@ export function StalledReviewActions({
             ) : (
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
             )}
-            Approve
-          </Button>
+            {l10n("local.approve_6007acbe")}</Button>
         </div>
       </div>
     </div>

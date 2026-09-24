@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpDown, Check, ChevronDown, Columns3, Filter, Layers, ListTree, Search, SearchX } from "lucide-react";
@@ -40,12 +41,12 @@ type CaseViewState = {
 };
 
 const STATUS_FILTER_OPTIONS: { value: CaseStatus; label: string }[] = [
-  { value: "draft", label: "Draft" },
-  { value: "in_progress", label: "In progress" },
-  { value: "in_review", label: "In review" },
-  { value: "approved", label: "Approved" },
-  { value: "done", label: "Done" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "draft", label: l10n("local.draft_ebf12ef4") },
+  { value: "in_progress", label: l10n("local.in_progress_c1f88e9d") },
+  { value: "in_review", label: l10n("local.in_review_c3905914") },
+  { value: "approved", label: l10n("local.approved_87b42e40") },
+  { value: "done", label: l10n("local.done_11a6767d") },
+  { value: "cancelled", label: l10n("local.cancelled_d353a99e") },
 ];
 
 const ALL = "__all__";
@@ -54,23 +55,23 @@ const DEFAULT_CASE_COLUMNS: CaseColumn[] = ["id", "title", "status", "updated"];
 const CASE_COLUMN_ORDER: CaseColumn[] = ["id", "key", "title", "type", "status", "updated", "created", "project", "parent"];
 const CASE_COLUMN_LABELS: Record<CaseColumn, string> = {
   id: "ID",
-  key: "Key",
-  title: "Title",
-  status: "Status",
-  updated: "Updated",
-  created: "Created at",
-  type: "Type",
-  project: "Project",
-  parent: "Parent case",
+  key: l10n("local.key_99a52df3"),
+  title: l10n("local.title_7e8cd205"),
+  status: l10n("local.status_920e413c"),
+  updated: l10n("local.updated_3a5ecca1"),
+  created: l10n("local.created_at_775b5bf9"),
+  type: l10n("local.type_baaddf70"),
+  project: l10n("local.project_98595978"),
+  parent: l10n("local.parent_case_67636e37"),
 };
 const CASE_SORT_LABELS: Record<CaseSortField, string> = {
-  updated: "Last updated",
-  created: "Created at",
-  title: "Title",
-  status: "Status",
+  updated: l10n("local.last_updated_382ac5f3"),
+  created: l10n("local.created_at_775b5bf9"),
+  title: l10n("local.title_7e8cd205"),
+  status: l10n("local.status_920e413c"),
   id: "ID",
-  type: "Type",
-  project: "Project",
+  type: l10n("local.type_baaddf70"),
+  project: l10n("local.project_98595978"),
 };
 const defaultCaseViewState: CaseViewState = {
   search: "",
@@ -220,7 +221,7 @@ function CaseStatusPicker({
           type="button"
           disabled={disabled}
           className="inline-flex items-center gap-1 rounded-md hover:bg-accent/50 disabled:opacity-50"
-          aria-label="Change case status"
+          aria-label={l10n("local.change_case_status_11df1e0c")}
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -288,7 +289,7 @@ function CaseTrailingColumns({
             <CaseCopyableToken
               key={column}
               value={row.identifier}
-              label="case ID"
+              label={l10n("local.case_id_9c869d6f")}
               className="font-mono text-xs text-muted-foreground"
               containerClassName="shrink-0"
               stopPropagation
@@ -300,12 +301,12 @@ function CaseTrailingColumns({
             <CaseCopyableToken
               key={column}
               value={row.key}
-              label="case key"
+              label={l10n("local.case_key_a741eb3c")}
               className="font-mono text-xs text-muted-foreground"
               stopPropagation
             />
           ) : (
-            <span key={column} className="min-w-0 truncate text-xs text-muted-foreground">None</span>
+            <span key={column} className="min-w-0 truncate text-xs text-muted-foreground">{l10n("local.none_dc937b59")}</span>
           );
         }
         if (column === "title") {
@@ -358,12 +359,12 @@ function CaseTrailingColumns({
           return <span key={column} className="min-w-0 truncate text-xs text-muted-foreground">{row.caseType}</span>;
         }
         if (column === "project") {
-          return <span key={column} className="min-w-0 truncate text-xs text-muted-foreground">{projectName ?? "No project"}</span>;
+          return <span key={column} className="min-w-0 truncate text-xs text-muted-foreground">{projectName ?? l10n("local.no_project_f34c2be0")}</span>;
         }
         if (column === "parent") {
           return (
             <span key={column} className="min-w-0 truncate font-mono text-xs text-muted-foreground">
-              {row.parentCaseId ? "Parent" : "None"}
+              {row.parentCaseId ? l10n("local.parent_5f7953f7") : l10n("local.none_dc937b59")}
             </span>
           );
         }
@@ -439,7 +440,7 @@ function CaseListRow({
           {visibleColumnSet.has("id") ? (
             <CaseCopyableToken
               value={row.identifier}
-              label="case ID"
+              label={l10n("local.case_id_9c869d6f")}
               className="font-mono text-xs text-muted-foreground"
               containerClassName="shrink-0"
               stopPropagation
@@ -448,7 +449,7 @@ function CaseListRow({
           {visibleColumnSet.has("key") && row.key ? (
             <CaseCopyableToken
               value={row.key}
-              label="case key"
+              label={l10n("local.case_key_a741eb3c")}
               className="shrink-0 font-mono text-xs text-muted-foreground"
               stopPropagation
             />
@@ -529,7 +530,7 @@ function CaseGroup({
           onToggle={onToggle}
           trailing={(
             <span className="text-xs text-muted-foreground tabular-nums">
-              {count} {count === 1 ? "case" : "cases"}
+              {count} {count === 1 ? l10n("local.case_bbfcd416") : l10n("local.cases_352b8477")}
             </span>
           )}
         />
@@ -637,13 +638,12 @@ function CaseColumnPicker({
   onReset: () => void;
 }) {
   return (
-    <CaseToolbarButton icon={Columns3} title="Columns" active={!sameStringSet([...visibleColumns], DEFAULT_CASE_COLUMNS)}>
+    <CaseToolbarButton icon={Columns3} title={l10n("local.columns_53aade77")} active={!sameStringSet([...visibleColumns], DEFAULT_CASE_COLUMNS)}>
       <PopoverContent align="end" className="w-(--sz-300px) p-1.5">
         <div className="px-2 pb-1 pt-1.5">
           <div className="text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-            Desktop case rows
-          </div>
-          <div className="text-sm font-medium text-foreground">Choose visible columns</div>
+            {l10n("local.desktop_case_rows_5b0058bd")}</div>
+          <div className="text-sm font-medium text-foreground">{l10n("local.choose_visible_columns_6d57d599")}</div>
         </div>
         <div className="space-y-0.5">
           {CASE_COLUMN_ORDER.map((column) => (
@@ -664,8 +664,7 @@ function CaseColumnPicker({
             className="flex w-full items-center justify-between rounded px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/50"
             onClick={onReset}
           >
-            Reset defaults
-          </button>
+            {l10n("local.reset_defaults_4542d49a")}</button>
         </div>
       </PopoverContent>
     </CaseToolbarButton>
@@ -682,7 +681,7 @@ function CaseSortPicker({
   onChange: (patch: Pick<CaseViewState, "sortField" | "sortDir">) => void;
 }) {
   return (
-    <CaseToolbarButton icon={ArrowUpDown} title="Sort" active={sortField !== "updated" || sortDir !== "desc"}>
+    <CaseToolbarButton icon={ArrowUpDown} title={l10n("local.sort_bec69036")} active={sortField !== "updated" || sortDir !== "desc"}>
       <PopoverContent align="end" className="w-48 p-2">
         {(Object.keys(CASE_SORT_LABELS) as CaseSortField[]).map((field) => (
           <button
@@ -716,25 +715,20 @@ function CasesEmptyHero() {
   return (
     <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
       <Layers className="h-10 w-10 text-muted-foreground" />
-      <h2 className="text-lg font-semibold">No cases yet</h2>
+      <h2 className="text-lg font-semibold">{l10n("local.no_cases_yet_709b3afd")}</h2>
       <p className="text-sm text-muted-foreground">
-        Cases are durable work products — blog posts, tweet storms, docs pages — that tasks create and
-        iterate on. In v1 they&apos;re created by agents, not from the UI.
-      </p>
+        {l10n("local.cases_are_durable_work_products_blog_posts_tw_39d6251b")}</p>
       <div className="w-full space-y-2 rounded-lg border border-border bg-muted/50 p-4 text-left">
-        <p className="text-sm font-medium">To start creating cases, add this to a skill:</p>
+        <p className="text-sm font-medium">{l10n("local.to_start_creating_cases_add_this_to_a_skill_59262833")}</p>
         <pre className="overflow-x-auto rounded bg-background/60 p-3 font-mono text-xs text-muted-foreground">
 {`"Create a case of type blog_post with fields
 {slug, target_audience, publish_url} and key <release>/<slug>."`}
         </pre>
         <p className="text-xs text-muted-foreground">
-          See the paperclip skill → <code className="font-mono">references/cases.md</code> for the API.
-        </p>
+          {l10n("local.see_the_paperclip_skill_a156137b")}{" "}<code className="font-mono">references/cases.md</code> {l10n("local.for_the_api_e9c183a4")}</p>
       </div>
       <p className="text-xs text-muted-foreground">
-        Feature is gated by the <code className="font-mono">enableCases</code> experimental flag
-        (Settings → Experimental).
-      </p>
+        {l10n("local.feature_is_gated_by_the_fea763e6")}{" "}<code className="font-mono">enableCases</code> {l10n("local.experimental_flag_settings_experimental_11168efe")}</p>
     </div>
   );
 }
@@ -755,7 +749,7 @@ export function Cases() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Cases" }]);
+    setBreadcrumbs([{ label: l10n("local.cases_2249bd50") }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
@@ -1194,8 +1188,8 @@ export function Cases() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold">Cases</h1>
-          <Badge variant="secondary">Experimental</Badge>
+          <h1 className="text-xl font-bold">{l10n("local.cases_2249bd50")}</h1>
+          <Badge variant="secondary">{l10n("local.experimental_3dc9f569")}</Badge>
         </div>
       </div>
 
@@ -1209,9 +1203,9 @@ export function Cases() {
               <Input
                 value={viewState.search}
                 onChange={(e) => updateView({ search: e.target.value })}
-                placeholder="Search cases..."
+                placeholder={l10n("local.search_cases_7485f988")}
                 className="pl-7 text-xs sm:text-sm"
-                aria-label="Search cases"
+                aria-label={l10n("local.search_cases_22c2a406")}
                 data-page-search-target="true"
               />
             </div>
@@ -1222,8 +1216,8 @@ export function Cases() {
                 variant="outline"
                 size="icon"
                 className={cn("h-8 w-8 shrink-0", viewState.treeView && "bg-accent")}
-                title={viewState.treeView ? "Show flat case list" : "Show parent/children tree"}
-                aria-label={viewState.treeView ? "Show flat case list" : "Show parent/children tree"}
+                title={viewState.treeView ? l10n("local.show_flat_case_list_92f73808") : l10n("local.show_parent_children_tree_879fb924")}
+                aria-label={viewState.treeView ? l10n("local.show_flat_case_list_92f73808") : l10n("local.show_parent_children_tree_879fb924")}
                 aria-pressed={viewState.treeView}
                 onClick={() => updateView({ treeView: !viewState.treeView })}
               >
@@ -1236,13 +1230,13 @@ export function Cases() {
                 onReset={resetColumns}
               />
 
-              <CaseToolbarButton icon={Filter} title="Filters" active={hasActiveFilters}>
+              <CaseToolbarButton icon={Filter} title={l10n("local.filters_546ebb8e")} active={hasActiveFilters}>
                 <PopoverContent align="end" className="w-72 p-3">
                   <div className="grid gap-3">
-                    <FilterField label="Type">
+                    <FilterField label={l10n("local.type_baaddf70")}>
                       <div className="max-h-40 overflow-y-auto">
                         {distinctTypes.length === 0 ? (
-                          <p className="px-1 py-1 text-xs text-muted-foreground">No types yet</p>
+                          <p className="px-1 py-1 text-xs text-muted-foreground">{l10n("local.no_types_yet_0c135528")}</p>
                         ) : distinctTypes.map((type) => (
                           <FilterCheckboxRow
                             key={type}
@@ -1253,7 +1247,7 @@ export function Cases() {
                         ))}
                       </div>
                     </FilterField>
-                    <FilterField label="Status">
+                    <FilterField label={l10n("local.status_920e413c")}>
                       <div>
                         {STATUS_FILTER_OPTIONS.map((option) => (
                           <FilterCheckboxRow
@@ -1265,10 +1259,10 @@ export function Cases() {
                         ))}
                       </div>
                     </FilterField>
-                    <FilterField label="Project">
+                    <FilterField label={l10n("local.project_98595978")}>
                       <div className="max-h-40 overflow-y-auto">
                         <FilterCheckboxRow
-                          label="No project"
+                          label={l10n("local.no_project_f34c2be0")}
                           checked={viewState.projectFilters.includes(ALL)}
                           onCheckedChange={(checked) => toggleStringFilter("projectFilters", ALL, checked)}
                         />
@@ -1282,10 +1276,10 @@ export function Cases() {
                         ))}
                       </div>
                     </FilterField>
-                    <FilterField label="Label">
+                    <FilterField label={l10n("local.label_0e66373f")}>
                       <div className="max-h-40 overflow-y-auto">
                         <FilterCheckboxRow
-                          label="All labels"
+                          label={l10n("local.all_labels_3e834006")}
                           checked={viewState.labelFilter === ALL}
                           onCheckedChange={(checked) => {
                             if (checked) updateView({ labelFilter: ALL });
@@ -1302,8 +1296,7 @@ export function Cases() {
                       </div>
                     </FilterField>
                     <Button type="button" variant="ghost" size="sm" onClick={clearFilters} disabled={!hasActiveFilters}>
-                      Clear filters
-                    </Button>
+                      {l10n("local.clear_filters_7179ea00")}</Button>
                   </div>
                 </PopoverContent>
               </CaseToolbarButton>
@@ -1314,7 +1307,7 @@ export function Cases() {
                 onChange={updateView}
               />
 
-              <CaseToolbarButton icon={Layers} title="Group" active={viewState.groupBy !== "type"}>
+              <CaseToolbarButton icon={Layers} title={l10n("local.group_34ca0e76")} active={viewState.groupBy !== "type"}>
                 <PopoverContent align="end" className="w-44 p-2">
                   {([
                     ["type", "Type"],

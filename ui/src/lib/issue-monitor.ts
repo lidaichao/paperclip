@@ -1,3 +1,5 @@
+import { l10n } from "../i18n";
+import { displayLocale } from "../i18n/display";
 import { useEffect, useState } from "react";
 
 const SECOND_MS = 1_000;
@@ -87,8 +89,32 @@ export function formatMonitorEta(nextCheckAt: MonitorDate, now: MonitorDate = ne
   return `overdue by ${formatDuration(Math.abs(deltaMs))}`;
 }
 
+
+/** Localize a known monitor display string; raw ETA/offset contracts stay English. */
+export function displayMonitorRelative(raw: string): string {
+  if (displayLocale() !== "zh-CN") return raw;
+  if (raw === "due now") return l10n("local.manual_monitor_due_now");
+  if (raw === "now") return l10n("local.manual_monitor_now");
+  const match = /^(?:(in |overdue by ))?(\d+[smhd](?: \d+[smhd])?)( ago)?$/.exec(raw);
+  if (!match || (Boolean(match[1]) === Boolean(match[3]))) return raw;
+  const duration = match[2].replace(/(\d+)([smhd])/g, (_token, count: string, unit: string) =>
+    l10n(`local.manual_monitor_duration_${unit}`, { v0: count }),
+  );
+  if (match[1] === "in ") return l10n("local.manual_monitor_in", { v0: duration });
+  if (match[1] === "overdue by ") return l10n("local.manual_monitor_overdue", { v0: duration });
+  return l10n("local.manual_monitor_ago", { v0: duration });
+}
+
+export function formatMonitorEtaDisplay(nextCheckAt: MonitorDate, now: MonitorDate = new Date()): string {
+  return displayMonitorRelative(formatMonitorEta(nextCheckAt, now));
+}
+
+export function formatMonitorOffsetDisplay(nextCheckAt: MonitorDate): string {
+  return displayMonitorRelative(formatMonitorOffset(nextCheckAt));
+}
+
 export function formatMonitorEtaLabel(nextCheckAt: MonitorDate, now: MonitorDate = new Date()): string {
-  const eta = formatMonitorEta(nextCheckAt, now);
+  const eta = formatMonitorEtaDisplay(nextCheckAt, now);
   return `${eta.charAt(0).toUpperCase()}${eta.slice(1)}`;
 }
 
@@ -125,7 +151,7 @@ export function formatMonitorAbsolute(
   const targetYmd = zonedYmd(target, options.locale, options.timeZone);
   const referenceYmd = zonedYmd(reference, options.locale, options.timeZone);
 
-  const time = new Intl.DateTimeFormat(options.locale, {
+  const time = new Intl.DateTimeFormat(options.locale ?? displayLocale(), {
     hour: "numeric",
     minute: "2-digit",
     timeZone: options.timeZone,
@@ -135,13 +161,13 @@ export function formatMonitorAbsolute(
     targetYmd.year === referenceYmd.year &&
     targetYmd.month === referenceYmd.month &&
     targetYmd.day === referenceYmd.day;
-  if (isToday) return `Today, ${time}`;
+  if (isToday) return l10n("local.manual_today_time", {v0: time});
 
-  const weekday = new Intl.DateTimeFormat(options.locale, {
+  const weekday = new Intl.DateTimeFormat(options.locale ?? displayLocale(), {
     weekday: "short",
     timeZone: options.timeZone,
   }).format(target);
-  const date = new Intl.DateTimeFormat(options.locale, {
+  const date = new Intl.DateTimeFormat(options.locale ?? displayLocale(), {
     month: "short",
     day: "numeric",
     year: targetYmd.year === referenceYmd.year ? undefined : "numeric",
@@ -156,14 +182,14 @@ export function formatMonitorAbsoluteFull(
   options: MonitorDateTimeFormatOptions = {},
 ): string {
   const date = new Date(toTimestamp(nextCheckAt));
-  const datePart = new Intl.DateTimeFormat(options.locale, {
+  const datePart = new Intl.DateTimeFormat(options.locale ?? displayLocale(), {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
     timeZone: options.timeZone,
   }).format(date);
-  const timePart = new Intl.DateTimeFormat(options.locale, {
+  const timePart = new Intl.DateTimeFormat(options.locale ?? displayLocale(), {
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",

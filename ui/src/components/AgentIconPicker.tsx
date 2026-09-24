@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useState, useMemo } from "react";
 import {
   type LucideIcon,
@@ -46,7 +47,7 @@ export function AgentIconPicker({ value, onChange, children }: AgentIconPickerPr
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-72 p-3" align="start">
         <Input
-          placeholder="Search icons..."
+          placeholder={l10n("local.search_icons_d47dbbe1")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="mb-2 h-8 text-sm"
@@ -71,7 +72,7 @@ export function AgentIconPicker({ value, onChange, children }: AgentIconPickerPr
             </button>
           ))}
           {filtered.length === 0 && (
-            <p className="col-span-7 text-xs text-muted-foreground text-center py-2">No icons match</p>
+            <p className="col-span-7 text-xs text-muted-foreground text-center py-2">{l10n("local.no_icons_match_838e8267")}</p>
           )}
         </div>
       </PopoverContent>

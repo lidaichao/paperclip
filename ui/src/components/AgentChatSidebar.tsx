@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { Star, SquarePen } from "lucide-react";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { AgentIcon } from "@/components/AgentIconPicker";
@@ -47,7 +48,7 @@ export function AgentChatSidebar({
             size="icon-xs"
             aria-label={`${pinned ? "Unstar" : "Star"} ${agent.name}`}
             aria-pressed={pinned}
-            title={pinned ? "Unstar agent" : "Star agent to pin"}
+            title={pinned ? l10n("local.unstar_agent_87f2a385") : l10n("local.star_agent_to_pin_28d20be6")}
             onClick={(event) => {
               event.stopPropagation();
               onToggleStar(agent.id);
@@ -64,15 +65,15 @@ export function AgentChatSidebar({
     );
   };
   return (
-    <section aria-label="Chats" className="group/chats flex flex-col gap-0.5">
+    <section aria-label={l10n("local.chats_ef5b4049")} className="group/chats flex flex-col gap-0.5">
       <div className="relative flex min-h-9 items-center px-4 py-1.5">
-        <span className={cn("font-mono text-(length:--text-nano) font-medium uppercase tracking-widest text-muted-foreground/60", rail && "sr-only")}>Chats</span>
+        <span className={cn("font-mono text-(length:--text-nano) font-medium uppercase tracking-widest text-muted-foreground/60", rail && "sr-only")}>{l10n("local.chats_ef5b4049")}</span>
         <Button
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label="Chat with an agent"
-          title="Chat with an agent"
+          aria-label={l10n("local.chat_with_an_agent_73adffe3")}
+          title={l10n("local.chat_with_an_agent_73adffe3")}
           onClick={onOpenChat}
           className="absolute right-2 top-(--pct-50) -translate-y-(--pct-50) text-muted-foreground opacity-0 group-hover/chats:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
         >

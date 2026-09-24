@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
 import type { AgentPermissions, TrustPreset } from "@paperclipai/shared";
 import { Lock, ShieldAlert } from "lucide-react";
@@ -45,9 +46,9 @@ export interface LowTrustBoundaryCandidate {
 type LowTrustBoundaryTargetType = LowTrustBoundaryTarget["type"];
 
 const BOUNDARY_TARGET_LABELS: Record<LowTrustBoundaryTargetType, string> = {
-  project: "Project",
-  root_issue: "Root issue",
-  issue: "Issue",
+  project: l10n("local.project_98595978"),
+  root_issue: l10n("local.root_issue_9cfea50f"),
+  issue: l10n("local.issue_48dc76df"),
 };
 
 export function TrustPresetSection({
@@ -106,9 +107,9 @@ export function TrustPresetSection({
 
   return (
     <div>
-      <h3 className="mb-3 text-sm font-medium">Trust</h3>
+      <h3 className="mb-3 text-sm font-medium">{l10n("local.trust_ade9248e")}</h3>
       <div className="rounded-lg border border-border p-4 space-y-3">
-        <Field label="Trust preset" hint="Choose how broadly this agent can read and act on Paperclip work objects.">
+        <Field label={l10n("local.trust_preset_d41e165d")} hint={l10n("local.choose_how_broadly_this_agent_can_read_and_ac_24bf54bd")}>
           <select
             className={inputClass}
             value={preset}
@@ -140,27 +141,27 @@ export function TrustPresetSection({
             <div className="min-w-0 flex-1 space-y-2">
               <div>
                 <p className="font-medium">
-                  {hasScope ? "Containment active" : "Containment not configured"}
+                  {hasScope ? l10n("local.containment_active_116032b7") : l10n("local.containment_not_configured_b5c07df6")}
                 </p>
                 <p className="mt-1 text-xs leading-5">
                   {hasScope
-                    ? "This agent can only read and mutate work inside its assigned review boundary. Raw output is quarantined from higher-trust agents until a trusted reviewer promotes it."
-                    : "This agent is set to low-trust review, but no project, root issue, or issue scope is set in the core policy. Add a scope before this agent can run without denial."}
+                    ? l10n("local.this_agent_can_only_read_and_mutate_work_insi_56237f23")
+                    : l10n("local.this_agent_is_set_to_low_trust_review_but_no_27171347")}
                 </p>
               </div>
               {boundaryEditable ? (
                 <div className="rounded-md border border-border/70 bg-background/70 p-3 text-foreground space-y-3">
                   <div className="grid gap-3 sm:grid-cols-(--gtc-12)">
-                    <Field label="Boundary type">
+                    <Field label={l10n("local.boundary_type_61a3e610")}>
                       <select
                         className={inputClass}
                         value={targetType}
                         onChange={(event) => setTargetType(event.target.value as LowTrustBoundaryTargetType)}
                         disabled={disabled}
                       >
-                        <option value="project">Project</option>
-                        <option value="root_issue">Root issue</option>
-                        {allowSingleIssue && <option value="issue">Issue</option>}
+                        <option value="project">{l10n("local.project_98595978")}</option>
+                        <option value="root_issue">{l10n("local.root_issue_9cfea50f")}</option>
+                        {allowSingleIssue && <option value="issue">{l10n("local.issue_48dc76df")}</option>}
                       </select>
                     </Field>
                     <Field label={BOUNDARY_TARGET_LABELS[targetType]}>
@@ -172,10 +173,10 @@ export function TrustPresetSection({
                       >
                         <option value="">
                           {candidatesLoading
-                            ? "Loading…"
+                            ? l10n("local.loading_ba3bbbe1")
                             : targetCandidates.length === 0
-                              ? `No ${targetType === "project" ? "projects" : "issues"} available`
-                              : "Select boundary"}
+                              ? l10n("local.no_value_available_85ce314a", {v0: (targetType === "project" ? "projects" : "issues")})
+                              : l10n("local.select_boundary_5009d413")}
                         </option>
                         {targetCandidates.map((candidate) => (
                           <option key={candidate.id} value={candidate.id}>
@@ -187,8 +188,7 @@ export function TrustPresetSection({
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">
-                      CE saves one containment boundary at a time. Saved policies include this organization id.
-                    </p>
+                      {l10n("local.ce_saves_one_containment_boundary_at_a_time_s_76927e0a")}</p>
                     {boundaryTarget ? (
                       <Button
                         type="button"
@@ -198,47 +198,44 @@ export function TrustPresetSection({
                         onClick={handleClearBoundary}
                         disabled={disabled}
                       >
-                        Clear boundary
-                      </Button>
+                        {l10n("local.clear_boundary_ebcd7119")}</Button>
                     ) : null}
                   </div>
                 </div>
               ) : (
                 <div className="rounded-md border border-border/70 bg-background/70 p-3 text-foreground">
-                  <p className="text-sm font-medium">Managed by EE/API</p>
+                  <p className="text-sm font-medium">{l10n("local.managed_by_ee_api_b028fcfe")}</p>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    This policy has {summarizeLowTrustBoundaryTarget(boundary).toLowerCase()} and cannot be edited by the CE single-boundary editor.
-                  </p>
+                    {l10n("local.this_policy_has_afbc2a08")}{" "}{summarizeLowTrustBoundaryTarget(boundary).toLowerCase()} {l10n("local.and_cannot_be_edited_by_the_ce_single_boundar_112a59c1")}</p>
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Want to set more than one containment boundary?{" "}
+                {l10n("local.want_to_set_more_than_one_containment_boundar_4a136265")}{" "}
                 <a
                   className="underline underline-offset-2 hover:text-foreground"
                   href="https://paperclip.ing/ee"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Get Paperclip EE.
-                </a>
+                  {l10n("local.get_paperclip_ee_601f5e6e")}</a>
               </p>
               <CollapsibleSection
-                title="View policy"
+                title={l10n("local.view_policy_faa39d94")}
                 open={policyOpen}
                 onToggle={() => setPolicyOpen((open) => !open)}
               >
                 <div className="divide-y divide-border/60 text-foreground">
-                  <PolicyRow label="Preset" value="Low-trust review v1" />
-                  <PolicyRow label="Raw output" value="Quarantined from higher-trust agents" />
-                  <PolicyRow label="Projects" value={formatCount(boundary?.projectIds, "project", "projects")} />
-                  <PolicyRow label="Root issue" value={boundary?.rootIssueId ? boundary.rootIssueId.slice(0, 8) : "-"} />
-                  <PolicyRow label="Explicit issues" value={formatCount(boundary?.issueIds, "issue", "issues")} />
-                  <PolicyRow label="Allowed agents" value={formatCount(boundary?.allowedAgentIds, "agent", "agents")} />
-                  <PolicyRow label="Allowed tools" value={boundary?.allowedToolClasses?.join(" · ") || "-"} />
-                  <PolicyRow label="Allowed secrets" value={formatCount(boundary?.allowedSecretBindingIds, "binding", "bindings")} />
-                  <PolicyRow label="Promotion target" value={boundary?.outputPromotionTarget?.issueId?.slice(0, 8) ?? "-"} />
+                  <PolicyRow label={l10n("local.preset_7252e7ce")} value="Low-trust review v1" />
+                  <PolicyRow label={l10n("local.raw_output_f3dbf20a")} value="Quarantined from higher-trust agents" />
+                  <PolicyRow label={l10n("local.projects_04e2a972")} value={formatCount(boundary?.projectIds, "project", "projects")} />
+                  <PolicyRow label={l10n("local.root_issue_9cfea50f")} value={boundary?.rootIssueId ? boundary.rootIssueId.slice(0, 8) : "-"} />
+                  <PolicyRow label={l10n("local.explicit_issues_5093b25d")} value={formatCount(boundary?.issueIds, "issue", "issues")} />
+                  <PolicyRow label={l10n("local.allowed_agents_ab33e0e8")} value={formatCount(boundary?.allowedAgentIds, "agent", "agents")} />
+                  <PolicyRow label={l10n("local.allowed_tools_73f3619d")} value={boundary?.allowedToolClasses?.join(" · ") || "-"} />
+                  <PolicyRow label={l10n("local.allowed_secrets_29e561fc")} value={formatCount(boundary?.allowedSecretBindingIds, "binding", "bindings")} />
+                  <PolicyRow label={l10n("local.promotion_target_ac1fff63")} value={boundary?.outputPromotionTarget?.issueId?.slice(0, 8) ?? "-"} />
                   <PolicyRow
-                    label="EE fields"
+                    label={l10n("local.ee_fields_5cf54800")}
                     value={Object.keys(policy ?? {}).some((key) => !["trustPreset", "reviewPreset", "trustBoundary"].includes(key))
                       ? "Custom advanced policy fields preserved"
                       : "-"}
@@ -251,8 +248,7 @@ export function TrustPresetSection({
 
         {managedPermissions.authorizationPolicy?.reviewPreset ? null : (
           <p className="text-xs text-muted-foreground">
-            Advanced permissions remain editable through the EE permissions extension when installed.
-          </p>
+            {l10n("local.advanced_permissions_remain_editable_through_fb6b4df4")}</p>
         )}
       </div>
     </div>

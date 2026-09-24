@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useWorkspaceIsolationControls } from "@/hooks/useWorkspaceIsolationControls";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
@@ -167,18 +168,18 @@ const STAGE_NAV_GROUPS: Array<{
   items: Array<{ id: StageSectionKey; label: string; icon: typeof Circle }>;
 }> = [
   {
-    label: "Stage",
+    label: l10n("local.stage_de838855"),
     items: [
-      { id: "instructions", label: "Automation", icon: LayoutGrid },
-      { id: "advanced", label: "Advanced", icon: SlidersHorizontal },
-      { id: "secrets", label: "Secrets", icon: KeyRound },
+      { id: "instructions", label: l10n("local.automation_d909750b"), icon: LayoutGrid },
+      { id: "advanced", label: l10n("local.advanced_9f088dbe"), icon: SlidersHorizontal },
+      { id: "secrets", label: l10n("local.secrets_d8707d41"), icon: KeyRound },
     ],
   },
   {
-    label: "Operate",
+    label: l10n("local.operate_58c3939c"),
     items: [
-      { id: "activity", label: "Activity", icon: ActivityIcon },
-      { id: "history", label: "History", icon: HistoryIcon },
+      { id: "activity", label: l10n("local.activity_38da1505"), icon: ActivityIcon },
+      { id: "history", label: l10n("local.history_0e769600"), icon: HistoryIcon },
     ],
   },
 ];
@@ -222,26 +223,26 @@ const STAGE_KIND_OPTIONS: Array<{
 }> = [
   {
     value: "working",
-    label: "Working",
-    description: "Items wait here while work happens. An agent or a person moves them forward.",
+    label: l10n("local.working_a92f0449"),
+    description: l10n("local.items_wait_here_while_work_happens_an_agent_o_5217c39b"),
     icon: Hammer,
   },
   {
     value: "review",
-    label: "Review",
-    description: "Someone has to approve before items leave. Use this when a person or an agent has to say yes or no.",
+    label: l10n("local.review_aff0766a"),
+    description: l10n("local.someone_has_to_approve_before_items_leave_use_279e0914"),
     icon: BadgeCheck,
   },
   {
     value: "done",
-    label: "Done",
-    description: "The final step. Items that reach here are finished.",
+    label: l10n("local.done_11a6767d"),
+    description: l10n("local.the_final_step_items_that_reach_here_are_fini_f11b3150"),
     icon: CircleCheck,
   },
   {
     value: "cancelled",
-    label: "Cancelled",
-    description: "The dead end. Items that reach here are dropped or rejected.",
+    label: l10n("local.cancelled_d353a99e"),
+    description: l10n("local.the_dead_end_items_that_reach_here_are_droppe_2dcda684"),
     icon: Ban,
   },
 ];
@@ -311,9 +312,9 @@ function stageConfig(stage: PipelineStage | null | undefined): StageConfig {
 }
 
 const STAGE_EXECUTION_WORKSPACE_OPTIONS = [
-  { value: "shared_workspace", label: "Project default" },
-  { value: "isolated_workspace", label: "New isolated workspace" },
-  { value: "reuse_existing", label: "Reuse existing workspace" },
+  { value: "shared_workspace", label: l10n("local.project_default_e8cb80e5") },
+  { value: "isolated_workspace", label: l10n("local.new_isolated_workspace_0c67029f") },
+  { value: "reuse_existing", label: l10n("local.reuse_existing_workspace_c84ba2b6") },
 ] as const;
 
 function nullableString(value: unknown) {
@@ -537,10 +538,10 @@ function readVariableField(variable: unknown): { key: string; label: string; req
 }
 
 function fieldOriginLabel(depth: number, pipelineName: string) {
-  if (depth === 0) return "This item";
-  if (depth === 1) return `Parent: ${pipelineName}`;
-  if (depth === 2) return `Grandparent: ${pipelineName}`;
-  return `Ancestor ${depth}: ${pipelineName}`;
+  if (depth === 0) return l10n("local.this_item_10ceeb1a");
+  if (depth === 1) return l10n("local.parent_value_926ade7d", {v0: (pipelineName)});
+  if (depth === 2) return l10n("local.grandparent_value_e9dc53c2", {v0: (pipelineName)});
+  return l10n("local.ancestor_value_value_e052c49d", {v0: (depth), v1: (pipelineName)});
 }
 
 function pipelineCarryOverFields(source: { pipeline: PipelineWithOptionalConnections; depth: number }): CarryOverFieldOption[] {
@@ -954,43 +955,43 @@ function buildAutomationVariableGroups(input: {
   const pipelineVariables: AutomationVariableOption[] = [
     {
       key: "pipeline_id",
-      label: "Pipeline ID",
-      description: "ID of the pipeline this automation runs in.",
+      label: l10n("local.pipeline_id_2ee44497"),
+      description: l10n("local.id_of_the_pipeline_this_automation_runs_in_dbfdd9eb"),
       example: input.pipeline.id,
       exampleSource: null,
     },
     {
       key: "pipeline_key",
-      label: "Pipeline key",
-      description: "Stable key of the pipeline this automation runs in.",
+      label: l10n("local.pipeline_key_e43abacb"),
+      description: l10n("local.stable_key_of_the_pipeline_this_automation_ru_e4e978ed"),
       example: input.pipeline.key,
       exampleSource: null,
     },
     {
       key: "pipeline_name",
-      label: "Pipeline name",
-      description: "Display name of the pipeline this automation runs in.",
+      label: l10n("local.pipeline_name_5ba23939"),
+      description: l10n("local.display_name_of_the_pipeline_this_automation_8e08d669"),
       example: input.pipeline.name,
       exampleSource: null,
     },
     {
       key: "stage_id",
-      label: "Stage ID",
-      description: "ID of this automation stage.",
+      label: l10n("local.stage_id_449d8bc1"),
+      description: l10n("local.id_of_this_automation_stage_1a6b1a39"),
       example: input.stage.id,
       exampleSource: null,
     },
     {
       key: "stage_key",
-      label: "Stage key",
-      description: "Stable key of this automation stage.",
+      label: l10n("local.stage_key_aa600fc4"),
+      description: l10n("local.stable_key_of_this_automation_stage_833b1cc1"),
       example: input.stage.key,
       exampleSource: null,
     },
     {
       key: "stage_name",
-      label: "Stage name",
-      description: "Display name of this automation stage.",
+      label: l10n("local.stage_name_1f31e5b6"),
+      description: l10n("local.display_name_of_this_automation_stage_482eb586"),
       example: input.stage.name,
       exampleSource: null,
     },
@@ -998,43 +999,43 @@ function buildAutomationVariableGroups(input: {
   const itemVariables: AutomationVariableOption[] = [
     {
       key: "title",
-      label: "Item title",
-      description: "Title of the item being automated.",
+      label: l10n("local.item_title_8ae08972"),
+      description: l10n("local.title_of_the_item_being_automated_8c88b0d3"),
       example: sampleCase?.title ?? "",
       exampleSource,
     },
     {
       key: "body",
-      label: "Item body",
-      description: "Body text of the item being automated.",
+      label: l10n("local.item_body_256f4ed7"),
+      description: l10n("local.body_text_of_the_item_being_automated_4ca7c36f"),
       example: sampleCase?.summary ?? "",
       exampleSource,
     },
     {
       key: "case_id",
-      label: "Item ID",
-      description: "ID of the item being automated.",
+      label: l10n("local.item_id_2e5ffe2c"),
+      description: l10n("local.id_of_the_item_being_automated_2e177d4d"),
       example: sampleCase?.id ?? "",
       exampleSource,
     },
     {
       key: "case_key",
-      label: "Item key",
-      description: "Stable key of the item being automated.",
+      label: l10n("local.item_key_cde9feab"),
+      description: l10n("local.stable_key_of_the_item_being_automated_51e54d15"),
       example: sampleCase?.caseKey ?? "",
       exampleSource,
     },
     {
       key: "case_title",
-      label: "Item title alias",
-      description: "Compatibility alias for the item title.",
+      label: l10n("local.item_title_alias_8be0f3d4"),
+      description: l10n("local.compatibility_alias_for_the_item_title_bbc5fab9"),
       example: sampleCase?.title ?? "",
       exampleSource,
     },
     {
       key: "case_version",
-      label: "Item version",
-      description: "Current item version when the automation runs.",
+      label: l10n("local.item_version_9c9fef79"),
+      description: l10n("local.current_item_version_when_the_automation_runs_31f83639"),
       example: sampleCase?.version ?? "",
       exampleSource,
     },
@@ -1054,8 +1055,8 @@ function buildAutomationVariableGroups(input: {
     });
   }
   const groups: AutomationVariableGroup[] = [
-    { id: "pipeline", label: "Pipeline and stage", variables: pipelineVariables },
-    { id: "item", label: "Current item", variables: itemVariables },
+    { id: "pipeline", label: l10n("local.pipeline_and_stage_a1da6a95"), variables: pipelineVariables },
+    { id: "item", label: l10n("local.current_item_542a6937"), variables: itemVariables },
   ];
   if (fieldVariables.length > 0) {
     groups.push({ id: "fields", label: "Item fields", variables: fieldVariables });
@@ -1094,8 +1095,7 @@ function CarriedFieldTokenHelper({
     <div className="rounded-md border border-dashed border-border bg-muted/25 px-3 py-2">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold uppercase text-muted-foreground">
-          Already available on child items
-        </span>
+          {l10n("local.already_available_on_child_items_8806b5f6")}</span>
       </div>
       <div className="space-y-2">
         {groups.map((group) => (
@@ -1111,8 +1111,8 @@ function CarriedFieldTokenHelper({
                   type="button"
                   onClick={() => onInsert(field.key)}
                   className="inline-flex h-7 items-center rounded-md border border-border bg-background px-2 font-mono text-xs text-foreground transition-colors hover:bg-accent"
-                  title={`Insert {{${field.key}}}`}
-                  aria-label={`Insert {{${field.key}}}`}
+                  title={l10n("local.insert_value_b4c258da", {v0: (field.key)})}
+                  aria-label={l10n("local.insert_value_b4c258da", {v0: (field.key)})}
                 >
                   {`{{${field.key}}}`}
                 </button>
@@ -1154,7 +1154,7 @@ function AutomationVariableTokenHelper({
                   onClick={() => onInsert(variable.key)}
                   className="inline-flex h-7 items-center rounded-md border border-border bg-background px-2 font-mono text-xs text-foreground transition-colors hover:bg-accent"
                   title={automationVariablePreviewTitle(variable)}
-                  aria-label={`Insert {{${variable.key}}}`}
+                  aria-label={l10n("local.insert_value_b4c258da", {v0: (variable.key)})}
                 >
                   {`{{${variable.key}}}`}
                 </button>
@@ -1180,7 +1180,7 @@ function StageSubSidebar({
   return (
     <>
       <div className="md:hidden">
-        <label className="sr-only" htmlFor="stage-section-picker">Stage section</label>
+        <label className="sr-only" htmlFor="stage-section-picker">{l10n("local.stage_section_b041ad38")}</label>
         <select
           id="stage-section-picker"
           value={activeSection}
@@ -1197,7 +1197,7 @@ function StageSubSidebar({
         </select>
       </div>
       <nav
-        aria-label="Stage sections"
+        aria-label={l10n("local.stage_sections_6c7456b4")}
         className="sticky top-14 hidden max-h-(--sz-calc-39) w-52 shrink-0 flex-col gap-4 self-start overflow-y-auto border-r border-border bg-sidebar/30 px-3 py-4 md:flex"
       >
         {groups.map((group) => (
@@ -1264,7 +1264,7 @@ function StageEventsList({
             </Link>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {formatPipelineItemEvent(event, stages)}
-              {event.actorAgent ? ` by ${event.actorAgent.name}` : null}
+              {event.actorAgent ? (" " + l10n("local.by_value_c4188371", {v0: (event.actorAgent.name)})) : null}
             </p>
           </div>
         </div>
@@ -1646,9 +1646,9 @@ export function PipelineSettings() {
   useEffect(() => {
     if (!pipeline) return;
     setBreadcrumbs([
-      { label: "Pipelines", href: "/pipelines" },
+      { label: l10n("local.pipelines_d1a8fffe"), href: "/pipelines" },
       { label: pipeline.name, href: `/pipelines/${pipeline.id}` },
-      { label: "Settings" },
+      { label: l10n("local.settings_74a883a0") },
     ]);
   }, [pipeline, setBreadcrumbs]);
 
@@ -1903,12 +1903,12 @@ export function PipelineSettings() {
         ]);
       }
       await refreshPipeline();
-      pushToast({ title: "Stage saved", tone: "success" });
+      pushToast({ title: l10n("local.stage_saved_9d908412"), tone: "success" });
     },
     onError: async (error) => {
       pushToast({
-        title: "Failed to save stage",
-        body: error instanceof Error ? error.message : "Paperclip could not save the stage.",
+        title: l10n("local.failed_to_save_stage_fb320870"),
+        body: error instanceof Error ? error.message : l10n("local.paperclip_could_not_save_the_stage_0d715db6"),
         tone: "error",
       });
     },
@@ -1932,16 +1932,16 @@ export function PipelineSettings() {
       if (selectedCompanyId) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.secrets.list(selectedCompanyId) });
       }
-      pushToast({ title: "Stage secrets saved", tone: "success" });
+      pushToast({ title: l10n("local.stage_secrets_saved_571b2128"), tone: "success" });
     },
     onError: async (error) => {
       pushToast({
-        title: "Failed to save secrets",
+        title: l10n("local.failed_to_save_secrets_3e524597"),
         body: error instanceof ApiError
           ? error.message
           : error instanceof Error
             ? error.message
-            : "Paperclip could not save the stage secrets.",
+            : l10n("local.paperclip_could_not_save_the_stage_secrets_a9015389"),
         tone: "error",
       });
     },
@@ -1994,7 +1994,7 @@ export function PipelineSettings() {
       if (created) {
         setSelectedStageId(created.id);
       }
-      pushToast({ title: "Stage added", tone: "success" });
+      pushToast({ title: l10n("local.stage_added_76d5ac5d"), tone: "success" });
     },
   });
 
@@ -2013,12 +2013,12 @@ export function PipelineSettings() {
       if (selectedCompanyId) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.pipelines.list(selectedCompanyId) });
       }
-      pushToast({ title: "Stage deleted", tone: "success" });
+      pushToast({ title: l10n("local.stage_deleted_004d66bc"), tone: "success" });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to delete stage",
-        body: error instanceof Error ? error.message : "Paperclip could not delete the stage.",
+        title: l10n("local.failed_to_delete_stage_0bfd9c20"),
+        body: error instanceof Error ? error.message : l10n("local.paperclip_could_not_delete_the_stage_df312840"),
         tone: "error",
       });
     },
@@ -2035,7 +2035,7 @@ export function PipelineSettings() {
       if (selectedCompanyId) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.pipelines.list(selectedCompanyId) });
       }
-      pushToast({ title: "Pipeline updated", tone: "success" });
+      pushToast({ title: l10n("local.pipeline_updated_d3eb589b"), tone: "success" });
     },
   });
 
@@ -2044,13 +2044,13 @@ export function PipelineSettings() {
       pipelinesApi.update(pipelineId!, { enforceTransitions }),
     onSuccess: async () => {
       await refreshPipeline();
-      pushToast({ title: "Transition rules updated", tone: "success" });
+      pushToast({ title: l10n("local.transition_rules_updated_6b35ef56"), tone: "success" });
     },
     onError: (error) => {
       setStrictTransitionsEnabled(pipeline?.enforceTransitions ?? false);
       pushToast({
-        title: "Failed to update transition rules",
-        body: error instanceof Error ? error.message : "Paperclip could not update transition rules.",
+        title: l10n("local.failed_to_update_transition_rules_aa35c7df"),
+        body: error instanceof Error ? error.message : l10n("local.paperclip_could_not_update_transition_rules_bda1d620"),
         tone: "error",
       });
     },
@@ -2068,7 +2068,7 @@ export function PipelineSettings() {
         navigate("/pipelines");
       } else {
         await refreshPipeline();
-        pushToast({ title: "Pipeline restored", tone: "success" });
+        pushToast({ title: l10n("local.pipeline_restored_05912fab"), tone: "success" });
       }
     },
   });
@@ -2269,7 +2269,7 @@ export function PipelineSettings() {
     ? breakdownSummarySentence(breakdownConfigForCopy, breakdownCopyNames)
     : null;
   const transitionTargetsControl = !isReviewStage && !isPipelineTerminalStageKind(stageKind) ? (
-    <FieldRow label="Allowed next steps">
+    <FieldRow label={l10n("local.allowed_next_steps_729b8a76")}>
       <div className="space-y-2">
         {otherStages.map((stage) => {
           const isCancelled = stage.kind === "cancelled";
@@ -2298,7 +2298,7 @@ export function PipelineSettings() {
               />
               <span className="flex-1">{stage.name}</span>
               {isCancelled ? (
-                <span className="text-xs text-muted-foreground">Always available</span>
+                <span className="text-xs text-muted-foreground">{l10n("local.always_available_0fda3772")}</span>
               ) : null}
             </label>
           );
@@ -2310,13 +2310,12 @@ export function PipelineSettings() {
     <div className="rounded-lg border border-border">
       <div className="flex items-start justify-between gap-4 border-b border-border p-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-foreground">Break into smaller pieces</h3>
+          <h3 className="text-sm font-semibold text-foreground">{l10n("local.break_into_smaller_pieces_02bc4068")}</h3>
           <p className="max-w-md text-sm text-muted-foreground">
-            The agent decides what the pieces are. Paperclip creates and tracks them.
-          </p>
+            {l10n("local.the_agent_decides_what_the_pieces_are_papercl_d8c8e5d1")}</p>
         </div>
         <ToggleSwitch
-          aria-label="Break into smaller pieces"
+          aria-label={l10n("local.break_into_smaller_pieces_02bc4068")}
           checked={breakdownEnabled}
           onCheckedChange={(checked) => {
             setBreakdownEnabled(checked);
@@ -2328,11 +2327,11 @@ export function PipelineSettings() {
       </div>
       {breakdownEnabled ? (
         <div className="divide-y divide-border px-4">
-          <FieldRow label="Create each piece in">
+          <FieldRow label={l10n("local.create_each_piece_in_f762f68b")}>
             <div className="space-y-1">
               <div className="flex w-full max-w-sm items-center">
                 <select
-                  aria-label="Create each piece in"
+                  aria-label={l10n("local.create_each_piece_in_f762f68b")}
                   value={breakdownTargetPipelineId}
                   onChange={(event) => {
                     setBreakdownTargetPipelineId(event.target.value);
@@ -2340,7 +2339,7 @@ export function PipelineSettings() {
                   }}
                   className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  <option value="">Choose a pipeline</option>
+                  <option value="">{l10n("local.choose_a_pipeline_4309efab")}</option>
                   {breakdownTargetOptions.map((candidate) => (
                     <option key={candidate.id} value={candidate.id}>{candidate.name}</option>
                   ))}
@@ -2348,8 +2347,8 @@ export function PipelineSettings() {
                 {breakdownTargetPipelineId ? (
                   <Link
                     to={`/pipelines/${breakdownTargetPipelineId}`}
-                    aria-label={`Open ${breakdownTargetPipeline?.name ?? "selected"} pipeline`}
-                    title={`Open ${breakdownTargetPipeline?.name ?? "selected"} pipeline`}
+                    aria-label={l10n("local.open_value_pipeline_bcc106d4", {v0: (breakdownTargetPipeline?.name ?? "selected")})}
+                    title={l10n("local.open_value_pipeline_bcc106d4", {v0: (breakdownTargetPipeline?.name ?? "selected")})}
                     className="ml-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <ArrowUpRight className="h-4 w-4" />
@@ -2357,52 +2356,50 @@ export function PipelineSettings() {
                 ) : null}
               </div>
               {!breakdownTargetPipelineId ? (
-                <p className="text-xs text-muted-foreground">A pipeline in this workspace</p>
+                <p className="text-xs text-muted-foreground">{l10n("local.a_pipeline_in_this_workspace_a641cac6")}</p>
               ) : null}
             </div>
           </FieldRow>
-          <FieldRow label="starting at">
+          <FieldRow label={l10n("local.starting_at_491013df")}>
             <div className="space-y-1">
               <select
-                aria-label="Starting stage for each piece"
+                aria-label={l10n("local.starting_stage_for_each_piece_2570eccd")}
                 value={breakdownTargetStageKey}
                 onChange={(event) => setBreakdownTargetStageKey(event.target.value)}
                 disabled={!breakdownTargetPipelineId}
                 className="h-10 w-full max-w-sm rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
               >
-                <option value="">Choose a stage</option>
+                <option value="">{l10n("local.choose_a_stage_15a9299c")}</option>
                 {breakdownTargetStages.map((stage) => (
                   <option key={stage.id} value={stage.key}>{stage.name}</option>
                 ))}
               </select>
-              <p className="text-xs text-muted-foreground">The stage every new piece starts in</p>
+              <p className="text-xs text-muted-foreground">{l10n("local.the_stage_every_new_piece_starts_in_af7d5503")}</p>
             </div>
           </FieldRow>
-          <FieldRow label="Call each piece a">
+          <FieldRow label={l10n("local.call_each_piece_a_bc98a4c1")}>
             <div className="space-y-1">
               <Input
-                aria-label="Call each piece a"
+                aria-label={l10n("local.call_each_piece_a_bc98a4c1")}
                 value={breakdownPieceNoun}
                 onChange={(event) => setBreakdownPieceNoun(event.target.value)}
-                placeholder="piece"
+                placeholder={l10n("local.piece_34235a2c")}
                 className="h-10 w-full max-w-sm"
               />
               <p className="text-xs text-muted-foreground">
-                Drives copy on this case (e.g. “3 of 5 {breakdownPieceNounPlural} finished”)
-              </p>
+                {l10n("local.drives_copy_on_this_case_e_g_3_of_5_e3d8908b")}{" "}{breakdownPieceNounPlural} {l10n("local.finished_89269f0e")}</p>
             </div>
           </FieldRow>
-          <FieldRow label="Carry over">
+          <FieldRow label={l10n("local.carry_over_585af0c1")}>
             <div className="space-y-2">
               <div className="space-y-1 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs">
                 <p className="text-muted-foreground">
-                  Values are copied from this item and its ancestors. New eligible fields stay on unless you uncheck them.
-                </p>
+                  {l10n("local.values_are_copied_from_this_item_and_its_ance_184a0537")}</p>
                 {breakdownTargetPipelineId ? (
                   <div className="flex flex-wrap items-center gap-1 text-muted-foreground">
-                    <span>Destination validation:</span>
+                    <span>{l10n("local.destination_validation_9ece9648")}</span>
                     <span className="font-medium text-foreground">
-                      {breakdownTargetPipeline?.name ?? "selected pipeline"}
+                      {breakdownTargetPipeline?.name ?? l10n("local.selected_pipeline_e3efb28b")}
                     </span>
                     {breakdownIntakeStageName ? (
                       <>
@@ -2417,15 +2414,13 @@ export function PipelineSettings() {
                     to={breakdownIntakeSettingsHref}
                     className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
                   >
-                    Review destination fields
-                    <ArrowUpRight className="h-3 w-3" />
+                    {l10n("local.review_destination_fields_aa31913e")}<ArrowUpRight className="h-3 w-3" />
                   </Link>
                 ) : null}
                 {breakdownTargetArchived ? (
                   <p className="flex items-center gap-1 text-amber-700 dark:text-amber-300">
                     <Archive className="h-3 w-3 shrink-0" />
-                    This destination pipeline is archived, so its validation fields can't be edited until it's restored.
-                  </p>
+                    {l10n("local.this_destination_pipeline_is_archived_so_its_df5ba304")}</p>
                 ) : null}
               </div>
               {breakdownCarryOverFieldGroups.length > 0 ? (
@@ -2464,11 +2459,11 @@ export function PipelineSettings() {
                               <span className="flex-1">{field.label}</span>
                               {targetField?.required ? (
                                 <span className="text-xs text-muted-foreground">
-                                  Required by {breakdownTargetPipeline?.name ?? "destination"}
+                                  {l10n("local.required_by_9bab66cb")}{" "}{breakdownTargetPipeline?.name ?? l10n("local.destination_b5c755aa")}
                                 </span>
                               ) : targetField ? (
                                 <span className="text-xs text-muted-foreground">
-                                  Validated by {breakdownTargetPipeline?.name ?? "destination"}
+                                  {l10n("local.validated_by_0156ee46")}{" "}{breakdownTargetPipeline?.name ?? l10n("local.destination_b5c755aa")}
                                 </span>
                               ) : null}
                             </label>
@@ -2481,31 +2476,30 @@ export function PipelineSettings() {
               ) : null}
               {breakdownCarryOverFieldGroups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  This pipeline and its ancestors do not define any fields that can be carried over yet.
-                </p>
+                  {l10n("local.this_pipeline_and_its_ancestors_do_not_define_864a4679")}</p>
               ) : null}
               <p className="text-xs text-muted-foreground">
-                Name and title fields are kept unique for each new {breakdownPieceNoun.trim() || "piece"}.
+                {l10n("local.name_and_title_fields_are_kept_unique_for_eac_17ea3976")}{" "}{breakdownPieceNoun.trim() || l10n("local.piece_34235a2c")}.
               </p>
             </div>
           </FieldRow>
-          <FieldRow label="Then move this case to">
+          <FieldRow label={l10n("local.then_move_this_case_to_6eb8ce44")}>
             <div className="space-y-1">
               <select
-                aria-label="Then move this case to"
+                aria-label={l10n("local.then_move_this_case_to_6eb8ce44")}
                 value={breakdownAdvanceTo}
                 onChange={(event) => setBreakdownAdvanceTo(event.target.value)}
                 className="h-10 w-full max-w-sm rounded-md border border-input bg-background px-3 text-sm"
               >
-                <option value="">Stay on this step</option>
+                <option value="">{l10n("local.stay_on_this_step_d9c0a2a6")}</option>
                 {otherStages.map((stage) => (
                   <option key={stage.id} value={stage.key}>{stage.name}</option>
                 ))}
               </select>
-              <p className="text-xs text-muted-foreground">As soon as the pieces are created</p>
+              <p className="text-xs text-muted-foreground">{l10n("local.as_soon_as_the_pieces_are_created_cc5a44dc")}</p>
             </div>
           </FieldRow>
-          <FieldRow label="Wait">
+          <FieldRow label={l10n("local.wait_26b83994")}>
             <div className="space-y-2">
               <label className="flex items-start gap-2 text-sm">
                 <input
@@ -2521,24 +2515,23 @@ export function PipelineSettings() {
                   }}
                 />
                 <span className="font-medium text-foreground">
-                  Wait until all {breakdownPieceNounPlural} are finished, then move it to
-                </span>
+                  {l10n("local.wait_until_all_ee422050")}{" "}{breakdownPieceNounPlural} {l10n("local.are_finished_then_move_it_to_c335ae64")}</span>
               </label>
               <select
-                aria-label="Move this case when all pieces finish"
+                aria-label={l10n("local.move_this_case_when_all_pieces_finish_53f2c1bd")}
                 value={breakdownWhenFinishedMoveTo}
                 onChange={(event) => setBreakdownWhenFinishedMoveTo(event.target.value)}
                 disabled={!breakdownWaitForPieces}
                 className="h-10 w-full max-w-sm rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
               >
-                <option value="">Choose a stage</option>
+                <option value="">{l10n("local.choose_a_stage_15a9299c")}</option>
                 {otherStages.map((stage) => (
                   <option key={stage.id} value={stage.key}>{stage.name}</option>
                 ))}
               </select>
               {breakdownAdvanceTo ? (
                 <p className="text-xs text-muted-foreground">
-                  If nothing is worth splitting, this case still moves to {breakdownCopyNames.advanceToName}.
+                  {l10n("local.if_nothing_is_worth_splitting_this_case_still_80d81bd2")}{" "}{breakdownCopyNames.advanceToName}.
                 </p>
               ) : null}
             </div>
@@ -2566,11 +2559,10 @@ export function PipelineSettings() {
       >
         <div className="mb-3 flex items-start justify-between gap-3">
           <Link to={`/pipelines/${pipeline.id}`} className="text-sm text-muted-foreground hover:text-foreground">
-            Back to board
-          </Link>
+            {l10n("local.back_to_board_b58959bb")}</Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" size="icon" className="h-8 w-8" title="Pipeline actions">
+              <Button type="button" variant="outline" size="icon" className="h-8 w-8" title={l10n("local.pipeline_actions_b6de8e33")}>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -2578,13 +2570,11 @@ export function PipelineSettings() {
               {isArchived ? (
                 <DropdownMenuItem onSelect={() => archivePipeline.mutate(false)}>
                   <Archive className="h-4 w-4" />
-                  Restore pipeline
-                </DropdownMenuItem>
+                  {l10n("local.restore_pipeline_689140b1")}</DropdownMenuItem>
               ) : (
                 <DropdownMenuItem variant="destructive" onSelect={() => setArchiveDialogOpen(true)}>
                   <Archive className="h-4 w-4" />
-                  Archive pipeline
-                </DropdownMenuItem>
+                  {l10n("local.archive_pipeline_959e7cee")}</DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -2592,9 +2582,9 @@ export function PipelineSettings() {
         <div className="grid gap-3 md:grid-cols-(--gtc-13) md:items-end">
           <div className="space-y-3">
             <label className="block space-y-1.5 text-sm font-medium">
-              <span className="sr-only">Pipeline name</span>
+              <span className="sr-only">{l10n("local.pipeline_name_5ba23939")}</span>
               <Input
-                aria-label="Pipeline name"
+                aria-label={l10n("local.pipeline_name_5ba23939")}
                 value={pipelineName}
                 onChange={(event) => setPipelineName(event.target.value)}
                 required
@@ -2602,13 +2592,13 @@ export function PipelineSettings() {
               />
             </label>
             <label className="block space-y-1.5 text-sm font-medium">
-              <span className="sr-only">Pipeline description</span>
+              <span className="sr-only">{l10n("local.pipeline_description_65e6d866")}</span>
               <Textarea
-                aria-label="Pipeline description"
+                aria-label={l10n("local.pipeline_description_65e6d866")}
                 value={pipelineDescription}
                 onChange={(event) => setPipelineDescription(event.target.value)}
                 rows={2}
-                placeholder="Add a description"
+                placeholder={l10n("local.add_a_description_e707b452")}
                 className="min-h-0 resize-none border-0 bg-transparent px-0 py-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
               />
             </label>
@@ -2616,7 +2606,7 @@ export function PipelineSettings() {
           {detailsDirty || savePipelineDetails.isPending ? (
             <Button type="submit" disabled={savePipelineDetails.isPending || !pipelineName.trim()}>
               <Save className="h-4 w-4" />
-              {savePipelineDetails.isPending ? "Saving..." : "Save details"}
+              {savePipelineDetails.isPending ? l10n("local.saving_dc85af8f") : l10n("local.save_details_bb76faab")}
             </Button>
           ) : null}
         </div>
@@ -2664,30 +2654,28 @@ export function PipelineSettings() {
                             {warningCount > 0 ? (
                               <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
                                 <AlertTriangle className="h-3.5 w-3.5" />
-                                {warningCount} {warningCount === 1 ? "warning" : "warnings"}
+                                {warningCount} {warningCount === 1 ? l10n("local.warning_4bd9354b") : l10n("local.warnings_227690d7")}
                               </span>
                             ) : null}
                           </span>
-                          <span className="mt-1 block text-xs text-muted-foreground">Step {index + 1}</span>
+                          <span className="mt-1 block text-xs text-muted-foreground">{l10n("local.step_8e6a6cca")}{" "}{index + 1}</span>
                           {stageNewEntriesDisabled(stage) ? (
                             <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300">
                               <AlertTriangle className="h-3 w-3" />
-                              New entries paused
-                            </span>
+                              {l10n("local.new_entries_paused_e3c983a1")}</span>
                           ) : null}
                         </button>
                         <Link
                           to={`/pipelines/${pipelineId}`}
                           className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
                         >
-                          View queue
-                          <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                          {l10n("local.view_queue_e700ab00")}<ArrowUpRight className="h-3 w-3" aria-hidden="true" />
                         </Link>
                       </div>
                       {canInsertAfter ? (
                         <button
                           type="button"
-                          aria-label={`Insert stage after ${stage.name}`}
+                          aria-label={l10n("local.insert_stage_after_value_c7361901", {v0: (stage.name)})}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                           onClick={() => addStage.mutate(stage)}
                           disabled={addStage.isPending}
@@ -2735,8 +2723,8 @@ export function PipelineSettings() {
                             newEntriesDisabled &&
                               "border-amber-500/50 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300",
                           )}
-                          title={newEntriesDisabled ? "Resume new entries" : "Pause new entries"}
-                          aria-label={newEntriesDisabled ? "Resume new entries" : "Pause new entries"}
+                          title={newEntriesDisabled ? l10n("local.resume_new_entries_a1c1fec8") : l10n("local.pause_new_entries_dffbb84c")}
+                          aria-label={newEntriesDisabled ? l10n("local.resume_new_entries_a1c1fec8") : l10n("local.pause_new_entries_dffbb84c")}
                           onClick={() => setNewEntriesDisabled((value) => !value)}
                         >
                           {newEntriesDisabled ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
@@ -2746,8 +2734,8 @@ export function PipelineSettings() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 text-destructive hover:text-destructive"
-                          title={`Delete ${selectedStage.name}`}
-                          aria-label={`Delete ${selectedStage.name}`}
+                          title={l10n("local.delete_value_cd822e07", {v0: (selectedStage.name)})}
+                          aria-label={l10n("local.delete_value_cd822e07", {v0: (selectedStage.name)})}
                           onClick={() => setDeleteStageDialogOpen(true)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -2764,17 +2752,17 @@ export function PipelineSettings() {
                   {activeStageSection === "instructions" ? (
                     <div className="w-full max-w-3xl">
                       <div className="divide-y divide-border border-b border-border">
-                        <FieldRow label="Name">
+                        <FieldRow label={l10n("local.name_dcd1d522")}>
                           <Input value={stageName} onChange={(event) => setStageName(event.target.value)} required />
                         </FieldRow>
-                        <FieldRow label="Step type">
+                        <FieldRow label={l10n("local.step_type_23d0ef5b")}>
                           <div className="max-w-xl space-y-2">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  aria-label="Step type"
+                                  aria-label={l10n("local.step_type_23d0ef5b")}
                                   className="h-auto min-h-10 w-full justify-between whitespace-normal px-3 py-2 text-left"
                                 >
                                   <span className="flex min-w-0 items-center gap-2">
@@ -2814,18 +2802,18 @@ export function PipelineSettings() {
                         </FieldRow>
 
                         {stageKind === "review" ? (
-                          <FieldRow label="Approver">
+                          <FieldRow label={l10n("local.approver_3ebb5648")}>
                             <InlineEntitySelector
                               value={selectedApproval === "any_human" ? "" : selectedApproval}
                               options={approvalOptions}
                               recentOptionIds={recentAssigneeOptionIds}
-                              placeholder="Approver"
-                              noneLabel="Any human"
-                              searchPlaceholder="Search approvers..."
-                              emptyMessage="No approvers found."
+                              placeholder={l10n("local.approver_3ebb5648")}
+                              noneLabel={l10n("local.any_human_f4ae4736")}
+                              searchPlaceholder={l10n("local.search_approvers_14a9f989")}
+                              emptyMessage={l10n("local.no_approvers_found_f1a7922d")}
                               onChange={(value) => setSelectedApproval(approverValueFromOption(value))}
                               renderTriggerValue={(option) => {
-                                if (!option) return <span className="text-muted-foreground">Any human</span>;
+                                if (!option) return <span className="text-muted-foreground">{l10n("local.any_human_f4ae4736")}</span>;
                                 const agent = option.id.startsWith("agent:") ? agentById.get(option.id.slice("agent:".length)) : null;
                                 return (
                                   <>
@@ -2849,7 +2837,7 @@ export function PipelineSettings() {
                         ) : null}
 
                         {stageKind === "review" ? (
-                          <FieldRow label="Review outcomes">
+                          <FieldRow label={l10n("local.review_outcomes_c4a2bb75")}>
                             <div className="space-y-2">
                               {([
                                 ["Approved items move to", approveTarget, setApproveTarget, "Choose a stage"],
@@ -2875,13 +2863,13 @@ export function PipelineSettings() {
                                 </div>
                               ))}
                               <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-(--gtc-42)">
-                                <span className="text-sm font-medium">Ask for a note when requesting changes</span>
+                                <span className="text-sm font-medium">{l10n("local.ask_for_a_note_when_requesting_changes_c2d3b51c")}</span>
                                 <div className="sm:justify-self-start">
                                   <ToggleSwitch checked={requireRequestChangesReason} onCheckedChange={setRequireRequestChangesReason} />
                                 </div>
                               </div>
                               <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-(--gtc-42)">
-                                <span className="text-sm font-medium">Ask for a note when declining</span>
+                                <span className="text-sm font-medium">{l10n("local.ask_for_a_note_when_declining_3c63a1df")}</span>
                                 <div className="sm:justify-self-start">
                                   <ToggleSwitch checked={requireRejectReason} onCheckedChange={setRequireRejectReason} />
                                 </div>
@@ -2889,8 +2877,7 @@ export function PipelineSettings() {
                             </div>
                             {reviewTargetsMissing ? (
                               <p className="mt-2 text-sm text-muted-foreground">
-                                Pick where approved and declined items should go before saving.
-                              </p>
+                                {l10n("local.pick_where_approved_and_declined_items_should_d7bc4720")}</p>
                             ) : null}
                           </FieldRow>
                         ) : null}
@@ -2903,18 +2890,18 @@ export function PipelineSettings() {
                     <div className="mt-8 w-full max-w-3xl space-y-6">
                       <div className="overflow-x-auto overscroll-x-contain">
                         <div className="inline-flex min-w-full flex-wrap items-center gap-2 text-sm text-muted-foreground sm:min-w-max sm:flex-nowrap">
-                          <span>When an item enters this step</span>
+                          <span>{l10n("local.when_an_item_enters_this_step_9e82510a")}</span>
                           <InlineEntitySelector
                             value={stageAssigneeOptionId(stageAssigneeAgentId)}
                             options={stageAssigneeOptions}
                             recentOptionIds={recentAssigneeOptionIds}
-                            placeholder="Pick agent"
-                            noneLabel="No automation"
-                            searchPlaceholder="Search agents..."
-                            emptyMessage="No agents found."
+                            placeholder={l10n("local.pick_agent_867bb608")}
+                            noneLabel={l10n("local.no_automation_43b54777")}
+                            searchPlaceholder={l10n("local.search_agents_32f4468b")}
+                            emptyMessage={l10n("local.no_agents_found_61666542")}
                             onChange={(value) => setStageAssigneeAgentId(stageAssigneeIdFromOption(value))}
                             renderTriggerValue={(option) => {
-                              if (!option) return <span className="text-muted-foreground">Pick agent</span>;
+                              if (!option) return <span className="text-muted-foreground">{l10n("local.pick_agent_867bb608")}</span>;
                               const agent = stageAssigneeIdFromOption(option.id)
                                 ? agentById.get(stageAssigneeIdFromOption(option.id))
                                 : null;
@@ -2937,23 +2924,23 @@ export function PipelineSettings() {
                               );
                             }}
                           />
-                          <span>runs these instructions, then moves the item to the next step.</span>
+                          <span>{l10n("local.runs_these_instructions_then_moves_the_item_t_8e3a03a2")}</span>
                         </div>
                       </div>
 
                       {selectedAutomationAgent ? (
                         <>
                           <div className="divide-y divide-border border-y border-border">
-                            <FieldRow label="Project context">
+                            <FieldRow label={l10n("local.project_context_121099a0")}>
                               <div className="grid gap-2 sm:grid-cols-(--gtc-43)">
                                 <InlineEntitySelector
                                   value={stageProjectId}
                                   options={projectOptions}
                                   recentOptionIds={recentProjectIds}
-                                  placeholder="Project"
-                                  noneLabel="No project"
-                                  searchPlaceholder="Search projects..."
-                                  emptyMessage="No projects found."
+                                  placeholder={l10n("local.project_98595978")}
+                                  noneLabel={l10n("local.no_project_f34c2be0")}
+                                  searchPlaceholder={l10n("local.search_projects_c59dd5a3")}
+                                  emptyMessage={l10n("local.no_projects_found_26e92309")}
                                   onChange={handleAutomationProjectChange}
                                   renderTriggerValue={(option) =>
                                     option && selectedAutomationProject ? (
@@ -2965,7 +2952,7 @@ export function PipelineSettings() {
                                         <span className="truncate">{option.label}</span>
                                       </>
                                     ) : (
-                                      <span className="text-muted-foreground">Project</span>
+                                      <span className="text-muted-foreground">{l10n("local.project_98595978")}</span>
                                     )
                                   }
                                   renderOption={(option) => {
@@ -2984,36 +2971,34 @@ export function PipelineSettings() {
                                 />
                                 {selectedAutomationProject ? (
                                   <select
-                                    aria-label="Project workspace"
+                                    aria-label={l10n("local.project_workspace_ce016e7f")}
                                     value={stageProjectWorkspaceId}
                                     onChange={(event) => handleAutomationProjectWorkspaceChange(event.target.value)}
                                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                                   >
-                                    <option value="">Project fallback</option>
+                                    <option value="">{l10n("local.project_fallback_19bf89ef")}</option>
                                     {(selectedAutomationProject.workspaces ?? []).map((workspace) => (
                                       <option key={workspace.id} value={workspace.id}>
-                                        {workspace.name}{workspace.isPrimary ? " · primary" : ""}
+                                        {workspace.name}{workspace.isPrimary ? (" " + l10n("local._primary_c81587f4")) : ""}
                                       </option>
                                     ))}
                                   </select>
                                 ) : (
                                   <div className="flex h-10 items-center rounded-md border border-dashed border-border px-3 text-sm text-muted-foreground">
-                                    Project workspace
-                                  </div>
+                                    {l10n("local.project_workspace_ce016e7f")}</div>
                                 )}
                               </div>
                               {selectedAutomationProject && !selectedAutomationProjectWorkspace ? (
                                 <p className="mt-2 text-xs text-muted-foreground">
-                                  This project has no saved workspace default. Paperclip will use the project fallback when automation runs.
-                                </p>
+                                  {l10n("local.this_project_has_no_saved_workspace_default_p_c6e087a5")}</p>
                               ) : null}
                             </FieldRow>
 
                             {selectedAutomationProject && selectedProjectSupportsExecutionWorkspace ? (
-                              <FieldRow label="Execution workspace">
+                              <FieldRow label={l10n("local.execution_workspace_d31c92b6")}>
                                 <div className="grid gap-2 sm:grid-cols-(--gtc-43)">
                                   <select
-                                    aria-label="Execution workspace mode"
+                                    aria-label={l10n("local.execution_workspace_mode_3b50be31")}
                                     value={stageExecutionWorkspacePreference || "shared_workspace"}
                                     onChange={(event) => handleAutomationExecutionWorkspacePreferenceChange(event.target.value)}
                                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
@@ -3026,12 +3011,12 @@ export function PipelineSettings() {
                                   </select>
                                   {stageExecutionWorkspacePreference === "reuse_existing" ? (
                                     <select
-                                      aria-label="Existing execution workspace"
+                                      aria-label={l10n("local.existing_execution_workspace_5f62874c")}
                                       value={stageExecutionWorkspaceId}
                                       onChange={(event) => handleAutomationExecutionWorkspaceIdChange(event.target.value)}
                                       className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                                     >
-                                      <option value="">Choose an existing workspace</option>
+                                      <option value="">{l10n("local.choose_an_existing_workspace_f8f73210")}</option>
                                       {deduplicatedReusableWorkspaces.map((workspace) => (
                                         <option key={workspace.id} value={workspace.id}>
                                           {workspace.name} · {workspace.status} · {workspace.branchName ?? workspace.cwd ?? workspace.id.slice(0, 8)}
@@ -3041,32 +3026,31 @@ export function PipelineSettings() {
                                   ) : (
                                     <div className="flex h-10 items-center rounded-md border border-dashed border-border px-3 text-sm text-muted-foreground">
                                       {stageExecutionWorkspacePreference === "isolated_workspace"
-                                        ? "A new workspace will be created"
-                                        : "Project default workspace"}
+                                        ? l10n("local.a_new_workspace_will_be_created_1ca03164")
+                                        : l10n("local.project_default_workspace_5c8cc632")}
                                     </div>
                                   )}
                                 </div>
                                 {stageExecutionWorkspacePreference === "reuse_existing" && selectedReusableExecutionWorkspace ? (
                                   <p className="mt-2 text-xs text-muted-foreground">
-                                    Reusing {selectedReusableExecutionWorkspace.name} from {selectedReusableExecutionWorkspace.branchName ?? selectedReusableExecutionWorkspace.cwd ?? "existing workspace"}.
+                                    {l10n("local.reusing_7f0f95dc")}{" "}{selectedReusableExecutionWorkspace.name} {l10n("local.from_75857a45")}{" "}{selectedReusableExecutionWorkspace.branchName ?? selectedReusableExecutionWorkspace.cwd ?? l10n("local.existing_workspace_63e42d38")}.
                                   </p>
                                 ) : null}
                                 {!canSaveAutomationWorkspace ? (
                                   <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
-                                    Choose an existing workspace before saving reuse mode.
-                                  </p>
+                                    {l10n("local.choose_an_existing_workspace_before_saving_re_76e6ba5a")}</p>
                                 ) : null}
                               </FieldRow>
                             ) : null}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <AgentAvatar agent={selectedAutomationAgent} size={16} className="h-4 w-4 shrink-0"/>
-                            <span>{selectedAutomationAgent.name} runs this step automatically.</span>
+                            <span>{selectedAutomationAgent.name} {l10n("local.runs_this_step_automatically_674a7f2f")}</span>
                           </div>
-                          <FieldRow label="Issue title">
+                          <FieldRow label={l10n("local.issue_title_baebb0f7")}>
                             <Input
                               ref={issueTitleTemplateInputRef}
-                              aria-label="Issue title template"
+                              aria-label={l10n("local.issue_title_template_512f4624")}
                               value={issueTitleTemplate}
                               onChange={(event) => setIssueTitleTemplate(event.target.value)}
                               placeholder={PIPELINE_AUTOMATION_DEFAULT_TITLE_TEMPLATE}
@@ -3076,14 +3060,13 @@ export function PipelineSettings() {
                           <AutomationVariableTokenHelper
                             groups={automationVariableGroups}
                             onInsert={insertIssueTitleVariableToken}
-                            label="Issue title variables"
+                            label={l10n("local.issue_title_variables_a589b2df")}
                           />
                           {breakdownEnabled ? (
                             <div className="space-y-1">
-                              <h3 className="text-sm font-semibold text-foreground">What should the agent decide?</h3>
+                              <h3 className="text-sm font-semibold text-foreground">{l10n("local.what_should_the_agent_decide_249ec530")}</h3>
                               <p className="text-sm text-muted-foreground">
-                                The mechanics are handled below. Write only the judgment.
-                              </p>
+                                {l10n("local.the_mechanics_are_handled_below_write_only_th_4eb413ef")}</p>
                             </div>
                           ) : null}
                           <div data-testid="stage-instructions-editor">
@@ -3093,8 +3076,8 @@ export function PipelineSettings() {
                               onChange={setInstructionsBody}
                               placeholder={
                                 breakdownEnabled
-                                  ? "Describe the judgment the agent should make — what counts as a piece worth splitting out?"
-                                  : "Tell the agent exactly what to do when an item enters this step..."
+                                  ? l10n("local.describe_the_judgment_the_agent_should_make_w_96fa7259")
+                                  : l10n("local.tell_the_agent_exactly_what_to_do_when_an_ite_8d9c6082")
                               }
                               bordered={false}
                               contentClassName="min-h-(--sz-120px) text-sm leading-7"
@@ -3167,13 +3150,13 @@ export function PipelineSettings() {
                     <div className="w-full max-w-3xl space-y-8">
                       <div className="divide-y divide-border border-b border-border">
                         <div className="py-3">
-                          <h3 className="text-sm font-semibold text-foreground">Transitions</h3>
+                          <h3 className="text-sm font-semibold text-foreground">{l10n("local.transitions_700bb6e8")}</h3>
                         </div>
-                        <FieldRow label="Strict mode">
+                        <FieldRow label={l10n("local.strict_mode_9f19fe13")}>
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-3">
                               <ToggleSwitch
-                                aria-label="Strictly enforce transitions"
+                                aria-label={l10n("local.strictly_enforce_transitions_4ee5c089")}
                                 checked={strictTransitionsEnabled}
                                 disabled={saveStrictTransitions.isPending}
                                 onCheckedChange={(checked) => {
@@ -3182,13 +3165,12 @@ export function PipelineSettings() {
                                 }}
                               />
                               <span className="text-sm font-medium text-foreground">
-                                Strictly enforce transitions
-                              </span>
+                                {l10n("local.strictly_enforce_transitions_4ee5c089")}</span>
                             </div>
                             <p className="max-w-2xl text-sm text-muted-foreground">
                               {strictTransitionsEnabled
-                                ? "Items can only move to configured next steps. Operators can force an off-path move by giving a reason."
-                                : "Items can move to any step. Saved allowed-next-step choices are kept, but they are not enforced."}
+                                ? l10n("local.items_can_only_move_to_configured_next_steps_b2437421")
+                                : l10n("local.items_can_move_to_any_step_saved_allowed_next_0a4e207d")}
                             </p>
                           </div>
                         </FieldRow>
@@ -3202,9 +3184,9 @@ export function PipelineSettings() {
                       ) : (
                         <div className="divide-y divide-border border-b border-border">
                           <div className="py-3">
-                            <h3 className="text-sm font-semibold text-foreground">Children</h3>
+                            <h3 className="text-sm font-semibold text-foreground">{l10n("local.children_3583a358")}</h3>
                           </div>
-                          <FieldRow label="Block children">
+                          <FieldRow label={l10n("local.block_children_7f9c1c06")}>
                             <div className="space-y-1.5">
                               <div className="flex items-center gap-3">
                                 <ToggleSwitch
@@ -3212,15 +3194,13 @@ export function PipelineSettings() {
                                   onCheckedChange={setRequireChildrenTerminal}
                                 />
                                 <span className="text-sm font-medium text-foreground">
-                                  Block until all child items are done or cancelled
-                                </span>
+                                  {l10n("local.block_until_all_child_items_are_done_or_cance_ec438bc8")}</span>
                               </div>
                               <p className="max-w-2xl text-sm text-muted-foreground">
-                                When on, this step can't move forward while any child item is still open. When off, items can move through even with open children.
-                              </p>
+                                {l10n("local.when_on_this_step_can_t_move_forward_while_an_a7aef544")}</p>
                             </div>
                           </FieldRow>
-                          <FieldRow label="Advance children">
+                          <FieldRow label={l10n("local.advance_children_6031ef68")}>
                             <div className="space-y-3">
                               <div className="flex items-center gap-3">
                                 <ToggleSwitch
@@ -3230,27 +3210,25 @@ export function PipelineSettings() {
                                   }}
                                 />
                                 <span className="text-sm font-medium text-foreground">
-                                  Advance when the last child is done
-                                </span>
+                                  {l10n("local.advance_when_the_last_child_is_done_168dc8a7")}</span>
                               </div>
                               <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-(--gtc-44)">
-                                <span className="text-sm font-medium text-muted-foreground">Move to</span>
+                                <span className="text-sm font-medium text-muted-foreground">{l10n("local.move_to_beb8194b")}</span>
                                 <select
-                                  aria-label="Move to stage when children finish"
+                                  aria-label={l10n("local.move_to_stage_when_children_finish_ffd452be")}
                                   value={autoAdvanceOnChildrenTerminal}
                                   onChange={(event) => setAutoAdvanceOnChildrenTerminal(event.target.value)}
                                   disabled={!autoAdvanceOnChildrenTerminal}
                                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
                                 >
-                                  <option value="">Choose a stage</option>
+                                  <option value="">{l10n("local.choose_a_stage_15a9299c")}</option>
                                   {otherStages.map((stage) => (
                                     <option key={stage.id} value={stage.key}>{stage.name}</option>
                                   ))}
                                 </select>
                               </div>
                               <p className="max-w-2xl text-sm text-muted-foreground">
-                                When on and every child is done, this step moves the item forward automatically. When off, someone has to move it.
-                              </p>
+                                {l10n("local.when_on_and_every_child_is_done_this_step_mov_1166019f")}</p>
                             </div>
                           </FieldRow>
                         </div>
@@ -3266,7 +3244,7 @@ export function PipelineSettings() {
                         <StageEventsList
                           events={stageEvents}
                           stages={stages}
-                          emptyMessage="No stage activity yet."
+                          emptyMessage={l10n("local.no_stage_activity_yet_32aadf73")}
                         />
                       )}
                     </div>
@@ -3296,14 +3274,14 @@ export function PipelineSettings() {
               {stageDirty || saveStage.isPending ? (
                 <div className="sticky bottom-0 z-10 -mx-6 mt-6 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-6 py-3 backdrop-blur motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2">
                   <span className="text-sm text-muted-foreground">
-                    {saveStage.isPending ? "Saving changes…" : "You have unsaved changes."}
+                    {saveStage.isPending ? l10n("local.saving_changes_39520758") : l10n("local.you_have_unsaved_changes_4e0a4324")}
                   </span>
                   <Button
                     type="submit"
                     disabled={saveStage.isPending || !stageName.trim() || reviewTargetsMissing || !canSaveAutomationWorkspace}
                   >
                     {saveStage.isPending ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                    {saveStage.isPending ? "Saving..." : "Save stage"}
+                    {saveStage.isPending ? l10n("local.saving_dc85af8f") : l10n("local.save_stage_954df125")}
                   </Button>
                 </div>
               ) : null}
@@ -3316,17 +3294,16 @@ export function PipelineSettings() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete stage</DialogTitle>
+            <DialogTitle>{l10n("local.delete_stage_0e8ac379")}</DialogTitle>
             <DialogDescription>
-              Delete {selectedStage?.name ?? "this stage"} from this pipeline. Connected stage transitions are removed.
-            </DialogDescription>
+              {l10n("local.delete_e2d0a549")}{" "}{selectedStage?.name ?? l10n("local.this_stage_c24d9e1e")} {l10n("local.from_this_pipeline_connected_stage_transition_85a944da")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {stages.length > 1 ? (
               <label className="block space-y-1.5 text-sm font-medium">
-                <span>Move existing items to</span>
+                <span>{l10n("local.move_existing_items_to_79267c85")}</span>
                 <select
-                  aria-label="Move existing items to"
+                  aria-label={l10n("local.move_existing_items_to_79267c85")}
                   value={deleteMoveTargetStageId}
                   onChange={(event) => setDeleteMoveTargetStageId(event.target.value)}
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
@@ -3340,8 +3317,7 @@ export function PipelineSettings() {
               </label>
             ) : (
               <p className="text-sm text-muted-foreground">
-                This is the only stage. Deletion succeeds only if it has no items.
-              </p>
+                {l10n("local.this_is_the_only_stage_deletion_succeeds_only_3230b105")}</p>
             )}
             {deleteStage.error ? (
               <p className="text-sm text-destructive">{deleteStage.error.message}</p>
@@ -3354,8 +3330,7 @@ export function PipelineSettings() {
               onClick={() => setDeleteStageDialogOpen(false)}
               disabled={deleteStage.isPending}
             >
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               type="button"
               variant="destructive"
@@ -3363,7 +3338,7 @@ export function PipelineSettings() {
               onClick={() => deleteStage.mutate()}
             >
               <Trash2 className="h-4 w-4" />
-              {deleteStage.isPending ? "Deleting..." : "Delete stage"}
+              {deleteStage.isPending ? l10n("local.deleting_685ecb98") : l10n("local.delete_stage_0e8ac379")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3378,16 +3353,15 @@ export function PipelineSettings() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Archive pipeline</DialogTitle>
+            <DialogTitle>{l10n("local.archive_pipeline_959e7cee")}</DialogTitle>
             <DialogDescription>
-              Archiving hides this pipeline from everyday views. Its stages and items are kept and can be restored later.
-            </DialogDescription>
+              {l10n("local.archiving_hides_this_pipeline_from_everyday_v_365905aa")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <label className="block space-y-1.5 text-sm font-medium">
-              <span>Type {pipeline.name} to confirm</span>
+              <span>{l10n("local.type_baaddf70")}{" "}{pipeline.name} {l10n("local.to_confirm_83918ed6")}</span>
               <Input
-                aria-label="Archive confirmation"
+                aria-label={l10n("local.archive_confirmation_d2326f08")}
                 value={archiveConfirmation}
                 onChange={(event) => setArchiveConfirmation(event.target.value)}
                 autoComplete="off"
@@ -3404,8 +3378,7 @@ export function PipelineSettings() {
               onClick={() => setArchiveDialogOpen(false)}
               disabled={archivePipeline.isPending}
             >
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               type="button"
               variant="destructive"
@@ -3413,7 +3386,7 @@ export function PipelineSettings() {
               onClick={() => archivePipeline.mutate(true)}
             >
               <Archive className="h-4 w-4" />
-              {archivePipeline.isPending ? "Archiving..." : "Archive pipeline"}
+              {archivePipeline.isPending ? l10n("local.archiving_6f340711") : l10n("local.archive_pipeline_959e7cee")}
             </Button>
           </DialogFooter>
         </DialogContent>

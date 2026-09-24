@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 /**
  * Single source of truth for adapter display metadata.
  *
@@ -61,94 +62,94 @@ export interface AdapterDisplayInfo {
 
 const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
   acpx_local: {
-    label: "ACPX (retired)",
-    description: "Retired standalone ACPX adapter",
+    label: l10n("local.acpx_retired_8b657a53"),
+    description: l10n("local.retired_standalone_acpx_adapter_b063be3d"),
     icon: Bot,
     comingSoon: true,
     disabledLabel: "Use Claude Code or Codex with the ACP engine",
     hideFromVisualSelection: true,
   },
   claude_local: {
-    label: "Claude Code",
-    description: "Claude Code CLI harness",
+    label: l10n("local.claude_code_246ef8c1"),
+    description: l10n("local.claude_code_cli_harness_8ef9af1e"),
     icon: Sparkles,
     recommended: true,
   },
   codex_local: {
     label: "Codex",
-    description: "Codex CLI harness",
+    description: l10n("local.codex_cli_harness_8544dfe5"),
     icon: Code,
     recommended: true,
   },
   paperclip_runner: {
-    label: "Paperclip Runner",
-    description: "Experimental Rust runner with a Codex provider",
+    label: l10n("local.paperclip_runner_aacfc564"),
+    description: l10n("local.experimental_rust_runner_with_a_codex_provide_98edf62e"),
     icon: Cpu,
     experimental: true,
   },
   gemini_local: {
     label: "Gemini CLI",
-    description: "Gemini CLI harness",
+    description: l10n("local.gemini_cli_harness_f87585b2"),
     icon: Gem,
   },
   grok_local: {
-    label: "Grok Build",
-    description: "Grok Build harness",
+    label: l10n("local.grok_build_fd3bf01a"),
+    description: l10n("local.grok_build_harness_916ba19a"),
     icon: Bot,
   },
   kimi_local: {
-    label: "Kimi Code",
-    description: "Kimi Code CLI harness",
+    label: l10n("local.kimi_code_0c486180"),
+    description: l10n("local.kimi_code_cli_harness_92db38e8"),
     icon: Moon,
   },
   hermes_gateway: {
-    label: "Hermes Gateway",
-    description: "Remote Hermes API server",
+    label: l10n("local.hermes_gateway_10ea67a0"),
+    description: l10n("local.remote_hermes_api_server_120e74ee"),
     icon: Bot,
     hideFromVisualSelection: true,
   },
   hermes_local: {
     label: "Hermes",
-    description: "Hermes harness",
+    description: l10n("local.hermes_harness_1709feea"),
     icon: Bot,
   },
   opencode_local: {
     label: "OpenCode",
-    description: "OpenCode multi-provider harness",
+    description: l10n("local.opencode_multi_provider_harness_b8f8e337"),
     icon: OpenCodeLogoIcon,
   },
   pi_local: {
     label: "Pi",
-    description: "Pi harness",
+    description: l10n("local.pi_harness_19e155b1"),
     icon: Terminal,
   },
   cursor: {
     label: "Cursor",
-    description: "Cursor CLI harness",
+    description: l10n("local.cursor_cli_harness_473f101c"),
     icon: MousePointer2,
   },
   cursor_cloud: {
     label: "Cursor Cloud",
-    description: "Managed remote Cursor agent",
+    description: l10n("local.managed_remote_cursor_agent_201c0c40"),
     icon: MousePointer2,
   },
   openclaw_gateway: {
-    label: "OpenClaw Gateway",
-    description: "External gateway adapter",
+    label: l10n("local.openclaw_gateway_b0371788"),
+    description: l10n("local.external_gateway_adapter_73f25264"),
     icon: Bot,
     comingSoon: true,
     disabledLabel: "Invite external agents from the add-agent modal",
     hideFromVisualSelection: true,
   },
   process: {
-    label: "Process",
-    description: "Internal process adapter",
+    label: l10n("local.process_e083bd83"),
+    description: l10n("local.internal_process_adapter_485c4b0a"),
     icon: Cpu,
     comingSoon: true,
   },
   http: {
     label: "HTTP",
-    description: "Internal HTTP adapter",
+    description: l10n("local.internal_http_adapter_6036685c"),
     icon: Cpu,
     comingSoon: true,
   },
@@ -195,7 +196,7 @@ export function getAdapterDisplay(type: string): AdapterDisplayInfo {
   const label = withSuffix(humanizeType(type), suffix);
   return {
     label,
-    description: suffix ? `External ${suffix} adapter` : "External adapter",
+    description: suffix ? l10n("local.external_value_adapter_d6e40c7d", {v0: (suffix)}) : l10n("local.external_adapter_0ff88083"),
     icon: Cpu,
   };
 }

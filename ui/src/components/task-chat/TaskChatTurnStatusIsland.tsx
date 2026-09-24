@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
@@ -115,7 +116,7 @@ function checklistIcon(step: TaskChatProtocolStep) {
 }
 
 function fileCountLabel(files: number): string {
-  return `${files} ${files === 1 ? "file" : "files"} changed`;
+  return l10n("local.value_value_changed_db65cf07", {v0: (files), v1: (files === 1 ? "file" : "files")});
 }
 
 function IslandBody({ model }: { model: TaskChatTurnStatusModel }) {
@@ -131,7 +132,7 @@ function IslandBody({ model }: { model: TaskChatTurnStatusModel }) {
         <span className="flex shrink-0 items-center gap-2">
           {planIcon(plan)}
           <span className="font-mono text-sm tabular-nums" aria-live="polite" aria-atomic="true">
-            Step {plan.currentStepIndex + 1} / {plan.steps.length}
+            {l10n("local.step_8e6a6cca")}{" "}{plan.currentStepIndex + 1} / {plan.steps.length}
             <span className="sr-only">: {plan.steps[plan.currentStepIndex]?.label}</span>
           </span>
         </span>
@@ -248,7 +249,7 @@ export function TaskChatTurnStatusIsland({ model }: { model: TaskChatTurnStatusM
         align="center"
         sideOffset={8}
         className="w-(--sz-turn-status-popover) p-2"
-        aria-label="Turn plan"
+        aria-label={l10n("local.turn_plan_e2e8da4d")}
         onPointerEnter={(event) => {
           if (event.pointerType === "mouse") cancelClose();
         }}
@@ -258,7 +259,7 @@ export function TaskChatTurnStatusIsland({ model }: { model: TaskChatTurnStatusM
         onEscapeKeyDown={() => setPinned(false)}
         onInteractOutside={() => setPinned(false)}
       >
-        <ol className="flex flex-col gap-1" aria-label="Within-turn checklist">
+        <ol className="flex flex-col gap-1" aria-label={l10n("local.within_turn_checklist_985ce887")}>
           {plan.steps.map((step, index) => (
             <li
               key={step.id}

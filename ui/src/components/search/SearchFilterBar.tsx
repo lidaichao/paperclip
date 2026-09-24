@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useMemo } from "react";
 import { User, UserX } from "lucide-react";
 import {
@@ -163,45 +164,45 @@ export function SearchFilterBar({
   return (
     <div className="flex flex-wrap items-center gap-1.5" data-testid="search-filter-bar">
       <SearchFilterMenu
-        label="Status"
+        label={l10n("local.status_920e413c")}
         multi
         options={options.status}
         selected={filters.status ?? []}
         onToggle={(value) => toggleMulti("status", value)}
         onClear={() => onChange({ ...filters, status: [] })}
-        presets={[{ label: "Open items", values: OPEN_STATUS_PRESET }]}
+        presets={[{ label: l10n("local.open_items_161e4d50"), values: OPEN_STATUS_PRESET }]}
       />
       <SearchFilterMenu
-        label="Assignee"
+        label={l10n("local.assignee_5e20d20e")}
         options={options.assignee}
         selected={selectedAssignee ? [selectedAssignee] : []}
         onSelect={(value) => onChange(applyAssigneeToken(filters, value, data.currentUserId))}
         searchable
-        searchPlaceholder="Search assignees…"
-        emptyMessage="No assignees"
+        searchPlaceholder={l10n("local.search_assignees_12019555")}
+        emptyMessage={l10n("local.no_assignees_27980ffd")}
       />
       <SearchFilterMenu
-        label="Project"
+        label={l10n("local.project_98595978")}
         options={options.project}
         selected={filters.projectId ? [filters.projectId] : []}
         onSelect={(value) => onChange({ ...filters, projectId: value })}
         searchable
-        searchPlaceholder="Search projects…"
-        emptyMessage="No projects"
+        searchPlaceholder={l10n("local.search_projects_b0c5facf")}
+        emptyMessage={l10n("local.no_projects_97353c7b")}
       />
       <SearchFilterMenu
-        label="Label"
+        label={l10n("local.label_0e66373f")}
         options={options.label}
         selected={filters.labelId ? [filters.labelId] : []}
         onSelect={(value) => onChange({ ...filters, labelId: value })}
         searchable
-        searchPlaceholder="Search labels…"
-        emptyMessage="No labels"
+        searchPlaceholder={l10n("local.search_labels_6baf3082")}
+        emptyMessage={l10n("local.no_labels_3ffc3b71")}
       />
       {/* PAP-411: Priority filter menu hidden behind SHOW_TASK_PRIORITY_UI (search DSL stays intact). */}
       {SHOW_TASK_PRIORITY_UI && (
       <SearchFilterMenu
-        label="Priority"
+        label={l10n("local.priority_d60dbba0")}
         multi
         options={options.priority}
         selected={filters.priority ?? []}
@@ -210,7 +211,7 @@ export function SearchFilterBar({
       />
       )}
       <SearchFilterMenu
-        label="Updated"
+        label={l10n("local.updated_3a5ecca1")}
         options={options.updated}
         selected={filters.updatedWithin ? [filters.updatedWithin] : []}
         onSelect={(value) => onChange({ ...filters, updatedWithin: value })}

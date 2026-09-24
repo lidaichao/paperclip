@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useId } from "react";
 import { Loader2, Pause, Play } from "lucide-react";
 import { Link } from "@/lib/router";
@@ -35,12 +36,12 @@ export function TaskChatPausedTakeover({
         <Pause aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-(--status-task-icon-todo)" />
         <div className="flex min-w-0 flex-col gap-1">
           <h2 id={headingId} className="text-sm font-medium text-foreground">
-            {subtree ? "Subtree is paused." : "Task is paused."}
+            {subtree ? l10n("local.subtree_is_paused_f9ebf72d") : l10n("local.task_is_paused_fb9c04c9")}
           </h2>
           <p className="text-sm text-muted-foreground">
             {subtree
-              ? "Resume this subtree to send a message."
-              : "Resume this task to send a message."}
+              ? l10n("local.resume_this_subtree_to_send_a_message_1f80fbce")
+              : l10n("local.resume_this_task_to_send_a_message_24253739")}
           </p>
         </div>
       </div>
@@ -51,11 +52,11 @@ export function TaskChatPausedTakeover({
       ) : null}
       <div className="flex flex-wrap items-center justify-end gap-3">
         {hasDraft ? (
-          <p className="mr-auto text-xs text-muted-foreground">Your draft is saved.</p>
+          <p className="mr-auto text-xs text-muted-foreground">{l10n("local.your_draft_is_saved_58c808d9")}</p>
         ) : null}
         {resumeHref ? (
           <Button asChild size="sm" className="bg-(--status-agent-paused) text-foreground hover:bg-(--status-agent-paused)/80 dark:text-background">
-            <Link to={resumeHref}><Play aria-hidden="true" />Resume subtree</Link>
+            <Link to={resumeHref}><Play aria-hidden="true" />{l10n("local.resume_subtree_b3820988")}</Link>
           </Button>
         ) : (
           <Button
@@ -65,7 +66,7 @@ export function TaskChatPausedTakeover({
             className="bg-(--status-agent-paused) text-foreground hover:bg-(--status-agent-paused)/80 dark:text-background"
           >
             {pending ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Play aria-hidden="true" />}
-            {pending ? "Resuming…" : subtree ? "Resume subtree" : "Resume task"}
+            {pending ? l10n("local.resuming_c494e3ca") : subtree ? l10n("local.resume_subtree_b3820988") : l10n("local.resume_task_c697c056")}
           </Button>
         )}
       </div>

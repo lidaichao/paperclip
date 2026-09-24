@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { AgentCharacter } from "../AgentCharacter";
 import { useAgentAppearanceDraft } from "../../hooks/useAgentAppearanceDraft";
 import { AiConnectionField, aiProviderForAdapter } from "../ai-connections/AiConnectionField";
@@ -77,8 +78,7 @@ export function NewAgentSetup() {
   if (!selectedCompanyId)
     return (
       <p className="text-sm text-muted-foreground">
-        Select an organization to create an agent.
-      </p>
+        {l10n("local.select_an_organization_to_create_an_agent_28b980d2")}</p>
     );
   return (
     <Setup
@@ -568,8 +568,8 @@ function Setup({
         className="text-sm text-muted-foreground"
       >
         {savedAgent.error
-          ? "Could not load the created agent. Return to Agents to view it."
-          : "Loading your agent…"}
+          ? l10n("local.could_not_load_the_created_agent_return_to_ag_07abe0b1")
+          : l10n("local.loading_your_agent_48046357")}
       </p>
     );
   if (!name || !adapterType)
@@ -591,9 +591,9 @@ function Setup({
     "saved" as const,
   ];
   const labels = {
-    connect: "Connect",
-    runtime: "Configure",
-    saved: "Confirmation",
+    connect: l10n("local.connect_1a2303ed"),
+    runtime: l10n("local.configure_6defafa2"),
+    saved: l10n("local.confirmation_d7430705"),
   };
   const confirmationEnvironment = created?.defaultEnvironmentId
     ? envs.data?.find((env) => env.id === created.defaultEnvironmentId)
@@ -612,10 +612,10 @@ function Setup({
     adapterType === "cursor_cloud"
       ? "Cursor Cloud"
       : adapterType === "hermes_gateway"
-        ? "Hermes Gateway"
+        ? l10n("local.hermes_gateway_10ea67a0")
         : confirmationEnvironment
           ? environmentDisplayLabel(confirmationEnvironment)
-          : "Local machine";
+          : l10n("local.local_machine_2424a156");
   const setupError =
     adapters.error ??
     envs.error ??
@@ -640,8 +640,8 @@ function Setup({
                 <span>
                   ·{" "}
                   {runnerProvider === "codex"
-                    ? "Native app server runner"
-                    : "Paperclip Runner"}
+                    ? l10n("local.native_app_server_runner_6254c5e6")
+                    : l10n("local.paperclip_runner_aacfc564")}
                 </span>
               )}
             </div>
@@ -659,19 +659,16 @@ function Setup({
         )}
         {adapters.data && !available && (
           <p role="alert" className="text-sm text-destructive">
-            This adapter is unavailable. Choose an enabled adapter.
-          </p>
+            {l10n("local.this_adapter_is_unavailable_choose_an_enabled_36fcb6b4")}</p>
         )}
         {(managedOnly || forced.forced) &&
           !envs.isPending &&
           !environmentId && (
             <p role="alert" className="text-sm text-destructive">
-              No managed environment is available. Configure an environment
-              before continuing.
-            </p>
+              {l10n("local.no_managed_environment_is_available_configure_3dcfbcb9")}</p>
           )}
         <div className="flex flex-col gap-8 md:flex-row">
-          <nav aria-label="Agent setup steps" className="shrink-0 md:w-44">
+          <nav aria-label={l10n("local.agent_setup_steps_1f28c3a9")} className="shrink-0 md:w-44">
             <ol className="flex flex-wrap gap-2 md:flex-col">
               {steps.map((step, index) => (
                 <li key={step}>
@@ -712,7 +709,7 @@ function Setup({
                   <OnboardingCard className="mx-auto">
                     <div className="mb-8">
                       <OnboardingHeading
-                        title="Connect a model"
+                        title={l10n("local.connect_a_model_87bdaaf8")}
                         lede={`Connect ${name} to ${connectionAdapter === "claude_local" ? "Claude" : connectionAdapter === "grok_local" ? "Grok" : "OpenAI"}.`}
                         center
                       />
@@ -752,27 +749,27 @@ function Setup({
                       <h2 className="flex items-center gap-3 text-lg font-semibold">
                         <Check className="size-5" />
                         {created.status === "pending_approval"
-                          ? "Agent submitted for approval"
-                          : "Your agent is ready"}
+                          ? l10n("local.agent_submitted_for_approval_9357fe16")
+                          : l10n("local.your_agent_is_ready_bf213d4f")}
                       </h2>
                       <dl className="grid grid-cols-2 gap-4 text-sm">
-                        <dt className="text-muted-foreground">Adapter</dt>
+                        <dt className="text-muted-foreground">{l10n("local.adapter_0252b849")}</dt>
                         <dd>{getAdapterDisplay(adapterType).label}</dd>
                         {showModel && (
                           <>
-                            <dt className="text-muted-foreground">Model</dt>
+                            <dt className="text-muted-foreground">{l10n("local.model_5e2c614c")}</dt>
                             <dd className="break-all">
                               {String(confirmationModel)}
                             </dd>
                           </>
                         )}
-                        <dt className="text-muted-foreground">Environment</dt>
+                        <dt className="text-muted-foreground">{l10n("local.environment_9e471951")}</dt>
                         <dd>{environmentLabel}</dd>
                       </dl>
                       <p className="text-sm text-muted-foreground">
                         {created.status === "pending_approval"
-                          ? "An organization administrator must approve this agent before it can work."
-                          : "Assign a task when you’re ready for this agent to work."}
+                          ? l10n("local.an_organization_administrator_must_approve_th_77d7c0ff")
+                          : l10n("local.assign_a_task_when_you_re_ready_for_this_agen_adbf2c57")}
                       </p>
                     </div>
                     <div className="flex flex-wrap justify-between gap-3">
@@ -781,8 +778,7 @@ function Setup({
                         onClick={() => navigate(`${agentUrl(created)}/runtime`)}
                       >
                         <Settings2 className="size-4" />
-                        Edit configuration
-                      </Button>
+                        {l10n("local.edit_configuration_30768100")}</Button>
                       <Button
                         disabled={created.status === "pending_approval"}
                         onClick={() =>
@@ -792,8 +788,7 @@ function Setup({
                           })
                         }
                       >
-                        Assign {created.name} a Task
-                        <ArrowRight className="size-4" />
+                        {l10n("local.assign_8ece895c")}{" "}{created.name} {l10n("local.a_task_da913ed4")}<ArrowRight className="size-4" />
                       </Button>
                     </div>
                   </div>
@@ -806,27 +801,24 @@ function Setup({
                     }}
                   >
                     <h2 className="text-xl font-semibold">
-                      Configure your agent
-                    </h2>
+                      {l10n("local.configure_your_agent_be9ca645")}</h2>
                     <fieldset disabled={busy} className="space-y-8">
                       <section className="space-y-5">
-                        <h3 className="text-sm font-semibold">Runtime</h3>
+                        <h3 className="text-sm font-semibold">{l10n("local.runtime_10931158")}</h3>
                         {aiProviderForAdapter(brandType) && (
                           connection && !aiBinding ? (
                             <div className="space-y-3">
                               <p className="text-sm text-muted-foreground">
-                                Using the connection selected in the Connect step.
-                              </p>
+                                {l10n("local.using_the_connection_selected_in_the_connect_7129ce38")}</p>
                               <Button type="button" variant="outline" onClick={() => setScreen("connect")}>
-                                Change connection
-                              </Button>
+                                {l10n("local.change_connection_286b1c9d")}</Button>
                             </div>
                           ) : (
                             <AiConnectionField companyId={companyId} agentName={name} adapterType={brandType} model={model} environmentId={environmentId ?? undefined} value={aiBinding}
                               onChange={binding => { setRuntimeAiBinding(binding); resetTest(); }} />
                           )
                         )}
-                        {models.error && <p role="alert" className="text-sm text-destructive">Could not load models. Retry or enter a model ID manually.</p>}
+                        {models.error && <p role="alert" className="text-sm text-destructive">{l10n("local.could_not_load_models_retry_or_enter_a_model_c8cad4cf")}</p>}
                         {((showModel && !usingKimiApi) ||
                           efforts.length > 0) && (
                           <div className="grid items-start gap-5 sm:grid-cols-2">
@@ -864,9 +856,9 @@ function Setup({
                               />
                             )}
                             {efforts.length > 0 && (
-                              <Field label="Thinking effort">
+                              <Field label={l10n("local.thinking_effort_264c28cb")}>
                                 <select
-                                  aria-label="Thinking effort"
+                                  aria-label={l10n("local.thinking_effort_264c28cb")}
                                   className={controlClass}
                                   value={effort}
                                   onChange={(event) => {
@@ -874,7 +866,7 @@ function Setup({
                                     resetTest();
                                   }}
                                 >
-                                  <option value="">Auto</option>
+                                  <option value="">{l10n("local.auto_02862497")}</option>
                                   {efforts.map((value) => (
                                     <option key={value} value={value}>
                                       {value}
@@ -892,16 +884,14 @@ function Setup({
                         )}
                         {showModel && models.error && (
                           <p className="text-xs text-muted-foreground">
-                            Couldn’t load models. You can enter a model ID
-                            manually.
-                          </p>
+                            {l10n("local.couldn_t_load_models_you_can_enter_a_model_id_5943c11e")}</p>
                         )}
                         {hasCredentialField && !aiBinding && (
                           <div className="grid gap-5 sm:grid-cols-2">
                             {chooseProvider && (
-                              <Field label="API key provider">
+                              <Field label={l10n("local.api_key_provider_d8551dcf")}>
                                 <select
-                                  aria-label="API key provider"
+                                  aria-label={l10n("local.api_key_provider_d8551dcf")}
                                   className={controlClass}
                                   value={provider}
                                   onChange={(event) => {
@@ -915,11 +905,11 @@ function Setup({
                                   {Object.keys(providerKeys).map((key) => (
                                     <option key={key} value={key}>
                                       {key === "openrouter"
-                                        ? "OpenRouter"
+                                        ? l10n("local.openrouter_eb70c3bc")
                                         : key === "openai"
-                                          ? "OpenAI"
+                                          ? l10n("local.openai_8b7d1a31")
                                           : key === "anthropic"
-                                            ? "Anthropic"
+                                            ? l10n("local.anthropic_744205e4")
                                             : ({
                                                 google: "Google",
                                                 xai: "xAI",
@@ -952,13 +942,13 @@ function Setup({
                                     }}
                                     placeholder={
                                       selectedBinding
-                                        ? "Using saved key"
+                                        ? l10n("local.using_saved_key_57220904")
                                         : [
                                               "cursor_cloud",
                                               "hermes_gateway",
                                             ].includes(adapterType)
-                                          ? "Required"
-                                          : "Optional if already configured"
+                                          ? l10n("local.required_4850b174")
+                                          : l10n("local.optional_if_already_configured_74f784d7")
                                     }
                                   />
                                   {adapterType === "cursor_cloud" && (
@@ -968,8 +958,7 @@ function Setup({
                                       rel="noopener noreferrer"
                                       className="shrink-0 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
                                     >
-                                      get api key
-                                    </a>
+                                      {l10n("local.get_api_key_b2384483")}</a>
                                   )}
                                 </div>
                               </Field>
@@ -980,7 +969,7 @@ function Setup({
                                   chooseProvider ? "sm:col-span-2" : undefined
                                 }
                               >
-                                <Field label="Or use an organization secret">
+                                <Field label={l10n("local.or_use_an_organization_secret_961df787")}>
                                   <SecretPicker
                                     secretId={
                                       selectedBinding &&
@@ -1005,16 +994,14 @@ function Setup({
                               </div>
                             )}
                             <p className="text-xs text-muted-foreground sm:col-span-2">
-                              New keys are saved as organization secrets when
-                              you finish setup.
-                              {multiProvider && ` Use a ${provider}/model ID.`}
+                              {l10n("local.new_keys_are_saved_as_organization_secrets_wh_ff961302")}{multiProvider && (" " + l10n("local.use_a_value_model_id_1c8a91ce", {v0: (provider)}))}
                             </p>
                           </div>
                         )}
                         {adapterType === "hermes_gateway" && (
-                          <Field label="Hermes API base URL">
+                          <Field label={l10n("local.hermes_api_base_url_ccec8cd4")}>
                             <Input
-                              aria-label="Hermes API base URL"
+                              aria-label={l10n("local.hermes_api_base_url_ccec8cd4")}
                               value={gatewayUrl}
                               onChange={(event) => {
                                 setGatewayUrl(event.target.value);
@@ -1026,20 +1013,20 @@ function Setup({
                         )}
                         {usingKimiApi && (
                           <div className="grid gap-5 sm:grid-cols-2">
-                            <Field label="Kimi API model name">
+                            <Field label={l10n("local.kimi_api_model_name_d880c2be")}>
                               <Input
-                                aria-label="Kimi API model name"
+                                aria-label={l10n("local.kimi_api_model_name_d880c2be")}
                                 value={kimiModel}
                                 onChange={(event) => {
                                   setKimiModel(event.target.value);
                                   resetTest();
                                 }}
-                                placeholder="kimi-for-coding"
+                                placeholder={l10n("local.kimi_for_coding_a856fb3d")}
                               />
                             </Field>
-                            <Field label="Kimi API protocol">
+                            <Field label={l10n("local.kimi_api_protocol_2fd46541")}>
                               <select
-                                aria-label="Kimi API protocol"
+                                aria-label={l10n("local.kimi_api_protocol_2fd46541")}
                                 className={controlClass}
                                 value={kimiProtocol}
                                 onChange={(event) => {
@@ -1055,26 +1042,26 @@ function Setup({
                               </select>
                             </Field>
                             <Field
-                              label="Kimi API base URL"
-                              hint="Optional override for your provider endpoint."
+                              label={l10n("local.kimi_api_base_url_b46e77c4")}
+                              hint={l10n("local.optional_override_for_your_provider_endpoint_1f92d2d4")}
                             >
                               <Input
-                                aria-label="Kimi API base URL"
+                                aria-label={l10n("local.kimi_api_base_url_b46e77c4")}
                                 value={kimiBaseUrl}
                                 onChange={(event) => {
                                   setKimiBaseUrl(event.target.value);
                                   resetTest();
                                 }}
-                                placeholder="Provider default"
+                                placeholder={l10n("local.provider_default_352a2567")}
                               />
                             </Field>
                           </div>
                         )}
                         {adapterType === "cursor_cloud" && (
                           <div className="grid gap-5 sm:grid-cols-2">
-                            <Field label="GitHub repository">
+                            <Field label={l10n("local.github_repository_50555492")}>
                               <Input
-                                aria-label="GitHub repository"
+                                aria-label={l10n("local.github_repository_50555492")}
                                 value={repository}
                                 onChange={(event) => {
                                   setRepository(event.target.value);
@@ -1083,10 +1070,10 @@ function Setup({
                                 placeholder="https://github.com/your-org/repo"
                               />
                             </Field>
-                            <Field label="Branch">
+                            <Field label={l10n("local.branch_52656e81")}>
                               <Input
-                                aria-label="Branch"
-                                placeholder="Repository default"
+                                aria-label={l10n("local.branch_52656e81")}
+                                placeholder={l10n("local.repository_default_e88cba3b")}
                                 value={branch}
                                 onChange={(event) => {
                                   setBranch(event.target.value);
@@ -1101,9 +1088,9 @@ function Setup({
                         adapterType,
                       ) && (
                         <section className="space-y-5">
-                          <h3 className="text-sm font-semibold">Environment</h3>
+                          <h3 className="text-sm font-semibold">{l10n("local.environment_9e471951")}</h3>
                           <select
-                            aria-label="Environment"
+                            aria-label={l10n("local.environment_9e471951")}
                             className={controlClass}
                             value={environmentOverride}
                             disabled={forced.forced || managedOnly}
@@ -1115,7 +1102,7 @@ function Setup({
                             }}
                           >
                             <option value="">
-                              Default: {environmentLabel}
+                              {l10n("local.default_d1f6d9e7")}{" "}{environmentLabel}
                             </option>
                             {(envs.data ?? [])
                               .filter((env) => env.status === "active")
@@ -1149,8 +1136,7 @@ function Setup({
                           onClick={() => setScreen("connect")}
                         >
                           <ArrowLeft className="size-4" />
-                          Connection
-                        </Button>
+                          {l10n("local.connection_639a40e8")}</Button>
                       ) : (
                         <span />
                       )}
@@ -1163,7 +1149,7 @@ function Setup({
                           Boolean(connectionAdapter && !connection)
                         }
                       >
-                        {saving ? "Creating…" : "Finish setup"}
+                        {saving ? l10n("local.creating_c79ed949") : l10n("local.finish_setup_bc01ae77")}
                         <Check className="size-4" />
                       </Button>
                     </div>

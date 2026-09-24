@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useCallback, useEffect } from "react";
 import { History } from "lucide-react";
 import { useSearchParams } from "@/lib/router";
@@ -21,7 +22,7 @@ export function CompanyActivity() {
   const mode: AuditFeedMode = searchParams.get("mode") === "agents" ? "agents" : "all";
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Activity" }]);
+    setBreadcrumbs([{ label: l10n("local.activity_38da1505") }]);
   }, [setBreadcrumbs]);
 
   const handleModeChange = useCallback(

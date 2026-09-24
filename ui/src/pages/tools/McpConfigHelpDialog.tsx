@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,18 +58,16 @@ export function McpConfigHelpDialog() {
           variant="ghost"
           size="icon"
           className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
-          aria-label="Get help creating an MCP config"
+          aria-label={l10n("local.get_help_creating_an_mcp_config_2b39abc0")}
         >
           <HelpCircle className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-(--sz-85vh) overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Ask an agent for an MCP config</DialogTitle>
+          <DialogTitle>{l10n("local.ask_an_agent_for_an_mcp_config_fd679cf3")}</DialogTitle>
           <DialogDescription>
-            Don't know the URL or headers a tool needs? Hand this request to an agent and paste back what it
-            gives you.
-          </DialogDescription>
+            {l10n("local.don_t_know_the_url_or_headers_a_tool_needs_ha_ea0f20d6")}</DialogDescription>
         </DialogHeader>
 
         <ol className="list-decimal space-y-1.5 pl-5 text-sm text-muted-foreground">
@@ -79,8 +78,7 @@ export function McpConfigHelpDialog() {
 
         <div className="space-y-2">
           <label htmlFor="mcp-config-help-prompt" className="text-sm font-medium text-foreground">
-            Prompt to send
-          </label>
+            {l10n("local.prompt_to_send_928a8e35")}</label>
           <Textarea
             id="mcp-config-help-prompt"
             readOnly
@@ -95,15 +93,14 @@ export function McpConfigHelpDialog() {
         <div className="flex flex-wrap items-center gap-3">
           <Button type="button" onClick={() => void copyPrompt()}>
             {copyState === "copied" ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-            Copy prompt
-          </Button>
+            {l10n("local.copy_prompt_ffc64b8b")}</Button>
           {/* aria-live so a screen reader hears the outcome without moving focus
               off the button the operator just pressed. */}
           <span aria-live="polite" className="text-xs text-muted-foreground">
             {copyState === "copied"
-              ? "Copied to clipboard."
+              ? l10n("local.copied_to_clipboard_af096322")
               : copyState === "failed"
-                ? "Couldn't copy automatically — select the text above and copy it."
+                ? l10n("local.couldn_t_copy_automatically_select_the_text_a_312ea8a2")
                 : null}
           </span>
         </div>

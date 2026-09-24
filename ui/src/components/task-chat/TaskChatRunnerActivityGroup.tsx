@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useId, useState } from "react";
 import { completedActivitySummary } from "./completed-activity-summary";
 import {
@@ -53,7 +54,7 @@ function presentation(item: Activity, active: boolean) {
     const running = active && Boolean(item.streaming);
     return {
       icon: Brain,
-      label: running ? "Thinking" : "Thought",
+      label: running ? l10n("local.thinking_a20d12c5") : l10n("local.thought_deb04a0d"),
       target: item.lines
         .filter((line) => line.trim())
         .at(-1)
@@ -95,7 +96,7 @@ function presentation(item: Activity, active: boolean) {
     .join(" · ");
   return {
     icon: Gauge,
-    label: item.label ?? "Token usage",
+    label: item.label ?? l10n("local.token_usage_67908a8d"),
     target: usage || item.detail,
     mono: false,
     running: false,
@@ -229,7 +230,7 @@ function ActivityDetails({ item }: { item: Activity }) {
           {item.detail}
         </pre>
       ) : null}
-      {item.decision ? <p>Permission {item.decision}</p> : null}
+      {item.decision ? <p>{l10n("local.permission_229efc8f")}{" "}{item.decision}</p> : null}
       {item.diff ? (
         <p className="break-all font-mono">
           {item.diff.path} · +{item.diff.added} −{item.diff.removed}
@@ -386,7 +387,7 @@ export function TaskChatRunnerActivityGroup({
             <ol
               id={historyId}
               className="flex min-w-0 flex-col gap-1"
-              aria-label="Activity history"
+              aria-label={l10n("local.activity_history_e4687518")}
               data-testid="task-chat-runner-activity-list"
             >
               {activities.map((activity, index) => (

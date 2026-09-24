@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
@@ -172,8 +173,7 @@ function SelectOption({
           <span>{label}</span>
           {recommended ? (
             <span className="rounded-sm bg-background/70 px-1.5 py-0.5 text-(length:--text-micro) font-medium text-muted-foreground">
-              Recommended
-            </span>
+              {l10n("local.recommended_d70604e8")}</span>
           ) : null}
         </span>
         {description ? (
@@ -220,7 +220,7 @@ export function QuestionResponseSummary({
               </span>
             </dt>
             <dd className="mt-0.5 text-foreground">
-              {values.length > 0 ? values.join(", ") : "No answer"}
+              {values.length > 0 ? values.join(", ") : l10n("local.no_answer_7e49c68d")}
             </dd>
           </div>
         );
@@ -313,8 +313,7 @@ export function QuestionForm({
   if (!question)
     return (
       <p className="text-sm text-muted-foreground">
-        No answerable questions were provided.
-      </p>
+        {l10n("local.no_answerable_questions_were_provided_f088561a")}</p>
     );
   const answer = answers[question.id] ?? {};
   const selected = answer.selectedOptionIds ?? [];
@@ -451,26 +450,26 @@ export function QuestionForm({
     questionSet.questions.length > 1 ? (
       <nav
         className="flex shrink-0 items-center gap-1"
-        aria-label="Question pagination"
+        aria-label={l10n("local.question_pagination_03274772")}
       >
         <Button
           type="button"
           size="icon-xs"
           variant="ghost"
-          aria-label="Previous question"
+          aria-label={l10n("local.previous_question_d237e091")}
           disabled={disabled || working != null || page === 0}
           onClick={() => setPage((current) => current - 1)}
         >
           <ChevronLeft aria-hidden />
         </Button>
         <span className="min-w-10 text-center tabular-nums">
-          {page + 1} of {questionSet.questions.length}
+          {page + 1} {l10n("local.of_28391d3b")}{" "}{questionSet.questions.length}
         </span>
         <Button
           type="button"
           size="icon-xs"
           variant="ghost"
-          aria-label="Next question"
+          aria-label={l10n("local.next_question_f7a9d743")}
           // The arrows browse; they do not validate. A send that finds an
           // earlier answer missing returns to that question (see submit).
           disabled={disabled || working != null || isLastPage}
@@ -521,7 +520,7 @@ export function QuestionForm({
       ) : null}
       {question.answerMode === "text" ? (
         <div className="mb-2 flex items-center gap-3 text-xs text-muted-foreground">
-          {question.answerMode === "text" ? <span>Write an answer</span> : null}
+          {question.answerMode === "text" ? <span>{l10n("local.write_an_answer_dd394ad8")}</span> : null}
         </div>
       ) : null}
       {pagination ? (
@@ -563,7 +562,7 @@ export function QuestionForm({
             value={answer.text ?? ""}
             disabled={disabled || working != null}
             onChange={(value) => updateAnswer({ text: value })}
-            placeholder="Write your answer"
+            placeholder={l10n("local.write_your_answer_a2639bd0")}
             imageUploadHandler={imageUploadHandler}
             mentions={mentions}
             autoFocus
@@ -571,7 +570,7 @@ export function QuestionForm({
             onSubmit={() => {
               if (!inputUploading && currentError == null) progressOrSubmit();
             }}
-            attachAriaLabel={`Attach image to answer for ${question.prompt}`}
+            attachAriaLabel={l10n("local.attach_image_to_answer_for_value_67cdc3b9", {v0: (question.prompt)})}
           />
         </div>
       ) : (
@@ -594,8 +593,8 @@ export function QuestionForm({
                     [question.id]: event.target.value,
                   }))
                 }
-                placeholder="Filter choices"
-                aria-label={`Filter choices for ${question.prompt}`}
+                placeholder={l10n("local.filter_choices_386caed3")}
+                aria-label={l10n("local.filter_choices_for_value_0b683e1a", {v0: (question.prompt)})}
                 className="pl-8"
               />
             </label>
@@ -617,7 +616,7 @@ export function QuestionForm({
             <div className="space-y-1.5">
               <SelectOption
                 id={`${id}-${question.id}-custom`}
-                label={question.customAnswer?.label ?? "Other"}
+                label={question.customAnswer?.label ?? l10n("local.other_f97e9da0")}
                 selected={isCustomActive}
                 multiple={multiple}
                 disabled={disabled || working != null}
@@ -629,7 +628,7 @@ export function QuestionForm({
                   testId="question-other-answer-composer"
                   value={answer.customText ?? ""}
                   placeholder={
-                    question.customAnswer?.placeholder ?? "Type your answer"
+                    question.customAnswer?.placeholder ?? l10n("local.type_your_answer_d078bf75")
                   }
                   disabled={disabled || working != null}
                   onChange={(value) =>
@@ -643,7 +642,7 @@ export function QuestionForm({
                     if (!inputUploading && currentError == null)
                       progressOrSubmit();
                   }}
-                  attachAriaLabel={`Attach image to other answer for ${question.prompt}`}
+                  attachAriaLabel={l10n("local.attach_image_to_other_answer_for_value_3f03c66c", {v0: (question.prompt)})}
                 />
               ) : null}
             </div>
@@ -672,8 +671,7 @@ export function QuestionForm({
             {working === "cancel" ? (
               <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
             ) : null}{" "}
-            Cancel
-          </Button>
+            {l10n("local.cancel_19766ed6")}</Button>
         ) : null}
         {!question.required ? (
           <Button
@@ -683,8 +681,7 @@ export function QuestionForm({
             disabled={busy}
             onClick={skipQuestion}
           >
-            Skip
-          </Button>
+            {l10n("local.skip_28d03596")}</Button>
         ) : null}
         <Button
           type="button"
@@ -695,7 +692,7 @@ export function QuestionForm({
           {working === "submit" ? (
             <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
           ) : null}
-          {isLastPage ? (questionSet.submitLabel ?? "Submit answers") : "Next"}
+          {isLastPage ? (questionSet.submitLabel ?? l10n("local.submit_answers_6d232615")) : l10n("local.next_1ff57a29")}
         </Button>
       </div>
     </div>

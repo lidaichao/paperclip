@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ExternalObjectSummary, Issue } from "@paperclipai/shared";
 
 export type IssueFilterWorkspaceLookup = {
@@ -63,13 +64,13 @@ export const externalObjectFilterOrder = [
 ];
 
 const EXTERNAL_OBJECT_FILTER_LABELS: Record<string, string> = {
-  failed: "Any failed",
-  waiting: "Any waiting",
-  running: "Any running",
-  auth_required: "Auth required",
-  unreachable: "Unreachable",
-  stale: "Stale",
-  none: "No external objects",
+  failed: l10n("local.any_failed_6912e994"),
+  waiting: l10n("local.any_waiting_a20be758"),
+  running: l10n("local.any_running_19da2ead"),
+  auth_required: l10n("local.auth_required_0005d851"),
+  unreachable: l10n("local.unreachable_abaa46ad"),
+  stale: l10n("local.stale_40c9e59c"),
+  none: l10n("local.no_external_objects_cfe9bbc4"),
 };
 
 export function externalObjectFilterLabel(value: string): string {
@@ -80,10 +81,10 @@ export const issueStatusOrder = ["in_progress", "todo", "backlog", "in_review", 
 export const issuePriorityOrder = ["critical", "high", "medium", "low"];
 
 export const issueQuickFilterPresets = [
-  { label: "All", statuses: [] as string[] },
-  { label: "Active", statuses: ["todo", "in_progress", "in_review", "blocked"] },
-  { label: "Backlog", statuses: ["backlog"] },
-  { label: "Done", statuses: ["done", "cancelled"] },
+  { label: l10n("local.all_a52ace42"), statuses: [] as string[] },
+  { label: l10n("local.active_92340695"), statuses: ["todo", "in_progress", "in_review", "blocked"] },
+  { label: l10n("local.backlog_bf986e9a"), statuses: ["backlog"] },
+  { label: l10n("local.done_11a6767d"), statuses: ["done", "cancelled"] },
 ];
 
 export function issueFilterLabel(value: string): string {

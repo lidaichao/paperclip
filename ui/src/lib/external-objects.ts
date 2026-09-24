@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   AlertCircle,
   AlertOctagon,
@@ -75,17 +76,17 @@ export function externalObjectIconForLiveness(liveness: string): LucideIcon | nu
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  unknown: "Not yet resolved",
-  open: "Open",
-  waiting: "Waiting",
-  running: "Running",
-  succeeded: "Succeeded",
-  failed: "Failed",
-  blocked: "Blocked",
-  closed: "Closed",
-  archived: "Archived",
-  auth_required: "Authorization required",
-  unreachable: "Unreachable",
+  unknown: l10n("local.not_yet_resolved_60d1c681"),
+  open: l10n("local.open_ed077f3d"),
+  waiting: l10n("local.waiting_6e293a8c"),
+  running: l10n("local.running_f4ccae29"),
+  succeeded: l10n("local.succeeded_6d9a6f97"),
+  failed: l10n("local.failed_031a8f0f"),
+  blocked: l10n("local.blocked_18f2a094"),
+  closed: l10n("local.closed_c21ead06"),
+  archived: l10n("local.archived_bdb86505"),
+  auth_required: l10n("local.authorization_required_47e796b6"),
+  unreachable: l10n("local.unreachable_abaa46ad"),
 };
 
 export function externalObjectCategoryLabel(category: string): string {
@@ -93,11 +94,11 @@ export function externalObjectCategoryLabel(category: string): string {
 }
 
 const LIVENESS_LABELS: Record<string, string> = {
-  unknown: "Not yet refreshed",
-  fresh: "Fresh",
-  stale: "Stale",
-  auth_required: "Requires auth",
-  unreachable: "Unreachable",
+  unknown: l10n("local.not_yet_refreshed_cde59065"),
+  fresh: l10n("local.fresh_f810b668"),
+  stale: l10n("local.stale_40c9e59c"),
+  auth_required: l10n("local.requires_auth_53d75ad8"),
+  unreachable: l10n("local.unreachable_abaa46ad"),
 };
 
 export function externalObjectLivenessLabel(liveness: string): string {
@@ -116,7 +117,7 @@ export function externalObjectDisplayStatusLabel(input: {
   const isGenericUrl = input.providerKey === "url" && input.objectType === "link";
   const hasKnownObjectType = Boolean(input.providerKey && input.objectType);
   if (input.statusCategory === "unknown" && hasKnownObjectType && !isGenericUrl) {
-    if (input.liveness === "fresh") return "Status unavailable";
+    if (input.liveness === "fresh") return l10n("local.status_unavailable_7eb5af92");
     return externalObjectLivenessLabel(input.liveness);
   }
   return externalObjectCategoryLabel(input.statusCategory);
@@ -161,18 +162,18 @@ export function externalObjectFallbackTone(
 }
 
 const PROVIDER_LABELS: Record<string, string> = {
-  github: "GitHub",
-  github_pull_request: "GitHub",
-  github_issue: "GitHub",
-  hubspot: "HubSpot",
+  github: l10n("local.github_f911e414"),
+  github_pull_request: l10n("local.github_f911e414"),
+  github_issue: l10n("local.github_f911e414"),
+  hubspot: l10n("local.hubspot_5f5f6ddd"),
   linear: "Linear",
-  jira: "Jira",
+  jira: l10n("local.jira_8b9b0b3f"),
   notion: "Notion",
   asana: "Asana",
 };
 
 export function externalObjectProviderLabel(providerKey: string | null | undefined): string {
-  if (!providerKey) return "External";
+  if (!providerKey) return l10n("local.external_68c114ea");
   const lookup = PROVIDER_LABELS[providerKey];
   if (lookup) return lookup;
   return providerKey
@@ -182,17 +183,17 @@ export function externalObjectProviderLabel(providerKey: string | null | undefin
 }
 
 const OBJECT_TYPE_LABELS: Record<string, string> = {
-  pull_request: "pull request",
-  issue: "issue",
-  deployment: "deployment",
-  workflow_run: "workflow run",
-  ticket: "ticket",
-  lead: "lead",
-  url_link: "URL",
+  pull_request: l10n("local.pull_request_763fae51"),
+  issue: l10n("local.issue_4a502846"),
+  deployment: l10n("local.deployment_aee50b18"),
+  workflow_run: l10n("local.workflow_run_d70a7c47"),
+  ticket: l10n("local.ticket_14069429"),
+  lead: l10n("local.lead_e3456bc1"),
+  url_link: l10n("local.url_e7a241de"),
 };
 
 export function externalObjectTypeLabel(objectType: string | null | undefined): string {
-  if (!objectType) return "object";
+  if (!objectType) return l10n("local.object_2958d416");
   return OBJECT_TYPE_LABELS[objectType] ?? objectType.replace(/_/g, " ");
 }
 
@@ -203,7 +204,7 @@ export function externalObjectDisplayLabel(
 ): string {
   const trimmedDisplayKey = displayKey?.trim();
   if (trimmedDisplayKey) return trimmedDisplayKey;
-  if (providerKey === "url" && objectType === "link") return "URL";
+  if (providerKey === "url" && objectType === "link") return l10n("local.url_e7a241de");
   return `${externalObjectProviderLabel(providerKey)} ${externalObjectTypeLabel(objectType)}`;
 }
 

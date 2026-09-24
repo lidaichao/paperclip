@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ExecutionProjection } from "@paperclipai/shared";
 import type {
   ReasoningMessagePart,
@@ -821,9 +822,9 @@ function runDurationLabel(run: {
       }
       return durationText ? `Cancelled after ${durationText}` : "Run cancelled";
     case "queued":
-      return "Queued";
+      return l10n("local.queued_661ff40a");
     case "running":
-      return "Working...";
+      return l10n("local.working_b93900bd");
     default:
       return formatStatusLabel(run.status);
   }
@@ -862,7 +863,7 @@ function createHistoricalTranscriptMessage(args: {
   const agentName = run.agentName ?? agentMap?.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
   const compactedTranscript = compactIssueChatTranscript(transcript, issueChatTranscriptMaxVisibleEntries(run.adapterType));
   const { parts, notices, segments } = buildAssistantPartsFromTranscript(compactedTranscript);
-  const waitingText = hasOutput ? "" : "Run finished";
+  const waitingText = hasOutput ? "" : l10n("local.run_finished_22488bd9");
   const content = parts.length > 0
     ? parts
     : waitingText
@@ -1106,10 +1107,10 @@ function createLiveRunMessage(args: {
   const { parts, notices, segments } = buildAssistantPartsFromTranscript(compactedTranscript);
   const waitingText =
     run.status === "queued"
-      ? "Queued..."
+      ? l10n("local.queued_c0c05da9")
       : parts.length > 0
         ? ""
-        : "Working...";
+        : l10n("local.working_b93900bd");
 
   const content = parts;
 

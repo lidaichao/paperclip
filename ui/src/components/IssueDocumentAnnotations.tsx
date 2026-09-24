@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { Profiler, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Agent, DocumentAnnotationThreadWithComments, IssueDocument } from "@paperclipai/shared";
@@ -427,14 +428,14 @@ export function DocumentAnnotationsCountChip({
       onClick={onToggle}
       data-testid={`document-annotation-count-${docKey}`}
       aria-label={openCount === 0
-        ? `Open comments on ${docKey}`
-        : `Open ${openCount} unresolved comments on ${docKey}`}
+        ? l10n("local.open_comments_on_value_c3fdc53b", {v0: (docKey)})
+        : l10n("local.open_value_unresolved_comments_on_value_437bbf6e", {v0: (openCount), v1: (docKey)})}
       aria-expanded={panelOpen}
     >
       <MessageSquare className="h-3 w-3" aria-hidden="true" />
       <span className="tabular-nums">{openCount}</span>
       <span className="hidden sm:inline">
-        {openCount === 1 ? "comment" : "comments"}
+        {openCount === 1 ? l10n("local.comment_c44bb2fd") : l10n("local.comments_2b4244fb")}
       </span>
     </Button>
   );

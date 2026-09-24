@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useQuery } from "@tanstack/react-query";
 import { Clock3, FileDiff, GitCommit, type LucideIcon } from "lucide-react";
 import { healthApi, type HealthStatus } from "@/api/health";
@@ -24,17 +25,17 @@ function restartTimestamp(health: HealthStatus | undefined): string | null {
 
 function commitLabel(health: HealthStatus | undefined): string {
   const git = health?.serverInfo?.git;
-  if (!git?.available) return "Commit unavailable";
+  if (!git?.available) return l10n("local.commit_unavailable_ff6a6609");
   return `${git.shortSha} · ${git.subject}`;
 }
 
 function localChangesLabel(health: HealthStatus | undefined): string {
   const git = health?.serverInfo?.git;
-  if (!git?.available) return "Unavailable";
+  if (!git?.available) return l10n("local.unavailable_ca184496");
   const localChanges = git.localChanges;
-  if (!localChanges) return "Change status unavailable";
-  if (!localChanges.available) return "Change status unavailable";
-  if (!localChanges.hasLocalChanges) return "Clean checkout";
+  if (!localChanges) return l10n("local.change_status_unavailable_50e3e180");
+  if (!localChanges.available) return l10n("local.change_status_unavailable_50e3e180");
+  if (!localChanges.hasLocalChanges) return l10n("local.clean_checkout_f208aaf4");
 
   const parts = [
     [localChanges.stagedFileCount, "staged"],
@@ -106,9 +107,9 @@ export function SidebarServerInfo() {
   const restartedAt = restartTimestamp(health);
   const restartedAtIsValid = isValidTimestamp(restartedAt);
   const lastRestartedLabel = healthUnavailable
-    ? "Health unavailable"
+    ? l10n("local.health_unavailable_ea4edd2b")
     : isWaitingForHealth
-      ? "Loading..."
+      ? l10n("local.loading_47d2a515")
       : formatTimestamp(restartedAt);
   const commit = healthUnavailable
     ? "Health unavailable"
@@ -124,16 +125,15 @@ export function SidebarServerInfo() {
   return (
     <div className="mt-2 border-t border-border pt-2">
       <p className="px-3 pb-1 pt-1 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
-        Server
-      </p>
+        {l10n("local.server_aef7de28")}</p>
       <ServerInfoRow
         icon={Clock3}
-        label="Last restarted"
+        label={l10n("local.last_restarted_865e87f0")}
         value={lastRestartedLabel}
         dateTime={!healthUnavailable && !isWaitingForHealth && restartedAtIsValid ? restartedAt : null}
       />
-      <ServerInfoRow icon={GitCommit} label="Running commit" value={commit} />
-      <ServerInfoRow icon={FileDiff} label="Checkout state" value={localChanges} />
+      <ServerInfoRow icon={GitCommit} label={l10n("local.running_commit_ac455328")} value={commit} />
+      <ServerInfoRow icon={FileDiff} label={l10n("local.checkout_state_93896287")} value={localChanges} />
     </div>
   );
 }

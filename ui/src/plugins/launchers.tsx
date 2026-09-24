@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   Component,
   createContext,
@@ -129,7 +130,7 @@ const PluginLauncherRuntimeContext = createContext<PluginLauncherRuntimeContextV
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
-  return "Unknown error";
+  return l10n("local.unknown_error_27c2ccd9");
 }
 
 function buildLauncherHostContext(
@@ -417,8 +418,7 @@ class LauncherErrorBoundary extends Component<LauncherErrorBoundaryProps, Launch
     if (this.state.hasError) {
       return (
         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-          {this.props.launcher.pluginDisplayName}: failed to render
-        </div>
+          {this.props.launcher.pluginDisplayName}{l10n("local._failed_to_render_40815c10")}</div>
       );
     }
     return this.props.children;
@@ -456,7 +456,7 @@ function LauncherRenderContent({
 
     return (
       <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-        {instance.launcher.pluginDisplayName}: could not resolve launcher target "{instance.launcher.action.target}".
+        {instance.launcher.pluginDisplayName}{l10n("local._could_not_resolve_launcher_target_d1a6d026")}{instance.launcher.action.target}".
       </div>
     );
   }
@@ -596,8 +596,7 @@ function LauncherModalShell({
             className="ml-auto"
             onClick={() => void closeLauncher(instance.key, { reason: "programmatic" })}
           >
-            Close
-          </Button>
+            {l10n("local.close_7d9eb7ac")}</Button>
         </div>
         <div
           className={cn(
@@ -802,7 +801,7 @@ export function PluginLauncherOutlet({
   if (errorMessage) {
     return (
       <div className={cn("rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1 text-xs text-destructive", errorClassName)}>
-        Plugin launchers unavailable: {errorMessage}
+        {l10n("local.plugin_launchers_unavailable_b432ce81")}{" "}{errorMessage}
       </div>
     );
   }

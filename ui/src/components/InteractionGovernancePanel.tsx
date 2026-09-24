@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { Fragment } from "react";
 import {
   ISSUE_THREAD_INTERACTION_KINDS,
@@ -17,12 +18,12 @@ import {
 import { resolverPolicyLabel } from "../lib/interaction-audience";
 
 const INTERACTION_KIND_LABELS: Record<IssueThreadInteractionKind, string> = {
-  suggest_tasks: "Suggested tasks",
-  ask_user_questions: "Ask user questions",
-  request_confirmation: "Confirmations",
-  request_checkbox_confirmation: "Checkbox confirmations",
-  request_item_verdicts: "Item verdicts",
-  connection_intent: "Connection requests",
+  suggest_tasks: l10n("local.suggested_tasks_5addd6ff"),
+  ask_user_questions: l10n("local.ask_user_questions_85f98263"),
+  request_confirmation: l10n("local.confirmations_5dfa99a6"),
+  request_checkbox_confirmation: l10n("local.checkbox_confirmations_b7f92c40"),
+  request_item_verdicts: l10n("local.item_verdicts_7023d105"),
+  connection_intent: l10n("local.connection_requests_7c3a0985"),
 };
 
 /**
@@ -48,8 +49,8 @@ const NARROWING_POLICIES: readonly IssueThreadInteractionCanonicalResolverPolicy
 ];
 
 const UNSET_LABELS: Record<GovernanceField, string> = {
-  defaultPolicy: "Anyone (default)",
-  cap: "No cap",
+  defaultPolicy: l10n("local.anyone_default_9a3ee13f"),
+  cap: l10n("local.no_cap_59db2115"),
 };
 
 const UNSET_EFFECTS: Record<GovernanceField, string> = {
@@ -239,19 +240,14 @@ export function InteractionGovernancePanel({
   return (
     <div className="space-y-4" data-testid="company-settings-interaction-governance-section">
       <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        Interaction governance
-      </div>
+        {l10n("local.interaction_governance_55a23137")}</div>
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Thread interactions are open by default:{" "}
-          <span className="font-medium text-foreground">Anyone</span> in the organization — the
-          board or any agent, including the one that asked — can respond. Narrow a kind
-          only when you need to.{" "}
-          <span className="font-medium text-foreground">Default policy</span> is the
-          audience new cards get when the requester does not ask for one;{" "}
-          <span className="font-medium text-foreground">Cap</span> narrows every request of
-          that kind and can never widen one. Tool-approval confirmations always stay{" "}
-          <span className="font-medium text-foreground">Human only</span>.
+          {l10n("local.thread_interactions_are_open_by_default_3aa2fcb4")}{" "}
+          <span className="font-medium text-foreground">{l10n("local.anyone_8d486bb2")}</span> {l10n("local.in_the_organization_the_board_or_any_agent_in_db1cd68b")}{" "}
+          <span className="font-medium text-foreground">{l10n("local.default_policy_8cca8b21")}</span> {l10n("local.is_the_audience_new_cards_get_when_the_reques_04594352")}{" "}
+          <span className="font-medium text-foreground">{l10n("local.cap_1257ac04")}</span> {l10n("local.narrows_every_request_of_that_kind_and_can_ne_e2c82b37")}{" "}
+          <span className="font-medium text-foreground">{l10n("local.human_only_de7c8fff")}</span>.
         </p>
         {/*
          * Responsive: below `sm` the row collapses to a single column so the
@@ -262,14 +258,11 @@ export function InteractionGovernancePanel({
          */}
         <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-x-4 sm:gap-y-2.5">
           <div className="hidden text-xs font-medium text-muted-foreground uppercase tracking-wide sm:block">
-            Kind
-          </div>
+            {l10n("local.kind_f5387f9b")}</div>
           <div className="hidden text-xs font-medium text-muted-foreground uppercase tracking-wide sm:block">
-            Default policy
-          </div>
+            {l10n("local.default_policy_8cca8b21")}</div>
           <div className="hidden text-xs font-medium text-muted-foreground uppercase tracking-wide sm:block">
-            Cap
-          </div>
+            {l10n("local.cap_1257ac04")}</div>
           {ISSUE_THREAD_INTERACTION_KINDS.map((kind) => {
             const entry = governance[kind] ?? {};
             const kindLabel = INTERACTION_KIND_LABELS[kind];
@@ -279,8 +272,8 @@ export function InteractionGovernancePanel({
                 <GovernanceSelect
                   field="defaultPolicy"
                   testId={`governance-${kind}-default`}
-                  ariaLabel={`Default resolver audience for ${kindLabel}`}
-                  mobileLabel="Default policy"
+                  ariaLabel={l10n("local.default_resolver_audience_for_value_ab8adf6d", {v0: (kindLabel)})}
+                  mobileLabel={l10n("local.default_policy_8cca8b21")}
                   value={toGovernanceSelectValue(entry.defaultPolicy)}
                   disabled={isPending}
                   onChange={(v) => onChange(kind, "defaultPolicy", v)}
@@ -288,8 +281,8 @@ export function InteractionGovernancePanel({
                 <GovernanceSelect
                   field="cap"
                   testId={`governance-${kind}-cap`}
-                  ariaLabel={`Resolver cap for ${kindLabel}`}
-                  mobileLabel="Cap"
+                  ariaLabel={l10n("local.resolver_cap_for_value_07b5948c", {v0: (kindLabel)})}
+                  mobileLabel={l10n("local.cap_1257ac04")}
                   value={toGovernanceSelectValue(entry.cap)}
                   disabled={isPending}
                   onChange={(v) => onChange(kind, "cap", v)}

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { ChatSetupSidebarProvider } from "@/context/ChatSetupSidebarContext";
 import { PluginAppShellOverlays } from "./PluginAppShellOverlays";
 import {
@@ -322,8 +323,8 @@ export function Layout() {
     });
     if (bounce) {
       pushToast?.({
-        title: `${matchedCompany.name} is archived`,
-        body: `Switched to ${bounce.name}.`,
+        title: l10n("local.value_is_archived_7fed8883", {v0: (matchedCompany.name)}),
+        body: l10n("local.switched_to_value_efbb8d80", {v0: (bounce.name)}),
         tone: "info",
         dedupeKey: `archived-company-bounce:${matchedCompany.id}`,
       });
@@ -654,8 +655,7 @@ export function Layout() {
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-(--z-200) focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          Skip to Main Content
-        </a>
+          {l10n("local.skip_to_main_content_435bdbf6")}</a>
         <WorktreeBanner />
         <DevRestartBanner devServer={health?.devServer} />
         <div
@@ -669,7 +669,7 @@ export function Layout() {
               type="button"
               className="fixed inset-0 z-40 bg-black/50"
               onClick={() => setSidebarOpen(false)}
-              aria-label="Close sidebar"
+              aria-label={l10n("local.close_sidebar_17e28e23")}
             />
           )}
 

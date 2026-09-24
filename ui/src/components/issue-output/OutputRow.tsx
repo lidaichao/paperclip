@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { Download, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, relativeTime } from "@/lib/utils";
@@ -36,18 +37,18 @@ export function OutputRow({ item, creatorName }: OutputRowProps) {
             item.degraded ? "text-destructive" : "text-muted-foreground",
           )}
         >
-          {item.degraded ? "File details unavailable" : metaBits.join(" · ")}
+          {item.degraded ? l10n("local.file_details_unavailable_d0c2f231") : metaBits.join(" · ")}
         </p>
       </div>
       {meta ? (
         <div className="flex shrink-0 items-center gap-1">
-          <Button asChild variant="ghost" size="icon-sm" title="Open in new tab">
-            <a href={meta.openPath} target="_blank" rel="noreferrer" aria-label={`Open ${filename}`}>
+          <Button asChild variant="ghost" size="icon-sm" title={l10n("local.open_in_new_tab_e0af5c0b")}>
+            <a href={meta.openPath} target="_blank" rel="noreferrer" aria-label={l10n("local.open_value_afaef5c3", {v0: (filename)})}>
               <ExternalLink className="h-4 w-4" />
             </a>
           </Button>
-          <Button asChild variant="ghost" size="icon-sm" title="Download">
-            <a href={meta.downloadPath} aria-label={`Download ${filename}`}>
+          <Button asChild variant="ghost" size="icon-sm" title={l10n("local.download_d6eafe82")}>
+            <a href={meta.downloadPath} aria-label={l10n("local.download_value_ac3a0cac", {v0: (filename)})}>
               <Download className="h-4 w-4" />
             </a>
           </Button>

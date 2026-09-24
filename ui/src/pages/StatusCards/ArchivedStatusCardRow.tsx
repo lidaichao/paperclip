@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -34,10 +35,10 @@ export function ArchivedStatusCardRow({
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 px-4 py-3">
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold">{card.title ?? "Untitled card"}</p>
+        <p className="truncate text-sm font-semibold">{card.title ?? l10n("local.untitled_card_29fc5432")}</p>
         <p className="mt-0.5 text-xs text-muted-foreground" title={card.archivedAt ? formatDateTime(card.archivedAt) : undefined}>
-          archived {shortDate(card.archivedAt)} · last summary {shortDate(card.lastGeneratedAt)}
-          {rollup ? ` · lifetime ${formatTokens(rollup.totalTokens)} / ${formatCents(rollup.totalCostCents)}` : ""}
+          {l10n("local.archived_dd9e8812")}{" "}{shortDate(card.archivedAt)} {l10n("local._last_summary_35a21f1d")}{" "}{shortDate(card.lastGeneratedAt)}
+          {rollup ? (" " + l10n("local._lifetime_value_value_d58338ad", {v0: (formatTokens(rollup.totalTokens)), v1: (formatCents(rollup.totalCostCents))})) : ""}
         </p>
       </div>
       {/* View is the more common intent on an archived row (reading the last
@@ -45,12 +46,10 @@ export function ArchivedStatusCardRow({
           stale and never auto-runs. */}
       <div className="flex shrink-0 gap-2">
         <Button size="sm" onClick={onView}>
-          View
-        </Button>
+          {l10n("local.view_dcc839a4")}</Button>
         <Button variant="outline" size="sm" onClick={onRestore} disabled={restorePending}>
           {restorePending ? <Loader2 className="animate-spin" /> : null}
-          Restore
-        </Button>
+          {l10n("local.restore_a76e13b9")}</Button>
       </div>
     </div>
   );

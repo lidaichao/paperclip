@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { cn } from "../../lib/utils";
 
 /**
@@ -115,7 +116,7 @@ export function Stepper({
           <button
             key={segment}
             type="button"
-            aria-label={labels[segment - 1] ?? `Step ${segment}`}
+            aria-label={labels[segment - 1] ?? l10n("local.step_value_5e406ade", {v0: (segment)})}
             aria-current={segment === step ? "step" : undefined}
             disabled={!jumpable}
             onClick={() => jumpable && onJumpToStep?.(segment)}
@@ -134,7 +135,7 @@ export function Stepper({
       })}
       {/* Out of flow, so it neither takes a row nor picks up the gap. */}
       <span className="sr-only">
-        Step {step} of {total}
+        {l10n("local.step_8e6a6cca")}{" "}{step} {l10n("local.of_28391d3b")}{" "}{total}
       </span>
     </div>
   );

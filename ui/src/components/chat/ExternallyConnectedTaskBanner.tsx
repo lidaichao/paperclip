@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, Paperclip, Radio } from "lucide-react";
@@ -49,63 +50,63 @@ type PublicationFeedback = {
 
 const publicationFeedback: Record<ChatPublicationState, PublicationFeedback> = {
   awaiting_consent: {
-    title: "Waiting for file consent",
+    title: l10n("local.waiting_for_file_consent_56991603"),
     body: "The recipient must accept the file card in Microsoft Teams. The file is not delivered yet; this send identity is kept while Paperclip waits.",
     tone: "info",
   },
   published: {
-    title: "Sent to channel",
+    title: l10n("local.sent_to_channel_255e7030"),
     body: "The board update was published to the connected conversation.",
     tone: "success",
   },
   pending: {
-    title: "Queued for channel",
+    title: l10n("local.queued_for_channel_cf7ce8fc"),
     body: "Delivery is still pending. Your draft is kept until Paperclip confirms publication.",
     tone: "info",
   },
   streaming: {
-    title: "Publishing to channel",
+    title: l10n("local.publishing_to_channel_c303056d"),
     body: "Delivery is still in progress. Your draft is kept until Paperclip confirms publication.",
     tone: "info",
   },
   retry: {
-    title: "Delivery retry scheduled",
+    title: l10n("local.delivery_retry_scheduled_d4db8f71"),
     body: "Paperclip will retry this publication. Your draft and retry identity are kept.",
     tone: "warn",
   },
   delivery_unknown: {
-    title: "Delivery not confirmed",
+    title: l10n("local.delivery_not_confirmed_521724ca"),
     body: "The provider may have accepted this update. Resolve it in Activity before trying again to avoid a duplicate.",
     tone: "warn",
   },
   failed: {
-    title: "Channel delivery failed",
+    title: l10n("local.channel_delivery_failed_ce13a3ab"),
     body: "Your draft is kept. Open Activity to retry this same publication safely.",
     tone: "error",
   },
   cancelled: {
-    title: "Channel delivery cancelled",
+    title: l10n("local.channel_delivery_cancelled_c918fc9f"),
     body: "Your draft is kept. Some parts may already have been published; check Activity before starting a new send.",
     tone: "info",
   },
 };
 
 const filePhaseLabels: Record<ChatFileTransferPhase, string> = {
-  consent_pending: "Consent card queued",
-  consent_sending: "Sending consent card",
-  consent_unknown: "Consent card delivery not confirmed",
-  awaiting_consent: "Awaiting consent",
-  upload_pending: "Upload queued",
-  uploading: "Uploading file",
-  upload_unknown: "File upload not confirmed",
-  file_info_pending: "File notification queued",
-  file_info_sending: "Sending file notification",
-  file_info_unknown: "File notification not confirmed",
-  delivered: "Delivered",
-  declined: "Declined",
-  expired: "Consent expired",
-  cancelled: "Cancelled; remote bytes may remain",
-  conflict: "File delivery needs review",
+  consent_pending: l10n("local.consent_card_queued_ac5107c1"),
+  consent_sending: l10n("local.sending_consent_card_d94296ed"),
+  consent_unknown: l10n("local.consent_card_delivery_not_confirmed_dee42bd4"),
+  awaiting_consent: l10n("local.awaiting_consent_737a6aed"),
+  upload_pending: l10n("local.upload_queued_2008ae53"),
+  uploading: l10n("local.uploading_file_48618a91"),
+  upload_unknown: l10n("local.file_upload_not_confirmed_7b4244f0"),
+  file_info_pending: l10n("local.file_notification_queued_1e34e059"),
+  file_info_sending: l10n("local.sending_file_notification_fe58fa1a"),
+  file_info_unknown: l10n("local.file_notification_not_confirmed_c5e1673d"),
+  delivered: l10n("local.delivered_90611565"),
+  declined: l10n("local.declined_dce083a2"),
+  expired: l10n("local.consent_expired_6fde807b"),
+  cancelled: l10n("local.cancelled_remote_bytes_may_remain_f9188ba5"),
+  conflict: l10n("local.file_delivery_needs_review_cf75626d"),
 };
 
 export function useIssueChatBinding(companyId: string, issueId: string) {
@@ -215,7 +216,7 @@ function ConnectedTaskComposer({
       setStorageError(null);
     } catch {
       setStorageError(
-        "Saved delivery identity could not be read. Check Activity and restore browser storage before starting another send.",
+        l10n("local.saved_delivery_identity_could_not_be_read_che_809ec9e5"),
       );
       setComposing(true);
     }
@@ -336,7 +337,7 @@ function ConnectedTaskComposer({
       pushToast({
         ...feedback,
         action: {
-          label: "View activity",
+          label: l10n("local.view_activity_4bf3f8dd"),
           href: `/apps/chat/${binding!.endpointId}/activity`,
         },
       });
@@ -350,7 +351,7 @@ function ConnectedTaskComposer({
           writeBoardSendDraft(storageKey, saved);
         } catch {
           setStorageError(
-            "The rejected send could not be saved. Restore browser storage, then retry this same request to recover its receipt.",
+            l10n("local.the_rejected_send_could_not_be_saved_restore_c77bf4ad"),
           );
           return;
         }
@@ -359,18 +360,18 @@ function ConnectedTaskComposer({
         setUnconfirmedRequest(false);
         invalidateTask();
         pushToast({
-          title: "Update was not sent",
-          body: "A selected file already belongs to another comment. Edit the rejected send to correct the selection.",
+          title: l10n("local.update_was_not_sent_313813f3"),
+          body: l10n("local.a_selected_file_already_belongs_to_another_co_2c699a37"),
           tone: "error",
         });
         return;
       }
       pushToast({
-        title: "Couldn't confirm channel delivery",
+        title: l10n("local.couldn_t_confirm_channel_delivery_c3e0510d"),
         body:
           error instanceof Error
-            ? `${error.message} Your draft is kept; retrying here reuses the same request identity.`
-            : "Your draft is kept; retrying here reuses the same request identity.",
+            ? l10n("local.value_your_draft_is_kept_retrying_here_reuses_9a3b83a2", {v0: (error.message)})
+            : l10n("local.your_draft_is_kept_retrying_here_reuses_the_s_f7661476"),
         tone: "error",
       });
     },
@@ -404,7 +405,7 @@ function ConnectedTaskComposer({
     } catch (error) {
       if (mounted.current) {
         setUploadError(
-          `${error instanceof Error ? error.message : "Upload could not be confirmed."} No channel message was sent. Check task files before retrying the upload.`,
+          l10n("local.value_no_channel_message_was_sent_check_task_08453cdd", {v0: (error instanceof Error ? error.message : "Upload could not be confirmed.")}),
         );
       }
     } finally {
@@ -467,14 +468,14 @@ function ConnectedTaskComposer({
     canDismissBoardSendBatch(batch) && batch!.published < batch!.total;
   const currentFeedback = mixedTerminal
     ? {
-        title: "Delivery settled with mixed outcomes",
+        title: l10n("local.delivery_settled_with_mixed_outcomes_308794c8"),
         body: "Not every part was confirmed delivered. Review the outcomes below; dismissing this receipt does not resend anything.",
         tone: "info" as const,
       }
     : currentPublication?.state === "cancelled" &&
         (batch?.awaitingConsent ?? 0) > 0
       ? {
-          title: "Waiting for remaining file consent",
+          title: l10n("local.waiting_for_remaining_file_consent_15cf5433"),
           body: "Some parts have settled. The remaining file cards still need the recipient's response; this send stays locked until the whole batch is resolved.",
           tone: "info" as const,
         }
@@ -484,7 +485,7 @@ function ConnectedTaskComposer({
   const activityPath = `/apps/chat/${binding.endpointId}/activity`;
   return (
     <section
-      aria-label="External conversation"
+      aria-label={l10n("local.external_conversation_051d5bb3")}
       className="space-y-3 rounded-lg border border-border bg-muted/40 p-3 text-sm"
     >
       <div className="flex flex-wrap items-center gap-3">
@@ -492,19 +493,17 @@ function ConnectedTaskComposer({
           <Radio className="h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
             <p className="font-medium">
-              Connected to {providerNames[binding.provider]}
+              {l10n("local.connected_to_34e3fb39")}{" "}{providerNames[binding.provider]}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {binding.externalLabel} · Agent assignment is fixed for this
-              external task.
-            </p>
+              {binding.externalLabel} {l10n("local._agent_assignment_is_fixed_for_this_external_2a1e4e55")}</p>
           </div>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {binding.externalUrl && (
             <Button asChild size="sm" variant="outline">
               <a href={binding.externalUrl} target="_blank" rel="noreferrer">
-                Open {providerNames[binding.provider]} <ExternalLink />
+                {l10n("local.open_ed077f3d")}{" "}{providerNames[binding.provider]} <ExternalLink />
               </a>
             </Button>
           )}
@@ -513,12 +512,10 @@ function ConnectedTaskComposer({
             variant="outline"
             onClick={() => setComposing((value) => !value)}
           >
-            Send to channel
-          </Button>
+            {l10n("local.send_to_channel_dface7aa")}</Button>
           <Button asChild size="sm" variant="ghost">
             <Link to={`/apps/chat/${binding.endpointId}/conversations`}>
-              Connection
-            </Link>
+              {l10n("local.connection_639a40e8")}</Link>
           </Button>
         </div>
       </div>
@@ -528,8 +525,7 @@ function ConnectedTaskComposer({
             className="text-xs font-medium"
             htmlFor="external-board-update"
           >
-            Board update
-          </label>
+            {l10n("local.board_update_6e1dcf6a")}</label>
           <Textarea
             id="external-board-update"
             value={body}
@@ -546,19 +542,18 @@ function ConnectedTaskComposer({
               idempotencyKey.current = null;
               publish.reset();
             }}
-            placeholder="Write only what should be visible in the provider conversation."
+            placeholder={l10n("local.write_only_what_should_be_visible_in_the_prov_c5a8ffd5")}
           />
           {selectedAttachmentIds.length > 0 && !body.trim() && (
             <p className="text-xs text-muted-foreground">
-              Add a message to send with your files.
-            </p>
+              {l10n("local.add_a_message_to_send_with_your_files_680f3ab6")}</p>
           )}
           <div className="flex flex-wrap items-center gap-2">
             <input
               ref={fileInput}
               type="file"
               className="hidden"
-              aria-label="Attach file to channel update"
+              aria-label={l10n("local.attach_file_to_channel_update_59a735f6")}
               disabled={uploadDisabled}
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -574,11 +569,10 @@ function ConnectedTaskComposer({
               onClick={() => fileInput.current?.click()}
             >
               <Paperclip />
-              {uploading ? "Uploading…" : "Attach file"}
+              {uploading ? l10n("local.uploading_5ce44dd7") : l10n("local.attach_file_87fbe4fb")}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Files stay on this task until you send them to the channel.
-            </p>
+              {l10n("local.files_stay_on_this_task_until_you_send_them_t_c68a82b0")}</p>
           </div>
           {uploadError && (
             <p role="alert" className="text-xs text-destructive">
@@ -587,10 +581,7 @@ function ConnectedTaskComposer({
           )}
           {selectionNotice && (
             <p role="status" className="text-xs text-muted-foreground">
-              A file already attached to another comment was removed from this
-              selection. Attach a new copy or share the task link; your message
-              is unchanged.
-            </p>
+              {l10n("local.a_file_already_attached_to_another_comment_wa_15717288")}</p>
           )}
           {visibleAttachments.length > 0 && (
             <fieldset
@@ -606,23 +597,23 @@ function ConnectedTaskComposer({
             >
               <legend className="px-1 text-xs font-medium">
                 {showingRetainedFiles
-                  ? "Files in this send"
-                  : "Include task files"}
+                  ? l10n("local.files_in_this_send_7674c3b4")
+                  : l10n("local.include_task_files_47c29c1f")}
               </legend>
               <p className="text-xs text-muted-foreground">
                 {binding.provider === "github"
-                  ? "GitHub Apps cannot upload file bytes in comments. Checked files stay on the Paperclip task; GitHub receives an authenticated task link when this Board has a public URL, or a private-task notice otherwise."
+                  ? l10n("local.github_apps_cannot_upload_file_bytes_in_comme_82e71ca7")
                   : binding.provider === "microsoft-teams" &&
                       !showingRetainedFiles
-                    ? "In personal Teams chats, recipients accept each file before upload. Channels and group chats receive supported images directly; other files stay on the task, with a task link or private-task notice."
+                    ? l10n("local.in_personal_teams_chats_recipients_accept_eac_53b1a2a8")
                     : showingRetainedFiles
-                      ? "These are the files selected for this send. Selection is locked until delivery is resolved."
-                      : "Only checked files will be published to the external conversation."}
+                      ? l10n("local.these_are_the_files_selected_for_this_send_se_3b09f256")
+                      : l10n("local.only_checked_files_will_be_published_to_the_e_53a7b5b7")}
               </p>
               <div className="space-y-2">
                 {visibleAttachments.map((attachment) => {
                   const label =
-                    attachment.originalFilename ?? "Unnamed attachment";
+                    attachment.originalFilename ?? l10n("local.unnamed_attachment_a90dd5d8");
                   return (
                     <label
                       className="flex items-center gap-2 text-xs"
@@ -659,12 +650,9 @@ function ConnectedTaskComposer({
               role="alert"
               className="space-y-1 rounded-md border border-border bg-background p-3 text-xs"
             >
-              <p className="font-medium">Update was not sent</p>
+              <p className="font-medium">{l10n("local.update_was_not_sent_313813f3")}</p>
               <p className="text-muted-foreground">
-                A selected file already belongs to another comment. This request
-                was rejected before any channel message was queued. Your exact
-                draft is kept.
-              </p>
+                {l10n("local.a_selected_file_already_belongs_to_another_co_c22adf15")}</p>
               <Button
                 size="sm"
                 variant="outline"
@@ -675,7 +663,7 @@ function ConnectedTaskComposer({
                     clearBoardSendDraft(storageKey);
                   } catch {
                     setStorageError(
-                      "Saved rejection could not be cleared. Restore browser storage before editing this send.",
+                      l10n("local.saved_rejection_could_not_be_cleared_restore_9d82a132"),
                     );
                     return;
                   }
@@ -698,8 +686,7 @@ function ConnectedTaskComposer({
                   publish.reset();
                 }}
               >
-                Edit rejected send
-              </Button>
+                {l10n("local.edit_rejected_send_c342fb93")}</Button>
             </div>
           )}
           {!rejection &&
@@ -710,18 +697,14 @@ function ConnectedTaskComposer({
                 role="alert"
                 className="space-y-1 rounded-md border border-border bg-background p-3 text-xs"
               >
-                <p className="font-medium">Delivery result not confirmed</p>
+                <p className="font-medium">{l10n("local.delivery_result_not_confirmed_68d563e3")}</p>
                 <p className="text-muted-foreground">
-                  Your exact draft and request identity are kept. Retry safely
-                  to learn the authoritative publication state without creating
-                  a duplicate.
-                </p>
+                  {l10n("local.your_exact_draft_and_request_identity_are_kep_876c543e")}</p>
                 <Link
                   className="inline-block font-medium underline underline-offset-4"
                   to={activityPath}
                 >
-                  Open Activity
-                </Link>
+                  {l10n("local.open_activity_b2a97706")}</Link>
               </div>
             )}
           {publication && currentPublication && currentFeedback && (
@@ -755,13 +738,13 @@ function ConnectedTaskComposer({
                           ? [`${batch.cancelled} cancelled`]
                           : []),
                       ].join(" · ")
-                    : `${batch.published} of ${batch.total} parts published.`}
+                    : l10n("local.value_of_value_parts_published_43244182", {v0: (batch.published), v1: (batch.total)})}
                 </p>
               )}
               {batch?.parts?.some((part) => part.fileTransfer) && (
                 <ul
                   className="space-y-1 text-muted-foreground"
-                  aria-label="File delivery outcomes"
+                  aria-label={l10n("local.file_delivery_outcomes_e0229aa5")}
                 >
                   {batch.parts
                     .filter((part) => part.fileTransfer)
@@ -775,21 +758,18 @@ function ConnectedTaskComposer({
               )}
               {publicationStatus.isError && (
                 <p role="alert" className="text-muted-foreground">
-                  Delivery status could not be refreshed. Your draft is kept;
-                  Paperclip will check again without sending another update.
-                </p>
+                  {l10n("local.delivery_status_could_not_be_refreshed_your_d_2c58b83f")}</p>
               )}
               {currentPublication.redactedError && (
                 <p className="text-muted-foreground">
-                  Provider detail: {currentPublication.redactedError}
+                  {l10n("local.provider_detail_2c23fae4")}{" "}{currentPublication.redactedError}
                 </p>
               )}
               <Link
                 className="inline-block font-medium underline underline-offset-4"
                 to={activityPath}
               >
-                Open Activity
-              </Link>
+                {l10n("local.open_activity_b2a97706")}</Link>
               {dismissible && (
                 <Button
                   className="ml-3"
@@ -801,7 +781,7 @@ function ConnectedTaskComposer({
                         clearBoardSendDraft(storageKey);
                       } catch {
                         setStorageError(
-                          "Saved delivery identity could not be cleared. Restore browser storage before starting another send.",
+                          l10n("local.saved_delivery_identity_could_not_be_cleared_9302ae1b"),
                         );
                         return;
                       }
@@ -818,15 +798,13 @@ function ConnectedTaskComposer({
                     publish.reset();
                   }}
                 >
-                  Dismiss delivery receipt
-                </Button>
+                  {l10n("local.dismiss_delivery_receipt_e6d60fbc")}</Button>
               )}
             </div>
           )}
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Ordinary board comments remain Paperclip-only.
-            </p>
+              {l10n("local.ordinary_board_comments_remain_paperclip_only_9add3834")}</p>
             <Button
               size="sm"
               disabled={
@@ -864,7 +842,7 @@ function ConnectedTaskComposer({
                   writeBoardSendDraft(storageKey, input);
                 } catch {
                   setStorageError(
-                    "Browser storage could not preserve this delivery identity. No update was sent. Restore browser storage, then reload to try again.",
+                    l10n("local.browser_storage_could_not_preserve_this_deliv_093cb743"),
                   );
                   return;
                 }
@@ -878,10 +856,10 @@ function ConnectedTaskComposer({
               }}
             >
               {publish.isPending
-                ? "Sending…"
+                ? l10n("local.sending_b8ed5279")
                 : !rejection && (publish.isError || unconfirmedRequest)
-                  ? "Retry safely"
-                  : "Send to channel"}
+                  ? l10n("local.retry_safely_aea7359d")
+                  : l10n("local.send_to_channel_dface7aa")}
             </Button>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ReactNode } from "react";
 import type {
   ExternalObjectLivenessState,
@@ -40,7 +41,7 @@ function githubObjectLabel(url: string | null | undefined): string | null {
     const [, owner, repo, kind, number] = parsed.pathname.split("/");
     if (!owner || !repo || !number) return null;
     if (kind === "pull") return `PR ${number}`;
-    if (kind === "issues") return `Issue ${number}`;
+    if (kind === "issues") return l10n("local.issue_value_eb7f7533", {v0: (number)});
     return null;
   } catch {
     return null;

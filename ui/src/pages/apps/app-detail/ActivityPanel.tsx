@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useMemo } from "react";
 import {
   humanizeConnectionDisplayName,
@@ -76,7 +77,7 @@ function RecentActivity({
   return (
     <section className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Recent activity</h2>
+        <h2 className="text-lg font-semibold text-foreground">{l10n("local.recent_activity_6cb44b56")}</h2>
       </div>
       {loading ? (
         <div className="space-y-2 py-4">
@@ -84,7 +85,7 @@ function RecentActivity({
           <Skeleton className="h-4 w-2/3" />
         </div>
       ) : rows.length === 0 ? (
-        <p className="py-5 text-sm text-muted-foreground">No activity yet.</p>
+        <p className="py-5 text-sm text-muted-foreground">{l10n("local.no_activity_yet_a288d2d0")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((row) => (
@@ -95,7 +96,7 @@ function RecentActivity({
                 <span className="block truncate text-xs text-muted-foreground">
                   {row.issue ? (
                     <>
-                      while working on{" "}
+                      {l10n("local.while_working_on_74d62b6c")}{" "}
                       <Link
                         to={`/issues/${row.issue.identifier}`}
                         className="font-medium text-muted-foreground hover:text-foreground hover:underline"
@@ -151,9 +152,9 @@ export function resolveActorLabel(
   if (actorId) {
     const label = userLabelById?.get(actorId);
     if (label) return label;
-    if (actorId === "local-board") return "Board";
+    if (actorId === "local-board") return l10n("local.board_4816cbfd");
   }
-  return "Someone";
+  return l10n("local.someone_864c855e");
 }
 
 export function humanizeEvent(
@@ -200,9 +201,9 @@ function humanizeApprovalResolved(
   actionRequest?: ActivityPanelProps["actionRequests"][string],
 ): string {
   const resolver = actionRequest?.resolverDisplayName ?? "Someone";
-  if (actionRequest?.status === "approved") return `${resolver} approved ${action}`;
-  if (actionRequest?.status === "rejected") return `${resolver} said no to ${action}`;
-  return `${resolver} reviewed ${action}`;
+  if (actionRequest?.status === "approved") return l10n("local.value_approved_value_2f3c0947", {v0: (resolver), v1: (action)});
+  if (actionRequest?.status === "rejected") return l10n("local.value_said_no_to_value_7aba9cfd", {v0: (resolver), v1: (action)});
+  return l10n("local.value_reviewed_value_8a61f483", {v0: (resolver), v1: (action)});
 }
 
 /** Humanize a connection lifecycle event into a prosumer sentence (PAP-11284). */
@@ -214,23 +215,23 @@ function humanizeLifecycleEvent(
   const who = event.actorDisplayName ?? agentName ?? "Someone";
   switch (event.type) {
     case "app_connected":
-      return `${who} connected ${appName}`;
+      return l10n("local.value_connected_value_7f21dc36", {v0: (who), v1: (appName)});
     case "app_paused":
-      return `${who} paused this app`;
+      return l10n("local.value_paused_this_app_1d2c6a9a", {v0: (who)});
     case "app_resumed":
-      return `${who} resumed this app`;
+      return l10n("local.value_resumed_this_app_6e0ed8ae", {v0: (who)});
     case "reconnected":
-      return `${who} reconnected ${appName}`;
+      return l10n("local.value_reconnected_value_eebbeb9f", {v0: (who), v1: (appName)});
     case "disconnected":
-      return `${who} disconnected ${appName}`;
+      return l10n("local.value_disconnected_value_e9e1100d", {v0: (who), v1: (appName)});
     case "allowlist_changed":
       return humanizeAllowlistChange(who, event.details);
     case "actions_quarantined": {
       const count = numberFrom(event.details?.count);
-      return `${count} new ${count === 1 ? "action" : "actions"} need review`;
+      return l10n("local.value_new_value_need_review_e9b65e79", {v0: (count), v1: (count === 1 ? "action" : "actions")});
     }
     default:
-      return `${who} updated this app`;
+      return l10n("local.value_updated_this_app_46d322b4", {v0: (who)});
   }
 }
 
@@ -238,15 +239,15 @@ function humanizeAllowlistChange(who: string, details: Record<string, unknown> |
   const added = numberFrom(details?.added);
   const removed = numberFrom(details?.removed);
   if (added > 0 && removed === 0) {
-    return `${who} added ${added} ${added === 1 ? "sheet" : "sheets"} to the allowlist`;
+    return l10n("local.value_added_value_value_to_the_allowlist_856215dd", {v0: (who), v1: (added), v2: (added === 1 ? "sheet" : "sheets")});
   }
   if (removed > 0 && added === 0) {
-    return `${who} removed ${removed} ${removed === 1 ? "sheet" : "sheets"} from the allowlist`;
+    return l10n("local.value_removed_value_value_from_the_allowlist_e2fa4047", {v0: (who), v1: (removed), v2: (removed === 1 ? "sheet" : "sheets")});
   }
   if (added > 0 && removed > 0) {
-    return `${who} updated the allowlist (added ${added}, removed ${removed})`;
+    return l10n("local.value_updated_the_allowlist_added_value_remov_1ac3b195", {v0: (who), v1: (added), v2: (removed)});
   }
-  return `${who} updated the allowlist`;
+  return l10n("local.value_updated_the_allowlist_8688c87b", {v0: (who)});
 }
 
 function lifecycleLinkLabel(event: ToolConnectionLifecycleEvent): string {

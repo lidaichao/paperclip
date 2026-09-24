@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { IssueChangeReceiptEntry } from "@paperclipai/shared";
 import { formatReviewPolicyValue } from "./review-policy";
 
@@ -17,28 +18,28 @@ import { formatReviewPolicyValue } from "./review-policy";
 
 /** Field names whose raw ids carry no meaning in a scannable summary. */
 const FIELD_LABELS: Record<string, string> = {
-  assigneeAgentId: "Assignee",
-  assigneeUserId: "Assignee (user)",
-  responsibleUserId: "Responsible user",
-  blockedByIssueIds: "Blockers",
-  labelIds: "Labels",
-  parentId: "Parent",
-  projectId: "Project",
-  goalId: "Goal",
-  workMode: "Work mode",
-  reviewPolicy: "Who can approve",
-  billingCode: "Billing code",
-  checkoutRunId: "Checkout run",
-  executionRunId: "Execution run",
-  hiddenAt: "Hidden",
-  startedAt: "Started",
-  completedAt: "Completed",
-  cancelledAt: "Cancelled",
-  requestDepth: "Request depth",
-  sourceTrust: "Source trust",
-  executionPolicy: "Execution policy",
-  executionWorkspaceId: "Execution workspace",
-  projectWorkspaceId: "Project workspace",
+  assigneeAgentId: l10n("local.assignee_5e20d20e"),
+  assigneeUserId: l10n("local.assignee_user_aab320ef"),
+  responsibleUserId: l10n("local.responsible_user_aafb0485"),
+  blockedByIssueIds: l10n("local.blockers_cb9b9d5c"),
+  labelIds: l10n("local.labels_934b8899"),
+  parentId: l10n("local.parent_5f7953f7"),
+  projectId: l10n("local.project_98595978"),
+  goalId: l10n("local.goal_cdbf6975"),
+  workMode: l10n("local.work_mode_b4c4aec3"),
+  reviewPolicy: l10n("local.who_can_approve_933be04f"),
+  billingCode: l10n("local.billing_code_1aad3d28"),
+  checkoutRunId: l10n("local.checkout_run_d755944f"),
+  executionRunId: l10n("local.execution_run_d78fe751"),
+  hiddenAt: l10n("local.hidden_7e6fefff"),
+  startedAt: l10n("local.started_ecbc89cd"),
+  completedAt: l10n("local.completed_22a970d2"),
+  cancelledAt: l10n("local.cancelled_d353a99e"),
+  requestDepth: l10n("local.request_depth_bdf6410f"),
+  sourceTrust: l10n("local.source_trust_5894ecd9"),
+  executionPolicy: l10n("local.execution_policy_b9215cec"),
+  executionWorkspaceId: l10n("local.execution_workspace_d31c92b6"),
+  projectWorkspaceId: l10n("local.project_workspace_ce016e7f"),
 };
 
 /** Human label for a changed field, e.g. `assigneeAgentId` → "Assignee". */
@@ -165,17 +166,17 @@ export function readIssueChangeReceipt(
 
 /** Authorization reasons, as recorded by the server's write-policy decision. */
 const AUTHORIZATION_REASON_LABELS: Record<string, string> = {
-  allow_visible_issue_write: "default-open write on a visible task",
-  allow_scoped_agent_write: "scoped agent write",
-  allow_board_actor: "board actor",
-  allow_self: "own task",
-  allow_issue_mention_grant: "mention grant",
-  allow_direct_parent_report: "direct parent report",
-  allow_low_trust_boundary: "low-trust boundary allowance",
-  allow_explicit_grant: "explicit permission grant",
-  allow_instance_admin: "instance admin",
-  allow_local_board: "local board",
-  internal_agent_write: "internal agent write",
+  allow_visible_issue_write: l10n("local.default_open_write_on_a_visible_task_b8bfd7fd"),
+  allow_scoped_agent_write: l10n("local.scoped_agent_write_bc00f989"),
+  allow_board_actor: l10n("local.board_actor_cf2ed14e"),
+  allow_self: l10n("local.own_task_d37df892"),
+  allow_issue_mention_grant: l10n("local.mention_grant_982e0e74"),
+  allow_direct_parent_report: l10n("local.direct_parent_report_0141a958"),
+  allow_low_trust_boundary: l10n("local.low_trust_boundary_allowance_c03a45cf"),
+  allow_explicit_grant: l10n("local.explicit_permission_grant_af5e909a"),
+  allow_instance_admin: l10n("local.instance_admin_6eabc9c5"),
+  allow_local_board: l10n("local.local_board_59e8df74"),
+  internal_agent_write: l10n("local.internal_agent_write_1a965cd9"),
 };
 
 /**

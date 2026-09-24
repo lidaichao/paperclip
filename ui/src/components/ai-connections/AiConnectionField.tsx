@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -87,9 +88,7 @@ export function AiConnectionField({
     <div className="space-y-4">
       {value && (adapterType !== "opencode_local" || Boolean(model)) && !isAiConnectionCompatible(value, adapterType, model) && (
         <p role="alert" className="text-sm text-destructive">
-          This connection does not support the current harness and model. Choose
-          a compatible connection before saving.
-        </p>
+          {l10n("local.this_connection_does_not_support_the_current_f964a914")}</p>
       )}
       <AiConnectionPicker
         requirement={{ companyId, provider }}
@@ -115,46 +114,39 @@ export function AiConnectionField({
       >
         <DialogContent className="max-h-(--sz-85vh) overflow-y-auto sm:max-w-2xl" onCloseAutoFocus={restoreFocus}>
           <DialogHeader>
-            <DialogTitle>Adopt Connections for {agentName}</DialogTitle>
+            <DialogTitle>{l10n("local.adopt_connections_for_85bf58d9")}{" "}{agentName}</DialogTitle>
             <DialogDescription>
-              Saving tests this account in {agentName}’s environment before
-              replacing its existing authentication. Other agents keep their
-              current configuration.
-            </DialogDescription>
+              {l10n("local.saving_tests_this_account_in_4bac81f8")}{" "}{agentName}{l10n("local._s_environment_before_replacing_its_existing_c440dccd")}</DialogDescription>
           </DialogHeader>
           <p className="text-sm">
             {pendingAdoption?.mode === "responsible_user"
-              ? `Responsible user’s default. For you: ${accounts.data?.connections.find((account) => account.isDefault && account.provider === provider)?.name ?? "Not connected"}. Other users use their own default.`
+              ? l10n("local.responsible_user_s_default_for_you_value_othe_a3decdf9", {v0: (accounts.data?.connections.find((account) => account.isDefault && account.provider === provider)?.name ?? "Not connected")})
               : accounts.data?.connections.find(
                   (account) => account.id === pendingAdoption?.connectionId,
                 )?.name}
           </p>
           <p className="text-xs text-muted-foreground">
-            After adoption, missing credentials block execution. Previous
-            authentication will not be used as a fallback.
-          </p>
+            {l10n("local.after_adoption_missing_credentials_block_exec_f32239bb")}</p>
           <DialogFooter>
             <Button
               variant="ghost"
               onClick={() => setPendingAdoption(undefined)}
             >
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               onClick={() => {
                 if (pendingAdoption) onChange(pendingAdoption);
                 setPendingAdoption(undefined);
               }}
             >
-              Use this binding when saved
-            </Button>
+              {l10n("local.use_this_binding_when_saved_3a51030e")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={connecting} onOpenChange={setConnecting}>
         <DialogContent className="max-h-(--sz-85vh) overflow-y-auto sm:max-w-2xl" onCloseAutoFocus={restoreFocus}>
           <DialogHeader>
-            <DialogTitle>Connect account</DialogTitle>
+            <DialogTitle>{l10n("local.connect_account_f7d84518")}</DialogTitle>
           </DialogHeader>
           <AiConnectionCredentialStep
             companyId={companyId}

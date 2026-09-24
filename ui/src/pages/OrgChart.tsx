@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "@/lib/router";
@@ -238,7 +239,7 @@ export function OrgChart({ orgTree: providedOrgTree, agents: providedAgents, emb
   }, [agents]);
 
   useEffect(() => {
-    if (!embedded) setBreadcrumbs([{ label: "Org Chart" }]);
+    if (!embedded) setBreadcrumbs([{ label: l10n("local.org_chart_aab3e6c8") }]);
   }, [embedded, setBreadcrumbs]);
 
   // Layout computation
@@ -488,16 +489,14 @@ export function OrgChart({ orgTree: providedOrgTree, agents: providedAgents, emb
           <Link to="/company/import">
             <Button variant="outline" size="sm">
               <Upload className="mr-1.5 h-3.5 w-3.5" />
-              Import organization
-            </Button>
+              {l10n("local.import_organization_837ee932")}</Button>
           </Link>
         ) : null}
         {showExport ? (
           <Link to="/company/export">
             <Button variant="outline" size="sm">
               <Download className="mr-1.5 h-3.5 w-3.5" />
-              Export organization
-            </Button>
+              {l10n("local.export_organization_38a8481a")}</Button>
           </Link>
         ) : null}
         </div>
@@ -534,8 +533,8 @@ export function OrgChart({ orgTree: providedOrgTree, agents: providedAgents, emb
                 });
               }
             }}
-            title="Zoom in"
-            aria-label="Zoom in"
+            title={l10n("local.zoom_in_0e47f09a")}
+            aria-label={l10n("local.zoom_in_0e47f09a")}
           >
             <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
@@ -550,16 +549,16 @@ export function OrgChart({ orgTree: providedOrgTree, agents: providedAgents, emb
                 });
               }
             }}
-            title="Zoom out"
-            aria-label="Zoom out"
+            title={l10n("local.zoom_out_bc7b631a")}
+            aria-label={l10n("local.zoom_out_bc7b631a")}
           >
             <Minus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
           <button
             className="flex size-9 items-center justify-center rounded border border-border bg-background text-(length:--text-nano) transition-colors hover:bg-accent sm:size-7"
             onClick={fitToScreen}
-            title="Fit to screen"
-            aria-label="Fit chart to screen"
+            title={l10n("local.fit_to_screen_32bb0d29")}
+            aria-label={l10n("local.fit_chart_to_screen_3dc2e333")}
           >
             <Maximize2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>

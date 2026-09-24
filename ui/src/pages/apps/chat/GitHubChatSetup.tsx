@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -124,8 +125,8 @@ export function GitHubChatSetup() {
   const selectedAgent = agents.data?.find((agent) => agent.id === agentId);
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Connectors", href: "/apps" },
-      { label: "Connect GitHub bot" },
+      { label: l10n("local.connectors_c3d2e79e"), href: "/apps" },
+      { label: l10n("local.connect_github_bot_bb04a725") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs]);
@@ -212,8 +213,7 @@ export function GitHubChatSetup() {
             disabled={busy}
             onClick={() => setStep(step - 1)}
           >
-            Back
-          </Button>
+            {l10n("local.back_76900f1b")}</Button>
         )}
         {extra}
         <Button disabled={busy || disabled} onClick={() => void run(action)}>
@@ -238,32 +238,29 @@ export function GitHubChatSetup() {
       <div>
         <p className="text-xs text-muted-foreground">
           {identityOnly
-            ? "GitHub account linking"
-            : `GitHub bot · Step ${step + 1} of ${steps.length}`}
+            ? l10n("local.github_account_linking_0b212370")
+            : l10n("local.github_bot_step_value_of_value_d94fa5c5", {v0: (step + 1), v1: (steps.length)})}
         </p>
         <h1 className="mt-2 text-2xl font-semibold">{steps[step]}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          GitHub conversations run as Paperclip tasks on one assigned agent.
-        </p>
+          {l10n("local.github_conversations_run_as_paperclip_tasks_o_337de2fd")}</p>
       </div>
       {(error || current.error || agents.error) && (
         <p
           role="alert"
           className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm"
         >
-          {error || "Could not load this setup. Refresh to try again."}
+          {error || l10n("local.could_not_load_this_setup_refresh_to_try_agai_99dc51ba")}
         </p>
       )}
       {step === 0 && (
         <>
           <GitHubSetupPrompt />
           <p className="text-sm">
-            This assignment is permanent. The agent works through its existing
-            permissions, budgets, and tools.
-          </p>
+            {l10n("local.this_assignment_is_permanent_the_agent_works_2810c390")}</p>
           {endpoint ? (
             <Input
-              aria-label="Assigned agent"
+              aria-label={l10n("local.assigned_agent_f96135ac")}
               value={
                 endpoint.assignedAgentName ?? selectedAgent?.name ?? agentId
               }
@@ -276,8 +273,8 @@ export function GitHubChatSetup() {
               )}
               value={agentId}
               onChange={setAgentId}
-              placeholder="Choose an agent"
-              emptyMessage="No agents available"
+              placeholder={l10n("local.choose_an_agent_b6890bc2")}
+              emptyMessage={l10n("local.no_agents_available_da910835")}
             />
           )}
           <GitHubAgentTrustWarning agent={selectedAgent} />
@@ -309,43 +306,33 @@ export function GitHubChatSetup() {
               role="alert"
               className="rounded-lg border border-(--status-task-todo)/30 bg-(--status-task-todo)/10 p-4 text-sm"
             >
-              A publicly reachable HTTPS address is required before App
-              registration. Configure the instance’s public URL or an explicit
-              webhook ingress URL, then refresh. {" "}
-              <a className="underline" href="https://docs.paperclip.ing/reference/deploy/https/" target="_blank" rel="noreferrer">Learn how to set up HTTPS</a>
+              {l10n("local.a_publicly_reachable_https_address_is_require_7aacdb21")}{" "}{" "}
+              <a className="underline" href="https://docs.paperclip.ing/reference/deploy/https/" target="_blank" rel="noreferrer">{l10n("local.learn_how_to_set_up_https_d73f790b")}</a>
             </div>
           )}
           <p className="text-sm">
-            Create a dedicated GitHub App for{" "}
-            {selectedAgent?.name ?? endpoint.assignedAgentName}. Paperclip
-            stores the credentials in its vault and uses this same App for the
-            agent’s GitHub tools.
-          </p>
+            {l10n("local.create_a_dedicated_github_app_for_3f4496e9")}{" "}
+            {selectedAgent?.name ?? endpoint.assignedAgentName}{l10n("local._paperclip_stores_the_credentials_in_its_vaul_92f80fda")}</p>
           {reconnecting && (
             <p className="text-sm text-muted-foreground">
-              Verify the saved App and refresh its webhook configuration. Leave
-              the credentials blank to keep them, or enter a replacement private
-              key for the same App.
-            </p>
+              {l10n("local.verify_the_saved_app_and_refresh_its_webhook_32758e44")}</p>
           )}
           <div className="flex gap-2">
             <Button
               variant={!existing ? "default" : "outline"}
               onClick={() => setExisting(false)}
             >
-              Create an App
-            </Button>
+              {l10n("local.create_an_app_ee0d7952")}</Button>
             <Button
               variant={existing ? "default" : "outline"}
               onClick={() => setExisting(true)}
             >
-              Use an existing App
-            </Button>
+              {l10n("local.use_an_existing_app_49f3af52")}</Button>
           </div>
           {existing ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="github-app-id">App ID</Label>
+                <Label htmlFor="github-app-id">{l10n("local.app_id_3c2f1e20")}</Label>
                 <Input
                   id="github-app-id"
                   value={credentials.appId}
@@ -354,11 +341,10 @@ export function GitHubChatSetup() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Find this in your GitHub App’s settings.
-                </p>
+                  {l10n("local.find_this_in_your_github_app_s_settings_20685192")}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="github-private-key">Private key</Label>
+                <Label htmlFor="github-private-key">{l10n("local.private_key_477bf990")}</Label>
                 <Textarea
                   id="github-private-key"
                   autoComplete="off"
@@ -371,11 +357,10 @@ export function GitHubChatSetup() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Paste the PEM key. It is vaulted server-side.
-                </p>
+                  {l10n("local.paste_the_pem_key_it_is_vaulted_server_side_618c80b1")}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="github-webhook-secret">Webhook secret</Label>
+                <Label htmlFor="github-webhook-secret">{l10n("local.webhook_secret_342da972")}</Label>
                 <Input
                   id="github-webhook-secret"
                   type="password"
@@ -389,25 +374,24 @@ export function GitHubChatSetup() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use the same secret in GitHub’s webhook settings.
-                </p>
+                  {l10n("local.use_the_same_secret_in_github_s_webhook_setti_92781553")}</p>
                 {!reconnecting && <div className="flex flex-wrap gap-2">
                   <Button variant="outline" disabled={busy} onClick={() => void run(async () => {
                     const generated = await chatEndpointsApi.generateSetupSecret(endpoint.id);
                     setCredentials(current => ({ ...current, webhookSecret: generated.webhookSecret }));
                     setSecretCopy("idle");
-                  })}>Generate webhook secret</Button>
+                  })}>{l10n("local.generate_webhook_secret_cfbc14de")}</Button>
                   {credentials.webhookSecret && <Button variant="outline" onClick={async () => {
                     try { await copyTextToClipboard(credentials.webhookSecret); setSecretCopy("copied"); }
-                    catch { setSecretCopy("failed"); pushToast({ title: "Couldn't copy to clipboard", body: "Select and copy the value manually.", tone: "error" }); }
-                  }}>{secretCopy === "copied" ? "Webhook secret copied" : secretCopy === "failed" ? "Couldn’t copy — select it manually" : "Copy webhook secret"}</Button>}
+                    catch { setSecretCopy("failed"); pushToast({ title: l10n("local.couldn_t_copy_to_clipboard_72ff542b"), body: l10n("local.select_and_copy_the_value_manually_d630d482"), tone: "error" }); }
+                  }}>{secretCopy === "copied" ? l10n("local.webhook_secret_copied_444c369d") : secretCopy === "failed" ? l10n("local.couldn_t_copy_select_it_manually_368f602d") : l10n("local.copy_webhook_secret_a6635b8c")}</Button>}
                 </div>}
 
               </div>
             </div>
           ) : (
             <div className="space-y-3">
-              <Label htmlFor="github-app-name">GitHub App name</Label>
+              <Label htmlFor="github-app-name">{l10n("local.github_app_name_0647b10c")}</Label>
               <Input
                 id="github-app-name"
                 maxLength={34}
@@ -418,9 +402,7 @@ export function GitHubChatSetup() {
                 }}
               />
               <p className="text-xs text-muted-foreground">
-                GitHub requires a unique name. Continue on GitHub, then return
-                automatically to finish setup.
-              </p>
+                {l10n("local.github_requires_a_unique_name_continue_on_git_b57b0a8f")}</p>
               {registration && (
                 <form
                   action={registration.registrationUrl}
@@ -432,11 +414,10 @@ export function GitHubChatSetup() {
                     value={JSON.stringify(registration.manifest)}
                   />
                   <Button type="submit">
-                    Create App on GitHub
-                    <ExternalLink className="ml-2 size-4" />
+                    {l10n("local.create_app_on_github_1536e05c")}<ExternalLink className="ml-2 size-4" />
                   </Button>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Registration expires at{" "}
+                    {l10n("local.registration_expires_at_6afb9390")}{" "}
                     {new Date(registration.expiresAt).toLocaleTimeString()}.
                   </p>
                 </form>
@@ -445,16 +426,13 @@ export function GitHubChatSetup() {
           )}
           <details className="rounded-lg border border-border p-4">
             <summary className="cursor-pointer text-sm">
-              App permissions and callback details
-            </summary>
+              {l10n("local.app_permissions_and_callback_details_a84eb7a1")}</summary>
             <p className="mt-3 text-sm">
-              Contents: read. Issues, Pull requests, Checks: write. Events:
-              issue_comment, pull_request_review_comment, pull_request.
-            </p>
+              {l10n("local.contents_read_issues_pull_requests_checks_wri_b3424f9f")}</p>
             <p className="mt-2 break-all text-xs">
-              {endpoint.setup?.webhookUrl ?? "Public webhook URL unavailable"}
+              {endpoint.setup?.webhookUrl ?? l10n("local.public_webhook_url_unavailable_58d73158")}
             </p>
-            {endpoint.setup?.webhookUrl && <Button variant="outline" size="sm" className="mt-2" onClick={() => void run(async () => { await copyTextToClipboard(endpoint.setup!.webhookUrl!); pushToast({ title: "Webhook URL copied", tone: "success" }); })}>Copy webhook URL</Button>}
+            {endpoint.setup?.webhookUrl && <Button variant="outline" size="sm" className="mt-2" onClick={() => void run(async () => { await copyTextToClipboard(endpoint.setup!.webhookUrl!); pushToast({ title: l10n("local.webhook_url_copied_10a93657"), tone: "success" }); })}>{l10n("local.copy_webhook_url_69179edf")}</Button>}
             {registration && (
               <pre className="mt-3 overflow-auto text-xs">
                 {JSON.stringify(registration.manifest, null, 2)}
@@ -520,14 +498,9 @@ export function GitHubChatSetup() {
       {step === 2 && endpoint && (
         <>
           <p className="text-sm">
-            Install the bot’s App into your GitHub account or organization. On
-            GitHub, choose the repositories the installation can access.
-          </p>
+            {l10n("local.install_the_bot_s_app_into_your_github_accoun_d40d8b89")}</p>
           <p className="text-sm text-muted-foreground">
-            You will choose the subset enabled in Paperclip in the next step.
-            Changing the installation does not automatically enable repositories
-            here.
-          </p>
+            {l10n("local.you_will_choose_the_subset_enabled_in_papercl_7a6e89c3")}</p>
           {endpoint.setup?.github?.installationUrl && (
             <Button asChild>
               <a
@@ -535,8 +508,7 @@ export function GitHubChatSetup() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Install App on GitHub
-                <ExternalLink className="ml-2 size-4" />
+                {l10n("local.install_app_on_github_e7d912b5")}<ExternalLink className="ml-2 size-4" />
               </a>
             </Button>
           )}
@@ -562,8 +534,7 @@ export function GitHubChatSetup() {
               }
             >
               <RefreshCw className="mr-2 size-4" />
-              Refresh access
-            </Button>
+              {l10n("local.refresh_access_0df81b58")}</Button>
             <Button variant="outline" asChild>
               <a
                 href={
@@ -573,21 +544,16 @@ export function GitHubChatSetup() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Configure access on GitHub
-                <ExternalLink className="ml-2 size-4" />
+                {l10n("local.configure_access_on_github_e9f56cc3")}<ExternalLink className="ml-2 size-4" />
               </a>
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
-            This list comes from the bot App’s installation. Enable the
-            repositories where it should respond and review.
-          </p>
+            {l10n("local.this_list_comes_from_the_bot_app_s_installati_93759d03")}</p>
           <div className="divide-y divide-border rounded-lg border border-border">
             {resources.length === 0 && (
               <p className="p-4 text-sm">
-                No repositories found. Configure installation access on GitHub,
-                then refresh.
-              </p>
+                {l10n("local.no_repositories_found_configure_installation_30bcd525")}</p>
             )}
             {resources.map((resource) => (
               <div key={resource.id} className="p-4">
@@ -595,8 +561,8 @@ export function GitHubChatSetup() {
                   label={resource.label}
                   description={
                     resource.availability !== "available"
-                      ? "GitHub installation access is unavailable"
-                      : "Available to this App installation"
+                      ? l10n("local.github_installation_access_is_unavailable_be83c868")
+                      : l10n("local.available_to_this_app_installation_343c9809")
                   }
                   checked={
                     resource.enabled && resource.availability === "available"
@@ -650,9 +616,7 @@ export function GitHubChatSetup() {
       {step === 4 && endpoint && (
         <>
           <p className="text-sm">
-            Verify signed delivery, App identity, repository access, and the
-            assigned agent’s effective tools separately.
-          </p>
+            {l10n("local.verify_signed_delivery_app_identity_repositor_1d855f92")}</p>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -663,8 +627,7 @@ export function GitHubChatSetup() {
                 )
               }
             >
-              Verify connection
-            </Button>
+              {l10n("local.verify_connection_7b840072")}</Button>
             <Button
               variant="outline"
               disabled={busy || !record}
@@ -681,14 +644,10 @@ export function GitHubChatSetup() {
                 })
               }
             >
-              Assign this bot’s GitHub tools
-            </Button>
+              {l10n("local.assign_this_bot_s_github_tools_4a308425")}</Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Tool assignment grants this agent the bot App’s task-scoped tools
-            through its Paperclip tool profile. Existing deny and approval
-            policies still apply.
-          </p>
+            {l10n("local.tool_assignment_grants_this_agent_the_bot_app_116cdcb8")}</p>
           <div className="divide-y divide-border rounded-lg border border-border">
             {verification?.checks.map((check) => (
               <div key={check.key} className="flex gap-3 p-4">
@@ -713,15 +672,10 @@ export function GitHubChatSetup() {
       {step === 5 && endpoint && (
         <>
           <p className="text-sm">
-            Choose your existing personal GitHub connection. Paperclip verifies
-            the account, then asks you to confirm ownership. This link
-            identifies your requests; the bot still uses its own App
-            credentials.
-          </p>
+            {l10n("local.choose_your_existing_personal_github_connecti_2fef5c50")}</p>
           <div className="space-y-2">
             <Label htmlFor="github-personal-account">
-              Your GitHub connection
-            </Label>
+              {l10n("local.your_github_connection_b6eb02e7")}</Label>
             <select
               id="github-personal-account"
               className={githubSelectClass}
@@ -731,7 +685,7 @@ export function GitHubChatSetup() {
                 setIdentity(null);
               }}
             >
-              <option value="">Choose a personal connection</option>
+              <option value="">{l10n("local.choose_a_personal_connection_323b061e")}</option>
               {accounts.data?.map((account) => (
                 <option
                   key={account.connectionId}
@@ -739,14 +693,13 @@ export function GitHubChatSetup() {
                   disabled={!account.enabled || account.status !== "active"}
                 >
                   {account.name}
-                  {account.login ? ` · @${account.login}` : ""}
-                  {account.status !== "active" ? " · reconnect required" : ""}
+                  {account.login ? (" " + l10n("local._value_fa3ec8c3", {v0: (account.login)})) : ""}
+                  {account.status !== "active" ? (" " + l10n("local._reconnect_required_eeb7a476")) : ""}
                 </option>
               ))}
             </select>
             <p className="text-xs text-muted-foreground">
-              Shared and agent connections cannot prove your identity.
-            </p>
+              {l10n("local.shared_and_agent_connections_cannot_prove_you_88560962")}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -763,27 +716,21 @@ export function GitHubChatSetup() {
                 )
               }
             >
-              Verify my account
-            </Button>
+              {l10n("local.verify_my_account_8540f4de")}</Button>
             <Button variant="ghost" onClick={() => void accounts.refetch()}>
-              Refresh connections
-            </Button>
+              {l10n("local.refresh_connections_cad52835")}</Button>
             <Link className="self-center text-sm underline" to="/apps/connect?source=github">
-              Connect GitHub
-            </Link>
+              {l10n("local.connect_github_4027e5b2")}</Link>
           </div>
           {accounts.error && (
             <p role="alert" className="text-sm text-destructive">
-              Could not load personal connections.
-            </p>
+              {l10n("local.could_not_load_personal_connections_9f7fb239")}</p>
           )}
           {identity && (
             <div className="rounded-lg border border-border p-4">
               <p className="font-medium">@{identity.login}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                GitHub ID {identity.githubUserId}. Confirm that this is your
-                account.
-              </p>
+                {l10n("local.github_id_13f319d7")}{" "}{identity.githubUserId}{l10n("local._confirm_that_this_is_your_account_b51d7434")}</p>
             </div>
           )}
           {footer(
@@ -829,17 +776,14 @@ export function GitHubChatSetup() {
       {step === 7 && endpoint && (
         <>
           <p className="text-sm">
-            Mention the bot in an enabled repository. The request should create
-            a real Paperclip task on{" "}
-            {selectedAgent?.name ?? endpoint.assignedAgentName} and reply on
-            GitHub.
-          </p>
+            {l10n("local.mention_the_bot_in_an_enabled_repository_the_e98898df")}{" "}
+            {selectedAgent?.name ?? endpoint.assignedAgentName} {l10n("local.and_reply_on_github_2d8cdf8c")}</p>
           <div className="flex items-center gap-3 rounded-lg border border-border p-4">
             <code className="min-w-0 flex-1 break-all text-sm">{mention}</code>
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Copy test mention"
+              aria-label={l10n("local.copy_test_mention_e2d09d42")}
               onClick={() =>
                 void copyTextToClipboard(mention).then(() => setCopied(true))
               }
@@ -849,20 +793,18 @@ export function GitHubChatSetup() {
           </div>
           {copied && (
             <p role="status" className="text-xs text-muted-foreground">
-              Mention copied
-            </p>
+              {l10n("local.mention_copied_84071487")}</p>
           )}
           <p role="status" className="text-sm">
             {test.data?.messageReceivedAt
-              ? "Message received. Wait for the agent’s response, then finish."
-              : "Waiting for your test message…"}
+              ? l10n("local.message_received_wait_for_the_agent_s_respons_3f5a8a96")
+              : l10n("local.waiting_for_your_test_message_4739b5e8")}
           </p>
           <Link
             className="text-sm underline"
             to={`/apps/chat/${endpoint.id}/conversations`}
           >
-            Open underlying tasks
-          </Link>
+            {l10n("local.open_underlying_tasks_29b288a5")}</Link>
           {footer(
             "Verify response and finish",
             async () => {
@@ -880,8 +822,7 @@ export function GitHubChatSetup() {
                 })
               }
             >
-              Finish without test
-            </Button>,
+              {l10n("local.finish_without_test_75641f72")}</Button>,
           )}
         </>
       )}

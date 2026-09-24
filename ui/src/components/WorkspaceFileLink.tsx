@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { MouseEvent, ReactNode } from "react";
 import { FileCode2, FolderOpen } from "lucide-react";
 import { useLocation } from "@/lib/router";
@@ -38,8 +39,8 @@ export function WorkspaceFileLink({
     ? ` line ${workspaceFileRef.line}${workspaceFileRef.column ? ` column ${workspaceFileRef.column}` : ""}`
     : "";
   const ariaLabel = canOpen
-    ? `Open ${workspaceFileRef.path}${lineSuffix} in the ${isDirectory ? "workspace browser" : "file viewer"}`
-    : `Workspace ${isDirectory ? "folder" : "file"} ${workspaceFileRef.path}${lineSuffix}`;
+    ? l10n("local.open_valuevalue_in_the_value_56897ab1", {v0: (workspaceFileRef.path), v1: (lineSuffix), v2: (isDirectory ? "workspace browser" : "file viewer")})
+    : l10n("local.workspace_value_valuevalue_99db42d2", {v0: (isDirectory ? "folder" : "file"), v1: (workspaceFileRef.path), v2: (lineSuffix)});
   const tooltip = title ?? (canOpen
     ? `Open ${workspaceFileRef.path}${lineSuffix} in the ${isDirectory ? "workspace browser" : "file viewer"}`
     : `Workspace ${isDirectory ? "folder" : "file"} ${workspaceFileRef.path}${lineSuffix}`);

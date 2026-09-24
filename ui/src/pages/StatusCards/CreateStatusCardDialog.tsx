@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { defaultStatusCardRefreshPolicy } from "@paperclipai/shared";
@@ -74,30 +75,27 @@ export function CreateStatusCardDialog({
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>New card</DialogTitle>
+          <DialogTitle>{l10n("local.new_card_8d3efc39")}</DialogTitle>
           <DialogDescription>
-            One message sets up the whole card: say what you want to watch and what each update
-            should tell you. The agent builds the query from it and writes every update against it.
-          </DialogDescription>
+            {l10n("local.one_message_sets_up_the_whole_card_say_what_y_7ce8e93d")}</DialogDescription>
         </DialogHeader>
 
-        {error ? <InlineBanner tone="danger" title="Create failed">{error}</InlineBanner> : null}
+        {error ? <InlineBanner tone="danger" title={l10n("local.create_failed_3e05ffcf")}>{error}</InlineBanner> : null}
 
         <div className="space-y-3">
           <label htmlFor="status-card-prompt" className="block pb-1 text-sm font-semibold">
-            What do you want to keep an eye on?
-          </label>
+            {l10n("local.what_do_you_want_to_keep_an_eye_on_2abdde3d")}</label>
           <Textarea
             id="status-card-prompt"
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
             rows={5}
             autoFocus
-            placeholder="Keep an eye on the ID and Cloud projects. Tell me whether the service is live, and if not, the exact three actions needed to get it to production."
+            placeholder={l10n("local.keep_an_eye_on_the_id_and_cloud_projects_tell_1cadc7b8")}
             className="text-sm"
           />
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Examples</span>
+            <span className="text-xs font-medium text-muted-foreground">{l10n("local.examples_e68ee04d")}</span>
             {EXAMPLES.map((example) => (
               <button
                 key={example}
@@ -112,25 +110,22 @@ export function CreateStatusCardDialog({
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold">Agent</label>
+          <label className="block text-sm font-semibold">{l10n("local.agent_11b39c93")}</label>
           <SummarizerAgentSelect companyId={companyId} value={agentId} onChange={setAgentId} enabled={open} />
           <p className="text-xs text-muted-foreground">
-            Runs this card's setup and updates. Leave on the default unless another agent should own it.
-          </p>
+            {l10n("local.runs_this_card_s_setup_and_updates_leave_on_t_d23a2d8b")}</p>
         </div>
 
         <DialogFooter>
           <div className="flex gap-2">
             <Button variant="outline" onClick={close} disabled={createMutation.isPending}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               onClick={() => createMutation.mutate()}
               disabled={prompt.trim().length === 0 || createMutation.isPending}
             >
               {createMutation.isPending ? <Loader2 className="animate-spin" /> : null}
-              Create card
-            </Button>
+              {l10n("local.create_card_939a6a1b")}</Button>
           </div>
         </DialogFooter>
       </DialogContent>

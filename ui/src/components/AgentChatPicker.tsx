@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useState } from "react";
 import type { Agent } from "@paperclipai/shared";
 import { AgentIcon } from "@/components/AgentIconPicker";
@@ -20,7 +21,7 @@ export function AgentChatPicker({ open, onOpenChange, ...props }: AgentChatPicke
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} className="gap-0 overflow-hidden p-0 sm:max-w-md">
         <div className="px-4 pt-4 pb-3">
-          <DialogTitle>Chat with an agent</DialogTitle>
+          <DialogTitle>{l10n("local.chat_with_an_agent_73adffe3")}</DialogTitle>
         </div>
         {/* The dialog unmounts its content on close, so each search starts empty. */}
         <AgentChatPickerResults {...props} onSelect={(agent) => {
@@ -37,27 +38,27 @@ function AgentChatPickerResults({ agents, onSelect, loading, error, onRetry }: O
   return (
     <Command>
       <CommandInput
-        aria-label="Search agents by name or role"
-        placeholder="Search by name or role…"
+        aria-label={l10n("local.search_agents_by_name_or_role_e5d13d38")}
+        placeholder={l10n("local.search_by_name_or_role_ada75765")}
         value={search}
         onValueChange={setSearch}
       />
       {error ? (
         <div role="alert" className="flex flex-col items-start gap-2 p-4 text-sm">
-          <p>Couldn’t load agents. Try again.</p>
-          {onRetry && <Button variant="outline" size="sm" onClick={onRetry}>Retry</Button>}
+          <p>{l10n("local.couldn_t_load_agents_try_again_3ca8c851")}</p>
+          {onRetry && <Button variant="outline" size="sm" onClick={onRetry}>{l10n("local.retry_942087cc")}</Button>}
         </div>
       ) : loading ? (
-        <p role="status" className="p-4 text-sm text-muted-foreground">Loading agents…</p>
+        <p role="status" className="p-4 text-sm text-muted-foreground">{l10n("local.loading_agents_ae0c1414")}</p>
       ) : (
         <CommandList>
           <CommandEmpty>
             <div className="flex flex-col items-center gap-2 px-4">
-              <span>{agents.length ? `No agents match “${search}”` : "No agents yet."}</span>
+              <span>{agents.length ? l10n("local.no_agents_match_value_180fe87b", {v0: (search)}) : l10n("local.no_agents_yet_8a33b2e7")}</span>
               {agents.length ? <>
-                <span className="text-xs text-muted-foreground">Try another name or role.</span>
-                <Button variant="ghost" size="sm" onClick={() => setSearch("")}>Clear search</Button>
-              </> : <span className="text-xs text-muted-foreground">Create an agent from the Agents page to start chatting.</span>}
+                <span className="text-xs text-muted-foreground">{l10n("local.try_another_name_or_role_ec1f4d9d")}</span>
+                <Button variant="ghost" size="sm" onClick={() => setSearch("")}>{l10n("local.clear_search_3b7ea517")}</Button>
+              </> : <span className="text-xs text-muted-foreground">{l10n("local.create_an_agent_from_the_agents_page_to_start_8f52c095")}</span>}
             </div>
           </CommandEmpty>
           <CommandGroup>
@@ -74,9 +75,9 @@ function AgentChatPickerResults({ agents, onSelect, loading, error, onRetry }: O
                   <span className="truncate font-medium">{agent.name}</span>
                   <span className="truncate text-xs text-muted-foreground">{agent.title ?? agent.role}</span>
                 </span>
-                {agent.status === "paused" && <span className="text-xs text-(--status-agent-paused)">Paused</span>}
-                {agent.status === "terminated" && <span className="text-xs text-muted-foreground">Terminated</span>}
-                {agent.status === "pending_approval" && <span className="text-xs text-muted-foreground">Awaiting approval</span>}
+                {agent.status === "paused" && <span className="text-xs text-(--status-agent-paused)">{l10n("local.paused_e159b061")}</span>}
+                {agent.status === "terminated" && <span className="text-xs text-muted-foreground">{l10n("local.terminated_56a88f4f")}</span>}
+                {agent.status === "pending_approval" && <span className="text-xs text-muted-foreground">{l10n("local.awaiting_approval_ae25c9b1")}</span>}
               </CommandItem>
             ))}
           </CommandGroup>

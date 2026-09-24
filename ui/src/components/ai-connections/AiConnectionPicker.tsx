@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { AppLogo } from "@/pages/apps/AppLogo";
 import { ConnectionChoiceList } from "@/features/connections/ConnectionChoiceList";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,7 @@ export function AiConnectionPicker({
       grantId: connection.grantId,
     });
   return (
-    <section className="flex flex-col gap-4" aria-label="AI connection">
+    <section className="flex flex-col gap-4" aria-label={l10n("local.ai_connection_a991b227")}>
       <div className="flex items-center gap-3">
         <AppLogo
           name={AI_PROVIDERS[requirement.provider].name}
@@ -79,7 +80,7 @@ export function AiConnectionPicker({
           size={32}
         />
         <div className="flex min-w-0 flex-col gap-1">
-        <h3 className="text-sm font-semibold">AI connection</h3>
+        <h3 className="text-sm font-semibold">{l10n("local.ai_connection_a991b227")}</h3>
         <p className="text-xs text-muted-foreground">
           {AI_PROVIDERS[requirement.provider].name}
           {value && value.mode !== "responsible_user" && ` · ${aiMethodLabel(value.provider, value.method)}`}
@@ -87,7 +88,7 @@ export function AiConnectionPicker({
         </div>
       </div>
       {loading ? (
-        <div role="status" aria-label="Loading AI connections">
+        <div role="status" aria-label={l10n("local.loading_ai_connections_b38addbe")}>
           <Skeleton className="h-24 w-full" />
         </div>
       ) : error ? (
@@ -97,8 +98,7 @@ export function AiConnectionPicker({
           </p>
           {onRetry && (
             <Button type="button" variant="outline" onClick={onRetry}>
-              Retry connections
-            </Button>
+              {l10n("local.retry_connections_4048d2ff")}</Button>
           )}
         </div>
       ) : (
@@ -108,13 +108,13 @@ export function AiConnectionPicker({
             selectedId={value?.mode === "responsible_user" ? "responsible_user" : value?.connectionId}
             choices={[
               { id: "responsible_user", name: "Responsible user’s connection", description: <>
-                <span className="block">For you: {personalDefault?.name ?? "Not connected"}</span>
-                <span className="block">Other users’ tasks use their own {AI_PROVIDERS[requirement.provider].name} connection.</span>
+                <span className="block">{l10n("local.for_you_112b0bab")}{" "}{personalDefault?.name ?? l10n("local.not_connected_0303e182")}</span>
+                <span className="block">{l10n("local.other_users_tasks_use_their_own_08d053ff")}{" "}{AI_PROVIDERS[requirement.provider].name} {l10n("local.connection_1b33ea86")}</span>
               </> },
               ...compatible.filter((connection) => connection.ownership === "shared").map((connection) => ({
                 id: connection.id, name: connection.name,
                 disabled: Boolean(aiConnectionProblem(connection)),
-                description: <>Company shared · {aiMethodLabel(connection.provider, connection.method)}{connection.accountLabel ? ` · ${connection.accountLabel}` : ""}{aiConnectionProblem(connection) ? ` · ${aiConnectionProblem(connection)}` : ""}</>,
+                description: <>{l10n("local.company_shared_c720ab92")}{" "}{aiMethodLabel(connection.provider, connection.method)}{connection.accountLabel ? ` · ${connection.accountLabel}` : ""}{aiConnectionProblem(connection) ? ` · ${aiConnectionProblem(connection)}` : ""}</>,
               })),
             ]}
             onSelect={(id) => {
@@ -134,8 +134,7 @@ export function AiConnectionPicker({
               className="self-end"
               onClick={onConnect}
             >
-              Connect another account
-            </Button>
+              {l10n("local.connect_another_account_261b28a3")}</Button>
           )}
         </>
       )}

@@ -1,3 +1,4 @@
+import { l10n } from "../../../../i18n";
 import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -12,12 +13,12 @@ import { ErrorState, RelativeTime } from "@/pages/tools/shared";
 const PAGE_SIZE = 25;
 
 const OUTCOME_META: Record<ToolAuditOutcome, { label: string; status: string }> = {
-  allowed: { label: "Allowed", status: "allowed" },
-  blocked: { label: "Blocked", status: "denied" },
-  asked_first: { label: "Asked first", status: "require-approval" },
-  waiting: { label: "Waiting", status: "deferred" },
-  failed: { label: "Failed", status: "failed" },
-  unknown: { label: "Recorded", status: "unchecked" },
+  allowed: { label: l10n("local.allowed_1bb201d1"), status: "allowed" },
+  blocked: { label: l10n("local.blocked_18f2a094"), status: "denied" },
+  asked_first: { label: l10n("local.asked_first_db928628"), status: "require-approval" },
+  waiting: { label: l10n("local.waiting_6e293a8c"), status: "deferred" },
+  failed: { label: l10n("local.failed_031a8f0f"), status: "failed" },
+  unknown: { label: l10n("local.recorded_c7175fa7"), status: "unchecked" },
 };
 
 function detailString(details: Record<string, unknown> | null, key: string): string | null {
@@ -48,7 +49,7 @@ function durationLabel(event: ToolGatewayActivityEvent): string | null {
   const started = event.invocation?.startedAt ? new Date(event.invocation.startedAt).getTime() : Number.NaN;
   const completed = event.invocation?.completedAt ? new Date(event.invocation.completedAt).getTime() : Number.NaN;
   if (!Number.isFinite(started) || !Number.isFinite(completed) || completed < started) return null;
-  return `${completed - started} ms`;
+  return l10n("local.value_ms_d659ced2", {v0: (completed - started)});
 }
 
 function Fact({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
@@ -93,7 +94,7 @@ function ActivityRow({ event }: { event: ToolGatewayActivityEvent }) {
         )}
         <span className="min-w-0 flex-1">
           <span className="block text-foreground">
-            <span className="font-medium">{actor}</span> used <span className="font-medium">{tool}</span> in {app}
+            <span className="font-medium">{actor}</span> {l10n("local.used_f8391613")}{" "}<span className="font-medium">{tool}</span> {l10n("local.in_58296753")}{" "}{app}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2 whitespace-nowrap">
@@ -107,18 +108,18 @@ function ActivityRow({ event }: { event: ToolGatewayActivityEvent }) {
       {open ? (
         <div className="border-t border-border bg-muted/30 px-4 py-3 pl-10 text-xs">
           <dl>
-            {rawTool ? <Fact label="Tool" value={rawTool} mono /> : null}
-            {event.invocation?.status ? <Fact label="Call status" value={event.invocation.status} /> : null}
-            {event.invocation?.policyDecision ? <Fact label="Decision" value={event.invocation.policyDecision} /> : null}
-            {reason ? <Fact label="Reason" value={reason} mono /> : null}
-            {duration ? <Fact label="Duration" value={duration} /> : null}
-            {event.invocation?.id ? <Fact label="Invocation ID" value={event.invocation.id} mono /> : null}
-            {event.invocation?.errorCode ? <Fact label="Error code" value={event.invocation.errorCode} mono /> : null}
-            {event.invocation?.errorMessage ? <Fact label="Error" value={event.invocation.errorMessage} /> : null}
+            {rawTool ? <Fact label={l10n("local.tool_2e53bdcd")} value={rawTool} mono /> : null}
+            {event.invocation?.status ? <Fact label={l10n("local.call_status_c43d9824")} value={event.invocation.status} /> : null}
+            {event.invocation?.policyDecision ? <Fact label={l10n("local.decision_640ae4ba")} value={event.invocation.policyDecision} /> : null}
+            {reason ? <Fact label={l10n("local.reason_f81ab834")} value={reason} mono /> : null}
+            {duration ? <Fact label={l10n("local.duration_4fc52a3c")} value={duration} /> : null}
+            {event.invocation?.id ? <Fact label={l10n("local.invocation_id_56d237ee")} value={event.invocation.id} mono /> : null}
+            {event.invocation?.errorCode ? <Fact label={l10n("local.error_code_0570b384")} value={event.invocation.errorCode} mono /> : null}
+            {event.invocation?.errorMessage ? <Fact label={l10n("local.error_54a0e8c1")} value={event.invocation.errorMessage} /> : null}
           </dl>
           {argumentsText ? (
             <div className="mt-2 space-y-1">
-              <div className="text-muted-foreground">Arguments (redacted)</div>
+              <div className="text-muted-foreground">{l10n("local.arguments_redacted_1965f782")}</div>
               <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-border bg-background p-3 font-mono text-xs text-foreground">
                 {argumentsText}
               </pre>
@@ -126,7 +127,7 @@ function ActivityRow({ event }: { event: ToolGatewayActivityEvent }) {
           ) : null}
           {resultText ? (
             <div className="mt-3 space-y-1">
-              <div className="text-muted-foreground">Result (redacted)</div>
+              <div className="text-muted-foreground">{l10n("local.result_redacted_1a33ba53")}</div>
               <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-border bg-background p-3 font-mono text-xs text-foreground">
                 {resultText}
               </pre>
@@ -179,12 +180,10 @@ export function GatewayActivityPanel({
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Calls through this gateway from the last 30 days. Open a row to inspect its tool, redacted arguments, result, and decision.
-      </p>
+        {l10n("local.calls_through_this_gateway_from_the_last_30_d_4c86c708")}</p>
       {events.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No calls have gone through this gateway yet.
-        </div>
+          {l10n("local.no_calls_have_gone_through_this_gateway_yet_a4511ecd")}</div>
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border">
           {events.map((event) => <ActivityRow key={event.id} event={event} />)}
@@ -198,7 +197,7 @@ export function GatewayActivityPanel({
             onClick={() => activityQuery.fetchNextPage()}
             disabled={activityQuery.isFetchingNextPage}
           >
-            {activityQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+            {activityQuery.isFetchingNextPage ? l10n("local.loading_ba3bbbe1") : l10n("local.load_more_ac8991ef")}
           </Button>
         </div>
       ) : null}

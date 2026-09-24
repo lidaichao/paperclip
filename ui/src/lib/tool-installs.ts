@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ToolConnectionInstall } from "@paperclipai/shared";
 
 /**
@@ -56,4 +57,4 @@ export function autoExtendNotice(agentName: string): string {
 }
 
 export const INSTALLED_HINT =
-  "Has access — tick to load its tools into this agent's context.";
+  l10n("local.has_access_tick_to_load_its_tools_into_this_a_58d3dd85");

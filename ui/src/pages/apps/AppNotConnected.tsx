@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ToolConnection } from "@paperclipai/shared";
@@ -79,7 +80,7 @@ export function AppNotConnected() {
   useEffect(() => {
     if (!activeTab) return;
     setBreadcrumbs([
-      { label: "Connectors", href: "/apps" },
+      { label: l10n("local.connectors_c3d2e79e"), href: "/apps" },
       { label: appName, href: appApplicationTabHref(applicationId, "permissions") },
       { label: appTabLabel(activeTab) },
     ]);
@@ -93,7 +94,7 @@ export function AppNotConnected() {
     return <Navigate to={appApplicationTabHref(applicationId, "permissions")} replace />;
   }
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select an organization to manage apps.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{l10n("local.select_an_organization_to_manage_apps_c62bf64e")}</div>;
   }
   if (!applicationId || !activeTab) {
     return <Navigate to={applicationId ? appApplicationTabHref(applicationId, "permissions") : "/apps"} replace />;
@@ -109,8 +110,8 @@ export function AppNotConnected() {
   if (!application) {
     return (
       <div className="max-w-3xl space-y-3 p-6 text-sm text-muted-foreground">
-        <p>This app doesn’t exist anymore.</p>
-        <Button variant="outline" size="sm" onClick={() => navigate("/apps")}>Back to connectors</Button>
+        <p>{l10n("local.this_app_doesn_t_exist_anymore_f86e299e")}</p>
+        <Button variant="outline" size="sm" onClick={() => navigate("/apps")}>{l10n("local.back_to_connectors_4bb96fc6")}</Button>
       </div>
     );
   }
@@ -148,13 +149,13 @@ export function AppNotConnected() {
       )
       : grantsQuery.data?.capabilities.canConfigure === true);
   const reconnectUnavailableMessage = grantsQuery.isLoading
-    ? "Checking who can reconnect this identity…"
+    ? l10n("local.checking_who_can_reconnect_this_identity_6e1a0df1")
     : grantsQuery.isError
-      ? "We couldn't verify who can reconnect this identity. Reload the page to try again."
+      ? l10n("local.we_couldn_t_verify_who_can_reconnect_this_ide_3dca45b9")
       : previousConnection?.credentialPolicy === "per_user"
         && retainedPersonalUserId !== grantsQuery.data?.currentUserId
-        ? "The person this connection belongs to must reconnect it."
-        : "You don't have permission to reconnect this identity.";
+        ? l10n("local.the_person_this_connection_belongs_to_must_re_f6a7ad9a")
+        : l10n("local.you_don_t_have_permission_to_reconnect_this_i_b611d45d");
   const connectHref = newConnectionHref({
     applicationId,
     appName: application.name,
@@ -185,8 +186,8 @@ export function AppNotConnected() {
           <ReviewPanel connectionId={previousConnection.id} />
         ) : (
           <EmptyTab
-            title="Nothing is waiting for your OK right now."
-            body="Review requests will appear here after this app is connected."
+            title={l10n("local.nothing_is_waiting_for_your_ok_right_now_635a9029")}
+            body={l10n("local.review_requests_will_appear_here_after_this_a_3d605b08")}
           />
         )
       )}
@@ -217,7 +218,7 @@ function ApplicationHeader({
         <div className="flex items-center gap-2">
           <h1 className="truncate text-2xl font-bold tracking-tight">{applicationName}</h1>
           <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {connectedCount > 0 ? `${connectedCount} connected` : "Not connected"}
+            {connectedCount > 0 ? l10n("local.value_connected_db4ed330", {v0: (connectedCount)}) : l10n("local.not_connected_0303e182")}
           </span>
         </div>
         {description && (
@@ -245,21 +246,21 @@ function ConnectionCallout({
     <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
       <div>
         <h2 className="text-sm font-semibold text-foreground">
-          {previousConnection ? "Needs attention" : "Not connected"}
+          {previousConnection ? l10n("local.needs_attention_c1ebc781") : l10n("local.not_connected_0303e182")}
         </h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
           {previousConnection
             ? previousConnection.authKind === "oauth"
-              ? `Sign in to ${applicationName} again to restore access.`
-              : `Add a working ${applicationName} key to restore access.`
-            : `Connect ${applicationName} so agents can use it.`}
+              ? l10n("local.sign_in_to_value_again_to_restore_access_b5eedc71", {v0: (applicationName)})
+              : l10n("local.add_a_working_value_key_to_restore_access_d91319d2", {v0: (applicationName)})
+            : l10n("local.connect_value_so_agents_can_use_it_e8772832", {v0: (applicationName)})}
         </p>
         {previousConnection && !canReconnect ? (
           <p className="mt-1 text-sm text-muted-foreground">{reconnectUnavailableMessage}</p>
         ) : null}
       </div>
       {!previousConnection || canReconnect ? (
-        <Button onClick={onConnect}>{previousConnection ? "Reconnect" : "Connect"}</Button>
+        <Button onClick={onConnect}>{previousConnection ? l10n("local.reconnect_bf8a9eab") : l10n("local.connect_1a2303ed")}</Button>
       ) : null}
     </section>
   );
@@ -268,14 +269,12 @@ function ConnectionCallout({
 function PermissionsTab({ previousConnection }: { previousConnection: ToolConnection | null }) {
   return (
     <section>
-      <h2 className="text-sm font-bold text-foreground">Permissions paused</h2>
+      <h2 className="text-sm font-bold text-foreground">{l10n("local.permissions_paused_931046d2")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Reconnect this app to edit who can use it and which actions need a human first.
-      </p>
+        {l10n("local.reconnect_this_app_to_edit_who_can_use_it_and_3ffd9025")}</p>
       {previousConnection && (
         <p className="mt-3 text-xs text-muted-foreground">
-          Previous setup is retained for reconnect, but access controls stay read-only until the app is online.
-        </p>
+          {l10n("local.previous_setup_is_retained_for_reconnect_but_9d8b6537")}</p>
       )}
     </section>
   );

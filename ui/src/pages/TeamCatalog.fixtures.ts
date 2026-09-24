@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type {
   CatalogTeam,
   CatalogTeamSkillPreparation,
@@ -19,7 +20,7 @@ export const sampleTeam: CatalogTeam = {
   slug: "core-exec-team",
   name: "Core Exec Team",
   description:
-    "A starter executive team: a CEO who manages a CTO and a CMO, plus a launch project and a weekly standup routine. Installs ready-to-run agents you can customize.",
+    l10n("local.a_starter_executive_team_a_ceo_who_manages_a_13bddff0"),
   path: "catalog/bundled/company-defaults/core-exec-team",
   entrypoint: "TEAM.md",
   schema: "agentcompanies/v1",
@@ -73,7 +74,7 @@ export const optionalTeam: CatalogTeam = {
   category: "software-development",
   slug: "platform-pod",
   name: "Platform Engineering Pod",
-  description: "An optional platform pod with a tech lead and two engineers.",
+  description: l10n("local.an_optional_platform_pod_with_a_tech_lead_and_77e6d748"),
   recommendedForCompanyTypes: [],
   counts: { ...sampleTeam.counts, agents: 4, routines: 2 },
   rootAgentSlugs: ["tech-lead"],
@@ -138,7 +139,7 @@ export const onboardingTeams: CatalogTeam[] = [
     slug: "growth-pod",
     name: "Growth Pod",
     description:
-      "A lean growth squad: a head of growth managing a content marketer and a data analyst, wired to a launch project and a weekly metrics routine.",
+      l10n("local.a_lean_growth_squad_a_head_of_growth_managing_209cfddc"),
     tags: ["growth", "marketing", "starter"],
     counts: { agents: 3, projects: 1, tasks: 0, routines: 1, localSkills: 0, catalogSkills: 0, externalSkillSources: 0 },
     rootAgentSlugs: ["head-of-growth"],
@@ -153,7 +154,7 @@ export const onboardingTeams: CatalogTeam[] = [
     key: "paperclipai/bundled/company-defaults/support-pod",
     slug: "support-pod",
     name: "Support Pod",
-    description: "A two-person support desk with a lead and an agent, plus a triage routine.",
+    description: l10n("local.a_two_person_support_desk_with_a_lead_and_an_efff7849"),
     tags: ["support", "ops"],
     counts: { agents: 2, projects: 0, tasks: 0, routines: 1, localSkills: 0, catalogSkills: 0, externalSkillSources: 0 },
     rootAgentSlugs: ["support-lead"],

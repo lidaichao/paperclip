@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 // token-extraction: allowlisted — intentional one-off decoration (DECISION-SHEET.md B1
 // user ruling). The bg-[...gradient...] / shadow-[...] literals in this demo/UX-lab page
 // are deliberate one-off decoration, reverted from --gradient-extract-*/--shadow-extract-*
@@ -23,23 +24,23 @@ const surfaceOptions: Array<{
 }> = [
   {
     id: "detail",
-    label: "Run Detail",
+    label: l10n("local.run_detail_95ccb018"),
     eyebrow: "Full transcript",
-    description: "The long-form run page with the `Nice | Raw` toggle and the most inspectable transcript view.",
+    description: l10n("local.the_long_form_run_page_with_the_nice_raw_togg_4c316230"),
     icon: MonitorCog,
   },
   {
     id: "live",
-    label: "Issue Widget",
+    label: l10n("local.issue_widget_977a3384"),
     eyebrow: "Live stream",
-    description: "The issue-detail live run widget, optimized for following an active run without leaving the task page.",
+    description: l10n("local.the_issue_detail_live_run_widget_optimized_fo_13d3e8d1"),
     icon: RadioTower,
   },
   {
     id: "dashboard",
-    label: "Dashboard Card",
+    label: l10n("local.dashboard_card_686783b6"),
     eyebrow: "Dense card",
-    description: "The active-agents dashboard card, tuned for compact scanning while keeping the same transcript language.",
+    description: l10n("local.the_active_agents_dashboard_card_tuned_for_co_59aca2a9"),
     icon: PanelsTopLeft,
   },
 ];
@@ -68,15 +69,14 @@ function RunDetailPreview({
       <div className="border-b border-border/60 bg-background/90 px-5 py-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="uppercase tracking-(--tracking-caps) text-(length:--text-nano)">
-            Run Detail
-          </Badge>
+            {l10n("local.run_detail_95ccb018")}</Badge>
           <StatusBadge status={streaming ? "running" : "succeeded"} />
           <span className="text-xs text-muted-foreground">
             {formatDateTime(runTranscriptFixtureMeta.startedAt)}
           </span>
         </div>
         <div className="mt-2 text-sm font-medium">
-          Transcript ({runTranscriptFixtureEntries.length})
+          {l10n("local.transcript_fd6a2ef4")}{runTranscriptFixtureEntries.length})
         </div>
       </div>
       <div className="max-h-(--sz-720px) overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(8,145,178,0.08),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.10),transparent_28%)] p-5">
@@ -104,11 +104,9 @@ function LiveWidgetPreview({
     <div className="overflow-hidden rounded-xl border border-cyan-500/25 bg-background/85 shadow-[0_20px_50px_rgba(6,182,212,0.10)]">
       <div className="border-b border-border/60 bg-cyan-500/[0.05] px-5 py-4">
         <div className="text-xs font-semibold uppercase tracking-(--tracking-caps) text-cyan-700 dark:text-cyan-300">
-          Live Runs
-        </div>
+          {l10n("local.live_runs_cf23290b")}</div>
         <div className="mt-1 text-xs text-muted-foreground">
-          Compact live transcript stream for the issue detail page.
-        </div>
+          {l10n("local.compact_live_transcript_stream_for_the_issue_0e8e7080")}</div>
       </div>
       <div className="px-5 py-4">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -123,8 +121,7 @@ function LiveWidgetPreview({
             </div>
           </div>
           <Badge variant="outline" className="border-border/70 bg-background/70 px-2.5 py-1 text-(length:--text-micro) text-muted-foreground">
-            Open run
-            <ExternalLink className="h-3 w-3" />
+            {l10n("local.open_run_95fe7393")}<ExternalLink className="h-3 w-3" />
           </Badge>
         </div>
         <div className="max-h-(--sz-460px) overflow-y-auto pr-1">
@@ -169,7 +166,7 @@ function DashboardPreview({
                 <Identity name={runTranscriptFixtureMeta.agentName} size="sm" />
               </div>
               <div className="mt-2 text-(length:--text-micro) text-muted-foreground">
-                {streaming ? "Live now" : "Finished 2m ago"}
+                {streaming ? l10n("local.live_now_96436bc4") : l10n("local.finished_2m_ago_e7890b9d")}
               </div>
             </div>
             <Badge variant="outline" className="[&>svg]:size-2.5 border-border/70 bg-background/70 py-1 text-(length:--text-nano) text-muted-foreground">
@@ -210,12 +207,10 @@ export function RunTranscriptUxLab() {
             <div className="mb-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/[0.08] px-3 py-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-caps) text-cyan-700 dark:text-cyan-300">
                 <FlaskConical className="h-3.5 w-3.5" />
-                UX Lab
-              </div>
-              <h1 className="mt-4 text-2xl font-semibold tracking-tight">Run Transcript Fixtures</h1>
+                {l10n("local.ux_lab_ff3eaed8")}</div>
+              <h1 className="mt-4 text-2xl font-semibold tracking-tight">{l10n("local.run_transcript_fixtures_867588bf")}</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Built from a real Paperclip development run, then sanitized so no secrets, local paths, or environment details survive into the fixture.
-              </p>
+                {l10n("local.built_from_a_real_paperclip_development_run_t_a53c0607")}</p>
             </div>
 
             <div className="space-y-2">
@@ -267,7 +262,7 @@ export function RunTranscriptUxLab() {
 
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="rounded-full px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps)">
-                  Source run {runTranscriptFixtureMeta.sourceRunId.slice(0, 8)}
+                  {l10n("local.source_run_bb84312e")}{" "}{runTranscriptFixtureMeta.sourceRunId.slice(0, 8)}
                 </Badge>
                 <Badge variant="outline" className="rounded-full px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps)">
                   {runTranscriptFixtureMeta.issueIdentifier}
@@ -277,8 +272,7 @@ export function RunTranscriptUxLab() {
 
             <div className="mb-5 flex flex-wrap items-center gap-2">
               <span className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-                Controls
-              </span>
+                {l10n("local.controls_799c2691")}</span>
               <div className="inline-flex rounded-full border border-border/70 bg-background/80 p-1">
                 {(["nice", "raw"] as const).map((mode) => (
                   <button
@@ -315,7 +309,7 @@ export function RunTranscriptUxLab() {
                 className="rounded-full"
                 onClick={() => setStreaming((value) => !value)}
               >
-                {streaming ? "Show settled state" : "Show streaming state"}
+                {streaming ? l10n("local.show_settled_state_225c1597") : l10n("local.show_streaming_state_85fb43cc")}
               </Button>
             </div>
 

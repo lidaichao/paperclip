@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { healthApi } from "@/api/health";
 import { LocalProviderLoginInstructions } from "./AdapterLoginChrome";
 import { useLocalAiLogin } from "./ai-connections/useLocalAiLogin";
@@ -274,7 +275,7 @@ function ModelSourceMark({
 // Exported so tests write/read the exact key the component uses, instead of
 // duplicating the literal and silently drifting from it if it's ever renamed.
 export const ONBOARDING_STORAGE_KEY = "paperclip-onboarding-state";
-const DEFAULT_TASK_TITLE = "Paperclip onboarding";
+const DEFAULT_TASK_TITLE = l10n("local.paperclip_onboarding_2f51e6ab");
 /**
  * The onboarding draft in `localStorage`, via a browser that is allowed to say
  * no.
@@ -317,7 +318,7 @@ const onboardingDraftStorage = {
 };
 
 const INCOMPLETE_ONBOARDING_STATE_MESSAGE =
-  "Onboarding state is incomplete. Please restart onboarding and try again.";
+  l10n("local.onboarding_state_is_incomplete_please_restart_9e4fb717");
 
 /**
  * Thin gate in front of {@link OnboardingWizardInner}. The inner component's
@@ -1368,27 +1369,27 @@ function OnboardingWizardInner({
   const connectSourceLabel = CONNECT_SOURCE_NAMES[adapterType] ?? adapterType;
   const connectCta: { label: string; icon: FooterPrimaryIcon; disabled: boolean } =
     connectProgress
-      ? { label: adapterEnvLoading ? "Testing…" : connectProgress, icon: "spinner", disabled: true }
+      ? { label: adapterEnvLoading ? l10n("local.testing_407b7a04") : connectProgress, icon: "spinner", disabled: true }
       : connectPhase === "waiting"
-      ? { label: "Waiting for code", icon: "spinner", disabled: true }
+      ? { label: l10n("local.waiting_for_code_f22b705c"), icon: "spinner", disabled: true }
       : connectPhase === "connecting"
-        ? { label: "Connecting", icon: "spinner", disabled: true }
+        ? { label: l10n("local.connecting_d403c686"), icon: "spinner", disabled: true }
         : connectPhase === "ready"
           ? connectStepNeedsLogin
             ? {
-                label: `Sign in to ${connectSourceLabel}`,
+                label: l10n("local.sign_in_to_value_640129b7", {v0: (connectSourceLabel)}),
                 icon: "none",
                 disabled: !connectAuthUrl,
               }
             : {
-                label: "Connect",
+                label: l10n("local.connect_1a2303ed"),
                 icon: "arrow",
                 disabled:
                   !connectStepReady || (credentialMode === "api" && !apiKey.trim() && !selectedApiKey),
               }
           : // Nothing is chosen on arrival, and the row is what chooses. Until
             // it has been answered the button has nothing to do.
-            { label: "Next", icon: "arrow", disabled: true };
+            { label: l10n("local.next_1ff57a29"), icon: "arrow", disabled: true };
 
   /**
    * Back, on the connect step, unwinds the sign-in before it leaves the step.
@@ -1689,7 +1690,7 @@ function OnboardingWizardInner({
     if (companyIdNow === companyIdAtStart || companyIdNow === returnedCompanyId) {
       return true;
     }
-    setError("Organization created, but onboarding switched to another organization.");
+    setError(l10n("local.organization_created_but_onboarding_switched_bf76cf2d"));
     return false;
   }
 
@@ -1888,7 +1889,7 @@ function OnboardingWizardInner({
   ): Promise<AdapterEnvironmentTestResult | null> {
     if (!createdCompanyId) {
       setAdapterEnvError(
-        "Create or select an organization before testing adapter environment."
+        l10n("local.create_or_select_an_organization_before_testi_eda42ec9")
       );
       return null;
     }
@@ -1924,7 +1925,7 @@ function OnboardingWizardInner({
       } catch {
         if (!isCurrent()) return null;
         setAdapterEnvError(
-          "Could not load environment settings to determine which environment to test in. Retry the test.",
+          l10n("local.could_not_load_environment_settings_to_determ_24889282"),
         );
         return null;
       }
@@ -2023,7 +2024,7 @@ function OnboardingWizardInner({
     if (adapterType === "paperclip_runner") {
       setAdapterType("claude_local");
       setModel("");
-      setError("Paperclip Runner is not available during onboarding. Choose a legacy adapter.");
+      setError(l10n("local.paperclip_runner_is_not_available_during_onbo_e68507b0"));
       return;
     }
     if (createdAgentId) {
@@ -2042,7 +2043,7 @@ function OnboardingWizardInner({
         const selectedModelId = model.trim();
         if (!isValidOpenCodeModelId(selectedModelId)) {
           setError(
-            "OpenCode requires an explicit model in provider/model format."
+            l10n("local.opencode_requires_an_explicit_model_in_provid_821bca37")
           );
           return;
         }
@@ -2056,7 +2057,7 @@ function OnboardingWizardInner({
         }
         if (adapterModelsLoading || adapterModelsFetching) {
           setError(
-            "OpenCode models are still loading. Please wait and try again."
+            l10n("local.opencode_models_are_still_loading_please_wait_9ea51340")
           );
           return;
         }
@@ -2282,7 +2283,7 @@ function OnboardingWizardInner({
       const result = await runAdapterEnvironmentTest(configWithUnset);
       if (result?.status === "fail") {
         setError(
-          "Retried with ANTHROPIC_API_KEY unset in adapter config, but the environment test is still failing."
+          l10n("local.retried_with_anthropic_api_key_unset_in_adapt_0be1a4e3")
         );
       }
     } catch (err) {
@@ -2548,12 +2549,12 @@ function OnboardingWizardInner({
                       title={
                         <motion.span key={step} {...titleSwapMotion} className="inline-block">
                           {step === 1
-                            ? "What is the name of your organization?"
+                            ? l10n("local.what_is_the_name_of_your_organization_315be75f")
                             : step === 3
-                              ? "Create your first agent"
+                              ? l10n("local.create_your_first_agent_88dcddea")
                               : step === 4
-                                ? "Connect a model"
-                                : "Let's get started..."}
+                                ? l10n("local.connect_a_model_87bdaaf8")
+                                : l10n("local.let_s_get_started_6f8efe19")}
                         </motion.span>
                       }
                     />
@@ -2575,8 +2576,8 @@ function OnboardingWizardInner({
                       <p className="pt-2 text-base leading-relaxed text-muted-foreground">
                         <motion.span key={step} {...titleSwapMotion} className="inline-block">
                           {step === 4
-                            ? "Paperclip works with your subscription or API keys."
-                            : `${agentName.trim() || "Your first agent"} is ready to work!`}
+                            ? l10n("local.paperclip_works_with_your_subscription_or_api_d71eb161")
+                            : l10n("local.value_is_ready_to_work_5f5013c1", {v0: (agentName.trim() || "Your first agent")})}
                         </motion.span>
                       </p>
                     </motion.div>
@@ -2602,11 +2603,11 @@ function OnboardingWizardInner({
               {step === 1 && (
                 <motion.div key="step-1" {...stepContentMotion} exit={stepHandoff ? stepContentMotion.exit : undefined} className="mx-auto flex w-full flex-col gap-9">
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="onboarding-company-name">Name</Label>
+                    <Label htmlFor="onboarding-company-name">{l10n("local.name_dcd1d522")}</Label>
                     <Input
                       id="onboarding-company-name"
                       className="h-(--sz-44px) rounded-lg border-transparent bg-muted shadow-none dark:bg-muted"
-                      placeholder="e.g. Northwind Labs"
+                      placeholder={l10n("local.e_g_northwind_labs_b7c20a47")}
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       onKeyDown={(e) => {
@@ -2630,7 +2631,7 @@ function OnboardingWizardInner({
               {step === 3 && (
                 <motion.div key="step-3" {...stepContentMotion} exit={stepHandoff ? stepContentMotion.exit : undefined} className="mx-auto flex w-full flex-col gap-9">
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="onboarding-agent-name">Agent name</Label>
+                    <Label htmlFor="onboarding-agent-name">{l10n("local.agent_name_1cfb2187")}</Label>
                     {/*
                       Filled, not outlined, and the column's full width — the
                       same field the naming step before the hand-off draws.
@@ -2643,7 +2644,7 @@ function OnboardingWizardInner({
                     <Input
                       id="onboarding-agent-name"
                       className="h-(--sz-44px) rounded-lg border-transparent bg-muted shadow-none dark:bg-muted"
-                      placeholder="e.g. Chief of staff"
+                      placeholder={l10n("local.e_g_chief_of_staff_8e339ee7")}
                       value={agentName}
                       onChange={(e) => setAgentName(e.target.value)}
                       onKeyDown={(e) => {
@@ -2671,7 +2672,7 @@ function OnboardingWizardInner({
                         Picking one starts the sign-in now. The row is the
                         question, and answering it is what opens the card. */}
                     <ModelSourceTiles
-                      label="Model source"
+                      label={l10n("local.model_source_9fb88c74")}
                       sources={recommendedAdapters.map((opt) => ({
                         id: opt.type,
                         label: CONNECT_SOURCE_NAMES[opt.type] ?? opt.label,
@@ -2721,8 +2722,8 @@ function OnboardingWizardInner({
                     >
                       <div className="-ml-3 mt-1">
                         <CredentialModeLink mode={credentialMode} onChange={setCredentialMode} />
-                        {savedKeys.options.length > 0 && <p className="px-3 text-sm text-muted-foreground">{savedKeys.options.length} saved API {savedKeys.options.length === 1 ? "key available" : "keys available"}.</p>}
-                        {credentialMode === "subscription" && authSignalStatus === "present" && <p className="px-3 text-sm text-muted-foreground">An existing provider connection is available.</p>}
+                        {savedKeys.options.length > 0 && <p className="px-3 text-sm text-muted-foreground">{savedKeys.options.length} {l10n("local.saved_api_b9bbaf3b")}{" "}{savedKeys.options.length === 1 ? l10n("local.key_available_39a65ba3") : l10n("local.keys_available_2f106105")}.</p>}
+                        {credentialMode === "subscription" && authSignalStatus === "present" && <p className="px-3 text-sm text-muted-foreground">{l10n("local.an_existing_provider_connection_is_available_e34ff189")}</p>}
                       </div>
                     </motion.div>
                   </div>
@@ -2779,8 +2780,8 @@ function OnboardingWizardInner({
                           setApiKey("");
                         }} />
                         {!selectedApiKey && <OnboardingCardField
-                          label="API key"
-                          placeholder="Enter API key here"
+                          label={l10n("local.api_key_16f0ee47")}
+                          placeholder={l10n("local.enter_api_key_here_c80c3ac9")}
                           masked
                           // The card is the answer to the tile just pressed, so
                           // the field is unambiguously the next thing. Carried
@@ -2891,7 +2892,7 @@ function OnboardingWizardInner({
                     ) : hasSavedSubscription || localLogin.status === "ready" ? null : connectStepHasNoSandbox ? (
                       canUseLocalLogin && managedProvider ? (
                         <LocalProviderLoginInstructions adapterType={adapterType} login={{ ...localLogin, retry: () => { autoConnectStartedRef.current = false; setError(null); localLogin.retry(); } }} />
-                      ) : <p className="text-xs text-muted-foreground">This environment does not support browser sign-in. Choose another sign-in environment or connect with an API key.</p>
+                      ) : <p className="text-xs text-muted-foreground">{l10n("local.this_environment_does_not_support_browser_sig_bbff3a38")}</p>
                     ) : null}
                   </motion.div>
 
@@ -2936,7 +2937,7 @@ function OnboardingWizardInner({
                             style={{ "--sc": "var(--status-task-done)" } as CSSProperties}
                           >
                             <Check className="size-3.5 shrink-0" />
-                            <span className="font-medium">Passed</span>
+                            <span className="font-medium">{l10n("local.passed_436fe71b")}</span>
                           </div>
                           {/* Show the checks on a pass too, so the target and the
                               auth signals stay visible before the hire. */}
@@ -2949,11 +2950,9 @@ function OnboardingWizardInner({
                       {shouldSuggestUnsetAnthropicApiKey && (
                         <div className="rounded-md border border-amber-300/60 bg-amber-50/40 px-2.5 py-2 space-y-2">
                           <p className="text-(length:--text-micro) text-amber-900/90 leading-relaxed">
-                            Claude failed while{" "}
+                            {l10n("local.claude_failed_while_ab641d5a")}{" "}
                             <span className="font-mono">ANTHROPIC_API_KEY</span>{" "}
-                            is set. You can clear it in this adapter config
-                            and retry the probe.
-                          </p>
+                            {l10n("local.is_set_you_can_clear_it_in_this_adapter_confi_30ec4c81")}</p>
                           <Button
                             size="sm"
                             variant="outline"
@@ -2964,15 +2963,15 @@ function OnboardingWizardInner({
                             onClick={() => void handleUnsetAnthropicApiKey()}
                           >
                             {unsetAnthropicLoading
-                              ? "Retrying..."
-                              : "Unset ANTHROPIC_API_KEY"}
+                              ? l10n("local.retrying_84a657bc")
+                              : l10n("local.unset_anthropic_api_key_88e3ffad")}
                           </Button>
                         </div>
                       )}
 
                       {adapterEnvResult && adapterEnvResult.status === "fail" && (
                         <div className="rounded-md border border-border/70 bg-muted/20 px-2.5 py-2 text-(length:--text-micro) space-y-1.5">
-                          <p className="font-medium">Manual debug</p>
+                          <p className="font-medium">{l10n("local.manual_debug_b21b5589")}</p>
                           <p className="text-muted-foreground font-mono break-all">
                             {adapterType === "cursor"
                               ? `${effectiveAdapterCommand} -p --mode ask --output-format json \"Respond with hello.\"`
@@ -2987,8 +2986,8 @@ function OnboardingWizardInner({
                               : `${effectiveAdapterCommand} --print - --output-format stream-json --verbose`}
                           </p>
                           <p className="text-muted-foreground">
-                            Prompt:{" "}
-                            <span className="font-mono">Respond with hello.</span>
+                            {l10n("local.prompt_35261535")}{" "}
+                            <span className="font-mono">{l10n("local.respond_with_hello_1ed91d47")}</span>
                           </p>
                           {adapterType === "cursor" ||
                           adapterType === "codex_local" ||
@@ -2996,7 +2995,7 @@ function OnboardingWizardInner({
                           adapterType === "kimi_local" ||
                           adapterType === "opencode_local" ? (
                             <p className="text-muted-foreground">
-                              If auth fails, set{" "}
+                              {l10n("local.if_auth_fails_set_2768d5f5")}{" "}
                               <span className="font-mono">
                                 {adapterType === "cursor"
                                   ? "CURSOR_API_KEY"
@@ -3006,10 +3005,10 @@ function OnboardingWizardInner({
                                       ? "KIMI_MODEL_NAME + KIMI_MODEL_API_KEY"
                                     : "OPENAI_API_KEY"}
                               </span>{" "}
-                              in env or run{" "}
+                              {l10n("local.in_env_or_run_e32cc558")}{" "}
                               <span className="font-mono">
                                 {adapterType === "cursor"
-                                  ? "agent login"
+                                  ? l10n("local.agent_login_2bdf4062")
                                   : adapterType === "codex_local"
                                     ? "codex login"
                                     : adapterType === "gemini_local"
@@ -3022,10 +3021,9 @@ function OnboardingWizardInner({
                             </p>
                           ) : (
                             <p className="text-muted-foreground">
-                              If login is required, run{" "}
+                              {l10n("local.if_login_is_required_run_66bbc08c")}{" "}
                               <span className="font-mono">claude login</span>{" "}
-                              and retry.
-                            </p>
+                              {l10n("local.and_retry_018dd1de")}</p>
                           )}
                         </div>
                       )}
@@ -3037,8 +3035,8 @@ function OnboardingWizardInner({
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">
                         {adapterType === "openclaw_gateway"
-                          ? "Gateway URL"
-                          : "Webhook URL"}
+                          ? l10n("local.gateway_url_3d069508")
+                          : l10n("local.webhook_url_84805a75")}
                       </label>
                       <input
                         className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
@@ -3090,20 +3088,20 @@ function OnboardingWizardInner({
                   // prototype's own local flow draws with "Next".
                   primaryLabel={
                     step === 1
-                      ? "Continue"
+                      ? l10n("local.continue_31fbef16")
                       : step === 5
-                        ? "Get started"
+                        ? l10n("local.get_started_61e8d44a")
                         : step === 4
                           ? connectCta.label
-                          : "Next"
+                          : l10n("local.next_1ff57a29")
                   }
                   primaryIcon={step === 4 ? connectCta.icon : undefined}
                   loadingLabel={
                     step === 1
-                      ? "Creating..."
+                      ? l10n("local.creating_def70944")
                       : step === 4
-                        ? "Connecting"
-                        : "Launching..."
+                        ? l10n("local.connecting_d403c686")
+                        : l10n("local.launching_b1601ddd")
                   }
                   // The browser-code login is finished on this screen, so the
                   // button is genuinely busy for its duration and shows it. The
@@ -3148,10 +3146,10 @@ function AdapterEnvironmentResult({
 }) {
   const statusLabel =
     result.status === "pass"
-      ? "Passed"
+      ? l10n("local.passed_436fe71b")
       : result.status === "warn"
-      ? "Warnings"
-      : "Failed";
+      ? l10n("local.warnings_0e04cd10")
+      : l10n("local.failed_031a8f0f");
   const statusClass =
     result.status === "pass"
       ? "text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/40 bg-green-50 dark:bg-green-500/10"
@@ -3185,7 +3183,7 @@ function AdapterEnvironmentResult({
             )}
             {check.hint && (
               <span className="block opacity-90 break-words">
-                Hint: {check.hint}
+                {l10n("local.hint_8da8c6a2")}{" "}{check.hint}
               </span>
             )}
           </div>

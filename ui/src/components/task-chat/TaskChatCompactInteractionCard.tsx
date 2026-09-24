@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import {
   useEffect,
   useMemo,
@@ -86,32 +87,32 @@ export interface TaskChatCompactInteractionCardProps extends SharedInteractionPr
 const KIND_COPY = {
   suggest_tasks: {
     fallbackTitle: "Suggested tasks",
-    label: "Tasks",
+    label: l10n("local.tasks_b3a60e61"),
     icon: GitBranch,
   },
   ask_user_questions: {
     fallbackTitle: "Questions",
-    label: "Questions",
+    label: l10n("local.questions_9a72221a"),
     icon: CircleHelp,
   },
   request_confirmation: {
     fallbackTitle: "Confirmation",
-    label: "Confirmation",
+    label: l10n("local.confirmation_d7430705"),
     icon: CheckCircle2,
   },
   request_checkbox_confirmation: {
     fallbackTitle: "Choose options",
-    label: "Selection",
+    label: l10n("local.selection_ca406707"),
     icon: ListChecks,
   },
   request_item_verdicts: {
     fallbackTitle: "Review items",
-    label: "Review",
+    label: l10n("local.review_aff0766a"),
     icon: MessageSquareQuote,
   },
   connection_intent: {
     fallbackTitle: "Connect service",
-    label: "Connection",
+    label: l10n("local.connection_639a40e8"),
     icon: Plug,
   },
 } as const;
@@ -237,8 +238,7 @@ function Details({ children }: { children?: ReactNode }) {
   return (
     <details className="mt-2">
       <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground">
-        <ChevronDown aria-hidden className="h-3.5 w-3.5" /> Details
-      </summary>
+        <ChevronDown aria-hidden className="h-3.5 w-3.5" /> {l10n("local.details_45989de4")}</summary>
       <div className="mt-2 rounded-sm bg-muted/40 px-2.5 py-2 text-sm text-muted-foreground">
         {children}
       </div>
@@ -342,7 +342,7 @@ function PlanReviewPreview({
       }}
       href="#document-plan"
       testId="plan-review-preview"
-      ariaLabel={`Open ${target.label ?? (targetRevision == null ? "plan" : `plan revision ${targetRevision}`)}`}
+      ariaLabel={l10n("local.open_value_afaef5c3", {v0: (target.label ?? (targetRevision == null ? "plan" : `plan revision ${targetRevision}`))})}
     />
   );
 }
@@ -413,7 +413,7 @@ function ReceiptDisclosure({
                 </p>
               ) : null}
               <p className="mt-1 text-sm font-medium text-foreground">
-                Answer: {values.length > 0 ? values.join(", ") : "No answer"}
+                {l10n("local.answer_64f89cf4")}{" "}{values.length > 0 ? values.join(", ") : l10n("local.no_answer_7e49c68d")}
               </p>
             </div>
           );
@@ -430,10 +430,10 @@ function ReceiptDisclosure({
         <p className="text-sm text-foreground">{interaction.payload.prompt}</p>
         {interaction.status === "accepted" ? (
           <p className="mt-1 text-sm font-medium text-foreground">
-            Answer:{" "}
+            {l10n("local.answer_64f89cf4")}{" "}
             {selectedLabels.length > 0
               ? selectedLabels.join(", ")
-              : "No options selected"}
+              : l10n("local.no_options_selected_8889217c")}
           </p>
         ) : null}
         {interaction.payload.detailsMarkdown ? (
@@ -470,8 +470,7 @@ function ReceiptDisclosure({
           </ul>
         ) : (
           <p className="mt-1 text-sm font-medium text-foreground">
-            No verdicts submitted
-          </p>
+            {l10n("local.no_verdicts_submitted_1968a982")}</p>
         )}
         {interaction.payload.detailsMarkdown ? (
           <div className="mt-2 text-sm">
@@ -501,15 +500,14 @@ function ReceiptDisclosure({
           </ul>
         ) : interaction.status === "accepted" ? (
           <p className="text-sm font-medium text-foreground">
-            No tasks created
-          </p>
+            {l10n("local.no_tasks_created_d64524ab")}</p>
         ) : null}
       </div>
     );
   } else if (interaction.kind === "connection_intent") {
     request = (
       <p className="text-sm text-foreground">
-        {interaction.payload.requestingAgentName} requested access to{" "}
+        {interaction.payload.requestingAgentName} {l10n("local.requested_access_to_d41de5d8")}{" "}
         {interaction.payload.serviceName}.
       </p>
     );
@@ -528,10 +526,9 @@ function ReceiptDisclosure({
           <div className="rounded-sm bg-muted/45 px-3 py-2.5 text-sm">
             <p>
               <strong>{interaction.payload.toolAction.toolDisplayName}</strong>{" "}
-              · {interaction.payload.toolAction.risk} risk
-            </p>
+              · {interaction.payload.toolAction.risk} {l10n("local.risk_2c6ef0f0")}</p>
             <p className="mt-1">
-              Expires{" "}
+              {l10n("local.expires_f6725f3a")}{" "}
               {new Date(
                 interaction.payload.toolAction.expiresAt,
               ).toLocaleString()}
@@ -552,22 +549,22 @@ function ReceiptDisclosure({
         {interaction.payload.secretProposal ? (
           <dl className="grid gap-1 rounded-sm bg-muted/45 px-3 py-2.5 text-sm">
             <div>
-              <dt className="text-xs text-muted-foreground">Secret</dt>
+              <dt className="text-xs text-muted-foreground">{l10n("local.secret_7e32a729")}</dt>
               <dd>{interaction.payload.secretProposal.sourceSecretLabel}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Binding</dt>
+              <dt className="text-xs text-muted-foreground">{l10n("local.binding_164c690a")}</dt>
               <dd className="font-mono text-xs">
                 {interaction.payload.secretProposal.configPath} →{" "}
                 {interaction.payload.secretProposal.targetAgentName}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Why</dt>
+              <dt className="text-xs text-muted-foreground">{l10n("local.why_d3ae14a5")}</dt>
               <dd>{interaction.payload.secretProposal.justification}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Expires</dt>
+              <dt className="text-xs text-muted-foreground">{l10n("local.expires_f6725f3a")}</dt>
               <dd>
                 {new Date(
                   interaction.payload.secretProposal.expiresAt,
@@ -591,7 +588,7 @@ function ReceiptDisclosure({
       {request}
       {answerReason ? (
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium">Reason:</span> {answerReason}
+          <span className="font-medium">{l10n("local.reason_3425d108")}</span> {answerReason}
         </p>
       ) : null}
     </div>
@@ -602,7 +599,7 @@ function ReceiptDisclosure({
     const summary =
       interaction.kind === "ask_user_questions" &&
       interaction.status === "answered"
-        ? "Questions answered"
+        ? l10n("local.questions_answered_46141d00")
         : buildIssueThreadInteractionSummary(interaction);
     return (
       <details
@@ -640,8 +637,7 @@ function ReceiptDisclosure({
   return (
     <details className="mt-2">
       <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
-        View original request and resolution
-      </summary>
+        {l10n("local.view_original_request_and_resolution_b6a8ff6f")}</summary>
       {detail}
     </details>
   );
@@ -862,7 +858,7 @@ function ConfirmationCard({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <p className="min-w-0 flex-1 text-sm leading-5 text-foreground">
             {isPlanConfirmation
-              ? "Do you accept this plan?"
+              ? l10n("local.do_you_accept_this_plan_81fc390d")
               : interaction.payload.prompt}
           </p>
           {!isPlanConfirmation ? (
@@ -889,10 +885,9 @@ function ConfirmationCard({
                   : "text-muted-foreground",
               )}
             >
-              {interaction.payload.toolAction.risk} risk
-            </span>
+              {interaction.payload.toolAction.risk} {l10n("local.risk_2c6ef0f0")}</span>
             <span className="ml-auto text-xs text-muted-foreground">
-              Expires{" "}
+              {l10n("local.expires_f6725f3a")}{" "}
               {new Date(
                 interaction.payload.toolAction.expiresAt,
               ).toLocaleString()}
@@ -903,8 +898,7 @@ function ConfirmationCard({
           </MarkdownBody>
           <details>
             <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
-              Arguments and audit hash
-            </summary>
+              {l10n("local.arguments_and_audit_hash_0e1e0bc9")}</summary>
             <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-xs text-foreground">
               {interaction.payload.toolAction.argumentsSummaryJson}
             </pre>
@@ -917,22 +911,22 @@ function ConfirmationCard({
       {interaction.payload.secretProposal ? (
         <dl className="mt-3 grid gap-2 rounded-sm bg-muted/45 px-3 py-2.5 text-sm">
           <div>
-            <dt className="text-xs text-muted-foreground">Secret</dt>
+            <dt className="text-xs text-muted-foreground">{l10n("local.secret_7e32a729")}</dt>
             <dd>{interaction.payload.secretProposal.sourceSecretLabel}</dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Binding</dt>
+            <dt className="text-xs text-muted-foreground">{l10n("local.binding_164c690a")}</dt>
             <dd className="font-mono text-xs">
               {interaction.payload.secretProposal.configPath} →{" "}
               {interaction.payload.secretProposal.targetAgentName}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Why</dt>
+            <dt className="text-xs text-muted-foreground">{l10n("local.why_d3ae14a5")}</dt>
             <dd>{interaction.payload.secretProposal.justification}</dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Expires</dt>
+            <dt className="text-xs text-muted-foreground">{l10n("local.expires_f6725f3a")}</dt>
             <dd>
               {new Date(
                 interaction.payload.secretProposal.expiresAt,
@@ -947,8 +941,8 @@ function ConfirmationCard({
             id={`${interaction.id}-reject-reason-label`}
             className="text-xs font-medium leading-4 text-foreground"
           >
-            {interaction.payload.rejectReasonLabel ?? "What should change?"}
-            {interaction.payload.rejectRequiresReason ? "" : " (optional)"}
+            {interaction.payload.rejectReasonLabel ?? l10n("local.what_should_change_e6cbf7fa")}
+            {interaction.payload.rejectRequiresReason ? "" : (" " + l10n("local._optional_0059798b"))}
           </p>
           {isPlanConfirmation ? (
             <TaskChatRichInput
@@ -956,7 +950,7 @@ function ConfirmationCard({
               onChange={setReason}
               placeholder={
                 interaction.payload.declineReasonPlaceholder ??
-                "Describe what should change"
+                l10n("local.describe_what_should_change_05189224")
               }
               imageUploadHandler={onUploadImage}
               mentions={mentions}
@@ -977,7 +971,7 @@ function ConfirmationCard({
               onChange={(event) => setReason(event.target.value)}
               placeholder={
                 interaction.payload.declineReasonPlaceholder ??
-                "Add a short note"
+                l10n("local.add_a_short_note_1adb884a")
               }
               className={TAKEOVER_TEXTAREA_CLASS}
               autoFocus
@@ -998,8 +992,7 @@ function ConfirmationCard({
                 setRejecting(false);
               }}
             >
-              Back
-            </Button>
+              {l10n("local.back_76900f1b")}</Button>
             <Button
               type="button"
               size="sm"
@@ -1016,7 +1009,7 @@ function ConfirmationCard({
               {working === "reject" ? (
                 <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
               ) : null}
-              {interaction.payload.rejectLabel ?? "Reject"}
+              {interaction.payload.rejectLabel ?? l10n("local.reject_ab604a36")}
             </Button>
           </>
         ) : (
@@ -1032,7 +1025,7 @@ function ConfirmationCard({
                   : void resolve("reject")
               }
             >
-              {interaction.payload.rejectLabel ?? "Reject"}
+              {interaction.payload.rejectLabel ?? l10n("local.reject_ab604a36")}
             </Button>
             <Button
               type="button"
@@ -1043,7 +1036,7 @@ function ConfirmationCard({
               {working === "accept" ? (
                 <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
               ) : null}
-              {interaction.payload.acceptLabel ?? "Approve"}
+              {interaction.payload.acceptLabel ?? l10n("local.approve_6007acbe")}
             </Button>
           </>
         )}
@@ -1140,10 +1133,10 @@ function CheckboxConfirmationCard({
 
   const countHint =
     maximum < Number.POSITIVE_INFINITY
-      ? `${selected.size} selected · choose ${minimum}–${maximum}`
+      ? l10n("local.value_selected_choose_value_value_6eb345f8", {v0: (selected.size), v1: (minimum), v2: (maximum)})
       : minimum > 0
-        ? `${selected.size} selected · at least ${minimum}`
-        : `${selected.size} selected`;
+        ? l10n("local.value_selected_at_least_value_4ed16116", {v0: (selected.size), v1: (minimum)})
+        : l10n("local.value_selected_b3edc3b3", {v0: (selected.size)});
 
   return (
     <div>
@@ -1167,8 +1160,8 @@ function CheckboxConfirmationCard({
             <Input
               value={filter}
               onChange={(event) => setFilter(event.target.value)}
-              placeholder="Filter options"
-              aria-label="Filter options"
+              placeholder={l10n("local.filter_options_62b72239")}
+              aria-label={l10n("local.filter_options_62b72239")}
               className="pl-8"
             />
           </label>
@@ -1209,15 +1202,15 @@ function CheckboxConfirmationCard({
             htmlFor={`${interaction.id}-reject-reason`}
             className="text-xs font-medium text-foreground"
           >
-            {interaction.payload.rejectReasonLabel ?? "What should change?"}
-            {interaction.payload.rejectRequiresReason ? "" : " (optional)"}
+            {interaction.payload.rejectReasonLabel ?? l10n("local.what_should_change_e6cbf7fa")}
+            {interaction.payload.rejectRequiresReason ? "" : (" " + l10n("local._optional_0059798b"))}
           </label>
           <Textarea
             id={`${interaction.id}-reject-reason`}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             placeholder={
-              interaction.payload.declineReasonPlaceholder ?? "Add a short note"
+              interaction.payload.declineReasonPlaceholder ?? l10n("local.add_a_short_note_1adb884a")
             }
             className={TAKEOVER_TEXTAREA_CLASS}
             autoFocus
@@ -1235,8 +1228,7 @@ function CheckboxConfirmationCard({
               disabled={working !== null}
               onClick={() => setRejecting(false)}
             >
-              Back
-            </Button>
+              {l10n("local.back_76900f1b")}</Button>
             <Button
               type="button"
               size="sm"
@@ -1252,7 +1244,7 @@ function CheckboxConfirmationCard({
               {working === "reject" ? (
                 <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
               ) : null}
-              {interaction.payload.rejectLabel ?? "Decline"}
+              {interaction.payload.rejectLabel ?? l10n("local.decline_a2d285b3")}
             </Button>
           </>
         ) : (
@@ -1268,7 +1260,7 @@ function CheckboxConfirmationCard({
                   : void resolve("reject")
               }
             >
-              {interaction.payload.rejectLabel ?? "Decline"}
+              {interaction.payload.rejectLabel ?? l10n("local.decline_a2d285b3")}
             </Button>
             <Button
               type="button"
@@ -1279,7 +1271,7 @@ function CheckboxConfirmationCard({
               {working === "accept" ? (
                 <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
               ) : null}
-              {interaction.payload.acceptLabel ?? "Confirm selection"}
+              {interaction.payload.acceptLabel ?? l10n("local.confirm_selection_9ce9c379")}
             </Button>
           </>
         )}
@@ -1319,8 +1311,7 @@ function SuggestedTaskRow({
           </span>
           {hiddenCount > 0 ? (
             <span className="block text-xs text-muted-foreground">
-              + {hiddenCount} hidden follow-up
-            </span>
+              + {hiddenCount} {l10n("local.hidden_follow_up_248b5825")}</span>
           ) : null}
         </span>
       </label>
@@ -1437,8 +1428,7 @@ function SuggestedTasksCard({
   return (
     <div>
       <p className="text-sm leading-5 text-foreground">
-        Select the tasks to create.
-      </p>
+        {l10n("local.select_the_tasks_to_create_1bfa036a")}</p>
       {interaction.payload.tasks.length > 10 ? (
         <label className="relative mt-3 block">
           <Search
@@ -1448,15 +1438,15 @@ function SuggestedTasksCard({
           <Input
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
-            placeholder="Filter suggested tasks"
-            aria-label="Filter suggested tasks"
+            placeholder={l10n("local.filter_suggested_tasks_fa7c7e08")}
+            aria-label={l10n("local.filter_suggested_tasks_fa7c7e08")}
             className="pl-8"
           />
         </label>
       ) : null}
       <ul
         className="mt-2 max-h-(--sz-28dvh) overflow-y-auto scrollbar-auto-hide"
-        aria-label="Suggested tasks"
+        aria-label={l10n("local.suggested_tasks_5addd6ff")}
       >
         {visibleRoots.map((node) => (
           <SuggestedTaskRow
@@ -1473,13 +1463,12 @@ function SuggestedTasksCard({
             htmlFor={`${interaction.id}-reject-reason`}
             className="text-xs font-medium text-foreground"
           >
-            Why should these tasks change? (optional)
-          </label>
+            {l10n("local.why_should_these_tasks_change_optional_cdac7ad6")}</label>
           <Textarea
             id={`${interaction.id}-reject-reason`}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Add a short note"
+            placeholder={l10n("local.add_a_short_note_1adb884a")}
             className={TAKEOVER_TEXTAREA_CLASS}
             autoFocus
           />
@@ -1487,7 +1476,7 @@ function SuggestedTasksCard({
       ) : null}
       <InteractionActionError message={actionError} />
       <ActionRow
-        hint={`${selected.size} of ${interaction.payload.tasks.length} selected`}
+        hint={l10n("local.value_of_value_selected_1e203f18", {v0: (selected.size), v1: (interaction.payload.tasks.length)})}
       >
         {rejecting ? (
           <>
@@ -1498,8 +1487,7 @@ function SuggestedTasksCard({
               disabled={working !== null}
               onClick={() => setRejecting(false)}
             >
-              Back
-            </Button>
+              {l10n("local.back_76900f1b")}</Button>
             <Button
               type="button"
               size="sm"
@@ -1510,8 +1498,7 @@ function SuggestedTasksCard({
               {working === "reject" ? (
                 <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
               ) : null}
-              Send back
-            </Button>
+              {l10n("local.send_back_a7b87f68")}</Button>
           </>
         ) : (
           <>
@@ -1522,8 +1509,7 @@ function SuggestedTasksCard({
               disabled={working !== null || !onRejectInteraction}
               onClick={() => setRejecting(true)}
             >
-              Revise
-            </Button>
+              {l10n("local.revise_f1323f09")}</Button>
             <Button
               type="button"
               size="sm"
@@ -1535,8 +1521,7 @@ function SuggestedTasksCard({
               {working === "accept" ? (
                 <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
               ) : null}
-              Create selected
-            </Button>
+              {l10n("local.create_selected_9bedb482")}</Button>
           </>
         )}
       </ActionRow>
@@ -1617,8 +1602,7 @@ function ItemVerdictsCard({
   if (!item)
     return (
       <p className="text-sm text-muted-foreground">
-        No review items were provided.
-      </p>
+        {l10n("local.no_review_items_were_provided_c94dec81")}</p>
     );
   const resolved = resolvedById.get(item.id);
   const draft = drafts.get(item.id);
@@ -1708,30 +1692,30 @@ function ItemVerdictsCard({
   return (
     <div>
       <div className="mb-2 flex items-center text-xs text-muted-foreground">
-        <span>{drafts.size + resolvedById.size} decided</span>
+        <span>{drafts.size + resolvedById.size} {l10n("local.decided_8d3c6686")}</span>
         <TaskChatComposerTakeoverControls>
           <nav
             className="flex shrink-0 items-center gap-1"
-            aria-label="Item pagination"
+            aria-label={l10n("local.item_pagination_3ca1c211")}
           >
             <Button
               type="button"
               size="icon-xs"
               variant="ghost"
-              aria-label="Previous item"
+              aria-label={l10n("local.previous_item_81b35f1b")}
               disabled={working || page === 0}
               onClick={() => setPage((current) => current - 1)}
             >
               <ChevronLeft aria-hidden />
             </Button>
             <span className="min-w-10 text-center tabular-nums">
-              {page + 1} of {items.length}
+              {page + 1} {l10n("local.of_28391d3b")}{" "}{items.length}
             </span>
             <Button
               type="button"
               size="icon-xs"
               variant="ghost"
-              aria-label="Next item"
+              aria-label={l10n("local.next_item_1e47d4f7")}
               disabled={
                 working ||
                 page === items.length - 1 ||
@@ -1760,8 +1744,7 @@ function ItemVerdictsCard({
             href={itemHref}
             className="text-xs font-medium text-primary hover:underline"
           >
-            Open
-          </a>
+            {l10n("local.open_ed077f3d")}</a>
         ) : null}
       </div>
       {item.previewMarkdown ? (
@@ -1780,7 +1763,7 @@ function ItemVerdictsCard({
         <div
           className="mt-3 flex flex-wrap gap-1.5"
           role="group"
-          aria-label={`Verdict for ${item.label}`}
+          aria-label={l10n("local.verdict_for_value_591ae08c", {v0: (item.label)})}
         >
           {enabledVerdicts.map((verdict) => (
             <Button
@@ -1819,13 +1802,13 @@ function ItemVerdictsCard({
             htmlFor={`${interaction.id}-${item.id}-reason`}
             className="text-xs font-medium text-foreground"
           >
-            {interaction.payload.reasonLabel ?? "Reason"}
+            {interaction.payload.reasonLabel ?? l10n("local.reason_f81ab834")}
           </label>
           <Textarea
             id={`${interaction.id}-${item.id}-reason`}
             value={draft.reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Add a short reason"
+            placeholder={l10n("local.add_a_short_reason_9e6390b2")}
             className={TAKEOVER_TEXTAREA_CLASS}
             autoFocus
           />
@@ -1837,8 +1820,7 @@ function ItemVerdictsCard({
               disabled={!draft.reason.trim() || working}
               onClick={confirmRejectionReason}
             >
-              Submit rejection reason
-            </Button>
+              {l10n("local.submit_rejection_reason_181cd0c0")}</Button>
           </div>
         </div>
       ) : null}
@@ -1861,7 +1843,7 @@ function ItemVerdictsCard({
           {working ? (
             <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
           ) : null}
-          {drafts.size > 0 ? `Apply ${drafts.size}` : "Apply decisions"}
+          {drafts.size > 0 ? l10n("local.apply_value_b39baf98", {v0: (drafts.size)}) : l10n("local.apply_decisions_5d859982")}
         </Button>
       </ActionRow>
     </div>
@@ -1890,14 +1872,14 @@ export function TaskChatCompactInteractionCard({
     ? agentMap?.get(interaction.createdByAgentId)?.name
     : interaction.createdByUserId
       ? interaction.createdByUserId === currentUserId
-        ? "You"
+        ? l10n("local.you_08b04193")
         : userLabelMap?.get(interaction.createdByUserId)
       : null;
   const addresseeLabel = interaction.addresseeAgentId
     ? agentMap?.get(interaction.addresseeAgentId)?.name
     : interaction.addresseeUserId
       ? interaction.addresseeUserId === currentUserId
-        ? "You"
+        ? l10n("local.you_08b04193")
         : (userLabelMap?.get(interaction.addresseeUserId) ??
           interaction.addresseeUserId)
       : null;
@@ -1929,7 +1911,7 @@ export function TaskChatCompactInteractionCard({
         <ConnectionIntentInteractionBody
           interaction={interaction}
           currentUserId={currentUserId}
-          addresseeLabel={addresseeLabel ?? "the addressed user"}
+          addresseeLabel={addresseeLabel ?? l10n("local.the_addressed_user_20ee1b5e")}
         />
       </InteractionShell>
     );

@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect } from "react";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
@@ -19,23 +20,22 @@ export function AppsReview() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Connectors", href: "/apps" },
-      { label: "Review" },
+      { label: l10n("local.connectors_c3d2e79e"), href: "/apps" },
+      { label: l10n("local.review_aff0766a") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs]);
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select an organization to review approvals.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{l10n("local.select_an_organization_to_review_approvals_85763bcf")}</div>;
   }
 
   return (
     <div className="max-w-3xl space-y-6 pb-12">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Review</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{l10n("local.review_aff0766a")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Actions your agents want to run that need your OK first. Approve, always-allow, or decline.
-        </p>
+          {l10n("local.actions_your_agents_want_to_run_that_need_you_03373029")}</p>
       </header>
 
       <ReviewQueueCard emptyState="reassure" heading="Waiting for your OK" />

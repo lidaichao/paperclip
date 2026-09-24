@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useState, type ReactNode } from "react";
 import type {
   FeedbackDataSharingPreference,
@@ -49,7 +50,7 @@ export function agentBubbleDateLabel(date: Date | string | undefined): string {
  */
 export function BubbleCopyButton({ copyText }: { copyText: string }) {
   const { copied, failed, copy } = useCopyAction(2000);
-  const label = failed ? "Couldn’t copy message" : "Copy message";
+  const label = failed ? l10n("local.couldn_t_copy_message_41fff2fd") : l10n("local.copy_message_457efe53");
 
   return (
     <button
@@ -145,8 +146,8 @@ export function AgentBubbleActionRow({
             variant="ghost"
             size="icon-xs"
             className="text-muted-foreground hover:text-foreground"
-            title="More actions"
-            aria-label="More actions"
+            title={l10n("local.more_actions_f8d46c25")}
+            aria-label={l10n("local.more_actions_f8d46c25")}
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
           </Button>
@@ -158,8 +159,7 @@ export function AgentBubbleActionRow({
             }}
           >
             <Copy className="mr-2 h-3.5 w-3.5" />
-            Copy message
-          </DropdownMenuItem>
+            {l10n("local.copy_message_457efe53")}</DropdownMenuItem>
           {menuItems}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -262,8 +262,8 @@ export function IssueChatFeedbackButtons({
             ? "text-green-600 dark:text-green-400"
             : "text-muted-foreground hover:bg-accent hover:text-foreground",
         )}
-        title="Helpful"
-        aria-label="Helpful"
+        title={l10n("local.helpful_63c432db")}
+        aria-label={l10n("local.helpful_63c432db")}
         onClick={handleThumbsUp}
       >
         <ThumbsUp className="h-3.5 w-3.5" />
@@ -279,19 +279,19 @@ export function IssueChatFeedbackButtons({
                 ? "text-amber-600 dark:text-amber-400"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
-            title="Needs work"
-            aria-label="Needs work"
+            title={l10n("local.needs_work_738a3278")}
+            aria-label={l10n("local.needs_work_738a3278")}
             onClick={handleThumbsDown}
           >
             <ThumbsDown className="h-3.5 w-3.5" />
           </button>
         </PopoverTrigger>
         <PopoverContent side="top" align="start" className="w-80 p-3">
-          <div className="mb-2 text-sm font-medium">What could have been better?</div>
+          <div className="mb-2 text-sm font-medium">{l10n("local.what_could_have_been_better_829e701d")}</div>
           <Textarea
             value={downvoteReason}
             onChange={(event) => setDownvoteReason(event.target.value)}
-            placeholder="Add a short note"
+            placeholder={l10n("local.add_a_short_note_1adb884a")}
             className="min-h-20 resize-y bg-background text-sm"
             disabled={isSaving}
           />
@@ -306,15 +306,14 @@ export function IssueChatFeedbackButtons({
                 setDownvoteReason("");
               }}
             >
-              Dismiss
-            </Button>
+              {l10n("local.dismiss_48845bff")}</Button>
             <Button
               type="button"
               size="sm"
               disabled={isSaving || !downvoteReason.trim()}
               onClick={handleSubmitReason}
             >
-              {isSaving ? "Saving..." : "Save note"}
+              {isSaving ? l10n("local.saving_dc85af8f") : l10n("local.save_note_6501e1ce")}
             </Button>
           </div>
         </PopoverContent>
@@ -331,21 +330,16 @@ export function IssueChatFeedbackButtons({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save your feedback sharing preference</DialogTitle>
+            <DialogTitle>{l10n("local.save_your_feedback_sharing_preference_1c562b5e")}</DialogTitle>
             <DialogDescription>
-              Choose whether voted AI outputs can be shared with Paperclip Labs. This
-              answer becomes the default for future thumbs up and thumbs down votes.
-            </DialogDescription>
+              {l10n("local.choose_whether_voted_ai_outputs_can_be_shared_1e435dd1")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
-            <p>This vote is always saved locally.</p>
+            <p>{l10n("local.this_vote_is_always_saved_locally_a7cd6ce4")}</p>
             <p>
-              Choose <span className="font-medium text-foreground">Always allow</span> to share
-              this vote and future voted AI outputs. Choose{" "}
-              <span className="font-medium text-foreground">Don't allow</span> to keep this vote
-              and future votes local.
-            </p>
-            <p>You can change this later in Settings &gt; General.</p>
+              {l10n("local.choose_c7f93783")}{" "}<span className="font-medium text-foreground">{l10n("local.always_allow_977618bd")}</span> {l10n("local.to_share_this_vote_and_future_voted_ai_output_5f1e4cc9")}{" "}
+              <span className="font-medium text-foreground">{l10n("local.don_t_allow_9803bdd2")}</span> {l10n("local.to_keep_this_vote_and_future_votes_local_197083e8")}</p>
+            <p>{l10n("local.you_can_change_this_later_in_settings_gt_gene_730f637b")}</p>
             {termsUrl ? (
               <a
                 href={termsUrl}
@@ -353,8 +347,7 @@ export function IssueChatFeedbackButtons({
                 rel="noreferrer"
                 className="inline-flex text-sm text-foreground underline underline-offset-4"
               >
-                Read our terms of service
-              </a>
+                {l10n("local.read_our_terms_of_service_50aceeb5")}</a>
             ) : null}
           </div>
           <DialogFooter>
@@ -370,7 +363,7 @@ export function IssueChatFeedbackButtons({
                 ).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Don't allow"}
+              {isSaving ? l10n("local.saving_dc85af8f") : l10n("local.don_t_allow_9803bdd2")}
             </Button>
             <Button
               type="button"
@@ -383,7 +376,7 @@ export function IssueChatFeedbackButtons({
                 }).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Always allow"}
+              {isSaving ? l10n("local.saving_dc85af8f") : l10n("local.always_allow_977618bd")}
             </Button>
           </DialogFooter>
         </DialogContent>

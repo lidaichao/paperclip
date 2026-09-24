@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { Check } from "lucide-react";
 import { copyTextToClipboard } from "@/lib/clipboard";
@@ -45,7 +46,7 @@ export function CaseCopyableToken({
           className,
         )}
         title={value}
-        aria-label={`Copy ${label} ${value}`}
+        aria-label={l10n("local.copy_value_value_e399427f", {v0: (label), v1: (value)})}
         onClick={handleCopy}
       >
         {value}
@@ -57,8 +58,7 @@ export function CaseCopyableToken({
           className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 inline-flex -translate-x-1/2 items-center gap-1 rounded-md bg-foreground px-2 py-1 text-xs whitespace-nowrap text-background"
         >
           <Check className="h-3 w-3 shrink-0" />
-          Copied
-        </span>
+          {l10n("local.copied_8d525e5f")}</span>
       ) : null}
     </span>
   );
@@ -82,7 +82,7 @@ export function CaseIdentifierKey({
     >
       <CaseCopyableToken
         value={identifier}
-        label="case ID"
+        label={l10n("local.case_id_9c869d6f")}
         className="shrink-0 font-mono text-xs text-muted-foreground"
         containerClassName="shrink-0"
         stopPropagation={stopPropagation}
@@ -90,7 +90,7 @@ export function CaseIdentifierKey({
       {caseKey ? (
         <CaseCopyableToken
           value={caseKey}
-          label="case key"
+          label={l10n("local.case_key_a741eb3c")}
           className="font-mono text-xs text-muted-foreground"
           stopPropagation={stopPropagation}
         />

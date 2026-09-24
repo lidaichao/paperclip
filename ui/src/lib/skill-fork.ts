@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type {
   CompanySkillForkSummary,
   CompanySkillOriginalSummary,
@@ -27,17 +28,17 @@ export function shortSha(ref: string | null | undefined): string | null {
 function sourceTypeFallbackLabel(sourceType: CompanySkillSourceType): string {
   switch (sourceType) {
     case "github":
-      return "GitHub";
+      return l10n("local.github_f911e414");
     case "skills_sh":
       return "skills.sh";
     case "url":
-      return "a URL";
+      return l10n("local.a_url_a86ba76b");
     case "catalog":
-      return "the catalog";
+      return l10n("local.the_catalog_5e5eb745");
     case "local_path":
-      return "a local path";
+      return l10n("local.a_local_path_f42810b5");
     default:
-      return "its source";
+      return l10n("local.its_source_664810fb");
   }
 }
 

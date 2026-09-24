@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { configFieldsForSection } from "../config-sections";
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
@@ -80,7 +81,7 @@ function SecretField({
           type="button"
           onClick={() => setVisible((v) => !v)}
           className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-          aria-label={visible ? `Hide ${label}` : `Show ${label}`}
+          aria-label={visible ? l10n("local.hide_value_1ed45f87", {v0: (label)}) : l10n("local.show_value_146f0e8d", {v0: (label)})}
         >
           {visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
         </button>
@@ -90,7 +91,7 @@ function SecretField({
           immediate
           type={visible ? "text" : "password"}
           className={inputClass + " pl-8"}
-          placeholder={stored ? "Stored secret; enter a new value to replace it" : placeholder}
+          placeholder={stored ? l10n("local.stored_secret_enter_a_new_value_to_replace_it_f4a910c0") : placeholder}
         />
       </div>
     </Field>
@@ -143,8 +144,8 @@ export function HermesGatewayConfigFields({
   return configFieldsForSection(section, (
     <>
       <Field
-        label="API base URL"
-        hint="Hermes API server base URL that Paperclip can reach, such as http://127.0.0.1:8642 or a private HTTPS URL. Default dashboard root/chat URLs such as http://127.0.0.1:9119/chat are accepted and map to /api."
+        label={l10n("local.api_base_url_a45474ea")}
+        hint={l10n("local.hermes_api_server_base_url_that_paperclip_can_dde2c408")}
       >
         <DraftInput
           value={apiBaseUrl}
@@ -156,16 +157,16 @@ export function HermesGatewayConfigFields({
       </Field>
 
       <SecretField
-        label="API key"
+        label={l10n("local.api_key_16f0ee47")}
         value={isCreate ? String(readCreateValue(values, "apiKey", "") ?? "") : editApiKeyValue}
         onCommit={(v) => writeValue("apiKey", v || undefined)}
-        placeholder="Hermes API_SERVER_KEY, not PAPERCLIP_API_KEY"
+        placeholder={l10n("local.hermes_api_server_key_not_paperclip_api_key_3d65035f")}
         stored={!isCreate && hasStoredApiKey && !editApiKeyValue}
       />
 
       <Field
-        label="Paperclip API URL"
-        hint="Optional Paperclip API URL reachable by the Hermes host. This is not a credential."
+        label={l10n("local.paperclip_api_url_d7168750")}
+        hint={l10n("local.optional_paperclip_api_url_reachable_by_the_h_0c1c618e")}
       >
         <DraftInput
           value={paperclipApiUrl}
@@ -177,22 +178,22 @@ export function HermesGatewayConfigFields({
       </Field>
 
       <Field configSection="runPolicy"
-        label="Session key strategy"
-        hint="Controls X-Hermes-Session-Key. Issue scoped prevents cross-task memory bleed by default."
+        label={l10n("local.session_key_strategy_1abcf8b1")}
+        hint={l10n("local.controls_x_hermes_session_key_issue_scoped_pr_08f7c6fb")}
       >
         <select
           value={sessionKeyStrategy}
           onChange={(event) => writeValue("sessionKeyStrategy", event.target.value)}
           className={inputClass}
         >
-          <option value="issue">Issue scoped</option>
-          <option value="agent">Agent scoped</option>
-          <option value="run">Run scoped</option>
-          <option value="none">None</option>
+          <option value="issue">{l10n("local.issue_scoped_837400b8")}</option>
+          <option value="agent">{l10n("local.agent_scoped_e098d60a")}</option>
+          <option value="run">{l10n("local.run_scoped_fdedd5ac")}</option>
+          <option value="none">{l10n("local.none_dc937b59")}</option>
         </select>
       </Field>
 
-      <Field configSection="runPolicy" label="Timeout seconds">
+      <Field configSection="runPolicy" label={l10n("local.timeout_seconds_e7a1bb3c")}>
         <DraftNumberInput
           value={Number.isFinite(timeoutSec) ? timeoutSec : DEFAULT_TIMEOUT_SEC}
           onCommit={(v) => writeValue("timeoutSec", v)}
@@ -202,8 +203,8 @@ export function HermesGatewayConfigFields({
       </Field>
 
       <Field
-        label="Event reconnect ms"
-        hint="Delay before reconnecting the Hermes SSE events stream after a nonterminal disconnect."
+        label={l10n("local.event_reconnect_ms_4e117b41")}
+        hint={l10n("local.delay_before_reconnecting_the_hermes_sse_even_cd42ffbf")}
       >
         <DraftNumberInput
           value={Number.isFinite(eventReconnectMs) ? eventReconnectMs : DEFAULT_EVENT_RECONNECT_MS}
@@ -214,15 +215,15 @@ export function HermesGatewayConfigFields({
       </Field>
 
       <ToggleField
-        label="Dangerously allow remote HTTP"
-        hint="Unsafe dev-only escape hatch. Remote Hermes gateways should use HTTPS; loopback HTTP remains allowed."
+        label={l10n("local.dangerously_allow_remote_http_876d0d77")}
+        hint={l10n("local.unsafe_dev_only_escape_hatch_remote_hermes_ga_f41b6dec")}
         checked={allowInsecureRemoteHttp}
         onChange={(v) => writeValue("dangerouslyAllowInsecureRemoteHttp", v)}
       />
 
       <Field
-        label="Extra headers"
-        hint="Optional JSON object of extra nonsecret headers. Security-critical headers are generated by the adapter."
+        label={l10n("local.extra_headers_e53f03df")}
+        hint={l10n("local.optional_json_object_of_extra_nonsecret_heade_501ad66b")}
       >
         <textarea
           value={headers}
@@ -241,7 +242,7 @@ export function HermesGatewayConfigFields({
         />
       </Field>
 
-      <Field label="Instructions" hint="Optional stable Hermes instructions sent separately from the wake input.">
+      <Field label={l10n("local.instructions_934652dc")} hint={l10n("local.optional_stable_hermes_instructions_sent_sepa_7d641b19")}>
         <DraftTextarea
           value={instructions}
           onCommit={(v) => writeValue("instructions", v || undefined)}

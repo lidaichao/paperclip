@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { clearLegacyChatMessageRequests } from "@/lib/chat-message-request";
@@ -372,8 +373,8 @@ function createRunCancelledStatusUpdateError(
 ): StopAndFinalizeRunError {
   const message =
     err instanceof Error
-      ? `Run was stopped, but updating the task failed: ${err.message}`
-      : "Run was stopped, but updating the task failed. Retry the task status update.";
+      ? l10n("local.run_was_stopped_but_updating_the_task_failed_88657379", {v0: (err.message)})
+      : l10n("local.run_was_stopped_but_updating_the_task_failed_dd8c5913");
   const error = new Error(message) as StopAndFinalizeRunError;
   error.runCancelledBeforeStatusUpdateFailed = true;
   return error;
@@ -741,7 +742,7 @@ function AttributionAvatar({
             </div>
             {via ? (
               <div className="max-w-48 truncate text-(length:--text-nano) leading-3 text-background/60">
-                via {via}
+                {l10n("local.via_4d327af4")}{" "}{via}
               </div>
             ) : null}
           </div>
@@ -817,7 +818,7 @@ function IssueAttributionByline({
     <TooltipProvider>
       <AvatarGroup
         className="-space-x-1.5"
-        aria-label="Task people"
+        aria-label={l10n("local.task_people_46ac7b2e")}
         data-testid="issue-attribution-avatar-stack"
       >
         {assignee ? (
@@ -993,11 +994,10 @@ function IssueDetailLoadingState({
                 <Badge
                   variant="outline"
                   className="border-violet-500/30 bg-violet-500/10 text-(length:--text-nano) text-violet-600 dark:text-violet-400"
-                  title={`Routine execution from routine ${headerSeed.originId}`}
+                  title={l10n("local.routine_execution_from_routine_value_262c8d8a", {v0: (headerSeed.originId)})}
                 >
                   <Repeat className="h-3 w-3" />
-                  Routine
-                </Badge>
+                  {l10n("local.routine_0b5baf30")}</Badge>
               ) : null}
               {/* Seeded header — same anatomy as the resolved one below, so the
                   eyebrow does not change shape when the real issue arrives. */}
@@ -1011,8 +1011,7 @@ function IssueDetailLoadingState({
               ) : (
                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50 px-1 -mx-1 py-0.5">
                   <ProjectTile size="xs" />
-                  No project
-                </span>
+                  {l10n("local.no_project_f34c2be0")}</span>
               )}
             </>
           ) : (
@@ -1111,7 +1110,7 @@ function InboxMobileToolbar({
             navigate(backHref);
           }
         }}
-        aria-label="Back to inbox"
+        aria-label={l10n("local.back_to_inbox_97555c45")}
       >
         <ArrowLeft className="h-5 w-5" />
       </Button>
@@ -1123,7 +1122,7 @@ function InboxMobileToolbar({
             size="icon-sm"
             onClick={onArchive}
             disabled={archivePending}
-            aria-label="Archive from inbox"
+            aria-label={l10n("local.archive_from_inbox_67c88421")}
           >
             <Archive className="h-5 w-5" />
           </Button>
@@ -1131,7 +1130,7 @@ function InboxMobileToolbar({
 
         <Popover open={menuOpen} onOpenChange={setMenuOpen}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label="More actions">
+            <Button variant="ghost" size="icon-sm" aria-label={l10n("local.more_actions_f8d46c25")}>
               <MoreVertical className="h-5 w-5" />
             </Button>
           </PopoverTrigger>
@@ -1144,8 +1143,7 @@ function InboxMobileToolbar({
               }}
             >
               <Copy className="h-3 w-3" />
-              Copy as markdown
-            </button>
+              {l10n("local.copy_as_markdown_fec6709d")}</button>
             <button
               className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
               onClick={() => {
@@ -1154,8 +1152,7 @@ function InboxMobileToolbar({
               }}
             >
               <SlidersHorizontal className="h-3 w-3" />
-              Properties
-            </button>
+              {l10n("local.properties_ae43692b")}</button>
             {issueIdProp && (
               <button
                 className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-destructive"
@@ -1165,8 +1162,7 @@ function InboxMobileToolbar({
                 }}
               >
                 <EyeOff className="h-3 w-3" />
-                Hide this task
-              </button>
+                {l10n("local.hide_this_task_429dbcbd")}</button>
             )}
           </PopoverContent>
         </Popover>
@@ -1557,8 +1553,8 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
     onSuccess: (result) => {
       if (!result.runId) {
         pushToast({
-          title: "Retry queued",
-          body: "The exact request will retry when this task is ready.",
+          title: l10n("local.retry_queued_06fd42bb"),
+          body: l10n("local.the_exact_request_will_retry_when_this_task_i_c6d7f52e"),
           tone: "success",
         });
       }
@@ -1576,8 +1572,8 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
     },
     onError: (error) => {
       pushToast({
-        title: "Run retry failed",
-        body: error instanceof Error ? error.message : "Unable to retry run",
+        title: l10n("local.run_retry_failed_243efbc1"),
+        body: error instanceof Error ? error.message : l10n("local.unable_to_retry_run_537d0b3e"),
         tone: "error",
       });
     },
@@ -2241,8 +2237,8 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
               : null;
         if (code === "queued_comment_already_dispatching") {
           pushToast({
-            title: "Message is already being sent",
-            body: "The continuation started before the discard was confirmed, so Paperclip could not unsend it.",
+            title: l10n("local.message_is_already_being_sent_fecf0744"),
+            body: l10n("local.the_continuation_started_before_the_discard_w_be6edcee"),
             tone: "error",
             ttlMs: 15_000,
             dedupeKey: `queued-comment-already-dispatching:${issueId}:${commentId}`,
@@ -2280,8 +2276,8 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
         onClick={onLoadOlderComments}
       >
         {commentsLoadingOlder
-          ? "Loading earlier comments..."
-          : "Load earlier comments"}
+          ? l10n("local.loading_earlier_comments_aa9192a1")
+          : l10n("local.load_earlier_comments_a41f98dd")}
       </Button>
     </div>
   ) : null;
@@ -2435,8 +2431,8 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
                 ? (runId) => onPauseWorkRun(runId).catch(() => undefined)
                 : undefined
             }
-            stopRunLabel="Pause work"
-            stoppingRunLabel="Pausing..."
+            stopRunLabel={l10n("local.pause_work_0faaea9a")}
+            stoppingRunLabel={l10n("local.pausing_e7b385f5")}
             stopRunVariant="pause"
             runFinalizationActions={runFinalizationActions}
             onAcceptInteraction={onAcceptInteraction}
@@ -2645,18 +2641,16 @@ function IssueDetailActivityTab({
       {shouldShowCostSummary && (
         <div className="mb-3 px-3 py-2 rounded-lg border border-border">
           <div className="text-sm font-medium text-muted-foreground mb-1">
-            Cost Summary
-          </div>
+            {l10n("local.cost_summary_3ae4392d")}</div>
           {!issueCostSummary.hasCost &&
           !issueCostSummary.hasTokens &&
           !hasIssueTreeCost ? (
             <div className="text-xs text-muted-foreground">
-              No cost data yet.
-            </div>
+              {l10n("local.no_cost_data_yet_b13184a8")}</div>
           ) : (
             <div className="space-y-1 text-xs text-muted-foreground tabular-nums">
               <div className="flex flex-wrap gap-3">
-                <span className="font-medium text-foreground">This task</span>
+                <span className="font-medium text-foreground">{l10n("local.this_task_4f5b1b5d")}</span>
                 {issueCostSummary.hasCost ? (
                   <span className="font-medium text-foreground">
                     ${issueCostSummary.cost.toFixed(4)}
@@ -2664,28 +2658,28 @@ function IssueDetailActivityTab({
                 ) : null}
                 {issueCostSummary.hasTokens ? (
                   <span>
-                    Tokens {formatTokens(issueCostSummary.totalTokens)}
+                    {l10n("local.tokens_a039dfb9")}{" "}{formatTokens(issueCostSummary.totalTokens)}
                     {issueCostSummary.cached > 0
-                      ? ` (in ${formatTokens(issueCostSummary.input)}, out ${formatTokens(issueCostSummary.output)}, cached ${formatTokens(issueCostSummary.cached)})`
-                      : ` (in ${formatTokens(issueCostSummary.input)}, out ${formatTokens(issueCostSummary.output)})`}
+                      ? (" " + l10n("local._in_value_out_value_cached_value_3ca4fdf4", {v0: (formatTokens(issueCostSummary.input)), v1: (formatTokens(issueCostSummary.output)), v2: (formatTokens(issueCostSummary.cached))}))
+                      : (" " + l10n("local._in_value_out_value_306d550a", {v0: (formatTokens(issueCostSummary.input)), v1: (formatTokens(issueCostSummary.output))}))}
                   </span>
                 ) : null}
                 {issueCostSummary.hasRuntime ? (
                   <span>
-                    Runtime {formatDurationMs(issueCostSummary.runtimeMs)}
-                    {` (${issueCostSummary.runCount} run${issueCostSummary.runCount === 1 ? "" : "s"})`}
+                    {l10n("local.runtime_10931158")}{" "}{formatDurationMs(issueCostSummary.runtimeMs)}
+                    {(" " + l10n("local._value_runvalue_ad04b3d6", {v0: (issueCostSummary.runCount), v1: (englishPluralSuffix(issueCostSummary.runCount === 1 ? "" : "s"))}))}
                   </span>
                 ) : null}
                 {!issueCostSummary.hasCost &&
                 !issueCostSummary.hasTokens &&
                 !issueCostSummary.hasRuntime ? (
-                  <span>No direct cost data.</span>
+                  <span>{l10n("local.no_direct_cost_data_5a04bc38")}</span>
                 ) : null}
               </div>
               {hasIssueTreeCost && issueTreeCostSummary ? (
                 <div className="flex flex-wrap gap-3">
                   <span className="font-medium text-foreground">
-                    Including sub-tasks{" "}
+                    {l10n("local.including_sub_tasks_7a769802")}{" "}
                     {(issueTreeCostSummary.costCents / 100).toLocaleString(
                       undefined,
                       {
@@ -2697,20 +2691,19 @@ function IssueDetailActivityTab({
                     )}
                   </span>
                   <span>
-                    Tokens {formatTokens(issueTreeCostTokens)}
+                    {l10n("local.tokens_a039dfb9")}{" "}{formatTokens(issueTreeCostTokens)}
                     {issueTreeCostSummary.cachedInputTokens > 0
-                      ? ` (in ${formatTokens(issueTreeCostSummary.inputTokens)}, out ${formatTokens(issueTreeCostSummary.outputTokens)}, cached ${formatTokens(issueTreeCostSummary.cachedInputTokens)})`
-                      : ` (in ${formatTokens(issueTreeCostSummary.inputTokens)}, out ${formatTokens(issueTreeCostSummary.outputTokens)})`}
+                      ? (" " + l10n("local._in_value_out_value_cached_value_3ca4fdf4", {v0: (formatTokens(issueTreeCostSummary.inputTokens)), v1: (formatTokens(issueTreeCostSummary.outputTokens)), v2: (formatTokens(issueTreeCostSummary.cachedInputTokens))}))
+                      : (" " + l10n("local._in_value_out_value_306d550a", {v0: (formatTokens(issueTreeCostSummary.inputTokens)), v1: (formatTokens(issueTreeCostSummary.outputTokens))}))}
                   </span>
                   {issueTreeCostSummary.runCount > 0 ? (
                     <span>
-                      Runtime {formatDurationMs(issueTreeCostSummary.runtimeMs)}
-                      {` (${issueTreeCostSummary.runCount} run${issueTreeCostSummary.runCount === 1 ? "" : "s"})`}
+                      {l10n("local.runtime_10931158")}{" "}{formatDurationMs(issueTreeCostSummary.runtimeMs)}
+                      {(" " + l10n("local._value_runvalue_ad04b3d6", {v0: (issueTreeCostSummary.runCount), v1: (englishPluralSuffix(issueTreeCostSummary.runCount === 1 ? "" : "s"))}))}
                     </span>
                   ) : null}
                   <span>
-                    {issueTreeCostSummary.issueCount} task
-                    {issueTreeCostSummary.issueCount === 1 ? "" : "s"}
+                    {issueTreeCostSummary.issueCount} {l10n("local.task_0ebb429f")}{issueTreeCostSummary.issueCount === 1 ? "" : englishPluralSuffix("s")}
                   </span>
                 </div>
               ) : null}
@@ -3217,7 +3210,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
   const sourceBreadcrumb = useMemo(
     () =>
       readIssueDetailBreadcrumb(issueId, location.state, location.search) ?? {
-        label: "Tasks",
+        label: l10n("local.tasks_b3a60e61"),
         href: "/issues",
       },
     [issueId, location.state, location.search],
@@ -3709,7 +3702,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       }),
     [comments, optimisticComments],
   );
-  const breadcrumbTitle = issue?.title ?? issueId ?? "Task";
+  const breadcrumbTitle = issue?.title ?? issueId ?? l10n("local.task_4bc74b21");
   const breadcrumbIdentifier =
     issue?.identifier ?? issueHeaderSeed?.identifier ?? undefined;
   const breadcrumbStatus = issue?.status;
@@ -3875,7 +3868,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
 
       try {
         await issuesApi.unarchiveFromInbox(id);
-        pushToast({ title: "Task restored to inbox", tone: "success" });
+        pushToast({ title: l10n("local.task_restored_to_inbox_a17ff0d0"), tone: "success" });
       } catch (error) {
         if (companyId) {
           beginLocalInboxArchive(companyId, id);
@@ -3883,11 +3876,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
           boundLocalInboxArchive(companyId, id);
         }
         pushToast({
-          title: "Undo failed",
+          title: l10n("local.undo_failed_c7abe568"),
           body:
             error instanceof Error
               ? error.message
-              : "Unable to restore this task to the inbox",
+              : l10n("local.unable_to_restore_this_task_to_the_inbox_1e695f75"),
           tone: "error",
         });
       } finally {
@@ -4048,9 +4041,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         );
       }
       pushToast({
-        title: "Task update failed",
+        title: l10n("local.task_update_failed_c182c1db"),
         body:
-          err instanceof Error ? err.message : "Unable to save task changes",
+          err instanceof Error ? err.message : l10n("local.unable_to_save_task_changes_b1b8b57f"),
         tone: "error",
       });
     },
@@ -4083,11 +4076,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     },
     onError: (err) => {
       pushToast({
-        title: "Recovery resolution failed",
+        title: l10n("local.recovery_resolution_failed_f9244c72"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to resolve recovery action",
+            : l10n("local.unable_to_resolve_recovery_action_98c80218"),
         tone: "error",
       });
     },
@@ -4264,8 +4257,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       pushToast({
         title:
           status === "done"
-            ? "Run stopped and task done"
-            : "Run stopped and task cancelled",
+            ? l10n("local.run_stopped_and_task_done_61161295")
+            : l10n("local.run_stopped_and_task_cancelled_18448b85"),
         tone: "success",
       });
     },
@@ -4273,14 +4266,14 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       const runWasStopped = didRunCancelBeforeStatusUpdateFail(err);
       pushToast({
         title: runWasStopped
-          ? "Run stopped; task update failed"
+          ? l10n("local.run_stopped_task_update_failed_5d6ff315")
           : status === "done"
-            ? "Stop and done failed"
-            : "Stop and cancel failed",
+            ? l10n("local.stop_and_done_failed_2f4e24e9")
+            : l10n("local.stop_and_cancel_failed_3b957b73"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to stop the run and update the task",
+            : l10n("local.unable_to_stop_the_run_and_update_the_task_128fb2b1"),
         tone: "error",
       });
     },
@@ -4318,11 +4311,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     },
     onError: (err) => {
       pushToast({
-        title: "Task update failed",
+        title: l10n("local.task_update_failed_c182c1db"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to save sub-task changes",
+            : l10n("local.unable_to_save_sub_task_changes_dfc9e140"),
         tone: "error",
       });
     },
@@ -4355,7 +4348,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
             issue,
             currentUserId,
           )}
-          createIssueLabel="Sub-task"
+          createIssueLabel={l10n("local.sub_task_17aa97a0")}
           defaultSortField="workflow"
           showProgressSummary
           parentIssueIdForCostSummary={issue.id}
@@ -4386,17 +4379,17 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       invalidateIssueRunState();
       invalidateIssueCollections();
       pushToast({
-        title: "Monitor check queued",
+        title: l10n("local.monitor_check_queued_9cbc908e"),
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Monitor check failed",
+        title: l10n("local.monitor_check_failed_bcd59e0a"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to trigger the monitor right now",
+            : l10n("local.unable_to_trigger_the_monitor_right_now_a241d6bc"),
         tone: "error",
       });
     },
@@ -4435,8 +4428,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       pushToast({
         title:
           variables.action === "approve"
-            ? "Approval approved"
-            : "Approval rejected",
+            ? l10n("local.approval_approved_013f5619")
+            : l10n("local.approval_rejected_64b0e7ab"),
         tone: "success",
       });
     },
@@ -4444,9 +4437,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       pushToast({
         title:
           variables.action === "approve"
-            ? "Approval failed"
-            : "Rejection failed",
-        body: err instanceof Error ? err.message : "Unable to update approval",
+            ? l10n("local.approval_failed_8246891f")
+            : l10n("local.rejection_failed_a21eed92"),
+        body: err instanceof Error ? err.message : l10n("local.unable_to_update_approval_01dee78a"),
         tone: "error",
       });
     },
@@ -4533,11 +4526,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
           return;
         } catch (err) {
           pushToast({
-            title: "Cancel failed",
+            title: l10n("local.cancel_failed_785ae808"),
             body:
               err instanceof Error
                 ? err.message
-                : "Unable to cancel the queued comment",
+                : l10n("local.unable_to_cancel_the_queued_comment_297a9939"),
             tone: "error",
           });
         }
@@ -4600,9 +4593,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       pushToast({
         title:
           err instanceof CommentSubmissionUnknownError
-            ? "Comment save unconfirmed"
-            : "Comment failed",
-        body: err instanceof Error ? err.message : "Unable to post comment",
+            ? l10n("local.comment_save_unconfirmed_52cb4ccf")
+            : l10n("local.comment_failed_728785e9"),
+        body: err instanceof Error ? err.message : l10n("local.unable_to_post_comment_181529d8"),
         tone: "error",
       });
     },
@@ -4668,22 +4661,22 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       pushToast({
         title:
           interaction.kind === "request_confirmation"
-            ? "Request confirmed"
+            ? l10n("local.request_confirmed_469bddd0")
             : interaction.kind === "request_checkbox_confirmation"
-              ? "Selection confirmed"
+              ? l10n("local.selection_confirmed_b16d1591")
               : skippedCount > 0
-                ? `Accepted ${createdCount} draft${createdCount === 1 ? "" : "s"} and skipped ${skippedCount}`
-                : "Suggested tasks accepted",
+                ? l10n("local.accepted_value_draftvalue_and_skipped_value_a47391f1", {v0: (createdCount), v1: (englishPluralSuffix(createdCount === 1 ? "" : "s")), v2: (skippedCount)})
+                : l10n("local.suggested_tasks_accepted_1b2ba6ca"),
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Accept failed",
+        title: l10n("local.accept_failed_d576f243"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to accept the suggested tasks",
+            : l10n("local.unable_to_accept_the_suggested_tasks_3d148f83"),
         tone: "error",
       });
     },
@@ -4704,17 +4697,17 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         title:
           interaction.kind === "request_confirmation"
             ? buildIssueThreadInteractionSummary(interaction)
-            : "Suggestion rejected",
+            : l10n("local.suggestion_rejected_6750d659"),
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Reject failed",
+        title: l10n("local.reject_failed_8b1d9fa4"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to reject the suggested tasks",
+            : l10n("local.unable_to_reject_the_suggested_tasks_06971ec8"),
         tone: "error",
       });
     },
@@ -4732,14 +4725,14 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       invalidateIssueDetail();
       invalidateIssueCollections();
       pushToast({
-        title: "Answers submitted",
+        title: l10n("local.answers_submitted_6908408b"),
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Submit failed",
-        body: err instanceof Error ? err.message : "Unable to submit answers",
+        title: l10n("local.submit_failed_a8bf099a"),
+        body: err instanceof Error ? err.message : l10n("local.unable_to_submit_answers_013234ef"),
         tone: "error",
       });
     },
@@ -4769,16 +4762,16 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
           : false;
       pushToast({
         title: complete
-          ? "All verdicts applied"
-          : `Applied ${applied} decision${applied === 1 ? "" : "s"}`,
+          ? l10n("local.all_verdicts_applied_7cacb3cd")
+          : l10n("local.applied_value_decisionvalue_1788513d", {v0: (applied), v1: (englishPluralSuffix(applied === 1 ? "" : "s"))}),
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Apply failed",
+        title: l10n("local.apply_failed_cae4cf5c"),
         body:
-          err instanceof Error ? err.message : "Unable to apply the verdicts",
+          err instanceof Error ? err.message : l10n("local.unable_to_apply_the_verdicts_c94f1b1e"),
         tone: "error",
       });
     },
@@ -4795,15 +4788,15 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       invalidateIssueDetail();
       invalidateIssueCollections();
       pushToast({
-        title: "Question cancelled",
+        title: l10n("local.question_cancelled_e8960873"),
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Cancel failed",
+        title: l10n("local.cancel_failed_785ae808"),
         body:
-          err instanceof Error ? err.message : "Unable to cancel the question",
+          err instanceof Error ? err.message : l10n("local.unable_to_cancel_the_question_3f254a42"),
         tone: "error",
       });
     },
@@ -4819,9 +4812,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     },
     onError: (err) => {
       pushToast({
-        title: "Skip failed",
+        title: l10n("local.skip_failed_491e45ae"),
         body:
-          err instanceof Error ? err.message : "Unable to skip this request",
+          err instanceof Error ? err.message : l10n("local.unable_to_skip_this_request_685f7684"),
         tone: "error",
       });
     },
@@ -4928,11 +4921,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
           return;
         } catch (err) {
           pushToast({
-            title: "Cancel failed",
+            title: l10n("local.cancel_failed_785ae808"),
             body:
               err instanceof Error
                 ? err.message
-                : "Unable to cancel the queued comment",
+                : l10n("local.unable_to_cancel_the_queued_comment_297a9939"),
             tone: "error",
           });
         }
@@ -4992,9 +4985,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       pushToast({
         title:
           err instanceof CommentSubmissionUnknownError
-            ? "Comment save unconfirmed"
-            : "Comment failed",
-        body: err instanceof Error ? err.message : "Unable to post comment",
+            ? l10n("local.comment_save_unconfirmed_52cb4ccf")
+            : l10n("local.comment_failed_728785e9"),
+        body: err instanceof Error ? err.message : l10n("local.unable_to_post_comment_181529d8"),
         tone: "error",
       });
     },
@@ -5021,8 +5014,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       invalidateIssueDetail();
       invalidateIssueRunState();
       pushToast({
-        title: "Interrupt requested",
-        body: "Queued messages will be sent when the previous run has stopped.",
+        title: l10n("local.interrupt_requested_766c2332"),
+        body: l10n("local.queued_messages_will_be_sent_when_the_previou_828f40f7"),
         tone: "success",
       });
     },
@@ -5030,11 +5023,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       invalidateIssueDetail();
       invalidateIssueRunState();
       pushToast({
-        title: "Interrupt failed",
+        title: l10n("local.interrupt_failed_53d754e8"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to interrupt the active run",
+            : l10n("local.unable_to_interrupt_the_active_run_69bcf1ad"),
         tone: "error",
       });
     },
@@ -5056,18 +5049,18 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       invalidateIssueThreadLazily();
       invalidateIssueCollections();
       pushToast({
-        title: "Queued comment canceled",
-        body: "The queued message was restored to the composer.",
+        title: l10n("local.queued_comment_canceled_33606e66"),
+        body: l10n("local.the_queued_message_was_restored_to_the_compos_4b52deb0"),
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Cancel failed",
+        title: l10n("local.cancel_failed_785ae808"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to cancel the queued comment",
+            : l10n("local.unable_to_cancel_the_queued_comment_297a9939"),
         tone: "error",
       });
     },
@@ -5084,16 +5077,16 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       invalidateIssueCollections();
       invalidateIssueDocumentAnnotationState();
       pushToast({
-        title: "Comment deleted",
-        body: "The thread now shows a deleted-comment marker.",
+        title: l10n("local.comment_deleted_7199a134"),
+        body: l10n("local.the_thread_now_shows_a_deleted_comment_marker_c345076a"),
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Delete failed",
+        title: l10n("local.delete_failed_8727e2ba"),
         body:
-          err instanceof Error ? err.message : "Unable to delete the comment",
+          err instanceof Error ? err.message : l10n("local.unable_to_delete_the_comment_9c42969f"),
         tone: "error",
       });
     },
@@ -5112,8 +5105,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         if (cancelledCommentBody) {
           restoreQueuedCommentDraft(cancelledCommentBody);
           pushToast({
-            title: "Queued comment canceled",
-            body: "The queued message was restored to the composer.",
+            title: l10n("local.queued_comment_canceled_33606e66"),
+            body: l10n("local.the_queued_message_was_restored_to_the_compos_4b52deb0"),
             tone: "success",
           });
         }
@@ -5176,11 +5169,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         title:
           variables.sharingPreferenceAtSubmit === "prompt"
             ? variables.allowSharing
-              ? "Feedback saved. Future votes will share"
-              : "Feedback saved. Future votes will stay local"
+              ? l10n("local.feedback_saved_future_votes_will_share_510bbe8f")
+              : l10n("local.feedback_saved_future_votes_will_stay_local_1fc74647")
             : variables.allowSharing
-              ? "Feedback saved and sharing enabled"
-              : "Feedback saved",
+              ? l10n("local.feedback_saved_and_sharing_enabled_3ef000ed")
+              : l10n("local.feedback_saved_e812e0b8"),
         tone: "success",
       });
     },
@@ -5192,8 +5185,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         );
       }
       pushToast({
-        title: "Failed to save feedback",
-        body: err instanceof Error ? err.message : "Unknown error",
+        title: l10n("local.failed_to_save_feedback_ad0dfc66"),
+        body: err instanceof Error ? err.message : l10n("local.unknown_error_27c2ccd9"),
         tone: "error",
       });
     },
@@ -5297,10 +5290,10 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         { replace: true },
       );
       pushToast({
-        title: "Task archived from inbox",
+        title: l10n("local.task_archived_from_inbox_ca9374d1"),
         tone: "success",
         action: {
-          label: "Undo",
+          label: l10n("local.undo_a8283ade"),
           onClick: () => {
             void undoInboxArchive(
               id,
@@ -5317,11 +5310,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         restoreIssueToInboxCaches(queryClient, context.previousData, id);
       }
       pushToast({
-        title: "Archive failed",
+        title: l10n("local.archive_failed_a0d5f584"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to archive this task from the inbox",
+            : l10n("local.unable_to_archive_this_task_from_the_inbox_86bc2d32"),
         tone: "error",
       });
     },
@@ -5348,7 +5341,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         label: conversationAgent.name,
         leading: <Avatar className="size-6 shrink-0"><AvatarFallback>{deriveInitials(conversationAgent.name)}</AvatarFallback></Avatar>,
         leadingKey: `agent:${conversationAgent.id}`,
-        trailing: <Button variant="ghost" size="icon-xs" asChild aria-label={`Configure ${conversationAgent.name}`}><Link to={agentDetailHref(conversationAgent.id, "runtime")}><ChatSettings /></Link></Button>,
+        trailing: <Button variant="ghost" size="icon-xs" asChild aria-label={l10n("local.configure_value_1ea11a99", {v0: (conversationAgent.name)})}><Link to={agentDetailHref(conversationAgent.id, "runtime")}><ChatSettings /></Link></Button>,
         trailingKey: `configure:${conversationAgent.id}`,
       }]);
       return;
@@ -6035,15 +6028,15 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     try {
       await copyTextToClipboard(md);
       setCopied(true);
-      pushToast({ title: "Copied to clipboard", tone: "success" });
+      pushToast({ title: l10n("local.copied_to_clipboard_d37078fe"), tone: "success" });
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       pushToast({
-        title: "Copy failed",
+        title: l10n("local.copy_failed_5b50e7a6"),
         body:
           error instanceof Error
             ? error.message
-            : "Unable to copy task markdown",
+            : l10n("local.unable_to_copy_task_markdown_57705a28"),
         tone: "error",
       });
     }
@@ -6234,7 +6227,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     () => [
       {
         id: "cancel",
-        label: "Stop and cancel",
+        label: l10n("local.stop_and_cancel_d1fcb882"),
         pendingLabel: "Stopping and cancelling...",
         isPending:
           stopAndFinalizeRun.isPending &&
@@ -6248,7 +6241,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       },
       {
         id: "done",
-        label: "Stop and done",
+        label: l10n("local.stop_and_done_787e84f6"),
         pendingLabel: "Stopping and marking done...",
         isPending:
           stopAndFinalizeRun.isPending &&
@@ -6440,7 +6433,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       request: import("../components/IssueRecoveryActionCard").RecoveryReissueRequest,
     ) => {
       if (!issue) throw new Error("Task is not loaded yet.");
-      const sourceLabel = issue.identifier ?? "the stalled task";
+      const sourceLabel = issue.identifier ?? l10n("local.the_stalled_task_701f1d79");
       const descriptionLines = [
         `Re-issued from ${sourceLabel} on an isolated git worktree after a workspace branch divergence.`,
         "",
@@ -6474,10 +6467,10 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     onSuccess: (created) => {
       invalidateIssueCollections();
       pushToast({
-        title: "Isolated re-issue created",
+        title: l10n("local.isolated_re_issue_created_6d112862"),
         body: created.identifier
-          ? `${created.identifier} will run on a fresh isolated workspace.`
-          : "A fresh isolated re-issue was created.",
+          ? l10n("local.value_will_run_on_a_fresh_isolated_workspace_5c15dec5", {v0: (created.identifier)})
+          : l10n("local.a_fresh_isolated_re_issue_was_created_f8e1a20e"),
         tone: "success",
       });
       if (created.identifier) {
@@ -6486,11 +6479,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     },
     onError: (err) => {
       pushToast({
-        title: "Re-issue failed",
+        title: l10n("local.re_issue_failed_d2f4dc96"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to create an isolated re-issue.",
+            : l10n("local.unable_to_create_an_isolated_re_issue_36df82b6"),
         tone: "error",
       });
     },
@@ -6530,12 +6523,12 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       pushToast(
         variables.mode === "quarantine_restore"
           ? {
-              title: "Workspace repaired",
+              title: l10n("local.workspace_repaired_22f46fd2"),
               body: "Dirty changes were quarantined onto a rescue branch and the recorded branch restored; the task will resume.",
               tone: "success",
             }
           : {
-              title: "Workspace branch reconciled",
+              title: l10n("local.workspace_branch_reconciled_a01d3ef7"),
               body: "The recorded branch now matches the live branch; the task will resume.",
               tone: "success",
             },
@@ -6543,11 +6536,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     },
     onError: (err) => {
       pushToast({
-        title: "Reconcile failed",
+        title: l10n("local.reconcile_failed_45e78183"),
         body:
           err instanceof Error
             ? err.message
-            : "Unable to reconcile the workspace branch.",
+            : l10n("local.unable_to_reconcile_the_workspace_branch_f5dd8112"),
         tone: "error",
       });
     },
@@ -6565,8 +6558,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
   const handleReconcileForwardRecoveryAction = useCallback(() => {
     if (!reconcileExecutionWorkspaceId) {
       pushToast({
-        title: "Reconcile failed",
-        body: "This task has no execution workspace to reconcile.",
+        title: l10n("local.reconcile_failed_45e78183"),
+        body: l10n("local.this_task_has_no_execution_workspace_to_recon_7df2a625"),
         tone: "error",
       });
       return;
@@ -6584,8 +6577,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     (reason: string) => {
       if (!reconcileExecutionWorkspaceId) {
         pushToast({
-          title: "Reconcile failed",
-          body: "This task has no execution workspace to reconcile.",
+          title: l10n("local.reconcile_failed_45e78183"),
+          body: l10n("local.this_task_has_no_execution_workspace_to_recon_7df2a625"),
           tone: "error",
         });
         return;
@@ -6607,8 +6600,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
   const handleQuarantineRestoreRecoveryAction = useCallback(() => {
     if (!reconcileExecutionWorkspaceId) {
       pushToast({
-        title: "Repair failed",
-        body: "This task has no execution workspace to repair.",
+        title: l10n("local.repair_failed_9445b142"),
+        body: l10n("local.this_task_has_no_execution_workspace_to_repai_562a0ccd"),
         tone: "error",
       });
       return;
@@ -6763,7 +6756,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
   const previewAffectedAgentCount =
     treeControlPreview?.totals.affectedAgents ?? 0;
   const reopenComposerHint = closedIsolatedWorkspaceReopenPending
-    ? "This issue's isolated workspace was archived. Your next comment or resume reopens it and rebuilds the worktree."
+    ? l10n("local.this_issue_s_isolated_workspace_was_archived_ecfc33a6")
     : null;
   const composerHint = activePauseHold ? null : reopenComposerHint;
   const queuedCommentReason: "hold" | "active_run" | "other" = activePauseHold
@@ -6796,11 +6789,11 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       >
         <Paperclip className="h-3.5 w-3.5 mr-1.5" />
         {uploadAttachment.isPending || importMarkdownDocument.isPending ? (
-          "Uploading..."
+          l10n("local.uploading_72cb29c9")
         ) : (
           <>
-            <span className="hidden sm:inline">Upload attachment</span>
-            <span className="sm:hidden">Upload</span>
+            <span className="hidden sm:inline">{l10n("local.upload_attachment_dacea186")}</span>
+            <span className="sm:hidden">{l10n("local.upload_865e89de")}</span>
           </>
         )}
       </Button>
@@ -6923,30 +6916,27 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500" />
             </span>
-            Live
-          </Badge>
+            {l10n("local.live_b64ac05f")}</Badge>
         )}
 
         {issue.originKind === "routine_execution" && issue.originId && (
           <Link
             to={`/routines/${issue.originId}`}
             className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-(length:--text-nano) font-medium text-violet-600 dark:text-violet-400 shrink-0 hover:bg-violet-500/20 transition-colors"
-            title={`Routine execution from routine ${issue.originId}`}
+            title={l10n("local.routine_execution_from_routine_value_262c8d8a", {v0: (issue.originId)})}
           >
             <Repeat className="h-3 w-3" />
-            Routine
-          </Link>
+            {l10n("local.routine_0b5baf30")}</Link>
         )}
 
         {issue.originKind === "task_watchdog" ? (
           <Badge
             variant="outline"
             className="border-sky-500/40 bg-sky-500/10 text-(length:--text-nano) text-sky-700 dark:text-sky-300"
-            title="This task is a generated watchdog task. It verifies whether stopped work in the watched task tree is legitimate."
+            title={l10n("local.this_task_is_a_generated_watchdog_task_it_ver_2aeca021")}
           >
             <ScanEye className="h-3 w-3" />
-            Watchdog
-          </Badge>
+            {l10n("local.watchdog_da0ccfea")}</Badge>
         ) : null}
 
         {/* Task Chat Redesign: no mode chip in the header — mode is a
@@ -6965,7 +6955,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                     "text-(length:--text-nano)",
                     workModeMeta.classes.badge,
                   )}
-                  title={`This task is in ${workModeMeta.label.toLowerCase()}.`}
+                  title={l10n("local.this_task_is_in_value_4fee6177", {v0: (workModeMeta.label.toLowerCase())})}
                 >
                   <WorkModeIcon className="h-3 w-3" aria-hidden />
                   {workModeMeta.label}
@@ -6979,11 +6969,10 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
             variant="outline"
             data-testid="issue-detail-parked-blocker"
             className="border-amber-500/60 bg-amber-500/15 text-(length:--text-nano) text-amber-700 dark:text-amber-300"
-            title="Blocked by parked work — at least one assigned blocker is in backlog and will not wake its assignee."
+            title={l10n("local.blocked_by_parked_work_at_least_one_assigned_36e80d73")}
           >
             <Flag className="h-3 w-3" />
-            Blocked by parked work
-          </Badge>
+            {l10n("local.blocked_by_parked_work_8b239473")}</Badge>
         ) : null}
 
         {/* Project reads as a tile plus a name, matching the project rows in
@@ -7011,8 +7000,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         ) : (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50 px-1 -mx-1 py-0.5">
             <ProjectTile size="xs" />
-            No project
-          </span>
+            {l10n("local.no_project_f34c2be0")}</span>
         )}
 
         <IssueAttributionByline
@@ -7052,7 +7040,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               variant="ghost"
               size="icon-xs"
               onClick={copyIssueToClipboard}
-              title="Copy task as markdown"
+              title={l10n("local.copy_task_as_markdown_a6e95a42")}
             >
               {copied ? (
                 <Check className="h-4 w-4 text-green-500" />
@@ -7064,7 +7052,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               variant="ghost"
               size="icon-xs"
               onClick={() => setMobilePropsOpen(true)}
-              title="Properties"
+              title={l10n("local.properties_ae43692b")}
             >
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
@@ -7081,8 +7069,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                   archiveFromInbox.mutate(issue.id);
               }}
               disabled={archivePending}
-              title="Archive from inbox"
-              aria-label="Archive from inbox"
+              title={l10n("local.archive_from_inbox_67c88421")}
+              aria-label={l10n("local.archive_from_inbox_67c88421")}
             >
               <Archive className="h-4 w-4" />
             </Button>
@@ -7092,8 +7080,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               variant="ghost"
               size="icon-xs"
               onClick={() => setFileViewerPromptOpen(true)}
-              title="Open file... (g f)"
-              aria-label="Open file in this issue"
+              title={l10n("local.open_file_g_f_ac25d0b7")}
+              aria-label={l10n("local.open_file_in_this_issue_9ac0bbc6")}
             >
               <FileCode2 className="h-4 w-4" />
             </Button>
@@ -7103,7 +7091,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               variant="ghost"
               size="icon-xs"
               onClick={copyIssueToClipboard}
-              title="Copy task as markdown"
+              title={l10n("local.copy_task_as_markdown_a6e95a42")}
             >
               {copied ? (
                 <Check className="h-4 w-4 text-green-500" />
@@ -7137,8 +7125,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                   variant="ghost"
                   size="icon-xs"
                   className="shrink-0"
-                  aria-label="More task actions"
-                  title="More task actions"
+                  aria-label={l10n("local.more_task_actions_4fbf1e4c")}
+                  title={l10n("local.more_task_actions_4fbf1e4c")}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
@@ -7160,8 +7148,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                       }}
                     >
                       <Plus className="h-3 w-3" />
-                      Add subtask
-                    </button>
+                      {l10n("local.add_subtask_65db0c29")}</button>
                     <button
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent/50"
                       onClick={() => {
@@ -7174,8 +7161,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                       ) : (
                         <Copy className="h-3 w-3" />
                       )}
-                      Copy as markdown
-                    </button>
+                      {l10n("local.copy_as_markdown_fec6709d")}</button>
                     {canArchiveFromInbox ? (
                       <button
                         className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent/50 disabled:opacity-50"
@@ -7187,8 +7173,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                         }}
                       >
                         <Archive className="h-3 w-3" />
-                        Archive from inbox
-                      </button>
+                        {l10n("local.archive_from_inbox_67c88421")}</button>
                     ) : null}
                   </>
                 ) : null}
@@ -7245,8 +7230,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                   }}
                 >
                   <EyeOff className="h-3 w-3" />
-                  Hide this task
-                </button>
+                  {l10n("local.hide_this_task_429dbcbd")}</button>
               </PopoverContent>
             </Popover>
           </div>
@@ -7282,7 +7266,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
           onSave={(description) => updateIssue.mutateAsync({ description })}
           as="p"
           className="text-sm leading-7 text-foreground"
-          placeholder="Add a description..."
+          placeholder={l10n("local.add_a_description_eed0f05b")}
           multiline
           foldable
           mentions={mentionOptions}
@@ -7388,7 +7372,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
           />
 
           {issue.status === "in_review" && issue.externalConversationState === "waiting" && (
-            <p role="status" className="text-sm text-muted-foreground">Reply sent. Send a message to continue.</p>
+            <p role="status" className="text-sm text-muted-foreground">{l10n("local.reply_sent_send_a_message_to_continue_5b43d352")}</p>
           )}
 
           {issue.hiddenAt && (
@@ -7400,8 +7384,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               )}
             >
               <EyeOff className="h-4 w-4 shrink-0" />
-              This task is hidden
-            </div>
+              {l10n("local.this_task_is_hidden_99c38971")}</div>
           )}
           {treeControlWakeWarning ? (
             <p
@@ -7430,8 +7413,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-sm font-medium text-muted-foreground">
-                  Sub-tasks
-                </h3>
+                  {l10n("local.sub_tasks_ede4f888")}</h3>
               </div>
               <IssuesList
                 issues={childIssues}
@@ -7453,7 +7435,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                   issue,
                   currentUserId,
                 )}
-                createIssueLabel="Sub-task"
+                createIssueLabel={l10n("local.sub_task_17aa97a0")}
                 defaultSortField="workflow"
                 showProgressSummary
                 parentIssueIdForCostSummary={issue.id}
@@ -7469,8 +7451,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                 className="shrink-0 shadow-none"
               >
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
-                New Sub-task
-              </Button>
+                {l10n("local.new_sub_task_2c89e334")}</Button>
             </div>
           )}
 
@@ -7615,8 +7596,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-medium text-muted-foreground">
-                      Artifacts
-                    </h3>
+                      {l10n("local.artifacts_314ae71b")}</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {workProductsWithFileRefs.map(({ product, fileRef }) => (
@@ -7655,16 +7635,13 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               >
                 <TabsTrigger value="chat" className="gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5" />
-                  Chat
-                </TabsTrigger>
+                  {l10n("local.chat_460b3a7d")}</TabsTrigger>
                 <TabsTrigger value="activity" className="gap-1.5">
                   <ActivityIcon className="h-3.5 w-3.5" />
-                  Activity
-                </TabsTrigger>
+                  {l10n("local.activity_38da1505")}</TabsTrigger>
                 <TabsTrigger value="related-work" className="gap-1.5">
                   <ListTree className="h-3.5 w-3.5" />
-                  Related work
-                </TabsTrigger>
+                  {l10n("local.related_work_f4f15799")}</TabsTrigger>
                 {issuePluginTabItems.map((item) => (
                   <TabsTrigger key={item.value} value={item.value}>
                     {item.label}
@@ -8083,7 +8060,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               {taskChatShellEnabled ? (
                 <>
                   <SheetHeader className="sr-only">
-                    <SheetTitle>Task side panel</SheetTitle>
+                    <SheetTitle>{l10n("local.task_side_panel_08f62aa5")}</SheetTitle>
                   </SheetHeader>
                   <TaskSidePanel
                     key={`${issue.id}:mobile`}
@@ -8144,8 +8121,8 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                   <SheetHeader>
                     <SheetTitle className="text-sm">
                       {documentDeepLink?.documentKey === "plan"
-                        ? "Plan"
-                        : "Properties"}
+                        ? l10n("local.plan_fa8ed0bd")
+                        : l10n("local.properties_ae43692b")}
                     </SheetTitle>
                   </SheetHeader>
                   <ScrollArea className="flex-1 overflow-y-auto">

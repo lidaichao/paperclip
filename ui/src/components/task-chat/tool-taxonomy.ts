@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 /**
  * Provider-neutral tool vocabulary shared by live status, transcript rows,
  * and canonical provider activity. Exact semantic tools get purpose-specific
@@ -126,7 +127,7 @@ function sentenceCase(words: readonly string[]): string {
 
 export function humanizeToolName(name: string | undefined | null): string {
   const raw = (name ?? "").trim();
-  if (isGenericToolName(raw)) return "Unnamed tool";
+  if (isGenericToolName(raw)) return l10n("local.unnamed_tool_4e0f07e3");
   const mcp = mcpToolIdentity(raw);
   return sentenceCase(identifierWords(mcp?.name ?? raw));
 }
@@ -398,7 +399,7 @@ export function toolActivityPresentation(input: ToolActivityPresentationInput): 
   const sourceLabel = namespace
     ? humanizeToolName(namespace)
     : transport === "mcp"
-      ? "MCP"
+      ? l10n("local.mcp_53f13ae9")
       : undefined;
   const summaryGroup = namespace.toLowerCase() === "paperclip"
     ? paperclipSummaryGroup(action)

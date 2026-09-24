@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GitFork, Loader2, Users } from "lucide-react";
@@ -132,8 +133,8 @@ export function ForkSkillDialog({
   const busy = forkMutation.isPending;
   const forkLabel =
     reassign && agentCount > 0
-      ? `Create copy & switch ${agentCount} ${agentCount === 1 ? "agent" : "agents"}`
-      : "Create copy";
+      ? l10n("local.create_copy_switch_value_value_09b3ef9c", {v0: (agentCount), v1: (agentCount === 1 ? "agent" : "agents")})
+      : l10n("local.create_copy_982a7984");
 
   const openExisting = () => {
     if (!reusableFork) return;
@@ -147,22 +148,17 @@ export function ForkSkillDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitFork className="h-4 w-4" />
-            Edit a copy of {skill.name}
+            {l10n("local.edit_a_copy_of_145b4bdc")}{" "}{skill.name}
           </DialogTitle>
           <DialogDescription>
-            {skill.name} is read-only because it comes from an external source.
-            Creating a fully editable copy in your workspace leaves the original
-            untouched and still updatable.
-          </DialogDescription>
+            {skill.name} {l10n("local.is_read_only_because_it_comes_from_an_externa_e9da9f4a")}</DialogDescription>
         </DialogHeader>
 
         {reusableFork ? (
           <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
-            <p className="font-medium text-foreground">You already have a copy</p>
+            <p className="font-medium text-foreground">{l10n("local.you_already_have_a_copy_b1968595")}</p>
             <p className="mt-0.5 text-muted-foreground">
-              An unedited copy of this skill already exists. Open it instead of
-              making another.
-            </p>
+              {l10n("local.an_unedited_copy_of_this_skill_already_exists_d79a6caa")}</p>
             <Button
               type="button"
               size="sm"
@@ -170,8 +166,7 @@ export function ForkSkillDialog({
               onClick={openExisting}
               disabled={busy}
             >
-              Open your existing copy
-            </Button>
+              {l10n("local.open_your_existing_copy_b6026ce9")}</Button>
           </div>
         ) : null}
 
@@ -202,27 +197,24 @@ export function ForkSkillDialog({
               <label className="mt-3 flex items-start justify-between gap-3">
                 <span className="text-sm">
                   <span className="font-medium text-foreground">
-                    Switch these agents to the copy
-                  </span>
+                    {l10n("local.switch_these_agents_to_the_copy_d734b5ee")}</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     {reassign
-                      ? "These agents will run your copy instead of the original."
-                      : "These agents keep running the original — your copy won't change what they do."}
+                      ? l10n("local.these_agents_will_run_your_copy_instead_of_th_30dcfe51")
+                      : l10n("local.these_agents_keep_running_the_original_your_c_147029ef")}
                   </span>
                 </span>
                 <ToggleSwitch
                   checked={reassign}
                   onCheckedChange={setReassign}
                   disabled={busy}
-                  aria-label="Switch these agents to the copy"
+                  aria-label={l10n("local.switch_these_agents_to_the_copy_d734b5ee")}
                 />
               </label>
             </>
           ) : (
             <p className="mt-1 text-xs text-muted-foreground">
-              Nothing is assigned to it, so your copy won't change any agent's
-              behaviour.
-            </p>
+              {l10n("local.nothing_is_assigned_to_it_so_your_copy_won_t_79a76038")}</p>
           )}
         </div>
 
@@ -233,8 +225,7 @@ export function ForkSkillDialog({
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
-            Cancel
-          </Button>
+            {l10n("local.cancel_19766ed6")}</Button>
           <Button
             type="button"
             variant={reusableFork ? "outline" : "default"}
@@ -242,7 +233,7 @@ export function ForkSkillDialog({
             disabled={busy}
           >
             {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
-            {reusableFork ? "Create another copy" : forkLabel}
+            {reusableFork ? l10n("local.create_another_copy_87a01d3c") : forkLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

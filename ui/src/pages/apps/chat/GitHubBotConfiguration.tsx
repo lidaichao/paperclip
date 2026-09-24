@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -20,12 +21,12 @@ import { Link } from "@/lib/router";
 export const githubSelectClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
 const eventLabels = {
-  opened: "New pull request",
-  synchronize: "Updated commits",
-  reopened: "Reopened",
-  ready_for_review: "Ready for review",
-  mention: "Mention",
-  comment: "Follow-up comment",
+  opened: l10n("local.new_pull_request_263c7984"),
+  synchronize: l10n("local.updated_commits_30b31318"),
+  reopened: l10n("local.reopened_53a4ae1c"),
+  ready_for_review: l10n("local.ready_for_review_75c2a5c8"),
+  mention: l10n("local.mention_d820d8de"),
+  comment: l10n("local.follow_up_comment_f33a51e2"),
 };
 export function GitHubToggle({
   label,
@@ -71,8 +72,7 @@ export function GitHubPolicyEditor({
     <div className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="github-invocation">
-          When should this agent review?
-        </Label>
+          {l10n("local.when_should_this_agent_review_e10e8e09")}</Label>
         <select
           id="github-invocation"
           className={githubSelectClass}
@@ -85,19 +85,16 @@ export function GitHubPolicyEditor({
           }
         >
           <option value="linked_authors">
-            Linked members’ PRs and authorized mentions
-          </option>
-          <option value="mentions_only">Authorized mentions only</option>
+            {l10n("local.linked_members_prs_and_authorized_mentions_eb44de80")}</option>
+          <option value="mentions_only">{l10n("local.authorized_mentions_only_3d0d0ce4")}</option>
           <option value="allowed_authors">
-            Allowed authors’ PRs and authorized mentions
-          </option>
+            {l10n("local.allowed_authors_prs_and_authorized_mentions_97449943")}</option>
         </select>
         <p className="text-xs text-muted-foreground">
-          Newly added people have a separate automatic-review setting in Access.
-        </p>
+          {l10n("local.newly_added_people_have_a_separate_automatic_f329c97f")}</p>
       </div>
       <div>
-        <h3 className="text-sm font-medium">Automatic review events</h3>
+        <h3 className="text-sm font-medium">{l10n("local.automatic_review_events_7edf33ae")}</h3>
         {GITHUB_REVIEW_EVENTS.slice(0, 4).map((event) => (
           <GitHubToggle
             key={event}
@@ -114,21 +111,20 @@ export function GitHubPolicyEditor({
           />
         ))}
         <GitHubToggle
-          label="Include draft PRs"
+          label={l10n("local.include_draft_prs_433fa0da")}
           checked={policy.reviewDrafts}
           onChange={(value) => set("reviewDrafts", value)}
         />
         <GitHubToggle
-          label="Include bot authors"
-          description="Also allow the bot account in Access with a sponsor and automatic reviews enabled."
+          label={l10n("local.include_bot_authors_1d326547")}
+          description={l10n("local.also_allow_the_bot_account_in_access_with_a_s_7231d929")}
           checked={policy.reviewBotAuthors}
           onChange={(value) => set("reviewBotAuthors", value)}
         />
       </div>
       <details className="rounded-lg border border-border p-4">
         <summary className="cursor-pointer text-sm font-medium">
-          Author, branch, label, and file filters
-        </summary>
+          {l10n("local.author_branch_label_and_file_filters_a7d25ebd")}</summary>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {(
             [
@@ -183,24 +179,20 @@ export function GitHubPolicyEditor({
           ))}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Authorized manual requests bypass automatic scheduling filters.
-          Repository restrictions and ignored files still apply.
-        </p>
+          {l10n("local.authorized_manual_requests_bypass_automatic_s_84230b68")}</p>
       </details>
       <div className="space-y-2">
-        <Label htmlFor="github-instructions">Review instructions</Label>
+        <Label htmlFor="github-instructions">{l10n("local.review_instructions_e61fbd96")}</Label>
         <Textarea
           id="github-instructions"
           value={policy.instructions}
           onChange={(e) => set("instructions", e.target.value)}
         />
         <p className="text-xs text-muted-foreground">
-          Additional guidance for the assigned agent. Provider content cannot
-          change its permissions.
-        </p>
+          {l10n("local.additional_guidance_for_the_assigned_agent_pr_b4e33a0e")}</p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="github-prompt-event">Event prompts</Label>
+        <Label htmlFor="github-prompt-event">{l10n("local.event_prompts_d3e623f3")}</Label>
         <select
           id="github-prompt-event"
           className={githubSelectClass}
@@ -214,21 +206,18 @@ export function GitHubPolicyEditor({
           ))}
         </select>
         <Textarea
-          aria-label={`${eventLabels[prompt]} prompt`}
+          aria-label={l10n("local.value_prompt_a25ddbc4", {v0: (eventLabels[prompt])})}
           value={policy.prompts[prompt]}
           onChange={(e) =>
             set("prompts", { ...policy.prompts, [prompt]: e.target.value })
           }
         />
         <p className="text-xs text-muted-foreground">
-          Paperclip supplies repository, PR, base and head commits, sender, and
-          prior head as typed context. Saved revisions remain attached to review
-          activity.
-        </p>
+          {l10n("local.paperclip_supplies_repository_pr_base_and_hea_2688728d")}</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="github-categories">Finding categories</Label>
+          <Label htmlFor="github-categories">{l10n("local.finding_categories_6f31e9d6")}</Label>
           <Input
             id="github-categories"
             value={policy.findingCategories.join(", ")}
@@ -243,13 +232,11 @@ export function GitHubPolicyEditor({
             }
           />
           <p className="text-xs text-muted-foreground">
-            Comma-separated assessment categories.
-          </p>
+            {l10n("local.comma_separated_assessment_categories_ca9a3f17")}</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="github-severity">
-            Minimum inline comment severity
-          </Label>
+            {l10n("local.minimum_inline_comment_severity_d20fbcf4")}</Label>
           <select
             id="github-severity"
             className={githubSelectClass}
@@ -261,41 +248,40 @@ export function GitHubPolicyEditor({
               )
             }
           >
-            <option value="info">Info</option>
-            <option value="warning">Warning</option>
-            <option value="error">Error</option>
+            <option value="info">{l10n("local.info_170322a3")}</option>
+            <option value="warning">{l10n("local.warning_e981ddae")}</option>
+            <option value="error">{l10n("local.error_54a0e8c1")}</option>
           </select>
           <p className="text-xs text-muted-foreground">
-            Hidden comments still count in the assessment.
-          </p>
+            {l10n("local.hidden_comments_still_count_in_the_assessment_42ac3ca4")}</p>
         </div>
       </div>
       <div>
-        <h3 className="text-sm font-medium">Publication permissions</h3>
+        <h3 className="text-sm font-medium">{l10n("local.publication_permissions_24669fa3")}</h3>
         <GitHubToggle
-          label="Publish summary"
+          label={l10n("local.publish_summary_e1d31b27")}
           checked={policy.publishSummary}
           onChange={(value) => set("publishSummary", value)}
         />
         <GitHubToggle
-          label="Publish inline findings"
+          label={l10n("local.publish_inline_findings_d2558312")}
           checked={policy.publishInline}
           onChange={(value) => set("publishInline", value)}
         />
         <GitHubToggle
-          label="Allow formal approvals"
-          description="A separate agent action; a 5/5 score never automatically approves."
+          label={l10n("local.allow_formal_approvals_22261e40")}
+          description={l10n("local.a_separate_agent_action_a_5_5_score_never_aut_329a945b")}
           checked={policy.allowApprove}
           onChange={(value) => set("allowApprove", value)}
         />
         <GitHubToggle
-          label="Allow formal request changes"
+          label={l10n("local.allow_formal_request_changes_d5b9658c")}
           checked={policy.allowRequestChanges}
           onChange={(value) => set("allowRequestChanges", value)}
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="github-rating">Paperclip Review check</Label>
+        <Label htmlFor="github-rating">{l10n("local.paperclip_review_check_5cfccfdc")}</Label>
         <select
           id="github-rating"
           className={githubSelectClass}
@@ -311,26 +297,20 @@ export function GitHubPolicyEditor({
         >
           {[5, 4, 3, 2, 1].map((score) => (
             <option key={score} value={score}>
-              Require at least {score}/5
+              {l10n("local.require_at_least_d5cad176")}{" "}{score}/5
             </option>
           ))}
-          <option value="report">Report only</option>
+          <option value="report">{l10n("local.report_only_5d497412")}</option>
         </select>
         <p className="text-xs text-muted-foreground">
-          Paperclip computes the result for the exact reviewed commit.
-          Incomplete reviews cannot pass. To require it before merging, select
-          “Paperclip Review” in your GitHub branch protection or ruleset
-          settings and choose this bot’s GitHub App as the expected source. Run
-          a review first so the check appears in GitHub’s selector.
-        </p>
+          {l10n("local.paperclip_computes_the_result_for_the_exact_r_4f0df9fa")}</p>
         <a
           className="text-xs underline"
           href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository"
           target="_blank"
           rel="noreferrer"
         >
-          Set up a required check on GitHub
-        </a>
+          {l10n("local.set_up_a_required_check_on_github_91663fc2")}</a>
       </div>
     </div>
   );
@@ -388,8 +368,7 @@ export function GitHubAccessEditor({
     <div className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="github-responsible">
-          Responsible user for automatic events
-        </Label>
+          {l10n("local.responsible_user_for_automatic_events_8c627ece")}</Label>
         <select
           id="github-responsible"
           className={githubSelectClass}
@@ -405,12 +384,10 @@ export function GitHubAccessEditor({
           ))}
         </select>
         <p className="text-xs text-muted-foreground">
-          Accountable for automatic tasks. The PR author and webhook sender
-          remain recorded separately.
-        </p>
+          {l10n("local.accountable_for_automatic_tasks_the_pr_author_e06deb8c")}</p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="github-member-access">Company member access</Label>
+        <Label htmlFor="github-member-access">{l10n("local.company_member_access_2a721252")}</Label>
         <select
           id="github-member-access"
           className={githubSelectClass}
@@ -422,18 +399,17 @@ export function GitHubAccessEditor({
             })
           }
         >
-          <option value="all_linked">All linked company members</option>
-          <option value="selected">Only selected linked members</option>
+          <option value="all_linked">{l10n("local.all_linked_company_members_c4f6d738")}</option>
+          <option value="selected">{l10n("local.only_selected_linked_members_c749e6e7")}</option>
         </select>
         <p className="text-xs text-muted-foreground">
-          Members connect their own GitHub account.{" "}
+          {l10n("local.members_connect_their_own_github_account_95eaa9c7")}{" "}
           <Link
             className="underline"
             ref={accountLink}
             to={`/apps/chat/connect?provider=github&resume=${endpointId}&stage=identity`}
           >
-            Open account linking
-          </Link>
+            {l10n("local.open_account_linking_9218eed4")}</Link>
           <Button
             variant="link"
             size="sm"
@@ -443,22 +419,21 @@ export function GitHubAccessEditor({
                   () => setLinkCopied(true),
                   () =>
                     setError(
-                      "Could not copy the link. Open account linking and copy the address.",
+                      l10n("local.could_not_copy_the_link_open_account_linking_e3f2cbe8"),
                     ),
                 );
             }}
           >
-            {linkCopied ? "Link copied" : "Copy link for teammates"}
+            {linkCopied ? l10n("local.link_copied_d12860c2") : l10n("local.copy_link_for_teammates_272c0287")}
           </Button>
           .
         </p>
       </div>
       <div className="space-y-3">
-        <h3 className="text-sm font-medium">Linked GitHub accounts</h3>
+        <h3 className="text-sm font-medium">{l10n("local.linked_github_accounts_5d7ade44")}</h3>
         {links.isError && (
           <p role="alert" className="text-sm text-destructive">
-            Could not load linked accounts.
-          </p>
+            {l10n("local.could_not_load_linked_accounts_c1b59db6")}</p>
         )}
         {(links.data ?? [])
           .filter((link) => link.status === "linked")
@@ -494,25 +469,20 @@ export function GitHubAccessEditor({
                   }
                 }}
               >
-                Unlink account
-              </Button>
+                {l10n("local.unlink_account_f3f145c6")}</Button>
             </div>
           ))}
         {!links.isPending &&
           !links.isError &&
           !(links.data ?? []).some((link) => link.status === "linked") && (
             <p className="text-sm text-muted-foreground">
-              No accounts linked yet. Each teammate confirms their own GitHub
-              identity.
-            </p>
+              {l10n("local.no_accounts_linked_yet_each_teammate_confirms_c50b6cec")}</p>
           )}
       </div>
       <div className="divide-y divide-border rounded-lg border border-border">
         {configuration.people.length === 0 && (
           <p className="p-4 text-sm text-muted-foreground">
-            No individual access entries. Unlinked people cannot invoke this
-            bot.
-          </p>
+            {l10n("local.no_individual_access_entries_unlinked_people_19fe80bc")}</p>
         )}
         {configuration.people.map((person) => (
           <div key={person.githubUserId} className="space-y-2 p-4">
@@ -521,8 +491,8 @@ export function GitHubAccessEditor({
                 <p className="text-sm font-medium">@{person.login}</p>
                 <p className="text-xs text-muted-foreground">
                   {person.kind === "member"
-                    ? "Linked company member"
-                    : "External contributor · restricted guest permissions"}
+                    ? l10n("local.linked_company_member_a8583eb5")
+                    : l10n("local.external_contributor_restricted_guest_permiss_3de380bb")}
                 </p>
               </div>
               <Button
@@ -537,11 +507,10 @@ export function GitHubAccessEditor({
                   })
                 }
               >
-                Remove
-              </Button>
+                {l10n("local.remove_c3812fc4")}</Button>
             </div>
             <GitHubToggle
-              label={`Automatic PR reviews for @${person.login}`}
+              label={l10n("local.automatic_pr_reviews_for_value_406d7fb5", {v0: (person.login)})}
               checked={person.automaticReviews}
               onChange={(value) =>
                 onChange({
@@ -556,30 +525,25 @@ export function GitHubAccessEditor({
             />
             {person.kind === "guest" && (
               <p className="text-xs text-muted-foreground">
-                Sponsor:{" "}
+                {l10n("local.sponsor_79d0c211")}{" "}
                 {activeMembers.find(
                   (member) => member.principalId === person.sponsorUserId,
                 )?.user?.name ?? person.sponsorUserId}
-                . No company membership or personal credentials are granted.
-              </p>
+                {l10n("local._no_company_membership_or_personal_credential_8c0bbf8e")}</p>
             )}
           </div>
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => setKind("member")}>
-          Add linked member
-        </Button>
+          {l10n("local.add_linked_member_0c1b3674")}</Button>
         <Button variant="outline" onClick={() => setKind("guest")}>
-          Allow external contributor
-        </Button>
+          {l10n("local.allow_external_contributor_fea8e4f5")}</Button>
       </div>
       {kind === "member" && (
         <div className="space-y-3 rounded-lg border border-border p-4">
           <p className="text-sm">
-            Adding a member switches access to the selected-member list.
-            Automatic PR reviews start off.
-          </p>
+            {l10n("local.adding_a_member_switches_access_to_the_select_e96fb181")}</p>
           {(links.data ?? [])
             .filter((link) => link.status === "linked" && link.paperclipUserId)
             .map((link) => (
@@ -595,7 +559,7 @@ export function GitHubAccessEditor({
                   const id = link.githubUserId;
                   if (!id) {
                     setError(
-                      "Refresh linked identities before adding this member.",
+                      l10n("local.refresh_linked_identities_before_adding_this_90c0958b"),
                     );
                     return;
                   }
@@ -612,18 +576,15 @@ export function GitHubAccessEditor({
               </Button>
             ))}
           <Button variant="ghost" onClick={() => setKind(null)}>
-            Cancel
-          </Button>
+            {l10n("local.cancel_19766ed6")}</Button>
         </div>
       )}
       {kind === "guest" && (
         <div className="space-y-4 rounded-lg border border-border p-4">
           <p className="text-sm">
-            Allow one GitHub account to mention the bot with restricted guest
-            permissions. A sponsor is required.
-          </p>
+            {l10n("local.allow_one_github_account_to_mention_the_bot_w_66d4493e")}</p>
           <div className="space-y-2">
-            <Label htmlFor="github-guest-login">GitHub username</Label>
+            <Label htmlFor="github-guest-login">{l10n("local.github_username_64477e38")}</Label>
             <div className="flex gap-2">
               <Input
                 id="github-guest-login"
@@ -650,12 +611,11 @@ export function GitHubAccessEditor({
                   }
                 }}
               >
-                Look up
-              </Button>
+                {l10n("local.look_up_504101bc")}</Button>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="github-guest-sponsor">Sponsor</Label>
+            <Label htmlFor="github-guest-sponsor">{l10n("local.sponsor_fd6e874f")}</Label>
             <select
               id="github-guest-sponsor"
               className={githubSelectClass}
@@ -671,13 +631,12 @@ export function GitHubAccessEditor({
           </div>
           {candidate && (
             <p className="text-sm">
-              @{candidate.login} · GitHub ID {candidate.githubUserId}
+              @{candidate.login} {l10n("local._github_id_d614c4e4")}{" "}{candidate.githubUserId}
             </p>
           )}
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setKind(null)}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               disabled={
                 !candidate ||
@@ -697,15 +656,14 @@ export function GitHubAccessEditor({
                 })
               }
             >
-              Allow this account
-            </Button>
+              {l10n("local.allow_this_account_0c44f8da")}</Button>
           </div>
         </div>
       )}
       {(error || members.error || links.error) && (
         <p role="alert" className="text-sm text-destructive">
           {error ||
-            "Could not load members or linked accounts. Refresh to try again."}
+            l10n("local.could_not_load_members_or_linked_accounts_ref_ed5ce86d")}
         </p>
       )}
     </div>

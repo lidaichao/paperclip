@@ -1,3 +1,4 @@
+import { l10n } from "../../../../i18n";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, KeyRound, Plus } from "lucide-react";
@@ -67,11 +68,11 @@ function TokenField({ label, value }: { label: string; value: ReactNode }) {
 
 function ExpiryValue({ token }: { token: ToolMcpGatewayToken }) {
   const expiresAt = toDate(token.expiresAt);
-  if (!expiresAt) return <>No expiry</>;
+  if (!expiresAt) return <>{l10n("local.no_expiry_fe06351d")}</>;
   if (expiresAt.getTime() <= Date.now()) {
-    return <><span className="font-medium text-foreground">Expired</span> <RelativeTime value={token.expiresAt} /></>;
+    return <><span className="font-medium text-foreground">{l10n("local.expired_424a2551")}</span> <RelativeTime value={token.expiresAt} /></>;
   }
-  return <>Expires <RelativeTime value={token.expiresAt} /></>;
+  return <>{l10n("local.expires_f6725f3a")}{" "}<RelativeTime value={token.expiresAt} /></>;
 }
 
 export function TokensPanel({
@@ -125,8 +126,8 @@ export function TokensPanel({
       setOwnerNote("");
       setExpiresAt(defaultExpiry());
       pushToast({
-        title: "Token issued",
-        body: "Copy it now — you won’t see the full value again after leaving this page.",
+        title: l10n("local.token_issued_819e5d26"),
+        body: l10n("local.copy_it_now_you_won_t_see_the_full_value_agai_fb6044eb"),
         tone: "success",
       });
       onTokenCreated?.(token);
@@ -134,7 +135,7 @@ export function TokensPanel({
     },
     onError: (error) =>
       pushToast({
-        title: "Token was not issued",
+        title: l10n("local.token_was_not_issued_2f956f6d"),
         body: error instanceof Error ? error.message : String(error),
         tone: "error",
       }),
@@ -145,12 +146,12 @@ export function TokensPanel({
     onSuccess: async (token) => {
       setConfirmToken(null);
       setRevokeName("");
-      pushToast({ title: "Token revoked", body: `${token.name} can no longer connect.`, tone: "success" });
+      pushToast({ title: l10n("local.token_revoked_cd7e9dbe"), body: l10n("local.value_can_no_longer_connect_5ac12d64", {v0: (token.name)}), tone: "success" });
       await invalidate();
     },
     onError: (error) =>
       pushToast({
-        title: "Token was not revoked",
+        title: l10n("local.token_was_not_revoked_bae52f71"),
         body: error instanceof Error ? error.message : String(error),
         tone: "error",
       }),
@@ -159,11 +160,11 @@ export function TokensPanel({
   async function copyToken(value: string) {
     try {
       await copyTextToClipboard(value);
-      pushToast({ title: "Copied", body: "Access token", tone: "success" });
+      pushToast({ title: l10n("local.copied_8d525e5f"), body: l10n("local.access_token_9a911b08"), tone: "success" });
     } catch (error) {
       pushToast({
-        title: "Copy failed",
-        body: error instanceof Error ? error.message : "Clipboard access is unavailable.",
+        title: l10n("local.copy_failed_5b50e7a6"),
+        body: error instanceof Error ? error.message : l10n("local.clipboard_access_is_unavailable_0899c211"),
         tone: "error",
       });
     }
@@ -190,47 +191,41 @@ export function TokensPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-2xl space-y-1">
           <p className="text-sm text-muted-foreground">
-            Issue a reusable token for an external client. Its name is also used as the client label.
-          </p>
+            {l10n("local.issue_a_reusable_token_for_an_external_client_fbfce168")}</p>
           <p className="text-xs text-muted-foreground">
-            Paperclip creates a fresh one-hour runtime token when an agent run starts, then revokes it when the
-            run ends. Codex can receive the same gateway through both an app connection and the managed-gateway
-            path, so one run may leave two revoked rows. These are audit history, not repeated manual tokens.
-          </p>
+            {l10n("local.paperclip_creates_a_fresh_one_hour_runtime_to_bca38a5e")}</p>
         </div>
         <Button size="sm" onClick={startIssuing}>
           <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Issue token
-        </Button>
+          {l10n("local.issue_token_3f03f9be")}</Button>
       </div>
 
       {minting ? (
         <form className="space-y-3" onSubmit={submit}>
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <label className="space-y-1.5 text-sm">
-              <span className="text-xs font-medium text-muted-foreground">Token name</span>
+              <span className="text-xs font-medium text-muted-foreground">{l10n("local.token_name_2e418624")}</span>
               <Input value={name} onChange={(event) => setName(event.target.value)} required autoFocus />
-              <span className="text-xs text-muted-foreground">Also used as the client label.</span>
+              <span className="text-xs text-muted-foreground">{l10n("local.also_used_as_the_client_label_980b2783")}</span>
             </label>
             <label className="space-y-1.5 text-sm">
-              <span className="text-xs font-medium text-muted-foreground">Expires</span>
+              <span className="text-xs font-medium text-muted-foreground">{l10n("local.expires_f6725f3a")}</span>
               <Input type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} required />
             </label>
           </div>
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium text-muted-foreground">Owner note (optional)</span>
+            <span className="text-xs font-medium text-muted-foreground">{l10n("local.owner_note_optional_212c90ac")}</span>
             <Input
               value={ownerNote}
               onChange={(event) => setOwnerNote(event.target.value)}
-              placeholder="Who uses this token or why it exists"
+              placeholder={l10n("local.who_uses_this_token_or_why_it_exists_cbea111f")}
             />
           </label>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => setMinting(false)}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button type="submit" size="sm" disabled={createMutation.isPending || !name.trim()}>
-              {createMutation.isPending ? "Issuing…" : "Issue token"}
+              {createMutation.isPending ? l10n("local.issuing_0247fb13") : l10n("local.issue_token_3f03f9be")}
             </Button>
           </div>
         </form>
@@ -240,14 +235,12 @@ export function TokensPanel({
         <div className="space-y-2 border-y border-border py-4">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <div className="text-sm font-semibold text-foreground">New token — copy now</div>
+              <div className="text-sm font-semibold text-foreground">{l10n("local.new_token_copy_now_041568fe")}</div>
               <div className="text-xs text-muted-foreground">
-                It is now available in Client snippets for a copy-ready configuration.
-              </div>
+                {l10n("local.it_is_now_available_in_client_snippets_for_a_e48b3317")}</div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setCreated(null)} aria-label="Dismiss new token">
-              Dismiss
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setCreated(null)} aria-label={l10n("local.dismiss_new_token_53b2c778")}>
+              {l10n("local.dismiss_48845bff")}</Button>
           </div>
           <div className="flex items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded bg-muted px-3 py-2 font-mono text-xs text-foreground">
@@ -256,10 +249,9 @@ export function TokensPanel({
             {revealed ? (
               <Button variant="outline" size="sm" onClick={() => void copyToken(created.token)}>
                 <Copy className="mr-1 h-3.5 w-3.5" />
-                Copy
-              </Button>
+                {l10n("local.copy_e21f935f")}</Button>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => setRevealed(true)}>Show</Button>
+              <Button variant="outline" size="sm" onClick={() => setRevealed(true)}>{l10n("local.show_0df6f1ca")}</Button>
             )}
           </div>
         </div>
@@ -270,27 +262,26 @@ export function TokensPanel({
           <Button variant="ghost" className="h-auto w-full justify-between px-0 py-1 hover:bg-transparent">
             <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <KeyRound className="h-4 w-4 text-muted-foreground" />
-              Token history
-              <span className="font-normal text-muted-foreground">{tokens.length}</span>
+              {l10n("local.token_history_17d96e04")}<span className="font-normal text-muted-foreground">{tokens.length}</span>
             </span>
             {historyOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-3">
           {tokens.length === 0 ? (
-            <p className="py-4 text-sm text-muted-foreground">No tokens have been issued for this gateway.</p>
+            <p className="py-4 text-sm text-muted-foreground">{l10n("local.no_tokens_have_been_issued_for_this_gateway_6713f6e6")}</p>
           ) : (
             <>
               <div className="hidden overflow-x-auto rounded-lg border border-border sm:block">
                 <table className="w-full min-w-(--sz-44rem) text-sm">
                   <thead>
                     <tr className="border-b border-border bg-muted/40 text-left text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                      <th className="px-4 py-2.5">Token</th>
-                      <th className="px-4 py-2.5">Owner</th>
-                      <th className="px-4 py-2.5">Created</th>
-                      <th className="px-4 py-2.5">Last used</th>
-                      <th className="px-4 py-2.5">Expiry</th>
-                      <th className="px-4 py-2.5">Status</th>
+                      <th className="px-4 py-2.5">{l10n("local.token_d2089be6")}</th>
+                      <th className="px-4 py-2.5">{l10n("local.owner_4b1b8aa3")}</th>
+                      <th className="px-4 py-2.5">{l10n("local.created_d70b9e24")}</th>
+                      <th className="px-4 py-2.5">{l10n("local.last_used_830ec7f8")}</th>
+                      <th className="px-4 py-2.5">{l10n("local.expiry_6956d814")}</th>
+                      <th className="px-4 py-2.5">{l10n("local.status_920e413c")}</th>
                       <th className="px-4 py-2.5 text-right" />
                     </tr>
                   </thead>
@@ -318,8 +309,7 @@ export function TokensPanel({
                                 className="h-7 px-2 text-xs text-destructive hover:text-destructive"
                                 onClick={() => startRevoke(token)}
                               >
-                                Revoke
-                              </Button>
+                                {l10n("local.revoke_87e6d00b")}</Button>
                             ) : null}
                           </td>
                         </tr>
@@ -342,10 +332,10 @@ export function TokensPanel({
                         <StatusBadge status={status} />
                       </div>
                       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <TokenField label="Owner" value={token.clientLabel || token.ownerNote || "—"} />
-                        <TokenField label="Created" value={<RelativeTime value={token.createdAt} />} />
-                        <TokenField label="Last used" value={token.lastUsedAt ? <RelativeTime value={token.lastUsedAt} /> : "—"} />
-                        <TokenField label="Expiry" value={<ExpiryValue token={token} />} />
+                        <TokenField label={l10n("local.owner_4b1b8aa3")} value={token.clientLabel || token.ownerNote || "—"} />
+                        <TokenField label={l10n("local.created_d70b9e24")} value={<RelativeTime value={token.createdAt} />} />
+                        <TokenField label={l10n("local.last_used_830ec7f8")} value={token.lastUsedAt ? <RelativeTime value={token.lastUsedAt} /> : "—"} />
+                        <TokenField label={l10n("local.expiry_6956d814")} value={<ExpiryValue token={token} />} />
                       </dl>
                       {status !== "revoked" ? (
                         <Button
@@ -354,8 +344,7 @@ export function TokensPanel({
                           className="mt-3 w-full text-xs text-destructive hover:text-destructive"
                           onClick={() => startRevoke(token)}
                         >
-                          Revoke
-                        </Button>
+                          {l10n("local.revoke_87e6d00b")}</Button>
                       ) : null}
                     </div>
                   );
@@ -365,15 +354,14 @@ export function TokensPanel({
               {pageCount > 1 ? (
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs text-muted-foreground">
-                    Page {historyPage} of {pageCount} · {tokens.length} tokens
-                  </p>
+                    {l10n("local.page_0a30a815")}{" "}{historyPage} {l10n("local.of_28391d3b")}{" "}{pageCount} · {tokens.length} {l10n("local.tokens_c51e455b")}</p>
                   <div className="flex items-center gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
                       disabled={historyPage === 1}
                       onClick={() => setHistoryPage((page) => Math.max(1, page - 1))}
-                      aria-label="Previous token page"
+                      aria-label={l10n("local.previous_token_page_df6458a5")}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -382,7 +370,7 @@ export function TokensPanel({
                       size="sm"
                       disabled={historyPage === pageCount}
                       onClick={() => setHistoryPage((page) => Math.min(pageCount, page + 1))}
-                      aria-label="Next token page"
+                      aria-label={l10n("local.next_token_page_e41e004c")}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -398,17 +386,15 @@ export function TokensPanel({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-md space-y-3 rounded-lg border border-border bg-card p-5 shadow-lg">
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Revoke this token?</h3>
+              <h3 className="text-sm font-semibold text-foreground">{l10n("local.revoke_this_token_33271bd2")}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Any client using <span className="font-medium text-foreground">{confirmToken.name}</span> goes
-                silent immediately. This can’t be undone. Type the token name to confirm.
-              </p>
+                {l10n("local.any_client_using_4b320bd0")}{" "}<span className="font-medium text-foreground">{confirmToken.name}</span> {l10n("local.goes_silent_immediately_this_can_t_be_undone_5bd993cc")}</p>
             </div>
             <Input
               value={revokeName}
               onChange={(event) => setRevokeName(event.target.value)}
               placeholder={confirmToken.name}
-              aria-label="Type the token name to confirm"
+              aria-label={l10n("local.type_the_token_name_to_confirm_108c2424")}
               autoFocus
             />
             <div className="flex justify-end gap-2">
@@ -420,15 +406,14 @@ export function TokensPanel({
                   setRevokeName("");
                 }}
               >
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
               <Button
                 variant="destructive"
                 size="sm"
                 disabled={revokeName.trim() !== confirmToken.name || revokeMutation.isPending}
                 onClick={() => revokeMutation.mutate(confirmToken.id)}
               >
-                {revokeMutation.isPending ? "Revoking…" : "Revoke token"}
+                {revokeMutation.isPending ? l10n("local.revoking_1a36f21b") : l10n("local.revoke_token_14683b37")}
               </Button>
             </div>
           </div>

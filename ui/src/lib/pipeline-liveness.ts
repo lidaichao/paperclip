@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { PipelineCaseLiveness } from "@paperclipai/shared";
 
 /**
@@ -106,7 +107,7 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "blocked",
-        title: "Automation paused — waiting on a blocker",
+        title: l10n("local.automation_paused_waiting_on_a_blocker_e69c8d67"),
         body: liveness.message,
         blockerLink: blockerLinkFromLiveness(liveness),
         automationLink: automationLinkFromLiveness(liveness),
@@ -121,7 +122,7 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "blocked",
-        title: "Automation paused — waiting on a blocker",
+        title: l10n("local.automation_paused_waiting_on_a_blocker_e69c8d67"),
         body: liveness.message,
         blockerLink: blockerLinkFromLiveness(liveness),
         automationLink: automationLinkFromLiveness(liveness),
@@ -136,7 +137,7 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "permission",
-        title: "Permission needed before this can run",
+        title: l10n("local.permission_needed_before_this_can_run_88968c5b"),
         body: liveness.message,
         blockerLink: null,
         automationLink: automationLinkFromLiveness(liveness),
@@ -157,7 +158,7 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: recovered ? "retry" : "attention",
-        title: recovered ? "Blocker resolved — ready to retry" : "Automation failed",
+        title: recovered ? l10n("local.blocker_resolved_ready_to_retry_208b9986") : l10n("local.automation_failed_12a1fd11"),
         body: liveness.message,
         blockerLink: null,
         automationLink: automationLinkFromLiveness(liveness),
@@ -173,7 +174,7 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "attention",
-        title: "Waiting on breakdown evidence",
+        title: l10n("local.waiting_on_breakdown_evidence_efdfcdf3"),
         body: liveness.message,
         blockerLink: null,
         automationLink: null,
@@ -188,7 +189,7 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "blocked",
-        title: "Breakdown is incomplete",
+        title: l10n("local.breakdown_is_incomplete_b6bc6576"),
         body: missingPiecesBody(liveness),
         blockerLink: null,
         automationLink: null,
@@ -203,7 +204,7 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "attention",
-        title: "This item is stuck",
+        title: l10n("local.this_item_is_stuck_d440d10a"),
         body: NO_ACTION_PATH_BODY,
         blockerLink: null,
         automationLink: null,

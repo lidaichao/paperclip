@@ -1,3 +1,5 @@
+import { enumLabel } from "../i18n/display";
+import { l10n } from "../i18n";
 import type {
   IssueBlockerAttention,
   IssueRecoveryAction,
@@ -11,7 +13,7 @@ import { Link } from "@/lib/router";
 import { cn } from "../lib/utils";
 import { Button } from "@/components/ui/button";
 import { createIssueDetailPath } from "../lib/issueDetailBreadcrumb";
-import { formatMonitorOffset } from "../lib/issue-monitor";
+import { formatMonitorOffset, displayMonitorRelative } from "../lib/issue-monitor";
 import { useRetryNowMutation } from "../hooks/useRetryNowMutation";
 import { IssueLinkQuicklook } from "./IssueLinkQuicklook";
 import { RetryErrorBand } from "./IssueScheduledRetryCard";
@@ -60,8 +62,8 @@ function BlockerRecoveryIndicator({
       role="status"
       aria-label={detail ? `${label} — ${detail}` : label}
       title={detail
-        ? `${label} — ${detail}. Open the source task to act.`
-        : `${label} — open the source task to act.`}
+        ? l10n("local.value_value_open_the_source_task_to_act_946c6e14", {v0: (label), v1: (detail)})
+        : l10n("local.value_open_the_source_task_to_act_9061d91a", {v0: (label)})}
       className={`[&>svg]:size-2.5 gap-0.5 px-1.5 text-(length:--text-nano) ${tone.className}`}
     >
       <Icon className="h-2.5 w-2.5" aria-hidden />
@@ -83,10 +85,10 @@ function SuccessfulRunRetryNowControl({
     : null;
   const relative = dueAtIso ? formatMonitorOffset(dueAtIso) : null;
   const scheduleLabel = relative === "now"
-    ? "due now"
+    ? l10n("local.due_now_cfc76a56")
     : relative
-      ? `scheduled ${relative}`
-      : "scheduled";
+      ? l10n("local.scheduled_value_2877115d", {v0: displayMonitorRelative(relative)})
+      : l10n("local.scheduled_6aef76c6");
   const success = retryNow.isSuccess
     && (retryNow.data?.outcome === "promoted" || retryNow.data?.outcome === "already_promoted");
 
@@ -94,8 +96,7 @@ function SuccessfulRunRetryNowControl({
     <div className="mt-2 rounded-md border border-amber-300/70 bg-background/80 p-2 dark:border-amber-500/40 dark:bg-background/40">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 text-xs leading-5 text-amber-900 dark:text-amber-100">
-          Paperclip will ask the assignee to choose the next step {scheduleLabel}. Retry now starts that follow-up immediately.
-        </div>
+          {l10n("local.paperclip_will_ask_the_assignee_to_choose_the_9d4ce989")}{" "}{scheduleLabel}{l10n("local._retry_now_starts_that_follow_up_immediately_06bc7747")}</div>
         <Button
           type="button"
           variant="outline"
@@ -108,18 +109,16 @@ function SuccessfulRunRetryNowControl({
           {retryNow.isPending ? (
             <span className="inline-flex items-center gap-1.5">
               <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-              Retrying...
-            </span>
+              {l10n("local.retrying_84a657bc")}</span>
           ) : success ? (
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {retryNow.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
+              {retryNow.data?.outcome === "already_promoted" ? l10n("local.already_promoted_8a7ece83") : l10n("local.promoted_0cf04463")}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5">
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Retry now
-            </span>
+              {l10n("local.retry_now_5148c3e2")}</span>
           )}
         </Button>
       </div>
@@ -138,7 +137,7 @@ function SuccessfulRunRetryNowControl({
 const EMPTY_LIVE_IDS: ReadonlySet<string> = new Set<string>();
 
 function waitingTaskStatusLabel(status: string): string {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
+  return enumLabel(status);
 }
 
 function WaitingChipLink({
@@ -158,7 +157,7 @@ function WaitingChipLink({
       <StatusGlyph
         status={blocker.status}
         size="sm"
-        title={`${waitingTaskStatusLabel(blocker.status)} status`}
+        title={l10n("local.value_status_089f13ac", {v0: (waitingTaskStatusLabel(blocker.status))})}
       />
       <span>{blocker.identifier ?? blocker.id.slice(0, 8)}</span>
       <span className="max-w-(--sz-18rem) truncate font-sans text-(length:--text-micro) text-blue-800 dark:text-blue-200">
@@ -166,8 +165,7 @@ function WaitingChipLink({
       </span>
       {running ? (
         <span className="ml-0.5 rounded-full bg-blue-500/15 px-1.5 py-0.5 text-(length:--text-nano) font-medium uppercase tracking-wide text-blue-700 dark:bg-blue-400/20 dark:text-blue-200">
-          running
-        </span>
+          {l10n("local.running_c071cf5f")}</span>
       ) : null}
     </IssueLinkQuicklook>
   );
@@ -214,9 +212,7 @@ function SuccessfulRunHandoffInFlightNotice({
           <span className="h-2 w-2 animate-pulse rounded-full bg-blue-400" />
         </span>
         <p className="min-w-0 leading-5">
-          A correction run is in progress — the agent is working. This alert returns if the run
-          stops without choosing a next step.
-          {shortRunId ? (
+          {l10n("local.a_correction_run_is_in_progress_the_agent_is_a5988eb1")}{shortRunId ? (
             <>
               {" "}
               {assigneeAgentId ? (
@@ -224,10 +220,10 @@ function SuccessfulRunHandoffInFlightNotice({
                   to={`/agents/${assigneeAgentId}/runs/${liveRunId}`}
                   className="font-mono underline underline-offset-2 hover:text-foreground"
                 >
-                  run {shortRunId}
+                  {l10n("local.run_acba2551")}{" "}{shortRunId}
                 </Link>
               ) : (
-                <span className="font-mono">run {shortRunId}</span>
+                <span className="font-mono">{l10n("local.run_acba2551")}{" "}{shortRunId}</span>
               )}
             </>
           ) : null}
@@ -289,22 +285,18 @@ function WaitingOnLiveWorkNotice({
         </span>
         <div className="min-w-0 flex-1 space-y-2">
           <div className="space-y-1">
-            <p className="font-medium leading-5">Waiting on live work</p>
+            <p className="font-medium leading-5">{l10n("local.waiting_on_live_work_54a2de10")}</p>
             <p className="leading-5">
-              Queued behind {total} {queuedNoun} being worked in order. This task
-              resumes automatically when the chain is done. Comments still notify the
-              assignee.
-            </p>
+              {l10n("local.queued_behind_07eacf1b")}{" "}{total} {queuedNoun} {l10n("local.being_worked_in_order_this_task_resumes_autom_7fc7ae24")}</p>
           </div>
 
           <div className="space-y-1" data-testid="issue-blocked-notice-progress">
             <div className="text-xs font-medium text-blue-800 dark:text-blue-200">
-              {doneCount} of {total} done
-              {runningCount > 0 ? ` · ${runningCount} running` : null}
+              {doneCount} {l10n("local.of_28391d3b")}{" "}{total} {l10n("local.done_a4c3ed04")}{runningCount > 0 ? (" " + l10n("local._value_running_c4ce6779", {v0: (runningCount)})) : null}
             </div>
             <div
               role="progressbar"
-              aria-label="Blocker chain progress"
+              aria-label={l10n("local.blocker_chain_progress_e381a27e")}
               aria-valuemin={0}
               aria-valuenow={doneCount}
               aria-valuemax={total}
@@ -355,8 +347,7 @@ function WaitingOnLiveWorkNotice({
               </div>
               <div className="min-w-0 pb-0.5">
                 <span className="inline-block rounded-md border border-dashed border-blue-300/70 px-2 py-1 text-xs text-blue-800 dark:border-blue-500/40 dark:text-blue-200">
-                  This task — resumes automatically when the chain is done
-                </span>
+                  {l10n("local.this_task_resumes_automatically_when_the_chai_30e6fd94")}</span>
               </div>
             </div>
           </div>
@@ -367,8 +358,7 @@ function WaitingOnLiveWorkNotice({
               className="space-y-1 pt-0.5"
             >
               <div className="text-xs font-medium text-blue-800 dark:text-blue-200">
-                Now running
-              </div>
+                {l10n("local.now_running_44cdf357")}</div>
               <div className="flex flex-wrap items-center gap-1.5">
                 {nowRunning.map((blocker) => (
                   <WaitingChipLink key={blocker.id} blocker={blocker} running />
@@ -384,8 +374,7 @@ function WaitingOnLiveWorkNotice({
             >
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-800 dark:text-amber-200">
                 <Flag className="h-3 w-3" aria-hidden />
-                Blocked by parked work
-              </span>
+                {l10n("local.blocked_by_parked_work_8b239473")}</span>
               {parkedBlockers.map((blocker) => renderParkedChip(blocker))}
             </div>
           ) : null}
@@ -461,7 +450,7 @@ export function IssueBlockedNotice({
       ? { issueId, scheduledRetry }
       : null;
 
-  const blockerLabel = blockers.length === 1 ? "the linked task" : "the linked tasks";
+  const blockerLabel = blockers.length === 1 ? l10n("local.the_linked_task_bd75976e") : l10n("local.the_linked_tasks_a90141d6");
   const terminalBlockers = blockers
     .flatMap((blocker) => blocker.terminalBlockers ?? [])
     .filter((blocker, index, all) => all.findIndex((candidate) => candidate.id === blocker.id) === index);
@@ -607,16 +596,14 @@ export function IssueBlockedNotice({
         <div className="min-w-0 space-y-1.5">
           {showSuccessfulRunHandoff ? (
             <>
-              <p className="font-medium leading-5">This task still needs a next step.</p>
+              <p className="font-medium leading-5">{l10n("local.this_task_still_needs_a_next_step_1ada26e3")}</p>
               <p className="leading-5">
-                A run finished successfully, but the task is still open. Paperclip needs someone to choose
-                what happens next.
-              </p>
+                {l10n("local.a_run_finished_successfully_but_the_task_is_s_51ed8189")}</p>
               <ul className="list-disc space-y-1 pl-5 text-xs leading-5 text-amber-900 dark:text-amber-100">
-                <li>Mark it done or cancelled.</li>
-                <li>Send it for review or ask for input.</li>
-                <li>Record what is blocking it and who owns that blocker.</li>
-                <li>Delegate follow-up work or queue a continuation.</li>
+                <li>{l10n("local.mark_it_done_or_cancelled_5cbd6466")}</li>
+                <li>{l10n("local.send_it_for_review_or_ask_for_input_fa883fca")}</li>
+                <li>{l10n("local.record_what_is_blocking_it_and_who_owns_that_6b236d4d")}</li>
+                <li>{l10n("local.delegate_follow_up_work_or_queue_a_continuati_19ff3fa4")}</li>
               </ul>
               <div className="flex flex-wrap gap-1.5 text-xs">
                 {successfulRunHandoff.sourceRunId && successfulRunHandoff.assigneeAgentId ? (
@@ -624,20 +611,19 @@ export function IssueBlockedNotice({
                     to={`/agents/${successfulRunHandoff.assigneeAgentId}/runs/${successfulRunHandoff.sourceRunId}`}
                     className="rounded-md border border-amber-300/70 bg-background/80 px-2 py-1 font-mono text-amber-950 hover:border-amber-500 hover:bg-amber-100 hover:underline dark:border-amber-500/40 dark:bg-background/40 dark:text-amber-100 dark:hover:bg-amber-500/15"
                   >
-                    run {successfulRunHandoff.sourceRunId.slice(0, 8)}
+                    {l10n("local.run_acba2551")}{" "}{successfulRunHandoff.sourceRunId.slice(0, 8)}
                   </Link>
                 ) : successfulRunHandoff.sourceRunId ? (
                   <span className="rounded-md border border-amber-300/70 bg-background/80 px-2 py-1 font-mono text-amber-950 dark:border-amber-500/40 dark:bg-background/40 dark:text-amber-100">
-                    run {successfulRunHandoff.sourceRunId.slice(0, 8)}
+                    {l10n("local.run_acba2551")}{" "}{successfulRunHandoff.sourceRunId.slice(0, 8)}
                   </span>
                 ) : null}
                 <span className="rounded-md border border-amber-300/70 bg-background/80 px-2 py-1 text-amber-900 dark:border-amber-500/40 dark:bg-background/40 dark:text-amber-100">
-                  Asked {agentName ?? "the assignee"} to choose the next step
-                </span>
+                  {l10n("local.asked_821c038b")}{" "}{agentName ?? l10n("local.the_assignee_f584ae3a")} {l10n("local.to_choose_the_next_step_ebd73cac")}</span>
               </div>
               {successfulRunHandoff.detectedProgressSummary ? (
                 <p className="text-xs leading-5 text-amber-800 dark:text-amber-200">
-                  Detected progress: {successfulRunHandoff.detectedProgressSummary}
+                  {l10n("local.detected_progress_28a0185a")}{" "}{successfulRunHandoff.detectedProgressSummary}
                 </p>
               ) : null}
               {successfulRunRetryNow ? (
@@ -657,25 +643,23 @@ export function IssueBlockedNotice({
                 {blockers.length > 0
                   ? isStalled
                     ? stalledLeafBlockers.length > 1
-                      ? <>Work on this task is blocked by {blockerLabel}, but the chain is stalled in review without a clear next step. Resolve the stalled reviews below or remove them as blockers.</>
-                      : <>Work on this task is blocked by {blockerLabel}, but the chain is stalled in review without a clear next step. Resolve the stalled review below or remove it as a blocker.</>
+                      ? <>{l10n("local.work_on_this_task_is_blocked_by_14b7a503")}{" "}{blockerLabel}{l10n("local._but_the_chain_is_stalled_in_review_without_a_0e9574da")}</>
+                      : <>{l10n("local.work_on_this_task_is_blocked_by_14b7a503")}{" "}{blockerLabel}{l10n("local._but_the_chain_is_stalled_in_review_without_a_9a237d94")}</>
                     : reopenSuppressed
-                      ? <>A message won&rsquo;t restart this task yet — it stays blocked by {blockerLabel} until {blockers.length === 1 ? "it is" : "they are"} done, then it reopens automatically. Comments still notify {responsibleName} for questions or triage in the meantime.</>
-                      : <>Work on this task is blocked by {blockerLabel} until {blockers.length === 1 ? "it is" : "they are"} complete. Comments still notify the assignee for questions or triage.</>
-                  : <>Work on this task is blocked until someone moves it back to To do. Comments still notify the assignee for questions or triage.</>}
+                      ? <>{l10n("local.a_message_won_rsquo_t_restart_this_task_yet_i_a4e13c3c")}{" "}{blockerLabel} {l10n("local.until_2e3200de")}{" "}{blockers.length === 1 ? l10n("local.it_is_1aa0be92") : l10n("local.they_are_4f616d6e")} {l10n("local.done_then_it_reopens_automatically_comments_s_acd5a0c7")}{" "}{responsibleName} {l10n("local.for_questions_or_triage_in_the_meantime_0890504a")}</>
+                      : <>{l10n("local.work_on_this_task_is_blocked_by_14b7a503")}{" "}{blockerLabel} {l10n("local.until_2e3200de")}{" "}{blockers.length === 1 ? l10n("local.it_is_1aa0be92") : l10n("local.they_are_4f616d6e")} {l10n("local.complete_comments_still_notify_the_assignee_f_518a9957")}</>
+                  : <>{l10n("local.work_on_this_task_is_blocked_until_someone_mo_6d2d0cb4")}</>}
               </p>
               {reopenSuppressed && reopenSuppressedLeafId ? (
                 <p
                   data-testid="issue-blocked-notice-reopen-suppressed"
                   className="text-xs font-medium leading-5 text-amber-900 dark:text-amber-100"
                 >
-                  Still blocked by{" "}
+                  {l10n("local.still_blocked_by_4f3b07f8")}{" "}
                   <span className="font-mono">{reopenSuppressedLeafId}</span>
                   {reopenSuppressedLeafStatus ? <> ({reopenSuppressedLeafStatus})</> : null}
                   {reopenSuppressedOtherCount > 0
-                    ? ` and ${reopenSuppressedOtherCount} other ${
-                        reopenSuppressedOtherCount === 1 ? "task" : "tasks"
-                      }`
+                    ? (" " + l10n("local.and_value_other_value_eb157cf9", {v0: (reopenSuppressedOtherCount), v1: (reopenSuppressedOtherCount === 1 ? "task" : "tasks")}))
                     : null}
                   .
                 </p>
@@ -688,15 +672,13 @@ export function IssueBlockedNotice({
               {showStalledRow ? (
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                    Stalled in review
-                  </span>
+                    {l10n("local.stalled_in_review_0fc03143")}</span>
                   {stalledLeafBlockers.map(renderBlockerChip)}
                 </div>
               ) : terminalBlockers.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                    Ultimately waiting on
-                  </span>
+                    {l10n("local.ultimately_waiting_on_ae937d06")}</span>
                   {terminalBlockers.map(renderBlockerChip)}
                 </div>
               ) : null}
@@ -707,8 +689,7 @@ export function IssueBlockedNotice({
                 >
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-800 dark:text-amber-200">
                     <Flag className="h-3 w-3" aria-hidden />
-                    Blocked by parked work
-                  </span>
+                    {l10n("local.blocked_by_parked_work_8b239473")}</span>
                   {parkedBlockers.map(renderBlockerChip)}
                 </div>
               ) : null}

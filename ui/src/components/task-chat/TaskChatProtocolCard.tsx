@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -233,7 +234,7 @@ function CardShell({
 function PlanSteps({ steps }: { steps: TaskChatProtocolStep[] }) {
   if (steps.length === 0) return null;
   return (
-    <ol className="flex flex-col gap-1.5" aria-label="Plan steps">
+    <ol className="flex flex-col gap-1.5" aria-label={l10n("local.plan_steps_3fa02f98")}>
       {steps.map((step) => (
         <li key={step.id} className="flex items-start gap-2 text-sm">
           <StatusIcon status={step.status} className="mt-0.5 shrink-0" />
@@ -273,7 +274,7 @@ function ProviderActivityCard({
     >
       {item.steps.length > 0 ? <PlanSteps steps={item.steps} /> : null}
       {item.children.length > 0 ? (
-        <ul className="flex flex-col gap-2" aria-label="Delegated agents">
+        <ul className="flex flex-col gap-2" aria-label={l10n("local.delegated_agents_a3a4ad04")}>
           {item.children.map((child) => (
             <li
               key={child.id}
@@ -306,7 +307,7 @@ function ProviderActivityCard({
         </ul>
       ) : null}
       {item.links.length > 0 ? (
-        <ul className="flex flex-col gap-2" aria-label="Research sources">
+        <ul className="flex flex-col gap-2" aria-label={l10n("local.research_sources_6891cd22")}>
           {item.links.map((link) => (
             <li key={link.href}>
               <a
@@ -337,8 +338,7 @@ function ProviderActivityCard({
           )}
         >
           <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground">
-            <ChevronDown aria-hidden className="h-3.5 w-3.5" /> Details
-          </summary>
+            <ChevronDown aria-hidden className="h-3.5 w-3.5" /> {l10n("local.details_45989de4")}</summary>
           {item.details.length > 0 ? (
             <dl className="mt-2 flex min-w-0 flex-col gap-1.5 text-xs">
               {item.details.map((detail) => (
@@ -366,8 +366,7 @@ function ProviderActivityCard({
           ) : null}
           {item.outputTruncated ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              Output truncated to 8 KiB.
-            </p>
+              {l10n("local.output_truncated_to_8_kib_71045c3c")}</p>
           ) : null}
         </details>
       ) : null}
@@ -378,9 +377,9 @@ function ProviderActivityCard({
 function diffStats(file: TaskChatWorkspaceChangeItem["files"][number]) {
   return (
     <span className="shrink-0 font-mono text-xs text-muted-foreground">
-      {file.additions == null ? "" : `+${file.additions}`}
+      {file.additions == null ? "" : l10n("local._value_8b26dc05", {v0: (file.additions)})}
       {file.additions != null && file.deletions != null ? " " : ""}
-      {file.deletions == null ? "" : `−${file.deletions}`}
+      {file.deletions == null ? "" : l10n("local._value_85362958", {v0: (file.deletions)})}
     </span>
   );
 }
@@ -398,13 +397,13 @@ function WorkspaceChangeCard({ item }: { item: TaskChatWorkspaceChangeItem }) {
     item.totals.deletions == null ? null : `−${item.totals.deletions}`,
   ].filter(Boolean).join(" ");
   const summary = item.complete
-    ? `${fileLabel} changed${stats ? ` · ${stats}` : ""}`
-    : "Workspace changes in progress";
+    ? l10n("local.value_changedvalue_754d0245", {v0: (fileLabel), v1: (stats ? ` · ${stats}` : "")})
+    : l10n("local.workspace_changes_in_progress_57de540a");
   return (
     <>
       <CardShell
         icon={GitBranch}
-        title="Workspace changes"
+        title={l10n("local.workspace_changes_1ac656d5")}
         status={item.complete ? "completed" : "running"}
         summary={summary}
         testId="task-chat-workspace-change"
@@ -424,7 +423,7 @@ function WorkspaceChangeCard({ item }: { item: TaskChatWorkspaceChangeItem }) {
                     : file.path}
                 </span>
                 <span className="text-xs capitalize text-muted-foreground">
-                  {file.binary ? "binary · " : ""}
+                  {file.binary ? (l10n("local.binary_a10eca32") + " ") : ""}
                   {file.operation.replaceAll("_", " ")}
                 </span>
               </span>
@@ -441,8 +440,8 @@ function WorkspaceChangeCard({ item }: { item: TaskChatWorkspaceChangeItem }) {
               onClick={() => setExpanded((value) => !value)}
             >
               {expanded
-                ? "Show fewer files"
-                : `Show ${item.files.length - 3} more files`}
+                ? l10n("local.show_fewer_files_17fe4047")
+                : l10n("local.show_value_more_files_a903a9a8", {v0: (item.files.length - 3)})}
             </Button>
           ) : null}
           {item.files.length > 0 ? (
@@ -452,8 +451,7 @@ function WorkspaceChangeCard({ item }: { item: TaskChatWorkspaceChangeItem }) {
               variant="outline"
               onClick={() => setSelectedPath(item.files[0].path)}
             >
-              Review diff
-            </Button>
+              {l10n("local.review_diff_61468276")}</Button>
           ) : null}
         </div>
       </CardShell>
@@ -466,13 +464,13 @@ function WorkspaceChangeCard({ item }: { item: TaskChatWorkspaceChangeItem }) {
         <DialogContent className="w-full max-w-(--pct-90) overflow-hidden">
           <DialogHeader>
             <DialogTitle className="font-mono text-sm">
-              {selected?.path ?? "Workspace diff"}
+              {selected?.path ?? l10n("local.workspace_diff_a4472b52")}
             </DialogTitle>
           </DialogHeader>
           {item.files.length > 1 ? (
             <div
               className="flex max-w-full gap-1 overflow-x-auto pb-1"
-              aria-label="Changed files"
+              aria-label={l10n("local.changed_files_5d4041aa")}
             >
               {item.files.map((file) => (
                 <Button
@@ -489,16 +487,14 @@ function WorkspaceChangeCard({ item }: { item: TaskChatWorkspaceChangeItem }) {
           ) : null}
           {selected?.binary ? (
             <p className="rounded-sm bg-muted/50 p-3 text-sm text-muted-foreground">
-              Binary file; text diff is unavailable.
-            </p>
+              {l10n("local.binary_file_text_diff_is_unavailable_98cd1b4b")}</p>
           ) : selected?.diff ? (
             <pre className="max-h-(--sz-70vh) overflow-auto whitespace-pre rounded-sm bg-muted/50 p-3 font-mono text-xs">
               {selected.diff}
             </pre>
           ) : (
             <p className="rounded-sm bg-muted/50 p-3 text-sm text-muted-foreground">
-              No inline patch was recorded for this file.
-            </p>
+              {l10n("local.no_inline_patch_was_recorded_for_this_file_009e7b89")}</p>
           )}
         </DialogContent>
       </Dialog>
@@ -512,7 +508,7 @@ function WorkspaceFileCard({ item }: { item: TaskChatWorkspaceFileItem }) {
     ? item.displayName.split(".").at(-1)?.toUpperCase()
     : "FILE";
   const label =
-    item.presentation === "generic" ? "File" : titleCaseKey(item.presentation);
+    item.presentation === "generic" ? l10n("local.file_50009ce1") : titleCaseKey(item.presentation);
   const workspaceFileRef = useMemo(
     () => ({
       path: item.path,
@@ -531,7 +527,7 @@ function WorkspaceFileCard({ item }: { item: TaskChatWorkspaceFileItem }) {
         status={
           item.source === "runner_verified" ? "completed" : "informational"
         }
-        summary={`${label} · ${extension}${item.line ? ` · line ${item.line}` : ""}`}
+        summary={l10n("local.value_valuevalue_2841d681", {v0: (label), v1: (extension), v2: (item.line ? ` · line ${item.line}` : "")})}
         testId="task-chat-workspace-file"
       >
         <div className="flex flex-wrap items-center gap-2">
@@ -546,8 +542,7 @@ function WorkspaceFileCard({ item }: { item: TaskChatWorkspaceFileItem }) {
             variant="outline"
             onClick={() => setOpen(true)}
           >
-            Preview
-          </Button>
+            {l10n("local.preview_324b134f")}</Button>
         </div>
       </CardShell>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -558,9 +553,7 @@ function WorkspaceFileCard({ item }: { item: TaskChatWorkspaceFileItem }) {
           <p className="font-mono text-xs text-muted-foreground">{item.path}</p>
           {item.preview == null ? (
             <p className="rounded-sm bg-muted/50 p-3 text-sm text-muted-foreground">
-              Preview unavailable. The verified workspace reference is still
-              available above.
-            </p>
+              {l10n("local.preview_unavailable_the_verified_workspace_re_adcad82d")}</p>
           ) : item.presentation === "document" ? (
             <div className="max-h-(--sz-70vh) overflow-auto rounded-sm bg-muted/30 p-3">
               <MarkdownBody>{item.preview}</MarkdownBody>
@@ -580,8 +573,7 @@ function WorkspaceFileCard({ item }: { item: TaskChatWorkspaceFileItem }) {
           )}
           {item.previewTruncated ? (
             <p className="text-xs text-muted-foreground">
-              Preview truncated by the runner.
-            </p>
+              {l10n("local.preview_truncated_by_the_runner_c8a44a1e")}</p>
           ) : null}
         </DialogContent>
       </Dialog>
@@ -626,8 +618,8 @@ function RuntimeQuestionHistory({
           ))}
           <p className="text-xs text-muted-foreground">
             {item.status === "resolved"
-              ? "Answer details were not recorded by this older runtime."
-              : `No answers were submitted; this request was ${item.status}.`}
+              ? l10n("local.answer_details_were_not_recorded_by_this_olde_43dc6c77")
+              : l10n("local.no_answers_were_submitted_this_request_was_va_5dcd7ddf", {v0: (item.status)})}
           </p>
         </div>
       )}
@@ -642,12 +634,12 @@ function RuntimeQuestionReceipt({
 }) {
   const label =
     item.status === "resolved"
-      ? "Questions answered"
+      ? l10n("local.questions_answered_46141d00")
       : item.status === "cancelled"
-        ? "Questions cancelled"
+        ? l10n("local.questions_cancelled_eb68371f")
         : item.status === "expired"
-          ? "Questions expired"
-          : "Questions resolved";
+          ? l10n("local.questions_expired_405a359b")
+          : l10n("local.questions_resolved_4741bfcd");
   return (
     <details className="group" data-testid="task-chat-runtime-request">
       <summary className="flex min-h-8 cursor-pointer list-none items-center gap-2 rounded-sm px-1 py-1.5 text-sm leading-5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -671,7 +663,7 @@ function RuntimeQuestionReceipt({
       <div className="pb-3 pl-7 pr-1">
         <div className="mb-3">
           <p className="text-sm font-medium text-foreground">
-            {item.questionSet?.title ?? "Runtime input"}
+            {item.questionSet?.title ?? l10n("local.runtime_input_b73049f7")}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">{item.prompt}</p>
         </div>
@@ -699,12 +691,12 @@ function RuntimeRequestCard({
   const title =
     item.questionSet?.title ??
     (item.requestType === "permission"
-      ? "Runtime permission"
-      : "Runtime input");
+      ? l10n("local.runtime_permission_b2e85aec")
+      : l10n("local.runtime_input_b73049f7"));
   const fields =
     item.fields.length > 0
       ? item.fields
-      : [{ name: "answer", label: "Response", placeholder: null }];
+      : [{ name: "answer", label: l10n("local.response_9061383b"), placeholder: null }];
   const [values, setValues] = useState<Record<string, string>>(() =>
     draftKey ? loadStructuredDraft(draftKey, {}) : {},
   );
@@ -839,7 +831,7 @@ function RuntimeRequestCard({
               size="sm"
               disabled={!onDecision || submitting || !canSubmitInput}
             >
-              {submitting ? "Submitting…" : "Submit response"}
+              {submitting ? l10n("local.submitting_49195f55") : l10n("local.submit_response_2b35561b")}
             </Button>
             {item.choices.some((choice) => choice.key === "decline") ? (
               <Button
@@ -849,8 +841,7 @@ function RuntimeRequestCard({
                 disabled={!onDecision || submitting}
                 onClick={() => void submit({ action: "decline" })}
               >
-                Deny
-              </Button>
+                {l10n("local.deny_05a2d733")}</Button>
             ) : null}
             {presentation === "timeline" ? (
               <Button
@@ -860,8 +851,7 @@ function RuntimeRequestCard({
                 disabled={!onDecision || submitting}
                 onClick={() => void submit({ action: "cancel" })}
               >
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
             ) : null}
           </div>
         </form>
@@ -892,15 +882,14 @@ function RuntimeRequestCard({
                   }
                 }}
               >
-                {submitting ? "Submitting…" : choice.label}
+                {submitting ? l10n("local.submitting_49195f55") : choice.label}
               </Button>
             ))}
         </div>
       ) : null}
       {item.status === "pending" && !onDecision ? (
         <p className="mt-2 text-xs text-muted-foreground">
-          Resolve this request in the active runtime session.
-        </p>
+          {l10n("local.resolve_this_request_in_the_active_runtime_se_a855c7a3")}</p>
       ) : null}
       {error ? (
         <p className="mt-2 text-xs text-destructive" role="alert">
@@ -924,7 +913,7 @@ function ResultCard({
   return (
     <CardShell
       icon={PackageCheck}
-      title="Run result"
+      title={l10n("local.run_result_916788b6")}
       status={item.disposition}
       summary={item.summary}
       testId="task-chat-run-result"
@@ -933,7 +922,7 @@ function ResultCard({
         <div className="flex flex-col gap-3 text-sm">
           {item.blocker ? (
             <div className="rounded-sm bg-muted/50 p-2">
-              <strong>Blocked: {item.blocker.reasonCode}</strong>
+              <strong>{l10n("local.blocked_3e75b484")}{" "}{item.blocker.reasonCode}</strong>
               <p className="mt-1 text-muted-foreground">
                 {item.blocker.unblockAction}
               </p>
@@ -942,7 +931,7 @@ function ResultCard({
           {item.verification.length > 0 ? (
             <ul
               className="flex flex-col gap-1"
-              aria-label="Verification results"
+              aria-label={l10n("local.verification_results_14a01310")}
             >
               {item.verification.map((check, index) => (
                 <li
@@ -972,7 +961,7 @@ function ResultCard({
               {item.remainingWork.map((work, index) => (
                 <li key={`${work.description}:${index}`}>
                   {work.description}
-                  {work.blocksCompletion ? " · blocks completion" : ""}
+                  {work.blocksCompletion ? (" " + l10n("local._blocks_completion_935d5b7e")) : ""}
                 </li>
               ))}
             </ul>
@@ -1003,7 +992,7 @@ function TerminalCard({
   return (
     <CardShell
       icon={TerminalSquare}
-      title="Run ended"
+      title={l10n("local.run_ended_65ad5d90")}
       status={item.runState}
       summary={[item.disposition.replaceAll("_", " "), item.stopReason]
         .filter(Boolean)

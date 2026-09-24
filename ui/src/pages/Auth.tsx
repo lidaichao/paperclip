@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "@/lib/router";
@@ -93,12 +94,12 @@ export function AuthPage() {
           </div>
 
           <h1 className="text-xl font-semibold">
-            {mode === "sign_in" ? "Sign in to Paperclip" : "Create your Paperclip account"}
+            {mode === "sign_in" ? l10n("local.sign_in_to_paperclip_315a9e5c") : l10n("local.create_your_paperclip_account_f6c4b1d0")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "sign_in"
-              ? "Use your email and password to access this instance."
-              : "Create an account for this instance. Email confirmation is not required in v1."}
+              ? l10n("local.use_your_email_and_password_to_access_this_in_7665f3a5")
+              : l10n("local.create_an_account_for_this_instance_email_con_fa7492f5")}
           </p>
 
           <form
@@ -109,7 +110,7 @@ export function AuthPage() {
               event.preventDefault();
               if (mutation.isPending) return;
               if (!canSubmit) {
-                setError("Please fill in all required fields.");
+                setError(l10n("local.please_fill_in_all_required_fields_d1641a4d"));
                 return;
               }
               mutation.mutate();
@@ -117,7 +118,7 @@ export function AuthPage() {
           >
             {mode === "sign_up" && (
               <div>
-                <label htmlFor="name" className="text-xs text-muted-foreground mb-1 block">Name</label>
+                <label htmlFor="name" className="text-xs text-muted-foreground mb-1 block">{l10n("local.name_dcd1d522")}</label>
                 <input
                   id="name"
                   name="name"
@@ -134,7 +135,7 @@ export function AuthPage() {
               </div>
             )}
             <div>
-              <label htmlFor="email" className="text-xs text-muted-foreground mb-1 block">Email</label>
+              <label htmlFor="email" className="text-xs text-muted-foreground mb-1 block">{l10n("local.email_969ccbd3")}</label>
               <input
                 id="email"
                 name="email"
@@ -151,7 +152,7 @@ export function AuthPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="text-xs text-muted-foreground mb-1 block">Password</label>
+              <label htmlFor="password" className="text-xs text-muted-foreground mb-1 block">{l10n("local.password_e7cf3ef4")}</label>
               <input
                 id="password"
                 name="password"
@@ -178,15 +179,15 @@ export function AuthPage() {
               className={`w-full ${!canSubmit && !mutation.isPending ? "opacity-50" : ""}`}
             >
               {mutation.isPending
-                ? "Working…"
+                ? l10n("local.working_5474eef8")
                 : mode === "sign_in"
-                  ? "Sign In"
-                  : "Create Account"}
+                  ? l10n("local.sign_in_bcc0bcc9")
+                  : l10n("local.create_account_0dffe234")}
             </Button>
           </form>
 
           <div className="mt-5 text-sm text-muted-foreground">
-            {mode === "sign_in" ? "Need an account?" : "Already have an account?"}{" "}
+            {mode === "sign_in" ? l10n("local.need_an_account_d24daaf3") : l10n("local.already_have_an_account_e77fea93")}{" "}
             <button
               type="button"
               className="font-medium text-foreground underline underline-offset-2"
@@ -195,7 +196,7 @@ export function AuthPage() {
                 setMode(mode === "sign_in" ? "sign_up" : "sign_in");
               }}
             >
-              {mode === "sign_in" ? "Create one" : "Sign in"}
+              {mode === "sign_in" ? l10n("local.create_one_b6ab95ea") : l10n("local.sign_in_bfd402b2")}
             </button>
           </div>
         </div>

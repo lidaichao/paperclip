@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import type {
   WorkspaceCommandDefinition,
   RuntimeExposureStatus,
@@ -134,7 +135,7 @@ function buildJobItem(
     workspaceCommandId: command.id,
     runtimeServiceId: null,
     serviceIndex: null,
-    disabledReason: command.disabledReason ?? (!command.command ? "This job is missing a command." : null),
+    disabledReason: command.disabledReason ?? (!command.command ? l10n("local.this_job_is_missing_a_command_9b13b618") : null),
   };
 }
 
@@ -184,7 +185,7 @@ export function buildWorkspaceRuntimeControlSections(input: {
       workspaceCommandId: null,
       runtimeServiceId: runtimeService.id,
       serviceIndex: runtimeService.configIndex ?? null,
-      disabledReason: "This runtime service no longer matches a configured workspace command.",
+      disabledReason: l10n("local.this_runtime_service_no_longer_matches_a_conf_5e243974"),
     }));
 
   return {
@@ -222,13 +223,13 @@ function isActiveStatusLabel(statusLabel: string) {
 function exposureFailureCopy(exposure: RuntimeExposureStatus | null) {
   if (exposure?.state === "failed") {
     return {
-      label: "HTTPS unavailable",
+      label: l10n("local.https_unavailable_0c011e77"),
       remediation: "Check the Tailscale broker and node HTTPS configuration.",
     };
   }
   if (exposure?.state === "cleanup_pending") {
     return {
-      label: "HTTPS cleanup pending",
+      label: l10n("local.https_cleanup_pending_6727ed53"),
       remediation: "Restart the host broker before reusing this port.",
     };
   }
@@ -297,14 +298,14 @@ export function buildWorkspaceServiceControlEntries(input: {
 
     const runtimeService = item.runtimeServiceId ? runtimeServicesById.get(item.runtimeServiceId) ?? null : null;
     const failureDetail = state === "failed"
-      ? `Service failed${runtimeService?.stoppedAt ? ` · ${timeAgo(runtimeService.stoppedAt)}` : ""}`
+      ? l10n("local.service_failedvalue_7fc8fdf6", {v0: (runtimeService?.stoppedAt ? ` · ${timeAgo(runtimeService.stoppedAt)}` : "")})
       : null;
     const exposure = runtimeService?.exposure ?? item.exposure;
     const exposureFailure = exposureFailureCopy(exposure);
     const exposureDetail = exposure?.state === "pending"
-      ? "Provisioning HTTPS…"
+      ? l10n("local.provisioning_https_038fbe1d")
       : exposure?.state === "ready"
-        ? "HTTPS ready"
+        ? l10n("local.https_ready_b796de5c")
         : exposureFailure
           ? `${exposureFailure.label} · ${exposureFailure.remediation}`
           : null;
@@ -403,12 +404,12 @@ function CommandActionButtons({
         const request = buildRequest(item, action);
         const Icon = action === "stop" ? Square : action === "restart" ? RotateCcw : Play;
         const label = action === "run"
-          ? "Run"
+          ? l10n("local.run_00d60e31")
           : action === "start"
-            ? "Start"
+            ? l10n("local.start_e4bb9f1e")
             : action === "stop"
-              ? "Stop"
-              : "Restart";
+              ? l10n("local.stop_cae7d57b")
+              : l10n("local.restart_6b983a81");
         const showSpinner = isPending && requestMatchesPending(pendingRequest, request);
         const disabled =
           isPending
@@ -506,7 +507,7 @@ function CommandSection({
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   ) : null}
-                  {item.port ? <div>Port {item.port}</div> : null}
+                  {item.port ? <div>{l10n("local.port_72e9a59f")}{" "}{item.port}</div> : null}
                   {item.command ? <div className="break-all font-mono">{item.command}</div> : null}
                   {item.cwd && !hideHostPaths ? <div className="break-all font-mono">{item.cwd}</div> : null}
                   {item.disabledReason ? <div>{item.disabledReason}</div> : null}
@@ -566,7 +567,7 @@ export function WorkspaceRuntimeControls({
     <div className={cn("space-y-4", className)}>
       <div className={cn("border border-border/70 bg-background p-3", square ? "rounded-none" : "rounded-xl")}>
         <div className="space-y-1">
-          <div className="text-xs font-medium uppercase tracking-(--tracking-eyebrow) text-muted-foreground">Workspace commands</div>
+          <div className="text-xs font-medium uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{l10n("local.workspace_commands_6cc6282c")}</div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline"
               className={cn(
@@ -577,12 +578,12 @@ export function WorkspaceRuntimeControls({
               )}
             >
               <Activity className="h-3.5 w-3.5" />
-              {runningCount > 0 ? `${runningCount} services running` : "No services running"}
+              {runningCount > 0 ? l10n("local.value_services_running_4c41fc2c", {v0: (runningCount)}) : l10n("local.no_services_running_03916b31")}
             </Badge>
             <span className="text-xs text-muted-foreground">
               {resolvedSections.jobs.length > 0
-                ? `${resolvedSections.jobs.length} job${resolvedSections.jobs.length === 1 ? "" : "s"} available to run on demand.`
-                : "Each command can be controlled independently."}
+                ? l10n("local.value_jobvalue_available_to_run_on_demand_829d796a", {v0: (resolvedSections.jobs.length), v1: (englishPluralSuffix(resolvedSections.jobs.length === 1 ? "" : "s"))})
+                : l10n("local.each_command_can_be_controlled_independently_9a0e7981")}
             </span>
           </div>
           {visibleDisabledHint ? <p className="text-xs text-muted-foreground">{visibleDisabledHint}</p> : null}
@@ -590,8 +591,8 @@ export function WorkspaceRuntimeControls({
       </div>
 
       <CommandSection
-        title="Services"
-        description="Long-running commands that Paperclip can supervise for this workspace."
+        title={l10n("local.services_604dce44")}
+        description={l10n("local.long_running_commands_that_paperclip_can_supe_ed1be5cc")}
         items={resolvedSections.services}
         emptyMessage={resolvedServiceEmptyMessage}
         disabledHint={visibleDisabledHint}
@@ -602,8 +603,8 @@ export function WorkspaceRuntimeControls({
       />
 
       <CommandSection
-        title="Jobs"
-        description="One-shot commands that run now and exit when they finish."
+        title={l10n("local.jobs_2f17a0f8")}
+        description={l10n("local.one_shot_commands_that_run_now_and_exit_when_9b358ae2")}
         items={resolvedSections.jobs}
         emptyMessage={jobEmptyMessage}
         isPending={isPending}
@@ -614,8 +615,8 @@ export function WorkspaceRuntimeControls({
 
       {resolvedSections.otherServices.length > 0 ? (
         <CommandSection
-          title="Untracked services"
-          description="Running services that no longer match the current workspace command config."
+          title={l10n("local.untracked_services_87bd9a2e")}
+          description={l10n("local.running_services_that_no_longer_match_the_cur_b3169d3d")}
           items={resolvedSections.otherServices}
           emptyMessage=""
           isPending={isPending}

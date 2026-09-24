@@ -1,3 +1,4 @@
+import { l10n } from "../../../../i18n";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
@@ -51,13 +52,13 @@ export function GatewayAdvancedPanel({
   const archiveMutation = useMutation({
     mutationFn: () => toolsApi.updateGateway(companyId, gateway.id, { status: "archived" }),
     onSuccess: async () => {
-      pushToast({ title: "Gateway archived", body: `${gateway.name} is no longer reachable.`, tone: "success" });
+      pushToast({ title: l10n("local.gateway_archived_b6b73fd7"), body: l10n("local.value_is_no_longer_reachable_576a6703", {v0: (gateway.name)}), tone: "success" });
       await queryClient.invalidateQueries({ queryKey: gatewaysQueryKey(companyId) });
       navigate("/apps/gateways");
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't archive the gateway",
+        title: l10n("local.couldn_t_archive_the_gateway_ab9a7739"),
         body: error instanceof Error ? error.message : String(error),
         tone: "error",
       }),
@@ -66,21 +67,21 @@ export function GatewayAdvancedPanel({
   async function copy(value: string, label: string) {
     try {
       await copyTextToClipboard(value);
-      pushToast({ title: "Copied", body: label, tone: "success" });
+      pushToast({ title: l10n("local.copied_8d525e5f"), body: label, tone: "success" });
     } catch {
-      pushToast({ title: "Copy failed", body: "Clipboard access is unavailable.", tone: "error" });
+      pushToast({ title: l10n("local.copy_failed_5b50e7a6"), body: l10n("local.clipboard_access_is_unavailable_0899c211"), tone: "error" });
     }
   }
 
   return (
     <div className="space-y-5">
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold text-foreground">Transport</h3>
+        <h3 className="text-sm font-semibold text-foreground">{l10n("local.transport_aaead4ab")}</h3>
         <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-          <Row label="Transport" value="streamable_http" />
-          <Row label="Authentication" value="bearer" />
-          <Row label="Protocol version" value="2025-03-26" />
-          <Row label="Public ID" value={gateway.gatewayPublicId} mono />
+          <Row label={l10n("local.transport_aaead4ab")} value="streamable_http" />
+          <Row label={l10n("local.authentication_66880d2d")} value="bearer" />
+          <Row label={l10n("local.protocol_version_cdd7356e")} value="2025-03-26" />
+          <Row label={l10n("local.public_id_3705b64f")} value={gateway.gatewayPublicId} mono />
         </dl>
         <div className="flex items-center gap-2">
           <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-2 font-mono text-xs text-muted-foreground">
@@ -88,18 +89,16 @@ export function GatewayAdvancedPanel({
           </code>
           <Button variant="outline" size="sm" onClick={() => void copy(endpoint, "Endpoint URL")}>
             <Copy className="mr-1 h-3.5 w-3.5" />
-            Copy
-          </Button>
+            {l10n("local.copy_e21f935f")}</Button>
         </div>
       </section>
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">Raw configuration</h3>
+          <h3 className="text-sm font-semibold text-foreground">{l10n("local.raw_configuration_493d4f27")}</h3>
           <Button variant="outline" size="sm" onClick={() => void copy(rawConfig, "Gateway config JSON")}>
             <Copy className="mr-1 h-3.5 w-3.5" />
-            Copy JSON
-          </Button>
+            {l10n("local.copy_json_7708c6e2")}</Button>
         </div>
         <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 font-mono text-xs text-muted-foreground">
           {rawConfig}
@@ -107,18 +106,16 @@ export function GatewayAdvancedPanel({
       </section>
 
       <section className="space-y-2 rounded-lg border border-destructive/40 p-4">
-        <h3 className="text-sm font-semibold text-destructive">Danger zone</h3>
+        <h3 className="text-sm font-semibold text-destructive">{l10n("local.danger_zone_fd8b8dae")}</h3>
         <p className="text-sm text-muted-foreground">
-          Archiving takes the gateway offline for every client. Existing tokens stop working. Type the
-          gateway name to confirm.
-        </p>
+          {l10n("local.archiving_takes_the_gateway_offline_for_every_7297cf45")}</p>
         {confirming ? (
           <div className="space-y-2">
             <Input
               value={confirmName}
               onChange={(e) => setConfirmName(e.target.value)}
               placeholder={gateway.name}
-              aria-label="Type the gateway name to confirm archive"
+              aria-label={l10n("local.type_the_gateway_name_to_confirm_archive_7add56c9")}
             />
             <div className="flex gap-2">
               <Button
@@ -127,17 +124,15 @@ export function GatewayAdvancedPanel({
                 disabled={confirmName.trim() !== gateway.name || archiveMutation.isPending}
                 onClick={() => archiveMutation.mutate()}
               >
-                {archiveMutation.isPending ? "Archiving…" : "Archive gateway"}
+                {archiveMutation.isPending ? l10n("local.archiving_af9e1c99") : l10n("local.archive_gateway_62da42a3")}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => { setConfirming(false); setConfirmName(""); }}>
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
             </div>
           </div>
         ) : (
           <Button variant="outline" size="sm" className="text-destructive" onClick={() => setConfirming(true)}>
-            Archive gateway
-          </Button>
+            {l10n("local.archive_gateway_62da42a3")}</Button>
         )}
       </section>
     </div>

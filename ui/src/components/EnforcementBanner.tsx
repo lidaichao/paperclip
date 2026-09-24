@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -151,16 +152,10 @@ export function EnforcementBanner(props: EnforcementBannerProps) {
       <div className="min-w-0 flex-1">
         {variant === "denied-detected" ? (
           <p>
-            <span className="font-medium">{computedCount}</span> governed tool call
-            {computedCount === 1 ? " was" : "s were"} denied or failed in the last hour. Access is enforced
-            server-side by the tool gateway — open the affected connector to review what was blocked and why.
-          </p>
+            <span className="font-medium">{computedCount}</span> {l10n("local.governed_tool_call_acfba296")}{computedCount === 1 ? (" " + l10n("local.was_b63b99f6")) : l10n("local.s_were_fe223f7b")} {l10n("local.denied_or_failed_in_the_last_hour_access_is_e_8533fff3")}</p>
         ) : (
           <p>
-            Tool access is enforced server-side by the tool gateway. These screens configure and observe that
-            enforcement — they do not replace it. Agents see and call only the tools their profiles and policies
-            allow; everything else is denied by default.
-          </p>
+            {l10n("local.tool_access_is_enforced_server_side_by_the_to_eb68447c")}</p>
         )}
       </div>
     </div>

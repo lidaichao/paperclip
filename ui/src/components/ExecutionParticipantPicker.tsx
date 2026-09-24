@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useMemo, useState } from "react";
 import type { Agent, Issue } from "@paperclipai/shared";
@@ -89,7 +90,7 @@ export function ExecutionParticipantPicker({
     updatePolicy(next);
   };
 
-  const label = stageType === "review" ? "Reviewers" : "Approvers";
+  const label = stageType === "review" ? l10n("local.reviewers_06499a30") : l10n("local.approvers_97ecaec1");
   const Icon = stageType === "review" ? Eye : ShieldCheck;
 
   return (
@@ -116,7 +117,7 @@ export function ExecutionParticipantPicker({
       <PopoverContent className="p-1 w-56" align="start" collisionPadding={16}>
         <input
           className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-          placeholder={`Search ${label.toLowerCase()}...`}
+          placeholder={l10n("local.search_value_9a2afa30", {v0: (label.toLowerCase())})}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus
@@ -129,7 +130,7 @@ export function ExecutionParticipantPicker({
             )}
             onClick={() => updatePolicy([])}
           >
-            No {label.toLowerCase()}
+            {l10n("local.no_1ea442a1")}{" "}{label.toLowerCase()}
           </button>
           {currentUserId && (
             <button
@@ -140,8 +141,7 @@ export function ExecutionParticipantPicker({
               onClick={() => toggle(`user:${currentUserId}`)}
             >
               <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-              Assign to me
-            </button>
+              {l10n("local.assign_to_me_9dd977a4")}</button>
           )}
           {issue.createdByUserId && issue.createdByUserId !== currentUserId && (
             <button
@@ -152,7 +152,7 @@ export function ExecutionParticipantPicker({
               onClick={() => toggle(`user:${issue.createdByUserId}`)}
             >
               <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-              {creatorUserLabel ?? "Requester"}
+              {creatorUserLabel ?? l10n("local.requester_b5687cf0")}
             </button>
           )}
           {otherUserOptions

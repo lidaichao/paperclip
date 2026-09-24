@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,8 +52,8 @@ export function buildGitHubSetupPrompt(instanceUrl: string) {
     // A preview can have no configured instance. Do not substitute its own URL.
   }
   const context = instanceOrigin
-    ? `Paperclip instance URL: ${instanceOrigin}\nUse this instance for setup. Do not ask me for its URL again unless it is unavailable or I ask to use a different instance.`
-    : "Paperclip instance URL is unavailable. Ask me for it before starting setup.";
+    ? l10n("local.paperclip_instance_url_value_use_this_instanc_8f250aab", {v0: (instanceOrigin)})
+    : l10n("local.paperclip_instance_url_is_unavailable_ask_me_f8abab53");
   return `${context}\n\n${githubSetupPrompt}`;
 }
 
@@ -78,14 +79,14 @@ export function GitHubSetupPrompt({ instanceUrl = window.location.origin }: { in
           <img src="/brands/claude-color.svg" alt="" className="size-4 rounded-full bg-background ring-2 ring-background" />
           <img src="/brands/codex-color.svg" alt="" className="size-4 rounded-full bg-background ring-2 ring-background" />
         </span>
-        {status === "copied" ? "Copied setup prompt" : "Copy setup prompt"}
+        {status === "copied" ? l10n("local.copied_setup_prompt_326f6976") : l10n("local.copy_setup_prompt_9a5d81cc")}
         {status === "copied" ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
       </Button>
-      <span className="sr-only" role="status">{status === "copied" ? "Setup prompt copied. Paste it into Codex or Claude with browser tools." : ""}</span>
+      <span className="sr-only" role="status">{status === "copied" ? l10n("local.setup_prompt_copied_paste_it_into_codex_or_cl_3ea3b2b6") : ""}</span>
       {status === "failed" && (
         <div className="space-y-2">
-          <p role="alert" className="text-sm text-muted-foreground">Could not copy automatically. Select and copy the setup prompt below.</p>
-          <Textarea aria-label="Setup prompt" readOnly value={prompt} onFocus={(event) => event.currentTarget.select()} rows={8} />
+          <p role="alert" className="text-sm text-muted-foreground">{l10n("local.could_not_copy_automatically_select_and_copy_8db848e9")}</p>
+          <Textarea aria-label={l10n("local.setup_prompt_c7b9bbe5")} readOnly value={prompt} onFocus={(event) => event.currentTarget.select()} rows={8} />
         </div>
       )}
     </div>

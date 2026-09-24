@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type {
   WorkspaceOperation,
   WorkspaceReadiness,
@@ -75,11 +76,11 @@ function timestampMs(value: Date | string | null | undefined): number | null {
 function failedRepairNotice(repair: WorkspaceOperation): WorkspaceAccessNotice {
   const phase = typeof repair.metadata?.repairPhase === "string" ? repair.metadata.repairPhase : null;
   return {
-    title: "Repair failed",
+    title: l10n("local.repair_failed_9445b142"),
     description: phase
-      ? `The repair stopped during ${phase}. The pre-repair backup was kept.`
-      : "The repair stopped before the workspace became usable. The pre-repair backup was kept.",
-    action: { kind: "view_logs", label: "View repair log" },
+      ? l10n("local.the_repair_stopped_during_value_the_pre_repai_93d51170", {v0: (phase)})
+      : l10n("local.the_repair_stopped_before_the_workspace_becam_0f115777"),
+    action: { kind: "view_logs", label: l10n("local.view_repair_log_bb0e22f5") },
   };
 }
 
@@ -88,11 +89,11 @@ function failedProvisionNotice(provision: WorkspaceOperation): WorkspaceAccessNo
     ? provision.metadata.seedFailurePhase
     : null;
   return {
-    title: "Database provisioning failed",
+    title: l10n("local.database_provisioning_failed_7774e3ef"),
     description: phase
-      ? `The earlier clone attempt failed during ${phase}. The workspace later became usable.`
-      : "An earlier clone attempt failed, but the workspace later became usable.",
-    action: { kind: "view_logs", label: "View provisioning log" },
+      ? l10n("local.the_earlier_clone_attempt_failed_during_value_bf03dd0c", {v0: (phase)})
+      : l10n("local.an_earlier_clone_attempt_failed_but_the_works_704021f4"),
+    action: { kind: "view_logs", label: l10n("local.view_provisioning_log_0b151b35") },
   };
 }
 
@@ -187,11 +188,11 @@ export function resolveWorkspaceAccessState(input: {
     const phase = typeof repair.metadata?.repairPhase === "string" ? repair.metadata.repairPhase : null;
     return {
       state: "repairing",
-      title: "Repairing workspace database",
+      title: l10n("local.repairing_workspace_database_a275741a"),
       description: phase
-        ? `Only the isolated database is replaced; the git worktree and your files are preserved. Current phase: ${phase}.`
-        : "Only the isolated database is replaced; the git worktree and your files are preserved.",
-      action: { kind: "wait", label: "Repair in progress" },
+        ? l10n("local.only_the_isolated_database_is_replaced_the_gi_4d393693", {v0: (phase)})
+        : l10n("local.only_the_isolated_database_is_replaced_the_gi_f9d0a2a4"),
+      action: { kind: "wait", label: l10n("local.repair_in_progress_4b259553") },
       handoffAvailable,
     };
   }
@@ -207,9 +208,9 @@ export function resolveWorkspaceAccessState(input: {
   if (provision?.status === "running") {
     return {
       state: "provisioning",
-      title: "Provisioning database",
-      description: "Restoring the isolated database clone for this workspace. This runs once before the first start.",
-      action: { kind: "wait", label: "Provisioning" },
+      title: l10n("local.provisioning_database_1eb90451"),
+      description: l10n("local.restoring_the_isolated_database_clone_for_thi_c34f6e33"),
+      action: { kind: "wait", label: l10n("local.provisioning_c2b1b8e2") },
       handoffAvailable,
     };
   }
@@ -219,11 +220,11 @@ export function resolveWorkspaceAccessState(input: {
       : null;
     return {
       state: "failed",
-      title: "Database provisioning failed",
+      title: l10n("local.database_provisioning_failed_7774e3ef"),
       description: seedPhase
-        ? `The clone failed during ${seedPhase}. Repairing replaces only the isolated database.`
-        : "The clone did not finish, so this workspace has no usable database yet.",
-      action: { kind: "repair", label: "Repair workspace" },
+        ? l10n("local.the_clone_failed_during_value_repairing_repla_7a55f73f", {v0: (seedPhase)})
+        : l10n("local.the_clone_did_not_finish_so_this_workspace_ha_82d05fc2"),
+      action: { kind: "repair", label: l10n("local.repair_workspace_152f148b") },
       handoffAvailable,
     };
   }
@@ -235,9 +236,9 @@ export function resolveWorkspaceAccessState(input: {
     if (failure.reason === "runtime_not_running" && !servingService && !startingService) {
       return {
         state: "stopped",
-        title: "Workspace is not running",
-        description: "Start the workspace runtime to publish its board.",
-        action: { kind: "start", label: "Start workspace" },
+        title: l10n("local.workspace_is_not_running_992fec9f"),
+        description: l10n("local.start_the_workspace_runtime_to_publish_its_bo_90464108"),
+        action: { kind: "start", label: l10n("local.start_workspace_0e6b0b29") },
         handoffAvailable,
       };
     }
@@ -246,25 +247,25 @@ export function resolveWorkspaceAccessState(input: {
       const validating = readinessState === "validating" || readinessState === "provisioning";
       return {
         state: validating ? "validating" : "degraded",
-        title: validating ? "Validating clone" : "Workspace is degraded",
+        title: validating ? l10n("local.validating_clone_d86d5002") : l10n("local.workspace_is_degraded_f238ba49"),
         description: [
           cause ?? "The workspace is serving, but its clone did not pass the readiness contract.",
           validating ? "Paperclip is still confirming the clone." : "One bounded repair replaces the isolated database.",
         ].join(" "),
         action: validating
-          ? { kind: "wait", label: "Validating" }
-          : { kind: "repair", label: "Repair workspace" },
+          ? { kind: "wait", label: l10n("local.validating_5a1a167e") }
+          : { kind: "repair", label: l10n("local.repair_workspace_152f148b") },
         handoffAvailable,
       };
     }
     if (!handoffAvailable) {
       return {
         state: servingService ? "ready" : "degraded",
-        title: servingService ? "Ready — snapshot-local sign-in" : "Workspace is degraded",
-        description: cause ?? "Opening the board will ask for the credentials captured in this snapshot.",
+        title: servingService ? l10n("local.ready_snapshot_local_sign_in_3eea985d") : l10n("local.workspace_is_degraded_f238ba49"),
+        description: cause ?? l10n("local.opening_the_board_will_ask_for_the_credential_f2195ef5"),
         action: servingService
-          ? { kind: "open", label: "Open workspace" }
-          : { kind: "start", label: "Start workspace" },
+          ? { kind: "open", label: l10n("local.open_workspace_b3e34b18") }
+          : { kind: "start", label: l10n("local.start_workspace_0e6b0b29") },
         handoffAvailable: false,
         secondaryNotice,
       };
@@ -274,9 +275,9 @@ export function resolveWorkspaceAccessState(input: {
   if (startingService) {
     return {
       state: "provisioning",
-      title: "Workspace is starting",
-      description: "Paperclip is starting the workspace runtime and waiting for its board URL.",
-      action: { kind: "wait", label: "Starting workspace" },
+      title: l10n("local.workspace_is_starting_45656776"),
+      description: l10n("local.paperclip_is_starting_the_workspace_runtime_a_eef837ac"),
+      action: { kind: "wait", label: l10n("local.starting_workspace_7212fa79") },
       handoffAvailable,
     };
   }
@@ -284,9 +285,9 @@ export function resolveWorkspaceAccessState(input: {
   if (servingService) {
     return {
       state: "ready",
-      title: "Ready",
-      description: "Opening the workspace signs you in to the cloned board without a password.",
-      action: { kind: "open", label: "Open workspace" },
+      title: l10n("local.ready_5fa7aac5"),
+      description: l10n("local.opening_the_workspace_signs_you_in_to_the_clo_b7322496"),
+      action: { kind: "open", label: l10n("local.open_workspace_b3e34b18") },
       handoffAvailable,
       secondaryNotice,
     };
@@ -298,19 +299,19 @@ export function resolveWorkspaceAccessState(input: {
   if (unhealthyService) {
     return {
       state: "degraded",
-      title: "Workspace is degraded",
+      title: l10n("local.workspace_is_degraded_f238ba49"),
       description: cause
-        ?? "The runtime is up but did not report a usable database, so Paperclip will not publish it as ready.",
-      action: { kind: "repair", label: "Repair workspace" },
+        ?? l10n("local.the_runtime_is_up_but_did_not_report_a_usable_059c9862"),
+      action: { kind: "repair", label: l10n("local.repair_workspace_152f148b") },
       handoffAvailable,
     };
   }
 
   return {
     state: "stopped",
-    title: "Workspace is not running",
-    description: "Start the workspace runtime to publish its board.",
-    action: { kind: "start", label: "Start workspace" },
+    title: l10n("local.workspace_is_not_running_992fec9f"),
+    description: l10n("local.start_the_workspace_runtime_to_publish_its_bo_90464108"),
+    action: { kind: "start", label: l10n("local.start_workspace_0e6b0b29") },
     handoffAvailable,
   };
 }

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,18 +8,18 @@ import { nextCronFires, parseCronExpression } from "../lib/cron-fires";
 export type SchedulePreset = "every_minute" | "every_hour" | "every_day" | "weekdays" | "weekly" | "monthly" | "custom";
 
 const PRESETS: { value: SchedulePreset; label: string }[] = [
-  { value: "every_minute", label: "Every minute" },
-  { value: "every_hour", label: "Every hour" },
-  { value: "every_day", label: "Every day" },
-  { value: "weekdays", label: "Weekdays" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "custom", label: "Custom (cron)" },
+  { value: "every_minute", label: l10n("local.every_minute_3c14fb8a") },
+  { value: "every_hour", label: l10n("local.every_hour_a4bac465") },
+  { value: "every_day", label: l10n("local.every_day_c4e42b97") },
+  { value: "weekdays", label: l10n("local.weekdays_6f4b602b") },
+  { value: "weekly", label: l10n("local.weekly_29751324") },
+  { value: "monthly", label: l10n("local.monthly_9b11f6b7") },
+  { value: "custom", label: l10n("local.custom_cron_6dc53fd8") },
 ];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => ({
   value: String(i),
-  label: i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`,
+  label: i === 0 ? l10n("local.12_am_0f6496fb") : i < 12 ? l10n("local.value_am_9fa35cc3", {v0: (i)}) : i === 12 ? l10n("local.12_pm_a7367471") : l10n("local.value_pm_7088914a", {v0: (i - 12)}),
 }));
 
 const MINUTES = Array.from({ length: 12 }, (_, i) => ({
@@ -27,13 +28,13 @@ const MINUTES = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 const DAYS_OF_WEEK = [
-  { value: "1", label: "Mon" },
-  { value: "2", label: "Tue" },
-  { value: "3", label: "Wed" },
-  { value: "4", label: "Thu" },
-  { value: "5", label: "Fri" },
-  { value: "6", label: "Sat" },
-  { value: "0", label: "Sun" },
+  { value: "1", label: l10n("local.mon_f40d7f51") },
+  { value: "2", label: l10n("local.tue_d1eb39b0") },
+  { value: "3", label: l10n("local.wed_58339f45") },
+  { value: "4", label: l10n("local.thu_7da11212") },
+  { value: "5", label: l10n("local.fri_66dab40c") },
+  { value: "6", label: l10n("local.sat_fdeb71b5") },
+  { value: "0", label: l10n("local.sun_db18f17f") },
 ];
 
 const DAYS_OF_MONTH = Array.from({ length: 31 }, (_, i) => ({
@@ -247,8 +248,8 @@ export function ScheduleEditor({
   return (
     <div className="space-y-3">
       <Select value={preset} onValueChange={(v) => handlePresetChange(v as SchedulePreset)}>
-        <SelectTrigger className="w-full" aria-label="Schedule frequency">
-          <SelectValue placeholder="Choose frequency..." />
+        <SelectTrigger className="w-full" aria-label={l10n("local.schedule_frequency_feed2d11")}>
+          <SelectValue placeholder={l10n("local.choose_frequency_55479844")} />
         </SelectTrigger>
         <SelectContent>
           {PRESETS.map((p) => (
@@ -277,20 +278,19 @@ export function ScheduleEditor({
               }
             }}
             placeholder="0 10 * * *"
-            aria-label="Cron expression"
+            aria-label={l10n("local.cron_expression_9e6e7de6")}
             aria-invalid={!customValidation.valid}
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Five fields: minute hour day-of-month month day-of-week
-          </p>
+            {l10n("local.five_fields_minute_hour_day_of_month_month_da_7abb912a")}</p>
           <p
             className={customValidation.valid ? "text-xs text-muted-foreground" : "text-xs text-destructive"}
             aria-live="polite"
           >
             {customValidation.message}
             {customValidation.valid && customValidation.nextFires.length > 0
-              ? ` Next: ${customValidation.nextFires.map((fire) => fire.toLocaleString()).join(", ")}.`
+              ? (" " + l10n("local.next_value_f3d03fd9", {v0: (customValidation.nextFires.map((fire) => fire.toLocaleString()).join(", "))}))
               : null}
           </p>
         </div>
@@ -298,7 +298,7 @@ export function ScheduleEditor({
         <div className="flex flex-wrap items-center gap-2">
           {preset !== "every_minute" && preset !== "every_hour" && (
             <>
-              <span className="text-sm text-muted-foreground">at</span>
+              <span className="text-sm text-muted-foreground">{l10n("local.at_b1d6b91b")}</span>
               <Select
                 value={hour}
                 onValueChange={(h) => {
@@ -341,7 +341,7 @@ export function ScheduleEditor({
 
           {preset === "every_hour" && (
             <>
-              <span className="text-sm text-muted-foreground">at minute</span>
+              <span className="text-sm text-muted-foreground">{l10n("local.at_minute_5f2ed72d")}</span>
               <Select
                 value={minute}
                 onValueChange={(m) => {
@@ -365,7 +365,7 @@ export function ScheduleEditor({
 
           {preset === "weekly" && (
             <>
-              <span className="text-sm text-muted-foreground">on</span>
+              <span className="text-sm text-muted-foreground">{l10n("local.on_b8d31e85")}</span>
               <div className="flex gap-1">
                 {DAYS_OF_WEEK.map((d) => (
                   <Button
@@ -389,7 +389,7 @@ export function ScheduleEditor({
 
           {preset === "monthly" && (
             <>
-              <span className="text-sm text-muted-foreground">on day</span>
+              <span className="text-sm text-muted-foreground">{l10n("local.on_day_ada1fca3")}</span>
               <Select
                 value={dayOfMonth}
                 onValueChange={(dom) => {

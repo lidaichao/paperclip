@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { Issue } from "@paperclipai/shared";
 import type {
   PipelineCase,
@@ -74,17 +75,17 @@ function humanizeKey(key: string) {
 }
 
 export function humanizePipelineItemStatus(status: string | null | undefined) {
-  if (!status) return "Open";
+  if (!status) return l10n("local.open_ed077f3d");
   const normalized = status.trim().toLowerCase();
-  if (!normalized) return "Open";
+  if (!normalized) return l10n("local.open_ed077f3d");
   const labels: Record<string, string> = {
-    open: "Open",
-    working: "In progress",
-    done: "Done",
-    cancelled: "Removed",
-    in_review: "In review",
-    review: "In review",
-    in_progress: "In progress",
+    open: l10n("local.open_ed077f3d"),
+    working: l10n("local.in_progress_c1f88e9d"),
+    done: l10n("local.done_11a6767d"),
+    cancelled: l10n("local.removed_4118fb4f"),
+    in_review: l10n("local.in_review_c3905914"),
+    review: l10n("local.in_review_c3905914"),
+    in_progress: l10n("local.in_progress_c1f88e9d"),
   };
   return labels[normalized] ?? humanizeKey(normalized);
 }
@@ -248,7 +249,7 @@ export function itemHasChangedNotice(item: Pick<PipelineCase, "fields"> & {
   if (item.changeAcknowledgedAt || fields.changeAcknowledgedAt) return null;
   if (item.thisChanged || fields.thisChanged || fields.upstreamChanged || fields.upstreamDrift) {
     return {
-      title: "This changed",
+      title: l10n("local.this_changed_56ec3b71"),
       body: "Upstream work changed after this item was created. Review the latest details before continuing.",
     };
   }
@@ -272,7 +273,7 @@ export function eventsHaveUnacknowledgedDrift(events: PipelineCaseEvent[]) {
 export function changedNoticeFromEvents(events: PipelineCaseEvent[]) {
   if (!eventsHaveUnacknowledgedDrift(events)) return null;
   return {
-    title: "This changed",
+    title: l10n("local.this_changed_56ec3b71"),
     body: "Upstream work changed after this item was created. Review the latest details before continuing.",
   };
 }

@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type {
   FeedbackDataSharingPreference,
   FeedbackVoteValue,
@@ -33,7 +34,7 @@ export function TaskChatBubbleActions({
   feedback?: TaskChatBubbleFeedback | null;
 }) {
   const { copied, failed, copy } = useCopyAction(2000);
-  const label = failed ? "Couldn’t copy message" : "Copy message";
+  const label = failed ? l10n("local.couldn_t_copy_message_41fff2fd") : l10n("local.copy_message_457efe53");
 
   return (
     <div className="flex items-center gap-0.5" data-testid="task-chat-bubble-actions">

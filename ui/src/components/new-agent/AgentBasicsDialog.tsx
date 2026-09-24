@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useCompany } from "@/context/CompanyContext";
 import { useAgentAppearanceDraft } from "@/hooks/useAgentAppearanceDraft";
 import { AgentCharacter } from "../AgentCharacter";
@@ -148,19 +149,17 @@ export function AgentBasicsDialog({
       >
         <div
           className="flex items-center gap-2 px-6 py-5 text-xs text-muted-foreground"
-          aria-label="New agent progress"
+          aria-label={l10n("local.new_agent_progress_260193aa")}
         >
           <span
             className={cn(step === "name" && "font-medium text-foreground")}
           >
-            1. Name
-          </span>
+            {l10n("local.1_name_6dce9cbb")}</span>
           <ChevronRight className="size-3" />
           <span
             className={cn(step === "adapter" && "font-medium text-foreground")}
           >
-            2. Adapter
-          </span>
+            {l10n("local.2_adapter_f692efe7")}</span>
         </div>
         <form
           className="flex min-h-0 flex-col"
@@ -178,26 +177,25 @@ export function AgentBasicsDialog({
               <div className="space-y-2">
                 <DialogTitle className="text-3xl font-semibold tracking-tight">
                   {step === "name"
-                    ? "Meet your next agent"
-                    : "Choose an adapter"}
+                    ? l10n("local.meet_your_next_agent_945b9577")
+                    : l10n("local.choose_an_adapter_ea43ab7d")}
                 </DialogTitle>
                 <DialogDescription className="text-base">
                   {step === "name"
-                    ? "Start with a name. Make them your own."
-                    : `How should ${name.trim()} work?`}
+                    ? l10n("local.start_with_a_name_make_them_your_own_8d8fc9f2")
+                    : l10n("local.how_should_value_work_e6568aee", {v0: (name.trim())})}
                 </DialogDescription>
               </div>
             </div>
             {step === "name" ? (
               <div className="space-y-2">
                 <label htmlFor={id} className="text-sm font-medium">
-                  Agent name
-                </label>
+                  {l10n("local.agent_name_1cfb2187")}</label>
                 <Input
                   id={id}
                   autoFocus
                   maxLength={100}
-                  placeholder="e.g. Darnold"
+                  placeholder={l10n("local.e_g_darnold_4c64e4fe")}
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   className="h-12 text-base"
@@ -209,17 +207,15 @@ export function AgentBasicsDialog({
                     className="px-0 text-muted-foreground"
                     onClick={onInvite}
                   >
-                    Invite an external agent
-                  </Button>
+                    {l10n("local.invite_an_external_agent_0c21d454")}</Button>
                 )}
               </div>
             ) : (
               <fieldset className="space-y-4">
-                <legend className="sr-only">Adapter</legend>
+                <legend className="sr-only">{l10n("local.adapter_0252b849")}</legend>
                 {isPending && (
                   <p role="status" className="text-sm text-muted-foreground">
-                    Loading adapters…
-                  </p>
+                    {l10n("local.loading_adapters_89e30959")}</p>
                 )}
                 {error && (
                   <p role="alert" className="text-sm text-destructive">
@@ -264,16 +260,15 @@ export function AgentBasicsDialog({
                 </div>
                 {validAdapter && adapterType === "paperclip_runner" && (
                   <label className="flex flex-col gap-2 text-sm font-medium">
-                    Runner
-                    <select
+                    {l10n("local.runner_2184a4e3")}<select
                       className="rounded-md border border-border bg-background px-3 py-2"
                       value={runnerProvider}
                       onChange={(event) =>
                         setRunnerProvider(event.target.value)
                       }
                     >
-                      <option value="codex">Codex (app server)</option>
-                      <option value="claude">Claude (ACPX)</option>
+                      <option value="codex">{l10n("local.codex_app_server_d64fe2f5")}</option>
+                      <option value="claude">{l10n("local.claude_acpx_60a5ff32")}</option>
                       <option value="opencode">OpenCode</option>
                     </select>
                   </label>
@@ -288,19 +283,18 @@ export function AgentBasicsDialog({
               onClick={() => (step === "name" ? onClose() : setStep("name"))}
             >
               {step === "name" ? (
-                "Cancel"
+                l10n("local.cancel_19766ed6")
               ) : (
                 <>
                   <ArrowLeft className="size-4" />
-                  Back
-                </>
+                  {l10n("local.back_76900f1b")}</>
               )}
             </Button>
             <Button
               type="submit"
               disabled={!name.trim() || (step === "adapter" && !validAdapter)}
             >
-              {step === "name" ? "Choose adapter" : "Configure agent"}
+              {step === "name" ? l10n("local.choose_adapter_83a3d0a9") : l10n("local.configure_agent_14c603bd")}
               <ArrowRight className="size-4" />
             </Button>
           </div>

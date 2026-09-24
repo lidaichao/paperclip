@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { parseAgentMentionHref } from "@paperclipai/shared";
 
 /**
@@ -71,13 +72,13 @@ export function resolveRunStatusPresentation(
 ): RunStatusPresentation {
   if (status === "cancelled" && opts.operatorInterrupted) {
     return {
-      label: "interrupted",
+      label: l10n("local.interrupted_d512d96e"),
       className: "text-amber-700 dark:text-amber-300",
       srHint: "interrupted by board comment",
     };
   }
   return {
-    label: status === "timed_out" ? "timed out" : status.replace(/_/g, " "),
+    label: status === "timed_out" ? l10n("local.timed_out_3dcd80f1") : status.replace(/_/g, " "),
     className: runStatusClassName(status),
     srHint: null,
   };

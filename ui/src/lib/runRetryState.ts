@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { formatDateTime } from "./utils";
 
 type RetryAwareRun = {
@@ -19,12 +20,12 @@ export type RunRetryStateSummary = {
 };
 
 const RETRY_REASON_LABELS: Record<string, string> = {
-  transient_failure: "Transient failure",
-  missing_issue_comment: "Missing task comment",
-  process_lost: "Process lost",
-  assignment_recovery: "Assignment recovery",
-  issue_continuation_needed: "Continuation needed",
-  max_turns_continuation: "Max-turn continuation",
+  transient_failure: l10n("local.transient_failure_cd410c02"),
+  missing_issue_comment: l10n("local.missing_task_comment_f5e2ea1f"),
+  process_lost: l10n("local.process_lost_670e8b32"),
+  assignment_recovery: l10n("local.assignment_recovery_752368eb"),
+  issue_continuation_needed: l10n("local.continuation_needed_1ce15e04"),
+  max_turns_continuation: l10n("local.max_turn_continuation_89ed52f0"),
 };
 
 function readNonEmptyString(value: unknown) {
@@ -47,7 +48,7 @@ export function describeRunRetryState(run: RetryAwareRun): RunRetryStateSummary 
     typeof run.scheduledRetryAttempt === "number" && Number.isFinite(run.scheduledRetryAttempt) && run.scheduledRetryAttempt > 0
       ? run.scheduledRetryAttempt
       : null;
-  const attemptLabel = attempt ? `Attempt ${attempt}` : null;
+  const attemptLabel = attempt ? l10n("local.attempt_value_48acbb29", {v0: (attempt)}) : null;
   const reasonLabel = formatRetryReason(run.scheduledRetryReason);
   const retryOfRunId = readNonEmptyString(run.retryOfRunId);
   const exhaustedReason = readNonEmptyString(run.retryExhaustedReason);

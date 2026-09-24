@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { RoutineRunSummary, RoutineVariable } from "@paperclipai/shared";
 
 /**
@@ -36,9 +37,9 @@ export function dedupedTriggerLabel(
  * turn it into a one-line "why" for the runs list.
  */
 const SKIP_REASON_LABELS: Record<string, string> = {
-  no_external_activity: "Skipped — no activity since last run",
-  paused: "Skipped — routine paused",
-  worktree_execution_cutoff: "Skipped — worktree execution cutoff",
+  no_external_activity: l10n("local.skipped_no_activity_since_last_run_7f7c5a93"),
+  paused: l10n("local.skipped_routine_paused_09d735c5"),
+  worktree_execution_cutoff: l10n("local.skipped_worktree_execution_cutoff_fd277c7a"),
 };
 
 /**

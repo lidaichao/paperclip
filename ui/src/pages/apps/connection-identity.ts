@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type {
   ConnectionGrantKind,
   ConnectionAudienceMember,
@@ -73,15 +74,15 @@ export function connectionNameForCredentialPolicy(
 export function grantStatusLabel(status: ConnectionGrantStatus | null): string {
   switch (status) {
     case "active":
-      return "Connected";
+      return l10n("local.connected_22965568");
     case "needs_reauthorization":
-      return "Needs attention";
+      return l10n("local.needs_attention_c1ebc781");
     case "expired":
-      return "Expired";
+      return l10n("local.expired_424a2551");
     case "revoked":
-      return "Revoked";
+      return l10n("local.revoked_f6f738d0");
     default:
-      return "Not connected";
+      return l10n("local.not_connected_0303e182");
   }
 }
 
@@ -114,7 +115,7 @@ export function grantAccountLabel(
   if (tenantName) return tenantName;
   if (grant?.kind === "user") return options.subjectLabel?.trim() || "Connected account";
   if (grant?.kind === "agent") return options.subjectLabel?.trim() || "Dedicated account";
-  return "Shared credential";
+  return l10n("local.shared_credential_d38adc78");
 }
 
 /**
@@ -124,8 +125,8 @@ export function grantAccountLabel(
  */
 export function audienceSummary(grant: Pick<ConnectionGrant, "members"> | null): string {
   const count = grant?.members?.length ?? 0;
-  if (count === 0) return "All organization members";
-  return `${count} selected ${count === 1 ? "member" : "members"}`;
+  if (count === 0) return l10n("local.all_organization_members_eac0894e");
+  return l10n("local.value_selected_value_c372c5aa", {v0: (count), v1: (count === 1 ? "member" : "members")});
 }
 
 export function audienceUserIds(grant: Pick<ConnectionGrant, "members"> | null): Set<string> {

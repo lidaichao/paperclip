@@ -1,3 +1,5 @@
+import { enumLabel } from "../i18n/display";
+import { l10n } from "../i18n";
 import { useState } from "react";
 import type { IssueBlockerAttention } from "@paperclipai/shared";
 import { cn } from "../lib/utils";
@@ -8,7 +10,7 @@ import { Button } from "@/components/ui/button";
 const allStatuses = ["backlog", "todo", "in_progress", "in_review", "done", "cancelled", "blocked"];
 
 function statusLabel(status: string): string {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return enumLabel(status);
 }
 
 interface StatusIconProps {
@@ -23,45 +25,45 @@ interface StatusIconProps {
 }
 
 function blockedAttentionLabel(blockerAttention: IssueBlockerAttention | null | undefined) {
-  if (!blockerAttention || blockerAttention.state === "none") return "Blocked";
+  if (!blockerAttention || blockerAttention.state === "none") return l10n("local.blocked_18f2a094");
 
   if (blockerAttention.reason === "active_child") {
     const count = blockerAttention.coveredBlockerCount;
     if (count === 1 && blockerAttention.sampleBlockerIdentifier) {
-      return `Blocked · waiting on active sub-task ${blockerAttention.sampleBlockerIdentifier}`;
+      return l10n("local.blocked_waiting_on_active_sub_task_value_2f1e3a80", {v0: (blockerAttention.sampleBlockerIdentifier)});
     }
-    if (count === 1) return "Blocked · waiting on 1 active sub-task";
-    return `Blocked · waiting on ${count} active sub-tasks`;
+    if (count === 1) return l10n("local.blocked_waiting_on_1_active_sub_task_5878bbf4");
+    return l10n("local.blocked_waiting_on_value_active_sub_tasks_5e9cc447", {v0: (count)});
   }
 
   if (blockerAttention.reason === "active_dependency") {
     const count = blockerAttention.coveredBlockerCount;
     if (count === 1 && blockerAttention.sampleBlockerIdentifier) {
-      return `Blocked · covered by active dependency ${blockerAttention.sampleBlockerIdentifier}`;
+      return l10n("local.blocked_covered_by_active_dependency_value_30a10a69", {v0: (blockerAttention.sampleBlockerIdentifier)});
     }
-    if (count === 1) return "Blocked · covered by 1 active dependency";
-    return `Blocked · covered by ${count} active dependencies`;
+    if (count === 1) return l10n("local.blocked_covered_by_1_active_dependency_319c949c");
+    return l10n("local.blocked_covered_by_value_active_dependencies_76745afd", {v0: (count)});
   }
 
   if (blockerAttention.reason === "stalled_review") {
     const count = blockerAttention.stalledBlockerCount;
     const leaf = blockerAttention.sampleStalledBlockerIdentifier ?? blockerAttention.sampleBlockerIdentifier;
-    if (count === 1 && leaf) return `Blocked · review stalled on ${leaf}`;
-    if (count === 1) return "Blocked · review stalled with no clear next step";
-    return `Blocked · ${count} reviews stalled with no clear next step`;
+    if (count === 1 && leaf) return l10n("local.blocked_review_stalled_on_value_e130f5ae", {v0: (leaf)});
+    if (count === 1) return l10n("local.blocked_review_stalled_with_no_clear_next_ste_4978f3d5");
+    return l10n("local.blocked_value_reviews_stalled_with_no_clear_n_ee386ccf", {v0: (count)});
   }
 
   if (blockerAttention.reason === "attention_required") {
     const count = blockerAttention.attentionBlockerCount || blockerAttention.unresolvedBlockerCount;
-    const attentionCopy = `${count} ${count === 1 ? "blocker needs" : "blockers need"} attention`;
+    const attentionCopy = l10n("local.value_value_attention_3a36fdfb", {v0: (count), v1: (count === 1 ? "blocker needs" : "blockers need")});
     const coveredCount = blockerAttention.coveredBlockerCount;
     if (coveredCount > 0) {
-      return `Blocked · ${attentionCopy}; ${coveredCount} covered by active work`;
+      return l10n("local.blocked_value_value_covered_by_active_work_e9f905f5", {v0: (attentionCopy), v1: (coveredCount)});
     }
-    return `Blocked · ${attentionCopy}`;
+    return l10n("local.blocked_value_cc750431", {v0: (attentionCopy)});
   }
 
-  return "Blocked";
+  return l10n("local.blocked_18f2a094");
 }
 
 /**
@@ -106,7 +108,7 @@ export function StatusIcon({ status, externalConversationState, blockerAttention
   const trigger = showLabel ? (
     <button
       type="button"
-      aria-label={`Change status (current: ${ariaLabel})`}
+      aria-label={l10n("local.change_status_current_value_6732c4fa", {v0: (ariaLabel)})}
       className="inline-flex min-h-5 items-center gap-1.5 cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
     >
       {glyph}
@@ -116,7 +118,7 @@ export function StatusIcon({ status, externalConversationState, blockerAttention
     <button
       type="button"
       data-slot="icon-button"
-      aria-label={`Change status (current: ${ariaLabel})`}
+      aria-label={l10n("local.change_status_current_value_6732c4fa", {v0: (ariaLabel)})}
       className="inline-flex cursor-pointer items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-(length:--rad-3) focus-visible:ring-ring"
     >
       {glyph}

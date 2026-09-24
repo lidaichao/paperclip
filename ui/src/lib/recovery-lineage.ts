@@ -1,5 +1,6 @@
+import { l10n } from "../i18n";
 import type { IssueRecoveryAction, IssueScheduledRetry } from "@paperclipai/shared";
-import { formatMonitorOffset } from "./issue-monitor";
+import { formatMonitorOffset, displayMonitorRelative } from "./issue-monitor";
 
 /**
  * Which bounded retry budget the server is currently spending on a recovery action.
@@ -195,7 +196,7 @@ export function readRecoveryRetryLineage(
 /** "Attempt 2 of 5", or null when the server did not record a bounded budget. */
 export function formatRecoveryAttemptLabel(lineage: RecoveryRetryLineage): string | null {
   if (lineage.maxAttempts === null) return null;
-  return `Attempt ${Math.min(lineage.attempt, lineage.maxAttempts)} of ${lineage.maxAttempts}`;
+  return l10n("local.attempt_value_of_value_4aeb1be8", {v0: (Math.min(lineage.attempt, lineage.maxAttempts)), v1: (lineage.maxAttempts)});
 }
 
 /** "in 3m" / "now" / "3m ago" for the stored next attempt, or null when none is stored. */
@@ -222,9 +223,9 @@ export function formatRecoveryLineageSummary(lineage: RecoveryRetryLineage): str
   } else if (lineage.retryExpired) {
     // Never "next try 5m ago": a due time in the past is a missed attempt, and phrasing it as
     // an upcoming one is exactly the false healthy state this helper exists to prevent.
-    parts.push(offset ? `retry missed ${offset}` : "retry missed");
+    parts.push(offset ? l10n("local.retry_missed_value_cafb69d7", { v0: displayMonitorRelative(offset) }) : l10n("local.retry_missed_a3e392ad"));
   } else if (offset) {
-    parts.push(offset === "now" ? "next try now" : `next try ${offset}`);
+    parts.push(offset === "now" ? l10n("local.next_try_now_3101ffa0") : l10n("local.next_try_value_97dabfd6", { v0: displayMonitorRelative(offset) }));
   } else if (lineage.exhausted) {
     parts.push("retries used up");
   }

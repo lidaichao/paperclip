@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 /**
  * Plain-language presentation of *who may resolve* an issue-thread interaction
  * (PAP-17280, Phase 3 of the open-default resolver contract in
@@ -37,9 +38,9 @@ export const DEFAULT_RESOLVER_POLICY: IssueThreadInteractionCanonicalResolverPol
 
 /** Short label for a resolver audience — badges, select options, table cells. */
 const RESOLVER_POLICY_LABELS: Record<IssueThreadInteractionCanonicalResolverPolicy, string> = {
-  anyone: "Anyone",
-  not_creator: "Anyone except creator",
-  human_only: "Human only",
+  anyone: l10n("local.anyone_8d486bb2"),
+  not_creator: l10n("local.anyone_except_creator_23c0899b"),
+  human_only: l10n("local.human_only_de7c8fff"),
 };
 
 /**
@@ -189,28 +190,28 @@ export function describeResolverAudience({
   const creator = midSentence(creatorLabel?.trim() || "the agent that created it");
 
   const summary = isUserAddressee
-    ? `Only ${addressee} can respond.`
+    ? l10n("local.only_value_can_respond_5acc7611", {v0: (addressee)})
     : policy === "human_only"
-    ? `${hasAddressee ? `Assigned to ${addressee}. ` : ""}Only a person on the board can respond — agents cannot resolve this card.`
+    ? l10n("local.valueonly_a_person_on_the_board_can_respond_a_2f257615", {v0: (hasAddressee ? `Assigned to ${addressee}. ` : "")})
     : hasAddressee
-      ? `Only ${addressee} or a person on the board can respond.`
+      ? l10n("local.only_value_or_a_person_on_the_board_can_respo_92a31ca6", {v0: (addressee)})
       : policy === "not_creator"
-        ? `Anyone in the organization except ${creator} can respond.`
-        : "Anyone in the organization can respond — the board or any agent, including the one that asked.";
+        ? l10n("local.anyone_in_the_organization_except_value_can_r_68f28c53", {v0: (creator)})
+        : l10n("local.anyone_in_the_organization_can_respond_the_bo_fcde294a");
 
   // Same fact, fewer words: a collapsed row has to answer "is this mine to
   // decide?" in one glance, next to the buttons that act on the answer.
   const shortSummary = isUserAddressee
-    ? `Only ${addressee} can respond`
+    ? l10n("local.only_value_can_respond_bc38f0fd", {v0: (addressee)})
     : policy === "human_only"
     ? hasAddressee
-      ? `Assigned to ${addressee} · board only`
-      : "Only the board can respond"
+      ? l10n("local.assigned_to_value_board_only_817c40c4", {v0: (addressee)})
+      : l10n("local.only_the_board_can_respond_4cb6e22e")
     : hasAddressee
-      ? `Only ${addressee} or the board can respond`
+      ? l10n("local.only_value_or_the_board_can_respond_d490bf82", {v0: (addressee)})
       : policy === "not_creator"
-        ? `Anyone except ${creator} can respond`
-        : "Anyone can respond";
+        ? l10n("local.anyone_except_value_can_respond_a8ac2444", {v0: (creator)})
+        : l10n("local.anyone_can_respond_aa246ded");
 
   const source = facts.effectiveResolverPolicySource;
   const provenance = facts.resolverPolicyProvenance;
@@ -246,7 +247,7 @@ export function describeResolverAudience({
     // while the sentence next to it names one actor. `human_only` wins for an
     // agent addressee, while a user addressee is the narrower human audience.
     label: (policy !== "human_only" || isUserAddressee) && hasAddressee
-      ? "Addressed"
+      ? l10n("local.addressed_6a9a603c")
       : RESOLVER_POLICY_LABELS[policy],
     summary,
     shortSummary,

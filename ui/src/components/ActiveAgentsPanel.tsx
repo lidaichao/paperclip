@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { memo, useMemo } from "react";
 import { Link } from "@/lib/router";
@@ -23,13 +24,13 @@ const EMPTY_TRANSCRIPT: TranscriptEntry[] = [];
 const EMPTY_RUNS: LiveRunForIssue[] = [];
 
 const runStatusLabels: Record<string, string> = {
-  running: "Running",
-  queued: "Queued",
-  succeeded: "Succeeded",
-  failed: "Failed",
-  timed_out: "Timed out",
-  cancelled: "Cancelled",
-  interrupted: "Interrupted",
+  running: l10n("local.running_f4ccae29"),
+  queued: l10n("local.queued_661ff40a"),
+  succeeded: l10n("local.succeeded_6d9a6f97"),
+  failed: l10n("local.failed_031a8f0f"),
+  timed_out: l10n("local.timed_out_9718cc76"),
+  cancelled: l10n("local.cancelled_d353a99e"),
+  interrupted: l10n("local.interrupted_132d124d"),
 };
 
 interface ActiveAgentsPanelProps {
@@ -139,8 +140,8 @@ export function ActiveAgentsPanel({
         <div className="mt-3 flex justify-end text-xs text-muted-foreground">
           <Link to="/dashboard/live" className="hover:text-foreground hover:underline">
             {hiddenRunCount > 0
-              ? `${hiddenRunCount} more active/recent run${hiddenRunCount === 1 ? "" : "s"}`
-              : "View all runs"}
+              ? l10n("local.value_more_active_recent_runvalue_4d0d8cbe", {v0: (hiddenRunCount), v1: (englishPluralSuffix(hiddenRunCount === 1 ? "" : "s"))})
+              : l10n("local.view_all_runs_346de5a0")}
           </Link>
         </div>
       )}
@@ -173,7 +174,7 @@ export const AgentRunCard = memo(function AgentRunCard({
     ? `Finished ${relativeTime(run.finishedAt)}`
     : run.startedAt ? `Started ${relativeTime(run.startedAt)}` : `Queued ${relativeTime(run.createdAt)}`;
   const taskStatus = issue?.status === "in_review" && issue.externalConversationState === "waiting" ? "idle" : issue?.status ?? "backlog";
-  const taskTitle = issue?.title ?? (issueLoadFailed ? "Task unavailable" : "Loading task…");
+  const taskTitle = issue?.title ?? (issueLoadFailed ? l10n("local.task_unavailable_8e7e1576") : l10n("local.loading_task_d417ed35"));
 
   return (
     <div className={cn(
@@ -187,8 +188,8 @@ export const AgentRunCard = memo(function AgentRunCard({
       <div className={cn("flex shrink-0 flex-col gap-3 p-3", showTranscript && "border-b border-border/60")}>
         <Link
           to={runUrl}
-          title={`${run.agentName} — ${statusLabel} · ${timestamp}`}
-          aria-label={`${run.agentName} — ${statusLabel}. View run`}
+          title={l10n("local.value_value_value_fbe666ec", {v0: (run.agentName), v1: (statusLabel), v2: (timestamp)})}
+          aria-label={l10n("local.value_value_view_run_7a917727", {v0: (run.agentName), v1: (statusLabel)})}
           className="flex min-w-0 items-center gap-2 rounded-md text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <AgentIdentity agent={{ id: run.agentId, name: run.agentName, appearance: run.agentAppearance }} size="sm" className="gap-2 font-medium" />
@@ -206,7 +207,7 @@ export const AgentRunCard = memo(function AgentRunCard({
                   status={taskStatus}
                   size="md"
                   className="self-center"
-                  title={issue ? `Task ${taskStatus.replace(/_/g, " ")}` : undefined}
+                  title={issue ? l10n("local.task_value_e26d4011", {v0: (taskStatus.replace(/_/g, " "))}) : undefined}
                 />
                 <span className="truncate">{taskTitle}</span>
               </span>
@@ -216,7 +217,7 @@ export const AgentRunCard = memo(function AgentRunCard({
         ) : (
           <Link to={runUrl} className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/60 px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Clock3 className="size-4 shrink-0" aria-hidden />
-            <span className="truncate">{run.invocationSource === "timer" ? "Scheduled heartbeat" : "No linked task"}</span>
+            <span className="truncate">{run.invocationSource === "timer" ? l10n("local.scheduled_heartbeat_9994a695") : l10n("local.no_linked_task_65d7a19e")}</span>
           </Link>
         )}
         <time

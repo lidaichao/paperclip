@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,8 +68,8 @@ export function SecretPopoverForm({
     }
   }
 
-  const ctaLabel = mode === "create" ? "Create & bind" : "Store & bind";
-  const heading = mode === "create" ? "Create secret" : "Store value as secret";
+  const ctaLabel = mode === "create" ? l10n("local.create_bind_e4fbc182") : l10n("local.store_bind_b11682f4");
+  const heading = mode === "create" ? l10n("local.create_secret_b72a9826") : l10n("local.store_value_as_secret_26f01e47");
 
   return (
     <div className="w-72 space-y-3">
@@ -76,21 +77,20 @@ export function SecretPopoverForm({
         <PopoverTitle className="text-sm font-medium">{heading}</PopoverTitle>
         {mode === "store" ? (
           <PopoverDescription className="text-(length:--text-micro) text-muted-foreground">
-            Moves the typed value into an encrypted organization secret and binds{" "}
-            <span className="font-mono">{initialName || "this variable"}</span> to it.
-          </PopoverDescription>
+            {l10n("local.moves_the_typed_value_into_an_encrypted_organ_f4cbdedc")}{" "}
+            <span className="font-mono">{initialName || l10n("local.this_variable_7ab1059a")}</span> {l10n("local.to_it_661b490b")}</PopoverDescription>
         ) : null}
       </div>
 
       <label className="block space-y-1">
-        <span className="text-(length:--text-micro) font-medium text-muted-foreground">Name</span>
+        <span className="text-(length:--text-micro) font-medium text-muted-foreground">{l10n("local.name_dcd1d522")}</span>
         <input
           className={cn(fieldClass, nameError && "border-destructive focus-visible:ring-destructive/40")}
           value={name}
           autoFocus
           spellCheck={false}
           placeholder="secret_name"
-          aria-label="Secret name"
+          aria-label={l10n("local.secret_name_5cdf573b")}
           aria-invalid={nameError ? true : undefined}
           onChange={(event) => setName(event.target.value)}
           onBlur={() => setTouched(true)}
@@ -105,7 +105,7 @@ export function SecretPopoverForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-(length:--text-micro) font-medium text-muted-foreground">Value</span>
+        <span className="text-(length:--text-micro) font-medium text-muted-foreground">{l10n("local.value_8e37953d")}</span>
         <div className="relative">
           <input
             className={cn(fieldClass, "pr-8", valueError && "border-destructive focus-visible:ring-destructive/40")}
@@ -113,15 +113,15 @@ export function SecretPopoverForm({
             value={value}
             readOnly={mode === "store"}
             spellCheck={false}
-            placeholder={mode === "create" ? "value" : undefined}
-            aria-label="Secret value"
+            placeholder={mode === "create" ? l10n("local.value_cd42404d") : undefined}
+            aria-label={l10n("local.secret_value_6ef47d98")}
             aria-invalid={valueError ? true : undefined}
             onChange={mode === "create" ? (event) => setValue(event.target.value) : undefined}
           />
           <button
             type="button"
             className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
-            aria-label={reveal ? "Hide value" : "Show value"}
+            aria-label={reveal ? l10n("local.hide_value_381d9c18") : l10n("local.show_value_fad206e2")}
             onClick={() => setReveal((prev) => !prev)}
           >
             {reveal ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -134,8 +134,7 @@ export function SecretPopoverForm({
 
       <div className="flex items-center justify-end gap-2 pt-0.5">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={submitting}>
-          Cancel
-        </Button>
+          {l10n("local.cancel_19766ed6")}</Button>
         <Button type="button" size="sm" onClick={() => void handleSubmit()} disabled={!canSubmit}>
           {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
           {ctaLabel}

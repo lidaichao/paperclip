@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect } from "react";
 import { Wrench } from "lucide-react";
 import { Link, Navigate, useParams } from "@/lib/router";
@@ -40,20 +41,20 @@ export function ToolsAccess() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
+      { label: selectedCompany?.name ?? l10n("local.company_de4743c8"), href: "/dashboard" },
+      { label: l10n("local.apps_89dd7484"), href: "/apps" },
       ...(advanced
-        ? [{ label: "Advanced setup" }]
+        ? [{ label: l10n("local.advanced_setup_c7de0706") }]
         : [
-            { label: "Advanced setup", href: advancedTabHref("paste-config") },
-            { label: tabLabel ?? "Developer tools" },
+            { label: l10n("local.advanced_setup_c7de0706"), href: advancedTabHref("paste-config") },
+            { label: tabLabel ?? l10n("local.developer_tools_96f0c06b") },
           ]),
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs, selectedCompany?.name, advanced, tabLabel]);
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select an organization to open advanced setup.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{l10n("local.select_an_organization_to_open_advanced_setup_7ddb3b16")}</div>;
   }
 
   if (params.tab === "run-your-own") {
@@ -86,17 +87,14 @@ export function ToolsAccess() {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
         <header>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-foreground">Advanced setup</h1>
+            <h1 className="text-xl font-bold text-foreground">{l10n("local.advanced_setup_c7de0706")}</h1>
             <span className="inline-flex items-center rounded-full bg-foreground px-2.5 py-0.5 text-(length:--text-micro) font-bold text-background">
-              Advanced
-            </span>
+              {l10n("local.advanced_9f088dbe")}</span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            For tools that aren't in the gallery. You'll need details from the tool's documentation.
-            Most people never need this — if the app you want is in the gallery,{" "}
+            {l10n("local.for_tools_that_aren_t_in_the_gallery_you_ll_n_70dbef37")}{" "}
             <Link to="/apps" className="font-medium text-primary hover:underline">
-              connect it there instead
-            </Link>
+              {l10n("local.connect_it_there_instead_106ac84a")}</Link>
             .
           </p>
         </header>
@@ -122,10 +120,9 @@ export function ToolsAccess() {
 
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Wrench className="h-3.5 w-3.5" />
-          Looking for the developer surface?{" "}
+          {l10n("local.looking_for_the_developer_surface_21a1fcee")}{" "}
           <Link to={advancedTabHref("profiles")} className="font-medium text-primary hover:underline">
-            Open developer tools
-          </Link>
+            {l10n("local.open_developer_tools_04c15814")}</Link>
         </p>
       </div>
     );

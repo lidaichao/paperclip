@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 /**
  * @fileoverview Core Skill Studio permission surfaces (PAP-13865, Phase 3).
  *
@@ -73,8 +74,7 @@ export function SkillPolicyDenialNotice({
 }) {
   const actions = onDismiss ? (
     <Button variant="ghost" size="sm" onClick={onDismiss}>
-      Dismiss
-    </Button>
+      {l10n("local.dismiss_48845bff")}</Button>
   ) : undefined;
 
   return (

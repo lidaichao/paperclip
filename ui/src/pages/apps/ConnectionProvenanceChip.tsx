@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { Blocks } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +22,10 @@ export function ConnectionProvenanceChip({
     return (
       <span
         className={chipClass}
-        title={connectorUid ? `Credentials managed by Vercel Connect (${connectorUid})` : "Credentials managed by Vercel Connect"}
+        title={connectorUid ? l10n("local.credentials_managed_by_vercel_connect_value_bd04515e", {v0: (connectorUid)}) : l10n("local.credentials_managed_by_vercel_connect_25308b6d")}
       >
         <Blocks className="h-3 w-3" />
-        via Vercel Connect
-      </span>
+        {l10n("local.via_vercel_connect_d34e03fb")}</span>
     );
   }
 

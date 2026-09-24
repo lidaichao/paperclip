@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 /**
  * Attachment-chip helpers for the task-chat redesign (PAP-351): map a filename
  * to a kind icon + label for the shadcn base/attachment chips, and extract the
@@ -38,47 +39,47 @@ const IMAGE_EXTENSIONS = new Set([
 
 const KIND_BY_EXTENSION: Record<string, FileKind> = {
   pdf: { icon: FileText, label: "PDF" },
-  doc: { icon: FileText, label: "Doc" },
-  docx: { icon: FileText, label: "Doc" },
-  txt: { icon: FileText, label: "Text" },
+  doc: { icon: FileText, label: l10n("local.doc_49f4e57c") },
+  docx: { icon: FileText, label: l10n("local.doc_49f4e57c") },
+  txt: { icon: FileText, label: l10n("local.text_71988c4d") },
   md: { icon: FileText, label: "Markdown" },
-  rtf: { icon: FileText, label: "Text" },
+  rtf: { icon: FileText, label: l10n("local.text_71988c4d") },
   csv: { icon: FileSpreadsheet, label: "CSV" },
-  tsv: { icon: FileSpreadsheet, label: "TSV" },
-  xls: { icon: FileSpreadsheet, label: "Sheet" },
-  xlsx: { icon: FileSpreadsheet, label: "Sheet" },
+  tsv: { icon: FileSpreadsheet, label: l10n("local.tsv_fca17147") },
+  xls: { icon: FileSpreadsheet, label: l10n("local.sheet_54bf0ebb") },
+  xlsx: { icon: FileSpreadsheet, label: l10n("local.sheet_54bf0ebb") },
   zip: { icon: FileArchive, label: "ZIP" },
-  gz: { icon: FileArchive, label: "Archive" },
-  tar: { icon: FileArchive, label: "Archive" },
-  tgz: { icon: FileArchive, label: "Archive" },
-  rar: { icon: FileArchive, label: "Archive" },
-  "7z": { icon: FileArchive, label: "Archive" },
-  mp3: { icon: FileAudio, label: "Audio" },
-  wav: { icon: FileAudio, label: "Audio" },
-  m4a: { icon: FileAudio, label: "Audio" },
-  ogg: { icon: FileAudio, label: "Audio" },
-  mp4: { icon: FileVideo, label: "Video" },
-  mov: { icon: FileVideo, label: "Video" },
-  webm: { icon: FileVideo, label: "Video" },
+  gz: { icon: FileArchive, label: l10n("local.archive_66f4804e") },
+  tar: { icon: FileArchive, label: l10n("local.archive_66f4804e") },
+  tgz: { icon: FileArchive, label: l10n("local.archive_66f4804e") },
+  rar: { icon: FileArchive, label: l10n("local.archive_66f4804e") },
+  "7z": { icon: FileArchive, label: l10n("local.archive_66f4804e") },
+  mp3: { icon: FileAudio, label: l10n("local.audio_bc1b8890") },
+  wav: { icon: FileAudio, label: l10n("local.audio_bc1b8890") },
+  m4a: { icon: FileAudio, label: l10n("local.audio_bc1b8890") },
+  ogg: { icon: FileAudio, label: l10n("local.audio_bc1b8890") },
+  mp4: { icon: FileVideo, label: l10n("local.video_d534be82") },
+  mov: { icon: FileVideo, label: l10n("local.video_d534be82") },
+  webm: { icon: FileVideo, label: l10n("local.video_d534be82") },
   json: { icon: FileCode, label: "JSON" },
   yaml: { icon: FileCode, label: "YAML" },
   yml: { icon: FileCode, label: "YAML" },
   xml: { icon: FileCode, label: "XML" },
   html: { icon: FileCode, label: "HTML" },
   css: { icon: FileCode, label: "CSS" },
-  js: { icon: FileCode, label: "Code" },
-  jsx: { icon: FileCode, label: "Code" },
-  ts: { icon: FileCode, label: "Code" },
-  tsx: { icon: FileCode, label: "Code" },
-  py: { icon: FileCode, label: "Code" },
-  rb: { icon: FileCode, label: "Code" },
-  go: { icon: FileCode, label: "Code" },
-  rs: { icon: FileCode, label: "Code" },
-  sh: { icon: FileCode, label: "Code" },
-  sql: { icon: FileCode, label: "SQL" },
-  log: { icon: FileText, label: "Log" },
-  patch: { icon: FileCode, label: "Patch" },
-  diff: { icon: FileCode, label: "Patch" },
+  js: { icon: FileCode, label: l10n("local.code_340f4630") },
+  jsx: { icon: FileCode, label: l10n("local.code_340f4630") },
+  ts: { icon: FileCode, label: l10n("local.code_340f4630") },
+  tsx: { icon: FileCode, label: l10n("local.code_340f4630") },
+  py: { icon: FileCode, label: l10n("local.code_340f4630") },
+  rb: { icon: FileCode, label: l10n("local.code_340f4630") },
+  go: { icon: FileCode, label: l10n("local.code_340f4630") },
+  rs: { icon: FileCode, label: l10n("local.code_340f4630") },
+  sh: { icon: FileCode, label: l10n("local.code_340f4630") },
+  sql: { icon: FileCode, label: l10n("local.sql_a7056a45") },
+  log: { icon: FileText, label: l10n("local.log_21e49eb2") },
+  patch: { icon: FileCode, label: l10n("local.patch_7e345470") },
+  diff: { icon: FileCode, label: l10n("local.patch_7e345470") },
 };
 
 function extensionOf(name: string): string {
@@ -115,7 +116,7 @@ export function isImageAttachment(ref: AttachmentRef): boolean {
 
 /** Kind icon + short label for a filename; unknown extensions get File/"File". */
 export function fileKindForName(name: string): FileKind {
-  return KIND_BY_EXTENSION[extensionOf(name)] ?? { icon: FileIcon, label: "File" };
+  return KIND_BY_EXTENSION[extensionOf(name)] ?? { icon: FileIcon, label: l10n("local.file_50009ce1") };
 }
 
 export function fileKindForAttachment(ref: AttachmentRef): FileKind {
@@ -130,11 +131,11 @@ export function fileKindForAttachment(ref: AttachmentRef): FileKind {
   if (contentType === "text/csv" || contentType === "application/csv") {
     return { icon: FileSpreadsheet, label: "CSV" };
   }
-  if (contentType.startsWith("text/")) return { icon: FileText, label: "Text" };
-  if (contentType.startsWith("audio/")) return { icon: FileAudio, label: "Audio" };
-  if (contentType.startsWith("video/")) return { icon: FileVideo, label: "Video" };
+  if (contentType.startsWith("text/")) return { icon: FileText, label: l10n("local.text_71988c4d") };
+  if (contentType.startsWith("audio/")) return { icon: FileAudio, label: l10n("local.audio_bc1b8890") };
+  if (contentType.startsWith("video/")) return { icon: FileVideo, label: l10n("local.video_d534be82") };
   if (contentType.includes("zip") || contentType.includes("archive")) {
-    return { icon: FileArchive, label: "Archive" };
+    return { icon: FileArchive, label: l10n("local.archive_66f4804e") };
   }
   return byName;
 }

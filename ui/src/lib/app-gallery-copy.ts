@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 /**
  * Prosumer copy for the Apps surface (PAP-10856).
  *
@@ -163,7 +164,7 @@ export function credentialFieldLabel(
   rawLabel: string,
   fieldCount: number,
 ): string {
-  if (fieldCount <= 1) return `Your ${appName} key`;
+  if (fieldCount <= 1) return l10n("local.your_value_key_721683e8", {v0: (appName)});
   const cleaned = sanitizeProsumerCopy(rawLabel);
   return cleaned || `Your ${appName} key`;
 }

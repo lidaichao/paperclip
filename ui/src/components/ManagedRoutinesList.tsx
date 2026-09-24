@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { Button } from "@/components/ui/button";
 import {
   RoutineListRow,
@@ -123,8 +124,8 @@ export function ManagedRoutinesList({
               runningRoutineId={runningRoutineKey}
               statusMutationRoutineId={statusMutationRoutineKey}
               href={href}
-              configureLabel="Configure"
-              managedByLabel={managedBy ? `Managed by ${managedBy}` : null}
+              configureLabel={l10n("local.configure_6defafa2")}
+              managedByLabel={managedBy ? l10n("local.managed_by_value_6e36b1de", {v0: (managedBy)}) : null}
               runNowButton
               hideArchiveAction
               disableRunNow={!canUseRoutine}
@@ -132,7 +133,7 @@ export function ManagedRoutinesList({
               secondaryDetails={
                 <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   {routine.resourceKey ? <span>{routine.resourceKey}</span> : null}
-                  {routine.cronExpression ? <span>Schedule {routine.cronExpression}</span> : null}
+                  {routine.cronExpression ? <span>{l10n("local.schedule_f4830a1d")}{" "}{routine.cronExpression}</span> : null}
                 </span>
               }
               onRunNow={() => onRunNow?.(routine)}
@@ -148,8 +149,8 @@ export function ManagedRoutinesList({
               >
                 <span>
                   {missingRefs.length
-                    ? `Missing ${missingRefs.map((ref) => `${ref.resourceKind}:${ref.resourceKey}`).join(", ")}`
-                    : "Routine defaults can be repaired."}
+                    ? l10n("local.missing_value_fa703024", {v0: (missingRefs.map((ref) => `${ref.resourceKind}:${ref.resourceKey}`).join(", "))})
+                    : l10n("local.routine_defaults_can_be_repaired_f3bb51cc")}
                 </span>
                 <span className="flex items-center gap-2">
                   {onReconcile ? (
@@ -159,7 +160,7 @@ export function ManagedRoutinesList({
                       disabled={reconcilingRoutineKey === routine.key}
                       onClick={() => onReconcile(routine)}
                     >
-                      {reconcilingRoutineKey === routine.key ? "Reconciling..." : "Reconcile"}
+                      {reconcilingRoutineKey === routine.key ? l10n("local.reconciling_393dc4a3") : l10n("local.reconcile_b59be565")}
                     </Button>
                   ) : null}
                   {onReset ? (
@@ -169,7 +170,7 @@ export function ManagedRoutinesList({
                       disabled={resettingRoutineKey === routine.key}
                       onClick={() => onReset(routine)}
                     >
-                      {resettingRoutineKey === routine.key ? "Resetting..." : "Reset"}
+                      {resettingRoutineKey === routine.key ? l10n("local.resetting_02281aff") : l10n("local.reset_daee7606")}
                     </Button>
                   ) : null}
                 </span>

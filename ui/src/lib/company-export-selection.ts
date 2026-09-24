@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type {
   CompanyPortabilityEmbeddedAssetManifestEntry,
   CompanyPortabilityIssueManifestEntry,
@@ -39,12 +40,12 @@ export const EXPORT_CATEGORY_ORDER: ExportCategoryKey[] = [
 ];
 
 export const EXPORT_CATEGORY_LABELS: Record<ExportCategoryKey, string> = {
-  agents: "Agents",
-  projects: "Projects",
-  skills: "Skills",
-  routines: "Routines",
-  tasks: "Tasks",
-  attachments: "Attachments",
+  agents: l10n("local.agents_279b44d2"),
+  projects: l10n("local.projects_04e2a972"),
+  skills: l10n("local.skills_66d0f523"),
+  routines: l10n("local.routines_61b7bb44"),
+  tasks: l10n("local.tasks_b3a60e61"),
+  attachments: l10n("local.attachments_634de114"),
 };
 
 /** Everything exports by default. */

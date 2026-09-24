@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useState } from "react";
 import type { Agent } from "@paperclipai/shared";
@@ -51,7 +52,7 @@ export function ReportsToPicker({
           {unknownManager ? (
             <>
               <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 truncate text-muted-foreground">Unknown manager (stale ID)</span>
+              <span className="min-w-0 truncate text-muted-foreground">{l10n("local.unknown_manager_stale_id_7c4ea0f2")}</span>
             </>
           ) : current ? (
             <>
@@ -62,7 +63,7 @@ export function ReportsToPicker({
                   terminatedManager && "text-amber-900 dark:text-amber-200",
                 )}
               >
-                {`Reports to ${current.name}${terminatedManager ? " (terminated)" : ""}`}
+                {l10n("local.reports_to_valuevalue_22c3edae", {v0: (current.name), v1: (terminatedManager ? " (terminated)" : "")})}
               </span>
             </>
           ) : (
@@ -87,20 +88,17 @@ export function ReportsToPicker({
             setOpen(false);
           }}
         >
-          No manager
-        </button>
+          {l10n("local.no_manager_6a4ee4d7")}</button>
         {terminatedManager && (
           <div className="flex min-w-0 items-center gap-2 overflow-hidden px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
             <AgentAvatar agent={current} size={16} className="shrink-0 h-3 w-3"/>
             <span className="min-w-0 truncate">
-              Current: {current.name} (terminated)
-            </span>
+              {l10n("local.current_c09f6328")}{" "}{current.name} {l10n("local._terminated_ea15d227")}</span>
           </div>
         )}
         {unknownManager && (
           <div className="px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
-            Saved manager is missing from this organization. Choose a new manager or clear.
-          </div>
+            {l10n("local.saved_manager_is_missing_from_this_organizati_20e06507")}</div>
         )}
         {rows.map((a) => (
           <button

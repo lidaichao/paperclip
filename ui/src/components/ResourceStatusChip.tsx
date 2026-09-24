@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { brandChipBadge, type BrandChipColor } from "@/lib/status-colors";
@@ -33,40 +34,40 @@ interface VariantSpec {
 }
 
 const VARIANTS: Record<ResourceStatusVariant, VariantSpec> = {
-  ready: { color: "green", glyph: "●", label: "Ready", title: "Materialized and matches the shipped default" },
-  needs_setup: { color: "amber", glyph: "⚠", label: "Needs setup", title: "Present but not usable yet" },
-  missing: { color: "amber", glyph: "⚠", label: "Missing", title: "Expected resource absent; reconcile will recreate it" },
-  error: { color: "red", glyph: "✕", label: "Error", title: "Failed to load or reconcile" },
+  ready: { color: "green", glyph: "●", label: l10n("local.ready_5fa7aac5"), title: l10n("local.materialized_and_matches_the_shipped_default_4dd6c838") },
+  needs_setup: { color: "amber", glyph: "⚠", label: l10n("local.needs_setup_b6df2441"), title: l10n("local.present_but_not_usable_yet_968a2059") },
+  missing: { color: "amber", glyph: "⚠", label: l10n("local.missing_6be36ca4"), title: l10n("local.expected_resource_absent_reconcile_will_recre_f4936f59") },
+  error: { color: "red", glyph: "✕", label: l10n("local.error_54a0e8c1"), title: l10n("local.failed_to_load_or_reconcile_4e42ee64") },
   update_available: {
     color: "blue",
     glyph: "↑",
-    label: "Update available",
-    title: "Unedited — a newer shipped default can be applied",
+    label: l10n("local.update_available_ff8b555d"),
+    title: l10n("local.unedited_a_newer_shipped_default_can_be_appli_71a19f55"),
   },
   drifted: {
     color: "gray",
     glyph: "✎",
-    label: "Drifted",
-    title: "You've edited this; your changes are kept, not overwritten",
+    label: l10n("local.drifted_bb85e268"),
+    title: l10n("local.you_ve_edited_this_your_changes_are_kept_not_993846ba"),
   },
   schedule_off: {
     color: "gray",
     glyph: "◌",
-    label: "Schedule off",
-    title: "No background work runs until you enable it — costs zero tokens",
+    label: l10n("local.schedule_off_e96f8077"),
+    title: l10n("local.no_background_work_runs_until_you_enable_it_c_ef9bdba7"),
   },
-  schedule_on: { color: "green", glyph: "●", label: "Weekly", title: "Runs on the weekly schedule" },
+  schedule_on: { color: "green", glyph: "●", label: l10n("local.weekly_29751324"), title: l10n("local.runs_on_the_weekly_schedule_47fd02dd") },
   pending_approval: {
     color: "amber",
     glyph: "⚠",
-    label: "Pending approval",
-    title: "Waiting on board hire approval before it can run",
+    label: l10n("local.pending_approval_bb33a7f4"),
+    title: l10n("local.waiting_on_board_hire_approval_before_it_can_96a74263"),
   },
   proposal_pending: {
     color: "blue",
     glyph: "↑",
-    label: "Proposal pending",
-    title: "A proposed update is waiting for your review",
+    label: l10n("local.proposal_pending_f8a713a2"),
+    title: l10n("local.a_proposed_update_is_waiting_for_your_review_ae9d5086"),
   },
 };
 

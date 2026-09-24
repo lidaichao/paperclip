@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { Agent, Issue, IssueWorkMode } from "@paperclipai/shared";
 /** Ephemeral view model; never persisted until first send or upload. */
 export function agentChatDraft(
@@ -7,7 +8,7 @@ export function agentChatDraft(
   return {
     id: `chat:${agent.id}`,
     companyId: agent.companyId,
-    title: `Chat with ${agent.name}`,
+    title: l10n("local.chat_with_value_c08a53e4", {v0: (agent.name)}),
     conversationAgentId: agent.id,
     conversationUserId: "draft",
     conversationState: "waiting",

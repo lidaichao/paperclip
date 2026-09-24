@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 /**
  * @fileoverview Classifies a failed skill mutation into the four visual states
  * from the Phase 3 UX spec (PAP-13865 / §9.10 Company Skill Policy Contract).
@@ -119,8 +120,8 @@ export function classifySkillDenial(
     || reason === "policy_default";
   if (isPolicyDenial) {
     const title = actionLabel
-      ? `${actionLabel} is restricted by your organization policy.`
-      : "This action is restricted by your organization policy.";
+      ? l10n("local.value_is_restricted_by_your_organization_poli_b6bd4373", {v0: (actionLabel)})
+      : l10n("local.this_action_is_restricted_by_your_organizatio_5427af2b");
     return {
       state: "policy",
       code,
@@ -136,7 +137,7 @@ export function classifySkillDenial(
       state: "platform_admin",
       code,
       reason,
-      title: "This change needs administration access.",
+      title: l10n("local.this_change_needs_administration_access_ecff0048"),
       remediation: remediation ?? DEFAULT_ADMIN_REMEDIATION,
     };
   }
@@ -150,7 +151,7 @@ export function classifySkillDenial(
       state: "platform",
       code,
       reason,
-      title: (code && PLATFORM_TITLES[code]) ?? "This action is blocked by a platform safety rule.",
+      title: (code && PLATFORM_TITLES[code]) ?? l10n("local.this_action_is_blocked_by_a_platform_safety_r_59465fd0"),
       remediation:
         remediation
         ?? (code && PLATFORM_REMEDIATIONS[code])

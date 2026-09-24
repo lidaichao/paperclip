@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { PauseCircle, PlayCircle, Repeat, XCircle } from "lucide-react";
@@ -42,13 +43,13 @@ export function TaskTreeControlMenuItems({
       {canPause ? (
         <button disabled={pending} className={itemClass} onClick={onPause}>
           <PauseCircle className="h-3 w-3" />
-          {scope === "leaf" ? "Pause work" : "Pause subtree"}
+          {scope === "leaf" ? l10n("local.pause_work_0faaea9a") : l10n("local.pause_subtree_d4492053")}
         </button>
       ) : null}
       {canResume ? (
         <button disabled={pending} className={itemClass} onClick={onResume}>
           <PlayCircle className="h-3 w-3" />
-          {scope === "leaf" ? "Resume work" : "Resume subtree"}
+          {scope === "leaf" ? l10n("local.resume_work_4c474b94") : l10n("local.resume_subtree_b3820988")}
         </button>
       ) : null}
       {canCancel ? (
@@ -58,14 +59,12 @@ export function TaskTreeControlMenuItems({
           onClick={onCancel}
         >
           <XCircle className="h-3 w-3" />
-          Cancel subtree...
-        </button>
+          {l10n("local.cancel_subtree_fccd5115")}</button>
       ) : null}
       {canRestore ? (
         <button disabled={pending} className={itemClass} onClick={onRestore}>
           <Repeat className="h-3 w-3" />
-          Restore subtree...
-        </button>
+          {l10n("local.restore_subtree_b42c3044")}</button>
       ) : null}
     </>
   );
@@ -105,12 +104,12 @@ export function TaskTreeControlDialog({
   const cancel = mode === "cancel";
   const tasks = `${affectedCount} task${affectedCount === 1 ? "" : "s"}`;
   const title = cancel
-    ? "Cancel subtree?"
+    ? l10n("local.cancel_subtree_b8b708d6")
     : mode === "restore"
-      ? "Restore subtree"
+      ? l10n("local.restore_subtree_d824b6aa")
       : scope === "leaf"
-        ? "Resume work"
-        : "Resume subtree";
+        ? l10n("local.resume_work_4c474b94")
+        : l10n("local.resume_subtree_b3820988");
   return (
     <Dialog
       open={open}
@@ -126,10 +125,10 @@ export function TaskTreeControlDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             {loading
-              ? "Loading…"
+              ? l10n("local.loading_ba3bbbe1")
               : cancel
-                ? `${tasks} will be cancelled.`
-                : `${tasks} will ${mode === "restore" ? "be restored" : "resume"}.`}
+                ? l10n("local.value_will_be_cancelled_d91d0193", {v0: (tasks)})
+                : l10n("local.value_will_value_c256d634", {v0: (tasks), v1: (mode === "restore" ? "be restored" : "resume")})}
           </DialogDescription>
         </DialogHeader>
         {error ? (
@@ -143,8 +142,7 @@ export function TaskTreeControlDialog({
               disabled={pending}
               onClick={onRetry}
             >
-              Retry preview
-            </Button>
+              {l10n("local.retry_preview_ceba3527")}</Button>
           </div>
         ) : null}
         {!cancel ? (
@@ -155,7 +153,7 @@ export function TaskTreeControlDialog({
               disabled={pending || loading || affectedAgentCount === 0}
               onChange={(event) => onWakeAgentsChange(event.target.checked)}
             />
-            Wake affected agents ({affectedAgentCount})
+            {l10n("local.wake_affected_agents_ba0ae697")}{affectedAgentCount})
           </label>
         ) : null}
         <DialogFooter>
@@ -164,7 +162,7 @@ export function TaskTreeControlDialog({
             disabled={pending}
             onClick={() => onOpenChange(false)}
           >
-            {cancel ? "Keep tasks" : "Close"}
+            {cancel ? l10n("local.keep_tasks_8d7bd1de") : l10n("local.close_7d9eb7ac")}
           </Button>
           <Button
             variant={cancel ? "destructive" : "default"}
@@ -172,11 +170,11 @@ export function TaskTreeControlDialog({
             onClick={onApply}
           >
             {pending
-              ? "Applying…"
+              ? l10n("local.applying_3329a9bb")
               : cancel
-                ? `Cancel ${tasks}`
+                ? l10n("local.cancel_value_db3da0ce", {v0: (tasks)})
                 : mode === "restore"
-                  ? `Restore ${tasks}`
+                  ? l10n("local.restore_value_5ec37798", {v0: (tasks)})
                   : title}
           </Button>
         </DialogFooter>
@@ -208,7 +206,7 @@ export function TaskPauseNotice({
       )}
     >
       <span>
-        {scope === "subtree" ? "Subtree is paused." : "Task is paused."}
+        {scope === "subtree" ? l10n("local.subtree_is_paused_f9ebf72d") : l10n("local.task_is_paused_fb9c04c9")}
       </span>
       {resumeLink ??
         (onResume ? (
@@ -218,7 +216,7 @@ export function TaskPauseNotice({
             disabled={pending}
             onClick={onResume}
           >
-            {scope === "subtree" ? "Resume subtree" : "Resume work"}
+            {scope === "subtree" ? l10n("local.resume_subtree_b3820988") : l10n("local.resume_work_4c474b94")}
           </Button>
         ) : null)}
     </div>

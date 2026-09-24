@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type {
   CompanySkillLastEditor,
   CompanySkillListItem,
@@ -357,9 +358,9 @@ export interface RunMediaGalleryItem {
 }
 
 function runHarnessUnavailableTitle(reason: CompanySkillTestRunHarnessContentUnavailableReason | null) {
-  if (reason === "expired") return "Test task expired";
-  if (reason === "deleted") return "Test task deleted";
-  return "Test task unavailable";
+  if (reason === "expired") return l10n("local.test_task_expired_f2a8da3a");
+  if (reason === "deleted") return l10n("local.test_task_deleted_7dd137d8");
+  return l10n("local.test_task_unavailable_4a87a05a");
 }
 
 export function runHarnessUnavailableCopy(

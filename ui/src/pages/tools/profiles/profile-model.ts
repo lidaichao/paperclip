@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import type {
   ToolCatalogEntry,
   ToolProfileDefaultAction,
@@ -131,16 +132,16 @@ export function appCheckState(group: AppGroup, selection: AppSelection | undefin
 export function appSelectionLabel(group: AppGroup, selection: AppSelection | undefined): string {
   const total = group.tools.length;
   const state = appCheckState(group, selection);
-  if (state === "unchecked") return "None selected";
+  if (state === "unchecked") return l10n("local.none_selected_55783235");
   if (selection?.kind === "all" || (selection?.kind === "all_except" && selection.excluded.length === 0)) {
-    return `All ${group.name} tools (${total})`;
+    return l10n("local.all_value_tools_value_5ab03318", {v0: (group.name), v1: (total)});
   }
   if (selection?.kind === "all_except") {
     const n = selection.excluded.length;
-    return `All ${group.name} except ${n}`;
+    return l10n("local.all_value_except_value_b7784202", {v0: (group.name), v1: (n)});
   }
   const n = selectedToolIds(group, selection).size;
-  return `${n} of ${total} ${group.name} tools`;
+  return l10n("local.value_of_value_value_tools_92b519fa", {v0: (n), v1: (total), v2: (group.name)});
 }
 
 // --- Checkbox reducers -----------------------------------------------------

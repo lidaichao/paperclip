@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -119,8 +120,8 @@ export function ConfigureBuiltInAgentModal({
     modelKnown &&
     (setupSupportedInModal ? !modelRequired || normalizedModel.length > 0 : true);
   const submitLabel = setupSupportedInModal
-    ? `Configure & enable ${definition.displayName}`
-    : `Provision ${definition.displayName}`;
+    ? l10n("local.configure_enable_value_27072389", {v0: (definition.displayName)})
+    : l10n("local.provision_value_fa0ca732", {v0: (definition.displayName)});
 
   const provision = useMutation({
     mutationFn: async () => {
@@ -151,18 +152,16 @@ export function ConfigureBuiltInAgentModal({
     <Dialog open={open} onOpenChange={(next) => (provision.isPending ? undefined : onOpenChange(next))}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Set up the {definition.displayName}</DialogTitle>
+          <DialogTitle>{l10n("local.set_up_the_6d83d317")}{" "}{definition.displayName}</DialogTitle>
           <DialogDescription>{definition.shortPurpose}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <InlineBanner tone="info" compact>
-            Creates <strong>{definition.displayName}</strong> in your roster, badged{" "}
-            <strong>Built-in</strong>. Organizations that require hire approval will queue this for the
-            board.
-          </InlineBanner>
+            {l10n("local.creates_c65cd9c1")}{" "}<strong>{definition.displayName}</strong> {l10n("local.in_your_roster_badged_3f4e690f")}{" "}
+            <strong>{l10n("local.built_in_1f439481")}</strong>{l10n("local._organizations_that_require_hire_approval_wil_879d6966")}</InlineBanner>
 
-          <Field label="Adapter type">
+          <Field label={l10n("local.adapter_type_03298f66")}>
             <AdapterTypeDropdown
               value={adapterType}
               onChange={(next) => {
@@ -196,12 +195,10 @@ export function ConfigureBuiltInAgentModal({
 
           {!setupSupportedInModal && (
             <InlineBanner tone="warning" compact>
-              This adapter needs command or endpoint fields before it can run. Provision the
-              built-in row now, then finish those fields from the full agent configuration.
-            </InlineBanner>
+              {l10n("local.this_adapter_needs_command_or_endpoint_fields_a9f99369")}</InlineBanner>
           )}
 
-          <Field label="Monthly budget (optional)" hint="Leave blank for no cap.">
+          <Field label={l10n("local.monthly_budget_optional_4e449013")} hint={l10n("local.leave_blank_for_no_cap_819c7fa8")}>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">$</span>
               <Input
@@ -231,8 +228,7 @@ export function ConfigureBuiltInAgentModal({
             onClick={() => onOpenChange(false)}
             disabled={provision.isPending}
           >
-            Not now
-          </Button>
+            {l10n("local.not_now_a0e63d7c")}</Button>
           <Button
             onClick={() => {
               setError(null);
@@ -240,7 +236,7 @@ export function ConfigureBuiltInAgentModal({
             }}
             disabled={!canSubmit || provision.isPending}
           >
-            {provision.isPending ? "Configuring…" : submitLabel}
+            {provision.isPending ? l10n("local.configuring_b66afe5b") : submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useState } from "react";
 import { Apple, Monitor, Terminal } from "lucide-react";
 import {
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
 type Platform = "mac" | "windows" | "linux";
 
 const platforms: { id: Platform; label: string; icon: typeof Apple }[] = [
-  { id: "mac", label: "macOS", icon: Apple },
+  { id: "mac", label: l10n("local.macos_aed6b7aa"), icon: Apple },
   { id: "windows", label: "Windows", icon: Monitor },
   { id: "linux", label: "Linux", icon: Terminal },
 ];
@@ -69,12 +70,11 @@ export function PathInstructionsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-base">How to get a full path</DialogTitle>
+          <DialogTitle className="text-base">{l10n("local.how_to_get_a_full_path_dc9f3a66")}</DialogTitle>
           <DialogDescription>
-            Paste the absolute path (e.g.{" "}
+            {l10n("local.paste_the_absolute_path_e_g_6f9194b9")}{" "}
             <code className="text-xs bg-muted px-1 py-0.5 rounded">/Users/you/project</code>
-            ) into the input field.
-          </DialogDescription>
+            {l10n("local._into_the_input_field_fe953a5f")}</DialogDescription>
         </DialogHeader>
 
         {/* Platform tabs */}
@@ -135,8 +135,7 @@ export function ChoosePathButton({ className }: { className?: string }) {
         )}
         onClick={() => setOpen(true)}
       >
-        Choose
-      </button>
+        {l10n("local.choose_c7f93783")}</button>
       <PathInstructionsModal open={open} onOpenChange={setOpen} />
     </>
   );

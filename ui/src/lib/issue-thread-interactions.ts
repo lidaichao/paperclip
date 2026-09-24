@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 export type {
   AskUserQuestionsAnswer,
   AskUserQuestionsInteraction,
@@ -149,11 +150,11 @@ export function buildItemVerdictsSummary(
   }
   if (interaction.status === "expired") {
     const outcome = interaction.result?.outcome;
-    if (outcome === "superseded_by_comment") return "Verdicts expired after comment";
-    if (outcome === "stale_target") return "Verdicts expired after target changed";
-    return "Verdicts expired";
+    if (outcome === "superseded_by_comment") return l10n("local.verdicts_expired_after_comment_6c1be2d1");
+    if (outcome === "stale_target") return l10n("local.verdicts_expired_after_target_changed_21bb8365");
+    return l10n("local.verdicts_expired_e8eb3fb6");
   }
-  return `${progress.decided} of ${progress.total} decided`;
+  return l10n("local.value_of_value_decided_d95cde7c", {v0: (progress.decided), v1: (progress.total)});
 }
 
 export function getCheckboxConfirmationSelectedLabels(args: {
@@ -201,17 +202,17 @@ export function buildIssueThreadInteractionSummary(
   const administrativeOutcome = interaction.result && "outcome" in interaction.result
     ? interaction.result.outcome
     : null;
-  if (administrativeOutcome === "skipped") return "Skipped interaction";
-  if (administrativeOutcome === "withdrawn") return "Withdrawn interaction";
-  if (administrativeOutcome === "issue_closed") return "Expired when issue closed";
-  if (administrativeOutcome === "addressee_deleted") return "Cancelled when addressee was deleted";
+  if (administrativeOutcome === "skipped") return l10n("local.skipped_interaction_357a35be");
+  if (administrativeOutcome === "withdrawn") return l10n("local.withdrawn_interaction_b3863602");
+  if (administrativeOutcome === "issue_closed") return l10n("local.expired_when_issue_closed_cbd60eaa");
+  if (administrativeOutcome === "addressee_deleted") return l10n("local.cancelled_when_addressee_was_deleted_ce2c0951");
   if (interaction.kind === "suggest_tasks") {
     const count = interaction.payload.tasks.length;
     if (interaction.status === "accepted") {
       const createdCount = interaction.result?.createdTasks?.length ?? 0;
       const skippedCount = interaction.result?.skippedClientKeys?.length ?? 0;
       if (skippedCount > 0) {
-        return `Accepted ${createdCount} of ${count} tasks`;
+        return l10n("local.accepted_value_of_value_tasks_b6c3d5d3", {v0: (createdCount), v1: (count)});
       }
       return createdCount === 1 ? "Accepted 1 task" : `Accepted ${createdCount} tasks`;
     }
@@ -222,35 +223,35 @@ export function buildIssueThreadInteractionSummary(
   }
 
   if (interaction.kind === "request_confirmation") {
-    if (interaction.status === "accepted") return "Confirmed request";
+    if (interaction.status === "accepted") return l10n("local.confirmed_request_e716c397");
     if (interaction.status === "rejected") {
       const rejectLabel = interaction.payload.rejectLabel?.trim();
       return rejectLabel ? `Selected “${rejectLabel}”` : "Declined request";
     }
     if (interaction.status === "expired") {
       const outcome = interaction.result?.outcome;
-      if (outcome === "superseded_by_comment") return "Confirmation expired after comment";
-      if (outcome === "stale_target") return "Confirmation expired after target changed";
-      return "Confirmation expired";
+      if (outcome === "superseded_by_comment") return l10n("local.confirmation_expired_after_comment_3e18c2eb");
+      if (outcome === "stale_target") return l10n("local.confirmation_expired_after_target_changed_ad019109");
+      return l10n("local.confirmation_expired_ce467dc1");
     }
-    return "Requested confirmation";
+    return l10n("local.requested_confirmation_d93210b4");
   }
 
   if (interaction.kind === "request_checkbox_confirmation") {
     const optionCount = interaction.payload.options.length;
     if (interaction.status === "accepted") {
       const selectedCount = interaction.result?.selectedOptionIds?.length ?? 0;
-      if (selectedCount === 0) return "Confirmed with no options selected";
+      if (selectedCount === 0) return l10n("local.confirmed_with_no_options_selected_1962f778");
       return selectedCount === 1
         ? `Confirmed 1 of ${optionCount} options`
         : `Confirmed ${selectedCount} of ${optionCount} options`;
     }
-    if (interaction.status === "rejected") return "Declined selection";
+    if (interaction.status === "rejected") return l10n("local.declined_selection_52c166c8");
     if (interaction.status === "expired") {
       const outcome = interaction.result?.outcome;
-      if (outcome === "superseded_by_comment") return "Selection expired after comment";
-      if (outcome === "stale_target") return "Selection expired after target changed";
-      return "Selection expired";
+      if (outcome === "superseded_by_comment") return l10n("local.selection_expired_after_comment_de4901df");
+      if (outcome === "stale_target") return l10n("local.selection_expired_after_target_changed_c3102149");
+      return l10n("local.selection_expired_1a7ff345");
     }
     return optionCount === 1
       ? "Requested a selection from 1 option"
@@ -262,14 +263,14 @@ export function buildIssueThreadInteractionSummary(
   }
 
   if (interaction.kind === "connection_intent") {
-    if (interaction.status === "accepted") return `${interaction.payload.serviceName} connected`;
-    if (interaction.status === "rejected") return `${interaction.payload.serviceName} declined`;
+    if (interaction.status === "accepted") return l10n("local.value_connected_db4ed330", {v0: (interaction.payload.serviceName)});
+    if (interaction.status === "rejected") return l10n("local.value_declined_ec5e6458", {v0: (interaction.payload.serviceName)});
     if (interaction.status === "expired") {
       return interaction.result?.outcome === "superseded"
         ? `${interaction.payload.serviceName} request superseded`
         : `${interaction.payload.serviceName} request expired`;
     }
-    return `Connect ${interaction.payload.serviceName}`;
+    return l10n("local.connect_value_2a49bf94", {v0: (interaction.payload.serviceName)});
   }
 
   const count = interaction.payload.questions.length;

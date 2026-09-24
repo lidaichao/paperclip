@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 export type AuditSection = "activity" | "runs" | "costs" | "budgets" | "timeline";
 
 export const AUDIT_SECTIONS: ReadonlyArray<{
@@ -5,11 +6,11 @@ export const AUDIT_SECTIONS: ReadonlyArray<{
   label: string;
   href: string;
 }> = [
-  { value: "activity", label: "Activity", href: "/activity" },
-  { value: "runs", label: "Runs", href: "/activity/runs" },
-  { value: "costs", label: "Costs", href: "/activity/costs" },
-  { value: "budgets", label: "Budgets", href: "/activity/budgets" },
-  { value: "timeline", label: "Timeline", href: "/activity/timeline" },
+  { value: "activity", label: l10n("local.activity_38da1505"), href: "/activity" },
+  { value: "runs", label: l10n("local.runs_848f54e8"), href: "/activity/runs" },
+  { value: "costs", label: l10n("local.costs_b88fc5fc"), href: "/activity/costs" },
+  { value: "budgets", label: l10n("local.budgets_a1a06e04"), href: "/activity/budgets" },
+  { value: "timeline", label: l10n("local.timeline_9dcff98e"), href: "/activity/timeline" },
 ];
 
 export interface AuditLinkScope {

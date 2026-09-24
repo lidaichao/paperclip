@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "../lib/utils";
 import { MarkdownBody, type MarkdownExternalReferenceMap } from "./MarkdownBody";
@@ -374,12 +375,12 @@ export function InlineEditor({
             )}
           >
             {autosaveState === "saving"
-              ? "Autosaving..."
+              ? l10n("local.autosaving_afa493a8")
               : autosaveState === "saved"
-                ? "Saved"
+                ? l10n("local.saved_b5c120b3")
                 : autosaveState === "error"
-                  ? "Could not save"
-                  : "Idle"}
+                  ? l10n("local.could_not_save_16efcd21")
+                  : l10n("local.idle_ab0171ca")}
           </span>
         </div>
       </div>

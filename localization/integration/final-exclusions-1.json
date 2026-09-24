@@ -1,0 +1,14 @@
+[
+  {
+    "key": "local.block_w_0_min_w_0_overflow_hidden_whitespace_63a99691",
+    "reason": "实际 CSS 样式类名，属于渲染契约，原样保留。"
+  },
+  {
+    "key": "local.jane_example_eea33f8b",
+    "reason": "虚构人名示例，保留原名。"
+  },
+  {
+    "key": "local.text_violet_700_dark_text_violet_300_6ef59e45",
+    "reason": "实际 CSS 样式类名，属于渲染契约，原样保留。"
+  }
+]

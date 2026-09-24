@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useState } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,7 +82,7 @@ export function RoutineSaveBar({
         {saveConflict ? (
           <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
             <AlertTriangle className="h-4 w-4" />
-            <span>Routine changed elsewhere. Reload to merge.</span>
+            <span>{l10n("local.routine_changed_elsewhere_reload_to_merge_3148fbdb")}</span>
           </div>
         ) : (
           <Popover>
@@ -92,14 +93,13 @@ export function RoutineSaveBar({
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 <span className="font-medium">
-                  {dirtyCount} unsaved {dirtyCount === 1 ? "change" : "changes"}
+                  {dirtyCount} {l10n("local.unsaved_9c80e833")}{" "}{dirtyCount === 1 ? l10n("local.change_12ea12ea") : l10n("local.changes_d0b4ba23")}
                 </span>
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-64">
               <p className="mb-2 text-xs font-medium text-muted-foreground">
-                Pending changes
-              </p>
+                {l10n("local.pending_changes_54ae644f")}</p>
               <ul className="space-y-1 text-sm">
                 {dirtyFields.map((field) => (
                   <li key={field.key} className="flex items-center gap-2">
@@ -116,8 +116,7 @@ export function RoutineSaveBar({
           {saveConflict ? (
             <>
               <Button variant="outline" size="sm" onClick={onReload}>
-                Reload latest
-              </Button>
+                {l10n("local.reload_latest_cb5bbbf3")}</Button>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -128,12 +127,10 @@ export function RoutineSaveBar({
                       onClick={onSave}
                     >
                       {isSaving ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-                      Overwrite anyway
-                    </Button>
+                      {l10n("local.overwrite_anyway_9511749c")}</Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    Replaces the newer revision with your local edits.
-                  </TooltipContent>
+                    {l10n("local.replaces_the_newer_revision_with_your_local_e_fec05c5b")}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </>
@@ -145,16 +142,14 @@ export function RoutineSaveBar({
                 disabled={isSaving || disabled}
                 onClick={() => setConfirmDiscardOpen(true)}
               >
-                Discard
-              </Button>
+                {l10n("local.discard_eb1a70e3")}</Button>
               <Button
                 size="sm"
                 disabled={isSaving || disabled}
                 onClick={onSave}
               >
                 {isSaving ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-                Save changes
-                <kbd className="ml-2 hidden rounded bg-foreground/10 px-1 text-(length:--text-nano) font-medium sm:inline">
+                {l10n("local.save_changes_dd0ae7a5")}<kbd className="ml-2 hidden rounded bg-foreground/10 px-1 text-(length:--text-nano) font-medium sm:inline">
                   ⌘S
                 </kbd>
               </Button>
@@ -166,16 +161,14 @@ export function RoutineSaveBar({
       <Dialog open={confirmDiscardOpen} onOpenChange={setConfirmDiscardOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Discard changes?</DialogTitle>
+            <DialogTitle>{l10n("local.discard_changes_85bcf416")}</DialogTitle>
             <DialogDescription>
-              This will revert {dirtyCount} unsaved{" "}
-              {dirtyCount === 1 ? "change" : "changes"} in this section.
-            </DialogDescription>
+              {l10n("local.this_will_revert_25fd077b")}{" "}{dirtyCount} {l10n("local.unsaved_9c80e833")}{" "}
+              {dirtyCount === 1 ? l10n("local.change_12ea12ea") : l10n("local.changes_d0b4ba23")} {l10n("local.in_this_section_a9e6d4f6")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" size="sm" onClick={() => setConfirmDiscardOpen(false)}>
-              Keep editing
-            </Button>
+              {l10n("local.keep_editing_e76fd2ad")}</Button>
             <Button
               variant="destructive"
               size="sm"
@@ -184,8 +177,7 @@ export function RoutineSaveBar({
                 setConfirmDiscardOpen(false);
               }}
             >
-              Discard changes
-            </Button>
+              {l10n("local.discard_changes_f9bfa3dc")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -197,7 +189,6 @@ export function RoutineSaveBar({
 export function RoutineReadOnlyStrip() {
   return (
     <div className="-mx-8 mt-6 border-t border-border bg-muted/20 px-8 py-3 text-xs text-muted-foreground">
-      Read-only — you don't own this routine.
-    </div>
+      {l10n("local.read_only_you_don_t_own_this_routine_ed056afb")}</div>
   );
 }

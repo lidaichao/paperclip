@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -42,10 +43,10 @@ const localIcons = {
 } satisfies Record<AgentLocalDetailView, typeof Sparkles>;
 
 const auditItems = [
-  { section: "activity", label: "Activity", icon: Activity },
-  { section: "runs", label: "Runs", icon: PlayCircle },
-  { section: "costs", label: "Costs", icon: ReceiptText },
-  { section: "budgets", label: "Budgets", icon: BadgeDollarSign },
+  { section: "activity", label: l10n("local.activity_38da1505"), icon: Activity },
+  { section: "runs", label: l10n("local.runs_848f54e8"), icon: PlayCircle },
+  { section: "costs", label: l10n("local.costs_b88fc5fc"), icon: ReceiptText },
+  { section: "budgets", label: l10n("local.budgets_a1a06e04"), icon: BadgeDollarSign },
 ] as const;
 
 export function AgentContextualSidebar({
@@ -79,7 +80,7 @@ export function AgentContextualSidebar({
       className="border-r border-border bg-background"
     >
       <nav
-        aria-label={`${resolvedName} navigation`}
+        aria-label={l10n("local.value_navigation_b2e92af1", {v0: (resolvedName)})}
         data-slot="contextual-sidebar-nav"
         className={contextualSidebarStyles.nav}
       >
@@ -118,8 +119,7 @@ export function AgentContextualSidebar({
             data-slot="contextual-sidebar-section-label"
             className={contextualSidebarStyles.sectionLabel}
           >
-            Audit
-          </p>
+            {l10n("local.audit_bb6aea28")}</p>
           <div data-slot="contextual-sidebar-group" className={contextualSidebarStyles.group}>
             {resolvedId ? auditItems.map((item) => (
               <SidebarNavItem
@@ -129,7 +129,7 @@ export function AgentContextualSidebar({
                 icon={item.icon}
               />
             )) : (
-              <p className="px-2 py-1.5 text-xs text-muted-foreground">Loading audit links…</p>
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">{l10n("local.loading_audit_links_041de420")}</p>
             )}
           </div>
         </div>

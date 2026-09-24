@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useRef } from "react";
 import type { ExecutionProjection } from "@paperclipai/shared";
 import { useSecondTick } from "@/hooks/useSecondTick";
@@ -84,14 +85,14 @@ function RunnerTurnStatus({
   const elapsed = formatCompactDuration(elapsedMs);
 
   const failed = terminalStatusFailed(status);
-  const label = terminal ? (failed ? "Stopped" : "Worked") : "Working";
+  const label = terminal ? (failed ? l10n("local.stopped_1a4f630a") : l10n("local.worked_e7f93aad")) : l10n("local.working_a92f0449");
   const semanticLabel = terminal
     ? elapsed
-      ? `${label} ${failed ? "after" : "for"} ${elapsed}`
+      ? l10n("local.value_value_value_a923f2f3", {v0: (label), v1: (failed ? "after" : "for"), v2: (elapsed)})
       : label
-    : `${label} for ${elapsed ?? "0s"}`;
+    : l10n("local.value_for_value_72c7a158", {v0: (label), v1: (elapsed ?? "0s")});
   const visibleLabel = continuedAfterSteering
-    ? `Continued after steering · ${semanticLabel}`
+    ? l10n("local.continued_after_steering_value_ebee0c8a", {v0: (semanticLabel)})
     : semanticLabel;
 
   return (
@@ -110,7 +111,7 @@ function RunnerTurnStatus({
 function RunnerCurrentActivityTail({ status }: { status: string }) {
   if (isTerminalRunStatus(status)) return null;
   return <div className="mt-2 flex min-h-8 min-w-0 items-center gap-2 px-1 py-1 text-xs text-muted-foreground" data-testid="task-chat-current-activity" data-turn-position="tail">
-    <span className="shimmer-text shimmer-text-muted" aria-live="polite" data-testid="task-chat-current-activity-label">Thinking</span>
+    <span className="shimmer-text shimmer-text-muted" aria-live="polite" data-testid="task-chat-current-activity-label">{l10n("local.thinking_a20d12c5")}</span>
   </div>;
 }
 
@@ -230,8 +231,7 @@ export function TaskChatRunnerTurn({
           role="status"
           data-testid="task-chat-activity-unavailable"
         >
-          Live runner activity is temporarily unavailable. Retrying…
-        </div>
+          {l10n("local.live_runner_activity_is_temporarily_unavailab_2e96977e")}</div>
       ) : null}
       {timelineRows.length > 0 ? (
         <div

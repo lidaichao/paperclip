@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import type { ActivityEvent } from "@paperclipai/shared";
 import { useProjectCreatedItems } from "@/hooks/useProjectCreatedItems";
 import { skillCreatedItems } from "@/components/task-chat/skill-created-items";
@@ -1567,36 +1568,36 @@ export function TaskChatThread(props: TaskChatThreadProps) {
             : "native_runner_process_exited");
         const label =
           code === "native_provider_approval_required" && source.status === "failed"
-            ? "Approval required"
+            ? l10n("local.approval_required_ef677f59")
             : code === "native_provider_usage_limit" && source.status === "failed"
-            ? "Usage limit reached"
+            ? l10n("local.usage_limit_reached_0e17661d")
             : source.status === "cancelled"
-              ? "Run cancelled"
+              ? l10n("local.run_cancelled_2d34c9f1")
               : source.status === "interrupted"
-                ? "Run interrupted"
+                ? l10n("local.run_interrupted_6d527beb")
                 : source.status === "timed_out"
-                  ? "Run timed out"
-                  : "Run failed";
+                  ? l10n("local.run_timed_out_7b73d2f7")
+                  : l10n("local.run_failed_97fddf2d");
         const responseBoundary = sourceHasNativeResponse
           ? "after returning a final response"
           : "before returning an answer";
         const detail =
           source.status === "cancelled"
-            ? `The run was cancelled ${responseBoundary}.`
+            ? l10n("local.the_run_was_cancelled_value_f7dfa442", {v0: (responseBoundary)})
             : source.status === "interrupted"
-              ? `The run was interrupted ${responseBoundary}.`
+              ? l10n("local.the_run_was_interrupted_value_ccf16617", {v0: (responseBoundary)})
               : code === "native_provider_approval_required"
-                ? "This operation requires approval, but this runner has no interactive approval handler. Review the operation and update the agent's permission setting before retrying."
+                ? l10n("local.this_operation_requires_approval_but_this_run_30893d78")
                 : code === "native_provider_model_rejected"
-                ? "The provider rejected the selected model. Check the model ID and your account's access, save the agent configuration, then retry. View the run for the provider's full error."
+                ? l10n("local.the_provider_rejected_the_selected_model_chec_e8030a7c")
                 : code === "native_provider_usage_limit" &&
                     source.status === "failed"
-                  ? "The model provider has reached its current usage limit. Try again after the limit resets."
+                  ? l10n("local.the_model_provider_has_reached_its_current_us_14acaa2d")
                   : code === "provider_frame_too_large"
-                    ? "Provider output exceeded the safe limit."
+                    ? l10n("local.provider_output_exceeded_the_safe_limit_d2978bf2")
                     : source.status === "timed_out"
-                      ? `The runner timed out ${responseBoundary} (${code}).`
-                      : `The runner stopped ${responseBoundary} (${code}).`;
+                      ? l10n("local.the_runner_timed_out_value_value_f4e4017b", {v0: (responseBoundary), v1: (code)})
+                      : l10n("local.the_runner_stopped_value_value_1afa5db5", {v0: (responseBoundary), v1: (code)});
         const id = `${source.id}:failure`;
         const runAgent = meta?.agentId
           ? agentMap?.get(meta.agentId)
@@ -1636,24 +1637,24 @@ export function TaskChatThread(props: TaskChatThreadProps) {
         settledRunIds.add(source.id);
         const code = meta?.errorCode ?? "native_runner_process_exited";
         const retryDetail = meta?.scheduledRetryAt
-          ? "Retry scheduled automatically."
+          ? l10n("local.retry_scheduled_automatically_f9a3eadd")
           : canRetryFailedRun
-            ? "You can retry this message now."
-            : "Your message is preserved.";
+            ? l10n("local.you_can_retry_this_message_now_2ca7cf63")
+            : l10n("local.your_message_is_preserved_fe90cde9");
         const aiRequest = interactions?.find((interaction) => interaction.kind === "connection_intent" && interaction.payload.purpose === "ai" && interaction.sourceRunId === source.id);
         const detail = aiRequest
           ? aiRequest.status === "pending"
-            ? "The selected AI account is unavailable. Fix it in the connection card."
-            : "This run stopped because its AI account was unavailable."
+            ? l10n("local.the_selected_ai_account_is_unavailable_fix_it_5282651b")
+            : l10n("local.this_run_stopped_because_its_ai_account_was_u_ef7bb5da")
           : source.status === "cancelled"
             ? code === "execution_reconciliation_required"
-              ? "The previous execution must be checked before this task can continue. Your message is preserved. View the stopped run for details."
-              : "Execution was stopped before returning an answer."
+              ? l10n("local.the_previous_execution_must_be_checked_before_b8424cab")
+              : l10n("local.execution_was_stopped_before_returning_an_ans_ba5b3674")
             : code === "provider_frame_too_large"
-            ? `Provider output exceeded the safe limit. ${retryDetail}`
+            ? l10n("local.provider_output_exceeded_the_safe_limit_value_d97b47d9", {v0: (retryDetail)})
             : code.startsWith("workspace_git_scan_")
-            ? `Workspace setup failed before the agent started. ${retryDetail}`
-            : `The runner stopped before returning an answer (${code}). ${retryDetail}`;
+            ? l10n("local.workspace_setup_failed_before_the_agent_start_327aa916", {v0: (retryDetail)})
+            : l10n("local.the_runner_stopped_before_returning_an_answer_541abdde", {v0: (code), v1: (retryDetail)});
         const id = `${source.id}:failure`;
         entriesWithFailures.push({
           ms: toMs(meta?.finishedAt ?? meta?.startedAt ?? meta?.createdAt),
@@ -2538,7 +2539,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
           disabled={isInterrupting}
           onClick={() => void onInterruptQueued(runId)}
         >
-          {isInterrupting ? "Interrupting…" : "Interrupt"}
+          {isInterrupting ? l10n("local.interrupting_3b4ddf08") : l10n("local.interrupt_b6252314")}
         </Button>
       );
     },
@@ -2791,10 +2792,8 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                   role="status"
                   className="absolute inset-x-0 top-0 z-20 mx-auto flex w-full max-w-(--tc-shell-max-w) items-center gap-2 border border-border bg-background px-4 py-2 text-sm text-muted-foreground"
                 >
-                  Some task history could not be loaded.
-                  <Button variant="ghost" size="sm" onClick={retryHistory}>
-                    Retry
-                  </Button>
+                  {l10n("local.some_task_history_could_not_be_loaded_5ab49573")}<Button variant="ghost" size="sm" onClick={retryHistory}>
+                    {l10n("local.retry_942087cc")}</Button>
                 </div>
               ) : null}
               {!historyRevealed ? (
@@ -2802,7 +2801,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                   className="absolute inset-0 z-10 overflow-hidden bg-background"
                   data-testid="task-chat-history-loading"
                   role="status"
-                  aria-label="Loading conversation"
+                  aria-label={l10n("local.loading_conversation_9deef600")}
                 >
                   <div className="mx-auto flex w-full max-w-(--tc-shell-max-w) flex-col gap-4 px-4 py-3">
                     {threadHeader}
@@ -2934,15 +2933,15 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                                     items={tailItems}
                                     emptyMessage={
                                       tailStatus === "queued"
-                                        ? "Waiting to start..."
+                                        ? l10n("local.waiting_to_start_46efd2ea")
                                         : (liveRun && liveRun.id === tailRunId
                                             ? liveRun.currentStatusMessage
                                             : null) ||
                                           (tailStatus === "failed"
                                             ? linkedRunMetaById.get(tailRunId ?? "")?.errorCode?.startsWith("workspace_git_scan_")
-                                              ? "Workspace setup failed before the agent started."
-                                              : "This run stopped before a response was available. Review the task’s connection or recovery action below."
-                                            : "Waiting for transcript...")
+                                              ? l10n("local.workspace_setup_failed_before_the_agent_start_619a14c6")
+                                              : l10n("local.this_run_stopped_before_a_response_was_availa_e432c4b1")
+                                            : l10n("local.waiting_for_transcript_8f7d4ad6"))
                                     }
                                   />
                                 </>
@@ -3082,7 +3081,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                         pendingComposerInputs.length > 0
                           ? {
                               count: pendingComposerInputs.length,
-                              label: `${pendingComposerInputs.length} pending input${pendingComposerInputs.length === 1 ? "" : "s"}`,
+                              label: l10n("local.value_pending_inputvalue_03b80c57", {v0: (pendingComposerInputs.length), v1: (englishPluralSuffix(pendingComposerInputs.length === 1 ? "" : "s"))}),
                               onOpen: openPendingTakeover,
                             }
                           : null

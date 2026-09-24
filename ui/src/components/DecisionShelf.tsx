@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Sun } from "lucide-react";
@@ -77,12 +78,12 @@ export function AgingItemRow({
     mutationFn: () => decisionQueuesApi.setKeep(companyId, item.sourceKind, item.subject.id, true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.attention(companyId) });
-      pushToast({ title: "Kept on desk", body: item.subject.title ?? undefined, tone: "success" });
+      pushToast({ title: l10n("local.kept_on_desk_d5c41d42"), body: item.subject.title ?? undefined, tone: "success" });
     },
     onError: (error) =>
       pushToast({
-        title: "Could not keep this decision",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: l10n("local.could_not_keep_this_decision_f5156cd3"),
+        body: error instanceof Error ? error.message : l10n("local.please_try_again_eea4fb33"),
         tone: "error",
       }),
   });
@@ -91,7 +92,7 @@ export function AgingItemRow({
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2 px-1">
         <span className="text-(length:--text-nano) text-muted-foreground">
-          Idle {idleDays} {idleDays === 1 ? "day" : "days"}
+          {l10n("local.idle_ab0171ca")}{" "}{idleDays} {idleDays === 1 ? l10n("local.day_944c27e5") : l10n("local.days_ab51004e")}
         </span>
         <Button
           type="button"
@@ -103,7 +104,7 @@ export function AgingItemRow({
         >
           {keep.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
           <Sun className="h-3.5 w-3.5" />
-          {item.keep ? "Kept" : "Keep on desk"}
+          {item.keep ? l10n("local.kept_c159e746") : l10n("local.keep_on_desk_00ede66c")}
         </Button>
       </div>
       <AttentionQueueRow

@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Plug, Plus, Search, X } from "lucide-react";
 import { Link } from "@/lib/router";
@@ -74,7 +75,7 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
       .filter((entry) => entry.tools.length > 0);
   }, [appGroups, search, capabilityFilter]);
 
-  if (catalogLoading) return <LoadingState label="Loading tools…" />;
+  if (catalogLoading) return <LoadingState label={l10n("local.loading_tools_ff209730")} />;
 
   // Cold state A (AP17): nothing connected at all.
   if (appGroups.length === 0) {
@@ -82,14 +83,12 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
       <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
         <Plug className="h-6 w-6 text-muted-foreground" />
         <div>
-          <p className="text-sm font-medium text-foreground">App connections are coming soon</p>
+          <p className="text-sm font-medium text-foreground">{l10n("local.app_connections_are_coming_soon_0b9d3ae7")}</p>
           <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-            Profiles will be available once app connections are ready. Browse the planned integrations in the
-            meantime.
-          </p>
+            {l10n("local.profiles_will_be_available_once_app_connectio_838a081b")}</p>
         </div>
         <Button asChild variant="outline">
-          <Link to="/apps">Browse app connections</Link>
+          <Link to="/apps">{l10n("local.browse_app_connections_a60b4f5f")}</Link>
         </Button>
       </div>
     );
@@ -103,7 +102,7 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search tools…"
+            placeholder={l10n("local.search_tools_e4245bd3")}
             className="pl-8"
           />
         </div>
@@ -129,7 +128,7 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
       {filteredGroups.length === 0 ? (
         // Cold state B (AP17): a search/filter that matches nothing.
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border py-10 text-center">
-          <p className="text-sm font-medium text-foreground">No tools match “{search}”.</p>
+          <p className="text-sm font-medium text-foreground">{l10n("local.no_tools_match_4c96c2da")}{search}”.</p>
           <button
             type="button"
             onClick={() => {
@@ -138,8 +137,7 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
             }}
             className="text-sm font-medium text-primary hover:underline"
           >
-            Clear search
-          </button>
+            {l10n("local.clear_search_3b7ea517")}</button>
         </div>
       ) : (
         <div className="divide-y divide-border overflow-hidden rounded-lg border border-border">
@@ -190,7 +188,7 @@ function AppRow({
   return (
     <div>
       <div className="flex items-center gap-2.5 px-3 py-2">
-        <Checkbox checked={checked} onCheckedChange={onToggleApp} aria-label={`All ${group.name} tools`} />
+        <Checkbox checked={checked} onCheckedChange={onToggleApp} aria-label={l10n("local.all_value_tools_ec767957", {v0: (group.name)})} />
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
@@ -203,12 +201,12 @@ function AppRow({
           )}
           <span className="flex flex-col">
             <span className="text-sm font-medium text-foreground">
-              All {group.name} tools ({group.tools.length})
+              {l10n("local.all_a52ace42")}{" "}{group.name} {l10n("local.tools_a4d2ca0e")}{group.tools.length})
             </span>
             <span className="text-xs text-muted-foreground">
               {state === "indeterminate"
                 ? appSelectionLabel(group, selection)
-                : "includes tools " + group.name + " adds later"}
+                : (l10n("local.includes_tools_ae83a2a5") + " ") + group.name + (" " + l10n("local.adds_later_547a30e0"))}
             </span>
           </span>
         </button>
@@ -258,19 +256,19 @@ function NewToolsRadio({
   const options: Array<{ value: NewToolsAction; label: string; hint: string; recommended?: boolean }> = [
     {
       value: "deny",
-      label: "Stay blocked until someone allows them",
-      hint: "New tools an app adds later won't be usable until you review them.",
+      label: l10n("local.stay_blocked_until_someone_allows_them_dbc2aaef"),
+      hint: l10n("local.new_tools_an_app_adds_later_won_t_be_usable_u_2751e3ac"),
       recommended: true,
     },
     {
       value: "allow",
-      label: "Allowed automatically",
-      hint: "Any tool an app adds later becomes usable right away.",
+      label: l10n("local.allowed_automatically_7fed1ac8"),
+      hint: l10n("local.any_tool_an_app_adds_later_becomes_usable_rig_3655ea77"),
     },
   ];
   return (
     <fieldset className="space-y-2 rounded-lg border border-border p-4">
-      <legend className="px-1 text-sm font-medium text-foreground">New tools that appear later</legend>
+      <legend className="px-1 text-sm font-medium text-foreground">{l10n("local.new_tools_that_appear_later_ffe66368")}</legend>
       <div className="space-y-2">
         {options.map((opt) => (
           <label key={opt.value} className="flex cursor-pointer items-start gap-2.5">
@@ -286,10 +284,9 @@ function NewToolsRadio({
                 {opt.label}
                 {opt.recommended ? (
                   <Badge variant="outline" className="text-(length:--text-nano)">
-                    Recommended
-                  </Badge>
+                    {l10n("local.recommended_d70604e8")}</Badge>
                 ) : (
-                  <span className="text-xs font-normal text-amber-600">(risky)</span>
+                  <span className="text-xs font-normal text-amber-600">{l10n("local._risky_9f4875c4")}</span>
                 )}
               </span>
               <span className="text-xs text-muted-foreground">{opt.hint}</span>
@@ -302,9 +299,9 @@ function NewToolsRadio({
 }
 
 const RULE_KIND_OPTIONS: Array<{ value: AdvancedRuleKind; label: string }> = [
-  { value: "tool_name", label: "Tool name pattern" },
-  { value: "risk_level", label: "Risk level" },
-  { value: "catalog_entry", label: "By tool ID" },
+  { value: "tool_name", label: l10n("local.tool_name_pattern_df0ac12b") },
+  { value: "risk_level", label: l10n("local.risk_level_d4419ea3") },
+  { value: "catalog_entry", label: l10n("local.by_tool_id_9c7511c1") },
 ];
 
 function createAdvancedRuleId() {
@@ -315,9 +312,9 @@ function createAdvancedRuleId() {
 
 function ruleSummary(rule: AdvancedRule): string {
   const verb = rule.effect === "include" ? "Allow" : "Block";
-  if (rule.kind === "tool_name") return `${verb} tools matching ${rule.value}`;
-  if (rule.kind === "risk_level") return `${verb} ${rule.riskLevel ?? rule.value} tools`;
-  return `${verb} tool ${rule.value}`;
+  if (rule.kind === "tool_name") return l10n("local.value_tools_matching_value_bc96bafd", {v0: (verb), v1: (rule.value)});
+  if (rule.kind === "risk_level") return l10n("local.value_value_tools_4e671565", {v0: (verb), v1: (rule.riskLevel ?? rule.value)});
+  return l10n("local.value_tool_value_92078b1b", {v0: (verb), v1: (rule.value)});
 }
 
 function AdvancedRules({
@@ -349,14 +346,12 @@ function AdvancedRules({
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border border-border">
       <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left">
-        <span className="text-sm font-medium text-foreground">Advanced rules</span>
+        <span className="text-sm font-medium text-foreground">{l10n("local.advanced_rules_8f58d324")}</span>
         <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-3 border-t border-border px-4 py-3">
         <p className="text-xs text-muted-foreground">
-          Match tools by a name pattern, a risk level, or a specific tool ID. These run on top of the choices
-          above.
-        </p>
+          {l10n("local.match_tools_by_a_name_pattern_a_risk_level_or_97f1963e")}</p>
 
         {rules.length > 0 ? (
           <ul className="space-y-1.5">
@@ -368,7 +363,7 @@ function AdvancedRules({
                 <span className="text-foreground">{ruleSummary(rule)}</span>
                 <button
                   type="button"
-                  aria-label="Remove rule"
+                  aria-label={l10n("local.remove_rule_3fab7379")}
                   onClick={() => onChange(rules.filter((r) => r.id !== rule.id))}
                   className="text-muted-foreground hover:text-destructive"
                 >
@@ -385,8 +380,8 @@ function AdvancedRules({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="include">Allow</SelectItem>
-              <SelectItem value="exclude">Block</SelectItem>
+              <SelectItem value="include">{l10n("local.allow_e213c161")}</SelectItem>
+              <SelectItem value="exclude">{l10n("local.block_211d0bb8")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={kind} onValueChange={(v) => setKind(v as AdvancedRuleKind)}>
@@ -407,23 +402,22 @@ function AdvancedRules({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="read">Read-only</SelectItem>
-                <SelectItem value="write">Makes changes</SelectItem>
-                <SelectItem value="destructive">Destructive</SelectItem>
+                <SelectItem value="read">{l10n("local.read_only_72bb9089")}</SelectItem>
+                <SelectItem value="write">{l10n("local.makes_changes_f85b6093")}</SelectItem>
+                <SelectItem value="destructive">{l10n("local.destructive_c3e58a73")}</SelectItem>
               </SelectContent>
             </Select>
           ) : (
             <Input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={kind === "tool_name" ? "e.g. gmail.send*" : "tool ID"}
+              placeholder={kind === "tool_name" ? l10n("local.e_g_gmail_send_497b3e83") : l10n("local.tool_id_5e1e780f")}
               className="w-44"
             />
           )}
           <Button type="button" variant="outline" size="sm" onClick={addRule}>
             <Plus className="mr-1 h-3.5 w-3.5" />
-            Add rule
-          </Button>
+            {l10n("local.add_rule_a27cff51")}</Button>
         </div>
       </CollapsibleContent>
     </Collapsible>

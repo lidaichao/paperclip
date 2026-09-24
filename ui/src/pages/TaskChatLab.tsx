@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Pause, Play, RotateCcw } from "lucide-react";
@@ -145,10 +146,10 @@ function useStreamingReplay(
  * page-surface treatment.
  */
 const BUBBLE_VARIANTS = [
-  { id: "", label: "Chosen · C · On bg" },
-  { id: "former", label: "Former" },
-  { id: "darker", label: "A · Darker" },
-  { id: "hairline", label: "B · Hairline" },
+  { id: "", label: l10n("local.chosen_c_on_bg_8bb852cb") },
+  { id: "former", label: l10n("local.former_9b5c6b4a") },
+  { id: "darker", label: l10n("local.a_darker_8f813722") },
+  { id: "hairline", label: l10n("local.b_hairline_9b29ba04") },
 ] as const;
 type BubbleVariantId = (typeof BUBBLE_VARIANTS)[number]["id"];
 
@@ -168,19 +169,18 @@ export function TaskChatLab() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="border-b border-border px-4 py-2">
-        <h1 className="text-sm font-semibold">Task Chat Lab</h1>
+        <h1 className="text-sm font-semibold">{l10n("local.task_chat_lab_eadc4f8e")}</h1>
         <p className="text-xs text-muted-foreground">
-          Synthetic harness for the task chat redesign · every state renders here with no live agent.
-        </p>
+          {l10n("local.synthetic_harness_for_the_task_chat_redesign_a9cded41")}</p>
       </header>
 
       <div className="flex min-h-0 flex-1">
         {/* State switcher */}
-        <nav className="w-56 shrink-0 overflow-y-auto border-r border-border p-2" aria-label="States">
+        <nav className="w-56 shrink-0 overflow-y-auto border-r border-border p-2" aria-label={l10n("local.states_2f6e9dae")}>
           {(["live", "tier-b"] as const).map((tier) => (
             <div key={tier} className="mb-3">
               <p className="mb-1 px-1 text-(length:--text-nano) font-semibold uppercase tracking-wide text-muted-foreground">
-                {tier === "live" ? "Live states" : "Tier-B (synthetic)"}
+                {tier === "live" ? l10n("local.live_states_7165ee04") : l10n("local.tier_b_synthetic_b0a420c1")}
               </p>
               <ul className="flex flex-col gap-0.5">
                 {TASK_CHAT_STATE_LIST.filter((m) => m.tier === tier).map((m) => (
@@ -215,7 +215,7 @@ export function TaskChatLab() {
               className="flex items-center gap-1 rounded border border-border px-2 py-1 hover:bg-accent"
             >
               {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-              {playing ? "Pause" : "Play"}
+              {playing ? l10n("local.pause_858e4ba7") : l10n("local.play_436e6101")}
             </button>
             <button
               type="button"
@@ -223,10 +223,9 @@ export function TaskChatLab() {
               className="flex items-center gap-1 rounded border border-border px-2 py-1 hover:bg-accent"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              Replay
-            </button>
+              {l10n("local.replay_c8dae637")}</button>
             <label className="flex items-center gap-2">
-              <span className="text-muted-foreground">Speed</span>
+              <span className="text-muted-foreground">{l10n("local.speed_c372fee9")}</span>
               <input
                 type="range"
                 min={0.1}
@@ -234,14 +233,14 @@ export function TaskChatLab() {
                 step={0.1}
                 value={speed}
                 onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                aria-label="Streaming speed"
+                aria-label={l10n("local.streaming_speed_7b7ee70e")}
                 className="w-32"
               />
               <span className="w-10 tabular-nums">{speed.toFixed(1)}×</span>
             </label>
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-muted-foreground">Agent bubble</span>
-              <div className="flex items-center gap-0.5 rounded border border-border p-0.5" role="group" aria-label="Agent bubble treatment">
+              <span className="text-muted-foreground">{l10n("local.agent_bubble_5f9372ee")}</span>
+              <div className="flex items-center gap-0.5 rounded border border-border p-0.5" role="group" aria-label={l10n("local.agent_bubble_treatment_5273d499")}>
                 {BUBBLE_VARIANTS.map((v) => (
                   <button
                     key={v.id || "current"}

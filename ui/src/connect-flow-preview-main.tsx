@@ -1,3 +1,4 @@
+import { l10n } from "./i18n";
 import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MotionConfig, motion } from "motion/react";
@@ -72,10 +73,10 @@ function OpenAiBlossom({ className }: { className?: string }) {
 const MODEL_SOURCES: ModelSource[] = [
   {
     id: "claude_local",
-    label: "Claude",
+    label: l10n("local.claude_0615570f"),
     icon: <img src="/brands/claude-color.svg" alt="" className="size-full" />,
   },
-  { id: "codex_local", label: "OpenAI", icon: <OpenAiBlossom className="size-full" /> },
+  { id: "codex_local", label: l10n("local.openai_8b7d1a31"), icon: <OpenAiBlossom className="size-full" /> },
 ];
 
 /**
@@ -130,7 +131,7 @@ function ConnectFlowPreview({
 
   const mode: CredentialMode = useApiKeys ? "api" : "subscription";
   const providerName = selectedId === "codex_local" ? "OpenAI" : "Claude";
-  const signInLabel = `Sign in to ${providerName}`;
+  const signInLabel = l10n("local.sign_in_to_value_640129b7", {v0: (providerName)});
   /*
     Claude takes a code back from the customer; OpenAI hands one over. That is
     the only difference between the two cards — the sentence and the last row —
@@ -277,18 +278,18 @@ function ConnectFlowPreview({
     phase === "unwindCard"
       ? { label: signInLabel, icon: "none" as const, disabled: true }
       : done
-      ? { label: "Start over", icon: "arrow" as const, disabled: false }
+      ? { label: l10n("local.start_over_5eed7e9f"), icon: "arrow" as const, disabled: false }
       : phase === "ready" && apiMode
         ? // A key is typed here rather than fetched elsewhere, so the button is
           // the submit and stays dead until there is something to submit.
-          { label: "Connect", icon: "arrow" as const, disabled: !apiKey.trim() }
+          { label: l10n("local.connect_1a2303ed"), icon: "arrow" as const, disabled: !apiKey.trim() }
         : phase === "ready"
         ? { label: signInLabel, icon: "none" as const, disabled: false }
         : phase === "waiting"
-          ? { label: "Waiting for code", icon: "spinner" as const, disabled: true }
+          ? { label: l10n("local.waiting_for_code_f22b705c"), icon: "spinner" as const, disabled: true }
           : phase === "connecting"
-            ? { label: "Connecting", icon: "spinner" as const, disabled: true }
-            : { label: "Next", icon: "arrow" as const, disabled: true };
+            ? { label: l10n("local.connecting_d403c686"), icon: "spinner" as const, disabled: true }
+            : { label: l10n("local.next_1ff57a29"), icon: "arrow" as const, disabled: true };
 
   return (
     <MotionConfig reducedMotion="user">
@@ -308,7 +309,7 @@ function ConnectFlowPreview({
         <div className="pt-6">
           <OnboardingHeading
             center
-            title={done ? "Connected" : "Connect a model"}
+            title={done ? l10n("local.connected_22965568") : l10n("local.connect_a_model_87bdaaf8")}
             lede={
               done
                 ? "The step advances straight to Review — there is no success screen."
@@ -321,7 +322,7 @@ function ConnectFlowPreview({
           <>
             <div className="space-y-2 pt-12">
               <ModelSourceTiles
-                label="Model source"
+                label={l10n("local.model_source_9fb88c74")}
                 sources={MODEL_SOURCES}
                 mode={mode}
                 selectedId={selectedId}
@@ -420,8 +421,8 @@ function ConnectFlowPreview({
                     {/* The one place the three paths differ. */}
                     {apiMode ? (
                       <OnboardingCardField
-                        label="API key"
-                        placeholder="Enter API key here"
+                        label={l10n("local.api_key_16f0ee47")}
+                        placeholder={l10n("local.enter_api_key_here_c80c3ac9")}
                         masked
                         value={apiKey}
                         onChange={setApiKey}

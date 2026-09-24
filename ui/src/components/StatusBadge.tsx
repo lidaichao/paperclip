@@ -1,3 +1,5 @@
+import { enumLabel } from "../i18n/display";
+import { l10n } from "../i18n";
 import type { CSSProperties } from "react";
 import { cn } from "../lib/utils";
 import {
@@ -19,7 +21,7 @@ function scStyle(cssVar: string): CSSProperties {
 /** "in_review" → "In review" (sentence case). */
 function sentenceCaseStatus(status: string): string {
   const s = status.replace(/_/g, " ");
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return enumLabel(status, "sentence");
 }
 
 /**
@@ -35,7 +37,7 @@ export function StatusBadge({ status, label }: { status: string; label?: string 
         statusBadge[status] ?? statusBadgeDefault
       )}
     >
-      {label ?? status.replace(/[_-]/g, " ")}
+      {label ?? enumLabel(status, "lower")}
     </span>
   );
 }
@@ -47,13 +49,13 @@ export function StatusBadge({ status, label }: { status: string; label?: string 
  */
 export function AgentStatusBadge({ status }: { status: string }) {
   const cssVar = agentStatusVar[status] ?? agentStatusVarDefault;
-  const label = status === "active" ? "idle" : status;
+  const label = status === "active" ? l10n("local.idle_4fb62348") : status;
   return (
     <span
       className="status-chip inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium leading-none whitespace-nowrap shrink-0"
       style={scStyle(cssVar)}
     >
-      {label.replace(/_/g, " ")}
+      {enumLabel(label, "lower")}
     </span>
   );
 }

@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, Layers, Package, Search, X } from "lucide-react";
@@ -30,18 +31,18 @@ const ARTIFACTS_PAGE_SIZE = 30;
 const SEARCH_DEBOUNCE_MS = 250;
 
 export const ARTIFACT_KIND_FILTERS: { value: ArtifactKindFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "image", label: "Images" },
-  { value: "video", label: "Videos" },
-  { value: "document", label: "Documents" },
-  { value: "text", label: "Text" },
-  { value: "file", label: "Files" },
+  { value: "all", label: l10n("local.all_a52ace42") },
+  { value: "image", label: l10n("local.images_be7e2f20") },
+  { value: "video", label: l10n("local.videos_c9a96394") },
+  { value: "document", label: l10n("local.documents_b4e929d8") },
+  { value: "text", label: l10n("local.text_71988c4d") },
+  { value: "file", label: l10n("local.files_abc7e989") },
 ];
 
 export const ARTIFACT_GROUP_OPTIONS: { value: ArtifactGroupBy; label: string }[] = [
-  { value: "none", label: "None" },
-  { value: "task", label: "Task" },
-  { value: "parent_task", label: "Parent task" },
+  { value: "none", label: l10n("local.none_dc937b59") },
+  { value: "task", label: l10n("local.task_4bc74b21") },
+  { value: "parent_task", label: l10n("local.parent_task_fb8d8591") },
 ];
 
 const KIND_VALUES = new Set(ARTIFACT_KIND_FILTERS.map((filter) => filter.value));
@@ -218,11 +219,11 @@ export function Artifacts() {
   useEffect(() => {
     if (viewingSelectedStack && selectedGroup) {
       setBreadcrumbs([
-        { label: "Artifacts", href: "/artifacts" },
+        { label: l10n("local.artifacts_314ae71b"), href: "/artifacts" },
         { label: `${selectedGroup.issue.identifier} · ${selectedGroup.title}` },
       ]);
     } else {
-      setBreadcrumbs([{ label: "Artifacts" }]);
+      setBreadcrumbs([{ label: l10n("local.artifacts_314ae71b") }]);
     }
   }, [setBreadcrumbs, viewingSelectedStack, selectedGroup]);
 
@@ -235,15 +236,15 @@ export function Artifacts() {
 
   const emptyMessage = showGroupCards
     ? searching
-      ? "No artifact stacks match this search."
-      : "No artifact stacks yet."
+      ? l10n("local.no_artifact_stacks_match_this_search_a3b3ddf7")
+      : l10n("local.no_artifact_stacks_yet_7f21bb0e")
     : searching
-      ? "No artifacts match this search."
+      ? l10n("local.no_artifacts_match_this_search_c4e7a963")
       : viewingSelectedStack
-        ? "No artifacts in this stack match the current filters."
+        ? l10n("local.no_artifacts_in_this_stack_match_the_current_16f4a28e")
         : kind === "all"
-          ? "No artifacts yet. Outputs attached to issues will appear here."
-          : "No artifacts of this type yet.";
+          ? l10n("local.no_artifacts_yet_outputs_attached_to_issues_w_440470fa")
+          : l10n("local.no_artifacts_of_this_type_yet_4ced60bc");
 
   return (
     <div className="w-full max-w-6xl space-y-5">
@@ -253,15 +254,15 @@ export function Artifacts() {
           <Input
             value={draftQuery}
             onChange={(event) => setDraftQuery(event.currentTarget.value)}
-            placeholder="Search artifacts..."
-            aria-label="Search artifacts"
+            placeholder={l10n("local.search_artifacts_59aadbdf")}
+            aria-label={l10n("local.search_artifacts_c71436cc")}
             className="h-9 pl-9 pr-9 text-sm"
           />
           {draftQuery.length > 0 ? (
             <button
               type="button"
               onClick={() => setDraftQuery("")}
-              aria-label="Clear artifact search"
+              aria-label={l10n("local.clear_artifact_search_3bbc1b58")}
               className="absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
@@ -276,8 +277,8 @@ export function Artifacts() {
                 type="button"
                 variant="outline"
                 size="icon"
-                aria-label={`Group artifacts (currently ${artifactGroupByLabel(groupBy)})`}
-                title="Group artifacts"
+                aria-label={l10n("local.group_artifacts_currently_value_a8179bab", {v0: (artifactGroupByLabel(groupBy))})}
+                title={l10n("local.group_artifacts_49a9799e")}
                 data-testid="artifact-group-control"
                 data-group-by={groupBy}
                 className={cn("h-8 w-8 shrink-0", grouping && "bg-accent")}
@@ -286,7 +287,7 @@ export function Artifacts() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuLabel>Group by</DropdownMenuLabel>
+              <DropdownMenuLabel>{l10n("local.group_by_956a51f6")}</DropdownMenuLabel>
               {ARTIFACT_GROUP_OPTIONS.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
@@ -302,7 +303,7 @@ export function Artifacts() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Filter artifacts by type">
+          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label={l10n("local.filter_artifacts_by_type_ff8bce09")}>
             {ARTIFACT_KIND_FILTERS.map((filter) => (
               <button
                 key={filter.value}
@@ -332,8 +333,7 @@ export function Artifacts() {
             className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            All stacks
-          </Link>
+            {l10n("local.all_stacks_278e1063")}</Link>
           {selectedGroup ? (
             <span className="truncate text-muted-foreground">
               <span className="text-foreground/80">{selectedGroup.issue.identifier}</span>{" "}
@@ -362,11 +362,11 @@ export function Artifacts() {
           </div>
           <div ref={loadMoreRef} className="flex min-h-10 items-center justify-center pb-2 text-xs text-muted-foreground">
             {isFetchingNextPage
-              ? "Loading more artifacts..."
+              ? l10n("local.loading_more_artifacts_ad61c516")
               : hasNextPage
                 ? null
                 : isFetching
-                  ? "Updating artifacts..."
+                  ? l10n("local.updating_artifacts_e40329f0")
                   : null}
           </div>
         </>

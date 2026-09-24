@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { AlertTriangle, ExternalLink, Loader2, Lock, RefreshCw } from "lucide-react";
 import type { PipelineCaseLiveness } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
@@ -64,13 +65,13 @@ const TONE_PALETTES: Record<LivenessBannerTone, TonePalette> = {
 };
 
 function blockerLinkLabel(link: LivenessBannerLink): string {
-  if (link.identifier) return `Open ${link.identifier}`;
-  return "Open blocker";
+  if (link.identifier) return l10n("local.open_value_afaef5c3", {v0: (link.identifier)});
+  return l10n("local.open_blocker_25538877");
 }
 
 function automationLinkLabel(link: LivenessBannerLink): string {
-  if (link.identifier) return `Open ${link.identifier}`;
-  return "Open automation task";
+  if (link.identifier) return l10n("local.open_value_afaef5c3", {v0: (link.identifier)});
+  return l10n("local.open_automation_task_94eb7f23");
 }
 
 export function PipelineLivenessBanner({
@@ -115,12 +116,11 @@ export function PipelineLivenessBanner({
           <p className="text-sm opacity-85">{view.body}</p>
           {view.permissionKey ? (
             <p className="text-sm opacity-85">
-              Required permission:{" "}
+              {l10n("local.required_permission_ea616486")}{" "}
               <code className="rounded-sm bg-black/10 px-1 py-0.5 text-xs font-medium dark:bg-white/10">
                 {view.permissionKey}
               </code>{" "}
-              on the target pipeline.
-            </p>
+              {l10n("local.on_the_target_pipeline_d6828b19")}</p>
           ) : null}
           {view.blockerLink || view.automationLink ? (
             <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -169,7 +169,7 @@ export function PipelineLivenessBanner({
           ) : (
             <RefreshCw className="mr-2 h-4 w-4" />
           )}
-          {retryPending ? "Retrying…" : view.retryLabel}
+          {retryPending ? l10n("local.retrying_a16c8b1c") : view.retryLabel}
         </Button>
       ) : null}
     </section>

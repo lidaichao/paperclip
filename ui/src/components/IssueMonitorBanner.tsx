@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useMemo } from "react";
 import { Clock } from "lucide-react";
 import type { Issue } from "@paperclipai/shared";
@@ -9,6 +10,7 @@ import {
   deriveMonitorState,
   formatMonitorAbsolute,
   formatMonitorEta,
+  displayMonitorRelative,
   useMonitorCountdown,
   type DerivedMonitorState,
   type MonitorDisplayState,
@@ -80,6 +82,7 @@ export function buildMonitorSurfaceCopy(
   }
 
   const eta = formatMonitorEta(derived.nextCheckAt, now); // "in 2h 12m" | "due now" | "overdue by 18m"
+  const shownEta = displayMonitorRelative(eta);
   const absolute = formatMonitorAbsolute(derived.nextCheckAt, {}, now); // local time, e.g. "Today, 4:08 PM"
   const isScheduledRetryOnly = derived.source === "scheduled-retry";
 
@@ -89,24 +92,24 @@ export function buildMonitorSurfaceCopy(
   switch (derived.state) {
     case "scheduled":
     case "retrying":
-      bannerTitle = isScheduledRetryOnly ? `Agent resumes ${eta}` : `Waiting on monitor — resumes ${eta}`;
-      stripTitle = `Resumes ${eta}`;
+      bannerTitle = isScheduledRetryOnly ? `Agent resumes ${shownEta}` : `Waiting on monitor — resumes ${shownEta}`;
+      stripTitle = l10n("local.manual_monitor_resumes", { v0: shownEta });
       break;
     case "due-now":
-      bannerTitle = isScheduledRetryOnly ? "Agent retry due now" : "Waiting on monitor — due now";
-      stripTitle = "Due now";
+      bannerTitle = isScheduledRetryOnly ? `Agent retry ${shownEta}` : `Waiting on monitor — ${shownEta}`;
+      stripTitle = capitalize(shownEta);
       statusHint = "Checking momentarily…";
       break;
     case "overdue":
     default:
-      bannerTitle = isScheduledRetryOnly ? `Agent retry ${eta}` : `Waiting on monitor — ${eta}`;
-      stripTitle = capitalize(eta);
+      bannerTitle = isScheduledRetryOnly ? `Agent retry ${shownEta}` : `Waiting on monitor — ${shownEta}`;
+      stripTitle = capitalize(shownEta);
       statusHint = "Fires on next tick";
       break;
   }
 
-  const attemptLabel = derived.attemptCount >= 1 ? `Attempt ${derived.attemptCount}` : null;
-  const serviceLabel = derived.serviceName ? `Watching: ${derived.serviceName}` : null;
+  const attemptLabel = derived.attemptCount >= 1 ? l10n("local.attempt_value_48acbb29", {v0: (derived.attemptCount)}) : null;
+  const serviceLabel = derived.serviceName ? l10n("local.watching_value_56cfbd9c", {v0: (derived.serviceName)}) : null;
 
   const bannerMeta = [statusHint, `${absolute} (your time)`, attemptLabel, serviceLabel].filter(
     (piece): piece is string => Boolean(piece),
@@ -149,7 +152,7 @@ function CheckNowButton({
       onClick={onCheckNow}
       disabled={checkingNow}
     >
-      {checkingNow ? "Checking…" : "Check now"}
+      {checkingNow ? l10n("local.checking_ec963ffc") : l10n("local.check_now_2937cffb")}
     </Button>
   );
 }
@@ -218,8 +221,8 @@ export function IssueMonitorComposerStrip({
       </div>
       <p className="mt-1.5 text-xs text-muted-foreground">
         {copy.workspaceWait
-          ? "You can keep sending instructions while the agent waits."
-          : "Sending a reply wakes the agent now — before the scheduled check."}
+          ? l10n("local.you_can_keep_sending_instructions_while_the_a_863825ba")
+          : l10n("local.sending_a_reply_wakes_the_agent_now_before_th_c39c874e")}
       </p>
     </div>
   );

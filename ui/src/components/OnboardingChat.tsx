@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { IssueComment } from "@paperclipai/shared";
@@ -67,15 +68,15 @@ function getRunStatusMessage(status: string, agentName: string, elapsed: number)
     case "running":
       return getCyclingMessage(RUNNING_MESSAGES, elapsed, agentName);
     case "succeeded":
-      return `${agentName} finished`;
+      return l10n("local.value_finished_0ef8bd20", {v0: (agentName)});
     case "failed":
-      return `${agentName} encountered an error`;
+      return l10n("local.value_encountered_an_error_ce9ce2ae", {v0: (agentName)});
     case "cancelled":
       return `${agentName}'s run was cancelled`;
     case "timed_out":
       return `${agentName}'s run timed out`;
     default:
-      return `${agentName} is thinking...`;
+      return l10n("local.value_is_thinking_bd75a752", {v0: (agentName)});
   }
 }
 
@@ -249,8 +250,7 @@ export function OnboardingChat({
     return (
       <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-        Loading conversation...
-      </div>
+        {l10n("local.loading_conversation_05ddf541")}</div>
     );
   }
 
@@ -296,13 +296,12 @@ export function OnboardingChat({
                       : "text-foreground/70",
                   )}
                 >
-                  {isAgent ? agentName : "You"}
+                  {isAgent ? agentName : l10n("local.you_08b04193")}
                 </span>
                 {isPlan && (
                   <span className="inline-flex items-center gap-0.5 text-(length:--text-nano) text-green-600 dark:text-green-400 font-medium">
                     <CheckCircle2 className="h-3 w-3" />
-                    Hiring plan detected
-                  </span>
+                    {l10n("local.hiring_plan_detected_889b9608")}</span>
                 )}
               </div>
               <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
@@ -350,16 +349,13 @@ export function OnboardingChat({
               <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
               <div>
                 <p className="text-sm font-medium">
-                  {agentName} has prepared a hiring plan
-                </p>
+                  {agentName} {l10n("local.has_prepared_a_hiring_plan_db1f8d83")}</p>
                 <p className="text-(length:--text-micro) text-muted-foreground">
-                  Review it, make edits, then approve.
-                </p>
+                  {l10n("local.review_it_make_edits_then_approve_7cd07c93")}</p>
               </div>
             </div>
             <Button size="sm" onClick={onReviewPlan}>
-              Review plan
-              <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              {l10n("local.review_plan_71146ca6")}<ArrowRight className="h-3.5 w-3.5 ml-1" />
             </Button>
           </div>
         </div>
@@ -371,7 +367,7 @@ export function OnboardingChat({
           ref={inputRef}
           type="text"
           className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
-          placeholder={detectedPlanCommentId ? `Ask ${agentName} to revise the plan...` : `Message ${agentName}...`}
+          placeholder={detectedPlanCommentId ? l10n("local.ask_value_to_revise_the_plan_7d7bbd86", {v0: (agentName)}) : l10n("local.message_value_d29aee6f", {v0: (agentName)})}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -432,14 +428,13 @@ function WelcomeMessage({
             </span>
           </div>
           <p>
-            Hi! Thanks for bringing me on to lead <strong>{companyName}</strong>.
+            {l10n("local.hi_thanks_for_bringing_me_on_to_lead_619a01f0")}{" "}<strong>{companyName}</strong>.
           </p>
           <p className="mt-1">
-            Our mission is: <em>{companyGoal}</em>
+            {l10n("local.our_mission_is_4f04bf74")}{" "}<em>{companyGoal}</em>
           </p>
           <p className="mt-1">
-            I'm ready to put together a plan for who we should bring on. Want me to get started?
-          </p>
+            {l10n("local.i_m_ready_to_put_together_a_plan_for_who_we_s_68554bd4")}</p>
         </div>
       )}
 
@@ -450,14 +445,12 @@ function WelcomeMessage({
             className="rounded-full border border-border px-3 py-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
             onClick={onDiscuss}
           >
-            Let's discuss first
-          </button>
+            {l10n("local.let_s_discuss_first_0334a9f2")}</button>
           <button
             className="rounded-full border border-foreground bg-foreground text-background px-3 py-1 text-xs hover:opacity-90 transition-opacity"
             onClick={onStart}
           >
-            Yes, get started!
-          </button>
+            {l10n("local.yes_get_started_75735cbe")}</button>
         </div>
       )}
 
@@ -472,8 +465,8 @@ function WelcomeMessage({
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
           </span>
           {phase === "waking"
-            ? `${agentName} is waking up...`
-            : `${agentName} is composing a message...`}
+            ? l10n("local.value_is_waking_up_1e93bb3b", {v0: (agentName)})
+            : l10n("local.value_is_composing_a_message_9bf7e686", {v0: (agentName)})}
         </div>
       )}
     </>

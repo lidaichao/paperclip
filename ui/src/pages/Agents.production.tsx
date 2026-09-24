@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Link, useNavigate, useLocation } from "@/lib/router";
@@ -50,11 +51,11 @@ export const AGENT_FILTER_TABS = ["all", "active", "paused", "error", "builtin"]
 type FilterTab = (typeof AGENT_FILTER_TABS)[number];
 
 const AGENT_FILTER_TAB_ITEMS: { value: FilterTab; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "paused", label: "Paused" },
-  { value: "error", label: "Error" },
-  { value: "builtin", label: "Built-in" },
+  { value: "all", label: l10n("local.all_a52ace42") },
+  { value: "active", label: l10n("local.active_92340695") },
+  { value: "paused", label: l10n("local.paused_e159b061") },
+  { value: "error", label: l10n("local.error_54a0e8c1") },
+  { value: "builtin", label: l10n("local.built_in_1f439481") },
 ];
 
 function isFilterTab(value: string): value is FilterTab {
@@ -68,15 +69,15 @@ interface EnvironmentDescriptor {
 }
 
 const localEnvironmentDescriptor: EnvironmentDescriptor = {
-  label: "Local",
+  label: l10n("local.local_8c31e6e7"),
   detail: "Paperclip host",
-  title: "Local - Paperclip host",
+  title: l10n("local.local_paperclip_host_369767d8"),
 };
 
 const loadingEnvironmentDescriptor: EnvironmentDescriptor = {
   label: "—",
   detail: "Loading environment",
-  title: "Loading environment",
+  title: l10n("local.loading_environment_07bae8d3"),
 };
 
 // Agents in these states never appear in the agents list — `terminated` is
@@ -122,7 +123,7 @@ function getSandboxProviderLabel(
   const provider = typeof environment.config.provider === "string"
     ? environment.config.provider.trim()
     : "";
-  if (!provider) return "Sandbox";
+  if (!provider) return l10n("local.sandbox_67fc6249");
   return capabilities?.sandboxProviders?.[provider]?.displayName ?? provider;
 }
 
@@ -131,11 +132,11 @@ function describeEnvironment(
   capabilities?: EnvironmentCapabilities | null,
 ): EnvironmentDescriptor {
   const detail = isPlatformManagedEnvironment(environment)
-    ? "Managed by Paperclip"
+    ? l10n("local.managed_by_paperclip_eca36058")
     : environment.driver === "sandbox"
-      ? `${getSandboxProviderLabel(environment, capabilities)} sandbox provider`
+      ? l10n("local.value_sandbox_provider_d0c65138", {v0: (getSandboxProviderLabel(environment, capabilities))})
       : environment.driver === "local"
-        ? "Paperclip host"
+        ? l10n("local.paperclip_host_e5b9978d")
         : formatEnvironmentDriver(environment.driver);
 
   return {
@@ -147,9 +148,9 @@ function describeEnvironment(
 
 function describeMissingEnvironment(environmentId: string): EnvironmentDescriptor {
   return {
-    label: "Unknown environment",
+    label: l10n("local.unknown_environment_ea7edbd5"),
     detail: environmentId.slice(0, 8),
-    title: `Unknown environment - ${environmentId}`,
+    title: l10n("local.unknown_environment_value_de282056", {v0: (environmentId)}),
   };
 }
 
@@ -318,7 +319,7 @@ export function Agents() {
   }, [agents, environmentsById, environmentCapabilities, instanceSettings?.defaultEnvironmentId]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Agents" }]);
+    setBreadcrumbs([{ label: l10n("local.agents_279b44d2") }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
@@ -375,8 +376,7 @@ export function Agents() {
               variant="outline"
               onClick={() => setConfigureState(builtInState)}
             >
-              Set up
-            </Button>
+              {l10n("local.set_up_4da10f1f")}</Button>
           </span>
         )}
       </>
@@ -401,7 +401,7 @@ export function Agents() {
           resourceMembershipState(membershipsQuery.data, "agent", agent.id) === "left" ? "sm:text-foreground/55" : "",
         )}
         leading={hasInvalidOrgChain ? (
-          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-label="Invalid reporting chain" />
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-label={l10n("local.invalid_reporting_chain_bf9c6d9d")} />
         ) : (
           <AgentAvatar agent={agent} size={32} />
         )}
@@ -492,15 +492,15 @@ export function Agents() {
         <div className="flex items-center gap-2">
           {/* View toggle */}
           {!forceListView && (
-            <div className="flex items-center border border-border" role="group" aria-label="View mode">
+            <div className="flex items-center border border-border" role="group" aria-label={l10n("local.view_mode_18997f24")}>
               <button
                 className={cn(
                   "p-1.5 transition-colors",
                   effectiveView === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"
                 )}
                 onClick={() => setView("list")}
-                title="List view"
-                aria-label="List view"
+                title={l10n("local.list_view_5d8c3e1b")}
+                aria-label={l10n("local.list_view_5d8c3e1b")}
                 aria-pressed={effectiveView === "list"}
               >
                 <List className="h-3.5 w-3.5" />
@@ -511,8 +511,8 @@ export function Agents() {
                   effectiveView === "org" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"
                 )}
                 onClick={() => setView("org")}
-                title="Org chart view"
-                aria-label="Org chart view"
+                title={l10n("local.org_chart_view_a33c8240")}
+                aria-label={l10n("local.org_chart_view_a33c8240")}
                 aria-pressed={effectiveView === "org"}
               >
                 <GitBranch className="h-3.5 w-3.5" />
@@ -521,13 +521,12 @@ export function Agents() {
           )}
           <Button size="sm" variant="outline" onClick={openNewAgent}>
             <Plus className="h-3.5 w-3.5 mr-1.5" />
-            New Agent
-          </Button>
+            {l10n("local.new_agent_c548aab1")}</Button>
         </div>
       </div>
 
       {filtered.length > 0 && (
-        <p className="text-xs text-muted-foreground">{filtered.length} agent{filtered.length !== 1 ? "s" : ""}</p>
+        <p className="text-xs text-muted-foreground">{filtered.length} {l10n("local.agent_d4f0bc5a")}{filtered.length !== 1 ? englishPluralSuffix("s") : ""}</p>
       )}
 
       {error && <p className="text-sm text-destructive">{error.message}</p>}
@@ -550,8 +549,7 @@ export function Agents() {
 
       {effectiveView === "list" && agents && agents.length > 0 && filtered.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
-          No agents match the selected status.
-        </p>
+          {l10n("local.no_agents_match_the_selected_status_8b96d18f")}</p>
       )}
 
       {/* Org chart view */}
@@ -579,14 +577,12 @@ export function Agents() {
 
       {effectiveView === "org" && orgTree && orgTree.length > 0 && filteredOrg.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
-          No agents match the selected status.
-        </p>
+          {l10n("local.no_agents_match_the_selected_status_8b96d18f")}</p>
       )}
 
       {effectiveView === "org" && orgTree && orgTree.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
-          No organizational hierarchy defined.
-        </p>
+          {l10n("local.no_organizational_hierarchy_defined_7ac98865")}</p>
       )}
       {configureState && selectedCompanyId && (
         <Suspense fallback={null}>
@@ -654,7 +650,7 @@ function OrgTreeNode({
         )}
       >
         {hasInvalidOrgChain ? (
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label="Invalid reporting chain" />
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label={l10n("local.invalid_reporting_chain_bf9c6d9d")} />
         ) : (
           <AgentAvatar agent={agent ?? node} size={24} />
         )}
@@ -680,8 +676,7 @@ function OrgTreeNode({
                   }}
                 >
                   <Button size="xs" variant="outline" onClick={() => onConfigureBuiltIn(builtInState)}>
-                    Set up
-                  </Button>
+                    {l10n("local.set_up_4da10f1f")}</Button>
                 </span>
               )}
             </div>
@@ -851,7 +846,7 @@ function LiveRunIndicator({
         <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
       </span>
       <span className="text-(length:--text-micro) font-medium text-blue-600 dark:text-blue-400">
-        Live{liveCount > 1 ? ` (${liveCount})` : ""}
+        {l10n("local.live_b64ac05f")}{liveCount > 1 ? ` (${liveCount})` : ""}
       </span>
     </Link>
   );

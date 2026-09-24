@@ -1,0 +1,138 @@
+{
+  "just_now": [
+    "just now",
+    "刚刚"
+  ],
+  "tokens_in": [
+    "in",
+    "输入"
+  ],
+  "configuration": [
+    "Configuration",
+    "配置"
+  ],
+  "budget_open": [
+    "Open",
+    "无限制"
+  ],
+  "tokens_out": [
+    "· out",
+    "· 输出"
+  ],
+  "minutes_ago": [
+    "{{v0}}m ago",
+    "{{v0}} 分钟前"
+  ],
+  "hours_ago": [
+    "{{v0}}h ago",
+    "{{v0}} 小时前"
+  ],
+  "days_ago": [
+    "{{v0}}d ago",
+    "{{v0}} 天前"
+  ],
+  "weeks_ago": [
+    "{{v0}}w ago",
+    "{{v0}} 周前"
+  ],
+  "months_ago": [
+    "{{v0}}mo ago",
+    "{{v0}} 个月前"
+  ],
+  "monthly_budget": [
+    "{{v0}}/mo",
+    "{{v0}}/月"
+  ],
+  "duration_s": [
+    "{{v0}}s",
+    "{{v0}}秒"
+  ],
+  "duration_m": [
+    "{{v0}}m",
+    "{{v0}}分钟"
+  ],
+  "duration_h": [
+    "{{v0}}h",
+    "{{v0}}小时"
+  ],
+  "duration_d": [
+    "{{v0}}d",
+    "{{v0}}天"
+  ],
+  "duration_ms": [
+    "{{v0}}m {{v1}}s",
+    "{{v0}}分钟 {{v1}}秒"
+  ],
+  "duration_hm": [
+    "{{v0}}h {{v1}}m",
+    "{{v0}}小时 {{v1}}分钟"
+  ],
+  "duration_dh": [
+    "{{v0}}d {{v1}}h",
+    "{{v0}}天 {{v1}}小时"
+  ],
+  "today_time": [
+    "Today, {{v0}}",
+    "今天 {{v0}}"
+  ],
+  "source_promoted": [
+    "Promoted from low-trust{{v0}}.",
+    "已从低信任级别提升{{v0}}。"
+  ],
+  "source_promoted_on": [
+    " on {{v0}}",
+    "（{{v0}}）"
+  ],
+  "source_raw": [
+    "Authored by a low-trust review agent. Raw {{v0}} is not auto-shared with higher-trust agents.",
+    "由低信任级别的审核智能体编写。原始{{v0}}不会自动共享给信任级别更高的智能体。"
+  ],
+  "monitor_duration_s": [
+    "{{v0}}s",
+    "{{v0}}秒"
+  ],
+  "monitor_duration_m": [
+    "{{v0}}m",
+    "{{v0}}分钟"
+  ],
+  "monitor_duration_h": [
+    "{{v0}}h",
+    "{{v0}}小时"
+  ],
+  "monitor_duration_d": [
+    "{{v0}}d",
+    "{{v0}}天"
+  ],
+  "monitor_in": [
+    "in {{v0}}",
+    "{{v0}}后"
+  ],
+  "monitor_overdue": [
+    "overdue by {{v0}}",
+    "已逾期{{v0}}"
+  ],
+  "monitor_ago": [
+    "{{v0}} ago",
+    "{{v0}}前"
+  ],
+  "monitor_due_now": [
+    "due now",
+    "现已到期"
+  ],
+  "monitor_now": [
+    "now",
+    "现在"
+  ],
+  "monitor_resumes": [
+    "Resumes {{v0}}",
+    "{{v0}}恢复"
+  ],
+  "monitor_retry": [
+    "Retry",
+    "重试"
+  ],
+  "monitor_continuation": [
+    "Continuation",
+    "续接"
+  ]
+}

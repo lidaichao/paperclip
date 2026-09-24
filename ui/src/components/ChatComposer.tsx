@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   forwardRef,
   useImperativeHandle,
@@ -254,8 +255,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, ChatComposerProps>(fu
         >
           <span className="inline-flex items-center gap-2">
             <Paperclip className="h-3.5 w-3.5" />
-            Drop to attach
-          </span>
+            {l10n("local.drop_to_attach_34a7a637")}</span>
         </div>
       ) : null}
 
@@ -288,12 +288,12 @@ export const ChatComposer = forwardRef<ChatComposerHandle, ChatComposerProps>(fu
             const sizeLabel = formatAttachmentSize(attachment.size);
             const statusLabel =
               attachment.status === "uploading"
-                ? "Uploading…"
+                ? l10n("local.uploading_5ce44dd7")
                 : attachment.status === "error"
-                  ? attachment.error ?? "Upload failed"
+                  ? attachment.error ?? l10n("local.upload_failed_6efc5d27")
                   : attachment.inline
-                    ? "Inserted inline"
-                    : "Attached";
+                    ? l10n("local.inserted_inline_096fb2cc")
+                    : l10n("local.attached_ac6d9b76");
             return (
               <div
                 key={attachment.id}
@@ -342,8 +342,8 @@ export const ChatComposer = forwardRef<ChatComposerHandle, ChatComposerProps>(fu
               type="button"
               onClick={triggerFilePicker}
               disabled={disabled || attaching}
-              aria-label="Attach files"
-              title="Attach files"
+              aria-label={l10n("local.attach_files_e697cc1e")}
+              title={l10n("local.attach_files_e697cc1e")}
               className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               {attaching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}

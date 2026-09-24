@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -74,7 +75,7 @@ function ProposalRow({
               {proposal.target ? (
                 <AgentRefChip agent={proposal.target} className="font-medium" />
               ) : (
-                <span className="text-muted-foreground">agent</span>
+                <span className="text-muted-foreground">{l10n("local.agent_d4f0bc5a")}</span>
               )}
               <DeliveryBadge configPath={proposal.configPath} />
               <code className="font-mono text-xs">{envKey || proposal.configPath}</code>
@@ -91,7 +92,7 @@ function ProposalRow({
         {/* Provenance meta */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            by <AgentRefChip agent={proposal.proposedBy} className="font-medium text-foreground" />
+            {l10n("local.by_a7e2d26e")}{" "}<AgentRefChip agent={proposal.proposedBy} className="font-medium text-foreground" />
           </span>
           {proposal.originIssue ? (
             <>
@@ -167,16 +168,14 @@ export function ProposalsTab({
   if (proposalsQuery.isError) {
     return (
       <div className="flex items-center gap-2 py-4 text-sm text-destructive">
-        <AlertCircle className="size-4" /> Couldn’t load proposals. Try again.
-      </div>
+        <AlertCircle className="size-4" /> {l10n("local.couldn_t_load_proposals_try_again_7c9b863b")}</div>
     );
   }
 
   if (proposalsQuery.isPending) {
     return (
       <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> Loading proposals…
-      </div>
+        <Loader2 className="size-4 animate-spin" /> {l10n("local.loading_proposals_5b6b1d43")}</div>
     );
   }
 
@@ -184,7 +183,7 @@ export function ProposalsTab({
     return (
       <EmptyState
         icon={Inbox}
-        title="No pending proposals"
+        title={l10n("local.no_pending_proposals_1722fa30")}
         message="When an agent proposes a secret or an access binding, it shows up here for review."
       />
     );
@@ -193,9 +192,7 @@ export function ProposalsTab({
   return (
     <div className="space-y-2">
       <p className="text-xs text-muted-foreground">
-        Agents propose credentials and access bindings; you approve or reject them here. Proposed
-        values are never shown — only a fingerprint and length.
-      </p>
+        {l10n("local.agents_propose_credentials_and_access_binding_c2e4adf3")}</p>
       {sorted.map((proposal) => (
         <ProposalRow
           key={proposal.id}

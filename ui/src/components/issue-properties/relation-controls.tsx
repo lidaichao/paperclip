@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useState, type MouseEvent } from "react";
 import type { Issue } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
@@ -44,7 +45,7 @@ export function RemovableIssueReferencePill({
       <span className="truncate">{issueLabel}</span>
     </>
   );
-  const removeLabel = `Remove ${issueLabel} as blocker`;
+  const removeLabel = l10n("local.remove_value_as_blocker_eaf9d3b1", {v0: (issueLabel)});
   const openRemoveConfirmation = () => setIsConfirmOpen(true);
   const handleRemove = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -67,7 +68,7 @@ export function RemovableIssueReferencePill({
                 data-mention-kind="issue"
                 className={chipClassName}
                 title={issue.title}
-                aria-label={`Actions for blocker ${issueLabel}`}
+                aria-label={l10n("local.actions_for_blocker_value_522221c1", {v0: (issueLabel)})}
               >
                 {content}
               </button>
@@ -77,14 +78,12 @@ export function RemovableIssueReferencePill({
                 <DropdownMenuItem asChild>
                   <Link to={`/issues/${issue.identifier}`}>
                     <ArrowUpRight className="h-4 w-4" />
-                    Visit task
-                  </Link>
+                    {l10n("local.visit_task_ecacc67b")}</Link>
                 </DropdownMenuItem>
               ) : null}
               <DropdownMenuItem variant="destructive" onSelect={openRemoveConfirmation}>
                 <X className="h-4 w-4" />
-                Remove blocker
-              </DropdownMenuItem>
+                {l10n("local.remove_blocker_76792aa6")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
@@ -104,7 +103,7 @@ export function RemovableIssueReferencePill({
                 data-mention-kind="issue"
                 className={chipClassName}
                 title={issue.title}
-                aria-label={`Task ${issueLabel}: ${issue.title}`}
+                aria-label={l10n("local.task_value_value_e4eb199f", {v0: (issueLabel), v1: (issue.title)})}
               >
                 {content}
               </Link>
@@ -113,7 +112,7 @@ export function RemovableIssueReferencePill({
                 data-mention-kind="issue"
                 className={chipClassName}
                 title={issue.title}
-                aria-label={`Task: ${issue.title}`}
+                aria-label={l10n("local.task_value_4d9fe20e", {v0: (issue.title)})}
               >
                 {content}
               </span>
@@ -124,18 +123,16 @@ export function RemovableIssueReferencePill({
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Remove blocker?</DialogTitle>
+            <DialogTitle>{l10n("local.remove_blocker_b7d963b0")}</DialogTitle>
             <DialogDescription>
-              Remove {confirmLabel} as a blocker for this task.
-            </DialogDescription>
+              {l10n("local.remove_c3812fc4")}{" "}{confirmLabel} {l10n("local.as_a_blocker_for_this_task_33a5250e")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline">{l10n("local.cancel_19766ed6")}</Button>
             </DialogClose>
             <Button type="button" variant="destructive" onClick={confirmRemove}>
-              Remove blocker
-            </Button>
+              {l10n("local.remove_blocker_76792aa6")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -158,9 +155,9 @@ export function ExpandRelationListButton({
       type="button"
       className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
       onClick={onClick}
-      aria-label={expanded ? "Show fewer items" : `Show ${hiddenCount} more items`}
+      aria-label={expanded ? l10n("local.show_fewer_items_b908f492") : l10n("local.show_value_more_items_21153fcb", {v0: (hiddenCount)})}
     >
-      {expanded ? "Show less" : `Show ${hiddenCount} more`}
+      {expanded ? l10n("local.show_less_94ea9b1d") : l10n("local.show_value_more_df1508f6", {v0: (hiddenCount)})}
     </button>
   );
 }

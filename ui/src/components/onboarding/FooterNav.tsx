@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 
@@ -66,8 +67,7 @@ export function FooterNav({
           disabled={loading}
         >
           <ArrowLeft className="mr-1 size-3.5" />
-          Back
-        </Button>
+          {l10n("local.back_76900f1b")}</Button>
       ) : (
         <span />
       )}

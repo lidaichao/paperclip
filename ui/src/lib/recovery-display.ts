@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { IssueRecoveryAction, IssueRecoveryActionKind } from "@paperclipai/shared";
 import { Eye, OctagonAlert, RefreshCw, TriangleAlert } from "lucide-react";
 import {
@@ -23,23 +24,23 @@ export const RECOVERY_CHIP_DEFAULT_TONE: Record<
     className:
       "border-amber-500/60 bg-amber-500/15 text-amber-700 dark:text-amber-300",
     icon: TriangleAlert,
-    label: "Recovery needed",
+    label: l10n("local.recovery_needed_1ffe056f"),
   },
   in_progress: {
     className:
       "border-sky-500/60 bg-sky-500/15 text-sky-700 dark:text-sky-300",
     icon: RefreshCw,
-    label: "Recovery in progress",
+    label: l10n("local.recovery_in_progress_93d357e3"),
   },
   observe_only: {
     className: "border-border bg-muted text-muted-foreground",
     icon: Eye,
-    label: "Observing active run",
+    label: l10n("local.observing_active_run_e8ad00fb"),
   },
   escalated: {
     className: "border-red-500/60 bg-red-500/15 text-red-700 dark:text-red-300",
     icon: OctagonAlert,
-    label: "Recovery escalated",
+    label: l10n("local.recovery_escalated_b976b9c4"),
   },
 };
 
@@ -107,7 +108,7 @@ export function recoveryChipLabel(
   lineage?: RecoveryRetryLineage | null,
 ): string {
   if (kind === "workspace_validation" && state === "needed") {
-    return "Workspace recovery needed";
+    return l10n("local.workspace_recovery_needed_d374a518");
   }
   if (
     state === "in_progress" &&
@@ -115,7 +116,7 @@ export function recoveryChipLabel(
     lineage.maxAttempts !== null &&
     lineage.attempt > 0
   ) {
-    return `Recovery in progress · ${Math.min(lineage.attempt, lineage.maxAttempts)}/${lineage.maxAttempts}`;
+    return l10n("local.recovery_in_progress_value_value_5b8d6714", {v0: (Math.min(lineage.attempt, lineage.maxAttempts)), v1: (lineage.maxAttempts)});
   }
   return RECOVERY_CHIP_DEFAULT_TONE[state].label;
 }

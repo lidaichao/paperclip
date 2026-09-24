@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { StatusCardRefreshPolicy, StatusCardUpdate } from "@paperclipai/shared";
 
 /** "1.1k tok" / "940 tok" — compact token count for footers and chips. */
@@ -145,11 +146,11 @@ export function formatTokenSplit(inputTokens: number, outputTokens: number): str
 export function updateKindLabel(kind: StatusCardUpdate["kind"]): string {
   switch (kind) {
     case "compile":
-      return "compile";
+      return l10n("local.compile_eba8dcd6");
     case "full":
-      return "full rebuild";
+      return l10n("local.full_rebuild_4cec2a63");
     case "incremental":
-      return "incremental";
+      return l10n("local.incremental_80a3df68");
     default:
       return kind;
   }

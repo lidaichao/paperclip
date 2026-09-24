@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { cn } from "../lib/utils";
@@ -217,18 +218,18 @@ export function parseFrontmatter(content: string): { data: FrontmatterData; body
 }
 
 export const FRONTMATTER_FIELD_LABELS: Record<string, string> = {
-  name: "Name",
-  title: "Title",
-  kind: "Kind",
-  reportsTo: "Reports to",
-  skills: "Skills",
-  status: "Status",
-  description: "Description",
-  priority: "Priority",
-  assignee: "Responsible",
-  project: "Project",
-  recurring: "Recurring",
-  targetDate: "Target date",
+  name: l10n("local.name_dcd1d522"),
+  title: l10n("local.title_7e8cd205"),
+  kind: l10n("local.kind_f5387f9b"),
+  reportsTo: l10n("local.reports_to_2b488c09"),
+  skills: l10n("local.skills_66d0f523"),
+  status: l10n("local.status_920e413c"),
+  description: l10n("local.description_526e0087"),
+  priority: l10n("local.priority_d60dbba0"),
+  assignee: l10n("local.responsible_bc110a6d"),
+  project: l10n("local.project_98595978"),
+  recurring: l10n("local.recurring_c0c06e54"),
+  targetDate: l10n("local.target_date_834cc86b"),
 };
 
 // -- File tree component -----------------------------------------------------
@@ -364,14 +365,12 @@ export function FileTree({
                 statusBadge.error ?? statusBadgeDefault,
               )}
             >
-              error
-            </Badge>
+              {l10n("local.error_ca00fccf")}</Badge>
             <span className="min-w-0 text-destructive">{error.message}</span>
           </div>
           {error.retry && (
             <Button type="button" size="xs" variant="outline" onClick={error.retry}>
-              Retry
-            </Button>
+              {l10n("local.retry_942087cc")}</Button>
           )}
         </div>
       </div>
@@ -382,9 +381,9 @@ export function FileTree({
     return (
       <div aria-label={ariaLabel} role="tree" className="p-3">
         <div className="rounded-md border border-dashed border-border px-4 py-8 text-center">
-          <div className="text-sm font-medium">{empty?.title ?? "No files"}</div>
+          <div className="text-sm font-medium">{empty?.title ?? l10n("local.no_files_c219d965")}</div>
           <div className="mt-1 text-xs text-muted-foreground">
-            {empty?.description ?? "Files will appear here when they are available."}
+            {empty?.description ?? l10n("local.files_will_appear_here_when_they_are_availabl_d72f04c8")}
           </div>
         </div>
       </div>
@@ -484,7 +483,7 @@ export function FileTree({
                   event.stopPropagation();
                   onToggleDir(node.path);
                 }}
-                aria-label={expanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+                aria-label={expanded ? l10n("local.collapse_value_f8942621", {v0: (node.name)}) : l10n("local.expand_value_614e2df2", {v0: (node.name)})}
               >
                 {expanded ? (
                   <ChevronDown className="h-3.5 w-3.5" />

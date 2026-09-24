@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useId, useState, type ReactNode } from "react";
 import {
   ChevronDown,
@@ -326,7 +327,7 @@ export function SystemNotice({
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
             )}
           >
-            <span>{open ? "Hide details" : "Details"}</span>
+            <span>{open ? l10n("local.hide_details_c9722a7a") : l10n("local.details_45989de4")}</span>
             <ChevronDown
               className={cn(
                 "h-3.5 w-3.5 transition-transform duration-150",

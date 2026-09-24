@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "@/lib/router";
@@ -204,7 +205,7 @@ export function OrgChart() {
   }, [agents]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Org Chart" }]);
+    setBreadcrumbs([{ label: l10n("local.org_chart_aab3e6c8") }]);
   }, [setBreadcrumbs]);
 
   // Layout computation
@@ -457,16 +458,14 @@ export function OrgChart() {
           <Link to="/company/import">
             <Button variant="outline" size="sm">
               <Upload className="mr-1.5 h-3.5 w-3.5" />
-              Import company
-            </Button>
+              {l10n("local.import_company_e333ee2b")}</Button>
           </Link>
         )}
         {showExport && (
           <Link to="/company/export">
             <Button variant="outline" size="sm">
               <Download className="mr-1.5 h-3.5 w-3.5" />
-              Export company
-            </Button>
+              {l10n("local.export_company_2c098e09")}</Button>
           </Link>
         )}
       </div>
@@ -502,8 +501,8 @@ export function OrgChart() {
                 });
               }
             }}
-            title="Zoom in"
-            aria-label="Zoom in"
+            title={l10n("local.zoom_in_0e47f09a")}
+            aria-label={l10n("local.zoom_in_0e47f09a")}
           >
             <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
@@ -518,16 +517,16 @@ export function OrgChart() {
                 });
               }
             }}
-            title="Zoom out"
-            aria-label="Zoom out"
+            title={l10n("local.zoom_out_bc7b631a")}
+            aria-label={l10n("local.zoom_out_bc7b631a")}
           >
             <Minus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
           <button
             className="flex size-9 items-center justify-center rounded border border-border bg-background text-(length:--text-nano) transition-colors hover:bg-accent sm:size-7"
             onClick={fitToScreen}
-            title="Fit to screen"
-            aria-label="Fit chart to screen"
+            title={l10n("local.fit_to_screen_32bb0d29")}
+            aria-label={l10n("local.fit_chart_to_screen_3dc2e333")}
           >
             <Maximize2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>

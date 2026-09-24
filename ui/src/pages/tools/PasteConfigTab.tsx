@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
@@ -37,15 +38,15 @@ const SAMPLE_CONFIG = `{
 /** Turn an env/header key (e.g. `GITHUB_TOKEN`) into a friendly field label. */
 function humanizeKey(raw: string): string {
   const cleaned = raw.replace(/[_-]+/g, " ").trim().toLowerCase();
-  if (!cleaned) return "Key";
+  if (!cleaned) return l10n("local.key_99a52df3");
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
 function draftSummary(draft: McpJsonImportDraft): string {
   const keyCount = draft.credentialFields.length || draft.credentialRefs.length;
   const where = draft.transport === "local_stdio" ? "Runs in your workspace" : "Connects over the web";
-  if (keyCount === 0) return `${where}  ·  no keys needed`;
-  return `${where}  ·  needs ${keyCount} ${keyCount === 1 ? "key" : "keys"}`;
+  if (keyCount === 0) return l10n("local.value_no_keys_needed_baadd997", {v0: (where)});
+  return l10n("local.value_needs_value_value_f523706a", {v0: (where), v1: (keyCount), v2: (keyCount === 1 ? "key" : "keys")});
 }
 
 /**
@@ -173,7 +174,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
         if (result.auth.manualClientRequired) {
           setOAuthPhase("error");
           setOAuthError(
-            "This server requires OAuth client details from its provider settings. Continue in setup to add them.",
+            l10n("local.this_server_requires_oauth_client_details_fro_b794cdb6"),
           );
           return;
         }
@@ -255,17 +256,14 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
     <div className="space-y-5">
       <div className="flex max-w-2xl items-start gap-1.5">
         <p className="text-sm text-muted-foreground">
-          Paste the MCP config snippet from the tool's README and we'll turn it into a friendly setup.
-        </p>
+          {l10n("local.paste_the_mcp_config_snippet_from_the_tool_s_1f218ff8")}</p>
         <McpConfigHelpDialog />
       </div>
       <p className="text-xs text-muted-foreground">
-        Just a URL?{" "}
+        {l10n("local.just_a_url_88de1fa7")}{" "}
         <Link to="/apps" className="text-primary hover:underline">
-          Browse planned app connections
-        </Link>{" "}
-        instead.
-      </p>
+          {l10n("local.browse_planned_app_connections_342995c7")}</Link>{" "}
+        {l10n("local.instead_90b5d130")}</p>
 
       <div className="space-y-2">
         <Textarea
@@ -285,8 +283,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
           <p className="text-xs text-amber-600">{localParseError}</p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Paste an MCP config — the snippet a README tells you to copy.
-          </p>
+            {l10n("local.paste_an_mcp_config_the_snippet_a_readme_tell_59ed50f2")}</p>
         )}
       </div>
 
@@ -295,11 +292,10 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
           onClick={() => importMutation.mutate(draftText)}
           disabled={!canSubmit || Boolean(localParseError)}
         >
-          {importMutation.isPending ? "Checking…" : "Check config"}
+          {importMutation.isPending ? l10n("local.checking_ec963ffc") : l10n("local.check_config_9f23db38")}
         </Button>
         <span className="text-xs text-muted-foreground">
-          We'll read it and show what we found before anything is saved.
-        </span>
+          {l10n("local.we_ll_read_it_and_show_what_we_found_before_a_e36240cd")}</span>
       </div>
 
       {importMutation.isError ? <ErrorState error={importMutation.error} /> : null}
@@ -307,14 +303,12 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
       {preview ? (
         drafts.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-            We couldn't find an app in that config. Double-check you pasted the whole snippet.
-          </div>
+            {l10n("local.we_couldn_t_find_an_app_in_that_config_double_e68580b6")}</div>
         ) : (
           <div className="space-y-3">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              We found {drafts.length} {drafts.length === 1 ? "app" : "apps"} in that config
-            </h3>
+              {l10n("local.we_found_1bd4e6c6")}{" "}{drafts.length} {drafts.length === 1 ? l10n("local.app_a172cedc") : l10n("local.apps_d56f6359")} {l10n("local.in_that_config_d71ef3bc")}</h3>
             {drafts.map((draft, index) => {
               const url = draftConnectUrl(draft);
               const missingFields = missingCredentialFields(draft, credentialValues);
@@ -338,14 +332,10 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
             })}
             {drafts.some((d) => draftConnectUrl(d)) ? (
               <p className="text-xs text-muted-foreground">
-                Checking a remote app creates a draft connection, stores any header replacements as Paperclip secrets,
-                and runs health/catalog discovery before activation.
-              </p>
+                {l10n("local.checking_a_remote_app_creates_a_draft_connect_00667e3e")}</p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                We humanized the field names from the config. These run-in-your-workspace tools stay as drafts until an
-                admin maps them to an approved template.
-              </p>
+                {l10n("local.we_humanized_the_field_names_from_the_config_af267d34")}</p>
             )}
           </div>
         )
@@ -403,15 +393,13 @@ function DraftCard({
         {onCheck ? (
           <Button size="sm" className="shrink-0" onClick={onCheck} disabled={checking || !canCheck}>
             {checking ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-            Check actions
-          </Button>
+            {l10n("local.check_actions_de6a6a7d")}</Button>
         ) : null}
       </div>
 
       {onCheck ? (
         <label className="mt-4 block max-w-sm space-y-1 text-xs font-medium text-foreground">
-          Connection name
-          <Input
+          {l10n("local.connection_name_686d4d5d")}<Input
             value={connectionName}
             onChange={(event) => onConnectionNameChange(event.target.value)}
             placeholder={draft.name}
@@ -436,7 +424,7 @@ function DraftCard({
                   type="password"
                   value={credentialValues[credentialValueKey(draft, field.configPath)] ?? ""}
                   onChange={(event) => onCredentialChange(field.configPath, event.target.value)}
-                  placeholder="Paste replacement value"
+                  placeholder={l10n("local.paste_replacement_value_297ff20d")}
                   className="h-8 max-w-sm text-xs"
                 />
               </div>
@@ -445,10 +433,9 @@ function DraftCard({
         </div>
       ) : draft.credentialRefs.length > 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          Keys from this config stay draft-only until an admin maps them to an approved template.
-        </p>
+          {l10n("local.keys_from_this_config_stay_draft_only_until_a_c7c73829")}</p>
       ) : (
-        <p className="mt-3 text-xs text-muted-foreground">No keys needed for this one.</p>
+        <p className="mt-3 text-xs text-muted-foreground">{l10n("local.no_keys_needed_for_this_one_0f5035a9")}</p>
       )}
 
       {draft.warnings.length > 0 ? (
@@ -490,19 +477,18 @@ function CatalogReview({
         <div>
           <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            Review actions for {result.application.name}
+            {l10n("local.review_actions_for_fa0c2fbb")}{" "}{result.application.name}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Health and catalog checks passed. Every discovered action starts allowed; you can narrow access after activation.
-          </p>
+            {l10n("local.health_and_catalog_checks_passed_every_discov_cd29bd54")}</p>
         </div>
         <Button size="sm" onClick={onFinish} disabled={finishing || enabledCount === 0 || Boolean(activatedName)}>
           {finishing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-          Activate {enabledCount} of {total}
+          {l10n("local.activate_24433c70")}{" "}{enabledCount} {l10n("local.of_28391d3b")}{" "}{total}
         </Button>
       </div>
       <ActionGroup
-        title="Read-only"
+        title={l10n("local.read_only_72bb9089")}
         actions={result.actions.readOnly}
         enabled={enabled}
         onToggle={onToggle}
@@ -510,7 +496,7 @@ function CatalogReview({
         askFirstLevels={askFirstLevels}
       />
       <ActionGroup
-        title="Can make changes"
+        title={l10n("local.can_make_changes_0bf247bb")}
         actions={result.actions.canMakeChanges}
         enabled={enabled}
         onToggle={onToggle}
@@ -518,7 +504,7 @@ function CatalogReview({
         askFirstLevels={askFirstLevels}
       />
       {activatedName ? (
-        <p className="text-xs font-medium text-emerald-700">{activatedName} is active for all agents.</p>
+        <p className="text-xs font-medium text-emerald-700">{activatedName} {l10n("local.is_active_for_all_agents_8b382c59")}</p>
       ) : null}
     </div>
   );
@@ -546,11 +532,9 @@ function ActionGroup({
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
         <div className="flex gap-2">
           <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => onBulk(true)}>
-            Turn all on
-          </Button>
+            {l10n("local.turn_all_on_08f6d3f5")}</Button>
           <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => onBulk(false)}>
-            Turn all off
-          </Button>
+            {l10n("local.turn_all_off_59d74fd7")}</Button>
         </div>
       </div>
       <div className="divide-y divide-border rounded-lg border border-border">
@@ -561,7 +545,7 @@ function ActionGroup({
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-foreground">{action.title || action.toolName}</div>
                 <div className="truncate text-xs text-muted-foreground">
-                  {askFirstLevels.includes(action.riskLevel) ? "Ask first when enabled" : action.riskLevel}
+                  {askFirstLevels.includes(action.riskLevel) ? l10n("local.ask_first_when_enabled_68872ed6") : action.riskLevel}
                 </div>
               </div>
               <ToggleSwitch checked={on} onCheckedChange={(next) => onToggle(action.catalogEntryId, next)} />

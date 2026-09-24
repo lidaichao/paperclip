@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { Boxes, Folder, Link2, Paperclip, type LucideIcon } from "lucide-react";
 import { GithubIcon } from "@/components/icons/github-icon";
 import type { CompanySkillListItem } from "@paperclipai/shared";
@@ -78,20 +79,20 @@ function isFilesystemLikeLabel(value: string) {
 
 function displayLocalSourceLabel(label: string | null | undefined) {
   const trimmed = label?.trim();
-  if (!trimmed || isFilesystemLikeLabel(trimmed)) return "Local folder";
+  if (!trimmed || isFilesystemLikeLabel(trimmed)) return l10n("local.local_folder_b53e4dcc");
   return trimmed;
 }
 
 function displayCatalogSourceLabel(label: string | null | undefined) {
   const trimmed = label?.trim();
-  if (!trimmed || isFilesystemLikeLabel(trimmed)) return "Catalog";
+  if (!trimmed || isFilesystemLikeLabel(trimmed)) return l10n("local.catalog_3877d148");
   return trimmed;
 }
 
 export function buildAgentSkillSourceMeta(skill: SourceSkill): AgentSkillSourceMeta {
   if (skill.sourceBadge === "github" || skill.sourceType === "github") {
     const repo = githubRepoLabel(skill.sourceLabel) ?? githubRepoLabel(skill.sourceLocator);
-    return { icon: GithubIcon, label: repo ? `GitHub · ${repo}` : "GitHub" };
+    return { icon: GithubIcon, label: repo ? `GitHub · ${repo}` : l10n("local.github_f911e414") };
   }
 
   if (skill.sourceBadge === "skills_sh" || skill.sourceType === "skills_sh") {
@@ -100,11 +101,11 @@ export function buildAgentSkillSourceMeta(skill: SourceSkill): AgentSkillSourceM
   }
 
   if (skill.sourceBadge === "url" || skill.sourceType === "url") {
-    return { icon: Link2, label: hostLabel(skill.sourceLabel) ?? hostLabel(skill.sourceLocator) ?? "URL" };
+    return { icon: Link2, label: hostLabel(skill.sourceLabel) ?? hostLabel(skill.sourceLocator) ?? l10n("local.url_e7a241de") };
   }
 
   if (skill.sourceBadge === "paperclip") {
-    return { icon: Paperclip, label: skill.sourceLabel?.trim() || "Paperclip managed" };
+    return { icon: Paperclip, label: skill.sourceLabel?.trim() || l10n("local.paperclip_managed_e97c654c") };
   }
 
   if (skill.sourceBadge === "catalog" || skill.sourceType === "catalog") {

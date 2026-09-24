@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Building2, Loader2, Lock, RefreshCw, TriangleAlert, UserRound } from "lucide-react";
 import type {
@@ -166,8 +167,7 @@ export function IdentitiesSection({
       <section className="space-y-5">
         <IdentitiesHeading />
         <InlineBanner tone="warning" compact>
-          We couldn't load who this connection acts as. Reload the page to try again.
-        </InlineBanner>
+          {l10n("local.we_couldn_t_load_who_this_connection_acts_as_8d0b5a1b")}</InlineBanner>
       </section>
     );
   }
@@ -176,24 +176,23 @@ export function IdentitiesSection({
     const github = agentGrant?.providerTenant?.github;
     return (
       <section className="space-y-5">
-        <h2 className="text-sm font-semibold text-foreground">GitHub identity</h2>
-        <p className="text-sm text-muted-foreground">This agent uses this GitHub account for everyone’s work, instead of the person giving instructions.</p>
+        <h2 className="text-sm font-semibold text-foreground">{l10n("local.github_identity_c043831d")}</h2>
+        <p className="text-sm text-muted-foreground">{l10n("local.this_agent_uses_this_github_account_for_every_a47d6599")}</p>
         <IdentityRow
-          title={github ? `@${github.login}` : "Dedicated GitHub account"}
+          title={github ? `@${github.login}` : l10n("local.dedicated_github_account_55fb115c")}
           status={agentGrant?.status ?? null}
           detail={dedicatedAgent ? (
             <Link
               to={agentUrl(dedicatedAgent)}
               className="transition-colors hover:text-foreground hover:underline"
             >
-              Used only by {dedicatedAgent.name}
+              {l10n("local.used_only_by_81d77064")}{" "}{dedicatedAgent.name}
             </Link>
-          ) : "Dedicated to one agent"}
+          ) : l10n("local.dedicated_to_one_agent_9c261451")}
           actions={!agentGrant && dedicatedAgent && capabilities?.canConfigure ? (
             <Button size="sm" disabled={connectPending} onClick={() => onConnectAgent(dedicatedAgent.id)}>
               {connectPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-              Connect dedicated account
-            </Button>
+              {l10n("local.connect_dedicated_account_c566d2da")}</Button>
           ) : null}
         />
         {github ? <GitHubConnectionSummary grant={agentGrant} onRefreshAccess={onRefreshAccess} refreshPending={refreshAccessPending} /> : null}
@@ -233,14 +232,13 @@ export function IdentitiesSection({
           personalGrant ? null : (
             <IdentityRow
               id="personal-identity"
-              title="Personal account"
+              title={l10n("local.personal_account_96c55b36")}
               status={null}
-              detail="Personal identity"
+              detail={l10n("local.personal_identity_dfb32054")}
               actions={capabilities?.canConnectAsCurrentUser ? (
                   <Button size="sm" disabled={connectPending} onClick={onConnectAsMe}>
                     {connectPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-                    Connect as me
-                  </Button>
+                    {l10n("local.connect_as_me_806b4164")}</Button>
                 ) : null}
             />
           )
@@ -249,19 +247,17 @@ export function IdentitiesSection({
             orgGrant.capabilities?.canEditAudience ? (
               <div className="flex justify-end">
                   <Button size="sm" variant="outline" onClick={() => onOpenAudience(orgGrant.id)}>
-                    Manage access
-                  </Button>
+                    {l10n("local.manage_access_a90527b6")}</Button>
               </div>
             ) : null
           ) : (
             <IdentityRow
-              title="Organization account"
+              title={l10n("local.organization_account_d2056993")}
               status={null}
-              detail="Organization identity"
+              detail={l10n("local.organization_identity_4f644c74")}
               actions={capabilities?.canCreateOrganizationGrant ? (
                   <Button size="sm" disabled={connectPending} onClick={onConnectOrganization}>
-                    Connect organization identity
-                  </Button>
+                    {l10n("local.connect_organization_identity_dfa1d1c8")}</Button>
                 ) : null}
             />
           )
@@ -306,12 +302,12 @@ function GitHubConnectionSummary({
       ? "Mixed access; scope varies by installation"
       : null;
   const repositorySummary = github.repositorySelection === "none"
-    ? "No repositories selected"
-    : `${github.repositoryCount} selected ${github.repositoryCount === 1 ? "repository" : "repositories"}`;
+    ? l10n("local.no_repositories_selected_cfc95621")
+    : l10n("local.value_selected_value_c372c5aa", {v0: (github.repositoryCount), v1: (github.repositoryCount === 1 ? "repository" : "repositories")});
   return (
     <div className="divide-y divide-border border-y border-border">
       <div className="py-3">
-        <div className="text-sm font-medium text-foreground">GitHub account</div>
+        <div className="text-sm font-medium text-foreground">{l10n("local.github_account_d686f873")}</div>
         <a className="text-sm text-muted-foreground hover:underline" href={`https://github.com/${encodeURIComponent(github.login)}`} target="_blank" rel="noreferrer">
           @{github.login}
         </a>
@@ -319,7 +315,7 @@ function GitHubConnectionSummary({
       <div className="space-y-3 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-sm font-medium text-foreground">Repositories</div>
+            <div className="text-sm font-medium text-foreground">{l10n("local.repositories_1e32af87")}</div>
             {repositoryWarning ? (
               <div
                 role="note"
@@ -337,49 +333,46 @@ function GitHubConnectionSummary({
           </div>
           <div className="flex items-center gap-2">
             {onRefreshAccess && configurationUrl ? (
-              <Button size="icon-sm" variant="outline" aria-label="Refresh access" title="Refresh access" disabled={refreshPending} onClick={onRefreshAccess}>
+              <Button size="icon-sm" variant="outline" aria-label={l10n("local.refresh_access_0df81b58")} title={l10n("local.refresh_access_0df81b58")} disabled={refreshPending} onClick={onRefreshAccess}>
                 {refreshPending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RefreshCw aria-hidden="true" />}
               </Button>
             ) : null}
             {configurationUrl ? (
               <Button asChild size="sm" variant="outline">
-                <a href={configurationUrl} target="_blank" rel="noreferrer">Add More Repos on GitHub</a>
+                <a href={configurationUrl} target="_blank" rel="noreferrer">{l10n("local.add_more_repos_on_github_c7c688ec")}</a>
               </Button>
             ) : onRefreshAccess ? (
               <Button size="sm" variant="outline" disabled={refreshPending} onClick={onRefreshAccess}>
                 {refreshPending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RefreshCw aria-hidden="true" />}
-                Load GitHub configuration
-              </Button>
+                {l10n("local.load_github_configuration_075ef318")}</Button>
             ) : null}
           </div>
         </div>
         {github.repositories ? (
-          github.repositories.length ? <ul aria-label="Accessible GitHub repositories" tabIndex={0} className="max-h-(--sz-github-repository-list) space-y-2 overflow-y-auto text-sm">
+          github.repositories.length ? <ul aria-label={l10n("local.accessible_github_repositories_8aec55c7")} tabIndex={0} className="max-h-(--sz-github-repository-list) space-y-2 overflow-y-auto text-sm">
             {github.repositories.map((repository) => (
               <li key={repository.id}>
                 <a className="flex items-center gap-2 text-muted-foreground hover:underline" href={`https://github.com/${repository.fullName.split("/").map(encodeURIComponent).join("/")}`} target="_blank" rel="noreferrer">
                   <GithubIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="break-all">{repository.fullName}</span>
-                  {repository.private === true ? <Lock className="h-3 w-3 shrink-0" role="img" aria-label="Private repository" /> : null}
+                  {repository.private === true ? <Lock className="h-3 w-3 shrink-0" role="img" aria-label={l10n("local.private_repository_6ab5ea78")} /> : null}
                 </a>
               </li>
             ))}
           </ul> : <p role="status" className="text-sm text-muted-foreground">
-            No accessible repositories.
-          </p>
+            {l10n("local.no_accessible_repositories_ecffe2f5")}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">Refresh access to load the current repository list.</p>
+          <p className="text-sm text-muted-foreground">{l10n("local.refresh_access_to_load_the_current_repository_6011831a")}</p>
         )}
         {configurationUrl ? <p className="text-xs text-muted-foreground">
-          Missing an organization or repository? <a href={configurationUrl} target="_blank" rel="noreferrer" className="text-foreground hover:underline">Configure access on GitHub</a>, then refresh this list.
-        </p> : null}
+          {l10n("local.missing_an_organization_or_repository_e1a19618")}{" "}<a href={configurationUrl} target="_blank" rel="noreferrer" className="text-foreground hover:underline">{l10n("local.configure_access_on_github_e9f56cc3")}</a>{l10n("local._then_refresh_this_list_7d86d67b")}</p> : null}
       </div>
     </div>
   );
 }
 
 function IdentitiesHeading() {
-  return <h2 className="text-sm font-semibold text-foreground">Which humans can use this credential?</h2>;
+  return <h2 className="text-sm font-semibold text-foreground">{l10n("local.which_humans_can_use_this_credential_df3c5fa3")}</h2>;
 }
 
 function HumanAccessCards({
@@ -404,7 +397,7 @@ function HumanAccessCards({
   return (
     <div className="space-y-3">
       <RadioCardGroup
-        ariaLabel="Which humans can use this credential"
+        ariaLabel={l10n("local.which_humans_can_use_this_credential_e68f7a3e")}
         value={personal ? "personal" : restricted ? "selected" : "company"}
         className="sm:grid-cols-2"
         onValueChange={(next) => {
@@ -415,22 +408,22 @@ function HumanAccessCards({
         options={personal ? [
           {
             value: "personal",
-            title: "Just me",
-            description: "Only you can use this connection.",
+            title: l10n("local.just_me_3a4b4df8"),
+            description: l10n("local.only_you_can_use_this_connection_7fb35f12"),
             icon: <UserRound className="h-4 w-4" />,
           },
         ] : [
           {
             value: "selected",
-            title: "Humans I pick",
-            description: "Only selected people in your company.",
+            title: l10n("local.humans_i_pick_733eda8b"),
+            description: l10n("local.only_selected_people_in_your_company_c4dd628b"),
             icon: <UserRound className="h-4 w-4" />,
             disabled: !canEditAudience,
           },
           {
             value: "company",
-            title: "Any human in the company",
-            description: "Anyone in your company can use this connection.",
+            title: l10n("local.any_human_in_the_company_4b923619"),
+            description: l10n("local.anyone_in_your_company_can_use_this_connectio_06637667"),
             icon: <Building2 className="h-4 w-4" />,
             disabled: !canEditAudience,
           },
@@ -510,7 +503,7 @@ export function AudienceDialog({
     <Dialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Who can use this identity</DialogTitle>
+          <DialogTitle>{l10n("local.who_can_use_this_identity_c43b5922")}</DialogTitle>
           <DialogDescription>
             {grantAccountLabel(grant)} · {appName}
           </DialogDescription>
@@ -518,19 +511,19 @@ export function AudienceDialog({
 
         <div className="space-y-3">
           <RadioCardGroup
-            ariaLabel="Who can use this identity"
+            ariaLabel={l10n("local.who_can_use_this_identity_c43b5922")}
             value={scope}
             onValueChange={(next) => setScope(next as "all" | "selected")}
             options={[
               {
                 value: "all",
-                title: "All organization members",
-                description: "Anyone in this organization can have work use this identity.",
+                title: l10n("local.all_organization_members_eac0894e"),
+                description: l10n("local.anyone_in_this_organization_can_have_work_use_eb19683e"),
               },
               {
                 value: "selected",
-                title: "Selected members",
-                description: "Only the people you choose.",
+                title: l10n("local.selected_members_78a2792c"),
+                description: l10n("local.only_the_people_you_choose_085cf136"),
               },
             ]}
           />
@@ -545,15 +538,13 @@ export function AudienceDialog({
               selectedUserIds={selected}
               onChange={setSelected}
               triggerLabel={selected.size === 0
-                ? "Choose people"
-                : `${selected.size} ${selected.size === 1 ? "person" : "people"} selected`}
+                ? l10n("local.choose_people_4929aabe")
+                : l10n("local.value_value_selected_c05d4e8d", {v0: (selected.size), v1: (selected.size === 1 ? "person" : "people")})}
             />
           ) : null}
 
           <p className="text-xs text-muted-foreground">
-            This controls whose work can use the identity. It does not change which agents have the
-            connection.
-          </p>
+            {l10n("local.this_controls_whose_work_can_use_the_identity_0f4980c2")}</p>
 
           {error ? (
             <InlineBanner tone="warning" compact>
@@ -564,15 +555,13 @@ export function AudienceDialog({
 
         <DialogFooter>
           <Button variant="ghost" onClick={onCancel} disabled={pending}>
-            Cancel
-          </Button>
+            {l10n("local.cancel_19766ed6")}</Button>
           <Button
             disabled={pending || !canSave}
             onClick={() => onSave(scope === "all" ? [] : [...selected])}
           >
             {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Save audience
-          </Button>
+            {l10n("local.save_audience_bece046d")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -609,9 +598,9 @@ export function RevokeGrantDialog({
   const personal = grant.kind === "user";
   const title = personal
     ? isOwnIdentity
-      ? `Revoke your ${providerName} identity?`
-      : `Revoke this ${providerName} identity?`
-    : "Revoke the organization identity?";
+      ? l10n("local.revoke_your_value_identity_fce13000", {v0: (providerName)})
+      : l10n("local.revoke_this_value_identity_478699ca", {v0: (providerName)})
+    : l10n("local.revoke_the_organization_identity_2606ac93");
   const body = personal
     ? isOwnIdentity
       ? "Agents will stop acting as you. Work that needs this identity can ask you to connect again."
@@ -630,8 +619,7 @@ export function RevokeGrantDialog({
         {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending} autoFocus>
-            Cancel
-          </AlertDialogCancel>
+            {l10n("local.cancel_19766ed6")}</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
             onClick={(event) => {
@@ -639,8 +627,7 @@ export function RevokeGrantDialog({
               onConfirm();
             }}
           >
-            Revoke identity
-          </AlertDialogAction>
+            {l10n("local.revoke_identity_c8534276")}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

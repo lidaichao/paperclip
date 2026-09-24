@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { History as HistoryIcon, RotateCcw, Search } from "lucide-react";
@@ -124,10 +125,10 @@ export function RoutineHistoryTab({
       const restoredFromNumber = data.restoredFromRevisionNumber;
       const newNumber = data.revision.revisionNumber;
       pushToast({
-        title: `Restored revision ${restoredFromNumber} as revision ${newNumber}`,
+        title: l10n("local.restored_revision_value_as_revision_value_81451fdf", {v0: (restoredFromNumber), v1: (newNumber)}),
         body: data.secretMaterials.length > 0
-          ? "Trigger enabled state was restored from the snapshot. New webhook secrets are available in the banner above."
-          : "Trigger enabled state was restored from the snapshot.",
+          ? l10n("local.trigger_enabled_state_was_restored_from_the_s_16c9cd7b")
+          : l10n("local.trigger_enabled_state_was_restored_from_the_s_ea048b29"),
         tone: "success",
       });
       onRestoreSecretMaterials(data);
@@ -153,8 +154,8 @@ export function RoutineHistoryTab({
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to restore revision",
-        body: error instanceof Error ? error.message : "Paperclip could not restore the revision.",
+        title: l10n("local.failed_to_restore_revision_2dcf4f54"),
+        body: error instanceof Error ? error.message : l10n("local.paperclip_could_not_restore_the_revision_a4aa014d"),
         tone: "error",
       });
     },
@@ -200,16 +201,15 @@ export function RoutineHistoryTab({
     return (
       <div className="rounded-md border border-l-2 border-l-destructive border-border p-4 space-y-3">
         <div>
-          <p className="text-sm font-medium">Could not load revisions</p>
+          <p className="text-sm font-medium">{l10n("local.could_not_load_revisions_d92d345b")}</p>
           <p className="text-xs text-muted-foreground">
             {revisionsQuery.error instanceof Error
               ? revisionsQuery.error.message
-              : "Unknown error loading revisions."}
+              : l10n("local.unknown_error_loading_revisions_94324631")}
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={() => revisionsQuery.refetch()}>
-          Retry
-        </Button>
+          {l10n("local.retry_942087cc")}</Button>
       </div>
     );
   }
@@ -244,9 +244,7 @@ export function RoutineHistoryTab({
               message="No edits yet"
             />
             <p className="text-center text-xs text-muted-foreground">
-              Revision 1 is the only history this routine has. Saving an edit creates the first
-              additional revision.
-            </p>
+              {l10n("local.revision_1_is_the_only_history_this_routine_h_44654bed")}</p>
           </div>
         ) : (
           selectedRevision && (
@@ -337,21 +335,16 @@ function HistoricalPreviewBanner({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-            Viewing revision {revisionNumber} (read-only)
-          </p>
+            {l10n("local.viewing_revision_129e6a69")}{" "}{revisionNumber} {l10n("local._read_only_f24a300d")}</p>
           <p className="text-xs text-muted-foreground">
-            Restoring this revision creates a new revision {nextRevisionNumber} with the same content.
-            History stays append-only.
-          </p>
+            {l10n("local.restoring_this_revision_creates_a_new_revisio_eb272a75")}{" "}{nextRevisionNumber} {l10n("local.with_the_same_content_history_stays_append_on_11023eda")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={onReturn} disabled={pending}>
-            Return to current
-          </Button>
+            {l10n("local.return_to_current_2e6cf99a")}</Button>
           <Button size="sm" onClick={onRestore} disabled={pending}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            Restore as new revision
-          </Button>
+            {l10n("local.restore_as_new_revision_b5a56640")}</Button>
         </div>
       </div>
     </div>
@@ -375,19 +368,15 @@ function ConflictBanner({
     <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Unsaved routine edits</p>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">{l10n("local.unsaved_routine_edits_16e48398")}</p>
           <p className="text-xs text-muted-foreground">
-            You changed {fieldsText} but haven&apos;t saved yet. Save or discard before previewing or
-            restoring an older revision.
-          </p>
+            {l10n("local.you_changed_4ad8ea14")}{" "}{fieldsText} {l10n("local.but_haven_apos_t_saved_yet_save_or_discard_be_7976818b")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={onDiscard}>
-            Discard changes
-          </Button>
+            {l10n("local.discard_changes_f9bfa3dc")}</Button>
           <Button size="sm" onClick={onSave}>
-            Save and continue
-          </Button>
+            {l10n("local.save_and_continue_6880daf1")}</Button>
         </div>
       </div>
       {dirtyFields.length > 0 && (
@@ -429,9 +418,8 @@ function RevisionList({
     <aside className="space-y-1">
       <header className="flex items-center justify-between pb-2">
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Revisions
-        </p>
-        <span className="text-(length:--text-micro) text-muted-foreground">{totalRevisions} total</span>
+          {l10n("local.revisions_da80b1d5")}</p>
+        <span className="text-(length:--text-micro) text-muted-foreground">{totalRevisions} {l10n("local.total_11239872")}</span>
       </header>
       {revisions.map((revision) => {
         const isSelected = revision.id === selectedRevisionId;
@@ -459,16 +447,14 @@ function RevisionList({
             data-testid={`revision-row-${revision.revisionNumber}`}
           >
             <div className="flex items-center gap-2 text-sm font-medium">
-              <span>rev {revision.revisionNumber}</span>
+              <span>{l10n("local.rev_d1e75aca")}{" "}{revision.revisionNumber}</span>
               {isCurrent && (
                 <Badge variant="outline" className="border-border px-1.5 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-                  Current
-                </Badge>
+                  {l10n("local.current_e0d1b682")}</Badge>
               )}
               {revision.restoredFromRevisionId && (
                 <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 px-1.5 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-amber-800 dark:text-amber-200">
-                  Restored
-                </Badge>
+                  {l10n("local.restored_5d561a1e")}</Badge>
               )}
             </div>
             <div className="text-xs text-muted-foreground truncate">
@@ -480,8 +466,7 @@ function RevisionList({
       })}
       {totalRevisions > revisions.length && !showOlder && (
         <Button variant="ghost" size="sm" className="w-full" onClick={onShowOlder}>
-          Show {totalRevisions - revisions.length} older…
-        </Button>
+          {l10n("local.show_0df6f1ca")}{" "}{totalRevisions - revisions.length} {l10n("local.older_064bf618")}</Button>
       )}
     </aside>
   );
@@ -511,7 +496,7 @@ function RevisionPreview({
   const snapshot = revision.snapshot.routine;
   const triggers = revision.snapshot.triggers;
   const currentSnapshot = currentRevision?.snapshot.routine ?? null;
-  const restoreLabel = isHistorical ? "Restore this revision" : "Restore this revision";
+  const restoreLabel = isHistorical ? l10n("local.restore_this_revision_e0a9d24c") : l10n("local.restore_this_revision_e0a9d24c");
   const cardWrapper = `rounded-md border transition-colors duration-1000 ${
     highlighted ? "border-emerald-500/40 bg-emerald-500/10" : "border-border"
   }`;
@@ -523,49 +508,49 @@ function RevisionPreview({
   const fieldRows: Array<{ key: string; label: string; value: string; differs: boolean }> = [
     {
       key: "title",
-      label: "Title",
+      label: l10n("local.title_7e8cd205"),
       value: snapshot.title,
       differs: !!currentSnapshot && currentSnapshot.title !== snapshot.title,
     },
     {
       key: "priority",
-      label: "Priority",
+      label: l10n("local.priority_d60dbba0"),
       value: snapshot.priority,
       differs: !!currentSnapshot && currentSnapshot.priority !== snapshot.priority,
     },
     {
       key: "status",
-      label: "Status",
+      label: l10n("local.status_920e413c"),
       value: snapshot.status,
       differs: !!currentSnapshot && currentSnapshot.status !== snapshot.status,
     },
     {
       key: "assigneeAgentId",
-      label: "Default agent",
+      label: l10n("local.default_agent_94da52ec"),
       value: resolveAgentName(snapshot.assigneeAgentId, agents),
       differs: !!currentSnapshot && currentSnapshot.assigneeAgentId !== snapshot.assigneeAgentId,
     },
     {
       key: "projectId",
-      label: "Project",
+      label: l10n("local.project_98595978"),
       value: resolveProjectName(snapshot.projectId, projects),
       differs: !!currentSnapshot && currentSnapshot.projectId !== snapshot.projectId,
     },
     {
       key: "concurrencyPolicy",
-      label: "Concurrency",
+      label: l10n("local.concurrency_8708492f"),
       value: snapshot.concurrencyPolicy.replaceAll("_", " "),
       differs: !!currentSnapshot && currentSnapshot.concurrencyPolicy !== snapshot.concurrencyPolicy,
     },
     {
       key: "catchUpPolicy",
-      label: "Catch-up",
+      label: l10n("local.catch_up_1c2d0f8e"),
       value: snapshot.catchUpPolicy.replaceAll("_", " "),
       differs: !!currentSnapshot && currentSnapshot.catchUpPolicy !== snapshot.catchUpPolicy,
     },
     {
       key: "env",
-      label: "Env",
+      label: l10n("local.env_494d9aa0"),
       value: envSummary,
       differs: envDiffers,
     },
@@ -576,17 +561,16 @@ function RevisionPreview({
       <header className={`${cardWrapper} p-4 space-y-2`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1 min-w-0">
-            <p className="text-sm font-medium">rev {revision.revisionNumber}</p>
+            <p className="text-sm font-medium">{l10n("local.rev_d1e75aca")}{" "}{revision.revisionNumber}</p>
             <p className="text-xs text-muted-foreground truncate">
-              Saved {relativeTime(revision.createdAt)} by {getActorLabel(revision)}
+              {l10n("local.saved_b5c120b3")}{" "}{relativeTime(revision.createdAt)} {l10n("local.by_a7e2d26e")}{" "}{getActorLabel(revision)}
               {revision.changeSummary ? ` · ${revision.changeSummary}` : ""}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={onCompare}>
               <Search className="mr-1.5 h-3.5 w-3.5" />
-              Compare with current
-            </Button>
+              {l10n("local.compare_with_current_095f9ab7")}</Button>
             <Button
               size="sm"
               onClick={onRestore}
@@ -603,8 +587,7 @@ function RevisionPreview({
 
       <div className={`${cardWrapper} p-3`}>
         <p className="pb-2 text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Structured fields
-        </p>
+          {l10n("local.structured_fields_9ad6fd58")}</p>
         <div className="grid gap-3 md:grid-cols-2 divide-y md:divide-y-0 divide-border">
           {fieldRows.map((row) => (
             <div key={row.key} className="space-y-1 p-2">
@@ -613,8 +596,7 @@ function RevisionPreview({
                 {row.value || <span className="text-muted-foreground">—</span>}
                 {row.differs && (
                   <Badge variant="outline" className="ml-2 border-amber-500/40 bg-amber-500/10 px-1.5 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-amber-800 dark:text-amber-200">
-                    differs from current
-                  </Badge>
+                    {l10n("local.differs_from_current_6f73b4b9")}</Badge>
                 )}
               </p>
             </div>
@@ -624,23 +606,22 @@ function RevisionPreview({
 
       <div className={`${cardWrapper} p-3 space-y-2`}>
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Description
-        </p>
+          {l10n("local.description_526e0087")}</p>
         <div className="rounded-md bg-background/40 p-3 text-sm leading-7">
           {snapshot.description ? (
             <MarkdownBody>{snapshot.description}</MarkdownBody>
           ) : (
-            <span className="text-muted-foreground">No description</span>
+            <span className="text-muted-foreground">{l10n("local.no_description_bcd8cc53")}</span>
           )}
         </div>
       </div>
 
       <div className={`${cardWrapper} p-3 space-y-2`}>
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Triggers ({triggers.length})
+          {l10n("local.triggers_7acda2fc")}{triggers.length})
         </p>
         {triggers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No triggers in this revision.</p>
+          <p className="text-sm text-muted-foreground">{l10n("local.no_triggers_in_this_revision_30a4fef6")}</p>
         ) : (
           <ul className="divide-y divide-border">
             {triggers.map((trigger) => (
@@ -655,29 +636,27 @@ function RevisionPreview({
                 <span
                   className={`ml-auto text-xs ${trigger.enabled ? "text-emerald-400" : "text-muted-foreground"}`}
                 >
-                  {trigger.enabled ? "enabled" : "disabled"}
+                  {trigger.enabled ? l10n("local.enabled_fb9cf756") : l10n("local.disabled_17eb3c01")}
                 </span>
               </li>
             ))}
           </ul>
         )}
         <p className="text-xs text-muted-foreground">
-          Webhook secrets are not stored in revisions. If a restored webhook trigger needs re-creation,
-          Paperclip mints fresh secret material at restore time.
-        </p>
+          {l10n("local.webhook_secrets_are_not_stored_in_revisions_i_a2c8439f")}</p>
       </div>
 
       {snapshot.variables.length > 0 && (
         <div className={`${cardWrapper} p-3 space-y-2`}>
           <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-            Variables ({snapshot.variables.length})
+            {l10n("local.variables_9256243b")}{snapshot.variables.length})
           </p>
           <ul className="divide-y divide-border">
             {snapshot.variables.map((variable) => (
               <li key={variable.name} className="py-2 flex items-center justify-between text-sm">
                 <span className="font-mono text-xs">{variable.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  default: {formatVariableDefault(variable)}
+                  {l10n("local.default_0b02fb9c")}{" "}{formatVariableDefault(variable)}
                 </span>
               </li>
             ))}
@@ -716,54 +695,46 @@ function RestoreConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Restore revision {target.revisionNumber}?</DialogTitle>
+          <DialogTitle>{l10n("local.restore_revision_e2762376")}{" "}{target.revisionNumber}?</DialogTitle>
           <DialogDescription>
-            This creates a new revision {newRevisionNumber} with the same content as revision{" "}
-            {target.revisionNumber}. Revisions {target.revisionNumber}–{currentRevisionNumber} stay
-            in history and are not modified.
-          </DialogDescription>
+            {l10n("local.this_creates_a_new_revision_7e0b4396")}{" "}{newRevisionNumber} {l10n("local.with_the_same_content_as_revision_1d757f07")}{" "}
+            {target.revisionNumber}{l10n("local._revisions_f6bcce23")}{" "}{target.revisionNumber}–{currentRevisionNumber} {l10n("local.stay_in_history_and_are_not_modified_dcc63757")}</DialogDescription>
         </DialogHeader>
         <ul className="space-y-2 text-sm">
           <li className="flex items-start gap-2">
             <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Routine field values, variables, and schedule cron will revert.
-          </li>
+            {l10n("local.routine_field_values_variables_and_schedule_c_4e1b2bb6")}</li>
           {envDiffCounts.total > 0 && (
             <li className="flex items-start gap-2">
               <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Routine secrets will revert: {formatEnvDiffCounts(envDiffCounts)}.
+              {l10n("local.routine_secrets_will_revert_455b22f7")}{" "}{formatEnvDiffCounts(envDiffCounts)}.
             </li>
           )}
           <li className="flex items-start gap-2">
             <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Previous run history is preserved.
-          </li>
+            {l10n("local.previous_run_history_is_preserved_37857ccf")}</li>
           {recreatedWebhookLabels.map((label) => (
             <li key={label} className="flex items-start gap-2 text-amber-800 dark:text-amber-200">
               <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
-              The webhook trigger {label} will be recreated with a new URL and secret. Paperclip will
-              show the secret once after restore — copy it before closing.
-            </li>
+              {l10n("local.the_webhook_trigger_d504fc0a")}{" "}{label} {l10n("local.will_be_recreated_with_a_new_url_and_secret_p_69d213f3")}</li>
           ))}
         </ul>
         <div className="space-y-1.5">
           <Label htmlFor="restore-change-summary" className="text-xs">
-            Change summary (optional)
-          </Label>
+            {l10n("local.change_summary_optional_704fc4c0")}</Label>
           <Input
             id="restore-change-summary"
             value={changeSummary}
-            placeholder="Why are you restoring? Visible in history."
+            placeholder={l10n("local.why_are_you_restoring_visible_in_history_9093cbf2")}
             onChange={(event) => onChangeSummaryChange(event.target.value)}
           />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            Cancel
-          </Button>
+            {l10n("local.cancel_19766ed6")}</Button>
           <Button onClick={onConfirm} disabled={pending}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            {pending ? "Restoring…" : `Restore as revision ${newRevisionNumber}`}
+            {pending ? l10n("local.restoring_5a4918e0") : l10n("local.restore_as_revision_value_d9651d25", {v0: (newRevisionNumber)})}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -821,18 +792,18 @@ function RoutineRevisionDiffModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!max-w-(--pct-90) w-full max-h-(--sz-85vh) overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Compare routine revisions</DialogTitle>
+          <DialogTitle>{l10n("local.compare_routine_revisions_53caf5e9")}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-wrap items-center gap-3">
           <RevisionPicker
-            label="Old"
+            label={l10n("local.old_bca97160")}
             value={leftId}
             onChange={setLeftId}
             revisions={revisions}
             tone="red"
           />
           <RevisionPicker
-            label="New"
+            label={l10n("local.new_18fdd549")}
             value={rightId}
             onChange={setRightId}
             revisions={revisions}
@@ -842,17 +813,16 @@ function RoutineRevisionDiffModal({
         <div className="overflow-auto flex-1 space-y-4">
           <section className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-              Field changes
-            </p>
+              {l10n("local.field_changes_ecfa72a2")}</p>
             {fieldChanges.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No structural field changes.</p>
+              <p className="text-sm text-muted-foreground">{l10n("local.no_structural_field_changes_d9af89b8")}</p>
             ) : (
               <table className="w-full text-sm border border-border rounded-md overflow-hidden">
                 <thead>
                   <tr className="text-xs uppercase tracking-wide bg-muted/30 text-muted-foreground">
-                    <th className="px-3 py-2 text-left">Field</th>
-                    <th className="px-3 py-2 text-left">Old value</th>
-                    <th className="px-3 py-2 text-left">New value</th>
+                    <th className="px-3 py-2 text-left">{l10n("local.field_f45fc1df")}</th>
+                    <th className="px-3 py-2 text-left">{l10n("local.old_value_a7c253b4")}</th>
+                    <th className="px-3 py-2 text-left">{l10n("local.new_value_7ca9b97d")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -873,20 +843,17 @@ function RoutineRevisionDiffModal({
           </section>
           <section className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-              Description diff
-            </p>
+              {l10n("local.description_diff_0ec05d96")}</p>
             <DiffTable rows={descriptionDiff} />
           </section>
         </div>
         <DialogFooter className="justify-between sm:justify-between">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
+            {l10n("local.close_7d9eb7ac")}</Button>
           {leftIsHistorical && left && (
             <Button onClick={() => onRestore(left)}>
               <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-              Restore rev {left.revisionNumber} as new revision
-            </Button>
+              {l10n("local.restore_rev_c2d872bf")}{" "}{left.revisionNumber} {l10n("local.as_new_revision_beffdd18")}</Button>
           )}
         </DialogFooter>
       </DialogContent>
@@ -924,7 +891,7 @@ function RevisionPicker({
       >
         {revisions.map((revision) => (
           <option key={revision.id} value={revision.id}>
-            rev {revision.revisionNumber} — {relativeTime(revision.createdAt)}
+            {l10n("local.rev_d1e75aca")}{" "}{revision.revisionNumber} — {relativeTime(revision.createdAt)}
             {revision.changeSummary ? ` • ${revision.changeSummary}` : ""}
           </option>
         ))}
@@ -935,10 +902,10 @@ function RevisionPicker({
 
 function DiffTable({ rows }: { rows: DiffRow[] }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">No description on either revision.</p>;
+    return <p className="text-sm text-muted-foreground">{l10n("local.no_description_on_either_revision_010f554f")}</p>;
   }
   if (rows.every((row) => row.kind === "context")) {
-    return <p className="text-sm text-muted-foreground">Descriptions are identical.</p>;
+    return <p className="text-sm text-muted-foreground">{l10n("local.descriptions_are_identical_5982a8d2")}</p>;
   }
   const lineClassesByKind: Record<DiffRow["kind"], string> = {
     context: "bg-transparent",
@@ -953,10 +920,10 @@ function DiffTable({ rows }: { rows: DiffRow[] }) {
   return (
     <div className="rounded-md border border-border text-xs font-mono leading-6 overflow-hidden">
       <div className="grid grid-cols-(--gtc-1) border-b border-border/60 bg-muted/30 px-3 py-2 text-(length:--text-micro) uppercase tracking-wide text-muted-foreground">
-        <span>Old</span>
-        <span>New</span>
+        <span>{l10n("local.old_bca97160")}</span>
+        <span>{l10n("local.new_18fdd549")}</span>
         <span />
-        <span>Content</span>
+        <span>{l10n("local.content_47bd2907")}</span>
       </div>
       {rows.map((row, index) => (
         <div
@@ -982,9 +949,9 @@ function DiffTable({ rows }: { rows: DiffRow[] }) {
 }
 
 function getActorLabel(revision: RoutineRevision): string {
-  if (revision.createdByUserId) return "board";
-  if (revision.createdByAgentId) return "agent";
-  return "system";
+  if (revision.createdByUserId) return l10n("local.board_859169b3");
+  if (revision.createdByAgentId) return l10n("local.agent_d4f0bc5a");
+  return l10n("local.system_bbc5e661");
 }
 
 function resolveAgentName(agentId: string | null, lookup: AgentLookup) {
@@ -1129,7 +1096,7 @@ function summarizeEnv(env: RoutineEnvConfig | null): string {
   const entries = Object.entries(normalizeEnv(env));
   if (entries.length === 0) return "";
   const secretCount = entries.filter(([, binding]) => envBindingKind(binding) === "secret_ref").length;
-  const keyLabel = entries.length === 1 ? "key" : "keys";
+  const keyLabel = entries.length === 1 ? l10n("local.key_2c70e12b") : l10n("local.keys_48a53f07");
   if (secretCount === 0) return `${entries.length} ${keyLabel}`;
   return `${entries.length} ${keyLabel} (${secretCount} secret ${secretCount === 1 ? "ref" : "refs"})`;
 }

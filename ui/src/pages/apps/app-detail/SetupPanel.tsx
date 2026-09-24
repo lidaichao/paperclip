@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useState, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import type { ToolCatalogEntry, ToolConnection } from "@paperclipai/shared";
@@ -37,10 +38,10 @@ export function SetupPanel({
   return (
     <div className="space-y-10">
       {identities}
-      <SetupLinkSection title="Agents" summary={agentsSummary} onClick={onOpenPermissions} />
+      <SetupLinkSection title={l10n("local.agents_279b44d2")} summary={agentsSummary} onClick={onOpenPermissions} />
       <SetupLinkSection
-        title="Actions"
-        summary={permissionsLoading ? "Loading permissions…" : permissionsSummary ?? "Manage permissions"}
+        title={l10n("local.actions_ff8059dc")}
+        summary={permissionsLoading ? l10n("local.loading_permissions_946f1570") : permissionsSummary ?? l10n("local.manage_permissions_2630ba4d")}
         onClick={onOpenPermissions}
       />
       {appDefinitionSlug(galleryEntry) === "google-sheets" && (
@@ -121,10 +122,9 @@ function PostHogConfigurationSection({ connection }: { connection: ToolConnectio
   ];
   return (
     <section>
-      <h2 className="text-sm font-bold text-foreground">PostHog access scope</h2>
+      <h2 className="text-sm font-bold text-foreground">{l10n("local.posthog_access_scope_8b34d1f1")}</h2>
       <p className="mt-0.5 text-sm text-muted-foreground">
-        PostHog uses its normal account defaults unless you narrow the optional controls below.
-      </p>
+        {l10n("local.posthog_uses_its_normal_account_defaults_unle_84a94820")}</p>
       <dl className="mt-4 divide-y divide-border">
         {rows.map(([label, value]) => (
           <div key={label} className="grid gap-1 py-2 sm:grid-cols-3 sm:gap-4">
@@ -164,15 +164,14 @@ function GoogleSheetsAllowlistSection({
   return (
     <section>
       <div>
-        <h2 className="text-sm font-bold text-foreground">Sheets agents can use</h2>
+        <h2 className="text-sm font-bold text-foreground">{l10n("local.sheets_agents_can_use_38b73bee")}</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          Agents can only use the sheets listed here.
-        </p>
+          {l10n("local.agents_can_only_use_the_sheets_listed_here_17ba1daf")}</p>
       </div>
 
       <div className="mt-4 space-y-2">
         {ids.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No sheets are connected yet.</div>
+          <div className="text-sm text-muted-foreground">{l10n("local.no_sheets_are_connected_yet_ee54c8d9")}</div>
         ) : (
           ids.map((id) => {
             const sheetUrl = googleSheetsUrlForId(id);
@@ -184,12 +183,12 @@ function GoogleSheetsAllowlistSection({
                   rel="noreferrer"
                   className="min-w-0 flex-1 text-sm font-medium text-foreground underline-offset-2 hover:underline"
                 >
-                  <span className="block truncate">Open sheet</span>
+                  <span className="block truncate">{l10n("local.open_sheet_f2df2497")}</span>
                   <span className="block truncate font-mono text-xs font-normal text-muted-foreground">
                     {sheetUrl}
                   </span>
                   <span className="block truncate font-mono text-(length:--text-micro) font-normal text-muted-foreground/80">
-                    ID: {id}
+                    {l10n("local.id_3ea36adc")}{" "}{id}
                   </span>
                 </a>
                 <Button
@@ -197,11 +196,10 @@ function GoogleSheetsAllowlistSection({
                   size="sm"
                   variant="outline"
                   disabled={disabled || ids.length <= 1}
-                  title={ids.length <= 1 ? "Add another sheet before removing this one." : undefined}
+                  title={ids.length <= 1 ? l10n("local.add_another_sheet_before_removing_this_one_a9ae307c") : undefined}
                   onClick={() => saveIds(ids.filter((current) => current !== id))}
                 >
-                  Remove
-                </Button>
+                  {l10n("local.remove_c3812fc4")}</Button>
               </div>
             );
           })
@@ -225,19 +223,18 @@ function GoogleSheetsAllowlistSection({
           onClick={() => {
             const parsed = parseGoogleSheetIds(draft);
             if (parsed.ids.length === 0) {
-              setError("Paste a Google Sheets link.");
+              setError(l10n("local.paste_a_google_sheets_link_3140b10e"));
               return;
             }
             if (parsed.invalidCount > 0) {
-              setError("That doesn't look like a Google Sheets link.");
+              setError(l10n("local.that_doesn_t_look_like_a_google_sheets_link_42b2bd84"));
               return;
             }
             saveIds(Array.from(new Set([...ids, ...parsed.ids])));
             setDraft("");
           }}
         >
-          Add sheet
-        </Button>
+          {l10n("local.add_sheet_e05a0e96")}</Button>
       </div>
       {error && <div className="mt-2 text-xs text-destructive">{error}</div>}
     </section>
@@ -261,11 +258,10 @@ export function QuarantinedActionsReview({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-            Review {count} new {count === 1 ? "action" : "actions"}
+            {l10n("local.review_aff0766a")}{" "}{count} {l10n("local.new_11507a0e")}{" "}{count === 1 ? l10n("local.action_bd938c68") : l10n("local.actions_2b0dcdd4")}
           </div>
           <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-            Turn on the actions agents may use. Anything left off stays blocked when you save.
-          </p>
+            {l10n("local.turn_on_the_actions_agents_may_use_anything_l_6a8de879")}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -274,16 +270,14 @@ export function QuarantinedActionsReview({
             disabled={disabled}
             onClick={() => setEnabledIds(new Set(entries.map((entry) => entry.id)))}
           >
-            Turn all on
-          </button>
+            {l10n("local.turn_all_on_08f6d3f5")}</button>
           <button
             type="button"
             className="text-xs font-medium text-amber-800 hover:text-amber-950 dark:text-amber-200 dark:hover:text-amber-50"
             disabled={disabled}
             onClick={() => setEnabledIds(new Set())}
           >
-            Turn all off
-          </button>
+            {l10n("local.turn_all_off_59d74fd7")}</button>
         </div>
       </div>
       <div className="divide-y divide-border">
@@ -299,7 +293,7 @@ export function QuarantinedActionsReview({
                 )}
               </div>
               <ToggleSwitch
-                aria-label={`${label} allowed`}
+                aria-label={l10n("local.value_allowed_13a189ee", {v0: (label)})}
                 checked={enabled}
                 disabled={disabled}
                 onCheckedChange={(next) => {
@@ -317,10 +311,9 @@ export function QuarantinedActionsReview({
       </div>
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs text-amber-700 dark:text-amber-300">
-          {selectedIds.length} of {count} will be on
-        </span>
+          {selectedIds.length} {l10n("local.of_28391d3b")}{" "}{count} {l10n("local.will_be_on_fc51aab7")}</span>
         <Button size="sm" disabled={disabled} onClick={() => onSubmit(selectedIds)}>
-          {disabled ? "Saving…" : "Save choices"}
+          {disabled ? l10n("local.saving_23e39291") : l10n("local.save_choices_035882f1")}
         </Button>
       </div>
     </section>

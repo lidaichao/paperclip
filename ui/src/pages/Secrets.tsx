@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -264,7 +265,7 @@ function isAwsDiscoveryAccessDenied(error: unknown): boolean {
 function readableErrorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message || `Request failed: ${error.status}`;
   if (error instanceof Error) return error.message;
-  return "Unexpected error";
+  return l10n("local.unexpected_error_d24c41ae");
 }
 
 function providerVaultFormFromConfig(config: CompanySecretProviderConfig): ProviderVaultForm {
@@ -350,7 +351,7 @@ function modeLabel(managedMode: SecretManagedMode) {
 
 function modeDescription(managedMode: SecretManagedMode, canWriteExternalValue = false) {
   if (managedMode === "paperclip_managed") {
-    return "Paperclip owns create and rotation writes for this provider secret.";
+    return l10n("local.paperclip_owns_create_and_rotation_writes_for_8f5f834e");
   }
   return canWriteExternalValue
     ? "Paperclip resolves this provider reference and can write new values to it via Update value."
@@ -487,7 +488,7 @@ export function getCreateProviderBlockReason(
     if (selectedProviderConfigReady) return null;
     if (selectedProviderConfigBlockReason) return selectedProviderConfigBlockReason;
     const healthEntry = healthEntryForProvider(health, provider.id);
-    const deploymentMessage = `Deployment default ${provider.label} is not configured.`;
+    const deploymentMessage = l10n("local.deployment_default_value_is_not_configured_7916c38d", {v0: (provider.label)});
     const nextStep = " Select a ready provider vault or configure the deployment default.";
     return healthEntry?.message
       ? `${deploymentMessage}${nextStep} ${healthEntry.message}`
@@ -588,7 +589,7 @@ export function findCreateProviderReplacement({
 }
 
 function providerVaultLabel(configs: CompanySecretProviderConfig[], id: string | null | undefined) {
-  if (!id) return "Deployment default";
+  if (!id) return l10n("local.deployment_default_d9bdc394");
   return configs.find((config) => config.id === id)?.displayName ?? "Unknown vault";
 }
 
@@ -731,7 +732,7 @@ export function Secrets() {
   const [newFolderError, setNewFolderError] = useState<string | null>(null);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Secrets" }]);
+    setBreadcrumbs([{ label: l10n("local.secrets_d8707d41") }]);
   }, [setBreadcrumbs]);
 
   const secretsQuery = useQuery({
@@ -1114,10 +1115,10 @@ export function Secrets() {
       pushToast({
         title:
           result.kind === "company"
-            ? "Secret created"
+            ? l10n("local.secret_created_e4a1e1fd")
             : result.action === "updated"
-              ? "User-provided secret updated"
-              : "User-provided secret created",
+              ? l10n("local.user_provided_secret_updated_93d9e31d")
+              : l10n("local.user_provided_secret_created_fb46a271"),
         body: result.item.name,
         tone: "success",
       });
@@ -1166,7 +1167,7 @@ export function Secrets() {
       });
     },
     onSuccess: (updated) => {
-      pushToast({ title: "Rotated", body: `${updated.name} → v${updated.latestVersion}`, tone: "success" });
+      pushToast({ title: l10n("local.rotated_24b10841"), body: `${updated.name} → v${updated.latestVersion}`, tone: "success" });
       setRotateOpen(false);
       setRotateValue("");
       setRotateExternalRef("");
@@ -1193,13 +1194,13 @@ export function Secrets() {
       }
     },
     onSuccess: (updated) => {
-      pushToast({ title: `Secret ${updated.status}`, body: updated.name, tone: "info" });
+      pushToast({ title: l10n("local.secret_value_4838bb70", {v0: (updated.status)}), body: updated.name, tone: "info" });
       invalidateAll([updated.id]);
     },
     onError: (error) => {
       pushToast({
-        title: "Status update failed",
-        body: error instanceof Error ? error.message : "Try again",
+        title: l10n("local.status_update_failed_5a7dca4a"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_d8b8392e"),
         tone: "error",
       });
     },
@@ -1209,13 +1210,13 @@ export function Secrets() {
     mutationFn: ({ definition, status }: { definition: UserSecretDefinition; status: SecretStatus }) =>
       secretsApi.updateUserSecretDefinition(selectedCompanyId!, definition.id, { status }),
     onSuccess: (updated) => {
-      pushToast({ title: `User-provided secret ${updated.status}`, body: updated.name, tone: "info" });
+      pushToast({ title: l10n("local.user_provided_secret_value_fa0fc39a", {v0: (updated.status)}), body: updated.name, tone: "info" });
       invalidateAll([updated.id]);
     },
     onError: (error) => {
       pushToast({
-        title: "Status update failed",
-        body: error instanceof Error ? error.message : "Try again",
+        title: l10n("local.status_update_failed_5a7dca4a"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_d8b8392e"),
         tone: "error",
       });
     },
@@ -1224,15 +1225,15 @@ export function Secrets() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => secretsApi.remove(id),
     onSuccess: (_response, id) => {
-      pushToast({ title: "Secret deleted", tone: "info" });
+      pushToast({ title: l10n("local.secret_deleted_50c9e2de"), tone: "info" });
       setDeleteConfirm(null);
       if (selectedSecretId === id) setDetailSelection(null);
       invalidateAll([id]);
     },
     onError: (error) => {
       pushToast({
-        title: "Delete failed",
-        body: error instanceof Error ? error.message : "Try again",
+        title: l10n("local.delete_failed_8727e2ba"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_d8b8392e"),
         tone: "error",
       });
     },
@@ -1242,15 +1243,15 @@ export function Secrets() {
     mutationFn: (definition: UserSecretDefinition) =>
       secretsApi.removeUserSecretDefinition(selectedCompanyId!, definition.id),
     onSuccess: (_response, definition) => {
-      pushToast({ title: "User-provided secret removed", body: definition.name, tone: "info" });
+      pushToast({ title: l10n("local.user_provided_secret_removed_e2f54785"), body: definition.name, tone: "info" });
       setDefinitionDeleteConfirm(null);
       if (selectedDefinitionId === definition.id) setDetailSelection(null);
       invalidateAll([definition.id]);
     },
     onError: (error) => {
       pushToast({
-        title: "Delete failed",
-        body: error instanceof Error ? error.message : "Try again",
+        title: l10n("local.delete_failed_8727e2ba"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_d8b8392e"),
         tone: "error",
       });
     },
@@ -1273,7 +1274,7 @@ export function Secrets() {
       } as CreateSecretProviderConfigInput);
     },
     onSuccess: (saved) => {
-      pushToast({ title: editingVault ? "Provider vault updated" : "Provider vault created", body: saved.displayName, tone: "success" });
+      pushToast({ title: editingVault ? l10n("local.provider_vault_updated_c6163b8a") : l10n("local.provider_vault_created_78166cc0"), body: saved.displayName, tone: "success" });
       setVaultDialogOpen(false);
       setEditingVault(null);
       setVaultForm(emptyProviderVaultForm());
@@ -1306,13 +1307,13 @@ export function Secrets() {
   const disableVaultMutation = useMutation({
     mutationFn: (id: string) => secretsApi.disableProviderConfig(id),
     onSuccess: (updated) => {
-      pushToast({ title: "Provider vault disabled", body: updated.displayName, tone: "info" });
+      pushToast({ title: l10n("local.provider_vault_disabled_56a95921"), body: updated.displayName, tone: "info" });
       invalidateAll();
     },
     onError: (error) => {
       pushToast({
-        title: "Disable failed",
-        body: error instanceof Error ? error.message : "Try again",
+        title: l10n("local.disable_failed_33f64992"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_d8b8392e"),
         tone: "error",
       });
     },
@@ -1322,8 +1323,8 @@ export function Secrets() {
     mutationFn: (id: string) => secretsApi.removeProviderConfig(id),
     onSuccess: (removed) => {
       pushToast({
-        title: "Provider vault removed",
-        body: `${removed.displayName} was removed from Paperclip only.`,
+        title: l10n("local.provider_vault_removed_d4ede6a3"),
+        body: l10n("local.value_was_removed_from_paperclip_only_ff92c482", {v0: (removed.displayName)}),
         tone: "info",
       });
       setRemoveVaultConfirm(null);
@@ -1331,8 +1332,8 @@ export function Secrets() {
     },
     onError: (error) => {
       pushToast({
-        title: "Remove failed",
-        body: error instanceof Error ? error.message : "Try again",
+        title: l10n("local.remove_failed_7a91db72"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_d8b8392e"),
         tone: "error",
       });
     },
@@ -1341,13 +1342,13 @@ export function Secrets() {
   const defaultVaultMutation = useMutation({
     mutationFn: (id: string) => secretsApi.setDefaultProviderConfig(id),
     onSuccess: (updated) => {
-      pushToast({ title: "Default vault set", body: updated.displayName, tone: "success" });
+      pushToast({ title: l10n("local.default_vault_set_f7b8341e"), body: updated.displayName, tone: "success" });
       invalidateAll();
     },
     onError: (error) => {
       pushToast({
-        title: "Default update failed",
-        body: error instanceof Error ? error.message : "Try again",
+        title: l10n("local.default_update_failed_8e4849d8"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_d8b8392e"),
         tone: "error",
       });
     },
@@ -1356,13 +1357,13 @@ export function Secrets() {
   const healthVaultMutation = useMutation({
     mutationFn: (id: string) => secretsApi.checkProviderConfigHealth(id),
     onSuccess: (health) => {
-      pushToast({ title: "Health checked", body: health.message, tone: health.status === "error" ? "error" : "info" });
+      pushToast({ title: l10n("local.health_checked_3cf30ffe"), body: health.message, tone: health.status === "error" ? "error" : "info" });
       invalidateAll();
     },
     onError: (error) => {
       pushToast({
-        title: "Health check failed",
-        body: error instanceof Error ? error.message : "Try again",
+        title: l10n("local.health_check_failed_ce5ed1e6"),
+        body: error instanceof Error ? error.message : l10n("local.try_again_d8b8392e"),
         tone: "error",
       });
     },
@@ -1492,11 +1493,11 @@ export function Secrets() {
 
   function copyDetailLink() {
     void copyTextToClipboard(window.location.href)
-      .then(() => pushToast({ title: "Link copied", body: "Deep link to this secret", tone: "success" }))
+      .then(() => pushToast({ title: l10n("local.link_copied_d12860c2"), body: l10n("local.deep_link_to_this_secret_113e14cd"), tone: "success" }))
       .catch((error) =>
         pushToast({
-          title: "Copy failed",
-          body: error instanceof Error ? error.message : "Unable to copy link",
+          title: l10n("local.copy_failed_5b50e7a6"),
+          body: error instanceof Error ? error.message : l10n("local.unable_to_copy_link_fe2eaac4"),
           tone: "error",
         }),
       );
@@ -1504,11 +1505,11 @@ export function Secrets() {
 
   function copySecretKey(key: string) {
     void copyTextToClipboard(key)
-      .then(() => pushToast({ title: "Secret key copied", body: key, tone: "success" }))
+      .then(() => pushToast({ title: l10n("local.secret_key_copied_7714707e"), body: key, tone: "success" }))
       .catch((error) =>
         pushToast({
-          title: "Copy failed",
-          body: error instanceof Error ? error.message : "Unable to copy secret key",
+          title: l10n("local.copy_failed_5b50e7a6"),
+          body: error instanceof Error ? error.message : l10n("local.unable_to_copy_secret_key_7cd306aa"),
           tone: "error",
         }),
       );
@@ -1522,7 +1523,7 @@ export function Secrets() {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Actions for ${name}`}
+            aria-label={l10n("local.actions_for_value_b5983711", {v0: (name)})}
             onClick={(event) => event.stopPropagation()}
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -1535,12 +1536,11 @@ export function Secrets() {
               else openUserDefinition(row.definition);
             }}
           >
-            <KeyRound className="h-4 w-4" /> View details
-          </DropdownMenuItem>
+            <KeyRound className="h-4 w-4" /> {l10n("local.view_details_d1bf045b")}</DropdownMenuItem>
           {row.kind === "company" ? (
             <>
               <DropdownMenuItem onSelect={() => setUsageDialogSecretId(row.secret.id)}>
-                <Link2 className="h-4 w-4" /> View references ({row.secret.referenceCount ?? 0})
+                <Link2 className="h-4 w-4" /> {l10n("local.view_references_faa96652")}{row.secret.referenceCount ?? 0})
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => openRotateSecret(row.secret)}>
                 <RefreshCw className="h-4 w-4" />
@@ -1557,7 +1557,7 @@ export function Secrets() {
                 }
               >
                 {row.secret.status === "active" ? <Ban className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                {row.secret.status === "active" ? "Disable" : "Activate"}
+                {row.secret.status === "active" ? l10n("local.disable_b7e3e4aa") : l10n("local.activate_24433c70")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={statusMutation.isPending}
@@ -1573,12 +1573,11 @@ export function Secrets() {
                 ) : (
                   <Archive className="h-4 w-4" />
                 )}
-                {row.secret.status === "archived" ? "Unarchive" : "Archive"}
+                {row.secret.status === "archived" ? l10n("local.unarchive_f565318d") : l10n("local.archive_66f4804e")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={() => setDeleteConfirm(row.secret)}>
-                <Trash2 className="h-4 w-4" /> Delete secret
-              </DropdownMenuItem>
+                <Trash2 className="h-4 w-4" /> {l10n("local.delete_secret_1a48c8c8")}</DropdownMenuItem>
             </>
           ) : (
             <>
@@ -1595,12 +1594,11 @@ export function Secrets() {
               >
                 <KeyRound className="h-4 w-4" />
                 {myUserSecrets.find((entry) => entry.definition.id === row.definition.id)?.secret
-                  ? "Update my value"
-                  : "Set my value"}
+                  ? l10n("local.update_my_value_730940e9")
+                  : l10n("local.set_my_value_e36ebb62")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => openEditDefinition(row.definition)}>
-                <Pencil className="h-4 w-4" /> Edit definition
-              </DropdownMenuItem>
+                <Pencil className="h-4 w-4" /> {l10n("local.edit_definition_9d97898a")}</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={definitionStatusMutation.isPending}
@@ -1616,7 +1614,7 @@ export function Secrets() {
                 ) : (
                   <CheckCircle2 className="h-4 w-4" />
                 )}
-                {row.definition.status === "active" ? "Disable" : "Activate"}
+                {row.definition.status === "active" ? l10n("local.disable_b7e3e4aa") : l10n("local.activate_24433c70")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={definitionStatusMutation.isPending}
@@ -1632,12 +1630,11 @@ export function Secrets() {
                 ) : (
                   <Archive className="h-4 w-4" />
                 )}
-                {row.definition.status === "archived" ? "Unarchive" : "Archive"}
+                {row.definition.status === "archived" ? l10n("local.unarchive_f565318d") : l10n("local.archive_66f4804e")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={() => setDefinitionDeleteConfirm(row.definition)}>
-                <Trash2 className="h-4 w-4" /> Delete definition
-              </DropdownMenuItem>
+                <Trash2 className="h-4 w-4" /> {l10n("local.delete_definition_697c1c21")}</DropdownMenuItem>
             </>
           )}
         </DropdownMenuContent>
@@ -1710,7 +1707,7 @@ export function Secrets() {
   }
 
   function renderUpRow(variant: "table" | "card") {
-    const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : "All secrets";
+    const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : l10n("local.all_secrets_0b38e3da");
     return (
       <Link
         to={folderLinkTo(parentFolderPath)}
@@ -1723,14 +1720,14 @@ export function Secrets() {
         )}
       >
         <CornerLeftUp className="h-4 w-4 shrink-0" />
-        <span className="truncate">Up to {parentLabel}</span>
+        <span className="truncate">{l10n("local.up_to_3e288463")}{" "}{parentLabel}</span>
       </Link>
     );
   }
 
   function renderSecretsBreadcrumb() {
     const currentName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : "All secrets";
-    const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : "All secrets";
+    const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : l10n("local.all_secrets_0b38e3da");
     const fullTrail: { name: string; path: string }[] = [
       { name: "All secrets", path: "" },
       ...breadcrumbs,
@@ -1742,7 +1739,7 @@ export function Secrets() {
         : fullTrail;
 
     return (
-      <nav aria-label="Breadcrumb" className="min-w-0">
+      <nav aria-label={l10n("local.breadcrumb_2bd873d6")} className="min-w-0">
         {/* Wide: full trail */}
         <ol className="hidden min-w-0 items-center gap-1 text-sm @min-[40rem]:flex">
           {collapsed.map((crumb, index) => {
@@ -1775,7 +1772,7 @@ export function Secrets() {
             <>
               <Link
                 to={folderLinkTo(parentFolderPath)}
-                aria-label="Up one folder"
+                aria-label={l10n("local.up_one_folder_ef9a7ae0")}
                 className="shrink-0 text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -1789,8 +1786,7 @@ export function Secrets() {
             </>
           ) : (
             <span aria-current="page" className="truncate font-medium text-foreground">
-              All secrets
-            </span>
+              {l10n("local.all_secrets_0b38e3da")}</span>
           )}
         </div>
       </nav>
@@ -1799,7 +1795,7 @@ export function Secrets() {
 
   if (!selectedCompanyId) {
     return (
-      <div className="p-6 text-sm text-muted-foreground">Select an organization to manage secrets.</div>
+      <div className="p-6 text-sm text-muted-foreground">{l10n("local.select_an_organization_to_manage_secrets_fc947a67")}</div>
     );
   }
 
@@ -1808,7 +1804,7 @@ export function Secrets() {
     <div className="flex max-w-6xl flex-col gap-4">
       <div className="flex items-center gap-2">
         <KeyRound className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-lg font-semibold">Secrets</h1>
+        <h1 className="text-lg font-semibold">{l10n("local.secrets_d8707d41")}</h1>
       </div>
 
       <Tabs
@@ -1818,9 +1814,9 @@ export function Secrets() {
       >
         <PageTabBar
           items={[
-            { value: "secrets", label: "Secrets" },
-            { value: "my-secrets", label: "My secrets" },
-            ...(hideVaultsTab ? [] : [{ value: "vaults", label: "Provider vaults" }]),
+            { value: "secrets", label: l10n("local.secrets_d8707d41") },
+            { value: "my-secrets", label: l10n("local.my_secrets_f1b5f860") },
+            ...(hideVaultsTab ? [] : [{ value: "vaults", label: l10n("local.provider_vaults_d8e425e6") }]),
             ...(hideProposalsTab
               ? []
               : [
@@ -1828,8 +1824,7 @@ export function Secrets() {
                     value: "proposals",
                     label: (
                       <span className="inline-flex items-center gap-1.5">
-                        Proposals
-                        {pendingProposalCount > 0 ? (
+                        {l10n("local.proposals_834cfc1e")}{pendingProposalCount > 0 ? (
                           <Badge
                             variant="outline"
                             className="h-4 min-w-4 justify-center rounded-full border-amber-500/40 bg-amber-500/10 px-1 text-(length:--text-nano) font-medium text-amber-700 dark:text-amber-300"
@@ -1855,9 +1850,9 @@ export function Secrets() {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name, key, ref"
+                placeholder={l10n("local.search_by_name_key_ref_7a24503c")}
                 className="pl-7 text-xs sm:text-sm"
-                aria-label="Search secrets"
+                aria-label={l10n("local.search_secrets_b5814f05")}
                 data-page-search-target="true"
               />
             </div>
@@ -1873,7 +1868,7 @@ export function Secrets() {
             />
             <div
               role="group"
-              aria-label="View mode"
+              aria-label={l10n("local.view_mode_18997f24")}
               className={cn(
                 "inline-flex items-center rounded-md border border-border p-0.5",
                 searching && "opacity-50",
@@ -1913,15 +1908,13 @@ export function Secrets() {
                   setNewFolderError(null);
                 }}
               >
-                <Folder className="mr-1 h-3.5 w-3.5" /> New folder
-              </Button>
+                <Folder className="mr-1 h-3.5 w-3.5" /> {l10n("local.new_folder_cf28f49e")}</Button>
             ) : null}
             <Button onClick={openCreateSecret} size="sm">
-              <Plus className="h-3.5 w-3.5 mr-1" /> New secret
-            </Button>
+              <Plus className="h-3.5 w-3.5 mr-1" /> {l10n("local.new_secret_1088a1c0")}</Button>
           </div>
           {newFolderOpen && showFolderView ? (
-            <div className="flex flex-wrap items-start gap-2" role="group" aria-label="Create folder">
+            <div className="flex flex-wrap items-start gap-2" role="group" aria-label={l10n("local.create_folder_82b9e1ef")}>
               <div className="min-w-48 flex-1 sm:max-w-80">
                 <Input
                   value={newFolderName}
@@ -1933,8 +1926,8 @@ export function Secrets() {
                     if (event.key === "Enter") stageNewFolder();
                     if (event.key === "Escape") closeNewFolder();
                   }}
-                  placeholder="Folder name"
-                  aria-label="Folder name"
+                  placeholder={l10n("local.folder_name_14d34edf")}
+                  aria-label={l10n("local.folder_name_14d34edf")}
                   aria-invalid={Boolean(newFolderError)}
                   autoFocus
                 />
@@ -1945,17 +1938,15 @@ export function Secrets() {
                 ) : null}
               </div>
               <Button type="button" size="sm" onClick={stageNewFolder}>
-                Create folder
-              </Button>
+                {l10n("local.create_folder_82b9e1ef")}</Button>
               <Button type="button" variant="ghost" size="sm" onClick={closeNewFolder}>
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
             </div>
           ) : null}
           <div>
             {secretsQuery.isError || userDefinitionsQuery.isError ? (
               <div className="text-sm text-destructive flex items-center gap-2 py-4">
-                <AlertCircle className="h-4 w-4" /> Failed to load secrets:{" "}
+                <AlertCircle className="h-4 w-4" /> {l10n("local.failed_to_load_secrets_441626d0")}{" "}
                 {((secretsQuery.error ?? userDefinitionsQuery.error) as Error).message}
                 <Button
                   variant="ghost"
@@ -1965,8 +1956,7 @@ export function Secrets() {
                     void userDefinitionsQuery.refetch();
                   }}
                 >
-                  Retry
-                </Button>
+                  {l10n("local.retry_942087cc")}</Button>
               </div>
             ) : unifiedRows.length === 0 &&
               !secretsQuery.isPending &&
@@ -1989,10 +1979,9 @@ export function Secrets() {
                   </div>
                 ) : searching ? (
                   <div className="mb-3">
-                    <div className="text-sm font-medium text-foreground">Search results</div>
+                    <div className="text-sm font-medium text-foreground">{l10n("local.search_results_e978b00d")}</div>
                     <div className="text-xs text-muted-foreground">
-                      {filteredRows.length} {filteredRows.length === 1 ? "match" : "matches"} across all
-                      folders{folderPath ? ` · searching everywhere, not just ${folderPath}` : ""}
+                      {filteredRows.length} {filteredRows.length === 1 ? l10n("local.match_4945a70f") : l10n("local.matches_a5408438")} {l10n("local.across_all_folders_054ae768")}{folderPath ? (" " + l10n("local._searching_everywhere_not_just_value_38e6cc20", {v0: (folderPath)})) : ""}
                     </div>
                   </div>
                 ) : null}
@@ -2021,7 +2010,7 @@ export function Secrets() {
                   <>
                 <div
                   role="table"
-                  aria-label="Secrets"
+                  aria-label={l10n("local.secrets_d8707d41")}
                   className="hidden min-w-0 @min-[40rem]:block"
                   data-testid="secrets-table-view"
                 >
@@ -2029,11 +2018,11 @@ export function Secrets() {
                     role="row"
                     className="grid grid-cols-(--gtc-54) items-center gap-3 bg-muted/40 px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground"
                   >
-                    <div role="columnheader" className="font-medium">Secret</div>
-                    <div role="columnheader" className="font-medium">Status</div>
-                    <div role="columnheader" className="font-medium">Version / coverage</div>
-                    <div role="columnheader" className="font-medium">Updated</div>
-                    <div role="columnheader" className="sr-only">Actions</div>
+                    <div role="columnheader" className="font-medium">{l10n("local.secret_7e32a729")}</div>
+                    <div role="columnheader" className="font-medium">{l10n("local.status_920e413c")}</div>
+                    <div role="columnheader" className="font-medium">{l10n("local.version_coverage_9577b1fe")}</div>
+                    <div role="columnheader" className="font-medium">{l10n("local.updated_3a5ecca1")}</div>
+                    <div role="columnheader" className="sr-only">{l10n("local.actions_ff8059dc")}</div>
                   </div>
                   <div role="rowgroup">
                     {showUpRow ? renderUpRow("table") : null}
@@ -2076,13 +2065,13 @@ export function Secrets() {
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span
-                                      aria-label="Each user provides and owns their own value"
+                                      aria-label={l10n("local.each_user_provides_and_owns_their_own_value_ef9c6627")}
                                       className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-violet-500/30 bg-violet-500/5 text-violet-700 dark:text-violet-200"
                                     >
                                       <UserRound className="h-3 w-3" />
                                     </span>
                                   </TooltipTrigger>
-                                  <TooltipContent>Each user provides and owns their own value</TooltipContent>
+                                  <TooltipContent>{l10n("local.each_user_provides_and_owns_their_own_value_ef9c6627")}</TooltipContent>
                                 </Tooltip>
                               )}
                             </div>
@@ -2092,10 +2081,9 @@ export function Secrets() {
                             <div className="mt-1">
                               {row.kind === "company" ? (
                                 <MetaChip>
-                                  <ShieldCheck className="h-3 w-3" /> Organization
-                                </MetaChip>
+                                  <ShieldCheck className="h-3 w-3" /> {l10n("local.organization_d764d425")}</MetaChip>
                               ) : (
-                                <UserSecretChip label="Each user" />
+                                <UserSecretChip label={l10n("local.each_user_6630aadc")} />
                               )}
                             </div>
                           </div>
@@ -2106,7 +2094,7 @@ export function Secrets() {
                             {row.kind === "company" ? (
                               <span className="truncate text-muted-foreground">
                                 <span className="font-mono text-foreground">v{row.secret.latestVersion}</span>
-                                <span> · {row.secret.managedMode === "external_reference" ? "linked" : "managed"}</span>
+                                <span> · {row.secret.managedMode === "external_reference" ? l10n("local.linked_2272bea6") : l10n("local.managed_7fdfda5f")}</span>
                               </span>
                             ) : (
                               <CoverageInline companyId={selectedCompanyId} definitionId={row.definition.id} compact />
@@ -2157,8 +2145,7 @@ export function Secrets() {
                           {row.kind === "company" ? (
                             <>
                               <MetaChip>
-                                <ShieldCheck className="h-3 w-3" /> Organization
-                              </MetaChip>
+                                <ShieldCheck className="h-3 w-3" /> {l10n("local.organization_d764d425")}</MetaChip>
                               <SecretProviderIndicator
                                 secret={row.secret}
                                 providers={providers}
@@ -2168,7 +2155,7 @@ export function Secrets() {
                             </>
                           ) : (
                             <>
-                              <UserSecretChip label="Each user" />
+                              <UserSecretChip label={l10n("local.each_user_6630aadc")} />
                               <StatusBadge status={status} />
                               <CoverageInline companyId={selectedCompanyId} definitionId={row.definition.id} compact />
                             </>
@@ -2179,13 +2166,13 @@ export function Secrets() {
                             {row.kind === "company" ? (
                               <>
                                 v{row.secret.latestVersion} ·{" "}
-                                {row.secret.managedMode === "external_reference" ? "linked" : "managed"}
+                                {row.secret.managedMode === "external_reference" ? l10n("local.linked_2272bea6") : l10n("local.managed_7fdfda5f")}
                               </>
                             ) : (
-                              "Member-owned values"
+                              l10n("local.member_owned_values_aa127465")
                             )}
                           </span>
-                          <span>Updated {formatRelative(row.kind === "company" ? row.secret.updatedAt : row.definition.updatedAt)}</span>
+                          <span>{l10n("local.updated_3a5ecca1")}{" "}{formatRelative(row.kind === "company" ? row.secret.updatedAt : row.definition.updatedAt)}</span>
                         </div>
                       </div>
                     );
@@ -2255,7 +2242,7 @@ export function Secrets() {
                   </span>
                 </SheetTitle>
                 <SheetDescription className="sr-only">
-                  {providerLabel(providers, selectedSecret.provider)} secret {selectedSecret.key}
+                  {providerLabel(providers, selectedSecret.provider)} {l10n("local.secret_2bb80d53")}{" "}{selectedSecret.key}
                 </SheetDescription>
                 <div className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-muted/20 px-2 py-1.5">
                   <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
@@ -2268,13 +2255,11 @@ export function Secrets() {
                     className="h-7 shrink-0 px-2 text-xs"
                     onClick={() => copySecretKey(selectedSecret.key)}
                   >
-                    <Copy className="mr-1 h-3.5 w-3.5" /> Copy
-                  </Button>
+                    <Copy className="mr-1 h-3.5 w-3.5" /> {l10n("local.copy_e21f935f")}</Button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <MetaChip>
-                    <ShieldCheck className="h-3 w-3" /> Organization
-                  </MetaChip>
+                    <ShieldCheck className="h-3 w-3" /> {l10n("local.organization_d764d425")}</MetaChip>
                   <MetaChip>{modeLabel(selectedSecret.managedMode)}</MetaChip>
                   <MetaChip>{providerLabel(providers, selectedSecret.provider)}</MetaChip>
                   <MetaChip>v{selectedSecret.latestVersion}</MetaChip>
@@ -2289,13 +2274,11 @@ export function Secrets() {
                   {rotateActionLabel(selectedSecret)}
                 </Button>
                 <Button variant="outline" size="sm" onClick={copyDetailLink}>
-                  <Link2 className="h-3.5 w-3.5 mr-1" /> Copy link
-                </Button>
+                  <Link2 className="h-3.5 w-3.5 mr-1" /> {l10n("local.copy_link_dbf362d4")}</Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" aria-label={`More actions for ${selectedSecret.name}`}>
-                      <MoreHorizontal className="mr-1 h-3.5 w-3.5" /> More
-                    </Button>
+                    <Button variant="outline" size="sm" aria-label={l10n("local.more_actions_for_value_5057a73d", {v0: (selectedSecret.name)})}>
+                      <MoreHorizontal className="mr-1 h-3.5 w-3.5" /> {l10n("local.more_d47d7cb0")}</Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem
@@ -2312,7 +2295,7 @@ export function Secrets() {
                       ) : (
                         <CheckCircle2 className="h-4 w-4" />
                       )}
-                      {selectedSecret.status === "active" ? "Disable" : "Activate"}
+                      {selectedSecret.status === "active" ? l10n("local.disable_b7e3e4aa") : l10n("local.activate_24433c70")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       disabled={statusMutation.isPending}
@@ -2328,12 +2311,11 @@ export function Secrets() {
                       ) : (
                         <Archive className="h-4 w-4" />
                       )}
-                      {selectedSecret.status === "archived" ? "Unarchive" : "Archive"}
+                      {selectedSecret.status === "archived" ? l10n("local.unarchive_f565318d") : l10n("local.archive_66f4804e")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onSelect={() => setDeleteConfirm(selectedSecret)}>
-                      <Trash2 className="h-4 w-4" /> Delete secret
-                    </DropdownMenuItem>
+                      <Trash2 className="h-4 w-4" /> {l10n("local.delete_secret_1a48c8c8")}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -2341,9 +2323,9 @@ export function Secrets() {
                 <div className="border-b border-border px-4">
                   <PageTabBar
                     items={[
-                      { value: "details", label: "Details" },
-                      { value: "usage", label: usageQuery.data ? `Usage (${usageQuery.data.bindings.length})` : "Usage" },
-                      { value: "events", label: "Access events" },
+                      { value: "details", label: l10n("local.details_45989de4") },
+                      { value: "usage", label: usageQuery.data ? l10n("local.usage_value_47528b48", {v0: (usageQuery.data.bindings.length)}) : l10n("local.usage_8d59829c") },
+                      { value: "events", label: l10n("local.access_events_d0f902bd") },
                     ]}
                     align="start"
                     value={secretDetailTab}
@@ -2389,7 +2371,7 @@ export function Secrets() {
                   </span>
                 </SheetTitle>
                 <SheetDescription className="sr-only">
-                  Each user secret definition {selectedDefinition.key}
+                  {l10n("local.each_user_secret_definition_4cb5df4a")}{" "}{selectedDefinition.key}
                 </SheetDescription>
                 <div className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-muted/20 px-2 py-1.5">
                   <code className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
@@ -2402,11 +2384,10 @@ export function Secrets() {
                     className="h-7 shrink-0 px-2 text-xs"
                     onClick={() => copySecretKey(selectedDefinition.key)}
                   >
-                    <Copy className="mr-1 h-3.5 w-3.5" /> Copy
-                  </Button>
+                    <Copy className="mr-1 h-3.5 w-3.5" /> {l10n("local.copy_e21f935f")}</Button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  <UserSecretChip label="Each user" />
+                  <UserSecretChip label={l10n("local.each_user_6630aadc")} />
                   <MetaChip>
                     <CoverageInline companyId={selectedCompanyId} definitionId={selectedDefinition.id} compact />
                   </MetaChip>
@@ -2423,18 +2404,16 @@ export function Secrets() {
                   disabled={selectedDefinition.status !== "active"}
                 >
                   <KeyRound className="h-3.5 w-3.5 mr-1" />
-                  {selectedDefinitionMyEntry?.secret ? "Update my value" : "Set my value"}
+                  {selectedDefinitionMyEntry?.secret ? l10n("local.update_my_value_730940e9") : l10n("local.set_my_value_e36ebb62")}
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" aria-label={`More actions for ${selectedDefinition.name}`}>
-                      <MoreHorizontal className="mr-1 h-3.5 w-3.5" /> More
-                    </Button>
+                    <Button variant="outline" size="sm" aria-label={l10n("local.more_actions_for_value_5057a73d", {v0: (selectedDefinition.name)})}>
+                      <MoreHorizontal className="mr-1 h-3.5 w-3.5" /> {l10n("local.more_d47d7cb0")}</Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem onSelect={() => openEditDefinition(selectedDefinition)}>
-                      <Pencil className="h-4 w-4" /> Edit definition
-                    </DropdownMenuItem>
+                      <Pencil className="h-4 w-4" /> {l10n("local.edit_definition_9d97898a")}</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       disabled={definitionStatusMutation.isPending}
@@ -2450,7 +2429,7 @@ export function Secrets() {
                       ) : (
                         <CheckCircle2 className="h-4 w-4" />
                       )}
-                      {selectedDefinition.status === "active" ? "Disable" : "Activate"}
+                      {selectedDefinition.status === "active" ? l10n("local.disable_b7e3e4aa") : l10n("local.activate_24433c70")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       disabled={definitionStatusMutation.isPending}
@@ -2466,12 +2445,11 @@ export function Secrets() {
                       ) : (
                         <Archive className="h-4 w-4" />
                       )}
-                      {selectedDefinition.status === "archived" ? "Unarchive" : "Archive"}
+                      {selectedDefinition.status === "archived" ? l10n("local.unarchive_f565318d") : l10n("local.archive_66f4804e")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onSelect={() => setDefinitionDeleteConfirm(selectedDefinition)}>
-                      <Trash2 className="h-4 w-4" /> Delete definition
-                    </DropdownMenuItem>
+                      <Trash2 className="h-4 w-4" /> {l10n("local.delete_definition_697c1c21")}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -2479,10 +2457,10 @@ export function Secrets() {
                 <div className="border-b border-border px-4">
                   <PageTabBar
                     items={[
-                      { value: "details", label: "Details" },
-                      { value: "coverage", label: "Coverage" },
-                      { value: "usage", label: "Usage" },
-                      { value: "events", label: "Access events" },
+                      { value: "details", label: l10n("local.details_45989de4") },
+                      { value: "coverage", label: l10n("local.coverage_523487a5") },
+                      { value: "usage", label: l10n("local.usage_8d59829c") },
+                      { value: "events", label: l10n("local.access_events_d0f902bd") },
                     ]}
                     align="start"
                     value={secretDetailTab}
@@ -2528,12 +2506,10 @@ export function Secrets() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Secret references</DialogTitle>
+            <DialogTitle>{l10n("local.secret_references_4afbc504")}</DialogTitle>
             <DialogDescription>
               {usageDialogSecret
-                ? `${usageDialogSecret.name} is referenced by ${usageDialogSecret.referenceCount ?? 0} ${
-                    (usageDialogSecret.referenceCount ?? 0) === 1 ? "place" : "places"
-                  }.`
+                ? l10n("local.value_is_referenced_by_value_value_e6a23bad", {v0: (usageDialogSecret.name), v1: (usageDialogSecret.referenceCount ?? 0), v2: ((usageDialogSecret.referenceCount ?? 0) === 1 ? "place" : "places")})
                 : null}
             </DialogDescription>
           </DialogHeader>
@@ -2579,15 +2555,14 @@ export function Secrets() {
       >
         <DialogContent className="max-h-(--sz-calc-18) overflow-y-auto p-4 sm:max-w-lg sm:p-6">
           <DialogHeader>
-            <DialogTitle>{editingDefinition ? "Edit user-provided secret" : "Create secret"}</DialogTitle>
+            <DialogTitle>{editingDefinition ? l10n("local.edit_user_provided_secret_065e9014") : l10n("local.create_secret_b72a9826")}</DialogTitle>
             <DialogDescription>
-              Choose who provides the value. Shared fields keep their values when you switch modes.
-            </DialogDescription>
+              {l10n("local.choose_who_provides_the_value_shared_fields_k_22b074a3")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {!editingDefinition ? (
               <div className="space-y-1.5">
-                <p className="text-xs font-medium text-foreground">Who provides the value?</p>
+                <p className="text-xs font-medium text-foreground">{l10n("local.who_provides_the_value_dd47b40b")}</p>
                 <Tabs
                   value={secretValueProvider}
                   onValueChange={(value) => {
@@ -2605,27 +2580,26 @@ export function Secrets() {
                   }}
                 >
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="company">Organization</TabsTrigger>
-                    <TabsTrigger value="user">Each user</TabsTrigger>
+                    <TabsTrigger value="company">{l10n("local.organization_d764d425")}</TabsTrigger>
+                    <TabsTrigger value="user">{l10n("local.each_user_6630aadc")}</TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <p className="text-(length:--text-micro) text-muted-foreground">
-                  Organization stores one shared value. Each user lets every member supply their own value under My secrets.
-                </p>
+                  {l10n("local.organization_stores_one_shared_value_each_use_8c943592")}</p>
               </div>
             ) : null}
 
             {secretValueProvider === "company" && !editingDefinition ? (
               <Tabs value={createMode} onValueChange={(value) => setCreateMode(value as CreateMode)}>
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="managed">Managed value</TabsTrigger>
-                  <TabsTrigger value="external">External reference</TabsTrigger>
+                  <TabsTrigger value="managed">{l10n("local.managed_value_ae1038f5")}</TabsTrigger>
+                  <TabsTrigger value="external">{l10n("local.external_reference_5c54252e")}</TabsTrigger>
                 </TabsList>
               </Tabs>
             ) : null}
 
             <div>
-              <label className="text-xs font-medium" htmlFor="new-secret-name">Name</label>
+              <label className="text-xs font-medium" htmlFor="new-secret-name">{l10n("local.name_dcd1d522")}</label>
               {createNamePrefix && !editingDefinition ? (
                 <div className="flex h-9 w-full min-w-0 items-center gap-1.5 rounded-md border border-input bg-transparent px-2 shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-3">
                   <span
@@ -2636,7 +2610,7 @@ export function Secrets() {
                     <button
                       type="button"
                       className="shrink-0 rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      aria-label="Remove folder prefix"
+                      aria-label={l10n("local.remove_folder_prefix_611edd30")}
                       onClick={() => setCreateNamePrefix(null)}
                     >
                       <X className="h-3 w-3" />
@@ -2678,20 +2652,19 @@ export function Secrets() {
                           : normalizeSecretKeyForPreview(name),
                     }));
                   }}
-                  placeholder={secretValueProvider === "user" ? "Personal GitHub token" : "/dev/foo/bar"}
+                  placeholder={secretValueProvider === "user" ? l10n("local.personal_github_token_92e189a9") : "/dev/foo/bar"}
                   autoFocus
                 />
               )}
               {createNamePrefix && !editingDefinition ? (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Creating in {folderPath} — remove the chip to type a different path.
-                </p>
+                  {l10n("local.creating_in_1025ff47")}{" "}{folderPath} {l10n("local._remove_the_chip_to_type_a_different_path_c935f790")}</p>
               ) : null}
             </div>
 
             {secretValueProvider === "company" && createMode === "managed" ? (
               <div>
-                <label className="text-xs font-medium" htmlFor="new-secret-value">Value</label>
+                <label className="text-xs font-medium" htmlFor="new-secret-value">{l10n("local.value_8e37953d")}</label>
                 <Textarea
                   id="new-secret-value"
                   value={createForm.value}
@@ -2700,13 +2673,13 @@ export function Secrets() {
                   }
                   rows={3}
                   className="min-w-0 overflow-x-hidden break-all font-mono text-xs"
-                  placeholder="Stored once, never re-displayed"
+                  placeholder={l10n("local.stored_once_never_re_displayed_96978a39")}
                 />
               </div>
             ) : null}
             {secretValueProvider === "company" && createMode === "external" ? (
               <div>
-                <label className="text-xs font-medium" htmlFor="new-secret-ref">External reference</label>
+                <label className="text-xs font-medium" htmlFor="new-secret-ref">{l10n("local.external_reference_5c54252e")}</label>
                 <Input
                   id="new-secret-ref"
                   value={createForm.externalRef}
@@ -2717,20 +2690,16 @@ export function Secrets() {
                   className="font-mono text-xs"
                 />
                 <p className="text-(length:--text-micro) text-muted-foreground mt-1">
-                  Existing provider secrets are resolve-only in Paperclip. Rotate the value in the provider,
-                  then update this reference only if the path, ARN, or version changes.
-                </p>
+                  {l10n("local.existing_provider_secrets_are_resolve_only_in_9169f3cc")}</p>
               </div>
             ) : null}
             {secretValueProvider === "user" ? (
               <>
                 <div className="rounded-md border border-violet-500/30 bg-violet-500/5 p-2 text-(length:--text-micro) text-violet-800 dark:text-violet-200">
-                  Every member supplies their own value under My secrets. Agents resolve the responsible
-                  user&apos;s value at runtime.
-                </div>
+                  {l10n("local.every_member_supplies_their_own_value_under_m_4301a0fb")}</div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-foreground" htmlFor="new-secret-usage-guidance">
-                    Usage guidance <span className="text-muted-foreground/70">(optional)</span>
+                    {l10n("local.usage_guidance_0c1d12df")}{" "}<span className="text-muted-foreground/70">{l10n("local._optional_0059798b")}</span>
                   </label>
                   <Textarea
                     id="new-secret-usage-guidance"
@@ -2738,7 +2707,7 @@ export function Secrets() {
                     onChange={(event) =>
                       setCreateForm((current) => ({ ...current, usageGuidance: event.target.value }))
                     }
-                    placeholder="Tell members how to create their token, required scopes, etc."
+                    placeholder={l10n("local.tell_members_how_to_create_their_token_requir_2eecaea0")}
                     className="min-h-(--sz-70px) text-sm"
                   />
                 </div>
@@ -2747,7 +2716,7 @@ export function Secrets() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium" htmlFor="new-secret-key">Key</label>
+                <label className="text-xs font-medium" htmlFor="new-secret-key">{l10n("local.key_99a52df3")}</label>
                 {!createKeyEditable && !editingDefinition ? (
                   <Button
                     type="button"
@@ -2756,8 +2725,7 @@ export function Secrets() {
                     className="h-5 px-1.5 text-(length:--text-micro) text-muted-foreground"
                     onClick={() => setCreateKeyEditable(true)}
                   >
-                    <Pencil className="mr-1 h-3 w-3" /> Edit
-                  </Button>
+                    <Pencil className="mr-1 h-3 w-3" /> {l10n("local.edit_464c4ffd")}</Button>
                 ) : null}
               </div>
               <Input
@@ -2770,7 +2738,7 @@ export function Secrets() {
                   setCreateKeyDirty(true);
                   setCreateForm((current) => ({ ...current, key: event.target.value }));
                 }}
-                placeholder={secretValueProvider === "user" ? "PERSONAL_GH_TOKEN" : "auto from name"}
+                placeholder={secretValueProvider === "user" ? "PERSONAL_GH_TOKEN" : l10n("local.auto_from_name_9666ff04")}
                 disabled={Boolean(editingDefinition)}
                 className={cn(
                   "font-mono text-sm",
@@ -2779,18 +2747,18 @@ export function Secrets() {
               />
               <p className="mt-1 text-(length:--text-micro) text-muted-foreground">
                 {editingDefinition
-                  ? "Stable env binding key. Cannot be changed."
+                  ? l10n("local.stable_env_binding_key_cannot_be_changed_bf346c2b")
                   : !createKeyEditable
-                    ? "Generated from the name."
+                    ? l10n("local.generated_from_the_name_098693b8")
                     : secretValueProvider === "user"
-                      ? "Env-style key used by user-secret bindings."
-                      : "Shared secret keys keep lowercase dash normalization."}
+                      ? l10n("local.env_style_key_used_by_user_secret_bindings_6deef545")
+                      : l10n("local.shared_secret_keys_keep_lowercase_dash_normal_02b61827")}
               </p>
             </div>
 
             <div>
               <label className="text-xs font-medium" htmlFor="new-secret-description">
-                Description <span className="text-muted-foreground/70">(optional)</span>
+                {l10n("local.description_526e0087")}{" "}<span className="text-muted-foreground/70">{l10n("local._optional_0059798b")}</span>
               </label>
               <Input
                 id="new-secret-description"
@@ -2798,7 +2766,7 @@ export function Secrets() {
                 onChange={(event) =>
                   setCreateForm((current) => ({ ...current, description: event.target.value }))
                 }
-                placeholder="What is this secret used for? (no values)"
+                placeholder={l10n("local.what_is_this_secret_used_for_no_values_802e9b1e")}
               />
             </div>
 
@@ -2806,7 +2774,7 @@ export function Secrets() {
               <>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-medium" htmlFor="new-secret-provider">Provider</label>
+                  <label className="text-xs font-medium" htmlFor="new-secret-provider">{l10n("local.provider_472590ae")}</label>
                   <select
                     id="new-secret-provider"
                     className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
@@ -2838,9 +2806,9 @@ export function Secrets() {
                         {provider.label}
                         {provider.configured === false &&
                         !getSelectableProviderConfig(providerConfigs, provider.id)
-                          ? " (deployment default missing)"
+                          ? (" " + l10n("local._deployment_default_missing_ee13d508"))
                           : provider.requiresExternalRef
-                            ? " (external only)"
+                            ? (" " + l10n("local._external_only_ff42bfcf"))
                             : ""}
                       </option>
                     ))}
@@ -2855,7 +2823,7 @@ export function Secrets() {
                   ) : null}
                 </div>
                 <div>
-                  <label className="text-xs font-medium" htmlFor="new-secret-vault">Provider vault</label>
+                  <label className="text-xs font-medium" htmlFor="new-secret-vault">{l10n("local.provider_vault_8bb8c5d1")}</label>
                   <select
                     id="new-secret-vault"
                     className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
@@ -2864,13 +2832,13 @@ export function Secrets() {
                       setCreateForm((current) => ({ ...current, providerConfigId: event.target.value }))
                     }
                   >
-                    <option value="">Deployment default</option>
+                    <option value="">{l10n("local.deployment_default_d9bdc394")}</option>
                     {createProviderConfigs.map((config) => {
                       const blockReason = getProviderConfigBlockReason(config);
                       return (
                         <option key={config.id} value={config.id} disabled={Boolean(blockReason)}>
                           {config.displayName}
-                          {config.isDefault ? " (default)" : ""}
+                          {config.isDefault ? (" " + l10n("local._default_b3ffbbff")) : ""}
                           {blockReason ? ` (${blockReason})` : ""}
                         </option>
                       );
@@ -2883,11 +2851,9 @@ export function Secrets() {
                 </div>
                 {createMode === "managed" ? (
                   <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-(length:--text-micro) text-emerald-700 dark:text-emerald-300">
-                    Paperclip-managed secrets are created in the selected provider and future rotations
-                    write a new provider version through Paperclip.
-                    {awsManagedPathPreview ? (
+                    {l10n("local.paperclip_managed_secrets_are_created_in_the_94c4a60a")}{awsManagedPathPreview ? (
                       <div className="mt-1">
-                        AWS managed path:{" "}
+                        {l10n("local.aws_managed_path_d695be2f")}{" "}
                         <code className="break-all rounded bg-background/70 px-1 py-0.5">
                           {awsManagedPathPreview}
                         </code>
@@ -2907,8 +2873,7 @@ export function Secrets() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               onClick={() => {
                 setCreateError(null);
@@ -2925,12 +2890,12 @@ export function Secrets() {
             >
               {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
               {editingDefinition
-                ? "Save changes"
+                ? l10n("local.save_changes_dd0ae7a5")
                 : secretValueProvider === "user"
-                  ? "Create user-provided secret"
+                  ? l10n("local.create_user_provided_secret_c06003ee")
                   : createMode === "managed"
-                    ? "Create secret"
-                    : "Link reference"}
+                    ? l10n("local.create_secret_b72a9826")
+                    : l10n("local.link_reference_c9f13651")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2939,15 +2904,14 @@ export function Secrets() {
       <Dialog open={vaultDialogOpen} onOpenChange={setVaultDialogOpen}>
         <DialogContent className="max-h-(--sz-85vh) overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingVault ? "Edit provider vault" : "Create provider vault"}</DialogTitle>
+            <DialogTitle>{editingVault ? l10n("local.edit_provider_vault_99e29cce") : l10n("local.create_provider_vault_0194dfa1")}</DialogTitle>
             <DialogDescription>
-              Save only non-sensitive routing metadata. Credentials stay in the runtime environment or provider identity.
-            </DialogDescription>
+              {l10n("local.save_only_non_sensitive_routing_metadata_cred_2eb060d9")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-medium" htmlFor="vault-provider">Provider</label>
+                <label className="text-xs font-medium" htmlFor="vault-provider">{l10n("local.provider_472590ae")}</label>
                 <select
                   id="vault-provider"
                   className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none disabled:opacity-60"
@@ -2968,18 +2932,18 @@ export function Secrets() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium" htmlFor="vault-name">Display name</label>
+                <label className="text-xs font-medium" htmlFor="vault-name">{l10n("local.display_name_2b7f6a84")}</label>
                 <Input
                   id="vault-name"
                   value={vaultForm.displayName}
                   onChange={(event) =>
                     setVaultForm((current) => ({ ...current, displayName: event.target.value }))
                   }
-                  placeholder="Production local vault"
+                  placeholder={l10n("local.production_local_vault_bd9fb1ce")}
                 />
               </div>
               <div>
-                <label className="text-xs font-medium" htmlFor="vault-status">Status</label>
+                <label className="text-xs font-medium" htmlFor="vault-status">{l10n("local.status_920e413c")}</label>
                 <select
                   id="vault-status"
                   className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
@@ -2995,13 +2959,11 @@ export function Secrets() {
                   }}
                 >
                   <option value="ready" disabled={vaultForm.provider === "gcp_secret_manager" || vaultForm.provider === "vault"}>
-                    Ready
-                  </option>
+                    {l10n("local.ready_5fa7aac5")}</option>
                   <option value="warning" disabled={vaultForm.provider === "gcp_secret_manager" || vaultForm.provider === "vault"}>
-                    Warning
-                  </option>
-                  <option value="coming_soon">Coming soon</option>
-                  <option value="disabled">Disabled</option>
+                    {l10n("local.warning_e981ddae")}</option>
+                  <option value="coming_soon">{l10n("local.coming_soon_4f7d6401")}</option>
+                  <option value="disabled">{l10n("local.disabled_75081b59")}</option>
                 </select>
               </div>
               <label className="flex items-center gap-2 pt-6 text-sm">
@@ -3014,7 +2976,7 @@ export function Secrets() {
                     setVaultForm((current) => ({ ...current, isDefault: event.target.checked }))
                   }
                 />
-                Default for {providerLabel(providers, vaultForm.provider)}
+                {l10n("local.default_for_1c6925c1")}{" "}{providerLabel(providers, vaultForm.provider)}
               </label>
             </div>
 
@@ -3037,16 +2999,13 @@ export function Secrets() {
 
             {vaultForm.provider === "gcp_secret_manager" || vaultForm.provider === "vault" ? (
               <div className="rounded-md border border-sky-500/30 bg-sky-500/5 p-3 text-xs text-sky-700 dark:text-sky-300">
-                This provider can save draft routing metadata, but runtime writes and resolution stay disabled until
-                the provider module is implemented and reviewed.
-              </div>
+                {l10n("local.this_provider_can_save_draft_routing_metadata_456d4115")}</div>
             ) : null}
             {vaultError ? <p className="text-xs text-destructive">{vaultError}</p> : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setVaultDialogOpen(false)}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               onClick={() => {
                 setVaultError(null);
@@ -3059,7 +3018,7 @@ export function Secrets() {
               }
             >
               {saveVaultMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {editingVault ? "Save vault" : "Create vault"}
+              {editingVault ? l10n("local.save_vault_79da1637") : l10n("local.create_vault_c8c44253")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3070,40 +3029,40 @@ export function Secrets() {
           <DialogHeader>
             <DialogTitle>
               {selectedSecret?.managedMode === "external_reference" && rotateMode === "reference"
-                ? "Update external reference"
-                : "Update secret value"}
+                ? l10n("local.update_external_reference_d4aa6665")
+                : l10n("local.update_secret_value_47cde7d2")}
             </DialogTitle>
             <DialogDescription>
               {selectedSecret?.managedMode !== "external_reference"
-                ? "Creates a new provider-backed version. Consumers pinned to latest pick up the new value on the next run."
+                ? l10n("local.creates_a_new_provider_backed_version_consume_4e2ee5cb")
                 : rotateMode === "reference"
-                  ? "Creates a new Paperclip metadata version that points at an existing provider secret. Paperclip does not write a new provider value."
-                  : "Writes a new version of the referenced provider secret. The new value becomes current for every consumer of that secret, in and outside Paperclip."}
+                  ? l10n("local.creates_a_new_paperclip_metadata_version_that_ebb62c0f")
+                  : l10n("local.writes_a_new_version_of_the_referenced_provid_022c9986")}
             </DialogDescription>
           </DialogHeader>
           {selectedSecret && secretSupportsExternalValueWrite(selectedSecret) ? (
             <Tabs value={rotateMode} onValueChange={(value) => setRotateMode(value as RotateMode)}>
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="value">Write new value</TabsTrigger>
-                <TabsTrigger value="reference">Change reference</TabsTrigger>
+                <TabsTrigger value="value">{l10n("local.write_new_value_0904c88d")}</TabsTrigger>
+                <TabsTrigger value="reference">{l10n("local.change_reference_72aba55b")}</TabsTrigger>
               </TabsList>
             </Tabs>
           ) : null}
           <div>
-            <label className="text-xs font-medium" htmlFor="rotate-secret-vault">Provider vault</label>
+            <label className="text-xs font-medium" htmlFor="rotate-secret-vault">{l10n("local.provider_vault_8bb8c5d1")}</label>
             <select
               id="rotate-secret-vault"
               className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
               value={rotateProviderConfigId}
               onChange={(event) => setRotateProviderConfigId(event.target.value)}
             >
-              <option value="">Deployment default</option>
+              <option value="">{l10n("local.deployment_default_d9bdc394")}</option>
               {selectedRotateProviderConfigs.map((config) => {
                 const blockReason = getProviderConfigBlockReason(config);
                 return (
                   <option key={config.id} value={config.id} disabled={Boolean(blockReason)}>
                     {config.displayName}
-                    {config.isDefault ? " (default)" : ""}
+                    {config.isDefault ? (" " + l10n("local._default_b3ffbbff")) : ""}
                     {blockReason ? ` (${blockReason})` : ""}
                   </option>
                 );
@@ -3113,47 +3072,43 @@ export function Secrets() {
               <ProviderVaultInlineWarning config={selectedRotateProviderConfig} />
             ) : (
               <p className="mt-1 text-(length:--text-micro) text-muted-foreground">
-                Rotating with the deployment default preserves current fallback behavior.
-              </p>
+                {l10n("local.rotating_with_the_deployment_default_preserve_836d4351")}</p>
             )}
           </div>
           {selectedSecret?.managedMode === "external_reference" && rotateMode === "reference" ? (
             <div>
-              <label className="text-xs font-medium" htmlFor="rotate-ref">External reference</label>
+              <label className="text-xs font-medium" htmlFor="rotate-ref">{l10n("local.external_reference_5c54252e")}</label>
               <Input
                 id="rotate-ref"
                 value={rotateExternalRef}
                 onChange={(event) => setRotateExternalRef(event.target.value)}
-                placeholder={selectedSecret.externalRef ?? "Updated reference"}
+                placeholder={selectedSecret.externalRef ?? l10n("local.updated_reference_08c44d76")}
                 className="font-mono text-xs"
               />
               <p className="mt-1 text-(length:--text-micro) text-muted-foreground">
-                Rotate the actual value in the provider before changing this Paperclip reference.
-              </p>
+                {l10n("local.rotate_the_actual_value_in_the_provider_befor_2c7e3851")}</p>
             </div>
           ) : (
             <div>
-              <label className="text-xs font-medium" htmlFor="rotate-value">New value</label>
+              <label className="text-xs font-medium" htmlFor="rotate-value">{l10n("local.new_value_7ca9b97d")}</label>
               <Textarea
                 id="rotate-value"
                 value={rotateValue}
                 onChange={(event) => setRotateValue(event.target.value)}
                 rows={3}
                 className="font-mono text-xs"
-                placeholder="Paste the new value"
+                placeholder={l10n("local.paste_the_new_value_8601d2f4")}
               />
               {selectedSecret?.managedMode === "external_reference" ? (
                 <p className="mt-1 text-(length:--text-micro) text-muted-foreground">
-                  Written to <code className="font-mono">{selectedSecret.externalRef}</code> in the provider.
-                </p>
+                  {l10n("local.written_to_92109856")}{" "}<code className="font-mono">{selectedSecret.externalRef}</code> {l10n("local.in_the_provider_f7ce3252")}</p>
               ) : null}
             </div>
           )}
           {rotateError ? <p className="text-xs text-destructive">{rotateError}</p> : null}
           <DialogFooter>
             <Button variant="outline" onClick={() => setRotateOpen(false)}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               onClick={() => {
                 setRotateError(null);
@@ -3169,8 +3124,8 @@ export function Secrets() {
             >
               {rotateMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
               {selectedSecret?.managedMode === "external_reference" && rotateMode === "reference"
-                ? "Update reference"
-                : "Update value"}
+                ? l10n("local.update_reference_90866756")
+                : l10n("local.update_value_d508b1f3")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3179,21 +3134,19 @@ export function Secrets() {
       <Dialog open={Boolean(deleteConfirm)} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete secret</DialogTitle>
+            <DialogTitle>{l10n("local.delete_secret_1a48c8c8")}</DialogTitle>
             <DialogDescription>
-              Permanently removes <strong>{deleteConfirm?.name}</strong>. Active bindings will fail until you remap them.
-            </DialogDescription>
+              {l10n("local.permanently_removes_04c008a8")}{" "}<strong>{deleteConfirm?.name}</strong>{l10n("local._active_bindings_will_fail_until_you_remap_th_399f2dd8")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>{l10n("local.cancel_19766ed6")}</Button>
             <Button
               variant="destructive"
               onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm.id)}
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              Delete
-            </Button>
+              {l10n("local.delete_e2d0a549")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -3204,14 +3157,12 @@ export function Secrets() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete user-provided secret</DialogTitle>
+            <DialogTitle>{l10n("local.delete_user_provided_secret_f1bdef92")}</DialogTitle>
             <DialogDescription>
-              Permanently removes <strong>{definitionDeleteConfirm?.name}</strong> for the whole organization.
-              Existing member values become unreferenced and active bindings must be remapped.
-            </DialogDescription>
+              {l10n("local.permanently_removes_04c008a8")}{" "}<strong>{definitionDeleteConfirm?.name}</strong> {l10n("local.for_the_whole_organization_existing_member_va_9c2721dc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDefinitionDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDefinitionDeleteConfirm(null)}>{l10n("local.cancel_19766ed6")}</Button>
             <Button
               variant="destructive"
               onClick={() =>
@@ -3220,8 +3171,7 @@ export function Secrets() {
               disabled={deleteDefinitionMutation.isPending}
             >
               {deleteDefinitionMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              Delete
-            </Button>
+              {l10n("local.delete_e2d0a549")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -3239,25 +3189,23 @@ export function Secrets() {
       <Dialog open={Boolean(removeVaultConfirm)} onOpenChange={(open) => !open && setRemoveVaultConfirm(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Remove provider vault</DialogTitle>
+            <DialogTitle>{l10n("local.remove_provider_vault_34ea2a8f")}</DialogTitle>
             <DialogDescription>
-              Removes <strong>{removeVaultConfirm?.displayName}</strong> from Paperclip only.{" "}
+              {l10n("local.removes_c89e09be")}{" "}<strong>{removeVaultConfirm?.displayName}</strong> {l10n("local.from_paperclip_only_de5b917b")}{" "}
               {removeVaultConfirm?.provider === "aws_secrets_manager"
-                ? "This does not delete the remote AWS Secrets Manager vault, secrets, or any AWS data."
-                : "This does not delete any remote provider data."}{" "}
-              Secrets using this vault will lose the vault association until you assign another one.
-            </DialogDescription>
+                ? l10n("local.this_does_not_delete_the_remote_aws_secrets_m_52e1cba2")
+                : l10n("local.this_does_not_delete_any_remote_provider_data_982d777c")}{" "}
+              {l10n("local.secrets_using_this_vault_will_lose_the_vault_565a43c4")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRemoveVaultConfirm(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRemoveVaultConfirm(null)}>{l10n("local.cancel_19766ed6")}</Button>
             <Button
               variant="destructive"
               onClick={() => removeVaultConfirm && removeVaultMutation.mutate(removeVaultConfirm.id)}
               disabled={removeVaultMutation.isPending}
             >
               {removeVaultMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              Remove from Paperclip
-            </Button>
+              {l10n("local.remove_from_paperclip_c2cb51fe")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -3271,16 +3219,12 @@ function SecretsHowToUse() {
     <div className="flex items-start gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       <div className="space-y-1">
-        <p className="font-medium text-foreground">Use secrets by binding them to runtime environment variables.</p>
+        <p className="font-medium text-foreground">{l10n("local.use_secrets_by_binding_them_to_runtime_enviro_68b6643d")}</p>
         <p>
-          Create or link a secret here, then open an agent&apos;s Environment variables or a project&apos;s Env field.
-          Add the env key the process expects, for example <code className="font-mono">GH_TOKEN</code>, choose{" "}
-          <span className="font-medium text-foreground">Secret</span>, and select the stored secret version.
-        </p>
+          {l10n("local.create_or_link_a_secret_here_then_open_an_age_17f64ed5")}{" "}<code className="font-mono">GH_TOKEN</code>{l10n("local._choose_b27b9718")}{" "}
+          <span className="font-medium text-foreground">{l10n("local.secret_7e32a729")}</span>{l10n("local._and_select_the_stored_secret_version_8f99b845")}</p>
         <p>
-          Paperclip resolves the value server-side when the run starts and injects it as that env var. Project env
-          applies to every task in the project and overrides agent env on matching keys.
-        </p>
+          {l10n("local.paperclip_resolves_the_value_server_side_when_166e555e")}</p>
       </div>
     </div>
   );
@@ -3312,10 +3256,10 @@ function SecretsFiltersPopover({
   };
 
   const statusOptions: Array<{ value: SecretStatus | "all"; label: string }> = [
-    { value: "active", label: "Active" },
-    { value: "all", label: "All statuses" },
-    { value: "disabled", label: "Disabled" },
-    { value: "archived", label: "Archived" },
+    { value: "active", label: l10n("local.active_92340695") },
+    { value: "all", label: l10n("local.all_statuses_8ee57323") },
+    { value: "disabled", label: l10n("local.disabled_75081b59") },
+    { value: "archived", label: l10n("local.archived_bdb86505") },
   ];
 
   return (
@@ -3325,7 +3269,7 @@ function SecretsFiltersPopover({
           variant="outline"
           size="icon"
           className={cn("relative h-8 w-8 shrink-0", activeFilterCount > 0 && "text-blue-600 dark:text-blue-400")}
-          title={activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Filter"}
+          title={activeFilterCount > 0 ? l10n("local.filters_value_50046a6d", {v0: (activeFilterCount)}) : l10n("local.filter_638e249f")}
         >
           <Filter className="h-3.5 w-3.5" />
           {activeFilterCount > 0 ? (
@@ -3341,7 +3285,7 @@ function SecretsFiltersPopover({
       >
         <div className="space-y-3 p-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Filters</span>
+            <span className="text-sm font-medium">{l10n("local.filters_546ebb8e")}</span>
             {activeFilterCount > 0 ? (
               <button
                 type="button"
@@ -3349,14 +3293,13 @@ function SecretsFiltersPopover({
                 onClick={resetFilters}
               >
                 <X className="h-3 w-3" />
-                Clear
-              </button>
+                {l10n("local.clear_83b12c22")}</button>
             ) : null}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Status</span>
+              <span className="text-xs text-muted-foreground">{l10n("local.status_920e413c")}</span>
               <div className="space-y-0.5">
                 {statusOptions.map((option) => (
                   <label key={option.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
@@ -3371,12 +3314,12 @@ function SecretsFiltersPopover({
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Provided by</span>
+              <span className="text-xs text-muted-foreground">{l10n("local.provided_by_b8177963")}</span>
               <div className="space-y-0.5">
                 {[
-                  { value: "all" as const, label: "All sources" },
-                  { value: "company" as const, label: "Organization" },
-                  { value: "user" as const, label: "Each user" },
+                  { value: "all" as const, label: l10n("local.all_sources_08e774c5") },
+                  { value: "company" as const, label: l10n("local.organization_d764d425") },
+                  { value: "user" as const, label: l10n("local.each_user_6630aadc") },
                 ].map((option) => (
                   <label key={option.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
@@ -3390,14 +3333,14 @@ function SecretsFiltersPopover({
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Provider</span>
+              <span className="text-xs text-muted-foreground">{l10n("local.provider_472590ae")}</span>
               <div className="max-h-48 space-y-0.5 overflow-y-auto pr-1">
                 <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                   <Checkbox
                     checked={providerFilter === "all"}
                     onCheckedChange={() => onProviderChange("all")}
                   />
-                  <span className="text-sm">All providers</span>
+                  <span className="text-sm">{l10n("local.all_providers_20e56db7")}</span>
                 </label>
                 {providers.map((provider) => (
                   <label key={provider.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
@@ -3453,7 +3396,7 @@ function ProviderVaultInlineWarning({ config }: { config: CompanySecretProviderC
   if (!message) {
     return (
       <p className="mt-1 text-(length:--text-micro) text-muted-foreground">
-        {config.isDefault ? "Default vault" : "Vault"} · {config.status.replace("_", " ")}
+        {config.isDefault ? l10n("local.default_vault_653cc063") : l10n("local.vault_5d55c415")} · {config.status.replace("_", " ")}
       </p>
     );
   }
@@ -3497,10 +3440,9 @@ function ImportFromVaultButton({
         size="sm"
         onClick={onManageVaults}
         className={cn("text-xs text-muted-foreground", className)}
-        title="Configure an AWS provider vault to enable remote import"
+        title={l10n("local.configure_an_aws_provider_vault_to_enable_rem_e4be5f9a")}
       >
-        <Cloud className="h-3.5 w-3.5 mr-1" /> AWS vault disabled — manage
-      </Button>
+        <Cloud className="h-3.5 w-3.5 mr-1" /> {l10n("local.aws_vault_disabled_manage_21a63835")}</Button>
     );
   }
 
@@ -3512,8 +3454,7 @@ function ImportFromVaultButton({
       className={className}
       data-testid="import-from-vault-button"
     >
-      <Cloud className="h-3.5 w-3.5 mr-1" /> Import from vault
-    </Button>
+      <Cloud className="h-3.5 w-3.5 mr-1" /> {l10n("local.import_from_vault_cd824a91")}</Button>
   );
 }
 
@@ -3550,18 +3491,16 @@ export function ProviderVaultsTab({
     return (
       <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
-        Loading provider vaults
-      </div>
+        {l10n("local.loading_provider_vaults_86c32836")}</div>
     );
   }
 
   if (error) {
     return (
       <div className="py-4 text-sm text-destructive flex items-center gap-2">
-        <AlertCircle className="h-4 w-4" /> Failed to load provider vaults: {(error as Error).message}
+        <AlertCircle className="h-4 w-4" /> {l10n("local.failed_to_load_provider_vaults_8ca178ec")}{" "}{(error as Error).message}
         <Button variant="ghost" size="sm" onClick={onRetry}>
-          Retry
-        </Button>
+          {l10n("local.retry_942087cc")}</Button>
       </div>
     );
   }
@@ -3599,19 +3538,18 @@ export function ProviderVaultsTab({
               <Icon className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-sm font-semibold">{provider?.label ?? id.replaceAll("_", " ")}</h2>
               {isComingSoonFamily ? (
-                <span className="ml-auto text-xs text-muted-foreground">Coming soon</span>
+                <span className="ml-auto text-xs text-muted-foreground">{l10n("local.coming_soon_4f7d6401")}</span>
               ) : (
                 <Button variant="outline" size="sm" className="ml-auto" onClick={() => onCreate(id)}>
                   <Plus className="h-3.5 w-3.5 mr-1" />
-                  Add vault
-                </Button>
+                  {l10n("local.add_vault_252a9d50")}</Button>
               )}
             </div>
             {configs.length === 0 ? (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
                 {isComingSoonFamily
-                  ? "Not yet supported."
-                  : "No organization-specific vaults yet. Secrets can still use the deployment default provider settings."}
+                  ? l10n("local.not_yet_supported_50962ea5")
+                  : l10n("local.no_organization_specific_vaults_yet_secrets_c_0bd5e48c")}
               </div>
             ) : (
               <div className="space-y-3">
@@ -3667,8 +3605,7 @@ function ProviderVaultCard({
             {config.isDefault ? (
               <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                 <Star className="h-3 w-3 fill-current" />
-                Default
-              </span>
+                {l10n("local.default_21b111cb")}</span>
             ) : null}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -3677,10 +3614,10 @@ function ProviderVaultCard({
             </Badge>
             {config.healthStatus ? (
               <span className="text-xs text-muted-foreground">
-                Health {config.healthStatus.replace("_", " ")} · {formatRelative(config.healthCheckedAt)}
+                {l10n("local.health_55898449")}{" "}{config.healthStatus.replace("_", " ")} · {formatRelative(config.healthCheckedAt)}
               </span>
             ) : (
-              <span className="text-xs text-muted-foreground">Health not checked</span>
+              <span className="text-xs text-muted-foreground">{l10n("local.health_not_checked_20761188")}</span>
             )}
           </div>
         </div>
@@ -3703,8 +3640,7 @@ function ProviderVaultCard({
       <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={onHealthCheck} disabled={pending}>
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
-          Check health
-        </Button>
+          {l10n("local.check_health_6b9f0e92")}</Button>
         {config.provider === "aws_secrets_manager" ? (
           <Button
             variant="outline"
@@ -3714,13 +3650,12 @@ function ProviderVaultCard({
             title={
               blockReason
                 ? blockReason
-                : "Refresh AWS metadata and import existing secrets"
+                : l10n("local.refresh_aws_metadata_and_import_existing_secr_0fb31927")
             }
             data-testid={`provider-vault-refresh-secrets-${config.id}`}
           >
             <Cloud className="h-3.5 w-3.5 mr-1" />
-            Refresh secrets
-          </Button>
+            {l10n("local.refresh_secrets_f043cf62")}</Button>
         ) : null}
         <Button
           variant="outline"
@@ -3729,8 +3664,7 @@ function ProviderVaultCard({
           disabled={pending || Boolean(blockReason) || config.isDefault}
         >
           <Star className="h-3.5 w-3.5 mr-1" />
-          Make default
-        </Button>
+          {l10n("local.make_default_f43b9425")}</Button>
         <Button
           variant="outline"
           size="sm"
@@ -3739,8 +3673,7 @@ function ProviderVaultCard({
           disabled={pending || config.status === "disabled"}
         >
           <Ban className="h-3.5 w-3.5 mr-1" />
-          Disable
-        </Button>
+          {l10n("local.disable_b7e3e4aa")}</Button>
         <Button
           variant="outline"
           size="sm"
@@ -3749,8 +3682,7 @@ function ProviderVaultCard({
           disabled={pending}
         >
           <Trash2 className="h-3.5 w-3.5 mr-1" />
-          Remove
-        </Button>
+          {l10n("local.remove_c3812fc4")}</Button>
       </div>
     </div>
   );
@@ -3777,8 +3709,7 @@ function ProviderVaultFields({
           onChange={(event) => setField("backupReminderAcknowledged", event.target.checked)}
         />
         <span>
-          I understand backup and restore require both the database metadata and the local encrypted master key file.
-        </span>
+          {l10n("local.i_understand_backup_and_restore_require_both_b8017a2d")}</span>
       </label>
     );
   }
@@ -3786,12 +3717,12 @@ function ProviderVaultFields({
   if (form.provider === "aws_secrets_manager") {
     return (
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField label="AWS region" value={form.region} onChange={(value) => setField("region", value)} placeholder="us-east-1" required />
-        <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
-        <TextField label="Secret name prefix" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
-        <TextField label="KMS key id" value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/paperclip-secrets" />
-        <TextField label="Owner tag" value={form.ownerTag} onChange={(value) => setField("ownerTag", value)} placeholder="platform" />
-        <TextField label="Environment tag" value={form.environmentTag} onChange={(value) => setField("environmentTag", value)} placeholder="prod" />
+        <TextField label={l10n("local.aws_region_295e09c8")} value={form.region} onChange={(value) => setField("region", value)} placeholder="us-east-1" required />
+        <TextField label={l10n("local.namespace_c4e4e7ab")} value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder={l10n("local.production_ab8e18ef")} />
+        <TextField label={l10n("local.secret_name_prefix_128f9dc3")} value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
+        <TextField label={l10n("local.kms_key_id_0670e40a")} value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/paperclip-secrets" />
+        <TextField label={l10n("local.owner_tag_57998397")} value={form.ownerTag} onChange={(value) => setField("ownerTag", value)} placeholder={l10n("local.platform_d294fcce")} />
+        <TextField label={l10n("local.environment_tag_a2f25655")} value={form.environmentTag} onChange={(value) => setField("environmentTag", value)} placeholder={l10n("local.prod_6754af96")} />
       </div>
     );
   }
@@ -3799,20 +3730,20 @@ function ProviderVaultFields({
   if (form.provider === "gcp_secret_manager") {
     return (
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField label="Project id" value={form.projectId} onChange={(value) => setField("projectId", value)} placeholder="paperclip-prod" />
-        <TextField label="Location" value={form.location} onChange={(value) => setField("location", value)} placeholder="global" />
-        <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
-        <TextField label="Secret name prefix" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
+        <TextField label={l10n("local.project_id_ab8e81d7")} value={form.projectId} onChange={(value) => setField("projectId", value)} placeholder="paperclip-prod" />
+        <TextField label={l10n("local.location_15b61974")} value={form.location} onChange={(value) => setField("location", value)} placeholder={l10n("local.global_8001c274")} />
+        <TextField label={l10n("local.namespace_c4e4e7ab")} value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder={l10n("local.production_ab8e18ef")} />
+        <TextField label={l10n("local.secret_name_prefix_128f9dc3")} value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
       </div>
     );
   }
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <TextField label="Address" value={form.address} onChange={(value) => setField("address", value)} placeholder="https://vault.example.com" />
-      <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="admin" />
-      <TextField label="Mount path" value={form.mountPath} onChange={(value) => setField("mountPath", value)} placeholder="secret" />
-      <TextField label="Secret path prefix" value={form.secretPathPrefix} onChange={(value) => setField("secretPathPrefix", value)} placeholder="paperclip/prod" />
+      <TextField label={l10n("local.address_56ef8f20")} value={form.address} onChange={(value) => setField("address", value)} placeholder="https://vault.example.com" />
+      <TextField label={l10n("local.namespace_c4e4e7ab")} value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder={l10n("local.admin_8c6976e5")} />
+      <TextField label={l10n("local.mount_path_dfc326f2")} value={form.mountPath} onChange={(value) => setField("mountPath", value)} placeholder={l10n("local.secret_2bb80d53")} />
+      <TextField label={l10n("local.secret_path_prefix_e7033d27")} value={form.secretPathPrefix} onChange={(value) => setField("secretPathPrefix", value)} placeholder="paperclip/prod" />
     </div>
   );
 }
@@ -3839,10 +3770,9 @@ function AwsProviderVaultDiscoveryPanel({
     <div className="space-y-3 border-t border-border pt-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">AWS discovery</p>
+          <p className="text-sm font-medium">{l10n("local.aws_discovery_ba9e4009")}</p>
           <p className="text-xs text-muted-foreground">
-            Uses the current draft routing fields to inspect AWS Secrets Manager metadata. Values are not read.
-          </p>
+            {l10n("local.uses_the_current_draft_routing_fields_to_insp_85529ff3")}</p>
         </div>
         <Button
           type="button"
@@ -3857,19 +3787,17 @@ function AwsProviderVaultDiscoveryPanel({
           ) : (
             <Search className="h-3.5 w-3.5 mr-1" />
           )}
-          Find existing AWS values
-        </Button>
+          {l10n("local.find_existing_aws_values_18a80859")}</Button>
       </div>
 
       {!canDiscover ? (
-        <p className="text-xs text-muted-foreground">Enter an AWS region before discovery.</p>
+        <p className="text-xs text-muted-foreground">{l10n("local.enter_an_aws_region_before_discovery_2e8263fe")}</p>
       ) : null}
 
       {loading ? (
         <div className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Searching AWS Secrets Manager metadata
-        </div>
+          {l10n("local.searching_aws_secrets_manager_metadata_53c969d9")}</div>
       ) : null}
 
       {error ? (
@@ -3889,8 +3817,7 @@ function AwsProviderVaultDiscoveryPanel({
 
       {preview && preview.candidates.length === 0 && !loading ? (
         <div className="rounded-md border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-          No AWS vault metadata candidates found. Manual entry is still available.
-        </div>
+          {l10n("local.no_aws_vault_metadata_candidates_found_manual_8f862427")}</div>
       ) : null}
 
       {preview && preview.candidates.length > 0 ? (
@@ -3898,8 +3825,8 @@ function AwsProviderVaultDiscoveryPanel({
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Database className="h-3.5 w-3.5" />
             <span>
-              {preview.candidates.length} candidate{preview.candidates.length === 1 ? "" : "s"} from{" "}
-              {preview.sampledSecretCount} sampled secret{preview.sampledSecretCount === 1 ? "" : "s"}
+              {preview.candidates.length} {l10n("local.candidate_dda18a0e")}{preview.candidates.length === 1 ? "" : englishPluralSuffix("s")} {l10n("local.from_75857a45")}{" "}
+              {preview.sampledSecretCount} {l10n("local.sampled_secret_a1159360")}{preview.sampledSecretCount === 1 ? "" : englishPluralSuffix("s")}
             </span>
           </div>
           <div className="space-y-2" data-testid="aws-vault-discovery-candidates">
@@ -3925,7 +3852,7 @@ function CopyDetailsButton({ text }: { text: string }) {
   const { copied, failed, copy } = useCopyAction();
   return (
     <Button type="button" variant="ghost" size="sm" onClick={() => void copy(text)}>
-      {copied ? "Copied" : failed ? "Copy failed" : "Copy"}
+      {copied ? l10n("local.copied_8d525e5f") : failed ? l10n("local.copy_failed_5b50e7a6") : l10n("local.copy_e21f935f")}
     </Button>
   );
 }
@@ -3966,42 +3893,42 @@ function AwsProviderVaultDiscoveryError({
         <div className="min-w-0 flex-1 space-y-2">
           <div>
             <p className="font-medium">
-              {isAccessDenied ? "AWS discovery needs ListSecrets permission" : "AWS discovery failed"}
+              {isAccessDenied ? l10n("local.aws_discovery_needs_listsecrets_permission_ec5d8e67") : l10n("local.aws_discovery_failed_f232b288")}
             </p>
             <p className="mt-1 leading-relaxed text-destructive/85">
               {isAccessDenied
                 ? details?.actionableMessage ??
-                  "Discovery needs secretsmanager:ListSecrets in the selected region for the Paperclip server runtime/provider credential path."
+                  l10n("local.discovery_needs_secretsmanager_listsecrets_in_1af61d2c")
                 : message}
             </p>
           </div>
           {isAccessDenied ? (
             <p className="leading-relaxed text-destructive/85">
               {details?.safeAlternative ??
-                "If you already know the exact AWS Secrets Manager ARN, paste/link that ARN instead of using discovery. Exact-resource DescribeSecret and runtime read permissions are still required."}
+                l10n("local.if_you_already_know_the_exact_aws_secrets_man_3ca524f2")}
             </p>
           ) : null}
           <dl className="grid gap-1 text-destructive/80 sm:grid-cols-2">
             <div>
-              <dt className="font-medium">Region</dt>
+              <dt className="font-medium">{l10n("local.region_d3a008ef")}</dt>
               <dd>{region}</dd>
             </div>
             <div>
-              <dt className="font-medium">Operation</dt>
+              <dt className="font-medium">{l10n("local.operation_0f044feb")}</dt>
               <dd>{details?.operation ?? "secret_provider_config.discovery.preview"}</dd>
             </div>
             <div>
-              <dt className="font-medium">Provider</dt>
+              <dt className="font-medium">{l10n("local.provider_472590ae")}</dt>
               <dd>{details?.provider ?? "aws_secrets_manager"}</dd>
             </div>
             <div>
-              <dt className="font-medium">Vault context</dt>
+              <dt className="font-medium">{l10n("local.vault_context_890eec9a")}</dt>
               <dd>{details?.providerVaultContext ?? "draft_config"}</dd>
             </div>
           </dl>
           <div className="rounded-md border border-destructive/20 bg-background/70 p-2 text-foreground">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="font-medium text-muted-foreground">Safe request/error details</span>
+              <span className="font-medium text-muted-foreground">{l10n("local.safe_request_error_details_8176cb26")}</span>
               <CopyDetailsButton text={detailsText} />
             </div>
             <pre className="max-h-36 overflow-auto whitespace-pre-wrap break-words font-mono text-(length:--text-micro) leading-relaxed">
@@ -4061,7 +3988,7 @@ function SecretCreateError({
         <div className="min-w-0 flex-1 space-y-2">
           <div>
             <p className="font-medium">
-              {isAccessDenied ? "AWS secret creation needs CreateSecret permission" : "AWS secret creation failed"}
+              {isAccessDenied ? l10n("local.aws_secret_creation_needs_createsecret_permis_2ecbc7cb") : l10n("local.aws_secret_creation_failed_cad1069c")}
             </p>
             <p className="mt-1 leading-relaxed text-destructive/85">
               {details?.actionableMessage ?? message}
@@ -4073,28 +4000,28 @@ function SecretCreateError({
           <dl className="grid gap-1 text-destructive/80 sm:grid-cols-2">
             {details?.requiredCapability ? (
               <div>
-                <dt className="font-medium">Required IAM capability</dt>
+                <dt className="font-medium">{l10n("local.required_iam_capability_66baaa87")}</dt>
                 <dd className="font-mono">{details.requiredCapability}</dd>
               </div>
             ) : null}
             {details?.region ? (
               <div>
-                <dt className="font-medium">Region</dt>
+                <dt className="font-medium">{l10n("local.region_d3a008ef")}</dt>
                 <dd>{details.region}</dd>
               </div>
             ) : null}
             <div>
-              <dt className="font-medium">Provider vault</dt>
-              <dd className="break-all">{details?.providerConfigId ?? providerConfigId ?? "Deployment default"}</dd>
+              <dt className="font-medium">{l10n("local.provider_vault_8bb8c5d1")}</dt>
+              <dd className="break-all">{details?.providerConfigId ?? providerConfigId ?? l10n("local.deployment_default_d9bdc394")}</dd>
             </div>
             <div>
-              <dt className="font-medium">Operation</dt>
+              <dt className="font-medium">{l10n("local.operation_0f044feb")}</dt>
               <dd>{details?.operation ?? "secret.create"}</dd>
             </div>
           </dl>
           <div className="rounded-md border border-destructive/20 bg-background/70 p-2 text-foreground">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="font-medium text-muted-foreground">Safe request/error details</span>
+              <span className="font-medium text-muted-foreground">{l10n("local.safe_request_error_details_8176cb26")}</span>
               <CopyDetailsButton text={detailsText} />
             </div>
             <pre className="max-h-36 overflow-auto whitespace-pre-wrap break-words font-mono text-(length:--text-micro) leading-relaxed">
@@ -4127,11 +4054,11 @@ function AwsProviderVaultDiscoveryCandidateRow({
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-medium leading-snug">{candidate.displayName}</p>
             <span className="text-xs text-muted-foreground">
-              {candidate.sampleCount} sample{candidate.sampleCount === 1 ? "" : "s"}
+              {candidate.sampleCount} {l10n("local.sample_af2bdbe1")}{candidate.sampleCount === 1 ? "" : englishPluralSuffix("s")}
             </span>
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {fieldSummary.length > 0 ? fieldSummary.join(" / ") : "No stable namespace or prefix detected"}
+            {fieldSummary.length > 0 ? fieldSummary.join(" / ") : l10n("local.no_stable_namespace_or_prefix_detected_0cc8976f")}
           </p>
           {candidate.samples[0] ? (
             <p className="mt-1 truncate font-mono text-(length:--text-micro) text-muted-foreground">
@@ -4140,8 +4067,7 @@ function AwsProviderVaultDiscoveryCandidateRow({
           ) : null}
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={onApply}>
-          Use values
-        </Button>
+          {l10n("local.use_values_fafddc18")}</Button>
       </div>
       {candidate.warnings.length > 0 ? (
         <div className="mt-2 space-y-1 text-xs text-amber-700 dark:text-amber-300">
@@ -4175,7 +4101,7 @@ function TextField({
     <div>
       <label className="text-xs font-medium" htmlFor={id}>
         {label}
-        {required ? null : <span className="text-muted-foreground/70"> (optional)</span>}
+        {required ? null : <span className="text-muted-foreground/70"> {l10n("local._optional_0059798b")}</span>}
       </label>
       <Input id={id} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
     </div>
@@ -4197,19 +4123,19 @@ function CoverageInline({
     staleTime: 30_000,
   });
   const summary = coverageQuery.data;
-  if (coverageQuery.isPending) return <span className="text-muted-foreground">Loading…</span>;
-  if (coverageQuery.isError) return <span className="text-destructive">Coverage unavailable</span>;
+  if (coverageQuery.isPending) return <span className="text-muted-foreground">{l10n("local.loading_ba3bbbe1")}</span>;
+  if (coverageQuery.isError) return <span className="text-destructive">{l10n("local.coverage_unavailable_0a02c301")}</span>;
   return (
     <span className="inline-flex min-w-0 items-center gap-1 text-muted-foreground">
       <Users className="h-3 w-3" />
       <span className="truncate">
         {compact && summary
-          ? `${summary.configuredCount}/${summary.configuredCount + summary.missingCount + summary.inactiveCount} set`
+          ? l10n("local.value_value_set_189bb932", {v0: (summary.configuredCount), v1: (summary.configuredCount + summary.missingCount + summary.inactiveCount)})
           : coverageSummaryLabel(summary)}
       </span>
       {summary && summary.missingCount > 0 ? (
         <span className="shrink-0 text-amber-600 dark:text-amber-400">
-          · {compact ? `${summary.missingCount} miss` : `${summary.missingCount} missing`}
+          · {compact ? l10n("local.value_miss_2f608396", {v0: (summary.missingCount)}) : l10n("local.value_missing_be33af13", {v0: (summary.missingCount)})}
         </span>
       ) : null}
     </span>
@@ -4227,32 +4153,31 @@ function UserSecretDetailsTab({
 }) {
   return (
     <dl className="divide-y divide-border/60 text-xs">
-      <DetailRow label="Description">
+      <DetailRow label={l10n("local.description_526e0087")}>
         <span>{definition.description ?? <span className="text-muted-foreground">—</span>}</span>
       </DetailRow>
-      <DetailRow label="Provided by">Each user</DetailRow>
-      <DetailRow label="Key">
+      <DetailRow label={l10n("local.provided_by_b8177963")}>{l10n("local.each_user_6630aadc")}</DetailRow>
+      <DetailRow label={l10n("local.key_99a52df3")}>
         <code>{definition.key}</code>
       </DetailRow>
-      <DetailRow label="Status"><StatusBadge status={definition.status} /></DetailRow>
-      <DetailRow label="Coverage">
+      <DetailRow label={l10n("local.status_920e413c")}><StatusBadge status={definition.status} /></DetailRow>
+      <DetailRow label={l10n("local.coverage_523487a5")}>
         <button
           type="button"
           className="inline-flex min-w-0 items-center gap-1 text-left text-primary hover:underline"
           onClick={onViewCoverage}
         >
           <CoverageInline companyId={companyId} definitionId={definition.id} />
-          <span className="shrink-0 text-muted-foreground">· View in Coverage</span>
+          <span className="shrink-0 text-muted-foreground">{l10n("local._view_in_coverage_14f0d9c3")}</span>
         </button>
       </DetailRow>
-      <DetailRow label="Created">{formatRelative(definition.createdAt)}</DetailRow>
-      <DetailRow label="Updated">{formatRelative(definition.updatedAt)}</DetailRow>
-      <DetailRow label="Usage guidance">
+      <DetailRow label={l10n("local.created_d70b9e24")}>{formatRelative(definition.createdAt)}</DetailRow>
+      <DetailRow label={l10n("local.updated_3a5ecca1")}>{formatRelative(definition.updatedAt)}</DetailRow>
+      <DetailRow label={l10n("local.usage_guidance_0c1d12df")}>
         {definition.usageGuidance ?? <span className="text-muted-foreground">—</span>}
       </DetailRow>
       <div className="mt-3 rounded-md border border-violet-500/30 bg-violet-500/5 p-2 text-(length:--text-micro) text-violet-800 dark:text-violet-200">
-        No value is stored on this admin row. Each member manages their own value under My secrets.
-      </div>
+        {l10n("local.no_value_is_stored_on_this_admin_row_each_mem_c4b58438")}</div>
     </dl>
   );
 }
@@ -4270,10 +4195,10 @@ function UserSecretCoverageTab({
     staleTime: 30_000,
   });
   if (coverageQuery.isPending) {
-    return <div className="py-6 text-center text-xs text-muted-foreground">Loading…</div>;
+    return <div className="py-6 text-center text-xs text-muted-foreground">{l10n("local.loading_ba3bbbe1")}</div>;
   }
   if (coverageQuery.isError) {
-    return <div className="py-6 text-center text-xs text-destructive">Coverage unavailable.</div>;
+    return <div className="py-6 text-center text-xs text-destructive">{l10n("local.coverage_unavailable_5110f237")}</div>;
   }
   const summary: UserSecretCoverageSummary = coverageQuery.data;
   const total = summary.configuredCount + summary.missingCount + summary.inactiveCount;
@@ -4288,24 +4213,23 @@ function UserSecretCoverageTab({
           <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
             {summary.configuredCount}
           </div>
-          <div className="text-muted-foreground">Set</div>
+          <div className="text-muted-foreground">{l10n("local.set_b6f6f3ad")}</div>
         </div>
         <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
           <div className="text-lg font-semibold text-amber-700 dark:text-amber-300">
             {summary.missingCount}
           </div>
-          <div className="text-muted-foreground">Missing</div>
+          <div className="text-muted-foreground">{l10n("local.missing_6be36ca4")}</div>
         </div>
         <div className="rounded-md border border-border bg-muted/30 p-3">
           <div className="text-lg font-semibold text-muted-foreground">
             {summary.inactiveCount}
           </div>
-          <div className="text-muted-foreground">Inactive</div>
+          <div className="text-muted-foreground">{l10n("local.inactive_ac7c949f")}</div>
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        Coverage is counts only across {total} member{total === 1 ? "" : "s"}. Secret values are never shown here.
-      </p>
+        {l10n("local.coverage_is_counts_only_across_4de80b82")}{" "}{total} {l10n("local.member_e31ab643")}{total === 1 ? "" : englishPluralSuffix("s")}{l10n("local._secret_values_are_never_shown_here_eb8f23f6")}</p>
     </div>
   );
 }
@@ -4314,13 +4238,13 @@ function UserSecretUsageTab({ definition }: { definition: UserSecretDefinition }
   return (
     <div className="space-y-3 text-xs text-muted-foreground">
       <div className="rounded-md border border-border bg-muted/20 p-3">
-        Bind runtime environment variables to this user-provided secret by choosing{" "}
-        <span className="font-medium text-foreground">User secret</span> and selecting{" "}
+        {l10n("local.bind_runtime_environment_variables_to_this_us_f4e4d412")}{" "}
+        <span className="font-medium text-foreground">{l10n("local.user_secret_62c03b86")}</span> {l10n("local.and_selecting_41f87f67")}{" "}
         <code className="font-mono">{definition.key}</code>.
       </div>
       {definition.usageGuidance ? (
         <div>
-          <p className="mb-1 text-(length:--text-micro) uppercase tracking-wide text-muted-foreground">Member guidance</p>
+          <p className="mb-1 text-(length:--text-micro) uppercase tracking-wide text-muted-foreground">{l10n("local.member_guidance_ca36f647")}</p>
           <p className="text-foreground">{definition.usageGuidance}</p>
         </div>
       ) : null}
@@ -4331,8 +4255,7 @@ function UserSecretUsageTab({ definition }: { definition: UserSecretDefinition }
 function UserSecretAccessEventsTab() {
   return (
     <div className="py-6 text-center text-xs text-muted-foreground">
-      Access events are recorded on each member&apos;s stored value when runtime resolution occurs.
-    </div>
+      {l10n("local.access_events_are_recorded_on_each_member_apo_c0d07254")}</div>
   );
 }
 
@@ -4467,7 +4390,7 @@ function AgentAccessSection({
       setEnvKeyDirty(false);
       setAccessError(null);
       invalidateAfterChange(variables.agentId);
-      pushToast({ title: "Access granted", body: `${agent.name} now receives ${variables.key}`, tone: "success" });
+      pushToast({ title: l10n("local.access_granted_3a6a2dbe"), body: l10n("local.value_now_receives_value_6eb26e9e", {v0: (agent.name), v1: (variables.key)}), tone: "success" });
     },
     onError: (error) => setAccessError(readableErrorMessage(error)),
   });
@@ -4491,7 +4414,7 @@ function AgentAccessSection({
     onSuccess: (agent, variables) => {
       setAccessError(null);
       invalidateAfterChange(variables.agentId);
-      pushToast({ title: "Access removed", body: agent.name, tone: "info" });
+      pushToast({ title: l10n("local.access_removed_dcdce51f"), body: agent.name, tone: "info" });
     },
     onError: (error) => setAccessError(readableErrorMessage(error)),
   });
@@ -4503,19 +4426,18 @@ function AgentAccessSection({
     <section className="rounded-md border border-border bg-muted/20 p-3">
       <div className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-muted-foreground" />
-        <h3 className="text-xs font-medium text-foreground">Agent access</h3>
+        <h3 className="text-xs font-medium text-foreground">{l10n("local.agent_access_f504d02b")}</h3>
       </div>
       <p className="mt-0.5 text-(length:--text-micro) text-muted-foreground">
         {reference.kind === "company"
-          ? "Add here to inject this secret as an environment variable at run start. API-access grants (fetched on demand, no env var) are managed from each agent's Secret access settings and shown below."
-          : "These agents resolve the responsible user's value as an environment variable at run start."}
+          ? l10n("local.add_here_to_inject_this_secret_as_an_environm_1bb8bc80")
+          : l10n("local.these_agents_resolve_the_responsible_user_s_v_2c896d18")}
       </p>
       {agentsQuery.isPending ? (
-        <p className="mt-2 text-(length:--text-micro) text-muted-foreground">Loading agents…</p>
+        <p className="mt-2 text-(length:--text-micro) text-muted-foreground">{l10n("local.loading_agents_ae0c1414")}</p>
       ) : agentsQuery.isError ? (
         <p className="mt-2 text-(length:--text-micro) text-muted-foreground">
-          Agent list unavailable. Manage access from each agent&apos;s configuration instead.
-        </p>
+          {l10n("local.agent_list_unavailable_manage_access_from_eac_5d235d0d")}</p>
       ) : (
         <>
           {agentAccess.length > 0 ? (
@@ -4532,7 +4454,7 @@ function AgentAccessSection({
                         variant="outline"
                         className="h-5 px-1.5 text-(length:--text-nano) font-normal border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300"
                       >
-                        Env · {envKeys.join(", ")}
+                        {l10n("local.env_acf5def3")}{" "}{envKeys.join(", ")}
                       </Badge>
                     ) : null}
                     {apiAliases.length > 0 ? (
@@ -4549,7 +4471,7 @@ function AgentAccessSection({
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 shrink-0 p-0 text-muted-foreground"
-                    aria-label={`Remove access for ${agent.name}`}
+                    aria-label={l10n("local.remove_access_for_value_29ca06b1", {v0: (agent.name)})}
                     disabled={revokeMutation.isPending}
                     onClick={() => revokeMutation.mutate({ agentId: agent.id })}
                   >
@@ -4559,7 +4481,7 @@ function AgentAccessSection({
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-(length:--text-micro) text-muted-foreground">No agents have access yet.</p>
+            <p className="mt-2 text-(length:--text-micro) text-muted-foreground">{l10n("local.no_agents_have_access_yet_659feb15")}</p>
           )}
           <div className="mt-2 flex items-end gap-2">
             <div className="min-w-0 flex-1">
@@ -4567,15 +4489,14 @@ function AgentAccessSection({
                 className="text-(length:--text-micro) font-medium text-muted-foreground"
                 htmlFor="agent-access-agent"
               >
-                Agent
-              </label>
+                {l10n("local.agent_11b39c93")}</label>
               <AgentSelect
                 id="agent-access-agent"
                 agents={grantableAgents}
                 value={selectedAgentId}
                 onChange={setSelectedAgentId}
                 triggerClassName="h-8 text-xs"
-                emptyMessage="No agents available."
+                emptyMessage={l10n("local.no_agents_available_c4763d2f")}
               />
             </div>
             <div className="min-w-0 flex-1">
@@ -4583,8 +4504,7 @@ function AgentAccessSection({
                 className="text-(length:--text-micro) font-medium text-muted-foreground"
                 htmlFor="agent-access-env-key"
               >
-                Env var
-              </label>
+                {l10n("local.env_var_a806a90c")}</label>
               <Input
                 id="agent-access-env-key"
                 value={effectiveEnvKey}
@@ -4608,13 +4528,11 @@ function AgentAccessSection({
               ) : (
                 <Plus className="mr-1 h-3.5 w-3.5" />
               )}
-              Add
-            </Button>
+              {l10n("local.add_9fd728c6")}</Button>
           </div>
           {effectiveEnvKey && !envKeyValid ? (
             <p className="mt-1 text-(length:--text-micro) text-destructive">
-              Env keys use letters, digits, and underscores, and cannot start with a digit.
-            </p>
+              {l10n("local.env_keys_use_letters_digits_and_underscores_a_ba7b3c9d")}</p>
           ) : null}
           {accessError ? (
             <p className="mt-1 text-(length:--text-micro) text-destructive">{accessError}</p>
@@ -4637,40 +4555,40 @@ function SecretDetailsTab({
   onViewUsage: () => void;
 }) {
   const bindingLabel = (secret.referenceCount ?? 0) === 1
-    ? "1 binding"
-    : `${secret.referenceCount ?? 0} bindings`;
+    ? l10n("local.1_binding_38a20672")
+    : l10n("local.value_bindings_f7bab1e7", {v0: (secret.referenceCount ?? 0)});
 
   return (
     <dl className="divide-y divide-border/60 text-xs">
-      <DetailRow label="Description">
+      <DetailRow label={l10n("local.description_526e0087")}>
         <span>{secret.description ?? <span className="text-muted-foreground">—</span>}</span>
       </DetailRow>
-      <DetailRow label="Provided by">Organization</DetailRow>
-      <DetailRow label="Custody">{modeLabel(secret.managedMode)}</DetailRow>
-      <DetailRow label="Provider">{providerLabel(providers, secret.provider)}</DetailRow>
-      <DetailRow label="Provider vault">{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
-      <DetailRow label="External ARN">
+      <DetailRow label={l10n("local.provided_by_b8177963")}>{l10n("local.organization_d764d425")}</DetailRow>
+      <DetailRow label={l10n("local.custody_48957631")}>{modeLabel(secret.managedMode)}</DetailRow>
+      <DetailRow label={l10n("local.provider_472590ae")}>{providerLabel(providers, secret.provider)}</DetailRow>
+      <DetailRow label={l10n("local.provider_vault_8bb8c5d1")}>{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
+      <DetailRow label={l10n("local.external_arn_92d6923b")}>
         {secret.externalRef ? (
           <span className="break-all font-mono">{secret.externalRef}</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </DetailRow>
-      <DetailRow label="Latest version">v{secret.latestVersion}</DetailRow>
-      <DetailRow label="References">
+      <DetailRow label={l10n("local.latest_version_ef7105b6")}>v{secret.latestVersion}</DetailRow>
+      <DetailRow label={l10n("local.references_69824d3b")}>
         <button
           type="button"
           className="inline-flex items-center gap-1 text-left text-primary hover:underline"
           onClick={onViewUsage}
         >
           {bindingLabel}
-          <span className="text-muted-foreground">· View in Usage</span>
+          <span className="text-muted-foreground">{l10n("local._view_in_usage_0f8e135b")}</span>
         </button>
       </DetailRow>
-      <DetailRow label="Created">{formatRelative(secret.createdAt)}</DetailRow>
-      <DetailRow label="Updated">{formatRelative(secret.updatedAt)}</DetailRow>
-      <DetailRow label="Last rotated">{formatRelative(secret.lastRotatedAt)}</DetailRow>
-      <DetailRow label="Last resolved">{formatRelative(secret.lastResolvedAt)}</DetailRow>
+      <DetailRow label={l10n("local.created_d70b9e24")}>{formatRelative(secret.createdAt)}</DetailRow>
+      <DetailRow label={l10n("local.updated_3a5ecca1")}>{formatRelative(secret.updatedAt)}</DetailRow>
+      <DetailRow label={l10n("local.last_rotated_3b642793")}>{formatRelative(secret.lastRotatedAt)}</DetailRow>
+      <DetailRow label={l10n("local.last_resolved_5cd48b55")}>{formatRelative(secret.lastResolvedAt)}</DetailRow>
       <div className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 p-2 text-(length:--text-micro) text-amber-700 dark:text-amber-300">
         {modeDescription(
           secret.managedMode,
@@ -4679,8 +4597,7 @@ function SecretDetailsTab({
               providers.find((provider) => provider.id === secret.provider)?.supportsExternalValueWrites,
           ),
         )}{" "}
-        Paperclip never re-displays stored values.
-      </div>
+        {l10n("local.paperclip_never_re_displays_stored_values_eef9e851")}</div>
     </dl>
   );
 }
@@ -4696,13 +4613,12 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 export function SecretUsageTab({ loading, bindings }: { loading: boolean; bindings: CompanySecretUsageBinding[] }) {
   if (loading) {
-    return <div className="py-6 text-center text-xs text-muted-foreground">Loading…</div>;
+    return <div className="py-6 text-center text-xs text-muted-foreground">{l10n("local.loading_ba3bbbe1")}</div>;
   }
   if (bindings.length === 0) {
     return (
       <div className="py-6 text-center text-xs text-muted-foreground">
-        No active bindings. Add this secret in agent, project, environment, or plugin config to start using it.
-      </div>
+        {l10n("local.no_active_bindings_add_this_secret_in_agent_p_e8227064")}</div>
     );
   }
   return (
@@ -4752,11 +4668,11 @@ export function SecretUsageTab({ loading, bindings }: { loading: boolean; bindin
             </div>
             <div className="text-(length:--text-micro) text-muted-foreground">
               {deliveryMode === "api" ? (
-                <>API alias <span className="font-mono">{aliasFromConfigPath(binding.configPath)}</span></>
+                <>{l10n("local.api_alias_89ded86b")}{" "}<span className="font-mono">{aliasFromConfigPath(binding.configPath)}</span></>
               ) : (
                 <span className="font-mono">{binding.configPath}</span>
               )}{" "}
-              {binding.required ? "· required" : "· optional"}
+              {binding.required ? l10n("local._required_cdc2689f") : l10n("local._optional_304d9877")}
             </div>
           </div>
         );
@@ -4794,13 +4710,12 @@ export function SecretEventsTab({
   };
 
   if (loading) {
-    return <div className="py-6 text-center text-xs text-muted-foreground">Loading…</div>;
+    return <div className="py-6 text-center text-xs text-muted-foreground">{l10n("local.loading_ba3bbbe1")}</div>;
   }
   if (events.length === 0) {
     return (
       <div className="py-6 text-center text-xs text-muted-foreground">
-        No access events recorded yet. Each runtime resolution writes a redacted entry here.
-      </div>
+        {l10n("local.no_access_events_recorded_yet_each_runtime_re_1c5156d1")}</div>
     );
   }
   return (
@@ -4816,8 +4731,7 @@ export function SecretEventsTab({
                   variant="outline"
                   className="border-violet-500/30 bg-violet-500/10 text-(length:--text-nano) text-violet-700 dark:text-violet-300"
                 >
-                  User secret
-                </Badge>
+                  {l10n("local.user_secret_62c03b86")}</Badge>
               ) : null}
             </span>
             <span className="text-(length:--text-micro) text-muted-foreground">{formatRelative(event.createdAt)}</span>
@@ -4827,13 +4741,13 @@ export function SecretEventsTab({
           </div>
           {event.responsibleUserId ? (
             <div className="text-(length:--text-micro) text-muted-foreground">
-              Responsible user: <span className="text-foreground">{userLabel(event.responsibleUserId)}</span>
+              {l10n("local.responsible_user_6fe193d1")}{" "}<span className="text-foreground">{userLabel(event.responsibleUserId)}</span>
             </div>
           ) : null}
           {event.credentialOwnerUserId &&
           event.credentialOwnerUserId !== event.responsibleUserId ? (
             <div className="text-(length:--text-micro) text-muted-foreground">
-              Credential owner: <span className="text-foreground">{userLabel(event.credentialOwnerUserId)}</span>
+              {l10n("local.credential_owner_e1fc57c9")}{" "}<span className="text-foreground">{userLabel(event.credentialOwnerUserId)}</span>
             </div>
           ) : null}
           {event.errorCode ? (

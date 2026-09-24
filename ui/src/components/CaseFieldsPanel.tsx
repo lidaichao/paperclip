@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -110,8 +111,7 @@ function CopyableCompactValue({
           className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 inline-flex -translate-x-1/2 items-center gap-1 rounded-md bg-foreground px-2 py-1 text-xs whitespace-nowrap text-background"
         >
           <Check className="h-3 w-3 shrink-0" />
-          Copied
-        </span>
+          {l10n("local.copied_8d525e5f")}</span>
       ) : null}
     </span>
   );
@@ -238,12 +238,12 @@ export function CaseFieldsPanel({ fields }: { fields: Record<string, unknown> })
   return (
     <section className="space-y-2">
       <div className="flex items-baseline gap-2">
-        <h2 className="text-sm font-semibold">Fields</h2>
-        <span className="text-xs text-muted-foreground">from the skill&apos;s schema — rendered generically</span>
+        <h2 className="text-sm font-semibold">{l10n("local.fields_616f48c1")}</h2>
+        <span className="text-xs text-muted-foreground">{l10n("local.from_the_skill_apos_s_schema_rendered_generic_bb90639b")}</span>
       </div>
       <Card className="gap-0 py-0">
         {entries.length === 0 ? (
-          <div className="px-4 py-3 text-sm text-muted-foreground">No fields set</div>
+          <div className="px-4 py-3 text-sm text-muted-foreground">{l10n("local.no_fields_set_602596ab")}</div>
         ) : (
           <dl className="divide-y divide-border">
             {entries.map(([key, value]) => (

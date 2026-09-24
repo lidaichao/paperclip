@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { IssueCommentPresentation } from "@paperclipai/shared";
 import type { SystemNoticeTone } from "../components/SystemNotice";
 
@@ -15,7 +16,7 @@ export interface HumanizedSystemNotice {
   detail?: string;
 }
 
-const FALLBACK_TITLE = "System update";
+const FALLBACK_TITLE = l10n("local.system_update_dcfe3eed");
 const DETAIL_MAX_CHARS = 80;
 
 /** Failure code the recovery comments embed as "Latest retry failure: `code`". */
@@ -58,19 +59,19 @@ export function humanizeSystemNotice(input: {
 
   if (code === "claude_auth_required") {
     return {
-      title: "Task paused — Claude needs re-authentication",
+      title: l10n("local.task_paused_claude_needs_re_authentication_2db31a30"),
       tone: presentationTone ?? "warning",
     };
   }
   if (code === "configuration_incomplete" || body.includes("secret/env bindings are missing")) {
     return {
-      title: "Task paused — a secret/config binding is missing",
+      title: l10n("local.task_paused_a_secret_config_binding_is_missin_6d0bd697"),
       tone: presentationTone ?? "warning",
     };
   }
   if (code === "workspace_validation_failed" || body.includes("workspace failed validation")) {
     return {
-      title: "Task paused — workspace problem",
+      title: l10n("local.task_paused_workspace_problem_d227af6f"),
       tone: presentationTone ?? "warning",
     };
   }
@@ -78,8 +79,8 @@ export function humanizeSystemNotice(input: {
     const owner = recoveryOwnerName(body);
     return {
       title: owner
-        ? `Task paused — waiting on ${owner}`
-        : "Task paused — waiting on a recovery owner",
+        ? l10n("local.task_paused_waiting_on_value_70773f89", {v0: (owner)})
+        : l10n("local.task_paused_waiting_on_a_recovery_owner_4ab9448b"),
       tone: presentationTone ?? "warning",
     };
   }

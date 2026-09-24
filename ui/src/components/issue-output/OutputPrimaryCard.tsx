@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { Download, ExternalLink, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +45,7 @@ export function OutputPrimaryCard({ item, creatorName, onMediaClick }: OutputPri
           <button
             type="button"
             className="block aspect-video w-full overflow-hidden bg-black"
-            aria-label={`Browse ${filename} in gallery`}
+            aria-label={l10n("local.browse_value_in_gallery_a38b45b3", {v0: (filename)})}
             onClick={() => onMediaClick(item)}
           >
             <img src={meta.contentPath} alt={filename} className="h-full w-full object-contain" />
@@ -55,7 +56,7 @@ export function OutputPrimaryCard({ item, creatorName, onMediaClick }: OutputPri
             target="_blank"
             rel="noreferrer"
             className="block aspect-video w-full overflow-hidden bg-black"
-            aria-label={`Open ${filename}`}
+            aria-label={l10n("local.open_value_afaef5c3", {v0: (filename)})}
           >
             <img src={meta.contentPath} alt={filename} className="h-full w-full object-contain" />
           </a>
@@ -72,14 +73,12 @@ export function OutputPrimaryCard({ item, creatorName, onMediaClick }: OutputPri
           <p className="break-words text-sm font-semibold text-foreground">{filename}</p>
           {item.degraded ? (
             <p className="mt-0.5 text-(length:--text-micro) text-destructive">
-              Output metadata is unavailable — this file can’t be played or downloaded here.
-            </p>
+              {l10n("local.output_metadata_is_unavailable_this_file_can_68902975")}</p>
           ) : (
             <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-(length:--text-micro) text-muted-foreground">
               {item.isPrimary && (
                 <Badge variant="secondary" className="px-1.5 py-0 text-(length:--text-nano)">
-                  Primary
-                </Badge>
+                  {l10n("local.primary_efe10c80")}</Badge>
               )}
               {meta && <span>{meta.contentType}</span>}
               {meta && <span aria-hidden="true">·</span>}
@@ -102,22 +101,19 @@ export function OutputPrimaryCard({ item, creatorName, onMediaClick }: OutputPri
                 onClick={() => onMediaClick(item)}
               >
                 <Maximize2 className="h-4 w-4" />
-                Browse
-              </Button>
+                {l10n("local.browse_3227aa96")}</Button>
             ) : null}
             {!isMedia || !onMediaClick || isVideo ? (
               <Button asChild variant="outline" size="sm" className="max-md:flex-1">
                 <a href={meta.openPath} target="_blank" rel="noreferrer">
                   <ExternalLink className="h-4 w-4" />
-                  Open
-                </a>
+                  {l10n("local.open_ed077f3d")}</a>
               </Button>
             ) : null}
             <Button asChild size="sm" className="max-md:flex-1">
-              <a href={meta.downloadPath} aria-label={`Download ${filename}`}>
+              <a href={meta.downloadPath} aria-label={l10n("local.download_value_ac3a0cac", {v0: (filename)})}>
                 <Download className="h-4 w-4" />
-                Download
-              </a>
+                {l10n("local.download_d6eafe82")}</a>
             </Button>
           </div>
         ) : null}

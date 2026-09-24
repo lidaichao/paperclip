@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "catalogEntries": 9784,
+  "sourceFiles": 486,
+  "translatedCallSites": 13869,
+  "placeholderAndSafetyErrors": 0,
+  "missingKeys": 0,
+  "unchangedDisplayEntries": 275,
+  "note": "Source coverage requires the independent residual audit and browser checks; catalog completeness alone is not a full-interface claim."
+}

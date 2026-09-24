@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, ScrollText } from "lucide-react";
@@ -30,29 +31,29 @@ const ALL = "__all";
 
 /** Outcome chip vocabulary (spec §4C / §5): Allowed · Blocked · Asked first · Failed · Waiting. */
 const OUTCOME_META: Record<ToolAuditOutcome, { label: string; status: string }> = {
-  allowed: { label: "Allowed", status: "allowed" },
-  blocked: { label: "Blocked", status: "denied" },
-  asked_first: { label: "Asked first", status: "require-approval" },
-  waiting: { label: "Waiting", status: "deferred" },
-  failed: { label: "Failed", status: "failed" },
-  unknown: { label: "Recorded", status: "unchecked" },
+  allowed: { label: l10n("local.allowed_1bb201d1"), status: "allowed" },
+  blocked: { label: l10n("local.blocked_18f2a094"), status: "denied" },
+  asked_first: { label: l10n("local.asked_first_db928628"), status: "require-approval" },
+  waiting: { label: l10n("local.waiting_6e293a8c"), status: "deferred" },
+  failed: { label: l10n("local.failed_031a8f0f"), status: "failed" },
+  unknown: { label: l10n("local.recorded_c7175fa7"), status: "unchecked" },
 };
 
 const OUTCOME_FILTERS: { value: string; label: string }[] = [
-  { value: ALL, label: "All outcomes" },
-  { value: "allowed", label: "Allowed" },
-  { value: "blocked", label: "Blocked" },
-  { value: "asked_first", label: "Asked first" },
-  { value: "waiting", label: "Waiting" },
-  { value: "failed", label: "Failed" },
+  { value: ALL, label: l10n("local.all_outcomes_1d7f920d") },
+  { value: "allowed", label: l10n("local.allowed_1bb201d1") },
+  { value: "blocked", label: l10n("local.blocked_18f2a094") },
+  { value: "asked_first", label: l10n("local.asked_first_db928628") },
+  { value: "waiting", label: l10n("local.waiting_6e293a8c") },
+  { value: "failed", label: l10n("local.failed_031a8f0f") },
 ];
 
 const WINDOW_FILTERS: { value: ToolAuditWindow; label: string }[] = [
-  { value: "all", label: "All time" },
-  { value: "1h", label: "Last 1 hour" },
-  { value: "24h", label: "Last 24 hours" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "30d", label: "Last 30 days" },
+  { value: "all", label: l10n("local.all_time_9755c8d7") },
+  { value: "1h", label: l10n("local.last_1_hour_3e88e241") },
+  { value: "24h", label: l10n("local.last_24_hours_5c37cf8f") },
+  { value: "7d", label: l10n("local.last_7_days_0603deca") },
+  { value: "30d", label: l10n("local.last_30_days_f8f03fb4") },
 ];
 
 function detailString(details: Record<string, unknown> | null, key: string): string | undefined {
@@ -96,23 +97,23 @@ function lifecycleSummary(event: ToolGatewayActivityEvent): string | null {
   const removed = detailNumber(event.details, "removed") ?? 0;
   switch (event.lifecycleType) {
     case "app_connected":
-      return `${who} connected ${app}`;
+      return l10n("local.value_connected_value_7f21dc36", {v0: (who), v1: (app)});
     case "app_paused":
-      return `${who} paused ${app}`;
+      return l10n("local.value_paused_value_2676da75", {v0: (who), v1: (app)});
     case "app_resumed":
-      return `${who} resumed ${app}`;
+      return l10n("local.value_resumed_value_e2c666a2", {v0: (who), v1: (app)});
     case "reconnected":
-      return `${who} reconnected ${app}`;
+      return l10n("local.value_reconnected_value_eebbeb9f", {v0: (who), v1: (app)});
     case "disconnected":
-      return `${who} disconnected ${app}`;
+      return l10n("local.value_disconnected_value_e9e1100d", {v0: (who), v1: (app)});
     case "allowlist_changed":
-      if (added > 0 && removed === 0) return `${who} added ${added} allowed ${added === 1 ? "item" : "items"} in ${app}`;
-      if (removed > 0 && added === 0) return `${who} removed ${removed} allowed ${removed === 1 ? "item" : "items"} in ${app}`;
-      return `${who} updated the allowlist for ${app}`;
+      if (added > 0 && removed === 0) return l10n("local.value_added_value_allowed_value_in_value_2283b0f7", {v0: (who), v1: (added), v2: (added === 1 ? "item" : "items"), v3: (app)});
+      if (removed > 0 && added === 0) return l10n("local.value_removed_value_allowed_value_in_value_a7d11a3a", {v0: (who), v1: (removed), v2: (removed === 1 ? "item" : "items"), v3: (app)});
+      return l10n("local.value_updated_the_allowlist_for_value_989cd241", {v0: (who), v1: (app)});
     case "actions_quarantined":
-      return `${count} new ${count === 1 ? "action needs" : "actions need"} review in ${app}`;
+      return l10n("local.value_new_value_review_in_value_b77450f7", {v0: (count), v1: (count === 1 ? "action needs" : "actions need"), v2: (app)});
     default:
-      return `${who} updated ${app}`;
+      return l10n("local.value_updated_value_1e8c0c4e", {v0: (who), v1: (app)});
   }
 }
 
@@ -216,17 +217,16 @@ function ActivityRow({
             <span className="block text-foreground">{lifecycle}</span>
           ) : isRuntimeMcpDeliveryDiagnostic ? (
             <span className="block text-foreground">
-              <span className="font-medium">{who}</span>'s run received 0 MCP servers —{" "}
+              <span className="font-medium">{who}</span>{l10n("local._s_run_received_0_mcp_servers_76fb4163")}{" "}
               <span className="font-medium">{permittedNotInstalledCount ?? permittedNotInstalledConnections.length}</span>{" "}
-              permitted {(permittedNotInstalledCount ?? permittedNotInstalledConnections.length) === 1 ? "connection" : "connections"} not installed
-            </span>
+              {l10n("local.permitted_739ffeed")}{" "}{(permittedNotInstalledCount ?? permittedNotInstalledConnections.length) === 1 ? l10n("local.connection_b38d9d16") : l10n("local.connections_1e5fac86")} {l10n("local.not_installed_e9363f76")}</span>
           ) : (
             <span className="block text-foreground">
-              <span className="font-medium">{who}</span> used <span className="font-medium">{action}</span>
+              <span className="font-medium">{who}</span> {l10n("local.used_f8391613")}{" "}<span className="font-medium">{action}</span>
               {app ? (
                 <>
                   {" "}
-                  in <span className="font-medium">{app}</span>
+                  {l10n("local.in_58296753")}{" "}<span className="font-medium">{app}</span>
                 </>
               ) : null}
             </span>
@@ -255,13 +255,11 @@ function ActivityRow({
           <div className="flex flex-wrap gap-3 text-xs">
             {issueId ? (
               <Link to={`/issues/${issueId}`} className="text-primary hover:underline">
-                View task
-              </Link>
+                {l10n("local.view_task_01444a2b")}</Link>
             ) : null}
             {runId && agentId ? (
               <Link to={`/agents/${agentId}/runs/${runId}`} className="text-primary hover:underline">
-                View run
-              </Link>
+                {l10n("local.view_run_aaf7fccc")}</Link>
             ) : null}
           </div>
 
@@ -272,32 +270,31 @@ function ActivityRow({
               className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               {detailsOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              Details
-            </button>
+              {l10n("local.details_45989de4")}</button>
             {detailsOpen ? (
               <div className="mt-2 space-y-1.5 text-xs">
-                {rawTool ? <DetailFact label="Action name" value={rawTool} mono /> : null}
-                <DetailFact label="Reason code" value={reasonCode} mono />
-                <DetailFact label="Actor type" value={event.actorType ?? "—"} />
-                {runId ? <DetailFact label="Run ID" value={runId} mono /> : null}
-                {transport ? <DetailFact label="Transport" value={transport} mono /> : null}
-                {requestMethod && endpoint ? <DetailFact label="HTTP request" value={`${requestMethod} ${endpoint}`} mono /> : null}
-                {mcpMethod ? <DetailFact label="MCP method" value={mcpMethod} mono /> : null}
-                {requestId ? <DetailFact label="Request ID" value={requestId} mono /> : null}
-                {request ? <DetailFact label="Dispatched" value={request.dispatched === true ? "Yes" : "No"} /> : null}
-                {httpStatus !== undefined ? <DetailFact label="HTTP status" value={String(httpStatus)} mono /> : null}
-                {contentType ? <DetailFact label="Content type" value={contentType} mono /> : null}
-                {responseBytes !== undefined ? <DetailFact label="Response size" value={`${responseBytes} bytes`} /> : null}
-                {upstreamRequestId ? <DetailFact label="Upstream ID" value={upstreamRequestId} mono /> : null}
+                {rawTool ? <DetailFact label={l10n("local.action_name_323a3fff")} value={rawTool} mono /> : null}
+                <DetailFact label={l10n("local.reason_code_9e13ec9e")} value={reasonCode} mono />
+                <DetailFact label={l10n("local.actor_type_6d003d9d")} value={event.actorType ?? "—"} />
+                {runId ? <DetailFact label={l10n("local.run_id_26d3e7aa")} value={runId} mono /> : null}
+                {transport ? <DetailFact label={l10n("local.transport_aaead4ab")} value={transport} mono /> : null}
+                {requestMethod && endpoint ? <DetailFact label={l10n("local.http_request_f1ee1152")} value={`${requestMethod} ${endpoint}`} mono /> : null}
+                {mcpMethod ? <DetailFact label={l10n("local.mcp_method_e810a950")} value={mcpMethod} mono /> : null}
+                {requestId ? <DetailFact label={l10n("local.request_id_d561f528")} value={requestId} mono /> : null}
+                {request ? <DetailFact label={l10n("local.dispatched_a43dccad")} value={request.dispatched === true ? "Yes" : "No"} /> : null}
+                {httpStatus !== undefined ? <DetailFact label={l10n("local.http_status_0f7cf91f")} value={String(httpStatus)} mono /> : null}
+                {contentType ? <DetailFact label={l10n("local.content_type_6f51cb04")} value={contentType} mono /> : null}
+                {responseBytes !== undefined ? <DetailFact label={l10n("local.response_size_3bbd79b4")} value={`${responseBytes} bytes`} /> : null}
+                {upstreamRequestId ? <DetailFact label={l10n("local.upstream_id_56ca20b2")} value={upstreamRequestId} mono /> : null}
                 {isRuntimeMcpDeliveryDiagnostic ? (
                   <>
-                    <DetailFact label="Delivered MCP servers" value="0" mono />
+                    <DetailFact label={l10n("local.delivered_mcp_servers_e8f93a3e")} value="0" mono />
                     {permittedNotInstalledConnections.map((connection) => {
                       const connectionId = detailString(connection, "id");
                       const connectionName = detailString(connection, "name") ?? "Unnamed connection";
                       return connectionId ? (
                         <div key={connectionId} className="flex gap-2">
-                          <span className="shrink-0 text-muted-foreground">Not installed</span>
+                          <span className="shrink-0 text-muted-foreground">{l10n("local.not_installed_d177cdc0")}</span>
                           <Link to={`/apps/${connectionId}/permissions`} className="font-medium text-primary hover:underline">
                             {connectionName}
                           </Link>
@@ -308,7 +305,7 @@ function ActivityRow({
                 ) : null}
                 {argumentsText ? (
                   <div className="space-y-1">
-                    <span className="text-muted-foreground">Parameters (redacted)</span>
+                    <span className="text-muted-foreground">{l10n("local.parameters_redacted_7aa473af")}</span>
                     <pre className="whitespace-pre-wrap break-words rounded-md border border-border bg-background p-3 font-mono text-xs text-foreground">
                       {argumentsText}
                     </pre>
@@ -396,17 +393,17 @@ export function AuditTab({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-4">
       <ToolsPageHeader
-        title="Activity"
-        description="What your agents actually did with your apps, newest first. Each line is one decision — allowed, blocked, asked first, waiting, or failed."
+        title={l10n("local.activity_38da1505")}
+        description={l10n("local.what_your_agents_actually_did_with_your_apps_c7a12a9c")}
       />
 
       <div className="flex flex-wrap items-center gap-2">
         <Select value={app} onValueChange={setApp}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="App" />
+            <SelectValue placeholder={l10n("local.app_0d04bfeb")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All apps</SelectItem>
+            <SelectItem value={ALL}>{l10n("local.all_apps_01bed311")}</SelectItem>
             {(apps.data?.applications ?? []).map((a) => (
               <SelectItem key={a.id} value={a.id}>
                 {a.name}
@@ -445,15 +442,14 @@ export function AuditTab({ companyId }: { companyId: string }) {
           </SelectContent>
         </Select>
         <Input
-          placeholder="Search activity…"
+          placeholder={l10n("local.search_activity_6f14857b")}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           className="max-w-xs"
         />
         {hasActiveFilters ? (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Clear filters
-          </Button>
+            {l10n("local.clear_filters_7179ea00")}</Button>
         ) : null}
       </div>
 
@@ -467,14 +463,12 @@ export function AuditTab({ companyId }: { companyId: string }) {
             <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
               <ScrollText className="h-10 w-10 text-muted-foreground/40" />
               <div>
-                <p className="text-sm font-medium text-foreground">No activity matches these filters</p>
+                <p className="text-sm font-medium text-foreground">{l10n("local.no_activity_matches_these_filters_2acc5c10")}</p>
                 <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                  Try a wider time window or different filters.
-                </p>
+                  {l10n("local.try_a_wider_time_window_or_different_filters_4e97d386")}</p>
               </div>
               <Button variant="outline" size="sm" onClick={clearFilters}>
-                Clear filters
-              </Button>
+                {l10n("local.clear_filters_7179ea00")}</Button>
             </CardContent>
           </Card>
         ) : (
@@ -482,10 +476,9 @@ export function AuditTab({ companyId }: { companyId: string }) {
             <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
               <ScrollText className="h-10 w-10 text-muted-foreground/40" />
               <div>
-                <p className="text-sm font-medium text-foreground">Nothing here yet</p>
+                <p className="text-sm font-medium text-foreground">{l10n("local.nothing_here_yet_49abaf80")}</p>
                 <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                  As soon as your agents start using connected apps, what they do shows up here.
-                </p>
+                  {l10n("local.as_soon_as_your_agents_start_using_connected_3d3eaa19")}</p>
               </div>
             </CardContent>
           </Card>
@@ -510,7 +503,7 @@ export function AuditTab({ companyId }: { companyId: string }) {
             onClick={() => activity.fetchNextPage()}
             disabled={activity.isFetchingNextPage}
           >
-            {activity.isFetchingNextPage ? "Loading…" : "Load more"}
+            {activity.isFetchingNextPage ? l10n("local.loading_ba3bbbe1") : l10n("local.load_more_ac8991ef")}
           </Button>
         </div>
       ) : null}

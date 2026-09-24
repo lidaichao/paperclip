@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type {
   Approval,
   DashboardSummary,
@@ -649,7 +650,7 @@ export function resolveIssueWorkspaceGroup(
 
   return {
     key: "workspace:none",
-    label: "No workspace",
+    label: l10n("local.no_workspace_fce263d3"),
   };
 }
 
@@ -868,10 +869,10 @@ const inboxWorkItemKindOrder: InboxWorkItem["kind"][] = [
 ];
 
 const inboxWorkItemKindLabels: Record<InboxWorkItem["kind"], string> = {
-  issue: "Tasks",
-  approval: "Approvals",
-  failed_run: "Failed runs",
-  join_request: "Join requests",
+  issue: l10n("local.tasks_b3a60e61"),
+  approval: l10n("local.approvals_2bfc3471"),
+  failed_run: l10n("local.failed_runs_24afc952"),
+  join_request: l10n("local.join_requests_a1321fc2"),
 };
 
 function resolveIssueAssigneeGroup(
@@ -893,18 +894,18 @@ function resolveIssueAssigneeGroup(
   if (issue.assigneeUserId) {
     return {
       key: `assignee:user:${issue.assigneeUserId}`,
-      label: formatAssigneeUserLabel(issue.assigneeUserId, currentUserId, userLabelById) ?? "User",
+      label: formatAssigneeUserLabel(issue.assigneeUserId, currentUserId, userLabelById) ?? l10n("local.user_b512d97e"),
     };
   }
 
-  return { key: "assignee:none", label: "Unassigned" };
+  return { key: "assignee:none", label: l10n("local.unassigned_14d33bd0") };
 }
 
 function resolveIssueProjectGroup(
   issue: Pick<Issue, "projectId">,
   { projectById }: Pick<InboxWorkspaceGroupingOptions, "projectById">,
 ): { key: string; label: string } {
-  if (!issue.projectId) return { key: "project:none", label: "No project" };
+  if (!issue.projectId) return { key: "project:none", label: l10n("local.no_project_f34c2be0") };
 
   const projectName = projectById?.get(issue.projectId)?.name?.trim();
   return {

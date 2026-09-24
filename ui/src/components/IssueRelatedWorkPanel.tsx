@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { IssueRelatedWorkItem, IssueRelatedWorkSummary } from "@paperclipai/shared";
 import { IssueReferencePill } from "./IssueReferencePill";
 import { ExternalObjectPill } from "./ExternalObjectPill";
@@ -111,31 +112,28 @@ function ExternalObjectsSection({
   return (
     <section className="space-y-3 rounded-lg border border-border p-3">
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold">External objects</h3>
+        <h3 className="text-sm font-semibold">{l10n("local.external_objects_9279c11d")}</h3>
         <p className="text-xs text-muted-foreground">
-          Remote work referenced from this issue — pull requests, deployments, tickets in other systems, and more.
-        </p>
+          {l10n("local.remote_work_referenced_from_this_issue_pull_r_3c65ef5c")}</p>
       </div>
 
       {isError ? (
         <p className="text-xs text-muted-foreground">
-          Couldn't load external objects.{" "}
+          {l10n("local.couldn_t_load_external_objects_42d33ac2")}{" "}
           {onRetry ? (
             <button
               type="button"
               onClick={onRetry}
               className="text-primary underline-offset-2 hover:underline"
             >
-              Retry
-            </button>
+              {l10n("local.retry_942087cc")}</button>
           ) : null}
         </p>
       ) : isLoading ? (
-        <p className="text-xs text-muted-foreground">Loading external objects…</p>
+        <p className="text-xs text-muted-foreground">{l10n("local.loading_external_objects_d80d5f6c")}</p>
       ) : sorted.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          This issue does not reference any external objects yet.
-        </p>
+          {l10n("local.this_issue_does_not_reference_any_external_ob_e44c5d10")}</p>
       ) : (
         <ul className="-mx-1 flex flex-col">
           {sorted.map(({ pill, mentionCount, sourceLabels, group }) => {
@@ -191,10 +189,10 @@ export function IssueRelatedWorkPanel({
   return (
     <div className="space-y-3">
       <Section
-        title="References"
-        description="Other tasks this task currently points at in its title, description, comments, or documents."
+        title={l10n("local.references_69824d3b")}
+        description={l10n("local.other_tasks_this_task_currently_points_at_in_2fd8c15a")}
         items={outbound}
-        emptyLabel="This task does not reference any other tasks yet."
+        emptyLabel={l10n("local.this_task_does_not_reference_any_other_tasks_4bb2fcaa")}
       />
       {externalObjectsEnabled ? (
         <ExternalObjectsSection
@@ -205,10 +203,10 @@ export function IssueRelatedWorkPanel({
         />
       ) : null}
       <Section
-        title="Referenced by"
-        description="Other tasks that currently point at this task."
+        title={l10n("local.referenced_by_b65181bd")}
+        description={l10n("local.other_tasks_that_currently_point_at_this_task_b7a48cc8")}
         items={inbound}
-        emptyLabel="No other tasks reference this task yet."
+        emptyLabel={l10n("local.no_other_tasks_reference_this_task_yet_e46da1d8")}
       />
     </div>
   );

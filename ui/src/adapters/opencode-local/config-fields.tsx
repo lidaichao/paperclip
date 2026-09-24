@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { configFieldsForSection } from "../config-sections";
 import type { AdapterConfigFieldsProps } from "../types";
 import {
@@ -26,7 +27,7 @@ export function OpenCodeLocalConfigFields({
   return configFieldsForSection(section, (
     <>
       {!hideInstructionsFile && (
-        <Field label="Agent instructions file" hint={instructionsFileHint}>
+        <Field label={l10n("local.agent_instructions_file_ce46e7f3")} hint={instructionsFileHint}>
           <div className="flex items-center gap-2">
             <DraftInput
               value={
@@ -52,7 +53,7 @@ export function OpenCodeLocalConfigFields({
         </Field>
       )}
       <ToggleField
-        label="Skip permissions"
+        label={l10n("local.skip_permissions_77c4c0c6")}
         hint={help.dangerouslySkipPermissions}
         checked={
           isCreate

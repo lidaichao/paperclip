@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buildFilterChips, type FilterChipLookups, type SearchFilters } from "@/lib/search-filters";
@@ -25,7 +26,7 @@ export function SearchFilterChips({
             type="button"
             className="rounded-full p-0.5 hover:bg-background/60"
             onClick={() => onChange(chip.remove(filters))}
-            aria-label={`Remove filter ${chip.label}`}
+            aria-label={l10n("local.remove_filter_value_3c571997", {v0: (chip.label)})}
           >
             <X className="h-3 w-3" />
           </button>
@@ -36,8 +37,7 @@ export function SearchFilterChips({
         className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         onClick={onClearAll}
       >
-        Clear all
-      </button>
+        {l10n("local.clear_all_29a390f9")}</button>
     </div>
   );
 }

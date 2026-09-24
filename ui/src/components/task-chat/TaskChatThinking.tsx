@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useState } from "react";
 import { Brain, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,10 +24,10 @@ export function TaskChatThinking({
   const [open, setOpen] = useState(defaultOpen ?? false);
   const body = item.lines.join("\n").trim();
   const preview = flattenSelfTalk(body);
-  const baseLabel = item.channel === "detail" ? "Reasoning detail" : "Reasoning";
+  const baseLabel = item.channel === "detail" ? l10n("local.reasoning_detail_2090f489") : l10n("local.reasoning_d8211e24");
   const label = active
-    ? body ? `${baseLabel}…` : "Thinking…"
-    : item.summaryLabel ?? (body ? baseLabel : "Thought");
+    ? body ? l10n("local.value_e925e604", {v0: (baseLabel)}) : l10n("local.thinking_a02f1cea")
+    : item.summaryLabel ?? (body ? baseLabel : l10n("local.thought_deb04a0d"));
 
   if (body && !active) {
     return (
@@ -68,7 +69,7 @@ export function TaskChatThinking({
       <button
         type="button"
         aria-expanded={open}
-        aria-label={`${open ? "Collapse" : "Expand"} ${baseLabel.toLowerCase()}: ${preview}`}
+        aria-label={`${open ? l10n("local.collapse_be6eb1fc") : l10n("local.expand_07548c2c")} ${baseLabel.toLowerCase()}: ${preview}`}
         onClick={() => setOpen((value) => !value)}
         className={cn("group/thinking -mx-1.5 flex w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-sm px-1.5 py-0.5 text-left font-normal text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", rowClassName)}
       >

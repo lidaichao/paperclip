@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../../i18n";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
@@ -61,10 +62,7 @@ export function MissingUserSecretsBanner({
         <div className="min-w-0 flex-1">
           <p className="font-medium">{title}</p>
           <p className="mt-0.5 text-amber-700/90 dark:text-amber-300/90">
-            {missing.length} user secret{missing.length === 1 ? "" : "s"} you are responsible for
-            {missing.length === 1 ? " has" : " have"} no value yet. Runs that require
-            {missing.length === 1 ? " it" : " them"} will fail until you set your value.
-          </p>
+            {missing.length} {l10n("local.user_secret_7beadde6")}{missing.length === 1 ? "" : englishPluralSuffix("s")} {l10n("local.you_are_responsible_for_a576ef3e")}{missing.length === 1 ? (" " + l10n("local.has_9150c74c")) : (" " + l10n("local.have_193c45b5"))} {l10n("local.no_value_yet_runs_that_require_cab90b8b")}{missing.length === 1 ? (" " + l10n("local.it_2ad8a704")) : (" " + l10n("local.them_c9a8dc33"))} {l10n("local.will_fail_until_you_set_your_value_cdf0faea")}</p>
           <ul className="mt-2 space-y-1.5">
             {missing.map((entry) => (
               <li
@@ -76,8 +74,7 @@ export function MissingUserSecretsBanner({
                   <code className="text-(length:--text-micro) text-muted-foreground">{entry.definition.key}</code>
                 </span>
                 <Button size="sm" onClick={() => setDialogFor(entry)}>
-                  Set value
-                </Button>
+                  {l10n("local.set_value_58bf3410")}</Button>
               </li>
             ))}
           </ul>
@@ -86,8 +83,7 @@ export function MissingUserSecretsBanner({
               to={secretsPath}
               className="mt-2 inline-block text-(length:--text-micro) font-medium underline underline-offset-2"
             >
-              Manage all my secrets
-            </Link>
+              {l10n("local.manage_all_my_secrets_632626ac")}</Link>
           ) : null}
         </div>
       </div>

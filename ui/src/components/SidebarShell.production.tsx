@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   useCallback,
   useEffect,
@@ -218,7 +219,7 @@ export function SidebarShell({
         {canResize ? (
           <div
             role="separator"
-            aria-label="Resize sidebar"
+            aria-label={l10n("local.resize_sidebar_243854b4")}
             aria-orientation="vertical"
             aria-valuemin={MIN_SIDEBAR_WIDTH}
             aria-valuemax={MAX_SIDEBAR_WIDTH}

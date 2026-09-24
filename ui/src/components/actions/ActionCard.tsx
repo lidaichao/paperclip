@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { ReactNode } from "react";
 import { Clock, Pencil, ShieldCheck } from "lucide-react";
 import type { ToolRiskLevel } from "@paperclipai/shared";
@@ -133,10 +134,10 @@ function initials(name: string): string {
 function bindingRows(binding: ActionCardBinding, isStale: boolean): BindingRow[] {
   const catalogValue = isStale && binding.previousCatalogSha256 ? (
     <span className="inline-flex flex-wrap items-center gap-1.5">
-      <span className="text-muted-foreground line-through decoration-amber-500" title="Previous catalog hash">
+      <span className="text-muted-foreground line-through decoration-amber-500" title={l10n("local.previous_catalog_hash_ba0cd698")}>
         {shortSha(binding.previousCatalogSha256)}
       </span>
-      <span className="text-amber-600 dark:text-amber-400" title="Current catalog hash">
+      <span className="text-amber-600 dark:text-amber-400" title={l10n("local.current_catalog_hash_540922c9")}>
         {shortSha(binding.catalogSha256)}
       </span>
     </span>
@@ -146,23 +147,23 @@ function bindingRows(binding: ActionCardBinding, isStale: boolean): BindingRow[]
 
   return [
     {
-      label: "Application",
+      label: l10n("local.application_e7ad522e"),
       value: (
         <span>
           {binding.application}
-          <span className="ml-1.5 text-xs text-muted-foreground">manifest v{binding.manifestVersion}</span>
+          <span className="ml-1.5 text-xs text-muted-foreground">{l10n("local.manifest_v_a5aac0c8")}{binding.manifestVersion}</span>
         </span>
       ),
     },
-    { label: "Connection", value: binding.connection, mono: true },
-    { label: "Catalog", value: catalogValue, mono: !isStale },
+    { label: l10n("local.connection_639a40e8"), value: binding.connection, mono: true },
+    { label: l10n("local.catalog_3877d148"), value: catalogValue, mono: !isStale },
     {
-      label: "Payload",
+      label: l10n("local.payload_99733344"),
       value: (
         <span className="inline-flex items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{shortSha(binding.payloadSha256)}</span>
-          <span className="font-sans text-(length:--text-micro) uppercase tracking-normal text-muted-foreground">signed</span>
+          <span className="font-sans text-(length:--text-micro) uppercase tracking-normal text-muted-foreground">{l10n("local.signed_4a3cdfae")}</span>
         </span>
       ),
       mono: true,
@@ -201,21 +202,18 @@ export function ActionCard({
       onClick={onApprove}
       disabled={isStale}
       className={mobile ? "w-full" : undefined}
-      title={isStale ? "Re-issue the request before approving — the catalog hash changed." : undefined}
+      title={isStale ? l10n("local.re_issue_the_request_before_approving_the_cat_09773d0a") : undefined}
     >
-      Approve
-    </Button>
+      {l10n("local.approve_6007acbe")}</Button>
   );
   const denyButton = (
     <Button size="sm" variant="outline" onClick={onDeny} className={mobile ? "w-full" : undefined}>
-      Deny
-    </Button>
+      {l10n("local.deny_05a2d733")}</Button>
   );
   const editButton = (
     <Button size="sm" variant="outline" onClick={onEditResign} className={mobile ? "w-full" : undefined}>
       <Pencil className="mr-1 h-3.5 w-3.5" />
-      Edit &amp; re-sign
-    </Button>
+      {l10n("local.edit_amp_re_sign_759c31fe")}</Button>
   );
 
   return (
@@ -236,8 +234,7 @@ export function ActionCard({
           </Avatar>
           <div className="min-w-0 flex-1">
             <p className="text-sm text-foreground">
-              <span className="font-medium">{agentName}</span> requested approval to call
-            </p>
+              <span className="font-medium">{agentName}</span> {l10n("local.requested_approval_to_call_2258c9ee")}</p>
             <p className="mt-0.5 font-mono text-xs text-muted-foreground break-all">{toolName}</p>
           </div>
           <div className="shrink-0">
@@ -256,8 +253,8 @@ export function ActionCard({
         {isStale ? (
           <EnforcementBanner
             tone="warning"
-            title="Catalog changed since this request was signed."
-            body="The application's tool catalog hash no longer matches the one this approval was issued against. Approval is disabled — the agent must edit & re-sign to request again."
+            title={l10n("local.catalog_changed_since_this_request_was_signed_5c01858a")}
+            body={l10n("local.the_application_s_tool_catalog_hash_no_longer_05af262b")}
           />
         ) : null}
 
@@ -266,7 +263,7 @@ export function ActionCard({
 
         {/* JSON input */}
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">Input</p>
+          <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">{l10n("local.input_36ecb4f8")}</p>
           <pre className="overflow-x-auto rounded-md border border-border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground">
             {json}
           </pre>
@@ -274,14 +271,13 @@ export function ActionCard({
 
         {/* Why I'm asking */}
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">Why I&apos;m asking</p>
+          <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">{l10n("local.why_i_apos_m_asking_99a52c9b")}</p>
           <p className="text-sm text-muted-foreground">
             {reason}
             {policyNumber != null ? (
               <>
                 {" "}
-                <span className="font-medium text-foreground">Policy #{policyNumber}</span> requires approval here.
-              </>
+                <span className="font-medium text-foreground">{l10n("local.policy_feca2a17")}{policyNumber}</span> {l10n("local.requires_approval_here_c7e3768a")}</>
             ) : null}
           </p>
         </div>
@@ -296,7 +292,7 @@ export function ActionCard({
       >
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="h-3.5 w-3.5 shrink-0" />
-          {expiresInLabel ?? "no expiry set"}
+          {expiresInLabel ?? l10n("local.no_expiry_set_fcbeaba8")}
         </span>
         {mobile ? (
           <div className="flex flex-col gap-2">

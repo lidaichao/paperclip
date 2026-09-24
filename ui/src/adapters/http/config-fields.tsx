@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { configFieldsForSection } from "../config-sections";
 import type { AdapterConfigFieldsProps } from "../types";
 import {
@@ -19,7 +20,7 @@ export function HttpConfigFields({
   mark,
 }: AdapterConfigFieldsProps) {
   return configFieldsForSection(section, (
-    <Field label="Webhook URL" hint={help.webhookUrl}>
+    <Field label={l10n("local.webhook_url_84805a75")} hint={help.webhookUrl}>
       <DraftInput
         value={
           isCreate

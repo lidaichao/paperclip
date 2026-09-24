@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -149,7 +150,7 @@ export function BlockedInboxView({
 
   if (error) {
     const message =
-      error instanceof Error ? error.message : "Couldn't load the Blocked tab.";
+      error instanceof Error ? error.message : l10n("local.couldn_t_load_the_blocked_tab_a61e4428");
     return (
       <div
         data-testid="blocked-inbox-error"
@@ -159,9 +160,9 @@ export function BlockedInboxView({
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <div className="flex-1 space-y-1">
-            <p className="text-sm font-medium">Couldn't load the Blocked tab.</p>
+            <p className="text-sm font-medium">{l10n("local.couldn_t_load_the_blocked_tab_a61e4428")}</p>
             <p className="text-xs opacity-80">
-              Other Inbox tabs still work. {message}
+              {l10n("local.other_inbox_tabs_still_work_093a03d6")}{" "}{message}
             </p>
           </div>
           <Button
@@ -172,7 +173,7 @@ export function BlockedInboxView({
             onClick={() => void refetch()}
             disabled={isFetching}
           >
-            {isFetching ? "Trying…" : "Try again"}
+            {isFetching ? l10n("local.trying_3ff51b0b") : l10n("local.try_again_d8b8392e")}
           </Button>
         </div>
       </div>
@@ -189,10 +190,9 @@ export function BlockedInboxView({
           <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-foreground">No work is stopped.</p>
+          <p className="text-sm font-medium text-foreground">{l10n("local.no_work_is_stopped_6d4397f7")}</p>
           <p className="text-xs text-muted-foreground">
-            Tasks that need a decision, recovery, or external action will appear here.
-          </p>
+            {l10n("local.tasks_that_need_a_decision_recovery_or_extern_ec0fc599")}</p>
         </div>
       </Card>
     );
@@ -205,8 +205,7 @@ export function BlockedInboxView({
           data-testid="blocked-inbox-no-search-results"
           className="block border-border/70 bg-card/40 px-4 py-6 text-center text-sm text-muted-foreground"
         >
-          No stopped items match your search.
-        </Card>
+          {l10n("local.no_stopped_items_match_your_search_c4f2407d")}</Card>
       </div>
     );
   }

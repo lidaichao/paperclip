@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { MouseEvent, ReactNode } from "react";
 import { FileCode2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,8 +37,8 @@ export function ArtifactFileChip({
     ? ` line ${workspaceFileRef.line}${workspaceFileRef.column ? ` column ${workspaceFileRef.column}` : ""}`
     : "";
   const ariaLabel = canOpen
-    ? `Open ${workspaceFileRef.displayPath}${lineSuffix} in the file viewer`
-    : `Workspace file ${workspaceFileRef.displayPath}${lineSuffix}`;
+    ? l10n("local.open_valuevalue_in_the_file_viewer_97f5d121", {v0: (workspaceFileRef.displayPath), v1: (lineSuffix)})
+    : l10n("local.workspace_file_valuevalue_6f0403f2", {v0: (workspaceFileRef.displayPath), v1: (lineSuffix)});
   const tooltip = title ?? (canOpen
     ? `Open ${workspaceFileRef.displayPath}${lineSuffix} in the file viewer`
     : `Workspace file ${workspaceFileRef.displayPath}${lineSuffix}`);

@@ -2,9 +2,10 @@ import type { Resource } from "i18next";
 
 import { assertValidLocaleMessages } from "./locale-validation";
 
-export const DEFAULT_LOCALE = "en" as const;
+export const DEFAULT_LOCALE = "zh-CN" as const;
+export const FALLBACK_LOCALE = "en" as const;
 
-const localeModules = import.meta.glob("./locales/*.json", {
+const localeModules = import.meta.glob(["./locales/en.json", "./locales/zh-CN.json"], {
   eager: true,
   import: "default",
 }) as Record<string, unknown>;
@@ -21,6 +22,10 @@ export const localeMessages = Object.fromEntries(
 
 if (!(DEFAULT_LOCALE in localeMessages)) {
   throw new Error(`Missing default locale messages for ${DEFAULT_LOCALE}`);
+}
+
+if (!(FALLBACK_LOCALE in localeMessages)) {
+  throw new Error(`Missing fallback locale messages for ${FALLBACK_LOCALE}`);
 }
 
 for (const [locale, messages] of Object.entries(localeMessages)) {

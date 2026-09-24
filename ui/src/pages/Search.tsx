@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search as SearchIcon, AlertTriangle, FileQuestion, Plus, X } from "lucide-react";
@@ -58,13 +59,13 @@ const SEARCH_DEBOUNCE_MS = 250;
 const IDENTIFIER_PATTERN = /^[A-Z]+-\d+$/;
 
 const SCOPE_LABELS: Record<CompanySearchScope, string> = {
-  all: "All",
-  issues: "Tasks",
-  comments: "Comments",
-  documents: "Documents",
-  artifacts: "Artifacts",
-  agents: "Agents",
-  projects: "Projects",
+  all: l10n("local.all_a52ace42"),
+  issues: l10n("local.tasks_b3a60e61"),
+  comments: l10n("local.comments_355f79f2"),
+  documents: l10n("local.documents_b4e929d8"),
+  artifacts: l10n("local.artifacts_314ae71b"),
+  agents: l10n("local.agents_279b44d2"),
+  projects: l10n("local.projects_04e2a972"),
 };
 
 function isCompanySearchScope(value: string | null): value is CompanySearchScope {
@@ -156,7 +157,7 @@ export function Search() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Search" }]);
+    setBreadcrumbs([{ label: l10n("local.search_49c266ba") }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
@@ -545,7 +546,7 @@ export function Search() {
   return (
     <div className="flex h-full min-h-0 flex-col" data-page="search">
       <div className="border-b border-border px-4 py-3 sm:px-6">
-        <h1 className="sr-only">Search</h1>
+        <h1 className="sr-only">{l10n("local.search_49c266ba")}</h1>
         <div className="relative">
           <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -565,15 +566,15 @@ export function Search() {
                 }
               }
             }}
-            placeholder="Search tasks, comments, documents, artifacts, agents, projects…"
-            aria-label="Search query"
+            placeholder={l10n("local.search_tasks_comments_documents_artifacts_age_e395aedd")}
+            aria-label={l10n("local.search_query_9eef0523")}
             className="h-10 pl-9 pr-20 text-sm"
           />
           {draftQuery.length > 0 ? (
             <button
               type="button"
               onClick={handleClear}
-              aria-label="Clear search"
+              aria-label={l10n("local.clear_search_3b7ea517")}
               className="absolute right-12 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-accent/50"
             >
               <X className="h-3.5 w-3.5" />
@@ -602,7 +603,7 @@ export function Search() {
                 <button
                   key={suggestion.token}
                   type="button"
-                  aria-label={`Insert operator ${suggestion.token}`}
+                  aria-label={l10n("local.insert_operator_value_7d7b85c2", {v0: (suggestion.token)})}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
                     setDraftQuery(applySearchOperatorSuggestion(draftQuery, suggestion.token));
@@ -617,9 +618,9 @@ export function Search() {
             </div>
           ) : (
             <span className="truncate">
-              Try <code className="rounded bg-muted px-1 py-0.5 text-(length:--text-micro)">status:todo</code>,{" "}
+              {l10n("local.try_85d6c071")}{" "}<code className="rounded bg-muted px-1 py-0.5 text-(length:--text-micro)">status:todo</code>,{" "}
               <code className="rounded bg-muted px-1 py-0.5 text-(length:--text-micro)">assignee:me</code>,{" "}
-              or <code className="rounded bg-muted px-1 py-0.5 text-(length:--text-micro)">updated:&gt;7d</code>.
+              {l10n("local.or_7175517a")}{" "}<code className="rounded bg-muted px-1 py-0.5 text-(length:--text-micro)">updated:&gt;7d</code>.
             </span>
           )}
         </div>
@@ -763,16 +764,14 @@ function SearchTabContent({
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-10 sm:px-6">
         <div>
-          <h2 className="text-lg font-semibold">Type to search organization memory.</h2>
+          <h2 className="text-lg font-semibold">{l10n("local.type_to_search_organization_memory_cb201d7c")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tasks, comments, plan documents, artifacts, agents, projects — same surface, ranked by relevance.
-          </p>
+            {l10n("local.tasks_comments_plan_documents_artifacts_agent_ea90c709")}</p>
         </div>
         {recentSearches.length > 0 ? (
           <div>
             <div className="mb-2 text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-              Recent searches
-            </div>
+              {l10n("local.recent_searches_228c84b5")}</div>
             <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
               {recentSearches.map((entry) => (
                 <li key={entry}>
@@ -791,17 +790,12 @@ function SearchTabContent({
         ) : null}
         <ul className="space-y-1 text-xs text-muted-foreground">
           <li>
-            <span className="font-medium text-foreground">Identifier lookup:</span> type{" "}
-            <code className="rounded bg-muted px-1 py-0.5 text-(length:--text-micro)">PAP-123</code> to jump straight to a task.
-          </li>
+            <span className="font-medium text-foreground">{l10n("local.identifier_lookup_492ca893")}</span> {l10n("local.type_1303c06b")}{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-(length:--text-micro)">PAP-123</code> {l10n("local.to_jump_straight_to_a_task_0c973a2d")}</li>
           <li>
-            <span className="font-medium text-foreground">Quoted phrases:</span> wrap a phrase in quotes to match the
-            exact sequence.
-          </li>
+            <span className="font-medium text-foreground">{l10n("local.quoted_phrases_9efd02fa")}</span> {l10n("local.wrap_a_phrase_in_quotes_to_match_the_exact_se_69ad312e")}</li>
           <li>
-            <span className="font-medium text-foreground">⌘K:</span> reopens the command palette pre-seeded with your
-            current query.
-          </li>
+            <span className="font-medium text-foreground">⌘K:</span> {l10n("local.reopens_the_command_palette_pre_seeded_with_y_e90feb65")}</li>
         </ul>
       </div>
     );
@@ -812,18 +806,14 @@ function SearchTabContent({
     return (
       <div className="mx-auto flex w-full max-w-xl flex-col items-center justify-center gap-3 px-4 py-12 text-center">
         <AlertTriangle className="h-10 w-10 text-destructive" aria-hidden />
-        <div className="text-base font-semibold">Couldn’t run that search</div>
+        <div className="text-base font-semibold">{l10n("local.couldn_t_run_that_search_8e9caef8")}</div>
         <p className="text-sm text-muted-foreground">
-          {status ? `The server returned ${status}.` : "The request failed."} Your input and filters are still here, so
-          you can retry or fall back to the Tasks filter.
-        </p>
+          {status ? l10n("local.the_server_returned_value_369147ce", {v0: (status)}) : l10n("local.the_request_failed_db4fb447")} {l10n("local.your_input_and_filters_are_still_here_so_you_84cd3a3b")}</p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Button onClick={refetch} variant="default" size="sm">
-            Retry
-          </Button>
+            {l10n("local.retry_942087cc")}</Button>
           <Button onClick={navigateIssuesFallback} variant="outline" size="sm">
-            Open Tasks filter view
-          </Button>
+            {l10n("local.open_tasks_filter_view_841ffda7")}</Button>
         </div>
       </div>
     );
@@ -833,7 +823,7 @@ function SearchTabContent({
     return (
       <div className="flex flex-col gap-2 px-2 py-3 sm:px-4">
         <div className="px-3 text-xs text-muted-foreground" data-testid="search-loading">
-          Searching for &ldquo;{trimmedQuery}&rdquo;…
+          {l10n("local.searching_for_ldquo_dfc5764c")}{trimmedQuery}&rdquo;…
         </div>
         <div className="flex flex-col">
           <div className="px-3 py-2">
@@ -860,31 +850,26 @@ function SearchTabContent({
     return (
       <div className="mx-auto flex w-full max-w-xl flex-col items-center justify-center gap-3 px-4 py-12 text-center">
         <FileQuestion className="h-10 w-10 text-muted-foreground" aria-hidden />
-        <div className="text-base font-semibold">No results for &ldquo;{trimmedQuery}&rdquo;</div>
+        <div className="text-base font-semibold">{l10n("local.no_results_for_ldquo_c92600d2")}{trimmedQuery}&rdquo;</div>
         <p className="text-sm text-muted-foreground">
-          We couldn’t find a match in {describeScope(scope).toLowerCase()}. Try widening the scope or rephrasing your
-          query.
-        </p>
+          {l10n("local.we_couldn_t_find_a_match_in_ce36ccf8")}{" "}{describeScope(scope).toLowerCase()}{l10n("local._try_widening_the_scope_or_rephrasing_your_qu_f8873d6c")}</p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {scope !== "all" ? (
             <Button onClick={showAllScope} size="sm" variant="outline">
-              Search all scopes
-            </Button>
+              {l10n("local.search_all_scopes_5bcc0794")}</Button>
           ) : null}
           <Button onClick={openNewIssue} size="sm" variant="default">
             <Plus className="mr-1.5 h-4 w-4" />
-            Create task from this query
-          </Button>
+            {l10n("local.create_task_from_this_query_ab10ebff")}</Button>
           <Button onClick={navigateIssuesFallback} size="sm" variant="ghost">
-            Open Tasks filter view
-          </Button>
+            {l10n("local.open_tasks_filter_view_841ffda7")}</Button>
         </div>
         <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-          <li>Try fewer tokens or a single distinctive term.</li>
+          <li>{l10n("local.try_fewer_tokens_or_a_single_distinctive_term_2fc7f119")}</li>
           <li>
-            Use an identifier shortcut like <code className="rounded bg-muted px-1 py-0.5">PAP-123</code>.
+            {l10n("local.use_an_identifier_shortcut_like_b16a2c7a")}{" "}<code className="rounded bg-muted px-1 py-0.5">PAP-123</code>.
           </li>
-          <li>Wrap multi-word phrases in quotes.</li>
+          <li>{l10n("local.wrap_multi_word_phrases_in_quotes_bc38db20")}</li>
         </ul>
       </div>
     );
@@ -897,16 +882,16 @@ function SearchTabContent({
       <div className="flex items-center justify-between py-2 text-(length:--text-micro) uppercase tracking-wide text-muted-foreground">
         <span>
           {allMatchTotal > totalResults
-            ? `${totalResults} of ${allMatchTotal} results`
+            ? l10n("local.value_of_value_results_e736c017", {v0: (totalResults), v1: (allMatchTotal)})
             : totalResults === 1
-              ? "1 result"
-              : `${totalResults} results`}
-          {` · sorted by ${sortLabel}`}
+              ? l10n("local.1_result_15bf3671")
+              : l10n("local.value_results_729e13a0", {v0: (totalResults)})}
+          {(" " + l10n("local._sorted_by_value_322c35ba", {v0: (sortLabel)}))}
           {activeFilterCount > 0
-            ? ` · ${activeFilterCount} ${activeFilterCount === 1 ? "filter" : "filters"} active`
+            ? (" " + l10n("local._value_value_active_e808b320", {v0: (activeFilterCount), v1: (activeFilterCount === 1 ? "filter" : "filters")}))
             : ""}
         </span>
-        {isFetching ? <span aria-live="polite" className="normal-case tracking-normal">Updating…</span> : null}
+        {isFetching ? <span aria-live="polite" className="normal-case tracking-normal">{l10n("local.updating_dfe40efe")}</span> : null}
       </div>
       <div className="flex flex-col gap-y-1 pb-10">
         {results.map((result) => (

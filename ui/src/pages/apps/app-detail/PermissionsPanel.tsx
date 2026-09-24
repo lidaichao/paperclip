@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Ban, Check, FlaskConical, Loader2, RefreshCw, Search, ShieldQuestion } from "lucide-react";
@@ -122,14 +123,14 @@ function AgentAccessSection({
   return (
     <section className="space-y-4 border-t border-border pt-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-foreground">Which agents can use this connection?</h2>
-        {disabled ? <span className="text-xs text-muted-foreground">Saving…</span> : null}
+        <h2 className="text-sm font-semibold text-foreground">{l10n("local.which_agents_can_use_this_connection_a315e64c")}</h2>
+        {disabled ? <span className="text-xs text-muted-foreground">{l10n("local.saving_23e39291")}</span> : null}
       </div>
 
       {canManage ? (
         <div className="space-y-3">
           <RadioCardGroup
-            ariaLabel="Which agents can use this connection"
+            ariaLabel={l10n("local.which_agents_can_use_this_connection_f2fa54ec")}
             value={access.mode}
             disabled={disabled}
             className="sm:grid-cols-2"
@@ -143,16 +144,16 @@ function AgentAccessSection({
             options={[
               {
                 value: "specific",
-                title: "Just agents I pick",
+                title: l10n("local.just_agents_i_pick_d2b7ad83"),
                 description: install.onAll
-                  ? "Unavailable while this connection is installed for every agent."
-                  : "Available only to selected agents.",
+                  ? l10n("local.unavailable_while_this_connection_is_installe_61108305")
+                  : l10n("local.available_only_to_selected_agents_57ff838e"),
                 disabled: install.onAll,
               },
               {
                 value: "all",
-                title: "Any agent",
-                description: "Available across your company.",
+                title: l10n("local.any_agent_ee3e7690"),
+                description: l10n("local.available_across_your_company_0fecc5d5"),
               },
             ]}
           />
@@ -163,9 +164,9 @@ function AgentAccessSection({
               selectedAgentIds={access.agentIds}
               disabled={disabled}
               triggerLabel={access.agentIds.size === 0
-                ? "Choose agents"
-                : `${access.agentIds.size} ${access.agentIds.size === 1 ? "agent" : "agents"} selected`}
-              emptyMessage="You cannot edit any agents yet."
+                ? l10n("local.choose_agents_14300162")
+                : l10n("local.value_value_selected_c05d4e8d", {v0: (access.agentIds.size), v1: (access.agentIds.size === 1 ? "agent" : "agents")})}
+              emptyMessage={l10n("local.you_cannot_edit_any_agents_yet_1fe14169")}
               isAgentDisabled={(agent) => requiredAgentIds.has(agent.id)}
               getDescription={(agent) => requiredAgentIds.has(agent.id) ? "Required by this connection's install setting" : agent.title}
               onChange={(agentIds) => onSave({
@@ -176,9 +177,9 @@ function AgentAccessSection({
           ) : null}
         </div>
       ) : access.mode === "all" ? (
-        <p className="text-sm text-muted-foreground">Any agent can use this connection.</p>
+        <p className="text-sm text-muted-foreground">{l10n("local.any_agent_can_use_this_connection_8f6ff97f")}</p>
       ) : selectedAgents.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No agents can use this connection.</p>
+        <p className="text-sm text-muted-foreground">{l10n("local.no_agents_can_use_this_connection_de5ab3d9")}</p>
       ) : (
         <div className="space-y-0.5">
           {selectedAgents.map((agent) => (
@@ -246,10 +247,10 @@ export function ActionsSection({
   return (
     <section className="space-y-6 border-t border-border pt-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold text-foreground">Actions</h2>
+        <h2 className="text-lg font-semibold text-foreground">{l10n("local.actions_ff8059dc")}</h2>
         {canConfigure ? (
           <div className="flex items-center gap-2">
-            {disabled ? <span className="text-xs text-muted-foreground">Saving…</span> : null}
+            {disabled ? <span className="text-xs text-muted-foreground">{l10n("local.saving_23e39291")}</span> : null}
             <Button
               variant="outline"
               size="sm"
@@ -261,8 +262,7 @@ export function ActionsSection({
               ) : (
                 <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
               )}
-              Refresh actions
-            </Button>
+              {l10n("local.refresh_actions_ee8e81d5")}</Button>
           </div>
         ) : null}
       </div>
@@ -286,28 +286,27 @@ export function ActionsSection({
           <div className="relative min-w-(--sz-12rem) flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              aria-label="Find an action"
-              placeholder="Find an action…"
+              aria-label={l10n("local.find_an_action_efd38349")}
+              placeholder={l10n("local.find_an_action_f0eba3ca")}
               className="pl-9"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
           </div>
-          <FilterChip label={`All ${readOnly.length + canChange.length}`} active={kindFilter === "all"} onClick={() => setKindFilter("all")} />
-          <FilterChip label={`Read ${readOnly.length}`} active={kindFilter === "read"} onClick={() => setKindFilter("read")} />
-          <FilterChip label={`Write ${canChange.length}`} active={kindFilter === "write"} onClick={() => setKindFilter("write")} />
+          <FilterChip label={l10n("local.all_value_5b0190f9", {v0: (readOnly.length + canChange.length)})} active={kindFilter === "all"} onClick={() => setKindFilter("all")} />
+          <FilterChip label={l10n("local.read_value_e3ff7705", {v0: (readOnly.length)})} active={kindFilter === "read"} onClick={() => setKindFilter("read")} />
+          <FilterChip label={l10n("local.write_value_830a7ad6", {v0: (canChange.length)})} active={kindFilter === "write"} onClick={() => setKindFilter("write")} />
         </div>
-        <p className="text-xs text-muted-foreground">{visibleCount} matches · sorted A–Z</p>
+        <p className="text-xs text-muted-foreground">{visibleCount} {l10n("local.matches_sorted_a_z_f2a4ad9c")}</p>
       </div>
 
       {visibleCount === 0 ? (
         <div className="py-6 text-center text-sm text-muted-foreground">
-          No actions match “{query}”. Clear the search to see them all.
-        </div>
+          {l10n("local.no_actions_match_e67480ba")}{query}{l10n("local._clear_the_search_to_see_them_all_b115a059")}</div>
       ) : (
         <div className="space-y-6">
           <ActionGroup
-            title={`Read (${visibleRead.length})`}
+            title={l10n("local.read_value_4a8a12ac", {v0: (visibleRead.length)})}
             actions={visibleRead}
             connectionId={connectionId}
             appName={appName}
@@ -322,7 +321,7 @@ export function ActionsSection({
             }}
           />
           <ActionGroup
-            title={`Write (${visibleWrite.length})`}
+            title={l10n("local.write_value_4f9cbca3", {v0: (visibleWrite.length)})}
             actions={visibleWrite}
             connectionId={connectionId}
             appName={appName}
@@ -412,9 +411,9 @@ const PERMISSION_OPTIONS: Array<{
   description: string;
   icon: typeof Ban;
 }> = [
-  { value: "off", label: "Off", description: "Agents cannot run this action.", icon: Ban },
-  { value: "ask", label: "Ask first", description: "A human must approve each call.", icon: ShieldQuestion },
-  { value: "allowed", label: "Allowed", description: "Runs without approval.", icon: Check },
+  { value: "off", label: l10n("local.off_ca7981b4"), description: l10n("local.agents_cannot_run_this_action_91ab626d"), icon: Ban },
+  { value: "ask", label: l10n("local.ask_first_4a9e8cf3"), description: l10n("local.a_human_must_approve_each_call_d07c9e49"), icon: ShieldQuestion },
+  { value: "allowed", label: l10n("local.allowed_1bb201d1"), description: l10n("local.runs_without_approval_01d38af7"), icon: Check },
 ];
 
 function ActionRow({
@@ -465,7 +464,7 @@ function ActionRow({
             <TooltipProvider>
               <div
                 role="radiogroup"
-                aria-label={`${title} permission`}
+                aria-label={l10n("local.value_permission_582af8ae", {v0: (title)})}
                 className="inline-flex rounded-md border border-border bg-muted/40 p-0.5"
               >
               {PERMISSION_OPTIONS.map((option) => {
@@ -506,8 +505,7 @@ function ActionRow({
           )}
           <Button type="button" size="sm" variant="outline" onClick={() => setTestOpen(true)}>
             <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
-            Test
-          </Button>
+            {l10n("local.test_532eaabd")}</Button>
         </div>
       </div>
       <ActionTestDialog

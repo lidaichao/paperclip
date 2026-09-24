@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useCallback, useEffect, useState } from "react";
 import {
   CalendarClock,
@@ -170,7 +171,7 @@ export function RoutineTriggerWizard({
           saveAndExit();
         },
       },
-      { label: "Add trigger" },
+      { label: l10n("local.add_trigger_58fd3089") },
     ]);
   }, [saveAndExit, setBreadcrumbs, routineTitle, routineId]);
   const schedule = draft.kind === "schedule";
@@ -196,37 +197,36 @@ export function RoutineTriggerWizard({
   }
   const title =
     draft.step === 0
-      ? "When should this routine run?"
+      ? l10n("local.when_should_this_routine_run_7725656f")
       : schedule
         ? draft.step === 1
-          ? "Set a schedule"
-          : "Review your schedule"
+          ? l10n("local.set_a_schedule_b967d9c5")
+          : l10n("local.review_your_schedule_6204c309")
         : draft.step === 1
-          ? `Connect ${github ? "GitHub" : "your app"}`
-          : "Check your connection";
+          ? l10n("local.connect_value_2a49bf94", {v0: (github ? "GitHub" : "your app")})
+          : l10n("local.check_your_connection_c2886bc3");
   const subtitle =
     draft.step === 0
-      ? `Choose how to start “${routineTitle}”. You can add another trigger later.`
+      ? l10n("local.choose_how_to_start_value_you_can_add_another_a5daff11", {v0: (routineTitle)})
       : schedule
         ? draft.step === 1
-          ? "Choose when Paperclip should start this routine automatically."
-          : "This schedule starts the routine automatically. You can pause or change it later."
+          ? l10n("local.choose_when_paperclip_should_start_this_routi_3cca3d7f")
+          : l10n("local.this_schedule_starts_the_routine_automaticall_b549efc6")
         : draft.step === 1
-          ? "Copy these details into the sending app, then save its webhook settings."
-          : "Test that events arrive and authentication works. This won’t start the routine.";
+          ? l10n("local.copy_these_details_into_the_sending_app_then_7eaa5d90")
+          : l10n("local.test_that_events_arrive_and_authentication_wo_57926d6a");
   const selectClass =
     "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
   const goBack = (
     <Button variant="outline" onClick={() => patch({ step: draft.step - 1 })}>
-      Back
-    </Button>
+      {l10n("local.back_76900f1b")}</Button>
   );
   return (
     <div className="min-w-0 w-full max-w-2xl space-y-6">
       <SetupWizardNavigation
         takeover
         disabled={busy}
-        ariaLabel="Trigger setup progress"
+        ariaLabel={l10n("local.trigger_setup_progress_0e99f6bb")}
         labels={labels}
         step={draft.step}
         availableStep={draft.availableStep}
@@ -240,18 +240,18 @@ export function RoutineTriggerWizard({
         {!schedule && draft.step > 0 && <WebhookUrlWarning url={webhookUrl} />}
         {draft.step === 0 && (
           <fieldset className="space-y-3">
-            <legend className="sr-only">Trigger type</legend>
+            <legend className="sr-only">{l10n("local.trigger_type_31a9d2bd")}</legend>
             {(
               [
                 {
                   kind: "schedule",
-                  label: "On a schedule",
+                  label: l10n("local.on_a_schedule_8c4f3450"),
                   detail: "Every day, on weekdays, or once a week.",
                   Icon: CalendarClock,
                 },
                 {
                   kind: "webhook",
-                  label: "When another app sends a webhook",
+                  label: l10n("local.when_another_app_sends_a_webhook_d7f97da1"),
                   detail:
                     "When something happens in GitHub, another app, or a script.",
                   Icon: Webhook,
@@ -297,20 +297,20 @@ export function RoutineTriggerWizard({
           <div className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="repeat">Repeat</Label>
+                <Label htmlFor="repeat">{l10n("local.repeat_b6b7a006")}</Label>
                 <select
                   id="repeat"
                   className={selectClass}
                   value={draft.frequency}
                   onChange={(event) => patch({ frequency: event.target.value })}
                 >
-                  <option value="daily">Every day</option>
-                  <option value="weekdays">Weekdays (Monday–Friday)</option>
-                  <option value="weekly">Every week</option>
+                  <option value="daily">{l10n("local.every_day_c4e42b97")}</option>
+                  <option value="weekdays">{l10n("local.weekdays_monday_friday_0ea2df5f")}</option>
+                  <option value="weekly">{l10n("local.every_week_1b7e1851")}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="run-time">Time</Label>
+                <Label htmlFor="run-time">{l10n("local.time_33b93476")}</Label>
                 <Input
                   id="run-time"
                   type="time"
@@ -321,7 +321,7 @@ export function RoutineTriggerWizard({
             </div>
             {draft.frequency === "weekly" && (
               <div className="space-y-2">
-                <Label htmlFor="run-day">Day</Label>
+                <Label htmlFor="run-day">{l10n("local.day_8f2364e1")}</Label>
                 <select
                   id="run-day"
                   className={selectClass}
@@ -343,7 +343,7 @@ export function RoutineTriggerWizard({
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="timezone">Time zone</Label>
+              <Label htmlFor="timezone">{l10n("local.time_zone_b9fe1464")}</Label>
               <select
                 id="timezone"
                 className={selectClass}
@@ -364,8 +364,7 @@ export function RoutineTriggerWizard({
                 ))}
               </select>
               <p className="text-xs text-muted-foreground">
-                The time follows this zone, including daylight saving changes.
-              </p>
+                {l10n("local.the_time_follows_this_zone_including_daylight_ea2bf434")}</p>
             </div>
           </div>
         )}
@@ -381,25 +380,22 @@ export function RoutineTriggerWizard({
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              Each scheduled run creates a task for the routine’s assigned
-              agent. Any existing webhook triggers will continue to work.
-            </p>
+              {l10n("local.each_scheduled_run_creates_a_task_for_the_rou_ee4ebabb")}</p>
           </div>
         )}
         {draft.step === 0 && draft.kind === "webhook" && (
           <fieldset className="space-y-2">
             <legend className="mb-2 text-sm font-medium">
-              What’s sending the webhook?
-            </legend>
+              {l10n("local.what_s_sending_the_webhook_850bfd5b")}</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {(
                 [
                   {
                     sender: "custom",
-                    label: "Another app or script",
+                    label: l10n("local.another_app_or_script_33687214"),
                     Icon: Globe,
                   },
-                  { sender: "github", label: "GitHub", Icon: GitBranch },
+                  { sender: "github", label: l10n("local.github_f911e414"), Icon: GitBranch },
                 ] as const
               ).map(({ sender, label, Icon }) => (
                 <label
@@ -430,8 +426,7 @@ export function RoutineTriggerWizard({
         )}
         {draft.kind === "webhook" && draft.step === 0 && (
           <p className="text-sm text-muted-foreground">
-            Public services need a publicly reachable HTTPS webhook URL.
-          </p>
+            {l10n("local.public_services_need_a_publicly_reachable_htt_090e88c6")}</p>
         )}
         {!schedule && draft.step === 1 && (
           <div className="space-y-5">
@@ -448,35 +443,29 @@ export function RoutineTriggerWizard({
               />
             )}
             <CopyField
-              label={github ? "Payload URL" : "Webhook URL"}
+              label={github ? l10n("local.payload_url_1de5cdcf") : l10n("local.webhook_url_84805a75")}
               value={webhookUrl}
             />
             {!github && draft.signingMode !== "bearer" && (
               <p className="text-sm text-muted-foreground">
-                Paste this key into your app’s signing secret field.
-                {draft.signingMode !== "fireflies_hmac" && <>
-                  {" "}If your app uses custom headers instead, set Authorization to Bearer followed
-                  by a space and this key.
-                </>}
+                {l10n("local.paste_this_key_into_your_app_s_signing_secret_3dd90f15")}{draft.signingMode !== "fireflies_hmac" && <>
+                  {" "}{l10n("local.if_your_app_uses_custom_headers_instead_set_a_4d7327f2")}</>}
               </p>
             )}
             {webhookSecret ? (
               <CopyField
-                label={github ? "Secret" : draft.signingMode === "bearer" ? "Authorization header value" : "Secret key"}
+                label={github ? l10n("local.secret_7e32a729") : draft.signingMode === "bearer" ? l10n("local.authorization_header_value_39a91b3d") : l10n("local.secret_key_f47a99eb")}
                 value={!github && draft.signingMode === "bearer" ? `Bearer ${webhookSecret}` : webhookSecret}
               />
             ) : (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  The key is hidden after leaving setup. If you haven’t saved it
-                  in your app, generate a replacement.
-                </p>
+                  {l10n("local.the_key_is_hidden_after_leaving_setup_if_you_8e6e20d1")}</p>
                 <Button
                   variant="outline"
                   onClick={() => void perform(() => onRotateKey?.())}
                 >
-                  Generate new key
-                </Button>
+                  {l10n("local.generate_new_key_3a14b7bb")}</Button>
               </div>
             )}
           </div>
@@ -484,24 +473,21 @@ export function RoutineTriggerWizard({
         {!schedule && draft.step === 2 && (
           <div className="space-y-5">
             <div className="space-y-1 rounded-md border border-border p-4">
-              <p className="text-sm font-medium">Connection test only</p>
+              <p className="text-sm font-medium">{l10n("local.connection_test_only_fd7045f1")}</p>
               <p className="text-sm text-muted-foreground">
-                Events received during setup won’t start the routine or create
-                tasks.
-              </p>
+                {l10n("local.events_received_during_setup_won_t_start_the_ca8e4cd4")}</p>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium">
-                Send an event from {github ? "GitHub" : "your app"}
+                {l10n("local.send_an_event_from_af0f9889")}{" "}{github ? l10n("local.github_f911e414") : l10n("local.your_app_4696a335")}
               </p>
               <p className="text-sm text-muted-foreground">
                 {github
-                  ? "Open this webhook in your repository settings. Under Recent Deliveries, choose Redeliver on an event."
-                  : "Look for “Send test” in your app’s webhook settings. If it doesn’t have one, do the action that should trigger the webhook—for example, complete a deployment."}
+                  ? l10n("local.open_this_webhook_in_your_repository_settings_e2c845a5")
+                  : l10n("local.look_for_send_test_in_your_app_s_webhook_sett_643e56b8")}
               </p>
               <p className="text-xs text-muted-foreground">
-                Keep this page open to see the test result.
-              </p>
+                {l10n("local.keep_this_page_open_to_see_the_test_result_f5c74154")}</p>
             </div>
             <div
               role="status"
@@ -517,32 +503,29 @@ export function RoutineTriggerWizard({
               <div className="space-y-1">
                 <p className="text-sm font-medium">
                   {checkResult === "received"
-                    ? "Test event received · Connection working"
+                    ? l10n("local.test_event_received_connection_working_b57a6eee")
                     : checkResult === "rejected"
-                      ? "Event arrived, but the key was rejected"
+                      ? l10n("local.event_arrived_but_the_key_was_rejected_8ac7b7ed")
                       : checkResult === "no_event"
-                        ? "No event received yet"
-                        : "Waiting for an event from your app…"}
+                        ? l10n("local.no_event_received_yet_4d6fd6a8")
+                        : l10n("local.waiting_for_an_event_from_your_app_6da2e8bc")}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {checkResult === "received"
-                    ? "Authentication passed. No routine run or task was created."
+                    ? l10n("local.authentication_passed_no_routine_run_or_task_407050a5")
                     : checkResult === "rejected"
-                      ? "Go back to Connect your app, update the key in your sending app, and resend. No task was created."
-                      : "Waiting to verify delivery and authentication. The routine is not running."}
+                      ? l10n("local.go_back_to_connect_your_app_update_the_key_in_d5b974d7")
+                      : l10n("local.waiting_to_verify_delivery_and_authentication_f29bb26e")}
                 </p>
               </div>
             </div>
             <details>
               <summary className="cursor-pointer text-xs text-muted-foreground">
-                Troubleshoot delivery
-              </summary>
+                {l10n("local.troubleshoot_delivery_f854de03")}</summary>
               <div className="space-y-3 pt-3">
                 <p className="text-xs text-muted-foreground">
-                  Check that the webhook is enabled in your sending app and that
-                  its URL matches. Scripts must send POST with a JSON body.
-                </p>
-                <CopyField label="Webhook URL" value={webhookUrl} />
+                  {l10n("local.check_that_the_webhook_is_enabled_in_your_sen_a4e5ad3d")}</p>
+                <CopyField label={l10n("local.webhook_url_84805a75")} value={webhookUrl} />
               </div>
             </details>
           </div>
@@ -550,15 +533,13 @@ export function RoutineTriggerWizard({
         {!schedule && draft.step === 2 && (
           <p className="text-xs text-muted-foreground">
             {routineActive
-              ? "Finish setup to enable this webhook. Future events will start the routine; this test event won’t be replayed."
-              : "Finish setup to save this webhook. The routine is paused; enable its automatic triggers when you’re ready. This test event won’t be replayed."}
+              ? l10n("local.finish_setup_to_enable_this_webhook_future_ev_391fff2b")
+              : l10n("local.finish_setup_to_save_this_webhook_the_routine_7580f066")}
           </p>
         )}
         {schedule && draft.step === 2 && !routineActive && (
           <p className="text-sm text-muted-foreground">
-            The routine is paused. Enable its automatic triggers when you’re
-            ready to use this schedule.
-          </p>
+            {l10n("local.the_routine_is_paused_enable_its_automatic_tr_28f90721")}</p>
         )}
         {saveError && (
           <p role="alert" className="text-sm text-destructive">
@@ -569,25 +550,22 @@ export function RoutineTriggerWizard({
           {draft.step > 0 && goBack}
           {draft.step === 0 ? (
             <Button disabled={draft.kind === "choose"} onClick={advance}>
-              Continue
-            </Button>
+              {l10n("local.continue_31fbef16")}</Button>
           ) : schedule ? (
             draft.step === 1 ? (
               <Button disabled={!draft.time} onClick={advance}>
-                Review schedule
-              </Button>
+                {l10n("local.review_schedule_98c00356")}</Button>
             ) : (
               <Button onClick={() => void perform(() => onFinish(draft))}>
-                Add schedule
-              </Button>
+                {l10n("local.add_schedule_79218735")}</Button>
             )
           ) : draft.step === 1 ? (
-            <Button onClick={advance}>Check connection</Button>
+            <Button onClick={advance}>{l10n("local.check_connection_be5dff52")}</Button>
           ) : (
             <Button onClick={() => void perform(() => onFinish(draft))}>
               {checkResult === "received"
-                ? "Finish setup"
-                : "Finish without checking"}
+                ? l10n("local.finish_setup_bc01ae77")
+                : l10n("local.finish_without_checking_ccfc47b4")}
             </Button>
           )}
         </SetupWizardFooter>

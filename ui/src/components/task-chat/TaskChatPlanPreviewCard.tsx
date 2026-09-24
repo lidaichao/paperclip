@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { IssueDocument } from "@paperclipai/shared";
 import { Lightbulb, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,7 @@ export function planPreviewContent(markdown: string) {
   const headingIndex = lines.findIndex((line) => /^#\s+/.test(line));
   const title = headingIndex >= 0
     ? lines[headingIndex]!.replace(/^#\s+/, "").trim()
-    : "Plan";
+    : l10n("local.plan_fa8ed0bd");
   const preview = lines
     .filter((line, index) => index !== headingIndex && !/^(```|~~~|---+$|\*\*\*+$|___+$)/.test(line))
     .map((line) => line
@@ -54,7 +55,7 @@ export interface TaskChatPlanPreviewCardProps {
 function livePlanContent(activity: TaskChatProviderActivityItem) {
   const title = activity.title.trim() && activity.title.trim().toLowerCase() !== "plan"
     ? activity.title.trim()
-    : "Plan";
+    : l10n("local.plan_fa8ed0bd");
   const preview = activity.steps
     .map((step) => step.label.trim())
     .filter(Boolean)
@@ -86,12 +87,12 @@ export function TaskChatPlanPreviewCard({
   const content = source.kind === "saved" && source.document
     ? planPreviewContent(source.document.body)
     : source.kind === "saved"
-      ? { title: source.fallbackTitle?.trim() || "Plan", preview: [] as string[] }
+      ? { title: source.fallbackTitle?.trim() || l10n("local.plan_fa8ed0bd"), preview: [] as string[] }
       : livePlanContent(source.activity);
   const live = source.kind === "live";
   const headerDetail = revision == null
     ? null
-    : `rev ${revision}`;
+    : l10n("local.rev_value_abd632eb", {v0: (revision)});
   const body = (
     <>
       <div className="flex items-center gap-2 border-b border-border/70 px-3 py-2.5 text-sm text-muted-foreground">
@@ -100,7 +101,7 @@ export function TaskChatPlanPreviewCard({
           className={cn("h-4 w-4 shrink-0", live && "text-(--status-agent-running)")}
         />
         <span className={cn("font-medium", live && "shimmer-text shimmer-text-muted")} data-testid={live ? "task-chat-plan-streaming-status" : undefined}>
-          {live ? "Writing plan" : "Plan"}
+          {live ? l10n("local.writing_plan_64c92e65") : l10n("local.plan_fa8ed0bd")}
         </span>
         {headerDetail ? (
           <span
@@ -129,7 +130,7 @@ export function TaskChatPlanPreviewCard({
           </ul>
         ) : (
           <p className="mt-1 text-sm text-muted-foreground">
-            {live ? "Waiting for the first plan step…" : "Open the synchronized plan to review it."}
+            {live ? l10n("local.waiting_for_the_first_plan_step_e4fab791") : l10n("local.open_the_synchronized_plan_to_review_it_57c679e3")}
           </p>
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-b from-transparent to-card/95" />
@@ -147,7 +148,7 @@ export function TaskChatPlanPreviewCard({
       <a
         href={href}
         data-testid={testId}
-        aria-label={ariaLabel ?? `Open Plan${revision == null ? "" : ` revision ${revision}`}`}
+        aria-label={ariaLabel ?? l10n("local.open_planvalue_a1444a43", {v0: (revision == null ? "" : ` revision ${revision}`)})}
         className={sharedClassName}
       >
         {body}
@@ -157,7 +158,7 @@ export function TaskChatPlanPreviewCard({
 
   return (
     <section
-      aria-label={ariaLabel ?? "Streaming Plan preview"}
+      aria-label={ariaLabel ?? l10n("local.streaming_plan_preview_7a03f9c3")}
       data-testid={testId}
       className={sharedClassName}
     >

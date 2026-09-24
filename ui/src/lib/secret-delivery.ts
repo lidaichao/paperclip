@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { SecretAccessEvent } from "@paperclipai/shared";
 
 /**
@@ -32,11 +33,11 @@ export function deliveryModeForConfigPath(configPath: string | null | undefined)
 export function deliveryModeLabel(mode: SecretDeliveryMode): string {
   switch (mode) {
     case "env":
-      return "Env var";
+      return l10n("local.env_var_a806a90c");
     case "api":
-      return "API access";
+      return l10n("local.api_access_923fd434");
     default:
-      return "Config";
+      return l10n("local.config_87e89abb");
   }
 }
 
@@ -44,11 +45,11 @@ export function deliveryModeLabel(mode: SecretDeliveryMode): string {
 export function deliveryModeDescription(mode: SecretDeliveryMode): string {
   switch (mode) {
     case "env":
-      return "Injected as an environment variable at run start.";
+      return l10n("local.injected_as_an_environment_variable_at_run_st_4ab70ee1");
     case "api":
-      return "Fetched on demand via the run-bound agent API. Never written to the environment.";
+      return l10n("local.fetched_on_demand_via_the_run_bound_agent_api_f737f219");
     default:
-      return "Provided through adapter configuration.";
+      return l10n("local.provided_through_adapter_configuration_e08309ef");
   }
 }
 
@@ -72,11 +73,11 @@ export function aliasFromConfigPath(configPath: string | null | undefined): stri
 export function consumerTypeLabel(consumerType: SecretAccessEvent["consumerType"]): string {
   switch (consumerType) {
     case "agent_api":
-      return "Agent API";
+      return l10n("local.agent_api_bc2da491");
     case "plugin_worker":
-      return "Plugin worker";
+      return l10n("local.plugin_worker_032738c7");
     case "tool_connection":
-      return "Tool connection";
+      return l10n("local.tool_connection_84c49dc9");
     default:
       return consumerType.charAt(0).toUpperCase() + consumerType.slice(1);
   }

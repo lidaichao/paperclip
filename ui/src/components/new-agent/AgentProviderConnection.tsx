@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { healthApi } from "@/api/health";
 import { aiConnectionsApi } from "@/api/ai-connections";
 import { useLocalAiLogin } from "../ai-connections/useLocalAiLogin";
@@ -193,7 +194,7 @@ export function AgentProviderConnection({
       if (connected) onConnected(connection);
       else
         setError(
-          "The provider did not respond. Check the connection and try again.",
+          l10n("local.the_provider_did_not_respond_check_the_connec_524f25a6"),
         );
     } catch (cause) {
       if (run !== epoch.current) return;
@@ -218,7 +219,7 @@ export function AgentProviderConnection({
   return (
     <div className="min-w-0 max-w-full">
       <ModelSourceTiles
-        label="Connect your model provider"
+        label={l10n("local.connect_your_model_provider_763f7fb6")}
         sources={[
           {
             id: adapterType,
@@ -245,8 +246,8 @@ export function AgentProviderConnection({
       )}
       {!opened && savedKeys.options.length > 0 && (
         <p className="mt-2 text-sm text-muted-foreground">
-          {savedKeys.options.length} saved API{" "}
-          {savedKeys.options.length === 1 ? "key available" : "keys available"}.
+          {savedKeys.options.length} {l10n("local.saved_api_b9bbaf3b")}{" "}
+          {savedKeys.options.length === 1 ? l10n("local.key_available_39a65ba3") : l10n("local.keys_available_2f106105")}.
         </p>
       )}
       {method === "subscription" &&
@@ -290,14 +291,14 @@ export function AgentProviderConnection({
                 />
                 {!selectedKey && (
                   <OnboardingCardField
-                    label="API key"
+                    label={l10n("local.api_key_16f0ee47")}
                     masked
                     autoFocus
                     value={apiKey}
                     placeholder={
                       storedConnection
-                        ? "Key entered. Retry the connection."
-                        : "Enter API key here"
+                        ? l10n("local.key_entered_retry_the_connection_43912a0d")
+                        : l10n("local.enter_api_key_here_c80c3ac9")
                     }
                     onChange={(value) => {
                       setSelectedKeyId("");
@@ -331,7 +332,7 @@ export function AgentProviderConnection({
                 }}
                 onConnected={(sessionId) => {
                   if (managedAccount) {
-                    if (!sessionId) { setError("The login did not return a saved connection. Try again."); return; }
+                    if (!sessionId) { setError(l10n("local.the_login_did_not_return_a_saved_connection_t_35407fca")); return; }
                     const run = epoch.current;
                     setLoginPhase("connecting");
                     void aiConnectionsApi.loginResult(companyId, sessionId).then((result) => {
@@ -339,7 +340,7 @@ export function AgentProviderConnection({
                     }).catch(() => {
                       if (run !== epoch.current) return;
                       setLoginPhase("ready");
-                      setError("Could not retrieve the saved connection. Go back and retry.");
+                      setError(l10n("local.could_not_retrieve_the_saved_connection_go_ba_f016b92c"));
                     });
                     return;
                   }
@@ -353,10 +354,10 @@ export function AgentProviderConnection({
             ) : (
               <p className="text-sm text-muted-foreground">
                 {storedLogin.data
-                  ? "Use your saved Claude subscription for this agent."
+                  ? l10n("local.use_your_saved_claude_subscription_for_this_a_bb2c1106")
                   : canLogin
-                    ? "Use the existing provider connection for this environment."
-                    : "This environment does not support browser sign-in. Choose a sign-in environment or connect with an API key."}
+                    ? l10n("local.use_the_existing_provider_connection_for_this_c910c4a8")
+                    : l10n("local.this_environment_does_not_support_browser_sig_b62e1e2f")}
               </p>
             )}
           </div>
@@ -364,8 +365,7 @@ export function AgentProviderConnection({
       </motion.div>
       {method === "subscription" && storedLogin.isError && (
         <p role="alert" className="mt-4 text-sm text-destructive">
-          Could not check your saved Claude subscription. Try again.
-        </p>
+          {l10n("local.could_not_check_your_saved_claude_subscriptio_c8c6c2be")}</p>
       )}
       {error && (
         <p role="alert" className="mt-4 text-sm text-destructive">
@@ -373,7 +373,7 @@ export function AgentProviderConnection({
         </p>
       )}
       {localEnvironment && health.isError && (
-        <p role="alert" className="mt-4 text-sm text-destructive">Could not prepare sign-in. Reload this page to try again.</p>
+        <p role="alert" className="mt-4 text-sm text-destructive">{l10n("local.could_not_prepare_sign_in_reload_this_page_to_f89460cd")}</p>
       )}
       <FooterNav
         onBack={() => {
@@ -382,17 +382,17 @@ export function AgentProviderConnection({
         }}
         primaryLabel={
           opened && needsLogin
-            ? loginPhase === "waiting" ? "Waiting for code"
-              : loginPhase === "connecting" ? "Connecting"
-              : `Sign in to ${provider}`
+            ? loginPhase === "waiting" ? l10n("local.waiting_for_code_f22b705c")
+              : loginPhase === "connecting" ? l10n("local.connecting_d403c686")
+              : l10n("local.sign_in_to_value_640129b7", {v0: (provider)})
             : busy
-            ? "Connecting"
+            ? l10n("local.connecting_d403c686")
             : method === "subscription" &&
                 (storedLogin.data || savedSubscription)
-              ? "Use saved subscription"
+              ? l10n("local.use_saved_subscription_5adae315")
               : method === "api" && selectedKey
-                ? "Use saved API key"
-                : "Connect"
+                ? l10n("local.use_saved_api_key_b2c9e5ba")
+                : l10n("local.connect_1a2303ed")
         }
         primaryDisabled={
           managedAccount?.disabled ||

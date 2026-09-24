@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import type {
   Issue,
   IssuePriority,
@@ -42,17 +43,17 @@ export function summarizeRoutineSchedule(triggers: RoutineTrigger[]): RoutineSch
     const webhooks = triggers.filter((trigger) => trigger.kind === "webhook" && trigger.enabled);
     if (webhooks.length > 0) {
       return {
-        label: `${webhooks.length} active webhook${webhooks.length === 1 ? "" : "s"}`,
+        label: l10n("local.value_active_webhookvalue_21eb6198", {v0: (webhooks.length), v1: (englishPluralSuffix(webhooks.length === 1 ? "" : "s"))}),
         detail: "Runs on incoming requests",
         nextRunAt: null,
       };
     }
-    return { label: "No active schedule", detail: "Manual runs only", nextRunAt: null };
+    return { label: l10n("local.no_active_schedule_4624e546"), detail: "Manual runs only", nextRunAt: null };
   }
 
   const first = schedules[0]!;
   return {
-    label: schedules.length === 1 ? "1 active schedule" : `${schedules.length} active schedules`,
+    label: schedules.length === 1 ? l10n("local.1_active_schedule_fb3df617") : l10n("local.value_active_schedules_59317aeb", {v0: (schedules.length)}),
     detail: first.cronExpression
       ? `${first.cronExpression}${first.timezone ? ` · ${first.timezone}` : ""}`
       : first.label ?? "Scheduled trigger",
@@ -162,32 +163,32 @@ export function RoutineOverview() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <OverviewFact
           icon={Repeat}
-          label="State"
+          label={l10n("local.state_a3b50c47")}
           value={<StatusBadge status={automationState} />}
-          detail={hasLiveRun ? "A run is active now" : "No active run"}
+          detail={hasLiveRun ? l10n("local.a_run_is_active_now_6b03c610") : l10n("local.no_active_run_87e6c43b")}
         />
         <OverviewFact
           icon={CalendarClock}
-          label="Triggers"
+          label={l10n("local.triggers_e62f2148")}
           value={schedule.label}
           detail={<span className="font-mono">{schedule.detail}</span>}
         />
         <OverviewFact
           icon={Clock3}
-          label="Next run"
+          label={l10n("local.next_run_b3c0ab96")}
           value={schedule.nextRunAt ? formatRoutineTimestamp(schedule.nextRunAt) : hasWebhook ? "On webhook delivery" : "Not scheduled"}
-          detail={schedule.nextRunAt ? "Scheduled" : hasWebhook ? "Waiting for an incoming request" : "Add or enable a schedule"}
+          detail={schedule.nextRunAt ? l10n("local.scheduled_4724f344") : hasWebhook ? l10n("local.waiting_for_an_incoming_request_042e1123") : l10n("local.add_or_enable_a_schedule_dfefacb8")}
         />
         <OverviewFact
           icon={Play}
-          label="Last run"
+          label={l10n("local.last_run_512a4821")}
           value={lastRun ? <StatusBadge status={lastRun.status} /> : "No runs yet"}
-          detail={lastRun ? formatRoutineTimestamp(lastRun.triggeredAt) : "Run manually or wait for a trigger"}
+          detail={lastRun ? formatRoutineTimestamp(lastRun.triggeredAt) : l10n("local.run_manually_or_wait_for_a_trigger_0977c040")}
         />
       </div>
 
       <section className="flex flex-col gap-2" aria-labelledby="routine-agent-heading">
-        <h2 id="routine-agent-heading" className="text-sm font-semibold">Default agent</h2>
+        <h2 id="routine-agent-heading" className="text-sm font-semibold">{l10n("local.default_agent_94da52ec")}</h2>
         {currentAssignee ? (
           <Link
             to={`/agents/${currentAssignee.urlKey ?? currentAssignee.id}`}
@@ -197,32 +198,31 @@ export function RoutineOverview() {
             {currentAssignee.name}
           </Link>
         ) : (
-          <p className="text-sm text-muted-foreground">No default agent. Automatic triggers remain paused.</p>
+          <p className="text-sm text-muted-foreground">{l10n("local.no_default_agent_automatic_triggers_remain_pa_d047f6c7")}</p>
         )}
       </section>
 
       <section className="flex flex-col gap-2" aria-labelledby="routine-description-heading">
-        <h2 id="routine-description-heading" className="text-sm font-semibold">Description</h2>
+        <h2 id="routine-description-heading" className="text-sm font-semibold">{l10n("local.description_526e0087")}</h2>
         {routine.description?.trim() ? (
           <MarkdownBody className="text-sm text-foreground" linkIssueReferences>
             {routine.description}
           </MarkdownBody>
         ) : (
-          <p className="text-sm text-muted-foreground">No description yet.</p>
+          <p className="text-sm text-muted-foreground">{l10n("local.no_description_yet_6d962a3d")}</p>
         )}
       </section>
 
       <section className="flex flex-col gap-2" aria-labelledby="routine-recent-runs-heading">
         <div className="flex items-center justify-between gap-3">
-          <h2 id="routine-recent-runs-heading" className="text-sm font-semibold">Recent runs</h2>
+          <h2 id="routine-recent-runs-heading" className="text-sm font-semibold">{l10n("local.recent_runs_237112b8")}</h2>
           <Button variant="ghost" size="sm" asChild>
-            <Link to={routineDetailHref(routine.id, "runs")}>View all runs</Link>
+            <Link to={routineDetailHref(routine.id, "runs")}>{l10n("local.view_all_runs_346de5a0")}</Link>
           </Button>
         </div>
         {recentRuns.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No runs yet. Run the routine now or wait for its schedule.
-          </p>
+            {l10n("local.no_runs_yet_run_the_routine_now_or_wait_for_i_1d0eb00e")}</p>
         ) : (
           <div className="flex flex-col gap-0.5">
             {recentRuns.map((run) => run.linkedIssue ? (
@@ -241,14 +241,14 @@ export function RoutineOverview() {
             ) : (
               <div key={run.id} className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-2 text-sm">
                 <StatusBadge status={run.status} />
-                <span className="min-w-0 flex-1 truncate">{run.trigger?.label ?? "Routine run"}</span>
+                <span className="min-w-0 flex-1 truncate">{run.trigger?.label ?? l10n("local.routine_run_dda37a7a")}</span>
                 <span className="shrink-0 font-mono text-xs text-muted-foreground">{formatRoutineTimestamp(run.triggeredAt)}</span>
               </div>
             ))}
           </div>
         )}
         <Button variant="link" size="sm" className="w-fit px-0" asChild>
-          <Link to={routineDetailHref(routine.id, "activity")}>View routine activity</Link>
+          <Link to={routineDetailHref(routine.id, "activity")}>{l10n("local.view_routine_activity_cd1bd79b")}</Link>
         </Button>
       </section>
     </div>

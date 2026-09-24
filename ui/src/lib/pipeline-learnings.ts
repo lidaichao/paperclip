@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { PipelineCompanyCaseEvent } from "../api/pipelines";
 import { formatShortDate } from "./utils";
 
@@ -62,9 +63,9 @@ export function formatLearningEvent(event: PipelineCompanyCaseEvent): LearningEv
     const decision = asString(payload.decision);
     const toStageName =
       asString(event.toStage?.name) ?? payloadText(event, "toStageName", "stageName", "targetStageName");
-    const stageCopy = toStageName ? ` moving to ${toStageName}` : "";
+    const stageCopy = toStageName ? (" " + l10n("local.moving_to_value_218ee732", {v0: (toStageName)})) : "";
     const note = payloadText(event, "reason", "note");
-    const noteCopy = note ? ` - note: ${note}` : "";
+    const noteCopy = note ? (" " + l10n("local._note_value_4be06247", {v0: (note)})) : "";
     return {
       kind: "review",
       sentence: `${actor} ${reviewVerb(decision)} '${title}'${stageCopy}${noteCopy}.`,
@@ -75,10 +76,10 @@ export function formatLearningEvent(event: PipelineCompanyCaseEvent): LearningEv
     const fromStageName = asString(event.fromStage?.name) ?? payloadText(event, "fromStageName");
     const toStageName =
       asString(event.toStage?.name) ?? payloadText(event, "toStageName", "stageName", "targetStageName");
-    const fromCopy = fromStageName ? ` from ${fromStageName}` : "";
-    const toCopy = toStageName ? ` to ${toStageName}` : "";
+    const fromCopy = fromStageName ? (" " + l10n("local.from_value_09ac5ff6", {v0: (fromStageName)})) : "";
+    const toCopy = toStageName ? (" " + l10n("local.to_value_bc283e29", {v0: (toStageName)})) : "";
     const reason = payloadText(event, "reason", "note");
-    const reasonCopy = reason ? ` - reason: ${reason}` : "";
+    const reasonCopy = reason ? (" " + l10n("local._reason_value_ff8c539d", {v0: (reason)})) : "";
     return {
       kind: "forced_move",
       sentence: `'${title}' was moved by hand${fromCopy}${toCopy}${reasonCopy}.`,
@@ -99,13 +100,13 @@ export function learningDayKey(value: string | Date) {
 
 export function learningDayLabel(value: string | Date) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unknown";
+  if (Number.isNaN(date.getTime())) return l10n("local.unknown_b764cdc0");
   const today = new Date();
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
   const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
   const diffDays = Math.round((startOfToday - startOfDay) / 86_400_000);
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
+  if (diffDays === 0) return l10n("local.today_2b065c7c");
+  if (diffDays === 1) return l10n("local.yesterday_56618125");
   return formatShortDate(date);
 }
 

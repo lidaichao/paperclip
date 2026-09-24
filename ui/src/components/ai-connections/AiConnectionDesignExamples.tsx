@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useState } from "react";
 import { AiConnectionPicker } from "./AiConnectionPicker";
 import { LocalProviderLoginInstructions, ProviderApiKeyCard } from "@/components/AdapterLoginChrome";
@@ -34,12 +35,8 @@ export function AiConnectionDesignExamples() {
   return (
     <div className="flex max-w-2xl flex-col gap-5">
       <p className="text-sm text-muted-foreground">
-        Shared AI connection identity, account selection, and existing
-        authentication chrome. The full interactive state matrix lives in
-        Storybook under AI Connections / Review. Example controls below do not
-        connect accounts.
-      </p>
-      <p className="text-sm text-muted-foreground">Provider lists and account management use Browse and AppDetail from the Connectors interface. The picker below uses ConnectionChoiceList, also used by ConnectionSetupFlow.</p>
+        {l10n("local.shared_ai_connection_identity_account_selecti_9b2eec40")}</p>
+      <p className="text-sm text-muted-foreground">{l10n("local.provider_lists_and_account_management_use_bro_14339f7b")}</p>
       <AiConnectionPicker
         requirement={requirement}
         connections={[account]}
@@ -57,7 +54,7 @@ export function AiConnectionDesignExamples() {
         disabled
         onChange={() => {}}
         onSubmit={() => {}}
-        placeholder="Enter API key here"
+        placeholder={l10n("local.enter_api_key_here_c80c3ac9")}
       />
       <LocalProviderLoginInstructions
         adapterType="claude_local"

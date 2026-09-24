@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -71,7 +72,7 @@ function humanStatus(status: string | null | undefined): string {
 function issueLabel(ref: DecisionIssueRef | null, fallbackId: string): string {
   if (ref?.identifier) return ref.identifier;
   if (ref?.title) return ref.title;
-  return `issue ${fallbackId.slice(0, 8)}`;
+  return l10n("local.issue_value_47bb61ef", {v0: (fallbackId.slice(0, 8))});
 }
 
 function pluralize(count: number, singular: string): string {
@@ -97,26 +98,26 @@ function effectSummary(
   const target = issueLabel(resolve(effect.targetIssueId), effect.targetIssueId);
   switch (effect.type) {
     case "comment_on_issue":
-      return `Comment on ${target}`;
+      return l10n("local.comment_on_value_14b7a9b0", {v0: (target)});
     case "create_issue": {
       const parent = effect.draft.parentId
         ? issueLabel(resolve(effect.draft.parentId), effect.draft.parentId)
         : target;
-      return `Create issue “${effect.draft.title}” under ${parent}`;
+      return l10n("local.create_issue_value_under_value_e9cf48d4", {v0: (effect.draft.title), v1: (parent)});
     }
     case "update_issue_status":
-      return `Set ${target} to ${humanStatus(effect.status)}`;
+      return l10n("local.set_value_to_value_1e90373c", {v0: (target), v1: (humanStatus(effect.status))});
     case "assign_issue":
-      return `Reassign ${target}`;
+      return l10n("local.reassign_value_662f73b7", {v0: (target)});
     case "resolve_blocker":
-      return `Unblock ${target} — remove ${pluralize(effect.removeBlockedByIssueIds.length, "blocker")}`;
+      return l10n("local.unblock_value_remove_value_8bcff809", {v0: (target), v1: (pluralize(effect.removeBlockedByIssueIds.length, "blocker"))});
     case "cancel_issue_tree": {
       const snapshot = snapshots[effect.targetIssueId];
       const descendantCount = snapshot?.descendantCount ?? snapshot?.descendantIds?.length ?? snapshot?.childCount ?? 0;
-      return `Cancel ${target} and its sub-tree (${pluralize(descendantCount + 1, "issue")})`;
+      return l10n("local.cancel_value_and_its_sub_tree_value_65e7bb96", {v0: (target), v1: (pluralize(descendantCount + 1, "issue"))});
     }
     default:
-      return "Apply effect";
+      return l10n("local.apply_effect_4b92049a");
   }
 }
 
@@ -271,18 +272,18 @@ export function DecisionCard({
             : "failed";
 
   const badgeLabel = open
-    ? "Pending"
+    ? l10n("local.pending_331551b0")
     : decision.status === "expired"
-      ? "Expired"
+      ? l10n("local.expired_424a2551")
       : decision.status === "cancelled"
-        ? "Cancelled"
+        ? l10n("local.cancelled_d353a99e")
         : dismissed
-          ? "Dismissed"
+          ? l10n("local.dismissed_9d747277")
           : decision.executionStatus === "succeeded"
-            ? "Decided"
+            ? l10n("local.decided_30ba702e")
             : decision.executionStatus === "partial"
-              ? "Partial"
-              : "Failed";
+              ? l10n("local.partial_a4d50fb8")
+              : l10n("local.failed_031a8f0f");
 
   const requiredUnmet = (decision.inputs ?? []).some(
     (field) => field.required && !(inputValues[field.id] ?? "").trim(),
@@ -333,8 +334,7 @@ export function DecisionCard({
         <div className="flex shrink-0 items-center gap-1.5">
           {open && hasCancelTree && (
             <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-(length:--text-micro) font-semibold uppercase tracking-wide", BADGE.destructive)}>
-              <ShieldAlert className="h-3 w-3" aria-hidden /> Destructive
-            </span>
+              <ShieldAlert className="h-3 w-3" aria-hidden /> {l10n("local.destructive_c3e58a73")}</span>
           )}
           <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-(length:--text-micro) font-semibold uppercase tracking-wide", BADGE[tone])}>
             {badgeLabel}
@@ -344,10 +344,10 @@ export function DecisionCard({
 
       {/* Provenance */}
       <p className="mt-1 text-xs text-muted-foreground">
-        Proposed by <span className="font-medium text-foreground">{originAgentName ?? "an agent"}</span>
+        {l10n("local.proposed_by_3b48f0b6")}{" "}<span className="font-medium text-foreground">{originAgentName ?? l10n("local.an_agent_647936ec")}</span>
         {originIssue && (
           <>
-            {" "}while running{" "}
+            {" "}{l10n("local.while_running_59c39d72")}{" "}
             <a href={originIssue.href} className="font-medium text-primary underline-offset-2 hover:underline">
               {issueLabel(originIssue, originIssue.id)}
             </a>
@@ -355,7 +355,7 @@ export function DecisionCard({
         )}
         {targetRefs.length > 0 && (
           <>
-            {" · applies to "}
+            {(" " + l10n("local._applies_to_53171ce1") + " ")}
             {targetRefs.map(({ id, ref }, index) => (
               <span key={id}>
                 {index > 0 && ", "}
@@ -373,7 +373,7 @@ export function DecisionCard({
         {runHref && (
           <>
             {" · "}
-            <a href={runHref} className="hover:underline">view run</a>
+            <a href={runHref} className="hover:underline">{l10n("local.view_run_252314e6")}</a>
           </>
         )}
       </p>
@@ -390,8 +390,7 @@ export function DecisionCard({
         <div className="mt-3 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2">
           <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-200">
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-            {pluralize(staleTargetIds.length, "target")} changed since this was proposed
-          </div>
+            {pluralize(staleTargetIds.length, "target")} {l10n("local.changed_since_this_was_proposed_0ab996c3")}</div>
           <ul className="mt-1.5 space-y-1 text-xs text-amber-900/90 dark:text-amber-100/90">
             {staleTargetIds.map((id) => {
               const ref = resolveIssue(id);
@@ -401,14 +400,13 @@ export function DecisionCard({
                   <span className="font-medium">{issueLabel(ref, id)}:</span>
                   <span className="tabular-nums">{humanStatus(from?.status)}</span>
                   <ArrowRight className="h-3 w-3" aria-hidden />
-                  <span className="tabular-nums">{humanStatus(ref?.status) || "changed"}</span>
+                  <span className="tabular-nums">{humanStatus(ref?.status) || l10n("local.changed_d67e2e94")}</span>
                 </li>
               );
             })}
           </ul>
           <p className="mt-1.5 text-xs text-amber-800/80 dark:text-amber-200/80">
-            Options that require an unchanged target are disabled below.
-          </p>
+            {l10n("local.options_that_require_an_unchanged_target_are_d48689f3")}</p>
         </div>
       )}
 
@@ -467,8 +465,7 @@ export function DecisionCard({
                     </span>
                     {blockedStale && (
                       <span className="shrink-0 rounded-full border border-amber-500/60 bg-amber-500/10 px-2 py-0.5 text-(length:--text-micro) font-medium text-amber-800 dark:text-amber-200">
-                        Blocked · stale
-                      </span>
+                        {l10n("local.blocked_stale_eee22248")}</span>
                     )}
                   </div>
                   {option.description && (
@@ -496,13 +493,11 @@ export function DecisionCard({
                 {confirming && cancelTree && (
                   <div className="rounded-lg border border-rose-500/50 bg-rose-500/5 p-3">
                     <div className="flex items-center gap-2 text-sm font-semibold text-rose-700 dark:text-rose-300">
-                      <Ban className="h-4 w-4" aria-hidden /> This cancels an entire issue tree
-                    </div>
+                      <Ban className="h-4 w-4" aria-hidden /> {l10n("local.this_cancels_an_entire_issue_tree_96c6f9ea")}</div>
                     {previewRows && previewRows.length > 0 ? (
                       <>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {pluralize(previewRows.length, "issue")} will be cancelled:
-                        </p>
+                          {pluralize(previewRows.length, "issue")} {l10n("local.will_be_cancelled_f707853f")}</p>
                         <ul className="mt-1 max-h-40 space-y-0.5 overflow-auto text-xs">
                           {previewRows.map((row) => (
                             <li key={row.id} className="flex items-center gap-1.5">
@@ -517,17 +512,15 @@ export function DecisionCard({
                       </>
                     ) : (
                       <p className="mt-1 text-xs text-muted-foreground">
-                        This issue and every sub-issue beneath it will be cancelled.
-                      </p>
+                        {l10n("local.this_issue_and_every_sub_issue_beneath_it_wil_683863bc")}</p>
                     )}
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Type <span className="font-mono font-medium text-foreground">{confirmToken}</span> to confirm.
-                    </p>
+                      {l10n("local.type_baaddf70")}{" "}<span className="font-mono font-medium text-foreground">{confirmToken}</span> {l10n("local.to_confirm_a44014d5")}</p>
                     <Input
                       value={confirmText}
                       onChange={(event) => setConfirmText(event.target.value)}
                       placeholder={confirmToken}
-                      aria-label="Type the issue identifier to confirm"
+                      aria-label={l10n("local.type_the_issue_identifier_to_confirm_f3deefa7")}
                       autoFocus
                       className="mt-1"
                     />
@@ -540,8 +533,7 @@ export function DecisionCard({
                           setConfirmText("");
                         }}
                       >
-                        Cancel
-                      </Button>
+                        {l10n("local.cancel_19766ed6")}</Button>
                       <Button
                         variant="destructive"
                         size="sm"
@@ -549,7 +541,7 @@ export function DecisionCard({
                         onClick={() => onDecide?.(option.id, inputValues)}
                       >
                         {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                        {previewRows ? `Cancel ${pluralize(previewRows.length, "issue")}` : "Cancel tree"}
+                        {previewRows ? l10n("local.cancel_value_db3da0ce", {v0: (pluralize(previewRows.length, "issue"))}) : l10n("local.cancel_tree_85c1703a")}
                       </Button>
                     </div>
                   </div>
@@ -561,10 +553,9 @@ export function DecisionCard({
           {/* Always-present zero-effect Dismiss (telemetered "no", distinct from expiry) */}
           {!decision.options.some((option) => option.effects.length === 0) && (
             <div className="flex items-center justify-between gap-2 pt-1">
-              <span className="text-xs text-muted-foreground">Not now?</span>
+              <span className="text-xs text-muted-foreground">{l10n("local.not_now_1fd18036")}</span>
               <Button variant="ghost" size="sm" disabled={busy} onClick={() => onDismiss?.()}>
-                Dismiss — no effects
-              </Button>
+                {l10n("local.dismiss_no_effects_e04bd6c4")}</Button>
             </div>
           )}
           {errorMessage && <p className="text-xs text-rose-600 dark:text-rose-400">{errorMessage}</p>}
@@ -577,27 +568,24 @@ export function DecisionCard({
           {decision.status === "expired" && (
             <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-2 font-medium text-foreground">
-                <Clock className="h-4 w-4" aria-hidden /> The decision window closed
-              </div>
+                <Clock className="h-4 w-4" aria-hidden /> {l10n("local.the_decision_window_closed_6131db8e")}</div>
               <p className="mt-1">
                 {expiredReason === "target_gone"
-                  ? "A target issue was cancelled before this was decided."
+                  ? l10n("local.a_target_issue_was_cancelled_before_this_was_08f64658")
                   : expiredReason === "target_completed"
-                    ? "All target issues were completed before this was decided."
-                    : "No response before the expiry deadline."}
-                {decision.continuationPolicy === "wake_origin_agent" && " The proposer was re-woken."}
+                    ? l10n("local.all_target_issues_were_completed_before_this_873ce659")
+                    : l10n("local.no_response_before_the_expiry_deadline_27314a75")}
+                {decision.continuationPolicy === "wake_origin_agent" && (" " + l10n("local.the_proposer_was_re_woken_3e0a7491"))}
               </p>
             </div>
           )}
           {decision.status === "cancelled" && (
             <p className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-              This decision was withdrawn by the proposer before a response.
-            </p>
+              {l10n("local.this_decision_was_withdrawn_by_the_proposer_b_a5bdb32a")}</p>
           )}
           {decision.status === "decided" && dismissed && (
             <p className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-              Dismissed — no effects were run.
-            </p>
+              {l10n("local.dismissed_no_effects_were_run_7a9d63ee")}</p>
           )}
           {decision.status === "decided" && !dismissed && (executions ?? []).length > 0 && (
             <>
@@ -615,8 +603,7 @@ export function DecisionCard({
               </ul>
               {decision.executionStatus !== "succeeded" && (
                 <p className="text-xs text-muted-foreground">
-                  Some effects may already have been applied. Review the results before asking the proposer to re-propose.
-                </p>
+                  {l10n("local.some_effects_may_already_have_been_applied_re_cd7735ed")}</p>
               )}
             </>
           )}

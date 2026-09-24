@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ProviderTraceMetadata } from "@paperclipai/shared";
 import { Bug, CircleOff } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,23 +32,23 @@ export function ProviderTraceStatusBadge({
     ? new Date(trace.expiresAt).getTime() <= Date.now()
     : false;
   const label = expired
-    ? "Trace expired"
+    ? l10n("local.trace_expired_c208aa1a")
     : status === "capturing"
-      ? "Raw tracing enabled"
+      ? l10n("local.raw_tracing_enabled_812a3547")
       : status === "complete"
-        ? "Trace captured"
+        ? l10n("local.trace_captured_c5a0a578")
         : status === "incomplete"
-          ? "Trace incomplete"
+          ? l10n("local.trace_incomplete_329116c8")
           : status === "truncated"
-            ? "Trace truncated"
+            ? l10n("local.trace_truncated_0efe370c")
             : status === "expired"
-              ? "Trace expired"
+              ? l10n("local.trace_expired_c208aa1a")
               : status === "deleted"
-                ? "Trace deleted"
+                ? l10n("local.trace_deleted_ce1e0dd2")
                 : requested
-                  ? "Trace requested"
+                  ? l10n("local.trace_requested_f1ebbe0e")
                   : showOff
-                    ? "Trace off"
+                    ? l10n("local.trace_off_56a98a22")
                     : null;
   if (!label) return null;
   const warning =
@@ -70,10 +71,10 @@ export function ProviderTraceStatusBadge({
       )}
       title={
         trace
-          ? `${trace.frameCount} frames · ${trace.byteCount} bytes · expires ${new Date(trace.expiresAt).toLocaleString()}`
+          ? l10n("local.value_frames_value_bytes_expires_value_d6e7be65", {v0: (trace.frameCount), v1: (trace.byteCount), v2: (new Date(trace.expiresAt).toLocaleString())})
           : requested
-            ? "This run requested sensitive provider-frame capture."
-            : "Raw provider-frame capture was disabled for this run."
+            ? l10n("local.this_run_requested_sensitive_provider_frame_c_4398e38a")
+            : l10n("local.raw_provider_frame_capture_was_disabled_for_t_90c06cbc")
       }
     >
       <Icon className="h-3 w-3" />

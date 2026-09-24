@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { UIAdapterModule } from "../types";
 import { parseKimiStdoutLine } from "@paperclipai/adapter-kimi-local/ui";
 import { KimiLocalConfigFields } from "./config-fields";
@@ -5,7 +6,7 @@ import { buildKimiLocalConfig } from "@paperclipai/adapter-kimi-local/ui";
 
 export const kimiLocalUIAdapter: UIAdapterModule = {
   type: "kimi_local",
-  label: "Kimi Code",
+  label: l10n("local.kimi_code_0c486180"),
   parseStdoutLine: parseKimiStdoutLine,
   ConfigFields: KimiLocalConfigFields,
   buildAdapterConfig: buildKimiLocalConfig,

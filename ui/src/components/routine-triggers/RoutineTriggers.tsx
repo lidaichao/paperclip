@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useCallback, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Plus, Webhook } from "lucide-react";
@@ -104,27 +105,24 @@ export function RoutineTriggers() {
     if (setupId !== "new" && !trigger)
       return (
         <p role="alert">
-          This trigger is no longer available.{" "}
+          {l10n("local.this_trigger_is_no_longer_available_33f2030f")}{" "}
           <Button variant="link" onClick={closeSetup}>
-            Back to triggers
-          </Button>
+            {l10n("local.back_to_triggers_4b2775d3")}</Button>
         </p>
       );
     if (trigger && !trigger.setupPending)
       return (
         <p>
-          This trigger is ready.{" "}
+          {l10n("local.this_trigger_is_ready_dd9d1377")}{" "}
           <Button variant="link" onClick={closeSetup}>
-            Back to triggers
-          </Button>
+            {l10n("local.back_to_triggers_4b2775d3")}</Button>
         </p>
       );
     return (
       <div className="space-y-4">
         {statusError && (
           <p role="alert" className="text-sm text-destructive">
-            Connection status is unavailable. Retrying…
-          </p>
+            {l10n("local.connection_status_is_unavailable_retrying_861491d0")}</p>
         )}
         <TriggerSetup
           key={routine.id}
@@ -143,16 +141,15 @@ export function RoutineTriggers() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {routine.triggers.length}{" "}
-          {routine.triggers.length === 1 ? "trigger" : "triggers"}
+          {routine.triggers.length === 1 ? l10n("local.trigger_683259fe") : l10n("local.triggers_51936fd3")}
         </p>
         <Button size="sm" onClick={() => startSetup("new")}>
           <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Add trigger
-        </Button>
+          {l10n("local.add_trigger_58fd3089")}</Button>
       </div>
       {(error || statusError) && (
         <p role="alert" className="text-sm text-destructive">
-          {error || "Connection status is unavailable. Retrying…"}
+          {error || l10n("local.connection_status_is_unavailable_retrying_861491d0")}
         </p>
       )}
       {removed.map((trigger) => (
@@ -163,12 +160,11 @@ export function RoutineTriggers() {
         >
           <span className="flex-1">
             {trigger.kind === "schedule"
-              ? "Schedule"
+              ? l10n("local.schedule_f4830a1d")
               : trigger.kind === "api"
-                ? "API trigger"
+                ? l10n("local.api_trigger_ef556ef2")
                 : "Webhook"}{" "}
-            removed.
-          </span>
+            {l10n("local.removed_432c93eb")}</span>
           <Button
             variant="ghost"
             size="sm"
@@ -184,8 +180,7 @@ export function RoutineTriggers() {
               })
             }
           >
-            Undo
-          </Button>
+            {l10n("local.undo_a8283ade")}</Button>
         </div>
       ))}
       {ctx.secretMessage && (
@@ -193,19 +188,17 @@ export function RoutineTriggers() {
           <p className="text-sm font-medium">{ctx.secretMessage.title}</p>
           {ctx.secretMessage.entries.map((entry) => (
             <div key={entry.webhookUrl} className="space-y-3">
-              <CopyField label="Webhook URL" value={entry.webhookUrl} />
-              <CopyField label="Secret key" value={entry.webhookSecret} />
+              <CopyField label={l10n("local.webhook_url_84805a75")} value={entry.webhookUrl} />
+              <CopyField label={l10n("local.secret_key_f47a99eb")} value={entry.webhookSecret} />
             </div>
           ))}
           <Button variant="outline" onClick={() => ctx.setSecretMessage(null)}>
-            Done
-          </Button>
+            {l10n("local.done_11a6767d")}</Button>
         </div>
       )}
       {routine.triggers.length === 0 && (
         <p className="py-6 text-sm text-muted-foreground">
-          Run this routine on a schedule or when another app sends a webhook.
-        </p>
+          {l10n("local.run_this_routine_on_a_schedule_or_when_anothe_98d55cd1")}</p>
       )}
       <fieldset disabled={busy} className="min-w-0 space-y-3">
         {routine.triggers.map((trigger) => (
@@ -227,31 +220,31 @@ export function RoutineTriggers() {
             }
             title={
               trigger.kind === "schedule"
-                ? (describeCron(trigger.cronExpression) ?? "Schedule")
+                ? (describeCron(trigger.cronExpression) ?? l10n("local.schedule_f4830a1d"))
                 : trigger.kind === "api"
-                  ? "API trigger"
+                  ? l10n("local.api_trigger_ef556ef2")
                   : trigger.signingMode === "github_hmac"
-                    ? "GitHub webhook"
+                    ? l10n("local.github_webhook_62487aeb")
                     : "Webhook"
             }
             summary={
               trigger.setupPending
-                ? "Setup unfinished · Events only test the connection"
+                ? l10n("local.setup_unfinished_events_only_test_the_connect_29f7e499")
                 : !trigger.enabled
-                  ? "Paused"
+                  ? l10n("local.paused_e159b061")
                   : trigger.kind === "schedule"
-                    ? (trigger.timezone ?? "UTC")
+                    ? (trigger.timezone ?? l10n("local.utc_7e5f76c9"))
                     : trigger.kind === "api"
-                      ? "Run through the API"
+                      ? l10n("local.run_through_the_api_7f4f8ad9")
                       : trigger.lastWebhookDelivery?.status === "rejected"
-                        ? "Authentication failed · Check the key in your app"
+                        ? l10n("local.authentication_failed_check_the_key_in_your_a_1d0c755f")
                         : trigger.lastWebhookDelivery?.status === "received" &&
                             !trigger.lastWebhookDelivery.test
-                          ? "Receiving events"
-                          : "Ready · Waiting for an event"
+                          ? l10n("local.receiving_events_3ce60aee")
+                          : l10n("local.ready_waiting_for_an_event_0e26ab04")
             }
             expanded={expanded === trigger.id}
-            editLabel={trigger.setupPending ? "Resume setup" : undefined}
+            editLabel={trigger.setupPending ? l10n("local.resume_setup_014c5f81") : undefined}
             onEdit={() =>
               trigger.setupPending
                 ? startSetup(trigger.id)
@@ -266,8 +259,7 @@ export function RoutineTriggers() {
           >
             {trigger.setupPending ? (
               <Button onClick={() => startSetup(trigger.id)}>
-                Resume setup
-              </Button>
+                {l10n("local.resume_setup_014c5f81")}</Button>
             ) : trigger.kind === "schedule" ? (
               <ScheduleSettings
                 trigger={trigger}
@@ -280,8 +272,7 @@ export function RoutineTriggers() {
               />
             ) : trigger.kind === "api" ? (
               <p className="text-sm text-muted-foreground">
-                This trigger starts the routine through the API.
-              </p>
+                {l10n("local.this_trigger_starts_the_routine_through_the_a_76104f99")}</p>
             ) : (
               <WebhookSettings
                 trigger={trigger}
@@ -301,7 +292,7 @@ export function RoutineTriggers() {
                   })
                 }
               >
-                {trigger.enabled ? "Pause trigger" : "Enable trigger"}
+                {trigger.enabled ? l10n("local.pause_trigger_6b084b69") : l10n("local.enable_trigger_1e3e32db")}
               </Button>
             )}
           </RoutineTriggerCard>
@@ -463,8 +454,7 @@ function ScheduleSettings({
         onValidityChange={setValid}
       />
       <Label>
-        Time zone
-        <Input
+        {l10n("local.time_zone_b9fe1464")}<Input
           value={timezone}
           onChange={(event) => setTimezone(event.target.value)}
         />
@@ -493,11 +483,9 @@ function ScheduleSettings({
             }
           }}
         >
-          Save schedule
-        </Button>
+          {l10n("local.save_schedule_387f355f")}</Button>
         <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
+          {l10n("local.cancel_19766ed6")}</Button>
       </div>
     </fieldset>
   );
@@ -536,15 +524,15 @@ function WebhookSettings({
           )}
         />
       )}
-      <CopyField label="Webhook URL" value={trigger.webhookUrl ?? ""} />
+      <CopyField label={l10n("local.webhook_url_84805a75")} value={trigger.webhookUrl ?? ""} />
       {trigger.signingMode !== "none" && (
         <div className="space-y-2">
           {secret ? (
             <CopyField
               label={
                 trigger.signingMode === "bearer"
-                  ? "Authorization header value"
-                  : "Secret key"
+                  ? l10n("local.authorization_header_value_39a91b3d")
+                  : l10n("local.secret_key_f47a99eb")
               }
               value={
                 trigger.signingMode === "bearer" ? `Bearer ${secret}` : secret
@@ -552,30 +540,23 @@ function WebhookSettings({
             />
           ) : (
             <p className="text-sm text-muted-foreground">
-              The secret key is hidden.
-            </p>
+              {l10n("local.the_secret_key_is_hidden_e27dfe1b")}</p>
           )}
           <Button variant="outline" size="sm" onClick={() => setReplace(true)}>
-            Replace key
-          </Button>
+            {l10n("local.replace_key_548dca59")}</Button>
           {secret && (
             <Button variant="ghost" size="sm" onClick={() => setSecret("")}>
-              Hide key
-            </Button>
+              {l10n("local.hide_key_0614b215")}</Button>
           )}
         </div>
       )}
       {trigger.signingMode === "none" && (
         <p className="text-sm text-muted-foreground">
-          This webhook uses its URL as the shared secret.
-        </p>
+          {l10n("local.this_webhook_uses_its_url_as_the_shared_secre_43ad86bc")}</p>
       )}
       {trigger.signingMode === "hmac_sha256" && (
         <p className="text-sm text-muted-foreground">
-          Sign the timestamp, a period, and the exact JSON body with
-          HMAC-SHA256. Send X-Paperclip-Timestamp and X-Paperclip-Signature:
-          sha256=&lt;signature&gt;.
-        </p>
+          {l10n("local.sign_the_timestamp_a_period_and_the_exact_jso_94da72ff")}</p>
       )}
       <Button
         variant="outline"
@@ -583,16 +564,13 @@ function WebhookSettings({
           setCheckBaseline(trigger.lastWebhookDelivery?.receivedAt ?? "")
         }
       >
-        Check connection
-      </Button>
+        {l10n("local.check_connection_be5dff52")}</Button>
       <Dialog open={replace} onOpenChange={setReplace}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Replace the webhook key?</DialogTitle>
+            <DialogTitle>{l10n("local.replace_the_webhook_key_76f7b007")}</DialogTitle>
             <DialogDescription>
-              The old key will stop working. Update your sending app with the
-              new key.
-            </DialogDescription>
+              {l10n("local.the_old_key_will_stop_working_update_your_sen_43f717b1")}</DialogDescription>
           </DialogHeader>
           {error && (
             <p role="alert" className="text-sm text-destructive">
@@ -622,8 +600,7 @@ function WebhookSettings({
               }
             }}
           >
-            Replace key
-          </Button>
+            {l10n("local.replace_key_548dca59")}</Button>
         </DialogContent>
       </Dialog>
       <Dialog
@@ -634,18 +611,16 @@ function WebhookSettings({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Check connection</DialogTitle>
+            <DialogTitle>{l10n("local.check_connection_be5dff52")}</DialogTitle>
             <DialogDescription>
-              This webhook is already enabled. Events sent now can start the
-              routine. Send an event from your app to check delivery.
-            </DialogDescription>
+              {l10n("local.this_webhook_is_already_enabled_events_sent_n_62600030")}</DialogDescription>
           </DialogHeader>
           <p role="status" className="text-sm">
             {checked
               ? delivery.status === "received"
-                ? "Event received · Authentication passed"
-                : "Event arrived, but authentication failed. Check the key in your app."
-              : "Waiting for an event from your app…"}
+                ? l10n("local.event_received_authentication_passed_809603f5")
+                : l10n("local.event_arrived_but_authentication_failed_check_c8fb89d2")
+              : l10n("local.waiting_for_an_event_from_your_app_6da2e8bc")}
           </p>
         </DialogContent>
       </Dialog>

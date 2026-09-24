@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +26,7 @@ export function PageTabBar({ items, value, onValueChange, align = "center" }: Pa
           value={value}
           onChange={(e) => onValueChange(e.target.value)}
           className="h-9 appearance-none rounded-md border border-border bg-background pl-3 pr-9 py-1 text-base focus:outline-none focus:ring-1 focus:ring-ring"
-          aria-label="Page section"
+          aria-label={l10n("local.page_section_1cade196")}
         >
           {items.map((item) => (
             <option key={item.value} value={item.value}>

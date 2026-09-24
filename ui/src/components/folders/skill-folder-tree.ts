@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { FolderListItem, FolderListResult } from "@paperclipai/shared";
 
 /**
@@ -148,11 +149,11 @@ export function folderBreadcrumbTrail(
 export function reservedRootLabel(folder: Pick<FolderListItem, "systemKey" | "name">): string {
   switch (folder.systemKey) {
     case "my":
-      return "My Skills";
+      return l10n("local.my_skills_ea424d66");
     case "projects":
-      return "Projects";
+      return l10n("local.projects_04e2a972");
     case "bundled":
-      return "Bundled";
+      return l10n("local.bundled_79d3a1f1");
     default:
       return folder.name;
   }

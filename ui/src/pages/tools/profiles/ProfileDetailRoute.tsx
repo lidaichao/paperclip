@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useEffect } from "react";
 import { useParams } from "@/lib/router";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
@@ -13,16 +14,16 @@ export function ProfileDetailRoute() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
-      { label: "Access profiles", href: advancedTabHref("profiles") },
-      { label: "Profile detail" },
+      { label: selectedCompany?.name ?? l10n("local.company_de4743c8"), href: "/dashboard" },
+      { label: l10n("local.apps_89dd7484"), href: "/apps" },
+      { label: l10n("local.access_profiles_2471292f"), href: advancedTabHref("profiles") },
+      { label: l10n("local.profile_detail_584ea58b") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs, selectedCompany?.name]);
 
   if (!selectedCompanyId || !params.profileId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select an organization and profile.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{l10n("local.select_an_organization_and_profile_aac2b9e3")}</div>;
   }
 
   return (

@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 /**
  * Live adapter: map a run's streaming TranscriptEntry[] (from
  * useLiveRunTranscripts — the same source the current thread consumes) into the
@@ -399,7 +400,7 @@ function providerActivityItem(
                 : "pending";
             return {
               id: stringValue(step.stepId) ?? `${runId}:plan-step:${stepIndex}`,
-              label: stringValue(step.body) ?? "Plan step",
+              label: stringValue(step.body) ?? l10n("local.plan_step_c1ecca3f"),
               status,
             };
           })
@@ -432,7 +433,7 @@ function providerActivityItem(
           .map((child, childIndex) => ({
             id:
               stringValue(child.childId) ?? `${runId}:delegation:${childIndex}`,
-            title: stringValue(child.role) ?? "Subagent",
+            title: stringValue(child.role) ?? l10n("local.subagent_d6cb4188"),
             status: stringValue(child.status) ?? "unknown",
             metadata:
               [stringValue(child.model), stringValue(child.activitySummary)]
@@ -1623,7 +1624,7 @@ function phaseSummary(
     return protocolCount === 1
       ? "Runner activity"
       : `${protocolCount} runner updates`;
-  if (items.some((item) => item.kind === "thinking")) return "Reasoning";
+  if (items.some((item) => item.kind === "thinking")) return l10n("local.reasoning_d8211e24");
   const interrupted = items.find(
     (item) => item.kind === "marker" && item.variant === "interrupted",
   );
@@ -1755,8 +1756,8 @@ export function buildActivityPhases(
 function formatDurationLabel(ms: number): string | undefined {
   if (!Number.isFinite(ms) || ms <= 0) return undefined;
   const totalSec = Math.round(ms / 1000);
-  if (totalSec < 1) return "1s";
-  if (totalSec < 60) return `${totalSec}s`;
+  if (totalSec < 1) return l10n("local.1s_64c83df8");
+  if (totalSec < 60) return l10n("local.values_7680eb34", {v0: (totalSec)});
   const min = Math.floor(totalSec / 60);
   const sec = totalSec % 60;
   return sec === 0 ? `${min}m` : `${min}m ${sec}s`;
@@ -1765,7 +1766,7 @@ function formatDurationLabel(ms: number): string | undefined {
 function formatTokensLabel(tokens: number): string | undefined {
   if (!Number.isFinite(tokens) || tokens <= 0) return undefined;
   const label = tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : `${tokens}`;
-  return `${label} tokens`;
+  return l10n("local.value_tokens_7ad84bba", {v0: (label)});
 }
 
 /** First→last ts span of a transcript, or undefined when unknowable. */
@@ -2102,11 +2103,11 @@ export function deriveRunStatusLabel(entries: readonly TranscriptEntry[]): {
         }
       }
       const selfTalk = flattenSelfTalk(parts.join(""));
-      return { label: "Responding", selfTalk: selfTalk || undefined };
+      return { label: l10n("local.responding_98047c1e"), selfTalk: selfTalk || undefined };
     }
-    if (entry.kind === "thinking") return { label: "Thinking" };
+    if (entry.kind === "thinking") return { label: l10n("local.thinking_a20d12c5") };
     if (entry.kind === "system" && entry.text === "Reasoning started")
-      return { label: "Thinking" };
+      return { label: l10n("local.thinking_a20d12c5") };
   }
-  return { label: "Running" };
+  return { label: l10n("local.running_f4ccae29") };
 }

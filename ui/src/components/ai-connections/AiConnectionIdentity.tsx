@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { Building2, UserRound } from "lucide-react";
 import { AppLogo } from "@/pages/apps/AppLogo";
 import {
@@ -28,8 +29,8 @@ export function AiConnectionIdentity({
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <Icon aria-hidden className="size-3" />
           {connection.ownership === "shared"
-            ? "Company shared"
-            : `Personal · ${connection.ownerName ?? "Account owner"}`}
+            ? l10n("local.company_shared_47e5dc16")
+            : l10n("local.personal_value_9012ca98", {v0: (connection.ownerName ?? "Account owner")})}
         </span>
       </div>
     </div>

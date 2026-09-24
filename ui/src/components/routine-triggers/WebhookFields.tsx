@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ export function CopyField({
         <Button
           variant="ghost"
           size="sm"
-          aria-label={`Copy ${label}`}
+          aria-label={l10n("local.copy_value_3f3ebff4", {v0: (label)})}
           onClick={async () => {
             try {
               await copyTextToClipboard(value);
@@ -41,18 +42,17 @@ export function CopyField({
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}
-          {copied ? "Copied" : "Copy"}
+          {copied ? l10n("local.copied_8d525e5f") : l10n("local.copy_e21f935f")}
         </Button>
       </div>
       {help && <p className="text-xs text-muted-foreground">{help}</p>}
       {error && (
         <div className="space-y-2">
           <p role="alert" className="text-xs text-destructive">
-            Copy failed. Select and copy the text below.
-          </p>
+            {l10n("local.copy_failed_select_and_copy_the_text_below_7a858143")}</p>
           <textarea
             readOnly
-            aria-label={`${label} text`}
+            aria-label={l10n("local.value_text_00554678", {v0: (label)})}
             value={value}
             rows={5}
             className="w-full rounded-md border border-input bg-background p-3 font-mono text-xs"
@@ -68,20 +68,18 @@ export function AgentInstructions({ value }: { value: string }) {
   const [error, setError] = useState(false);
   return (
     <section
-      aria-label="Agent instructions"
+      aria-label={l10n("local.agent_instructions_dc390e18")}
       className="space-y-3 rounded-md bg-muted/40 p-4"
     >
       <div className="space-y-1">
-        <h2 className="text-sm font-medium">Agent instructions</h2>
+        <h2 className="text-sm font-medium">{l10n("local.agent_instructions_dc390e18")}</h2>
         <p className="text-sm text-muted-foreground">
-          Give your agent everything it needs to connect this webhook: the URL,
-          authentication key, and step-by-step instructions.
-        </p>
+          {l10n("local.give_your_agent_everything_it_needs_to_connec_ea90b46a")}</p>
       </div>
       <Button
         variant="outline"
         size="sm"
-        aria-label="Copy for your agent"
+        aria-label={l10n("local.copy_for_your_agent_64d2d48d")}
         onClick={async () => {
           try {
             await copyTextToClipboard(value);
@@ -97,16 +95,15 @@ export function AgentInstructions({ value }: { value: string }) {
         ) : (
           <Copy className="h-3.5 w-3.5" />
         )}
-        {copied ? "Copied instructions" : "Copy for your agent"}
+        {copied ? l10n("local.copied_instructions_28a80735") : l10n("local.copy_for_your_agent_64d2d48d")}
       </Button>
       {error && (
         <div className="space-y-2">
           <p role="alert" className="text-xs text-destructive">
-            Copy failed. Select and copy the instructions below.
-          </p>
+            {l10n("local.copy_failed_select_and_copy_the_instructions_a143bf11")}</p>
           <textarea
             readOnly
-            aria-label="Agent instructions text"
+            aria-label={l10n("local.agent_instructions_text_fe12d6fe")}
             value={value}
             rows={5}
             className="w-full rounded-md border border-input bg-background p-3 text-sm"

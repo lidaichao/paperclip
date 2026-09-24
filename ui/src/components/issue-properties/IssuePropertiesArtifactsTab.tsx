@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -61,16 +62,16 @@ function workProductStatusBadge(status: string): { label: string; cssVar: string
   switch (status) {
     case "active":
     case "draft":
-      return { label: "In progress", cssVar: "--status-task-in_progress" };
+      return { label: l10n("local.in_progress_c1f88e9d"), cssVar: "--status-task-in_progress" };
     case "ready_for_review":
-      return { label: "For review", cssVar: "--status-task-in_review" };
+      return { label: l10n("local.for_review_1afa6050"), cssVar: "--status-task-in_review" };
     case "approved":
     case "merged":
-      return { label: "Done", cssVar: "--status-task-done" };
+      return { label: l10n("local.done_11a6767d"), cssVar: "--status-task-done" };
     case "changes_requested":
-      return { label: "Changes requested", cssVar: "--status-task-todo" };
+      return { label: l10n("local.changes_requested_10a92a8a"), cssVar: "--status-task-todo" };
     case "failed":
-      return { label: "Failed", cssVar: "--status-task-blocked" };
+      return { label: l10n("local.failed_031a8f0f"), cssVar: "--status-task-blocked" };
     default:
       return null;
   }
@@ -151,8 +152,7 @@ function MarkdownWorkProductRow({
   if (tooLarge) {
     expandedBody = (
       <p className="text-sm text-muted-foreground">
-        This Markdown file is too large to preview. Use Raw or Download instead.
-      </p>
+        {l10n("local.this_markdown_file_is_too_large_to_preview_us_c4195ee5")}</p>
     );
   } else if (reviewDoc) {
     expandedBody = reviewDoc.body.trim().length > 0 ? (
@@ -171,15 +171,15 @@ function MarkdownWorkProductRow({
         <MarkdownBody>{reviewDoc.body}</MarkdownBody>
       </IssueDocumentAnnotations>
     ) : (
-      <p className="text-sm text-muted-foreground">Document is empty.</p>
+      <p className="text-sm text-muted-foreground">{l10n("local.document_is_empty_14945822")}</p>
     );
   } else if (ensure.isError) {
     expandedBody = (
       <div className="flex flex-col items-start gap-1.5">
         <p className="text-sm text-muted-foreground">
           {unsupportedError
-            ? "This file can't be previewed as Markdown. Use Raw or Download instead."
-            : "Preview failed to load."}
+            ? l10n("local.this_file_can_t_be_previewed_as_markdown_use_e2d6081f")
+            : l10n("local.preview_failed_to_load_83edf741")}
         </p>
         {!unsupportedError ? (
           <button
@@ -190,13 +190,12 @@ function MarkdownWorkProductRow({
               ensure.mutate();
             }}
           >
-            Retry
-          </button>
+            {l10n("local.retry_942087cc")}</button>
         ) : null}
       </div>
     );
   } else {
-    expandedBody = <p className="text-sm text-muted-foreground">Preparing preview…</p>;
+    expandedBody = <p className="text-sm text-muted-foreground">{l10n("local.preparing_preview_11e66e1b")}</p>;
   }
 
   return (
@@ -220,7 +219,7 @@ function MarkdownWorkProductRow({
           ) : null}
           {reviewDoc ? (
             <span className="shrink-0 text-(length:--text-micro) text-muted-foreground">
-              {`Rev ${reviewDoc.latestRevisionNumber ?? 1}`}
+              {l10n("local.rev_value_46689171", {v0: (reviewDoc.latestRevisionNumber ?? 1)})}
             </span>
           ) : null}
           <Chevron className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -237,16 +236,16 @@ function MarkdownWorkProductRow({
           href={metadata.openPath}
           target="_blank"
           rel="noreferrer"
-          aria-label={`Open raw ${workProduct.title}`}
-          title="Open raw"
+          aria-label={l10n("local.open_raw_value_44f212db", {v0: (workProduct.title)})}
+          title={l10n("local.open_raw_7f57bf8c")}
           className="shrink-0 px-1.5 py-1.5 text-muted-foreground hover:text-foreground"
         >
           <ExternalLink className="h-3 w-3" />
         </a>
         <a
           href={metadata.downloadPath}
-          aria-label={`Download ${workProduct.title}`}
-          title="Download"
+          aria-label={l10n("local.download_value_ac3a0cac", {v0: (workProduct.title)})}
+          title={l10n("local.download_d6eafe82")}
           className="shrink-0 py-1.5 pr-2 pl-0.5 text-muted-foreground hover:text-foreground"
         >
           <Download className="h-3 w-3" />
@@ -293,7 +292,7 @@ function DocumentRow({
         <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate">{documentDisplayTitle(doc)}</span>
         <span className="shrink-0 text-(length:--text-micro) text-muted-foreground">
-          {`Rev ${doc.latestRevisionNumber ?? 1}`}
+          {l10n("local.rev_value_46689171", {v0: (doc.latestRevisionNumber ?? 1)})}
         </span>
         <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       </button>
@@ -311,7 +310,7 @@ function DocumentRow({
           <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1 truncate">{documentDisplayTitle(doc)}</span>
           <span className="shrink-0 text-(length:--text-micro) text-muted-foreground">
-            {`Rev ${doc.latestRevisionNumber ?? 1}`}
+            {l10n("local.rev_value_46689171", {v0: (doc.latestRevisionNumber ?? 1)})}
           </span>
           <Chevron className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
@@ -340,7 +339,7 @@ function DocumentRow({
               <MarkdownBody>{doc.body}</MarkdownBody>
             </IssueDocumentAnnotations>
           ) : (
-            <p className="text-sm text-muted-foreground">Document is empty.</p>
+            <p className="text-sm text-muted-foreground">{l10n("local.document_is_empty_14945822")}</p>
           )}
         </div>
       ) : null}
@@ -434,8 +433,7 @@ export function IssuePropertiesArtifactsTab({ issue, documentDeepLink, onOpenDoc
   if (workProductRows.length === 0 && documentRows.length === 0 && fileRows.length === 0) {
     return (
       <div className="px-1 py-6 text-sm text-muted-foreground">
-        No artifacts yet. Work products, documents, and agent-produced files will appear here.
-      </div>
+        {l10n("local.no_artifacts_yet_work_products_documents_and_b032412c")}</div>
     );
   }
 
@@ -449,7 +447,7 @@ export function IssuePropertiesArtifactsTab({ issue, documentDeepLink, onOpenDoc
             {group.runId !== "other" ? (
               <header className="flex items-baseline justify-between gap-2 px-1">
                 <h3 className="truncate text-xs font-medium text-foreground">
-                  {agent?.name ?? `Run ${group.runId.slice(0, 8)}`}
+                  {agent?.name ?? l10n("local.run_value_b0b0fae1", {v0: (group.runId.slice(0, 8))})}
                 </h3>
                 <time className="shrink-0 text-(length:--text-micro) text-muted-foreground" dateTime={group.date.toISOString()}>
                   {formatDateTime(group.date)}

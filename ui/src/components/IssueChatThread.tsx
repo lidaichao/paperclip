@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { TaskChatPausedTakeover, type TaskComposerPause } from "./task-chat/TaskChatPausedTakeover";
 import { useEmailComment } from "./EmailMessageCard";
@@ -448,8 +449,8 @@ function IssueChatLiveRunStatusLine({
       : currentStatusMessage;
   const activityText = lastActivityElapsed
     ? lastActivityAgeMs !== null && lastActivityAgeMs >= 15_000
-      ? `no output for ${lastActivityElapsed} - still running`
-      : `${lastActivityElapsed} ago`
+      ? l10n("local.no_output_for_value_still_running_c655a869", {v0: (lastActivityElapsed)})
+      : l10n("local.value_ago_67b26b3b", {v0: (lastActivityElapsed)})
     : "";
   const text = [primary, activityText].filter(Boolean).join(" · ");
   if (!text) return null;
@@ -790,12 +791,12 @@ export function IssueAssigneePausedNotice({
 
   const pauseDetail =
     agent.pauseReason === "budget"
-      ? "It was paused by a budget hard stop."
+      ? l10n("local.it_was_paused_by_a_budget_hard_stop_672b9653")
       : agent.pauseReason === "import"
-        ? "It arrived paused from an organization import — imported agents stay parked until you resume them."
+        ? l10n("local.it_arrived_paused_from_an_organization_import_d5d5e2e7")
         : agent.pauseReason === "system"
-          ? "It was paused by the system."
-          : "It was paused manually.";
+          ? l10n("local.it_was_paused_by_the_system_8da06634")
+          : l10n("local.it_was_paused_manually_701eb898");
   // Budget pauses clear on their own when the budget resets; resuming by hand
   // would fight the hard stop, so the action is only offered for the rest.
   const canResume = Boolean(onResume) && agent.pauseReason !== "budget";
@@ -808,8 +809,7 @@ export function IssueAssigneePausedNotice({
         compact
         title={
           <>
-            <span className="font-medium">{agent.name}</span> is paused.
-          </>
+            <span className="font-medium">{agent.name}</span> {l10n("local.is_paused_4ad51942")}</>
         }
         actions={
           canResume ? (
@@ -820,12 +820,12 @@ export function IssueAssigneePausedNotice({
               disabled={resuming}
               data-testid="issue-assignee-paused-resume"
             >
-              {resuming ? "Resuming…" : "Resume agent"}
+              {resuming ? l10n("local.resuming_c494e3ca") : l10n("local.resume_agent_0bb60c45")}
             </Button>
           ) : undefined
         }
       >
-        New runs will not start until the agent is resumed. {pauseDetail}
+        {l10n("local.new_runs_will_not_start_until_the_agent_is_re_0315b0db")}{" "}{pauseDetail}
       </InlineBanner>
     </div>
   );
@@ -837,9 +837,9 @@ function fallbackAuthorLabel(message: ThreadMessage) {
   if (typeof custom?.["authorName"] === "string") return custom["authorName"];
   if (typeof custom?.["runAgentName"] === "string")
     return custom["runAgentName"];
-  if (message.role === "assistant") return "Agent";
-  if (message.role === "user") return "You";
-  return "System";
+  if (message.role === "assistant") return l10n("local.agent_11b39c93");
+  if (message.role === "user") return l10n("local.you_08b04193");
+  return l10n("local.system_6725e7bb");
 }
 
 function fallbackTextParts(message: ThreadMessage) {
@@ -888,12 +888,9 @@ function IssueChatFallbackThread({
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="space-y-1">
             <p className="font-medium">
-              Chat renderer hit an internal state error.
-            </p>
+              {l10n("local.chat_renderer_hit_an_internal_state_error_50b111f1")}</p>
             <p className="text-xs opacity-80">
-              Showing a safe fallback transcript instead of crashing the tasks
-              page.
-            </p>
+              {l10n("local.showing_a_safe_fallback_transcript_instead_of_ad742727")}</p>
           </div>
         </div>
       </div>
@@ -940,8 +937,7 @@ function IssueChatFallbackThread({
                     ))
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      No message content.
-                    </p>
+                      {l10n("local.no_message_content_d810b883")}</p>
                   )}
                 </div>
               </Card>
@@ -1118,7 +1114,7 @@ export function SuccessfulRunHandoffCommentCallout({
 }
 
 function humanizeValue(value: string | null) {
-  if (!value) return "None";
+  if (!value) return l10n("local.none_dc937b59");
   return value.replace(/_/g, " ");
 }
 
@@ -1146,7 +1142,7 @@ function formatInteractionActorLabel(args: {
       "Board"
     );
   }
-  return "System";
+  return l10n("local.system_6725e7bb");
 }
 
 export function resolveIssueChatHumanAuthor(args: {
@@ -1555,8 +1551,8 @@ function CopyablePreBlock({
           "absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-0 backdrop-blur-sm transition-opacity hover:text-foreground group-hover/pre:opacity-100",
           copied && "opacity-100",
         )}
-        title="Copy"
-        aria-label="Copy"
+        title={l10n("local.copy_e21f935f")}
+        aria-label={l10n("local.copy_e21f935f")}
         onClick={() => {
           void copyTextToClipboard(children)
             .then(() => {
@@ -1675,8 +1671,7 @@ function IssueChatToolPart({
             {nonIntentDetails.length > 0 ? (
               <div>
                 <div className="mb-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground/60">
-                  Input
-                </div>
+                  {l10n("local.input_36ecb4f8")}</div>
                 <dl className="space-y-1.5">
                   {nonIntentDetails.map((detail) => (
                     <div key={`${detail.label}:${detail.value}`}>
@@ -1699,8 +1694,7 @@ function IssueChatToolPart({
             ) : rawArgsText ? (
               <div>
                 <div className="mb-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground/60">
-                  Input
-                </div>
+                  {l10n("local.input_36ecb4f8")}</div>
                 <CopyablePreBlock className="overflow-x-auto rounded-md bg-accent/30 p-2 text-(length:--text-micro) leading-4 text-foreground/70">
                   {rawArgsText}
                 </CopyablePreBlock>
@@ -1709,8 +1703,7 @@ function IssueChatToolPart({
             {result !== undefined ? (
               <div>
                 <div className="mb-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground/60">
-                  Result
-                </div>
+                  {l10n("local.result_6e7d50e8")}</div>
                 <CopyablePreBlock className="overflow-x-auto rounded-md bg-accent/30 p-2 text-(length:--text-micro) leading-4 text-foreground/70">
                   {resultText}
                 </CopyablePreBlock>
@@ -1745,7 +1738,7 @@ function IssueChatProviderActivity({
       ? (value.payload as Record<string, unknown>)
       : {};
   const title =
-    typeof value.title === "string" ? value.title : "Provider activity";
+    typeof value.title === "string" ? value.title : l10n("local.provider_activity_2cb218ea");
   const summary = typeof value.summary === "string" ? value.summary : "";
   const steps = Array.isArray(payload.steps) ? payload.steps.slice(0, 256) : [];
   const children = Array.isArray(payload.children)
@@ -1859,16 +1852,15 @@ function IssueChatProviderActivity({
                     <span>{String(source.title ?? "Unavailable source")}</span>
                   )}{" "}
                   <span className="text-muted-foreground">
-                    (provider-reported)
-                  </span>
+                    {l10n("local._provider_reported_1d001256")}</span>
                 </div>
               );
             })}
             {effectiveModel ? (
               <div>
-                <span className="text-muted-foreground">Model</span>{" "}
+                <span className="text-muted-foreground">{l10n("local.model_5e2c614c")}</span>{" "}
                 {requestedModel && requestedModel !== effectiveModel
-                  ? `${requestedModel} → `
+                  ? (l10n("local.value_aa746376", {v0: (requestedModel)}) + " ")
                   : ""}
                 {effectiveModel}
               </div>
@@ -2026,7 +2018,7 @@ function IssueChatUserMessage({
   const queueReason =
     typeof custom.queueReason === "string" ? custom.queueReason : null;
   const queueBadgeLabel =
-    queueReason === "hold" ? "\u23f8 Deferred wake" : "Queued";
+    queueReason === "hold" ? l10n("local._deferred_wake_427ced70") : l10n("local.queued_661ff40a");
   const pending = custom.clientStatus === "pending";
   const deleted = Boolean(custom.deletedAt);
   const queueTargetRunId =
@@ -2082,14 +2074,13 @@ function IssueChatUserMessage({
         <span className="text-sm font-medium text-foreground">
           {resolvedAuthorName}
         </span>
-        <SourceTrustBadge sourceTrust={sourceTrust} artifactLabel="comment" />
+        <SourceTrustBadge sourceTrust={sourceTrust} artifactLabel={l10n("local.comment_c44bb2fd")} />
         {followUpRequested ? (
           <Badge
             variant="outline"
             className="text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow)"
           >
-            Follow-up
-          </Badge>
+            {l10n("local.follow_up_09b2d9cd")}</Badge>
         ) : null}
       </div>
       <div
@@ -2126,7 +2117,7 @@ function IssueChatUserMessage({
                 disabled={isInterruptingQueuedRun}
                 onClick={() => void onInterruptQueued(queueTargetRunId)}
               >
-                {isInterruptingQueuedRun ? "Interrupting..." : "Interrupt"}
+                {isInterruptingQueuedRun ? l10n("local.interrupting_f60f33ed") : l10n("local.interrupt_b6252314")}
               </Button>
             ) : null}
             {onCancelQueued ? (
@@ -2136,15 +2127,13 @@ function IssueChatUserMessage({
                 className="h-6 border-amber-300 px-2 text-(length:--text-micro) text-amber-900 hover:bg-amber-100/80 hover:text-amber-950 dark:border-amber-500/40 dark:text-amber-100 dark:hover:bg-amber-500/10"
                 onClick={() => onCancelQueued(commentId)}
               >
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
             ) : null}
           </div>
         ) : null}
         {deleted ? (
           <div className="text-sm italic text-muted-foreground">
-            Comment deleted
-          </div>
+            {l10n("local.comment_deleted_7199a134")}</div>
         ) : (
           <div className="min-w-0 max-w-full space-y-3">
             <IssueChatTextParts
@@ -2157,8 +2146,7 @@ function IssueChatUserMessage({
 
       {sentFromIMessage && !deleted ? (
         <div className="mt-1 px-1 text-xs text-muted-foreground">
-          Sent from iMessage
-        </div>
+          {l10n("local.sent_from_imessage_01ad7f21")}</div>
       ) : null}
       {pending ? (
         <div
@@ -2167,8 +2155,7 @@ function IssueChatUserMessage({
             isCurrentUser ? "justify-end" : "justify-start",
           )}
         >
-          Sending...
-        </div>
+          {l10n("local.sending_286a3af7")}</div>
       ) : (
         <div
           className={cn(
@@ -2193,8 +2180,8 @@ function IssueChatUserMessage({
             <button
               type="button"
               className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-              title="Copy message"
-              aria-label="Copy message"
+              title={l10n("local.copy_message_457efe53")}
+              aria-label={l10n("local.copy_message_457efe53")}
               onClick={() => {
                 const text = message.content
                   .filter(
@@ -2231,8 +2218,8 @@ function IssueChatUserMessage({
             <button
               type="button"
               className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-destructive"
-              title="Delete comment"
-              aria-label="Delete comment"
+              title={l10n("local.delete_comment_e43811a1")}
+              aria-label={l10n("local.delete_comment_e43811a1")}
               onClick={handleDeleteComment}
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -2268,21 +2255,18 @@ function IssueChatUserMessage({
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete comment?</DialogTitle>
+            <DialogTitle>{l10n("local.delete_comment_4bb3b704")}</DialogTitle>
             <DialogDescription>
-              This will replace the comment with a deleted-comment marker.
-            </DialogDescription>
+              {l10n("local.this_will_replace_the_comment_with_a_deleted_50d8bc6e")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
             >
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button variant="destructive" onClick={confirmDeleteComment}>
-              Delete comment
-            </Button>
+              {l10n("local.delete_comment_e43811a1")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2433,8 +2417,8 @@ function IssueChatAssistantMessage({
       <button
         type="button"
         className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        title="Copy message"
-        aria-label="Copy message"
+        title={l10n("local.copy_message_457efe53")}
+        aria-label={l10n("local.copy_message_457efe53")}
         onClick={() => {
           void copyTextToClipboard(copyText)
             .then(() => {
@@ -2486,8 +2470,8 @@ function IssueChatAssistantMessage({
             variant="ghost"
             size="icon-xs"
             className="text-muted-foreground hover:text-foreground"
-            title="More actions"
-            aria-label="More actions"
+            title={l10n("local.more_actions_f8d46c25")}
+            aria-label={l10n("local.more_actions_f8d46c25")}
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
           </Button>
@@ -2508,8 +2492,7 @@ function IssueChatAssistantMessage({
             }}
           >
             <Copy className="mr-2 h-3.5 w-3.5" />
-            Copy message
-          </DropdownMenuItem>
+            {l10n("local.copy_message_457efe53")}</DropdownMenuItem>
           {canStopRun && onStopRun && runId ? (
             <DropdownMenuItem
               disabled={isStoppingRun}
@@ -2534,8 +2517,7 @@ function IssueChatAssistantMessage({
             <DropdownMenuItem asChild>
               <Link to={runHref} target="_blank" rel="noreferrer noopener">
                 <Search className="mr-2 h-3.5 w-3.5" />
-                View run
-              </Link>
+                {l10n("local.view_run_aaf7fccc")}</Link>
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuContent>
@@ -2574,15 +2556,14 @@ function IssueChatAssistantMessage({
             ) : null}
             <SourceTrustBadge
               sourceTrust={sourceTrust}
-              artifactLabel="comment"
+              artifactLabel={l10n("local.comment_c44bb2fd")}
             />
             {followUpRequested ? (
               <Badge
                 variant="outline"
                 className="text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow)"
               >
-                Follow-up
-              </Badge>
+                {l10n("local.follow_up_09b2d9cd")}</Badge>
             ) : null}
           </div>
           {/* Canonical conference-room agent bubble (BoardChat.tsx:712). */}
@@ -2597,8 +2578,7 @@ function IssueChatAssistantMessage({
           >
             {deleted ? (
               <div className="text-sm italic text-muted-foreground">
-                Comment deleted
-              </div>
+                {l10n("local.comment_deleted_7199a134")}</div>
             ) : (
               <div className="min-w-0 max-w-full space-y-3">
                 <IssueChatAssistantParts message={message} hasCoT={false} />
@@ -2640,7 +2620,7 @@ function IssueChatAssistantMessage({
               </span>
               <SourceTrustBadge
                 sourceTrust={sourceTrust}
-                artifactLabel="comment"
+                artifactLabel={l10n("local.comment_c44bb2fd")}
               />
               <span className="text-xs text-muted-foreground/60">
                 {chainOfThoughtLabel?.toLowerCase()}
@@ -2666,15 +2646,14 @@ function IssueChatAssistantMessage({
               </span>
               <SourceTrustBadge
                 sourceTrust={sourceTrust}
-                artifactLabel="comment"
+                artifactLabel={l10n("local.comment_c44bb2fd")}
               />
               {followUpRequested ? (
                 <Badge
                   variant="outline"
                   className="text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow)"
                 >
-                  Follow-up
-                </Badge>
+                  {l10n("local.follow_up_09b2d9cd")}</Badge>
               ) : null}
               {isRunning ? (
                 // Running chip shares the liveness-blue badge recipe with the
@@ -2687,16 +2666,14 @@ function IssueChatAssistantMessage({
                   )}
                 >
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Running
-                </Badge>
+                  {l10n("local.running_f4ccae29")}</Badge>
               ) : null}
             </div>
           )}
 
           {deleted ? (
             <div className="rounded-sm bg-muted/40 px-3 py-2 text-sm italic text-muted-foreground">
-              Comment deleted
-            </div>
+              {l10n("local.comment_deleted_7199a134")}</div>
           ) : !folded ? (
             <>
               <div className="space-y-3">
@@ -2838,8 +2815,8 @@ function IssueChatFeedbackButtons({
             ? "text-green-600 dark:text-green-400"
             : "text-muted-foreground hover:bg-accent hover:text-foreground",
         )}
-        title="Helpful"
-        aria-label="Helpful"
+        title={l10n("local.helpful_63c432db")}
+        aria-label={l10n("local.helpful_63c432db")}
         onClick={handleThumbsUp}
       >
         <ThumbsUp className="h-3.5 w-3.5" />
@@ -2855,8 +2832,8 @@ function IssueChatFeedbackButtons({
                 ? "text-amber-600 dark:text-amber-400"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
-            title="Needs work"
-            aria-label="Needs work"
+            title={l10n("local.needs_work_738a3278")}
+            aria-label={l10n("local.needs_work_738a3278")}
             onClick={handleThumbsDown}
           >
             <ThumbsDown className="h-3.5 w-3.5" />
@@ -2864,12 +2841,11 @@ function IssueChatFeedbackButtons({
         </PopoverTrigger>
         <PopoverContent side="top" align="start" className="w-80 p-3">
           <div className="mb-2 text-sm font-medium">
-            What could have been better?
-          </div>
+            {l10n("local.what_could_have_been_better_829e701d")}</div>
           <Textarea
             value={downvoteReason}
             onChange={(event) => setDownvoteReason(event.target.value)}
-            placeholder="Add a short note"
+            placeholder={l10n("local.add_a_short_note_1adb884a")}
             className="min-h-20 resize-y bg-background text-sm"
             disabled={isSaving}
           />
@@ -2884,15 +2860,14 @@ function IssueChatFeedbackButtons({
                 setDownvoteReason("");
               }}
             >
-              Dismiss
-            </Button>
+              {l10n("local.dismiss_48845bff")}</Button>
             <Button
               type="button"
               size="sm"
               disabled={isSaving || !downvoteReason.trim()}
               onClick={handleSubmitReason}
             >
-              {isSaving ? "Saving..." : "Save note"}
+              {isSaving ? l10n("local.saving_dc85af8f") : l10n("local.save_note_6501e1ce")}
             </Button>
           </div>
         </PopoverContent>
@@ -2909,23 +2884,19 @@ function IssueChatFeedbackButtons({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save your feedback sharing preference</DialogTitle>
+            <DialogTitle>{l10n("local.save_your_feedback_sharing_preference_1c562b5e")}</DialogTitle>
             <DialogDescription>
-              Choose whether voted AI outputs can be shared with Paperclip Labs.
-              This answer becomes the default for future thumbs up and thumbs
-              down votes.
-            </DialogDescription>
+              {l10n("local.choose_whether_voted_ai_outputs_can_be_shared_1e435dd1")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
-            <p>This vote is always saved locally.</p>
+            <p>{l10n("local.this_vote_is_always_saved_locally_a7cd6ce4")}</p>
             <p>
-              Choose{" "}
-              <span className="font-medium text-foreground">Always allow</span>{" "}
-              to share this vote and future voted AI outputs. Choose{" "}
-              <span className="font-medium text-foreground">Don't allow</span>{" "}
-              to keep this vote and future votes local.
-            </p>
-            <p>You can change this later in Settings &gt; General.</p>
+              {l10n("local.choose_c7f93783")}{" "}
+              <span className="font-medium text-foreground">{l10n("local.always_allow_977618bd")}</span>{" "}
+              {l10n("local.to_share_this_vote_and_future_voted_ai_output_5f1e4cc9")}{" "}
+              <span className="font-medium text-foreground">{l10n("local.don_t_allow_9803bdd2")}</span>{" "}
+              {l10n("local.to_keep_this_vote_and_future_votes_local_197083e8")}</p>
+            <p>{l10n("local.you_can_change_this_later_in_settings_gt_gene_730f637b")}</p>
             {termsUrl ? (
               <a
                 href={termsUrl}
@@ -2933,8 +2904,7 @@ function IssueChatFeedbackButtons({
                 rel="noreferrer"
                 className="inline-flex text-sm text-foreground underline underline-offset-4"
               >
-                Read our terms of service
-              </a>
+                {l10n("local.read_our_terms_of_service_50aceeb5")}</a>
             ) : null}
           </div>
           <DialogFooter>
@@ -2952,7 +2922,7 @@ function IssueChatFeedbackButtons({
                 ).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Don't allow"}
+              {isSaving ? l10n("local.saving_dc85af8f") : l10n("local.don_t_allow_9803bdd2")}
             </Button>
             <Button
               type="button"
@@ -2967,7 +2937,7 @@ function IssueChatFeedbackButtons({
                 }).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Always allow"}
+              {isSaving ? l10n("local.saving_dc85af8f") : l10n("local.always_allow_977618bd")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3032,7 +3002,7 @@ function ExpiredRequestConfirmationActivity({
         )}
       >
         <span className="font-medium text-foreground">{actorName}</span>
-        <span className="text-muted-foreground">updated this task</span>
+        <span className="text-muted-foreground">{l10n("local.updated_this_task_9cc0b812")}</span>
         <a
           href={anchorId ? `#${anchorId}` : undefined}
           className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
@@ -3052,7 +3022,7 @@ function ExpiredRequestConfirmationActivity({
               expanded && "rotate-180",
             )}
           />
-          {expanded ? "Hide confirmation" : "Expired confirmation"}
+          {expanded ? l10n("local.hide_confirmation_0dabb2c2") : l10n("local.expired_confirmation_dc8bfef2")}
         </button>
       </div>
       {expanded ? (
@@ -3307,8 +3277,7 @@ function StaleDispositionWarningDetails({
   if (sections.length === 0) {
     return (
       <div className="text-xs leading-5 text-muted-foreground">
-        No additional details.
-      </div>
+        {l10n("local.no_additional_details_dfe09e30")}</div>
     );
   }
 
@@ -3365,8 +3334,7 @@ function StaleDispositionWarningRow({
             onClick={() => setOpen((value) => !value)}
           >
             <span className="text-sm font-medium text-foreground/80">
-              Stale disposition warning
-            </span>
+              {l10n("local.stale_disposition_warning_3227440c")}</span>
             <span className="ml-auto flex items-center gap-1.5">
               {message.createdAt ? (
                 <span
@@ -3651,8 +3619,8 @@ function SystemNoticeCommentContent({
             <button
               type="button"
               className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-              title="Copy link"
-              aria-label="Copy link to system notice"
+              title={l10n("local.copy_link_dbf362d4")}
+              aria-label={l10n("local.copy_link_to_system_notice_26e0f88b")}
               onClick={handleCopyLink}
             >
               {copiedLink ? (
@@ -3665,8 +3633,8 @@ function SystemNoticeCommentContent({
           <button
             type="button"
             className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-            title="Copy notice text"
-            aria-label="Copy system notice"
+            title={l10n("local.copy_notice_text_c545e526")}
+            aria-label={l10n("local.copy_system_notice_7c87ec19")}
             onClick={handleCopy}
           >
             {copied ? (
@@ -3815,8 +3783,8 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
           <span className="font-medium text-foreground">{actorName}</span>
           <span className="text-muted-foreground">
             {custom.followUpRequested === true
-              ? "requested follow-up"
-              : "updated this task"}
+              ? l10n("local.requested_follow_up_23f52c48")
+              : l10n("local.updated_this_task_9cc0b812")}
           </span>
           <a
             href={anchorId ? `#${anchorId}` : undefined}
@@ -3829,8 +3797,7 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
         {statusChange ? (
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <span className="text-(length:--text-nano) font-medium uppercase tracking-wider text-muted-foreground/70">
-              Status
-            </span>
+              {l10n("local.status_920e413c")}</span>
             <span className="text-muted-foreground">
               {humanizeValue(statusChange.from)}
             </span>
@@ -3850,8 +3817,7 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
               )}
             >
               <span className="text-(length:--text-nano) font-medium uppercase tracking-wider text-muted-foreground/70">
-                Assignee
-              </span>
+                {l10n("local.assignee_5e20d20e")}</span>
               <AssigneeChip
                 assignee={assigneeChange.from}
                 resolvers={handoffResolvers}
@@ -3875,8 +3841,7 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
         {workspaceChange ? (
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <span className="text-(length:--text-nano) font-medium uppercase tracking-wider text-muted-foreground/70">
-              Workspace
-            </span>
+              {l10n("local.workspace_87bb59ba")}</span>
             <span className="text-muted-foreground">
               {formatTimelineWorkspaceLabel(workspaceChange.from)}
             </span>
@@ -3908,7 +3873,7 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
           >
             {displayedRunAgentName}
           </Link>
-          <span className="text-muted-foreground">run</span>
+          <span className="text-muted-foreground">{l10n("local.run_acba2551")}</span>
           <Link
             to={`/agents/${runAgentId}/runs/${runId}`}
             className="inline-flex items-center rounded-md border border-border bg-accent/40 px-1.5 py-0.5 font-mono text-(length:--text-nano) text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
@@ -4542,7 +4507,7 @@ function IssueChatDeletedComment({
       </div>
       <div className="min-w-0 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
         <span className="font-medium text-foreground/80">{authorName}</span>
-        <span> deleted this comment</span>
+        <span> {l10n("local.deleted_this_comment_9cc59fcd")}</span>
         {deletedDateLabel ? (
           <span className="text-xs"> · {deletedDateLabel}</span>
         ) : null}
@@ -5334,12 +5299,9 @@ const IssueChatComposer = forwardRef<
             </span>
             <div className="min-w-0">
               <div className="text-sm font-medium text-foreground">
-                Drop to upload
-              </div>
+                {l10n("local.drop_to_upload_936e6ec1")}</div>
               <div className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                Images insert into the reply. Other files are added to this
-                task.
-              </div>
+                {l10n("local.images_insert_into_the_reply_other_files_are_1b09ae15")}</div>
             </div>
           </div>
         </div>
@@ -5351,9 +5313,7 @@ const IssueChatComposer = forwardRef<
           className="mb-3 space-y-2 rounded-md border border-border bg-muted p-3 text-sm"
         >
           <p>
-            We couldn’t confirm whether this comment was saved. It may already
-            be in the conversation. Review it before starting another draft.
-          </p>
+            {l10n("local.we_couldn_t_confirm_whether_this_comment_was_d18cbb20")}</p>
           <Button
             type="button"
             variant="outline"
@@ -5378,17 +5338,14 @@ const IssueChatComposer = forwardRef<
               }
             }}
           >
-            Review conversation
-          </Button>
+            {l10n("local.review_conversation_f2f5723a")}</Button>
           {reviewError ? (
-            <p>Couldn’t refresh the conversation. Try reviewing it again.</p>
+            <p>{l10n("local.couldn_t_refresh_the_conversation_try_reviewi_57d51bf8")}</p>
           ) : null}
           {uncertainSubmission.reviewed ? (
             <>
               <p>
-                Discarding this draft does not remove any saved comment or
-                uploaded file.
-              </p>
+                {l10n("local.discarding_this_draft_does_not_remove_any_sav_fabd608b")}</p>
               <Button
                 type="button"
                 variant="outline"
@@ -5402,8 +5359,7 @@ const IssueChatComposer = forwardRef<
                   setUncertainSubmission(null);
                 }}
               >
-                Discard draft and start new
-              </Button>
+                {l10n("local.discard_draft_and_start_new_c6c7026b")}</Button>
             </>
           ) : null}
         </div>
@@ -5413,7 +5369,7 @@ const IssueChatComposer = forwardRef<
         readOnly={!!uncertainSubmission}
         value={body}
         onChange={changeBody}
-        placeholder="Reply"
+        placeholder={l10n("local.reply_c253f451")}
         mentions={mentions}
         onSubmit={handleSubmit}
         imageUploadHandler={
@@ -5458,12 +5414,12 @@ const IssueChatComposer = forwardRef<
             const sizeLabel = formatAttachmentSize(attachment.size);
             const statusLabel =
               attachment.status === "uploading"
-                ? "Uploading to task"
+                ? l10n("local.uploading_to_task_06a172f2")
                 : attachment.status === "error"
-                  ? (attachment.error ?? "Upload failed")
+                  ? (attachment.error ?? l10n("local.upload_failed_6efc5d27"))
                   : attachment.inline
-                    ? "Inserted inline"
-                    : "Attached to task";
+                    ? l10n("local.inserted_inline_096fb2cc")
+                    : l10n("local.attached_to_task_95fcc6e4");
             return (
               <div
                 key={attachment.id}
@@ -5497,7 +5453,7 @@ const IssueChatComposer = forwardRef<
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={`Remove ${attachment.name}`}
+                    aria-label={l10n("local.remove_value_86790c6d", {v0: (attachment.name)})}
                     disabled={!!uncertainSubmission}
                     onClick={() =>
                       setComposerAttachments((current) =>
@@ -5538,7 +5494,7 @@ const IssueChatComposer = forwardRef<
                 size="icon-sm"
                 onClick={() => attachInputRef.current?.click()}
                 disabled={attaching}
-                title="Attach file"
+                title={l10n("local.attach_file_87fbe4fb")}
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
@@ -5601,8 +5557,7 @@ const IssueChatComposer = forwardRef<
                   );
                 })}
                 <div className="mt-1 border-t px-2 py-1.5 text-(length:--text-nano) text-muted-foreground">
-                  Cmd/Ctrl+. cycles modes
-                </div>
+                  {l10n("local.cmd_ctrl_cycles_modes_d994cdcc")}</div>
               </PopoverContent>
             </Popover>
           ) : null}
@@ -5613,16 +5568,16 @@ const IssueChatComposer = forwardRef<
             ref={reassignTriggerRef}
             value={reassignTarget}
             options={reassignOptions}
-            placeholder="Responsible"
-            noneLabel="No responsible"
-            searchPlaceholder="Search responsible..."
-            emptyMessage="No responsible found."
+            placeholder={l10n("local.responsible_bc110a6d")}
+            noneLabel={l10n("local.no_responsible_15abdee5")}
+            searchPlaceholder={l10n("local.search_responsible_9cb8d79f")}
+            emptyMessage={l10n("local.no_responsible_found_045a8ffe")}
             onChange={setReassignTarget}
             className="h-8 text-xs"
             renderTriggerValue={(option) => {
               if (!option)
                 return (
-                  <span className="text-muted-foreground">Responsible</span>
+                  <span className="text-muted-foreground">{l10n("local.responsible_bc110a6d")}</span>
                 );
               const agentId = option.id.startsWith("agent:")
                 ? option.id.slice("agent:".length)
@@ -5661,8 +5616,8 @@ const IssueChatComposer = forwardRef<
             size="icon-sm"
             disabled={stopControl.stopping}
             onClick={() => void stopControl.stop()}
-            aria-label={stopControl.stopping ? "Stopping…" : "Stop"}
-            title="Stop response"
+            aria-label={stopControl.stopping ? l10n("local.stopping_bbe85741") : l10n("local.stop_cae7d57b")}
+            title={l10n("local.stop_response_d5ca579c")}
           >
             {stopControl.stopping ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -5676,7 +5631,7 @@ const IssueChatComposer = forwardRef<
             disabled={!canSubmit}
             onClick={() => void handleSubmit()}
           >
-            {submitting ? "Posting..." : "Send"}
+            {submitting ? l10n("local.posting_e24da73e") : l10n("local.send_f6f4688f")}
           </Button>
         )}
       </div>
@@ -5702,12 +5657,9 @@ const IssueChatComposer = forwardRef<
           }}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle>No responsible selected</AlertDialogTitle>
+            <AlertDialogTitle>{l10n("local.no_responsible_selected_fd52c10c")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This comment will be posted without an assignee, so no agent will
-              be woken to act on it. Go back to pick a responsible, or send
-              anyway.
-            </AlertDialogDescription>
+              {l10n("local.this_comment_will_be_posted_without_an_assign_fd51a22d")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
@@ -5716,16 +5668,14 @@ const IssueChatComposer = forwardRef<
                 focusAssigneeOnDialogCloseRef.current = true;
               }}
             >
-              Go back
-            </AlertDialogCancel>
+              {l10n("local.go_back_6aadac2f")}</AlertDialogCancel>
             <AlertDialogAction
               data-testid="issue-chat-no-assignee-send-anyway"
               onClick={() => {
                 void submitComment();
               }}
             >
-              Send anyway
-            </AlertDialogAction>
+              {l10n("local.send_anyway_3bdd9831")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -6527,8 +6477,8 @@ export function IssueChatThread({
   const resolvedEmptyMessage =
     emptyMessage ??
     (variant === "embedded"
-      ? "No run output yet."
-      : "This task conversation is empty. Start with a message below.");
+      ? l10n("local.no_run_output_yet_2a4bb3c8")
+      : l10n("local.this_task_conversation_is_empty_start_with_a_a9ce9840"));
   const previousErrorBoundaryMessagesRef = useRef<
     readonly ThreadMessage[] | null
   >(null);
@@ -6550,8 +6500,7 @@ export function IssueChatThread({
                 onClick={handleJumpToLatest}
                 className="text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                Jump to latest
-              </button>
+                {l10n("local.jump_to_latest_86752458")}</button>
             </div>
           ) : null}
 
@@ -6639,12 +6588,10 @@ export function IssueChatThread({
                     {legacyRecoverySourceIssue ? (
                       <SystemNotice
                         tone="info"
-                        label="Legacy recovery task"
+                        label={l10n("local.legacy_recovery_task_179cd4ad")}
                         body={
                           <span>
-                            Legacy recovery task. Newer recovery actions live on
-                            the source task
-                            {legacyRecoverySourceIssue.identifier ? (
+                            {l10n("local.legacy_recovery_task_newer_recovery_actions_l_9dabc76e")}{legacyRecoverySourceIssue.identifier ? (
                               <>
                                 {" — "}
                                 <Link

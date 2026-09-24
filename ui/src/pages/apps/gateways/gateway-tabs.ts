@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { Activity, LayoutGrid, KeyRound, Wrench, Boxes } from "lucide-react";
 
 /**
@@ -6,11 +7,11 @@ import { Activity, LayoutGrid, KeyRound, Wrench, Boxes } from "lucide-react";
  * Advanced. Raw protocol / JSON / transport details live under Advanced.
  */
 export const GATEWAY_TABS = [
-  { key: "overview", label: "Overview", icon: LayoutGrid },
-  { key: "apps", label: "Apps & tools", icon: Boxes },
-  { key: "tokens", label: "Tokens", icon: KeyRound },
-  { key: "activity", label: "Activity", icon: Activity },
-  { key: "advanced", label: "Advanced", icon: Wrench },
+  { key: "overview", label: l10n("local.overview_d4b1ea57"), icon: LayoutGrid },
+  { key: "apps", label: l10n("local.apps_tools_b10a5c44"), icon: Boxes },
+  { key: "tokens", label: l10n("local.tokens_a039dfb9"), icon: KeyRound },
+  { key: "activity", label: l10n("local.activity_38da1505"), icon: Activity },
+  { key: "advanced", label: l10n("local.advanced_9f088dbe"), icon: Wrench },
 ] as const;
 
 export type GatewayTabKey = (typeof GATEWAY_TABS)[number]["key"];

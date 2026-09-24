@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { KeyRound, Save } from "lucide-react";
 import type { CompanySecret, RoutineEnvConfig } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
@@ -72,15 +73,12 @@ export function StageSecretsPanel({
           <KeyRound className="h-3.5 w-3.5 mt-0.5 shrink-0" />
         )}
         <p>
-          These env vars are injected when{" "}
-          <span className="font-medium text-foreground">{displayName}</span> runs this step. They override
-          matching project and agent env on collisions. <span className="font-mono">PAPERCLIP_*</span> names
-          are reserved.
-        </p>
+          {l10n("local.these_env_vars_are_injected_when_ec634ff6")}{" "}
+          <span className="font-medium text-foreground">{displayName}</span> {l10n("local.runs_this_step_they_override_matching_project_26a73892")}{" "}<span className="font-mono">PAPERCLIP_*</span> {l10n("local.names_are_reserved_a23f67d3")}</p>
       </div>
 
       {secretsLoading ? (
-        <p className="text-sm text-muted-foreground">Loading secrets…</p>
+        <p className="text-sm text-muted-foreground">{l10n("local.loading_secrets_3775fb66")}</p>
       ) : (
         <EnvironmentVariablesEditor
           value={value}
@@ -93,9 +91,9 @@ export function StageSecretsPanel({
       <div className="flex items-center gap-3">
         <Button type="button" onClick={onSave} disabled={!dirty || saving}>
           <Save className="h-4 w-4 mr-1.5" />
-          {saving ? "Saving…" : "Save secrets"}
+          {saving ? l10n("local.saving_23e39291") : l10n("local.save_secrets_a84c957d")}
         </Button>
-        {dirty && !saving ? <span className="text-xs text-muted-foreground">Unsaved changes</span> : null}
+        {dirty && !saving ? <span className="text-xs text-muted-foreground">{l10n("local.unsaved_changes_a710c2b9")}</span> : null}
       </div>
     </div>
   );

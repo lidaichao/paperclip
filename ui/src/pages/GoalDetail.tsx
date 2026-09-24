@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect } from "react";
 import { useParams } from "@/lib/router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,7 +40,7 @@ export function GoalPropertiesToggleButton({
         panelVisible ? "opacity-0 pointer-events-none w-0 overflow-hidden" : "opacity-100",
       )}
       onClick={onShowProperties}
-      title="Show properties"
+      title={l10n("local.show_properties_ae4293fc")}
     >
       <SlidersHorizontal className="h-4 w-4" />
     </Button>
@@ -118,8 +119,8 @@ export function GoalDetail() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Goals", href: "/goals" },
-      { label: goal?.title ?? goalId ?? "Goal" }
+      { label: l10n("local.goals_116cd398"), href: "/goals" },
+      { label: goal?.title ?? goalId ?? l10n("local.goal_cdbf6975") }
     ]);
   }, [setBreadcrumbs, goal, goalId]);
 
@@ -167,7 +168,7 @@ export function GoalDetail() {
           onSave={(description) => updateGoal.mutate({ description })}
           as="p"
           className="text-sm text-muted-foreground"
-          placeholder="Add a description..."
+          placeholder={l10n("local.add_a_description_eed0f05b")}
           multiline
           imageUploadHandler={async (file) => {
             const asset = await uploadImage.mutateAsync(file);
@@ -179,10 +180,10 @@ export function GoalDetail() {
       <Tabs defaultValue="children">
         <TabsList>
           <TabsTrigger value="children">
-            Sub-Goals ({childGoals.length})
+            {l10n("local.sub_goals_e8b1ab99")}{childGoals.length})
           </TabsTrigger>
           <TabsTrigger value="projects">
-            Projects ({linkedProjects.length})
+            {l10n("local.projects_fd2a4674")}{linkedProjects.length})
           </TabsTrigger>
         </TabsList>
 
@@ -194,11 +195,10 @@ export function GoalDetail() {
               onClick={() => openNewGoal({ parentId: goalId })}
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Sub Goal
-            </Button>
+              {l10n("local.sub_goal_7e686a3c")}</Button>
           </div>
           {childGoals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No sub-goals.</p>
+            <p className="text-sm text-muted-foreground">{l10n("local.no_sub_goals_87edd368")}</p>
           ) : (
             <GoalTree goals={childGoals} goalLink={(g) => `/goals/${g.id}`} />
           )}
@@ -206,7 +206,7 @@ export function GoalDetail() {
 
         <TabsContent value="projects" className="mt-4">
           {linkedProjects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No linked projects.</p>
+            <p className="text-sm text-muted-foreground">{l10n("local.no_linked_projects_ad16a257")}</p>
           ) : (
             <div className="border border-border">
               {linkedProjects.map((project) => (

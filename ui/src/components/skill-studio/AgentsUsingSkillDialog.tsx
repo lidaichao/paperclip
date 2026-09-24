@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2, Users } from "lucide-react";
@@ -56,7 +57,7 @@ export function AgentsUsingSkillBadge({
 }) {
   const [open, setOpen] = useState(false);
   const count = skill.usedByAgents.length;
-  const label = `${count} ${count === 1 ? "agent uses" : "agents use"} this skill`;
+  const label = l10n("local.value_value_this_skill_c64ccb98", {v0: (count), v1: (count === 1 ? "agent uses" : "agents use")});
 
   return (
     <>
@@ -72,7 +73,7 @@ export function AgentsUsingSkillBadge({
         )}
       >
         <Users className="h-3.5 w-3.5" aria-hidden="true" />
-        {count} {count === 1 ? "agent" : "agents"}
+        {count} {count === 1 ? l10n("local.agent_d4f0bc5a") : l10n("local.agents_8c70b25c")}
       </button>
       <AgentsUsingSkillDialog
         open={open}
@@ -201,7 +202,7 @@ export function AgentsUsingSkillDialog({
       ]);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Failed to update agent skills.";
+      const message = error instanceof Error ? error.message : l10n("local.failed_to_update_agent_skills_f491569a");
       toast?.pushToast({
         tone: "error",
         title: "Update failed",
@@ -232,11 +233,11 @@ export function AgentsUsingSkillDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Agents using {skill.name}</DialogTitle>
+          <DialogTitle>{l10n("local.agents_using_e836cc37")}{" "}{skill.name}</DialogTitle>
           <DialogDescription>
             {count === 0
-              ? "No agents have this skill assigned yet."
-              : `${count} ${count === 1 ? "agent has" : "agents have"} this skill in their desired set.`}
+              ? l10n("local.no_agents_have_this_skill_assigned_yet_765a266e")
+              : l10n("local.value_value_this_skill_in_their_desired_set_d669510b", {v0: (count), v1: (count === 1 ? "agent has" : "agents have")})}
           </DialogDescription>
         </DialogHeader>
 
@@ -244,8 +245,8 @@ export function AgentsUsingSkillDialog({
           {count === 0 ? (
             <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
               {canManage
-                ? "Add an agent below to assign this skill."
-                : "This skill isn't assigned to any agents."}
+                ? l10n("local.add_an_agent_below_to_assign_this_skill_4d7a7446")
+                : l10n("local.this_skill_isn_t_assigned_to_any_agents_c4ac8bbf")}
             </div>
           ) : (
             <ul className="divide-y divide-border">
@@ -340,12 +341,12 @@ function AgentRow({
 
       <div className="flex shrink-0 flex-col items-end gap-0.5">
         {!hasVersions ? (
-          <span className="text-sm text-muted-foreground" aria-label={`${agent.name} version`}>
+          <span className="text-sm text-muted-foreground" aria-label={l10n("local.value_version_d8db71e7", {v0: (agent.name)})}>
             —
           </span>
         ) : canManage ? (
           <select
-            aria-label={`${agent.name} skill version`}
+            aria-label={l10n("local.value_skill_version_612dcffb", {v0: (agent.name)})}
             value={agent.versionId ?? LATEST_VALUE}
             disabled={busy}
             onChange={(event) =>
@@ -354,7 +355,7 @@ function AgentRow({
             className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground disabled:opacity-60"
           >
             <option value={LATEST_VALUE}>
-              Latest{latestRevision !== null ? ` (v${latestRevision})` : ""}
+              {l10n("local.latest_8730d3c2")}{latestRevision !== null ? ` (v${latestRevision})` : ""}
             </option>
             {versions.map((version) => (
               <option key={version.id} value={version.id}>
@@ -367,13 +368,12 @@ function AgentRow({
           <span className="text-xs text-muted-foreground">
             {agent.versionId
               ? `v${pinnedRevision ?? "?"}`
-              : `Latest${latestRevision !== null ? ` (v${latestRevision})` : ""}`}
+              : l10n("local.latestvalue_b43d65ab", {v0: (latestRevision !== null ? ` (v${latestRevision})` : "")})}
           </span>
         )}
         {behindLatest > 0 ? (
           <span className="text-(length:--text-nano) text-amber-500">
-            {behindLatest} version{behindLatest === 1 ? "" : "s"} behind latest
-          </span>
+            {behindLatest} {l10n("local.version_5ca4f385")}{behindLatest === 1 ? "" : englishPluralSuffix("s")} {l10n("local.behind_latest_e7e36725")}</span>
         ) : null}
       </div>
 
@@ -385,13 +385,12 @@ function AgentRow({
               size="sm"
               onClick={onRemove}
               disabled={busy}
-              aria-label={`Confirm removing this skill from ${agent.name}`}
+              aria-label={l10n("local.confirm_removing_this_skill_from_value_f4b232be", {v0: (agent.name)})}
             >
-              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Remove"}
+              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : l10n("local.remove_c3812fc4")}
             </Button>
             <Button variant="ghost" size="sm" onClick={onCancelRemove} disabled={busy}>
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
           </div>
         ) : (
           <Button
@@ -400,7 +399,7 @@ function AgentRow({
             onClick={onRequestRemove}
             disabled={busy}
             className="shrink-0 text-muted-foreground hover:text-destructive"
-            aria-label={`Remove this skill from ${agent.name}`}
+            aria-label={l10n("local.remove_this_skill_from_value_da51706d", {v0: (agent.name)})}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -439,10 +438,10 @@ function AddAgentPicker({
       value=""
       groups={groups}
       loading={loading}
-      loadingMessage="Loading agents..."
-      placeholder="Add agent…"
-      searchPlaceholder="Search agents..."
-      emptyMessage="All eligible agents already have this skill."
+      loadingMessage={l10n("local.loading_agents_a4e0608f")}
+      placeholder={l10n("local.add_agent_51189bf0")}
+      searchPlaceholder={l10n("local.search_agents_32f4468b")}
+      emptyMessage={l10n("local.all_eligible_agents_already_have_this_skill_e8e90b54")}
       disabled={disabled}
       onValueChange={(_value, option) => {
         onSelect(option.agent);
@@ -453,8 +452,7 @@ function AddAgentPicker({
       renderValue={() => (
         <span className="flex items-center gap-1.5 text-muted-foreground">
           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-          Add agent…
-        </span>
+          {l10n("local.add_agent_51189bf0")}</span>
       )}
       renderOption={(option) => (
         <span className="flex min-w-0 flex-col">

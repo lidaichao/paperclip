@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type {
@@ -34,19 +35,19 @@ export async function fetchIssueExternalObjectSummariesInBatches(
 function formatMentionSourceLabel(mention: ExternalObjectMention): string {
   switch (mention.sourceKind) {
     case "title":
-      return "Title";
+      return l10n("local.title_7e8cd205");
     case "description":
-      return "Description";
+      return l10n("local.description_526e0087");
     case "comment":
-      return "Comment";
+      return l10n("local.comment_44f5e3fb");
     case "document":
       return mention.documentKey ? `Document: ${mention.documentKey}` : "Document";
     case "property":
       return mention.propertyKey ? `Property: ${mention.propertyKey}` : "Property";
     case "plugin":
-      return "Plugin";
+      return l10n("local.plugin_ab1173ee");
     default:
-      return "Source";
+      return l10n("local.source_0e570ca6");
   }
 }
 

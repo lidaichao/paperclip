@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { SecretStatus, UserSecretCoverageSummary } from "@paperclipai/shared";
 import { UserRound } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -61,11 +62,11 @@ export function myValueTone(state: MyValueState): string {
 export function myValueLabel(state: MyValueState): string {
   switch (state) {
     case "set":
-      return "Value set";
+      return l10n("local.value_set_17b07890");
     case "not_set":
-      return "Not set";
+      return l10n("local.not_set_4895f731");
     case "inactive":
-      return "Disabled";
+      return l10n("local.disabled_75081b59");
   }
 }
 
@@ -76,5 +77,5 @@ export function myValueLabel(state: MyValueState): string {
 export function coverageSummaryLabel(summary: UserSecretCoverageSummary | undefined): string {
   if (!summary) return "—";
   const total = summary.configuredCount + summary.missingCount + summary.inactiveCount;
-  return `${summary.configuredCount} of ${total} set`;
+  return l10n("local.value_of_value_set_75b4f21d", {v0: (summary.configuredCount), v1: (total)});
 }

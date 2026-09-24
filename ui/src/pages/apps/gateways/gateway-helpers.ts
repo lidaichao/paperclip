@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import type {
   ToolApplication,
   ToolConnection,
@@ -103,13 +104,13 @@ export function isGatewayOn(gateway: ToolMcpGatewayWithTokens): boolean {
 
 /** Human summary of how many tools a profile allows. */
 export function allowedToolsLabel(profile: ToolProfileWithDetails | undefined): string {
-  if (!profile) return "Profile unavailable";
+  if (!profile) return l10n("local.profile_unavailable_158e5a22");
   const { accessMode, allowedToolCount, totalToolCount, excludedToolCount } = profile.summary;
   const count =
     accessMode === "all_except"
       ? Math.max(totalToolCount - excludedToolCount, 0)
       : allowedToolCount;
-  if (count === 0) return "No tools allowed";
+  if (count === 0) return l10n("local.no_tools_allowed_e8e116ae");
   return `${count} ${count === 1 ? "tool" : "tools"}`;
 }
 

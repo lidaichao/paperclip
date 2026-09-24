@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { EmailMessageCard } from "./EmailMessageCard";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -81,35 +82,32 @@ function EmailDelivery({
     <div className="space-y-2 text-xs text-muted-foreground">
       {p.request && !p.providerMessageId && (
         <article
-          aria-label="Email send intent"
+          aria-label={l10n("local.email_send_intent_5cd55844")}
           className="space-y-3 rounded-lg border border-border p-4"
         >
-          <p className="font-semibold">{p.request.subject ?? "Email reply"}</p>
-          {p.request.to && <p>To: {p.request.to.join(", ")}</p>}
+          <p className="font-semibold">{p.request.subject ?? l10n("local.email_reply_ef902e38")}</p>
+          {p.request.to && <p>{l10n("local.to_2b5fc5c9")}{" "}{p.request.to.join(", ")}</p>}
           <div className="whitespace-pre-wrap break-words text-sm text-foreground">
             {p.request.text}
           </div>
         </article>
       )}
       <p>
-        Email {p.outcome}
+        {l10n("local.email_969ccbd3")}{" "}{p.outcome}
         {p.error ? ` — ${p.error}` : ""}
       </p>
       {p.outcome === "uncertain" && (
         <details>
           <summary className="cursor-pointer">
-            Resolve delivery after checking AgentMail
-          </summary>
+            {l10n("local.resolve_delivery_after_checking_agentmail_45731872")}</summary>
           <div className="space-y-2 py-2">
             <p>
-              Confirm the outcome in AgentMail before resolving. This action
-              does not resend.
-            </p>
+              {l10n("local.confirm_the_outcome_in_agentmail_before_resol_0e870401")}</p>
             <Input
-              aria-label="Provider message ID"
+              aria-label={l10n("local.provider_message_id_c250cfdf")}
               value={messageId}
               onChange={(e) => setMessageId(e.target.value)}
-              placeholder="Provider message ID"
+              placeholder={l10n("local.provider_message_id_c250cfdf")}
             />
             <div className="flex gap-2">
               <Button
@@ -118,16 +116,14 @@ function EmailDelivery({
                 disabled={!messageId || resolve.isPending}
                 onClick={() => resolve.mutate("sent")}
               >
-                Confirm sent
-              </Button>
+                {l10n("local.confirm_sent_a1913b58")}</Button>
               <Button
                 size="sm"
                 variant="outline"
                 disabled={resolve.isPending}
                 onClick={() => resolve.mutate("failed")}
               >
-                Confirm not sent
-              </Button>
+                {l10n("local.confirm_not_sent_e948b4c3")}</Button>
             </div>
             {resolve.error && (
               <p role="alert" className="text-destructive">

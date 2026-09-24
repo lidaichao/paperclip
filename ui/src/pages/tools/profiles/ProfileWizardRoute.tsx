@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useEffect } from "react";
 import { useParams, useSearchParams } from "@/lib/router";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
@@ -28,16 +29,16 @@ export function ProfileWizardRoute({ mode }: { mode: "new" | "edit" }) {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Organization", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
-      { label: "Access profiles", href: advancedTabHref("profiles") },
-      { label: mode === "edit" ? "Resume draft" : "New profile" },
+      { label: selectedCompany?.name ?? l10n("local.organization_d764d425"), href: "/dashboard" },
+      { label: l10n("local.apps_89dd7484"), href: "/apps" },
+      { label: l10n("local.access_profiles_2471292f"), href: advancedTabHref("profiles") },
+      { label: mode === "edit" ? l10n("local.resume_draft_13af115d") : l10n("local.new_profile_fcf4f3f4") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs, selectedCompany?.name, mode]);
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select an organization to create a profile.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{l10n("local.select_an_organization_to_create_a_profile_3f7c06e0")}</div>;
   }
 
   return (
@@ -45,11 +46,10 @@ export function ProfileWizardRoute({ mode }: { mode: "new" | "edit" }) {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
         <header>
           <h1 className="text-xl font-bold text-foreground">
-            {mode === "edit" ? "Finish your profile" : "New access profile"}
+            {mode === "edit" ? l10n("local.finish_your_profile_a29dd2bd") : l10n("local.new_access_profile_c7e9f564")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose which tools this profile allows, then assign it to the agents that need them.
-          </p>
+            {l10n("local.choose_which_tools_this_profile_allows_then_a_7c7739c8")}</p>
         </header>
         <ProfileWizard
           companyId={selectedCompanyId}

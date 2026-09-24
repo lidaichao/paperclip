@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   useCallback,
   useEffect,
@@ -121,48 +122,48 @@ export function describeDenial(code: string, fallback: string): { title: string;
   if (lower.includes("policy") || lower.includes("denied") || lower.includes("sensitive")) {
     return {
       icon: <Lock aria-hidden="true" className="h-6 w-6 text-amber-500" />,
-      title: "Viewer blocked for this file",
+      title: l10n("local.viewer_blocked_for_this_file_2d9ad26c"),
       body: "This file is not available through the viewer because it may contain sensitive data.",
     };
   }
   if (lower.includes("outside") || lower.includes("traversal")) {
     return {
       icon: <Ban aria-hidden="true" className="h-6 w-6 text-red-500" />,
-      title: "Path is outside the workspace",
+      title: l10n("local.path_is_outside_the_workspace_aa3ce277"),
       body: "The viewer can only open files that live under the issue's workspace.",
     };
   }
   if (lower.includes("archive") || lower.includes("cleaned")) {
     return {
       icon: <FolderOpen aria-hidden="true" className="h-6 w-6 text-muted-foreground" />,
-      title: "Workspace is no longer available",
+      title: l10n("local.workspace_is_no_longer_available_cb2826c6"),
       body: "The isolated worktree for this issue has been cleaned up, so files cannot be previewed.",
     };
   }
   if (lower.includes("remote")) {
     return {
       icon: <AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />,
-      title: "Remote workspace preview not supported",
+      title: l10n("local.remote_workspace_preview_not_supported_118565fc"),
       body: "This workspace is hosted remotely and is not available for inline preview yet.",
     };
   }
   if (lower.includes("too_large") || lower.includes("size")) {
     return {
       icon: <AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />,
-      title: "File is too large to preview",
+      title: l10n("local.file_is_too_large_to_preview_af94fcfb"),
       body: "This file exceeds the supported preview size.",
     };
   }
   if (lower.includes("binary") || lower.includes("unsupported")) {
     return {
       icon: <AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />,
-      title: "Preview not supported for this file type",
+      title: l10n("local.preview_not_supported_for_this_file_type_c55ca586"),
       body: "This file does not have a text, image, or video preview available.",
     };
   }
   return {
     icon: <Ban aria-hidden="true" className="h-6 w-6 text-red-500" />,
-    title: "Can't preview this file",
+    title: l10n("local.can_t_preview_this_file_31b952ec"),
     body: fallback || "The viewer was unable to load this file.",
   };
 }
@@ -217,14 +218,14 @@ export function FileViewerMetadataRow({
             <>
               <span aria-hidden="true" className="opacity-50">·</span>
               <span>
-                Line {state.line}
-                {state.column ? `, Col ${state.column}` : ""}
+                {l10n("local.line_d7852cd0")}{" "}{state.line}
+                {state.column ? l10n("local._col_value_1d86a54f", {v0: (state.column)}) : ""}
               </span>
             </>
           ) : null}
         </>
       ) : state ? (
-        <span className="h-3 w-28 rounded bg-muted animate-pulse" aria-label="Loading file details" />
+        <span className="h-3 w-28 rounded bg-muted animate-pulse" aria-label={l10n("local.loading_file_details_768d734a")} />
       ) : null}
     </div>
   );
@@ -275,7 +276,7 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
       return (
         <FileViewerStateView
           icon={<AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />}
-          title="Image preview unavailable"
+          title={l10n("local.image_preview_unavailable_637262a2")}
         />
       );
     }
@@ -298,7 +299,7 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
       return (
         <FileViewerStateView
           icon={<AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />}
-          title="Video preview unavailable"
+          title={l10n("local.video_preview_unavailable_ba6b8bcc")}
         />
       );
     }
@@ -309,7 +310,7 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
           controls
           preload="metadata"
           playsInline
-          aria-label={`Video preview: ${resource.title}`}
+          aria-label={l10n("local.video_preview_value_f25df21d", {v0: (resource.title)})}
           className="max-h-full max-w-full rounded border border-white/10 bg-black"
         />
       </div>
@@ -320,8 +321,8 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
     return (
       <FileViewerStateView
         icon={<AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />}
-        title="Preview not supported for this file type"
-        body={resource.contentType ? `Content type: ${resource.contentType}` : undefined}
+        title={l10n("local.preview_not_supported_for_this_file_type_c55ca586")}
+        body={resource.contentType ? l10n("local.content_type_value_380be5fc", {v0: (resource.contentType)}) : undefined}
       />
     );
   }
@@ -332,7 +333,7 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
     <div
       ref={codeScrollRef}
       role="region"
-      aria-label={`${resource.title} source`}
+      aria-label={l10n("local.value_source_438da15d", {v0: (resource.title)})}
       tabIndex={0}
       className="paperclip-file-viewer-code flex-1 overflow-auto bg-(--code-bg-resolved) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
     >
@@ -382,15 +383,15 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
       <div className="absolute right-3 top-3 z-20">
         <div
           role="group"
-          aria-label="Markdown preview mode"
+          aria-label={l10n("local.markdown_preview_mode_7d6f9f68")}
           className="inline-flex rounded-md border border-border bg-background/95 p-0.5 shadow-sm backdrop-blur"
         >
           <Button
             type="button"
             variant={markdownMode === "rendered" ? "secondary" : "ghost"}
             size="icon-sm"
-            aria-label="Show rendered Markdown"
-            title="Rendered Markdown"
+            aria-label={l10n("local.show_rendered_markdown_a2755a35")}
+            title={l10n("local.rendered_markdown_021ce646")}
             aria-pressed={markdownMode === "rendered"}
             onClick={() => setMarkdownMode("rendered")}
             className={cn(
@@ -404,8 +405,8 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
             type="button"
             variant={markdownMode === "raw" ? "secondary" : "ghost"}
             size="icon-sm"
-            aria-label="Show raw Markdown"
-            title="Raw Markdown"
+            aria-label={l10n("local.show_raw_markdown_399bc52a")}
+            title={l10n("local.raw_markdown_f41bae51")}
             aria-pressed={markdownMode === "raw"}
             onClick={() => setMarkdownMode("raw")}
             className={cn(
@@ -422,7 +423,7 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
       ) : (
         <div
           role="region"
-          aria-label={`${resource.title} rendered Markdown`}
+          aria-label={l10n("local.value_rendered_markdown_11c61445", {v0: (resource.title)})}
           tabIndex={0}
           className="flex-1 overflow-auto bg-background p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
@@ -442,7 +443,7 @@ function LoadingView({ elapsedMs }: { elapsedMs: number }) {
   if (elapsedMs < 400) {
     return (
       <div className="flex-1 space-y-2 p-6" aria-busy="true" aria-live="polite">
-        <span className="sr-only">Loading file preview</span>
+        <span className="sr-only">{l10n("local.loading_file_preview_7b144afc")}</span>
         {Array.from({ length: 10 }).map((_, index) => (
           <div key={index} className="h-3 rounded bg-muted animate-pulse" style={{ width: `${90 - index * 6}%` }} />
         ))}
@@ -457,8 +458,7 @@ function LoadingView({ elapsedMs }: { elapsedMs: number }) {
     >
       <div className="flex items-center gap-2 text-muted-foreground">
         <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-        Loading file preview...
-      </div>
+        {l10n("local.loading_file_preview_33454f00")}</div>
     </div>
   );
 }
@@ -661,7 +661,7 @@ export function FileViewerSheet({
         showCopyFeedback(null, "File contents unavailable");
         return;
       }
-      const message = content.content.encoding === "base64" ? "Copied file data" : "Copied contents";
+      const message = content.content.encoding === "base64" ? l10n("local.copied_file_data_62c309f4") : l10n("local.copied_contents_6604ead1");
       await copyToClipboard(content.content.data, "content", message);
     })();
   }, [canPreview, contentQuery, copyToClipboard, showCopyFeedback, state]);
@@ -707,10 +707,10 @@ export function FileViewerSheet({
     });
   }, []);
 
-  const title = state ? basename(state.path) : "Browse workspace";
+  const title = state ? basename(state.path) : l10n("local.browse_workspace_c9f08da4");
   const description = state
     ? middleTruncatePath(state.path)
-    : "Search and preview files from this issue's workspace.";
+    : l10n("local.search_and_preview_files_from_this_issue_s_wo_fc4d8249");
   const showDescription = state ? description !== title : true;
 
   return (
@@ -761,11 +761,10 @@ export function FileViewerSheet({
                   size="sm"
                   onClick={() => viewer.backToFiles()}
                   className="h-7 gap-1 px-2 text-xs"
-                  aria-label="Back to files"
+                  aria-label={l10n("local.back_to_files_f911e3db")}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  Back to files
-                </Button>
+                  {l10n("local.back_to_files_f911e3db")}</Button>
               ) : null}
               {state ? (
                 downloadUrl ? (
@@ -778,8 +777,8 @@ export function FileViewerSheet({
                     <a
                       href={downloadUrl}
                       download={resolvedResource?.title ?? basename(state.path)}
-                      aria-label="Download file"
-                      title="Download file"
+                      aria-label={l10n("local.download_file_9de4149f")}
+                      title={l10n("local.download_file_9de4149f")}
                     >
                       <Download className="h-4 w-4" />
                     </a>
@@ -792,8 +791,8 @@ export function FileViewerSheet({
                   variant="ghost"
                   size="icon-sm"
                   onClick={handleCopyContent}
-                  aria-label={copiedField === "content" ? "Copied file contents" : "Copy file contents"}
-                  title={copiedField === "content" ? "Copied contents" : "Copy file contents"}
+                  aria-label={copiedField === "content" ? l10n("local.copied_file_contents_b4dbbc32") : l10n("local.copy_file_contents_b3278e5f")}
+                  title={copiedField === "content" ? l10n("local.copied_contents_6604ead1") : l10n("local.copy_file_contents_b3278e5f")}
                   className="h-7 w-7"
                 >
                   {copyingField === "content" ? (
@@ -811,8 +810,8 @@ export function FileViewerSheet({
                   variant="ghost"
                   size="icon-sm"
                   onClick={handleCopyLink}
-                  aria-label={copiedField === "link" ? "Copied file view link" : "Copy link to this file view"}
-                  title={copiedField === "link" ? "Copied link" : "Copy link"}
+                  aria-label={copiedField === "link" ? l10n("local.copied_file_view_link_b2acd575") : l10n("local.copy_link_to_this_file_view_ed399e88")}
+                  title={copiedField === "link" ? l10n("local.copied_link_93354054") : l10n("local.copy_link_dbf362d4")}
                   className="h-7 w-7"
                 >
                   {copyingField === "link" ? (
@@ -830,8 +829,8 @@ export function FileViewerSheet({
                 size="icon-sm"
                 onClick={() => handleOpenChange(false)}
                 className="h-7 w-7"
-                aria-label="Close file viewer"
-                title="Close"
+                aria-label={l10n("local.close_file_viewer_ca47c733")}
+                title={l10n("local.close_7d9eb7ac")}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -871,7 +870,7 @@ export function FileViewerSheet({
               <div
                 role="separator"
                 aria-orientation="vertical"
-                aria-label="Resize file tree"
+                aria-label={l10n("local.resize_file_tree_8c62ea07")}
                 aria-valuemin={MIN_FILE_TREE_WIDTH}
                 aria-valuemax={MAX_FILE_TREE_WIDTH}
                 aria-valuenow={fileTreeWidth}
@@ -956,18 +955,16 @@ export function FileViewerBody({
       return (
         <FileViewerStateView
           icon={<FileSearch aria-hidden="true" className="h-6 w-6 text-muted-foreground" />}
-          title="File not found"
-          body="That file was not found in the active workspace."
+          title={l10n("local.file_not_found_3521021a")}
+          body={l10n("local.that_file_was_not_found_in_the_active_workspa_0e7e492c")}
           actions={
             <>
               {onFallbackToProject ? (
                 <Button type="button" variant="secondary" size="sm" onClick={onFallbackToProject}>
-                  Try project workspace
-                </Button>
+                  {l10n("local.try_project_workspace_ec57088f")}</Button>
               ) : null}
               <Button type="button" variant="ghost" size="sm" onClick={onRetry}>
-                <RefreshCcw aria-hidden="true" className="mr-1 h-3 w-3" /> Retry
-              </Button>
+                <RefreshCcw aria-hidden="true" className="mr-1 h-3 w-3" /> {l10n("local.retry_942087cc")}</Button>
             </>
           }
         />
@@ -977,8 +974,8 @@ export function FileViewerBody({
       return (
         <FileViewerStateView
           icon={<FolderOpen aria-hidden="true" className="h-6 w-6 text-muted-foreground" />}
-          title="No workspace available"
-          body="This issue does not have a workspace that supports preview yet."
+          title={l10n("local.no_workspace_available_8621cdb8")}
+          body={l10n("local.this_issue_does_not_have_a_workspace_that_sup_2cebaed6")}
         />
       );
     }
@@ -990,8 +987,7 @@ export function FileViewerBody({
         body={denial.body}
         actions={
           <Button type="button" variant="ghost" size="sm" onClick={onRetry}>
-            <RefreshCcw aria-hidden="true" className="mr-1 h-3 w-3" /> Retry
-          </Button>
+            <RefreshCcw aria-hidden="true" className="mr-1 h-3 w-3" /> {l10n("local.retry_942087cc")}</Button>
         }
       />
     );
@@ -1004,8 +1000,8 @@ export function FileViewerBody({
     return (
       <FileViewerStateView
         icon={<Cloud aria-hidden="true" className="h-6 w-6 text-muted-foreground" />}
-        title="Remote workspace preview coming soon"
-        body="This workspace is hosted remotely; inline previews are not supported yet."
+        title={l10n("local.remote_workspace_preview_coming_soon_e823cbb5")}
+        body={l10n("local.this_workspace_is_hosted_remotely_inline_prev_328ae25d")}
       />
     );
   }
@@ -1029,8 +1025,7 @@ export function FileViewerBody({
         body={denial.body}
         actions={
           <Button type="button" variant="ghost" size="sm" onClick={onRetry}>
-            <RefreshCcw aria-hidden="true" className="mr-1 h-3 w-3" /> Retry
-          </Button>
+            <RefreshCcw aria-hidden="true" className="mr-1 h-3 w-3" /> {l10n("local.retry_942087cc")}</Button>
         }
       />
     );

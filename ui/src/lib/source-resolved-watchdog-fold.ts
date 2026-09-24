@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { HeartbeatRun } from "@paperclipai/shared";
 
 export type SourceResolvedFoldCleanupOutcome =
@@ -105,12 +106,12 @@ export function readSourceResolvedWatchdogFold(
 }
 
 const CLEANUP_OUTCOME_LABELS: Record<string, string> = {
-  terminated: "terminated",
-  termination_sent_still_running: "termination sent (still running)",
-  failed: "failed",
-  not_running: "not running",
-  no_process_metadata: "no process metadata",
-  skipped_non_local_adapter: "skipped (non-local adapter)",
+  terminated: l10n("local.terminated_e8c95a2a"),
+  termination_sent_still_running: l10n("local.termination_sent_still_running_ee987105"),
+  failed: l10n("local.failed_5d28a90f"),
+  not_running: l10n("local.not_running_415ed734"),
+  no_process_metadata: l10n("local.no_process_metadata_eabfb85c"),
+  skipped_non_local_adapter: l10n("local.skipped_non_local_adapter_a01b4506"),
 };
 
 export function formatCleanupOutcome(outcome: string): string {

@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { REMOTE_MCP_CONNECTOR_METHODS, type ToolConnection } from "@paperclipai/shared";
@@ -181,14 +182,14 @@ export function RemoteMcpProductionSetup({ providerId, connection, host = "page"
     refresh: () => {}, reconnect: () => edit({ step: "connect" }), disconnect: () => {},
   };
   if (showChoices && onUseExisting) return <div className="space-y-5">
-    <div><h1 className="text-xl font-bold">Connect {provider.name}</h1><p className="mt-2 text-sm text-muted-foreground">Use an existing connection or connect a new account. Existing access stays unchanged.</p></div>
-    <ConnectionChoiceList choices={existingConnections.map((c) => ({ id: c.id, name: c.name, description: "Ready to use" }))} pendingId={choicePending} onSelect={(id) => {
+    <div><h1 className="text-xl font-bold">{l10n("local.connect_1a2303ed")}{" "}{provider.name}</h1><p className="mt-2 text-sm text-muted-foreground">{l10n("local.use_an_existing_connection_or_connect_a_new_a_a6155ab1")}</p></div>
+    <ConnectionChoiceList choices={existingConnections.map((c) => ({ id: c.id, name: c.name, description: l10n("local.ready_to_use_996f87b3") }))} pendingId={choicePending} onSelect={(id) => {
       setChoicePending(id); setChoiceError(null);
       void onUseExisting(id).catch((error) => { setChoiceError(error instanceof Error ? error.message : "Could not use this connection."); setChoicePending(null); });
     }} />
     {choiceError && <p role="alert" className="text-sm text-destructive">{choiceError}</p>}
-    <div className="flex items-center justify-between gap-3"><Button variant="ghost" disabled={Boolean(choicePending)} onClick={onCancel}>Cancel</Button><Button disabled={Boolean(choicePending)} onClick={() => setShowChoices(false)}>Connect new</Button></div>
+    <div className="flex items-center justify-between gap-3"><Button variant="ghost" disabled={Boolean(choicePending)} onClick={onCancel}>{l10n("local.cancel_19766ed6")}</Button><Button disabled={Boolean(choicePending)} onClick={() => setShowChoices(false)}>{l10n("local.connect_new_99ecd0a9")}</Button></div>
   </div>;
-  if (connection && !installs.data) return <div className="space-y-3 p-8"><p>{installs.isError ? "Could not load saved access. Retry before changing this connection." : "Loading saved access…"}</p>{installs.isError && <button type="button" className="text-primary underline" onClick={() => void installs.refetch()}>Try again</button>}</div>;
+  if (connection && !installs.data) return <div className="space-y-3 p-8"><p>{installs.isError ? l10n("local.could_not_load_saved_access_retry_before_chan_0062e3f0") : l10n("local.loading_saved_access_4a770f5a")}</p>{installs.isError && <button type="button" className="text-primary underline" onClick={() => void installs.refetch()}>{l10n("local.try_again_d8b8392e")}</button>}</div>;
   return <RemoteMcpConnectionSetup host={host} lockedAgentId={requestedAgentId} authorizationUrl={host === "dialog" ? authorizationUrl.current : undefined} provider={provider} connectionId={savedConnection.current?.id ?? ""} fixedGrantKind={savedConnection.current ? savedConnection.current.credentialPolicy === "per_user" ? "user" : "organization" : undefined} state={state} actions={actions} agents={agents.data ?? []} />;
 }

@@ -1,14 +1,15 @@
+import { l10n } from "../i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export type DatePreset = "mtd" | "7d" | "30d" | "ytd" | "all" | "custom";
 
 export const PRESET_LABELS: Record<DatePreset, string> = {
-  mtd: "Month to Date",
-  "7d": "Last 7 Days",
-  "30d": "Last 30 Days",
-  ytd: "Year to Date",
-  all: "All Time",
-  custom: "Custom",
+  mtd: l10n("local.month_to_date_951ce1b0"),
+  "7d": l10n("local.last_7_days_b84372e5"),
+  "30d": l10n("local.last_30_days_e9ddf63b"),
+  ytd: l10n("local.year_to_date_92176dd3"),
+  all: l10n("local.all_time_476adfac"),
+  custom: l10n("local.custom_494ca78f"),
 };
 
 export const PRESET_KEYS: DatePreset[] = ["mtd", "7d", "30d", "ytd", "all", "custom"];

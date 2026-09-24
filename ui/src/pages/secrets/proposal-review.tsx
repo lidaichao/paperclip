@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -76,10 +77,10 @@ export function FingerprintChip({
       type="button"
       onClick={() => {
         copyTextToClipboard(full)
-          .then(() => pushToast({ title: "Fingerprint copied", tone: "success" }))
-          .catch(() => pushToast({ title: "Couldn’t copy fingerprint", tone: "error" }));
+          .then(() => pushToast({ title: l10n("local.fingerprint_copied_8c837ec1"), tone: "success" }))
+          .catch(() => pushToast({ title: l10n("local.couldn_t_copy_fingerprint_bed9690f"), tone: "error" }));
       }}
-      title={`Copy full digest — ${full}`}
+      title={l10n("local.copy_full_digest_value_efd2ea46", {v0: (full)})}
       className={cn(
         "inline-flex items-center gap-1 font-mono hover:text-foreground",
         className,
@@ -108,7 +109,7 @@ export function ProposalJustification({
 }) {
   return (
     <div className={cn("space-y-0.5", className)}>
-      <p className="text-(length:--text-micro) text-muted-foreground">Reason given by the agent</p>
+      <p className="text-(length:--text-micro) text-muted-foreground">{l10n("local.reason_given_by_the_agent_39273c7e")}</p>
       <p className="whitespace-pre-wrap break-words text-xs text-foreground/80">
         “{justification}”
       </p>
@@ -164,8 +165,7 @@ export function ProposedBadge({ className }: { className?: string }) {
         className,
       )}
     >
-      <ShieldAlert className="size-3" /> Proposed
-    </Badge>
+      <ShieldAlert className="size-3" /> {l10n("local.proposed_9b0c660b")}</Badge>
   );
 }
 
@@ -261,10 +261,10 @@ export function useProposalReview(
     },
     onSuccess: (result) => {
       pushToast({
-        title: result.kind === "secret" ? "Secret approved" : "Binding approved",
+        title: result.kind === "secret" ? l10n("local.secret_approved_65d8abdd") : l10n("local.binding_approved_98ffc80d"),
         body:
           result.kind === "secret"
-            ? (result.proposedName ?? "Secret created")
+            ? (result.proposedName ?? l10n("local.secret_created_e4a1e1fd"))
             : `${result.target?.name ?? "Agent"} · ${bindingEnvKey(result) || "binding"}`,
         tone: "success",
       });
@@ -280,7 +280,7 @@ export function useProposalReview(
       secretsApi.rejectProposal(companyId!, proposal.id, { reason: reason.trim() }),
     onSuccess: (result) => {
       pushToast({
-        title: "Proposal rejected",
+        title: l10n("local.proposal_rejected_ad35cb88"),
         body: result.kind === "secret" ? (result.proposedName ?? undefined) : undefined,
         tone: "info",
       });
@@ -397,19 +397,19 @@ function ApproveDialog({
           <>
             <DialogHeader>
               <DialogTitle>
-                {isSecret ? "Approve & create secret" : "Approve binding"}
+                {isSecret ? l10n("local.approve_create_secret_66d7b3b9") : l10n("local.approve_binding_32170370")}
               </DialogTitle>
               <DialogDescription>
                 {isSecret
-                  ? "The value is created as the proposing agent recorded it. Re-folder or rename it before it lands."
-                  : "Grant the target agent access to this secret. This runs with your permissions."}
+                  ? l10n("local.the_value_is_created_as_the_proposing_agent_r_3350abf8")
+                  : l10n("local.grant_the_target_agent_access_to_this_secret_cded16e8")}
               </DialogDescription>
             </DialogHeader>
 
             {/* Provenance recap — keeps the social-engineering surface visible. */}
             <div className="space-y-1.5 rounded-md border border-border bg-muted/30 p-2.5 text-xs">
               <div className="flex items-center gap-1.5 text-muted-foreground">
-                <span>Proposed by</span>
+                <span>{l10n("local.proposed_by_3b48f0b6")}</span>
                 <AgentRefChip agent={draft.proposal.proposedBy} className="font-medium text-foreground" />
               </div>
               <ProposalJustification justification={draft.proposal.justification} />
@@ -419,7 +419,7 @@ function ApproveDialog({
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label htmlFor="approve-folder">Folder</Label>
+                    <Label htmlFor="approve-folder">{l10n("local.folder_74ccd433")}</Label>
                     <Input
                       id="approve-folder"
                       value={draft.folder}
@@ -429,7 +429,7 @@ function ApproveDialog({
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="approve-name">Name</Label>
+                    <Label htmlFor="approve-name">{l10n("local.name_dcd1d522")}</Label>
                     <Input
                       id="approve-name"
                       value={draft.leaf}
@@ -442,27 +442,27 @@ function ApproveDialog({
                   </div>
                 </div>
                 <p className="text-(length:--text-micro) text-muted-foreground">
-                  Lands as{" "}
+                  {l10n("local.lands_as_91a5715f")}{" "}
                   {previewName ? (
                     <SecretPathName name={previewName} className="font-mono" />
                   ) : (
-                    <span className="italic">enter a name</span>
+                    <span className="italic">{l10n("local.enter_a_name_46b4826d")}</span>
                   )}
                 </p>
 
                 <div className="space-y-1">
-                  <Label htmlFor="approve-description">Description</Label>
+                  <Label htmlFor="approve-description">{l10n("local.description_526e0087")}</Label>
                   <Input
                     id="approve-description"
                     value={draft.description}
                     onChange={(event) => onChange({ ...draft, description: event.target.value })}
-                    placeholder="Optional"
+                    placeholder={l10n("local.optional_59be7133")}
                   />
                 </div>
 
                 {localConfigs.length > 0 ? (
                   <div className="space-y-1">
-                    <Label htmlFor="approve-provider-config">Provider vault</Label>
+                    <Label htmlFor="approve-provider-config">{l10n("local.provider_vault_8bb8c5d1")}</Label>
                     <select
                       id="approve-provider-config"
                       value={draft.providerConfigId}
@@ -471,7 +471,7 @@ function ApproveDialog({
                       }
                       className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                     >
-                      <option value="">Deployment default</option>
+                      <option value="">{l10n("local.deployment_default_d9bdc394")}</option>
                       {localConfigs.map((config) => (
                         <option key={config.id} value={config.id}>
                           {config.displayName}
@@ -500,16 +500,15 @@ function ApproveDialog({
 
             <DialogFooter>
               <Button variant="ghost" onClick={onCancel} disabled={pending}>
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
               <Button onClick={onConfirm} disabled={pending || !canConfirm}>
                 {pending
-                  ? "Approving…"
+                  ? l10n("local.approving_e99dcb0a")
                   : isSecret
-                    ? "Approve & create"
+                    ? l10n("local.approve_create_fe48e1da")
                     : draft.cascade
-                      ? "Approve secret & bind"
-                      : "Approve binding"}
+                      ? l10n("local.approve_secret_bind_25953f75")
+                      : l10n("local.approve_binding_32170370")}
               </Button>
             </DialogFooter>
           </>
@@ -533,7 +532,7 @@ function BindingApproveBody({
     <div className="space-y-3 text-sm">
       <div className="space-y-2 rounded-md border border-border p-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Target agent</span>
+          <span className="text-xs text-muted-foreground">{l10n("local.target_agent_d5390914")}</span>
           {proposal.target ? (
             <AgentRefChip agent={proposal.target} className="text-sm font-medium" />
           ) : (
@@ -541,14 +540,14 @@ function BindingApproveBody({
           )}
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Delivered as</span>
+          <span className="text-xs text-muted-foreground">{l10n("local.delivered_as_7ee7eb4e")}</span>
           <span className="flex items-center gap-1.5">
             <DeliveryBadge configPath={proposal.configPath} />
             <code className="font-mono text-xs">{envKey || proposal.configPath}</code>
           </span>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Secret</span>
+          <span className="text-xs text-muted-foreground">{l10n("local.secret_7e32a729")}</span>
           <span className="flex items-center gap-1.5">
             <KeyRound className="size-3.5 text-muted-foreground" />
             <span className="font-medium">{secret.name}</span>
@@ -564,13 +563,11 @@ function BindingApproveBody({
             checked={draft.cascade}
             onCheckedChange={(checked) => onChange({ ...draft, cascade: checked === true })}
             className="mt-0.5"
-            aria-label="Also approve the proposed secret"
+            aria-label={l10n("local.also_approve_the_proposed_secret_1ef5afe2")}
           />
           <span className="text-foreground/90">
-            Also approve the proposed secret{" "}
-            <span className="font-medium">{secret.name}</span> and create it in the same step. The
-            binding can’t land without it.
-          </span>
+            {l10n("local.also_approve_the_proposed_secret_1ef5afe2")}{" "}
+            <span className="font-medium">{secret.name}</span> {l10n("local.and_create_it_in_the_same_step_the_binding_ca_294f1944")}</span>
         </label>
       ) : null}
     </div>
@@ -605,22 +602,20 @@ function RejectDialog({
         {proposal ? (
           <>
             <DialogHeader>
-              <DialogTitle>Reject proposal</DialogTitle>
+              <DialogTitle>{l10n("local.reject_proposal_8c3acdbb")}</DialogTitle>
               <DialogDescription>
-                The reason is sent back to{" "}
-                <AgentRefChip agent={proposal.proposedBy} className="text-foreground" />. Dependent
-                bindings are rejected too.
-              </DialogDescription>
+                {l10n("local.the_reason_is_sent_back_to_c796ab34")}{" "}
+                <AgentRefChip agent={proposal.proposedBy} className="text-foreground" />{l10n("local._dependent_bindings_are_rejected_too_d5e74d5f")}</DialogDescription>
             </DialogHeader>
             <div className="space-y-1">
-              <Label htmlFor="reject-reason">Reason</Label>
+              <Label htmlFor="reject-reason">{l10n("local.reason_f81ab834")}</Label>
               <Textarea
                 id="reject-reason"
                 value={reason}
                 onChange={(event) => onReasonChange(event.target.value)}
                 rows={3}
                 autoFocus
-                placeholder="Why is this being rejected?"
+                placeholder={l10n("local.why_is_this_being_rejected_1fa2a429")}
               />
             </div>
             {error ? (
@@ -630,10 +625,9 @@ function RejectDialog({
             ) : null}
             <DialogFooter>
               <Button variant="ghost" onClick={onCancel} disabled={pending}>
-                Cancel
-              </Button>
+                {l10n("local.cancel_19766ed6")}</Button>
               <Button variant="destructive" onClick={onConfirm} disabled={pending || !canConfirm}>
-                {pending ? "Rejecting…" : "Reject"}
+                {pending ? l10n("local.rejecting_09868524") : l10n("local.reject_ab604a36")}
               </Button>
             </DialogFooter>
           </>
@@ -669,8 +663,7 @@ export function ProposalActions({
       disabled={disabled || blocked}
       onClick={() => onApprove(proposal)}
     >
-      Approve
-    </Button>
+      {l10n("local.approve_6007acbe")}</Button>
   );
   return (
     <div className="flex items-center gap-1.5">
@@ -681,7 +674,7 @@ export function ProposalActions({
               <span tabIndex={0}>{approveButton}</span>
             </TooltipTrigger>
             <TooltipContent className="max-w-72">
-              {proposal.approveBlockReason ?? "You don’t have permission to approve this."}
+              {proposal.approveBlockReason ?? l10n("local.you_don_t_have_permission_to_approve_this_40091fa5")}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -695,8 +688,7 @@ export function ProposalActions({
         disabled={disabled}
         onClick={() => onReject(proposal)}
       >
-        Reject
-      </Button>
+        {l10n("local.reject_ab604a36")}</Button>
     </div>
   );
 }

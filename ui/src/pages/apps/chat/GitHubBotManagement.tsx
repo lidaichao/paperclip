@@ -1,3 +1,4 @@
+import { l10n } from "../../../i18n";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw } from "lucide-react";
@@ -56,7 +57,7 @@ export function GitHubBotManagement({
   if (query.isError || resources.isError)
     return (
       <p role="alert" className="text-sm text-destructive">
-        Could not load the bot configuration.{" "}
+        {l10n("local.could_not_load_the_bot_configuration_52018652")}{" "}
         <Button
           variant="link"
           onClick={() => {
@@ -64,13 +65,12 @@ export function GitHubBotManagement({
             void resources.refetch();
           }}
         >
-          Try again
-        </Button>
+          {l10n("local.try_again_d8b8392e")}</Button>
       </p>
     );
   if (!record)
     return (
-      <p className="text-sm text-muted-foreground">Loading configuration…</p>
+      <p className="text-sm text-muted-foreground">{l10n("local.loading_configuration_bc8fd86d")}</p>
     );
   const config = record.configuration;
   const override = repository ? config.repositories[repository] : undefined;
@@ -79,20 +79,16 @@ export function GitHubBotManagement({
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">
           {view === "access"
-            ? "Who can start work"
-            : "Agent and review behavior"}
+            ? l10n("local.who_can_start_work_a4285ffa")
+            : l10n("local.agent_and_review_behavior_3a5d8a8c")}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {endpoint.assignedAgentName} is permanently assigned to this bot.
-          GitHub messages create or continue Paperclip tasks; reviews are
-          results of those runs.
-        </p>
+          {endpoint.assignedAgentName} {l10n("local.is_permanently_assigned_to_this_bot_github_me_116958d0")}</p>
         <Link
           className="text-sm underline"
           to={`/apps/${endpoint.connectionId}`}
         >
-          Bot’s GitHub tool connection
-        </Link>
+          {l10n("local.bot_s_github_tool_connection_ef3e4ed5")}</Link>
       </div>
       {view === "access" ? (
         <GitHubAccessEditor
@@ -104,14 +100,14 @@ export function GitHubBotManagement({
       ) : (
         <>
           <GitHubToggle
-            label="Agent can use this bot’s GitHub tools"
-            description="Uses the same GitHub App, limited to this bot’s enabled repositories and bound tasks. Tool policies still apply."
+            label={l10n("local.agent_can_use_this_bot_s_github_tools_48a207ab")}
+            description={l10n("local.uses_the_same_github_app_limited_to_this_bot_64035f24")}
             checked={config.toolsEnabled}
             onChange={(toolsEnabled) => edit({ ...config, toolsEnabled })}
           />
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-sm font-medium">Repository access</h3>
+              <h3 className="text-sm font-medium">{l10n("local.repository_access_3e3d7edf")}</h3>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -122,14 +118,13 @@ export function GitHubBotManagement({
                       await githubChatApi.refreshRepositories(endpoint.id);
                       await resources.refetch();
                       setNotice(
-                        "Repository access refreshed. New repositories stay disabled.",
+                        l10n("local.repository_access_refreshed_new_repositories_1b9f7156"),
                       );
                     })
                   }
                 >
                   <RefreshCw className="size-4" />
-                  Refresh
-                </Button>
+                  {l10n("local.refresh_0e916101")}</Button>
                 <Button variant="outline" size="sm" asChild>
                   <a
                     href={
@@ -140,16 +135,13 @@ export function GitHubBotManagement({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Configure on GitHub
-                    <ExternalLink className="size-4" />
+                    {l10n("local.configure_on_github_106d3442")}<ExternalLink className="size-4" />
                   </a>
                 </Button>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              These repositories come from the bot App’s installation. Choose
-              where this bot can receive messages and use tools in Paperclip.
-            </p>
+              {l10n("local.these_repositories_come_from_the_bot_app_s_in_2726cc48")}</p>
             {resources.data
               ?.filter((r) => r.type === "repository")
               .map((resource) => (
@@ -159,7 +151,7 @@ export function GitHubBotManagement({
                   description={
                     resource.availability === "available"
                       ? undefined
-                      : "Installation access is unavailable. Update access on GitHub and refresh."
+                      : l10n("local.installation_access_is_unavailable_update_acc_bca11134")
                   }
                   checked={resource.enabled}
                   onChange={(enabled) =>
@@ -178,15 +170,14 @@ export function GitHubBotManagement({
               htmlFor="github-policy-repository"
               className="text-sm font-medium"
             >
-              Review configuration
-            </label>
+              {l10n("local.review_configuration_da791254")}</label>
             <select
               id="github-policy-repository"
               className={githubSelectClass}
               value={repository}
               onChange={(e) => setRepository(e.target.value)}
             >
-              <option value="">Connection defaults</option>
+              <option value="">{l10n("local.connection_defaults_ef6250a5")}</option>
               {resources.data
                 ?.filter(
                   (r) =>
@@ -206,8 +197,8 @@ export function GitHubBotManagement({
           </div>
           {repository && (
             <GitHubToggle
-              label="Override connection defaults"
-              description="This repository can have its own prompts, filters, and publication permissions."
+              label={l10n("local.override_connection_defaults_fa09d2e2")}
+              description={l10n("local.this_repository_can_have_its_own_prompts_filt_d31e5099")}
               checked={!!override}
               onChange={(enabled) => {
                 const repositories = { ...config.repositories };
@@ -236,8 +227,7 @@ export function GitHubBotManagement({
             />
           ) : (
             <p className="text-sm text-muted-foreground">
-              This repository follows the connection defaults.
-            </p>
+              {l10n("local.this_repository_follows_the_connection_defaul_d0a794ab")}</p>
           )}
         </>
       )}
@@ -260,8 +250,7 @@ export function GitHubBotManagement({
             setError("");
           }}
         >
-          Discard changes
-        </Button>
+          {l10n("local.discard_changes_f9bfa3dc")}</Button>
         <Button
           disabled={!draft || pending}
           onClick={() =>
@@ -274,11 +263,11 @@ export function GitHubBotManagement({
               setDraft(saved);
               await query.refetch();
               setDraft(null);
-              setNotice("Configuration saved.");
+              setNotice(l10n("local.configuration_saved_6b5b3c69"));
             })
           }
         >
-          {pending ? "Saving…" : "Save changes"}
+          {pending ? l10n("local.saving_23e39291") : l10n("local.save_changes_dd0ae7a5")}
         </Button>
       </div>
     </section>
@@ -294,28 +283,23 @@ export function GitHubReviews({ endpointId }: { endpointId: string }) {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">Reviews</h2>
+        <h2 className="text-lg font-semibold">{l10n("local.reviews_84cb7871")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Review activity from the agent’s Paperclip tasks. Open a task for the
-          conversation and execution history.
-        </p>
+          {l10n("local.review_activity_from_the_agent_s_paperclip_ta_1dc20451")}</p>
       </div>
       {query.isError && (
         <p role="alert" className="text-sm text-destructive">
-          Reviews could not be loaded.{" "}
+          {l10n("local.reviews_could_not_be_loaded_58b6d154")}{" "}
           <Button variant="link" onClick={() => void query.refetch()}>
-            Try again
-          </Button>
+            {l10n("local.try_again_d8b8392e")}</Button>
         </p>
       )}
       {query.isLoading && (
-        <p className="text-sm text-muted-foreground">Loading reviews…</p>
+        <p className="text-sm text-muted-foreground">{l10n("local.loading_reviews_510c765f")}</p>
       )}
       {query.data?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No reviews yet. Mention the bot on an enabled repository’s PR, or
-          enable automatic review events in Settings.
-        </p>
+          {l10n("local.no_reviews_yet_mention_the_bot_on_an_enabled_f6b5ca55")}</p>
       )}
       {query.data?.map((review) => (
         <article
@@ -333,10 +317,10 @@ export function GitHubReviews({ endpointId }: { endpointId: string }) {
             </a>
             <span className="text-sm">
               {review.assessment?.complete
-                ? `${review.assessment.score}/5`
+                ? l10n("local.value_5_931c6465", {v0: (review.assessment.score)})
                 : review.state.replaceAll("_", " ")}{" "}
               ·{" "}
-              {review.conclusion?.replaceAll("_", " ") ?? "Awaiting assessment"}
+              {review.conclusion?.replaceAll("_", " ") ?? l10n("local.awaiting_assessment_53000e1b")}
             </span>
           </div>
           <p className="text-sm">
@@ -346,15 +330,13 @@ export function GitHubReviews({ endpointId }: { endpointId: string }) {
             <code>{review.headSha.slice(0, 12)}</code>
             <span>{formatDateTime(review.updatedAt)}</span>
             <Link className="underline" to={`/issues/${review.issueId}`}>
-              Paperclip task
-            </Link>
+              {l10n("local.paperclip_task_ff44b378")}</Link>
             {review.runId && (
               <Link
                 className="underline"
                 to={`/issues/${review.issueId}?runId=${review.runId}`}
               >
-                Run
-              </Link>
+                {l10n("local.run_00d60e31")}</Link>
             )}
             {review.summaryUrl && (
               <a
@@ -363,8 +345,7 @@ export function GitHubReviews({ endpointId }: { endpointId: string }) {
                 target="_blank"
                 rel="noreferrer"
               >
-                Summary
-              </a>
+                {l10n("local.summary_8e76a94a")}</a>
             )}
             {review.checkUrl && (
               <a
@@ -373,20 +354,16 @@ export function GitHubReviews({ endpointId }: { endpointId: string }) {
                 target="_blank"
                 rel="noreferrer"
               >
-                Check
-              </a>
+                {l10n("local.check_9d60841e")}</a>
             )}
           </div>
           {review.assessment && (
             <details className="text-sm">
               <summary className="cursor-pointer">
-                Rationale and coverage
-              </summary>
+                {l10n("local.rationale_and_coverage_439aa4e2")}</summary>
               <p className="mt-2">{review.assessment.rationale}</p>
               <p className="mt-2 text-muted-foreground">
-                {review.assessment.coverage.reviewedPaths.length} files reviewed
-                · {review.assessment.coverage.omittedPaths.length} omitted
-              </p>
+                {review.assessment.coverage.reviewedPaths.length} {l10n("local.files_reviewed_4db53103")}{" "}{review.assessment.coverage.omittedPaths.length} {l10n("local.omitted_f34912a1")}</p>
               {review.assessment.coverage.limitations.map((limit, index) => (
                 <p key={index} className="mt-1 text-muted-foreground">
                   {limit}

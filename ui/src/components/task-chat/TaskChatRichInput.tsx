@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
 import {
@@ -132,9 +133,8 @@ export function TaskChatRichInput({
             ) : (
               <ImagePlus aria-hidden className="h-3.5 w-3.5" />
             )}
-            Attach image
-          </Button>
-          <span>or drop/paste an image into the note</span>
+            {l10n("local.attach_image_2eacc5e0")}</Button>
+          <span>{l10n("local.or_drop_paste_an_image_into_the_note_91c413d3")}</span>
         </div>
       ) : null}
       {uploadError ? (

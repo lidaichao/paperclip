@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { copyTextToClipboard } from "./clipboard";
@@ -89,8 +90,8 @@ export function useCopyToast() {
         return true;
       } catch {
         pushToast?.({
-          title: "Couldn’t copy to clipboard",
-          body: "Select and copy the value manually.",
+          title: l10n("local.couldn_t_copy_to_clipboard_27990eb1"),
+          body: l10n("local.select_and_copy_the_value_manually_d630d482"),
           tone: "error",
           dedupeKey: "copy-failed",
         });

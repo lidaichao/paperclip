@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Agent } from "@paperclipai/shared";
 import { AlertTriangle, ArrowUpRight, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, CircleDashed, Clock, ExternalLink, FileText, GitBranch, ImagePlus, KeyRound, Loader2, MessageSquareQuote, MinusCircle, ShieldAlert, ThumbsUp, TriangleAlert, Wrench, X, XCircle } from "lucide-react";
@@ -141,7 +142,7 @@ function resolveActorLabel(args: {
   if (userId) {
     return formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ?? "Board";
   }
-  return "Unknown";
+  return l10n("local.unknown_b764cdc0");
 }
 
 /**
@@ -173,19 +174,19 @@ function getAdministrativeReason(interaction: IssueThreadInteraction): string | 
 function statusLabel(status: IssueThreadInteraction["status"]) {
   switch (status) {
     case "pending":
-      return "Pending";
+      return l10n("local.pending_331551b0");
     case "accepted":
-      return "Accepted";
+      return l10n("local.accepted_a00fb0c5");
     case "rejected":
-      return "Rejected";
+      return l10n("local.rejected_aea4a04a");
     case "answered":
-      return "Answered";
+      return l10n("local.answered_66559035");
     case "cancelled":
-      return "Cancelled";
+      return l10n("local.cancelled_d353a99e");
     case "expired":
-      return "Expired";
+      return l10n("local.expired_424a2551");
     case "failed":
-      return "Failed";
+      return l10n("local.failed_031a8f0f");
     default:
       return status;
   }
@@ -194,17 +195,17 @@ function statusLabel(status: IssueThreadInteraction["status"]) {
 function interactionKindLabel(kind: IssueThreadInteraction["kind"]) {
   switch (kind) {
     case "suggest_tasks":
-      return "Suggested tasks";
+      return l10n("local.suggested_tasks_5addd6ff");
     case "ask_user_questions":
-      return "Ask user questions";
+      return l10n("local.ask_user_questions_85f98263");
     case "request_confirmation":
-      return "Confirmation";
+      return l10n("local.confirmation_d7430705");
     case "request_checkbox_confirmation":
-      return "Checkbox confirmation";
+      return l10n("local.checkbox_confirmation_e977187a");
     case "request_item_verdicts":
-      return "Item verdicts";
+      return l10n("local.item_verdicts_7023d105");
     case "connection_intent":
-      return "Connection request";
+      return l10n("local.connection_request_cd97ea1c");
     default:
       return kind;
   }
@@ -283,14 +284,14 @@ function planStatusClasses(
         return {
           shell: "border-2 border-amber-500/70 bg-transparent",
           badge: "border-amber-500/60 bg-amber-500/10 text-amber-900 dark:bg-amber-500/15 dark:text-amber-100",
-          label: "Approved — agent resume failed",
+          label: l10n("local.approved_agent_resume_failed_03dbaee7"),
           Icon: AlertTriangle,
         };
       }
       return {
         shell: "border-2 border-green-500/80 bg-transparent",
         badge: "border-green-500/60 bg-green-500/10 text-green-900 dark:bg-green-500/15 dark:text-green-100",
-        label: "Approved",
+        label: l10n("local.approved_87b42e40"),
         Icon: CheckCircle2,
       };
     case "rejected":
@@ -298,7 +299,7 @@ function planStatusClasses(
       return {
         shell: "border-2 border-red-500/80 bg-transparent",
         badge: "border-red-500/60 bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-100",
-        label: outcome === "withdrawn" ? "Withdrawn" : "Changes requested",
+        label: outcome === "withdrawn" ? l10n("local.withdrawn_00c0b03f") : l10n("local.changes_requested_10a92a8a"),
         Icon: XCircle,
       };
     case "failed":
@@ -306,14 +307,14 @@ function planStatusClasses(
       return {
         shell: "border-2 border-amber-500/70 bg-transparent",
         badge: "border-amber-500/60 bg-amber-500/10 text-amber-900 dark:bg-amber-500/15 dark:text-amber-100",
-        label: "Expired",
+        label: l10n("local.expired_424a2551"),
         Icon: AlertTriangle,
       };
     default:
       return {
         shell: "border-2 border-violet-500/80 bg-transparent",
         badge: "border-violet-500/60 bg-violet-500/10 text-violet-900 dark:bg-violet-500/15 dark:text-violet-100",
-        label: "In review",
+        label: l10n("local.in_review_c3905914"),
         Icon: FileText,
       };
   }
@@ -474,7 +475,7 @@ function toolActionStatusClasses(state: ToolActionCardState): {
       return {
         shell: "border-2 border-amber-500/70 bg-transparent",
         badge: "border-amber-500/60 bg-amber-500/10 text-amber-900 dark:bg-amber-500/15 dark:text-amber-100",
-        label: "Running…",
+        label: l10n("local.running_46c54136"),
         Icon: Loader2,
         spin: true,
       };
@@ -482,31 +483,31 @@ function toolActionStatusClasses(state: ToolActionCardState): {
       return {
         shell: "border-2 border-green-500/80 bg-transparent",
         badge: "border-green-500/60 bg-green-500/10 text-green-900 dark:bg-green-500/15 dark:text-green-100",
-        label: "Executed",
+        label: l10n("local.executed_3aa8b683"),
         Icon: CheckCircle2,
       };
     case "failed":
       return {
         shell: "border-2 border-amber-500/70 bg-transparent",
         badge: "border-amber-500/60 bg-amber-500/10 text-amber-900 dark:bg-amber-500/15 dark:text-amber-100",
-        label: "Failed",
+        label: l10n("local.failed_031a8f0f"),
         Icon: XCircle,
       };
     case "declined":
       return {
         shell: "border-2 border-red-500/80 bg-transparent",
         badge: "border-red-500/60 bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-100",
-        label: "Declined",
+        label: l10n("local.declined_dce083a2"),
         Icon: XCircle,
         dimmed: true,
       };
     case "cancelled":
-      return { shell: "border-2 border-border bg-transparent", badge: "border-border bg-muted text-muted-foreground", label: "Cancelled", Icon: XCircle, dimmed: true };
+      return { shell: "border-2 border-border bg-transparent", badge: "border-border bg-muted text-muted-foreground", label: l10n("local.cancelled_d353a99e"), Icon: XCircle, dimmed: true };
     case "expired":
       return {
         shell: "border-2 border-border bg-transparent",
         badge: "border-border bg-muted/60 text-muted-foreground",
-        label: "Expired",
+        label: l10n("local.expired_424a2551"),
         Icon: Clock,
         dimmed: true,
       };
@@ -514,7 +515,7 @@ function toolActionStatusClasses(state: ToolActionCardState): {
       return {
         shell: "border-2 border-violet-500/80 bg-transparent",
         badge: "border-violet-500/60 bg-violet-500/10 text-violet-900 dark:bg-violet-500/15 dark:text-violet-100",
-        label: "Awaiting approval",
+        label: l10n("local.awaiting_approval_ae25c9b1"),
         Icon: ShieldAlert,
       };
   }
@@ -613,7 +614,7 @@ function TaskTreeNode({
                 <Checkbox
                   checked={isSelected}
                   onCheckedChange={(checked) => onToggleSelection?.(node, checked === true)}
-                  aria-label={`Include ${node.task.title}`}
+                  aria-label={l10n("local.include_value_8890b6d6", {v0: (node.task.title)})}
                   className="mt-0.5"
                 />
               ) : null}
@@ -632,8 +633,7 @@ function TaskTreeNode({
                 </div>
                 {depth > 0 ? (
                   <div className="mt-0.5 text-(length:--text-nano) font-medium uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-                    Child task
-                  </div>
+                    {l10n("local.child_task_4e6d7bdb")}</div>
                 ) : null}
                 {node.task.description ? (
                   <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
@@ -654,24 +654,23 @@ function TaskTreeNode({
             </Link>
           ) : isSkipped ? (
             <span className="inline-flex shrink-0 items-center rounded-sm border border-amber-500/60 bg-amber-500/10 px-2.5 py-1 text-(length:--text-micro) font-medium text-amber-900 dark:text-amber-100">
-              Skipped
-            </span>
+              {l10n("local.skipped_12698ce1")}</span>
           ) : null}
         </div>
 
         {hasMetadata ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {hasExplicitAssignee ? (
-              <TaskField label="Responsible" value={assigneeLabel} />
+              <TaskField label={l10n("local.responsible_bc110a6d")} value={assigneeLabel} />
             ) : null}
             {node.task.billingCode ? (
-              <TaskField label="Billing" value={node.task.billingCode} />
+              <TaskField label={l10n("local.billing_3ac8bbca")} value={node.task.billingCode} />
             ) : null}
             {node.task.projectId ? (
-              <TaskField label="Project" value={node.task.projectId} tone="subtle" />
+              <TaskField label={l10n("local.project_98595978")} value={node.task.projectId} tone="subtle" />
             ) : null}
             {labels.map((label) => (
-              <TaskField key={label} label="Label" value={label} tone="subtle" />
+              <TaskField key={label} label={l10n("local.label_0e66373f")} value={label} tone="subtle" />
             ))}
           </div>
         ) : null}
@@ -681,8 +680,8 @@ function TaskTreeNode({
             <GitBranch className="h-3.5 w-3.5 shrink-0" />
             <span>
               {hiddenChildCount === 1
-                ? "1 follow-on task hidden in preview"
-                : `${hiddenChildCount} follow-on tasks hidden in preview`}
+                ? l10n("local.1_follow_on_task_hidden_in_preview_20e5cdeb")
+                : l10n("local.value_follow_on_tasks_hidden_in_preview_6f1282d8", {v0: (hiddenChildCount)})}
             </span>
           </div>
         ) : null}
@@ -838,9 +837,9 @@ function SuggestTasksCard({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span>{totalTasks === 1 ? "1 draft issue" : `${totalTasks} draft issues`}</span>
+        <span>{totalTasks === 1 ? l10n("local.1_draft_issue_142b5c43") : l10n("local.value_draft_issues_c27e5374", {v0: (totalTasks)})}</span>
         {interaction.payload.defaultParentId ? (
-          <TaskField label="Default parent" value={interaction.payload.defaultParentId} tone="subtle" />
+          <TaskField label={l10n("local.default_parent_ac981ebf")} value={interaction.payload.defaultParentId} tone="subtle" />
         ) : null}
       </div>
 
@@ -864,12 +863,11 @@ function SuggestTasksCard({
       {interaction.status === "accepted" ? (
         <div className="rounded-sm border border-emerald-500/60 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
           <div className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-emerald-700">
-            Resolution summary
-          </div>
+            {l10n("local.resolution_summary_5ac338f0")}</div>
           <p className="mt-1 leading-6">
             {skippedCount > 0
-              ? `Created ${createdCount} draft ${createdCount === 1 ? "issue" : "issues"} and skipped ${skippedCount} during review.`
-              : `Created all ${createdCount} draft ${createdCount === 1 ? "issue" : "issues"}.`}
+              ? l10n("local.created_value_draft_value_and_skipped_value_d_2c668cad", {v0: (createdCount), v1: (createdCount === 1 ? "issue" : "issues"), v2: (skippedCount)})
+              : l10n("local.created_all_value_draft_value_1a9911a9", {v0: (createdCount), v1: (createdCount === 1 ? "issue" : "issues")})}
           </p>
         </div>
       ) : null}
@@ -877,13 +875,12 @@ function SuggestTasksCard({
       {interaction.status === "rejected" ? (
         <div className="rounded-sm border border-rose-500/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
           <div className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-rose-700">
-            Rejection reason
-          </div>
+            {l10n("local.rejection_reason_e5749926")}</div>
           <p className={cn(
             "mt-1 leading-6",
             !interaction.result?.rejectionReason && "text-rose-900/75",
           )}>
-            {interaction.result?.rejectionReason || "No reason provided."}
+            {interaction.result?.rejectionReason || l10n("local.no_reason_provided_a63c933a")}
           </p>
         </div>
       ) : null}
@@ -894,13 +891,12 @@ function SuggestTasksCard({
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span>
                 {selectedCount === totalTasks
-                  ? `All ${totalTasks} draft ${totalTasks === 1 ? "issue" : "issues"} selected`
-                  : `${selectedCount} of ${totalTasks} draft ${totalTasks === 1 ? "issue" : "issues"} selected`}
+                  ? l10n("local.all_value_draft_value_selected_37bc6d6a", {v0: (totalTasks), v1: (totalTasks === 1 ? "issue" : "issues")})
+                  : l10n("local.value_of_value_draft_value_selected_c2e32bf9", {v0: (selectedCount), v1: (totalTasks), v2: (totalTasks === 1 ? "issue" : "issues")})}
               </span>
               {selectedCount < totalTasks ? (
                 <span>
-                  {totalTasks - selectedCount} will be skipped if you accept this interaction.
-                </span>
+                  {totalTasks - selectedCount} {l10n("local.will_be_skipped_if_you_accept_this_interactio_7088fd3a")}</span>
               ) : null}
             </div>
 
@@ -913,10 +909,9 @@ function SuggestTasksCard({
                 {working === "accept" ? (
                   <>
                     <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    Accepting...
-                  </>
+                    {l10n("local.accepting_31409c77")}</>
                 ) : (
-                  selectedCount === totalTasks ? "Accept drafts" : "Accept selected drafts"
+                  selectedCount === totalTasks ? l10n("local.accept_drafts_43a26ceb") : l10n("local.accept_selected_drafts_3db4cde1")
                 )}
               </Button>
               <Button
@@ -925,8 +920,7 @@ function SuggestTasksCard({
                 disabled={!onRejectInteraction || working !== null}
                 onClick={() => setRejecting((current) => !current)}
               >
-                Reject
-              </Button>
+                {l10n("local.reject_ab604a36")}</Button>
               {selectedCount < totalTasks ? (
                 <Button
                   size="sm"
@@ -934,8 +928,7 @@ function SuggestTasksCard({
                   disabled={working !== null}
                   onClick={() => setSelectedClientKeys(new Set(interaction.payload.tasks.map((task) => task.clientKey)))}
                 >
-                  Reset selection
-                </Button>
+                  {l10n("local.reset_selection_2e924686")}</Button>
               ) : null}
             </div>
           </div>
@@ -945,7 +938,7 @@ function SuggestTasksCard({
               <Textarea
                 value={rejectReason}
                 onChange={(event) => setRejectReason(event.target.value)}
-                placeholder="Add a short reason for rejecting this suggestion"
+                placeholder={l10n("local.add_a_short_reason_for_rejecting_this_suggest_11886cf2")}
                 className="min-h-24 bg-background text-sm"
               />
               <div className="flex justify-end">
@@ -958,10 +951,9 @@ function SuggestTasksCard({
                   {working === "reject" ? (
                     <>
                       <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Saving...
-                    </>
+                      {l10n("local.saving_dc85af8f")}</>
                   ) : (
-                    "Save rejection"
+                    l10n("local.save_rejection_6fc943c1")
                   )}
                 </Button>
               </div>
@@ -1185,12 +1177,11 @@ function AskUserQuestionsCard({
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <Badge variant="outline" className="border-border/70 bg-background/70 px-2.5 py-1 uppercase tracking-(--tracking-eyebrow) text-foreground/70">
           <MessageSquareQuote className="h-3 w-3" />
-          Ask user questions
-        </Badge>
+          {l10n("local.ask_user_questions_85f98263")}</Badge>
         <span>
           {questions.length === 1
-            ? "1 question"
-            : `${questions.length} questions`}
+            ? l10n("local.1_question_d69c3b18")
+            : l10n("local.value_questions_0d98d85d", {v0: (questions.length)})}
         </span>
       </div>
 
@@ -1208,7 +1199,7 @@ function AskUserQuestionsCard({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-                    Question {index + 1}
+                    {l10n("local.question_289aff12")}{" "}{index + 1}
                   </div>
                   <div
                     id={`${interaction.id}-${question.id}-prompt`}
@@ -1223,7 +1214,7 @@ function AskUserQuestionsCard({
                   ) : null}
                 </div>
                 <TaskField
-                  label={question.selectionMode === "single" ? "Pick" : "Pick many"}
+                  label={question.selectionMode === "single" ? l10n("local.pick_831a9d52") : l10n("local.pick_many_1c791936")}
                   value={question.required ? "Required" : "Optional"}
                   tone="subtle"
                 />
@@ -1253,14 +1244,14 @@ function AskUserQuestionsCard({
                         />
                         {isFreeText && optionSelected ? (
                           <Textarea
-                            aria-label={`Describe your answer for ${question.prompt}`}
+                            aria-label={l10n("local.describe_your_answer_for_value_09887c17", {v0: (question.prompt)})}
                             value={draftOtherAnswers[question.id] ?? ""}
                             onChange={(event) =>
                               setDraftOtherAnswers((current) => ({
                                 ...current,
                                 [question.id]: event.target.value,
                               }))}
-                            placeholder="Type your answer"
+                            placeholder={l10n("local.type_your_answer_d078bf75")}
                             className="min-h-24 bg-background text-sm"
                             autoFocus
                           />
@@ -1290,18 +1281,17 @@ function AskUserQuestionsCard({
                       onClick={() =>
                         toggleOption(question.id, OTHER_ANSWER_ID, question.selectionMode)}
                     >
-                      Other
-                    </button>
+                      {l10n("local.other_f97e9da0")}</button>
                     {otherActiveQuestions[question.id] ? (
                       <Textarea
-                        aria-label={`Other answer for ${question.prompt}`}
+                        aria-label={l10n("local.other_answer_for_value_0b982573", {v0: (question.prompt)})}
                         value={draftOtherAnswers[question.id] ?? ""}
                         onChange={(event) =>
                           setDraftOtherAnswers((current) => ({
                             ...current,
                             [question.id]: event.target.value,
                           }))}
-                        placeholder="Type your answer"
+                        placeholder={l10n("local.type_your_answer_d078bf75")}
                         className="min-h-24 bg-background text-sm"
                       />
                     ) : null}
@@ -1314,8 +1304,7 @@ function AskUserQuestionsCard({
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/75 p-4">
             <div className="text-sm text-muted-foreground">
-              Submit once after you finish the full form.
-            </div>
+              {l10n("local.submit_once_after_you_finish_the_full_form_02885ec7")}</div>
             <div className="flex flex-wrap items-center gap-2">
               {onCancelInteraction ? (
                 <Button
@@ -1327,10 +1316,9 @@ function AskUserQuestionsCard({
                   {cancelling ? (
                     <>
                       <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Cancelling...
-                    </>
+                      {l10n("local.cancelling_7b261310")}</>
                   ) : (
-                    "Cancel question"
+                    l10n("local.cancel_question_437c1e56")
                   )}
                   </Button>
                 ) : null}
@@ -1342,10 +1330,9 @@ function AskUserQuestionsCard({
                 {working ? (
                   <>
                     <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    Submitting...
-                  </>
+                    {l10n("local.submitting_64115d5b")}</>
                 ) : (
-                  interaction.payload.submitLabel ?? "Submit answers"
+                  interaction.payload.submitLabel ?? l10n("local.submit_answers_6d232615")
                 )}
               </Button>
             </div>
@@ -1357,15 +1344,15 @@ function AskUserQuestionsCard({
         <div className="rounded-2xl border border-rose-300/60 bg-rose-50/85 p-4 text-sm leading-6 text-rose-950 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100">
           <div className="font-semibold">
             {interaction.result?.outcome === "withdrawn"
-              ? questions.length === 1 ? "Question withdrawn" : "Questions withdrawn"
-              : "Question cancelled"}
+              ? questions.length === 1 ? l10n("local.question_withdrawn_7fb9da0d") : l10n("local.questions_withdrawn_5f00159e")
+              : l10n("local.question_cancelled_e8960873")}
           </div>
           {interaction.result?.cancellationReason ? (
             <p className="mt-1">{interaction.result.cancellationReason}</p>
           ) : interaction.result?.reason ? (
             <p className="mt-1">{interaction.result.reason}</p>
           ) : (
-            <p className="mt-1">No answer was recorded.</p>
+            <p className="mt-1">{l10n("local.no_answer_was_recorded_9122bb87")}</p>
           )}
         </div>
       ) : interaction.status === "expired" ? (
@@ -1374,24 +1361,23 @@ function AskUserQuestionsCard({
             <AlertTriangle className="h-4 w-4" />
             {interaction.result?.outcome === "issue_closed"
               ? questions.length === 1
-                ? "Question expired when the issue closed"
-                : "Questions expired when the issue closed"
+                ? l10n("local.question_expired_when_the_issue_closed_25e10cc4")
+                : l10n("local.questions_expired_when_the_issue_closed_0f7b109d")
               : questions.length === 1
-                ? "Question expired by comment"
-                : "Questions expired by comment"}
+                ? l10n("local.question_expired_by_comment_9a1e929d")
+                : l10n("local.questions_expired_by_comment_89168554")}
           </div>
           <p className="mt-1">
             {interaction.result?.outcome === "issue_closed"
-              ? "This question request expired automatically when the issue reached a terminal state."
-              : "A later board/user comment superseded this question request. Create a fresh request if answers are still needed."}
+              ? l10n("local.this_question_request_expired_automatically_w_7dc5da5d")
+              : l10n("local.a_later_board_user_comment_superseded_this_qu_890aebaa")}
           </p>
           {interaction.result?.commentId ? (
             <a
               href={`#comment-${interaction.result.commentId}`}
               className="mt-3 inline-flex text-sm font-medium underline underline-offset-4"
             >
-              Jump to comment
-            </a>
+              {l10n("local.jump_to_comment_c8799fd3")}</a>
           ) : null}
         </div>
       ) : (
@@ -1412,10 +1398,10 @@ function AskUserQuestionsCard({
                 <div className="mt-2 flex flex-wrap gap-2">
                   {labels.length > 0 ? (
                     labels.map((label) => (
-                      <TaskField key={label} label="Answer" value={label} />
+                      <TaskField key={label} label={l10n("local.answer_b2a3aa60")} value={label} />
                     ))
                   ) : (
-                    <span className="text-sm text-muted-foreground">No answer recorded.</span>
+                    <span className="text-sm text-muted-foreground">{l10n("local.no_answer_recorded_85dd2304")}</span>
                   )}
                 </div>
               </div>
@@ -1425,8 +1411,7 @@ function AskUserQuestionsCard({
           {interaction.result?.summaryMarkdown ? (
             <div className="rounded-2xl border border-emerald-300/60 bg-emerald-50/85 p-4">
               <div className="mb-2 text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-emerald-700">
-                Submitted summary
-              </div>
+                {l10n("local.submitted_summary_6af3ea68")}</div>
               <MarkdownBody externalReferences={externalReferences}>{interaction.result.summaryMarkdown}</MarkdownBody>
             </div>
           ) : null}
@@ -1440,7 +1425,7 @@ function requestConfirmationTargetLabel(target: RequestConfirmationTarget) {
   if (target.label) return target.label;
   const revision = target.revisionNumber ? ` v${target.revisionNumber}` : "";
   if (target.type === "issue_document" && target.key === "plan") {
-    return `Plan${revision}`;
+    return l10n("local.planvalue_f71243d8", {v0: (revision)});
   }
   return `${target.key}${revision}`;
 }
@@ -1516,21 +1501,20 @@ function RequestConfirmationResolution({
       return (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
-            <span className="font-medium">Confirmed</span>
+            <span className="font-medium">{l10n("local.confirmed_fe00b67b")}</span>
             <RequestConfirmationTargetChip interaction={interaction} target={target} />
           </div>
           <div className="rounded-sm border border-amber-500/60 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
             <div className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-amber-700">
-              Agent resume failed
-            </div>
+              {l10n("local.agent_resume_failed_a456bede")}</div>
             <p className="mt-1 leading-6">
               {resumeFailure.status === "retrying"
-                ? `Paperclip is retrying the agent resume after approval (attempt ${resumeFailure.attempt}/${resumeFailure.maxAttempts}).`
-                : "Paperclip needs attention before the agent can resume this approved work."}
+                ? l10n("local.paperclip_is_retrying_the_agent_resume_after_ff68a5b4", {v0: (resumeFailure.attempt), v1: (resumeFailure.maxAttempts)})
+                : l10n("local.paperclip_needs_attention_before_the_agent_ca_d517e69a")}
             </p>
             {resumeFailure.errorCode ? (
               <p className="mt-1 leading-6">
-                Latest cause: <code className="font-mono text-(length:--text-micro)">{resumeFailure.errorCode}</code>
+                {l10n("local.latest_cause_961d0b2c")}{" "}<code className="font-mono text-(length:--text-micro)">{resumeFailure.errorCode}</code>
               </p>
             ) : null}
           </div>
@@ -1539,7 +1523,7 @@ function RequestConfirmationResolution({
     }
     return (
       <div className="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
-        <span className="font-medium">Confirmed</span>
+        <span className="font-medium">{l10n("local.confirmed_fe00b67b")}</span>
         <RequestConfirmationTargetChip interaction={interaction} target={target} />
       </div>
     );
@@ -1549,7 +1533,7 @@ function RequestConfirmationResolution({
     return (
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
-          <span className="font-medium">Declined</span>
+          <span className="font-medium">{l10n("local.declined_dce083a2")}</span>
           <RequestConfirmationTargetChip interaction={interaction} target={target} />
         </div>
         {interaction.result?.reason ? (
@@ -1568,7 +1552,7 @@ function RequestConfirmationResolution({
     // and no duplicated reason text.
     return (
       <div className="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
-        <span className="font-medium">Withdrawn</span>
+        <span className="font-medium">{l10n("local.withdrawn_00c0b03f")}</span>
         <RequestConfirmationTargetChip interaction={interaction} target={target} />
       </div>
     );
@@ -1588,19 +1572,19 @@ function RequestConfirmationResolution({
          */}
         {expiredByIssueClosed ? null : (
           <div className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-amber-700">
-            {expiredByComment ? "Expired by comment" : "Expired by target change"}
+            {expiredByComment ? l10n("local.expired_by_comment_2261bc69") : l10n("local.expired_by_target_change_29b61c07")}
           </div>
         )}
         <p className="leading-6">
           {expiredByComment
-            ? "A board comment superseded this confirmation before it was resolved."
+            ? l10n("local.a_board_comment_superseded_this_confirmation_93bcdf36")
             : expiredByIssueClosed
-              ? "This confirmation expired automatically when the issue reached a terminal state."
-              : "The requested target changed before this confirmation was resolved."}
+              ? l10n("local.this_confirmation_expired_automatically_when_d9d1a932")
+              : l10n("local.the_requested_target_changed_before_this_conf_45202d1a")}
         </p>
         {expiredByComment && interaction.result?.commentId ? (
           <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-amber-950 hover:bg-amber-500/15 dark:text-amber-50">
-            <a href={`#comment-${interaction.result.commentId}`}>Jump to comment</a>
+            <a href={`#comment-${interaction.result.commentId}`}>{l10n("local.jump_to_comment_c8799fd3")}</a>
           </Button>
         ) : null}
         {expiredByTargetChange ? (
@@ -1623,8 +1607,7 @@ function RequestConfirmationResolution({
   if (interaction.status === "failed") {
     return (
       <p className="text-sm leading-6 text-muted-foreground">
-        This request could not be resolved. Try again or create a new request.
-      </p>
+        {l10n("local.this_request_could_not_be_resolved_try_again_7056ad01")}</p>
     );
   }
 
@@ -1646,29 +1629,29 @@ function ToolActionResolution({
     try { formattedOutput = JSON.stringify(JSON.parse(output), null, 2); } catch { /* Plain-text results remain readable. */ }
   }
   const labels = {
-    pending: "Waiting for approval",
-    running: "Approved · Running…",
-    executed: "Succeeded",
-    failed: "Execution failed",
-    declined: "Declined",
-    expired: "Expired",
-    cancelled: "Cancelled",
+    pending: l10n("local.waiting_for_approval_10c5739b"),
+    running: l10n("local.approved_running_2a0bae3d"),
+    executed: l10n("local.succeeded_6d9a6f97"),
+    failed: l10n("local.execution_failed_19e5e642"),
+    declined: l10n("local.declined_dce083a2"),
+    expired: l10n("local.expired_424a2551"),
+    cancelled: l10n("local.cancelled_d353a99e"),
   };
   const Icon = state === "running" ? Loader2 : state === "executed" ? CheckCircle2 : state === "failed" ? AlertTriangle : state === "expired" ? Clock : MinusCircle;
-  const detail = state === "failed" ? result?.errorMessage?.trim() || "The action could not complete."
+  const detail = state === "failed" ? result?.errorMessage?.trim() || l10n("local.the_action_could_not_complete_6a2bc383")
     : state === "declined" ? interaction.result?.reason?.trim()
     : null;
   const status = <>
     <Icon className={cn("h-3.5 w-3.5 shrink-0", state === "running" && "animate-spin", state === "failed" && "text-destructive")} />
     {labels[state]}
-    {result?.rememberedAction ? " · Always allowed" : ""}
+    {result?.rememberedAction ? (" " + l10n("local._always_allowed_fe54b377")) : ""}
   </>;
   return (
     <div className="space-y-1 text-sm text-muted-foreground" aria-live="polite">
       {output ? (
         <Collapsible open={resultOpen} onOpenChange={setResultOpen}>
           <CollapsibleTrigger asChild>
-            <button type="button" className="flex items-center gap-1.5 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={resultOpen ? "Hide result details" : "Show result details"}>
+            <button type="button" className="flex items-center gap-1.5 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={resultOpen ? l10n("local.hide_result_details_1ff4e49e") : l10n("local.show_result_details_68254305")}>
               {status}<ChevronDown className={cn("h-3 w-3", resultOpen && "rotate-180")} />
             </button>
           </CollapsibleTrigger>
@@ -1679,7 +1662,7 @@ function ToolActionResolution({
       ) : <p className="flex items-center gap-1.5">{status}</p>}
       {detail ? <p className={cn("break-words", state === "failed" && "text-destructive")}>{detail}</p> : null}
       {state === "executed" && result?.resultHref?.trim() ? (
-        <a className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground" href={result.resultHref} target="_blank" rel="noreferrer">View result<ExternalLink className="h-3 w-3" /></a>
+        <a className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground" href={result.resultHref} target="_blank" rel="noreferrer">{l10n("local.view_result_fdb7eafd")}<ExternalLink className="h-3 w-3" /></a>
       ) : null}
     </div>
   );
@@ -1736,23 +1719,22 @@ function RequestToolActionCard({
       {isPending ? (
         <div className="mt-3 flex justify-end gap-2">
           <Button size="sm" variant="ghost" disabled={!onRejectInteraction || working !== null} onClick={() => void decide("reject")}>
-            {working === "reject" ? "Declining…" : "Decline"}
+            {working === "reject" ? l10n("local.declining_fb03c72b") : l10n("local.decline_a2d285b3")}
           </Button>
-          <div className="inline-flex" role="group" aria-label="Approve request">
+          <div className="inline-flex" role="group" aria-label={l10n("local.approve_request_9ed200ae")}>
             <Button size="sm" variant={variant} className={payload.rememberActionScope ? "rounded-r-none" : undefined} disabled={!onAcceptInteraction || working !== null} onClick={() => void decide("accept")}>
-              {working === "accept" || working === "always" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />{working === "always" ? "Saving…" : "Approving…"}</> : "Approve & run"}
+              {working === "accept" || working === "always" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />{working === "always" ? l10n("local.saving_23e39291") : l10n("local.approving_e99dcb0a")}</> : l10n("local.approve_run_e31adde5")}
             </Button>
             {payload.rememberActionScope ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="icon-sm" variant={variant} className="rounded-l-none border-l border-background/30" aria-label="Approval options" disabled={!onAcceptInteraction || working !== null}>
+                  <Button size="icon-sm" variant={variant} className="rounded-l-none border-l border-background/30" aria-label={l10n("local.approval_options_b8cd0e4b")} disabled={!onAcceptInteraction || working !== null}>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onSelect={() => void decide("always")} title={payload.rememberActionScope} aria-description={payload.rememberActionScope}>
-                    Always allow
-                  </DropdownMenuItem>
+                    {l10n("local.always_allow_977618bd")}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
@@ -1790,7 +1772,7 @@ function secretProposalStatusClasses(state: SecretProposalCardState) {
     return {
       shell: "border-2 border-red-500/80 bg-transparent",
       badge: "border-red-500/60 bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-100",
-      label: "FAILED",
+      label: l10n("local.failed_02bd3492"),
       Icon: XCircle,
     };
   }
@@ -1813,8 +1795,7 @@ function SecretProposalIdentityHeader({
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-base font-bold leading-tight text-foreground">
-          Bind an existing secret
-        </div>
+          {l10n("local.bind_an_existing_secret_2aea300f")}</div>
       </div>
     </div>
   );
@@ -1829,20 +1810,17 @@ function SecretProposalDetails({
     <dl className="grid gap-3 rounded-sm border border-border/70 bg-muted/30 p-3 sm:grid-cols-2">
       <div className="min-w-0 space-y-1">
         <dt className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-          Source secret
-        </dt>
+          {l10n("local.source_secret_60e1f18d")}</dt>
         <dd className="truncate text-sm font-medium text-foreground">{payload.sourceSecretLabel}</dd>
       </div>
       <div className="min-w-0 space-y-1">
         <dt className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-          Target agent
-        </dt>
+          {l10n("local.target_agent_d5390914")}</dt>
         <dd className="truncate text-sm font-medium text-foreground">{payload.targetAgentName}</dd>
       </div>
       <div className="min-w-0 space-y-1 sm:col-span-2">
         <dt className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-          New config path
-        </dt>
+          {l10n("local.new_config_path_be59ea68")}</dt>
         <dd className="break-all font-mono text-sm text-foreground">{payload.configPath}</dd>
       </div>
     </dl>
@@ -1871,10 +1849,9 @@ function SecretProposalResolution({
       <div aria-live="polite" className="flex items-start gap-2 rounded-sm border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
         <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
         <div>
-          <div className="font-medium">Approved by {who} — creating the binding</div>
+          <div className="font-medium">{l10n("local.approved_by_8e838c46")}{" "}{who} {l10n("local._creating_the_binding_aa4e87c4")}</div>
           <p className="mt-1 text-amber-900/80 dark:text-amber-100/80">
-            Paperclip is re-checking authority and the proposal snapshot before writing.
-          </p>
+            {l10n("local.paperclip_is_re_checking_authority_and_the_pr_5117fae9")}</p>
         </div>
       </div>
     );
@@ -1885,9 +1862,9 @@ function SecretProposalResolution({
       <div aria-live="polite" className="flex items-start gap-2 rounded-sm border border-green-500/50 bg-green-500/10 px-4 py-3 text-sm text-green-900 dark:text-green-100">
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
         <div>
-          <div className="font-medium">Binding created · approved by {who}</div>
+          <div className="font-medium">{l10n("local.binding_created_approved_by_debd1faf")}{" "}{who}</div>
           <p className="mt-1 text-green-900/80 dark:text-green-100/80">
-            The target agent can now use the proposed config path{when ? ` · ${when}` : ""}.
+            {l10n("local.the_target_agent_can_now_use_the_proposed_con_c91e5f78")}{when ? ` · ${when}` : ""}.
           </p>
         </div>
       </div>
@@ -1902,18 +1879,15 @@ function SecretProposalResolution({
           <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <div className="font-semibold uppercase tracking-(--tracking-eyebrow)">
-              FAILED · binding was not created
-            </div>
+              {l10n("local.failed_binding_was_not_created_0c4d9095")}</div>
             <p className="mt-1 text-red-900/80 dark:text-red-100/80">
-              The request was accepted, but execution failed closed. No secret value was exposed.
-            </p>
+              {l10n("local.the_request_was_accepted_but_execution_failed_2b886203")}</p>
           </div>
         </div>
         {errorCode ? (
           <div className="rounded-sm border border-red-500/50 bg-background/60 px-3 py-2">
             <span className="text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-eyebrow)">
-              Error code
-            </span>{" "}
+              {l10n("local.error_code_0570b384")}</span>{" "}
             <code className="font-mono text-foreground">{errorCode}</code>
           </div>
         ) : null}
@@ -1928,8 +1902,8 @@ function SecretProposalResolution({
         <div className="flex items-start gap-2">
           <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <div className="font-medium">Rejected by {who}</div>
-            <p className="mt-1 text-red-900/80 dark:text-red-100/80">The binding was not created.</p>
+            <div className="font-medium">{l10n("local.rejected_by_2ad44c3f")}{" "}{who}</div>
+            <p className="mt-1 text-red-900/80 dark:text-red-100/80">{l10n("local.the_binding_was_not_created_38364995")}</p>
           </div>
         </div>
         {reason ? (
@@ -1945,8 +1919,8 @@ function SecretProposalResolution({
     <div className="flex items-start gap-2 rounded-sm border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
       <Clock className="mt-0.5 h-4 w-4 shrink-0" />
       <div>
-        <div className="font-medium text-foreground">Proposal expired{when ? ` · ${when}` : ""}</div>
-        <p className="mt-1">The binding was not created. A fresh proposal is required.</p>
+        <div className="font-medium text-foreground">{l10n("local.proposal_expired_63284dbb")}{when ? ` · ${when}` : ""}</div>
+        <p className="mt-1">{l10n("local.the_binding_was_not_created_a_fresh_proposal_76768784")}</p>
       </div>
     </div>
   );
@@ -2012,15 +1986,15 @@ function RequestSecretProposalCard({
       <ProposalJustification justification={payload.justification} />
       <div className="flex items-center gap-2 text-(length:--text-micro) text-muted-foreground">
         <Clock className="h-3.5 w-3.5" />
-        Expires {formatDateTime(payload.expiresAt)}
+        {l10n("local.expires_f6725f3a")}{" "}{formatDateTime(payload.expiresAt)}
       </div>
 
       {isPending ? (
         <ConfirmationActionRow
           resetKey={`${interaction.id}:${interaction.status}`}
-          approveLabel={interaction.payload.acceptLabel ?? "Approve & bind"}
-          reviseLabel="Add reason…"
-          rejectLabel={interaction.payload.rejectLabel ?? "Reject"}
+          approveLabel={interaction.payload.acceptLabel ?? l10n("local.approve_bind_6c8c7479")}
+          reviseLabel={l10n("local.add_reason_ac3b68fa")}
+          rejectLabel={interaction.payload.rejectLabel ?? l10n("local.reject_ab604a36")}
           approveVariant="cta"
           allowRevise={interaction.payload.allowDeclineReason !== false}
           rejectRequiresReason={interaction.payload.rejectRequiresReason === true}
@@ -2052,9 +2026,9 @@ function RequestSecretProposalCard({
  * producers may still override the accept/reject labels for domain-specific
  * confirmations (e.g. "Delete selected"), but the shape stays consistent.
  */
-const CONFIRMATION_APPROVE_LABEL = "Approve";
-const CONFIRMATION_REVISE_LABEL = "Revise…";
-const CONFIRMATION_REJECT_LABEL = "Reject";
+const CONFIRMATION_APPROVE_LABEL = l10n("local.approve_6007acbe");
+const CONFIRMATION_REVISE_LABEL = l10n("local.revise_62e1da04");
+const CONFIRMATION_REJECT_LABEL = l10n("local.reject_ab604a36");
 
 /**
  * The one action control every confirmation card renders (PAP-418), collapsing
@@ -2157,8 +2131,7 @@ function ConfirmationActionRow({
           {working === "accept" ? (
             <>
               <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-              Approving…
-            </>
+              {l10n("local.approving_e99dcb0a")}</>
           ) : (
             approveLabel
           )}
@@ -2188,8 +2161,7 @@ function ConfirmationActionRow({
             {working === "reject" && !revising ? (
               <>
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                Rejecting…
-              </>
+                {l10n("local.rejecting_09868524")}</>
             ) : (
               rejectLabel
             )}
@@ -2210,7 +2182,7 @@ function ConfirmationActionRow({
             )}
           />
           {attempted && reasonMissing ? (
-            <p className="text-xs text-destructive">Add a note describing the changes you want.</p>
+            <p className="text-xs text-destructive">{l10n("local.add_a_note_describing_the_changes_you_want_d5ef6ba9")}</p>
           ) : null}
           {revisePanelChildren}
           <div className="flex flex-wrap justify-end gap-2">
@@ -2223,8 +2195,7 @@ function ConfirmationActionRow({
                 setAttempted(false);
               }}
             >
-              Cancel
-            </Button>
+              {l10n("local.cancel_19766ed6")}</Button>
             <Button
               size="sm"
               variant="outline"
@@ -2234,10 +2205,9 @@ function ConfirmationActionRow({
               {working === "reject" ? (
                 <>
                   <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                  Sending…
-                </>
+                  {l10n("local.sending_b8ed5279")}</>
               ) : (
-                "Send revision"
+                l10n("local.send_revision_953cc98c")
               )}
             </Button>
           </div>
@@ -2263,7 +2233,7 @@ function connectionAuthorizationStatusClasses(
       return {
         shell: "border-2 border-sky-500/70 bg-transparent",
         badge: "border-sky-500/60 bg-sky-500/10 text-sky-900 dark:bg-sky-500/15 dark:text-sky-100",
-        label: "Action required",
+        label: l10n("local.action_required_adf69e75"),
         Icon: KeyRound,
       };
     case "waiting":
@@ -2272,21 +2242,21 @@ function connectionAuthorizationStatusClasses(
       return {
         shell: "border-border bg-transparent",
         badge: "border-border bg-muted/60 text-muted-foreground",
-        label: `Waiting for ${copy.addresseeLabel}`,
+        label: l10n("local.waiting_for_value_499293fe", {v0: (copy.addresseeLabel)}),
         Icon: Clock,
       };
     case "connected":
       return {
         shell: "border-2 border-green-500/80 bg-transparent",
         badge: "border-green-500/60 bg-green-500/10 text-green-900 dark:bg-green-500/15 dark:text-green-100",
-        label: `${copy.providerName} connected`,
+        label: l10n("local.value_connected_db4ed330", {v0: (copy.providerName)}),
         Icon: CheckCircle2,
       };
     case "declined":
       return {
         shell: "border-border bg-transparent",
         badge: "border-border bg-muted/60 text-muted-foreground",
-        label: "Not connected",
+        label: l10n("local.not_connected_0303e182"),
         Icon: MinusCircle,
       };
     case "expired":
@@ -2294,7 +2264,7 @@ function connectionAuthorizationStatusClasses(
       return {
         shell: "border-border bg-transparent",
         badge: "border-border bg-muted/60 text-muted-foreground",
-        label: "Authorization expired",
+        label: l10n("local.authorization_expired_92b4263f"),
         Icon: CircleDashed,
       };
   }
@@ -2378,7 +2348,7 @@ function RequestConnectionAuthorizationCard({
   // person. Shown to a teammate it names the wrong account, so a reader who is
   // not the addressee gets the same fact stated about them. Caught by rendering
   // the card, not by reading it.
-  const agentLabel = requestingAgentLabel ?? "An agent";
+  const agentLabel = requestingAgentLabel ?? l10n("local.an_agent_ea6a0363");
   const lead = isAddressee
     ? interaction.summary?.trim()
       || `${agentLabel} needs your ${providerName} identity for work running as you.`
@@ -2405,7 +2375,7 @@ function RequestConnectionAuthorizationCard({
             >
               <Button asChild size="sm" variant="cta" className="w-full sm:w-auto">
                 <a href={href} target="_blank" rel="noreferrer">
-                  Connect {providerName}
+                  {l10n("local.connect_1a2303ed")}{" "}{providerName}
                   <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
                 </a>
               </Button>
@@ -2419,10 +2389,9 @@ function RequestConnectionAuthorizationCard({
                 {working ? (
                   <>
                     <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    Saving…
-                  </>
+                    {l10n("local.saving_23e39291")}</>
                 ) : (
-                  "Not now"
+                  l10n("local.not_now_a0e63d7c")
                 )}
               </Button>
             </div>
@@ -2433,7 +2402,7 @@ function RequestConnectionAuthorizationCard({
               Icon={TriangleAlert}
               testId="connection-authorization-no-target"
               headline="This authorization link is unavailable"
-              detail={`Ask ${requestingAgentLabel ?? "the agent"} to send a fresh ${providerName} authorization link.`}
+              detail={l10n("local.ask_value_to_send_a_fresh_value_authorization_4a48611e", {v0: (requestingAgentLabel ?? "the agent"), v1: (providerName)})}
             />
           )}
           <InteractionActionError message={actionError} />
@@ -2443,7 +2412,7 @@ function RequestConnectionAuthorizationCard({
           Icon={Clock}
           testId="connection-authorization-waiting"
           headline={`Waiting for ${addresseeLabel}`}
-          detail={`Only ${addresseeLabel} can connect their own ${providerName} account.`}
+          detail={l10n("local.only_value_can_connect_their_own_value_accoun_fc6c2f7c", {v0: (addresseeLabel), v1: (providerName)})}
         />
       ) : state === "connected" ? (
         <ConnectionAuthorizationStatusLine
@@ -2452,13 +2421,13 @@ function RequestConnectionAuthorizationCard({
           headline={`${providerName} connected`}
           detail={
             <>
-              Connected by{" "}
+              {l10n("local.connected_by_9952ce52")}{" "}
               <span className="font-medium text-foreground">
                 {/* "You" is display-cased for a badge; this is mid-sentence. */}
-                {(resolvedByLabel ?? addresseeLabel) === "You" ? "you" : resolvedByLabel ?? addresseeLabel}
+                {(resolvedByLabel ?? addresseeLabel) === "You" ? l10n("local.you_bb0347a4") : resolvedByLabel ?? addresseeLabel}
               </span>
               {resolvedByAgent ? <ResolvedByAgentChip /> : null}
-              {interaction.resolvedAt ? ` on ${formatDateTime(interaction.resolvedAt)}` : ""}
+              {interaction.resolvedAt ? (" " + l10n("local.on_value_dc137047", {v0: (formatDateTime(interaction.resolvedAt))})) : ""}
             </>
           }
         />
@@ -2472,7 +2441,7 @@ function RequestConnectionAuthorizationCard({
           headline={state === "declined" ? `${providerName} was not connected` : "This authorization request expired"}
           detail={
             declineReason
-              ?? `${requestingAgentLabel ?? "The agent"} can ask again with a new ${providerName} authorization link.`
+              ?? l10n("local.value_can_ask_again_with_a_new_value_authoriz_91084260", {v0: (requestingAgentLabel ?? "The agent"), v1: (providerName)})
           }
         />
       )}
@@ -2567,7 +2536,7 @@ function RequestConfirmationCard({
       }
       if (uploaded.length > 0) setShots((current) => [...current, ...uploaded]);
     } catch {
-      setUploadError("Couldn't upload that image. Try again.");
+      setUploadError(l10n("local.couldn_t_upload_that_image_try_again_0764ae5a"));
     } finally {
       setUploading(false);
     }
@@ -2660,7 +2629,7 @@ function RequestConfirmationCard({
                         />
                         <button
                           type="button"
-                          aria-label={`Remove ${shot.name}`}
+                          aria-label={l10n("local.remove_value_86790c6d", {v0: (shot.name)})}
                           className="absolute right-0.5 top-0.5 rounded-full bg-background/90 p-0.5 text-foreground opacity-0 transition-opacity group-hover:opacity-100"
                           onClick={() =>
                             setShots((current) => current.filter((_, i) => i !== index))
@@ -2693,13 +2662,11 @@ function RequestConfirmationCard({
                   {uploading ? (
                     <>
                       <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Uploading...
-                    </>
+                      {l10n("local.uploading_72cb29c9")}</>
                   ) : (
                     <>
                       <ImagePlus className="mr-2 h-3.5 w-3.5" />
-                      Attach screenshots
-                    </>
+                      {l10n("local.attach_screenshots_d0f8e01d")}</>
                   )}
                 </Button>
                 {uploadError ? (
@@ -2746,15 +2713,15 @@ function RequestCheckboxConfirmationResolution({
         <div className="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
           <span className="font-medium">
             {selectedCount === 0
-              ? "Confirmed with no options selected"
-              : `Confirmed ${selectedCount} of ${totalOptions} ${totalOptions === 1 ? "option" : "options"}`}
+              ? l10n("local.confirmed_with_no_options_selected_1962f778")
+              : l10n("local.confirmed_value_of_value_value_6e1d685a", {v0: (selectedCount), v1: (totalOptions), v2: (totalOptions === 1 ? "option" : "options")})}
           </span>
           <RequestConfirmationTargetChip interaction={interaction} target={target} />
         </div>
         {visibleLabels.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {visibleLabels.map((label, index) => (
-              <TaskField key={`${label}-${index}`} label="Selected" value={label} />
+              <TaskField key={`${label}-${index}`} label={l10n("local.selected_57fd7a0c")} value={label} />
             ))}
             {hasHiddenLabels ? (
               <button
@@ -2766,7 +2733,7 @@ function RequestCheckboxConfirmationResolution({
                 )}
                 aria-expanded={expanded}
               >
-                {expanded ? "Show less" : `+${hiddenCount} more`}
+                {expanded ? l10n("local.show_less_94ea9b1d") : l10n("local._value_more_8769eb5d", {v0: (hiddenCount)})}
               </button>
             ) : null}
           </div>
@@ -2786,8 +2753,7 @@ function RequestCheckboxConfirmationResolution({
   if (interaction.status === "failed") {
     return (
       <p className="text-sm leading-6 text-muted-foreground">
-        This request could not be resolved. Try again or create a new request.
-      </p>
+        {l10n("local.this_request_could_not_be_resolved_try_again_7056ad01")}</p>
     );
   }
 
@@ -2901,12 +2867,12 @@ function RequestCheckboxConfirmationCard({
 
   const validationMessage = belowMin
     ? minSelected === 1
-      ? "Select at least 1 option."
-      : `Select at least ${minSelected} options.`
+      ? l10n("local.select_at_least_1_option_b2ec3305")
+      : l10n("local.select_at_least_value_options_de619825", {v0: (minSelected)})
     : aboveMax && maxSelected != null
       ? maxSelected === 1
-        ? "Select at most 1 option."
-        : `Select at most ${maxSelected} options.`
+        ? l10n("local.select_at_most_1_option_45f17e29")
+        : l10n("local.select_at_most_value_options_91db3a57", {v0: (maxSelected)})
       : null;
 
   function toggleOption(optionId: string, checked: boolean) {
@@ -2966,12 +2932,12 @@ function RequestCheckboxConfirmationCard({
   }
 
   const selectionSummary = totalOptions > 0 && selectedCount === totalOptions
-    ? `All ${totalOptions} options selected`
-    : `${selectedCount} of ${totalOptions} ${totalOptions === 1 ? "option" : "options"} selected`;
+    ? l10n("local.all_value_options_selected_12566844", {v0: (totalOptions)})
+    : l10n("local.value_of_value_value_selected_f15705fa", {v0: (selectedCount), v1: (totalOptions), v2: (totalOptions === 1 ? "option" : "options")});
   const boundsHint = maxSelected != null
-    ? `Pick ${minSelected === maxSelected ? `exactly ${maxSelected}` : `${minSelected}-${maxSelected}`}.`
+    ? l10n("local.pick_value_b993b7e4", {v0: (minSelected === maxSelected ? `exactly ${maxSelected}` : `${minSelected}-${maxSelected}`)})
     : minSelected > 0
-      ? `Pick at least ${minSelected}.`
+      ? l10n("local.pick_at_least_value_e4298a2b", {v0: (minSelected)})
       : null;
 
   return (
@@ -3006,22 +2972,20 @@ function RequestCheckboxConfirmationCard({
               disabled={working !== null || selectedCount === totalOptions || (maxSelected != null && selectedCount >= maxSelected)}
               onClick={handleSelectAll}
             >
-              Select all
-            </Button>
+              {l10n("local.select_all_1fc9a387")}</Button>
             <Button
               size="sm"
               variant="ghost"
               disabled={working !== null || selectedCount === 0}
               onClick={handleClearSelection}
             >
-              Clear selection
-            </Button>
+              {l10n("local.clear_selection_cea4d2e0")}</Button>
           </div>
         </div>
 
         <div
           role="group"
-          aria-label="Selectable options"
+          aria-label={l10n("local.selectable_options_aaabfe0b")}
           className="max-h-80 overflow-y-auto rounded-sm border border-border/70"
         >
           {options.map((option) => {
@@ -3113,8 +3077,7 @@ function ItemVerdictDeepLink({ item }: { item: RequestItemVerdictsItem }) {
     "inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1";
   const label = (
     <>
-      Open
-      {isInternal ? <ArrowUpRight className="h-3 w-3" aria-hidden /> : <ExternalLink className="h-3 w-3" aria-hidden />}
+      {l10n("local.open_ed077f3d")}{isInternal ? <ArrowUpRight className="h-3 w-3" aria-hidden /> : <ExternalLink className="h-3 w-3" aria-hidden />}
     </>
   );
   if (isInternal) {
@@ -3147,7 +3110,7 @@ function ItemVerdictSegmentedControl({
   return (
     <div
       role="group"
-      aria-label="Choose a verdict"
+      aria-label={l10n("local.choose_a_verdict_849de4eb")}
       className="flex shrink-0 flex-wrap items-center gap-2"
     >
       {verdicts.map((verdict) => {
@@ -3166,7 +3129,7 @@ function ItemVerdictSegmentedControl({
             variant={variant}
             disabled={disabled}
             aria-pressed={active}
-            aria-label={`${VERDICT_LABEL[verdict]} this item`}
+            aria-label={l10n("local.value_this_item_fb77b19d", {v0: (VERDICT_LABEL[verdict])})}
             className="min-h-11 min-w-24"
             onClick={() => onSelect(verdict)}
             data-verdict={verdict}
@@ -3210,7 +3173,7 @@ function RequestItemVerdictsCard({
     [payload.requireReasonOn],
   );
   const allowBulkApprove = payload.allowBulkApprove !== false && enabledVerdicts.includes("approve");
-  const reasonLabel = payload.reasonLabel ?? "Reason";
+  const reasonLabel = payload.reasonLabel ?? l10n("local.reason_f81ab834");
 
   const resolvedById = useMemo(
     () => new Map<string, RequestItemVerdictsResultItem>((interaction.result?.items ?? []).map((item) => [item.id, item])),
@@ -3319,8 +3282,8 @@ function RequestItemVerdictsCard({
   }
 
   const applyLabel = draftCount === 0
-    ? "Apply 0 decisions"
-    : `Apply ${draftCount} decision${draftCount === 1 ? "" : "s"}`;
+    ? l10n("local.apply_0_decisions_3797d7e6")
+    : l10n("local.apply_value_decisionvalue_fb737472", {v0: (draftCount), v1: (englishPluralSuffix(draftCount === 1 ? "" : "s"))});
 
   return (
     <div className="space-y-4">
@@ -3346,22 +3309,20 @@ function RequestItemVerdictsCard({
           <div className="flex items-center gap-2 font-medium">
             <AlertTriangle className="h-4 w-4" aria-hidden />
             {interaction.result?.outcome === "superseded_by_comment"
-              ? "This review expired after a later comment."
+              ? l10n("local.this_review_expired_after_a_later_comment_080c0897")
               : interaction.result?.outcome === "stale_target"
-                ? "This review expired after the target changed."
-                : "This review expired."}
+                ? l10n("local.this_review_expired_after_the_target_changed_66123ea9")
+                : l10n("local.this_review_expired_36cd0712")}
           </div>
           {progress.decided > 0 ? (
             <p className="mt-1 text-xs leading-5">
-              {progress.decided === 1 ? "1 item was" : `${progress.decided} items were`} already applied and cannot be
-              reverted. Remaining items were cancelled.
-            </p>
+              {progress.decided === 1 ? l10n("local.1_item_was_f4000d8c") : l10n("local.value_items_were_56aa0570", {v0: (progress.decided)})} {l10n("local.already_applied_and_cannot_be_reverted_remain_360a2fec")}</p>
           ) : null}
         </div>
       ) : null}
 
       {/* Item list (S1/S2/S3/S4) */}
-      <ul className="space-y-2" aria-label="Items to review">
+      <ul className="space-y-2" aria-label={l10n("local.items_to_review_6cac728c")}>
         {items.map((item) => {
           const resolved = resolvedById.get(item.id);
           const applying = applyingItemIds.has(item.id);
@@ -3404,13 +3365,11 @@ function RequestItemVerdictsCard({
                   ) : applying ? (
                     <span className="inline-flex items-center gap-1.5 rounded-sm border border-border/70 bg-muted/40 px-2 py-0.5 text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
                       <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" aria-hidden />
-                      Applying…
-                    </span>
+                      {l10n("local.applying_3329a9bb")}</span>
                   ) : isTerminal ? (
                     <span className="inline-flex items-center gap-1 rounded-sm border border-border/70 bg-muted/30 px-2 py-0.5 text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
                       <CircleDashed className="h-3.5 w-3.5" aria-hidden />
-                      Not decided
-                    </span>
+                      {l10n("local.not_decided_4fb8e6bd")}</span>
                   ) : (
                     <ItemVerdictSegmentedControl
                       itemId={item.id}
@@ -3436,7 +3395,7 @@ function RequestItemVerdictsCard({
                     id={`${interaction.id}-${item.id}-reason`}
                     value={draft.reason}
                     onChange={(event) => setDraftReason(item.id, event.target.value)}
-                    placeholder="Give the agent a reason so it can act on this item."
+                    placeholder={l10n("local.give_the_agent_a_reason_so_it_can_act_on_this_0149096b")}
                     aria-invalid={attempted && invalidDraftIds.has(item.id)}
                     className={cn(
                       "min-h-16 bg-background text-sm",
@@ -3444,7 +3403,7 @@ function RequestItemVerdictsCard({
                     )}
                   />
                   {attempted && invalidDraftIds.has(item.id) ? (
-                    <p className="text-xs text-destructive">A reason is required to {VERDICT_LABEL[draft.verdict].toLowerCase()} this item.</p>
+                    <p className="text-xs text-destructive">{l10n("local.a_reason_is_required_to_3301d901")}{" "}{VERDICT_LABEL[draft.verdict].toLowerCase()} {l10n("local.this_item_5f6fa014")}</p>
                   ) : null}
                 </div>
               ) : null}
@@ -3458,8 +3417,7 @@ function RequestItemVerdictsCard({
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-900 dark:text-emerald-100">
           <CheckCircle2 className="h-4 w-4" aria-hidden />
           <span className="font-medium">
-            {progress.decided} decided · {progress.approved} approved · {progress.rejected} rejected
-            {progress.deferred > 0 ? ` · ${progress.deferred} deferred` : ""}
+            {progress.decided} {l10n("local.decided_5a06576f")}{" "}{progress.approved} {l10n("local.approved_1ecc7774")}{" "}{progress.rejected} {l10n("local.rejected_20cd938a")}{progress.deferred > 0 ? (" " + l10n("local._value_deferred_a5f3f44f", {v0: (progress.deferred)})) : ""}
           </span>
         </div>
       ) : null}
@@ -3469,8 +3427,8 @@ function RequestItemVerdictsCard({
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
           <div className="text-xs text-muted-foreground">
             {draftCount > 0
-              ? `${draftCount} draft verdict${draftCount === 1 ? "" : "s"} ready to apply`
-              : "Mark verdicts, then apply them in one pass."}
+              ? l10n("local.value_draft_verdictvalue_ready_to_apply_846180a4", {v0: (draftCount), v1: (englishPluralSuffix(draftCount === 1 ? "" : "s"))})
+              : l10n("local.mark_verdicts_then_apply_them_in_one_pass_881de88b")}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {allowBulkApprove ? (
@@ -3482,8 +3440,7 @@ function RequestItemVerdictsCard({
                 onClick={handleApproveAll}
               >
                 <ThumbsUp className="h-4 w-4" aria-hidden />
-                Approve all
-              </Button>
+                {l10n("local.approve_all_ae067b68")}</Button>
             ) : null}
             <Button
               type="button"
@@ -3496,8 +3453,7 @@ function RequestItemVerdictsCard({
               {working ? (
                 <>
                   <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden />
-                  Applying…
-                </>
+                  {l10n("local.applying_3329a9bb")}</>
               ) : (
                 applyLabel
               )}
@@ -3525,8 +3481,7 @@ function VerdictProgressBadge({
       {pendingReason ? (
         <span className="inline-flex items-center gap-1 rounded-sm border border-amber-500/60 bg-amber-500/10 px-1.5 py-0.5 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-eyebrow) text-amber-900 dark:text-amber-100">
           <AlertTriangle className="h-3 w-3" aria-hidden />
-          Reason needed
-        </span>
+          {l10n("local.reason_needed_e2d71a28")}</span>
       ) : null}
       <div
         className="flex items-center gap-2"
@@ -3534,7 +3489,7 @@ function VerdictProgressBadge({
         aria-valuemin={0}
         aria-valuemax={progress.total}
         aria-valuenow={progress.decided}
-        aria-label={`${progress.decided} of ${progress.total} decided`}
+        aria-label={l10n("local.value_of_value_decided_d95cde7c", {v0: (progress.decided), v1: (progress.total)})}
       >
         <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
           <div
@@ -3543,8 +3498,7 @@ function VerdictProgressBadge({
           />
         </div>
         <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
-          {progress.decided} of {progress.total} decided
-        </span>
+          {progress.decided} {l10n("local.of_28391d3b")}{" "}{progress.total} {l10n("local.decided_8d3c6686")}</span>
       </div>
     </div>
   );
@@ -3691,9 +3645,9 @@ export function IssueThreadInteractionCard({
   }
   const statusText =
     adminOutcome === "withdrawn"
-      ? "Withdrawn"
+      ? l10n("local.withdrawn_00c0b03f")
       : adminOutcome === "issue_closed"
-        ? "Expired · issue closed"
+        ? l10n("local.expired_issue_closed_9a128696")
         : activeStyles
           ? activeStyles.label
           : statusLabel(interaction.status);
@@ -3716,7 +3670,7 @@ export function IssueThreadInteractionCard({
                 <StatusIcon className={cn("h-3.5 w-3.5", iconSpin && "animate-spin")} />
                 {isSecretProposal ? (
                   <span className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
-                    <span>Secret binding</span>
+                    <span>{l10n("local.secret_binding_c7693628")}</span>
                     <span className="hidden text-current/60 sm:inline">/</span>
                     <span>{statusText}</span>
                   </span>
@@ -3727,7 +3681,7 @@ export function IssueThreadInteractionCard({
                   <span>{statusText}</span>
                 ) : (
                   <>
-                    {isPlan ? "Plan" : interactionKindLabel(interaction.kind)}
+                    {isPlan ? l10n("local.plan_fa8ed0bd") : interactionKindLabel(interaction.kind)}
                     <span className="text-current/60">/</span>
                     {statusText}
                   </>
@@ -3742,12 +3696,11 @@ export function IssueThreadInteractionCard({
                       data-testid="interaction-addressee-badge"
                     >
                       <Bot className="h-3 w-3" />
-                      For {addresseeLabel}
+                      {l10n("local.for_ca15ebc0")}{" "}{addresseeLabel}
                     </Badge>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-xs text-xs">
-                    Directed to {addresseeLabel}. Agent-addressed interactions are owned by that agent and are kept out of the open organization attention feed.
-                  </TooltipContent>
+                    {l10n("local.directed_to_0180ad83")}{" "}{addresseeLabel}{l10n("local._agent_addressed_interactions_are_owned_by_th_6aabcb21")}</TooltipContent>
                 </Tooltip>
               ) : null}
             </div>
@@ -3755,27 +3708,27 @@ export function IssueThreadInteractionCard({
             <div className="mt-3 text-lg font-bold text-foreground">
               {interaction.title
                 ?? (interaction.kind === "suggest_tasks"
-                  ? "Suggested task tree"
+                  ? l10n("local.suggested_task_tree_76731895")
                   : interaction.kind === "ask_user_questions"
                     // Only a human-only card is genuinely "for the operator";
                     // an open card is answerable by any teammate (PAP-17280).
                     ? interaction.payload.title
                       ?? (audience.policy === "human_only"
-                        ? "Questions for the operator"
-                        : "Questions to answer")
+                        ? l10n("local.questions_for_the_operator_09c5a86e")
+                        : l10n("local.questions_to_answer_9b3aa958"))
                   : interaction.kind === "request_checkbox_confirmation"
-                    ? "Checkbox confirmation requested"
+                    ? l10n("local.checkbox_confirmation_requested_afc8475c")
                     : isSecretProposal
-                      ? "Secret binding requested"
+                      ? l10n("local.secret_binding_requested_c2a0831b")
                     : connectionAuthorization
-                      ? `Connect your ${connectionAuthorization.providerName} to continue`
+                      ? l10n("local.connect_your_value_to_continue_d0ded5fa", {v0: (connectionAuthorization.providerName)})
                     : isToolAction
-                      ? "Tool approval requested"
+                      ? l10n("local.tool_approval_requested_76497c62")
                       : interaction.kind === "request_item_verdicts"
-                        ? "Review these items"
+                        ? l10n("local.review_these_items_2309d930")
                         : isPlan
-                          ? "Plan review"
-                          : "Confirmation requested")}
+                          ? l10n("local.plan_review_649e8b22")
+                          : l10n("local.confirmation_requested_92e16918"))}
             </div>
             {/* A connection-authorization card composes its own single body
                 below, because the closing sentence depends on whether the
@@ -3795,11 +3748,11 @@ export function IssueThreadInteractionCard({
             <TooltipTrigger asChild>
               <div className="rounded-sm border border-border/70 bg-transparent px-3 py-2 text-right text-xs text-muted-foreground">
                 <div className="font-medium text-foreground">{formatShortDate(interaction.createdAt)}</div>
-                <div>proposed by {createdByLabel}</div>
+                <div>{l10n("local.proposed_by_7d35fa87")}{" "}{createdByLabel}</div>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">
-              Created {formatDateTime(interaction.createdAt)}
+              {l10n("local.created_d70b9e24")}{" "}{formatDateTime(interaction.createdAt)}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -3837,7 +3790,7 @@ export function IssueThreadInteractionCard({
               state={connectionAuthorizationState}
               isAddressee={isConnectionAddressee}
               providerName={connectionAuthorization.providerName}
-              addresseeLabel={addresseeLabel ?? "the addressed person"}
+              addresseeLabel={addresseeLabel ?? l10n("local.the_addressed_person_2d03804d")}
               requestingAgentLabel={connectionAuthorization.requestingAgentName ?? null}
               resolvedByLabel={resolvedByLabel}
               resolvedByAgent={resolvedByAgent}
@@ -3855,7 +3808,7 @@ export function IssueThreadInteractionCard({
             <ConnectionIntentInteractionBody
               interaction={interaction}
               currentUserId={currentUserId}
-              addresseeLabel={addresseeLabel ?? "the addressed person"}
+              addresseeLabel={addresseeLabel ?? l10n("local.the_addressed_person_2d03804d")}
             />
           ) : interaction.kind === "request_item_verdicts" ? (
             <RequestItemVerdictsCard
@@ -3882,10 +3835,10 @@ export function IssueThreadInteractionCard({
             data-testid="interaction-withdrawn-footer"
           >
             <div>
-              Withdrawn by{" "}
-              <span className="font-medium text-foreground">{resolvedByLabel ?? "an agent"}</span>
+              {l10n("local.withdrawn_by_305109dc")}{" "}
+              <span className="font-medium text-foreground">{resolvedByLabel ?? l10n("local.an_agent_647936ec")}</span>
               {resolvedByAgent ? <ResolvedByAgentChip /> : null}
-              {interaction.resolvedAt ? ` on ${formatShortDate(interaction.resolvedAt)}` : ""}
+              {interaction.resolvedAt ? (" " + l10n("local.on_value_dc137047", {v0: (formatShortDate(interaction.resolvedAt))})) : ""}
             </div>
             {adminReason ? (
               <div className="mt-1 italic text-muted-foreground/90">"{adminReason}"</div>
@@ -3908,9 +3861,9 @@ export function IssueThreadInteractionCard({
             className="mt-4 flex flex-wrap items-center gap-x-1 gap-y-0.5 border-t border-border/60 pt-3 text-xs text-muted-foreground"
             data-testid="interaction-resolved-footer"
           >
-            Resolved by <span className="font-medium text-foreground">{resolvedByLabel}</span>
+            {l10n("local.resolved_by_f266c7ec")}{" "}<span className="font-medium text-foreground">{resolvedByLabel}</span>
             {resolvedByAgent ? <ResolvedByAgentChip /> : null}
-            {interaction.resolvedAt ? ` on ${formatShortDate(interaction.resolvedAt)}` : ""}
+            {interaction.resolvedAt ? (" " + l10n("local.on_value_dc137047", {v0: (formatShortDate(interaction.resolvedAt))})) : ""}
           </div>
         ) : null}
       </div>
@@ -3932,12 +3885,10 @@ function ResolvedByAgentChip() {
           data-testid="interaction-resolved-by-agent-chip"
         >
           <Bot className="h-3 w-3" />
-          Agent
-        </Badge>
+          {l10n("local.agent_11b39c93")}</Badge>
       </TooltipTrigger>
       <TooltipContent side="bottom" className="max-w-xs text-xs">
-        Resolved by an agent under the organization's interaction governance policy — audit-distinct from a human board resolution.
-      </TooltipContent>
+        {l10n("local.resolved_by_an_agent_under_the_organization_s_a511fb10")}</TooltipContent>
     </Tooltip>
   );
 }

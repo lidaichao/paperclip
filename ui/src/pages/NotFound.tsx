@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useEffect } from "react";
 import { Link, useLocation } from "@/lib/router";
 import { AlertTriangle, Compass } from "lucide-react";
@@ -19,7 +20,7 @@ export function NotFoundPage({ scope = "global", requestedPrefix }: NotFoundPage
   const { companies, selectedCompany } = useCompany();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Not Found" }]);
+    setBreadcrumbs([{ label: l10n("local.not_found_0019dfc4") }]);
   }, [setBreadcrumbs]);
 
   const fallbackCompany = selectedCompany ?? companies[0] ?? null;
@@ -27,11 +28,11 @@ export function NotFoundPage({ scope = "global", requestedPrefix }: NotFoundPage
   const currentPath = `${location.pathname}${location.search}${location.hash}`;
   const normalizedPrefix = requestedPrefix?.toUpperCase();
 
-  const title = scope === "invalid_company_prefix" ? "Organization not found" : "Page not found";
+  const title = scope === "invalid_company_prefix" ? l10n("local.organization_not_found_00c50f7a") : l10n("local.page_not_found_a469ab4c");
   const description =
     scope === "invalid_company_prefix"
-      ? `No organization matches prefix "${normalizedPrefix ?? "unknown"}".`
-      : "This route does not exist.";
+      ? l10n("local.no_organization_matches_prefix_value_895e90ae", {v0: (normalizedPrefix ?? "unknown")})
+      : l10n("local.this_route_does_not_exist_80eced63");
 
   return (
     <div className="mx-auto max-w-2xl py-10">
@@ -47,18 +48,17 @@ export function NotFoundPage({ scope = "global", requestedPrefix }: NotFoundPage
         </div>
 
         <div className="mt-4 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-          Requested path: <code className="font-mono">{currentPath}</code>
+          {l10n("local.requested_path_709875dd")}{" "}<code className="font-mono">{currentPath}</code>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
           <Button asChild>
             <Link to={dashboardHref}>
               <Compass className="mr-1.5 h-4 w-4" />
-              Open dashboard
-            </Link>
+              {l10n("local.open_dashboard_803f2313")}</Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link to="/">Go home</Link>
+            <Link to="/">{l10n("local.go_home_a0aac914")}</Link>
           </Button>
         </div>
       </Card>

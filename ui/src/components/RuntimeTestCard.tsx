@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   CircleCheck,
   CircleAlert,
@@ -12,28 +13,28 @@ export type TestState = "idle" | "running" | "pass" | "fail";
 
 const copy = {
   idle: {
-    title: "Test your agent",
-    description: "Check that your runtime and model can respond.",
+    title: l10n("local.test_your_agent_bcf9391c"),
+    description: l10n("local.check_that_your_runtime_and_model_can_respond_0325fd6d"),
     action: "Run test",
   },
   running: {
-    title: "Testing connection",
-    description: "Checking the runtime and waiting for a model response…",
+    title: l10n("local.testing_connection_04dfed9c"),
+    description: l10n("local.checking_the_runtime_and_waiting_for_a_model_a1c61e07"),
     action: "Testing…",
   },
   pass: {
-    title: "Connection successful",
-    description: "Your runtime checks passed. Review the details below.",
+    title: l10n("local.connection_successful_856dd8c8"),
+    description: l10n("local.your_runtime_checks_passed_review_the_details_4edd5666"),
     action: "Test again",
   },
   warn: {
-    title: "Connection needs attention",
-    description: "Review the test details before running your agent.",
+    title: l10n("local.connection_needs_attention_4f1fc01d"),
+    description: l10n("local.review_the_test_details_before_running_your_a_a186aaf2"),
     action: "Test again",
   },
   fail: {
-    title: "Couldn't connect",
-    description: "Check your model and provider connection, then try again.",
+    title: l10n("local.couldn_t_connect_babe5b38"),
+    description: l10n("local.check_your_model_and_provider_connection_then_c7c75083"),
     action: "Retry test",
   },
 } as const;
@@ -62,7 +63,7 @@ export function RuntimeTestCard({
           : Play;
   return (
     <section
-      aria-label="Runtime test"
+      aria-label={l10n("local.runtime_test_a3b5b907")}
       className="rounded-lg border border-border bg-card"
     >
       <div className="flex items-start gap-3 p-4 sm:items-center">
@@ -117,8 +118,7 @@ export function RuntimeTestCard({
               aria-hidden="true"
               className="size-3 transition-transform group-open:rotate-90"
             />
-            Test details
-          </summary>
+            {l10n("local.test_details_7cc561a5")}</summary>
           <ul className="space-y-3 px-4 pb-4">
             {result.checks.map((check) => (
               <li

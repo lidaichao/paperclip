@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { Link } from "@/lib/router";
 import { Menu, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
@@ -102,7 +103,7 @@ export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?:
       size="icon-sm"
       className="mr-2 shrink-0"
       onClick={toggleSidebar}
-      aria-label="Open sidebar"
+      aria-label={l10n("local.open_sidebar_45609089")}
     >
       <Menu className="h-5 w-5" />
     </Button>
@@ -231,8 +232,8 @@ export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?:
           size="icon-sm"
           className="ml-5 size-9 shrink-0 text-muted-foreground"
           onClick={toggleTaskPanel}
-          aria-label={taskPanelOpen ? "Hide properties" : "Show properties"}
-          title={taskPanelOpen ? "Hide properties" : "Show properties"}
+          aria-label={taskPanelOpen ? l10n("local.hide_properties_dd66dbf9") : l10n("local.show_properties_ae4293fc")}
+          title={taskPanelOpen ? l10n("local.hide_properties_dd66dbf9") : l10n("local.show_properties_ae4293fc")}
         >
           {taskPanelOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
         </Button>

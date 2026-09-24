@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { useLocation, useNavigate } from "@/lib/router";
 import { Button } from "@/components/ui/button";
@@ -41,21 +42,18 @@ class RouteErrorBoundaryInner extends Component<RouteErrorBoundaryInnerProps, Ro
     return (
       <div className="mx-auto max-w-2xl space-y-4 px-4 py-10">
         <div>
-          <h1 className="text-lg font-semibold">This page hit an error</h1>
+          <h1 className="text-lg font-semibold">{l10n("local.this_page_hit_an_error_58443b4f")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Something went wrong while rendering this page. You can go back and try again, or reload.
-          </p>
+            {l10n("local.something_went_wrong_while_rendering_this_pag_46d793bc")}</p>
         </div>
         <pre className="overflow-auto rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive whitespace-pre-wrap">
           {error.message}
         </pre>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={this.props.onReset}>
-            Go back
-          </Button>
+            {l10n("local.go_back_6aadac2f")}</Button>
           <Button size="sm" onClick={() => window.location.reload()}>
-            Reload page
-          </Button>
+            {l10n("local.reload_page_437d0d63")}</Button>
         </div>
       </div>
     );

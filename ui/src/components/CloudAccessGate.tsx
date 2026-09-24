@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { Navigate, Outlet, useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { accessApi } from "@/api/access";
@@ -13,14 +14,11 @@ function NoBoardAccessPage() {
   return (
     <div className="mx-auto max-w-xl py-10">
       <Card className="block p-6">
-        <h1 className="text-xl font-semibold">No organization access</h1>
+        <h1 className="text-xl font-semibold">{l10n("local.no_organization_access_c6136206")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This account is signed in, but it does not have an active organization membership or instance-admin access on
-          this Paperclip instance.
-        </p>
+          {l10n("local.this_account_is_signed_in_but_it_does_not_hav_628f031d")}</p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Use an organization invite or sign in with an account that already belongs to this org.
-        </p>
+          {l10n("local.use_an_organization_invite_or_sign_in_with_an_1473bb22")}</p>
       </Card>
     </div>
   );
@@ -85,7 +83,7 @@ export function CloudAccessGate({ allowMembershipRequest = false }: { allowMembe
           ? healthQuery.error.message
           : boardAccessQuery.error instanceof Error
             ? boardAccessQuery.error.message
-            : "Failed to load app state"}
+            : l10n("local.failed_to_load_app_state_e3728287")}
       </div>
     );
   }

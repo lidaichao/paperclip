@@ -1,3 +1,4 @@
+import { l10n } from "./i18n";
 import { lazy, Suspense, type ReactNode } from "react";
 import type { ToolConnectionCredentialSource } from "@paperclipai/shared";
 import { Navigate, Outlet, Route, Routes, useActiveCompanyPrefix, useLocation, useParams } from "@/lib/router";
@@ -565,15 +566,15 @@ export function OnboardingRoutePage() {
   }
 
   const title = matchedCompany
-    ? `Add another agent to ${matchedCompany.name}`
+    ? l10n("local.add_another_agent_to_value_6c3fdba7", {v0: (matchedCompany.name)})
     : companies.length > 0
-      ? "Create another organization"
-      : "Create your first organization";
+      ? l10n("local.create_another_organization_0defc5bc")
+      : l10n("local.create_your_first_organization_b85c051e");
   const description = matchedCompany
-    ? "Run onboarding again to add an agent and a starter task for this organization."
+    ? l10n("local.run_onboarding_again_to_add_an_agent_and_a_st_8b916950")
     : companies.length > 0
-      ? "Run onboarding again to create another organization and seed its first agent."
-      : "Get started by creating an organization and your first agent.";
+      ? l10n("local.run_onboarding_again_to_create_another_organi_1a96e8db")
+      : l10n("local.get_started_by_creating_an_organization_and_y_e4bcc59f");
 
   return (
     <div className="mx-auto max-w-xl py-10">
@@ -611,7 +612,7 @@ export function OnboardingRoutePage() {
                     : openOnboarding()
               }
             >
-              {matchedCompany ? "Add Agent" : "Start Onboarding"}
+              {matchedCompany ? l10n("local.add_agent_9d4bc87e") : l10n("local.start_onboarding_2ffae665")}
             </Button>
           )}
         </div>

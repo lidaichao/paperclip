@@ -1,3 +1,4 @@
+import { l10n, englishPluralSuffix } from "../i18n";
 /**
  * Work Timeline page (PAP-12424 / Phase C of PAP-12405).
  *
@@ -249,23 +250,19 @@ function TimelineLegend() {
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-3.5 py-2 text-xs text-muted-foreground">
       <span className="flex items-center gap-1.5">
         <span className="h-2.5 w-4 rounded-sm" style={{ backgroundColor: TIMELINE_COLORS.delegated }} />
-        Delegated
-      </span>
+        {l10n("local.delegated_dd341e5d")}</span>
       <span className="flex items-center gap-1.5">
         <span className="h-2.5 w-4 rounded-sm" style={{ backgroundColor: TIMELINE_COLORS.automation }} />
-        Automation
-      </span>
+        {l10n("local.automation_d909750b")}</span>
       <span className="flex items-center gap-1.5">
         <span
           className="h-2.5 w-4 rounded-sm border border-dashed bg-transparent"
           style={{ borderColor: TIMELINE_COLORS.cancelled }}
         />
-        Cancelled
-      </span>
+        {l10n("local.cancelled_d353a99e")}</span>
       <span className="flex items-center gap-1.5">
         <span className="h-3.5 w-0.5" style={{ backgroundColor: TIMELINE_COLORS.now }} />
-        Now
-      </span>
+        {l10n("local.now_fe18013d")}</span>
     </div>
   );
 }
@@ -276,11 +273,11 @@ function TimelineSummaryStats({
   summary: ReturnType<typeof timelineSummary>;
 }) {
   const stats: { label: string; value: string; icon: LucideIcon }[] = [
-    { label: "Runs", value: formatInteger(summary.runs), icon: GanttChartSquare },
-    { label: "Agents", value: formatInteger(summary.agents), icon: Bot },
-    { label: "Run time", value: formatDuration(0, summary.activeMs), icon: Clock3 },
+    { label: l10n("local.runs_848f54e8"), value: formatInteger(summary.runs), icon: GanttChartSquare },
+    { label: l10n("local.agents_279b44d2"), value: formatInteger(summary.agents), icon: Bot },
+    { label: l10n("local.run_time_40349abb"), value: formatDuration(0, summary.activeMs), icon: Clock3 },
     {
-      label: "Tokens used",
+      label: l10n("local.tokens_used_d2252f5a"),
       value: summary.totalTokens > 0 ? formatCompactInteger(summary.totalTokens) : "Not tracked",
       icon: Coins,
     },
@@ -322,7 +319,7 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
 
   useEffect(() => {
     if (!embedded) {
-      setBreadcrumbs([{ label: scopedProjectId ? "Project Timeline" : "Timeline" }]);
+      setBreadcrumbs([{ label: scopedProjectId ? l10n("local.project_timeline_da2fd084") : l10n("local.timeline_9dcff98e") }]);
     }
   }, [embedded, scopedProjectId, setBreadcrumbs]);
 
@@ -371,7 +368,7 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
     <div className="flex items-center gap-2">
       <GanttChartSquare className="h-6 w-6 text-muted-foreground" />
       <h1 className="text-3xl font-semibold tracking-tight">
-        {scopedProjectId ? "Project Timeline" : "Work Timeline"}
+        {scopedProjectId ? l10n("local.project_timeline_da2fd084") : l10n("local.work_timeline_38973f05")}
       </h1>
     </div>
   );
@@ -397,8 +394,7 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
 
   const rangeControls = (
     <label className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
-      Range
-      <Segmented
+      {l10n("local.range_5de74a81")}<Segmented
         value={rangePreset}
         onChange={(preset) => {
           if (preset === "custom") return;
@@ -406,9 +402,9 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
           setDateRange(presetRange(preset));
         }}
         options={[
-          { value: "today", label: "Today" },
-          { value: "7d", label: "7 days" },
-          { value: "30d", label: "30 days" },
+          { value: "today", label: l10n("local.today_2b065c7c") },
+          { value: "7d", label: l10n("local.7_days_7f920bb6") },
+          { value: "30d", label: l10n("local.30_days_ffd72805") },
         ]}
       />
       <Input
@@ -419,9 +415,9 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
           setDateRange((prev) => ({ ...prev, fromDate: event.target.value }));
         }}
         className="h-8 w-(--sz-150px) text-xs"
-        aria-label="Timeline start date"
+        aria-label={l10n("local.timeline_start_date_881e6415")}
       />
-      <span>to</span>
+      <span>{l10n("local.to_663ea1bf")}</span>
       <Input
         type="date"
         value={dateRange.toDate}
@@ -430,7 +426,7 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
           setDateRange((prev) => ({ ...prev, toDate: event.target.value }));
         }}
         className="h-8 w-(--sz-150px) text-xs"
-        aria-label="Timeline end date"
+        aria-label={l10n("local.timeline_end_date_0f612621")}
       />
     </label>
   );
@@ -438,14 +434,14 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
   const toolbar = (
     <div className="flex flex-wrap items-start gap-3">
       {summary && <TimelineSummaryStats summary={summary} />}
-      <div className="ml-auto flex items-center gap-1 pt-3" aria-label="Timeline zoom controls">
+      <div className="ml-auto flex items-center gap-1 pt-3" aria-label={l10n("local.timeline_zoom_controls_4c7cc9e9")}>
         <Button
           type="button"
           variant="outline"
           size="icon-xs"
           onClick={() => adjustZoom(0.8)}
-          aria-label="Zoom out"
-          title="Zoom out"
+          aria-label={l10n("local.zoom_out_bc7b631a")}
+          title={l10n("local.zoom_out_bc7b631a")}
         >
           <Minus className="h-3 w-3" />
         </Button>
@@ -454,8 +450,8 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
           variant="outline"
           size="icon-xs"
           onClick={() => adjustZoom(1.25)}
-          aria-label="Zoom in"
-          title="Zoom in"
+          aria-label={l10n("local.zoom_in_0e47f09a")}
+          title={l10n("local.zoom_in_0e47f09a")}
         >
           <Plus className="h-3 w-3" />
         </Button>
@@ -464,8 +460,8 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
           variant="outline"
           size="icon-xs"
           onClick={resetZoom}
-          aria-label="Reset zoom"
-          title="Reset zoom"
+          aria-label={l10n("local.reset_zoom_91a661b2")}
+          title={l10n("local.reset_zoom_91a661b2")}
         >
           <RotateCcw className="h-3 w-3" />
         </Button>
@@ -529,9 +525,9 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
             </Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-muted-foreground">
-                {data.spans.length} run{data.spans.length === 1 ? "" : "s"} ·{" "}
-                {new Date(data.window.from).toLocaleString()} to {new Date(data.window.to).toLocaleString()}
-                {data.window.capped ? " · window capped" : ""}
+                {data.spans.length} {l10n("local.run_acba2551")}{data.spans.length === 1 ? "" : englishPluralSuffix("s")} ·{" "}
+                {new Date(data.window.from).toLocaleString()} {l10n("local.to_663ea1bf")}{" "}{new Date(data.window.to).toLocaleString()}
+                {data.window.capped ? (" " + l10n("local._window_capped_f207541f")) : ""}
               </p>
               {rangeControls}
             </div>
