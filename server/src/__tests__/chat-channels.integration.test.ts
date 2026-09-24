@@ -3978,7 +3978,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await service.publishBoardMessage(endpoint.id, conversation.id, "Now assign the follow-ups", key, "owner-user");
     await service.publishBoardMessage(endpoint.id, conversation.id, "Now assign the follow-ups", key, "owner-user");
     expect(wakeup).toHaveBeenCalledTimes(1);
-    expect(wakeup).toHaveBeenCalledWith(fixture.assignedAgentId, expect.objectContaining({ requestedByActorId: "owner-user", contextSnapshot: expect.objectContaining({ source: "issue.comment", wakeCommentId: expect.any(String) }) }));
+    expect(wakeup).toHaveBeenCalledWith(fixture.assignedAgentId, expect.objectContaining({ requestedByActorId: "owner-user", contextSnapshot: expect.objectContaining({ source: "issue.comment", taskKey: (await issueService(db).getById(conversation.issueId))!.identifier, wakeCommentId: expect.any(String) }) }));
     expect(runtime.endpoints.get(endpoint.id)!.posts.filter(post => post.text.includes("Now assign the follow-ups"))).toHaveLength(1);
     const ordinary = await issueService(db).addComment(conversation.issueId, "Private system note", { agentId: fixture.assignedAgentId }, { authorType: "agent" });
     expect(await db.select().from(chatPublications).where(eq(chatPublications.commentId, ordinary.id))).toEqual([]);
