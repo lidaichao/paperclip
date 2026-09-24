@@ -596,8 +596,9 @@ describe("issue update comment wakeups", () => {
     );
   });
 
-  it("wakes the assignee on top-level board issue comments", async () => {
+  it.each([null, "active"] as const)("wakes the assignee on top-level board comments with external conversation %s", async (externalConversationState) => {
     const existing = makeIssue({
+      externalConversationState,
       assigneeAgentId: ASSIGNEE_AGENT_ID,
       assigneeUserId: null,
       status: "in_progress",
@@ -618,8 +619,9 @@ describe("issue update comment wakeups", () => {
       });
 
     expect(res.status).toBe(201);
+    if (externalConversationState) expect(mockRunnerGoalService.projection).not.toHaveBeenCalled();
     expect(mockIssueService.addComment).toHaveBeenCalledWith(existing.id, "please handle this top-level thread comment", expect.anything(),
-      expect.objectContaining({ clientRequestId: "66666666-6666-4666-8666-666666666666" }), expect.anything());
+      expect.objectContaining({ clientRequestId: "66666666-6666-4666-8666-666666666666", mirrorToSlack: true }), expect.anything());
     await vi.waitFor(() => expect(mockHeartbeatService.wakeup).toHaveBeenCalledTimes(1));
     expect(mockHeartbeatService.wakeup).toHaveBeenCalledWith(
       ASSIGNEE_AGENT_ID,
