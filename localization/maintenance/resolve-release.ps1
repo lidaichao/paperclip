@@ -2,7 +2,7 @@
 $script:PaperclipOfficialRoot = 'H:/AIagent/Luna/tools/paperclip'
 $script:PaperclipReleasesRoot = 'H:/AIagent/Luna/tools/paperclip-releases'
 $script:PaperclipDataRoot = 'H:/AIagent/Luna/.paperclip'
-$script:PaperclipBackendVersion = '2026.831.1'
+$script:PaperclipBackendVersion = '2026.924.0-canary.0'
 $script:PaperclipNodePath = 'C:/Program Files/nodejs/node.exe'
 $script:PaperclipEntryRelative = 'node_modules/paperclipai/dist/index.js'
 

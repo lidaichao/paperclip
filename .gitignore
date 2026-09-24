@@ -81,4 +81,5 @@ tests/storybook-visual/playwright-report/
 .env.local
 test-results/
 .paperclip-dev/
+.paperclip-dev-tools/
 localization/integration/source-before-current/

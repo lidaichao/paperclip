@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'resolve-release.ps1')
 $lock = Enter-PaperclipLauncherLock
 try {
+    $release = Resolve-PaperclipRelease
     $listener = @(Get-NetTCPConnection -LocalPort 3100 -State Listen -ErrorAction SilentlyContinue)
     $serverProcessIds = @()
     foreach ($item in $listener) {
@@ -10,7 +11,7 @@ try {
         $serverProcessIds += $item.OwningProcess
     }
     if ($listener.Count -gt 0) { Assert-PaperclipIdle }
-    $pgCtl = Join-Path $script:PaperclipOfficialRoot 'node_modules/@embedded-postgres/windows-x64/native/bin/pg_ctl.exe'
+    $pgCtl = Join-Path $release.directory 'node_modules/@embedded-postgres/windows-x64/native/bin/pg_ctl.exe'
     $dbDir = Join-Path $script:PaperclipDataRoot 'instances/default/db'
     Assert-PaperclipUnlinkedPath $dbDir
     Assert-PaperclipUnlinkedPath $pgCtl
