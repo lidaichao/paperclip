@@ -3,21 +3,31 @@ import type { Db } from "@paperclipai/db";
 import {
   createWorkRecordSchema,
   dispatchWorkRecordSchema,
+  linkWorkPackageDefectSchema,
   prepareWorkPackageDispatchSchema,
   previewWorkPackageDispatchSchema,
+  recordPoQualityVerdictSchema,
+  recordQaQualityVerdictSchema,
   updateWorkRecordSchema,
 } from "@paperclipai/shared";
 import { validate } from "../middleware/validate.js";
 import { forbidden } from "../errors.js";
 import { authorizationDeniedDetails } from "../services/authorization.js";
 import { appendHeartbeatRunEvent } from "../services/heartbeat-run-events.js";
-import { accessService, logActivity, workPackageDispatchService, workRecordService } from "../services/index.js";
+import {
+  accessService,
+  logActivity,
+  workPackageDispatchService,
+  workRecordQualityService,
+  workRecordService,
+} from "../services/index.js";
 import { assertCompanyAccess, getActorInfo } from "./authz.js";
 
 export function workRecordRoutes(db: Db) {
   const router = Router();
   const service = workRecordService(db);
   const packages = workPackageDispatchService(db);
+  const quality = workRecordQualityService(db);
   const access = accessService(db);
 
   async function assertPackageAssignmentAccess(req: Parameters<typeof getActorInfo>[0], companyId: string, projectId: string, assigneeAgentIds: Array<string | null>) {
@@ -53,7 +63,10 @@ export function workRecordRoutes(db: Db) {
     const projectId = req.params.projectId as string;
     assertCompanyAccess(req, companyId);
     const preview = await packages.preview(companyId, projectId, req.body);
-    await assertPackageAssignmentAccess(req, companyId, projectId, preview.records.map((record) => record.assigneeAgentId));
+    await assertPackageAssignmentAccess(req, companyId, projectId, preview.records.flatMap((record) => [
+      record.assigneeAgentId,
+      record.qaAssigneeAgentId,
+    ]));
     res.json(preview);
   });
 
@@ -62,7 +75,10 @@ export function workRecordRoutes(db: Db) {
     const projectId = req.params.projectId as string;
     assertCompanyAccess(req, companyId);
     const preview = await packages.preview(companyId, projectId, req.body);
-    await assertPackageAssignmentAccess(req, companyId, projectId, preview.records.map((record) => record.assigneeAgentId));
+    await assertPackageAssignmentAccess(req, companyId, projectId, preview.records.flatMap((record) => [
+      record.assigneeAgentId,
+      record.qaAssigneeAgentId,
+    ]));
     const actor = getActorInfo(req);
     const result = await packages.prepare(companyId, projectId, req.body, {
       actorType: actor.actorType,
@@ -126,6 +142,102 @@ export function workRecordRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     res.json(await service.list(companyId, projectId));
   });
+
+  router.get("/companies/:companyId/projects/:projectId/work-records/:recordId/quality", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyAccess(req, companyId);
+    res.json(await quality.get(companyId, projectId, req.params.recordId as string));
+  });
+
+  router.post(
+    "/companies/:companyId/projects/:projectId/work-records/:recordId/quality/po-verdicts",
+    validate(recordPoQualityVerdictSchema),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const projectId = req.params.projectId as string;
+      const recordId = req.params.recordId as string;
+      assertCompanyAccess(req, companyId);
+      const actor = getActorInfo(req);
+      const result = await quality.recordPoVerdict(companyId, projectId, recordId, req.body, actor);
+      await logActivity(db, {
+        companyId,
+        actorType: actor.actorType,
+        actorId: actor.actorId,
+        agentId: actor.agentId,
+        runId: actor.runId,
+        agentApiKeyId: actor.agentApiKeyId,
+        action: result.replayed ? "work_record.po_verdict_replayed" : "work_record.po_verdict_recorded",
+        entityType: "work_record_quality_verdict",
+        entityId: result.verdict.id,
+        details: { projectId, recordId, outcome: result.verdict.outcome, nextCycleId: result.nextCycleId },
+      });
+      await logPackageRunEvent(req, "work_record_po_verdict_recorded", {
+        recordId,
+        verdictId: result.verdict.id,
+        outcome: result.verdict.outcome,
+        replayed: result.replayed,
+      });
+      res.status(result.replayed ? 200 : 201).json(result);
+    },
+  );
+
+  router.post(
+    "/companies/:companyId/projects/:projectId/work-records/:recordId/quality/qa-verdicts",
+    validate(recordQaQualityVerdictSchema),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const projectId = req.params.projectId as string;
+      const recordId = req.params.recordId as string;
+      assertCompanyAccess(req, companyId);
+      const actor = getActorInfo(req);
+      const result = await quality.recordQaVerdict(companyId, projectId, recordId, req.body, actor);
+      await logActivity(db, {
+        companyId,
+        actorType: actor.actorType,
+        actorId: actor.actorId,
+        agentId: actor.agentId,
+        runId: actor.runId,
+        agentApiKeyId: actor.agentApiKeyId,
+        action: result.replayed ? "work_record.qa_verdict_replayed" : "work_record.qa_verdict_recorded",
+        entityType: "work_record_quality_verdict",
+        entityId: result.verdict.id,
+        details: { projectId, recordId, outcome: result.verdict.outcome, escalated: result.escalated },
+      });
+      await logPackageRunEvent(req, "work_record_qa_verdict_recorded", {
+        recordId,
+        verdictId: result.verdict.id,
+        outcome: result.verdict.outcome,
+        replayed: result.replayed,
+      });
+      res.status(result.replayed ? 200 : 201).json(result);
+    },
+  );
+
+  router.post(
+    "/companies/:companyId/projects/:projectId/work-record-quality/defect-links",
+    validate(linkWorkPackageDefectSchema),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const projectId = req.params.projectId as string;
+      assertCompanyAccess(req, companyId);
+      const actor = getActorInfo(req);
+      const result = await quality.linkPackageDefect(companyId, projectId, req.body, actor);
+      await logActivity(db, {
+        companyId,
+        actorType: actor.actorType,
+        actorId: actor.actorId,
+        agentId: actor.agentId,
+        runId: actor.runId,
+        agentApiKeyId: actor.agentApiKeyId,
+        action: result.replayed ? "work_record.defect_link_replayed" : "work_record.defect_link_created",
+        entityType: "work_record_quality_link",
+        entityId: result.link.id,
+        details: { projectId, packageRecordId: result.link.packageRecordId, defectRecordId: result.link.defectRecordId },
+      });
+      res.status(result.replayed ? 200 : 201).json(result);
+    },
+  );
 
   router.post("/companies/:companyId/work-records", validate(createWorkRecordSchema), async (req, res) => {
     const companyId = req.params.companyId as string;

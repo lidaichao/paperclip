@@ -231,13 +231,15 @@ export function workRecordService(db: Db) {
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
     await assertProject(companyId, input.projectId);
     await assertAssignee(companyId, input.assigneeAgentId);
+    await assertAssignee(companyId, input.qaAssigneeAgentId);
     const created = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, input.projectId)}, 0))`);
       const predecessorIds = await assertDependencies(tx, companyId, input.projectId, null, input.predecessorRecordIds);
       const [record] = await tx.insert(workRecords).values({
         companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
         parentRecordId: input.parentRecordId ?? null, iterationId: input.iterationId ?? null,
-        assigneeAgentId: input.assigneeAgentId ?? null, createdByAgentId: actor.agentId ?? null, createdByUserId: actor.userId ?? null,
+        assigneeAgentId: input.assigneeAgentId ?? null, qaAssigneeAgentId: input.qaAssigneeAgentId ?? null,
+        createdByAgentId: actor.agentId ?? null, createdByUserId: actor.userId ?? null,
       }).returning();
       if (predecessorIds.length) await tx.insert(workRecordDependencies).values(predecessorIds.map((predecessorRecordId) => ({
         companyId, projectId: input.projectId, predecessorRecordId, successorRecordId: record.id,
@@ -249,6 +251,7 @@ export function workRecordService(db: Db) {
 
   async function update(companyId: string, projectId: string, recordId: string, input: UpdateWorkRecord) {
     if (input.assigneeAgentId !== undefined) await assertAssignee(companyId, input.assigneeAgentId);
+    if (input.qaAssigneeAgentId !== undefined) await assertAssignee(companyId, input.qaAssigneeAgentId);
     const updated = await db.transaction(async (tx) => {
       if (input.predecessorRecordIds !== undefined) {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
@@ -265,7 +268,7 @@ export function workRecordService(db: Db) {
       );
       if (
         locked.dispatchState !== "not_dispatched" &&
-        ((!workflowV2WritesEnabled && predecessorIds !== null) || input.assigneeAgentId !== undefined || input.businessStatus !== undefined)
+        ((!workflowV2WritesEnabled && predecessorIds !== null) || input.assigneeAgentId !== undefined || input.qaAssigneeAgentId !== undefined || input.businessStatus !== undefined)
       ) throw conflict("Dispatched record routing and business status are controlled by execution");
       if (predecessorIds) {
         await tx.delete(workRecordDependencies).where(and(eq(workRecordDependencies.companyId, companyId), eq(workRecordDependencies.successorRecordId, recordId)));
@@ -279,6 +282,7 @@ export function workRecordService(db: Db) {
         ...(input.parentRecordId !== undefined ? { parentRecordId: input.parentRecordId } : {}),
         ...(input.iterationId !== undefined ? { iterationId: input.iterationId } : {}),
         ...(input.assigneeAgentId !== undefined ? { assigneeAgentId: input.assigneeAgentId } : {}),
+        ...(input.qaAssigneeAgentId !== undefined ? { qaAssigneeAgentId: input.qaAssigneeAgentId } : {}),
         ...(predecessorIds ? { dependencySetRevision: locked.dependencySetRevision + 1 } : {}),
         revision: locked.revision + 1, updatedAt: new Date(),
       }).where(eq(workRecords.id, recordId)).returning();

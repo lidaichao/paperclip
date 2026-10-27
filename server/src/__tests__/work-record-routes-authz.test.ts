@@ -18,11 +18,18 @@ const packageService = vi.hoisted(() => ({
   getBatch: vi.fn(),
   reconcile: vi.fn(),
 }));
+const qualityService = vi.hoisted(() => ({
+  get: vi.fn(),
+  recordPoVerdict: vi.fn(),
+  recordQaVerdict: vi.fn(),
+  linkPackageDefect: vi.fn(),
+}));
 const access = vi.hoisted(() => ({ decide: vi.fn() }));
 
 vi.mock("../services/index.js", () => ({
   workRecordService: () => service,
   workPackageDispatchService: () => packageService,
+  workRecordQualityService: () => qualityService,
   accessService: () => access,
   logActivity,
 }));
@@ -55,10 +62,12 @@ describe("work-record route authorization", () => {
     for (const mock of Object.values(service)) mock.mockReset();
     logActivity.mockReset();
     for (const mock of Object.values(packageService)) mock.mockReset();
+    for (const mock of Object.values(qualityService)) mock.mockReset();
     access.decide.mockReset();
     access.decide.mockResolvedValue({ allowed: true });
     service.list.mockResolvedValue([]);
     service.getDispatchRequest.mockResolvedValue({ state: "linked" });
+    qualityService.get.mockResolvedValue({ cycle: null, items: [], verdicts: [], links: [] });
   });
 
   it("allows a viewer to read records and inspect the same dispatch request", async () => {
@@ -100,5 +109,33 @@ describe("work-record route authorization", () => {
       .expect(403, { error: "Viewer access is read-only" });
     expect(packageService.preview).not.toHaveBeenCalled();
     expect(packageService.prepare).not.toHaveBeenCalled();
+  });
+
+  it("allows quality reads but keeps PO/QA verdicts and defect links read-only for viewers", async () => {
+    const app = createApp(viewer);
+    const projectId = "11111111-1111-4111-8111-111111111111";
+    const recordId = "22222222-2222-4222-8222-222222222222";
+    const cycleId = "33333333-3333-4333-8333-333333333333";
+    const itemId = "44444444-4444-4444-8444-444444444444";
+    await request(app)
+      .get(`/api/companies/company-1/projects/${projectId}/work-records/${recordId}/quality`)
+      .expect(200);
+    await request(app)
+      .post(`/api/companies/company-1/projects/${projectId}/work-records/${recordId}/quality/po-verdicts`)
+      .send({
+        workflowVersion: 2,
+        clientRequestId: "viewer-po",
+        requestPayloadDigest: "viewer-po",
+        cycleId,
+        itemId,
+        expectedCycleRevision: 1,
+        outcome: "approve",
+        targetRecordIds: [],
+        reason: "viewer must not write",
+        evidenceRefs: [],
+      })
+      .expect(403, { error: "Viewer access is read-only" });
+    expect(qualityService.get).toHaveBeenCalledWith("company-1", projectId, recordId);
+    expect(qualityService.recordPoVerdict).not.toHaveBeenCalled();
   });
 });

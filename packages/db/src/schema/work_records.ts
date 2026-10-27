@@ -89,6 +89,7 @@ export const workRecords = pgTable(
     description: text("description"),
     descriptionRevision: integer("description_revision").notNull().default(1),
     assigneeAgentId: uuid("assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    qaAssigneeAgentId: uuid("qa_assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
     businessStatus: text("business_status").notNull().default("backlog"),
     statusVersion: bigint("status_version", { mode: "number" }).notNull().default(0),
     revision: integer("revision").notNull().default(1),
@@ -117,6 +118,11 @@ export const workRecords = pgTable(
       columns: [table.companyId, table.assigneeAgentId],
       foreignColumns: [agents.companyId, agents.id],
       name: "work_records_assignee_scope_fk",
+    }),
+    qaAssigneeScopeFk: foreignKey({
+      columns: [table.companyId, table.qaAssigneeAgentId],
+      foreignColumns: [agents.companyId, agents.id],
+      name: "work_records_qa_assignee_scope_fk",
     }),
     parentScopeFk: foreignKey({
       columns: [table.companyId, table.projectId, table.parentRecordId],
@@ -521,6 +527,7 @@ export const workRecordQualityLinks = pgTable(
     companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
     projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
     linkKey: text("link_key").notNull(),
+    requestPayloadDigest: text("request_payload_digest").notNull(),
     linkKind: text("link_kind").notNull(),
     defectRecordId: uuid("defect_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
     packageRecordId: uuid("package_record_id").references(() => workRecords.id, { onDelete: "cascade" }),

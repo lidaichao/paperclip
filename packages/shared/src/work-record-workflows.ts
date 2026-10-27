@@ -116,6 +116,10 @@ export const WORK_RECORD_WORKFLOW_ERROR_CODES = [
   "work_record_workflow_role_denied",
   "work_record_workflow_active_cycle_conflict",
   "work_record_workflow_active_intent_conflict",
+  "work_record_quality_assignment_required",
+  "work_record_quality_target_invalid",
+  "work_record_quality_not_ready",
+  "work_record_quality_review_round_limit",
   "work_record_workflow_v2_disabled",
   "work_package_assignment_required",
   "work_package_dependency_cycle",
@@ -221,6 +225,25 @@ export const recordQaQualityVerdictSchema = qualityVerdictBaseSchema.extend({
   }
 });
 
+/**
+ * Package defects are business evidence. They point back to the package,
+ * original repair record and original QA record; they never mint a parallel
+ * repair issue. A null repair target deliberately routes ownership to the PO.
+ */
+export const linkWorkPackageDefectSchema = z.object({
+  workflowVersion: z.literal(WORK_RECORD_WORKFLOW_VERSION).default(WORK_RECORD_WORKFLOW_VERSION),
+  clientRequestId: requestIdSchema,
+  requestPayloadDigest: digestSchema,
+  cycleId: z.string().guid(),
+  expectedCycleRevision: z.number().int().positive(),
+  defectRecordId: z.string().guid(),
+  packageRecordId: z.string().guid(),
+  repairRecordId: z.string().guid().nullable(),
+  qaRecordId: z.string().guid(),
+  reason: z.string().trim().min(1).max(100_000),
+  evidenceRefs: evidenceRefsSchema,
+});
+
 /** CEO may fill an empty assignment; replacing an existing owner is not this command. */
 export const fillWorkRecordAssignmentGapSchema = z.object({
   workflowVersion: z.literal(WORK_RECORD_WORKFLOW_VERSION).default(WORK_RECORD_WORKFLOW_VERSION),
@@ -236,6 +259,7 @@ export type PrepareWorkPackageDispatch = z.infer<typeof prepareWorkPackageDispat
 export type PreviewWorkPackageDispatch = z.infer<typeof previewWorkPackageDispatchSchema>;
 export type RecordPoQualityVerdict = z.infer<typeof recordPoQualityVerdictSchema>;
 export type RecordQaQualityVerdict = z.infer<typeof recordQaQualityVerdictSchema>;
+export type LinkWorkPackageDefect = z.infer<typeof linkWorkPackageDefectSchema>;
 export type FillWorkRecordAssignmentGap = z.infer<typeof fillWorkRecordAssignmentGapSchema>;
 
 export type WorkPackageBoundaryResult =

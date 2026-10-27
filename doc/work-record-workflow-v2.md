@@ -1,14 +1,14 @@
 # Work-record workflow v2 data contract
 
-Status: M2-B server/API preparation and release path implemented behind a
-default-off write flag; no user-facing or production capability is enabled.
+Status: M2-C server/API quality-cycle path implemented behind a default-off
+write flag; no user-facing or production capability is enabled. Independent
+QA verification remains a separate release gate.
 
 The workflow-v2 tables are additive sidecars around the existing work-record to
-native-issue to heartbeat chain. They do not create another scheduler, start an
-agent, or make package dispatch, PO review, or QA review available. New write and
-claim paths must remain behind a default-off feature flag until later M2 stages
-implement and independently verify them. M2-B reuses the existing two-second
-work-record heartbeat tick and does not add a scheduler.
+native-issue to heartbeat chain. They do not create another scheduler. Package,
+PO, QA, and rework releases all reuse the existing two-second work-record
+heartbeat tick and native heartbeat admission. New write and claim paths remain
+behind the default-off feature flag until independent M2 verification passes.
 
 ## M2-B API and feature flag
 
@@ -21,6 +21,10 @@ all prepare/reconcile/claim writes return `403` with
 - `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/prepare`
 - `GET /api/companies/:companyId/projects/:projectId/work-package-dispatch/:batchId`
 - `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/:batchId/reconcile`
+- `GET /api/companies/:companyId/projects/:projectId/work-records/:recordId/quality`
+- `POST /api/companies/:companyId/projects/:projectId/work-records/:recordId/quality/po-verdicts`
+- `POST /api/companies/:companyId/projects/:projectId/work-records/:recordId/quality/qa-verdicts`
+- `POST /api/companies/:companyId/projects/:projectId/work-record-quality/defect-links`
 
 Preview computes the current whole-package descendant closure or the exact
 selected-record set. Prepare always binds root/dependency revisions and may
@@ -80,6 +84,30 @@ HTTP response, heartbeat denial reason, and zero-effective-wake/run assertion
 for every authorization, governance, pause, hold, budget, and execution-lock
 case. Recovery evidence records before/after IDs and counts at each failpoint.
 
+The M2-C ledger lives in
+`server/src/__tests__/work-record-quality-cycle.test.ts`. Set
+`PAPERCLIP_M2C_EVIDENCE_DIR` to retain `quality-cycle-evidence.json`. It records
+the package, repair, QA, defect, cycle, intent, issue, and real heartbeat-run
+IDs for the shared-repair and independent-defect paths. The independent path
+executes two real process-adapter runs and proves agent pause plus project
+budget hard-stop deny the rework release before final admission.
+
+## M2-C quality behavior
+
+- A whole-package cycle reaches `po_acceptance` only after every required child
+  and QA item is accepted. PO approval alone closes the package.
+- A PO or QA return appends a verdict and opens the next cycle. It reopens the
+  original record and primary issue, then creates a new intent/run; it never
+  creates a parallel repair task.
+- Package defects use typed links to the package, original repair record, and
+  original QA record. Multiple defects sharing those records share one repair
+  item and one QA item while retaining one verdict per defect. Unknown repair
+  ownership leaves the cycle in `attention_required` for PO resolution.
+- Independent defects require distinct repair and QA agents before prepare.
+  Their native issue execution policy hands successful repair to QA in
+  `in_review`; only the named QA can pass or return it, and only QA pass reaches
+  `done`. The policy and quality service both cap unattended review rounds.
+
 ## Frozen implementation contracts
 
 1. `quality cycle`, `quality item`, and `execution intent` use their own state
@@ -125,6 +153,9 @@ Migration `0290_graceful_payback.sql` makes an execution intent's `issue_id`
 nullable during `preparing`. Reconciliation must bind the issue and expected
 status version before it can insert the required intent-scoped outbox event.
 
+Migration `0291_sleepy_corsair.sql` adds the nullable independent-defect QA
+assignee and the quality-link request digest used for replay/conflict checks.
+
 When an undispatched M1 release outbox and a v2 intent coexist during a rolling
 transition, the v2 payload persists the M1 heartbeat idempotency key. Either
 outbox processor may win, but both converge on one wake and one process-adapter
@@ -140,5 +171,5 @@ already running continue to obey the existing approval, budget, pause, source
 hold, execution-lock, and heartbeat controls.
 
 Schema and API presence are not an availability claim. The write flag remains
-off by default. PO verdicts, QA/defect quality rounds, product UI, notification
-confirmation, production deployment, and data backfill remain outside M2-B.
+off by default. Product UI, notification confirmation, production deployment,
+and data backfill remain outside M2-C.

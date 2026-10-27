@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { and, asc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
@@ -223,12 +223,27 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     }
     for (const record of scoped) {
       await assertAssignableAgent(database as Db, companyId, record.assigneeAgentId, { kind: "work" });
+      if (record.kind === "defect") {
+        if (!record.qaAssigneeAgentId || record.qaAssigneeAgentId === record.assigneeAgentId) {
+          throw unprocessable("Independent defects require distinct repair and QA assignees", details(
+            "work_record_quality_assignment_required",
+            { recordId: record.id },
+          ));
+        }
+        await assertAssignableAgent(database as Db, companyId, record.qaAssigneeAgentId, { kind: "work" });
+      }
     }
 
     const scopeDigest = digest({
       scopeKind: input.scopeKind,
       rootRecordId: input.rootRecordId,
-      records: scoped.map((record) => [record.id, record.revision, record.parentRecordId, record.assigneeAgentId]),
+      records: scoped.map((record) => [
+        record.id,
+        record.revision,
+        record.parentRecordId,
+        record.assigneeAgentId,
+        record.qaAssigneeAgentId,
+      ]),
       edges: edges.map((edge) => [edge.predecessorRecordId, edge.successorRecordId]),
     });
     const root = input.rootRecordId ? byId.get(input.rootRecordId) ?? null : scoped[0] ?? null;
@@ -260,6 +275,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         dependencySetRevision: record.dependencySetRevision,
         parentRecordId: record.parentRecordId,
         assigneeAgentId: record.assigneeAgentId,
+        qaAssigneeAgentId: record.qaAssigneeAgentId,
         depth: record.depth,
       })),
       edges: scope.edges.map((edge) => ({
@@ -391,6 +407,58 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
           required: true,
           state: "waiting",
         }).returning({ id: workRecordQualityItems.id }).then((rows) => rows[0].id);
+        await tx.insert(workRecordQualityItems).values(
+          scope.records
+            .filter((record) => record.id !== rootId)
+            .map((record) => ({
+              companyId,
+              projectId,
+              cycleId: cycle.id,
+              recordId: record.id,
+              role: "repair" as const,
+              required: true,
+              state: "waiting",
+            })),
+        );
+      }
+
+      if (input.scopeKind === "selected_records") {
+        for (const record of scope.records.filter((candidate) => candidate.kind === "defect")) {
+          const cycle = await tx.insert(workRecordQualityCycles).values({
+            companyId,
+            projectId,
+            aggregateRecordId: record.id,
+            cycleNumber: 1,
+            kind: "independent_defect",
+            state: "open",
+            qualityPhase: "waiting_fix",
+            scopeDigest: scope.scopeDigest,
+            openedByAgentId: actor.agentId ?? null,
+            openedByUserId: actor.userId ?? null,
+          }).returning().then((rows) => rows[0]);
+          await tx.insert(workRecordQualityItems).values([
+            {
+              companyId,
+              projectId,
+              cycleId: cycle.id,
+              recordId: record.id,
+              defectRecordId: record.id,
+              role: "repair",
+              required: true,
+              state: "ready",
+            },
+            {
+              companyId,
+              projectId,
+              cycleId: cycle.id,
+              recordId: record.id,
+              defectRecordId: record.id,
+              role: "qa",
+              required: true,
+              state: "blocked",
+            },
+          ]);
+        }
       }
 
       for (const record of scope.records) {
@@ -470,6 +538,25 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
           createdByUserId: actor.userId ?? null,
           originKind: "work_record",
           originId: record.id,
+          ...(record.kind === "defect" && record.qaAssigneeAgentId
+            ? {
+                executionPolicy: {
+                  mode: "normal",
+                  commentRequired: true,
+                  maxReviewRounds: 3,
+                  stages: [{
+                    id: randomUUID(),
+                    type: "review",
+                    approvalsNeeded: 1,
+                    participants: [{
+                      id: randomUUID(),
+                      type: "agent",
+                      agentId: record.qaAssigneeAgentId,
+                    }],
+                  }],
+                },
+              }
+            : {}),
           idempotencyKey: `work-package-batch-item:${locked.id}`,
           allowDuplicate: true,
         }, tx);
@@ -521,9 +608,16 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     });
   }
 
-  async function governanceReady(companyId: string, projectId: string, issue: typeof issues.$inferSelect) {
+  async function governanceReady(
+    companyId: string,
+    projectId: string,
+    issue: typeof issues.$inferSelect,
+    intentKind: typeof workRecordExecutionIntents.$inferSelect.kind,
+  ) {
     if (!issue.assigneeAgentId || issue.executionRunId) return false;
-    if (!["backlog", "todo"].includes(issue.status)) return false;
+    const admissibleStatus = ["backlog", "todo"].includes(issue.status)
+      || (intentKind === "rework_release" && issue.status === "in_progress");
+    if (!admissibleStatus) return false;
     const agent = await db.select().from(agents).where(and(
       eq(agents.companyId, companyId), eq(agents.id, issue.assigneeAgentId),
     )).then((rows) => rows[0] ?? null);
@@ -652,12 +746,22 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       eq(workRecordDispatchBatches.state, "prepared"),
     )).then((rows) => rows[0] ?? null);
     if (!batch) return;
+    const batchItems = await db.select({ recordId: workRecordDispatchBatchItems.recordId })
+      .from(workRecordDispatchBatchItems)
+      .where(and(
+        eq(workRecordDispatchBatchItems.companyId, companyId),
+        eq(workRecordDispatchBatchItems.batchId, batchId),
+      ));
+    const aggregateRecordIds = batchItems.map((item) => item.recordId);
     const intents = await db.select().from(workRecordExecutionIntents).where(and(
       eq(workRecordExecutionIntents.companyId, companyId),
       inArray(workRecordExecutionIntents.state, ["pending", "waiting_dependencies", "waiting_governance", "ready"]),
       or(
         inArray(workRecordExecutionIntents.batchItemId, db.select({ id: workRecordDispatchBatchItems.id }).from(workRecordDispatchBatchItems).where(eq(workRecordDispatchBatchItems.batchId, batchId))),
-        inArray(workRecordExecutionIntents.qualityItemId, db.select({ id: workRecordQualityItems.id }).from(workRecordQualityItems).innerJoin(workRecordQualityCycles, eq(workRecordQualityItems.cycleId, workRecordQualityCycles.id)).where(eq(workRecordQualityCycles.aggregateRecordId, batch.rootRecordId ?? "00000000-0000-0000-0000-000000000000"))),
+        inArray(workRecordExecutionIntents.qualityItemId, db.select({ id: workRecordQualityItems.id }).from(workRecordQualityItems).innerJoin(workRecordQualityCycles, eq(workRecordQualityItems.cycleId, workRecordQualityCycles.id)).where(inArray(
+          workRecordQualityCycles.aggregateRecordId,
+          aggregateRecordIds.length > 0 ? aggregateRecordIds : ["00000000-0000-0000-0000-000000000000"],
+        ))),
       ),
     ));
     for (const intent of intents) {
@@ -677,7 +781,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
           .where(eq(workRecordExecutionIntents.id, intent.id));
         continue;
       }
-      if (!(await governanceReady(companyId, projectId, issue))) {
+      if (!(await governanceReady(companyId, projectId, issue, intent.kind))) {
         await db.update(workRecordExecutionIntents).set({ state: "waiting_governance", waitingReason: "governance_pending", updatedAt: new Date() })
           .where(eq(workRecordExecutionIntents.id, intent.id));
         continue;

@@ -45,6 +45,7 @@ export const createWorkRecordSchema = z.object({
   parentRecordId: z.string().guid().optional().nullable(),
   iterationId: z.string().guid().optional().nullable(),
   assigneeAgentId: z.string().guid().optional().nullable(),
+  qaAssigneeAgentId: z.string().guid().optional().nullable(),
   predecessorRecordIds: z.array(z.string().guid()).max(100).optional().default([]),
 });
 
@@ -56,6 +57,7 @@ export const updateWorkRecordSchema = z.object({
   parentRecordId: z.string().guid().optional().nullable(),
   iterationId: z.string().guid().optional().nullable(),
   assigneeAgentId: z.string().guid().optional().nullable(),
+  qaAssigneeAgentId: z.string().guid().optional().nullable(),
   predecessorRecordIds: z.array(z.string().guid()).max(100).optional(),
 }).refine((value) => Object.keys(value).some((key) => key !== "expectedRevision"), {
   message: "At least one field must be updated",
@@ -121,6 +123,7 @@ export interface WorkRecord {
   description: string | null;
   descriptionRevision: number;
   assigneeAgentId: string | null;
+  qaAssigneeAgentId: string | null;
   businessStatus: WorkRecordBusinessStatus;
   statusVersion: number;
   revision: number;

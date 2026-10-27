@@ -209,6 +209,7 @@ export {
 export { reconcilePersistedRuntimeServicesOnStartup, restartDesiredRuntimeServicesOnStartup } from "./workspace-runtime.js";
 export { createStorageServiceFromConfig, getStorageService } from "../storage/index.js";
 export { workRecordService } from "./work-records.js";
+export { workRecordQualityService } from "./work-record-quality.js";
 export {
   managedAgentProfileService,
   CLAUDE_MANAGED_BETA_VERSION,
