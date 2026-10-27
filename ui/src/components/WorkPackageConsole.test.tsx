@@ -35,6 +35,10 @@ const ROOT_ID = "11111111-1111-4111-8111-111111111111";
 const CHILD_ID = "22222222-2222-4222-8222-222222222222";
 const DEFECT_ID = "33333333-3333-4333-8333-333333333333";
 const CYCLE_ID = "44444444-4444-4444-8444-444444444444";
+const CREATE_ID = "55555555-5555-4555-8555-555555555555";
+const REUSE_ID = "66666666-6666-4666-8666-666666666666";
+const COMPLETE_ID = "77777777-7777-4777-8777-777777777777";
+const BLOCKED_ID = "88888888-8888-4888-8888-888888888888";
 
 function record(overrides: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title">): WorkRecord {
   const { id, title, ...rest } = overrides;
@@ -118,6 +122,16 @@ describe("WorkPackageConsole", () => {
     expect(container.textContent).toContain("暂不可确认");
   });
 
+  it("fails closed while the first live query is pending even with cached running data", async () => {
+    liveRunsMock.mockReturnValue(new Promise(() => undefined));
+
+    await render();
+
+    expect(container.querySelector('[data-testid="work-record-status"]')?.getAttribute("data-state")).toBe("unknown");
+    expect(container.querySelector('[data-testid="work-record-status"]')?.getAttribute("data-animated")).toBe("false");
+    expect(container.textContent).toContain("暂不可确认");
+  });
+
   it("renders an inspectable package preview instead of counts alone", async () => {
     await render();
     await act(async () => window.dispatchEvent(new Event("online")));
@@ -129,6 +143,36 @@ describe("WorkPackageConsole", () => {
     expect(container.textContent).toContain("前置尚未完成");
     expect(container.textContent).toContain("发布工作包 → 实现子项");
     expect(container.textContent).toContain("范围摘要 scope-digest");
+  });
+
+  it("counts create, reuse, completed, and blocked preview records as exclusive categories", async () => {
+    const mixedRecords = [
+      record({ id: CREATE_ID, title: "新建项", execution: { ...records[0].execution, issueId: null, issueIdentifier: null } }),
+      record({ id: REUSE_ID, title: "复用项" }),
+      record({ id: COMPLETE_ID, title: "完成项", businessStatus: "done", execution: { ...records[0].execution, issueId: null, issueIdentifier: null } }),
+      record({ id: BLOCKED_ID, title: "受阻项", execution: { ...records[0].execution, issueId: null, issueIdentifier: null }, dependencies: [{ predecessorRecordId: CREATE_ID, title: "新建项", businessStatus: "todo", dispatchState: "not_dispatched", holdReason: "prerequisite_not_dispatched" }] }),
+    ];
+    previewMock.mockResolvedValueOnce({
+      ...preview,
+      rootRecordId: CREATE_ID,
+      recordCount: mixedRecords.length,
+      edgeCount: 0,
+      records: mixedRecords.map((item) => ({ id: item.id, title: item.title, revision: item.revision, dependencySetRevision: item.dependencySetRevision, parentRecordId: item.parentRecordId, assigneeAgentId: item.assigneeAgentId, qaAssigneeAgentId: item.qaAssigneeAgentId, depth: 0 })),
+      edges: [],
+    });
+    await render(mixedRecords);
+    const button = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("预览整个工作包")) as HTMLButtonElement;
+    await act(async () => button.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    await flush();
+
+    const countFor = (label: string) => [...container.querySelectorAll("dt")].find((node) => node.textContent === label)?.nextElementSibling?.textContent;
+    expect(countFor("将新建")).toBe("1");
+    expect(countFor("将复用")).toBe("1");
+    expect(countFor("保持完成")).toBe("1");
+    expect(countFor("安全受阻")).toBe("1");
+    const previewRows = [...container.querySelectorAll("li")];
+    expect(previewRows.find((node) => node.textContent?.includes("父项 · 完成项"))?.textContent).toContain("保持完成");
+    expect(previewRows.find((node) => node.textContent?.includes("父项 · 受阻项"))?.textContent).toContain("建立关联并安全受阻");
   });
 
   it("shows verdict reasons, evidence references, and defect-to-repair lineage", async () => {

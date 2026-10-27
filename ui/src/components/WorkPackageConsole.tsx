@@ -60,11 +60,20 @@ function recordTitle(records: WorkRecord[], recordId: string | null | undefined)
   return records.find((record) => record.id === recordId)?.title ?? recordId;
 }
 
+type PreviewCategory = "create" | "reuse" | "completed" | "blocked";
+
+function previewCategory(record: WorkRecord | undefined): PreviewCategory {
+  if (record?.businessStatus === "done") return "completed";
+  if (record?.dependencies.some((dependency) => dependency.holdReason)) return "blocked";
+  if (record?.execution.issueId) return "reuse";
+  return "create";
+}
+
 function previewDisposition(record: WorkRecord | undefined) {
-  if (!record) return "将新建";
-  if (record.businessStatus === "done") return "保持完成";
-  if (record.dependencies.some((dependency) => dependency.holdReason)) return record.execution.issueId ? "复用主任务并安全受阻" : "建立关联并安全受阻";
-  if (record.execution.issueId) return "复用主任务";
+  const category = previewCategory(record);
+  if (category === "completed") return "保持完成";
+  if (category === "blocked") return record?.execution.issueId ? "复用主任务并安全受阻" : "建立关联并安全受阻";
+  if (category === "reuse") return "复用主任务";
   return "将新建";
 }
 
@@ -181,7 +190,7 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
 
   const liveRuns = useQuery({ queryKey: queryKeys.liveRuns(companyId), queryFn: () => heartbeatsApi.liveRunsForCompany(companyId), refetchInterval: online ? 15_000 : false });
   const liveByIssue = useMemo(() => new Map((liveRuns.data ?? []).filter((run) => (run.status === "queued" || run.status === "running") && run.issueId).map((run) => [run.issueId!, run.status as "queued" | "running"])), [liveRuns.data]);
-  const liveAvailable = online && !liveRuns.isError;
+  const liveAvailable = online && !liveRuns.isError && liveRuns.isFetchedAfterMount;
   const quality = useQuery({ queryKey: queryKeys.workRecords.quality(companyId, projectId, selected?.id ?? "none"), queryFn: () => workRecordsApi.quality(companyId, projectId, selected!.id), enabled: Boolean(selected), refetchInterval: online ? 15_000 : false });
   const batch = useQuery({ queryKey: queryKeys.workRecords.packageBatch(companyId, projectId, batchId || "none"), queryFn: () => workRecordsApi.packageBatch(companyId, projectId, batchId), enabled: Boolean(batchId), refetchInterval: online ? 15_000 : false });
 
@@ -238,6 +247,10 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
     }, onSuccess: commandDone,
   });
   const commandError = previewScope.error ?? prepare.error ?? reconcile.error ?? reconcileRecord.error ?? poVerdict.error ?? qaVerdict.error ?? linkDefect.error;
+  const previewCounts = preview?.records.reduce<Record<PreviewCategory, number>>((counts, item) => {
+    counts[previewCategory(records.find((record) => record.id === item.id))] += 1;
+    return counts;
+  }, { create: 0, reuse: 0, completed: 0, blocked: 0 }) ?? { create: 0, reuse: 0, completed: 0, blocked: 0 };
 
   if (recordsLoading) return <p className="text-sm text-muted-foreground">正在加载工作包…</p>;
   if (recordsError) return <div className="flex items-center justify-between gap-3 text-sm text-destructive"><p>工作包加载失败：{recordsError.message}</p><Button variant="outline" onClick={onRetryRecords}>重试</Button></div>;
@@ -289,7 +302,7 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
 
       {preview ? <Card><CardHeader><CardTitle>派发前范围预览</CardTitle><CardDescription>{previewMode === "whole_package" ? "整个工作包" : "仅所选记录"} · {preview.recordCount} 项 · {preview.edgeCount} 条依赖 · 最大深度 {preview.maxDepth}</CardDescription></CardHeader><CardContent className="space-y-4">
         {previewMode === "selected_records" ? <p className="rounded-md bg-muted/50 p-3 text-sm">只处理下列所选记录；不会派发父项、兄弟项或前置记录。未满足的前置仍会保持来源阻断。</p> : <p className="rounded-md bg-muted/50 p-3 text-sm">范围根记录：{recordTitle(records, preview.rootRecordId)}。已有关联会复用，已完成项不会重启。</p>}
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><Stat label="将新建">{preview.records.filter((item) => !records.find((record) => record.id === item.id)?.execution.issueId).length}</Stat><Stat label="将复用">{preview.records.filter((item) => records.find((record) => record.id === item.id)?.execution.issueId).length}</Stat><Stat label="已完成">{preview.records.filter((item) => records.find((record) => record.id === item.id)?.businessStatus === "done").length}</Stat><Stat label="当前阻断">{preview.records.filter((item) => records.find((record) => record.id === item.id)?.dependencies.some((dependency) => dependency.holdReason)).length}</Stat></div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><Stat label="将新建">{previewCounts.create}</Stat><Stat label="将复用">{previewCounts.reuse}</Stat><Stat label="保持完成">{previewCounts.completed}</Stat><Stat label="安全受阻">{previewCounts.blocked}</Stat></div>
         <div><h4 className="text-sm font-medium">范围记录</h4><ul className="mt-2 space-y-2">{preview.records.map((item) => { const current = records.find((record) => record.id === item.id); const hold = current?.dependencies.find((dependency) => dependency.holdReason); return <li key={item.id} className="flex flex-wrap items-start justify-between gap-2 rounded-md border p-3"><div className="min-w-0"><p className="break-words text-sm font-medium">{item.depth > 0 ? "子项 · " : "父项 · "}{item.title}</p><p className="mt-1 text-xs text-muted-foreground">执行 {item.assigneeAgentId ? agentNames[item.assigneeAgentId] ?? "未知" : "未分配"} · QA {item.qaAssigneeAgentId ? agentNames[item.qaAssigneeAgentId] ?? "未知" : "未分配"}{hold ? ` · ${HOLD[hold.holdReason!] ?? hold.holdReason}` : ""}</p></div><Badge variant={hold ? "destructive" : "secondary"}>{previewDisposition(current)}</Badge></li>; })}</ul></div>
         {preview.edges.length > 0 ? <div><h4 className="text-sm font-medium">依赖边</h4><ul className="mt-2 space-y-1 text-sm text-muted-foreground">{preview.edges.map((edge) => <li key={`${edge.predecessorRecordId}:${edge.successorRecordId}`}>{recordTitle(records, edge.predecessorRecordId)} → {recordTitle(records, edge.successorRecordId)}</li>)}</ul></div> : <p className="text-sm text-muted-foreground">范围内没有依赖边。</p>}
         <p className="break-all font-mono text-xs text-muted-foreground">范围摘要 {preview.scopeDigest}</p><div className="flex justify-end"><Button disabled={!online || prepare.isPending} onClick={() => prepare.mutate()}><PackageCheck className="mr-2 size-4" />确认范围并准备派发</Button></div>
