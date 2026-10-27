@@ -58,7 +58,8 @@ type Wakeup = (agentId: string, options: {
 export type WorkPackageFailpoint =
   | "before_batch_commit"
   | "after_partial_materialization"
-  | "after_outbox_commit";
+  | "after_outbox_commit"
+  | "before_projection_update";
 
 export interface WorkPackageDispatchOptions {
   writesEnabled?: boolean;
@@ -682,7 +683,32 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         continue;
       }
       const eventKey = `work-record-v2:${intent.id}:${intent.generation}`;
-      const payload = { issueId: issue.id, recordId: intent.recordId, batchId, executionIntentId: intent.id, generation: intent.generation };
+      // During a rolling M1 -> v2 transition both workflows can observe the
+      // same undispatched release. Persist the legacy wake key in the v2 event
+      // so either outbox processor wins the same heartbeat admission instead
+      // of serially creating two real runs.
+      const legacyRelease = await db.select({ eventKey: workRecordOutbox.eventKey })
+        .from(workRecordOutbox)
+        .where(and(
+          eq(workRecordOutbox.companyId, companyId),
+          eq(workRecordOutbox.projectId, projectId),
+          eq(workRecordOutbox.recordId, intent.recordId),
+          eq(workRecordOutbox.issueId, issue.id),
+          eq(workRecordOutbox.workflowVersion, 1),
+          inArray(workRecordOutbox.state, ["pending", "retry", "processing"]),
+        ))
+        .orderBy(asc(workRecordOutbox.createdAt))
+        .then((rows) => rows[0] ?? null);
+      const payload = {
+        issueId: issue.id,
+        recordId: intent.recordId,
+        batchId,
+        executionIntentId: intent.id,
+        generation: intent.generation,
+        ...(legacyRelease
+          ? { compatibilityWakeKey: `work-record-release:${legacyRelease.eventKey}` }
+          : {}),
+      };
       await db.transaction(async (tx) => {
         await tx.update(workRecordExecutionIntents).set({ state: "ready", waitingReason: null, activatedAt: new Date(), updatedAt: new Date() })
           .where(and(eq(workRecordExecutionIntents.id, intent.id), inArray(workRecordExecutionIntents.state, ["pending", "waiting_dependencies", "waiting_governance", "ready"])));
@@ -887,41 +913,50 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         const issue = intent?.issueId ? await db.select().from(issues).where(and(
           eq(issues.companyId, claimed.companyId), eq(issues.id, intent.issueId),
         )).then((rows) => rows[0] ?? null) : null;
-        if (!intent || !batch || batch.state !== "prepared" || intent.state !== "ready" || !issue ||
-            issue.statusVersion !== intent.expectedIssueStatusVersion) {
-          await db.update(workRecordOutbox).set({ state: "superseded", lastError: null, updatedAt: new Date() })
+        const compatibilityWakeKey = typeof claimed.payload?.compatibilityWakeKey === "string"
+          ? claimed.payload.compatibilityWakeKey
+          : null;
+        const idempotencyKey = compatibilityWakeKey ?? (intent
+          ? `work-record-intent:${intent.id}:${intent.generation}`
+          : null);
+        const winner = async () => idempotencyKey
+          ? db.select({ id: agentWakeupRequests.id }).from(agentWakeupRequests).where(and(
+              eq(agentWakeupRequests.companyId, claimed.companyId),
+              eq(agentWakeupRequests.idempotencyKey, idempotencyKey),
+              inArray(agentWakeupRequests.status, ["queued", "claimed", "running", "completed"]),
+            )).then((rows) => rows[0] ?? null)
+          : null;
+        const existingWinner = await winner();
+        const staleIssueRevision = Boolean(intent && issue && !existingWinner &&
+          issue.statusVersion !== intent.expectedIssueStatusVersion);
+        if (!intent || !batch || batch.state !== "prepared" ||
+            !["ready", "waiting_dependencies", "waiting_governance"].includes(intent.state) || !issue ||
+            staleIssueRevision) {
+          await db.update(workRecordOutbox).set({
+            state: "superseded",
+            lastError: staleIssueRevision ? "stale_issue_revision" : null,
+            updatedAt: new Date(),
+          })
             .where(eq(workRecordOutbox.id, claimed.id));
           if (intent && !["superseded", "cancelled", "succeeded"].includes(intent.state)) {
-            await db.update(workRecordExecutionIntents).set({ state: "superseded", supersededAt: new Date(), updatedAt: new Date() })
+            await db.update(workRecordExecutionIntents).set({
+              state: "superseded",
+              waitingReason: staleIssueRevision ? "stale_issue_revision" : intent.waitingReason,
+              supersededAt: new Date(),
+              updatedAt: new Date(),
+            })
               .where(eq(workRecordExecutionIntents.id, intent.id));
           }
           continue;
         }
-        const readiness = await issueSvc.getDependencyReadiness(issue.id);
-        if (!readiness.isDependencyReady || !(await governanceReady(claimed.companyId, claimed.projectId, issue))) {
-          await db.update(workRecordOutbox).set({ state: "pending", availableAt: new Date(Date.now() + 2_000), updatedAt: new Date() })
-            .where(eq(workRecordOutbox.id, claimed.id));
-          await db.update(workRecordExecutionIntents).set({
-            state: readiness.isDependencyReady ? "waiting_governance" : "waiting_dependencies",
-            waitingReason: readiness.isDependencyReady ? "governance_pending" : "dependencies_pending",
-            updatedAt: new Date(),
-          }).where(eq(workRecordExecutionIntents.id, intent.id));
-          continue;
-        }
-        if (!issue.assigneeAgentId) throw new Error("Materialized issue has no assignee");
-        const idempotencyKey = `work-record-intent:${intent.id}:${intent.generation}`;
-        const winner = async () => db.select({ id: agentWakeupRequests.id }).from(agentWakeupRequests).where(and(
-          eq(agentWakeupRequests.companyId, claimed.companyId),
-          eq(agentWakeupRequests.idempotencyKey, idempotencyKey),
-          inArray(agentWakeupRequests.status, ["queued", "claimed", "running", "succeeded"]),
-        )).then((rows) => rows[0] ?? null);
-        if (!await winner()) {
+        if (!existingWinner) {
+          if (!issue.assigneeAgentId) throw new Error("Materialized issue has no assignee");
           await wakeup(issue.assigneeAgentId, {
             source: "assignment",
             triggerDetail: "system",
             reason: "work_record_workflow_v2_released",
             payload: claimed.payload ?? {},
-            idempotencyKey,
+            idempotencyKey: idempotencyKey!,
             allowRunCoalescing: false,
             requestedByActorType: "system",
             requestedByActorId: "work-record-v2-outbox",
@@ -930,6 +965,11 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
           await options.failpoint?.("after_outbox_commit");
           if (!await winner()) throw new Error("Heartbeat admission deferred the workflow-v2 release");
         }
+        // The wake receipt/run are authoritative execution facts.  Keep a
+        // separate failpoint after those facts exist but before the workflow
+        // projection catches up so recovery can prove that a targeted outbox
+        // retry only repairs projections and never creates another execution.
+        await options.failpoint?.("before_projection_update");
         await db.transaction(async (tx) => {
           await tx.update(workRecordOutbox).set({ state: "delivered", deliveredAt: new Date(), lastError: null, attemptCount: claimed.attemptCount + 1, updatedAt: new Date() })
             .where(eq(workRecordOutbox.id, claimed.id));
@@ -940,9 +980,41 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         });
         processed += 1;
       } catch (error) {
+        const failedIntent = claimed.executionIntentId
+          ? await db.select().from(workRecordExecutionIntents).where(and(
+              eq(workRecordExecutionIntents.companyId, claimed.companyId),
+              eq(workRecordExecutionIntents.id, claimed.executionIntentId),
+            )).then((rows) => rows[0] ?? null)
+          : null;
+        const failedCompatibilityWakeKey = typeof claimed.payload?.compatibilityWakeKey === "string"
+          ? claimed.payload.compatibilityWakeKey
+          : null;
+        const admissionKey = failedCompatibilityWakeKey ?? (failedIntent
+          ? `work-record-intent:${failedIntent.id}:${failedIntent.generation}`
+          : null);
+        const admissionReceipts = admissionKey
+          ? await db.select().from(agentWakeupRequests).where(and(
+              eq(agentWakeupRequests.companyId, claimed.companyId),
+              eq(agentWakeupRequests.idempotencyKey, admissionKey),
+            )).orderBy(asc(agentWakeupRequests.requestedAt))
+          : [];
+        const activeReceipt = admissionReceipts.find((receipt) =>
+          ["queued", "claimed", "running", "completed"].includes(receipt.status));
+        const admissionReceipt = admissionReceipts.at(-1) ?? null;
+        const admissionReason = !activeReceipt && admissionReceipt
+          ? admissionReceipt.reason ?? admissionReceipt.error ?? null
+          : null;
+        if (failedIntent?.issueId && admissionReason) {
+          const readiness = await issueSvc.getDependencyReadiness(failedIntent.issueId);
+          await db.update(workRecordExecutionIntents).set({
+            state: readiness.isDependencyReady ? "waiting_governance" : "waiting_dependencies",
+            waitingReason: admissionReason,
+            updatedAt: new Date(),
+          }).where(eq(workRecordExecutionIntents.id, failedIntent.id));
+        }
         await db.update(workRecordOutbox).set({
           state: "retry",
-          lastError: error instanceof Error ? error.message : String(error),
+          lastError: admissionReason ?? (error instanceof Error ? error.message : String(error)),
           attemptCount: claimed.attemptCount + 1,
           availableAt: new Date(Date.now() + 2_000),
           updatedAt: new Date(),

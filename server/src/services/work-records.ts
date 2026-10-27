@@ -39,7 +39,7 @@ type Wakeup = (agentId: string, options: {
   idempotencyKey: string; allowRunCoalescing: boolean; requestedByActorType: "user" | "agent" | "system";
   requestedByActorId: string | null; contextSnapshot: Record<string, unknown>;
 }) => Promise<unknown>;
-const ACTIVE_WAKE_STATUSES = ["queued", "claimed", "running", "succeeded"];
+const ACTIVE_WAKE_STATUSES = ["queued", "claimed", "running", "completed"];
 
 function releaseEventKey(record: typeof workRecords.$inferSelect) {
   return `${record.id}:${record.dispatchRound}:${record.dependencySetRevision}:${record.blockedCycle}`;
@@ -299,8 +299,8 @@ export function workRecordService(db: Db) {
           }).where(inArray(workRecordExecutionIntents.id, activeIntents.map((intent) => intent.id)));
           await tx.update(workRecordOutbox).set({ state: "superseded", updatedAt: now }).where(and(
             eq(workRecordOutbox.companyId, companyId),
+            eq(workRecordOutbox.workflowVersion, 2),
             inArray(workRecordOutbox.executionIntentId, activeIntents.map((intent) => intent.id)),
-            ne(workRecordOutbox.state, "delivered"),
           ));
         }
         const activeBatches = await tx.select({

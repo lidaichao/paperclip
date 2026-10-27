@@ -352,7 +352,9 @@ function isRecoveryActionDrivenRun(run: HeartbeatRunRow) {
 function isWorkRecordReleaseRun(run: HeartbeatRunRow) {
   const context = readRecord(run.contextSnapshot);
   return readString(context.wakeReason) === "work_record_released" ||
-    readString(context.source) === "work_record_release";
+    readString(context.source) === "work_record_release" ||
+    readString(context.wakeReason) === "work_record_workflow_v2_released" ||
+    readString(context.source) === "work_record_workflow_v2";
 }
 
 function isIssueMonitorMaintenanceRun(run: HeartbeatRunRow) {

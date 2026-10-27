@@ -60,9 +60,25 @@ native heartbeat admission. Cancelled prerequisites stay unresolved as
 children-completed path also consults unresolved source holds.
 
 The test-only failpoint boundary names are `before_batch_commit`,
-`after_partial_materialization`, and `after_outbox_commit`. Recovery tests must
-restart reconciliation/claim with the failpoint removed and assert convergence
-to one batch, primary link, intent, outbox event, wake, and run.
+`after_partial_materialization`, `after_outbox_commit`, and
+`before_projection_update`. The last boundary fires after the real heartbeat
+wake/run receipt exists but before the workflow outbox, intent, and record
+projections are advanced. Recovery tests must restart reconciliation/claim with
+the failpoint removed and assert convergence to one batch, primary link, intent,
+outbox event, wake, and run.
+
+The independently rerunnable M2-B ledger lives in
+`server/src/__tests__/work-package-dispatch.test.ts`. Set
+`PAPERCLIP_M2B_EVIDENCE_DIR` to retain `api-contract.json`,
+`final-admission-matrix.json`, `recovery-failpoint-snapshots.json`, and
+`o01-eight-layer-ledger.json`; set `PAPERCLIP_M2B_TESTED_COMMIT` to the exact
+commit under test. The O01 case uses two PostgreSQL clients, injects a wake
+response loss on every one of 50 rounds, calls the real
+`heartbeatService.wakeup`, and exports every record→batch→item→link→intent→
+outbox→wake→run ID and effective count. The admission matrix retains the real
+HTTP response, heartbeat denial reason, and zero-effective-wake/run assertion
+for every authorization, governance, pause, hold, budget, and execution-lock
+case. Recovery evidence records before/after IDs and counts at each failpoint.
 
 ## Frozen implementation contracts
 
@@ -108,6 +124,11 @@ schema while retaining old M1 facts.
 Migration `0290_graceful_payback.sql` makes an execution intent's `issue_id`
 nullable during `preparing`. Reconciliation must bind the issue and expected
 status version before it can insert the required intent-scoped outbox event.
+
+When an undispatched M1 release outbox and a v2 intent coexist during a rolling
+transition, the v2 payload persists the M1 heartbeat idempotency key. Either
+outbox processor may win, but both converge on one wake and one process-adapter
+run. A later v2 dispatch does not reuse an already delivered historical M1 key.
 
 ## Safe rollback
 

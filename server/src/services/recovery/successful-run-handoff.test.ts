@@ -269,6 +269,22 @@ describe("successful run handoff decision", () => {
       kind: "skip",
       reason: "work-record release is a single-execution dispatch",
     });
+    expect(
+      decide({
+        run: {
+          ...run,
+          contextSnapshot: {
+            issueId: "issue-1",
+            wakeReason: "work_record_workflow_v2_released",
+            source: "work_record_workflow_v2",
+            executionIntentId: "intent-1",
+          },
+        } as any,
+      }),
+    ).toEqual({
+      kind: "skip",
+      reason: "work-record release is a single-execution dispatch",
+    });
   });
 
   it("does not queue when the issue already has a valid disposition", () => {
