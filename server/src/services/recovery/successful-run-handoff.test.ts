@@ -252,6 +252,25 @@ describe("successful run handoff decision", () => {
     });
   });
 
+  it("does not turn a work-record release into a second business execution", () => {
+    expect(
+      decide({
+        run: {
+          ...run,
+          contextSnapshot: {
+            issueId: "issue-1",
+            wakeReason: "work_record_released",
+            source: "work_record_release",
+            recordId: "record-1",
+          },
+        } as any,
+      }),
+    ).toEqual({
+      kind: "skip",
+      reason: "work-record release is a single-execution dispatch",
+    });
+  });
+
   it("does not queue when the issue already has a valid disposition", () => {
     expect(decide({ issue: { ...issue, status: "done" } as any })).toEqual({
       kind: "skip",

@@ -344,6 +344,17 @@ function isRecoveryActionDrivenRun(run: HeartbeatRunRow) {
     readString(context.recoveryActionId) !== null;
 }
 
+// A work-record release wake is the one business execution authorized by the
+// dispatch tuple. Its issue deliberately remains the durable execution record
+// when an adapter exits without recording a disposition. Generic successful-run
+// handoff must not turn that missing disposition into a second business run;
+// the work-record projection/recovery path exposes the ambiguity instead.
+function isWorkRecordReleaseRun(run: HeartbeatRunRow) {
+  const context = readRecord(run.contextSnapshot);
+  return readString(context.wakeReason) === "work_record_released" ||
+    readString(context.source) === "work_record_release";
+}
+
 function isIssueMonitorMaintenanceRun(run: HeartbeatRunRow) {
   const context = readRecord(run.contextSnapshot);
   const wakeReason = readString(context.wakeReason);
@@ -487,6 +498,7 @@ export function decideSuccessfulRunHandoff(input: {
   }
   if (isCorrectiveHandoffRun(run)) return { kind: "skip", reason: "source run is already a corrective handoff run" };
   if (isRecoveryActionDrivenRun(run)) return { kind: "skip", reason: "recovery action run owns its own follow-up path" };
+  if (isWorkRecordReleaseRun(run)) return { kind: "skip", reason: "work-record release is a single-execution dispatch" };
   if (isIssueMonitorMaintenanceRun(run)) return { kind: "skip", reason: "issue monitor run owns its own recovery path" };
   if (isCommentDrivenWake(run)) return { kind: "skip", reason: "comment-driven wake already owns the next action" };
   if (run.issueCommentStatus === "retry_queued" || run.issueCommentStatus === "retry_exhausted") {

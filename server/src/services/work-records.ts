@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
-import { and, asc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
   agentWakeupRequests,
   agents,
+  heartbeatRuns,
   issues,
   issueRelations,
   projects,
@@ -21,9 +22,10 @@ import type {
   UpdateWorkRecord,
   WorkRecord,
   WorkRecordDispatchResult,
+  WorkRecordDispatchRequestResult,
   WorkRecordHoldReason,
 } from "@paperclipai/shared";
-import { conflict, notFound, unprocessable } from "../errors.js";
+import { HttpError, conflict, notFound, unprocessable } from "../errors.js";
 import { issueService, listUnfinalizedExecutionWorkspaceIds } from "./issues.js";
 
 type Actor = { actorType: "agent" | "user" | "system" | "plugin"; actorId: string; agentId?: string | null; userId?: string | null };
@@ -139,13 +141,52 @@ export function workRecordService(db: Db) {
       statusVersion: workRecordExecutionProjections.issueStatusVersion,
       runId: workRecordExecutionProjections.lastRunId,
       syncState: workRecordExecutionProjections.syncState,
-    }).from(workRecordExecutionProjections).innerJoin(issues, eq(workRecordExecutionProjections.issueId, issues.id)).where(and(
+      syncError: workRecordExecutionProjections.syncError,
+      projectedAt: workRecordExecutionProjections.projectedAt,
+      runStatus: heartbeatRuns.status,
+      runAgentId: heartbeatRuns.agentId,
+      runStartedAt: heartbeatRuns.startedAt,
+      runEndedAt: heartbeatRuns.finishedAt,
+    }).from(workRecordExecutionProjections)
+      .innerJoin(issues, eq(workRecordExecutionProjections.issueId, issues.id))
+      .leftJoin(heartbeatRuns, eq(workRecordExecutionProjections.lastRunId, heartbeatRuns.id)).where(and(
       eq(workRecordExecutionProjections.companyId, companyId), inArray(workRecordExecutionProjections.recordId, recordIds),
     ));
+    const outboxRows = await db.select({
+      recordId: workRecordOutbox.recordId,
+      state: workRecordOutbox.state,
+      lastError: workRecordOutbox.lastError,
+      updatedAt: workRecordOutbox.updatedAt,
+    }).from(workRecordOutbox).where(and(
+      eq(workRecordOutbox.companyId, companyId), inArray(workRecordOutbox.recordId, recordIds),
+    )).orderBy(desc(workRecordOutbox.createdAt));
+    const commandRows = await db.select({
+      recordId: workRecordDispatchCommands.recordId,
+      state: workRecordDispatchCommands.state,
+      error: workRecordDispatchCommands.error,
+      updatedAt: workRecordDispatchCommands.updatedAt,
+    }).from(workRecordDispatchCommands).where(and(
+      eq(workRecordDispatchCommands.companyId, companyId), inArray(workRecordDispatchCommands.recordId, recordIds),
+    )).orderBy(desc(workRecordDispatchCommands.createdAt));
     const holdMap = new Map(holds.map((hold) => [`${hold.dependentId}:${hold.blockingId}`, hold.reason]));
     const projectionMap = new Map(projections.map((projection) => [projection.recordId, projection]));
+    const outboxMap = new Map<string, (typeof outboxRows)[number]>();
+    for (const row of outboxRows) if (!outboxMap.has(row.recordId)) outboxMap.set(row.recordId, row);
+    const commandMap = new Map<string, (typeof commandRows)[number]>();
+    for (const row of commandRows) if (!commandMap.has(row.recordId)) commandMap.set(row.recordId, row);
     return rows.map((row) => {
       const projection = projectionMap.get(row.id);
+      const outbox = outboxMap.get(row.id);
+      const command = commandMap.get(row.id);
+      const recovery = projection?.syncState === "error"
+        ? { code: "projection_error" as const, message: projection.syncError, canReconcile: true, lastConfirmedAt: projection.projectedAt }
+        : outbox?.state === "retry"
+          ? { code: "release_failed" as const, message: outbox.lastError, canReconcile: true, lastConfirmedAt: outbox.updatedAt }
+          : command?.state === "failed"
+            ? { code: "dispatch_failed" as const, message: command.error, canReconcile: false, lastConfirmedAt: command.updatedAt }
+            : outbox && ["pending", "processing"].includes(outbox.state)
+              ? { code: "release_pending" as const, message: "Release is waiting for durable delivery", canReconcile: true, lastConfirmedAt: outbox.updatedAt }
+              : { code: null, message: null, canReconcile: false, lastConfirmedAt: projection?.projectedAt ?? outbox?.updatedAt ?? command?.updatedAt ?? null };
       return {
         ...row,
         kind: row.kind as WorkRecord["kind"],
@@ -161,8 +202,16 @@ export function workRecordService(db: Db) {
         execution: projection ? {
           issueId: projection.issueId, issueIdentifier: projection.identifier, issueStatus: projection.status,
           issueStatusVersion: projection.statusVersion, lastRunId: projection.runId,
-          projectionState: projection.syncState === "error" ? "error" as const : "current" as const,
-        } : { issueId: null, issueIdentifier: null, issueStatus: null, issueStatusVersion: null, lastRunId: null, projectionState: "none" as const },
+          lastRunStatus: projection.runStatus, lastRunAgentId: projection.runAgentId,
+          lastRunStartedAt: projection.runStartedAt, lastRunEndedAt: projection.runEndedAt,
+          projectionState: projection.syncState === "error" ? "error" as const : projection.syncState === "stale" ? "stale" as const : "current" as const,
+          projectionError: projection.syncError, projectedAt: projection.projectedAt,
+        } : {
+          issueId: null, issueIdentifier: null, issueStatus: null, issueStatusVersion: null, lastRunId: null,
+          lastRunStatus: null, lastRunAgentId: null, lastRunStartedAt: null, lastRunEndedAt: null,
+          projectionState: "none" as const, projectionError: null, projectedAt: null,
+        },
+        recovery,
       };
     });
   }
@@ -320,46 +369,140 @@ export function workRecordService(db: Db) {
         payload: release.payload,
         payloadDigest: release.payloadDigest,
       }).onConflictDoNothing();
-      const releaseRow = await tx.select({ state: workRecordOutbox.state }).from(workRecordOutbox).where(and(
+      const releaseRow = await tx.select({
+        state: workRecordOutbox.state,
+        lastError: workRecordOutbox.lastError,
+      }).from(workRecordOutbox).where(and(
         eq(workRecordOutbox.companyId, companyId),
         eq(workRecordOutbox.eventKey, eventKey),
       )).then((rows) => rows[0]);
-      dispatchState = releaseRow?.state === "delivered" ? "queued" : "linked";
-    }
-    const linked = await tx.select({
-      status: issues.status,
-      statusVersion: issues.statusVersion,
-      runId: issues.executionRunId,
-    }).from(issues).where(and(eq(issues.companyId, companyId), eq(issues.id, link.issueId))).then((rows) => rows[0]);
-    if (linked) {
-      await tx.insert(workRecordExecutionProjections).values({
-        companyId,
-        projectId,
-        recordId: record.id,
-        issueId: link.issueId,
-        issueStatus: linked.status,
-        issueStatusVersion: linked.statusVersion,
-        lastRunId: linked.runId,
-      }).onConflictDoUpdate({
-        target: [workRecordExecutionProjections.companyId, workRecordExecutionProjections.recordId],
-        set: {
+      const idempotencyKey = `work-record-release:${eventKey}`;
+      const releaseWake = await tx.select({
+        id: agentWakeupRequests.id,
+        status: agentWakeupRequests.status,
+        runId: agentWakeupRequests.runId,
+        error: agentWakeupRequests.error,
+      }).from(agentWakeupRequests).where(and(
+        eq(agentWakeupRequests.companyId, companyId),
+        eq(agentWakeupRequests.idempotencyKey, idempotencyKey),
+      )).orderBy(desc(agentWakeupRequests.requestedAt)).limit(1).then((rows) => rows[0]);
+      const releaseRun = releaseWake
+        ? await tx.select().from(heartbeatRuns).where(and(
+            eq(heartbeatRuns.companyId, companyId),
+            releaseWake.runId
+              ? or(eq(heartbeatRuns.id, releaseWake.runId), eq(heartbeatRuns.wakeupRequestId, releaseWake.id))
+              : eq(heartbeatRuns.wakeupRequestId, releaseWake.id),
+          )).orderBy(desc(heartbeatRuns.createdAt)).limit(1).then((rows) => rows[0])
+        : null;
+      if (releaseRow?.state === "retry") dispatchState = "failed";
+      else if (releaseRun?.status === "queued" || ["queued", "claimed", "deferred_issue_execution"].includes(releaseWake?.status ?? "")) {
+        dispatchState = "queued";
+      } else dispatchState = "linked";
+
+      const linked = await tx.select({
+        status: issues.status,
+        statusVersion: issues.statusVersion,
+        runId: issues.executionRunId,
+      }).from(issues).where(and(eq(issues.companyId, companyId), eq(issues.id, link.issueId))).then((rows) => rows[0]);
+      if (linked) {
+        const previousProjection = await tx.select({
+          lastRunId: workRecordExecutionProjections.lastRunId,
+        }).from(workRecordExecutionProjections).where(and(
+          eq(workRecordExecutionProjections.companyId, companyId),
+          eq(workRecordExecutionProjections.recordId, record.id),
+        )).then((rows) => rows[0]);
+        const failedRun = releaseRun && ["failed", "timed_out", "interrupted", "cancelled"].includes(releaseRun.status);
+        const missingDisposition = releaseRun?.status === "succeeded" && linked.status === "in_progress";
+        const deliveryMismatch = releaseRow?.state === "delivered" && !releaseWake;
+        const syncError = releaseRow?.state === "retry"
+          ? releaseRow.lastError ?? "release_failed"
+          : failedRun
+            ? releaseRun.error ?? `run_${releaseRun.status}`
+            : missingDisposition
+              ? "successful_run_missing_disposition"
+              : deliveryMismatch
+                ? "release_delivery_missing_wake"
+                : null;
+        const syncState = syncError ? "error" : "current";
+        const lastRunId = releaseRun?.id ?? linked.runId ?? previousProjection?.lastRunId ?? null;
+        await tx.insert(workRecordExecutionProjections).values({
+          companyId,
+          projectId,
+          recordId: record.id,
+          issueId: link.issueId,
           issueStatus: linked.status,
           issueStatusVersion: linked.statusVersion,
-          lastRunId: linked.runId,
+          lastRunId,
+          syncState,
+          syncError,
+          projectedAt: now,
+        }).onConflictDoUpdate({
+          target: [workRecordExecutionProjections.companyId, workRecordExecutionProjections.recordId],
+          set: {
+            issueStatus: linked.status,
+            issueStatusVersion: linked.statusVersion,
+            lastRunId,
+            syncState,
+            syncError,
+            projectedAt: now,
+            updatedAt: now,
+          },
+        });
+        await tx.update(workRecords).set({
+          businessStatus: linked.status,
+          statusVersion: linked.statusVersion,
+          dispatchState,
+          updatedAt: now,
+        }).where(eq(workRecords.id, record.id));
+      } else {
+        await tx.update(workRecords).set({ dispatchState, updatedAt: now }).where(eq(workRecords.id, record.id));
+      }
+    }
+    if (unresolved.length > 0) {
+      const linked = await tx.select({
+        status: issues.status,
+        statusVersion: issues.statusVersion,
+        runId: issues.executionRunId,
+      }).from(issues).where(and(eq(issues.companyId, companyId), eq(issues.id, link.issueId))).then((rows) => rows[0]);
+      if (linked) {
+        const previousProjection = await tx.select({
+          lastRunId: workRecordExecutionProjections.lastRunId,
+        }).from(workRecordExecutionProjections).where(and(
+          eq(workRecordExecutionProjections.companyId, companyId),
+          eq(workRecordExecutionProjections.recordId, record.id),
+        )).then((rows) => rows[0]);
+        await tx.insert(workRecordExecutionProjections).values({
+          companyId,
+          projectId,
+          recordId: record.id,
+          issueId: link.issueId,
+          issueStatus: linked.status,
+          issueStatusVersion: linked.statusVersion,
+          lastRunId: linked.runId ?? previousProjection?.lastRunId ?? null,
           syncState: "current",
           syncError: null,
           projectedAt: now,
+        }).onConflictDoUpdate({
+          target: [workRecordExecutionProjections.companyId, workRecordExecutionProjections.recordId],
+          set: {
+            issueStatus: linked.status,
+            issueStatusVersion: linked.statusVersion,
+            lastRunId: linked.runId ?? previousProjection?.lastRunId ?? null,
+            syncState: "current",
+            syncError: null,
+            projectedAt: now,
+            updatedAt: now,
+          },
+        });
+        await tx.update(workRecords).set({
+          businessStatus: linked.status,
+          statusVersion: linked.statusVersion,
+          dispatchState,
           updatedAt: now,
-        },
-      });
-      await tx.update(workRecords).set({
-        businessStatus: linked.status,
-        statusVersion: linked.statusVersion,
-        dispatchState,
-        updatedAt: now,
-      }).where(eq(workRecords.id, record.id));
-    } else {
-      await tx.update(workRecords).set({ dispatchState, updatedAt: now }).where(eq(workRecords.id, record.id));
+        }).where(eq(workRecords.id, record.id));
+      } else {
+        await tx.update(workRecords).set({ dispatchState, updatedAt: now }).where(eq(workRecords.id, record.id));
+      }
     }
   }
 
@@ -384,8 +527,82 @@ export function workRecordService(db: Db) {
     });
   }
 
+  async function reconcileRecordView(companyId: string, projectId: string, recordId: string) {
+    await reconcileRecord(companyId, projectId, recordId);
+    const record = await raw(companyId, projectId, recordId);
+    return hydrate(companyId, [record]).then((rows) => rows[0]);
+  }
+
+  async function recoverRecord(companyId: string, projectId: string, recordId: string) {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
+      const record = await tx.select().from(workRecords).where(and(
+        eq(workRecords.companyId, companyId),
+        eq(workRecords.projectId, projectId),
+        eq(workRecords.id, recordId),
+      )).then((rows) => rows[0]);
+      if (!record) throw notFound("Work record not found");
+      const eventKey = releaseEventKey(record);
+      const outbox = await tx.select().from(workRecordOutbox).where(and(
+        eq(workRecordOutbox.companyId, companyId),
+        eq(workRecordOutbox.eventKey, eventKey),
+      )).then((rows) => rows[0]);
+      const now = new Date();
+      if (outbox?.state === "retry" || (outbox?.state === "processing" && outbox.availableAt <= now)) {
+        await tx.update(workRecordOutbox).set({
+          state: "pending",
+          availableAt: now,
+          lastError: null,
+          updatedAt: now,
+        }).where(eq(workRecordOutbox.id, outbox.id));
+      }
+    });
+    return reconcileRecordView(companyId, projectId, recordId);
+  }
+
+  async function getDispatchRequest(
+    companyId: string,
+    projectId: string,
+    recordId: string,
+    clientRequestId: string,
+  ): Promise<WorkRecordDispatchRequestResult> {
+    const record = await raw(companyId, projectId, recordId);
+    const command = await db.select().from(workRecordDispatchCommands).where(and(
+      eq(workRecordDispatchCommands.companyId, companyId),
+      eq(workRecordDispatchCommands.projectId, projectId),
+      eq(workRecordDispatchCommands.recordId, recordId),
+      eq(workRecordDispatchCommands.clientRequestId, clientRequestId),
+    )).then((rows) => rows[0]);
+    if (!command) throw notFound("Dispatch request not found");
+    const link = command.issueLinkId
+      ? await db.select({
+          id: workRecordIssueLinks.id,
+          issueId: workRecordIssueLinks.issueId,
+          issueIdentifier: issues.identifier,
+        }).from(workRecordIssueLinks)
+          .innerJoin(issues, and(eq(issues.companyId, companyId), eq(issues.id, workRecordIssueLinks.issueId)))
+          .where(and(
+            eq(workRecordIssueLinks.companyId, companyId),
+            eq(workRecordIssueLinks.id, command.issueLinkId),
+          )).then((rows) => rows[0])
+      : null;
+    const hydrated = await hydrate(companyId, [record]).then((rows) => rows[0]);
+    return {
+      clientRequestId,
+      commandId: command.id,
+      state: command.state,
+      error: command.error,
+      issueId: link?.issueId ?? null,
+      issueIdentifier: link?.issueIdentifier ?? null,
+      issueLinkId: link?.id ?? null,
+      record: hydrated,
+    };
+  }
+
   async function dispatch(companyId: string, projectId: string, recordId: string, input: DispatchWorkRecord, actor: Actor): Promise<WorkRecordDispatchResult> {
-    const result = await db.transaction(async (tx) => {
+    let result: Omit<WorkRecordDispatchResult, "record">;
+    try {
+      result = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
       const record = await tx.select().from(workRecords).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, recordId))).then((rows) => rows[0]);
       if (!record) throw notFound("Work record not found");
@@ -441,7 +658,52 @@ export function workRecordService(db: Db) {
       }))).onConflictDoNothing();
       await reconcileLocked(tx, dispatchedRecord, link);
       return { issueId: createdIssue.id, issueIdentifier: createdIssue.identifier, issueLinkId: link.id, commandId: command.id, replayed: false };
-    });
+      });
+    } catch (error) {
+      if (!(error instanceof HttpError) || error.status >= 500) {
+        const message = error instanceof Error ? error.message : String(error);
+        try {
+          await db.transaction(async (tx) => {
+            await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
+            const record = await tx.select().from(workRecords).where(and(
+              eq(workRecords.companyId, companyId),
+              eq(workRecords.projectId, projectId),
+              eq(workRecords.id, recordId),
+            )).then((rows) => rows[0]);
+            if (!record) return;
+            const link = await tx.select({ id: workRecordIssueLinks.id }).from(workRecordIssueLinks).where(and(
+              eq(workRecordIssueLinks.companyId, companyId),
+              eq(workRecordIssueLinks.recordId, recordId),
+              eq(workRecordIssueLinks.purpose, "primary"),
+            )).then((rows) => rows[0]);
+            if (link) return;
+            const now = new Date();
+            await tx.insert(workRecordDispatchCommands).values({
+              companyId,
+              projectId,
+              recordId,
+              clientRequestId: input.clientRequestId,
+              recordRevision: record.revision,
+              dispatchRound: record.dispatchRound + 1,
+              state: "failed",
+              error: message,
+            }).onConflictDoUpdate({
+              target: [
+                workRecordDispatchCommands.companyId,
+                workRecordDispatchCommands.recordId,
+                workRecordDispatchCommands.clientRequestId,
+              ],
+              set: { state: "failed", error: message, updatedAt: now },
+            });
+            await tx.update(workRecords).set({ dispatchState: "failed", updatedAt: now }).where(eq(workRecords.id, recordId));
+          });
+        } catch {
+          // Preserve the original dispatch failure when its persistence path is
+          // affected by the same infrastructure outage.
+        }
+      }
+      throw error;
+    }
     if (result.replayed) await reconcileRecord(companyId, projectId, recordId);
     const record = await raw(companyId, projectId, recordId).then((row) => hydrate(companyId, [row])).then((rows) => rows[0]);
     return { ...result, record };
@@ -520,7 +782,24 @@ export function workRecordService(db: Db) {
           await tx.update(workRecords).set({ dispatchState: "queued", updatedAt: new Date() }).where(eq(workRecords.id, fresh.recordId));
         });
       } catch (error) {
-        await db.update(workRecordOutbox).set({ state: "retry", lastError: error instanceof Error ? error.message : String(error), attemptCount: event.attemptCount + 1, availableAt: new Date(Date.now() + 2_000), updatedAt: new Date() }).where(eq(workRecordOutbox.id, event.id));
+        const message = error instanceof Error ? error.message : String(error);
+        const now = new Date();
+        await db.transaction(async (tx) => {
+          await tx.update(workRecordOutbox).set({ state: "retry", lastError: message, attemptCount: event.attemptCount + 1, availableAt: new Date(Date.now() + 2_000), updatedAt: now }).where(eq(workRecordOutbox.id, event.id));
+          await tx.update(workRecords).set({ dispatchState: "failed", updatedAt: now }).where(and(
+            eq(workRecords.companyId, event.companyId),
+            eq(workRecords.id, event.recordId),
+          ));
+          await tx.update(workRecordExecutionProjections).set({
+            syncState: "error",
+            syncError: message,
+            projectedAt: now,
+            updatedAt: now,
+          }).where(and(
+            eq(workRecordExecutionProjections.companyId, event.companyId),
+            eq(workRecordExecutionProjections.recordId, event.recordId),
+          ));
+        });
       }
     }
   }
@@ -533,7 +812,19 @@ export function workRecordService(db: Db) {
     if (hold) throw conflict("Source prerequisites are not ready", { holdId: hold.id, reason: hold.reason });
   }
 
-  return { list, create, update, dispatch, reconcileRecord, reconcileAll, processOutbox, assertNoSourceHoldStatusBypass };
+  return {
+    list,
+    create,
+    update,
+    dispatch,
+    getDispatchRequest,
+    reconcileRecord,
+    reconcileRecordView,
+    recoverRecord,
+    reconcileAll,
+    processOutbox,
+    assertNoSourceHoldStatusBypass,
+  };
 }
 
 export function createNonOverlappingWorkRecordTick(run: () => Promise<void>) {

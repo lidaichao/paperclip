@@ -95,5 +95,37 @@ export function workRecordRoutes(db: Db) {
     res.status(result.replayed ? 200 : 201).json(result);
   });
 
+  router.get("/companies/:companyId/projects/:projectId/work-records/:recordId/dispatch-requests/:clientRequestId", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    const recordId = req.params.recordId as string;
+    const clientRequestId = req.params.clientRequestId as string;
+    assertCompanyAccess(req, companyId);
+    res.json(await service.getDispatchRequest(companyId, projectId, recordId, clientRequestId));
+  });
+
+  router.post("/companies/:companyId/projects/:projectId/work-records/:recordId/reconcile", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    const recordId = req.params.recordId as string;
+    assertCompanyAccess(req, companyId);
+    const record = await service.recoverRecord(companyId, projectId, recordId);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId,
+      actorType: actor.actorType,
+      actorId: actor.actorId,
+      agentId: actor.agentId,
+      runId: actor.runId,
+      agentApiKeyId: actor.agentApiKeyId,
+      issueId: record.execution.issueId,
+      action: "work_record.reconciled",
+      entityType: "work_record",
+      entityId: recordId,
+      details: { projectId, recoveryCode: record.recovery.code },
+    });
+    res.json(record);
+  });
+
   return router;
 }

@@ -191,6 +191,88 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(1);
   });
 
+  it("queries a timed-out dispatch by the same client request without creating a new tuple", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "Timeout lookup");
+    const dispatched = await context.service.dispatch(
+      context.company.id,
+      context.project.id,
+      record.id,
+      { clientRequestId: "stable-request", expectedRevision: record.revision },
+      { actorType: "system", actorId: "test" },
+    );
+    const result = await context.service.getDispatchRequest(
+      context.company.id,
+      context.project.id,
+      record.id,
+      "stable-request",
+    );
+    expect(result).toMatchObject({
+      clientRequestId: "stable-request",
+      state: "linked",
+      issueId: dispatched.issueId,
+      issueLinkId: dispatched.issueLinkId,
+      record: { id: record.id, dispatchRound: 1 },
+    });
+    expect(await db.select().from(workRecordIssueLinks).where(eq(workRecordIssueLinks.recordId, record.id))).toHaveLength(1);
+    expect(await db.select().from(workRecordDispatchCommands).where(eq(workRecordDispatchCommands.recordId, record.id))).toHaveLength(1);
+  });
+
+  it("persists release failure and safely re-arms the same outbox tuple", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "Recover release");
+    await context.service.dispatch(context.company.id, context.project.id, record.id, { clientRequestId: "dispatch", expectedRevision: record.revision }, { actorType: "system", actorId: "test" });
+    await context.service.processOutbox(async () => { throw new Error("simulated transport failure"); });
+    expect(await db.select().from(workRecords).where(eq(workRecords.id, record.id)).then((rows) => rows[0])).toMatchObject({ dispatchState: "failed" });
+    expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.recordId, record.id)).then((rows) => rows[0])).toMatchObject({ state: "retry", lastError: "simulated transport failure" });
+
+    const recovered = await context.service.recoverRecord(context.company.id, context.project.id, record.id);
+    expect(recovered).toMatchObject({ dispatchState: "linked", recovery: { code: "release_pending", canReconcile: true } });
+    expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.recordId, record.id)).then((rows) => rows[0])).toMatchObject({ state: "pending", lastError: null });
+    expect(await db.select().from(workRecordIssueLinks).where(eq(workRecordIssueLinks.recordId, record.id))).toHaveLength(1);
+    await db.update(workRecordOutbox).set({ state: "superseded" }).where(eq(workRecordOutbox.recordId, record.id));
+  });
+
+  it("projects a terminal release run as ended and flags a missing disposition", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "No disposition");
+    const dispatched = await context.service.dispatch(context.company.id, context.project.id, record.id, { clientRequestId: "dispatch", expectedRevision: record.revision }, { actorType: "system", actorId: "test" });
+    const event = await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.recordId, record.id)).then((rows) => rows[0]);
+    const request = await db.insert(agentWakeupRequests).values({
+      companyId: context.company.id,
+      agentId: context.agent.id,
+      source: "assignment",
+      status: "completed",
+      reason: "work_record_released",
+      idempotencyKey: `work-record-release:${event.eventKey}`,
+    }).returning().then((rows) => rows[0]);
+    const run = await db.insert(heartbeatRuns).values({
+      companyId: context.company.id,
+      agentId: context.agent.id,
+      wakeupRequestId: request.id,
+      status: "succeeded",
+      startedAt: new Date(Date.now() - 1_000),
+      finishedAt: new Date(),
+      contextSnapshot: { issueId: dispatched.issueId, wakeReason: "work_record_released", source: "work_record_release" },
+    }).returning().then((rows) => rows[0]);
+    await db.update(agentWakeupRequests).set({ runId: run.id }).where(eq(agentWakeupRequests.id, request.id));
+    await db.update(workRecordOutbox).set({ state: "delivered", deliveredAt: new Date() }).where(eq(workRecordOutbox.id, event.id));
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, dispatched.issueId));
+    await context.service.reconcileRecord(context.company.id, context.project.id, record.id);
+
+    const [projected] = await context.service.list(context.company.id, context.project.id);
+    expect(projected).toMatchObject({
+      dispatchState: "linked",
+      execution: {
+        lastRunId: run.id,
+        lastRunStatus: "succeeded",
+        projectionState: "error",
+        projectionError: "successful_run_missing_disposition",
+      },
+      recovery: { code: "projection_error", canReconcile: true },
+    });
+  });
+
   it("reclaims an expired processing lease without creating a second effective wake", async () => {
     const context = await seed();
     const record = await createRecord(context, "Crash recovery");
@@ -373,5 +455,10 @@ describe("SD-09..SD-11 layered display state", () => {
   });
   it("SD-11 surfaces terminal/live conflicts instead of pretending normal execution", () => {
     expect(deriveWorkRecordDisplayState({ businessStatus: "done", dispatchState: "queued", liveRunStatus: "running" })).toEqual({ state: "conflict", animated: false });
+  });
+  it("does not retain queued after the release run ends and distinguishes stale/error projections", () => {
+    expect(deriveWorkRecordDisplayState({ businessStatus: "in_progress", dispatchState: "queued", lastRunStatus: "succeeded" })).toEqual({ state: "ended", animated: false });
+    expect(deriveWorkRecordDisplayState({ businessStatus: "in_progress", dispatchState: "linked", projectionState: "stale" })).toEqual({ state: "stale", animated: false });
+    expect(deriveWorkRecordDisplayState({ businessStatus: "in_progress", dispatchState: "linked", projectionState: "error" })).toEqual({ state: "error", animated: false });
   });
 });

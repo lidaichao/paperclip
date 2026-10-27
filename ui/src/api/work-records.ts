@@ -1,4 +1,4 @@
-import type { CreateWorkRecord, DispatchWorkRecord, UpdateWorkRecord, WorkRecord, WorkRecordDispatchResult } from "@paperclipai/shared";
+import type { CreateWorkRecord, DispatchWorkRecord, UpdateWorkRecord, WorkRecord, WorkRecordDispatchRequestResult, WorkRecordDispatchResult } from "@paperclipai/shared";
 import { api } from "./client";
 
 export const workRecordsApi = {
@@ -10,4 +10,8 @@ export const workRecordsApi = {
     api.patch<WorkRecord>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}`, input),
   dispatch: (companyId: string, projectId: string, recordId: string, input: DispatchWorkRecord) =>
     api.post<WorkRecordDispatchResult>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/dispatch`, input),
+  dispatchRequest: (companyId: string, projectId: string, recordId: string, clientRequestId: string) =>
+    api.get<WorkRecordDispatchRequestResult>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/dispatch-requests/${encodeURIComponent(clientRequestId)}`),
+  reconcile: (companyId: string, projectId: string, recordId: string) =>
+    api.post<WorkRecord>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/reconcile`, {}),
 };

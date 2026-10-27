@@ -4,33 +4,50 @@ import { deriveWorkRecordDisplayState, type WorkRecord } from "@paperclipai/shar
 import { agentsApi } from "@/api/agents";
 import { heartbeatsApi } from "@/api/heartbeats";
 import { workRecordsApi } from "@/api/work-records";
+import { Link } from "@/lib/router";
 import { queryKeys } from "@/lib/queryKeys";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const STATE_LABELS: Record<string, string> = {
-  running: "运行中",
-  unknown: "运行状态暂不可确认",
-  preparing: "准备派发",
-  failed: "派发失败",
-  blocked: "等待前置",
-  queued: "已排队",
-  linked: "已关联",
-  not_dispatched: "未派发",
-  conflict: "状态冲突",
+  running: "运行中", unknown: "运行状态暂不可确认", preparing: "准备派发", failed: "派发失败",
+  blocked: "等待前置", queued: "已排队", linked: "已派发，等待调度", not_dispatched: "未派发",
+  conflict: "状态冲突", done: "已完成", cancelled: "已取消", ended: "运行已结束",
+  stale: "投影已过期", error: "投影异常",
+};
+const BUSINESS_LABELS: Record<string, string> = {
+  backlog: "待整理", todo: "待开始", in_progress: "进行中", in_review: "审核中",
+  blocked: "受阻", done: "已完成", cancelled: "已取消",
+};
+const DISPATCH_LABELS: Record<string, string> = {
+  not_dispatched: "未派发", preparing: "准备派发", blocked: "等待前置",
+  linked: "已派发，等待调度", queued: "已进入调度队列", failed: "派发失败",
+};
+const HOLD_LABELS: Record<string, string> = {
+  prerequisite_not_dispatched: "前置尚未派发", prerequisite_not_completed: "前置尚未完成",
+  delivery_sync_pending: "等待交付同步", native_dependency_pending: "等待任务依赖",
+  release_pending: "等待释放", release_failed: "释放失败",
+};
+const RUN_LABELS: Record<string, string> = {
+  succeeded: "成功", failed: "失败", timed_out: "超时", interrupted: "已中断", cancelled: "已取消",
+};
+const RECOVERY_LABELS: Record<string, string> = {
+  successful_run_missing_disposition: "运行已成功结束，但业务状态尚未确认。请重新核对状态。",
+  release_delivery_missing_wake: "释放已记录，但未找到对应调度请求。请重新核对状态。",
+  release_failed: "任务释放失败。请重新核对后安全重试。",
 };
 
-const HOLD_LABELS: Record<string, string> = {
-  prerequisite_not_dispatched: "前置尚未派发",
-  prerequisite_not_completed: "前置尚未完成",
-  delivery_sync_pending: "等待交付同步",
-  native_dependency_pending: "等待任务依赖",
-  release_pending: "等待释放",
-  release_failed: "释放失败",
-};
+function formatConfirmedAt(value: Date | string | number | null | undefined) {
+  if (!value) return "尚未确认";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "时间未知" : date.toLocaleString();
+}
+
+function requestStorageKey(companyId: string, projectId: string, recordId: string) {
+  return `work-record-dispatch:${companyId}:${projectId}:${recordId}`;
+}
 
 export function ProjectWorkRecords({ companyId, projectId }: { companyId: string; projectId: string }) {
   const queryClient = useQueryClient();
@@ -47,43 +64,47 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
     queryFn: () => heartbeatsApi.liveRunsForCompany(companyId),
     refetchInterval: 2_000,
   });
-  const liveStatusByIssue = useMemo(() => new Map(
-    (liveRuns.data ?? []).filter((run) => (run.status === "queued" || run.status === "running") && run.issueId).map((run) => [run.issueId!, run.status]),
+  const liveRunByIssue = useMemo(() => new Map(
+    (liveRuns.data ?? []).filter((run) => (run.status === "queued" || run.status === "running") && run.issueId).map((run) => [run.issueId!, run]),
   ), [liveRuns.data]);
 
   const create = useMutation({
     mutationFn: () => workRecordsApi.create(companyId, {
-      projectId,
-      kind,
-      title: title.trim(),
-      description: description.trim() || null,
+      projectId, kind, title: title.trim(), description: description.trim() || null,
       assigneeAgentId: assigneeAgentId || null,
       predecessorRecordIds: predecessorRecordId ? [predecessorRecordId] : [],
     }),
     onSuccess: async () => {
-      setTitle("");
-      setDescription("");
-      setPredecessorRecordId("");
+      setTitle(""); setDescription(""); setPredecessorRecordId("");
       await queryClient.invalidateQueries({ queryKey: recordsKey });
     },
   });
   const dispatch = useMutation({
     mutationFn: (record: WorkRecord) => {
-      const storageKey = `work-record-dispatch:${companyId}:${projectId}:${record.id}`;
+      const storageKey = requestStorageKey(companyId, projectId, record.id);
       let clientRequestId = sessionStorage.getItem(storageKey);
       if (!clientRequestId) {
         clientRequestId = crypto.randomUUID();
         sessionStorage.setItem(storageKey, clientRequestId);
       }
-      return workRecordsApi.dispatch(companyId, projectId, record.id, {
-        clientRequestId,
-        expectedRevision: record.revision,
-      });
+      return workRecordsApi.dispatch(companyId, projectId, record.id, { clientRequestId, expectedRevision: record.revision });
     },
     onSuccess: async (_, record) => {
-      sessionStorage.removeItem(`work-record-dispatch:${companyId}:${projectId}:${record.id}`);
+      sessionStorage.removeItem(requestStorageKey(companyId, projectId, record.id));
       await queryClient.invalidateQueries({ queryKey: recordsKey });
     },
+  });
+  const inspectDispatch = useMutation({
+    mutationFn: ({ record, clientRequestId }: { record: WorkRecord; clientRequestId: string }) =>
+      workRecordsApi.dispatchRequest(companyId, projectId, record.id, clientRequestId),
+    onSuccess: async (result, { record }) => {
+      if (result.issueLinkId) sessionStorage.removeItem(requestStorageKey(companyId, projectId, record.id));
+      await queryClient.invalidateQueries({ queryKey: recordsKey });
+    },
+  });
+  const reconcile = useMutation({
+    mutationFn: (record: WorkRecord) => workRecordsApi.reconcile(companyId, projectId, record.id),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: recordsKey }),
   });
 
   return (
@@ -102,8 +123,7 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
             <label className="space-y-1 text-sm font-medium">
               <span>类型</span>
               <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={kind} onChange={(event) => setKind(event.target.value as "plan" | "defect")}>
-                <option value="plan">计划</option>
-                <option value="defect">缺陷</option>
+                <option value="plan">计划</option><option value="defect">缺陷</option>
               </select>
             </label>
             <label className="space-y-1 text-sm font-medium">
@@ -125,10 +145,8 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
             <span>描述</span>
             <Textarea maxLength={100_000} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="写明范围、约束和交付标准" />
           </label>
-          {(create.error || dispatch.error) ? <p aria-live="polite" className="text-sm text-destructive">操作失败：{(create.error ?? dispatch.error)?.message}。请检查内容后重试。</p> : null}
-          <div className="flex justify-end">
-            <Button disabled={!title.trim() || create.isPending} onClick={() => create.mutate()}>保存记录</Button>
-          </div>
+          {create.error ? <p aria-live="polite" className="text-sm text-destructive">记录保存失败：{create.error.message}</p> : null}
+          <div className="flex justify-end"><Button disabled={!title.trim() || create.isPending} onClick={() => create.mutate()}>保存记录</Button></div>
         </CardContent>
       </Card>
 
@@ -143,38 +161,73 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
         <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">还没有业务记录。先保存一条记录；确认前置与执行人后再明确派发。</p>
       ) : null}
       {(records.data ?? []).map((record) => {
+        const liveRun = record.execution.issueId ? liveRunByIssue.get(record.execution.issueId) : null;
         const display = deriveWorkRecordDisplayState({
-          businessStatus: record.businessStatus,
-          dispatchState: record.dispatchState,
-          liveRunStatus: record.execution.issueId ? liveStatusByIssue.get(record.execution.issueId) : null,
-          liveRunQueryFailed: liveRuns.isError,
+          businessStatus: record.businessStatus, dispatchState: record.dispatchState,
+          liveRunStatus: liveRun?.status, liveRunQueryFailed: liveRuns.isError,
+          projectionState: record.execution.projectionState, lastRunStatus: record.execution.lastRunStatus,
         });
-        const displayLabel = display.state === "unknown" && liveRuns.dataUpdatedAt
-          ? `${STATE_LABELS.unknown} · 最后确认 ${new Date(liveRuns.dataUpdatedAt).toLocaleTimeString()}`
-          : STATE_LABELS[display.state];
+        const clientRequestId = sessionStorage.getItem(requestStorageKey(companyId, projectId, record.id));
+        const dispatchOwnsRecord = dispatch.variables?.id === record.id;
+        const inspectOwnsRecord = inspectDispatch.variables?.record.id === record.id;
+        const reconcileOwnsRecord = reconcile.variables?.id === record.id;
+        const canRetryDispatch = record.dispatchState === "failed" && !record.execution.issueId && Boolean(clientRequestId);
+        const lastConfirmedAt = liveRun ? liveRuns.dataUpdatedAt : record.recovery.lastConfirmedAt ?? record.execution.projectedAt;
+        const projectionLabel = record.execution.projectionState === "none" ? "尚未建立"
+          : record.execution.projectionState === "current" ? `${record.execution.issueStatus ?? "状态未知"} · 已同步`
+            : record.execution.projectionState === "stale" ? "同步已过期"
+              : `异常 · ${RECOVERY_LABELS[record.execution.projectionError ?? ""] ?? record.execution.projectionError ?? "原因未知"}`;
+        const runLabel = liveRun ? liveRun.status === "running" ? "真实运行中" : "真实队列中"
+          : record.execution.lastRunStatus ? `已结束 · ${RUN_LABELS[record.execution.lastRunStatus] ?? record.execution.lastRunStatus}`
+            : liveRuns.isError ? "实时状态未知" : "无实时运行";
         return (
           <Card key={record.id}>
             <CardHeader className="flex-row items-start justify-between gap-4">
               <div className="min-w-0 space-y-1">
                 <CardTitle className="break-words">{record.title}</CardTitle>
-                <CardDescription>{record.kind === "defect" ? "缺陷" : "计划"} · 业务状态 {record.businessStatus}</CardDescription>
+                <CardDescription>{record.kind === "defect" ? "缺陷" : "计划"} · 最后确认 {formatConfirmedAt(lastConfirmedAt)}</CardDescription>
               </div>
-              <span className={cn("rounded-full bg-muted px-3 py-1 text-xs font-medium", display.animated && "animate-pulse bg-primary/15 text-primary")}>{displayLabel}</span>
+              <span className="inline-flex min-h-7 shrink-0 items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs font-medium">
+                {display.animated ? (
+                  <span className="relative flex size-2 shrink-0" aria-hidden="true">
+                    <span className="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping" />
+                    <span className="relative inline-flex size-2 rounded-full bg-primary" />
+                  </span>
+                ) : null}
+                {STATE_LABELS[display.state]}
+              </span>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {record.description ? <p className="text-sm text-muted-foreground whitespace-pre-wrap">{record.description}</p> : null}
-              {record.dependencies.length ? (
-                <div className="text-sm text-muted-foreground">
-                  前置：{record.dependencies.map((dependency) => `${dependency.title}${dependency.holdReason ? `（${HOLD_LABELS[dependency.holdReason] ?? dependency.holdReason}）` : ""}`).join("、")}
+            <CardContent className="space-y-4">
+              {record.description ? <p className="whitespace-pre-wrap text-sm text-muted-foreground">{record.description}</p> : null}
+              <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">业务状态</dt><dd className="mt-1 text-sm font-medium">{BUSINESS_LABELS[record.businessStatus] ?? record.businessStatus}</dd></div>
+                <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">派发状态</dt><dd className="mt-1 text-sm font-medium">{DISPATCH_LABELS[record.dispatchState] ?? record.dispatchState}</dd></div>
+                <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">执行投影</dt><dd className="mt-1 break-words text-sm font-medium">{projectionLabel}</dd></div>
+                <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">实时运行</dt><dd className="mt-1 text-sm font-medium">{runLabel}</dd></div>
+              </dl>
+              {record.dependencies.length ? <p className="text-sm text-muted-foreground">前置：{record.dependencies.map((dependency) => `${dependency.title}${dependency.holdReason ? `（${HOLD_LABELS[dependency.holdReason] ?? dependency.holdReason}）` : ""}`).join("、")}</p> : null}
+              {record.recovery.code ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                  <p className="text-destructive">{RECOVERY_LABELS[record.recovery.message ?? ""] ?? record.recovery.message ?? "状态需要重新核对"}</p>
+                  {record.recovery.canReconcile ? <Button variant="outline" size="sm" disabled={reconcileOwnsRecord && reconcile.isPending} onClick={() => reconcile.mutate(record)}>重新核对状态</Button> : null}
                 </div>
               ) : null}
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-muted-foreground">{record.execution.issueIdentifier ? `主任务 ${record.execution.issueIdentifier}` : "尚未创建主任务"}</p>
-                <Button
-                  variant="outline"
-                  disabled={!record.assigneeAgentId || record.dispatchState !== "not_dispatched" || dispatch.isPending}
-                  onClick={() => dispatch.mutate(record)}
-                >明确派发</Button>
+              {dispatchOwnsRecord && dispatch.error ? <p aria-live="polite" className="text-sm text-destructive">派发结果未确认：{dispatch.error.message}。请核对同一请求；确认未建立任务后再安全重试。</p> : null}
+              {inspectOwnsRecord && inspectDispatch.error ? <p aria-live="polite" className="text-sm text-destructive">同一请求查询失败：{inspectDispatch.error.message}</p> : null}
+              {reconcileOwnsRecord && reconcile.error ? <p aria-live="polite" className="text-sm text-destructive">状态核对失败：{reconcile.error.message}</p> : null}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <details className="text-xs text-muted-foreground">
+                  <summary className="cursor-pointer font-medium text-foreground">记录详情</summary>
+                  <div className="mt-2 space-y-1">
+                    <p>派发轮次 {record.dispatchRound} · 记录修订 {record.revision}</p>
+                    {record.execution.issueId ? <Link className="block font-medium text-primary underline-offset-4 hover:underline" to={`/issues/${record.execution.issueIdentifier ?? record.execution.issueId}`}>打开原生任务 {record.execution.issueIdentifier ?? ""}</Link> : <p>尚未创建主任务</p>}
+                    {record.execution.lastRunId && record.execution.lastRunAgentId ? <Link className="block font-medium text-primary underline-offset-4 hover:underline" to={`/agents/${record.execution.lastRunAgentId}/runs/${record.execution.lastRunId}`}>打开最近一次运行</Link> : null}
+                  </div>
+                </details>
+                <div className="flex flex-wrap justify-end gap-2">
+                  {clientRequestId ? <Button variant="outline" size="sm" disabled={inspectOwnsRecord && inspectDispatch.isPending} onClick={() => inspectDispatch.mutate({ record, clientRequestId })}>核对同一请求</Button> : null}
+                  <Button variant="outline" disabled={!record.assigneeAgentId || (!canRetryDispatch && record.dispatchState !== "not_dispatched") || (dispatchOwnsRecord && dispatch.isPending)} onClick={() => dispatch.mutate(record)}>{canRetryDispatch ? "使用同一请求安全重试" : "明确派发"}</Button>
+                </div>
               </div>
             </CardContent>
           </Card>

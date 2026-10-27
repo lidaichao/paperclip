@@ -91,7 +91,20 @@ export interface WorkRecordExecutionView {
   issueStatus: string | null;
   issueStatusVersion: number | null;
   lastRunId: string | null;
+  lastRunStatus: string | null;
+  lastRunAgentId: string | null;
+  lastRunStartedAt: Date | null;
+  lastRunEndedAt: Date | null;
   projectionState: "none" | "current" | "stale" | "error";
+  projectionError: string | null;
+  projectedAt: Date | null;
+}
+
+export interface WorkRecordRecoveryView {
+  code: "release_pending" | "release_failed" | "dispatch_failed" | "projection_error" | null;
+  message: string | null;
+  canReconcile: boolean;
+  lastConfirmedAt: Date | null;
 }
 
 export interface WorkRecord {
@@ -112,6 +125,7 @@ export interface WorkRecord {
   blockedCycle: number;
   dependencies: WorkRecordDependencyView[];
   execution: WorkRecordExecutionView;
+  recovery: WorkRecordRecoveryView;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -125,8 +139,19 @@ export interface WorkRecordDispatchResult {
   replayed: boolean;
 }
 
+export interface WorkRecordDispatchRequestResult {
+  clientRequestId: string;
+  commandId: string;
+  state: string;
+  error: string | null;
+  issueId: string | null;
+  issueIdentifier: string | null;
+  issueLinkId: string | null;
+  record: WorkRecord;
+}
+
 export interface WorkRecordDisplayState {
-  state: "running" | "unknown" | "preparing" | "failed" | "blocked" | "queued" | "linked" | "not_dispatched" | "conflict";
+  state: "running" | "unknown" | "preparing" | "failed" | "blocked" | "queued" | "linked" | "not_dispatched" | "conflict" | "done" | "cancelled" | "ended" | "stale" | "error";
   animated: boolean;
 }
 
@@ -135,10 +160,20 @@ export function deriveWorkRecordDisplayState(input: {
   dispatchState: WorkRecordDispatchState;
   liveRunStatus?: string | null;
   liveRunQueryFailed?: boolean;
+  projectionState?: WorkRecordExecutionView["projectionState"];
+  lastRunStatus?: string | null;
 }): WorkRecordDisplayState {
   const terminal = input.businessStatus === "done" || input.businessStatus === "cancelled";
   if (input.liveRunStatus === "running") return { state: terminal ? "conflict" : "running", animated: !terminal };
   if (input.liveRunStatus === "queued") return { state: terminal ? "conflict" : "queued", animated: false };
   if (input.liveRunQueryFailed && input.dispatchState !== "not_dispatched") return { state: "unknown", animated: false };
+  if (input.projectionState === "error") return { state: "error", animated: false };
+  if (input.projectionState === "stale") return { state: "stale", animated: false };
+  if (input.businessStatus === "done") return { state: "done", animated: false };
+  if (input.businessStatus === "cancelled") return { state: "cancelled", animated: false };
+  if (input.lastRunStatus && !["queued", "running"].includes(input.lastRunStatus)) {
+    return { state: "ended", animated: false };
+  }
+  if (input.dispatchState === "queued") return { state: "linked", animated: false };
   return { state: input.dispatchState, animated: false };
 }
