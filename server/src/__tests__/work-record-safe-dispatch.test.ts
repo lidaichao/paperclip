@@ -497,6 +497,7 @@ describe("SD-09..SD-11 layered display state", () => {
   });
   it("SD-10 reports unknown without animation when liveness cannot be read", () => {
     expect(deriveWorkRecordDisplayState({ businessStatus: "in_progress", dispatchState: "linked", liveRunQueryFailed: true })).toEqual({ state: "unknown", animated: false });
+    expect(deriveWorkRecordDisplayState({ businessStatus: "in_progress", dispatchState: "linked", liveRunStatus: "running", liveRunQueryFailed: true })).toEqual({ state: "unknown", animated: false });
   });
   it("SD-11 surfaces terminal/live conflicts instead of pretending normal execution", () => {
     expect(deriveWorkRecordDisplayState({ businessStatus: "done", dispatchState: "queued", liveRunStatus: "running" })).toEqual({ state: "conflict", animated: false });

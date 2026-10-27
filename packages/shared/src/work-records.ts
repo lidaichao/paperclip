@@ -352,9 +352,12 @@ export function deriveWorkRecordDisplayState(input: {
   lastRunStatus?: string | null;
 }): WorkRecordDisplayState {
   const terminal = input.businessStatus === "done" || input.businessStatus === "cancelled";
+  // A cached live run is not authoritative once the live query is unavailable.
+  // Fail closed before consulting liveRunStatus so offline/error states never
+  // keep animating an old "running" result.
+  if (input.liveRunQueryFailed && input.dispatchState !== "not_dispatched") return { state: "unknown", animated: false };
   if (input.liveRunStatus === "running") return { state: terminal ? "conflict" : "running", animated: !terminal };
   if (input.liveRunStatus === "queued") return { state: terminal ? "conflict" : "queued", animated: false };
-  if (input.liveRunQueryFailed && input.dispatchState !== "not_dispatched") return { state: "unknown", animated: false };
   if (input.projectionState === "error") return { state: "error", animated: false };
   if (input.projectionState === "stale") return { state: "stale", animated: false };
   if (input.businessStatus === "done") return { state: "done", animated: false };
