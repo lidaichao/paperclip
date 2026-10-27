@@ -63,7 +63,9 @@ import {
 import { environmentService } from "./services/environments.js";
 import { environmentRuntimeService } from "./services/environment-runtime.js";
 import { projectRoutes } from "./routes/projects.js";
+import { workRecordRoutes } from "./routes/work-records.js";
 import { issueRoutes } from "./routes/issues.js";
+import { workRecordService } from "./services/work-records.js";
 import { issueTreeControlRoutes } from "./routes/issue-tree-control.js";
 import { caseRoutes } from "./routes/cases.js";
 import { fileResourceRoutes } from "./routes/file-resources.js";
@@ -747,6 +749,7 @@ export async function createApp(
   api.use(assetRoutes(db, opts.storageService));
   api.use(projectToolRoutes(db));
   api.use(projectRoutes(db));
+  api.use(workRecordRoutes(db));
   api.use(caseRoutes(db, opts.storageService));
   api.use(issueTreeControlRoutes(db, { pluginWorkerManager: workerManager }));
   api.use(fileResourceRoutes(db));
@@ -1119,6 +1122,16 @@ export async function createApp(
 
   jobCoordinator.start();
   scheduler.start();
+  const workRecords = workRecordService(db);
+  let workRecordTimer: ReturnType<typeof setInterval> | null = setInterval(() => {
+    void workRecords.reconcileAll()
+      .then(() => workRecords.processOutbox(connectionIntentHeartbeat.wakeup))
+      .catch((err) => logger.error({ err }, "Failed to reconcile work-record dispatches"));
+  }, 2_000);
+  workRecordTimer.unref?.();
+  void workRecords.reconcileAll()
+    .then(() => workRecords.processOutbox(connectionIntentHeartbeat.wakeup))
+    .catch((err) => logger.error({ err }, "Failed initial work-record reconciliation"));
   let feedbackExportShuttingDown = false;
   let feedbackExportTimer: ReturnType<typeof setInterval> | null = null;
   const disableFeedbackExportFlushes = () => {
@@ -1309,6 +1322,10 @@ export async function createApp(
       // awaited teardown, so no tick runs after the caller ends the pool.
       scheduler.stop();
       jobCoordinator.stop();
+      if (workRecordTimer) {
+        clearInterval(workRecordTimer);
+        workRecordTimer = null;
+      }
       disableFeedbackExportFlushes();
       unsubscribeChatPublicationSignals();
       chatReconciliation.stop();

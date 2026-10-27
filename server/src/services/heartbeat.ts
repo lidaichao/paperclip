@@ -27354,6 +27354,7 @@ export function heartbeatService(
           const blockedInteractionWake =
             dependencyReadiness &&
             !dependencyReadiness.isDependencyReady &&
+            (dependencyReadiness.unresolvedSourceHoldCount ?? 0) === 0 &&
             allowsIssueInteractionWake(
               enrichedContextSnapshot,
               ISSUE_TREE_CONTROL_INTERACTION_WAKE_REASONS,

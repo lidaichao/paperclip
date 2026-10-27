@@ -207,6 +207,7 @@ export {
 } from "./codex-auth-reconciliation.js";
 export { reconcilePersistedRuntimeServicesOnStartup, restartDesiredRuntimeServicesOnStartup } from "./workspace-runtime.js";
 export { createStorageServiceFromConfig, getStorageService } from "../storage/index.js";
+export { workRecordService } from "./work-records.js";
 export {
   managedAgentProfileService,
   CLAUDE_MANAGED_BETA_VERSION,

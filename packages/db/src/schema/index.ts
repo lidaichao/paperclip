@@ -210,3 +210,15 @@ export { aiConnectionDefaults } from "./ai_connection_defaults.js";
 export { aiProviderDefaults } from "./ai_provider_defaults.js";
 export * from "./email.js";
 export { announcementDismissals, announcementPublications } from "./announcement_dismissals.js";
+export {
+  projectVersions,
+  projectIterations,
+  workRecords,
+  workRecordDependencies,
+  workRecordDispatchCommands,
+  workRecordIssueLinks,
+  workRecordExecutionHolds,
+  workRecordOutbox,
+  workRecordExecutionProjections,
+  WORK_RECORD_RELEASE_IDEMPOTENCY_PREFIX,
+} from "./work_records.js";

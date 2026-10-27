@@ -72,6 +72,7 @@ import {
   projects,
   toolConnections,
   workspaceOperations,
+  workRecordExecutionHolds,
 } from "@paperclipai/db";
 import type {
   AcceptedPlanDecomposition,
@@ -2021,6 +2022,10 @@ export type IssueDependencyReadiness = {
   unresolvedBlockerCount: number;
   /** Blockers whose status is `done` but whose execution workspace has not yet finalized. */
   pendingFinalizeBlockerIssueIds: string[];
+  /** Record-level source holds are authoritative and cannot be bypassed by interaction wakes. */
+  unresolvedSourceHoldIds: string[];
+  unresolvedSourceRecordIds: string[];
+  unresolvedSourceHoldCount: number;
   allBlockersDone: boolean;
   isDependencyReady: boolean;
 };
@@ -2320,6 +2325,9 @@ function createIssueDependencyReadiness(
     unresolvedBlockerIssueIds: [],
     unresolvedBlockerCount: 0,
     pendingFinalizeBlockerIssueIds: [],
+    unresolvedSourceHoldIds: [],
+    unresolvedSourceRecordIds: [],
+    unresolvedSourceHoldCount: 0,
     allBlockersDone: true,
     isDependencyReady: true,
   };
@@ -2605,6 +2613,32 @@ async function listIssueDependencyReadinessMap(
         inArray(issueRelations.relatedIssueId, uniqueIssueIds),
       ),
     );
+
+  const sourceHoldRows = await dbOrTx
+    .select({
+      id: workRecordExecutionHolds.id,
+      issueId: workRecordExecutionHolds.dependentIssueId,
+      blockingRecordId: workRecordExecutionHolds.blockingRecordId,
+    })
+    .from(workRecordExecutionHolds)
+    .where(
+      and(
+        eq(workRecordExecutionHolds.companyId, companyId),
+        inArray(workRecordExecutionHolds.dependentIssueId, uniqueIssueIds),
+        isNull(workRecordExecutionHolds.resolvedAt),
+      ),
+    );
+
+  for (const row of sourceHoldRows) {
+    const current = readinessMap.get(row.issueId) ?? createIssueDependencyReadiness(row.issueId);
+    current.unresolvedSourceHoldIds.push(row.id);
+    current.unresolvedSourceRecordIds.push(row.blockingRecordId);
+    current.unresolvedSourceHoldCount += 1;
+    current.unresolvedBlockerCount += 1;
+    current.allBlockersDone = false;
+    current.isDependencyReady = false;
+    readinessMap.set(row.issueId, current);
+  }
 
   // Collect issue/workspace pairs of "done" blockers — these are the only ones
   // subject to the workspace-finalize barrier. Blockers that aren't done already

@@ -516,6 +516,9 @@ export const queryKeys = {
       ] as const,
     detail: (id: string) => ["projects", "detail", id] as const,
   },
+  workRecords: {
+    list: (companyId: string, projectId: string) => ["work-records", companyId, projectId] as const,
+  },
   cases: {
     list: (companyId: string) => ["cases", companyId] as const,
     detail: (id: string) => ["cases", "detail", id] as const,

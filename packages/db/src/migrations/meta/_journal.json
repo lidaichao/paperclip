@@ -1975,6 +1975,34 @@
       "when": 1790018362070,
       "tag": "0283_jittery_psynapse",
       "breakpoints": true
+    },
+    {
+      "idx": 284,
+      "version": "7",
+      "when": 1793083714963,
+      "tag": "0284_pretty_prowler",
+      "breakpoints": true
+    },
+    {
+      "idx": 285,
+      "version": "7",
+      "when": 1793083935429,
+      "tag": "0285_blue_lady_bullseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 286,
+      "version": "7",
+      "when": 1793084482700,
+      "tag": "0286_wakeful_phantom_reporter",
+      "breakpoints": true
+    },
+    {
+      "idx": 287,
+      "version": "7",
+      "when": 1793085163324,
+      "tag": "0287_shallow_ronan",
+      "breakpoints": true
     }
   ]
 }

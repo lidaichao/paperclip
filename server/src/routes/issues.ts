@@ -2,6 +2,7 @@ import { queuedInteractionId, readQueuedInteractionResponse, hasQueuedInteractio
 import { deliverConversationComments, isConversation } from "../services/agent-conversations.js";
 import { issueRecoveryActionReadModel } from "../services/issue-recovery-actions.js";
 import { getExecutionBlocker } from "../services/execution-blocker.js";
+import { workRecordService } from "../services/work-records.js";
 import { extractIssueReferenceIdentifiers, requiresExecutionReconciliation } from "@paperclipai/shared";
 import {
   validateExecutionReconciliation,
@@ -3509,6 +3510,7 @@ export function issueRoutes(
 ) {
   const router = Router();
   const svc = issueService(db);
+  const workRecords = workRecordService(db);
   const runRedactions = createRunSecretRedactionRegistry(db);
   const access = accessService(db);
   const secretProposals = createSecretProposalsService(db);
@@ -13189,6 +13191,13 @@ export function issueRoutes(
       Object.assign(updateFields, transition.patch);
 
       const nextStatus = updateFields.status ?? existing.status;
+      if (existing.originKind === "work_record") {
+        await workRecords.assertNoSourceHoldStatusBypass(
+          existing.companyId,
+          existing.id,
+          typeof updateFields.status === "string" ? updateFields.status : undefined,
+        );
+      }
       if (updateFields.unblockDescriptor && nextStatus !== "blocked") {
         throw unprocessable("unblockDescriptor requires blocked status");
       }

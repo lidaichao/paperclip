@@ -2778,3 +2778,4 @@ export { REMOTE_MCP_CONNECTOR_METHODS, isRemoteMcpConnectorId, isRemoteMcpConnec
 export { isRetiredComposioConnection, RETIRED_COMPOSIO_MESSAGE } from "./retired-composio.js";
 
 export * from "./slack-tools.js";
+export * from "./work-records.js";

@@ -1,0 +1,7 @@
+ALTER TABLE "projects" ADD CONSTRAINT "projects_company_id_uq" UNIQUE("company_id","id");--> statement-breakpoint
+ALTER TABLE "project_iterations" ADD CONSTRAINT "project_iterations_company_project_id_uq" UNIQUE("company_id","project_id","id");--> statement-breakpoint
+ALTER TABLE "project_iterations" ADD CONSTRAINT "project_iterations_project_scope_fk" FOREIGN KEY ("company_id","project_id") REFERENCES "public"."projects"("company_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "project_versions" ADD CONSTRAINT "project_versions_project_scope_fk" FOREIGN KEY ("company_id","project_id") REFERENCES "public"."projects"("company_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "work_records" ADD CONSTRAINT "work_records_project_scope_fk" FOREIGN KEY ("company_id","project_id") REFERENCES "public"."projects"("company_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "work_records" ADD CONSTRAINT "work_records_iteration_scope_fk" FOREIGN KEY ("company_id","project_id","iteration_id") REFERENCES "public"."project_iterations"("company_id","project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "work_records" ADD CONSTRAINT "work_records_assignee_scope_fk" FOREIGN KEY ("company_id","assignee_agent_id") REFERENCES "public"."agents"("company_id","id") ON DELETE no action ON UPDATE no action;

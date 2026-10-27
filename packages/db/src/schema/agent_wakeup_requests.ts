@@ -81,6 +81,9 @@ export const agentWakeupRequests = pgTable(
     toolActionDeliveryIdempotencyUq: uniqueIndex("agent_wakeup_requests_tool_action_delivery_uq")
       .on(table.companyId, table.idempotencyKey)
       .where(sql`${table.idempotencyKey} LIKE 'tool-action-response:%' AND ${table.status} NOT IN ('skipped', 'failed', 'cancelled')`),
+    workRecordReleaseIdempotencyUq: uniqueIndex("agent_wakeup_requests_work_record_release_uq")
+      .on(table.companyId, table.idempotencyKey)
+      .where(sql`${table.idempotencyKey} LIKE 'work-record-release:%' AND ${table.status} NOT IN ('skipped', 'failed', 'cancelled')`),
     companyPayloadIssueIdx: index("agent_wakeup_requests_company_payload_issue_idx").on(
       table.companyId,
       sql`(${table.payload} ->> 'issueId')`,
