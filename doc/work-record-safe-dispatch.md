@@ -28,7 +28,7 @@ The background loop is non-overlapping and bounded: one tick scans at most 100 d
 - Execution projection stores the linked issue status/version and last run reference.
 - Live run state comes only from the heartbeat live-runs API.
 
-The UI animates only an observed `running` live run. A queued run is not animated, a live-query failure is shown as unknown, and a terminal business status combined with a running live run is shown as a conflict.
+The UI animates only an observed `running` live run. A queued run is not animated, a live-query failure is shown as unknown, and a terminal business status combined with a running live run is shown as a conflict. Browser-offline state keeps the last observation only for the shared 15-second realtime recovery interval; after that threshold the live layer becomes unknown instead of presenting cached `running` evidence as current. Reconnecting resumes the live-runs query and restores the API-backed state. Reduced-motion mode keeps the running label while disabling its ping animation.
 
 ## Verification
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deriveWorkRecordDisplayState, type WorkRecord } from "@paperclipai/shared";
 import { agentsApi } from "@/api/agents";
@@ -40,6 +40,38 @@ const RECOVERY_LABELS: Record<string, string> = {
   release_failed: "任务释放失败。请重新核对后安全重试。",
 };
 
+// Match the shared realtime provider's disconnected polling interval. Cached
+// live-run data is useful during a short network wobble, but it stops being
+// trustworthy after one full recovery interval without browser connectivity.
+const LIVE_RUN_OFFLINE_GRACE_MS = 15_000;
+
+function useLiveRunOfflineExpiry() {
+  const [expired, setExpired] = useState(false);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    const syncConnectivity = () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      if (navigator.onLine) {
+        setExpired(false);
+        return;
+      }
+      timer = window.setTimeout(() => setExpired(true), LIVE_RUN_OFFLINE_GRACE_MS);
+    };
+
+    syncConnectivity();
+    window.addEventListener("online", syncConnectivity);
+    window.addEventListener("offline", syncConnectivity);
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      window.removeEventListener("online", syncConnectivity);
+      window.removeEventListener("offline", syncConnectivity);
+    };
+  }, []);
+
+  return expired;
+}
+
 function formatConfirmedAt(value: Date | string | number | null | undefined) {
   if (!value) return "尚未确认";
   const date = new Date(value);
@@ -52,6 +84,7 @@ function requestStorageKey(companyId: string, projectId: string, recordId: strin
 
 export function ProjectWorkRecords({ companyId, projectId }: { companyId: string; projectId: string }) {
   const queryClient = useQueryClient();
+  const liveRunOfflineExpired = useLiveRunOfflineExpiry();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [kind, setKind] = useState<"plan" | "defect">("plan");
@@ -162,10 +195,13 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
         <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">还没有业务记录。先保存一条记录；确认前置与执行人后再明确派发。</p>
       ) : null}
       {(records.data ?? []).map((record) => {
-        const liveRun = record.execution.issueId ? liveRunByIssue.get(record.execution.issueId) : null;
+        const liveRunEvidenceUnavailable = liveRuns.isError || liveRunOfflineExpired;
+        const liveRun = !liveRunEvidenceUnavailable && record.execution.issueId
+          ? liveRunByIssue.get(record.execution.issueId)
+          : null;
         const display = deriveWorkRecordDisplayState({
           businessStatus: record.businessStatus, dispatchState: record.dispatchState,
-          liveRunStatus: liveRun?.status, liveRunQueryFailed: liveRuns.isError,
+          liveRunStatus: liveRun?.status, liveRunQueryFailed: liveRunEvidenceUnavailable,
           projectionState: record.execution.projectionState, lastRunStatus: record.execution.lastRunStatus,
         });
         const clientRequestId = sessionStorage.getItem(requestStorageKey(companyId, projectId, record.id));
@@ -184,7 +220,7 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
               : `异常 · ${RECOVERY_LABELS[record.execution.projectionError ?? ""] ?? record.execution.projectionError ?? "原因未知"}`;
         const runLabel = liveRun ? liveRun.status === "running" ? "真实运行中" : "真实队列中"
           : record.execution.lastRunStatus ? `已结束 · ${RUN_LABELS[record.execution.lastRunStatus] ?? record.execution.lastRunStatus}`
-            : liveRuns.isError ? "实时状态未知" : "无实时运行";
+            : liveRunEvidenceUnavailable ? "实时状态未知" : "无实时运行";
         return (
           <Card key={record.id}>
             <CardHeader className="flex-row items-start justify-between gap-4">
@@ -192,9 +228,14 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
                 <CardTitle className="break-words">{record.title}</CardTitle>
                 <CardDescription>{record.kind === "defect" ? "缺陷" : "计划"} · 最后确认 {formatConfirmedAt(lastConfirmedAt)}</CardDescription>
               </div>
-              <span className="inline-flex min-h-7 shrink-0 items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs font-medium">
+              <span
+                className="inline-flex min-h-7 shrink-0 items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs font-medium"
+                data-testid="work-record-status"
+                data-state={display.state}
+                data-animated={display.animated ? "true" : "false"}
+              >
                 {display.animated ? (
-                  <span className="relative flex size-2 shrink-0" aria-hidden="true">
+                  <span className="relative flex size-2 shrink-0" aria-hidden="true" data-testid="work-record-running-animation">
                     <span className="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping" />
                     <span className="relative inline-flex size-2 rounded-full bg-primary" />
                   </span>
@@ -208,7 +249,7 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
                 <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">业务状态</dt><dd className="mt-1 text-sm font-medium">{BUSINESS_LABELS[record.businessStatus] ?? record.businessStatus}</dd></div>
                 <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">派发状态</dt><dd className="mt-1 text-sm font-medium">{DISPATCH_LABELS[record.dispatchState] ?? record.dispatchState}</dd></div>
                 <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">执行投影</dt><dd className="mt-1 break-words text-sm font-medium">{projectionLabel}</dd></div>
-                <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">实时运行</dt><dd className="mt-1 text-sm font-medium">{runLabel}</dd></div>
+                <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">实时运行</dt><dd className="mt-1 text-sm font-medium" data-testid="work-record-live-run">{runLabel}</dd></div>
               </dl>
               {record.dependencies.length ? <p className="text-sm text-muted-foreground">前置：{record.dependencies.map((dependency) => `${dependency.title}${dependency.holdReason ? `（${HOLD_LABELS[dependency.holdReason] ?? dependency.holdReason}）` : ""}`).join("、")}</p> : null}
               {canReconcileState ? (
