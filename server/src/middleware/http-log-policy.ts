@@ -42,6 +42,11 @@ const SECRET_SENSITIVE_HTTP_PATHS = [
 ];
 const SECRET_SENSITIVE_HTTP_METHODS = new Set(["POST", "PUT", "PATCH"]);
 
+const WORK_RECORD_QUALITY_COMMAND_PATHS = [
+  /^\/api\/companies\/[^/]+\/projects\/[^/]+\/work-records\/[^/]+\/quality\/(?:po|qa)-verdicts\/?$/,
+  /^\/api\/companies\/[^/]+\/projects\/[^/]+\/work-record-quality\/defect-links\/?$/,
+];
+
 /** Provider payloads are private even when a method/signature is rejected. */
 export function isPrivateWebhookHttpRequest(
   method: string | undefined,
@@ -81,6 +86,21 @@ export function isSecretSensitiveHttpRequest(
   if (!SECRET_SENSITIVE_HTTP_METHODS.has(method.toUpperCase())) return false;
   const pathname = normalizePath(url);
   return SECRET_SENSITIVE_HTTP_PATHS.some((pattern) => pattern.test(pathname));
+}
+
+/**
+ * Quality command bodies intentionally retain operator-authored reasons and
+ * evidence references in the verdict ledger. Those values are evidence, not
+ * HTTP diagnostics, so rejected/conflicting commands must not copy them into
+ * the process log through pino-http's failure-body projection.
+ */
+export function isWorkRecordQualityCommandHttpRequest(
+  method: string | undefined,
+  url: string | undefined,
+): boolean {
+  if (!method || !url || method.toUpperCase() !== "POST") return false;
+  const pathname = normalizePath(url);
+  return WORK_RECORD_QUALITY_COMMAND_PATHS.some((pattern) => pattern.test(pathname));
 }
 
 export function shouldSilenceHttpSuccessLog(

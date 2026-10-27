@@ -5,6 +5,7 @@ import { HTTP_LOG_REDACT_PATHS } from "./http-log-redaction.js";
 import {
   isPrivateWebhookHttpRequest,
   isSecretSensitiveHttpRequest,
+  isWorkRecordQualityCommandHttpRequest,
   shouldSilenceHttpSuccessLog,
 } from "./http-log-policy.js";
 import {
@@ -76,6 +77,28 @@ function requestLogUrl(req: {
   return isPrivateWebhook(req)
     ? privateWebhookLogUrl(requestClassificationUrl(req))
     : stripSecretBearingUrlParts(typeof req.url === "string" ? req.url : "");
+}
+
+function redactHttpRequestBody(
+  req: { method?: string; originalUrl?: unknown; url?: unknown },
+  value: unknown,
+) {
+  const redacted = redactSensitive(value);
+  if (
+    !isWorkRecordQualityCommandHttpRequest(
+      req.method,
+      requestClassificationUrl(req),
+    ) ||
+    !redacted ||
+    typeof redacted !== "object" ||
+    Array.isArray(redacted)
+  ) {
+    return redacted;
+  }
+  const body = { ...(redacted as Record<string, unknown>) };
+  if (Object.hasOwn(body, "reason")) body.reason = "[REDACTED]";
+  if (Object.hasOwn(body, "evidenceRefs")) body.evidenceRefs = "[REDACTED]";
+  return body;
 }
 
 export function createHttpLogger(baseLogger: Logger) {
@@ -184,14 +207,14 @@ export function createHttpLogger(baseLogger: Logger) {
             errorContext: secretSensitiveRoute
               ? { name: "Error" }
               : redactSensitive(ctx.error),
-            reqBody: redactSensitive(ctx.reqBody),
+            reqBody: redactHttpRequestBody(req, ctx.reqBody),
             reqParams: redactSensitive(ctx.reqParams),
           };
         }
         const props: Record<string, unknown> = {};
         const { body, params } = req as any;
         if (body && typeof body === "object" && Object.keys(body).length > 0) {
-          props.reqBody = redactSensitive(body);
+          props.reqBody = redactHttpRequestBody(req, body);
         }
         if (
           params &&

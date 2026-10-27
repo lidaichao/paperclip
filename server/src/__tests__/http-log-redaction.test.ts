@@ -512,6 +512,50 @@ describe("HTTP logger redaction", () => {
     });
   });
 
+  it("keeps work-record quality reasons and evidence references out of failure logs", async () => {
+    const chunks: string[] = [];
+    const stream = new Writable({
+      write(chunk, _encoding, callback) {
+        chunks.push(chunk.toString());
+        callback();
+      },
+    });
+    const app = express();
+    app.use(express.json());
+    app.use(createHttpLogger(pino({ redact: [...HTTP_LOG_REDACT_PATHS] }, stream)));
+    app.post(
+      "/api/companies/:companyId/projects/:projectId/work-records/:recordId/quality/po-verdicts",
+      (_req, res) => res.status(409).json({ error: "stale revision" }),
+    );
+
+    const reason = "evidence-body-canary-m2c";
+    const credential = "credential-canary-m2c";
+    const token = "token-canary-m2c";
+    await request(app)
+      .post("/api/companies/company-1/projects/project-1/work-records/record-1/quality/po-verdicts")
+      .send({
+        workflowVersion: 2,
+        clientRequestId: "quality-log-redaction",
+        requestPayloadDigest: "quality-log-redaction-digest",
+        cycleId: "cycle-1",
+        itemId: "item-1",
+        expectedCycleRevision: 1,
+        outcome: "approve",
+        targetRecordIds: [],
+        reason,
+        evidenceRefs: [credential, token],
+      })
+      .expect(409);
+
+    const output = chunks.join("");
+    expect(output).not.toMatch(new RegExp(`${reason}|${credential}|${token}`));
+    expect(JSON.parse(output.trim()).reqBody).toMatchObject({
+      clientRequestId: "quality-log-redaction",
+      reason: "[REDACTED]",
+      evidenceRefs: "[REDACTED]",
+    });
+  });
+
   it("redacts every credential from serialized chat setup 422 and 500 logs", async () => {
     const chunks: string[] = [];
     const stream = new Writable({

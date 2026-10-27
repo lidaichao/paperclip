@@ -89,7 +89,12 @@ The M2-C ledger lives in
 `server/src/__tests__/work-record-quality-cycle.test.ts`. Set
 `PAPERCLIP_M2C_EVIDENCE_DIR` to retain `quality-cycle-evidence.json`,
 `assignment-command-evidence.json`, and
-`quality-audit-canary-evidence.json`. It records
+`quality-audit-canary-evidence.json`. The separate
+`work-record-dynamic-evidence.test.ts` suite retains
+`dynamic-http-postgres-evidence.json`; it exercises the assignment and quality
+commands over a real loopback TCP listener with signed run JWTs and isolated
+PostgreSQL, then scans persisted activity, run-event, process-log, telemetry,
+and Sentry sink artifacts. It records
 the package, repair, QA, defect, cycle, intent, issue, and real heartbeat-run
 IDs for the shared-repair, review-limit, and independent-defect paths. The
 shared-repair path executes repair, original-QA retest, and PO acceptance through
@@ -109,8 +114,9 @@ the rework release before final admission.
   success, replay, refusal, or conflict. The envelope carries company, project,
   record, cycle, item, related intent IDs, actor/run, request key, before/after
   revisions, outcome, and a bounded error code. Reasons, evidence bodies,
-  credentials, and tokens are excluded; no first-party telemetry event is
-  emitted.
+  credentials, and tokens are excluded. HTTP failure logging also replaces
+  `reason` and `evidenceRefs` with redaction markers for these routes. No
+  first-party telemetry event is emitted.
 
 - A whole-package cycle reaches `po_acceptance` only after every required child
   and QA item is accepted. PO approval alone closes the package.
