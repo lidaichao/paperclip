@@ -16,6 +16,7 @@ import {
   workRecordDispatchCommands,
   workRecordDependencies,
   workRecordExecutionHolds,
+  workRecordExecutionProjections,
   workRecordIssueLinks,
   workRecordOutbox,
   workRecords,
@@ -407,6 +408,41 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       statusVersion: authoritative.statusVersion,
       execution: { issueStatus: "done", issueStatusVersion: authoritative.statusVersion, projectionState: "current" },
     });
+  });
+
+  it("offers stale projections an executable reconcile without creating another issue, link, or run", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "Stale projection");
+    await context.service.dispatch(context.company.id, context.project.id, record.id, {
+      clientRequestId: "dispatch",
+      expectedRevision: record.revision,
+    }, { actorType: "system", actorId: "test" });
+    await db.update(workRecordExecutionProjections).set({
+      syncState: "stale",
+      syncError: null,
+      projectedAt: new Date(Date.now() - 60_000),
+    }).where(eq(workRecordExecutionProjections.recordId, record.id));
+
+    const [stale] = await context.service.list(context.company.id, context.project.id);
+    expect(stale).toMatchObject({
+      execution: { projectionState: "stale" },
+      recovery: { code: "projection_stale", canReconcile: true },
+    });
+    const before = {
+      issues: await db.select().from(issues).where(eq(issues.companyId, context.company.id)),
+      links: await db.select().from(workRecordIssueLinks).where(eq(workRecordIssueLinks.recordId, record.id)),
+      runs: await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id)),
+    };
+
+    const reconciled = await context.service.recoverRecord(context.company.id, context.project.id, record.id);
+
+    expect(reconciled).toMatchObject({
+      execution: { projectionState: "current" },
+      recovery: { code: "release_pending", canReconcile: true },
+    });
+    expect(await db.select().from(issues).where(eq(issues.companyId, context.company.id))).toHaveLength(before.issues.length);
+    expect(await db.select().from(workRecordIssueLinks).where(eq(workRecordIssueLinks.recordId, record.id))).toHaveLength(before.links.length);
+    expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(before.runs.length);
   });
 
   it("rejects company/project boundary crossing without leaking records", async () => {

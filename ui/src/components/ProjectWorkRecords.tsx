@@ -34,6 +34,7 @@ const RUN_LABELS: Record<string, string> = {
   succeeded: "成功", failed: "失败", timed_out: "超时", interrupted: "已中断", cancelled: "已取消",
 };
 const RECOVERY_LABELS: Record<string, string> = {
+  projection_stale: "执行投影已过期。重新读取现有任务和运行状态。",
   successful_run_missing_disposition: "运行已成功结束，但业务状态尚未确认。请重新核对状态。",
   release_delivery_missing_wake: "释放已记录，但未找到对应调度请求。请重新核对状态。",
   release_failed: "任务释放失败。请重新核对后安全重试。",
@@ -172,6 +173,10 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
         const inspectOwnsRecord = inspectDispatch.variables?.record.id === record.id;
         const reconcileOwnsRecord = reconcile.variables?.id === record.id;
         const canRetryDispatch = record.dispatchState === "failed" && !record.execution.issueId && Boolean(clientRequestId);
+        const canReconcileState = record.recovery.canReconcile || display.state === "conflict";
+        const reconcileMessage = display.state === "conflict"
+          ? "业务终态与实时运行冲突。重新核对现有任务和运行状态。"
+          : RECOVERY_LABELS[record.recovery.message ?? ""] ?? record.recovery.message ?? "状态需要重新核对";
         const lastConfirmedAt = liveRun ? liveRuns.dataUpdatedAt : record.recovery.lastConfirmedAt ?? record.execution.projectedAt;
         const projectionLabel = record.execution.projectionState === "none" ? "尚未建立"
           : record.execution.projectionState === "current" ? `${record.execution.issueStatus ?? "状态未知"} · 已同步`
@@ -206,10 +211,10 @@ export function ProjectWorkRecords({ companyId, projectId }: { companyId: string
                 <div className="min-h-20 rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">实时运行</dt><dd className="mt-1 text-sm font-medium">{runLabel}</dd></div>
               </dl>
               {record.dependencies.length ? <p className="text-sm text-muted-foreground">前置：{record.dependencies.map((dependency) => `${dependency.title}${dependency.holdReason ? `（${HOLD_LABELS[dependency.holdReason] ?? dependency.holdReason}）` : ""}`).join("、")}</p> : null}
-              {record.recovery.code ? (
+              {canReconcileState ? (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
-                  <p className="text-destructive">{RECOVERY_LABELS[record.recovery.message ?? ""] ?? record.recovery.message ?? "状态需要重新核对"}</p>
-                  {record.recovery.canReconcile ? <Button variant="outline" size="sm" disabled={reconcileOwnsRecord && reconcile.isPending} onClick={() => reconcile.mutate(record)}>重新核对状态</Button> : null}
+                  <p className="text-destructive">{reconcileMessage}</p>
+                  <Button variant="outline" size="sm" disabled={reconcileOwnsRecord && reconcile.isPending} onClick={() => reconcile.mutate(record)}>重新核对状态</Button>
                 </div>
               ) : null}
               {dispatchOwnsRecord && dispatch.error ? <p aria-live="polite" className="text-sm text-destructive">派发结果未确认：{dispatch.error.message}。请核对同一请求；确认未建立任务后再安全重试。</p> : null}

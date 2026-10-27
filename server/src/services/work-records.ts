@@ -180,6 +180,8 @@ export function workRecordService(db: Db) {
       const command = commandMap.get(row.id);
       const recovery = projection?.syncState === "error"
         ? { code: "projection_error" as const, message: projection.syncError, canReconcile: true, lastConfirmedAt: projection.projectedAt }
+        : projection?.syncState === "stale"
+          ? { code: "projection_stale" as const, message: "projection_stale", canReconcile: true, lastConfirmedAt: projection.projectedAt }
         : outbox?.state === "retry"
           ? { code: "release_failed" as const, message: outbox.lastError, canReconcile: true, lastConfirmedAt: outbox.updatedAt }
           : command?.state === "failed"

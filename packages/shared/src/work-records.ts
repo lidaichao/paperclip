@@ -101,7 +101,7 @@ export interface WorkRecordExecutionView {
 }
 
 export interface WorkRecordRecoveryView {
-  code: "release_pending" | "release_failed" | "dispatch_failed" | "projection_error" | null;
+  code: "release_pending" | "release_failed" | "dispatch_failed" | "projection_stale" | "projection_error" | null;
   message: string | null;
   canReconcile: boolean;
   lastConfirmedAt: Date | null;
