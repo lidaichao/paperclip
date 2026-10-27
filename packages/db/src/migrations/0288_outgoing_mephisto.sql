@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "work_record_issue_links_primary_issue_uq" ON "work_record_issue_links" USING btree ("company_id","issue_id") WHERE "work_record_issue_links"."purpose" = 'primary';

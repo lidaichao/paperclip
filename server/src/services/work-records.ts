@@ -43,6 +43,10 @@ function workRecordLockKey(recordId: string) {
   return `work-record:${recordId}`;
 }
 
+function workRecordProjectLockKey(companyId: string, projectId: string) {
+  return `work-record-project:${companyId}:${projectId}`;
+}
+
 function releasePayload(record: typeof workRecords.$inferSelect, issueId: string) {
   const payload = {
     issueId,
@@ -71,23 +75,29 @@ export function workRecordService(db: Db) {
     if (!row) throw unprocessable("Assignee is not available in this company");
   }
 
-  async function assertDependencies(companyId: string, projectId: string, recordId: string | null, input: string[]) {
+  async function assertDependencies(
+    tx: DbTransaction,
+    companyId: string,
+    projectId: string,
+    recordId: string | null,
+    input: string[],
+  ) {
     const ids = [...new Set(input)];
     if (recordId && ids.includes(recordId)) throw unprocessable("A record cannot depend on itself");
     if (ids.length === 0) return ids;
-    const rows = await db.select({ id: workRecords.id }).from(workRecords).where(and(
+    const rows = await tx.select({ id: workRecords.id }).from(workRecords).where(and(
       eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), inArray(workRecords.id, ids),
     ));
     if (rows.length !== ids.length) throw unprocessable("Every predecessor must belong to the same company and project");
     if (recordId) {
-      const [cycle] = await db.execute<{ found: boolean }>(sql`
+      const [cycle] = await tx.execute<{ found: boolean }>(sql`
         with recursive downstream(id) as (
           select successor_record_id from work_record_dependencies
           where company_id = ${companyId} and project_id = ${projectId} and predecessor_record_id = ${recordId}
           union
           select d.successor_record_id from work_record_dependencies d join downstream on d.predecessor_record_id = downstream.id
           where d.company_id = ${companyId} and d.project_id = ${projectId}
-        ) select exists(select 1 from downstream where id = any(${ids}::uuid[])) as found
+        ) select exists(select 1 from downstream where id in (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})) as found
       `);
       if (cycle?.found) throw unprocessable("Dependency update would create a cycle");
     }
@@ -166,8 +176,9 @@ export function workRecordService(db: Db) {
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
     await assertProject(companyId, input.projectId);
     await assertAssignee(companyId, input.assigneeAgentId);
-    const predecessorIds = await assertDependencies(companyId, input.projectId, null, input.predecessorRecordIds);
     const created = await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, input.projectId)}, 0))`);
+      const predecessorIds = await assertDependencies(tx, companyId, input.projectId, null, input.predecessorRecordIds);
       const [record] = await tx.insert(workRecords).values({
         companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
         parentRecordId: input.parentRecordId ?? null, iterationId: input.iterationId ?? null,
@@ -182,14 +193,18 @@ export function workRecordService(db: Db) {
   }
 
   async function update(companyId: string, projectId: string, recordId: string, input: UpdateWorkRecord) {
-    await raw(companyId, projectId, recordId);
     if (input.assigneeAgentId !== undefined) await assertAssignee(companyId, input.assigneeAgentId);
-    const predecessorIds = input.predecessorRecordIds === undefined ? null : await assertDependencies(companyId, projectId, recordId, input.predecessorRecordIds);
     const updated = await db.transaction(async (tx) => {
+      if (input.predecessorRecordIds !== undefined) {
+        await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      }
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
       const locked = await tx.select().from(workRecords).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, recordId))).then((rows) => rows[0]);
       if (!locked) throw notFound("Work record not found");
       if (locked.revision !== input.expectedRevision) throw conflict("Work record revision changed", { currentRevision: locked.revision });
+      const predecessorIds = input.predecessorRecordIds === undefined
+        ? null
+        : await assertDependencies(tx, companyId, projectId, recordId, input.predecessorRecordIds);
       if (
         locked.dispatchState !== "not_dispatched" &&
         (predecessorIds !== null || input.assigneeAgentId !== undefined || input.businessStatus !== undefined)
@@ -432,9 +447,14 @@ export function workRecordService(db: Db) {
     return { ...result, record };
   }
 
-  async function reconcileAll() {
-    const rows = await db.select({ companyId: workRecords.companyId, projectId: workRecords.projectId, id: workRecords.id }).from(workRecords).where(ne(workRecords.dispatchState, "not_dispatched"));
+  async function reconcileAll(limit = 100) {
+    const rows = await db.select({ companyId: workRecords.companyId, projectId: workRecords.projectId, id: workRecords.id })
+      .from(workRecords)
+      .where(ne(workRecords.dispatchState, "not_dispatched"))
+      .orderBy(asc(workRecords.updatedAt), asc(workRecords.id))
+      .limit(limit);
     for (const row of rows) await reconcileRecord(row.companyId, row.projectId, row.id);
+    return rows.length;
   }
 
   async function processOutbox(wakeup: Wakeup, limit = 25) {
@@ -514,4 +534,18 @@ export function workRecordService(db: Db) {
   }
 
   return { list, create, update, dispatch, reconcileRecord, reconcileAll, processOutbox, assertNoSourceHoldStatusBypass };
+}
+
+export function createNonOverlappingWorkRecordTick(run: () => Promise<void>) {
+  let running = false;
+  return async () => {
+    if (running) return false;
+    running = true;
+    try {
+      await run();
+      return true;
+    } finally {
+      running = false;
+    }
+  };
 }

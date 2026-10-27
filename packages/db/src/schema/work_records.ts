@@ -205,6 +205,9 @@ export const workRecordIssueLinks = pgTable(
       name: "work_record_issue_links_issue_scope_fk",
     }).onDelete("cascade"),
     recordPurposeUq: uniqueIndex("work_record_issue_links_record_purpose_uq").on(table.companyId, table.recordId, table.purpose),
+    primaryIssueUq: uniqueIndex("work_record_issue_links_primary_issue_uq")
+      .on(table.companyId, table.issueId)
+      .where(sql`${table.purpose} = 'primary'`),
     issuePurposeIdx: index("work_record_issue_links_issue_purpose_idx").on(table.companyId, table.issueId, table.purpose),
   }),
 );

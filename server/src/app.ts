@@ -65,7 +65,7 @@ import { environmentRuntimeService } from "./services/environment-runtime.js";
 import { projectRoutes } from "./routes/projects.js";
 import { workRecordRoutes } from "./routes/work-records.js";
 import { issueRoutes } from "./routes/issues.js";
-import { workRecordService } from "./services/work-records.js";
+import { createNonOverlappingWorkRecordTick, workRecordService } from "./services/work-records.js";
 import { issueTreeControlRoutes } from "./routes/issue-tree-control.js";
 import { caseRoutes } from "./routes/cases.js";
 import { fileResourceRoutes } from "./routes/file-resources.js";
@@ -1123,14 +1123,16 @@ export async function createApp(
   jobCoordinator.start();
   scheduler.start();
   const workRecords = workRecordService(db);
+  const runWorkRecordTick = createNonOverlappingWorkRecordTick(async () => {
+    await workRecords.reconcileAll(100);
+    await workRecords.processOutbox(connectionIntentHeartbeat.wakeup, 25);
+  });
   let workRecordTimer: ReturnType<typeof setInterval> | null = setInterval(() => {
-    void workRecords.reconcileAll()
-      .then(() => workRecords.processOutbox(connectionIntentHeartbeat.wakeup))
+    void runWorkRecordTick()
       .catch((err) => logger.error({ err }, "Failed to reconcile work-record dispatches"));
   }, 2_000);
   workRecordTimer.unref?.();
-  void workRecords.reconcileAll()
-    .then(() => workRecords.processOutbox(connectionIntentHeartbeat.wakeup))
+  void runWorkRecordTick()
     .catch((err) => logger.error({ err }, "Failed initial work-record reconciliation"));
   let feedbackExportShuttingDown = false;
   let feedbackExportTimer: ReturnType<typeof setInterval> | null = null;

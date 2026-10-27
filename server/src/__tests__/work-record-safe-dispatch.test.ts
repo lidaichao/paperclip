@@ -4,7 +4,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   agentWakeupRequests,
   agents,
+  budgetPolicies,
   companies,
+  costEvents,
   createDb,
   executionWorkspaces,
   heartbeatRuns,
@@ -20,8 +22,9 @@ import {
 } from "@paperclipai/db";
 import { deriveWorkRecordDisplayState } from "@paperclipai/shared";
 import { getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase } from "./helpers/embedded-postgres.js";
+import { heartbeatService } from "../services/heartbeat.js";
 import { issueService } from "../services/issues.js";
-import { workRecordService } from "../services/work-records.js";
+import { createNonOverlappingWorkRecordTick, workRecordService } from "../services/work-records.js";
 
 const support = await getEmbeddedPostgresTestSupport();
 const describeDb = support.supported ? describe : describe.skip;
@@ -70,6 +73,33 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
+  });
+
+  it("serializes concurrent dependency writers per project so two valid prechecks cannot commit a cycle", async () => {
+    const context = await seed();
+    const first = await createRecord(context, "A");
+    const second = await createRecord(context, "B");
+
+    const results = await Promise.allSettled([
+      context.service.update(context.company.id, context.project.id, first.id, {
+        expectedRevision: first.revision,
+        predecessorRecordIds: [second.id],
+      }),
+      context.service.update(context.company.id, context.project.id, second.id, {
+        expectedRevision: second.revision,
+        predecessorRecordIds: [first.id],
+      }),
+    ]);
+
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
+    expect(results.find((result) => result.status === "rejected")).toMatchObject({
+      reason: { status: 422, message: "Dependency update would create a cycle" },
+    });
+    expect(await db.select().from(workRecordDependencies).where(and(
+      eq(workRecordDependencies.companyId, context.company.id),
+      eq(workRecordDependencies.projectId, context.project.id),
+    ))).toHaveLength(1);
   });
 
   it("SD-02 dispatches a dependent record once but holds it when its source is undispatched", async () => {
@@ -193,14 +223,64 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.recordId, record.id)).then((rows) => rows[0])).toMatchObject({ state: "superseded" });
   });
 
-  it.each(["company pause", "budget hard stop", "approval gate"])("keeps outbox pending when the authoritative heartbeat denies %s", async () => {
-    const context = await seed();
-    const record = await createRecord(context, "Gated");
-    await context.service.dispatch(context.company.id, context.project.id, record.id, { clientRequestId: "dispatch", expectedRevision: record.revision }, { actorType: "system", actorId: "test" });
-    await context.service.processOutbox(async () => { throw new Error("authoritative gate denied"); });
-    const event = await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.recordId, record.id)).then((rows) => rows[0]);
-    expect(event.state).toBe("retry");
+  async function expectNativeHeartbeatGateKeepsOutboxPending(
+    context: Awaited<ReturnType<typeof seed>>,
+    recordId: string,
+    expectedWakeReason: string,
+  ) {
+    const nativeHeartbeat = heartbeatService(db, { runtimeEnv: { NODE_ENV: "test" } });
+    await context.service.processOutbox(nativeHeartbeat.wakeup);
+    const event = await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.recordId, recordId)).then((rows) => rows[0]);
+    expect(event).toMatchObject({ state: "retry", attemptCount: 1 });
     expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, context.company.id))).toEqual([
+      expect.objectContaining({ status: "skipped", reason: expectedWakeReason }),
+    ]);
+  }
+
+  it("keeps outbox pending when native heartbeat admission sees a paused company", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "Company paused");
+    await context.service.dispatch(context.company.id, context.project.id, record.id, { clientRequestId: "dispatch", expectedRevision: record.revision }, { actorType: "system", actorId: "test" });
+    await db.update(companies).set({ status: "paused", pauseReason: "manual", pausedAt: new Date() }).where(eq(companies.id, context.company.id));
+    await expectNativeHeartbeatGateKeepsOutboxPending(context, record.id, "company.inactive");
+  });
+
+  it("keeps outbox pending when native heartbeat admission sees an exceeded budget hard-stop", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "Budget stopped");
+    const dispatched = await context.service.dispatch(context.company.id, context.project.id, record.id, { clientRequestId: "dispatch", expectedRevision: record.revision }, { actorType: "system", actorId: "test" });
+    await db.insert(budgetPolicies).values({
+      companyId: context.company.id,
+      scopeType: "project",
+      scopeId: context.project.id,
+      metric: "billed_cents",
+      windowKind: "lifetime",
+      amount: 100,
+      hardStopEnabled: true,
+      isActive: true,
+    });
+    await db.insert(costEvents).values({
+      companyId: context.company.id,
+      agentId: context.agent.id,
+      issueId: dispatched.issueId,
+      projectId: context.project.id,
+      provider: "test",
+      biller: "test",
+      billingType: "metered_api",
+      model: "gate-proof",
+      costCents: 125,
+      occurredAt: new Date(),
+    });
+    await expectNativeHeartbeatGateKeepsOutboxPending(context, record.id, "budget.blocked");
+  });
+
+  it("keeps outbox pending when native heartbeat admission sees an agent awaiting approval", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "Approval pending");
+    await context.service.dispatch(context.company.id, context.project.id, record.id, { clientRequestId: "dispatch", expectedRevision: record.revision }, { actorType: "system", actorId: "test" });
+    await db.update(agents).set({ status: "pending_approval" }).where(eq(agents.id, context.agent.id));
+    await expectNativeHeartbeatGateKeepsOutboxPending(context, record.id, "agent.not_invokable");
   });
 
   it("allows multiple records to reference one issue without weakening the one-primary-link-per-record rule", async () => {
@@ -214,6 +294,23 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       { companyId: context.company.id, projectId: context.project.id, recordId: secondReference.id, issueId: dispatched.issueId, purpose: "reference", dispatchRound: 0 },
     ]);
     expect(await db.select().from(workRecordIssueLinks).where(eq(workRecordIssueLinks.issueId, dispatched.issueId))).toHaveLength(3);
+    await expect(db.insert(workRecordIssueLinks).values({
+      companyId: context.company.id,
+      projectId: context.project.id,
+      recordId: firstReference.id,
+      issueId: dispatched.issueId,
+      purpose: "primary",
+      dispatchRound: 1,
+    })).rejects.toThrow();
+  });
+
+  it("bounds each reconciliation scan", async () => {
+    const context = await seed();
+    const first = await createRecord(context, "First queued record");
+    const second = await createRecord(context, "Second queued record");
+    await context.service.dispatch(context.company.id, context.project.id, first.id, { clientRequestId: "first", expectedRevision: first.revision }, { actorType: "system", actorId: "test" });
+    await context.service.dispatch(context.company.id, context.project.id, second.id, { clientRequestId: "second", expectedRevision: second.revision }, { actorType: "system", actorId: "test" });
+    await expect(context.service.reconcileAll(1)).resolves.toBe(1);
   });
 
   it("SD-11 reconciles business and execution projections from the authoritative issue version", async () => {
@@ -242,6 +339,26 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       predecessorRecordId: record.id,
       successorRecordId: rightRecord.id,
     })).rejects.toThrow();
+  });
+});
+
+describe("work-record background reconciliation", () => {
+  it("does not overlap ticks and resumes after the active tick settles", async () => {
+    let releaseFirst!: () => void;
+    const firstRun = new Promise<void>((resolve) => { releaseFirst = resolve; });
+    let calls = 0;
+    const tick = createNonOverlappingWorkRecordTick(async () => {
+      calls += 1;
+      if (calls === 1) await firstRun;
+    });
+
+    const active = tick();
+    await expect(tick()).resolves.toBe(false);
+    expect(calls).toBe(1);
+    releaseFirst();
+    await expect(active).resolves.toBe(true);
+    await expect(tick()).resolves.toBe(true);
+    expect(calls).toBe(2);
   });
 });
 
