@@ -194,6 +194,11 @@ export const workRecordIssueLinks = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
+    companyProjectIdUq: unique("work_record_issue_links_company_project_id_uq").on(
+      table.companyId,
+      table.projectId,
+      table.id,
+    ),
     recordScopeFk: foreignKey({
       columns: [table.companyId, table.projectId, table.recordId],
       foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
@@ -209,6 +214,476 @@ export const workRecordIssueLinks = pgTable(
       .on(table.companyId, table.issueId)
       .where(sql`${table.purpose} = 'primary'`),
     issuePurposeIdx: index("work_record_issue_links_issue_purpose_idx").on(table.companyId, table.issueId, table.purpose),
+  }),
+);
+
+/**
+ * Workflow-v2 sidecars are additive planning and quality facts. They never
+ * replace native issues, heartbeat runs, or their execution locks.
+ */
+export const workRecordDispatchBatches = pgTable(
+  "work_record_dispatch_batches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    rootRecordId: uuid("root_record_id").references(() => workRecords.id, { onDelete: "cascade" }),
+    clientRequestId: text("client_request_id").notNull(),
+    requestPayloadDigest: text("request_payload_digest").notNull(),
+    scopeKind: text("scope_kind").$type<"whole_package" | "selected_records">().notNull(),
+    scopeDigest: text("scope_digest").notNull(),
+    rootRecordRevision: integer("root_record_revision").notNull(),
+    dependencySetRevision: integer("dependency_set_revision").notNull(),
+    workflowVersion: integer("workflow_version").notNull().default(2),
+    state: text("state").notNull().default("preparing"),
+    errorCode: text("error_code"),
+    createdByAgentId: uuid("created_by_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    createdByUserId: text("created_by_user_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    companyProjectIdUq: unique("work_record_dispatch_batches_company_project_id_uq").on(
+      table.companyId,
+      table.projectId,
+      table.id,
+    ),
+    projectScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId],
+      foreignColumns: [projects.companyId, projects.id],
+      name: "work_record_dispatch_batches_project_scope_fk",
+    }).onDelete("cascade"),
+    rootRecordScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.rootRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_dispatch_batches_root_record_scope_fk",
+    }).onDelete("cascade"),
+    requestUq: uniqueIndex("work_record_dispatch_batches_request_uq").on(
+      table.companyId,
+      table.clientRequestId,
+    ),
+    projectStateIdx: index("work_record_dispatch_batches_project_state_idx").on(
+      table.companyId,
+      table.projectId,
+      table.state,
+      table.updatedAt,
+    ),
+    workflowVersionCheck: check(
+      "work_record_dispatch_batches_workflow_version_check",
+      sql`${table.workflowVersion} = 2`,
+    ),
+    revisionCheck: check(
+      "work_record_dispatch_batches_revision_check",
+      sql`${table.rootRecordRevision} > 0 AND ${table.dependencySetRevision} > 0`,
+    ),
+  }),
+);
+
+export const workRecordDispatchBatchItems = pgTable(
+  "work_record_dispatch_batch_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    batchId: uuid("batch_id").notNull().references(() => workRecordDispatchBatches.id, { onDelete: "cascade" }),
+    recordId: uuid("record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    recordRevision: integer("record_revision").notNull(),
+    inclusionReason: text("inclusion_reason").notNull(),
+    materializationState: text("materialization_state").notNull().default("pending"),
+    primaryIssueLinkId: uuid("primary_issue_link_id").references(() => workRecordIssueLinks.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    companyProjectIdUq: unique("work_record_dispatch_batch_items_company_project_id_uq").on(
+      table.companyId,
+      table.projectId,
+      table.id,
+    ),
+    batchScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.batchId],
+      foreignColumns: [
+        workRecordDispatchBatches.companyId,
+        workRecordDispatchBatches.projectId,
+        workRecordDispatchBatches.id,
+      ],
+      name: "work_record_dispatch_batch_items_batch_scope_fk",
+    }).onDelete("cascade"),
+    recordScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.recordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_dispatch_batch_items_record_scope_fk",
+    }).onDelete("cascade"),
+    issueLinkScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.primaryIssueLinkId],
+      foreignColumns: [
+        workRecordIssueLinks.companyId,
+        workRecordIssueLinks.projectId,
+        workRecordIssueLinks.id,
+      ],
+      name: "work_record_dispatch_batch_items_issue_link_scope_fk",
+    }),
+    recordUq: uniqueIndex("work_record_dispatch_batch_items_record_uq").on(
+      table.companyId,
+      table.projectId,
+      table.batchId,
+      table.recordId,
+    ),
+    batchStateIdx: index("work_record_dispatch_batch_items_batch_state_idx").on(
+      table.companyId,
+      table.batchId,
+      table.materializationState,
+    ),
+    recordRevisionCheck: check(
+      "work_record_dispatch_batch_items_record_revision_check",
+      sql`${table.recordRevision} > 0`,
+    ),
+  }),
+);
+
+export const workRecordDependencySnapshots = pgTable(
+  "work_record_dependency_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    batchId: uuid("batch_id").notNull().references(() => workRecordDispatchBatches.id, { onDelete: "cascade" }),
+    predecessorRecordId: uuid("predecessor_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    successorRecordId: uuid("successor_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    predecessorRevision: integer("predecessor_revision").notNull(),
+    successorRevision: integer("successor_revision").notNull(),
+    predecessorIssueLinkId: uuid("predecessor_issue_link_id").references(() => workRecordIssueLinks.id, { onDelete: "set null" }),
+    successorIssueLinkId: uuid("successor_issue_link_id").references(() => workRecordIssueLinks.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    batchScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.batchId],
+      foreignColumns: [
+        workRecordDispatchBatches.companyId,
+        workRecordDispatchBatches.projectId,
+        workRecordDispatchBatches.id,
+      ],
+      name: "work_record_dependency_snapshots_batch_scope_fk",
+    }).onDelete("cascade"),
+    predecessorScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.predecessorRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_dependency_snapshots_predecessor_scope_fk",
+    }).onDelete("cascade"),
+    successorScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.successorRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_dependency_snapshots_successor_scope_fk",
+    }).onDelete("cascade"),
+    predecessorLinkScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.predecessorIssueLinkId],
+      foreignColumns: [workRecordIssueLinks.companyId, workRecordIssueLinks.projectId, workRecordIssueLinks.id],
+      name: "work_record_dependency_snapshots_predecessor_link_scope_fk",
+    }),
+    successorLinkScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.successorIssueLinkId],
+      foreignColumns: [workRecordIssueLinks.companyId, workRecordIssueLinks.projectId, workRecordIssueLinks.id],
+      name: "work_record_dependency_snapshots_successor_link_scope_fk",
+    }),
+    edgeUq: uniqueIndex("work_record_dependency_snapshots_edge_uq").on(
+      table.companyId,
+      table.projectId,
+      table.batchId,
+      table.predecessorRecordId,
+      table.successorRecordId,
+    ),
+    batchIdx: index("work_record_dependency_snapshots_batch_idx").on(table.companyId, table.batchId),
+    noSelf: check(
+      "work_record_dependency_snapshots_not_self",
+      sql`${table.predecessorRecordId} <> ${table.successorRecordId}`,
+    ),
+  }),
+);
+
+export const workRecordQualityCycles = pgTable(
+  "work_record_quality_cycles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    aggregateRecordId: uuid("aggregate_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    cycleNumber: integer("cycle_number").notNull(),
+    kind: text("kind").notNull(),
+    state: text("state").notNull().default("open"),
+    qualityPhase: text("quality_phase").notNull().default("not_started"),
+    reason: text("reason"),
+    scopeDigest: text("scope_digest").notNull(),
+    revision: integer("revision").notNull().default(1),
+    openedByAgentId: uuid("opened_by_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    openedByUserId: text("opened_by_user_id"),
+    closedByAgentId: uuid("closed_by_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    closedByUserId: text("closed_by_user_id"),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    companyProjectIdUq: unique("work_record_quality_cycles_company_project_id_uq").on(
+      table.companyId,
+      table.projectId,
+      table.id,
+    ),
+    aggregateScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.aggregateRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_quality_cycles_aggregate_scope_fk",
+    }).onDelete("cascade"),
+    cycleUq: uniqueIndex("work_record_quality_cycles_number_uq").on(
+      table.companyId,
+      table.projectId,
+      table.aggregateRecordId,
+      table.cycleNumber,
+    ),
+    activeCycleUq: uniqueIndex("work_record_quality_cycles_active_uq")
+      .on(table.companyId, table.projectId, table.aggregateRecordId)
+      .where(sql`${table.state} = 'open'`),
+    projectPhaseIdx: index("work_record_quality_cycles_project_phase_idx").on(
+      table.companyId,
+      table.projectId,
+      table.qualityPhase,
+      table.updatedAt,
+    ),
+    cycleNumberCheck: check("work_record_quality_cycles_number_check", sql`${table.cycleNumber} > 0`),
+    revisionCheck: check("work_record_quality_cycles_revision_check", sql`${table.revision} > 0`),
+  }),
+);
+
+export const workRecordQualityItems = pgTable(
+  "work_record_quality_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    cycleId: uuid("cycle_id").notNull().references(() => workRecordQualityCycles.id, { onDelete: "cascade" }),
+    recordId: uuid("record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    defectRecordId: uuid("defect_record_id").references(() => workRecords.id, { onDelete: "cascade" }),
+    role: text("role").$type<"repair" | "qa" | "po">().notNull(),
+    required: boolean("required").notNull().default(true),
+    state: text("state").notNull().default("waiting"),
+    issueLinkId: uuid("issue_link_id").references(() => workRecordIssueLinks.id, { onDelete: "set null" }),
+    revision: integer("revision").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    companyProjectIdUq: unique("work_record_quality_items_company_project_id_uq").on(
+      table.companyId,
+      table.projectId,
+      table.id,
+    ),
+    cycleScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.cycleId],
+      foreignColumns: [workRecordQualityCycles.companyId, workRecordQualityCycles.projectId, workRecordQualityCycles.id],
+      name: "work_record_quality_items_cycle_scope_fk",
+    }).onDelete("cascade"),
+    recordScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.recordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_quality_items_record_scope_fk",
+    }).onDelete("cascade"),
+    defectScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.defectRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_quality_items_defect_scope_fk",
+    }).onDelete("cascade"),
+    issueLinkScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.issueLinkId],
+      foreignColumns: [workRecordIssueLinks.companyId, workRecordIssueLinks.projectId, workRecordIssueLinks.id],
+      name: "work_record_quality_items_issue_link_scope_fk",
+    }),
+    cycleRecordRoleUq: uniqueIndex("work_record_quality_items_cycle_record_role_uq").on(
+      table.companyId,
+      table.projectId,
+      table.cycleId,
+      table.recordId,
+      table.role,
+    ),
+    readinessIdx: index("work_record_quality_items_readiness_idx").on(
+      table.companyId,
+      table.cycleId,
+      table.required,
+      table.state,
+    ),
+    revisionCheck: check("work_record_quality_items_revision_check", sql`${table.revision} > 0`),
+  }),
+);
+
+export const workRecordQualityLinks = pgTable(
+  "work_record_quality_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    linkKey: text("link_key").notNull(),
+    linkKind: text("link_kind").notNull(),
+    defectRecordId: uuid("defect_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    packageRecordId: uuid("package_record_id").references(() => workRecords.id, { onDelete: "cascade" }),
+    repairRecordId: uuid("repair_record_id").references(() => workRecords.id, { onDelete: "cascade" }),
+    qaRecordId: uuid("qa_record_id").references(() => workRecords.id, { onDelete: "cascade" }),
+    validFromCycleNumber: integer("valid_from_cycle_number").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    defectScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.defectRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_quality_links_defect_scope_fk",
+    }).onDelete("cascade"),
+    packageScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.packageRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_quality_links_package_scope_fk",
+    }).onDelete("cascade"),
+    repairScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.repairRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_quality_links_repair_scope_fk",
+    }).onDelete("cascade"),
+    qaScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.qaRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_quality_links_qa_scope_fk",
+    }).onDelete("cascade"),
+    linkKeyUq: uniqueIndex("work_record_quality_links_key_uq").on(table.companyId, table.linkKey),
+    defectIdx: index("work_record_quality_links_defect_idx").on(table.companyId, table.projectId, table.defectRecordId),
+    targetCheck: check(
+      "work_record_quality_links_target_check",
+      sql`${table.packageRecordId} IS NOT NULL OR ${table.repairRecordId} IS NOT NULL OR ${table.qaRecordId} IS NOT NULL`,
+    ),
+    cycleNumberCheck: check(
+      "work_record_quality_links_cycle_number_check",
+      sql`${table.validFromCycleNumber} > 0`,
+    ),
+  }),
+);
+
+export const workRecordQualityVerdicts = pgTable(
+  "work_record_quality_verdicts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    cycleId: uuid("cycle_id").notNull().references(() => workRecordQualityCycles.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id").notNull().references(() => workRecordQualityItems.id, { onDelete: "cascade" }),
+    defectRecordId: uuid("defect_record_id").references(() => workRecords.id, { onDelete: "cascade" }),
+    clientRequestId: text("client_request_id").notNull(),
+    requestPayloadDigest: text("request_payload_digest").notNull(),
+    outcome: text("outcome").notNull(),
+    reason: text("reason"),
+    evidenceRefs: jsonb("evidence_refs").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    actorAgentId: uuid("actor_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    actorUserId: text("actor_user_id"),
+    actorRunId: uuid("actor_run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    cycleScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.cycleId],
+      foreignColumns: [workRecordQualityCycles.companyId, workRecordQualityCycles.projectId, workRecordQualityCycles.id],
+      name: "work_record_quality_verdicts_cycle_scope_fk",
+    }).onDelete("cascade"),
+    itemScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.itemId],
+      foreignColumns: [workRecordQualityItems.companyId, workRecordQualityItems.projectId, workRecordQualityItems.id],
+      name: "work_record_quality_verdicts_item_scope_fk",
+    }).onDelete("cascade"),
+    defectScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.defectRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_quality_verdicts_defect_scope_fk",
+    }).onDelete("cascade"),
+    requestUq: uniqueIndex("work_record_quality_verdicts_request_uq").on(
+      table.companyId,
+      table.clientRequestId,
+    ),
+    itemCreatedIdx: index("work_record_quality_verdicts_item_created_idx").on(
+      table.companyId,
+      table.itemId,
+      table.createdAt,
+    ),
+  }),
+);
+
+export const workRecordExecutionIntents = pgTable(
+  "work_record_execution_intents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    recordId: uuid("record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    issueId: uuid("issue_id").notNull().references(() => issues.id, { onDelete: "cascade" }),
+    batchItemId: uuid("batch_item_id").references(() => workRecordDispatchBatchItems.id, { onDelete: "cascade" }),
+    qualityItemId: uuid("quality_item_id").references(() => workRecordQualityItems.id, { onDelete: "cascade" }),
+    intentKey: text("intent_key").notNull(),
+    requestPayloadDigest: text("request_payload_digest").notNull(),
+    kind: text("kind").notNull(),
+    generation: integer("generation").notNull().default(1),
+    expectedIssueStatusVersion: bigint("expected_issue_status_version", { mode: "number" }).notNull(),
+    state: text("state").notNull().default("pending"),
+    waitingReason: text("waiting_reason"),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    supersededAt: timestamp("superseded_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    companyProjectIdUq: unique("work_record_execution_intents_company_project_id_uq").on(
+      table.companyId,
+      table.projectId,
+      table.id,
+    ),
+    recordScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.recordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_execution_intents_record_scope_fk",
+    }).onDelete("cascade"),
+    issueScopeFk: foreignKey({
+      columns: [table.companyId, table.issueId],
+      foreignColumns: [issues.companyId, issues.id],
+      name: "work_record_execution_intents_issue_scope_fk",
+    }).onDelete("cascade"),
+    batchItemScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.batchItemId],
+      foreignColumns: [
+        workRecordDispatchBatchItems.companyId,
+        workRecordDispatchBatchItems.projectId,
+        workRecordDispatchBatchItems.id,
+      ],
+      name: "work_record_execution_intents_batch_item_scope_fk",
+    }).onDelete("cascade"),
+    qualityItemScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.qualityItemId],
+      foreignColumns: [workRecordQualityItems.companyId, workRecordQualityItems.projectId, workRecordQualityItems.id],
+      name: "work_record_execution_intents_quality_item_scope_fk",
+    }).onDelete("cascade"),
+    intentKeyUq: uniqueIndex("work_record_execution_intents_key_uq").on(table.companyId, table.intentKey),
+    batchItemUq: uniqueIndex("work_record_execution_intents_batch_item_uq")
+      .on(table.companyId, table.batchItemId)
+      .where(sql`${table.batchItemId} IS NOT NULL`),
+    qualityItemUq: uniqueIndex("work_record_execution_intents_quality_item_uq")
+      .on(table.companyId, table.qualityItemId)
+      .where(sql`${table.qualityItemId} IS NOT NULL`),
+    activeIssueUq: uniqueIndex("work_record_execution_intents_active_issue_uq")
+      .on(table.companyId, table.issueId)
+      .where(sql`${table.state} IN ('pending', 'waiting_dependencies', 'waiting_governance', 'ready', 'queued', 'running')`),
+    stateIdx: index("work_record_execution_intents_state_idx").on(
+      table.companyId,
+      table.projectId,
+      table.state,
+      table.updatedAt,
+    ),
+    sourceCheck: check(
+      "work_record_execution_intents_source_check",
+      sql`num_nonnulls(${table.batchItemId}, ${table.qualityItemId}) = 1`,
+    ),
+    generationCheck: check("work_record_execution_intents_generation_check", sql`${table.generation} > 0`),
   }),
 );
 
@@ -258,6 +733,11 @@ export const workRecordOutbox = pgTable(
     projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
     recordId: uuid("record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
     issueId: uuid("issue_id").notNull().references(() => issues.id, { onDelete: "cascade" }),
+    workflowVersion: integer("workflow_version").notNull().default(1),
+    batchId: uuid("batch_id").references(() => workRecordDispatchBatches.id, { onDelete: "cascade" }),
+    qualityCycleId: uuid("quality_cycle_id").references(() => workRecordQualityCycles.id, { onDelete: "cascade" }),
+    qualityItemId: uuid("quality_item_id").references(() => workRecordQualityItems.id, { onDelete: "cascade" }),
+    executionIntentId: uuid("execution_intent_id").references(() => workRecordExecutionIntents.id, { onDelete: "cascade" }),
     eventKey: text("event_key").notNull(),
     eventType: text("event_type").notNull().default("release"),
     dispatchRound: integer("dispatch_round").notNull(),
@@ -284,9 +764,51 @@ export const workRecordOutbox = pgTable(
       foreignColumns: [issues.companyId, issues.id],
       name: "work_record_outbox_issue_scope_fk",
     }).onDelete("cascade"),
+    batchScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.batchId],
+      foreignColumns: [
+        workRecordDispatchBatches.companyId,
+        workRecordDispatchBatches.projectId,
+        workRecordDispatchBatches.id,
+      ],
+      name: "work_record_outbox_batch_scope_fk",
+    }).onDelete("cascade"),
+    qualityCycleScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.qualityCycleId],
+      foreignColumns: [workRecordQualityCycles.companyId, workRecordQualityCycles.projectId, workRecordQualityCycles.id],
+      name: "work_record_outbox_quality_cycle_scope_fk",
+    }).onDelete("cascade"),
+    qualityItemScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.qualityItemId],
+      foreignColumns: [workRecordQualityItems.companyId, workRecordQualityItems.projectId, workRecordQualityItems.id],
+      name: "work_record_outbox_quality_item_scope_fk",
+    }).onDelete("cascade"),
+    executionIntentScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.executionIntentId],
+      foreignColumns: [
+        workRecordExecutionIntents.companyId,
+        workRecordExecutionIntents.projectId,
+        workRecordExecutionIntents.id,
+      ],
+      name: "work_record_outbox_execution_intent_scope_fk",
+    }).onDelete("cascade"),
     eventKeyUq: uniqueIndex("work_record_outbox_event_key_uq").on(table.companyId, table.eventKey),
-    releaseUq: uniqueIndex("work_record_outbox_release_uq").on(table.companyId, table.recordId, table.dispatchRound, table.dependencySetRevision, table.blockedCycle, table.eventType),
+    releaseUq: uniqueIndex("work_record_outbox_release_uq")
+      .on(table.companyId, table.recordId, table.dispatchRound, table.dependencySetRevision, table.blockedCycle, table.eventType)
+      .where(sql`${table.workflowVersion} = 1`),
+    intentEventUq: uniqueIndex("work_record_outbox_intent_event_uq")
+      .on(table.companyId, table.executionIntentId, table.eventType)
+      .where(sql`${table.workflowVersion} = 2 AND ${table.executionIntentId} IS NOT NULL`),
     pendingIdx: index("work_record_outbox_pending_idx").on(table.state, table.availableAt),
+    workflowVersionCheck: check(
+      "work_record_outbox_workflow_version_check",
+      sql`${table.workflowVersion} IN (1, 2)`,
+    ),
+    workflowPayloadCheck: check(
+      "work_record_outbox_workflow_payload_check",
+      sql`(${table.workflowVersion} = 1 AND ${table.batchId} IS NULL AND ${table.qualityCycleId} IS NULL AND ${table.qualityItemId} IS NULL AND ${table.executionIntentId} IS NULL)
+        OR (${table.workflowVersion} = 2 AND ${table.executionIntentId} IS NOT NULL)`,
+    ),
   }),
 );
 

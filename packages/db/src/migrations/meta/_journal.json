@@ -2010,6 +2010,13 @@
       "when": 1793086565696,
       "tag": "0288_outgoing_mephisto",
       "breakpoints": true
+    },
+    {
+      "idx": 289,
+      "version": "7",
+      "when": 1793095272898,
+      "tag": "0289_green_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

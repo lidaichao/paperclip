@@ -10,6 +10,8 @@ export const WORK_RECORD_BUSINESS_STATUSES = [
   "done",
   "cancelled",
 ] as const;
+// These seven values remain business status only. Package/quality phase,
+// execution intent, and heartbeat run state use separate contracts.
 export const WORK_RECORD_DISPATCH_STATES = [
   "not_dispatched",
   "preparing",
@@ -25,6 +27,9 @@ export const WORK_RECORD_HOLD_REASONS = [
   "native_dependency_pending",
   "release_pending",
   "release_failed",
+  "prerequisite_cancelled_impact_pending",
+  "quality_gate_pending",
+  "approval_pending",
 ] as const;
 
 export type WorkRecordKind = (typeof WORK_RECORD_KINDS)[number];
