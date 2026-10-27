@@ -197,7 +197,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     recordId: string;
     issueId: string;
     issueStatusVersion: number;
-    kind: "rework_release" | "qa_retest_release";
+    kind: "rework_release" | "qa_retest_release" | "po_acceptance_release";
   }) {
     const intentKey = `quality:${input.itemId}:${input.kind}:${input.cycleNumber}`;
     await tx.insert(workRecordExecutionIntents).values({
@@ -268,7 +268,8 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     issueRow: typeof issues.$inferSelect;
     itemId: string;
     cycleNumber: number;
-    kind: "rework_release" | "qa_retest_release";
+    kind: "rework_release" | "qa_retest_release" | "po_acceptance_release";
+    recordBusinessStatus?: "todo" | "in_review";
     actor: Actor;
   }) {
     if (input.issueRow.executionRunId || input.issueRow.checkoutRunId) {
@@ -301,7 +302,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     }, tx);
     if (!updated) throw notFound("Original quality task not found");
     await tx.update(workRecords).set({
-      businessStatus: "todo",
+      businessStatus: input.recordBusinessStatus ?? "todo",
       statusVersion: sql`${workRecords.statusVersion} + 1`,
       dispatchState: "linked",
       updatedAt: new Date(),
@@ -378,6 +379,19 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
       eq(workRecordQualityLinks.packageRecordId, cycle.aggregateRecordId),
       inArray(workRecordQualityLinks.repairRecordId, targetIds),
     ));
+    const defectRecordIds = [...new Set(links.map((link) => link.defectRecordId))];
+    if (defectRecordIds.length > 0) {
+      await tx.update(workRecords).set({
+        businessStatus: "in_progress",
+        statusVersion: sql`${workRecords.statusVersion} + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(workRecords.companyId, input.companyId),
+        eq(workRecords.projectId, input.projectId),
+        inArray(workRecords.id, defectRecordIds),
+        ne(workRecords.businessStatus, "in_progress"),
+      ));
+    }
     const qaRecordIds = [...new Set(links.map((link) => link.qaRecordId).filter((id): id is string => Boolean(id)))];
     const qaRecords = qaRecordIds.length > 0 ? await tx.select().from(workRecords).where(and(
       eq(workRecords.companyId, input.companyId),
@@ -733,6 +747,15 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
       await tx.update(workRecordQualityItems).set({ state: "rejected", revision: sql`${workRecordQualityItems.revision} + 1`, updatedAt: now })
         .where(eq(workRecordQualityItems.id, item.id));
       if (independent) {
+        if (cycle.cycleNumber >= maxReviewRounds) {
+          await tx.update(workRecordQualityCycles).set({
+            qualityPhase: "attention_required",
+            reason: "review_round_limit_reached",
+            revision: cycle.revision + 1,
+            updatedAt: now,
+          }).where(eq(workRecordQualityCycles.id, cycle.id));
+          return { verdict, replayed: false, escalated: true };
+        }
         const primary = await primaryIssueForRecord(tx, companyId, projectId, defect.id);
         if (!primary || primary.issue.status !== "in_review") {
           throw conflict("Independent defect is not awaiting QA review", details("work_record_quality_not_ready"));
@@ -753,7 +776,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
         }, tx);
         if (!updated) throw notFound("Independent defect issue not found");
         const escalated = updated.status === "in_review";
-        if (cycle.cycleNumber >= maxReviewRounds || escalated) {
+        if (escalated) {
           await tx.update(workRecordQualityCycles).set({
             qualityPhase: "attention_required", reason: "review_round_limit_reached",
             revision: cycle.revision + 1, updatedAt: now,
@@ -788,6 +811,16 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
           businessStatus: "in_progress", statusVersion: sql`${workRecords.statusVersion} + 1`, updatedAt: now,
         }).where(eq(workRecords.id, defect.id));
         return { verdict, replayed: false, escalated: false };
+      }
+
+      if (cycle.cycleNumber >= maxReviewRounds) {
+        await tx.update(workRecordQualityCycles).set({
+          qualityPhase: "attention_required",
+          reason: "review_round_limit_reached",
+          revision: cycle.revision + 1,
+          updatedAt: now,
+        }).where(eq(workRecordQualityCycles.id, cycle.id));
+        return { verdict, replayed: false, escalated: true };
       }
 
       const repairRecord = await tx.select().from(workRecords).where(and(
@@ -885,6 +918,16 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
         .every((item) => item.state === "accepted");
       if (!repairsReady) return changed;
       if (cycle.kind === "independent_defect") {
+        await tx.update(workRecords).set({
+          businessStatus: "in_review",
+          statusVersion: sql`${workRecords.statusVersion} + 1`,
+          updatedAt: now,
+        }).where(and(
+          eq(workRecords.companyId, companyId),
+          eq(workRecords.projectId, projectId),
+          eq(workRecords.id, cycle.aggregateRecordId),
+          ne(workRecords.businessStatus, "in_review"),
+        ));
         await tx.update(workRecordQualityItems).set({ state: "active", revision: sql`${workRecordQualityItems.revision} + 1`, updatedAt: now }).where(and(
           eq(workRecordQualityItems.companyId, companyId), eq(workRecordQualityItems.cycleId, cycle.id),
           eq(workRecordQualityItems.role, "qa"), inArray(workRecordQualityItems.state, ["waiting", "blocked", "ready"]),
@@ -894,6 +937,32 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
             .where(eq(workRecordQualityCycles.id, cycle.id));
         }
         return true;
+      }
+      const repairRecordIds = refreshed
+        .filter((item) => item.role === "repair" && item.required)
+        .map((item) => item.recordId);
+      if (repairRecordIds.length > 0) {
+        const defectLinks = await tx.select({ defectRecordId: workRecordQualityLinks.defectRecordId })
+          .from(workRecordQualityLinks)
+          .where(and(
+            eq(workRecordQualityLinks.companyId, companyId),
+            eq(workRecordQualityLinks.projectId, projectId),
+            eq(workRecordQualityLinks.packageRecordId, cycle.aggregateRecordId),
+            inArray(workRecordQualityLinks.repairRecordId, repairRecordIds),
+          ));
+        const defectRecordIds = [...new Set(defectLinks.map((link) => link.defectRecordId))];
+        if (defectRecordIds.length > 0) {
+          await tx.update(workRecords).set({
+            businessStatus: "in_review",
+            statusVersion: sql`${workRecords.statusVersion} + 1`,
+            updatedAt: now,
+          }).where(and(
+            eq(workRecords.companyId, companyId),
+            eq(workRecords.projectId, projectId),
+            inArray(workRecords.id, defectRecordIds),
+            ne(workRecords.businessStatus, "in_review"),
+          ));
+        }
       }
       const qaItems = refreshed.filter((item) => item.role === "qa" && item.required);
       if (qaItems.length > 0) {
@@ -924,6 +993,57 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
         isNull(workRecordExecutionHolds.resolvedAt),
       )).limit(1).then((rows) => rows[0] ?? null);
       if (!unresolvedHolds) {
+        const poItem = await tx.select().from(workRecordQualityItems).where(and(
+          eq(workRecordQualityItems.companyId, companyId),
+          eq(workRecordQualityItems.cycleId, cycle.id),
+          eq(workRecordQualityItems.role, "po"),
+        )).then((rows) => rows[0] ?? null);
+        if (poItem && ["waiting", "blocked"].includes(poItem.state)) {
+          const existingIntent = await tx.select({ id: workRecordExecutionIntents.id })
+            .from(workRecordExecutionIntents)
+            .where(and(
+              eq(workRecordExecutionIntents.companyId, companyId),
+              eq(workRecordExecutionIntents.qualityItemId, poItem.id),
+              ne(workRecordExecutionIntents.state, "superseded"),
+            ))
+            .then((rows) => rows[0] ?? null);
+          const aggregate = await tx.select().from(workRecords).where(and(
+            eq(workRecords.companyId, companyId),
+            eq(workRecords.projectId, projectId),
+            eq(workRecords.id, cycle.aggregateRecordId),
+          )).then((rows) => rows[0] ?? null);
+          const primary = aggregate
+            ? await primaryIssueForRecord(tx, companyId, projectId, aggregate.id)
+            : null;
+          if (!aggregate || !primary) {
+            throw unprocessable("PO acceptance requires the original package task", details(
+              "work_record_quality_target_invalid",
+            ));
+          }
+          if (existingIntent) {
+            await tx.update(workRecords).set({
+              businessStatus: "in_review",
+              statusVersion: sql`${workRecords.statusVersion} + 1`,
+              updatedAt: now,
+            }).where(and(
+              eq(workRecords.companyId, companyId),
+              eq(workRecords.id, aggregate.id),
+              ne(workRecords.businessStatus, "in_review"),
+            ));
+          } else {
+            await reopenRecordForQuality(tx, {
+              companyId,
+              projectId,
+              record: aggregate,
+              issueRow: primary.issue,
+              itemId: poItem.id,
+              cycleNumber: cycle.cycleNumber,
+              kind: "po_acceptance_release",
+              recordBusinessStatus: "in_review",
+              actor: { actorType: "system", actorId: "work-record-quality-reconciler" },
+            });
+          }
+        }
         await tx.update(workRecordQualityItems).set({ state: "ready", revision: sql`${workRecordQualityItems.revision} + 1`, updatedAt: now }).where(and(
           eq(workRecordQualityItems.companyId, companyId), eq(workRecordQualityItems.cycleId, cycle.id),
           eq(workRecordQualityItems.role, "po"), inArray(workRecordQualityItems.state, ["waiting", "blocked"]),

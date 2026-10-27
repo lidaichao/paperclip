@@ -5,6 +5,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   agents,
+  agentWakeupRequests,
   budgetPolicies,
   companies,
   costEvents,
@@ -15,6 +16,7 @@ import {
   workRecords,
   workRecordExecutionIntents,
   workRecordIssueLinks,
+  workRecordOutbox,
   workRecordQualityCycles,
   workRecordQualityItems,
   workRecordQualityLinks,
@@ -55,7 +57,7 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     await tempDb?.cleanup();
   });
 
-  async function seed() {
+  async function seed(maxReviewRounds = 3) {
     const suffix = randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase();
     const company = await db.insert(companies).values({ name: `M2C ${suffix}`, issuePrefix: `C${suffix}` })
       .returning().then((rows) => rows[0]);
@@ -80,7 +82,7 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
       po,
       records: workRecordService(db),
       packages: workPackageDispatchService(db, { writesEnabled: true }),
-      quality: workRecordQualityService(db, { writesEnabled: true, maxReviewRounds: 3 }),
+      quality: workRecordQualityService(db, { writesEnabled: true, maxReviewRounds }),
     };
   }
 
@@ -317,6 +319,13 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     quality = await context.quality.get(context.company.id, context.project.id, root.id);
     const qaItem = quality.items.find((item) => item.role === "qa")!;
     expect(quality.cycle!.qualityPhase).toBe("qa_retest");
+    expect((await db.select({
+      id: workRecords.id,
+      businessStatus: workRecords.businessStatus,
+    }).from(workRecords).where(and(
+      eq(workRecords.companyId, context.company.id),
+      inArray(workRecords.id, [unassignedDefect.id, defectA.id, defectB.id]),
+    ))).map((record) => record.businessStatus)).toEqual(["in_review", "in_review", "in_review"]);
     expect(await db.select().from(workRecordExecutionIntents).where(and(
       eq(workRecordExecutionIntents.companyId, context.company.id),
       eq(workRecordExecutionIntents.recordId, qaRecord.id),
@@ -343,6 +352,43 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     expect(quality.cycle!.qualityPhase).toBe("po_acceptance");
     expect(quality.verdicts.filter((verdict) => verdict.outcome === "pass")).toHaveLength(3);
     const finalPoItem = quality.items.find((item) => item.role === "po")!;
+    const finalPoIntents = await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.qualityItemId, finalPoItem.id),
+      eq(workRecordExecutionIntents.kind, "po_acceptance_release"),
+    ));
+    expect(finalPoIntents).toHaveLength(1);
+    expect((await db.select({ businessStatus: workRecords.businessStatus }).from(workRecords).where(
+      eq(workRecords.id, root.id),
+    ).then((rows) => rows[0])).businessStatus).toBe("in_review");
+    await db.update(issues).set({ responsibleUserId: "m2c-po-review-owner" }).where(eq(issues.id, rootPrimary.issue.id));
+    const heartbeat = heartbeatService(db, { runtimeEnv: { ...process.env, PAPERCLIP_IN_WORKTREE: "false" } });
+    await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id, {
+      actorType: "system",
+      actorId: "m2c-test",
+    });
+    expect(await db.select().from(workRecordExecutionIntents).where(
+      eq(workRecordExecutionIntents.id, finalPoIntents[0].id),
+    ).then((rows) => rows[0])).toMatchObject({ state: "ready", waitingReason: null });
+    const processedPoEvents = await context.packages.processOutbox(heartbeat.wakeup, 25);
+    const poOutbox = await db.select().from(workRecordOutbox).where(
+      eq(workRecordOutbox.executionIntentId, finalPoIntents[0].id),
+    ).then((rows) => rows[0] ?? null);
+    const poWakeups = await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, context.company.id),
+      eq(agentWakeupRequests.idempotencyKey, `work-record-intent:${finalPoIntents[0].id}:${finalPoIntents[0].generation}`),
+    ));
+    expect({ processedPoEvents, poOutbox, poWakeups }).toMatchObject({
+      processedPoEvents: 1,
+      poOutbox: { state: "delivered", lastError: null },
+      poWakeups: [{ status: expect.stringMatching(/^(queued|claimed|running|completed)$/) }],
+    });
+    await heartbeat.drainActiveRunExecutions();
+    const poRuns = await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, context.company.id),
+      eq(heartbeatRuns.agentId, context.po.id),
+    ));
+    expect(poRuns).toHaveLength(1);
     await context.quality.recordPoVerdict(context.company.id, context.project.id, root.id, {
       workflowVersion: 2,
       clientRequestId: "po-final-approve",
@@ -371,6 +417,71 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
       poReturnVerdictId: firstReturn.verdict.id,
       reworkCycleId: firstReturn.nextCycleId,
       repairIntentIds: reworkIntents.map((intent) => intent.id),
+      poIntentIds: finalPoIntents.map((intent) => intent.id),
+      poRunIds: poRuns.map((run) => run.id),
+    });
+  }, 30_000);
+
+  it("stops independent-defect review returns at the configured round limit", async () => {
+    const context = await seed(1);
+    const defect = await createRecord(context, {
+      title: "Bounded independent defect",
+      kind: "defect",
+      assigneeAgentId: context.developer.id,
+      qaAssigneeAgentId: context.qa.id,
+    });
+    const prepared = await prepare(context, {
+      scopeKind: "selected_records",
+      rootRecordId: null,
+      selectedRecordIds: [defect.id],
+    }, "independent-defect-review-limit");
+    const primary = await primaryIssue(context.company.id, defect.id);
+    await db.update(issues).set({ responsibleUserId: "m2c-review-owner" }).where(eq(issues.id, primary.issue.id));
+    const heartbeat = heartbeatService(db, { runtimeEnv: { ...process.env, PAPERCLIP_IN_WORKTREE: "false" } });
+    await context.packages.processOutbox(heartbeat.wakeup, 25);
+    await heartbeat.drainActiveRunExecutions();
+    await submitIndependentDefectForReview(primary.issue.id, context.developer.id);
+    await context.quality.reconcileAll(25);
+    const quality = await context.quality.get(context.company.id, context.project.id, defect.id);
+    const qaItem = quality.items.find((item) => item.role === "qa")!;
+    const result = await context.quality.recordQaVerdict(context.company.id, context.project.id, defect.id, {
+      workflowVersion: 2,
+      clientRequestId: "qa-return-review-limit",
+      requestPayloadDigest: "qa-return-review-limit",
+      cycleId: quality.cycle!.id,
+      itemId: qaItem.id,
+      expectedCycleRevision: quality.cycle!.revision,
+      outcome: "return",
+      defectRecordId: defect.id,
+      repairRecordId: defect.id,
+      reason: "Maximum review round reached",
+      evidenceRefs: ["evidence://independent/review-limit"],
+    }, { actorType: "agent", actorId: context.qa.id, agentId: context.qa.id });
+    expect(result.escalated).toBe(true);
+    expect(result.quality.cycle).toMatchObject({
+      id: quality.cycle!.id,
+      state: "open",
+      qualityPhase: "attention_required",
+      reason: "review_round_limit_reached",
+    });
+    expect(await db.select().from(workRecordQualityCycles).where(and(
+      eq(workRecordQualityCycles.companyId, context.company.id),
+      eq(workRecordQualityCycles.aggregateRecordId, defect.id),
+    ))).toHaveLength(1);
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.recordId, defect.id),
+      eq(workRecordExecutionIntents.kind, "rework_release"),
+    ))).toHaveLength(0);
+    expect((await db.select().from(issues).where(eq(issues.id, primary.issue.id)).then((rows) => rows[0])).status)
+      .toBe("in_review");
+    evidence.push({
+      case: "C23-review-round-limit",
+      batchId: prepared.batch.id,
+      recordId: defect.id,
+      issueId: primary.issue.id,
+      cycleId: quality.cycle!.id,
+      outcome: "attention_required",
     });
   }, 30_000);
 

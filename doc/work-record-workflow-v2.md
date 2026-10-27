@@ -88,9 +88,11 @@ The M2-C ledger lives in
 `server/src/__tests__/work-record-quality-cycle.test.ts`. Set
 `PAPERCLIP_M2C_EVIDENCE_DIR` to retain `quality-cycle-evidence.json`. It records
 the package, repair, QA, defect, cycle, intent, issue, and real heartbeat-run
-IDs for the shared-repair and independent-defect paths. The independent path
-executes two real process-adapter runs and proves agent pause plus project
-budget hard-stop deny the rework release before final admission.
+IDs for the shared-repair, review-limit, and independent-defect paths. The
+shared-repair path proves that the next PO round gets a fresh intent and real
+process-adapter run only after every required defect verdict passes. The
+independent path executes two real process-adapter runs and proves agent pause
+plus project budget hard-stop deny the rework release before final admission.
 
 ## M2-C quality behavior
 
@@ -99,6 +101,10 @@ budget hard-stop deny the rework release before final admission.
 - A PO or QA return appends a verdict and opens the next cycle. It reopens the
   original record and primary issue, then creates a new intent/run; it never
   creates a parallel repair task.
+- When repair completes, affected defect records move to `in_review`. A
+  package returns to `po_acceptance` only after its QA items and source holds
+  clear; that transition reopens the original PO issue and creates exactly one
+  `po_acceptance_release` intent for the new cycle.
 - Package defects use typed links to the package, original repair record, and
   original QA record. Multiple defects sharing those records share one repair
   item and one QA item while retaining one verdict per defect. Unknown repair
@@ -106,7 +112,9 @@ budget hard-stop deny the rework release before final admission.
 - Independent defects require distinct repair and QA agents before prepare.
   Their native issue execution policy hands successful repair to QA in
   `in_review`; only the named QA can pass or return it, and only QA pass reaches
-  `done`. The policy and quality service both cap unattended review rounds.
+  `done`. Package and independent QA returns stop at the configured review
+  round limit and enter `attention_required` without creating another rework
+  intent. The native policy and quality service both enforce the cap.
 
 ## Frozen implementation contracts
 
