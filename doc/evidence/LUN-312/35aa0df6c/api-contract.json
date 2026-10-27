@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "preview": {
+    "status": 200,
+    "body": {
+      "workflowVersion": 2,
+      "projectId": "b96a93d1-80db-48c5-8249-e0adb0e1d348",
+      "rootRecordId": null,
+      "scopeKind": "selected_records",
+      "scopeDigest": "5b9c1c36efa903f0e3ac36b34f9fb16f715a9a167bea49ae50a5b6f2010ca3fd",
+      "rootRevision": 1,
+      "dependencySetRevision": 1,
+      "recordCount": 1,
+      "edgeCount": 0,
+      "maxDepth": 0,
+      "records": [
+        {
+          "id": "337e2da9-0971-4095-b5d0-07b7d942d1b4",
+          "title": "API race target",
+          "revision": 1,
+          "dependencySetRevision": 1,
+          "parentRecordId": null,
+          "assigneeAgentId": "26f3407e-fb55-4e63-a1dc-0750f001249a",
+          "depth": 0
+        }
+      ],
+      "edges": []
+    }
+  },
+  "concurrentPrepare": [
+    {
+      "status": 201,
+      "body": {
+        "batch": {
+          "id": "f12973ab-31b1-4e5e-8090-2ded01bcf8e1",
+          "companyId": "329e3b6c-8e8a-42d6-aa98-38a827dfbed8",
+          "projectId": "b96a93d1-80db-48c5-8249-e0adb0e1d348",
+          "rootRecordId": null,
+          "clientRequestId": "api-double-client",
+          "requestPayloadDigest": "api-double-client-payload",
+          "scopeKind": "selected_records",
+          "scopeDigest": "5b9c1c36efa903f0e3ac36b34f9fb16f715a9a167bea49ae50a5b6f2010ca3fd",
+          "rootRecordRevision": 1,
+          "dependencySetRevision": 1,
+          "workflowVersion": 2,
+          "state": "prepared",
+          "errorCode": null,
+          "createdByAgentId": null,
+          "createdByUserId": "api-admin",
+          "createdAt": "2026-10-27T12:09:27.027Z",
+          "updatedAt": "2026-10-27T12:09:27.162Z"
+        },
+        "items": [
+          {
+            "id": "fcf17e23-09f3-4f8c-80f4-71d43ec2831c",
+            "companyId": "329e3b6c-8e8a-42d6-aa98-38a827dfbed8",
+            "projectId": "b96a93d1-80db-48c5-8249-e0adb0e1d348",
+            "batchId": "f12973ab-31b1-4e5e-8090-2ded01bcf8e1",
+            "recordId": "337e2da9-0971-4095-b5d0-07b7d942d1b4",
+            "recordRevision": 1,
+            "inclusionReason": "selected",
+            "materializationState": "materialized",
+            "primaryIssueLinkId": "addb4ec0-ad4e-4f43-baea-1816d426c500",
+            "createdAt": "2026-10-27T12:09:27.027Z",
+            "updatedAt": "2026-10-27T12:09:27.140Z"
+          }
+        ],
+        "recovered": true,
+        "replayed": false
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "batch": {
+          "id": "f12973ab-31b1-4e5e-8090-2ded01bcf8e1",
+          "companyId": "329e3b6c-8e8a-42d6-aa98-38a827dfbed8",
+          "projectId": "b96a93d1-80db-48c5-8249-e0adb0e1d348",
+          "rootRecordId": null,
+          "clientRequestId": "api-double-client",
+          "requestPayloadDigest": "api-double-client-payload",
+          "scopeKind": "selected_records",
+          "scopeDigest": "5b9c1c36efa903f0e3ac36b34f9fb16f715a9a167bea49ae50a5b6f2010ca3fd",
+          "rootRecordRevision": 1,
+          "dependencySetRevision": 1,
+          "workflowVersion": 2,
+          "state": "prepared",
+          "errorCode": null,
+          "createdByAgentId": null,
+          "createdByUserId": "api-admin",
+          "createdAt": "2026-10-27T12:09:27.027Z",
+          "updatedAt": "2026-10-27T12:09:27.162Z"
+        },
+        "items": [
+          {
+            "id": "fcf17e23-09f3-4f8c-80f4-71d43ec2831c",
+            "companyId": "329e3b6c-8e8a-42d6-aa98-38a827dfbed8",
+            "projectId": "b96a93d1-80db-48c5-8249-e0adb0e1d348",
+            "batchId": "f12973ab-31b1-4e5e-8090-2ded01bcf8e1",
+            "recordId": "337e2da9-0971-4095-b5d0-07b7d942d1b4",
+            "recordRevision": 1,
+            "inclusionReason": "selected",
+            "materializationState": "materialized",
+            "primaryIssueLinkId": "addb4ec0-ad4e-4f43-baea-1816d426c500",
+            "createdAt": "2026-10-27T12:09:27.027Z",
+            "updatedAt": "2026-10-27T12:09:27.140Z"
+          }
+        ],
+        "recovered": true,
+        "replayed": true
+      }
+    }
+  ],
+  "conflict": {
+    "status": 409,
+    "body": {
+      "error": "Client request key was already used with a different payload",
+      "code": "work_record_workflow_idempotency_conflict",
+      "details": {
+        "code": "work_record_workflow_idempotency_conflict",
+        "workflowVersion": 2,
+        "batchId": "f12973ab-31b1-4e5e-8090-2ded01bcf8e1"
+      }
+    }
+  },
+  "viewer": {
+    "status": 403,
+    "body": {
+      "error": "Viewer access is read-only"
+    }
+  },
+  "defaultOff": {
+    "preview": {
+      "status": 200,
+      "body": {
+        "workflowVersion": 2,
+        "projectId": "b96a93d1-80db-48c5-8249-e0adb0e1d348",
+        "rootRecordId": null,
+        "scopeKind": "selected_records",
+        "scopeDigest": "5b9c1c36efa903f0e3ac36b34f9fb16f715a9a167bea49ae50a5b6f2010ca3fd",
+        "rootRevision": 1,
+        "dependencySetRevision": 1,
+        "recordCount": 1,
+        "edgeCount": 0,
+        "maxDepth": 0,
+        "records": [
+          {
+            "id": "337e2da9-0971-4095-b5d0-07b7d942d1b4",
+            "title": "API race target",
+            "revision": 1,
+            "dependencySetRevision": 1,
+            "parentRecordId": null,
+            "assigneeAgentId": "26f3407e-fb55-4e63-a1dc-0750f001249a",
+            "depth": 0
+          }
+        ],
+        "edges": []
+      }
+    },
+    "get": {
+      "status": 200,
+      "body": {
+        "batch": {
+          "id": "f12973ab-31b1-4e5e-8090-2ded01bcf8e1",
+          "companyId": "329e3b6c-8e8a-42d6-aa98-38a827dfbed8",
+          "projectId": "b96a93d1-80db-48c5-8249-e0adb0e1d348",
+          "rootRecordId": null,
+          "clientRequestId": "api-double-client",
+          "requestPayloadDigest": "api-double-client-payload",
+          "scopeKind": "selected_records",
+          "scopeDigest": "5b9c1c36efa903f0e3ac36b34f9fb16f715a9a167bea49ae50a5b6f2010ca3fd",
+          "rootRecordRevision": 1,
+          "dependencySetRevision": 1,
+          "workflowVersion": 2,
+          "state": "prepared",
+          "errorCode": null,
+          "createdByAgentId": null,
+          "createdByUserId": "api-admin",
+          "createdAt": "2026-10-27T12:09:27.027Z",
+          "updatedAt": "2026-10-27T12:09:27.162Z"
+        },
+        "items": [
+          {
+            "id": "fcf17e23-09f3-4f8c-80f4-71d43ec2831c",
+            "companyId": "329e3b6c-8e8a-42d6-aa98-38a827dfbed8",
+            "projectId": "b96a93d1-80db-48c5-8249-e0adb0e1d348",
+            "batchId": "f12973ab-31b1-4e5e-8090-2ded01bcf8e1",
+            "recordId": "337e2da9-0971-4095-b5d0-07b7d942d1b4",
+            "recordRevision": 1,
+            "inclusionReason": "selected",
+            "materializationState": "materialized",
+            "primaryIssueLinkId": "addb4ec0-ad4e-4f43-baea-1816d426c500",
+            "createdAt": "2026-10-27T12:09:27.027Z",
+            "updatedAt": "2026-10-27T12:09:27.140Z"
+          }
+        ]
+      }
+    },
+    "prepare": {
+      "status": 403,
+      "body": {
+        "error": "Work-package workflow v2 writes are disabled",
+        "code": "work_record_workflow_v2_disabled",
+        "details": {
+          "code": "work_record_workflow_v2_disabled",
+          "workflowVersion": 2
+        }
+      }
+    },
+    "reconcile": {
+      "status": 403,
+      "body": {
+        "error": "Work-package workflow v2 writes are disabled",
+        "code": "work_record_workflow_v2_disabled",
+        "details": {
+          "code": "work_record_workflow_v2_disabled",
+          "workflowVersion": 2
+        }
+      }
+    }
+  }
+}

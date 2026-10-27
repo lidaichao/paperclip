@@ -1,0 +1,2957 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "6fdd60d393c828f3a1500f78c10503e0badd1451",
+  "testedCommit": "35aa0df6c3a67f72c89cf0eb10319c640f1d7b0b",
+  "rounds": [
+    {
+      "round": 0,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "f2ef25fb-6cca-4b3f-b853-aa4759a10046"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "abc71318-7201-40bd-be38-674b1faf4ecc"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "50f4174b-2edc-4991-9fc4-37a78cf4b5c5"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "b9b05413-7f43-45a9-b96c-1944b2940f51"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "08e02d51-fef4-4ac5-acc8-ca05f09e4366"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "a147819e-8d68-4f16-8384-19dab04bd4c9"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "aaf0c616-1f1c-43cf-836a-9951fd714370"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "f10a39d8-5dff-438a-a2b4-d83ae0cbd2af"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 1,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "6dabfa9f-ba15-42f4-bcfd-2ee024594152"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "b9031edb-58ad-467e-b3b4-ceb918313766"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "345d999b-01e1-49e6-a056-ae5b153ff12f"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "66d914a0-5449-44d2-ba3e-600a5669b064"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "4c5cc74f-7b07-40bb-9643-b7be619fd0b0"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "62dbca3d-2853-4ad0-83a5-1bf85e2768ec"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "8ad09ff8-58dc-4910-9d27-cc34f7b3ce09"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "34a43b6d-1470-46b2-8277-dbff59ba918d"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 2,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "a43714bb-3c0c-458c-9a74-772247f9741b"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "486a9c74-2a96-441a-a5c1-30f7494e08b6"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "dee65a44-2788-4018-82fe-677be5efb696"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "263af015-4552-425d-bff4-ea5c0026ba7e"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "8d03e284-6ce2-4cc3-96cc-e7e7f7a63a6b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "f8e09406-810c-4b06-84e8-a4d4ba31d8d9"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "74cdb6b4-1840-462e-b934-47c0b1e6e3c9"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "4d43a94e-7c9f-4c8b-89f6-6605998a1153"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 3,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "2a107aeb-f0c0-4ead-97bc-0b8b275d152a"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "7c20cc5e-b1ae-4681-abac-4f8e6a5bc79d"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "300de751-22b8-48c4-8468-35715dd289e7"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "08911cb3-1548-4e75-b35b-3b2a8a104e66"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "22d5933f-8fc4-4bf0-93a9-f3343b58abde"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "b4b0d447-e26c-4198-b7f7-e14e67b59ca9"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "69970f69-06f1-4bdf-b746-acbf6d4aa6c9"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "c78e3a2a-c94b-4ddb-a035-c51479cf136f"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 4,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "c20ce6de-79f5-447a-af09-c8032dfd78e7"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "edd666c3-bd2a-4494-b4a2-1fdfa41df168"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "40334f65-aeee-4d8d-a998-b4cac17059e7"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "c76a02aa-f843-4dd5-ae2e-69d693b64414"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "96e4dc78-5cd4-4df1-8a66-34f07b933986"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "0386a4a6-1f88-4d04-89a2-963b2f6bfaca"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "ccf38963-03d9-46c3-a407-7e0031bccea4"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "d3117efe-ac3d-4175-b8f9-d22a410cd968"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 5,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "b1aaf0d3-427e-4c52-88e3-c03a47c85865"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "438828d2-f6ec-4965-8042-652473f16ebe"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "03b05306-323e-4393-8102-3db1db11ef72"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "7c8ddf47-4143-4c34-9223-d2236fb5e8dc"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "2d16783c-31c7-487e-8b77-0cfd4fdc6af3"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "a30093f1-6e52-47e3-8fb6-a2064eb8ea00"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "c85fdcd0-b1d1-4e3d-8a86-5d32bb2798b9"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "df6529e2-a756-4962-897c-69dd6e06d0cf"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 6,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "7dfa2576-7ba9-4319-bd97-a9b93d665042"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "93224fe9-da6b-413d-9d13-be15f610b688"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "39d97d17-ed0a-4c16-bf9a-52b4bae197f9"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "ebf22e36-9439-4ca2-8deb-80a896c22285"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "4234e168-98ab-440e-8f3f-756d7c7b37a1"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "aedc8241-f5b0-4c78-a77e-4b62afc83c45"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "7b334b4d-6305-4670-bd6e-93b44f851e7c"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "01b63347-bd30-4eda-b893-f05d2e2d5730"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 7,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "d45dd9a0-ce3f-4528-85dc-bf508ce25fd8"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "b8e353e9-21fc-48c4-b7af-c91438690bd1"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "a03326dc-fb0a-42c7-8898-a7d6655b130f"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "acc12026-e96c-45f1-b9d1-142fc20821fb"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "54da2909-4336-48e1-af5a-3c260e290d27"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "14cfedd3-28e3-4f3c-9621-7909aab5d113"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "e5519d97-c8d3-477c-8766-29a1dafced86"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "0cc0d812-83f8-4d32-996e-8aa34aa9b7c4"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 8,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "72650edd-cd8b-4a69-ab33-ed02919e4075"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "d9f8dee4-78b7-40a6-99f7-8fb21ff617fe"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "59815196-b81b-432b-a1d1-eecf71533be9"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "9cf5b3e6-30c0-4372-a408-f6a883df74fe"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "b46221bf-2d4f-4753-bb90-69b246e97e61"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "632606a2-1b80-424e-b799-147483ef8a3d"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "7211eec8-9eb2-4cf4-a9e2-ed2680a4b85b"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "b5b9ac83-83c5-4661-a774-7b3bd2148353"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 9,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "1d64b960-f878-46d3-a3ba-690a18ad5817"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "df096f3b-904e-4386-8f30-d3c6f4531bfe"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "1912ab9a-eac8-464c-8416-f6b0ec0e7a16"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "1df11442-1d50-49b5-8d37-8c735b25bb3a"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "987981f4-1fac-442a-9fdd-d99aae42cb8b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "ce2189e5-babc-4dfb-8f2f-338062c48b5d"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "f7898a90-8340-4a65-83e3-93225186c1e5"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "8f7cb40f-f060-4d75-89e0-fd830d05e6a8"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 10,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "04e0ab7d-8d51-4722-ac56-cc325ebca2f8"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "2c8fd29e-1cb1-4e3b-a8c8-e67486b0bc29"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "b2664c20-b5c4-45bc-b8a7-17125f77f4ae"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "ffc9e0ee-f3ef-4ae8-acb0-984471497735"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "2b5cfb9d-c4c0-43c2-8f8c-67346cf6b48b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "9e38f45e-3902-4d68-8f90-877d258a9750"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "c265274d-c748-4de5-944c-653a6b3e6233"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "dbd9247e-fb18-45ff-adfa-1392b3b79b64"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 11,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "d17ca646-25c4-4655-8899-971da330a0ba"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "3824ecf4-3765-44ce-a88c-2ed5f4d81b18"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "a6411253-b818-4a2c-82ee-5bae7710ec14"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "4f283a28-bf6d-45d9-9342-1d2eddf950b0"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "91008d1b-4411-43f3-b0f7-bef9cee12f29"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "d14351f4-33dc-47ac-a6b8-84887cffa598"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "528493ee-dbe9-4a05-89df-6d9cafc2baf5"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "1db9c786-1e99-4423-b921-f16b980d8366"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 12,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "b2af168a-594e-458b-89c7-060eebce0aee"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "416e25bb-fbf8-4fc2-9477-f56711034cf0"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "f897213c-8cf5-477f-9e80-448e1aaabe10"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "1d8074d4-ebbf-4416-8aed-7cc4ea4be742"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "a62db903-b9aa-49ed-800a-f8e3fb33afba"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "36f6a321-cb15-49d1-90e9-0ef2d448f4c3"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "c4ae7e97-ed42-43c7-bc5c-85156904a107"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "adb85752-c2d1-479d-8b99-ffc84cdf4968"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 13,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "ab94b769-8336-4314-a8e1-8b87297d6096"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "8a5b8e14-ae79-42e4-9c59-a87d9be98ea9"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "5f698f98-8195-419d-812b-ec3355d1957e"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "79cffbb0-348a-4497-9723-237b75fe9119"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "899843ae-7b94-409b-a91f-2471cbf5721a"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "6b485751-2fd8-49b1-b5c0-dc1822fef3a0"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "d59308ad-ffd1-4914-8804-76bd42cc461a"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "75f5a670-d938-4394-9edd-ce2a4c189e10"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 14,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "20916e77-87bc-463d-b50b-f0b46ba9e8c6"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "e02b65a6-a7bf-42ff-bb6b-e91e6f1757ce"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "a7509bd7-7a3c-4b9c-abea-9bfc8e663dbb"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "570e3b4b-261e-4b91-8fae-d77cddaa46c3"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "90187c0c-700b-4e86-bd5b-0f15e162244b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "a68156c9-2d7a-4d1b-9e80-baab6de1c0e2"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "e11d7a82-1c69-4774-b947-a23aa244967e"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "1b5692f2-f0f9-41db-931a-54d9fbb55925"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 15,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "4be7e92c-4e07-4986-bf00-5650d6de3dbb"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "78232424-bbe4-4f9b-adcc-9c2fa9b964e2"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "15a0a4e5-ff9e-4906-972f-c6d074afaf4b"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "321b9d58-6c4a-4071-9282-0076a6317cb8"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "802b279f-c257-492b-a53e-9c260ebbb03c"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "79d6b03e-c6b7-480b-afc5-7d5bcb157344"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "cc341b84-5a66-4bef-8a52-cfeb0ce8af86"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "2a3c01c4-382d-4de2-9311-42f55c5dab12"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 16,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "d0b2d443-6ad2-45db-acde-9e550f4418f1"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "b14cf201-91e9-4074-8fba-781845211ee6"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "8fae1a31-4665-4e13-9ae9-b9ecd82a031a"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "8c36e307-2bc5-434e-b980-5190b4c696b6"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "92acb1ff-36ab-4d07-9ab7-4b01d8558bfd"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "e9f93fb1-c1db-4f8f-8ff9-b99115de839d"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "840c0287-27cd-4edc-a9ce-b83bae33909e"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "9e09d503-7b57-4692-a9a1-3be5fdeedeae"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 17,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "c57e55f8-1400-4d47-bd5f-b9ea9049d7d6"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "759cc7be-9c6a-49b8-8c6a-1f300803f029"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "6a7f91ae-7303-4000-bfcf-1d80bf7e9d0c"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "08e1e112-ddcd-4598-bcdc-00579d7a573c"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "80e867ad-b437-465f-961d-b68d020f1592"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "f59ced92-00c7-4e13-bba7-221391dde070"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "d0f806a2-8dcd-44df-a9c4-85f4b38a4aa0"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "7a7859da-6428-47c0-9084-eb7eedfec631"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 18,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "a1579b83-a8f9-4c1e-85c3-21ce5c099d0c"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "198197f6-7601-447d-847d-4cca09c5ab41"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "8aaa8e10-6100-4cc1-af36-4e6426b7750d"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "3842621a-740a-4aca-a257-908f586162a0"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "51a31dd6-a29f-46a9-b209-0e79be683aed"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "28c12408-3d9e-406d-a57c-3e50d37466a2"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "ee587dc9-65c9-4d8e-9133-677f5463a00b"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "344f5055-27a3-4730-a35f-684be1d173be"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 19,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "5b12ad94-c9c9-4471-822b-faa6ebe1dc07"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "5d4a76d5-32f1-43fc-bda3-95cda06ef7ec"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "3e5dae20-00ba-47bd-8acd-8ce352626f57"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "fd5f984b-e2e1-4e72-9d57-0c5f03b6b29d"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "c1542672-2f5e-4598-89f1-97d9d99c5da6"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "956bb4fa-ecb2-4972-b869-bcac9525aaaa"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "d7afd0e8-aed7-4e67-8e5e-425baba2c05b"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "32fbb720-df5e-4d16-b83c-841e63aa121e"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 20,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "00b9cc97-5b58-4efc-9feb-08a22d8dc8c6"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "c64258d4-ca3b-404b-82cb-67a878b7b2d2"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "b3fa505c-42b6-4c09-9a1c-e163b0994493"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "db492172-41fb-4c31-bf24-54e8f7274a99"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "ed7cfbed-02d4-4efe-8034-5d8de892a2e8"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "fd9f579e-2020-43ec-a513-eaee3da8a0b6"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "cf3fa6c1-e85c-46a5-a1cc-32af6bf09d7e"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "d5b6bdaa-d42a-4e98-8606-c1ffeeb4a84e"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 21,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "cf1cc432-d187-4b3a-a782-3c4059bf0da8"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "135bfdd2-9ad2-49fc-967c-f184264fd85a"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "092bdc08-ede1-4afa-a8ed-b5582abc2705"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "f1b4c8c3-ff80-4e72-a22e-41a612397f98"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "93732cda-04c4-4169-aa90-cb3ed1dbbf09"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "126058e6-ad96-4ab3-a405-7615d8a1aae1"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "08f422cf-737d-45ed-a120-ed7befb12df5"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "3a3addae-5b64-42bf-8b58-ec10ac526626"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 22,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "e1d44f41-7368-416c-a6ed-ec2cc198aa57"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "36b4e4cc-fb2f-4b43-901e-0e47988554e7"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "42c6cac3-3ead-4fc4-8d0a-b1d37bf63ec7"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "f2829564-4e4d-46f9-a08b-6e1a72d74239"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "9fc14597-5103-4f2c-9c28-37c733a814af"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "d9d55d9d-4806-44e4-afc4-2ea74ef881da"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "79e2739c-f239-4699-aba3-50ee7c61d3e1"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "6b78faad-d2b5-47c8-a56b-89c58f7d0432"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 23,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "4268ea60-0373-43b5-abe1-13b7e4839cd9"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "cd5102fe-c85d-471a-beaa-96c328f41794"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "a3287709-9a22-4d55-b0b1-194c4c946987"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "7989acf0-b0b0-4e1d-a69d-35d3257c5d8e"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "47dd7173-6d6f-482c-b0db-9c45b693f4e9"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "fd5a4c0c-7b4e-4c8b-b4b7-127f68027c29"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "66a0e176-a338-4501-ac3b-6ac9b707bc6e"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "620fecab-9e45-45fc-84db-ed194c3f546c"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 24,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "657426b1-6869-4332-a169-a3357ff01549"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "f7ef5246-a440-45bf-a784-80d2da82b9d0"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "bcc62ccd-822f-44eb-98da-93296b543d91"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "376f8300-a367-4387-92cc-269755f081cd"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "cff8ba38-ef7b-4016-8d51-ae827f7c589b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "10eba5be-3d31-4fe1-b1c7-f58ef6b2cb49"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "addb7859-94f9-4fe7-954a-cb6c07bc8c10"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "08b46c2b-5a36-47c6-bc03-bc03b5b6f8b7"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 25,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "b5443204-2445-4cca-a023-abde3cf856ae"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "b3473089-c37a-481e-89da-5616d27310a7"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "3f0a131f-300f-4b56-8c4e-753a8ff3677e"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "0734209d-bc13-4998-995c-f163d17b2e3c"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "e25a7956-398a-4a1d-9fc1-c54ad2934fdf"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "b5de09e1-a799-4d09-9a06-9b7bd2438e82"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "1e6a52f2-d9ab-45ca-9c12-39371b210691"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "c9e373a6-0a17-450c-8556-17454208f938"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 26,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "40a77ef0-6587-4b63-ae93-98cf63cf6c4a"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "6e22ad6b-f3e1-4ee4-a75d-95064e9bb590"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "d3d73235-d8e8-4c7a-b467-486f53c79137"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "6496ed1b-1fd0-4a0b-b8f9-5e8e1a69eb8d"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "fe65cc03-89f3-4bdd-b514-e214491a5d66"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "e8abcff5-49c2-4358-84f4-93f36bc8c20b"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "d7d69868-be55-485e-ac41-e975300fe3aa"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "b2e6c933-af50-4aa9-8edc-f11a528239c8"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 27,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "b6b5ac72-0f79-46ec-8474-684da418ee70"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "329b9952-c58c-4ca0-a9ea-d680aaee4792"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "c08eb939-389b-4fce-8fb2-81d2aaad6dec"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "997d6ec4-54b6-4bd2-9d4b-245342cd2da1"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "e489d030-7538-4c70-b94b-0eb89bb6bb20"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "9d16fba4-3da3-46f7-b84f-861863c77156"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "aef66b1f-47af-42ec-812f-b4272e93179e"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "675a416d-77ea-4926-8222-414d040a621e"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 28,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "7b199966-582f-45d5-b6cd-9936f78397ba"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "ef52dd53-e95a-43a4-9b49-19afad74db6f"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "6076db7d-4f83-46e2-a444-bbbb4ee8ac99"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "0a253979-8609-4b23-bb10-e0f9df4fbb0d"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "ff47d21f-d494-4e74-a6a7-3d0e8507e55b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "8b92c6de-249a-4ce0-a34c-7070ab12c253"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "bb3320a4-170b-4e65-b714-2df661126b48"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "cb947b5e-88b1-4c79-9d33-7bb469f7a8bc"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 29,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "e6023730-90e6-4450-8b0f-3091dbb4c547"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "e2c713fe-7e95-4c27-b3e4-73b09acfa38d"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "718be6a7-a56b-4e3e-bcd6-b19333f53ea3"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "387333b0-afea-4ef3-99df-a298849a244b"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "a88443a7-045d-452c-a2cf-66310d535909"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "5034ce94-b009-4340-8468-7b4f53777bcc"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "9ba69191-9e94-4340-a0f5-9f487800ecb5"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "ac173e90-b3da-450a-b6c9-18f62c8ec9cf"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 30,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "16b5dc0b-a697-47ec-9bb3-58b62cfc5d8a"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "3d362905-8f40-4b2b-9dc1-45ab38b04a22"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "380c704b-2820-4cda-8697-93345eccd03d"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "a0ca037d-c08f-4668-9dc9-7a976b0055e6"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "c9999864-3666-49d4-b02c-19c1b6191332"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "d7f785b0-b4c6-4ef4-8279-e02911ba872d"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "de8e2c59-3de1-4a42-a832-cd069f8e2241"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "0148e87e-754b-4f68-b478-8b03b575025c"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 31,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "c7c52cd9-0479-4678-b484-7acfdf379c46"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "07047238-f83c-48ad-b845-e5a8e317b937"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "a15cdca5-87ca-4942-be91-250e53bd615a"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "72dd8141-b9b7-4876-8acf-fa57a82306df"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "df540cea-c796-4061-9da0-ae8bd380da26"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "22ff4f1c-f94d-471c-a430-22d08eeb39d1"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "766da779-360f-40c7-a0a1-c174b58bafe6"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "29093ab4-b127-4ac5-959b-ec6e264fa210"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 32,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "2124d522-4596-43da-beb0-44a313712f0e"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "46cc2d31-9655-426b-8c70-0048d66ce8ff"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "234f5b2c-5078-4866-82f1-3d9de8f4f5f5"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "c7f6a027-ee24-4321-bc23-69be0416b55b"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "b44f4779-d3ac-4ead-856e-0e499930dae5"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "e889b32b-3c2b-479c-a782-9249b5f594b8"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "89a44431-dd61-485e-a0a9-a529f24a2cbd"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "dcb97312-a220-4c5c-92c8-fea6a7c5ec47"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 33,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "cb176a42-1e99-443b-8197-a498077a7609"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "aa503b74-7e61-4d9d-8687-3f843c4be8a6"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "3f0ac4aa-a4b3-4136-9362-5cb3ad166f54"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "4b4310b0-2a4a-4b11-bd1c-38b6248a306d"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "a356c297-3fbb-4548-adc3-88b38a6915a7"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "5c8b5b3e-0de4-4513-89f1-693a40bc2838"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "4e7dde7d-707b-41e8-8b2e-345669a1d38d"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "6d9cda6c-07d9-407c-b643-e19764b78874"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 34,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "a5af00ad-556d-4ddd-bc57-0b3d45f190d7"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "f390a9d2-6766-469a-80af-aa4354d3de91"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "ef045175-03ae-43a2-a575-c73f59c8f6c0"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "bd6bb248-5319-4d57-bd61-817db81e6c27"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "9edec33e-4445-45fb-8e78-4e12c37ba287"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "6863f743-44f2-4910-b876-0c7919f4d655"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "20201bce-3c56-499c-a8e9-a6590e10daab"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "4e98c9a5-9a48-4db7-b11f-2b88935f9113"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 35,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "9428ddba-fabd-4d15-99c9-0ee6453c5332"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "a67e376a-c921-4dcf-ad14-e8c1785092df"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "47c4c5c5-4a0f-4d29-a971-55507cd61bf1"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "431a5bb9-3628-4fbe-9394-c648d402038d"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "5e8d80be-9e04-4990-9fee-76c7276865ee"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "b456bbd1-4b31-4cc2-90c6-7055e1200c9a"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "a506a441-6c4a-44d2-8daa-fac0dd17d9d8"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "8d5d6bd6-f9e4-4140-acc3-57bacda9ae3f"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 36,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "88bd3d49-1f40-41af-96fb-f0f914dc34c1"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "c090fa01-5a77-48b6-996c-4a1aeb0397d7"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "d8b941b6-94f9-4a3d-8eba-66d88af15253"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "2390a859-a0db-42d2-a8f8-e1ff473598aa"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "5498cb6b-ded0-4483-ac6a-5ed04b72ed84"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "8fad00c4-a6b2-4045-963b-22894f341128"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "4b20bbb9-c99b-4a98-a01a-cf99279b82c6"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "2ebc9323-b286-46cc-bf1e-3a801b0a17bb"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 37,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "80fba15f-b150-4306-9b96-35c55f00f0e5"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "058babb1-df03-4d55-85c7-fd9be780f07d"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "d7a2c79a-380a-4c5c-b4e7-ba43cc34529c"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "6eee374e-c76b-4335-92c2-ccedf5f56b28"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "98e1e5ab-f986-4ee6-b3ed-efb2d1ebb4a1"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "573ccfbf-ef72-439d-a962-9ddbd921ae65"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "9acaf549-a351-4707-bf2e-a38875bc40ed"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "32e134dc-32cf-45db-bff8-3866b96c8bbe"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 38,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "dd73d242-3d41-4759-96e1-982d8f549713"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "bf48bbc0-b475-40d4-860d-acb6152751a2"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "17b9817a-501f-4429-9397-6cec717b85e8"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "633b2331-359d-44c1-9462-3ab52ac7dbf0"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "92d7515d-8708-4ef1-8365-f442dd411b04"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "b64162b5-f6d7-4ff5-900d-7e04963f06c2"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "12732571-a946-4b91-bfbc-9ce528896ff8"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "114be725-e7fd-411c-8a01-3275e699b695"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 39,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "16206e72-1d52-4e4b-90ef-0cf0de2f97d6"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "0b7cffc1-fe37-4281-837d-85eb8e262650"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "6ff7381c-913f-40d5-b86d-6b8f1b59e9cb"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "4e8091a9-975a-4828-98ea-4fad40cb495d"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "a509b0eb-972f-45c5-bfb2-589372ea102a"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "0da26c56-52a3-4f55-b2b3-b439d7ae103d"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "d4ba413a-d2f3-4cb0-9f07-491083106679"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "5469520f-7b7f-4472-986b-1d11145b28f8"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 40,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "de795028-5185-4d84-9eb9-5543688a17de"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "f84b99e0-f7af-4a4e-a050-bd9d5e6ddcae"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "5ae6282e-fa8b-4dd5-bc4e-a4f55a4f67c3"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "9409a593-9258-478a-8fab-e11b27856044"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "776f69e8-2f4b-4947-965f-1e3daaad4f3b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "abc065e3-6442-4e72-aa21-d1eb4777bffe"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "bfb133d8-6d9d-4954-9c30-04cb2fa6ebd1"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "4a66bdda-3b12-4afb-9ab6-7476f0552f2c"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 41,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "1551de1c-beed-4a8f-b46f-948f3257b184"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "a3ba81ef-40dc-46fa-bc2c-2ee321c74a8e"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "8492ad18-f010-4502-b56d-dbf7e806d448"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "dc404803-08b6-45b9-8e80-dcd0bd079af0"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "3980cbf9-bfe1-434c-85d8-6e63a1f2879b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "1a3a4c18-3298-4674-aacd-0fdc36c6e04a"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "eb0d6152-a297-4552-9a4d-af55941102e1"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "4aa0090d-cd3a-4bcc-b075-7fcbd755cef2"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 42,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "7d2e1d16-bcbf-4df9-9c05-97c8512fa9ab"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "c9debf81-7805-4dfc-9381-59ebb1ef8c02"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "4edbca62-3a60-4e6a-8592-610c50aff50b"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "8e7feaa5-2326-43fe-8083-dc2322d3ba6f"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "01c49e88-8b31-4d19-ade8-63637e096fc0"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "2ca31ec6-e9f9-4b31-9814-049ac1ca3c67"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "0da96b9c-1b61-43c5-ac3c-cb7f46d3e941"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "b4a946f6-af40-431a-80ce-35a291836410"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 43,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "3ef3356d-702e-4347-b980-0b563629e0b3"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "fd71afb0-0e6c-4ee0-9f23-951dadd75421"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "299c0c9c-bf9d-429e-bd2b-759dea5ef074"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "5e0b1833-e27a-47d0-b87f-8f6361f76a7a"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "588b4ead-7aad-4455-be2c-b513750f1a42"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "8982f2ce-6047-4915-9f96-1145e3e83c06"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "48d39ccc-2362-414c-acff-6bc04ae3222a"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "8bf7e3b4-7c2d-4dd5-a237-63e375c23227"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 44,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "a179655e-735a-4d6b-ae7f-69ab1147c58c"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "20b67d82-c785-4234-8857-ee93cf500ced"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "49e9e891-fd8a-4c20-8e15-934ce8b4c461"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "35cbdf5e-fe61-4b9f-abfb-217ca31986f7"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "c2be8a4a-8d0e-4571-874f-ebb71ecce609"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "3f8c3346-d20c-4aab-8e2b-646892097f6f"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "6d4e3148-33ec-490f-b7bc-983863db7182"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "cd773e79-fc5c-4761-afc3-5b6f3f1c9929"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 45,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "6f44020d-d863-4e82-a3c7-e6aa6eed7598"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "b136c9d9-0ac2-4ec4-a892-1da7889063cf"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "c0d12ec6-a198-4c00-bf56-bd8f2521f246"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "26cfd260-ba53-4090-83c3-62d96811257d"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "0cb03466-ea8d-49ce-9c99-67250c070d45"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "3f6e0ab6-67ee-4c4c-9657-30e43c86a63f"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "dedd4ab3-4971-4ba5-8584-61e0b8e22019"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "b5550939-f19f-4909-b25e-fba70eb184ab"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 46,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "52cc0fed-e598-4d28-9dd0-62a263acc58f"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "10386ed9-926d-486d-9a2e-78d9fd080b81"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "5a633243-9766-4181-8ec6-236199ce139c"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "a6c9647a-b659-4f25-ad44-5294c8dad738"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "d06a4b73-3894-4225-8cc8-b83c4f54f67c"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "ba9181ee-3b1a-4ecb-806f-191ef017c26f"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "0f876275-0ea5-456e-b7b4-38a1a09170b7"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "504b33c7-1598-46da-81a9-ac2615b37363"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 47,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "f160d947-575e-43ac-bff7-37a27e0b1702"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "73a61377-1a5c-4255-840d-2c9521b517b2"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "9f16f133-01a5-424e-9878-c71c0efcd124"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "b7548b3a-9b82-4df2-a236-b6e90ded1108"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "c9ff2cbc-87a1-4f3a-b305-76cdd8a1d85f"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "c3b2dbe4-484f-4804-a2ec-08492f3d5bd3"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "752d9c9c-80da-4f08-aad1-fb3443825eb3"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "f9be70bd-34f5-4939-abc0-906dab4bdcda"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 48,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "df4530e2-3b77-426f-ae8d-b721b1c106db"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "4fbed2ad-250f-4fd2-8ba8-7004430308cc"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "515175e3-eb0e-4eeb-95c2-a4472ba83d6d"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "ac8de78d-4163-43c5-84f8-97933b81c940"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "d3c870e4-13b2-4cd6-937d-1504997a10f8"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "16117f43-6194-44f4-9301-9f0f8b93897c"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "460dc76a-c2a9-49a8-93da-cd5c8add206f"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "df8e9f8f-3d27-48c5-8abd-d52ccfd0700a"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "round": 49,
+      "winner": "left",
+      "replayed": [
+        false,
+        true
+      ],
+      "conflictCode": "work_record_workflow_idempotency_conflict",
+      "layers": {
+        "record": {
+          "ids": [
+            "5838438a-3391-462f-bf90-a3298e43a89d"
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "db60a1a0-1e9b-4c70-9dfb-a2ffd859b24c"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "d5abc869-c84e-481e-b468-e947a5e3a71a"
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "0cfade13-9fd2-42e8-b00f-2c670a45f70e"
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "2cf6bcfe-32ac-48f1-b781-3496541ad75b"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "2f6504e0-68d5-4c8a-8b48-5e7eba776c73"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "e6b3b0ef-8f8a-46bd-8166-282a448cac35"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "60ce5b3d-38cf-4fbc-91bc-536065cc2c2c"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    }
+  ]
+}

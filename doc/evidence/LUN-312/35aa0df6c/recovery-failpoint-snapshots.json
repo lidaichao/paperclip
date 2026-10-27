@@ -1,0 +1,707 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "6fdd60d393c828f3a1500f78c10503e0badd1451",
+  "testedCommit": "35aa0df6c3a67f72c89cf0eb10319c640f1d7b0b",
+  "snapshots": [
+    {
+      "case": "before_batch_commit",
+      "phase": "before",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "535a2a76-bdd3-45dd-85d4-e7d176b9262d"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "item": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "link": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "intent": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "outbox": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "wake": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "run": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        }
+      }
+    },
+    {
+      "case": "partial_materialization",
+      "phase": "before",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "535a2a76-bdd3-45dd-85d4-e7d176b9262d"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "924bd69f-67f6-48dd-8f5b-76c256717511"
+          ],
+          "states": [
+            "preparing"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "1e8cb0a3-5a33-4992-94f2-47796cc11768"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "a6b89a98-0161-44db-bed9-d6982e9512cf"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "ec8bc88f-2aa0-47e3-9c2c-b7e4b5ab1feb"
+          ],
+          "states": [
+            "waiting_dependencies"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "wake": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "run": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        }
+      }
+    },
+    {
+      "case": "before_batch_commit",
+      "phase": "after",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "535a2a76-bdd3-45dd-85d4-e7d176b9262d"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "924bd69f-67f6-48dd-8f5b-76c256717511"
+          ],
+          "states": [
+            "prepared"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "1e8cb0a3-5a33-4992-94f2-47796cc11768"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "a6b89a98-0161-44db-bed9-d6982e9512cf"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "ec8bc88f-2aa0-47e3-9c2c-b7e4b5ab1feb"
+          ],
+          "states": [
+            "waiting_dependencies"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "wake": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "run": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        }
+      }
+    },
+    {
+      "case": "partial_materialization",
+      "phase": "after",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "535a2a76-bdd3-45dd-85d4-e7d176b9262d"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "924bd69f-67f6-48dd-8f5b-76c256717511"
+          ],
+          "states": [
+            "prepared"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "1e8cb0a3-5a33-4992-94f2-47796cc11768"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "a6b89a98-0161-44db-bed9-d6982e9512cf"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "ec8bc88f-2aa0-47e3-9c2c-b7e4b5ab1feb"
+          ],
+          "states": [
+            "waiting_dependencies"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "wake": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "run": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        }
+      }
+    },
+    {
+      "case": "wake_response_loss",
+      "phase": "before",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "8578a097-f5df-4ccb-ac96-4a308c863c01"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "924bd69f-67f6-48dd-8f5b-76c256717511"
+          ],
+          "states": [
+            "prepared"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "6b3af8a0-e26f-45fa-ae9e-c4c51a9a36f1"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "a0a27f20-c355-409f-8dbc-6b64400463be"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "9225c539-2c2b-4169-99a4-b239c6b3e822"
+          ],
+          "states": [
+            "ready"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "7c9bfa02-6a67-4f45-a4ff-1e2b0cda036d"
+          ],
+          "states": [
+            "retry"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "6e598f56-10d8-4843-83e0-d6cfb3eb1cf8"
+          ],
+          "states": [
+            "completed"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "adbac502-37f8-414c-be02-d65c4d5eb175"
+          ],
+          "states": [
+            "succeeded"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "case": "wake_response_loss",
+      "phase": "after",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "8578a097-f5df-4ccb-ac96-4a308c863c01"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "924bd69f-67f6-48dd-8f5b-76c256717511"
+          ],
+          "states": [
+            "prepared"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "6b3af8a0-e26f-45fa-ae9e-c4c51a9a36f1"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "a0a27f20-c355-409f-8dbc-6b64400463be"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "9225c539-2c2b-4169-99a4-b239c6b3e822"
+          ],
+          "states": [
+            "queued"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "7c9bfa02-6a67-4f45-a4ff-1e2b0cda036d"
+          ],
+          "states": [
+            "delivered"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "6e598f56-10d8-4843-83e0-d6cfb3eb1cf8"
+          ],
+          "states": [
+            "completed"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "adbac502-37f8-414c-be02-d65c4d5eb175"
+          ],
+          "states": [
+            "succeeded"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "case": "projection_not_updated",
+      "phase": "before",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "2ef52735-68be-44bd-8447-1f8c5c7310b7"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "69703c08-62dc-48eb-b7b4-f0f21c70dec2"
+          ],
+          "states": [
+            "prepared"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "7e76f4c6-d589-4149-8cd4-c35d081ef6a2"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "fbf0bba7-26f6-4867-b4d6-f4ee01c8eebf"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "a00996e0-1ccf-4bc1-8bb6-6c2fda723691"
+          ],
+          "states": [
+            "ready"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "4da9b22e-2d11-4134-a40f-92c27c721fee"
+          ],
+          "states": [
+            "retry"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "a73847d1-88c8-4d8f-aa1a-306c5ccdd87f"
+          ],
+          "states": [
+            "completed"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "df1c06b4-01d7-4909-aab1-c2e9fa874a96"
+          ],
+          "states": [
+            "succeeded"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "case": "projection_not_updated",
+      "phase": "after",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "2ef52735-68be-44bd-8447-1f8c5c7310b7"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "69703c08-62dc-48eb-b7b4-f0f21c70dec2"
+          ],
+          "states": [
+            "prepared"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "7e76f4c6-d589-4149-8cd4-c35d081ef6a2"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "fbf0bba7-26f6-4867-b4d6-f4ee01c8eebf"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "a00996e0-1ccf-4bc1-8bb6-6c2fda723691"
+          ],
+          "states": [
+            "queued"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "4da9b22e-2d11-4134-a40f-92c27c721fee"
+          ],
+          "states": [
+            "delivered"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [
+            "a73847d1-88c8-4d8f-aa1a-306c5ccdd87f"
+          ],
+          "states": [
+            "completed"
+          ],
+          "effectiveCount": 1
+        },
+        "run": {
+          "ids": [
+            "df1c06b4-01d7-4909-aab1-c2e9fa874a96"
+          ],
+          "states": [
+            "succeeded"
+          ],
+          "effectiveCount": 1
+        }
+      }
+    },
+    {
+      "case": "out_of_order_old_event",
+      "phase": "before",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "b1864a6c-00b1-4563-8c58-77a7c983635a"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "1496cc34-d09f-44b5-969d-5df7681de51a"
+          ],
+          "states": [
+            "prepared"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "9e479c5e-f64c-49e4-8803-e8984d33df7b"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "47e81f87-1196-4459-9c13-24398ce64661"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "821dc613-b106-4264-829d-94c6e1915a85"
+          ],
+          "states": [
+            "ready"
+          ],
+          "effectiveCount": 1
+        },
+        "outbox": {
+          "ids": [
+            "7250a80c-c082-41fb-9032-47dbed16e274"
+          ],
+          "states": [
+            "pending"
+          ],
+          "effectiveCount": 1
+        },
+        "wake": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "run": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        }
+      }
+    },
+    {
+      "case": "out_of_order_old_event",
+      "phase": "after",
+      "snapshot": {
+        "record": {
+          "ids": [
+            "b1864a6c-00b1-4563-8c58-77a7c983635a"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "batch": {
+          "ids": [
+            "1496cc34-d09f-44b5-969d-5df7681de51a"
+          ],
+          "states": [
+            "prepared"
+          ],
+          "effectiveCount": 1
+        },
+        "item": {
+          "ids": [
+            "9e479c5e-f64c-49e4-8803-e8984d33df7b"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "link": {
+          "ids": [
+            "47e81f87-1196-4459-9c13-24398ce64661"
+          ],
+          "states": [
+            null
+          ],
+          "effectiveCount": 1
+        },
+        "intent": {
+          "ids": [
+            "821dc613-b106-4264-829d-94c6e1915a85"
+          ],
+          "states": [
+            "superseded"
+          ],
+          "effectiveCount": 0
+        },
+        "outbox": {
+          "ids": [
+            "7250a80c-c082-41fb-9032-47dbed16e274"
+          ],
+          "states": [
+            "superseded"
+          ],
+          "effectiveCount": 0
+        },
+        "wake": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        },
+        "run": {
+          "ids": [],
+          "states": [],
+          "effectiveCount": 0
+        }
+      }
+    }
+  ]
+}

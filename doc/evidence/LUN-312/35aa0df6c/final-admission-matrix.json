@@ -1,0 +1,949 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "6fdd60d393c828f3a1500f78c10503e0badd1451",
+  "testedCommit": "35aa0df6c3a67f72c89cf0eb10319c640f1d7b0b",
+  "cases": [
+    {
+      "case": "company_boundary",
+      "http": {
+        "status": 403,
+        "body": {
+          "error": "User does not have access to this company"
+        }
+      },
+      "admissionReason": "company_access_denied",
+      "effectiveWakeCount": 0,
+      "effectiveRunCount": 0
+    },
+    {
+      "case": "project_boundary",
+      "http": {
+        "status": 422,
+        "body": {
+          "error": "Project does not match request path",
+          "code": "work_record_workflow_project_boundary",
+          "details": {
+            "code": "work_record_workflow_project_boundary",
+            "workflowVersion": 2
+          }
+        }
+      },
+      "admissionReason": "work_record_workflow_project_boundary",
+      "effectiveWakeCount": 0,
+      "effectiveRunCount": 0
+    },
+    {
+      "case": "viewer",
+      "http": {
+        "status": 403,
+        "body": {
+          "error": "Viewer access is read-only"
+        }
+      },
+      "admissionReason": "role_denied",
+      "effectiveWakeCount": 0,
+      "effectiveRunCount": 0
+    },
+    {
+      "case": "approval_pending",
+      "http": {
+        "prepare": {
+          "status": 201,
+          "body": {
+            "batch": {
+              "id": "43af3d6f-9e3c-4296-bb9b-6da7e021aa7e",
+              "companyId": "d38e21f5-eb28-4c15-9931-b5b2f973e3d9",
+              "projectId": "80c07ef4-229f-4935-bf64-8372004b7380",
+              "rootRecordId": null,
+              "clientRequestId": "admission-approval_pending",
+              "requestPayloadDigest": "admission-approval_pending",
+              "scopeKind": "selected_records",
+              "scopeDigest": "62c63d217bd48095124f3759a5f5154bc6c107111904e8d191f19b08b84ed396",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.275Z",
+              "updatedAt": "2026-10-27T12:09:27.304Z"
+            },
+            "items": [
+              {
+                "id": "1ed39071-6f1b-4444-b6a3-ac1d008a2f5f",
+                "companyId": "d38e21f5-eb28-4c15-9931-b5b2f973e3d9",
+                "projectId": "80c07ef4-229f-4935-bf64-8372004b7380",
+                "batchId": "43af3d6f-9e3c-4296-bb9b-6da7e021aa7e",
+                "recordId": "a61f371b-0300-44a1-8351-d9f65edd342a",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "60cd6052-b093-467a-9cc9-c5a02da9a6c2",
+                "createdAt": "2026-10-27T12:09:27.275Z",
+                "updatedAt": "2026-10-27T12:09:27.297Z"
+              }
+            ],
+            "recovered": true,
+            "replayed": false
+          }
+        },
+        "get": {
+          "status": 200,
+          "body": {
+            "batch": {
+              "id": "43af3d6f-9e3c-4296-bb9b-6da7e021aa7e",
+              "companyId": "d38e21f5-eb28-4c15-9931-b5b2f973e3d9",
+              "projectId": "80c07ef4-229f-4935-bf64-8372004b7380",
+              "rootRecordId": null,
+              "clientRequestId": "admission-approval_pending",
+              "requestPayloadDigest": "admission-approval_pending",
+              "scopeKind": "selected_records",
+              "scopeDigest": "62c63d217bd48095124f3759a5f5154bc6c107111904e8d191f19b08b84ed396",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.275Z",
+              "updatedAt": "2026-10-27T12:09:27.304Z"
+            },
+            "items": [
+              {
+                "id": "1ed39071-6f1b-4444-b6a3-ac1d008a2f5f",
+                "companyId": "d38e21f5-eb28-4c15-9931-b5b2f973e3d9",
+                "projectId": "80c07ef4-229f-4935-bf64-8372004b7380",
+                "batchId": "43af3d6f-9e3c-4296-bb9b-6da7e021aa7e",
+                "recordId": "a61f371b-0300-44a1-8351-d9f65edd342a",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "60cd6052-b093-467a-9cc9-c5a02da9a6c2",
+                "createdAt": "2026-10-27T12:09:27.275Z",
+                "updatedAt": "2026-10-27T12:09:27.297Z"
+              }
+            ]
+          }
+        }
+      },
+      "admissionReason": "stale_issue_revision",
+      "observedReasons": [
+        "stale_issue_revision",
+        "stale_issue_revision"
+      ],
+      "wake": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "run": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "intent": {
+        "id": "0348bfa4-6c87-4c35-a6ca-79b0661a6464",
+        "state": "superseded",
+        "waitingReason": "stale_issue_revision"
+      },
+      "outbox": {
+        "id": "fcd81a05-8cf1-4d39-9f39-6ab9c760c0c9",
+        "state": "superseded",
+        "lastError": "stale_issue_revision"
+      }
+    },
+    {
+      "case": "approval_stale",
+      "http": {
+        "prepare": {
+          "status": 201,
+          "body": {
+            "batch": {
+              "id": "b07289f0-56ff-4436-955b-d63daba438ec",
+              "companyId": "0a1160d5-bad5-459f-98a8-910218b77a29",
+              "projectId": "6139e75f-8b2b-45d8-bea3-0f69ee8afa09",
+              "rootRecordId": null,
+              "clientRequestId": "admission-approval_stale",
+              "requestPayloadDigest": "admission-approval_stale",
+              "scopeKind": "selected_records",
+              "scopeDigest": "f585175217e2948cc7a0432a67158577e8706347f354531868326138e739fbf5",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.382Z",
+              "updatedAt": "2026-10-27T12:09:27.413Z"
+            },
+            "items": [
+              {
+                "id": "00658ad5-5bf5-45d6-8e23-fe867298f9e1",
+                "companyId": "0a1160d5-bad5-459f-98a8-910218b77a29",
+                "projectId": "6139e75f-8b2b-45d8-bea3-0f69ee8afa09",
+                "batchId": "b07289f0-56ff-4436-955b-d63daba438ec",
+                "recordId": "2d28a8a6-1880-44e3-b626-986c5df2d295",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "e6b450f9-b56c-4a15-b2f6-28c0aaba7c87",
+                "createdAt": "2026-10-27T12:09:27.382Z",
+                "updatedAt": "2026-10-27T12:09:27.407Z"
+              }
+            ],
+            "recovered": true,
+            "replayed": false
+          }
+        },
+        "get": {
+          "status": 200,
+          "body": {
+            "batch": {
+              "id": "b07289f0-56ff-4436-955b-d63daba438ec",
+              "companyId": "0a1160d5-bad5-459f-98a8-910218b77a29",
+              "projectId": "6139e75f-8b2b-45d8-bea3-0f69ee8afa09",
+              "rootRecordId": null,
+              "clientRequestId": "admission-approval_stale",
+              "requestPayloadDigest": "admission-approval_stale",
+              "scopeKind": "selected_records",
+              "scopeDigest": "f585175217e2948cc7a0432a67158577e8706347f354531868326138e739fbf5",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.382Z",
+              "updatedAt": "2026-10-27T12:09:27.413Z"
+            },
+            "items": [
+              {
+                "id": "00658ad5-5bf5-45d6-8e23-fe867298f9e1",
+                "companyId": "0a1160d5-bad5-459f-98a8-910218b77a29",
+                "projectId": "6139e75f-8b2b-45d8-bea3-0f69ee8afa09",
+                "batchId": "b07289f0-56ff-4436-955b-d63daba438ec",
+                "recordId": "2d28a8a6-1880-44e3-b626-986c5df2d295",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "e6b450f9-b56c-4a15-b2f6-28c0aaba7c87",
+                "createdAt": "2026-10-27T12:09:27.382Z",
+                "updatedAt": "2026-10-27T12:09:27.407Z"
+              }
+            ]
+          }
+        }
+      },
+      "admissionReason": "stale_issue_revision",
+      "observedReasons": [
+        "stale_issue_revision",
+        "stale_issue_revision"
+      ],
+      "wake": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "run": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "intent": {
+        "id": "b6929b3e-e33b-4428-abaa-885c760bea0d",
+        "state": "superseded",
+        "waitingReason": "stale_issue_revision"
+      },
+      "outbox": {
+        "id": "07535ee9-644e-4b45-ac7d-e328f27838c8",
+        "state": "superseded",
+        "lastError": "stale_issue_revision"
+      }
+    },
+    {
+      "case": "approval_reject",
+      "http": {
+        "prepare": {
+          "status": 201,
+          "body": {
+            "batch": {
+              "id": "d9a46141-7e67-4d4b-91d5-36be4c5e9299",
+              "companyId": "f4d0f470-d484-4bbd-ab6e-0d0dbbfacfa2",
+              "projectId": "c9c19889-dfb6-45a9-86bb-99c35b1b0244",
+              "rootRecordId": null,
+              "clientRequestId": "admission-approval_reject",
+              "requestPayloadDigest": "admission-approval_reject",
+              "scopeKind": "selected_records",
+              "scopeDigest": "8917d12cd68118fc45fa90c9368570813d43bb5a588ffab61f97f6b5420a4204",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.460Z",
+              "updatedAt": "2026-10-27T12:09:27.481Z"
+            },
+            "items": [
+              {
+                "id": "1e0ed070-44a5-4428-9b2e-48281f6d86e5",
+                "companyId": "f4d0f470-d484-4bbd-ab6e-0d0dbbfacfa2",
+                "projectId": "c9c19889-dfb6-45a9-86bb-99c35b1b0244",
+                "batchId": "d9a46141-7e67-4d4b-91d5-36be4c5e9299",
+                "recordId": "afa4ca03-8fc5-4a5f-bbc5-493e93264a4e",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "94607bb0-5146-4a06-95ce-414f93e2542e",
+                "createdAt": "2026-10-27T12:09:27.460Z",
+                "updatedAt": "2026-10-27T12:09:27.477Z"
+              }
+            ],
+            "recovered": true,
+            "replayed": false
+          }
+        },
+        "get": {
+          "status": 200,
+          "body": {
+            "batch": {
+              "id": "d9a46141-7e67-4d4b-91d5-36be4c5e9299",
+              "companyId": "f4d0f470-d484-4bbd-ab6e-0d0dbbfacfa2",
+              "projectId": "c9c19889-dfb6-45a9-86bb-99c35b1b0244",
+              "rootRecordId": null,
+              "clientRequestId": "admission-approval_reject",
+              "requestPayloadDigest": "admission-approval_reject",
+              "scopeKind": "selected_records",
+              "scopeDigest": "8917d12cd68118fc45fa90c9368570813d43bb5a588ffab61f97f6b5420a4204",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.460Z",
+              "updatedAt": "2026-10-27T12:09:27.481Z"
+            },
+            "items": [
+              {
+                "id": "1e0ed070-44a5-4428-9b2e-48281f6d86e5",
+                "companyId": "f4d0f470-d484-4bbd-ab6e-0d0dbbfacfa2",
+                "projectId": "c9c19889-dfb6-45a9-86bb-99c35b1b0244",
+                "batchId": "d9a46141-7e67-4d4b-91d5-36be4c5e9299",
+                "recordId": "afa4ca03-8fc5-4a5f-bbc5-493e93264a4e",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "94607bb0-5146-4a06-95ce-414f93e2542e",
+                "createdAt": "2026-10-27T12:09:27.460Z",
+                "updatedAt": "2026-10-27T12:09:27.477Z"
+              }
+            ]
+          }
+        }
+      },
+      "admissionReason": "stale_issue_revision",
+      "observedReasons": [
+        "stale_issue_revision",
+        "stale_issue_revision"
+      ],
+      "wake": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "run": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "intent": {
+        "id": "30e6afb1-b08e-442f-9b9c-5e4ffe750f19",
+        "state": "superseded",
+        "waitingReason": "stale_issue_revision"
+      },
+      "outbox": {
+        "id": "958b28df-9bb3-48d1-9b05-c01a2b0693b1",
+        "state": "superseded",
+        "lastError": "stale_issue_revision"
+      }
+    },
+    {
+      "case": "budget_hard_stop",
+      "http": {
+        "prepare": {
+          "status": 201,
+          "body": {
+            "batch": {
+              "id": "55b005bc-fd16-41bb-b2aa-0574625e0507",
+              "companyId": "0042323f-ab00-4197-ae30-2fb1b8965c5d",
+              "projectId": "5bd37a96-938b-4ce0-bc5a-06f1bc8ae550",
+              "rootRecordId": null,
+              "clientRequestId": "admission-budget_hard_stop",
+              "requestPayloadDigest": "admission-budget_hard_stop",
+              "scopeKind": "selected_records",
+              "scopeDigest": "2f27d5e0344890e279d96acbda38a8fa74e556fd8aebe9f6e60836948aecb18e",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.523Z",
+              "updatedAt": "2026-10-27T12:09:27.543Z"
+            },
+            "items": [
+              {
+                "id": "d27283d8-4abd-41bc-a959-ebeda4d20f2e",
+                "companyId": "0042323f-ab00-4197-ae30-2fb1b8965c5d",
+                "projectId": "5bd37a96-938b-4ce0-bc5a-06f1bc8ae550",
+                "batchId": "55b005bc-fd16-41bb-b2aa-0574625e0507",
+                "recordId": "a1753998-c18e-401a-9c28-87f60f54db09",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "e3d1e4e2-543d-4c7c-ac30-088a8761e5c7",
+                "createdAt": "2026-10-27T12:09:27.523Z",
+                "updatedAt": "2026-10-27T12:09:27.539Z"
+              }
+            ],
+            "recovered": true,
+            "replayed": false
+          }
+        },
+        "get": {
+          "status": 200,
+          "body": {
+            "batch": {
+              "id": "55b005bc-fd16-41bb-b2aa-0574625e0507",
+              "companyId": "0042323f-ab00-4197-ae30-2fb1b8965c5d",
+              "projectId": "5bd37a96-938b-4ce0-bc5a-06f1bc8ae550",
+              "rootRecordId": null,
+              "clientRequestId": "admission-budget_hard_stop",
+              "requestPayloadDigest": "admission-budget_hard_stop",
+              "scopeKind": "selected_records",
+              "scopeDigest": "2f27d5e0344890e279d96acbda38a8fa74e556fd8aebe9f6e60836948aecb18e",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.523Z",
+              "updatedAt": "2026-10-27T12:09:27.543Z"
+            },
+            "items": [
+              {
+                "id": "d27283d8-4abd-41bc-a959-ebeda4d20f2e",
+                "companyId": "0042323f-ab00-4197-ae30-2fb1b8965c5d",
+                "projectId": "5bd37a96-938b-4ce0-bc5a-06f1bc8ae550",
+                "batchId": "55b005bc-fd16-41bb-b2aa-0574625e0507",
+                "recordId": "a1753998-c18e-401a-9c28-87f60f54db09",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "e3d1e4e2-543d-4c7c-ac30-088a8761e5c7",
+                "createdAt": "2026-10-27T12:09:27.523Z",
+                "updatedAt": "2026-10-27T12:09:27.539Z"
+              }
+            ]
+          }
+        }
+      },
+      "admissionReason": "budget.blocked",
+      "observedReasons": [
+        "budget.blocked",
+        "Project cannot start work because its budget hard-stop is still exceeded."
+      ],
+      "wake": {
+        "ids": [
+          "7fe11a86-8718-43db-9a5a-e0c836b96f00"
+        ],
+        "statuses": [
+          "skipped"
+        ],
+        "effectiveCount": 0
+      },
+      "run": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "intent": {
+        "id": "4d292a1b-ee37-4faa-95f9-37504f07988c",
+        "state": "ready",
+        "waitingReason": null
+      },
+      "outbox": {
+        "id": "77ce43e4-29ee-487c-8dc8-8e8549db3c67",
+        "state": "retry",
+        "lastError": "Project cannot start work because its budget hard-stop is still exceeded."
+      }
+    },
+    {
+      "case": "company_paused",
+      "http": {
+        "prepare": {
+          "status": 201,
+          "body": {
+            "batch": {
+              "id": "99e62a45-bdfe-48c2-8c3f-68c2b7df33ee",
+              "companyId": "90077292-1608-4a78-853c-50ccb61c7000",
+              "projectId": "658d19b4-2d7b-4f6a-8c58-67a817d57455",
+              "rootRecordId": null,
+              "clientRequestId": "admission-company_paused",
+              "requestPayloadDigest": "admission-company_paused",
+              "scopeKind": "selected_records",
+              "scopeDigest": "392e0504445a8e6bc1b6315ebf5ef0f1fa31d7141a16281e15ba1c4e7486e26b",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.623Z",
+              "updatedAt": "2026-10-27T12:09:27.660Z"
+            },
+            "items": [
+              {
+                "id": "21c4fb45-6133-4186-9bb1-39ef1af870cf",
+                "companyId": "90077292-1608-4a78-853c-50ccb61c7000",
+                "projectId": "658d19b4-2d7b-4f6a-8c58-67a817d57455",
+                "batchId": "99e62a45-bdfe-48c2-8c3f-68c2b7df33ee",
+                "recordId": "8cf67221-bcf9-4c40-80e8-d5cbd52b3d95",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "a3d8446d-a7c0-448e-a7ca-d52bb1edb1d8",
+                "createdAt": "2026-10-27T12:09:27.623Z",
+                "updatedAt": "2026-10-27T12:09:27.655Z"
+              }
+            ],
+            "recovered": true,
+            "replayed": false
+          }
+        },
+        "get": {
+          "status": 200,
+          "body": {
+            "batch": {
+              "id": "99e62a45-bdfe-48c2-8c3f-68c2b7df33ee",
+              "companyId": "90077292-1608-4a78-853c-50ccb61c7000",
+              "projectId": "658d19b4-2d7b-4f6a-8c58-67a817d57455",
+              "rootRecordId": null,
+              "clientRequestId": "admission-company_paused",
+              "requestPayloadDigest": "admission-company_paused",
+              "scopeKind": "selected_records",
+              "scopeDigest": "392e0504445a8e6bc1b6315ebf5ef0f1fa31d7141a16281e15ba1c4e7486e26b",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.623Z",
+              "updatedAt": "2026-10-27T12:09:27.660Z"
+            },
+            "items": [
+              {
+                "id": "21c4fb45-6133-4186-9bb1-39ef1af870cf",
+                "companyId": "90077292-1608-4a78-853c-50ccb61c7000",
+                "projectId": "658d19b4-2d7b-4f6a-8c58-67a817d57455",
+                "batchId": "99e62a45-bdfe-48c2-8c3f-68c2b7df33ee",
+                "recordId": "8cf67221-bcf9-4c40-80e8-d5cbd52b3d95",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "a3d8446d-a7c0-448e-a7ca-d52bb1edb1d8",
+                "createdAt": "2026-10-27T12:09:27.623Z",
+                "updatedAt": "2026-10-27T12:09:27.655Z"
+              }
+            ]
+          }
+        }
+      },
+      "admissionReason": "company.inactive",
+      "observedReasons": [
+        "company.inactive",
+        "Heartbeat admission deferred the workflow-v2 release"
+      ],
+      "wake": {
+        "ids": [
+          "d0eadc4c-5bab-4df0-abbf-0f071c31aa94"
+        ],
+        "statuses": [
+          "skipped"
+        ],
+        "effectiveCount": 0
+      },
+      "run": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "intent": {
+        "id": "bfb82774-6a1f-489e-9650-b4f1c267c5cb",
+        "state": "ready",
+        "waitingReason": null
+      },
+      "outbox": {
+        "id": "d236790f-efdf-4742-a8a5-94113f0e0899",
+        "state": "retry",
+        "lastError": "Heartbeat admission deferred the workflow-v2 release"
+      }
+    },
+    {
+      "case": "agent_paused",
+      "http": {
+        "prepare": {
+          "status": 201,
+          "body": {
+            "batch": {
+              "id": "db501462-88c5-4183-a4c2-36a4d18b549c",
+              "companyId": "a81d18d9-f63a-4ec5-b554-c3556f26683b",
+              "projectId": "2387e191-1f5e-4ab5-8156-dff13aff2416",
+              "rootRecordId": null,
+              "clientRequestId": "admission-agent_paused",
+              "requestPayloadDigest": "admission-agent_paused",
+              "scopeKind": "selected_records",
+              "scopeDigest": "24d9eca1898119ab37530b635f55ddffe89eeac9aac3a764373953f98d6cc576",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.721Z",
+              "updatedAt": "2026-10-27T12:09:27.748Z"
+            },
+            "items": [
+              {
+                "id": "eee3d1bd-f5c0-4f1f-b457-bdf9245e6499",
+                "companyId": "a81d18d9-f63a-4ec5-b554-c3556f26683b",
+                "projectId": "2387e191-1f5e-4ab5-8156-dff13aff2416",
+                "batchId": "db501462-88c5-4183-a4c2-36a4d18b549c",
+                "recordId": "a103d877-5f4e-4bb0-b8db-2b7516ae1a21",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "31366edb-aaee-4acd-b7ba-ccebb7cb180b",
+                "createdAt": "2026-10-27T12:09:27.721Z",
+                "updatedAt": "2026-10-27T12:09:27.743Z"
+              }
+            ],
+            "recovered": true,
+            "replayed": false
+          }
+        },
+        "get": {
+          "status": 200,
+          "body": {
+            "batch": {
+              "id": "db501462-88c5-4183-a4c2-36a4d18b549c",
+              "companyId": "a81d18d9-f63a-4ec5-b554-c3556f26683b",
+              "projectId": "2387e191-1f5e-4ab5-8156-dff13aff2416",
+              "rootRecordId": null,
+              "clientRequestId": "admission-agent_paused",
+              "requestPayloadDigest": "admission-agent_paused",
+              "scopeKind": "selected_records",
+              "scopeDigest": "24d9eca1898119ab37530b635f55ddffe89eeac9aac3a764373953f98d6cc576",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.721Z",
+              "updatedAt": "2026-10-27T12:09:27.748Z"
+            },
+            "items": [
+              {
+                "id": "eee3d1bd-f5c0-4f1f-b457-bdf9245e6499",
+                "companyId": "a81d18d9-f63a-4ec5-b554-c3556f26683b",
+                "projectId": "2387e191-1f5e-4ab5-8156-dff13aff2416",
+                "batchId": "db501462-88c5-4183-a4c2-36a4d18b549c",
+                "recordId": "a103d877-5f4e-4bb0-b8db-2b7516ae1a21",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "31366edb-aaee-4acd-b7ba-ccebb7cb180b",
+                "createdAt": "2026-10-27T12:09:27.721Z",
+                "updatedAt": "2026-10-27T12:09:27.743Z"
+              }
+            ]
+          }
+        }
+      },
+      "admissionReason": "agent.not_invokable",
+      "observedReasons": [
+        "agent.not_invokable",
+        "Agent is not invokable in its current state"
+      ],
+      "wake": {
+        "ids": [
+          "9aead008-9cc1-4903-ac7e-5c68e963b420"
+        ],
+        "statuses": [
+          "skipped"
+        ],
+        "effectiveCount": 0
+      },
+      "run": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "intent": {
+        "id": "29372238-8eae-477d-bf3f-fdb684c7fc23",
+        "state": "ready",
+        "waitingReason": null
+      },
+      "outbox": {
+        "id": "d8cee12e-0803-4ed2-98b8-7d83ecda5910",
+        "state": "retry",
+        "lastError": "Agent is not invokable in its current state"
+      }
+    },
+    {
+      "case": "source_hold",
+      "http": {
+        "prepare": {
+          "status": 201,
+          "body": {
+            "batch": {
+              "id": "67fba71b-27a2-40ef-8ee2-574ad1cd184c",
+              "companyId": "6094d1c4-8346-49b4-9fd3-24ba588e86d8",
+              "projectId": "e873fdc3-316f-4ac6-a5a7-c6864be46670",
+              "rootRecordId": null,
+              "clientRequestId": "admission-source_hold",
+              "requestPayloadDigest": "admission-source_hold",
+              "scopeKind": "selected_records",
+              "scopeDigest": "0ef437793e8726ad635bb7ecb96ba82d76b35aa7dff670944a2667b752d42423",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.802Z",
+              "updatedAt": "2026-10-27T12:09:27.821Z"
+            },
+            "items": [
+              {
+                "id": "0b43fa11-392a-439b-b510-117cbae90f15",
+                "companyId": "6094d1c4-8346-49b4-9fd3-24ba588e86d8",
+                "projectId": "e873fdc3-316f-4ac6-a5a7-c6864be46670",
+                "batchId": "67fba71b-27a2-40ef-8ee2-574ad1cd184c",
+                "recordId": "909f9153-37b1-4863-b49c-a1ecb4a6293a",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "938010bd-5ea2-4922-801b-dc750f9a33ab",
+                "createdAt": "2026-10-27T12:09:27.802Z",
+                "updatedAt": "2026-10-27T12:09:27.817Z"
+              }
+            ],
+            "recovered": true,
+            "replayed": false
+          }
+        },
+        "get": {
+          "status": 200,
+          "body": {
+            "batch": {
+              "id": "67fba71b-27a2-40ef-8ee2-574ad1cd184c",
+              "companyId": "6094d1c4-8346-49b4-9fd3-24ba588e86d8",
+              "projectId": "e873fdc3-316f-4ac6-a5a7-c6864be46670",
+              "rootRecordId": null,
+              "clientRequestId": "admission-source_hold",
+              "requestPayloadDigest": "admission-source_hold",
+              "scopeKind": "selected_records",
+              "scopeDigest": "0ef437793e8726ad635bb7ecb96ba82d76b35aa7dff670944a2667b752d42423",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.802Z",
+              "updatedAt": "2026-10-27T12:09:27.821Z"
+            },
+            "items": [
+              {
+                "id": "0b43fa11-392a-439b-b510-117cbae90f15",
+                "companyId": "6094d1c4-8346-49b4-9fd3-24ba588e86d8",
+                "projectId": "e873fdc3-316f-4ac6-a5a7-c6864be46670",
+                "batchId": "67fba71b-27a2-40ef-8ee2-574ad1cd184c",
+                "recordId": "909f9153-37b1-4863-b49c-a1ecb4a6293a",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "938010bd-5ea2-4922-801b-dc750f9a33ab",
+                "createdAt": "2026-10-27T12:09:27.802Z",
+                "updatedAt": "2026-10-27T12:09:27.817Z"
+              }
+            ]
+          }
+        }
+      },
+      "admissionReason": "issue_dependencies_blocked",
+      "observedReasons": [
+        "issue_dependencies_blocked",
+        "Heartbeat admission deferred the workflow-v2 release"
+      ],
+      "wake": {
+        "ids": [
+          "03e48e1a-051e-468d-baf3-cba4a3603084"
+        ],
+        "statuses": [
+          "skipped"
+        ],
+        "effectiveCount": 0
+      },
+      "run": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "intent": {
+        "id": "b1d1b013-6048-4bb3-a7fd-63725d97c5ce",
+        "state": "ready",
+        "waitingReason": null
+      },
+      "outbox": {
+        "id": "3d377201-2c56-4e51-9f8f-11c9ee89b7b3",
+        "state": "retry",
+        "lastError": "Heartbeat admission deferred the workflow-v2 release"
+      }
+    },
+    {
+      "case": "issue_execution_lock",
+      "http": {
+        "prepare": {
+          "status": 201,
+          "body": {
+            "batch": {
+              "id": "ee5f8c42-b139-4491-a246-665803606319",
+              "companyId": "e016dae5-ff7b-4f74-9688-686a07b6ad7c",
+              "projectId": "f58d1107-7a31-47b3-ab57-7651fb3c473c",
+              "rootRecordId": null,
+              "clientRequestId": "admission-issue_execution_lock",
+              "requestPayloadDigest": "admission-issue_execution_lock",
+              "scopeKind": "selected_records",
+              "scopeDigest": "07dbd025f15b47b99ba5759d05b17021f80f2798695de0081639057c5c27ec64",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.896Z",
+              "updatedAt": "2026-10-27T12:09:27.919Z"
+            },
+            "items": [
+              {
+                "id": "f38c2529-7b71-4a48-8666-9142c8ebcdb0",
+                "companyId": "e016dae5-ff7b-4f74-9688-686a07b6ad7c",
+                "projectId": "f58d1107-7a31-47b3-ab57-7651fb3c473c",
+                "batchId": "ee5f8c42-b139-4491-a246-665803606319",
+                "recordId": "73c1d282-1eaf-4e75-914d-a2bcdce5734d",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "45be0f55-f6d5-426e-bf53-28762f63b522",
+                "createdAt": "2026-10-27T12:09:27.896Z",
+                "updatedAt": "2026-10-27T12:09:27.915Z"
+              }
+            ],
+            "recovered": true,
+            "replayed": false
+          }
+        },
+        "get": {
+          "status": 200,
+          "body": {
+            "batch": {
+              "id": "ee5f8c42-b139-4491-a246-665803606319",
+              "companyId": "e016dae5-ff7b-4f74-9688-686a07b6ad7c",
+              "projectId": "f58d1107-7a31-47b3-ab57-7651fb3c473c",
+              "rootRecordId": null,
+              "clientRequestId": "admission-issue_execution_lock",
+              "requestPayloadDigest": "admission-issue_execution_lock",
+              "scopeKind": "selected_records",
+              "scopeDigest": "07dbd025f15b47b99ba5759d05b17021f80f2798695de0081639057c5c27ec64",
+              "rootRecordRevision": 1,
+              "dependencySetRevision": 1,
+              "workflowVersion": 2,
+              "state": "prepared",
+              "errorCode": null,
+              "createdByAgentId": null,
+              "createdByUserId": "api-admin",
+              "createdAt": "2026-10-27T12:09:27.896Z",
+              "updatedAt": "2026-10-27T12:09:27.919Z"
+            },
+            "items": [
+              {
+                "id": "f38c2529-7b71-4a48-8666-9142c8ebcdb0",
+                "companyId": "e016dae5-ff7b-4f74-9688-686a07b6ad7c",
+                "projectId": "f58d1107-7a31-47b3-ab57-7651fb3c473c",
+                "batchId": "ee5f8c42-b139-4491-a246-665803606319",
+                "recordId": "73c1d282-1eaf-4e75-914d-a2bcdce5734d",
+                "recordRevision": 1,
+                "inclusionReason": "selected",
+                "materializationState": "materialized",
+                "primaryIssueLinkId": "45be0f55-f6d5-426e-bf53-28762f63b522",
+                "createdAt": "2026-10-27T12:09:27.896Z",
+                "updatedAt": "2026-10-27T12:09:27.915Z"
+              }
+            ]
+          }
+        }
+      },
+      "admissionReason": "issue_execution_deferred",
+      "observedReasons": [
+        "issue_execution_deferred",
+        "issue_execution_deferred",
+        "issue_execution_deferred"
+      ],
+      "wake": {
+        "ids": [
+          "4d51c64d-1fcc-4d9f-9773-1489fecc5fab"
+        ],
+        "statuses": [
+          "deferred_issue_execution"
+        ],
+        "effectiveCount": 0
+      },
+      "run": {
+        "ids": [],
+        "statuses": [],
+        "effectiveCount": 0
+      },
+      "intent": {
+        "id": "5d27a050-4779-4039-9195-5d068b5a490d",
+        "state": "waiting_governance",
+        "waitingReason": "issue_execution_deferred"
+      },
+      "outbox": {
+        "id": "8e1ac5f4-35dd-4980-ab39-d8eed478b482",
+        "state": "retry",
+        "lastError": "issue_execution_deferred"
+      }
+    }
+  ]
+}
