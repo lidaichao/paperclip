@@ -66,6 +66,7 @@ import { projectRoutes } from "./routes/projects.js";
 import { workRecordRoutes } from "./routes/work-records.js";
 import { issueRoutes } from "./routes/issues.js";
 import { createNonOverlappingWorkRecordTick, workRecordService } from "./services/work-records.js";
+import { workPackageDispatchService } from "./services/work-package-dispatch.js";
 import { issueTreeControlRoutes } from "./routes/issue-tree-control.js";
 import { caseRoutes } from "./routes/cases.js";
 import { fileResourceRoutes } from "./routes/file-resources.js";
@@ -1123,9 +1124,12 @@ export async function createApp(
   jobCoordinator.start();
   scheduler.start();
   const workRecords = workRecordService(db);
+  const workPackages = workPackageDispatchService(db);
   const runWorkRecordTick = createNonOverlappingWorkRecordTick(async () => {
     await workRecords.reconcileAll(100);
+    await workPackages.reconcileAll(25);
     await workRecords.processOutbox(connectionIntentHeartbeat.wakeup, 25);
+    await workPackages.processOutbox(connectionIntentHeartbeat.wakeup, 25);
   });
   let workRecordTimer: ReturnType<typeof setInterval> | null = setInterval(() => {
     void runWorkRecordTick()

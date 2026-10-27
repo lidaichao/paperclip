@@ -9166,6 +9166,19 @@ export function issueService(db: Db) {
         return null;
       }
 
+      // Workflow-v2 package parents carry source holds until the package
+      // reconciler has observed every successful child and admitted the PO
+      // intent. This final check closes the native "children completed" path,
+      // including the native rule that otherwise treats cancelled as terminal.
+      const parentReadiness = await listIssueDependencyReadinessMap(
+        db,
+        parent.companyId,
+        [parent.id],
+      );
+      if (!(parentReadiness.get(parent.id) ?? createIssueDependencyReadiness(parent.id)).isDependencyReady) {
+        return null;
+      }
+
       const childIdsForSummaries = children
         .slice(0, MAX_CHILD_COMPLETION_SUMMARIES)
         .map((child) => child.id);

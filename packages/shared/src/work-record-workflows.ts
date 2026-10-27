@@ -116,6 +116,9 @@ export const WORK_RECORD_WORKFLOW_ERROR_CODES = [
   "work_record_workflow_role_denied",
   "work_record_workflow_active_cycle_conflict",
   "work_record_workflow_active_intent_conflict",
+  "work_record_workflow_v2_disabled",
+  "work_package_assignment_required",
+  "work_package_dependency_cycle",
 ] as const;
 
 export type WorkPackageScopeKind = (typeof WORK_PACKAGE_SCOPE_KINDS)[number];
@@ -135,17 +138,13 @@ const requestIdSchema = z.string().trim().min(1).max(255);
 const digestSchema = z.string().trim().min(1).max(255);
 const evidenceRefsSchema = z.array(z.string().trim().min(1).max(2_000)).max(100).default([]);
 
-export const prepareWorkPackageDispatchSchema = z
+const workPackageScopeSchema = z
   .object({
     workflowVersion: z.literal(WORK_RECORD_WORKFLOW_VERSION).default(WORK_RECORD_WORKFLOW_VERSION),
-    clientRequestId: requestIdSchema,
-    requestPayloadDigest: digestSchema,
     projectId: z.string().guid(),
     rootRecordId: z.string().guid().nullable(),
     scopeKind: z.enum(WORK_PACKAGE_SCOPE_KINDS),
     selectedRecordIds: z.array(z.string().guid()).max(WORK_PACKAGE_MAX_RECORDS).default([]),
-    expectedRootRevision: z.number().int().positive(),
-    expectedDependencySetRevision: z.number().int().positive(),
   })
   .superRefine((value, context) => {
     if (value.scopeKind === "whole_package" && value.rootRecordId === null) {
@@ -170,6 +169,17 @@ export const prepareWorkPackageDispatchSchema = z
       });
     }
   });
+
+export const previewWorkPackageDispatchSchema = workPackageScopeSchema;
+
+export const prepareWorkPackageDispatchSchema = z
+  .intersection(workPackageScopeSchema, z.object({
+    clientRequestId: requestIdSchema,
+    requestPayloadDigest: digestSchema,
+    expectedRootRevision: z.number().int().positive(),
+    expectedDependencySetRevision: z.number().int().positive(),
+    expectedScopeDigest: digestSchema.optional(),
+  }));
 
 const qualityVerdictBaseSchema = z.object({
   workflowVersion: z.literal(WORK_RECORD_WORKFLOW_VERSION).default(WORK_RECORD_WORKFLOW_VERSION),
@@ -223,6 +233,7 @@ export const fillWorkRecordAssignmentGapSchema = z.object({
 });
 
 export type PrepareWorkPackageDispatch = z.infer<typeof prepareWorkPackageDispatchSchema>;
+export type PreviewWorkPackageDispatch = z.infer<typeof previewWorkPackageDispatchSchema>;
 export type RecordPoQualityVerdict = z.infer<typeof recordPoQualityVerdictSchema>;
 export type RecordQaQualityVerdict = z.infer<typeof recordQaQualityVerdictSchema>;
 export type FillWorkRecordAssignmentGap = z.infer<typeof fillWorkRecordAssignmentGapSchema>;

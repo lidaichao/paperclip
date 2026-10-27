@@ -12,9 +12,18 @@ const service = vi.hoisted(() => ({
   recoverRecord: vi.fn(),
 }));
 const logActivity = vi.hoisted(() => vi.fn());
+const packageService = vi.hoisted(() => ({
+  preview: vi.fn(),
+  prepare: vi.fn(),
+  getBatch: vi.fn(),
+  reconcile: vi.fn(),
+}));
+const access = vi.hoisted(() => ({ decide: vi.fn() }));
 
 vi.mock("../services/index.js", () => ({
   workRecordService: () => service,
+  workPackageDispatchService: () => packageService,
+  accessService: () => access,
   logActivity,
 }));
 
@@ -45,6 +54,9 @@ describe("work-record route authorization", () => {
   beforeEach(() => {
     for (const mock of Object.values(service)) mock.mockReset();
     logActivity.mockReset();
+    for (const mock of Object.values(packageService)) mock.mockReset();
+    access.decide.mockReset();
+    access.decide.mockResolvedValue({ allowed: true });
     service.list.mockResolvedValue([]);
     service.getDispatchRequest.mockResolvedValue({ state: "linked" });
   });
@@ -67,5 +79,26 @@ describe("work-record route authorization", () => {
     const app = createApp(viewer);
     await request(app).get("/api/companies/company-2/projects/project-2/work-records").expect(403, { error: "User does not have access to this company" });
     expect(service.list).not.toHaveBeenCalled();
+  });
+
+  it("keeps workflow-v2 prepare behind company write authorization", async () => {
+    const app = createApp(viewer);
+    await request(app)
+      .post("/api/companies/company-1/projects/11111111-1111-4111-8111-111111111111/work-package-dispatch/prepare")
+      .send({
+        workflowVersion: 2,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        rootRecordId: null,
+        scopeKind: "selected_records",
+        selectedRecordIds: ["22222222-2222-4222-8222-222222222222"],
+        clientRequestId: "viewer-denied",
+        requestPayloadDigest: "viewer-denied",
+        expectedRootRevision: 1,
+        expectedDependencySetRevision: 1,
+        expectedScopeDigest: "viewer-denied",
+      })
+      .expect(403, { error: "Viewer access is read-only" });
+    expect(packageService.preview).not.toHaveBeenCalled();
+    expect(packageService.prepare).not.toHaveBeenCalled();
   });
 });

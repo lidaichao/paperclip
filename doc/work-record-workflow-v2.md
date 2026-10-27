@@ -1,12 +1,68 @@
 # Work-record workflow v2 data contract
 
-Status: schema and shared contract only; user-facing M2 behavior is disabled.
+Status: M2-B server/API preparation and release path implemented behind a
+default-off write flag; no user-facing or production capability is enabled.
 
 The workflow-v2 tables are additive sidecars around the existing work-record to
 native-issue to heartbeat chain. They do not create another scheduler, start an
 agent, or make package dispatch, PO review, or QA review available. New write and
 claim paths must remain behind a default-off feature flag until later M2 stages
-implement and independently verify them.
+implement and independently verify them. M2-B reuses the existing two-second
+work-record heartbeat tick and does not add a scheduler.
+
+## M2-B API and feature flag
+
+Set `PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED=true` only in an isolated
+company/project and isolated database. When unset, preview remains read-only and
+all prepare/reconcile/claim writes return `403` with
+`work_record_workflow_v2_disabled`.
+
+- `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/preview`
+- `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/prepare`
+- `GET /api/companies/:companyId/projects/:projectId/work-package-dispatch/:batchId`
+- `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/:batchId/reconcile`
+
+Preview computes the current whole-package descendant closure or the exact
+selected-record set. Prepare always binds root/dependency revisions and may
+also pin the returned `expectedScopeDigest`; the server recomputes and stores
+the digest under the routing lock either way. The client request key replays only the
+same payload digest; a different payload returns `409`. Company/project misses
+return `404` without disclosing another scope, permission failures return `403`,
+stale revisions and request-key conflicts return `409`, and invalid scope,
+cycle, owner, or boundary input returns `422` with a stable `details.code`.
+
+All target owners are checked through `tasks:assign` authorization before the
+write. Prepare, replay, and reconcile mutations write activity evidence; an
+agent-originated command also appends lifecycle evidence to its existing run
+log. No first-party telemetry event is added.
+
+## Preparation, materialization, and recovery
+
+The prepare transaction takes the project routing advisory lock, then stable
+record row locks, and atomically stores the batch, items, dependency snapshots,
+quality facts, and execution intents. No issue or release is created inside
+that transaction. Whole-package validation is all-or-nothing; selected scope
+never pulls in a parent, sibling, predecessor, or successor.
+
+Reconciliation materializes one item transaction at a time. It reuses an
+existing primary issue link or creates an issue with the batch-item idempotency
+key, then adds parent and native `blocks` relations where both endpoints exist.
+A batch remains `preparing` until every item is materialized or reused. Calling
+the reconcile endpoint after a crash or response loss resumes the same batch;
+it does not create a second link or intent.
+
+Only a `prepared` batch may produce a workflow-v2 outbox row. Source holds,
+native dependency readiness, company/agent pause and invokability, budgets, and
+the issue execution lock are checked before claim and remain enforced again by
+native heartbeat admission. Cancelled prerequisites stay unresolved as
+`prerequisite_cancelled_impact_pending`, put the package quality cycle into
+`impact_review`, and cannot trigger a downstream or parent-PO wake. The native
+children-completed path also consults unresolved source holds.
+
+The test-only failpoint boundary names are `before_batch_commit`,
+`after_partial_materialization`, and `after_outbox_commit`. Recovery tests must
+restart reconciliation/claim with the failpoint removed and assert convergence
+to one batch, primary link, intent, outbox event, wake, and run.
 
 ## Frozen implementation contracts
 
@@ -49,6 +105,10 @@ records, links, holds, projections, issues, and runs are neither rewritten nor
 backfilled. Fresh databases and upgrades therefore produce the same additive
 schema while retaining old M1 facts.
 
+Migration `0290_graceful_payback.sql` makes an execution intent's `issue_id`
+nullable during `preparing`. Reconciliation must bind the issue and expected
+status version before it can insert the required intent-scoped outbox event.
+
 ## Safe rollback
 
 Rollback means disabling workflow-v2 writes and claims while preserving reads.
@@ -58,6 +118,6 @@ and prove there are no pending workflow-version-2 outbox events. Native issues
 already running continue to obey the existing approval, budget, pause, source
 hold, execution-lock, and heartbeat controls.
 
-Schema presence is not an availability claim. Whole/partial package dispatch,
-PO/QA pages and commands, automatic release, real agent launch, deployment, and
-data backfill remain outside this phase.
+Schema and API presence are not an availability claim. The write flag remains
+off by default. PO verdicts, QA/defect quality rounds, product UI, notification
+confirmation, production deployment, and data backfill remain outside M2-B.

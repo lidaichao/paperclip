@@ -617,7 +617,10 @@ export const workRecordExecutionIntents = pgTable(
     companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
     projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
     recordId: uuid("record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
-    issueId: uuid("issue_id").notNull().references(() => issues.id, { onDelete: "cascade" }),
+    // A prepare transaction creates the durable intent before the issue is
+    // materialized. Reconciliation binds this field before an outbox event can
+    // be emitted; the v2 outbox payload check remains the release fence.
+    issueId: uuid("issue_id").references(() => issues.id, { onDelete: "cascade" }),
     batchItemId: uuid("batch_item_id").references(() => workRecordDispatchBatchItems.id, { onDelete: "cascade" }),
     qualityItemId: uuid("quality_item_id").references(() => workRecordQualityItems.id, { onDelete: "cascade" }),
     intentKey: text("intent_key").notNull(),

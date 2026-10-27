@@ -1,0 +1,1 @@
+ALTER TABLE "work_record_execution_intents" ALTER COLUMN "issue_id" DROP NOT NULL;

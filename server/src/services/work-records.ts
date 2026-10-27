@@ -10,11 +10,15 @@ import {
   projects,
   workRecords,
   workRecordDependencies,
+  workRecordDispatchBatchItems,
+  workRecordDispatchBatches,
   workRecordDispatchCommands,
   workRecordExecutionHolds,
+  workRecordExecutionIntents,
   workRecordExecutionProjections,
   workRecordIssueLinks,
   workRecordOutbox,
+  workRecordQualityCycles,
 } from "@paperclipai/db";
 import type {
   CreateWorkRecord,
@@ -256,9 +260,12 @@ export function workRecordService(db: Db) {
       const predecessorIds = input.predecessorRecordIds === undefined
         ? null
         : await assertDependencies(tx, companyId, projectId, recordId, input.predecessorRecordIds);
+      const workflowV2WritesEnabled = ["1", "true", "yes", "on"].includes(
+        (process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED ?? "").trim().toLowerCase(),
+      );
       if (
         locked.dispatchState !== "not_dispatched" &&
-        (predecessorIds !== null || input.assigneeAgentId !== undefined || input.businessStatus !== undefined)
+        ((!workflowV2WritesEnabled && predecessorIds !== null) || input.assigneeAgentId !== undefined || input.businessStatus !== undefined)
       ) throw conflict("Dispatched record routing and business status are controlled by execution");
       if (predecessorIds) {
         await tx.delete(workRecordDependencies).where(and(eq(workRecordDependencies.companyId, companyId), eq(workRecordDependencies.successorRecordId, recordId)));
@@ -275,6 +282,63 @@ export function workRecordService(db: Db) {
         ...(predecessorIds ? { dependencySetRevision: locked.dependencySetRevision + 1 } : {}),
         revision: locked.revision + 1, updatedAt: new Date(),
       }).where(eq(workRecords.id, recordId)).returning();
+      if (locked.dispatchState !== "not_dispatched" && workflowV2WritesEnabled && predecessorIds !== null) {
+        const activeIntents = await tx.select({ id: workRecordExecutionIntents.id }).from(workRecordExecutionIntents).where(and(
+          eq(workRecordExecutionIntents.companyId, companyId),
+          eq(workRecordExecutionIntents.projectId, projectId),
+          eq(workRecordExecutionIntents.recordId, recordId),
+          inArray(workRecordExecutionIntents.state, ["pending", "waiting_dependencies", "waiting_governance", "ready", "queued", "running", "failed"]),
+        ));
+        const now = new Date();
+        if (activeIntents.length > 0) {
+          await tx.update(workRecordExecutionIntents).set({
+            state: "superseded",
+            waitingReason: "dependency_revision_changed",
+            supersededAt: now,
+            updatedAt: now,
+          }).where(inArray(workRecordExecutionIntents.id, activeIntents.map((intent) => intent.id)));
+          await tx.update(workRecordOutbox).set({ state: "superseded", updatedAt: now }).where(and(
+            eq(workRecordOutbox.companyId, companyId),
+            inArray(workRecordOutbox.executionIntentId, activeIntents.map((intent) => intent.id)),
+            ne(workRecordOutbox.state, "delivered"),
+          ));
+        }
+        const activeBatches = await tx.select({
+          id: workRecordDispatchBatchItems.batchId,
+          rootRecordId: workRecordDispatchBatches.rootRecordId,
+        }).from(workRecordDispatchBatchItems)
+          .innerJoin(workRecordDispatchBatches, and(
+            eq(workRecordDispatchBatches.companyId, workRecordDispatchBatchItems.companyId),
+            eq(workRecordDispatchBatches.id, workRecordDispatchBatchItems.batchId),
+          ))
+          .where(and(
+            eq(workRecordDispatchBatchItems.companyId, companyId),
+            eq(workRecordDispatchBatchItems.projectId, projectId),
+            eq(workRecordDispatchBatchItems.recordId, recordId),
+            inArray(workRecordDispatchBatches.state, ["preparing", "prepared", "blocked", "failed"]),
+          ));
+        if (activeBatches.length > 0) {
+          await tx.update(workRecordDispatchBatches).set({
+            state: "superseded",
+            errorCode: "work_record_workflow_stale_revision",
+            updatedAt: now,
+          }).where(inArray(workRecordDispatchBatches.id, [...new Set(activeBatches.map((batch) => batch.id))]));
+          const aggregateIds = [...new Set(activeBatches.map((batch) => batch.rootRecordId).filter((id): id is string => Boolean(id)))];
+          if (aggregateIds.length > 0) {
+            await tx.update(workRecordQualityCycles).set({
+              state: "superseded",
+              reason: "dependency_revision_changed",
+              closedAt: now,
+              updatedAt: now,
+            }).where(and(
+              eq(workRecordQualityCycles.companyId, companyId),
+              eq(workRecordQualityCycles.projectId, projectId),
+              inArray(workRecordQualityCycles.aggregateRecordId, aggregateIds),
+              eq(workRecordQualityCycles.state, "open"),
+            ));
+          }
+        }
+      }
       return row;
     });
     return hydrate(companyId, [updated]).then((result) => result[0]);
@@ -323,6 +387,8 @@ export function workRecordService(db: Db) {
     for (const dependency of dependencies) {
       const reason: WorkRecordHoldReason | null = !dependency.issueId
         ? "prerequisite_not_dispatched"
+        : dependency.issueStatus === "cancelled"
+          ? "prerequisite_cancelled_impact_pending"
         : dependency.issueStatus !== "done"
           ? "prerequisite_not_completed"
           : dependency.workspaceId && unfinalized.has(dependency.workspaceId)
@@ -723,6 +789,7 @@ export function workRecordService(db: Db) {
 
   async function processOutbox(wakeup: Wakeup, limit = 25) {
     const pending = await db.select().from(workRecordOutbox).where(and(
+      eq(workRecordOutbox.workflowVersion, 1),
       or(eq(workRecordOutbox.state, "pending"), eq(workRecordOutbox.state, "retry"), eq(workRecordOutbox.state, "processing")),
       sql`${workRecordOutbox.availableAt} <= now()`,
     )).orderBy(asc(workRecordOutbox.createdAt)).limit(limit);

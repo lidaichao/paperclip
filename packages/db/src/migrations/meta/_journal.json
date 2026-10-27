@@ -2017,6 +2017,13 @@
       "when": 1793095272898,
       "tag": "0289_green_lady_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 290,
+      "version": "7",
+      "when": 1793098268077,
+      "tag": "0290_graceful_payback",
+      "breakpoints": true
     }
   ]
 }
