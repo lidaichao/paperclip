@@ -89,10 +89,11 @@ The M2-C ledger lives in
 `PAPERCLIP_M2C_EVIDENCE_DIR` to retain `quality-cycle-evidence.json`. It records
 the package, repair, QA, defect, cycle, intent, issue, and real heartbeat-run
 IDs for the shared-repair, review-limit, and independent-defect paths. The
-shared-repair path proves that the next PO round gets a fresh intent and real
-process-adapter run only after every required defect verdict passes. The
-independent path executes two real process-adapter runs and proves agent pause
-plus project budget hard-stop deny the rework release before final admission.
+shared-repair path executes repair, original-QA retest, and PO acceptance through
+outbox wakes and real process-adapter runs; the next PO run exists only after
+every required defect verdict passes. The independent path executes two real
+process-adapter runs and proves agent pause plus project budget hard-stop deny
+the rework release before final admission.
 
 ## M2-C quality behavior
 
@@ -108,7 +109,13 @@ plus project budget hard-stop deny the rework release before final admission.
 - Package defects use typed links to the package, original repair record, and
   original QA record. Multiple defects sharing those records share one repair
   item and one QA item while retaining one verdict per defect. Unknown repair
-  ownership leaves the cycle in `attention_required` for PO resolution.
+  ownership leaves the cycle in `attention_required`: the reporting QA may not
+  resolve it, and only the package's assigned PO agent (or a board operator) may
+  select the original repair task. No rework intent or run is created before
+  that adjudication.
+- A package QA verdict must bind the defect's QA record, that record's primary
+  issue link, and the matching QA item. An item owned by another QA task cannot
+  carry the verdict even when both tasks belong to the same package.
 - Independent defects require distinct repair and QA agents before prepare.
   Their native issue execution policy hands successful repair to QA in
   `in_review`; only the named QA can pass or return it, and only QA pass reaches

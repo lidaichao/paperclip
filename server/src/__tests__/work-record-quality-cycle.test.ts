@@ -147,6 +147,16 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     }).where(eq(issues.id, issueId));
   }
 
+  async function completeIssueThroughService(issueId: string, agentId: string) {
+    const issue = await db.select().from(issues).where(eq(issues.id, issueId)).then((rows) => rows[0]);
+    const updated = await issueService(db).update(issueId, {
+      companyGuard: issue.companyId,
+      status: "done",
+      actorAgentId: agentId,
+    });
+    expect(updated).toMatchObject({ id: issueId, status: "done" });
+  }
+
   async function submitIndependentDefectForReview(issueId: string, developerAgentId: string) {
     const issue = await db.select().from(issues).where(eq(issues.id, issueId)).then((rows) => rows[0]);
     const transition = applyIssueExecutionPolicyTransition({
@@ -186,6 +196,10 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     const repairPrimary = await primaryIssue(context.company.id, repair.id);
     const qaPrimary = await primaryIssue(context.company.id, qaRecord.id);
     const rootPrimary = await primaryIssue(context.company.id, root.id);
+    await db.update(issues).set({ responsibleUserId: "m2c-quality-owner" }).where(inArray(
+      issues.id,
+      [rootPrimary.issue.id, repairPrimary.issue.id, qaPrimary.issue.id],
+    ));
     await markIssueDone(repairPrimary.issue.id);
     await markIssueDone(qaPrimary.issue.id);
     await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id, {
@@ -279,7 +293,7 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
       qaRecordId: qaRecord.id,
       reason: "PO selected the original repair task",
       evidenceRefs: ["evidence://po/ownership"],
-    }, { actorType: "user", actorId: "board-po", userId: "board-po" });
+    }, { actorType: "agent", actorId: context.po.id, agentId: context.po.id });
     quality = linkedByPo.quality;
     expect(await db.select().from(workRecordExecutionIntents).where(and(
       eq(workRecordExecutionIntents.companyId, context.company.id),
@@ -314,7 +328,28 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     expect(reworkIntents).toHaveLength(1);
     expect((await primaryIssue(context.company.id, repair.id)).issue.id).toBe(repairPrimary.issue.id);
 
-    await markIssueDone(repairPrimary.issue.id);
+    const heartbeat = heartbeatService(db, { runtimeEnv: { ...process.env, PAPERCLIP_IN_WORKTREE: "false" } });
+    await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id, {
+      actorType: "system",
+      actorId: "m2c-test",
+    });
+    expect(await context.packages.processOutbox(heartbeat.wakeup, 25)).toBe(1);
+    await heartbeat.drainActiveRunExecutions();
+    const repairRuns = await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, context.company.id),
+      eq(heartbeatRuns.agentId, context.developer.id),
+    ));
+    expect(repairRuns).toHaveLength(1);
+    const repairOutbox = await db.select().from(workRecordOutbox).where(
+      eq(workRecordOutbox.executionIntentId, reworkIntents[0].id),
+    ).then((rows) => rows[0]);
+    const repairWakeups = await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, context.company.id),
+      eq(agentWakeupRequests.idempotencyKey, `work-record-intent:${reworkIntents[0].id}:${reworkIntents[0].generation}`),
+    ));
+    expect(repairOutbox).toMatchObject({ state: "delivered", lastError: null });
+    expect(repairWakeups).toHaveLength(1);
+    await completeIssueThroughService(repairPrimary.issue.id, context.developer.id);
     await context.quality.reconcileCycle(context.company.id, context.project.id, quality.cycle!.id);
     quality = await context.quality.get(context.company.id, context.project.id, root.id);
     const qaItem = quality.items.find((item) => item.role === "qa")!;
@@ -331,7 +366,32 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
       eq(workRecordExecutionIntents.recordId, qaRecord.id),
       eq(workRecordExecutionIntents.kind, "qa_retest_release"),
     ))).toHaveLength(1);
-    await markIssueDone(qaPrimary.issue.id);
+    const qaIntents = await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.recordId, qaRecord.id),
+      eq(workRecordExecutionIntents.kind, "qa_retest_release"),
+    ));
+    await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id, {
+      actorType: "system",
+      actorId: "m2c-test",
+    });
+    expect(await context.packages.processOutbox(heartbeat.wakeup, 25)).toBe(1);
+    await heartbeat.drainActiveRunExecutions();
+    const qaRuns = await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, context.company.id),
+      eq(heartbeatRuns.agentId, context.qa.id),
+    ));
+    expect(qaRuns).toHaveLength(1);
+    const qaOutbox = await db.select().from(workRecordOutbox).where(
+      eq(workRecordOutbox.executionIntentId, qaIntents[0].id),
+    ).then((rows) => rows[0]);
+    const qaWakeups = await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, context.company.id),
+      eq(agentWakeupRequests.idempotencyKey, `work-record-intent:${qaIntents[0].id}:${qaIntents[0].generation}`),
+    ));
+    expect(qaOutbox).toMatchObject({ state: "delivered", lastError: null });
+    expect(qaWakeups).toHaveLength(1);
+    await completeIssueThroughService(qaPrimary.issue.id, context.qa.id);
     for (const [index, defect] of [unassignedDefect, defectA, defectB].entries()) {
       await context.quality.recordQaVerdict(context.company.id, context.project.id, root.id, {
         workflowVersion: 2,
@@ -361,8 +421,6 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     expect((await db.select({ businessStatus: workRecords.businessStatus }).from(workRecords).where(
       eq(workRecords.id, root.id),
     ).then((rows) => rows[0])).businessStatus).toBe("in_review");
-    await db.update(issues).set({ responsibleUserId: "m2c-po-review-owner" }).where(eq(issues.id, rootPrimary.issue.id));
-    const heartbeat = heartbeatService(db, { runtimeEnv: { ...process.env, PAPERCLIP_IN_WORKTREE: "false" } });
     await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id, {
       actorType: "system",
       actorId: "m2c-test",
@@ -416,9 +474,327 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
       issueIds: { root: rootPrimary.issue.id, repair: repairPrimary.issue.id, qa: qaPrimary.issue.id },
       poReturnVerdictId: firstReturn.verdict.id,
       reworkCycleId: firstReturn.nextCycleId,
-      repairIntentIds: reworkIntents.map((intent) => intent.id),
-      poIntentIds: finalPoIntents.map((intent) => intent.id),
-      poRunIds: poRuns.map((run) => run.id),
+      repairChain: {
+        intentId: reworkIntents[0].id,
+        outboxId: repairOutbox.id,
+        wakeupRequestId: repairWakeups[0].id,
+        runId: repairRuns[0].id,
+      },
+      qaChain: {
+        intentId: qaIntents[0].id,
+        outboxId: qaOutbox.id,
+        wakeupRequestId: qaWakeups[0].id,
+        runId: qaRuns[0].id,
+      },
+      poChain: {
+        intentId: finalPoIntents[0].id,
+        outboxId: poOutbox!.id,
+        wakeupRequestId: poWakeups[0].id,
+        runId: poRuns[0].id,
+      },
+    });
+  }, 30_000);
+
+  it("routes unknown package-defect ownership to the package PO before creating repair work", async () => {
+    const context = await seed();
+    const root = await createRecord(context, { title: "Ownership package", assigneeAgentId: context.po.id });
+    const repair = await createRecord(context, {
+      title: "Ownership repair",
+      assigneeAgentId: context.developer.id,
+      parentRecordId: root.id,
+    });
+    const qaRecord = await createRecord(context, {
+      title: "Ownership QA",
+      assigneeAgentId: context.qa.id,
+      parentRecordId: root.id,
+    });
+    const prepared = await prepare(context, {
+      scopeKind: "whole_package",
+      rootRecordId: root.id,
+      selectedRecordIds: [],
+    }, "package-ownership-adjudication");
+    await markIssueDone((await primaryIssue(context.company.id, repair.id)).issue.id);
+    await markIssueDone((await primaryIssue(context.company.id, qaRecord.id)).issue.id);
+    await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id, {
+      actorType: "system",
+      actorId: "m2c-test",
+    });
+    const initialCycle = await db.select().from(workRecordQualityCycles).where(and(
+      eq(workRecordQualityCycles.companyId, context.company.id),
+      eq(workRecordQualityCycles.aggregateRecordId, root.id),
+      eq(workRecordQualityCycles.state, "open"),
+    )).then((rows) => rows[0]);
+    await context.quality.reconcileCycle(context.company.id, context.project.id, initialCycle.id);
+    const defect = await createRecord(context, {
+      title: "Ownership unclear",
+      kind: "defect",
+      assigneeAgentId: null,
+    });
+    let quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    const reported = await context.quality.linkPackageDefect(context.company.id, context.project.id, {
+      workflowVersion: 2,
+      clientRequestId: "ownership-unassigned",
+      requestPayloadDigest: "ownership-unassigned",
+      cycleId: quality.cycle!.id,
+      expectedCycleRevision: quality.cycle!.revision,
+      defectRecordId: defect.id,
+      packageRecordId: root.id,
+      repairRecordId: null,
+      qaRecordId: qaRecord.id,
+      reason: "QA cannot identify the owning repair task",
+      evidenceRefs: ["evidence://qa/ownership-unclear"],
+    }, { actorType: "agent", actorId: context.qa.id, agentId: context.qa.id });
+    quality = reported.quality;
+    expect(quality.cycle).toMatchObject({
+      qualityPhase: "attention_required",
+      reason: "repair_ownership_requires_po",
+    });
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.kind, "rework_release"),
+    ))).toHaveLength(0);
+    expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
+
+    const adjudication = {
+      workflowVersion: 2 as const,
+      cycleId: quality.cycle!.id,
+      expectedCycleRevision: quality.cycle!.revision,
+      defectRecordId: defect.id,
+      packageRecordId: root.id,
+      repairRecordId: repair.id,
+      qaRecordId: qaRecord.id,
+      reason: "Select the original repair task",
+      evidenceRefs: ["evidence://po/ownership-adjudication"],
+    };
+    await expect(context.quality.linkPackageDefect(context.company.id, context.project.id, {
+      ...adjudication,
+      clientRequestId: "ownership-qa-denied",
+      requestPayloadDigest: "ownership-qa-denied",
+    }, { actorType: "agent", actorId: context.qa.id, agentId: context.qa.id })).rejects.toMatchObject({ status: 403 });
+    await expect(context.quality.linkPackageDefect(context.company.id, context.project.id, {
+      ...adjudication,
+      clientRequestId: "ownership-developer-denied",
+      requestPayloadDigest: "ownership-developer-denied",
+    }, { actorType: "agent", actorId: context.developer.id, agentId: context.developer.id })).rejects.toMatchObject({ status: 403 });
+    const decided = await context.quality.linkPackageDefect(context.company.id, context.project.id, {
+      ...adjudication,
+      clientRequestId: "ownership-po-decided",
+      requestPayloadDigest: "ownership-po-decided",
+    }, { actorType: "agent", actorId: context.po.id, agentId: context.po.id });
+    expect(decided.quality.cycle).toMatchObject({ qualityPhase: "waiting_fix" });
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.kind, "rework_release"),
+      eq(workRecordExecutionIntents.recordId, repair.id),
+    ))).toHaveLength(1);
+    expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
+  }, 30_000);
+
+  it("rejects a package defect verdict submitted through another QA task's item", async () => {
+    const context = await seed();
+    const qaTwo = await db.insert(agents).values({
+      companyId: context.company.id,
+      name: "QA Two",
+      status: "idle",
+      adapterType: "process",
+      adapterConfig: { command: process.execPath, args: ["-e", "process.exit(0)"] },
+      runtimeConfig: { heartbeat: { enabled: true, intervalSec: 60, wakeOnDemand: true } },
+    }).returning().then((rows) => rows[0]);
+    const root = await createRecord(context, { title: "Two-QA package", assigneeAgentId: context.po.id });
+    const repair = await createRecord(context, {
+      title: "Two-QA repair",
+      assigneeAgentId: context.developer.id,
+      parentRecordId: root.id,
+    });
+    const qaOneRecord = await createRecord(context, {
+      title: "QA one task",
+      assigneeAgentId: context.qa.id,
+      parentRecordId: root.id,
+    });
+    const qaTwoRecord = await createRecord(context, {
+      title: "QA two task",
+      assigneeAgentId: qaTwo.id,
+      parentRecordId: root.id,
+    });
+    const prepared = await prepare(context, {
+      scopeKind: "whole_package",
+      rootRecordId: root.id,
+      selectedRecordIds: [],
+    }, "package-two-qa-items");
+    for (const recordId of [repair.id, qaOneRecord.id, qaTwoRecord.id]) {
+      await markIssueDone((await primaryIssue(context.company.id, recordId)).issue.id);
+    }
+    await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id, {
+      actorType: "system",
+      actorId: "m2c-test",
+    });
+    let quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    await context.quality.reconcileCycle(context.company.id, context.project.id, quality.cycle!.id);
+    quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    const initialPoItem = quality.items.find((item) => item.role === "po")!;
+    await context.quality.recordPoVerdict(context.company.id, context.project.id, root.id, {
+      workflowVersion: 2,
+      clientRequestId: "two-qa-po-return",
+      requestPayloadDigest: "two-qa-po-return",
+      cycleId: quality.cycle!.id,
+      itemId: initialPoItem.id,
+      expectedCycleRevision: quality.cycle!.revision,
+      outcome: "return",
+      targetRecordIds: [repair.id],
+      reason: "Repair defects found by two QA owners",
+      evidenceRefs: ["evidence://po/two-qa-return"],
+    }, { actorType: "agent", actorId: context.po.id, agentId: context.po.id });
+    quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    const defectOne = await createRecord(context, { title: "QA one defect", kind: "defect", assigneeAgentId: null });
+    const defectTwo = await createRecord(context, { title: "QA two defect", kind: "defect", assigneeAgentId: null });
+    for (const [index, assignment] of [
+      { defect: defectOne, qaRecord: qaOneRecord, qaAgentId: context.qa.id },
+      { defect: defectTwo, qaRecord: qaTwoRecord, qaAgentId: qaTwo.id },
+    ].entries()) {
+      const linked = await context.quality.linkPackageDefect(context.company.id, context.project.id, {
+        workflowVersion: 2,
+        clientRequestId: `two-qa-link-${index}`,
+        requestPayloadDigest: `two-qa-link-${index}`,
+        cycleId: quality.cycle!.id,
+        expectedCycleRevision: quality.cycle!.revision,
+        defectRecordId: assignment.defect.id,
+        packageRecordId: root.id,
+        repairRecordId: repair.id,
+        qaRecordId: assignment.qaRecord.id,
+        reason: `QA ${index + 1} linked its own defect`,
+        evidenceRefs: [`evidence://qa/${index + 1}`],
+      }, { actorType: "agent", actorId: assignment.qaAgentId, agentId: assignment.qaAgentId });
+      quality = linked.quality;
+    }
+    await markIssueDone((await primaryIssue(context.company.id, repair.id)).issue.id);
+    await context.quality.reconcileCycle(context.company.id, context.project.id, quality.cycle!.id);
+    quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    const qaOneItem = quality.items.find((item) => item.role === "qa" && item.recordId === qaOneRecord.id)!;
+    await expect(context.quality.recordQaVerdict(context.company.id, context.project.id, root.id, {
+      workflowVersion: 2,
+      clientRequestId: "two-qa-cross-item",
+      requestPayloadDigest: "two-qa-cross-item",
+      cycleId: quality.cycle!.id,
+      itemId: qaOneItem.id,
+      expectedCycleRevision: quality.cycle!.revision,
+      outcome: "pass",
+      defectRecordId: defectTwo.id,
+      repairRecordId: repair.id,
+      reason: "Must not accept QA two's defect through QA one's item",
+      evidenceRefs: ["evidence://qa/cross-item"],
+    }, { actorType: "agent", actorId: qaTwo.id, agentId: qaTwo.id })).rejects.toMatchObject({
+      status: 422,
+      details: { code: "work_record_quality_target_invalid" },
+    });
+    expect(await db.select().from(workRecordQualityVerdicts).where(and(
+      eq(workRecordQualityVerdicts.companyId, context.company.id),
+      eq(workRecordQualityVerdicts.clientRequestId, "two-qa-cross-item"),
+    ))).toHaveLength(0);
+  }, 30_000);
+
+  it("stops package QA returns at the configured round limit without creating another repair run", async () => {
+    const context = await seed(2);
+    const root = await createRecord(context, { title: "Bounded package", assigneeAgentId: context.po.id });
+    const repair = await createRecord(context, {
+      title: "Bounded package repair",
+      assigneeAgentId: context.developer.id,
+      parentRecordId: root.id,
+    });
+    const qaRecord = await createRecord(context, {
+      title: "Bounded package QA",
+      assigneeAgentId: context.qa.id,
+      parentRecordId: root.id,
+    });
+    const prepared = await prepare(context, {
+      scopeKind: "whole_package",
+      rootRecordId: root.id,
+      selectedRecordIds: [],
+    }, "package-review-limit");
+    await markIssueDone((await primaryIssue(context.company.id, repair.id)).issue.id);
+    await markIssueDone((await primaryIssue(context.company.id, qaRecord.id)).issue.id);
+    await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id, {
+      actorType: "system",
+      actorId: "m2c-test",
+    });
+    let quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    await context.quality.reconcileCycle(context.company.id, context.project.id, quality.cycle!.id);
+    quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    const initialPoItem = quality.items.find((item) => item.role === "po")!;
+    await context.quality.recordPoVerdict(context.company.id, context.project.id, root.id, {
+      workflowVersion: 2,
+      clientRequestId: "package-limit-po-return",
+      requestPayloadDigest: "package-limit-po-return",
+      cycleId: quality.cycle!.id,
+      itemId: initialPoItem.id,
+      expectedCycleRevision: quality.cycle!.revision,
+      outcome: "return",
+      targetRecordIds: [repair.id],
+      reason: "Open the final permitted review round",
+      evidenceRefs: ["evidence://po/package-limit"],
+    }, { actorType: "agent", actorId: context.po.id, agentId: context.po.id });
+    quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    expect(quality.cycle!.cycleNumber).toBe(2);
+    const defect = await createRecord(context, { title: "Bounded package defect", kind: "defect", assigneeAgentId: null });
+    const linked = await context.quality.linkPackageDefect(context.company.id, context.project.id, {
+      workflowVersion: 2,
+      clientRequestId: "package-limit-defect-link",
+      requestPayloadDigest: "package-limit-defect-link",
+      cycleId: quality.cycle!.id,
+      expectedCycleRevision: quality.cycle!.revision,
+      defectRecordId: defect.id,
+      packageRecordId: root.id,
+      repairRecordId: repair.id,
+      qaRecordId: qaRecord.id,
+      reason: "Final permitted package review",
+      evidenceRefs: ["evidence://qa/package-limit"],
+    }, { actorType: "agent", actorId: context.qa.id, agentId: context.qa.id });
+    quality = linked.quality;
+    await markIssueDone((await primaryIssue(context.company.id, repair.id)).issue.id);
+    await context.quality.reconcileCycle(context.company.id, context.project.id, quality.cycle!.id);
+    quality = await context.quality.get(context.company.id, context.project.id, root.id);
+    const qaItem = quality.items.find((item) => item.role === "qa" && item.recordId === qaRecord.id)!;
+    const intentCountBefore = await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.kind, "rework_release"),
+    ));
+    const runCountBefore = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id));
+    const result = await context.quality.recordQaVerdict(context.company.id, context.project.id, root.id, {
+      workflowVersion: 2,
+      clientRequestId: "package-limit-qa-return",
+      requestPayloadDigest: "package-limit-qa-return",
+      cycleId: quality.cycle!.id,
+      itemId: qaItem.id,
+      expectedCycleRevision: quality.cycle!.revision,
+      outcome: "return",
+      defectRecordId: defect.id,
+      repairRecordId: repair.id,
+      reason: "Review ceiling reached with defect still open",
+      evidenceRefs: ["evidence://qa/package-limit-return"],
+    }, { actorType: "agent", actorId: context.qa.id, agentId: context.qa.id });
+    expect(result.escalated).toBe(true);
+    expect(result.quality.cycle).toMatchObject({
+      id: quality.cycle!.id,
+      state: "open",
+      qualityPhase: "attention_required",
+      reason: "review_round_limit_reached",
+    });
+    expect(await db.select().from(workRecordQualityCycles).where(and(
+      eq(workRecordQualityCycles.companyId, context.company.id),
+      eq(workRecordQualityCycles.aggregateRecordId, root.id),
+    ))).toHaveLength(2);
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.kind, "rework_release"),
+    ))).toHaveLength(intentCountBefore.length);
+    expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id)))
+      .toHaveLength(runCountBefore.length);
+    evidence.push({
+      case: "C23-package-review-round-limit",
+      recordIds: { root: root.id, repair: repair.id, qa: qaRecord.id, defect: defect.id },
+      cycleId: quality.cycle!.id,
+      outcome: "attention_required",
+      newRepairIntentCount: 0,
+      newRunCount: 0,
     });
   }, 30_000);
 

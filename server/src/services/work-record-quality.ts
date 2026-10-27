@@ -562,8 +562,39 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
         input.packageRecordId,
         [input.qaRecordId, ...(input.repairRecordId ? [input.repairRecordId] : [])],
       );
+      const packageRecord = records.find((record) => record.id === input.packageRecordId)!;
       const qaRecord = records.find((record) => record.id === input.qaRecordId)!;
-      assertRole(actor, qaRecord.assigneeAgentId, "QA");
+      const existingDefectLinks = await tx.select().from(workRecordQualityLinks).where(and(
+        eq(workRecordQualityLinks.companyId, companyId),
+        eq(workRecordQualityLinks.projectId, projectId),
+        eq(workRecordQualityLinks.packageRecordId, input.packageRecordId),
+        eq(workRecordQualityLinks.defectRecordId, input.defectRecordId),
+      )).orderBy(desc(workRecordQualityLinks.createdAt), desc(workRecordQualityLinks.id));
+      const unresolvedLink = existingDefectLinks.find((candidate) => candidate.repairRecordId === null) ?? null;
+      const resolvedLink = existingDefectLinks.find((candidate) => candidate.repairRecordId !== null) ?? null;
+      if (unresolvedLink) {
+        if (!input.repairRecordId) {
+          throw conflict("Defect ownership is already awaiting PO adjudication", details(
+            "work_record_quality_not_ready",
+            { qualityLinkId: unresolvedLink.id },
+          ));
+        }
+        assertRole(actor, packageRecord.assigneeAgentId, "PO");
+        if (unresolvedLink.qaRecordId !== input.qaRecordId) {
+          throw unprocessable("PO adjudication must preserve the reporting QA task", details(
+            "work_record_quality_target_invalid",
+            { qualityLinkId: unresolvedLink.id },
+          ));
+        }
+      } else {
+        assertRole(actor, qaRecord.assigneeAgentId, "QA");
+      }
+      if (resolvedLink) {
+        throw conflict("Defect ownership has already been adjudicated", details(
+          "work_record_quality_not_ready",
+          { qualityLinkId: resolvedLink.id },
+        ));
+      }
       if (await primaryIssueForRecord(tx, companyId, projectId, input.defectRecordId)) {
         throw conflict("Package-linked defects cannot own a parallel primary issue", details("work_record_quality_active_intent_conflict"));
       }
@@ -684,6 +715,13 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
         eq(workRecords.companyId, companyId), eq(workRecords.id, link.qaRecordId),
       )).then((rows) => rows[0] ?? null) : null;
       if (!qaRecord) throw unprocessable("Defect has no QA owner", details("work_record_quality_assignment_required"));
+      const qaPrimary = await primaryIssueForRecord(tx, companyId, projectId, qaRecord.id);
+      if (item.recordId !== qaRecord.id || !qaPrimary || item.issueLinkId !== qaPrimary.link.id) {
+        throw unprocessable("QA verdict is not bound to the defect's QA task", details(
+          "work_record_quality_target_invalid",
+          { qaRecordId: qaRecord.id, qualityItemId: item.id },
+        ));
+      }
       assertRole(actor, independent ? defect.qaAssigneeAgentId : qaRecord.assigneeAgentId, "QA");
       if (item.state !== "ready" && item.state !== "active" && item.state !== "submitted") {
         throw conflict("QA item is not ready for a verdict", details("work_record_quality_not_ready", { itemState: item.state }));
