@@ -216,6 +216,7 @@ export {
   workRecords,
   workRecordDependencies,
   workRecordDispatchCommands,
+  workRecordAssignmentCommands,
   workRecordIssueLinks,
   workRecordDispatchBatches,
   workRecordDispatchBatchItems,

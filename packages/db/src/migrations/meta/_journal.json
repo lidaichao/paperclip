@@ -2031,6 +2031,13 @@
       "when": 1793104663785,
       "tag": "0291_sleepy_corsair",
       "breakpoints": true
+    },
+    {
+      "idx": 292,
+      "version": "7",
+      "when": 1793111089602,
+      "tag": "0292_wooden_micromax",
+      "breakpoints": true
     }
   ]
 }

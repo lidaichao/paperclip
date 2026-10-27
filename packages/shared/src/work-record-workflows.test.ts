@@ -142,7 +142,7 @@ describe("work-record workflow v2 contract", () => {
     }).success).toBe(false);
   });
 
-  it("freezes CEO gap filling as null-to-agent compare-and-set", () => {
+  it("binds CEO assignment compare-and-set and requires approval for replacement", () => {
     expect(fillWorkRecordAssignmentGapSchema.safeParse({
       clientRequestId: "fill-gap",
       requestPayloadDigest: "digest-gap",
@@ -159,6 +159,15 @@ describe("work-record workflow v2 contract", () => {
       expectedRecordRevision: 1,
       expectedAssigneeAgentId: ids.repair,
     }).success).toBe(false);
+    expect(fillWorkRecordAssignmentGapSchema.safeParse({
+      clientRequestId: "replace-owner-approved",
+      requestPayloadDigest: "digest-replace-approved",
+      recordId: ids.root,
+      assigneeAgentId: ids.assignee,
+      expectedRecordRevision: 1,
+      expectedAssigneeAgentId: ids.repair,
+      approvalId: ids.item,
+    }).success).toBe(true);
   });
 
   it("allows only declared batch, cycle, item, and intent transitions", () => {

@@ -22,6 +22,7 @@ all prepare/reconcile/claim writes return `403` with
 - `GET /api/companies/:companyId/projects/:projectId/work-package-dispatch/:batchId`
 - `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/:batchId/reconcile`
 - `GET /api/companies/:companyId/projects/:projectId/work-records/:recordId/quality`
+- `POST /api/companies/:companyId/projects/:projectId/work-records/:recordId/assignment`
 - `POST /api/companies/:companyId/projects/:projectId/work-records/:recordId/quality/po-verdicts`
 - `POST /api/companies/:companyId/projects/:projectId/work-records/:recordId/quality/qa-verdicts`
 - `POST /api/companies/:companyId/projects/:projectId/work-record-quality/defect-links`
@@ -86,7 +87,9 @@ case. Recovery evidence records before/after IDs and counts at each failpoint.
 
 The M2-C ledger lives in
 `server/src/__tests__/work-record-quality-cycle.test.ts`. Set
-`PAPERCLIP_M2C_EVIDENCE_DIR` to retain `quality-cycle-evidence.json`. It records
+`PAPERCLIP_M2C_EVIDENCE_DIR` to retain `quality-cycle-evidence.json`,
+`assignment-command-evidence.json`, and
+`quality-audit-canary-evidence.json`. It records
 the package, repair, QA, defect, cycle, intent, issue, and real heartbeat-run
 IDs for the shared-repair, review-limit, and independent-defect paths. The
 shared-repair path executes repair, original-QA retest, and PO acceptance through
@@ -96,6 +99,18 @@ process-adapter runs and proves agent pause plus project budget hard-stop deny
 the rework release before final admission.
 
 ## M2-C quality behavior
+
+- CEO assignment uses a dedicated compare-and-set command. `NULL` to a named,
+  available company agent needs the current record revision; replacing a named
+  assignee additionally needs an approved board approval bound to the exact
+  company, project, record, revision, and before/after agent pair. PO, QA,
+  viewer, stale-revision, and generic PATCH attempts cannot dispatch work.
+- Every quality command records one sanitized activity/run-log audit for
+  success, replay, refusal, or conflict. The envelope carries company, project,
+  record, cycle, item, related intent IDs, actor/run, request key, before/after
+  revisions, outcome, and a bounded error code. Reasons, evidence bodies,
+  credentials, and tokens are excluded; no first-party telemetry event is
+  emitted.
 
 - A whole-package cycle reaches `po_acceptance` only after every required child
   and QA item is accepted. PO approval alone closes the package.
@@ -132,7 +147,8 @@ the rework release before final admission.
    and 2,000 dependency edges. Any exceeded limit returns `422` and must leave no
    partial batch, item, intent, outbox, wake, or run facts.
 3. PO, QA, and CEO actions use dedicated commands bound to the current revision.
-   CEO assignment gap filling is compare-and-set from an empty assignee only.
+   CEO assignment changes are compare-and-set; replacing a non-empty assignee
+   also requires an approved board approval bound to that exact transition.
    Approval, budget, pause, dependency, and source-hold checks remain final
    heartbeat admission gates.
 4. Rework and retest reuse the original work record and primary issue. A new
@@ -170,6 +186,11 @@ status version before it can insert the required intent-scoped outbox event.
 
 Migration `0291_sleepy_corsair.sql` adds the nullable independent-defect QA
 assignee and the quality-link request digest used for replay/conflict checks.
+
+Migration `0292_wooden_micromax.sql` adds dedicated CEO assignment command
+receipts, including the compare-and-set revisions, actor/run attribution, and
+optional board approval reference. It does not create an execution intent,
+outbox event, wake, or heartbeat run.
 
 When an undispatched M1 release outbox and a v2 intent coexist during a rolling
 transition, the v2 payload persists the M1 heartbeat idempotency key. Either

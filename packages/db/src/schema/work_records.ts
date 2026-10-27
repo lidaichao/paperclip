@@ -16,6 +16,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { agents } from "./agents.js";
+import { approvals } from "./approvals.js";
 import { companies } from "./companies.js";
 import { heartbeatRuns } from "./heartbeat_runs.js";
 import { issues } from "./issues.js";
@@ -184,6 +185,50 @@ export const workRecordDispatchCommands = pgTable(
       name: "work_record_dispatch_commands_record_scope_fk",
     }).onDelete("cascade"),
     requestUq: uniqueIndex("work_record_dispatch_commands_request_uq").on(table.companyId, table.recordId, table.clientRequestId),
+  }),
+);
+
+export const workRecordAssignmentCommands = pgTable(
+  "work_record_assignment_commands",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    recordId: uuid("record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    clientRequestId: text("client_request_id").notNull(),
+    requestPayloadDigest: text("request_payload_digest").notNull(),
+    expectedRecordRevision: integer("expected_record_revision").notNull(),
+    expectedAssigneeAgentId: uuid("expected_assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    assigneeAgentId: uuid("assignee_agent_id").notNull().references(() => agents.id),
+    approvalId: uuid("approval_id").references(() => approvals.id, { onDelete: "set null" }),
+    previousRevision: integer("previous_revision").notNull(),
+    resultingRevision: integer("resulting_revision").notNull(),
+    actorAgentId: uuid("actor_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    actorUserId: text("actor_user_id"),
+    actorRunId: uuid("actor_run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    recordScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.recordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_assignment_commands_record_scope_fk",
+    }).onDelete("cascade"),
+    assigneeScopeFk: foreignKey({
+      columns: [table.companyId, table.assigneeAgentId],
+      foreignColumns: [agents.companyId, agents.id],
+      name: "work_record_assignment_commands_assignee_scope_fk",
+    }),
+    expectedAssigneeScopeFk: foreignKey({
+      columns: [table.companyId, table.expectedAssigneeAgentId],
+      foreignColumns: [agents.companyId, agents.id],
+      name: "work_record_assignment_commands_expected_assignee_scope_fk",
+    }),
+    requestUq: uniqueIndex("work_record_assignment_commands_request_uq").on(
+      table.companyId,
+      table.recordId,
+      table.clientRequestId,
+    ),
   }),
 );
 

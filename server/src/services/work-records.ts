@@ -4,11 +4,13 @@ import type { Db } from "@paperclipai/db";
 import {
   agentWakeupRequests,
   agents,
+  approvals,
   heartbeatRuns,
   issues,
   issueRelations,
   projects,
   workRecords,
+  workRecordAssignmentCommands,
   workRecordDependencies,
   workRecordDispatchBatchItems,
   workRecordDispatchBatches,
@@ -23,16 +25,21 @@ import {
 import type {
   CreateWorkRecord,
   DispatchWorkRecord,
+  FillWorkRecordAssignmentGap,
   UpdateWorkRecord,
   WorkRecord,
   WorkRecordDispatchResult,
   WorkRecordDispatchRequestResult,
   WorkRecordHoldReason,
 } from "@paperclipai/shared";
-import { HttpError, conflict, notFound, unprocessable } from "../errors.js";
+import {
+  WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT,
+  classifyWorkRecordCommandReplay,
+} from "@paperclipai/shared";
+import { HttpError, conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { issueService, listUnfinalizedExecutionWorkspaceIds } from "./issues.js";
 
-type Actor = { actorType: "agent" | "user" | "system" | "plugin"; actorId: string; agentId?: string | null; userId?: string | null };
+type Actor = { actorType: "agent" | "user" | "system" | "plugin"; actorId: string; agentId?: string | null; userId?: string | null; runId?: string | null };
 type DbTransaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
 type Wakeup = (agentId: string, options: {
   source: "assignment"; triggerDetail: "system"; reason: string; payload: Record<string, unknown>;
@@ -40,6 +47,16 @@ type Wakeup = (agentId: string, options: {
   requestedByActorId: string | null; contextSnapshot: Record<string, unknown>;
 }) => Promise<unknown>;
 const ACTIVE_WAKE_STATUSES = ["queued", "claimed", "running", "completed"];
+
+export interface WorkRecordServiceOptions {
+  writesEnabled?: boolean;
+}
+
+function workflowV2WritesEnabledFromEnv() {
+  const value = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
+  if (value === undefined) return WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT;
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
 
 function releaseEventKey(record: typeof workRecords.$inferSelect) {
   return `${record.id}:${record.dispatchRound}:${record.dependencySetRevision}:${record.blockedCycle}`;
@@ -67,8 +84,9 @@ function releasePayload(record: typeof workRecords.$inferSelect, issueId: string
   };
 }
 
-export function workRecordService(db: Db) {
+export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}) {
   const issuesSvc = issueService(db);
+  const isWorkflowV2WritesEnabled = () => options.writesEnabled ?? workflowV2WritesEnabledFromEnv();
 
   async function assertProject(companyId: string, projectId: string) {
     const row = await db.select({ id: projects.id }).from(projects).where(and(eq(projects.companyId, companyId), eq(projects.id, projectId))).then((rows) => rows[0]);
@@ -250,6 +268,13 @@ export function workRecordService(db: Db) {
   }
 
   async function update(companyId: string, projectId: string, recordId: string, input: UpdateWorkRecord) {
+    const workflowV2WritesEnabled = isWorkflowV2WritesEnabled();
+    if (workflowV2WritesEnabled && input.assigneeAgentId !== undefined) {
+      throw unprocessable(
+        "Work-record assignee changes require the dedicated assignment command",
+        { code: "work_record_assignment_command_required", workflowVersion: 2 },
+      );
+    }
     if (input.assigneeAgentId !== undefined) await assertAssignee(companyId, input.assigneeAgentId);
     if (input.qaAssigneeAgentId !== undefined) await assertAssignee(companyId, input.qaAssigneeAgentId);
     const updated = await db.transaction(async (tx) => {
@@ -263,9 +288,6 @@ export function workRecordService(db: Db) {
       const predecessorIds = input.predecessorRecordIds === undefined
         ? null
         : await assertDependencies(tx, companyId, projectId, recordId, input.predecessorRecordIds);
-      const workflowV2WritesEnabled = ["1", "true", "yes", "on"].includes(
-        (process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED ?? "").trim().toLowerCase(),
-      );
       if (
         locked.dispatchState !== "not_dispatched" &&
         ((!workflowV2WritesEnabled && predecessorIds !== null) || input.assigneeAgentId !== undefined || input.qaAssigneeAgentId !== undefined || input.businessStatus !== undefined)
@@ -346,6 +368,170 @@ export function workRecordService(db: Db) {
       return row;
     });
     return hydrate(companyId, [updated]).then((result) => result[0]);
+  }
+
+  async function fillAssignmentGap(
+    companyId: string,
+    projectId: string,
+    recordId: string,
+    input: FillWorkRecordAssignmentGap,
+    actor: Actor,
+  ) {
+    if (!isWorkflowV2WritesEnabled()) {
+      throw forbidden("Work-record workflow v2 writes are disabled", {
+        code: "work_record_workflow_v2_disabled",
+        workflowVersion: 2,
+      });
+    }
+    if (input.recordId !== recordId) {
+      throw unprocessable("Assignment command record does not match the route", {
+        code: "work_record_assignment_target_invalid",
+        workflowVersion: 2,
+      });
+    }
+
+    const result = await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
+
+      const prior = await tx.select().from(workRecordAssignmentCommands).where(and(
+        eq(workRecordAssignmentCommands.companyId, companyId),
+        eq(workRecordAssignmentCommands.recordId, recordId),
+        eq(workRecordAssignmentCommands.clientRequestId, input.clientRequestId),
+      )).then((rows) => rows[0] ?? null);
+      if (prior) {
+        const replay = classifyWorkRecordCommandReplay(prior.requestPayloadDigest, input.requestPayloadDigest);
+        if (replay.outcome === "conflict") {
+          throw conflict("Client request key was already used with a different assignment command", {
+            code: replay.code,
+            workflowVersion: 2,
+            commandId: prior.id,
+          });
+        }
+        const record = await tx.select().from(workRecords).where(and(
+          eq(workRecords.companyId, companyId),
+          eq(workRecords.projectId, projectId),
+          eq(workRecords.id, recordId),
+        )).then((rows) => rows[0] ?? null);
+        if (!record) throw notFound("Work record not found");
+        return { command: prior, record, replayed: true };
+      }
+
+      const record = await tx.select().from(workRecords).where(and(
+        eq(workRecords.companyId, companyId),
+        eq(workRecords.projectId, projectId),
+        eq(workRecords.id, recordId),
+      )).for("update").then((rows) => rows[0] ?? null);
+      if (!record) throw notFound("Work record not found");
+      if (record.revision !== input.expectedRecordRevision) {
+        throw conflict("Work record revision changed", {
+          code: "work_record_workflow_stale_revision",
+          workflowVersion: 2,
+          currentRevision: record.revision,
+        });
+      }
+      if (record.assigneeAgentId !== input.expectedAssigneeAgentId) {
+        throw conflict("Work record assignee changed", {
+          code: "work_record_assignment_compare_failed",
+          workflowVersion: 2,
+          currentRevision: record.revision,
+        });
+      }
+
+      if (actor.actorType === "agent") {
+        const ceo = actor.agentId ? await tx.select({
+          id: agents.id,
+          role: agents.role,
+          status: agents.status,
+        }).from(agents).where(and(
+          eq(agents.companyId, companyId),
+          eq(agents.id, actor.agentId),
+        )).then((rows) => rows[0] ?? null) : null;
+        if (!ceo || ceo.role.trim().toLowerCase() !== "ceo" || !["active", "idle", "running"].includes(ceo.status)) {
+          throw forbidden("Assignment command is restricted to the current available CEO or board", {
+            code: "work_record_assignment_role_denied",
+            workflowVersion: 2,
+          });
+        }
+      } else if (actor.actorType !== "user") {
+        throw forbidden("Assignment command is restricted to the current available CEO or board", {
+          code: "work_record_assignment_role_denied",
+          workflowVersion: 2,
+        });
+      }
+
+      const assignee = await tx.select({ id: agents.id, status: agents.status }).from(agents).where(and(
+        eq(agents.companyId, companyId),
+        eq(agents.id, input.assigneeAgentId),
+      )).then((rows) => rows[0] ?? null);
+      if (!assignee || ["paused", "terminated", "pending_approval", "error"].includes(assignee.status)) {
+        throw unprocessable("Assignee is not available in this company", {
+          code: "work_record_assignment_target_invalid",
+          workflowVersion: 2,
+        });
+      }
+
+      if (input.expectedAssigneeAgentId !== null) {
+        const approval = input.approvalId ? await tx.select().from(approvals).where(and(
+          eq(approvals.companyId, companyId),
+          eq(approvals.id, input.approvalId),
+        )).then((rows) => rows[0] ?? null) : null;
+        const payload = approval?.payload ?? {};
+        const validApproval = approval?.type === "request_board_approval" &&
+          approval.status === "approved" &&
+          Boolean(approval.decidedByUserId) &&
+          Boolean(approval.decidedAt) &&
+          payload.action === "work_record.replace_assignee" &&
+          payload.companyId === companyId &&
+          payload.projectId === projectId &&
+          payload.recordId === recordId &&
+          payload.recordRevision === input.expectedRecordRevision &&
+          payload.fromAssigneeAgentId === input.expectedAssigneeAgentId &&
+          payload.toAssigneeAgentId === input.assigneeAgentId;
+        if (!validApproval) {
+          throw forbidden("Replacing an existing assignee requires a current board approval", {
+            code: "work_record_assignment_approval_required",
+            workflowVersion: 2,
+          });
+        }
+      }
+
+      const updated = await tx.update(workRecords).set({
+        assigneeAgentId: input.assigneeAgentId,
+        revision: record.revision + 1,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(workRecords.companyId, companyId),
+        eq(workRecords.projectId, projectId),
+        eq(workRecords.id, recordId),
+        eq(workRecords.revision, record.revision),
+      )).returning().then((rows) => rows[0] ?? null);
+      if (!updated) {
+        throw conflict("Work record revision changed", {
+          code: "work_record_workflow_stale_revision",
+          workflowVersion: 2,
+        });
+      }
+      const command = await tx.insert(workRecordAssignmentCommands).values({
+        companyId,
+        projectId,
+        recordId,
+        clientRequestId: input.clientRequestId,
+        requestPayloadDigest: input.requestPayloadDigest,
+        expectedRecordRevision: input.expectedRecordRevision,
+        expectedAssigneeAgentId: input.expectedAssigneeAgentId,
+        assigneeAgentId: input.assigneeAgentId,
+        approvalId: input.approvalId ?? null,
+        previousRevision: record.revision,
+        resultingRevision: updated.revision,
+        actorAgentId: actor.agentId ?? null,
+        actorUserId: actor.userId ?? null,
+        actorRunId: actor.runId ?? null,
+      }).returning().then((rows) => rows[0]);
+      return { command, record: updated, replayed: false };
+    });
+
+    const hydrated = await hydrate(companyId, [result.record]).then((rows) => rows[0]);
+    return { ...result, record: hydrated };
   }
 
   async function reconcileLocked(
@@ -889,6 +1075,7 @@ export function workRecordService(db: Db) {
     list,
     create,
     update,
+    fillAssignmentGap,
     dispatch,
     getDispatchRequest,
     reconcileRecord,

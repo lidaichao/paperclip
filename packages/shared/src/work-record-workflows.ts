@@ -244,7 +244,11 @@ export const linkWorkPackageDefectSchema = z.object({
   evidenceRefs: evidenceRefsSchema,
 });
 
-/** CEO may fill an empty assignment; replacing an existing owner is not this command. */
+/**
+ * CEO assignment changes are compare-and-set. Filling an empty slot needs no
+ * approval; replacing a named owner must carry a current board approval bound
+ * to the exact record revision and before/after assignee pair.
+ */
 export const fillWorkRecordAssignmentGapSchema = z.object({
   workflowVersion: z.literal(WORK_RECORD_WORKFLOW_VERSION).default(WORK_RECORD_WORKFLOW_VERSION),
   clientRequestId: requestIdSchema,
@@ -252,7 +256,16 @@ export const fillWorkRecordAssignmentGapSchema = z.object({
   recordId: z.string().guid(),
   assigneeAgentId: z.string().guid(),
   expectedRecordRevision: z.number().int().positive(),
-  expectedAssigneeAgentId: z.null(),
+  expectedAssigneeAgentId: z.string().guid().nullable(),
+  approvalId: z.string().guid().nullable().optional(),
+}).superRefine((value, context) => {
+  if (value.expectedAssigneeAgentId !== null && !value.approvalId) {
+    context.addIssue({
+      code: "custom",
+      path: ["approvalId"],
+      message: "Replacing an existing assignee requires a current board approval",
+    });
+  }
 });
 
 export type PrepareWorkPackageDispatch = z.infer<typeof prepareWorkPackageDispatchSchema>;

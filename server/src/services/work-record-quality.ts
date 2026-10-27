@@ -1106,8 +1106,56 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     return cycles.length;
   }
 
+  async function auditSnapshot(
+    companyId: string,
+    projectId: string,
+    aggregateRecordId: string,
+    cycleId: string,
+    itemId: string | null,
+  ) {
+    const [record, cycle, item] = await Promise.all([
+      db.select({ revision: workRecords.revision }).from(workRecords).where(and(
+        eq(workRecords.companyId, companyId),
+        eq(workRecords.projectId, projectId),
+        eq(workRecords.id, aggregateRecordId),
+      )).then((rows) => rows[0] ?? null),
+      db.select({ revision: workRecordQualityCycles.revision }).from(workRecordQualityCycles).where(and(
+        eq(workRecordQualityCycles.companyId, companyId),
+        eq(workRecordQualityCycles.projectId, projectId),
+        eq(workRecordQualityCycles.id, cycleId),
+      )).then((rows) => rows[0] ?? null),
+      itemId ? db.select({ revision: workRecordQualityItems.revision }).from(workRecordQualityItems).where(and(
+        eq(workRecordQualityItems.companyId, companyId),
+        eq(workRecordQualityItems.projectId, projectId),
+        eq(workRecordQualityItems.cycleId, cycleId),
+        eq(workRecordQualityItems.id, itemId),
+      )).then((rows) => rows[0] ?? null) : Promise.resolve(null),
+    ]);
+    const cycleItemIds = itemId ? [itemId] : await db.select({ id: workRecordQualityItems.id })
+      .from(workRecordQualityItems)
+      .where(and(
+        eq(workRecordQualityItems.companyId, companyId),
+        eq(workRecordQualityItems.projectId, projectId),
+        eq(workRecordQualityItems.cycleId, cycleId),
+      )).then((rows) => rows.map((row) => row.id));
+    const intentIds = cycleItemIds.length === 0 ? [] : await db.select({ id: workRecordExecutionIntents.id })
+      .from(workRecordExecutionIntents)
+      .where(and(
+        eq(workRecordExecutionIntents.companyId, companyId),
+        eq(workRecordExecutionIntents.projectId, projectId),
+        inArray(workRecordExecutionIntents.qualityItemId, cycleItemIds),
+      )).then((rows) => rows.map((row) => row.id).sort());
+    return {
+      recordRevision: record?.revision ?? null,
+      cycleRevision: cycle?.revision ?? null,
+      itemRevision: item?.revision ?? null,
+      intentIds,
+    };
+  }
+
   return {
     get: currentView,
+    auditSnapshot,
     recordPoVerdict,
     recordQaVerdict,
     linkPackageDefect,
