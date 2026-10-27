@@ -21,6 +21,7 @@ import {
   workRecordIssueLinks,
   workRecordOutbox,
   workRecordQualityCycles,
+  workRecordQualityLinks,
 } from "@paperclipai/db";
 import type {
   CreateWorkRecord,
@@ -176,7 +177,11 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     ));
     const outboxRows = await db.select({
       recordId: workRecordOutbox.recordId,
+      eventKey: workRecordOutbox.eventKey,
+      executionIntentId: workRecordOutbox.executionIntentId,
       state: workRecordOutbox.state,
+      attemptCount: workRecordOutbox.attemptCount,
+      deliveredAt: workRecordOutbox.deliveredAt,
       lastError: workRecordOutbox.lastError,
       updatedAt: workRecordOutbox.updatedAt,
     }).from(workRecordOutbox).where(and(
@@ -190,15 +195,67 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     }).from(workRecordDispatchCommands).where(and(
       eq(workRecordDispatchCommands.companyId, companyId), inArray(workRecordDispatchCommands.recordId, recordIds),
     )).orderBy(desc(workRecordDispatchCommands.createdAt));
+    const qualityCycles = await db.select({
+      id: workRecordQualityCycles.id,
+      aggregateRecordId: workRecordQualityCycles.aggregateRecordId,
+      cycleNumber: workRecordQualityCycles.cycleNumber,
+      revision: workRecordQualityCycles.revision,
+      phase: workRecordQualityCycles.qualityPhase,
+    }).from(workRecordQualityCycles).where(and(
+      eq(workRecordQualityCycles.companyId, companyId),
+      inArray(workRecordQualityCycles.aggregateRecordId, recordIds),
+    )).orderBy(desc(workRecordQualityCycles.cycleNumber), desc(workRecordQualityCycles.createdAt));
+    const qualityLinks = await db.select({
+      packageRecordId: workRecordQualityLinks.packageRecordId,
+    }).from(workRecordQualityLinks).where(and(
+      eq(workRecordQualityLinks.companyId, companyId),
+      inArray(workRecordQualityLinks.packageRecordId, recordIds),
+    ));
     const holdMap = new Map(holds.map((hold) => [`${hold.dependentId}:${hold.blockingId}`, hold.reason]));
     const projectionMap = new Map(projections.map((projection) => [projection.recordId, projection]));
     const outboxMap = new Map<string, (typeof outboxRows)[number]>();
     for (const row of outboxRows) if (!outboxMap.has(row.recordId)) outboxMap.set(row.recordId, row);
+    const intentIds = [...new Set([...outboxMap.values()].flatMap((row) => row.executionIntentId ? [row.executionIntentId] : []))];
+    const intentRows = intentIds.length > 0 ? await db.select({
+      id: workRecordExecutionIntents.id,
+      generation: workRecordExecutionIntents.generation,
+    }).from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, companyId),
+      inArray(workRecordExecutionIntents.id, intentIds),
+    )) : [];
+    const intentMap = new Map(intentRows.map((intent) => [intent.id, intent]));
+    const wakeKeyForOutbox = (row: (typeof outboxRows)[number]) => {
+      const intent = row.executionIntentId ? intentMap.get(row.executionIntentId) : null;
+      return intent ? `work-record-intent:${intent.id}:${intent.generation}` : `work-record-release:${row.eventKey}`;
+    };
+    const wakeKeys = [...new Set([...outboxMap.values()].map(wakeKeyForOutbox))];
+    const wakeRows = wakeKeys.length > 0 ? await db.select({
+      idempotencyKey: agentWakeupRequests.idempotencyKey,
+      id: agentWakeupRequests.id,
+      status: agentWakeupRequests.status,
+      claimedAt: agentWakeupRequests.claimedAt,
+      runId: agentWakeupRequests.runId,
+    }).from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, companyId),
+      inArray(agentWakeupRequests.idempotencyKey, wakeKeys),
+    )).orderBy(desc(agentWakeupRequests.requestedAt)) : [];
+    const wakeMap = new Map<string, (typeof wakeRows)[number]>();
+    for (const row of wakeRows) {
+      if (row.idempotencyKey && !wakeMap.has(row.idempotencyKey)) wakeMap.set(row.idempotencyKey, row);
+    }
     const commandMap = new Map<string, (typeof commandRows)[number]>();
     for (const row of commandRows) if (!commandMap.has(row.recordId)) commandMap.set(row.recordId, row);
+    const qualityCycleMap = new Map<string, (typeof qualityCycles)[number]>();
+    for (const cycle of qualityCycles) if (!qualityCycleMap.has(cycle.aggregateRecordId)) qualityCycleMap.set(cycle.aggregateRecordId, cycle);
+    const defectCountMap = new Map<string, number>();
+    for (const link of qualityLinks) {
+      if (!link.packageRecordId) continue;
+      defectCountMap.set(link.packageRecordId, (defectCountMap.get(link.packageRecordId) ?? 0) + 1);
+    }
     return rows.map((row) => {
       const projection = projectionMap.get(row.id);
       const outbox = outboxMap.get(row.id);
+      const wake = outbox ? wakeMap.get(wakeKeyForOutbox(outbox)) : null;
       const command = commandMap.get(row.id);
       const recovery = projection?.syncState === "error"
         ? { code: "projection_error" as const, message: projection.syncError, canReconcile: true, lastConfirmedAt: projection.projectedAt }
@@ -236,6 +293,24 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
           projectionState: "none" as const, projectionError: null, projectedAt: null,
         },
         recovery,
+        delivery: {
+          eventKey: outbox?.eventKey ?? null,
+          deliveryState: outbox?.state ?? null,
+          deliveredAt: outbox?.deliveredAt ?? null,
+          attemptCount: outbox?.attemptCount ?? 0,
+          lastError: outbox?.lastError ?? null,
+          wakeRequestId: wake?.id ?? null,
+          wakeStatus: wake?.status ?? null,
+          acknowledgedAt: wake?.claimedAt ?? null,
+          runId: wake?.runId ?? null,
+        },
+        quality: {
+          cycleId: qualityCycleMap.get(row.id)?.id ?? null,
+          cycleNumber: qualityCycleMap.get(row.id)?.cycleNumber ?? null,
+          cycleRevision: qualityCycleMap.get(row.id)?.revision ?? null,
+          phase: (qualityCycleMap.get(row.id)?.phase ?? "not_started") as WorkRecord["quality"]["phase"],
+          defectCount: defectCountMap.get(row.id) ?? 0,
+        },
       };
     });
   }

@@ -271,6 +271,15 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
         projectionError: "successful_run_missing_disposition",
       },
       recovery: { code: "projection_error", canReconcile: true },
+      delivery: {
+        eventKey: event.eventKey,
+        deliveryState: "delivered",
+        deliveredAt: expect.any(Date),
+        wakeRequestId: request.id,
+        wakeStatus: "completed",
+        acknowledgedAt: null,
+        runId: run.id,
+      },
     });
   });
 

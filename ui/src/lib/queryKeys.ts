@@ -518,6 +518,10 @@ export const queryKeys = {
   },
   workRecords: {
     list: (companyId: string, projectId: string) => ["work-records", companyId, projectId] as const,
+    quality: (companyId: string, projectId: string, recordId: string) =>
+      ["work-records", companyId, projectId, "quality", recordId] as const,
+    packageBatch: (companyId: string, projectId: string, batchId: string) =>
+      ["work-records", companyId, projectId, "package-batch", batchId] as const,
   },
   cases: {
     list: (companyId: string) => ["cases", companyId] as const,

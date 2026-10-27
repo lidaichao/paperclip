@@ -1,4 +1,20 @@
-import type { CreateWorkRecord, DispatchWorkRecord, UpdateWorkRecord, WorkRecord, WorkRecordDispatchRequestResult, WorkRecordDispatchResult } from "@paperclipai/shared";
+import type {
+  CreateWorkRecord,
+  DispatchWorkRecord,
+  LinkWorkPackageDefect,
+  PrepareWorkPackageDispatch,
+  PreviewWorkPackageDispatch,
+  RecordPoQualityVerdict,
+  RecordQaQualityVerdict,
+  UpdateWorkRecord,
+  WorkPackageDispatchBatchView,
+  WorkPackageDispatchPreview,
+  WorkRecord,
+  WorkRecordDispatchRequestResult,
+  WorkRecordDispatchResult,
+  WorkRecordQualityCommandResult,
+  WorkRecordQualityView,
+} from "@paperclipai/shared";
 import { api } from "./client";
 
 export const workRecordsApi = {
@@ -14,4 +30,20 @@ export const workRecordsApi = {
     api.get<WorkRecordDispatchRequestResult>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/dispatch-requests/${encodeURIComponent(clientRequestId)}`),
   reconcile: (companyId: string, projectId: string, recordId: string) =>
     api.post<WorkRecord>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/reconcile`, {}),
+  previewPackage: (companyId: string, projectId: string, input: PreviewWorkPackageDispatch) =>
+    api.post<WorkPackageDispatchPreview>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/preview`, input),
+  preparePackage: (companyId: string, projectId: string, input: PrepareWorkPackageDispatch) =>
+    api.post<WorkPackageDispatchBatchView>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/prepare`, input),
+  packageBatch: (companyId: string, projectId: string, batchId: string) =>
+    api.get<WorkPackageDispatchBatchView>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/${batchId}`),
+  reconcilePackage: (companyId: string, projectId: string, batchId: string) =>
+    api.post<WorkPackageDispatchBatchView>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/${batchId}/reconcile`, {}),
+  quality: (companyId: string, projectId: string, recordId: string) =>
+    api.get<WorkRecordQualityView>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/quality`),
+  recordPoVerdict: (companyId: string, projectId: string, recordId: string, input: RecordPoQualityVerdict) =>
+    api.post<WorkRecordQualityCommandResult>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/quality/po-verdicts`, input),
+  recordQaVerdict: (companyId: string, projectId: string, recordId: string, input: RecordQaQualityVerdict) =>
+    api.post<WorkRecordQualityCommandResult>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/quality/qa-verdicts`, input),
+  linkDefect: (companyId: string, projectId: string, input: LinkWorkPackageDefect) =>
+    api.post<WorkRecordQualityCommandResult>(`/companies/${companyId}/projects/${projectId}/work-record-quality/defect-links`, input),
 };

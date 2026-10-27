@@ -84,26 +84,35 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
       eq(workRecords.id, aggregateRecordId),
     )).then((rows) => rows[0] ?? null);
     if (!aggregate) throw notFound("Quality aggregate work record not found");
-    const cycle = await db.select().from(workRecordQualityCycles).where(and(
+    const cycles = await db.select().from(workRecordQualityCycles).where(and(
       eq(workRecordQualityCycles.companyId, companyId),
       eq(workRecordQualityCycles.projectId, projectId),
       eq(workRecordQualityCycles.aggregateRecordId, aggregateRecordId),
-      eq(workRecordQualityCycles.state, "open"),
-    )).then((rows) => rows[0] ?? null);
-    const items = cycle ? await db.select().from(workRecordQualityItems).where(and(
+    )).orderBy(desc(workRecordQualityCycles.cycleNumber), desc(workRecordQualityCycles.createdAt));
+    const cycle = cycles.find((candidate) => candidate.state === "open") ?? null;
+    const cycleIds = cycles.map((candidate) => candidate.id);
+    const historyItems = cycleIds.length > 0 ? await db.select().from(workRecordQualityItems).where(and(
       eq(workRecordQualityItems.companyId, companyId),
-      eq(workRecordQualityItems.cycleId, cycle.id),
+      inArray(workRecordQualityItems.cycleId, cycleIds),
     )).orderBy(asc(workRecordQualityItems.createdAt), asc(workRecordQualityItems.id)) : [];
-    const verdicts = cycle ? await db.select().from(workRecordQualityVerdicts).where(and(
+    const verdicts = cycleIds.length > 0 ? await db.select().from(workRecordQualityVerdicts).where(and(
       eq(workRecordQualityVerdicts.companyId, companyId),
-      eq(workRecordQualityVerdicts.cycleId, cycle.id),
+      inArray(workRecordQualityVerdicts.cycleId, cycleIds),
     )).orderBy(asc(workRecordQualityVerdicts.createdAt), asc(workRecordQualityVerdicts.id)) : [];
+    const items = cycle ? historyItems.filter((item) => item.cycleId === cycle.id) : [];
     const links = await db.select().from(workRecordQualityLinks).where(and(
       eq(workRecordQualityLinks.companyId, companyId),
       eq(workRecordQualityLinks.projectId, projectId),
       eq(workRecordQualityLinks.packageRecordId, aggregateRecordId),
     )).orderBy(asc(workRecordQualityLinks.createdAt), asc(workRecordQualityLinks.id));
-    return { aggregate, cycle, items, verdicts, links };
+    return {
+      aggregate,
+      cycle,
+      items,
+      verdicts: cycle ? verdicts.filter((verdict) => verdict.cycleId === cycle.id) : [],
+      links,
+      history: { cycles, items: historyItems, verdicts },
+    };
   }
 
   async function nextCycleNumber(tx: DbTransaction, companyId: string, aggregateRecordId: string) {

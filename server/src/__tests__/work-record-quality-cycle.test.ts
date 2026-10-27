@@ -214,6 +214,19 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     await context.quality.reconcileCycle(context.company.id, context.project.id, initialCycle.id);
     const ready = await context.quality.get(context.company.id, context.project.id, root.id);
     expect(ready.cycle).toMatchObject({ qualityPhase: "po_acceptance", state: "open" });
+    expect(ready.history).toMatchObject({
+      cycles: [expect.objectContaining({ id: ready.cycle!.id })],
+      items: expect.arrayContaining([expect.objectContaining({ role: "po" })]),
+      verdicts: [],
+    });
+    const rootProjection = (await context.records.list(context.company.id, context.project.id))
+      .find((record) => record.id === root.id)!;
+    expect(rootProjection.quality).toMatchObject({
+      cycleId: ready.cycle!.id,
+      cycleNumber: ready.cycle!.cycleNumber,
+      phase: "po_acceptance",
+      defectCount: 0,
+    });
     expect(rootPrimary.issue.status).not.toBe("done");
     const poItem = ready.items.find((item) => item.role === "po")!;
     const poReturn = {
@@ -349,11 +362,23 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     ));
     expect(repairOutbox).toMatchObject({ state: "delivered", lastError: null });
     expect(repairWakeups).toHaveLength(1);
+    const repairProjection = (await context.records.list(context.company.id, context.project.id))
+      .find((record) => record.id === repair.id)!;
+    expect(repairProjection.delivery).toMatchObject({
+      deliveryState: "delivered",
+      wakeRequestId: repairWakeups[0].id,
+      wakeStatus: expect.stringMatching(/^(queued|claimed|running|completed)$/),
+      runId: repairWakeups[0].runId,
+    });
     await completeIssueThroughService(repairPrimary.issue.id, context.developer.id);
     await context.quality.reconcileCycle(context.company.id, context.project.id, quality.cycle!.id);
     quality = await context.quality.get(context.company.id, context.project.id, root.id);
     const qaItem = quality.items.find((item) => item.role === "qa")!;
     expect(quality.cycle!.qualityPhase).toBe("qa_retest");
+    expect(quality.history.cycles.map((cycle) => cycle.cycleNumber)).toEqual([2, 1]);
+    expect(quality.history.verdicts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ cycleId: ready.cycle!.id, outcome: "return" }),
+    ]));
     expect((await db.select({
       id: workRecords.id,
       businessStatus: workRecords.businessStatus,

@@ -1,4 +1,13 @@
 import { z } from "zod";
+import type {
+  WorkPackageBatchState,
+  WorkPackageScopeKind,
+  WorkRecordQualityCycleKind,
+  WorkRecordQualityCycleState,
+  WorkRecordQualityItemRole,
+  WorkRecordQualityItemState,
+  WorkRecordQualityPhase,
+} from "./work-record-workflows.js";
 
 export const WORK_RECORD_KINDS = ["plan", "defect"] as const;
 export const WORK_RECORD_BUSINESS_STATUSES = [
@@ -114,6 +123,26 @@ export interface WorkRecordRecoveryView {
   lastConfirmedAt: Date | null;
 }
 
+export interface WorkRecordDeliveryView {
+  eventKey: string | null;
+  deliveryState: string | null;
+  deliveredAt: Date | null;
+  attemptCount: number;
+  lastError: string | null;
+  wakeRequestId: string | null;
+  wakeStatus: string | null;
+  acknowledgedAt: Date | null;
+  runId: string | null;
+}
+
+export interface WorkRecordQualitySummaryView {
+  cycleId: string | null;
+  cycleNumber: number | null;
+  cycleRevision: number | null;
+  phase: WorkRecordQualityPhase;
+  defectCount: number;
+}
+
 export interface WorkRecord {
   id: string;
   companyId: string;
@@ -122,6 +151,8 @@ export interface WorkRecord {
   title: string;
   description: string | null;
   descriptionRevision: number;
+  parentRecordId: string | null;
+  iterationId: string | null;
   assigneeAgentId: string | null;
   qaAssigneeAgentId: string | null;
   businessStatus: WorkRecordBusinessStatus;
@@ -134,8 +165,157 @@ export interface WorkRecord {
   dependencies: WorkRecordDependencyView[];
   execution: WorkRecordExecutionView;
   recovery: WorkRecordRecoveryView;
+  delivery: WorkRecordDeliveryView;
+  quality: WorkRecordQualitySummaryView;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface WorkPackageDispatchPreview {
+  workflowVersion: 2;
+  projectId: string;
+  rootRecordId: string | null;
+  scopeKind: WorkPackageScopeKind;
+  scopeDigest: string;
+  rootRevision: number;
+  dependencySetRevision: number;
+  recordCount: number;
+  edgeCount: number;
+  maxDepth: number;
+  records: Array<{
+    id: string;
+    title: string;
+    revision: number;
+    dependencySetRevision: number;
+    parentRecordId: string | null;
+    assigneeAgentId: string | null;
+    qaAssigneeAgentId: string | null;
+    depth: number;
+  }>;
+  edges: Array<{
+    predecessorRecordId: string;
+    successorRecordId: string;
+  }>;
+}
+
+export interface WorkPackageDispatchBatch {
+  id: string;
+  companyId: string;
+  projectId: string;
+  rootRecordId: string | null;
+  clientRequestId: string;
+  scopeKind: WorkPackageScopeKind;
+  scopeDigest: string;
+  rootRecordRevision: number;
+  dependencySetRevision: number;
+  workflowVersion: number;
+  state: WorkPackageBatchState;
+  errorCode: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WorkPackageDispatchBatchItem {
+  id: string;
+  recordId: string;
+  recordRevision: number;
+  inclusionReason: string;
+  materializationState: string;
+  primaryIssueLinkId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WorkPackageDispatchBatchView {
+  batch: WorkPackageDispatchBatch;
+  items: WorkPackageDispatchBatchItem[];
+  replayed?: boolean;
+  recovered?: boolean;
+}
+
+export interface WorkRecordQualityCycleView {
+  id: string;
+  aggregateRecordId: string;
+  cycleNumber: number;
+  kind: WorkRecordQualityCycleKind;
+  state: WorkRecordQualityCycleState;
+  qualityPhase: WorkRecordQualityPhase;
+  reason: string | null;
+  scopeDigest: string;
+  revision: number;
+  openedByAgentId: string | null;
+  openedByUserId: string | null;
+  closedByAgentId: string | null;
+  closedByUserId: string | null;
+  closedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WorkRecordQualityItemView {
+  id: string;
+  cycleId: string;
+  recordId: string;
+  defectRecordId: string | null;
+  role: WorkRecordQualityItemRole;
+  required: boolean;
+  state: WorkRecordQualityItemState;
+  issueLinkId: string | null;
+  revision: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WorkRecordQualityVerdictView {
+  id: string;
+  cycleId: string;
+  itemId: string;
+  defectRecordId: string | null;
+  outcome: string;
+  reason: string | null;
+  evidenceRefs: string[];
+  actorAgentId: string | null;
+  actorUserId: string | null;
+  actorRunId: string | null;
+  createdAt: Date;
+}
+
+export interface WorkRecordQualityLinkView {
+  id: string;
+  linkKind: string;
+  defectRecordId: string;
+  packageRecordId: string | null;
+  repairRecordId: string | null;
+  qaRecordId: string | null;
+  validFromCycleNumber: number;
+  createdAt: Date;
+}
+
+export type WorkRecordQualityAggregateView = Pick<
+  WorkRecord,
+  | "id" | "companyId" | "projectId" | "kind" | "title" | "description"
+  | "descriptionRevision" | "parentRecordId" | "iterationId" | "assigneeAgentId"
+  | "qaAssigneeAgentId" | "businessStatus" | "dispatchState" | "dispatchRound"
+  | "statusVersion" | "revision" | "createdAt" | "updatedAt"
+>;
+
+export interface WorkRecordQualityView {
+  aggregate: WorkRecordQualityAggregateView;
+  cycle: WorkRecordQualityCycleView | null;
+  items: WorkRecordQualityItemView[];
+  verdicts: WorkRecordQualityVerdictView[];
+  links: WorkRecordQualityLinkView[];
+  history: {
+    cycles: WorkRecordQualityCycleView[];
+    items: WorkRecordQualityItemView[];
+    verdicts: WorkRecordQualityVerdictView[];
+  };
+}
+
+export interface WorkRecordQualityCommandResult {
+  replayed: boolean;
+  escalated?: boolean;
+  quality: WorkRecordQualityView;
 }
 
 export interface WorkRecordDispatchResult {

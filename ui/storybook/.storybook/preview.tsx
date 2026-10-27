@@ -676,6 +676,9 @@ function installStorybookApiFixtures() {
       if (resource === "heartbeat-runs") {
         return Response.json([]);
       }
+      if (resource === "skills" || resource === "routines") {
+        return Response.json([]);
+      }
       if (resource === "live-runs") {
         return Response.json(
           companyId === "company-storybook" ? storybookLiveRuns : [],
