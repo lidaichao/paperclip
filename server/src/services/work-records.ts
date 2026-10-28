@@ -37,11 +37,11 @@ import type {
 import {
   WORK_RECORD_LIST_DEFAULT_LIMIT,
   WORK_RECORD_LIST_MAX_LIMIT,
-  WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT,
   classifyWorkRecordCommandReplay,
 } from "@paperclipai/shared";
 import { HttpError, conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { issueService, listUnfinalizedExecutionWorkspaceIds } from "./issues.js";
+import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-rollout.js";
 
 type Actor = { actorType: "agent" | "user" | "system" | "plugin"; actorId: string; agentId?: string | null; userId?: string | null; runId?: string | null };
 type DbTransaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -54,12 +54,6 @@ const ACTIVE_WAKE_STATUSES = ["queued", "claimed", "running", "completed"];
 
 export interface WorkRecordServiceOptions {
   writesEnabled?: boolean;
-}
-
-function workflowV2WritesEnabledFromEnv() {
-  const value = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-  if (value === undefined) return WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT;
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 }
 
 function releaseEventKey(record: typeof workRecords.$inferSelect) {
@@ -90,7 +84,9 @@ function releasePayload(record: typeof workRecords.$inferSelect, issueId: string
 
 export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}) {
   const issuesSvc = issueService(db);
-  const isWorkflowV2WritesEnabled = () => options.writesEnabled ?? workflowV2WritesEnabledFromEnv();
+  const currentRollout = () => resolveWorkRecordWorkflowV2Rollout({ writesEnabled: options.writesEnabled });
+  const isWorkflowV2WritesEnabled = (companyId: string, projectId: string) =>
+    currentRollout().decision(companyId, projectId).scopeEnabled;
 
   async function assertProject(companyId: string, projectId: string) {
     const row = await db.select({ id: projects.id }).from(projects).where(and(eq(projects.companyId, companyId), eq(projects.id, projectId))).then((rows) => rows[0]);
@@ -375,7 +371,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   }
 
   async function update(companyId: string, projectId: string, recordId: string, input: UpdateWorkRecord) {
-    const workflowV2WritesEnabled = isWorkflowV2WritesEnabled();
+    const workflowV2WritesEnabled = isWorkflowV2WritesEnabled(companyId, projectId);
     if (workflowV2WritesEnabled && input.assigneeAgentId !== undefined) {
       throw unprocessable(
         "Work-record assignee changes require the dedicated assignment command",
@@ -484,9 +480,12 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     input: FillWorkRecordAssignmentGap,
     actor: Actor,
   ) {
-    if (!isWorkflowV2WritesEnabled()) {
+    if (!isWorkflowV2WritesEnabled(companyId, projectId)) {
+      const rollout = currentRollout();
       throw forbidden("Work-record workflow v2 writes are disabled", {
-        code: "work_record_workflow_v2_disabled",
+        code: rollout.globalEnabled
+          ? "work_record_workflow_v2_scope_denied"
+          : "work_record_workflow_v2_disabled",
         workflowVersion: 2,
       });
     }

@@ -175,7 +175,7 @@ describeDb("M2-C A02/O02 dynamic HTTP and PostgreSQL evidence", () => {
       import("pino"),
     ]);
     createLocalAgentJwt = createJwt;
-    records = workRecordService(db);
+    records = workRecordService(db, { writesEnabled: true });
     telemetryStateDir = join(resolvePaperclipInstanceRoot(), "telemetry");
     telemetryClient = telemetry.initTelemetry({ enabled: true });
     shutdownSentry = sentry.shutdownSentry;
@@ -187,7 +187,7 @@ describeDb("M2-C A02/O02 dynamic HTTP and PostgreSQL evidence", () => {
     app.use(express.json());
     app.use(createHttpLogger(pino({ redact: [...HTTP_LOG_REDACT_PATHS] }, logDestination)));
     app.use(actorMiddleware(db, { deploymentMode: "authenticated", resolveSession: async () => null }));
-    app.use("/api", workRecordRoutes(db));
+    app.use("/api", workRecordRoutes(db, { workflowV2WritesEnabled: true }));
     app.use(errorHandler);
     appServer = createServer(app);
     const appPort = await listen(appServer);

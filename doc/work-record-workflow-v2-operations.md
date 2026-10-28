@@ -69,15 +69,21 @@ and cursor-wrap facts. This is local observability, not first-party telemetry.
 
 ## Dead-letter recovery
 
-Workflow-v2 delivery stops after five failed attempts. Recovery is a
+Workflow-v2 delivery stops after five **delivery** failures. Governance waits
+(cohort, approval, budget, company/agent/task pause, or source hold) retain the
+same event, do not increment `attemptCount`, and never enter dead-letter.
+They are rechecked on the bounded worker interval after the gate is removed.
+Recovery is a
 compare-and-set update on the existing outbox row; it does not create a second
-event. Record the observed attempt count and a reason:
+event. Record the observed attempt count and an allowlisted reason code. The
+deprecated free-text `reason` field is accepted for older clients but is
+discarded: it is never written to activity, run log, telemetry, or the response.
 
 ```sh
 curl -sS -X POST \
   -H "Authorization: Bearer $BOARD_API_KEY" \
   -H 'Content-Type: application/json' \
-  --data-binary '{"expectedAttemptCount":5,"reason":"operator verified dependency recovery"}' \
+  --data-binary '{"expectedAttemptCount":5,"reasonCode":"delivery_dependency_repaired"}' \
   "$PAPERCLIP_API_URL/api/companies/$COMPANY_ID/projects/$PROJECT_ID/work-record-workflow/outbox/$EVENT_ID/recover"
 ```
 
@@ -86,44 +92,111 @@ returns 409. Recovery resets attempts to zero, increments `recoveryCount`,
 records `lastRecoveredAt`, and preserves the event ID. Check the operations
 endpoint after the worker delivers it.
 
-## Backup and restore drill
+Allowed codes are `operator_retry`, `delivery_dependency_repaired`,
+`governance_released`, `rollback_recovery`, and `other`. Put detailed incident
+notes in an access-controlled work product; do not paste tokens, provider
+payloads, customer text, or attachments into this endpoint.
 
-Never run the drill against the active 3100 instance. Point `DATABASE_URL` at
-an isolated database and create a backup:
+## Authenticated backup and restore closure
+
+Owner: the authorized instance operator. Approver: Jack (or the named incident
+approver). Stop if the backup/key checksum differs, the target is not empty,
+the expected company is absent, migrations are not current, or authenticated
+login and the M1/v2 smoke do not pass. Never use the active 3100 instance for a
+drill.
+
+Before the outage window, record the database backup and the local encrypted
+secrets key in the approved manifest. A database dump without the matching key
+cannot restore encrypted credentials.
+
+POSIX shell:
 
 ```sh
-pnpm db:backup
+export DATABASE_URL='postgres://paperclip:paperclip@127.0.0.1:55432/source'
+export BACKUP_DIR='/approved/paperclip-backups'
+export KEY_FILE='/approved/paperclip-secrets/master.key'
+
+npx paperclipai db:backup --dir "$BACKUP_DIR" --filename-prefix workflow-v2 --json > backup.json
+export BACKUP_FILE="$(node -p "JSON.parse(require('fs').readFileSync('backup.json','utf8')).backupFile")"
+sha256sum "$BACKUP_FILE" "$KEY_FILE" | tee restore-manifest.sha256
 ```
 
-The restore target must be empty and must use the same Paperclip encryption-key
-material as the source when encrypted data is present. The automated drill
-uses the exported `runDatabaseRestore` function against a new isolated database
-and verifies the workflow-v2 event ID, state, recovery count, and recovery
-timestamp:
+PowerShell:
 
-```sh
-pnpm exec vitest run server/src/__tests__/work-record-m2e-hardening.test.ts \
-  -t "backs up and restores workflow-v2 recovery facts"
+```powershell
+$env:DATABASE_URL = 'postgres://paperclip:paperclip@127.0.0.1:55432/source'
+$backupDir = 'C:\approved\paperclip-backups'
+$keyFile = 'C:\approved\paperclip-secrets\master.key'
+
+npx paperclipai db:backup --dir $backupDir --filename-prefix workflow-v2 --json |
+  Set-Content -LiteralPath .\backup.json
+$backupFile = (Get-Content -LiteralPath .\backup.json -Raw | ConvertFrom-Json).backupFile
+Get-FileHash -Algorithm SHA256 -LiteralPath $backupFile, $keyFile |
+  ConvertTo-Json | Set-Content -LiteralPath .\restore-manifest.sha256.json
 ```
 
-Fresh and M1-upgrade migration proof:
+Create a new empty PostgreSQL database. Point `DATABASE_URL` at that target and
+run the non-mutating preflight first. Replace the example digests and company ID
+with the approved manifest values. `db:restore` refuses a non-empty target.
 
 ```sh
-pnpm exec vitest run packages/db/src/work-record-workflow-v2-migration.test.ts \
+export DATABASE_URL='postgres://paperclip:paperclip@127.0.0.1:55433/restored'
+npx paperclipai db:restore \
+  --backup "$BACKUP_FILE" \
+  --expected-sha256 "$BACKUP_SHA256" \
+  --secrets-key-file "$KEY_FILE" \
+  --expected-secrets-key-sha256 "$KEY_SHA256" \
+  --expected-company-id "$COMPANY_ID" \
+  --json
+
+npx paperclipai db:restore \
+  --backup "$BACKUP_FILE" \
+  --expected-sha256 "$BACKUP_SHA256" \
+  --secrets-key-file "$KEY_FILE" \
+  --expected-secrets-key-sha256 "$KEY_SHA256" \
+  --expected-company-id "$COMPANY_ID" \
+  --apply --yes --json | tee restore-result.json
+```
+
+PowerShell uses the same arguments and `Tee-Object -FilePath
+.\restore-result.json`. Restore the approved key file to the configured
+`secrets.localEncrypted.keyFilePath` before starting the restored process.
+Start the new binary on an isolated port, require `/api/health` to report
+`status=ok` and `startupRecovery.phase=ready`, sign in through the authenticated
+mode, then verify the operations endpoint plus one retained M1 record and one
+workflow-v2 event/recovery row. If any check fails, stop the restored process,
+retain `restore-result.json` and logs, discard the empty-target database, and
+restart the unchanged source process; never restore over the source database.
+
+Repeatable proof commands:
+
+```sh
+pnpm exec vitest run cli/src/__tests__/db-restore.test.ts \
+  server/src/__tests__/work-record-m2e-hardening.test.ts \
+  packages/db/src/work-record-workflow-v2-migration.test.ts \
   packages/db/src/migration-snapshot-drift.test.ts
 ```
-
-The migration suite contains a dedicated `0294 -> 0295` case. It removes only
-the 0295 journal row and 0295 schema additions, verifies 0295 is the sole
-pending migration, reapplies it, and compares the pre-existing outbox row
-before and after the upgrade.
 
 ## Gray rollout and rollback gate
 
 1. Keep `PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED` unset or `false`
    while applying migrations and observing read-only preview/metrics.
-2. Back up the isolated/approved target, then enable the flag only for the
-   approved gray cohort and restart the current binary.
+2. Back up the isolated/approved target. Set the global flag and the exact
+   approved company/project JSON cohort, then restart the current binary:
+
+   ```sh
+   export PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED=true
+   export PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS='[{"companyId":"<uuid>","projectIds":["<uuid>"]}]'
+   ```
+
+   ```powershell
+   $env:PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = 'true'
+   $env:PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS = '[{"companyId":"<uuid>","projectIds":["<uuid>"]}]'
+   ```
+
+   Missing, malformed, cross-company, or unlisted scopes fail closed. The
+   operations response must show `rollout.scopeEnabled=true` for the approved
+   project and `false` for a control project before any write traffic is sent.
 3. Watch the monitoring gates above; disabling the flag stops new workflow-v2
    prepare/reconcile/outbox writes while leaving inspection available.
 4. Before an old binary starts, require
@@ -132,5 +205,33 @@ before and after the upgrade.
 5. Migration 0295 is additive. Do not reverse the database migration during an
    application rollback; drain the new state first, retain the backup, and use
    the old binary only after the preflight passes.
+
+The frozen rollback baseline for this M2-E sequence is commit
+`65b3d9ae48d02abdeb8f310500e93fcf30105a2d`. The authorized operator records
+the current candidate commit/image digest and this old commit in the change
+manifest. Disable both rollout variables, stop the current process, and start
+that exact old checkout against the **same** database only after the gate is
+open. Require `status=ok`, `startupRecovery.phase=ready`, and the retained M1
+record smoke. If old startup or smoke fails, stop it and restart the recorded
+current candidate with both rollout variables still disabled. Do not reverse
+0295 and do not change data during either fallback.
+
+The isolated real-process drill is:
+
+```sh
+git worktree add "$PAPERCLIP_OLD_BINARY_ROOT" 65b3d9ae48d02abdeb8f310500e93fcf30105a2d
+PAPERCLIP_OLD_BINARY_COMMIT=65b3d9ae48d02abdeb8f310500e93fcf30105a2d \
+PAPERCLIP_M2E_EVIDENCE_DIR="$PAPERCLIP_RUN_SCRATCH_DIR/m2e" \
+pnpm exec tsx tests/e2e/run-work-record-old-binary-rollback.ts
+```
+
+PowerShell:
+
+```powershell
+git worktree add $env:PAPERCLIP_OLD_BINARY_ROOT 65b3d9ae48d02abdeb8f310500e93fcf30105a2d
+$env:PAPERCLIP_OLD_BINARY_COMMIT = '65b3d9ae48d02abdeb8f310500e93fcf30105a2d'
+$env:PAPERCLIP_M2E_EVIDENCE_DIR = Join-Path $env:PAPERCLIP_RUN_SCRATCH_DIR 'm2e'
+pnpm exec tsx tests/e2e/run-work-record-old-binary-rollback.ts
+```
 
 No command in this runbook authorizes production gray rollout or deployment.

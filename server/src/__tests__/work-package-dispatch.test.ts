@@ -95,11 +95,10 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     membershipRole = "admin",
     heartbeat?: Parameters<typeof workRecordRoutes>[1]["heartbeat"],
   ) {
-    const previous = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-    process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = writesEnabled ? "true" : "false";
-    const router = workRecordRoutes(database, { heartbeat });
-    if (previous === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-    else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = previous;
+    const router = workRecordRoutes(database, {
+      heartbeat,
+      workflowV2WritesEnabled: writesEnabled,
+    });
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
@@ -392,7 +391,15 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
         eq(heartbeatRuns.companyId, context.company.id),
       )).map((row) => row.id));
       const heartbeat = heartbeatService(db, { runtimeEnv: { ...process.env, PAPERCLIP_IN_WORKTREE: "false" } });
-      await workPackageDispatchService(db, { writesEnabled: true }).processOutbox(heartbeat.wakeup, 1);
+      const workflow = workPackageDispatchService(db, { writesEnabled: true });
+      for (let tick = 0; tick < 6; tick += 1) {
+        await workflow.processOutbox(heartbeat.wakeup, 1);
+        await db.update(workRecordOutbox).set({ availableAt: new Date(Date.now() - 1) })
+          .where(and(
+            eq(workRecordOutbox.executionIntentId, context.intentId),
+            inArray(workRecordOutbox.state, ["retry", "processing"]),
+          ));
+      }
       if (!cleanup) await heartbeat.drainActiveRunExecutions();
       const wakes = (await db.select().from(agentWakeupRequests).where(
         eq(agentWakeupRequests.companyId, context.company.id),
@@ -402,6 +409,8 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
       )).filter((row) => !runIdsBefore.has(row.id));
       const intent = await db.select().from(workRecordExecutionIntents).where(eq(workRecordExecutionIntents.id, context.intentId)).then((rows) => rows[0]);
       const outbox = await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.executionIntentId, context.intentId)).then((rows) => rows[0]);
+      expect(outbox.state).not.toBe("dead_letter");
+      expect(outbox.attemptCount).toBe(0);
       const app = createApi(db, context.company.id, true);
       const batch = await request(app)
         .get(`/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/${context.batchId}`)
@@ -452,7 +461,7 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
           lastDecisionOutcome: null,
         },
       }).where(eq(issues.id, context.issueId));
-    }, "stale_issue_revision");
+    }, "approval_pending");
     await exerciseGate("approval_stale", async (context) => {
       await db.update(issues).set({ statusVersion: sql`${issues.statusVersion} + 1` }).where(eq(issues.id, context.issueId));
     }, "stale_issue_revision");
@@ -486,11 +495,11 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     await exerciseGate("company_paused", async (context) => {
       await db.update(companies).set({ status: "paused", pauseReason: "m2b-test", pausedAt: new Date() })
         .where(eq(companies.id, context.company.id));
-    }, "company.inactive");
+    }, "company_paused");
     await exerciseGate("agent_paused", async (context) => {
       await db.update(agents).set({ status: "paused", pauseReason: "m2b-test", pausedAt: new Date() })
         .where(eq(agents.id, context.agent.id));
-    }, "agent.not_invokable");
+    }, "agent_paused");
     await exerciseGate("source_hold", async (context) => {
       const blocker = await record(context, "Late source hold blocker");
       await db.insert(workRecordExecutionHolds).values({
@@ -536,7 +545,51 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
         await holderHeartbeat.cancelRun(holderRun!.id, "M2-B issue-lock evidence captured");
         await holderHeartbeat.drainActiveRunExecutions();
       };
-    }, "issue_execution_deferred");
+    }, "issue.execution_active");
+
+    const resumed = await prepareGateCase("company_pause_resume");
+    const resumedEvent = await db.select().from(workRecordOutbox)
+      .where(eq(workRecordOutbox.executionIntentId, resumed.intentId))
+      .then((rows) => rows[0]);
+    await db.update(companies).set({ status: "paused", pauseReason: "m2b-resume-proof", pausedAt: new Date() })
+      .where(eq(companies.id, resumed.company.id));
+    const resumeHeartbeat = heartbeatService(db, {
+      runtimeEnv: { ...process.env, PAPERCLIP_IN_WORKTREE: "false" },
+    });
+    const resumeWorkflow = workPackageDispatchService(db, { writesEnabled: true });
+    for (let tick = 0; tick < 6; tick += 1) {
+      await resumeWorkflow.processOutbox(resumeHeartbeat.wakeup, 1);
+      await db.update(workRecordOutbox).set({ availableAt: new Date(Date.now() - 1) })
+        .where(eq(workRecordOutbox.id, resumedEvent.id));
+    }
+    expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.id, resumedEvent.id)).then((rows) => rows[0]))
+      .toMatchObject({ id: resumedEvent.id, state: "retry", attemptCount: 0, deadLetteredAt: null });
+    await db.update(companies).set({ status: "active", pauseReason: null, pausedAt: null })
+      .where(eq(companies.id, resumed.company.id));
+    await resumeWorkflow.processOutbox(resumeHeartbeat.wakeup, 1);
+    await resumeHeartbeat.drainActiveRunExecutions();
+    const resumedOutbox = await db.select().from(workRecordOutbox)
+      .where(eq(workRecordOutbox.id, resumedEvent.id)).then((rows) => rows[0]);
+    const resumedWakes = await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, resumed.company.id),
+      eq(agentWakeupRequests.idempotencyKey, `work-record-intent:${resumed.intentId}:1`),
+    ));
+    const resumedRuns = await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, resumed.company.id),
+      inArray(heartbeatRuns.wakeupRequestId, resumedWakes.map((wake) => wake.id)),
+    ));
+    expect(resumedOutbox).toMatchObject({ id: resumedEvent.id, state: "delivered", attemptCount: 1 });
+    expect(resumedWakes.filter((wake) => effectiveWakeStatuses.has(wake.status))).toHaveLength(1);
+    expect(resumedRuns.filter((run) => effectiveRunStatuses.has(run.status)).length).toBeLessThanOrEqual(1);
+    evidence.push({
+      case: "company_pause_resume",
+      eventId: resumedEvent.id,
+      governanceTicks: 6,
+      blockedAttemptCount: 0,
+      finalState: resumedOutbox.state,
+      effectiveWakeCount: resumedWakes.filter((wake) => effectiveWakeStatuses.has(wake.status)).length,
+      effectiveRunCount: resumedRuns.filter((run) => effectiveRunStatuses.has(run.status)).length,
+    });
 
     const evidenceDir = process.env.PAPERCLIP_M2B_EVIDENCE_DIR?.trim();
     if (evidenceDir) {
@@ -1307,19 +1360,12 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     await service.processOutbox(heartbeat.wakeup, 1);
     await heartbeat.drainActiveRunExecutions();
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.executionIntentId, firstIntent.id)).then((rows) => rows[0])).toMatchObject({ state: "delivered" });
-    const previousFlag = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-    process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = "true";
-    let revised: Awaited<ReturnType<ReturnType<typeof workRecordService>["update"]>>;
-    try {
-      revised = await context.records.update(context.company.id, context.project.id, target.id, {
-        expectedRevision: target.revision,
-        predecessorRecordIds: [newPrerequisite.id],
-      });
-      expect(revised.dependencySetRevision).toBe(target.dependencySetRevision + 1);
-    } finally {
-      if (previousFlag === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-      else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = previousFlag;
-    }
+    const v2Records = workRecordService(db, { writesEnabled: true });
+    const revised = await v2Records.update(context.company.id, context.project.id, target.id, {
+      expectedRevision: target.revision,
+      predecessorRecordIds: [newPrerequisite.id],
+    });
+    expect(revised.dependencySetRevision).toBe(target.dependencySetRevision + 1);
     expect(await db.select().from(workRecordDispatchBatches).where(eq(workRecordDispatchBatches.id, first.batch.id)).then((rows) => rows[0])).toMatchObject({ state: "superseded" });
     expect(await db.select().from(workRecordExecutionIntents).where(and(
       eq(workRecordExecutionIntents.companyId, context.company.id), eq(workRecordExecutionIntents.recordId, target.id),
@@ -1342,17 +1388,10 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
       successorRecordId: target.id,
     })]);
 
-    process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = "true";
-    let removed: typeof revised;
-    try {
-      removed = await context.records.update(context.company.id, context.project.id, target.id, {
-        expectedRevision: revised.revision,
-        predecessorRecordIds: [],
-      });
-    } finally {
-      if (previousFlag === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-      else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = previousFlag;
-    }
+    const removed = await v2Records.update(context.company.id, context.project.id, target.id, {
+      expectedRevision: revised.revision,
+      predecessorRecordIds: [],
+    });
     const third = await prepare(service, context, scopeInput(context, {
       scopeKind: "selected_records",
       rootRecordId: null,
@@ -1364,16 +1403,10 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
       eq(workRecordDependencySnapshots.batchId, third.batch.id),
     ))).toHaveLength(0);
 
-    process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = "true";
-    try {
-      await context.records.update(context.company.id, context.project.id, target.id, {
-        expectedRevision: removed.revision,
-        predecessorRecordIds: [retargetedPrerequisite.id],
-      });
-    } finally {
-      if (previousFlag === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-      else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = previousFlag;
-    }
+    await v2Records.update(context.company.id, context.project.id, target.id, {
+      expectedRevision: removed.revision,
+      predecessorRecordIds: [retargetedPrerequisite.id],
+    });
     const fourth = await prepare(service, context, scopeInput(context, {
       scopeKind: "selected_records",
       rootRecordId: null,

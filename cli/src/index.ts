@@ -11,6 +11,7 @@ import { heartbeatRun } from "./commands/heartbeat-run.js";
 import { runCommand } from "./commands/run.js";
 import { bootstrapCeoInvite } from "./commands/auth-bootstrap-ceo.js";
 import { dbBackupCommand } from "./commands/db-backup.js";
+import { dbRestoreCommand } from "./commands/db-restore.js";
 import { registerEnvLabCommands } from "./commands/env-lab.js";
 import { registerContextCommands } from "./commands/client/context.js";
 import { registerCompanyCommands } from "./commands/client/company.js";
@@ -183,6 +184,23 @@ program
   .option("--json", "Print backup metadata as JSON")
   .action(async (opts) => {
     await dbBackupCommand(opts);
+  });
+
+program
+  .command("db:restore")
+  .description("Verify or restore an approved database backup into an empty target")
+  .requiredOption("--backup <path>", "Approved .sql or .sql.gz backup file")
+  .requiredOption("--expected-sha256 <sha256>", "Approved backup SHA-256")
+  .option("-c, --config <path>", "Path to target config file")
+  .option("-d, --data-dir <path>", DATA_DIR_OPTION_HELP)
+  .option("--secrets-key-file <path>", "Matching local encrypted-secrets master key")
+  .option("--expected-secrets-key-sha256 <sha256>", "Approved secrets-key SHA-256")
+  .option("--expected-company-id <uuid>", "Company that must exist after apply")
+  .option("--apply", "Apply after preflight; default is dry-run")
+  .option("-y, --yes", "Confirm the approved destructive restore into the empty target")
+  .option("--json", "Print machine-readable evidence")
+  .action(async (opts) => {
+    await dbRestoreCommand(opts);
   });
 
 program

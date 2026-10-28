@@ -51,11 +51,16 @@ async function waitForHealth(baseUrl: string, child: ChildProcess, output: () =>
 }
 
 const oldRoot = process.env.PAPERCLIP_OLD_BINARY_ROOT?.trim();
+const approvedOldCommit = process.env.PAPERCLIP_OLD_BINARY_COMMIT?.trim();
 const evidenceDir = process.env.PAPERCLIP_M2E_EVIDENCE_DIR?.trim();
 if (!oldRoot) throw new Error("PAPERCLIP_OLD_BINARY_ROOT is required");
+if (!approvedOldCommit) throw new Error("PAPERCLIP_OLD_BINARY_COMMIT is required");
 if (!evidenceDir) throw new Error("PAPERCLIP_M2E_EVIDENCE_DIR is required");
 
 const oldCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: oldRoot, encoding: "utf8" }).trim();
+if (oldCommit !== approvedOldCommit) {
+  throw new Error(`Old binary commit ${oldCommit} does not match approved rollback commit ${approvedOldCommit}`);
+}
 const workflowV2FeatureFlagEvidence = execFileSync("git", [
   "grep",
   "-n",

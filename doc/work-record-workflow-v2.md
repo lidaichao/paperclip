@@ -12,10 +12,14 @@ behind the default-off feature flag until independent M2 verification passes.
 
 ## M2-B API and feature flag
 
-Set `PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED=true` only in an isolated
-company/project and isolated database. When unset, preview remains read-only and
-all prepare/reconcile/claim writes return `403` with
-`work_record_workflow_v2_disabled`.
+The write path requires both
+`PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED=true` and an exact approved
+company/project entry in `PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS` (JSON array
+of `{companyId,projectIds}`). Missing or malformed cohort configuration fails
+closed. When the global flag is unset, preview remains read-only and writes
+return `403` with `work_record_workflow_v2_disabled`; an unlisted scope returns
+`work_record_workflow_v2_scope_denied`. Prepare, assignment, quality,
+reconciliation, and the final outbox claim all use the same scope decision.
 
 - `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/preview`
 - `GET /api/companies/:companyId/projects/:projectId/work-record-capabilities`

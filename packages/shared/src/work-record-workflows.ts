@@ -15,6 +15,13 @@ export const WORK_PACKAGE_MAX_EDGES = 2_000;
 export const WORK_RECORD_LIST_DEFAULT_LIMIT = 100;
 export const WORK_RECORD_LIST_MAX_LIMIT = 200;
 export const WORK_RECORD_OUTBOX_MAX_ATTEMPTS = 5;
+export const WORK_RECORD_OUTBOX_RECOVERY_REASON_CODES = [
+  "operator_retry",
+  "delivery_dependency_repaired",
+  "governance_released",
+  "rollback_recovery",
+  "other",
+] as const;
 export const WORK_RECORD_OUTBOX_STATES = [
   "pending",
   "processing",
@@ -132,6 +139,7 @@ export const WORK_RECORD_WORKFLOW_ERROR_CODES = [
   "work_record_quality_not_ready",
   "work_record_quality_review_round_limit",
   "work_record_workflow_v2_disabled",
+  "work_record_workflow_v2_scope_denied",
   "work_record_outbox_not_dead_letter",
   "work_record_outbox_attempt_conflict",
   "work_package_assignment_required",
@@ -151,6 +159,8 @@ export type WorkRecordExecutionIntentState = (typeof WORK_RECORD_EXECUTION_INTEN
 export type WorkRecordWorkflowEventType = (typeof WORK_RECORD_WORKFLOW_EVENT_TYPES)[number];
 export type WorkRecordWorkflowErrorCode = (typeof WORK_RECORD_WORKFLOW_ERROR_CODES)[number];
 export type WorkRecordOutboxState = (typeof WORK_RECORD_OUTBOX_STATES)[number];
+export type WorkRecordOutboxRecoveryReasonCode =
+  (typeof WORK_RECORD_OUTBOX_RECOVERY_REASON_CODES)[number];
 
 const requestIdSchema = z.string().trim().min(1).max(255);
 const digestSchema = z.string().trim().min(1).max(255);
@@ -291,7 +301,9 @@ export const fillWorkRecordAssignmentGapSchema = z.object({
 
 export const recoverWorkRecordOutboxSchema = z.object({
   expectedAttemptCount: z.number().int().min(0),
-  reason: z.string().trim().min(1).max(2_000),
+  reasonCode: z.enum(WORK_RECORD_OUTBOX_RECOVERY_REASON_CODES).default("operator_retry"),
+  /** @deprecated Free text is accepted for wire compatibility but never persisted or echoed. */
+  reason: z.string().trim().min(1).max(2_000).optional(),
 });
 
 export type PrepareWorkPackageDispatch = z.infer<typeof prepareWorkPackageDispatchSchema>;

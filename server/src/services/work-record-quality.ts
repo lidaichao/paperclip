@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
   issues,
@@ -16,7 +16,6 @@ import {
 } from "@paperclipai/db";
 import { reconcileCandidatesIndependently } from "./work-record-candidate-scan.js";
 import {
-  WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT,
   classifyWorkRecordCommandReplay,
   type LinkWorkPackageDefect,
   type RecordPoQualityVerdict,
@@ -28,6 +27,7 @@ import {
   normalizeIssueExecutionPolicy,
 } from "./issue-execution-policy.js";
 import { issueService, listUnfinalizedExecutionWorkspaceIds } from "./issues.js";
+import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-rollout.js";
 
 type DbTransaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
 type Actor = {
@@ -43,12 +43,6 @@ export interface WorkRecordQualityOptions {
   maxReviewRounds?: number;
 }
 
-function writesEnabledFromEnv() {
-  const value = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-  if (value === undefined) return WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT;
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
-}
-
 function details(code: string, extra: Record<string, unknown> = {}) {
   return { code, workflowVersion: 2, ...extra };
 }
@@ -59,12 +53,30 @@ function aggregateLockKey(companyId: string, aggregateRecordId: string) {
 
 export function workRecordQualityService(db: Db, options: WorkRecordQualityOptions = {}) {
   const issueSvc = issueService(db);
-  const writesEnabled = options.writesEnabled ?? writesEnabledFromEnv();
+  const rollout = resolveWorkRecordWorkflowV2Rollout({ writesEnabled: options.writesEnabled });
+  const writesEnabled = rollout.globalEnabled;
   const maxReviewRounds = options.maxReviewRounds ?? 3;
 
-  function assertWritesEnabled() {
-    if (!writesEnabled) {
-      throw forbidden("Work-record workflow v2 writes are disabled", details("work_record_workflow_v2_disabled"));
+  function rolloutScopePredicate() {
+    if (rollout.allScopes) return undefined;
+    if (rollout.scopes.length === 0) return sql`false`;
+    return or(...rollout.scopes.map((scope) => and(
+      eq(workRecordQualityCycles.companyId, scope.companyId),
+      eq(workRecordQualityCycles.projectId, scope.projectId),
+    )));
+  }
+
+  function assertWritesEnabled(companyId: string, projectId: string) {
+    const decision = rollout.decision(companyId, projectId);
+    if (!decision.scopeEnabled) {
+      throw forbidden(
+        decision.globalEnabled
+          ? "Work-record workflow v2 writes are not approved for this cohort"
+          : "Work-record workflow v2 writes are disabled",
+        details(decision.globalEnabled
+          ? "work_record_workflow_v2_scope_denied"
+          : "work_record_workflow_v2_disabled", { rollout: decision.reason }),
+      );
     }
   }
 
@@ -445,7 +457,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
   }
 
   async function recordPoVerdict(companyId: string, projectId: string, aggregateRecordId: string, input: RecordPoQualityVerdict, actor: Actor) {
-    assertWritesEnabled();
+    assertWritesEnabled(companyId, projectId);
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${aggregateLockKey(companyId, aggregateRecordId)}, 0))`);
       const replay = await replayVerdict(tx, companyId, input.clientRequestId, input.requestPayloadDigest);
@@ -535,7 +547,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
   }
 
   async function linkPackageDefect(companyId: string, projectId: string, input: LinkWorkPackageDefect, actor: Actor) {
-    assertWritesEnabled();
+    assertWritesEnabled(companyId, projectId);
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${aggregateLockKey(companyId, input.packageRecordId)}, 0))`);
       const linkKey = `quality-defect:${input.clientRequestId}`;
@@ -697,7 +709,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
   }
 
   async function recordQaVerdict(companyId: string, projectId: string, aggregateRecordId: string, input: RecordQaQualityVerdict, actor: Actor) {
-    assertWritesEnabled();
+    assertWritesEnabled(companyId, projectId);
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${aggregateLockKey(companyId, aggregateRecordId)}, 0))`);
       const replay = await replayVerdict(tx, companyId, input.clientRequestId, input.requestPayloadDigest);
@@ -899,7 +911,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
   }
 
   async function reconcileCycle(companyId: string, projectId: string, cycleId: string) {
-    if (!writesEnabled) return false;
+    if (!rollout.decision(companyId, projectId).scopeEnabled) return false;
     return db.transaction(async (tx) => {
       const cycle = await tx.select().from(workRecordQualityCycles).where(and(
         eq(workRecordQualityCycles.companyId, companyId), eq(workRecordQualityCycles.projectId, projectId),
@@ -1112,6 +1124,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
       projectId: workRecordQualityCycles.projectId,
     }).from(workRecordQualityCycles).where(and(
       eq(workRecordQualityCycles.state, "open"),
+      rolloutScopePredicate(),
       afterId ? gt(workRecordQualityCycles.id, afterId) : undefined,
     )).orderBy(asc(workRecordQualityCycles.id)).limit(limit + 1);
     const hasMore = cycles.length > limit;

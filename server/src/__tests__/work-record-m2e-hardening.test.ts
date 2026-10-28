@@ -15,6 +15,7 @@ import {
   costEvents,
   createDb,
   ensurePostgresDatabase,
+  heartbeatRunEvents,
   heartbeatRuns,
   issues,
   projects,
@@ -70,14 +71,11 @@ describeDb("M2-E workflow hardening", () => {
 
   function createApi(
     companyId: string,
+    projectId: string,
     membershipRole: "admin" | "viewer" = "admin",
     database: ReturnType<typeof createDb> = db,
   ) {
-    const previous = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-    process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = "true";
-    const router = workRecordRoutes(database);
-    if (previous === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-    else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = previous;
+    const router = workRecordRoutes(database, { workflowV2WritesEnabled: true });
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
@@ -172,7 +170,7 @@ describeDb("M2-E workflow hardening", () => {
         assigneeAgentId: context.agent.id,
       }, { actorType: "system", actorId: "m2e-test" }));
     }
-    const app = createApi(context.company.id);
+    const app = createApi(context.company.id, context.project.id);
     const base = `/api/companies/${context.company.id}/projects/${context.project.id}/work-records`;
     const legacy = await request(app).get(base).expect(200);
     expect(Array.isArray(legacy.body)).toBe(true);
@@ -193,6 +191,105 @@ describeDb("M2-E workflow hardening", () => {
     expect(firstCandidates).toMatchObject({ processed: 1, nextAfterId: expect.any(String) });
     const secondCandidates = await service.reconcilePage(1, firstCandidates.nextAfterId);
     expect(secondCandidates).toMatchObject({ processed: 1, nextAfterId: null });
+  });
+
+  it("admits only the approved company/project cohort at the API and worker boundaries", async () => {
+    const context = await seed("M2-E cohort");
+    const deniedProject = await db.insert(projects).values({
+      companyId: context.company.id,
+      name: "M2-E denied cohort project",
+    }).returning().then((rows) => rows[0]);
+    const approvedRecord = await context.records.create(context.company.id, {
+      projectId: context.project.id,
+      kind: "plan",
+      title: "Approved cohort record",
+      assigneeAgentId: context.agent.id,
+    }, { actorType: "system", actorId: "m2e-test" });
+    const deniedRecord = await context.records.create(context.company.id, {
+      projectId: deniedProject.id,
+      kind: "plan",
+      title: "Denied cohort record",
+      assigneeAgentId: context.agent.id,
+    }, { actorType: "system", actorId: "m2e-test" });
+    const previousFlag = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
+    const previousCohorts = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS;
+    process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = "true";
+    process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS = JSON.stringify([{
+      companyId: context.company.id,
+      projectIds: [context.project.id],
+    }]);
+    try {
+      const router = workRecordRoutes(db);
+      const app = express();
+      app.use(express.json());
+      app.use((req, _res, next) => {
+        req.actor = {
+          type: "board",
+          userId: "m2e-cohort-admin",
+          companyIds: [context.company.id],
+          memberships: [{ companyId: context.company.id, membershipRole: "admin", status: "active" }],
+          source: "session",
+          isInstanceAdmin: true,
+        } as Express.Request["actor"];
+        next();
+      });
+      app.use("/api", router);
+      app.use(errorHandler);
+
+      const approvedInput = input(context.project.id, [approvedRecord.id]);
+      const approvedPreview = await request(app)
+        .post(`/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/preview`)
+        .send(approvedInput).expect(200);
+      await request(app)
+        .post(`/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/prepare`)
+        .send({
+          ...approvedInput,
+          clientRequestId: "m2e-approved-cohort",
+          requestPayloadDigest: "m2e-approved-cohort",
+          expectedScopeDigest: approvedPreview.body.scopeDigest,
+          expectedRootRevision: approvedPreview.body.rootRevision,
+          expectedDependencySetRevision: approvedPreview.body.dependencySetRevision,
+        }).expect(201);
+
+      const deniedInput = input(deniedProject.id, [deniedRecord.id]);
+      const deniedPreview = await request(app)
+        .post(`/api/companies/${context.company.id}/projects/${deniedProject.id}/work-package-dispatch/preview`)
+        .send(deniedInput).expect(200);
+      const denied = await request(app)
+        .post(`/api/companies/${context.company.id}/projects/${deniedProject.id}/work-package-dispatch/prepare`)
+        .send({
+          ...deniedInput,
+          clientRequestId: "m2e-denied-cohort",
+          requestPayloadDigest: "m2e-denied-cohort",
+          expectedScopeDigest: deniedPreview.body.scopeDigest,
+          expectedRootRevision: deniedPreview.body.rootRevision,
+          expectedDependencySetRevision: deniedPreview.body.dependencySetRevision,
+        }).expect(403);
+      expect(denied.body.details).toMatchObject({
+        code: "work_record_workflow_v2_scope_denied",
+        rollout: "scope_not_approved",
+      });
+
+      const approvedOperations = await request(app)
+        .get(`/api/companies/${context.company.id}/projects/${context.project.id}/work-record-workflow/operations`)
+        .expect(200);
+      const deniedOperations = await request(app)
+        .get(`/api/companies/${context.company.id}/projects/${deniedProject.id}/work-record-workflow/operations`)
+        .expect(200);
+      expect(approvedOperations.body.rollout).toMatchObject({ globalEnabled: true, scopeEnabled: true, reason: "enabled" });
+      expect(deniedOperations.body.rollout).toMatchObject({ globalEnabled: true, scopeEnabled: false, reason: "scope_not_approved" });
+      expect(await db.select().from(workRecordDispatchBatches).where(eq(workRecordDispatchBatches.projectId, deniedProject.id)))
+        .toHaveLength(0);
+      expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, context.company.id)))
+        .toHaveLength(0);
+      expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id)))
+        .toHaveLength(0);
+    } finally {
+      if (previousFlag === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
+      else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = previousFlag;
+      if (previousCohorts === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS;
+      else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS = previousCohorts;
+    }
   });
 
   it("dead-letters after five failures, recovers the same row, and exposes cost/rollback metrics", async () => {
@@ -229,16 +326,28 @@ describeDb("M2-E workflow hardening", () => {
     expect(before.outbox).toMatchObject({ deadLetter: 1, maxAttempts: 5 });
     expect(before.rollback).toMatchObject({ safeForOldBinary: false, actionableOutboxEvents: 1 });
 
-    const app = createApi(context.company.id);
+    const app = createApi(context.company.id, context.project.id);
     const recoveryPath = `/api/companies/${context.company.id}/projects/${context.project.id}/work-record-workflow/outbox/${event.id}/recover`;
+    const recoveryCanary = "Bearer m2e-recovery-secret-canary-9f7c";
     const conflict = await request(app).post(recoveryPath)
-      .send({ expectedAttemptCount: 4, reason: "stale operator observation" }).expect(409);
+      .send({ expectedAttemptCount: 4, reasonCode: "operator_retry", reason: recoveryCanary }).expect(409);
     expect(conflict.body.details).toMatchObject({ code: "work_record_outbox_attempt_conflict" });
-    await request(createApi(context.company.id, "viewer")).post(recoveryPath)
-      .send({ expectedAttemptCount: 5, reason: "viewer cannot recover" }).expect(403);
+    await request(createApi(context.company.id, context.project.id, "viewer")).post(recoveryPath)
+      .send({ expectedAttemptCount: 5, reasonCode: "operator_retry", reason: recoveryCanary }).expect(403);
     const recovered = await request(app).post(recoveryPath)
-      .send({ expectedAttemptCount: 5, reason: "isolated M2-E recovery proof" }).expect(200);
+      .send({ expectedAttemptCount: 5, reasonCode: "delivery_dependency_repaired", reason: recoveryCanary }).expect(200);
     expect(recovered.body).toMatchObject({ id: event.id, state: "pending", attemptCount: 0, recoveryCount: 1 });
+    expect(JSON.stringify([conflict.body, recovered.body])).not.toContain(recoveryCanary);
+    const recoveryActivity = await db.select().from(activityLog).where(and(
+      eq(activityLog.companyId, context.company.id),
+      eq(activityLog.action, "work_record.outbox_recovered"),
+    ));
+    expect(recoveryActivity).toHaveLength(1);
+    expect(recoveryActivity[0].details).toMatchObject({ reasonCode: "delivery_dependency_repaired" });
+    expect(JSON.stringify(recoveryActivity)).not.toContain(recoveryCanary);
+    expect(JSON.stringify(await db.select().from(heartbeatRunEvents).where(
+      eq(heartbeatRunEvents.companyId, context.company.id),
+    ))).not.toContain(recoveryCanary);
 
     const wake = await db.insert(agentWakeupRequests).values({
       companyId: context.company.id,
@@ -411,7 +520,7 @@ describeDb("M2-E workflow hardening", () => {
       },
     ]);
 
-    const app = createApi(context.company.id);
+    const app = createApi(context.company.id, context.project.id);
     const base = `/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch`;
     const preview = await request(app).post(`${base}/preview`)
       .send(input(context.project.id, [targets[0].id])).expect(200);
@@ -566,7 +675,7 @@ describeDb("M2-E workflow hardening", () => {
       applicationName: "paperclip-m2e-performance",
       debug: () => { queryCount += 1; },
     });
-    const performanceApp = createApi(context.company.id, "admin", measuredDb);
+    const performanceApp = createApi(context.company.id, context.project.id, "admin", measuredDb);
     const listPath = `/api/companies/${context.company.id}/projects/${context.project.id}/work-records`;
     const previewPath = `/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/preview`;
     const slo = {
@@ -707,8 +816,33 @@ describeDb("M2-E workflow hardening", () => {
   }, 240_000);
 
   it("backs up and restores workflow-v2 recovery facts into an empty isolated database", async () => {
+    const context = await seed("M2-E backup restore");
+    const target = await context.records.create(context.company.id, {
+      projectId: context.project.id,
+      kind: "plan",
+      title: "Backup restore recovery fact",
+      assigneeAgentId: context.agent.id,
+    }, { actorType: "system", actorId: "m2e-test" });
+    await prepare(context.company.id, context.project.id, [target.id], "m2e-backup-restore");
+    const recoveredAt = new Date();
+    await db.update(workRecordOutbox).set({
+      state: "pending",
+      attemptCount: 0,
+      recoveryCount: 1,
+      lastRecoveredAt: recoveredAt,
+      updatedAt: recoveredAt,
+    }).where(and(
+      eq(workRecordOutbox.companyId, context.company.id),
+      eq(workRecordOutbox.projectId, context.project.id),
+      eq(workRecordOutbox.recordId, target.id),
+      eq(workRecordOutbox.workflowVersion, 2),
+    ));
     const sourceEvent = await db.select().from(workRecordOutbox)
-      .where(eq(workRecordOutbox.recoveryCount, 1)).then((rows) => rows[0]);
+      .where(and(
+        eq(workRecordOutbox.companyId, context.company.id),
+        eq(workRecordOutbox.projectId, context.project.id),
+        eq(workRecordOutbox.recordId, target.id),
+      )).then((rows) => rows[0]);
     expect(sourceEvent).toBeTruthy();
     const backupDir = await mkdtemp(path.join(tmpdir(), "paperclip-m2e-backup-"));
     const sourceUrl = new URL(tempDb!.connectionString);

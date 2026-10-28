@@ -30,13 +30,15 @@ import { assertAuthenticated, assertCompanyAccess, getActorInfo, hasCompanyAcces
 
 export interface WorkRecordRouteOptions {
   heartbeat?: Pick<ReturnType<typeof heartbeatService>, "wakeup">;
+  /** Explicit isolated-test override; production routes resolve the environment cohort. */
+  workflowV2WritesEnabled?: boolean;
 }
 
 export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
   const router = Router();
-  const service = workRecordService(db);
-  const packages = workPackageDispatchService(db);
-  const quality = workRecordQualityService(db);
+  const service = workRecordService(db, { writesEnabled: options.workflowV2WritesEnabled });
+  const packages = workPackageDispatchService(db, { writesEnabled: options.workflowV2WritesEnabled });
+  const quality = workRecordQualityService(db, { writesEnabled: options.workflowV2WritesEnabled });
   const access = accessService(db);
   const heartbeat = options.heartbeat ?? heartbeatService(db);
 
@@ -481,7 +483,7 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
           projectId,
           workflowVersion: recovered.workflowVersion,
           recoveryCount: recovered.recoveryCount,
-          reason: req.body.reason,
+          reasonCode: req.body.reasonCode,
         },
       });
       res.json(recovered);

@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import type { PgColumn } from "drizzle-orm/pg-core";
 import type { Db } from "@paperclipai/db";
 import {
   agentWakeupRequests,
@@ -27,7 +28,6 @@ import {
   WORK_RECORD_LIST_DEFAULT_LIMIT,
   WORK_RECORD_LIST_MAX_LIMIT,
   WORK_RECORD_OUTBOX_MAX_ATTEMPTS,
-  WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT,
   classifyWorkRecordCommandReplay,
   classifyWorkRecordWorkflowEvent,
   validateWorkPackageBoundaries,
@@ -44,6 +44,7 @@ import { budgetService } from "./budgets.js";
 import { issueService, listUnfinalizedExecutionWorkspaceIds } from "./issues.js";
 import { issueTreeControlService } from "./issue-tree-control.js";
 import { isHeartbeatWakeOnDemandEnabled } from "./heartbeat-policy.js";
+import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-rollout.js";
 
 type DbTransaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
 type DbLike = Db | DbTransaction;
@@ -105,11 +106,14 @@ const ASSIGNMENT_GAP_DELIVERY_STALE_MS = 60_000;
 const WORK_RECORD_OPERATIONS_WINDOW_HOURS = 24;
 const FAILED_WAKE_STATUSES = new Set(["skipped", "failed", "cancelled"]);
 const FAILED_RUN_STATUSES = new Set(["failed", "cancelled", "timed_out"]);
+const WORK_RECORD_GOVERNANCE_RECHECK_MS = 30_000;
 
-function writesEnabledFromEnv() {
-  const value = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
-  if (value === undefined) return WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT;
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+function isIntentIssueStatusAdmissible(
+  issue: typeof issues.$inferSelect,
+  intentKind: typeof workRecordExecutionIntents.$inferSelect.kind,
+) {
+  return ["backlog", "todo"].includes(issue.status)
+    || (intentKind === "rework_release" && issue.status === "in_progress");
 }
 
 function projectLockKey(companyId: string, projectId: string) {
@@ -124,15 +128,36 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
   const issueSvc = issueService(db);
   const budgets = budgetService(db);
   const treeControl = issueTreeControlService(db);
-  const writesEnabled = options.writesEnabled ?? writesEnabledFromEnv();
+  const rollout = resolveWorkRecordWorkflowV2Rollout({ writesEnabled: options.writesEnabled });
+  const writesEnabled = rollout.globalEnabled;
 
-  function assertWritesEnabled() {
-    if (!writesEnabled) {
+  function assertWritesEnabled(companyId: string, projectId: string) {
+    const decision = rollout.decision(companyId, projectId);
+    if (!decision.scopeEnabled) {
       throw forbidden(
-        "Work-package workflow v2 writes are disabled",
-        details("work_record_workflow_v2_disabled"),
+        decision.globalEnabled
+          ? "Work-package workflow v2 writes are not approved for this cohort"
+          : "Work-package workflow v2 writes are disabled",
+        details(
+          decision.globalEnabled
+            ? "work_record_workflow_v2_scope_denied"
+            : "work_record_workflow_v2_disabled",
+          { rollout: decision.reason },
+        ),
       );
     }
+  }
+
+  function rolloutPredicate(
+    companyColumn: PgColumn,
+    projectColumn: PgColumn,
+  ) {
+    if (rollout.allScopes) return undefined;
+    if (rollout.scopes.length === 0) return sql`false`;
+    return or(...rollout.scopes.map((scope) => and(
+      eq(companyColumn, scope.companyId),
+      eq(projectColumn, scope.projectId),
+    )));
   }
 
   async function computeScope(
@@ -489,7 +514,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     actor: Actor,
     deliver: AssignmentGapDelivery,
   ) {
-    assertWritesEnabled();
+    assertWritesEnabled(companyId, projectId);
     const persisted = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${projectLockKey(companyId, projectId)}, 0))`);
       const existingRequest = await tx.select().from(workRecordAssignmentGapEscalations).where(and(
@@ -639,7 +664,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
   }
 
   async function prepare(companyId: string, projectId: string, input: PrepareWorkPackageDispatch, actor: Actor) {
-    assertWritesEnabled();
+    assertWritesEnabled(companyId, projectId);
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${projectLockKey(companyId, projectId)}, 0))`);
       const existing = await tx.select().from(workRecordDispatchBatches).where(and(
@@ -956,23 +981,37 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     });
   }
 
-  async function governanceReady(
+  async function governanceWaitReason(
     companyId: string,
     projectId: string,
     issue: typeof issues.$inferSelect,
     intentKind: typeof workRecordExecutionIntents.$inferSelect.kind,
   ) {
-    if (!issue.assigneeAgentId || issue.executionRunId) return false;
-    const admissibleStatus = ["backlog", "todo"].includes(issue.status)
-      || (intentKind === "rework_release" && issue.status === "in_progress");
-    if (!admissibleStatus) return false;
+    const rolloutDecision = rollout.decision(companyId, projectId);
+    if (!rolloutDecision.scopeEnabled) return `rollout.${rolloutDecision.reason}`;
+    if (!issue.assigneeAgentId) return "issue.unassigned";
+    if (issue.executionRunId) return "issue.execution_active";
+    const admissibleStatus = isIntentIssueStatusAdmissible(issue, intentKind);
+    if (!admissibleStatus) return issue.status === "in_review" ? "approval_pending" : "issue.status_not_admissible";
     const agent = await db.select().from(agents).where(and(
       eq(agents.companyId, companyId), eq(agents.id, issue.assigneeAgentId),
     )).then((rows) => rows[0] ?? null);
-    if (!agent || !(await evaluateAgentInvokabilityFromDb(db, agent)).invokable) return false;
-    if (!isHeartbeatWakeOnDemandEnabled(agent)) return false;
-    if (await treeControl.getActivePauseHoldGate(companyId, issue.id)) return false;
-    return !(await budgets.getInvocationBlock(companyId, issue.assigneeAgentId, { issueId: issue.id, projectId }));
+    const invokability = await evaluateAgentInvokabilityFromDb(db, agent);
+    if (!invokability.invokable) {
+      return invokability.reason === "paused" ? "agent_paused" : `agent.${invokability.reason}`;
+    }
+    if (!isHeartbeatWakeOnDemandEnabled(agent!)) return "agent.heartbeat_disabled";
+    if (await treeControl.getActivePauseHoldGate(companyId, issue.id)) return "issue_pause_hold";
+    const budgetBlock = await budgets.getInvocationBlock(companyId, issue.assigneeAgentId, {
+      issueId: issue.id,
+      projectId,
+    });
+    if (budgetBlock) {
+      return budgetBlock.reason.includes("paused") && budgetBlock.scopeType === "company"
+        ? "company_paused"
+        : "budget.blocked";
+    }
+    return null;
   }
 
   async function finalizeBatch(companyId: string, projectId: string, batchId: string) {
@@ -1129,8 +1168,9 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
           .where(eq(workRecordExecutionIntents.id, intent.id));
         continue;
       }
-      if (!(await governanceReady(companyId, projectId, issue, intent.kind))) {
-        await db.update(workRecordExecutionIntents).set({ state: "waiting_governance", waitingReason: "governance_pending", updatedAt: new Date() })
+      const governanceReason = await governanceWaitReason(companyId, projectId, issue, intent.kind);
+      if (governanceReason) {
+        await db.update(workRecordExecutionIntents).set({ state: "waiting_governance", waitingReason: governanceReason, updatedAt: new Date() })
           .where(eq(workRecordExecutionIntents.id, intent.id));
         continue;
       }
@@ -1283,7 +1323,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
   }
 
   async function reconcile(companyId: string, projectId: string, batchId: string, actor: Actor) {
-    assertWritesEnabled();
+    assertWritesEnabled(companyId, projectId);
     const view = await batchView(companyId, projectId, batchId);
     if (["failed", "superseded"].includes(view.batch.state)) return { ...view, recovered: false };
     const records = await db.select({ id: workRecords.id, parentRecordId: workRecords.parentRecordId }).from(workRecords).where(and(
@@ -1320,6 +1360,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       .from(workRecordDispatchBatches)
       .where(and(
         inArray(workRecordDispatchBatches.state, ["preparing", "prepared", "blocked"]),
+        rolloutPredicate(workRecordDispatchBatches.companyId, workRecordDispatchBatches.projectId),
         afterId ? gt(workRecordDispatchBatches.id, afterId) : undefined,
       ))
       .orderBy(asc(workRecordDispatchBatches.id))
@@ -1345,6 +1386,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     const events = await db.select().from(workRecordOutbox).where(and(
       eq(workRecordOutbox.workflowVersion, 2),
       inArray(workRecordOutbox.state, ["pending", "retry", "processing"]),
+      rolloutPredicate(workRecordOutbox.companyId, workRecordOutbox.projectId),
       sql`${workRecordOutbox.availableAt} <= now()`,
     )).orderBy(asc(workRecordOutbox.createdAt)).limit(limit);
     let processed = 0;
@@ -1392,8 +1434,22 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
             )).then((rows) => rows[0] ?? null)
           : null;
         const existingWinner = await winner();
+        const approvalWaitRevision = Boolean(intent && issue && !existingWinner &&
+          issue.statusVersion !== intent.expectedIssueStatusVersion &&
+          issue.status === "in_review" && issue.executionState?.status === "pending");
+        const approvalReleaseRevision = Boolean(intent && issue && !existingWinner &&
+          issue.statusVersion !== intent.expectedIssueStatusVersion &&
+          intent.state === "waiting_governance" && intent.waitingReason === "approval_pending" &&
+          isIntentIssueStatusAdmissible(issue, intent.kind));
         const staleIssueRevision = Boolean(intent && issue && !existingWinner &&
-          issue.statusVersion !== intent.expectedIssueStatusVersion);
+          issue.statusVersion !== intent.expectedIssueStatusVersion &&
+          !approvalWaitRevision && !approvalReleaseRevision);
+        if (intent && issue && (approvalWaitRevision || approvalReleaseRevision)) {
+          await db.update(workRecordExecutionIntents).set({
+            expectedIssueStatusVersion: issue.statusVersion,
+            updatedAt: new Date(),
+          }).where(eq(workRecordExecutionIntents.id, intent.id));
+        }
         if (!intent || !batch || batch.state !== "prepared" ||
             !["ready", "waiting_dependencies", "waiting_governance"].includes(intent.state) || !issue ||
             staleIssueRevision) {
@@ -1415,6 +1471,27 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
           continue;
         }
         if (!existingWinner) {
+          const readiness = await issueSvc.getDependencyReadiness(issue.id);
+          const governanceReason = readiness.isDependencyReady
+            ? await governanceWaitReason(claimed.companyId, claimed.projectId, issue, intent.kind)
+            : "issue_dependencies_blocked";
+          if (governanceReason) {
+            await db.transaction(async (tx) => {
+              await tx.update(workRecordExecutionIntents).set({
+                state: readiness.isDependencyReady ? "waiting_governance" : "waiting_dependencies",
+                waitingReason: governanceReason,
+                updatedAt: new Date(),
+              }).where(eq(workRecordExecutionIntents.id, intent.id));
+              await tx.update(workRecordOutbox).set({
+                state: "retry",
+                lastError: governanceReason,
+                availableAt: new Date(Date.now() + WORK_RECORD_GOVERNANCE_RECHECK_MS),
+                deadLetteredAt: null,
+                updatedAt: new Date(),
+              }).where(eq(workRecordOutbox.id, claimed.id));
+            });
+            continue;
+          }
           if (!issue.assigneeAgentId) throw new Error("Materialized issue has no assignee");
           await wakeup(issue.assigneeAgentId, {
             source: "assignment",
@@ -1469,13 +1546,27 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         const admissionReason = !activeReceipt && admissionReceipt
           ? admissionReceipt.reason ?? admissionReceipt.error ?? null
           : null;
-        if (failedIntent?.issueId && admissionReason) {
+        const governanceAdmission = Boolean(
+          admissionReason && admissionReceipt &&
+          ["skipped", "deferred_issue_execution"].includes(admissionReceipt.status),
+        );
+        if (failedIntent?.issueId && governanceAdmission) {
           const readiness = await issueSvc.getDependencyReadiness(failedIntent.issueId);
           await db.update(workRecordExecutionIntents).set({
             state: readiness.isDependencyReady ? "waiting_governance" : "waiting_dependencies",
             waitingReason: admissionReason,
             updatedAt: new Date(),
           }).where(eq(workRecordExecutionIntents.id, failedIntent.id));
+        }
+        if (governanceAdmission) {
+          await db.update(workRecordOutbox).set({
+            state: "retry",
+            lastError: admissionReason,
+            availableAt: new Date(Date.now() + WORK_RECORD_GOVERNANCE_RECHECK_MS),
+            deadLetteredAt: null,
+            updatedAt: new Date(),
+          }).where(eq(workRecordOutbox.id, claimed.id));
+          continue;
         }
         const nextAttemptCount = claimed.attemptCount + 1;
         const deadLetter = nextAttemptCount >= WORK_RECORD_OUTBOX_MAX_ATTEMPTS;
@@ -1498,7 +1589,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     eventId: string,
     input: RecoverWorkRecordOutbox,
   ) {
-    assertWritesEnabled();
+    assertWritesEnabled(companyId, projectId);
     const now = new Date();
     const recovered = await db.transaction(async (tx) => {
       const row = await tx.update(workRecordOutbox).set({
@@ -1726,9 +1817,18 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     const actionableOutboxEvents = Number(outbox?.pending_count ?? 0) + Number(outbox?.retry_count ?? 0) +
       Number(outbox?.processing_count ?? 0) + Number(outbox?.dead_letter_count ?? 0);
     const activeIntents = Number(execution?.active_intent_count ?? 0);
+    const rolloutDecision = rollout.decision(companyId, projectId);
     return {
       workflowVersion: 2,
       featureFlagEnabled: writesEnabled,
+      rollout: {
+        globalEnabled: rolloutDecision.globalEnabled,
+        scopeEnabled: rolloutDecision.scopeEnabled,
+        configured: rolloutDecision.configured,
+        source: rolloutDecision.source,
+        reason: rolloutDecision.reason,
+        scope: { companyId, projectId },
+      },
       outbox: {
         pending: Number(outbox?.pending_count ?? 0), retry: Number(outbox?.retry_count ?? 0),
         processing: Number(outbox?.processing_count ?? 0), deadLetter: Number(outbox?.dead_letter_count ?? 0),
