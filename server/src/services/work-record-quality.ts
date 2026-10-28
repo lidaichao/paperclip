@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
   issues,
@@ -1103,16 +1103,27 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     });
   }
 
-  async function reconcileAll(limit = 25) {
-    if (!writesEnabled) return 0;
+  async function reconcilePage(limit = 25, afterId: string | null = null) {
+    if (!writesEnabled) return { processed: 0, nextAfterId: null };
     const cycles = await db.select({
       id: workRecordQualityCycles.id,
       companyId: workRecordQualityCycles.companyId,
       projectId: workRecordQualityCycles.projectId,
-    }).from(workRecordQualityCycles).where(eq(workRecordQualityCycles.state, "open"))
-      .orderBy(asc(workRecordQualityCycles.updatedAt), asc(workRecordQualityCycles.id)).limit(limit);
-    for (const cycle of cycles) await reconcileCycle(cycle.companyId, cycle.projectId, cycle.id);
-    return cycles.length;
+    }).from(workRecordQualityCycles).where(and(
+      eq(workRecordQualityCycles.state, "open"),
+      afterId ? gt(workRecordQualityCycles.id, afterId) : undefined,
+    )).orderBy(asc(workRecordQualityCycles.id)).limit(limit + 1);
+    const hasMore = cycles.length > limit;
+    const candidates = hasMore ? cycles.slice(0, limit) : cycles;
+    for (const cycle of candidates) await reconcileCycle(cycle.companyId, cycle.projectId, cycle.id);
+    return {
+      processed: candidates.length,
+      nextAfterId: hasMore ? candidates.at(-1)?.id ?? null : null,
+    };
+  }
+
+  async function reconcileAll(limit = 25) {
+    return (await reconcilePage(limit)).processed;
   }
 
   async function auditSnapshot(
@@ -1170,6 +1181,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     linkPackageDefect,
     reconcileCycle,
     reconcileAll,
+    reconcilePage,
     writesEnabled,
   };
 }

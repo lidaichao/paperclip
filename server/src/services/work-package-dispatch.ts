@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
   agentWakeupRequests,
@@ -7,6 +7,7 @@ import {
   heartbeatRuns,
   issues,
   issueRelations,
+  projects,
   workRecords,
   workRecordAssignmentGapEscalations,
   workRecordDependencies,
@@ -22,6 +23,9 @@ import {
 } from "@paperclipai/db";
 import {
   WORK_PACKAGE_MAX_DEPTH,
+  WORK_RECORD_LIST_DEFAULT_LIMIT,
+  WORK_RECORD_LIST_MAX_LIMIT,
+  WORK_RECORD_OUTBOX_MAX_ATTEMPTS,
   WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT,
   classifyWorkRecordCommandReplay,
   classifyWorkRecordWorkflowEvent,
@@ -29,6 +33,7 @@ import {
   type PrepareWorkPackageDispatch,
   type PreviewWorkPackageDispatch,
   type EscalateWorkPackageAssignmentGaps,
+  type RecoverWorkRecordOutbox,
   type WorkPackageAssignmentEscalationReceipt,
 } from "@paperclipai/shared";
 import { conflict, forbidden, notFound, unprocessable } from "../errors.js";
@@ -261,13 +266,16 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       }
       return result;
     });
+    const validatedAgentIds = new Set<string>();
     for (const record of scoped) {
-      if (record.assigneeAgentId) {
+      if (record.assigneeAgentId && !validatedAgentIds.has(record.assigneeAgentId)) {
         await assertAssignableAgent(database as Db, companyId, record.assigneeAgentId, { kind: "work" });
+        validatedAgentIds.add(record.assigneeAgentId);
       }
       if (record.kind === "defect") {
-        if (record.qaAssigneeAgentId && record.qaAssigneeAgentId !== record.assigneeAgentId) {
+        if (record.qaAssigneeAgentId && !validatedAgentIds.has(record.qaAssigneeAgentId)) {
           await assertAssignableAgent(database as Db, companyId, record.qaAssigneeAgentId, { kind: "work" });
+          validatedAgentIds.add(record.qaAssigneeAgentId);
         }
       }
     }
@@ -1304,17 +1312,29 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     return { ...(await batchView(companyId, projectId, batchId)), recovered: true };
   }
 
-  async function reconcileAll(limit = 25) {
-    if (!writesEnabled) return 0;
+  async function reconcilePage(limit = 25, afterId: string | null = null) {
+    if (!writesEnabled) return { processed: 0, nextAfterId: null };
     const batches = await db.select({ companyId: workRecordDispatchBatches.companyId, projectId: workRecordDispatchBatches.projectId, id: workRecordDispatchBatches.id })
       .from(workRecordDispatchBatches)
-      .where(inArray(workRecordDispatchBatches.state, ["preparing", "prepared", "blocked"]))
-      .orderBy(asc(workRecordDispatchBatches.updatedAt), asc(workRecordDispatchBatches.id))
-      .limit(limit);
-    for (const batch of batches) {
+      .where(and(
+        inArray(workRecordDispatchBatches.state, ["preparing", "prepared", "blocked"]),
+        afterId ? gt(workRecordDispatchBatches.id, afterId) : undefined,
+      ))
+      .orderBy(asc(workRecordDispatchBatches.id))
+      .limit(limit + 1);
+    const hasMore = batches.length > limit;
+    const candidates = hasMore ? batches.slice(0, limit) : batches;
+    for (const batch of candidates) {
       await reconcile(batch.companyId, batch.projectId, batch.id, { actorType: "system", actorId: "work-package-reconciler" });
     }
-    return batches.length;
+    return {
+      processed: candidates.length,
+      nextAfterId: hasMore ? candidates.at(-1)?.id ?? null : null,
+    };
+  }
+
+  async function reconcileAll(limit = 25) {
+    return (await reconcilePage(limit)).processed;
   }
 
   async function processOutbox(wakeup: Wakeup, limit = 25) {
@@ -1454,16 +1474,167 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
             updatedAt: new Date(),
           }).where(eq(workRecordExecutionIntents.id, failedIntent.id));
         }
+        const nextAttemptCount = claimed.attemptCount + 1;
+        const deadLetter = nextAttemptCount >= WORK_RECORD_OUTBOX_MAX_ATTEMPTS;
         await db.update(workRecordOutbox).set({
-          state: "retry",
+          state: deadLetter ? "dead_letter" : "retry",
           lastError: admissionReason ?? (error instanceof Error ? error.message : String(error)),
-          attemptCount: claimed.attemptCount + 1,
-          availableAt: new Date(Date.now() + 2_000),
+          attemptCount: nextAttemptCount,
+          availableAt: deadLetter ? new Date() : new Date(Date.now() + 2_000),
+          deadLetteredAt: deadLetter ? new Date() : null,
           updatedAt: new Date(),
         }).where(eq(workRecordOutbox.id, claimed.id));
       }
     }
     return processed;
+  }
+
+  async function recoverOutboxEvent(
+    companyId: string,
+    projectId: string,
+    eventId: string,
+    input: RecoverWorkRecordOutbox,
+  ) {
+    assertWritesEnabled();
+    const now = new Date();
+    const recovered = await db.transaction(async (tx) => {
+      const row = await tx.update(workRecordOutbox).set({
+        state: "pending",
+        attemptCount: 0,
+        recoveryCount: sql`${workRecordOutbox.recoveryCount} + 1`,
+        availableAt: now,
+        deadLetteredAt: null,
+        lastRecoveredAt: now,
+        lastError: null,
+        updatedAt: now,
+      }).where(and(
+        eq(workRecordOutbox.companyId, companyId),
+        eq(workRecordOutbox.projectId, projectId),
+        eq(workRecordOutbox.id, eventId),
+        eq(workRecordOutbox.workflowVersion, 2),
+        eq(workRecordOutbox.state, "dead_letter"),
+        eq(workRecordOutbox.attemptCount, input.expectedAttemptCount),
+      )).returning().then((rows) => rows[0] ?? null);
+      if (!row) return null;
+      await tx.update(workRecords).set({ dispatchState: "linked", updatedAt: now }).where(and(
+        eq(workRecords.companyId, companyId),
+        eq(workRecords.projectId, projectId),
+        eq(workRecords.id, row.recordId),
+      ));
+      return row;
+    });
+    if (recovered) return recovered;
+    const existing = await db.select().from(workRecordOutbox).where(and(
+      eq(workRecordOutbox.companyId, companyId),
+      eq(workRecordOutbox.projectId, projectId),
+      eq(workRecordOutbox.id, eventId),
+      eq(workRecordOutbox.workflowVersion, 2),
+    )).then((rows) => rows[0] ?? null);
+    if (!existing) throw notFound("Workflow outbox event not found");
+    if (existing.state !== "dead_letter") {
+      throw conflict("Workflow outbox event is not dead-lettered", details("work_record_outbox_not_dead_letter", {
+        state: existing.state,
+      }));
+    }
+    throw conflict("Workflow outbox attempt count changed", details("work_record_outbox_attempt_conflict", {
+      expectedAttemptCount: input.expectedAttemptCount,
+      actualAttemptCount: existing.attemptCount,
+    }));
+  }
+
+  async function operationsMetrics(companyId: string, projectId: string) {
+    const project = await db.select({ id: projects.id }).from(projects).where(and(
+      eq(projects.companyId, companyId),
+      eq(projects.id, projectId),
+    )).then((rows) => rows[0] ?? null);
+    if (!project) throw notFound("Project not found");
+    const [outbox] = await db.execute<{
+      pending_count: number;
+      retry_count: number;
+      processing_count: number;
+      dead_letter_count: number;
+      oldest_actionable_age_seconds: number | null;
+      attempt_p95: number | null;
+      lease_reclaim_count: number;
+    }>(sql`
+      select
+        count(*) filter (where state = 'pending')::int as pending_count,
+        count(*) filter (where state = 'retry')::int as retry_count,
+        count(*) filter (where state = 'processing')::int as processing_count,
+        count(*) filter (where state = 'dead_letter')::int as dead_letter_count,
+        extract(epoch from (now() - min(created_at) filter (where state in ('pending', 'retry', 'processing'))))::float8 as oldest_actionable_age_seconds,
+        percentile_cont(0.95) within group (order by attempt_count)::float8 as attempt_p95,
+        count(*) filter (where recovery_count > 0)::int as lease_reclaim_count
+      from work_record_outbox
+      where company_id = ${companyId} and project_id = ${projectId} and workflow_version = 2
+    `);
+    const [execution] = await db.execute<{
+      intent_count: number;
+      active_intent_count: number;
+      wake_count: number;
+      run_count: number;
+      cost_event_count: number;
+      cost_cents: number;
+    }>(sql`
+      select
+        count(distinct i.id)::int as intent_count,
+        count(distinct i.id) filter (
+          where i.state in ('pending', 'waiting_dependencies', 'waiting_governance', 'ready', 'queued', 'running')
+        )::int as active_intent_count,
+        count(distinct w.id)::int as wake_count,
+        count(distinct r.id)::int as run_count,
+        count(distinct c.id)::int as cost_event_count,
+        coalesce(sum(c.cost_cents), 0)::int as cost_cents
+      from work_record_execution_intents i
+      left join agent_wakeup_requests w
+        on w.company_id = i.company_id
+       and w.idempotency_key = ('work-record-intent:' || i.id::text || ':' || i.generation::text)
+      left join heartbeat_runs r on r.company_id = i.company_id and r.wakeup_request_id = w.id
+      left join cost_events c on c.company_id = i.company_id and c.heartbeat_run_id = r.id
+      where i.company_id = ${companyId} and i.project_id = ${projectId}
+    `);
+    const actionableOutboxEvents = Number(outbox?.pending_count ?? 0) +
+      Number(outbox?.retry_count ?? 0) +
+      Number(outbox?.processing_count ?? 0) +
+      Number(outbox?.dead_letter_count ?? 0);
+    const activeIntents = Number(execution?.active_intent_count ?? 0);
+    return {
+      workflowVersion: 2,
+      featureFlagEnabled: writesEnabled,
+      outbox: {
+        pending: Number(outbox?.pending_count ?? 0),
+        retry: Number(outbox?.retry_count ?? 0),
+        processing: Number(outbox?.processing_count ?? 0),
+        deadLetter: Number(outbox?.dead_letter_count ?? 0),
+        oldestActionableAgeSeconds: outbox?.oldest_actionable_age_seconds == null ? null : Number(outbox.oldest_actionable_age_seconds),
+        attemptP95: outbox?.attempt_p95 == null ? null : Number(outbox.attempt_p95),
+        recoveredEventCount: Number(outbox?.lease_reclaim_count ?? 0),
+        maxAttempts: WORK_RECORD_OUTBOX_MAX_ATTEMPTS,
+      },
+      execution: {
+        intents: Number(execution?.intent_count ?? 0),
+        activeIntents,
+        wakes: Number(execution?.wake_count ?? 0),
+        runs: Number(execution?.run_count ?? 0),
+        costEvents: Number(execution?.cost_event_count ?? 0),
+        costCents: Number(execution?.cost_cents ?? 0),
+      },
+      scanBudget: {
+        intervalMs: 2_000,
+        recordCandidatesPerTick: WORK_RECORD_LIST_DEFAULT_LIMIT,
+        packageCandidatesPerTick: 25,
+        qualityCandidatesPerTick: 25,
+        maxListPageSize: WORK_RECORD_LIST_MAX_LIMIT,
+        upperBoundCandidateChecksPerMinute: 4_500,
+      },
+      rollback: {
+        safeForOldBinary: actionableOutboxEvents === 0 && activeIntents === 0,
+        actionableOutboxEvents,
+        activeIntents,
+        restriction: "Disable workflow-v2 writes and drain or resolve every active intent and actionable/dead-letter outbox event before starting an old binary.",
+      },
+      generatedAt: new Date(),
+    };
   }
 
   async function assignmentEscalationTarget(companyId: string, database: DbLike = db) {
@@ -1480,7 +1651,10 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     getBatch: batchView,
     reconcile,
     reconcileAll,
+    reconcilePage,
     processOutbox,
+    recoverOutboxEvent,
+    operationsMetrics,
     assignmentEscalationTarget,
     latestAssignmentEscalation,
     escalateAssignmentGaps,

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
   agentWakeupRequests,
@@ -34,6 +34,8 @@ import type {
   WorkRecordHoldReason,
 } from "@paperclipai/shared";
 import {
+  WORK_RECORD_LIST_DEFAULT_LIMIT,
+  WORK_RECORD_LIST_MAX_LIMIT,
   WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT,
   classifyWorkRecordCommandReplay,
 } from "@paperclipai/shared";
@@ -181,7 +183,10 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       executionIntentId: workRecordOutbox.executionIntentId,
       state: workRecordOutbox.state,
       attemptCount: workRecordOutbox.attemptCount,
+      recoveryCount: workRecordOutbox.recoveryCount,
       deliveredAt: workRecordOutbox.deliveredAt,
+      deadLetteredAt: workRecordOutbox.deadLetteredAt,
+      lastRecoveredAt: workRecordOutbox.lastRecoveredAt,
       lastError: workRecordOutbox.lastError,
       updatedAt: workRecordOutbox.updatedAt,
     }).from(workRecordOutbox).where(and(
@@ -261,6 +266,8 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ? { code: "projection_error" as const, message: projection.syncError, canReconcile: true, lastConfirmedAt: projection.projectedAt }
         : projection?.syncState === "stale"
           ? { code: "projection_stale" as const, message: "projection_stale", canReconcile: true, lastConfirmedAt: projection.projectedAt }
+        : outbox?.state === "dead_letter"
+          ? { code: "release_dead_letter" as const, message: outbox.lastError, canReconcile: false, lastConfirmedAt: outbox.deadLetteredAt ?? outbox.updatedAt }
         : outbox?.state === "retry"
           ? { code: "release_failed" as const, message: outbox.lastError, canReconcile: true, lastConfirmedAt: outbox.updatedAt }
           : command?.state === "failed"
@@ -298,6 +305,9 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
           deliveryState: outbox?.state ?? null,
           deliveredAt: outbox?.deliveredAt ?? null,
           attemptCount: outbox?.attemptCount ?? 0,
+          recoveryCount: outbox?.recoveryCount ?? 0,
+          deadLetteredAt: outbox?.deadLetteredAt ?? null,
+          lastRecoveredAt: outbox?.lastRecoveredAt ?? null,
           lastError: outbox?.lastError ?? null,
           wakeRequestId: wake?.id ?? null,
           wakeStatus: wake?.status ?? null,
@@ -319,6 +329,27 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     await assertProject(companyId, projectId);
     const rows = await db.select().from(workRecords).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId))).orderBy(asc(workRecords.createdAt));
     return hydrate(companyId, rows);
+  }
+
+  async function listPage(
+    companyId: string,
+    projectId: string,
+    input: { limit?: number; afterId?: string | null } = {},
+  ) {
+    await assertProject(companyId, projectId);
+    const limit = Math.max(1, Math.min(input.limit ?? WORK_RECORD_LIST_DEFAULT_LIMIT, WORK_RECORD_LIST_MAX_LIMIT));
+    const rows = await db.select().from(workRecords).where(and(
+      eq(workRecords.companyId, companyId),
+      eq(workRecords.projectId, projectId),
+      input.afterId ? gt(workRecords.id, input.afterId) : undefined,
+    )).orderBy(asc(workRecords.id)).limit(limit + 1);
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    return {
+      items: await hydrate(companyId, pageRows),
+      nextCursor: hasMore ? pageRows.at(-1)?.id ?? null : null,
+      limit,
+    };
   }
 
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
@@ -1042,14 +1073,26 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     return { ...result, record };
   }
 
-  async function reconcileAll(limit = 100) {
+  async function reconcilePage(limit = 100, afterId: string | null = null) {
     const rows = await db.select({ companyId: workRecords.companyId, projectId: workRecords.projectId, id: workRecords.id })
       .from(workRecords)
-      .where(ne(workRecords.dispatchState, "not_dispatched"))
-      .orderBy(asc(workRecords.updatedAt), asc(workRecords.id))
-      .limit(limit);
-    for (const row of rows) await reconcileRecord(row.companyId, row.projectId, row.id);
-    return rows.length;
+      .where(and(
+        ne(workRecords.dispatchState, "not_dispatched"),
+        afterId ? gt(workRecords.id, afterId) : undefined,
+      ))
+      .orderBy(asc(workRecords.id))
+      .limit(limit + 1);
+    const hasMore = rows.length > limit;
+    const candidates = hasMore ? rows.slice(0, limit) : rows;
+    for (const row of candidates) await reconcileRecord(row.companyId, row.projectId, row.id);
+    return {
+      processed: candidates.length,
+      nextAfterId: hasMore ? candidates.at(-1)?.id ?? null : null,
+    };
+  }
+
+  async function reconcileAll(limit = 100) {
+    return (await reconcilePage(limit)).processed;
   }
 
   async function processOutbox(wakeup: Wakeup, limit = 25) {
@@ -1058,6 +1101,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       or(eq(workRecordOutbox.state, "pending"), eq(workRecordOutbox.state, "retry"), eq(workRecordOutbox.state, "processing")),
       sql`${workRecordOutbox.availableAt} <= now()`,
     )).orderBy(asc(workRecordOutbox.createdAt)).limit(limit);
+    let processed = 0;
     for (const event of pending) {
       try {
         const fresh = await db.update(workRecordOutbox).set({ state: "processing", availableAt: new Date(Date.now() + 30_000), updatedAt: new Date() }).where(and(
@@ -1115,11 +1159,18 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
           await tx.update(workRecordOutbox).set({ state: "delivered", deliveredAt: new Date(), lastError: null, attemptCount: fresh.attemptCount + 1, updatedAt: new Date() }).where(eq(workRecordOutbox.id, fresh.id));
           await tx.update(workRecords).set({ dispatchState: "queued", updatedAt: new Date() }).where(eq(workRecords.id, fresh.recordId));
         });
+        processed += 1;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         const now = new Date();
         await db.transaction(async (tx) => {
-          await tx.update(workRecordOutbox).set({ state: "retry", lastError: message, attemptCount: event.attemptCount + 1, availableAt: new Date(Date.now() + 2_000), updatedAt: now }).where(eq(workRecordOutbox.id, event.id));
+          await tx.update(workRecordOutbox).set({
+            state: "retry",
+            lastError: message,
+            attemptCount: event.attemptCount + 1,
+            availableAt: new Date(Date.now() + 2_000),
+            updatedAt: now,
+          }).where(eq(workRecordOutbox.id, event.id));
           await tx.update(workRecords).set({ dispatchState: "failed", updatedAt: now }).where(and(
             eq(workRecords.companyId, event.companyId),
             eq(workRecords.id, event.recordId),
@@ -1136,6 +1187,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         });
       }
     }
+    return processed;
   }
 
   async function assertNoSourceHoldStatusBypass(companyId: string, issueId: string, status?: string) {
@@ -1148,6 +1200,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
 
   return {
     list,
+    listPage,
     create,
     update,
     fillAssignmentGap,
@@ -1157,6 +1210,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     reconcileRecordView,
     recoverRecord,
     reconcileAll,
+    reconcilePage,
     processOutbox,
     assertNoSourceHoldStatusBypass,
   };

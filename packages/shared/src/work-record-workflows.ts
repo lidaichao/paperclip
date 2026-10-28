@@ -12,6 +12,17 @@ export const WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT = false;
 export const WORK_PACKAGE_MAX_RECORDS = 200;
 export const WORK_PACKAGE_MAX_DEPTH = 8;
 export const WORK_PACKAGE_MAX_EDGES = 2_000;
+export const WORK_RECORD_LIST_DEFAULT_LIMIT = 100;
+export const WORK_RECORD_LIST_MAX_LIMIT = 200;
+export const WORK_RECORD_OUTBOX_MAX_ATTEMPTS = 5;
+export const WORK_RECORD_OUTBOX_STATES = [
+  "pending",
+  "processing",
+  "retry",
+  "delivered",
+  "superseded",
+  "dead_letter",
+] as const;
 
 export const WORK_PACKAGE_SCOPE_KINDS = ["whole_package", "selected_records"] as const;
 export const WORK_PACKAGE_BATCH_STATES = [
@@ -121,6 +132,8 @@ export const WORK_RECORD_WORKFLOW_ERROR_CODES = [
   "work_record_quality_not_ready",
   "work_record_quality_review_round_limit",
   "work_record_workflow_v2_disabled",
+  "work_record_outbox_not_dead_letter",
+  "work_record_outbox_attempt_conflict",
   "work_package_assignment_required",
   "work_package_dependency_cycle",
 ] as const;
@@ -137,6 +150,7 @@ export type WorkRecordExecutionIntentKind = (typeof WORK_RECORD_EXECUTION_INTENT
 export type WorkRecordExecutionIntentState = (typeof WORK_RECORD_EXECUTION_INTENT_STATES)[number];
 export type WorkRecordWorkflowEventType = (typeof WORK_RECORD_WORKFLOW_EVENT_TYPES)[number];
 export type WorkRecordWorkflowErrorCode = (typeof WORK_RECORD_WORKFLOW_ERROR_CODES)[number];
+export type WorkRecordOutboxState = (typeof WORK_RECORD_OUTBOX_STATES)[number];
 
 const requestIdSchema = z.string().trim().min(1).max(255);
 const digestSchema = z.string().trim().min(1).max(255);
@@ -275,6 +289,11 @@ export const fillWorkRecordAssignmentGapSchema = z.object({
   }
 });
 
+export const recoverWorkRecordOutboxSchema = z.object({
+  expectedAttemptCount: z.number().int().min(0),
+  reason: z.string().trim().min(1).max(2_000),
+});
+
 export type PrepareWorkPackageDispatch = z.infer<typeof prepareWorkPackageDispatchSchema>;
 export type PreviewWorkPackageDispatch = z.infer<typeof previewWorkPackageDispatchSchema>;
 export type EscalateWorkPackageAssignmentGaps = z.infer<typeof escalateWorkPackageAssignmentGapsSchema>;
@@ -282,6 +301,7 @@ export type RecordPoQualityVerdict = z.infer<typeof recordPoQualityVerdictSchema
 export type RecordQaQualityVerdict = z.infer<typeof recordQaQualityVerdictSchema>;
 export type LinkWorkPackageDefect = z.infer<typeof linkWorkPackageDefectSchema>;
 export type FillWorkRecordAssignmentGap = z.infer<typeof fillWorkRecordAssignmentGapSchema>;
+export type RecoverWorkRecordOutbox = z.infer<typeof recoverWorkRecordOutboxSchema>;
 
 export type WorkPackageBoundaryResult =
   | { ok: true }

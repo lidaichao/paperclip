@@ -1127,12 +1127,36 @@ export async function createApp(
   const workRecords = workRecordService(db);
   const workPackages = workPackageDispatchService(db);
   const workQuality = workRecordQualityService(db);
+  let workRecordCandidateCursor: string | null = null;
+  let workQualityCandidateCursor: string | null = null;
+  let workPackageCandidateCursor: string | null = null;
   const runWorkRecordTick = createNonOverlappingWorkRecordTick(async () => {
-    await workRecords.reconcileAll(100);
-    await workQuality.reconcileAll(25);
-    await workPackages.reconcileAll(25);
-    await workRecords.processOutbox(connectionIntentHeartbeat.wakeup, 25);
-    await workPackages.processOutbox(connectionIntentHeartbeat.wakeup, 25);
+    const startedAt = Date.now();
+    const recordPage = await workRecords.reconcilePage(100, workRecordCandidateCursor);
+    workRecordCandidateCursor = recordPage.nextAfterId;
+    const qualityPage = await workQuality.reconcilePage(25, workQualityCandidateCursor);
+    workQualityCandidateCursor = qualityPage.nextAfterId;
+    const packagePage = await workPackages.reconcilePage(25, workPackageCandidateCursor);
+    workPackageCandidateCursor = packagePage.nextAfterId;
+    const legacyOutboxProcessed = await workRecords.processOutbox(connectionIntentHeartbeat.wakeup, 25);
+    const workflowV2OutboxProcessed = await workPackages.processOutbox(connectionIntentHeartbeat.wakeup, 25);
+    logger.debug({
+      durationMs: Date.now() - startedAt,
+      candidates: {
+        records: recordPage.processed,
+        qualityCycles: qualityPage.processed,
+        packages: packagePage.processed,
+      },
+      outbox: {
+        legacyProcessed: legacyOutboxProcessed,
+        workflowV2Processed: workflowV2OutboxProcessed,
+      },
+      wrapped: {
+        records: workRecordCandidateCursor === null,
+        qualityCycles: workQualityCandidateCursor === null,
+        packages: workPackageCandidateCursor === null,
+      },
+    }, "work_record_workflow_tick");
   });
   // The process-recovery E2E owns the worker lifecycle explicitly. Keep its
   // API/UI observer alive without racing the child process that it kills.

@@ -117,7 +117,7 @@ export interface WorkRecordExecutionView {
 }
 
 export interface WorkRecordRecoveryView {
-  code: "release_pending" | "release_failed" | "dispatch_failed" | "projection_stale" | "projection_error" | null;
+  code: "release_pending" | "release_failed" | "release_dead_letter" | "dispatch_failed" | "projection_stale" | "projection_error" | null;
   message: string | null;
   canReconcile: boolean;
   lastConfirmedAt: Date | null;
@@ -128,6 +128,9 @@ export interface WorkRecordDeliveryView {
   deliveryState: string | null;
   deliveredAt: Date | null;
   attemptCount: number;
+  recoveryCount: number;
+  deadLetteredAt: Date | null;
+  lastRecoveredAt: Date | null;
   lastError: string | null;
   wakeRequestId: string | null;
   wakeStatus: string | null;

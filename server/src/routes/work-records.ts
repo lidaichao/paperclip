@@ -11,6 +11,7 @@ import {
   previewWorkPackageDispatchSchema,
   recordPoQualityVerdictSchema,
   recordQaQualityVerdictSchema,
+  recoverWorkRecordOutboxSchema,
   updateWorkRecordSchema,
 } from "@paperclipai/shared";
 import { validate } from "../middleware/validate.js";
@@ -394,8 +395,66 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     const companyId = req.params.companyId as string;
     const projectId = req.params.projectId as string;
     assertCompanyAccess(req, companyId);
-    res.json(await service.list(companyId, projectId));
+    const paginationRequested = req.query.limit !== undefined || req.query.afterId !== undefined;
+    if (!paginationRequested) {
+      res.json(await service.list(companyId, projectId));
+      return;
+    }
+    const limit = req.query.limit === undefined ? undefined : Number(req.query.limit);
+    const afterId = typeof req.query.afterId === "string" ? req.query.afterId : null;
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 200)) {
+      throw unprocessable("limit must be an integer from 1 to 200");
+    }
+    if (afterId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(afterId)) {
+      throw unprocessable("afterId must be a UUID cursor");
+    }
+    res.json(await service.listPage(companyId, projectId, { limit, afterId }));
   });
+
+  router.get("/companies/:companyId/projects/:projectId/work-record-workflow/operations", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyReadAccess(req, companyId);
+    res.json(await packages.operationsMetrics(companyId, projectId));
+  });
+
+  router.post(
+    "/companies/:companyId/projects/:projectId/work-record-workflow/outbox/:eventId/recover",
+    validate(recoverWorkRecordOutboxSchema),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const projectId = req.params.projectId as string;
+      assertCompanyAccess(req, companyId);
+      if (req.actor.type !== "board" || isReadOnlyViewer(req, companyId)) {
+        throw forbidden("Board operator access is required to recover a dead-lettered workflow event");
+      }
+      const actor = getActorInfo(req);
+      const recovered = await packages.recoverOutboxEvent(
+        companyId,
+        projectId,
+        req.params.eventId as string,
+        req.body,
+      );
+      await logActivity(db, {
+        companyId,
+        actorType: actor.actorType,
+        actorId: actor.actorId,
+        agentId: actor.agentId,
+        runId: actor.runId,
+        agentApiKeyId: actor.agentApiKeyId,
+        action: "work_record.outbox_recovered",
+        entityType: "work_record_outbox",
+        entityId: recovered.id,
+        details: {
+          projectId,
+          workflowVersion: recovered.workflowVersion,
+          recoveryCount: recovered.recoveryCount,
+          reason: req.body.reason,
+        },
+      });
+      res.json(recovered);
+    },
+  );
 
   router.get("/companies/:companyId/projects/:projectId/work-records/:recordId/quality", async (req, res) => {
     const companyId = req.params.companyId as string;

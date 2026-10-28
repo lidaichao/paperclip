@@ -858,8 +858,11 @@ export const workRecordOutbox = pgTable(
     payloadDigest: text("payload_digest").notNull(),
     state: text("state").notNull().default("pending"),
     attemptCount: integer("attempt_count").notNull().default(0),
+    recoveryCount: integer("recovery_count").notNull().default(0),
     availableAt: timestamp("available_at", { withTimezone: true }).notNull().defaultNow(),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    deadLetteredAt: timestamp("dead_lettered_at", { withTimezone: true }),
+    lastRecoveredAt: timestamp("last_recovered_at", { withTimezone: true }),
     lastError: text("last_error"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -911,6 +914,17 @@ export const workRecordOutbox = pgTable(
       .on(table.companyId, table.executionIntentId, table.eventType)
       .where(sql`${table.workflowVersion} = 2 AND ${table.executionIntentId} IS NOT NULL`),
     pendingIdx: index("work_record_outbox_pending_idx").on(table.state, table.availableAt),
+    projectStateIdx: index("work_record_outbox_project_state_idx").on(
+      table.companyId,
+      table.projectId,
+      table.state,
+      table.availableAt,
+      table.id,
+    ),
+    stateCheck: check(
+      "work_record_outbox_state_check",
+      sql`${table.state} IN ('pending', 'processing', 'retry', 'delivered', 'superseded', 'dead_letter')`,
+    ),
     workflowVersionCheck: check(
       "work_record_outbox_workflow_version_check",
       sql`${table.workflowVersion} IN (1, 2)`,
