@@ -16,6 +16,7 @@ import {
   issues,
   projects,
   workRecords,
+  workRecordAssignmentGapEscalations,
   workRecordDispatchBatches,
   workRecordDispatchBatchItems,
   workRecordDependencySnapshots,
@@ -87,10 +88,16 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     return { workflowVersion: 2, projectId: context.project.id, ...input };
   }
 
-  function createApi(database: typeof db, companyId: string, writesEnabled: boolean, membershipRole = "admin") {
+  function createApi(
+    database: typeof db,
+    companyId: string,
+    writesEnabled: boolean,
+    membershipRole = "admin",
+    heartbeat?: Parameters<typeof workRecordRoutes>[1]["heartbeat"],
+  ) {
     const previous = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
     process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = writesEnabled ? "true" : "false";
-    const router = workRecordRoutes(database);
+    const router = workRecordRoutes(database, { heartbeat });
     if (previous === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
     else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = previous;
     const app = express();
@@ -636,6 +643,177 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(issues).where(eq(issues.companyId, context.company.id))).toHaveLength(0);
   });
+
+  it("D02 persists one CEO coordination record, delivers once, and restores it without changing owners", async () => {
+    const context = await seed();
+    const ceo = await db.insert(agents).values({
+      companyId: context.company.id,
+      name: "CEO",
+      role: "ceo",
+      status: "idle",
+      adapterType: "process",
+      adapterConfig: { command: process.execPath, args: ["-e", "process.exit(0)"] },
+      runtimeConfig: { heartbeat: { enabled: true, intervalSec: 60, wakeOnDemand: true } },
+    }).returning().then((rows) => rows[0]);
+    const root = await record(context, "Root without PO", { assigned: false });
+    const missingChild = await record(context, "Unassigned child", { parentRecordId: root.id, assigned: false });
+    const assignedChild = await record(context, "Named owner stays", { parentRecordId: root.id });
+    const service = workPackageDispatchService(db, { writesEnabled: true });
+    const input = scopeInput(context, {
+      scopeKind: "whole_package",
+      rootRecordId: root.id,
+      selectedRecordIds: [],
+    });
+    const preview = await service.preview(context.company.id, context.project.id, input);
+    let deliveries = 0;
+    const deliver = async ({ escalationId, targetCeoAgentId }: { escalationId: string; targetCeoAgentId: string }) => {
+      deliveries += 1;
+      const wakeup = await db.insert(agentWakeupRequests).values({
+        companyId: context.company.id,
+        agentId: targetCeoAgentId,
+        source: "automation",
+        triggerDetail: "system",
+        reason: "work_record_assignment_gap_escalated",
+        status: "queued",
+        idempotencyKey: `work-record-assignment-gap:${escalationId}`,
+        payload: { escalationId },
+      }).returning().then((rows) => rows[0]);
+      return { wakeupRequestId: wakeup.id };
+    };
+    const command = {
+      ...input,
+      clientRequestId: "gap-escalation-1",
+      requestPayloadDigest: "gap-escalation-payload",
+      expectedScopeDigest: preview.scopeDigest,
+    };
+
+    const first = await service.escalateAssignmentGaps(
+      context.company.id,
+      context.project.id,
+      command,
+      { actorType: "system", actorId: "test" },
+      deliver,
+    );
+    const replay = await service.escalateAssignmentGaps(
+      context.company.id,
+      context.project.id,
+      command,
+      { actorType: "system", actorId: "test" },
+      deliver,
+    );
+    const refreshed = await service.latestAssignmentEscalation(context.company.id, context.project.id, root.id);
+
+    expect(first).toMatchObject({ state: "delivered", targetCeoAgentId: ceo.id, replayed: false });
+    expect(replay).toMatchObject({ id: first.id, state: "delivered", replayed: true });
+    expect(refreshed).toMatchObject({ id: first.id, state: "delivered", wakeupRequestId: first.wakeupRequestId });
+    expect(deliveries).toBe(1);
+    expect(await db.select().from(workRecordAssignmentGapEscalations).where(
+      eq(workRecordAssignmentGapEscalations.companyId, context.company.id),
+    )).toHaveLength(1);
+    expect(await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, context.company.id),
+      eq(agentWakeupRequests.idempotencyKey, `work-record-assignment-gap:${first.id}`),
+    ))).toHaveLength(1);
+    expect(await db.select().from(workRecords).where(and(
+      eq(workRecords.companyId, context.company.id),
+      eq(workRecords.id, assignedChild.id),
+    )).then((rows) => rows[0]?.assigneeAgentId)).toBe(context.agent.id);
+    expect(first.missingRecordIds).toEqual(expect.arrayContaining([root.id, missingChild.id]));
+  });
+
+  it("D02 records CEO unavailability and delivery failure as distinct states", async () => {
+    const context = await seed();
+    const root = await record(context, "Root without PO", { assigned: false });
+    const service = workPackageDispatchService(db, { writesEnabled: true });
+    const input = scopeInput(context, { scopeKind: "whole_package", rootRecordId: root.id, selectedRecordIds: [] });
+    const preview = await service.preview(context.company.id, context.project.id, input);
+    const deliver = async () => { throw new Error("delivery must not run"); };
+
+    const receipt = await service.escalateAssignmentGaps(context.company.id, context.project.id, {
+      ...input,
+      clientRequestId: "gap-without-ceo",
+      requestPayloadDigest: "gap-without-ceo",
+      expectedScopeDigest: preview.scopeDigest,
+    }, { actorType: "system", actorId: "test" }, deliver);
+
+    expect(receipt).toMatchObject({ state: "ceo_unavailable", targetCeoAgentId: null, wakeupRequestId: null });
+
+    await db.insert(agents).values({
+      companyId: context.company.id,
+      name: "Unavailable delivery CEO",
+      role: "ceo",
+      status: "idle",
+      adapterType: "process",
+      adapterConfig: { command: process.execPath, args: ["-e", "process.exit(0)"] },
+    });
+    const secondRoot = await record(context, "Second root without PO", { assigned: false });
+    const secondInput = scopeInput(context, { scopeKind: "whole_package", rootRecordId: secondRoot.id, selectedRecordIds: [] });
+    const secondPreview = await service.preview(context.company.id, context.project.id, secondInput);
+    const failed = await service.escalateAssignmentGaps(context.company.id, context.project.id, {
+      ...secondInput,
+      clientRequestId: "gap-delivery-failed",
+      requestPayloadDigest: "gap-delivery-failed",
+      expectedScopeDigest: secondPreview.scopeDigest,
+    }, { actorType: "system", actorId: "test" }, async () => { throw new Error("wakeup failed"); });
+
+    expect(failed).toMatchObject({ state: "delivery_failed", deliveryErrorCode: "ceo_wakeup_failed", wakeupRequestId: null });
+  });
+
+  it("D02 API delivers one durable CEO wake and replays the same coordination receipt", async () => {
+    const context = await seed();
+    await db.update(agents).set({ role: "ceo" }).where(eq(agents.id, context.agent.id));
+    const root = await record(context, "API root without PO", { assigned: false });
+    const assignedChild = await record(context, "API named owner stays", { parentRecordId: root.id });
+    const service = workPackageDispatchService(db, { writesEnabled: true });
+    const input = scopeInput(context, { scopeKind: "whole_package", rootRecordId: root.id, selectedRecordIds: [] });
+    const preview = await service.preview(context.company.id, context.project.id, input);
+    const body = {
+      ...input,
+      clientRequestId: "api-gap-escalation",
+      requestPayloadDigest: "api-gap-escalation",
+      expectedScopeDigest: preview.scopeDigest,
+    };
+    const apiHeartbeat = {
+      wakeup: async (agentId: string, options: {
+        source?: "timer" | "assignment" | "on_demand" | "automation";
+        triggerDetail?: "manual" | "ping" | "callback" | "system";
+        reason?: string | null;
+        payload?: Record<string, unknown> | null;
+        idempotencyKey?: string | null;
+      }) => db.insert(agentWakeupRequests).values({
+        companyId: context.company.id,
+        agentId,
+        source: options.source ?? "on_demand",
+        triggerDetail: options.triggerDetail ?? null,
+        reason: options.reason ?? null,
+        payload: options.payload ?? null,
+        status: "queued",
+        idempotencyKey: options.idempotencyKey ?? null,
+      }).returning().then((rows) => rows[0]),
+    } as Parameters<typeof workRecordRoutes>[1]["heartbeat"];
+    const app = createApi(db, context.company.id, true, "admin", apiHeartbeat);
+
+    const first = await request(app)
+      .post(`/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/assignment-gap-escalations`)
+      .send(body)
+      .expect(201);
+    const replay = await request(app)
+      .post(`/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/assignment-gap-escalations`)
+      .send(body)
+      .expect(200);
+    const refreshed = await request(app)
+      .get(`/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/assignment-gap-escalations/latest?rootRecordId=${root.id}`)
+      .expect(200);
+
+    expect(first.body).toMatchObject({ state: "delivered", targetCeoAgentId: context.agent.id, replayed: false });
+    expect(replay.body).toMatchObject({ id: first.body.id, state: "delivered", replayed: true });
+    expect(refreshed.body).toMatchObject({ id: first.body.id, state: "delivered", wakeupRequestId: first.body.wakeupRequestId });
+    expect(await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, context.company.id),
+      eq(agentWakeupRequests.idempotencyKey, `work-record-assignment-gap:${first.body.id}`),
+    ))).toHaveLength(1);
+    expect(await db.select().from(workRecords).where(eq(workRecords.id, assignedChild.id)).then((rows) => rows[0]?.assigneeAgentId)).toBe(context.agent.id);
+  }, 20_000);
 
   it("D03/D05 partial dispatch materializes only explicit selections and mixes reused plus new links", async () => {
     const context = await seed();

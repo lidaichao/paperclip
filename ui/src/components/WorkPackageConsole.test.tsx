@@ -14,6 +14,7 @@ const qualityMock = vi.hoisted(() => vi.fn());
 const previewMock = vi.hoisted(() => vi.fn());
 const capabilitiesMock = vi.hoisted(() => vi.fn());
 const escalateMock = vi.hoisted(() => vi.fn());
+const latestEscalationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/api/heartbeats", () => ({ heartbeatsApi: { liveRunsForCompany: liveRunsMock } }));
 vi.mock("@/api/work-records", () => ({
@@ -22,6 +23,7 @@ vi.mock("@/api/work-records", () => ({
     previewPackage: previewMock,
     capabilities: capabilitiesMock,
     escalateAssignmentGaps: escalateMock,
+    latestAssignmentGapEscalation: latestEscalationMock,
     packageBatch: vi.fn(),
     preparePackage: vi.fn(),
     reconcilePackage: vi.fn(),
@@ -82,7 +84,7 @@ const preview: WorkPackageDispatchPreview = {
   recordCount: 3, edgeCount: 1, maxDepth: 1,
   records: records.map((item, index) => ({ id: item.id, title: item.title, revision: item.revision, dependencySetRevision: item.dependencySetRevision, parentRecordId: item.parentRecordId, assigneeAgentId: item.assigneeAgentId, qaAssigneeAgentId: item.qaAssigneeAgentId, depth: index === 0 ? 0 : 1 })),
   edges: [{ predecessorRecordId: ROOT_ID, successorRecordId: CHILD_ID }],
-  eligibility: { canPrepare: true, blockers: [] },
+  eligibility: { canPrepare: true, blockers: [], escalation: null },
 };
 
 const writableCapabilities = {
@@ -111,6 +113,7 @@ describe("WorkPackageConsole", () => {
     liveRunsMock.mockResolvedValue([{ issueId: "issue-1", status: "running" }]);
     qualityMock.mockResolvedValue(quality); previewMock.mockResolvedValue(preview);
     capabilitiesMock.mockResolvedValue(writableCapabilities);
+    latestEscalationMock.mockResolvedValue(null);
     container = document.createElement("div"); document.body.appendChild(container);
     client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
     client.setQueryData(queryKeys.liveRuns("company-1"), [{ issueId: "issue-1", status: "running" }]);
@@ -175,10 +178,10 @@ describe("WorkPackageConsole", () => {
       eligibility: { canPrepare: false, blockers: [
         { code: "missing_po" as const, recordId: ROOT_ID, title: "发布工作包", requiredRole: "PO" as const },
         { code: "missing_assignee" as const, recordId: CHILD_ID, title: "实现子项", requiredRole: "执行人" as const },
-      ] },
+      ], escalation: null },
     };
     previewMock.mockResolvedValueOnce(gapPreview);
-    escalateMock.mockResolvedValueOnce({ clientRequestId: "gap", scopeDigest: preview.scopeDigest, targetCeoAgentId: "ceo-1", state: "recorded", recordedAt: new Date(), missingRecordIds: [ROOT_ID, CHILD_ID] });
+    escalateMock.mockResolvedValueOnce({ id: "escalation-1", clientRequestId: "gap", scopeDigest: preview.scopeDigest, targetCeoAgentId: "ceo-1", state: "delivered", wakeupRequestId: "wake-1", deliveryErrorCode: null, deliveredAt: new Date(), recordedAt: new Date(), updatedAt: new Date(), missingRecordIds: [ROOT_ID, CHILD_ID], replayed: false });
     await render();
     const previewButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("预览整个工作包")) as HTMLButtonElement;
     await act(async () => previewButton.click()); await flush();
@@ -190,7 +193,30 @@ describe("WorkPackageConsole", () => {
     await act(async () => escalationButton.click()); await flush();
     expect(escalateMock).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain("不会覆盖已有负责人");
-    expect(container.textContent).toContain("等待 CEO 协调");
+    expect(container.textContent).toContain("协调通知已送达");
+  });
+
+  it("restores the persisted CEO coordination state after a fresh render", async () => {
+    latestEscalationMock.mockResolvedValueOnce({
+      id: "escalation-1",
+      clientRequestId: "gap",
+      scopeDigest: preview.scopeDigest,
+      targetCeoAgentId: "ceo-1",
+      state: "delivered",
+      wakeupRequestId: "wake-1",
+      deliveryErrorCode: null,
+      deliveredAt: new Date(),
+      recordedAt: new Date(),
+      updatedAt: new Date(),
+      missingRecordIds: [ROOT_ID, CHILD_ID],
+      replayed: false,
+    });
+
+    await render();
+
+    expect(latestEscalationMock).toHaveBeenCalledWith("company-1", "project-1", ROOT_ID);
+    expect(container.textContent).toContain("负责人缺口已上报 CEO，协调通知已送达");
+    expect(container.textContent).toContain("不会覆盖已有负责人");
   });
 
   it("counts create, reuse, completed, and blocked preview records as exclusive categories", async () => {

@@ -16,6 +16,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { agents } from "./agents.js";
+import { agentWakeupRequests } from "./agent_wakeup_requests.js";
 import { approvals } from "./approvals.js";
 import { companies } from "./companies.js";
 import { heartbeatRuns } from "./heartbeat_runs.js";
@@ -229,6 +230,56 @@ export const workRecordAssignmentCommands = pgTable(
       table.recordId,
       table.clientRequestId,
     ),
+  }),
+);
+
+export const workRecordAssignmentGapEscalations = pgTable(
+  "work_record_assignment_gap_escalations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    rootRecordId: uuid("root_record_id").references(() => workRecords.id, { onDelete: "cascade" }),
+    scopeKind: text("scope_kind").notNull(),
+    scopeDigest: text("scope_digest").notNull(),
+    clientRequestId: text("client_request_id").notNull(),
+    requestPayloadDigest: text("request_payload_digest").notNull(),
+    blockers: jsonb("blockers").$type<Array<{
+      code: "missing_po" | "missing_assignee" | "missing_qa";
+      recordId: string;
+      title: string;
+      requiredRole: "PO" | "执行人" | "QA";
+    }>>().notNull(),
+    missingRecordIds: jsonb("missing_record_ids").$type<string[]>().notNull(),
+    targetCeoAgentId: uuid("target_ceo_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    state: text("state").notNull().default("pending"),
+    wakeupRequestId: uuid("wakeup_request_id").references(() => agentWakeupRequests.id, { onDelete: "set null" }),
+    deliveryErrorCode: text("delivery_error_code"),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    actorAgentId: uuid("actor_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    actorUserId: text("actor_user_id"),
+    actorRunId: uuid("actor_run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    rootScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.rootRecordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_assignment_gap_escalations_root_scope_fk",
+    }).onDelete("cascade"),
+    targetCeoScopeFk: foreignKey({
+      columns: [table.companyId, table.targetCeoAgentId],
+      foreignColumns: [agents.companyId, agents.id],
+      name: "work_record_assignment_gap_escalations_target_ceo_scope_fk",
+    }),
+    requestUq: uniqueIndex("work_record_assignment_gap_escalations_request_uq")
+      .on(table.companyId, table.clientRequestId),
+    scopeUq: uniqueIndex("work_record_assignment_gap_escalations_scope_uq")
+      .on(table.companyId, table.projectId, table.scopeDigest),
+    rootCreatedIdx: index("work_record_assignment_gap_escalations_root_created_idx")
+      .on(table.companyId, table.projectId, table.rootRecordId, table.createdAt),
+    stateCheck: check("work_record_assignment_gap_escalations_state_check", sql`${table.state} IN ('pending', 'delivering', 'delivered', 'ceo_unavailable', 'delivery_failed')`),
   }),
 );
 

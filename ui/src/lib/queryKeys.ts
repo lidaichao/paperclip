@@ -519,6 +519,8 @@ export const queryKeys = {
   workRecords: {
     list: (companyId: string, projectId: string) => ["work-records", companyId, projectId] as const,
     capabilities: (companyId: string, projectId: string) => ["work-records", companyId, projectId, "capabilities"] as const,
+    assignmentGapEscalation: (companyId: string, projectId: string, rootRecordId: string) =>
+      ["work-records", companyId, projectId, "assignment-gap-escalation", rootRecordId] as const,
     quality: (companyId: string, projectId: string, recordId: string) =>
       ["work-records", companyId, projectId, "quality", recordId] as const,
     packageBatch: (companyId: string, projectId: string, batchId: string) =>

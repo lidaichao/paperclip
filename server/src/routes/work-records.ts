@@ -1,5 +1,6 @@
 import { Router } from "express";
-import type { Db } from "@paperclipai/db";
+import { agentWakeupRequests, type Db } from "@paperclipai/db";
+import { and, eq } from "drizzle-orm";
 import {
   createWorkRecordSchema,
   dispatchWorkRecordSchema,
@@ -13,11 +14,12 @@ import {
   updateWorkRecordSchema,
 } from "@paperclipai/shared";
 import { validate } from "../middleware/validate.js";
-import { HttpError, conflict, forbidden, unprocessable } from "../errors.js";
+import { HttpError, forbidden, unprocessable } from "../errors.js";
 import { authorizationDeniedDetails } from "../services/authorization.js";
 import { appendHeartbeatRunEvent } from "../services/heartbeat-run-events.js";
 import {
   accessService,
+  heartbeatService,
   logActivity,
   workPackageDispatchService,
   workRecordQualityService,
@@ -25,12 +27,17 @@ import {
 } from "../services/index.js";
 import { assertAuthenticated, assertCompanyAccess, getActorInfo, hasCompanyAccess } from "./authz.js";
 
-export function workRecordRoutes(db: Db) {
+export interface WorkRecordRouteOptions {
+  heartbeat?: Pick<ReturnType<typeof heartbeatService>, "wakeup">;
+}
+
+export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
   const router = Router();
   const service = workRecordService(db);
   const packages = workPackageDispatchService(db);
   const quality = workRecordQualityService(db);
   const access = accessService(db);
+  const heartbeat = options.heartbeat ?? heartbeatService(db);
 
   async function assertPackageAssignmentAccess(req: Parameters<typeof getActorInfo>[0], companyId: string, projectId: string, assigneeAgentIds: Array<string | null>) {
     assertCompanyAccess(req, companyId);
@@ -239,43 +246,76 @@ export function workRecordRoutes(db: Db) {
     res.json(preview);
   });
 
+  router.get("/companies/:companyId/projects/:projectId/work-package-dispatch/assignment-gap-escalations/latest", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    const rootRecordId = typeof req.query.rootRecordId === "string" ? req.query.rootRecordId : "";
+    assertCompanyReadAccess(req, companyId);
+    if (!rootRecordId) throw unprocessable("rootRecordId is required", { code: "work_package_root_required" });
+    res.json(await packages.latestAssignmentEscalation(companyId, projectId, rootRecordId));
+  });
+
   router.post("/companies/:companyId/projects/:projectId/work-package-dispatch/assignment-gap-escalations", validate(escalateWorkPackageAssignmentGapsSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
     const projectId = req.params.projectId as string;
     assertCompanyAccess(req, companyId);
-    const preview = await packages.preview(companyId, projectId, req.body);
-    if (preview.scopeDigest !== req.body.expectedScopeDigest) {
-      throw conflict("Work-package scope changed after preview", { code: "work_record_workflow_stale_revision", currentScopeDigest: preview.scopeDigest });
-    }
-    if (preview.eligibility.canPrepare) {
-      throw unprocessable("Work-package has no ownership gaps to escalate", { code: "work_package_assignment_gap_missing" });
-    }
     const actor = getActorInfo(req);
-    const targetCeoAgentId = await packages.assignmentEscalationTarget(companyId);
-    const recordedAt = new Date();
-    const missingRecordIds = [...new Set(preview.eligibility.blockers.map((blocker) => blocker.recordId))];
-    const receipt = {
-      clientRequestId: req.body.clientRequestId,
-      scopeDigest: preview.scopeDigest,
-      targetCeoAgentId,
-      state: targetCeoAgentId ? "recorded" as const : "ceo_unavailable" as const,
-      recordedAt,
-      missingRecordIds,
-    };
-    await logActivity(db, {
-      companyId,
+    const receipt = await packages.escalateAssignmentGaps(companyId, projectId, req.body, {
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
+      userId: actor.actorType === "user" ? actor.actorId : null,
       runId: actor.runId,
-      agentApiKeyId: actor.agentApiKeyId,
-      action: "work_record.assignment_gap_escalated",
-      entityType: "work_package_scope",
-      entityId: preview.scopeDigest,
-      details: { projectId, ...receipt, blockers: preview.eligibility.blockers },
+    }, async (delivery) => {
+      const idempotencyKey = `work-record-assignment-gap:${delivery.escalationId}`;
+      await heartbeat.wakeup(delivery.targetCeoAgentId, {
+        source: "automation",
+        triggerDetail: "system",
+        reason: "work_record_assignment_gap_escalated",
+        payload: {
+          mutation: "work_record_assignment_gap_escalated",
+          escalationId: delivery.escalationId,
+          projectId: delivery.projectId,
+          rootRecordId: delivery.rootRecordId,
+          scopeDigest: delivery.scopeDigest,
+          missingRecordIds: delivery.missingRecordIds,
+        },
+        idempotencyKey,
+        allowRunCoalescing: false,
+        requestedByActorType: delivery.actor.actorType === "plugin" ? "system" : delivery.actor.actorType,
+        requestedByActorId: delivery.actor.actorId,
+        contextSnapshot: {
+          source: "work_record.assignment_gap_escalated",
+          projectId: delivery.projectId,
+          rootRecordId: delivery.rootRecordId,
+          escalationId: delivery.escalationId,
+        },
+      });
+      const wakeup = await db.select().from(agentWakeupRequests).where(and(
+        eq(agentWakeupRequests.companyId, delivery.companyId),
+        eq(agentWakeupRequests.idempotencyKey, idempotencyKey),
+      )).then((rows) => rows[0] ?? null);
+      if (!wakeup || ["skipped", "failed", "cancelled"].includes(wakeup.status)) {
+        throw new Error("CEO wakeup was not accepted");
+      }
+      return { wakeupRequestId: wakeup.id };
     });
-    await logPackageRunEvent(req, "work_record_assignment_gap_escalated", { projectId, ...receipt });
-    res.status(201).json(receipt);
+    if (!receipt.replayed) {
+      await logActivity(db, {
+        companyId,
+        actorType: actor.actorType,
+        actorId: actor.actorId,
+        agentId: actor.agentId,
+        runId: actor.runId,
+        agentApiKeyId: actor.agentApiKeyId,
+        action: "work_record.assignment_gap_escalated",
+        entityType: "work_record_assignment_gap_escalation",
+        entityId: receipt.id,
+        details: { projectId, ...receipt },
+      });
+      await logPackageRunEvent(req, "work_record_assignment_gap_escalated", { projectId, ...receipt });
+    }
+    res.status(receipt.replayed ? 200 : 201).json(receipt);
   });
 
   router.post("/companies/:companyId/projects/:projectId/work-package-dispatch/prepare", validate(prepareWorkPackageDispatchSchema), async (req, res) => {

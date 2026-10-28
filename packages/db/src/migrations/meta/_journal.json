@@ -2038,6 +2038,13 @@
       "when": 1793111089602,
       "tag": "0292_wooden_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 293,
+      "version": "7",
+      "when": 1793168304184,
+      "tag": "0293_magical_logan",
+      "breakpoints": true
     }
   ]
 }

@@ -41,6 +41,8 @@ export const workRecordsApi = {
     api.get<WorkRecordConsoleCapabilities>(`/companies/${companyId}/projects/${projectId}/work-record-capabilities`),
   escalateAssignmentGaps: (companyId: string, projectId: string, input: EscalateWorkPackageAssignmentGaps) =>
     api.post<WorkPackageAssignmentEscalationReceipt>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/assignment-gap-escalations`, input),
+  latestAssignmentGapEscalation: (companyId: string, projectId: string, rootRecordId: string) =>
+    api.get<WorkPackageAssignmentEscalationReceipt | null>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/assignment-gap-escalations/latest?rootRecordId=${encodeURIComponent(rootRecordId)}`),
   packageBatch: (companyId: string, projectId: string, batchId: string) =>
     api.get<WorkPackageDispatchBatchView>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/${batchId}`),
   reconcilePackage: (companyId: string, projectId: string, batchId: string) =>

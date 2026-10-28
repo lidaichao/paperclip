@@ -21,9 +21,12 @@ const packageService = vi.hoisted(() => ({
   preview: vi.fn(),
   prepare: vi.fn(),
   assignmentEscalationTarget: vi.fn(),
+  latestAssignmentEscalation: vi.fn(),
+  escalateAssignmentGaps: vi.fn(),
   getBatch: vi.fn(),
   reconcile: vi.fn(),
 }));
+const heartbeat = vi.hoisted(() => ({ wakeup: vi.fn() }));
 const qualityService = vi.hoisted(() => ({
   get: vi.fn(),
   auditSnapshot: vi.fn(),
@@ -55,6 +58,7 @@ vi.mock("../services/index.js", () => ({
   workPackageDispatchService: () => packageService,
   workRecordQualityService: () => qualityService,
   accessService: () => access,
+  heartbeatService: () => heartbeat,
   logActivity,
 }));
 
@@ -110,6 +114,21 @@ describe("work-record route authorization", () => {
       eligibility: { canPrepare: false, blockers: [{ code: "missing_po", recordId: "22222222-2222-4222-8222-222222222222", title: "缺少 PO", requiredRole: "PO" }] },
     });
     packageService.assignmentEscalationTarget.mockResolvedValue("33333333-3333-4333-8333-333333333333");
+    packageService.latestAssignmentEscalation.mockResolvedValue(null);
+    packageService.escalateAssignmentGaps.mockResolvedValue({
+      id: "44444444-4444-4444-8444-444444444444",
+      clientRequestId: "admin-gap",
+      scopeDigest: "viewer-scope",
+      targetCeoAgentId: "33333333-3333-4333-8333-333333333333",
+      state: "delivered",
+      wakeupRequestId: "55555555-5555-4555-8555-555555555555",
+      deliveryErrorCode: null,
+      deliveredAt: new Date(),
+      recordedAt: new Date(),
+      updatedAt: new Date(),
+      missingRecordIds: ["22222222-2222-4222-8222-222222222222"],
+      replayed: false,
+    });
     qualityService.get.mockResolvedValue({ cycle: null, items: [], verdicts: [], links: [] });
     qualityService.auditSnapshot.mockResolvedValue({
       recordRevision: 4,
@@ -217,12 +236,26 @@ describe("work-record route authorization", () => {
         expectedScopeDigest: "viewer-scope",
       })
       .expect(201);
-    expect(response.body).toMatchObject({ state: "recorded", scopeDigest: "viewer-scope", missingRecordIds: ["22222222-2222-4222-8222-222222222222"] });
+    expect(response.body).toMatchObject({ state: "delivered", scopeDigest: "viewer-scope", missingRecordIds: ["22222222-2222-4222-8222-222222222222"] });
     expect(logActivity).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       action: "work_record.assignment_gap_escalated",
-      details: expect.objectContaining({ targetCeoAgentId: "33333333-3333-4333-8333-333333333333" }),
+      details: expect.objectContaining({ targetCeoAgentId: "33333333-3333-4333-8333-333333333333", wakeupRequestId: "55555555-5555-4555-8555-555555555555" }),
     }));
     expect(service.fillAssignmentGap).not.toHaveBeenCalled();
+  });
+
+  it("allows viewers to recover the latest persisted coordination state", async () => {
+    packageService.latestAssignmentEscalation.mockResolvedValueOnce({ id: "escalation-1", state: "delivered" });
+    const app = createApp(viewer);
+    const projectId = "11111111-1111-4111-8111-111111111111";
+    const rootRecordId = "22222222-2222-4222-8222-222222222222";
+
+    const response = await request(app)
+      .get(`/api/companies/company-1/projects/${projectId}/work-package-dispatch/assignment-gap-escalations/latest?rootRecordId=${rootRecordId}`)
+      .expect(200);
+
+    expect(response.body).toMatchObject({ id: "escalation-1", state: "delivered" });
+    expect(packageService.latestAssignmentEscalation).toHaveBeenCalledWith("company-1", projectId, rootRecordId);
   });
 
   it("allows quality reads but keeps PO/QA verdicts and defect links read-only for viewers", async () => {

@@ -7,6 +7,7 @@ import {
   issues,
   issueRelations,
   workRecords,
+  workRecordAssignmentGapEscalations,
   workRecordDependencies,
   workRecordDependencySnapshots,
   workRecordDispatchBatchItems,
@@ -26,6 +27,8 @@ import {
   validateWorkPackageBoundaries,
   type PrepareWorkPackageDispatch,
   type PreviewWorkPackageDispatch,
+  type EscalateWorkPackageAssignmentGaps,
+  type WorkPackageAssignmentEscalationReceipt,
 } from "@paperclipai/shared";
 import { conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { assertAssignableAgent } from "./agent-assignability.js";
@@ -42,7 +45,18 @@ type Actor = {
   actorId: string;
   agentId?: string | null;
   userId?: string | null;
+  runId?: string | null;
 };
+type AssignmentGapDelivery = (input: {
+  escalationId: string;
+  targetCeoAgentId: string;
+  companyId: string;
+  projectId: string;
+  rootRecordId: string | null;
+  scopeDigest: string;
+  missingRecordIds: string[];
+  actor: Actor;
+}) => Promise<{ wakeupRequestId: string }>;
 type Wakeup = (agentId: string, options: {
   source: "assignment";
   triggerDetail: "system";
@@ -279,6 +293,11 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
 
   async function preview(companyId: string, projectId: string, input: PreviewWorkPackageDispatch) {
     const scope = await computeScope(db, companyId, projectId, input);
+    const escalation = await db.select().from(workRecordAssignmentGapEscalations).where(and(
+      eq(workRecordAssignmentGapEscalations.companyId, companyId),
+      eq(workRecordAssignmentGapEscalations.projectId, projectId),
+      eq(workRecordAssignmentGapEscalations.scopeDigest, scope.scopeDigest),
+    )).then((rows) => rows[0] ?? null);
     return {
       ...scope,
       records: scope.records.map((record) => ({
@@ -295,8 +314,158 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         predecessorRecordId: edge.predecessorRecordId,
         successorRecordId: edge.successorRecordId,
       })),
-      eligibility: scope.eligibility,
+      eligibility: {
+        ...scope.eligibility,
+        escalation: escalation ? assignmentEscalationReceipt(escalation, false) : null,
+      },
     };
+  }
+
+  function assignmentEscalationReceipt(
+    row: typeof workRecordAssignmentGapEscalations.$inferSelect,
+    replayed: boolean,
+  ): WorkPackageAssignmentEscalationReceipt {
+    return {
+      id: row.id,
+      clientRequestId: row.clientRequestId,
+      scopeDigest: row.scopeDigest,
+      targetCeoAgentId: row.targetCeoAgentId,
+      state: row.state as WorkPackageAssignmentEscalationReceipt["state"],
+      wakeupRequestId: row.wakeupRequestId,
+      deliveryErrorCode: row.deliveryErrorCode,
+      deliveredAt: row.deliveredAt,
+      recordedAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      missingRecordIds: row.missingRecordIds,
+      replayed,
+    };
+  }
+
+  async function latestAssignmentEscalation(
+    companyId: string,
+    projectId: string,
+    rootRecordId: string,
+  ) {
+    const current = await preview(companyId, projectId, {
+      workflowVersion: 2,
+      projectId,
+      scopeKind: "whole_package",
+      rootRecordId,
+      selectedRecordIds: [],
+    });
+    return current.eligibility.escalation;
+  }
+
+  async function escalateAssignmentGaps(
+    companyId: string,
+    projectId: string,
+    input: EscalateWorkPackageAssignmentGaps,
+    actor: Actor,
+    deliver: AssignmentGapDelivery,
+  ) {
+    assertWritesEnabled();
+    const persisted = await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${projectLockKey(companyId, projectId)}, 0))`);
+      const existingRequest = await tx.select().from(workRecordAssignmentGapEscalations).where(and(
+        eq(workRecordAssignmentGapEscalations.companyId, companyId),
+        eq(workRecordAssignmentGapEscalations.clientRequestId, input.clientRequestId),
+      )).then((rows) => rows[0] ?? null);
+      if (existingRequest) {
+        const replay = classifyWorkRecordCommandReplay(existingRequest.requestPayloadDigest, input.requestPayloadDigest);
+        if (replay.outcome === "conflict") {
+          throw conflict("Client request key was already used with a different payload", details(replay.code, {
+            escalationId: existingRequest.id,
+          }));
+        }
+        if (existingRequest.projectId !== projectId) {
+          throw conflict("Client request key belongs to another project", details("work_record_workflow_project_boundary"));
+        }
+        return { row: existingRequest, replayed: true };
+      }
+
+      const scope = await computeScope(tx, companyId, projectId, input, true);
+      if (scope.scopeDigest !== input.expectedScopeDigest) {
+        throw conflict("Work-package scope changed after preview", details("work_record_workflow_stale_revision", {
+          expectedScopeDigest: input.expectedScopeDigest,
+          currentScopeDigest: scope.scopeDigest,
+        }));
+      }
+      if (scope.eligibility.canPrepare) {
+        throw unprocessable("Work-package has no ownership gaps to escalate", details("work_package_assignment_gap_missing"));
+      }
+      const existingScope = await tx.select().from(workRecordAssignmentGapEscalations).where(and(
+        eq(workRecordAssignmentGapEscalations.companyId, companyId),
+        eq(workRecordAssignmentGapEscalations.projectId, projectId),
+        eq(workRecordAssignmentGapEscalations.scopeDigest, scope.scopeDigest),
+      )).then((rows) => rows[0] ?? null);
+      if (existingScope) return { row: existingScope, replayed: true };
+
+      const targetCeoAgentId = await assignmentEscalationTarget(companyId, tx);
+      const missingRecordIds = [...new Set(scope.eligibility.blockers.map((blocker) => blocker.recordId))];
+      const row = await tx.insert(workRecordAssignmentGapEscalations).values({
+        companyId,
+        projectId,
+        rootRecordId: scope.rootRecordId,
+        scopeKind: scope.scopeKind,
+        scopeDigest: scope.scopeDigest,
+        clientRequestId: input.clientRequestId,
+        requestPayloadDigest: input.requestPayloadDigest,
+        blockers: scope.eligibility.blockers,
+        missingRecordIds,
+        targetCeoAgentId,
+        state: targetCeoAgentId ? "pending" : "ceo_unavailable",
+        actorAgentId: actor.agentId ?? null,
+        actorUserId: actor.userId ?? null,
+        actorRunId: actor.runId ?? null,
+      }).returning().then((rows) => rows[0]);
+      return { row, replayed: false };
+    });
+
+    if (!persisted.row.targetCeoAgentId || persisted.row.state !== "pending") {
+      return assignmentEscalationReceipt(persisted.row, persisted.replayed);
+    }
+
+    const claimed = await db.update(workRecordAssignmentGapEscalations).set({
+      state: "delivering",
+      updatedAt: new Date(),
+    }).where(and(
+      eq(workRecordAssignmentGapEscalations.id, persisted.row.id),
+      eq(workRecordAssignmentGapEscalations.state, "pending"),
+    )).returning().then((rows) => rows[0] ?? null);
+    if (!claimed) {
+      const current = await db.select().from(workRecordAssignmentGapEscalations)
+        .where(eq(workRecordAssignmentGapEscalations.id, persisted.row.id))
+        .then((rows) => rows[0]);
+      return assignmentEscalationReceipt(current, true);
+    }
+
+    let delivered: typeof claimed;
+    try {
+      const result = await deliver({
+        escalationId: claimed.id,
+        targetCeoAgentId: claimed.targetCeoAgentId!,
+        companyId,
+        projectId,
+        rootRecordId: claimed.rootRecordId,
+        scopeDigest: claimed.scopeDigest,
+        missingRecordIds: claimed.missingRecordIds,
+        actor,
+      });
+      delivered = await db.update(workRecordAssignmentGapEscalations).set({
+        state: "delivered",
+        wakeupRequestId: result.wakeupRequestId,
+        deliveryErrorCode: null,
+        deliveredAt: new Date(),
+        updatedAt: new Date(),
+      }).where(eq(workRecordAssignmentGapEscalations.id, claimed.id)).returning().then((rows) => rows[0]);
+    } catch {
+      delivered = await db.update(workRecordAssignmentGapEscalations).set({
+        state: "delivery_failed",
+        deliveryErrorCode: "ceo_wakeup_failed",
+        updatedAt: new Date(),
+      }).where(eq(workRecordAssignmentGapEscalations.id, claimed.id)).returning().then((rows) => rows[0]);
+    }
+    return assignmentEscalationReceipt(delivered, persisted.replayed);
   }
 
   async function batchView(companyId: string, projectId: string, batchId: string) {
@@ -1151,13 +1320,24 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     return processed;
   }
 
-  async function assignmentEscalationTarget(companyId: string) {
-    return db.select({ id: agents.id }).from(agents).where(and(
+  async function assignmentEscalationTarget(companyId: string, database: DbLike = db) {
+    return database.select({ id: agents.id }).from(agents).where(and(
       eq(agents.companyId, companyId),
       eq(agents.role, "ceo"),
       ne(agents.status, "terminated"),
     )).orderBy(asc(agents.createdAt), asc(agents.id)).then((rows) => rows[0]?.id ?? null);
   }
 
-  return { preview, prepare, getBatch: batchView, reconcile, reconcileAll, processOutbox, assignmentEscalationTarget, writesEnabled };
+  return {
+    preview,
+    prepare,
+    getBatch: batchView,
+    reconcile,
+    reconcileAll,
+    processOutbox,
+    assignmentEscalationTarget,
+    latestAssignmentEscalation,
+    escalateAssignmentGaps,
+    writesEnabled,
+  };
 }

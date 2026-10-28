@@ -204,6 +204,7 @@ export interface WorkPackageDispatchPreview {
       title: string;
       requiredRole: "PO" | "执行人" | "QA";
     }>;
+    escalation: WorkPackageAssignmentEscalationReceipt | null;
   };
 }
 
@@ -223,12 +224,18 @@ export interface WorkRecordConsoleCapabilities {
 }
 
 export interface WorkPackageAssignmentEscalationReceipt {
+  id: string;
   clientRequestId: string;
   scopeDigest: string;
   targetCeoAgentId: string | null;
-  state: "recorded" | "ceo_unavailable";
+  state: "pending" | "delivering" | "delivered" | "ceo_unavailable" | "delivery_failed";
+  wakeupRequestId: string | null;
+  deliveryErrorCode: string | null;
+  deliveredAt: Date | null;
   recordedAt: Date;
+  updatedAt: Date;
   missingRecordIds: string[];
+  replayed: boolean;
 }
 
 export interface WorkPackageDispatchBatch {

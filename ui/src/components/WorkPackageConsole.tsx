@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deriveWorkRecordDisplayState, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordQualityView } from "@paperclipai/shared";
+import { deriveWorkRecordDisplayState, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordQualityView } from "@paperclipai/shared";
 import { CheckCircle2, ChevronRight, PackageCheck, RefreshCw, WifiOff } from "lucide-react";
 import { heartbeatsApi } from "@/api/heartbeats";
 import { workRecordsApi } from "@/api/work-records";
@@ -117,6 +117,13 @@ function deliveryLabel(record: WorkRecord) {
   return { delivered, acknowledged };
 }
 
+function assignmentEscalationMessage(receipt: WorkPackageAssignmentEscalationReceipt) {
+  if (receipt.state === "delivered") return "负责人缺口已上报 CEO，协调通知已送达";
+  if (receipt.state === "ceo_unavailable") return "负责人缺口已记录，但当前没有可用 CEO";
+  if (receipt.state === "delivery_failed") return "负责人缺口已记录，但 CEO 协调通知投递失败";
+  return "负责人缺口已记录，CEO 协调通知正在投递";
+}
+
 export function WorkPackageConsole({ companyId, projectId, records, agentNames, recordsLoading, recordsError, onRetryRecords }: {
   companyId: string; projectId: string; records: WorkRecord[]; agentNames: Record<string, string>; recordsLoading: boolean; recordsError: Error | null; onRetryRecords: () => unknown;
 }) {
@@ -193,6 +200,12 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
   const liveByIssue = useMemo(() => new Map((liveRuns.data ?? []).filter((run) => (run.status === "queued" || run.status === "running") && run.issueId).map((run) => [run.issueId!, run.status as "queued" | "running"])), [liveRuns.data]);
   const liveAvailable = online && !liveRuns.isError && liveRuns.isFetchedAfterMount;
   const capabilities = useQuery({ queryKey: queryKeys.workRecords.capabilities(companyId, projectId), queryFn: () => workRecordsApi.capabilities(companyId, projectId) });
+  const assignmentEscalation = useQuery({
+    queryKey: queryKeys.workRecords.assignmentGapEscalation(companyId, projectId, selectedRoot?.id ?? "none"),
+    queryFn: () => workRecordsApi.latestAssignmentGapEscalation(companyId, projectId, selectedRoot!.id),
+    enabled: Boolean(selectedRoot),
+    refetchInterval: online ? 15_000 : false,
+  });
   const quality = useQuery({ queryKey: queryKeys.workRecords.quality(companyId, projectId, selected?.id ?? "none"), queryFn: () => workRecordsApi.quality(companyId, projectId, selected!.id), enabled: Boolean(selected), refetchInterval: online ? 15_000 : false });
   const batch = useQuery({ queryKey: queryKeys.workRecords.packageBatch(companyId, projectId, batchId || "none"), queryFn: () => workRecordsApi.packageBatch(companyId, projectId, batchId), enabled: Boolean(batchId), refetchInterval: online ? 15_000 : false });
 
@@ -230,6 +243,15 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
         expectedScopeDigest: preview.scopeDigest,
       });
     },
+    onSuccess: (receipt) => {
+      if (selectedRoot) queryClient.setQueryData(
+        queryKeys.workRecords.assignmentGapEscalation(companyId, projectId, selectedRoot.id),
+        receipt,
+      );
+      setPreview((current) => current && current.scopeDigest === receipt.scopeDigest
+        ? { ...current, eligibility: { ...current.eligibility, escalation: receipt } }
+        : current);
+    },
   });
   const reconcile = useMutation({ mutationFn: () => workRecordsApi.reconcilePackage(companyId, projectId, batchId), onSuccess: async () => { await batch.refetch(); await queryClient.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }); } });
   const reconcileRecord = useMutation({ mutationFn: (recordId: string) => workRecordsApi.reconcile(companyId, projectId, recordId), onSuccess: async () => queryClient.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }) });
@@ -265,6 +287,10 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
     counts[previewCategory(records.find((record) => record.id === item.id))] += 1;
     return counts;
   }, { create: 0, reuse: 0, completed: 0, blocked: 0 }) ?? { create: 0, reuse: 0, completed: 0, blocked: 0 };
+  const persistedEscalation = assignmentEscalation.data
+    ?? preview?.eligibility.escalation
+    ?? escalateAssignmentGaps.data
+    ?? null;
 
   if (recordsLoading) return <div role="status" aria-label="正在加载工作包" className="space-y-3"><Skeleton className="h-11 w-2/5" /><Skeleton className="h-24 w-full" /><Skeleton className="h-24 w-full" /></div>;
   if (recordsError) return <div className="flex items-center justify-between gap-3 text-sm text-destructive"><p>工作包加载失败：{recordsError.message}</p><Button className="min-h-11" variant="outline" onClick={onRetryRecords}>重试</Button></div>;
@@ -284,6 +310,7 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
         {!online ? <div role="status" className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"><WifiOff className="size-4" />当前离线：保留最近确认状态，写操作已暂停；恢复连接后会自动核对。</div> : commandError ? <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">操作未完成：{commandError.message}。请求键已保留，可先原位核对再安全重试。</p> : null}
       </div>
       {permissionExplanation ? <p role="note" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">当前为只读权限：事实和范围预览仍可查看；准备派发、PO/QA 判定及缺口上报已禁用。{permissionExplanation}</p> : null}
+      {persistedEscalation ? <p role="status" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">{assignmentEscalationMessage(persistedEscalation)}；工作包保持阻断，且不会覆盖已有负责人。</p> : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><h2 id="work-package-title" className="text-lg font-semibold">工作包与质量证据</h2><p className="text-sm text-muted-foreground">列表宽度保持稳定；详情在固定区域原位核对。</p></div>
         <div className="flex flex-wrap gap-2"><Button className="min-h-11" variant="outline" disabled={!online || checked.length === 0 || previewScope.isPending} onClick={() => previewScope.mutate("selected_records")}>预览所选 {checked.length || ""}</Button><Button className="min-h-11" disabled={!online || !selected || previewScope.isPending} onClick={() => previewScope.mutate("whole_package")}>预览整个工作包</Button></div>
@@ -326,7 +353,7 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
       {preview ? <Card><CardHeader><CardTitle>派发前范围预览</CardTitle><CardDescription>{previewMode === "whole_package" ? "整个工作包" : "仅所选记录"} · {preview.recordCount} 项 · {preview.edgeCount} 条依赖 · 最大深度 {preview.maxDepth}</CardDescription></CardHeader><CardContent className="space-y-4">
         {previewMode === "selected_records" ? <p className="rounded-md bg-muted/50 p-3 text-sm">只处理下列所选记录；不会派发父项、兄弟项或前置记录。未满足的前置仍会保持来源阻断。</p> : <p className="rounded-md bg-muted/50 p-3 text-sm">范围根记录：{recordTitle(records, preview.rootRecordId)}。已有关联会复用，已完成项不会重启。</p>}
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><Stat label="将新建">{previewCounts.create}</Stat><Stat label="将复用">{previewCounts.reuse}</Stat><Stat label="保持完成">{previewCounts.completed}</Stat><Stat label="安全受阻">{previewCounts.blocked}</Stat></div>
-        {!preview.eligibility.canPrepare ? <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"><p className="font-medium text-destructive">负责人缺口会阻断整包派发</p><ul className="mt-2 space-y-1 text-muted-foreground">{preview.eligibility.blockers.map((blocker) => <li key={`${blocker.code}:${blocker.recordId}`}>{blocker.title} · 缺少 {blocker.requiredRole}</li>)}</ul><div className="mt-3 flex flex-wrap items-center gap-3"><Button className="min-h-11" variant="outline" disabled={!online || previewMode !== "whole_package" || escalateCapability?.allowed !== true || escalateAssignmentGaps.isPending} onClick={() => escalateAssignmentGaps.mutate()}>上报 CEO 协调</Button>{escalateAssignmentGaps.data ? <p className="text-muted-foreground">已记录{escalateAssignmentGaps.data.targetCeoAgentId ? "，等待 CEO 协调" : "；当前没有可用 CEO，工作包保持阻断"}；不会覆盖已有负责人。</p> : <p className="text-muted-foreground">上报只记录缺口，不会覆盖已有负责人。</p>}</div>{escalateCapability?.allowed === false ? <p className="mt-2 text-xs text-muted-foreground">{escalateCapability.reason}</p> : null}</div> : null}
+        {!preview.eligibility.canPrepare ? <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"><p className="font-medium text-destructive">负责人缺口会阻断整包派发</p><ul className="mt-2 space-y-1 text-muted-foreground">{preview.eligibility.blockers.map((blocker) => <li key={`${blocker.code}:${blocker.recordId}`}>{blocker.title} · 缺少 {blocker.requiredRole}</li>)}</ul><div className="mt-3 flex flex-wrap items-center gap-3"><Button className="min-h-11" variant="outline" disabled={!online || previewMode !== "whole_package" || escalateCapability?.allowed !== true || escalateAssignmentGaps.isPending || Boolean(persistedEscalation)} onClick={() => escalateAssignmentGaps.mutate()}>{persistedEscalation ? "已上报 CEO" : "上报 CEO 协调"}</Button>{persistedEscalation ? <p className="text-muted-foreground">{assignmentEscalationMessage(persistedEscalation)}；不会覆盖已有负责人。</p> : <p className="text-muted-foreground">上报只记录缺口，不会覆盖已有负责人。</p>}</div>{escalateCapability?.allowed === false ? <p className="mt-2 text-xs text-muted-foreground">{escalateCapability.reason}</p> : null}</div> : null}
         <div><h4 className="text-sm font-medium">范围记录</h4><ul className="mt-2 space-y-2">{preview.records.map((item) => { const current = records.find((record) => record.id === item.id); const hold = current?.dependencies.find((dependency) => dependency.holdReason); return <li key={item.id} className="flex flex-wrap items-start justify-between gap-2 rounded-md border p-3"><div className="min-w-0"><p className="break-words text-sm font-medium">{item.depth > 0 ? "子项 · " : "父项 · "}{item.title}</p><p className="mt-1 text-xs text-muted-foreground">执行 {item.assigneeAgentId ? agentNames[item.assigneeAgentId] ?? "未知" : "未分配"} · QA {item.qaAssigneeAgentId ? agentNames[item.qaAssigneeAgentId] ?? "未知" : "未分配"}{hold ? ` · ${HOLD[hold.holdReason!] ?? hold.holdReason}` : ""}</p></div><Badge variant={hold ? "destructive" : "secondary"}>{previewDisposition(current)}</Badge></li>; })}</ul></div>
         {preview.edges.length > 0 ? <div><h4 className="text-sm font-medium">依赖边</h4><ul className="mt-2 space-y-1 text-sm text-muted-foreground">{preview.edges.map((edge) => <li key={`${edge.predecessorRecordId}:${edge.successorRecordId}`}>{recordTitle(records, edge.predecessorRecordId)} → {recordTitle(records, edge.successorRecordId)}</li>)}</ul></div> : <p className="text-sm text-muted-foreground">范围内没有依赖边。</p>}
         <p className="break-all font-mono text-xs text-muted-foreground">范围摘要 {preview.scopeDigest}</p><div className="flex flex-wrap items-center justify-end gap-3">{prepareCapability?.allowed === false ? <p className="text-sm text-muted-foreground">{prepareCapability.reason}</p> : null}<Button className="min-h-11" disabled={!online || prepareCapability?.allowed !== true || !preview.eligibility.canPrepare || prepare.isPending} onClick={() => prepare.mutate()}><PackageCheck className="mr-2 size-4" />确认范围并准备派发</Button></div>
