@@ -1,5 +1,6 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { closeSync, openSync, readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import path from "node:path";
@@ -35,6 +36,7 @@ type RunningServer = {
   child: ChildProcess;
   baseUrl: string;
   output: () => string;
+  pipeErrors: () => string[];
 };
 
 const evidenceDir = process.env.PAPERCLIP_M2E_EVIDENCE_DIR?.trim();
@@ -107,56 +109,121 @@ function startServer(input: {
   instanceId: string;
   home: string;
   port: number;
+  logFile: string;
 }): RunningServer {
   const baseUrl = `http://127.0.0.1:${input.port}`;
-  let stdout = "";
-  let stderr = "";
-  const child = spawn(process.execPath, [serverTsx, serverEntry], {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      DATABASE_URL: input.connectionString,
-      PORT: String(input.port),
-      HOST: "127.0.0.1",
-      PAPERCLIP_HOME: input.home,
-      PAPERCLIP_INSTANCE_ID: input.instanceId,
-      PAPERCLIP_DEPLOYMENT_MODE: "authenticated",
-      PAPERCLIP_DEPLOYMENT_EXPOSURE: "private",
-      PAPERCLIP_AUTH_BASE_URL_MODE: "explicit",
-      PAPERCLIP_PUBLIC_URL: baseUrl,
-      BETTER_AUTH_URL: baseUrl,
-      BETTER_AUTH_SECRET: authSecret,
-      PAPERCLIP_AUTH_RATE_LIMIT_ENABLED: "false",
-      PAPERCLIP_SECRETS_MASTER_KEY_FILE: input.keyFile,
-      PAPERCLIP_SECRETS_STRICT_MODE: "true",
-      PAPERCLIP_DB_BACKUP_ENABLED: "false",
-      PAPERCLIP_MIGRATION_PROMPT: "never",
-      PAPERCLIP_MIGRATION_AUTO_APPLY: "false",
-      PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED: "false",
-      PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS: "",
-      PAPERCLIP_UI_DEV_MIDDLEWARE: "false",
-      FORCE_COLOR: "0",
-      NO_COLOR: "1",
+  const logFd = openSync(input.logFile, "w");
+  let child: ChildProcess;
+  try {
+    child = spawn(process.execPath, [serverTsx, serverEntry], {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        DATABASE_URL: input.connectionString,
+        PORT: String(input.port),
+        HOST: "127.0.0.1",
+        PAPERCLIP_HOME: input.home,
+        PAPERCLIP_INSTANCE_ID: input.instanceId,
+        PAPERCLIP_DEPLOYMENT_MODE: "authenticated",
+        PAPERCLIP_DEPLOYMENT_EXPOSURE: "private",
+        PAPERCLIP_AUTH_BASE_URL_MODE: "explicit",
+        PAPERCLIP_PUBLIC_URL: baseUrl,
+        BETTER_AUTH_URL: baseUrl,
+        BETTER_AUTH_SECRET: authSecret,
+        PAPERCLIP_AUTH_RATE_LIMIT_ENABLED: "false",
+        PAPERCLIP_SECRETS_MASTER_KEY_FILE: input.keyFile,
+        PAPERCLIP_SECRETS_STRICT_MODE: "true",
+        PAPERCLIP_DB_BACKUP_ENABLED: "false",
+        PAPERCLIP_MIGRATION_PROMPT: "never",
+        PAPERCLIP_MIGRATION_AUTO_APPLY: "false",
+        PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED: "false",
+        PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS: "",
+        PAPERCLIP_E2E_OWNS_WORK_RECORD_TICK: "true",
+        HEARTBEAT_SCHEDULER_ENABLED: "false",
+        PAPERCLIP_UI_DEV_MIDDLEWARE: "false",
+        FORCE_COLOR: "0",
+        NO_COLOR: "1",
+      },
+      stdio: ["ignore", logFd, logFd],
+      windowsHide: true,
+    });
+  } finally {
+    closeSync(logFd);
+  }
+  return {
+    child,
+    baseUrl,
+    output: () => {
+      try {
+        return readFileSync(input.logFile, "utf8");
+      } catch (error) {
+        return `Could not read server log: ${String(error)}`;
+      }
     },
-    stdio: ["ignore", "pipe", "pipe"],
-    windowsHide: true,
-  });
-  child.stdout?.on("data", (chunk) => { stdout += String(chunk); });
-  child.stderr?.on("data", (chunk) => { stderr += String(chunk); });
-  return { child, baseUrl, output: () => `${stdout}\n${stderr}` };
+    pipeErrors: () => [],
+  };
 }
 
 async function stopServer(server: RunningServer | null) {
-  if (!server || server.child.exitCode !== null) return;
+  if (!server || server.child.exitCode !== null || server.child.signalCode !== null) return;
   server.child.kill("SIGTERM");
   await new Promise<void>((resolve) => {
     const timer = setTimeout(() => {
-      if (server.child.pid) process.kill(server.child.pid, "SIGKILL");
+      if (server.child.pid) {
+        try {
+          process.kill(server.child.pid, "SIGKILL");
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+        }
+      }
       resolve();
     }, 5_000);
     timer.unref?.();
     server.child.once("exit", () => { clearTimeout(timer); resolve(); });
   });
+}
+
+function isRetryableLoopbackError(error: unknown) {
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+  while (current && typeof current === "object" && !seen.has(current)) {
+    seen.add(current);
+    const candidate = current as { code?: unknown; cause?: unknown; message?: unknown };
+    const code = typeof candidate.code === "string" ? candidate.code : "";
+    const message = typeof candidate.message === "string" ? candidate.message : "";
+    if (["ECONNRESET", "ENOTCONN", "ECONNREFUSED", "UND_ERR_SOCKET"].includes(code)) return true;
+    if (/ECONNRESET|ENOTCONN|fetch failed|other side closed/i.test(message)) return true;
+    current = candidate.cause;
+  }
+  return false;
+}
+
+async function fetchLoopback(
+  url: string,
+  init?: RequestInit,
+  attempts: Array<{ url: string; attempt: number; outcome: string }> = [],
+) {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        ...init,
+        headers: { ...init?.headers, connection: "close" },
+      });
+      attempts.push({ url: new URL(url).pathname, attempt, outcome: `http_${response.status}` });
+      return response;
+    } catch (error) {
+      lastError = error;
+      attempts.push({
+        url: new URL(url).pathname,
+        attempt,
+        outcome: isRetryableLoopbackError(error) ? "retryable_transport_error" : "transport_error",
+      });
+      if (!isRetryableLoopbackError(error) || attempt === 5) throw error;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 100));
+    }
+  }
+  throw lastError;
 }
 
 async function waitForHealth(server: RunningServer) {
@@ -184,12 +251,13 @@ async function authenticatedSmoke(
   legacyRecordId: string,
   expectedKeyFile: string,
 ) {
+  const attempts: Array<{ url: string; attempt: number; outcome: string }> = [];
   await waitForHealth(server);
-  const signIn = await fetch(`${server.baseUrl}/api/auth/sign-in/email`, {
+  const signIn = await fetchLoopback(`${server.baseUrl}/api/auth/sign-in/email`, {
     method: "POST",
     headers: { "content-type": "application/json", origin: server.baseUrl },
     body: JSON.stringify({ email, password }),
-  });
+  }, attempts);
   const signInBody = await signIn.text();
   if (!signIn.ok) throw new Error(`Authenticated sign-in failed (${signIn.status}): ${signInBody}`);
   const getSetCookie = (signIn.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.bind(signIn.headers);
@@ -198,24 +266,26 @@ async function authenticatedSmoke(
   if (!cookie) throw new Error("Authenticated sign-in did not return a session cookie");
   const headers = { cookie };
 
-  const healthResponse = await fetch(`${server.baseUrl}/api/health`, { headers });
+  const healthResponse = await fetchLoopback(`${server.baseUrl}/api/health`, { headers }, attempts);
   if (!healthResponse.ok) throw new Error(`Authenticated health failed: ${healthResponse.status}`);
   const health = await healthResponse.json() as { status?: string; startupRecovery?: { phase?: string } };
   if (health.status !== "ok" || health.startupRecovery?.phase !== "ready") {
     throw new Error(`Authenticated health did not prove ready startup recovery: ${JSON.stringify(health)}`);
   }
 
-  const recordsResponse = await fetch(
+  const recordsResponse = await fetchLoopback(
     `${server.baseUrl}/api/companies/${companyId}/projects/${projectId}/work-records`,
     { headers },
+    attempts,
   );
   if (!recordsResponse.ok) throw new Error(`M1 record smoke failed: ${recordsResponse.status} ${await recordsResponse.text()}`);
   const listed = await recordsResponse.json() as Array<{ id: string }>;
   if (!listed.some((record) => record.id === legacyRecordId)) throw new Error("M1 record was not retained");
 
-  const operationsResponse = await fetch(
+  const operationsResponse = await fetchLoopback(
     `${server.baseUrl}/api/companies/${companyId}/projects/${projectId}/work-record-workflow/operations`,
     { headers },
+    attempts,
   );
   if (!operationsResponse.ok) throw new Error(`Workflow operations smoke failed: ${operationsResponse.status} ${await operationsResponse.text()}`);
   const operations = await operationsResponse.json() as {
@@ -224,9 +294,10 @@ async function authenticatedSmoke(
   };
   if ((operations.outbox?.recoveredEventCount ?? 0) < 1) throw new Error("Recovered workflow-v2 event was not retained");
 
-  const providerResponse = await fetch(
+  const providerResponse = await fetchLoopback(
     `${server.baseUrl}/api/companies/${companyId}/secret-providers/health`,
     { headers },
+    attempts,
   );
   if (!providerResponse.ok) throw new Error(`Secret-provider health failed: ${providerResponse.status} ${await providerResponse.text()}`);
   const providerHealth = await providerResponse.json() as {
@@ -259,6 +330,8 @@ async function authenticatedSmoke(
       intentCount: operations.execution?.intents ?? 0,
     },
     secretProvider: localProvider,
+    requestAttempts: attempts,
+    pipeErrors: server.pipeErrors(),
   };
 }
 
@@ -279,6 +352,8 @@ process.env.BETTER_AUTH_SECRET = authSecret;
 let database: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | null = null;
 let sourceServer: RunningServer | null = null;
 let targetServer: RunningServer | null = null;
+let sourceServerLog = "";
+let targetServerLog = "";
 
 try {
   let databaseError: unknown;
@@ -427,6 +502,7 @@ try {
     instanceId: `m2e-source-${suffix.toLowerCase()}`,
     home: sourceHome,
     port: sourcePort,
+    logFile: path.join(workRoot, "source-server.raw.log"),
   });
   const sourceFallbackSmoke = await authenticatedSmoke(
     sourceServer,
@@ -436,6 +512,7 @@ try {
     sourceKeyFile,
   );
   await stopServer(sourceServer);
+  sourceServerLog = `${sourceServer.output()}\npipeErrors=${JSON.stringify(sourceServer.pipeErrors())}\n`;
   sourceServer = null;
 
   const preflightCommand = runCli([
@@ -464,6 +541,7 @@ try {
     instanceId: `m2e-target-${suffix.toLowerCase()}`,
     home: targetHome,
     port: targetPort,
+    logFile: path.join(workRoot, "target-server.raw.log"),
   });
   const restoredSmoke = await authenticatedSmoke(
     targetServer,
@@ -519,6 +597,11 @@ try {
 } finally {
   await stopServer(targetServer);
   await stopServer(sourceServer);
+  if (sourceServer) sourceServerLog = `${sourceServer.output()}\npipeErrors=${JSON.stringify(sourceServer.pipeErrors())}\n`;
+  if (targetServer) targetServerLog = `${targetServer.output()}\npipeErrors=${JSON.stringify(targetServer.pipeErrors())}\n`;
+  await mkdir(workRoot, { recursive: true }).catch(() => {});
+  await writeFile(path.join(workRoot, "source-server.log"), sourceServerLog, "utf8").catch(() => {});
+  await writeFile(path.join(workRoot, "target-server.log"), targetServerLog, "utf8").catch(() => {});
   if (database) {
     await closeRegisteredClients(database.connectionString).catch(() => {});
     await database.cleanup();

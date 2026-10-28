@@ -167,6 +167,10 @@ mode, then verify the operations endpoint plus one retained M1 record and one
 workflow-v2 event/recovery row. If any check fails, stop the restored process,
 retain `restore-result.json` and logs, discard the empty-target database, and
 restart the unchanged source process; never restore over the source database.
+The official Windows drill sends loopback requests with connection reuse disabled
+and retries only bounded `ENOTCONN`/`ECONNRESET`-class transport failures. It
+persists source and target server logs even when the drill fails; an HTTP denial
+or failed data assertion is never retried into a pass.
 
 Repeatable proof commands:
 
@@ -202,24 +206,46 @@ pnpm exec vitest run cli/src/__tests__/db-restore.test.ts \
 4. Before an old binary starts, require
    `rollback.safeForOldBinary=true`. Pending, retrying, processing, or
    dead-letter events and active intents all block old-binary rollback.
-5. Migration 0295 is additive. Do not reverse the database migration during an
-   application rollback; drain the new state first, retain the backup, and use
-   the old binary only after the preflight passes.
+5. Migration hashes are not a stable cross-checkout identity: LF/CRLF conversion
+   changes the SHA-256 bytes even when the migration name and SQL are otherwise
+   unchanged. Drain first, create a final backup, and restore it into a **new
+   empty rollback database**. In one transaction on that copy, add `name` to
+   `drizzle.__drizzle_migrations` when absent and backfill every row with its full
+   `.sql` filename from the current committed journal's unique
+   `created_at`/migration-name mapping. Verify
+   every row is named exactly once and 0295 remains the latest row. Both the
+   frozen and current migration inspectors prefer `name`, so this removes the
+   line-ending dependency without hiding a genuinely pending migration.
 
 The frozen rollback baseline for this M2-E sequence is commit
 `65b3d9ae48d02abdeb8f310500e93fcf30105a2d`. The authorized operator records
 the current candidate commit/image digest and this old commit in the change
-manifest. Disable both rollout variables, stop the current process, and start
-that exact old checkout against the **same** database only after the gate is
-open. Require `status=ok`, `startupRecovery.phase=ready`, and the retained M1
-record smoke. If old startup or smoke fails, stop it and restart the recorded
-current candidate with both rollout variables still disabled. Do not reverse
-0295 and do not change data during either fallback.
+manifest. Disable both rollout variables, stop the current process, and retain
+its database unchanged. Restore the final backup into a new rollback database;
+the official drill adds and audits the stable migration-name identity while
+leaving all 0295 columns, constraints, indexes, data and journal rows intact.
+It then requires the frozen checkout's own `inspectMigrations` to return
+`upToDate` without repair or auto-apply and starts the frozen server against that
+same 0295 copy. A transaction failure must leave the restored copy byte-for-byte
+at its original migration-schema state; discard/reset that failed target. If the
+old server produces concrete schema incompatibility after the stable-name check,
+the drill exits nonzero and retains the evidence. Schema downgrade is a separate
+reviewed recovery action and is not performed automatically or inferred from a
+hash mismatch.
+Start the old checkout with migration auto-apply disabled. Require a live old PID,
+`status=ok`, `startupRecovery.phase=ready`, the retained M1 record, archived
+recovery audit facts, and no increase in workflow-v2 effective wakes or runs. If
+old startup or smoke fails, stop it, discard the rollback target, and restart the
+recorded current candidate against the unchanged source database with both rollout
+variables still disabled.
 
 The isolated real-process drill is:
 
 ```sh
 git worktree add "$PAPERCLIP_OLD_BINARY_ROOT" 65b3d9ae48d02abdeb8f310500e93fcf30105a2d
+corepack pnpm@9.15.4 --dir "$PAPERCLIP_OLD_BINARY_ROOT" install --frozen-lockfile
+corepack pnpm@9.15.4 --dir "$PAPERCLIP_OLD_BINARY_ROOT" --filter @paperclipai/shared exec tsc
+corepack pnpm@9.15.4 --dir "$PAPERCLIP_OLD_BINARY_ROOT/packages/plugins/sdk" exec tsc
 PAPERCLIP_OLD_BINARY_COMMIT=65b3d9ae48d02abdeb8f310500e93fcf30105a2d \
 PAPERCLIP_M2E_EVIDENCE_DIR="$PAPERCLIP_RUN_SCRATCH_DIR/m2e" \
 pnpm exec tsx tests/e2e/run-work-record-old-binary-rollback.ts
@@ -229,9 +255,18 @@ PowerShell:
 
 ```powershell
 git worktree add $env:PAPERCLIP_OLD_BINARY_ROOT 65b3d9ae48d02abdeb8f310500e93fcf30105a2d
+corepack pnpm@9.15.4 --dir $env:PAPERCLIP_OLD_BINARY_ROOT install --frozen-lockfile
+corepack pnpm@9.15.4 --dir $env:PAPERCLIP_OLD_BINARY_ROOT --filter @paperclipai/shared exec tsc
+corepack pnpm@9.15.4 --dir (Join-Path $env:PAPERCLIP_OLD_BINARY_ROOT 'packages/plugins/sdk') exec tsc
 $env:PAPERCLIP_OLD_BINARY_COMMIT = '65b3d9ae48d02abdeb8f310500e93fcf30105a2d'
 $env:PAPERCLIP_M2E_EVIDENCE_DIR = Join-Path $env:PAPERCLIP_RUN_SCRATCH_DIR 'm2e'
 pnpm exec tsx tests/e2e/run-work-record-old-binary-rollback.ts
 ```
+
+For qualification, run the authenticated restore and old-binary drill three
+times each with a fresh evidence directory. Every invocation must exit `0`.
+Retain each JSON result and the raw `source-server.log`, `target-server.log`, or
+`old-binary-server.log`. A failed invocation is evidence of a closed gate; do
+not rerun over the same rollback database or waive it with a later success.
 
 No command in this runbook authorizes production gray rollout or deployment.
