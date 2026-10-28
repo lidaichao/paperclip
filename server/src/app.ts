@@ -1134,13 +1134,18 @@ export async function createApp(
     await workRecords.processOutbox(connectionIntentHeartbeat.wakeup, 25);
     await workPackages.processOutbox(connectionIntentHeartbeat.wakeup, 25);
   });
-  let workRecordTimer: ReturnType<typeof setInterval> | null = setInterval(() => {
+  // The process-recovery E2E owns the worker lifecycle explicitly. Keep its
+  // API/UI observer alive without racing the child process that it kills.
+  const e2eOwnsWorkRecordTick = process.env.PAPERCLIP_E2E_OWNS_WORK_RECORD_TICK === "true";
+  let workRecordTimer: ReturnType<typeof setInterval> | null = e2eOwnsWorkRecordTick ? null : setInterval(() => {
     void runWorkRecordTick()
       .catch((err) => logger.error({ err }, "Failed to reconcile work-record dispatches"));
   }, 2_000);
-  workRecordTimer.unref?.();
-  void runWorkRecordTick()
-    .catch((err) => logger.error({ err }, "Failed initial work-record reconciliation"));
+  workRecordTimer?.unref?.();
+  if (!e2eOwnsWorkRecordTick) {
+    void runWorkRecordTick()
+      .catch((err) => logger.error({ err }, "Failed initial work-record reconciliation"));
+  }
   let feedbackExportShuttingDown = false;
   let feedbackExportTimer: ReturnType<typeof setInterval> | null = null;
   const disableFeedbackExportFlushes = () => {
