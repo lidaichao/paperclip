@@ -11,6 +11,7 @@ import { applyConnectorSkills, resolveConnectorAssignments, annotateConnectorSki
 import { getExecutionBlocker } from "../services/execution-blocker.js";
 import { paperclipRunnerTransitionConfig, normalizeLegacyRunnerProvider, isPaperclipRunnerProvider } from "@paperclipai/adapter-utils";
 import { executionProjectionForRun, executionProjectionsForRuns } from "../services/execution-projection.js";
+import { buildPendingExecutionStageWake } from "../services/execution-recovery-resolution.js";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { generateKeyPairSync, randomUUID } from "node:crypto";
 import { readFile, rm } from "node:fs/promises";
@@ -5785,6 +5786,43 @@ export function agentRoutes(
 
     let wakePayload = req.body.payload ?? null;
     let retryConversationContext: Record<string, unknown> = {};
+    let manualExecutionStageContext: Record<string, unknown> = {};
+    if (
+      req.actor.type === "board" &&
+      (req.body.reason === "execution_review_requested" ||
+        req.body.reason === "execution_approval_requested")
+    ) {
+      if (req.body.source !== "assignment" || req.body.triggerDetail !== "system") {
+        throw badRequest(
+          "An execution-stage wake must use assignment source and system trigger.",
+        );
+      }
+      const payloadIssueId =
+        req.body.payload && typeof req.body.payload.issueId === "string"
+          ? req.body.payload.issueId
+          : null;
+      if (!payloadIssueId) {
+        throw badRequest("An execution-stage wake requires an issueId.");
+      }
+      const executionIssue = await issueService(db).getById(payloadIssueId);
+      if (!executionIssue || executionIssue.companyId !== agent.companyId) {
+        throw notFound("Task not found");
+      }
+      const pendingStageWake = buildPendingExecutionStageWake(executionIssue);
+      if (
+        !pendingStageWake ||
+        pendingStageWake.agentId !== agent.id ||
+        pendingStageWake.reason !== req.body.reason
+      ) {
+        throw conflict(
+          "The task is not waiting for this agent in the requested execution stage.",
+        );
+      }
+      manualExecutionStageContext = {
+        source: "issue.execution_stage_manual_recovery",
+        executionStage: pendingStageWake.executionStage,
+      };
+    }
     if (req.body.failedRunId) {
       assertBoard(req);
       if (
@@ -5938,6 +5976,7 @@ export function agentRoutes(
       requestedByActorId: req.actor.type === "agent" ? req.actor.agentId ?? null : req.actor.userId ?? null,
       contextSnapshot: {
         ...retryConversationContext,
+        ...manualExecutionStageContext,
         triggeredBy: req.actor.type,
         originIdentityContextId: req.actor.identityContextId ?? null,
         responsibleUserId: req.actor.type === "agent" ? req.actor.onBehalfOfUserId ?? null : req.actor.userId ?? null,

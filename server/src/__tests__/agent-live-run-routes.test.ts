@@ -929,6 +929,73 @@ describe("agent live run routes", () => {
     });
   });
 
+  it("rebuilds an operator execution-review wake from the authoritative pending stage", async () => {
+    const stageId = "55555555-5555-4555-8555-555555555555";
+    mockAgentService.getById.mockResolvedValue({
+      id: routeAgentId,
+      companyId: "company-1",
+      name: "Reviewer",
+      adapterType: "codex_local",
+    });
+    mockIssueService.getById.mockResolvedValue({
+      id: failedChatIssueId,
+      companyId: "company-1",
+      status: "in_review",
+      assigneeAgentId: routeAgentId,
+      executionState: {
+        status: "pending",
+        currentStageId: stageId,
+        currentStageIndex: 0,
+        currentStageType: "review",
+        currentParticipant: {
+          type: "agent",
+          agentId: routeAgentId,
+          userId: null,
+        },
+        returnAssignee: {
+          type: "agent",
+          agentId: "66666666-6666-4666-8666-666666666666",
+          userId: null,
+        },
+        reviewRequest: null,
+        completedStageIds: [],
+        lastDecisionId: null,
+        lastDecisionOutcome: null,
+      },
+    });
+
+    const res = await requestApp(await createApp(), (baseUrl) =>
+      request(baseUrl)
+        .post(`/api/agents/${routeAgentId}/wakeup`)
+        .send({
+          source: "assignment",
+          triggerDetail: "system",
+          reason: "execution_review_requested",
+          payload: { issueId: failedChatIssueId },
+        }),
+    );
+
+    expect(res.status, JSON.stringify(res.body)).toBe(202);
+    expect(mockHeartbeatService.wakeup).toHaveBeenCalledWith(
+      routeAgentId,
+      expect.objectContaining({
+        source: "assignment",
+        triggerDetail: "system",
+        reason: "execution_review_requested",
+        payload: { issueId: failedChatIssueId },
+        contextSnapshot: expect.objectContaining({
+          source: "issue.execution_stage_manual_recovery",
+          executionStage: expect.objectContaining({
+            wakeRole: "reviewer",
+            stageId,
+            stageType: "review",
+            allowedActions: ["approve", "request_changes"],
+          }),
+        }),
+      }),
+    );
+  });
+
   it("calls heartbeat.wakeup with the legacy minimal shape when the body is empty", async () => {
     const res = await requestApp(await createApp(), (baseUrl) =>
       request(baseUrl)

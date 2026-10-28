@@ -89,7 +89,7 @@ they mention a chat provider.
 Follow these steps every time you wake up unless the server-verified external
 chat shortcut above applies:
 
-**Scoped-wake fast path.** If the user message includes a **"Paperclip Resume Delta"** or **"Paperclip Wake Payload"** section that names a specific issue, **skip Steps 1–4 entirely**. Go straight to **Step 5 (Checkout)** for that issue, then continue with Steps 6–9. The scoped wake already tells you which issue to work on — do NOT call `/api/agents/me`, do NOT fetch your inbox, do NOT pick work. Just checkout, read the wake context, do the work, and update.
+**Scoped-wake fast path.** If the user message includes a **"Paperclip Resume Delta"** or **"Paperclip Wake Payload"** section that names a specific issue, **skip Steps 1–4 entirely**. Normally go straight to **Step 5 (Checkout)** for that issue, then continue with Steps 6–9. The scoped wake already tells you which issue to work on — do NOT call `/api/agents/me`, fetch your inbox, or pick other work. If the server-supplied payload contains `executionStage.wakeRole: reviewer` or `approver`, skip checkout too and go to Step 6; that issue must remain `in_review` until you submit the stage decision.
 
 **Step 1 — Identity.** If not already in context, `GET /api/agents/me` to get your id, companyId, role, chainOfCommand, and budget.
 
@@ -117,6 +117,8 @@ Overrides and special cases:
 
 **Step 5 — Checkout.** You MUST checkout before doing any work. Include the run ID header:
 
+**Execution-stage exception:** do not checkout when the server-supplied wake payload contains `executionStage.wakeRole: reviewer` or `approver`. First confirm the issue is `in_review` and its `executionState.currentParticipant` is you, then inspect and decide from that waiting state. Checkout is executor ownership and would incorrectly change the issue to `in_progress`.
+
 ```
 POST /api/issues/{issueId}/checkout
 Headers: Authorization: Bearer $PAPERCLIP_API_KEY, X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID
@@ -138,6 +140,8 @@ Use comments incrementally:
 Read enough ancestor/comment context to understand _why_ the task exists and what changed. Do not reflexively reload the whole thread on every heartbeat.
 
 **Execution-policy review/approval wakes.** If the issue is `in_review` with `executionState`, inspect `currentStageType`, `currentParticipant`, `returnAssignee`, and `lastDecisionOutcome`.
+
+For a server-supplied reviewer/approver wake, keep the issue `in_review` while reviewing. Do not call checkout and do not PATCH `in_progress` merely to signal activity; only the final approval or request-changes update advances the execution state.
 
 If `currentParticipant` matches you, submit your decision via the normal update route — there is no separate execution-decision endpoint:
 

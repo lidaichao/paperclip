@@ -9222,9 +9222,16 @@ export function issueRoutes(
               // An automatic no-replay disposition is final until new evidence
               // arrives. Keep the supported evidence API usable without a dialog.
               assertBoard(req);
+              const pendingExecutionState = parseIssueExecutionState(
+                lockedIssue.executionState,
+              );
+              const restoresPendingExecutionStage =
+                sourceIssueStatus === "in_review" &&
+                pendingExecutionState?.status === "pending";
               if (
                 activeRecoveryAction ||
-                sourceIssueStatus !== "todo" ||
+                (sourceIssueStatus !== "todo" &&
+                  !restoresPendingExecutionStage) ||
                 outcome !== "restored"
               ) {
                 throw conflict(
@@ -9259,8 +9266,14 @@ export function issueRoutes(
           { source: "recovery_action_resolution" },
         );
 
+        const pendingExecutionState = parseIssueExecutionState(
+          lockedIssue.executionState,
+        );
+        const restoresPendingExecutionStage =
+          sourceIssueStatus === "in_review" &&
+          pendingExecutionState?.status === "pending";
         if (
-          sourceIssueStatus === "todo" &&
+          (sourceIssueStatus === "todo" || restoresPendingExecutionStage) &&
           requiresExecutionReconciliation(activeRecoveryAction.cause)
         ) {
           assertBoard(req);

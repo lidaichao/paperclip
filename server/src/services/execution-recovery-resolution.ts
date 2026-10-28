@@ -22,6 +22,43 @@ import {
 import { parseIssueExecutionState } from "./issue-execution-policy.js";
 import { isSupersededConversationRun } from "./agent-conversations.js";
 
+export function buildPendingExecutionStageWake(task: Pick<
+  typeof issues.$inferSelect,
+  "status" | "assigneeAgentId" | "executionState"
+>) {
+  const executionState = parseIssueExecutionState(task.executionState);
+  if (
+    task.status !== "in_review" ||
+    executionState?.status !== "pending" ||
+    executionState.currentParticipant?.type !== "agent"
+  ) {
+    return null;
+  }
+  const agentId = executionState.currentParticipant.agentId;
+  if (!agentId || task.assigneeAgentId !== agentId) return null;
+  const executionStage = {
+    wakeRole:
+      executionState.currentStageType === "approval"
+        ? ("approver" as const)
+        : ("reviewer" as const),
+    stageId: executionState.currentStageId,
+    stageType: executionState.currentStageType,
+    currentParticipant: executionState.currentParticipant,
+    returnAssignee: executionState.returnAssignee,
+    reviewRequest: executionState.reviewRequest ?? null,
+    lastDecisionOutcome: executionState.lastDecisionOutcome,
+    allowedActions: ["approve", "request_changes"],
+  };
+  return {
+    agentId,
+    reason:
+      executionStage.stageType === "approval"
+        ? ("execution_approval_requested" as const)
+        : ("execution_review_requested" as const),
+    executionStage,
+  };
+}
+
 /** An operator records observed outcomes; this is not permission to blindly retry. */
 export async function validateExecutionReconciliation(input: {
   db: Db;
@@ -212,7 +249,7 @@ export async function deliverReconciledExecutions(
     try {
       const decision = action.evidence.executionReconciliation as
         ExecutionReconciliation | undefined;
-      if (!decision || !action.returnOwnerAgentId) continue;
+      if (!decision) continue;
       const pendingDecision = and(
         eq(issueRecoveryActions.companyId, action.companyId),
         eq(issueRecoveryActions.id, action.id),
@@ -229,9 +266,18 @@ export async function deliverReconciledExecutions(
             eq(issues.id, action.sourceIssueId),
           ),
         );
+      const pendingStageWake = task
+        ? buildPendingExecutionStageWake(task)
+        : null;
+      const executionStage = pendingStageWake?.executionStage ?? null;
+      const wakeReason =
+        pendingStageWake?.reason ?? "issue_recovery_action_restored";
+      const continuationAgentId =
+        pendingStageWake?.agentId ?? action.returnOwnerAgentId;
       if (
         !task ||
-        task.assigneeAgentId !== action.returnOwnerAgentId ||
+        !continuationAgentId ||
+        task.assigneeAgentId !== continuationAgentId ||
         ["done", "cancelled"].includes(task.status)
       ) {
         await db
@@ -242,12 +288,17 @@ export async function deliverReconciledExecutions(
           .where(pendingDecision);
         continue;
       }
-      const run = await wake(action.returnOwnerAgentId, {
-        source: "automation",
+      const run = await wake(continuationAgentId, {
+        source: executionStage ? "assignment" : "automation",
         triggerDetail: "system",
-        reason: "issue_recovery_action_restored",
+        reason: wakeReason,
         idempotencyKey: `execution-reconciliation:${action.id}`,
-        payload: { issueId: task.id, recoveryActionId: action.id },
+        payload: {
+          issueId: task.id,
+          recoveryActionId: action.id,
+          mutation: "recovery_action_resolution",
+          ...(executionStage ? { executionStage } : {}),
+        },
         requestedByActorType: "system",
         requestedByActorId: "execution-recovery",
         contextSnapshot: {
@@ -257,8 +308,11 @@ export async function deliverReconciledExecutions(
           previousRunId: decision.runId,
           retryOfRunId: decision.runId,
           forceFreshSession: true,
-          wakeReason: "issue_recovery_action_restored",
-          source: "execution.reconciled",
+          wakeReason,
+          source: executionStage
+            ? "issue.execution_stage_reconciliation"
+            : "execution.reconciled",
+          ...(executionStage ? { executionStage } : {}),
         },
       });
       if (run)
@@ -270,7 +324,7 @@ export async function deliverReconciledExecutions(
               and(
                 eq(heartbeatRuns.companyId, action.companyId),
                 eq(heartbeatRuns.id, run.id),
-                eq(heartbeatRuns.agentId, action.returnOwnerAgentId!),
+                eq(heartbeatRuns.agentId, continuationAgentId),
                 sql`${heartbeatRuns.contextSnapshot}->>'recoveryActionId' = ${action.id}`,
                 sql`${heartbeatRuns.contextSnapshot}->>'previousRunId' = ${decision.runId}`,
               ),
