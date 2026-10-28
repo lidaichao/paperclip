@@ -38,6 +38,7 @@ type Layer = {
 };
 
 const activeWorkers = new Set<ChildProcess>();
+const spawnedWorkerPids = new Set<number>();
 
 async function json<T>(response: APIResponse, label: string): Promise<T> {
   const body = await response.text();
@@ -112,7 +113,11 @@ async function seedScenario(request: APIRequestContext, failpoint: Failpoint): P
 function spawnWorker(databaseUrl: string, scenario: Scenario, operation: "crash" | "recover") {
   const child = spawn(
     process.execPath,
-    ["cli/node_modules/tsx/dist/cli.mjs", "tests/e2e/fixtures/work-package-process-recovery-worker.ts"],
+    [
+      "--import",
+      "./cli/node_modules/tsx/dist/loader.mjs",
+      "tests/e2e/fixtures/work-package-process-recovery-worker.ts",
+    ],
     {
       cwd: path.resolve(import.meta.dirname, "../.."),
       env: {
@@ -131,6 +136,7 @@ function spawnWorker(databaseUrl: string, scenario: Scenario, operation: "crash"
     },
   );
   activeWorkers.add(child);
+  if (child.pid) spawnedWorkerPids.add(child.pid);
   child.once("exit", () => activeWorkers.delete(child));
   return child;
 }
@@ -163,6 +169,29 @@ async function waitForExit(child: ChildProcess, timeoutMs = 10_000) {
 function killWorker(child: ChildProcess) {
   if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
   child.kill("SIGKILL");
+}
+
+function processIsAlive(pid: number) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function pidFromMarker(line: string, marker: string) {
+  const payload = JSON.parse(line.slice(marker.length)) as { pid?: unknown };
+  expect(payload.pid, `${marker} must report the actual worker PID`).toEqual(expect.any(Number));
+  return payload.pid as number;
+}
+
+async function expectProcessExited(pid: number, label: string) {
+  await expect.poll(() => processIsAlive(pid), {
+    message: `${label} PID ${pid} must not exist`,
+    timeout: 10_000,
+    intervals: [25, 50, 100],
+  }).toBe(false);
 }
 
 function layer<T extends { id: string }>(
@@ -305,7 +334,13 @@ async function assertUiConvergence(page: Page, scenario: Scenario, info: TestInf
 test.afterEach(async () => {
   for (const child of activeWorkers) killWorker(child);
   await Promise.all([...activeWorkers].map((child) => waitForExit(child).catch(() => {})));
+  await expect.poll(
+    () => [...spawnedWorkerPids].filter((pid) => processIsAlive(pid)),
+    { message: "M2-R05 worker processes must not survive test cleanup", timeout: 10_000 },
+  ).toEqual([]);
+  expect(activeWorkers.size).toBe(0);
   activeWorkers.clear();
+  spawnedWorkerPids.clear();
 });
 
 test("M2-R05 converges after process death at all durable work-package boundaries", async ({ page, request }, info) => {
@@ -327,9 +362,12 @@ test("M2-R05 converges after process death at all durable work-package boundarie
       const scenario = await seedScenario(request, failpoint);
       const crashing = spawnWorker(databaseUrl, scenario, "crash");
       const boundary = await waitForMarker(crashing, "M2_R05_FAILPOINT ");
-      const killedPid = crashing.pid;
+      const killedPid = pidFromMarker(boundary.line, "M2_R05_FAILPOINT ");
+      expect(crashing.pid, `${failpoint} child handle must be the marker worker`).toBe(killedPid);
+      expect(processIsAlive(killedPid), `${failpoint} marker worker must be alive before SIGKILL`).toBe(true);
       killWorker(crashing);
       await waitForExit(crashing);
+      await expectProcessExited(killedPid, `${failpoint} killed worker before DB/API snapshot`);
       expect(killedPid).toBeGreaterThan(0);
       expect(crashing.exitCode === 0).toBe(false);
 
@@ -346,9 +384,12 @@ test("M2-R05 converges after process death at all durable work-package boundarie
       }
       const recovering = spawnWorker(databaseUrl, scenario, "recover");
       const recovered = await waitForMarker(recovering, "M2_R05_RECOVERED ", 45_000);
+      const recoveryPid = pidFromMarker(recovered.line, "M2_R05_RECOVERED ");
+      expect(recovering.pid, `${failpoint} recovery child handle must be the marker worker`).toBe(recoveryPid);
+      expect(recoveryPid, `${failpoint} recovery worker must be a new process`).not.toBe(killedPid);
       await waitForExit(recovering);
+      await expectProcessExited(recoveryPid, `${failpoint} recovery worker after completion`);
       expect(recovering.exitCode).toBe(0);
-      expect(recovering.pid).not.toBe(killedPid);
 
       await expect.poll(async () => {
         const snapshot = await databaseSnapshot(db, scenario);
@@ -368,12 +409,23 @@ test("M2-R05 converges after process death at all durable work-package boundarie
         failpoint,
         killedProcess: {
           pid: killedPid,
+          childPid: crashing.pid,
+          markerPid: killedPid,
+          verifiedAliveBeforeSigkill: true,
+          verifiedExitedBeforeSnapshot: true,
           marker: boundary.line,
           termination: "SIGKILL",
           exitCode: crashing.exitCode,
           signalCode: crashing.signalCode,
         },
-        recoveryProcess: { pid: recovering.pid, marker: recovered.line },
+        recoveryProcess: {
+          pid: recoveryPid,
+          childPid: recovering.pid,
+          markerPid: recoveryPid,
+          differentFromKilledProcess: true,
+          verifiedExitedAfterCompletion: true,
+          marker: recovered.line,
+        },
         database: { before: beforeDb, after: afterDb },
         api: { before: beforeApi, after: afterApi },
         ui: { screenshot: `${failpoint}-ui.png`, converged: false },
@@ -381,7 +433,7 @@ test("M2-R05 converges after process death at all durable work-package boundarie
       expect(afterDb.postgresIdentity).toEqual(beforeDb.postgresIdentity);
       await writeFile(
         path.join(evidenceDir, `${failpoint}.json`),
-        `${JSON.stringify({ schemaVersion: 1, ...scenarioEvidence }, null, 2)}\n`,
+        `${JSON.stringify({ schemaVersion: 2, ...scenarioEvidence }, null, 2)}\n`,
         "utf8",
       );
       const expectedCount = scenario.recordIds.length;
@@ -420,7 +472,7 @@ test("M2-R05 converges after process death at all durable work-package boundarie
 
     const evidencePath = path.join(evidenceDir, "m2-r05-process-recovery.json");
     await writeFile(evidencePath, `${JSON.stringify({
-      schemaVersion: 1,
+      schemaVersion: 2,
       sourceSha: process.env.PAPERCLIP_M2_R05_SOURCE_SHA ?? null,
       browserChannel: process.env.PAPERCLIP_PLAYWRIGHT_CHANNEL ?? "bundled-chromium",
       executedAt: new Date().toISOString(),
