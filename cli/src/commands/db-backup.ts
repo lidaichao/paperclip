@@ -47,8 +47,11 @@ function resolveBackupDir(raw: string): string {
 }
 
 export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
-  printPaperclipCliBanner();
-  p.intro(pc.bgCyan(pc.black(" paperclip db:backup ")));
+  const interactiveOutput = !opts.json;
+  if (interactiveOutput) {
+    printPaperclipCliBanner();
+    p.intro(pc.bgCyan(pc.black(" paperclip db:backup ")));
+  }
 
   const configPath = resolveConfigPath(opts.config);
   const config = readConfig(opts.config);
@@ -62,13 +65,15 @@ export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
   );
   const filenamePrefix = opts.filenamePrefix?.trim() || "paperclip";
 
-  p.log.message(pc.dim(`Config: ${configPath}`));
-  p.log.message(pc.dim(`Connection source: ${connection.source}`));
-  p.log.message(pc.dim(`Backup dir: ${backupDir}`));
-  p.log.message(pc.dim(`Retention: ${retentionDays} day(s)`));
+  if (interactiveOutput) {
+    p.log.message(pc.dim(`Config: ${configPath}`));
+    p.log.message(pc.dim(`Connection source: ${connection.source}`));
+    p.log.message(pc.dim(`Backup dir: ${backupDir}`));
+    p.log.message(pc.dim(`Retention: ${retentionDays} day(s)`));
+  }
 
-  const spinner = p.spinner();
-  spinner.start("Creating database backup...");
+  const spinner = interactiveOutput ? p.spinner() : null;
+  spinner?.start("Creating database backup...");
   try {
     const result = await runDatabaseBackup({
       connectionString: connection.value,
@@ -76,7 +81,7 @@ export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
       retention: { dailyDays: retentionDays, weeklyWeeks: 4, monthlyMonths: 1 },
       filenamePrefix,
     });
-    spinner.stop(`Backup saved: ${formatDatabaseBackupResult(result)}`);
+    spinner?.stop(`Backup saved: ${formatDatabaseBackupResult(result)}`);
 
     if (opts.json) {
       console.log(
@@ -94,9 +99,9 @@ export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
         ),
       );
     }
-    p.outro(pc.green("Backup completed."));
+    if (interactiveOutput) p.outro(pc.green("Backup completed."));
   } catch (err) {
-    spinner.stop(pc.red("Backup failed."));
+    spinner?.stop(pc.red("Backup failed."));
     throw err;
   }
 }

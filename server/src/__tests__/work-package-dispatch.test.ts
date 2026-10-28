@@ -32,6 +32,7 @@ import { workPackageDispatchService, type WorkPackageFailpoint } from "../servic
 import { heartbeatService } from "../services/heartbeat.js";
 import { issueService } from "../services/issues.js";
 import { workRecordService } from "../services/work-records.js";
+import { createWorkRecordWorkflowTick } from "../services/work-record-workflow-tick.js";
 import { workRecordRoutes } from "../routes/work-records.js";
 import { errorHandler } from "../middleware/error-handler.js";
 
@@ -601,6 +602,106 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
         cases: evidence,
       }, null, 2)}\n`, "utf8");
     }
+  }, 120_000);
+
+  it("preserves one intent and event through approval wait/release in the real scheduler order", async () => {
+    const context = await seed();
+    await isolatePendingV2Outbox(context.company.id);
+    const target = await record(context, "Scheduler approval wait");
+    const prepared = await prepare(workPackageDispatchService(db, { writesEnabled: true }), context, scopeInput(context, {
+      scopeKind: "selected_records",
+      rootRecordId: null,
+      selectedRecordIds: [target.id],
+    }), "scheduler-approval-wait");
+    const intent = await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.recordId, target.id),
+    )).then((rows) => rows[0]);
+    const event = await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.executionIntentId, intent.id))
+      .then((rows) => rows[0]);
+    const issueBeforeWait = await db.select().from(issues).where(eq(issues.id, intent.issueId!))
+      .then((rows) => rows[0]);
+    await db.update(issues).set({
+      status: "in_review",
+      executionState: {
+        status: "pending",
+        currentStageId: "scheduler-approval-stage",
+        currentStageIndex: 0,
+        currentStageType: "approval",
+        currentParticipant: { type: "user", userId: "scheduler-approver" },
+        returnAssignee: { type: "agent", agentId: context.agent.id },
+        completedStageIds: [],
+        lastDecisionId: null,
+        lastDecisionOutcome: null,
+      },
+      responsibleUserId: "scheduler-approval-owner",
+    }).where(eq(issues.id, intent.issueId!));
+    const issueWaiting = await db.select().from(issues).where(eq(issues.id, intent.issueId!))
+      .then((rows) => rows[0]);
+    expect(issueWaiting.statusVersion).toBe(issueBeforeWait.statusVersion + 1);
+
+    const heartbeat = heartbeatService(db, { runtimeEnv: { ...process.env, PAPERCLIP_IN_WORKTREE: "false" } });
+    const workflow = workPackageDispatchService(db, { writesEnabled: true });
+    const emptyPage = async () => ({ processed: 0, succeeded: 0, failures: [], nextAfterId: null });
+    const schedulerTick = createWorkRecordWorkflowTick({
+      records: emptyPage,
+      qualityCycles: emptyPage,
+      packages: (afterId) => workflow.reconcilePage(1_000, afterId),
+      legacyOutbox: async () => 0,
+      workflowV2Outbox: () => workflow.processOutbox(heartbeat.wakeup, 25),
+    });
+
+    for (let tick = 0; tick < 6; tick += 1) {
+      await db.update(workRecordOutbox).set({ availableAt: new Date(Date.now() - 1) })
+        .where(eq(workRecordOutbox.id, event.id));
+      await schedulerTick();
+      const waitingIntent = await db.select().from(workRecordExecutionIntents)
+        .where(eq(workRecordExecutionIntents.id, intent.id)).then((rows) => rows[0]);
+      const waitingEvent = await db.select().from(workRecordOutbox)
+        .where(eq(workRecordOutbox.id, event.id)).then((rows) => rows[0]);
+      expect(waitingIntent).toMatchObject({
+        id: intent.id,
+        state: "waiting_governance",
+        waitingReason: "approval_pending",
+        expectedIssueStatusVersion: issueWaiting.statusVersion,
+      });
+      expect(waitingEvent).toMatchObject({ id: event.id, state: "retry", attemptCount: 0, deadLetteredAt: null });
+    }
+
+    await db.update(issues).set({ status: "todo", executionState: null }).where(eq(issues.id, intent.issueId!));
+    const issueReleased = await db.select().from(issues).where(eq(issues.id, intent.issueId!))
+      .then((rows) => rows[0]);
+    expect(issueReleased.statusVersion).toBe(issueWaiting.statusVersion + 1);
+    await db.update(workRecordOutbox).set({ availableAt: new Date(Date.now() - 1) })
+      .where(eq(workRecordOutbox.id, event.id));
+    await schedulerTick();
+    await heartbeat.drainActiveRunExecutions();
+
+    const finalIntents = await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.recordId, target.id),
+    ));
+    const finalEvents = await db.select().from(workRecordOutbox).where(and(
+      eq(workRecordOutbox.companyId, context.company.id),
+      eq(workRecordOutbox.executionIntentId, intent.id),
+    ));
+    const wakes = await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, context.company.id),
+      eq(agentWakeupRequests.idempotencyKey, `work-record-intent:${intent.id}:1`),
+    ));
+    const runs = wakes.length === 0 ? [] : await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, context.company.id),
+      inArray(heartbeatRuns.wakeupRequestId, wakes.map((wake) => wake.id)),
+    ));
+    const effectiveWakeStates = new Set(["queued", "claimed", "completed"]);
+    const effectiveRunStates = new Set(["queued", "running", "succeeded"]);
+    expect(finalIntents).toHaveLength(1);
+    expect(finalIntents[0]).toMatchObject({ id: intent.id, expectedIssueStatusVersion: issueReleased.statusVersion });
+    expect(finalEvents).toHaveLength(1);
+    expect(finalEvents[0]).toMatchObject({ id: event.id, state: "delivered", attemptCount: 1 });
+    expect(wakes.filter((wake) => effectiveWakeStates.has(wake.status))).toHaveLength(1);
+    expect(runs.filter((run) => effectiveRunStates.has(run.status)).length).toBeLessThanOrEqual(1);
+    expect(prepared.batch.id).toBe(event.batchId);
   }, 120_000);
 
   it("D01 releases a whole package in predecessor, successor, then PO order through real heartbeats", async () => {

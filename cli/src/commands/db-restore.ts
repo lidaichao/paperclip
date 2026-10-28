@@ -85,8 +85,11 @@ export async function inspectDatabaseRestoreInputs(opts: Pick<
 }
 
 export async function dbRestoreCommand(opts: DbRestoreOptions): Promise<void> {
-  printPaperclipCliBanner();
-  p.intro(pc.bgCyan(pc.black(" paperclip db:restore ")));
+  const interactiveOutput = !opts.json;
+  if (interactiveOutput) {
+    printPaperclipCliBanner();
+    p.intro(pc.bgCyan(pc.black(" paperclip db:restore ")));
+  }
   const inspected = await inspectDatabaseRestoreInputs(opts);
   const connectionString = resolveConnectionString(opts.config);
   const database = createDb(connectionString);
@@ -102,7 +105,7 @@ export async function dbRestoreCommand(opts: DbRestoreOptions): Promise<void> {
     if (!opts.apply) {
       const result = { mode: "dry-run", targetEmpty: true, ...inspected };
       if (opts.json) console.log(JSON.stringify(result, null, 2));
-      p.outro(pc.green("Restore preflight passed; no data was written."));
+      if (interactiveOutput) p.outro(pc.green("Restore preflight passed; no data was written."));
       return;
     }
     if (!opts.yes) throw new Error("--apply requires --yes after the approved outage window begins.");
@@ -135,7 +138,7 @@ export async function dbRestoreCommand(opts: DbRestoreOptions): Promise<void> {
       ...inspected,
     };
     if (opts.json) console.log(JSON.stringify(result, null, 2));
-    p.outro(pc.green("Restore applied and verified."));
+    if (interactiveOutput) p.outro(pc.green("Restore applied and verified."));
   } finally {
     await closeRegisteredClients(connectionString);
   }

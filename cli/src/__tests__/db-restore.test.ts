@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   closeRegisteredClients,
   companies,
@@ -13,6 +13,7 @@ import {
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
 import { dbRestoreCommand, inspectDatabaseRestoreInputs } from "../commands/db-restore.js";
+import { dbBackupCommand } from "../commands/db-backup.js";
 
 const roots: string[] = [];
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex");
@@ -22,6 +23,37 @@ afterEach(async () => {
 });
 
 describe("db:restore preflight", () => {
+  it("keeps db:backup --json stdout to one parseable JSON document", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "paperclip-db-backup-json-"));
+    roots.push(root);
+    const database = await startEmbeddedPostgresTestDatabase("paperclip-cli-backup-json-");
+    const previousUrl = process.env.DATABASE_URL;
+    process.env.DATABASE_URL = database.connectionString;
+    const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      await dbBackupCommand({
+        dir: root,
+        filenamePrefix: "json-contract",
+        retentionDays: 1,
+        json: true,
+      });
+      const writes = stdout.mock.calls.map(([value]) => String(value));
+      expect(writes).toHaveLength(1);
+      expect(JSON.parse(writes[0])).toMatchObject({
+        backupFile: expect.stringContaining("json-contract"),
+        backupDir: root,
+        retentionDays: 1,
+        connectionSource: "DATABASE_URL",
+      });
+    } finally {
+      stdout.mockRestore();
+      if (previousUrl === undefined) delete process.env.DATABASE_URL;
+      else process.env.DATABASE_URL = previousUrl;
+      await closeRegisteredClients(database.connectionString).catch(() => {});
+      await database.cleanup();
+    }
+  }, 120_000);
+
   it("verifies the approved backup and secrets-key digests without exposing key material", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "paperclip-db-restore-"));
     roots.push(root);
@@ -87,6 +119,7 @@ describe("db:restore preflight", () => {
     const backupBody = await readFile(backup.backupFile);
     const previousUrl = process.env.DATABASE_URL;
     process.env.DATABASE_URL = targetUrl.toString();
+    const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
       await dbRestoreCommand({
         backup: backup.backupFile,
@@ -98,11 +131,20 @@ describe("db:restore preflight", () => {
         yes: true,
         json: true,
       });
+      const writes = stdout.mock.calls.map(([value]) => String(value));
+      expect(writes).toHaveLength(1);
+      expect(JSON.parse(writes[0])).toMatchObject({
+        mode: "applied",
+        targetEmptyBeforeRestore: true,
+        migrationStatus: "upToDate",
+        expectedCompanyPresent: true,
+      });
       const restored = createDb(targetUrl.toString());
       expect(await restored.select().from(companies)).toEqual([
         expect.objectContaining({ id: company.id, name: "Authenticated restore proof" }),
       ]);
     } finally {
+      stdout.mockRestore();
       if (previousUrl === undefined) delete process.env.DATABASE_URL;
       else process.env.DATABASE_URL = previousUrl;
       await closeRegisteredClients(targetUrl.toString()).catch(() => {});

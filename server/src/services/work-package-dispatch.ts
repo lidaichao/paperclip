@@ -116,6 +116,25 @@ function isIntentIssueStatusAdmissible(
     || (intentKind === "rework_release" && issue.status === "in_progress");
 }
 
+type IntentIssueRevisionDisposition = "current" | "approval_wait" | "approval_release" | "stale";
+
+function classifyIntentIssueRevision(
+  intent: typeof workRecordExecutionIntents.$inferSelect,
+  issue: typeof issues.$inferSelect,
+  hasExecutionWinner = false,
+): IntentIssueRevisionDisposition {
+  if (hasExecutionWinner || issue.statusVersion === intent.expectedIssueStatusVersion) return "current";
+  if (issue.status === "in_review" && issue.executionState?.status === "pending") return "approval_wait";
+  if (
+    intent.state === "waiting_governance" &&
+    intent.waitingReason === "approval_pending" &&
+    isIntentIssueStatusAdmissible(issue, intent.kind)
+  ) {
+    return "approval_release";
+  }
+  return "stale";
+}
+
 function projectLockKey(companyId: string, projectId: string) {
   return `work-package-dispatch:${companyId}:${projectId}`;
 }
@@ -1155,12 +1174,26 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       if (!intent.issueId) continue;
       const issue = await db.select().from(issues).where(and(eq(issues.companyId, companyId), eq(issues.id, intent.issueId)))
         .then((rows) => rows[0] ?? null);
-      if (!issue || issue.statusVersion !== intent.expectedIssueStatusVersion) {
+      if (!issue) {
         await db.update(workRecordExecutionIntents).set({ state: "superseded", supersededAt: new Date(), waitingReason: "stale_issue_revision", updatedAt: new Date() })
           .where(eq(workRecordExecutionIntents.id, intent.id));
         await db.update(workRecordOutbox).set({ state: "superseded", updatedAt: new Date() })
           .where(eq(workRecordOutbox.executionIntentId, intent.id));
         continue;
+      }
+      const revisionDisposition = classifyIntentIssueRevision(intent, issue);
+      if (revisionDisposition === "stale") {
+        await db.update(workRecordExecutionIntents).set({ state: "superseded", supersededAt: new Date(), waitingReason: "stale_issue_revision", updatedAt: new Date() })
+          .where(eq(workRecordExecutionIntents.id, intent.id));
+        await db.update(workRecordOutbox).set({ state: "superseded", updatedAt: new Date() })
+          .where(eq(workRecordOutbox.executionIntentId, intent.id));
+        continue;
+      }
+      if (revisionDisposition !== "current") {
+        await db.update(workRecordExecutionIntents).set({
+          expectedIssueStatusVersion: issue.statusVersion,
+          updatedAt: new Date(),
+        }).where(eq(workRecordExecutionIntents.id, intent.id));
       }
       const readiness = await issueSvc.getDependencyReadiness(issue.id);
       if (!readiness.isDependencyReady) {
@@ -1434,17 +1467,12 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
             )).then((rows) => rows[0] ?? null)
           : null;
         const existingWinner = await winner();
-        const approvalWaitRevision = Boolean(intent && issue && !existingWinner &&
-          issue.statusVersion !== intent.expectedIssueStatusVersion &&
-          issue.status === "in_review" && issue.executionState?.status === "pending");
-        const approvalReleaseRevision = Boolean(intent && issue && !existingWinner &&
-          issue.statusVersion !== intent.expectedIssueStatusVersion &&
-          intent.state === "waiting_governance" && intent.waitingReason === "approval_pending" &&
-          isIntentIssueStatusAdmissible(issue, intent.kind));
-        const staleIssueRevision = Boolean(intent && issue && !existingWinner &&
-          issue.statusVersion !== intent.expectedIssueStatusVersion &&
-          !approvalWaitRevision && !approvalReleaseRevision);
-        if (intent && issue && (approvalWaitRevision || approvalReleaseRevision)) {
+        const revisionDisposition = intent && issue
+          ? classifyIntentIssueRevision(intent, issue, Boolean(existingWinner))
+          : null;
+        const staleIssueRevision = revisionDisposition === "stale";
+        if (intent && issue && revisionDisposition !== null &&
+            revisionDisposition !== "current" && revisionDisposition !== "stale") {
           await db.update(workRecordExecutionIntents).set({
             expectedIssueStatusVersion: issue.statusVersion,
             updatedAt: new Date(),
