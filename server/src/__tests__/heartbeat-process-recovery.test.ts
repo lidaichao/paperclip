@@ -6883,6 +6883,362 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     expect((await heartbeat.getRun(updated!.runId!))!.contextSnapshot?.wakeCommentIds).toEqual([comment!.id]);
   });
 
+  it("durably resumes an execution-stage handoff after the predecessor lease releases", async () => {
+    const source = await seedRunFixture({
+      runtimeMode: "legacy",
+      adapterType: "codex_local",
+      agentStatus: "idle",
+      runStatus: "interrupted",
+    });
+    const [lease] = await db
+      .insert(environmentLeases)
+      .values({
+        companyId: source.companyId,
+        issueId: source.issueId,
+        heartbeatRunId: source.runId,
+        status: "active",
+      })
+      .returning({ id: environmentLeases.id });
+    const reviewerAgentId = randomUUID();
+    const stageId = randomUUID();
+    const executionStage = {
+      wakeRole: "reviewer",
+      stageId,
+      stageType: "review",
+      currentParticipant: {
+        type: "agent",
+        agentId: reviewerAgentId,
+        userId: null,
+      },
+      returnAssignee: {
+        type: "agent",
+        agentId: source.agentId,
+        userId: null,
+      },
+      reviewRequest: null,
+      lastDecisionOutcome: null,
+      allowedActions: ["approve", "request_changes"],
+    };
+    await db.insert(agents).values({
+      id: reviewerAgentId,
+      companyId: source.companyId,
+      name: "Execution stage reviewer",
+      role: "engineer",
+      status: "idle",
+      adapterType: "codex_local",
+      adapterConfig: {},
+      runtimeConfig: {},
+      permissions: {},
+    });
+    await db
+      .update(issues)
+      .set({
+        status: "in_review",
+        assigneeAgentId: reviewerAgentId,
+        checkoutRunId: null,
+        executionRunId: null,
+        executionState: {
+          status: "pending",
+          currentStageId: stageId,
+          currentStageIndex: 0,
+          currentStageType: "review",
+          currentParticipant: {
+            type: "agent",
+            agentId: reviewerAgentId,
+            userId: null,
+          },
+          returnAssignee: {
+            type: "agent",
+            agentId: source.agentId,
+            userId: null,
+          },
+          reviewRequest: null,
+          completedStageIds: [],
+          lastDecisionId: null,
+          lastDecisionOutcome: null,
+        },
+      })
+      .where(eq(issues.id, source.issueId));
+
+    const heartbeat = heartbeatService(db);
+    const immediate = await heartbeat.wakeup(reviewerAgentId, {
+      source: "assignment",
+      triggerDetail: "system",
+      reason: "execution_review_requested",
+      requestedByActorType: "agent",
+      requestedByActorId: source.agentId,
+      payload: {
+        issueId: source.issueId,
+        mutation: "update",
+        executionStage,
+        interruptedRunId: source.runId,
+      },
+      contextSnapshot: {
+        issueId: source.issueId,
+        taskId: source.issueId,
+        wakeReason: "execution_review_requested",
+        source: "issue.execution_stage",
+        executionStage,
+        interruptedRunId: source.runId,
+      },
+    });
+    expect(immediate).toBeNull();
+
+    const [deferred] = await db
+      .select()
+      .from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.agentId, reviewerAgentId));
+    expect(deferred).toMatchObject({
+      source: "assignment",
+      triggerDetail: "system",
+      reason: "execution_review_requested",
+      status: "deferred_issue_execution",
+      runId: null,
+    });
+    expect(deferred?.payload?._paperclipWakeContext).toMatchObject({
+      issueId: source.issueId,
+      wakeReason: "execution_review_requested",
+      source: "issue.execution_stage",
+      executionStage: {
+        wakeRole: "reviewer",
+        stageId,
+        stageType: "review",
+      },
+    });
+
+    const releasedAt = new Date("2026-03-19T00:01:00.000Z");
+    await db
+      .update(environmentLeases)
+      .set({ status: "released", releasedAt, updatedAt: releasedAt })
+      .where(eq(environmentLeases.id, lease!.id));
+    await heartbeat.resumeQueuedRuns();
+    await heartbeat.drainActiveRunExecutions();
+
+    const [promoted] = await db
+      .select()
+      .from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, deferred!.id));
+    expect(promoted?.runId).toBeTruthy();
+    const successor = await heartbeat.getRun(promoted!.runId!);
+    expect(successor?.agentId).toBe(reviewerAgentId);
+    expect(successor?.contextSnapshot).toMatchObject({
+      issueId: source.issueId,
+      wakeReason: "execution_review_requested",
+      source: "issue.execution_stage",
+      executionStage: {
+        wakeRole: "reviewer",
+        stageId,
+        stageType: "review",
+      },
+    });
+
+    const staleStageId = randomUUID();
+    await db
+      .update(issues)
+      .set({
+        executionRunId: null,
+        executionState: {
+          status: "pending",
+          currentStageId: staleStageId,
+          currentStageIndex: 1,
+          currentStageType: "review",
+          currentParticipant: {
+            type: "agent",
+            agentId: reviewerAgentId,
+            userId: null,
+          },
+          returnAssignee: {
+            type: "agent",
+            agentId: source.agentId,
+            userId: null,
+          },
+          reviewRequest: null,
+          completedStageIds: [stageId],
+          lastDecisionId: null,
+          lastDecisionOutcome: null,
+        },
+      })
+      .where(eq(issues.id, source.issueId));
+    const staleContext = {
+      issueId: source.issueId,
+      taskId: source.issueId,
+      wakeReason: "execution_review_requested",
+      source: "issue.execution_stage",
+      executionStage,
+      interruptedRunId: source.runId,
+    };
+    const [stale] = await db
+      .insert(agentWakeupRequests)
+      .values({
+        companyId: source.companyId,
+        agentId: reviewerAgentId,
+        source: "assignment",
+        triggerDetail: "system",
+        reason: "execution_review_requested",
+        payload: {
+          issueId: source.issueId,
+          mutation: "update",
+          executionStage,
+          interruptedRunId: source.runId,
+          _paperclipWakeContext: staleContext,
+          executionWait: { reason: "execution_recovery" },
+        },
+        status: "deferred_issue_execution",
+        requestedByActorType: "agent",
+        requestedByActorId: source.agentId,
+      })
+      .returning();
+    await heartbeat.resumeQueuedRuns();
+    const [staleAfterResume] = await db
+      .select()
+      .from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, stale!.id));
+    expect(staleAfterResume).toMatchObject({
+      status: "skipped",
+      reason: "execution_stage_handoff_stale",
+      runId: null,
+    });
+  });
+
+  it("durably resumes a changes-requested handoff after the reviewer lease releases", async () => {
+    const reviewer = await seedRunFixture({
+      runtimeMode: "legacy",
+      adapterType: "codex_local",
+      agentStatus: "idle",
+      runStatus: "interrupted",
+    });
+    const [lease] = await db
+      .insert(environmentLeases)
+      .values({
+        companyId: reviewer.companyId,
+        issueId: reviewer.issueId,
+        heartbeatRunId: reviewer.runId,
+        status: "active",
+      })
+      .returning({ id: environmentLeases.id });
+    const executorAgentId = randomUUID();
+    const stageId = randomUUID();
+    const executionStage = {
+      wakeRole: "executor",
+      stageId,
+      stageType: "review",
+      currentParticipant: {
+        type: "agent",
+        agentId: reviewer.agentId,
+        userId: null,
+      },
+      returnAssignee: {
+        type: "agent",
+        agentId: executorAgentId,
+        userId: null,
+      },
+      reviewRequest: null,
+      lastDecisionOutcome: "changes_requested",
+      allowedActions: ["address_changes", "resubmit"],
+    };
+    await db.insert(agents).values({
+      id: executorAgentId,
+      companyId: reviewer.companyId,
+      name: "Changes requested executor",
+      role: "engineer",
+      status: "idle",
+      adapterType: "codex_local",
+      adapterConfig: {},
+      runtimeConfig: {},
+      permissions: {},
+    });
+    await db
+      .update(issues)
+      .set({
+        status: "in_progress",
+        assigneeAgentId: executorAgentId,
+        checkoutRunId: null,
+        executionRunId: null,
+        executionState: {
+          status: "changes_requested",
+          currentStageId: stageId,
+          currentStageIndex: 0,
+          currentStageType: "review",
+          currentParticipant: {
+            type: "agent",
+            agentId: reviewer.agentId,
+            userId: null,
+          },
+          returnAssignee: {
+            type: "agent",
+            agentId: executorAgentId,
+            userId: null,
+          },
+          reviewRequest: null,
+          completedStageIds: [],
+          lastDecisionId: randomUUID(),
+          lastDecisionOutcome: "changes_requested",
+          changesRequestedCount: 1,
+        },
+      })
+      .where(eq(issues.id, reviewer.issueId));
+
+    const heartbeat = heartbeatService(db);
+    const immediate = await heartbeat.wakeup(executorAgentId, {
+      source: "assignment",
+      triggerDetail: "system",
+      reason: "execution_changes_requested",
+      requestedByActorType: "agent",
+      requestedByActorId: reviewer.agentId,
+      payload: {
+        issueId: reviewer.issueId,
+        mutation: "update",
+        executionStage,
+        interruptedRunId: reviewer.runId,
+      },
+      contextSnapshot: {
+        issueId: reviewer.issueId,
+        taskId: reviewer.issueId,
+        wakeReason: "execution_changes_requested",
+        source: "issue.execution_stage",
+        executionStage,
+        interruptedRunId: reviewer.runId,
+      },
+    });
+    expect(immediate).toBeNull();
+
+    const [deferred] = await db
+      .select()
+      .from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.agentId, executorAgentId));
+    expect(deferred).toMatchObject({
+      reason: "execution_changes_requested",
+      status: "deferred_issue_execution",
+      runId: null,
+    });
+
+    const releasedAt = new Date("2026-03-19T00:02:00.000Z");
+    await db
+      .update(environmentLeases)
+      .set({ status: "released", releasedAt, updatedAt: releasedAt })
+      .where(eq(environmentLeases.id, lease!.id));
+    await heartbeat.resumeQueuedRuns();
+    await heartbeat.drainActiveRunExecutions();
+
+    const [promoted] = await db
+      .select()
+      .from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, deferred!.id));
+    expect(promoted?.runId).toBeTruthy();
+    const successor = await heartbeat.getRun(promoted!.runId!);
+    expect(successor?.agentId).toBe(executorAgentId);
+    expect(successor?.contextSnapshot).toMatchObject({
+      issueId: reviewer.issueId,
+      wakeReason: "execution_changes_requested",
+      source: "issue.execution_stage",
+      executionStage: {
+        wakeRole: "executor",
+        stageId,
+        stageType: "review",
+      },
+    });
+  });
+
   it("retries durable queue interruption after a promotion failure on a fresh service", async () => {
     const { companyId, agentId, issueId, runId } = await seedRunFixture({
       runtimeMode: "legacy", adapterType: "codex_local", agentStatus: "idle", runStatus: "cancelled",
@@ -7487,9 +7843,11 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       try {
         await terminated;
         expect(await waitForValue(async () => observedResult)).toMatchObject(
-          graceful
-            ? { exitCode: 0, signal: null }
-            : { exitCode: null, signal: stopSignal },
+          process.platform === "win32"
+            ? { exitCode: 1, signal: null }
+            : graceful
+              ? { exitCode: 0, signal: null }
+              : { exitCode: null, signal: stopSignal },
         );
         // The process utility already removed its child record on close. A new
         // service instance must still join the original cancellation owner.
@@ -7599,8 +7957,9 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
         expect((await heartbeat.cancelRun(runId))?.status).toBe("succeeded");
       } else {
         expect(finished).toMatchObject({
-          exitCode: null,
-          signal: "SIGTERM",
+          ...(process.platform === "win32"
+            ? { exitCode: 1, signal: null }
+            : { exitCode: null, signal: "SIGTERM" }),
           errorCode: "adapter_failed",
         });
       }

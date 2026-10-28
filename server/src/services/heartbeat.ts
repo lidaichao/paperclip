@@ -7165,6 +7165,101 @@ function hasInteractionContinuationWakeContext(
   );
 }
 
+const EXECUTION_STAGE_HANDOFF_ROLE_BY_REASON = {
+  execution_review_requested: "reviewer",
+  execution_approval_requested: "approver",
+  execution_changes_requested: "executor",
+} as const;
+
+function hasDurableExecutionStageHandoffWakeContext(input: {
+  source: WakeupOptions["source"];
+  triggerDetail: WakeupOptions["triggerDetail"] | null;
+  reason: string | null;
+  contextSnapshot: Record<string, unknown>;
+}) {
+  if (input.source !== "assignment" || input.triggerDetail !== "system")
+    return false;
+  const expectedRole =
+    EXECUTION_STAGE_HANDOFF_ROLE_BY_REASON[
+      input.reason as keyof typeof EXECUTION_STAGE_HANDOFF_ROLE_BY_REASON
+    ];
+  if (!expectedRole) return false;
+  const contextSource = readNonEmptyString(input.contextSnapshot.source);
+  if (
+    contextSource !== "issue.execution_stage" &&
+    contextSource !== "issue.execution_stage_manual_recovery" &&
+    contextSource !== "issue.execution_stage_reconciliation"
+  )
+    return false;
+  const executionStage = parseObject(input.contextSnapshot.executionStage);
+  return (
+    readNonEmptyString(input.contextSnapshot.issueId) !== null &&
+    readNonEmptyString(executionStage.wakeRole) === expectedRole &&
+    readNonEmptyString(executionStage.stageId) !== null &&
+    readNonEmptyString(executionStage.stageType) !== null
+  );
+}
+
+function isSameDurableExecutionStageHandoffWake(input: {
+  expected: Record<string, unknown>;
+  actual: Record<string, unknown>;
+}) {
+  const expectedStage = parseObject(input.expected.executionStage);
+  const actualStage = parseObject(input.actual.executionStage);
+  return (
+    readNonEmptyString(input.actual.issueId) ===
+      readNonEmptyString(input.expected.issueId) &&
+    readNonEmptyString(input.actual.source) ===
+      readNonEmptyString(input.expected.source) &&
+    readNonEmptyString(actualStage.wakeRole) ===
+      readNonEmptyString(expectedStage.wakeRole) &&
+    readNonEmptyString(actualStage.stageId) ===
+      readNonEmptyString(expectedStage.stageId) &&
+    readNonEmptyString(actualStage.stageType) ===
+      readNonEmptyString(expectedStage.stageType) &&
+    readNonEmptyString(input.actual.interruptedRunId) ===
+      readNonEmptyString(input.expected.interruptedRunId)
+  );
+}
+
+function executionStageHandoffIsCurrent(input: {
+  contextSnapshot: Record<string, unknown>;
+  issue: Pick<
+    typeof issues.$inferSelect,
+    "status" | "assigneeAgentId" | "executionState"
+  >;
+  agentId: string;
+}) {
+  const executionStage = parseObject(input.contextSnapshot.executionStage);
+  const state = parseIssueExecutionState(input.issue.executionState);
+  const wakeRole = readNonEmptyString(executionStage.wakeRole);
+  const stageId = readNonEmptyString(executionStage.stageId);
+  const stageType = readNonEmptyString(executionStage.stageType);
+  if (
+    input.issue.assigneeAgentId !== input.agentId ||
+    !state ||
+    state.currentStageId !== stageId ||
+    state.currentStageType !== stageType
+  )
+    return false;
+
+  if (wakeRole === "executor") {
+    return (
+      input.issue.status === "in_progress" &&
+      state.status === "changes_requested" &&
+      state.returnAssignee?.type === "agent" &&
+      state.returnAssignee.agentId === input.agentId
+    );
+  }
+
+  return (
+    input.issue.status === "in_review" &&
+    state.status === "pending" &&
+    state.currentParticipant?.type === "agent" &&
+    state.currentParticipant.agentId === input.agentId
+  );
+}
+
 function normalizeInteractionContinuationWakeContext(
   contextSnapshot: Record<string, unknown>,
   payload: Record<string, unknown> | null | undefined,
@@ -10415,6 +10510,51 @@ export function heartbeatService(
       issueStateGuard: { assigneeAgentId: wake.agentId, statuses: ["todo", "in_progress", "in_review", "blocked"] },
       idempotencyKey: `queued-comment-${interrupted ? "interrupt" : "delivery"}:${queueId}`,
     }, queueId);
+  }
+
+  async function resumeDeferredExecutionStageHandoff(
+    wake: typeof agentWakeupRequests.$inferSelect,
+  ) {
+    const payload = parseObject(wake.payload);
+    const contextSnapshot = parseObject(payload[DEFERRED_WAKE_CONTEXT_KEY]);
+    if (
+      !wake.reason ||
+      !["user", "agent", "system"].includes(
+        wake.requestedByActorType ?? "",
+      ) ||
+      !wake.requestedByActorId ||
+      !hasDurableExecutionStageHandoffWakeContext({
+        source: wake.source as WakeupOptions["source"],
+        triggerDetail: wake.triggerDetail as WakeupOptions["triggerDetail"],
+        reason: wake.reason,
+        contextSnapshot,
+      })
+    )
+      return;
+    const requestedByActorType = wake.requestedByActorType as NonNullable<
+      WakeupOptions["requestedByActorType"]
+    >;
+
+    const deliveryPayload = { ...payload };
+    delete deliveryPayload[DEFERRED_WAKE_CONTEXT_KEY];
+    delete deliveryPayload.executionWait;
+    await enqueueWakeup(
+      wake.agentId,
+      {
+        source: wake.source as WakeupOptions["source"],
+        triggerDetail:
+          (wake.triggerDetail ?? undefined) as WakeupOptions["triggerDetail"],
+        reason: wake.reason,
+        payload: deliveryPayload,
+        contextSnapshot,
+        requestedByActorType,
+        requestedByActorId: wake.requestedByActorId,
+        idempotencyKey:
+          wake.idempotencyKey ?? `execution-stage-handoff:${wake.id}`,
+        allowRunCoalescing: false,
+      },
+      wake.id,
+    );
   }
 
   async function resumeExecutionWaitComments() {
@@ -19329,24 +19469,65 @@ export function heartbeatService(
         or(and(
           sql`jsonb_typeof(${agentWakeupRequests.payload} #> '{_paperclipWakeContext,wakeCommentIds}') = 'array'`,
           sql`${agentWakeupRequests.payload} #> '{_paperclipWakeContext,wakeCommentIds}' <> '[]'::jsonb`,
-        ), sql`${agentWakeupRequests.payload}->>'mutation' = 'interaction'`),
+        ), sql`${agentWakeupRequests.payload}->>'mutation' = 'interaction'`,
+          sql`${agentWakeupRequests.payload} #>> '{_paperclipWakeContext,source}' in ('issue.execution_stage', 'issue.execution_stage_manual_recovery', 'issue.execution_stage_reconciliation')`),
         sql`${agentWakeupRequests.payload}->'queuedCommentInterrupt' is null`,
         cutoff ? gte(agentWakeupRequests.requestedAt, cutoff) : undefined))
       .orderBy(asc(agentWakeupRequests.updatedAt)).limit(50);
     for (const { wake } of strandedQueues) {
-      if (!queuedCommentIdsFromWakePayload(wake.payload).length &&
-          !await readQueuedInteractionResponse(db, wake.companyId, String(wake.payload?.issueId), wake.payload)) continue;
-      const [latest] = await db.select().from(heartbeatRuns).where(and(
-        eq(heartbeatRuns.companyId, wake.companyId), eq(heartbeatRuns.agentId, wake.agentId),
-        sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${String(wake.payload?.issueId)}`,
-      )).orderBy(desc(heartbeatRuns.createdAt), desc(heartbeatRuns.id)).limit(1);
+      const deferredContext = parseObject(
+        parseObject(wake.payload)[DEFERRED_WAKE_CONTEXT_KEY],
+      );
+      const executionStageHandoff =
+        hasDurableExecutionStageHandoffWakeContext({
+          source: wake.source as WakeupOptions["source"],
+          triggerDetail: wake.triggerDetail as WakeupOptions["triggerDetail"],
+          reason: wake.reason,
+          contextSnapshot: deferredContext,
+        });
+      if (
+        !executionStageHandoff &&
+        !queuedCommentIdsFromWakePayload(wake.payload).length &&
+        !(await readQueuedInteractionResponse(
+          db,
+          wake.companyId,
+          String(wake.payload?.issueId),
+          wake.payload,
+        ))
+      )
+        continue;
       await db.update(agentWakeupRequests).set({ updatedAt: new Date() }).where(and(
         eq(agentWakeupRequests.id, wake.id), eq(agentWakeupRequests.status, "deferred_issue_execution"),
       ));
+      if (executionStageHandoff) {
+        const issueId = readNonEmptyString(wake.payload?.issueId);
+        if (!issueId || await getExecutionBlocker(db, wake.companyId, issueId))
+          continue;
+        await resumeDeferredExecutionStageHandoff(wake).catch((err) => {
+          logger.warn(
+            { err, queueId: wake.id },
+            "failed to promote deferred execution-stage handoff",
+          );
+        });
+        continue;
+      }
+      const [latest] = await db
+        .select()
+        .from(heartbeatRuns)
+        .where(
+          and(
+            eq(heartbeatRuns.companyId, wake.companyId),
+            eq(heartbeatRuns.agentId, wake.agentId),
+            sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${String(wake.payload?.issueId)}`,
+          ),
+        )
+        .orderBy(desc(heartbeatRuns.createdAt), desc(heartbeatRuns.id))
+        .limit(1);
       if (!latest || latest.runtimeMode !== "legacy" || !isHeartbeatRunTerminalStatus(latest.status)) continue;
       const cancelledAdmission = latest.status === "cancelled" && !latest.startedAt &&
         latest.errorCode === "execution_reconciliation_required";
-      if ((latest.status !== "cancelled" || cancelledAdmission) && await getExecutionBlocker(db, wake.companyId, String(wake.payload?.issueId))) {
+      if ((latest.status !== "cancelled" || cancelledAdmission) &&
+          await getExecutionBlocker(db, wake.companyId, String(wake.payload?.issueId))) {
         await resumeSavedLegacyComments(wake.companyId, wake.id).catch(err => {
           logger.warn({ err, queueId: wake.id }, "failed to deliver saved legacy comment after recovery stopped");
         });
@@ -26083,6 +26264,15 @@ export function heartbeatService(
       triggerDetail,
       payload,
     });
+    const executionStageWaitResume = Boolean(
+      executionWaitRequestId &&
+        hasDurableExecutionStageHandoffWakeContext({
+          source,
+          triggerDetail,
+          reason,
+          contextSnapshot: enrichedContextSnapshot,
+        }),
+    );
     let issueId =
       readNonEmptyString(enrichedContextSnapshot.issueId) ?? issueIdFromPayload;
     if (executionReconciliationWake && !issueId) return null;
@@ -26601,17 +26791,48 @@ export function heartbeatService(
               eq(agentWakeupRequests.agentId, agentId), eq(agentWakeupRequests.status, "deferred_issue_execution"),
               // A user message can join a queue originally created by a
               // system wake. Admission validates the saved user comment or board click.
-              (opts.queuedCommentInterruptId ?? opts.queuedCommentRequestId) === executionWaitRequestId
+              executionStageWaitResume
+                ? eq(
+                    agentWakeupRequests.requestedByActorType,
+                    opts.requestedByActorType ?? "",
+                  )
+                : (opts.queuedCommentInterruptId ?? opts.queuedCommentRequestId) === executionWaitRequestId
                 ? undefined : eq(agentWakeupRequests.requestedByActorType, "user"),
-              opts.queuedCommentInterruptId === executionWaitRequestId
+              executionStageWaitResume
+                ? eq(
+                    agentWakeupRequests.requestedByActorId,
+                    opts.requestedByActorId ?? "",
+                  )
+                : opts.queuedCommentInterruptId === executionWaitRequestId
                 ? sql`${agentWakeupRequests.payload}->'queuedCommentInterrupt'->>'actorId' = ${opts.requestedByActorId ?? ""}`
                 : opts.queuedCommentRequestId === executionWaitRequestId ? undefined
                   : eq(agentWakeupRequests.requestedByActorId, opts.requestedByActorId ?? ""),
               sql`${agentWakeupRequests.payload}->>'issueId' = ${issueId}`,
             ));
+            const pendingContext = parseObject(
+              parseObject(pending?.payload)[DEFERRED_WAKE_CONTEXT_KEY],
+            );
+            const matchingExecutionStageHandoff = Boolean(
+              pending &&
+                executionStageWaitResume &&
+                pending.source === source &&
+                pending.triggerDetail === triggerDetail &&
+                pending.reason === reason &&
+                hasDurableExecutionStageHandoffWakeContext({
+                  source: pending.source as WakeupOptions["source"],
+                  triggerDetail:
+                    pending.triggerDetail as WakeupOptions["triggerDetail"],
+                  reason: pending.reason,
+                  contextSnapshot: pendingContext,
+                }) &&
+                isSameDurableExecutionStageHandoffWake({
+                  expected: enrichedContextSnapshot,
+                  actual: pendingContext,
+                }),
+            );
             // The issue lock serializes cleanup callbacks and periodic workers.
             // An adopted, discarded, or edited receipt is no longer authority.
-            if (!pending || (!(wakeCommentId && queuedCommentIdsFromWakePayload(pending.payload).includes(wakeCommentId)) &&
+            if (!pending || (!matchingExecutionStageHandoff && !(wakeCommentId && queuedCommentIdsFromWakePayload(pending.payload).includes(wakeCommentId)) &&
                 !(opts.queuedCommentInterruptId && await readQueuedInteractionResponse(tx as unknown as Db,
                   agent.companyId, issueId, pending.payload)))) {
               return { kind: "deferred" as const };
@@ -26813,6 +27034,7 @@ export function heartbeatService(
               executionWorkspacePreference: issues.executionWorkspacePreference,
               executionWorkspaceSettings: issues.executionWorkspaceSettings,
               assigneeAgentId: issues.assigneeAgentId,
+              executionState: issues.executionState,
               executionRunId: issues.executionRunId,
               executionAgentNameKey: issues.executionAgentNameKey,
               createdAt: issues.createdAt,
@@ -26841,6 +27063,37 @@ export function heartbeatService(
               idempotencyKey: opts.idempotencyKey ?? null,
               finishedAt: new Date(),
             });
+            return { kind: "skipped" as const };
+          }
+
+          if (
+            executionStageWaitResume &&
+            !executionStageHandoffIsCurrent({
+              contextSnapshot: enrichedContextSnapshot,
+              issue,
+              agentId,
+            })
+          ) {
+            const now = new Date();
+            await tx
+              .update(agentWakeupRequests)
+              .set({
+                status: "skipped",
+                reason: "execution_stage_handoff_stale",
+                error:
+                  "Execution-stage handoff no longer matches the task's current stage or assignee.",
+                finishedAt: now,
+                updatedAt: now,
+              })
+              .where(
+                and(
+                  eq(agentWakeupRequests.id, executionWaitRequestId!),
+                  eq(
+                    agentWakeupRequests.status,
+                    "deferred_issue_execution",
+                  ),
+                ),
+              );
             return { kind: "skipped" as const };
           }
 
@@ -26976,6 +27229,12 @@ export function heartbeatService(
             }
             if (durableRequest || wakeCommentId ||
                 hasInteractionContinuationWakeContext(enrichedContextSnapshot) ||
+                hasDurableExecutionStageHandoffWakeContext({
+                  source,
+                  triggerDetail,
+                  reason,
+                  contextSnapshot: enrichedContextSnapshot,
+                }) ||
                 readNonEmptyString(enrichedContextSnapshot.nativeStatusWakeIntentId)) {
               await tx.insert(agentWakeupRequests).values({
                 ...durableReceiptFields,
@@ -27803,23 +28062,51 @@ export function heartbeatService(
             enrichedContextSnapshot.explicitUserContinuation = explicitContinuation;
           }
 
-          const wakeupRequest = await tx
-            .insert(agentWakeupRequests)
-            .values({
-              ...durableReceiptFields,
-              companyId: agent.companyId,
-              agentId,
-              source,
-              triggerDetail,
-              reason,
-              payload,
-              status: "queued",
-              requestedByActorType: opts.requestedByActorType ?? null,
-              requestedByActorId: opts.requestedByActorId ?? null,
-              idempotencyKey: opts.idempotencyKey ?? null,
-            })
-            .returning()
-            .then((rows) => rows[0]);
+          const wakeupRequest = executionStageWaitResume
+            ? await tx
+                .update(agentWakeupRequests)
+                .set({
+                  source,
+                  triggerDetail,
+                  reason,
+                  payload,
+                  status: "queued",
+                  requestedByActorType: opts.requestedByActorType ?? null,
+                  requestedByActorId: opts.requestedByActorId ?? null,
+                  idempotencyKey: opts.idempotencyKey ?? null,
+                  error: null,
+                  finishedAt: null,
+                  updatedAt: new Date(),
+                })
+                .where(
+                  and(
+                    eq(agentWakeupRequests.id, executionWaitRequestId!),
+                    eq(
+                      agentWakeupRequests.status,
+                      "deferred_issue_execution",
+                    ),
+                  ),
+                )
+                .returning()
+                .then((rows) => rows[0] ?? null)
+            : await tx
+                .insert(agentWakeupRequests)
+                .values({
+                  ...durableReceiptFields,
+                  companyId: agent.companyId,
+                  agentId,
+                  source,
+                  triggerDetail,
+                  reason,
+                  payload,
+                  status: "queued",
+                  requestedByActorType: opts.requestedByActorType ?? null,
+                  requestedByActorId: opts.requestedByActorId ?? null,
+                  idempotencyKey: opts.idempotencyKey ?? null,
+                })
+                .returning()
+                .then((rows) => rows[0]);
+          if (!wakeupRequest) return { kind: "deferred" as const };
 
           // A handoff changes the executor, not the owner of saved user input.
           // Validate its exact stopped source while the issue row is locked;
