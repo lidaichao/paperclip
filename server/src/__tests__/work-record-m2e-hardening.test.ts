@@ -7,6 +7,7 @@ import request from "supertest";
 import { and, eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  activityLog,
   agents,
   agentWakeupRequests,
   companies,
@@ -24,6 +25,7 @@ import {
   workRecordExecutionIntents,
   workRecordIssueLinks,
   workRecordOutbox,
+  workRecordQualityCycles,
   workRecords,
 } from "@paperclipai/db";
 import type { PreviewWorkPackageDispatch } from "@paperclipai/shared";
@@ -316,6 +318,8 @@ describeDb("M2-E workflow hardening", () => {
     expect(after.runtimeSafety).toEqual({
       duplicateWakeIntents: 0,
       duplicateRunIntents: 0,
+      effectiveWakeStatuses: ["queued", "claimed", "completed"],
+      effectiveRunStatuses: ["queued", "running", "succeeded"],
       issuesWithMultipleActiveIntents: 0,
       issuesWithMultipleActiveRuns: 0,
     });
@@ -326,6 +330,151 @@ describeDb("M2-E workflow hardening", () => {
       byStatus: { forbidden403: 0, conflict409: 1, unprocessable422: 0 },
     });
     expect(after.rollback).toMatchObject({ safeForOldBinary: false, activeIntents: 1, actionableOutboxEvents: 0 });
+  }, 30_000);
+
+  it("classifies effective execution, consistency, quality waits, governance, and rejections exactly", async () => {
+    const context = await seed("M2-E exact metrics");
+    const targets = [];
+    for (const title of ["Exact metrics A", "Exact metrics B"]) {
+      targets.push(await context.records.create(context.company.id, {
+        projectId: context.project.id,
+        kind: "plan",
+        title,
+        assigneeAgentId: context.agent.id,
+      }, { actorType: "system", actorId: "m2e-test" }));
+    }
+    await prepare(context.company.id, context.project.id, [targets[0].id], "m2e-exact-a");
+    await prepare(context.company.id, context.project.id, [targets[1].id], "m2e-exact-b");
+    const intents = await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.projectId, context.project.id),
+    ));
+    expect(intents).toHaveLength(2);
+
+    const insertWakeAndRun = async (intent: typeof intents[number], status: "succeeded" | "failed") => {
+      const wake = await db.insert(agentWakeupRequests).values({
+        companyId: context.company.id,
+        agentId: context.agent.id,
+        source: "assignment",
+        triggerDetail: "system",
+        reason: "work_record_workflow_v2_released",
+        status: status === "succeeded" ? "completed" : "failed",
+        idempotencyKey: `work-record-intent:${intent.id}:${intent.generation}`,
+        finishedAt: new Date(),
+      }).returning().then((rows) => rows[0]);
+      const run = await db.insert(heartbeatRuns).values({
+        companyId: context.company.id,
+        agentId: context.agent.id,
+        status,
+        wakeupRequestId: wake.id,
+        startedAt: new Date(),
+        finishedAt: new Date(),
+      }).returning().then((rows) => rows[0]);
+      await db.update(agentWakeupRequests).set({ runId: run.id }).where(eq(agentWakeupRequests.id, wake.id));
+      return { wake, run };
+    };
+    await insertWakeAndRun(intents[0], "succeeded");
+    await insertWakeAndRun(intents[0], "failed");
+    await insertWakeAndRun(intents[1], "succeeded");
+    const duplicate = await insertWakeAndRun(intents[1], "succeeded");
+
+    const outboxes = await db.select().from(workRecordOutbox).where(and(
+      eq(workRecordOutbox.companyId, context.company.id),
+      eq(workRecordOutbox.projectId, context.project.id),
+    ));
+    expect(outboxes).toHaveLength(2);
+    await db.update(workRecordOutbox).set({ state: "superseded", lastError: "stale_issue_revision" })
+      .where(eq(workRecordOutbox.id, outboxes[0].id));
+    await db.update(workRecordOutbox).set({ state: "superseded", lastError: "Unsupported work-record workflow v2 event" })
+      .where(eq(workRecordOutbox.id, outboxes[1].id));
+
+    await db.insert(workRecordQualityCycles).values([
+      {
+        companyId: context.company.id,
+        projectId: context.project.id,
+        aggregateRecordId: targets[0].id,
+        cycleNumber: 1,
+        kind: "metrics_fixture",
+        state: "open",
+        qualityPhase: "qa_initial",
+        scopeDigest: "m2e-exact-qa-open",
+      },
+      {
+        companyId: context.company.id,
+        projectId: context.project.id,
+        aggregateRecordId: targets[1].id,
+        cycleNumber: 1,
+        kind: "metrics_fixture",
+        state: "accepted",
+        qualityPhase: "qa_initial",
+        scopeDigest: "m2e-exact-qa-closed",
+      },
+    ]);
+
+    const app = createApi(context.company.id);
+    const base = `/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch`;
+    const preview = await request(app).post(`${base}/preview`)
+      .send(input(context.project.id, [targets[0].id])).expect(200);
+    await request(app).post(`${base}/prepare`).send({
+      ...input(context.project.id, [targets[0].id]),
+      clientRequestId: "m2e-exact-scope-mismatch",
+      requestPayloadDigest: "m2e-exact-scope-mismatch",
+      expectedScopeDigest: "not-the-current-scope",
+      expectedRootRevision: preview.body.rootRevision,
+      expectedDependencySetRevision: preview.body.dependencySetRevision,
+    }).expect(409);
+    await request(app).post(`${base}/prepare`).send({
+      ...input(context.project.id, [targets[0].id]),
+      clientRequestId: "m2e-exact-revision-mismatch",
+      requestPayloadDigest: "m2e-exact-revision-mismatch",
+      expectedScopeDigest: preview.body.scopeDigest,
+      expectedRootRevision: preview.body.rootRevision + 1,
+      expectedDependencySetRevision: preview.body.dependencySetRevision,
+    }).expect(409);
+
+    const rejectionRows = [
+      { status: 403, code: "work_record_workflow_role_denied" },
+      { status: 403, code: "authorization_permission_denied" },
+      { status: 422, code: "work_record_workflow_project_boundary" },
+      { status: 422, code: "work_record_quality_target_invalid" },
+    ];
+    await db.insert(activityLog).values(rejectionRows.map((error, index) => ({
+      companyId: context.company.id,
+      actorType: "system",
+      actorId: "m2e-test",
+      action: index < 2 ? "work_record.quality_command" : "work_record.dispatch_command",
+      entityType: "work_record_metrics_fixture",
+      entityId: `m2e-exact-rejection-${index}`,
+      details: { projectId: context.project.id, outcome: "rejected", error },
+    })));
+
+    await db.update(workRecordExecutionIntents).set({ state: "waiting_governance", waitingReason: "budget.blocked" })
+      .where(eq(workRecordExecutionIntents.id, intents[0].id));
+    await db.update(workRecordExecutionIntents).set({ state: "waiting_governance", waitingReason: "budgetish_unknown" })
+      .where(eq(workRecordExecutionIntents.id, intents[1].id));
+    const service = workPackageDispatchService(db, { writesEnabled: true });
+    const positive = await service.operationsMetrics(context.company.id, context.project.id);
+    expect(positive.execution).toMatchObject({ wakes: 4, runs: 4, effectiveWakes: 3, effectiveRuns: 3 });
+    expect(positive.runtimeSafety).toMatchObject({ duplicateWakeIntents: 1, duplicateRunIntents: 1 });
+    expect(positive.consistency).toMatchObject({ staleEvents: 1, scopeDigestMismatchesLast24Hours: 1 });
+    expect(positive.quality.qaWait).toMatchObject({ count: 1, oldestSeconds: expect.any(Number) });
+    expect(positive.governance).toMatchObject({ totalWait: 2, budgetWait: 1, pauseWait: 0, approvalWait: 0, otherWait: 1 });
+    expect(positive.rejections).toMatchObject({
+      byStatus: { forbidden403: 2, conflict409: 2, unprocessable422: 2 },
+      roleDenied: 1,
+      crossScope: 1,
+    });
+
+    await db.update(agentWakeupRequests).set({ status: "failed" }).where(eq(agentWakeupRequests.id, duplicate.wake.id));
+    await db.update(heartbeatRuns).set({ status: "failed" }).where(eq(heartbeatRuns.id, duplicate.run.id));
+    await db.update(workRecordExecutionIntents).set({ waitingReason: "company.inactive" })
+      .where(eq(workRecordExecutionIntents.id, intents[0].id));
+    await db.update(workRecordExecutionIntents).set({ waitingReason: "governance_pending" })
+      .where(eq(workRecordExecutionIntents.id, intents[1].id));
+    const negative = await service.operationsMetrics(context.company.id, context.project.id);
+    expect(negative.execution).toMatchObject({ wakes: 4, runs: 4, effectiveWakes: 2, effectiveRuns: 2 });
+    expect(negative.runtimeSafety).toMatchObject({ duplicateWakeIntents: 0, duplicateRunIntents: 0 });
+    expect(negative.governance).toMatchObject({ totalWait: 2, budgetWait: 0, pauseWait: 1, approvalWait: 1, otherWait: 0 });
   }, 30_000);
 
   it("accepts 200 records/8 levels/2,000 edges and rejects each +1 boundary without writes", async () => {

@@ -35,7 +35,13 @@ async function waitForHealth(baseUrl: string, child: ChildProcess, output: () =>
     if (child.exitCode !== null) throw new Error(`Old binary exited before health check: ${output()}`);
     try {
       const response = await fetch(`${baseUrl}/api/health`);
-      if (response.ok) return await response.json();
+      if (response.ok) {
+        const health = await response.json() as {
+          status?: string;
+          startupRecovery?: { phase?: string };
+        };
+        if (health.status === "ok" && health.startupRecovery?.phase === "ready") return health;
+      }
     } catch {
       // Startup is still in progress.
     }
@@ -50,6 +56,14 @@ if (!oldRoot) throw new Error("PAPERCLIP_OLD_BINARY_ROOT is required");
 if (!evidenceDir) throw new Error("PAPERCLIP_M2E_EVIDENCE_DIR is required");
 
 const oldCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: oldRoot, encoding: "utf8" }).trim();
+const workflowV2FeatureFlagEvidence = execFileSync("git", [
+  "grep",
+  "-n",
+  "PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED",
+  "HEAD",
+  "--",
+  "server/src",
+], { cwd: oldRoot, encoding: "utf8" }).trim().split(/\r?\n/).filter(Boolean);
 let database: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | null = null;
 let databaseError: unknown;
 for (let attempt = 1; attempt <= 5; attempt += 1) {
@@ -158,7 +172,8 @@ try {
       health,
       listedRecordCount: listed.length,
       retainedLegacyRecordId: legacyRecord.id,
-      workflowV2FeatureAbsentByCommit: true,
+      workflowV2FeatureFlagPresentByCommit: workflowV2FeatureFlagEvidence.length > 0,
+      workflowV2FeatureFlagEvidence,
     },
   }, null, 2)}\n`, "utf8");
 } finally {

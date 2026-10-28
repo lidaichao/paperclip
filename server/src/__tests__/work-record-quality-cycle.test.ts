@@ -893,13 +893,21 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
       kind: "defect",
       assigneeAgentId: context.developer.id,
     });
-    await expect(context.packages.preview(context.company.id, context.project.id, {
+    const missingQaPreview = await context.packages.preview(context.company.id, context.project.id, {
       workflowVersion: 2,
       projectId: context.project.id,
       scopeKind: "selected_records",
       rootRecordId: null,
       selectedRecordIds: [missingQa.id],
-    })).rejects.toMatchObject({ status: 422, details: { code: "work_record_quality_assignment_required" } });
+    });
+    expect(missingQaPreview.eligibility).toMatchObject({
+      canPrepare: false,
+      blockers: [{
+        code: "missing_qa",
+        recordId: missingQa.id,
+        requiredRole: "QA",
+      }],
+    });
 
     const defect = await createRecord(context, {
       title: "Independent defect",

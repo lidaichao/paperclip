@@ -1573,6 +1573,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
 
     const [execution] = await db.execute<{
       intent_count: number; active_intent_count: number; wake_count: number; run_count: number;
+      effective_wake_count: number; effective_run_count: number;
       cost_event_count: number; cost_cents: number; duplicate_wake_intent_count: number;
       duplicate_run_intent_count: number; duplicate_active_intent_issue_count: number;
       duplicate_active_run_issue_count: number;
@@ -1584,6 +1585,8 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         select i.id, i.state, i.issue_id,
           count(distinct w.id)::int as wake_count,
           count(distinct r.id)::int as run_count,
+          count(distinct w.id) filter (where w.status in ('queued', 'claimed', 'completed'))::int as effective_wake_count,
+          count(distinct r.id) filter (where r.status in ('queued', 'running', 'succeeded'))::int as effective_run_count,
           count(distinct c.id)::int as cost_event_count,
           coalesce(sum(c.cost_cents), 0)::int as cost_cents
         from scoped_intents i
@@ -1612,10 +1615,12 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         count(*) filter (where f.state in ('pending', 'waiting_dependencies', 'waiting_governance', 'ready', 'queued', 'running'))::int as active_intent_count,
         coalesce(sum(f.wake_count), 0)::int as wake_count,
         coalesce(sum(f.run_count), 0)::int as run_count,
+        coalesce(sum(f.effective_wake_count), 0)::int as effective_wake_count,
+        coalesce(sum(f.effective_run_count), 0)::int as effective_run_count,
         coalesce(sum(f.cost_event_count), 0)::int as cost_event_count,
         coalesce(sum(f.cost_cents), 0)::int as cost_cents,
-        count(*) filter (where f.wake_count > 1)::int as duplicate_wake_intent_count,
-        count(*) filter (where f.run_count > 1)::int as duplicate_run_intent_count,
+        count(*) filter (where f.effective_wake_count > 1)::int as duplicate_wake_intent_count,
+        count(*) filter (where f.effective_run_count > 1)::int as duplicate_run_intent_count,
         (select count(*)::int from active_intent_issues) as duplicate_active_intent_issue_count,
         (select count(*)::int from active_run_issues) as duplicate_active_run_issue_count
       from intent_facts f
@@ -1629,7 +1634,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       select
         (select count(*)::int from work_record_outbox
           where company_id = ${companyId} and project_id = ${projectId} and workflow_version = 2
-            and state = 'superseded' and last_error is not null) as stale_event_count,
+            and state = 'superseded' and last_error = 'stale_issue_revision') as stale_event_count,
         (select count(*)::int from work_record_execution_projections p
           join issues i on i.company_id = p.company_id and i.id = p.issue_id
           where p.company_id = ${companyId} and p.project_id = ${projectId}
@@ -1656,7 +1661,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         (select count(*)::int from activity_log a
           where a.company_id = ${companyId} and a.created_at >= now() - interval '24 hours'
             and a.details ->> 'projectId' = ${projectId}
-            and a.details -> 'error' ->> 'code' = 'work_record_workflow_stale_revision') as scope_digest_mismatch_count
+            and a.details -> 'error' ->> 'classification' = 'scope_digest_mismatch') as scope_digest_mismatch_count
     `);
 
     const [quality] = await db.execute<{
@@ -1667,8 +1672,8 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       select
         count(*) filter (where c.state = 'open' and c.quality_phase = 'po_acceptance')::int as po_wait_count,
         extract(epoch from (now() - min(c.updated_at) filter (where c.state = 'open' and c.quality_phase = 'po_acceptance')))::float8 as po_wait_oldest_seconds,
-        count(*) filter (where c.state = 'open' and c.quality_phase = 'qa_retest')::int as qa_wait_count,
-        extract(epoch from (now() - min(c.updated_at) filter (where c.state = 'open' and c.quality_phase = 'qa_retest')))::float8 as qa_wait_oldest_seconds,
+        count(*) filter (where c.state = 'open' and c.quality_phase in ('qa_initial', 'qa_retest'))::int as qa_wait_count,
+        extract(epoch from (now() - min(c.updated_at) filter (where c.state = 'open' and c.quality_phase in ('qa_initial', 'qa_retest'))))::float8 as qa_wait_oldest_seconds,
         coalesce(max(c.cycle_number), 0)::int as max_rework_round,
         count(*) filter (where c.state = 'open' and c.quality_phase = 'impact_review')::int as impact_wait_count,
         extract(epoch from (now() - min(c.updated_at) filter (where c.state = 'open' and c.quality_phase = 'impact_review')))::float8 as impact_wait_oldest_seconds,
@@ -1687,12 +1692,14 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     }>(sql`
       select count(*)::int as total_wait_count,
         extract(epoch from (now() - min(updated_at)))::float8 as oldest_wait_seconds,
-        count(*) filter (where lower(coalesce(waiting_reason, '')) like '%budget%')::int as budget_wait_count,
-        count(*) filter (where lower(coalesce(waiting_reason, '')) like '%pause%')::int as pause_wait_count,
-        count(*) filter (where lower(coalesce(waiting_reason, '')) like '%approval%')::int as approval_wait_count,
-        count(*) filter (where lower(coalesce(waiting_reason, '')) not like '%budget%'
-          and lower(coalesce(waiting_reason, '')) not like '%pause%'
-          and lower(coalesce(waiting_reason, '')) not like '%approval%')::int as other_wait_count
+        count(*) filter (where waiting_reason in ('budget.blocked', 'budget_hard_stop'))::int as budget_wait_count,
+        count(*) filter (where waiting_reason in ('company.inactive', 'agent.not_invokable', 'company_paused', 'agent_paused'))::int as pause_wait_count,
+        count(*) filter (where waiting_reason in ('approval_pending', 'approval_revision_requested', 'governance_pending'))::int as approval_wait_count,
+        count(*) filter (where coalesce(waiting_reason, '') not in (
+          'budget.blocked', 'budget_hard_stop',
+          'company.inactive', 'agent.not_invokable', 'company_paused', 'agent_paused',
+          'approval_pending', 'approval_revision_requested', 'governance_pending'
+        ))::int as other_wait_count
       from work_record_execution_intents
       where company_id = ${companyId} and project_id = ${projectId} and state = 'waiting_governance'
     `);
@@ -1706,8 +1713,8 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         count(*) filter (where a.details -> 'error' ->> 'status' = '409')::int as conflict_count,
         count(*) filter (where a.details -> 'error' ->> 'status' = '422')::int as unprocessable_count,
         count(*) filter (where a.details -> 'error' ->> 'status' not in ('403', '409', '422'))::int as other_count,
-        count(*) filter (where a.details -> 'error' ->> 'status' = '403')::int as role_denied_count,
-        count(*) filter (where a.details -> 'error' ->> 'code' in ('work_record_workflow_project_boundary', 'work_record_quality_target_invalid'))::int as cross_scope_count
+        count(*) filter (where a.details -> 'error' ->> 'code' = 'work_record_workflow_role_denied')::int as role_denied_count,
+        count(*) filter (where a.details -> 'error' ->> 'code' = 'work_record_workflow_project_boundary')::int as cross_scope_count
       from activity_log a
       where a.company_id = ${companyId}
         and a.action in ('work_record.quality_command', 'work_record.dispatch_command')
@@ -1733,6 +1740,8 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       execution: {
         intents: Number(execution?.intent_count ?? 0), activeIntents,
         wakes: Number(execution?.wake_count ?? 0), runs: Number(execution?.run_count ?? 0),
+        effectiveWakes: Number(execution?.effective_wake_count ?? 0),
+        effectiveRuns: Number(execution?.effective_run_count ?? 0),
         costEvents: Number(execution?.cost_event_count ?? 0), costCents: Number(execution?.cost_cents ?? 0),
       },
       consistency: {
@@ -1745,6 +1754,8 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       runtimeSafety: {
         duplicateWakeIntents: Number(execution?.duplicate_wake_intent_count ?? 0),
         duplicateRunIntents: Number(execution?.duplicate_run_intent_count ?? 0),
+        effectiveWakeStatuses: ["queued", "claimed", "completed"],
+        effectiveRunStatuses: ["queued", "running", "succeeded"],
         issuesWithMultipleActiveIntents: Number(execution?.duplicate_active_intent_issue_count ?? 0),
         issuesWithMultipleActiveRuns: Number(execution?.duplicate_active_run_issue_count ?? 0),
       },

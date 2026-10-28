@@ -40,6 +40,24 @@ reported 24-hour window; completed historical rows cannot keep that alarm
 raised forever. Dead-letter and oldest-actionable-age alarms remain unbounded
 until an operator resolves the underlying row. Alert when any of these is true:
 
+Metric definitions are intentionally exact:
+
+- Effective wakes have status `queued`, `claimed`, or `completed`; effective
+  runs have status `queued`, `running`, or `succeeded`. Failed, cancelled,
+  skipped, interrupted, timed-out, coalesced, and scheduled-retry history does
+  not create a duplicate-effective-execution alarm. Raw and effective totals
+  are both returned under `execution`.
+- `consistency.staleEvents` counts only superseded outbox rows whose reason is
+  `stale_issue_revision`; unknown-event failures remain superseded errors but
+  are not stale events. Scope-digest mismatch counts require the dedicated
+  `scope_digest_mismatch` audit classification, not any stale revision.
+- `quality.qaWait` includes open `qa_initial` and `qa_retest` cycles. Governance
+  waits use explicit reason sets rather than substring matching.
+- `rejections.roleDenied` counts only
+  `work_record_workflow_role_denied`; `crossScope` counts only the explicit
+  `work_record_workflow_project_boundary` code. All 403/409/422 totals remain
+  available separately under `rejections.byStatus`.
+
 1. `outbox.deadLetter > 0`.
 2. `outbox.oldestActionableAgeSeconds > 60` for two consecutive samples.
 3. `outbox.attemptP95 >= 3` or cost exceeds the project's approved budget.

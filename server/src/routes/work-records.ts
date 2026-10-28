@@ -95,9 +95,16 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     const errorDetails = error.details && typeof error.details === "object" && !Array.isArray(error.details)
       ? error.details as Record<string, unknown>
       : null;
+    const code = typeof errorDetails?.code === "string" ? errorDetails.code : "http_error";
+    const classification = code === "work_record_workflow_stale_revision"
+      ? typeof errorDetails?.expectedScopeDigest === "string" && typeof errorDetails?.currentScopeDigest === "string"
+        ? "scope_digest_mismatch"
+        : "revision_mismatch"
+      : null;
     return {
       status: error.status,
-      code: typeof errorDetails?.code === "string" ? errorDetails.code : "http_error",
+      code,
+      classification,
     };
   }
 
