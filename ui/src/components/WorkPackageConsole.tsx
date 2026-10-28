@@ -120,7 +120,7 @@ function deliveryLabel(record: WorkRecord) {
 function assignmentEscalationMessage(receipt: WorkPackageAssignmentEscalationReceipt) {
   if (receipt.state === "queued") return "负责人缺口已上报 CEO，协调通知已入队，尚未送达";
   if (receipt.state === "delivered") return "负责人缺口已上报 CEO，CEO 已接收协调通知，等待确认";
-  if (receipt.state === "acknowledged") return "负责人缺口已上报 CEO，CEO 已确认协调通知";
+  if (receipt.state === "acknowledged") return "负责人缺口已上报 CEO，CEO 运行已结束；请核对负责人是否补齐";
   if (receipt.state === "ceo_unavailable") return "负责人缺口已记录，但当前没有可用 CEO；可原位核对或重试";
   if (receipt.state === "delivery_failed") return "负责人缺口已记录，但 CEO 协调通知失败；可原位核对或重试";
   return "负责人缺口已记录，CEO 协调通知正在投递";

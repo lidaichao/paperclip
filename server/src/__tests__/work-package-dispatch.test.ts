@@ -877,6 +877,49 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     expect(retried).toMatchObject({ id: failed.id, state: "queued", deliveryAttempt: 2 });
   });
 
+  it("D02 recovers a committed CEO wake when its escalation receipt was never saved", async () => {
+    const context = await seed();
+    await db.update(agents).set({ role: "ceo" }).where(eq(agents.id, context.agent.id));
+    const root = await record(context, "Wake persisted before process loss", { assigned: false });
+    const service = workPackageDispatchService(db, { writesEnabled: true });
+    const input = scopeInput(context, { scopeKind: "whole_package", rootRecordId: root.id, selectedRecordIds: [] });
+    const preview = await service.preview(context.company.id, context.project.id, input);
+    const command = { ...input, clientRequestId: "gap-wake-without-receipt", requestPayloadDigest: "gap-wake-without-receipt", expectedScopeDigest: preview.scopeDigest };
+    let wakeupId = "";
+    const first = await service.escalateAssignmentGaps(context.company.id, context.project.id, command,
+      { actorType: "system", actorId: "test" }, async ({ escalationId, deliveryAttempt }) => {
+        const wake = await db.insert(agentWakeupRequests).values({
+          companyId: context.company.id,
+          agentId: context.agent.id,
+          source: "automation",
+          status: "queued",
+          idempotencyKey: `work-record-assignment-gap:${escalationId}:${deliveryAttempt}`,
+        }).returning().then((rows) => rows[0]);
+        wakeupId = wake.id;
+        throw new Error("process stopped after wake commit, before receipt commit");
+      });
+    expect(first).toMatchObject({ state: "queued", deliveryAttempt: 1, wakeupRequestId: wakeupId });
+
+    // Model a restart reading the original claimed row instead of the recovered receipt.
+    await db.update(workRecordAssignmentGapEscalations).set({
+      state: "delivering",
+      wakeupRequestId: null,
+      wakeStatus: null,
+      deliveryErrorCode: null,
+      updatedAt: new Date(Date.now() - 120_000),
+    }).where(eq(workRecordAssignmentGapEscalations.id, first.id));
+
+    const recovered = await service.latestAssignmentEscalation(context.company.id, context.project.id, root.id);
+    expect(recovered).toMatchObject({ id: first.id, state: "queued", deliveryAttempt: 1, wakeupRequestId: wakeupId });
+    const replay = await service.escalateAssignmentGaps(context.company.id, context.project.id, command,
+      { actorType: "system", actorId: "test" }, async () => { throw new Error("must not send a second CEO wake"); });
+    expect(replay).toMatchObject({ id: first.id, state: "queued", deliveryAttempt: 1, wakeupRequestId: wakeupId });
+    expect(await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, context.company.id),
+      eq(agentWakeupRequests.idempotencyKey, `work-record-assignment-gap:${first.id}:1`),
+    ))).toHaveLength(1);
+  });
+
   it("D02 API delivers one durable CEO wake and replays the same coordination receipt", async () => {
     const context = await seed();
     await db.update(agents).set({ role: "ceo" }).where(eq(agents.id, context.agent.id));

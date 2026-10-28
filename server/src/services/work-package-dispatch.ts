@@ -364,12 +364,25 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
   async function reconcileAssignmentEscalation(
     row: typeof workRecordAssignmentGapEscalations.$inferSelect,
   ) {
-    const wake = row.wakeupRequestId
+    const storedWake = row.wakeupRequestId
       ? await db.select().from(agentWakeupRequests).where(and(
           eq(agentWakeupRequests.companyId, row.companyId),
           eq(agentWakeupRequests.id, row.wakeupRequestId),
         )).then((rows) => rows[0] ?? null)
       : null;
+    // A process can stop after heartbeat.wakeup commits but before this receipt
+    // stores wakeupRequestId. Recover that exact attempt before allowing retry.
+    const wakeCandidates = !storedWake && row.deliveryAttempt > 0 && row.targetCeoAgentId
+      ? await db.select().from(agentWakeupRequests).where(and(
+          eq(agentWakeupRequests.companyId, row.companyId),
+          eq(agentWakeupRequests.agentId, row.targetCeoAgentId),
+          eq(agentWakeupRequests.idempotencyKey, `work-record-assignment-gap:${row.id}:${row.deliveryAttempt}`),
+        )).orderBy(desc(agentWakeupRequests.createdAt))
+      : [];
+    const wake = storedWake
+      ?? wakeCandidates.find((candidate) => !FAILED_WAKE_STATUSES.has(candidate.status))
+      ?? wakeCandidates[0]
+      ?? null;
     const run = wake?.runId
       ? await db.select().from(heartbeatRuns).where(and(
           eq(heartbeatRuns.companyId, row.companyId),
@@ -413,10 +426,12 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       deliveryErrorCode = "ceo_wakeup_timeout";
     }
 
+    const wakeupRequestId = wake?.id ?? row.wakeupRequestId;
     const runId = run?.id ?? wake?.runId ?? row.runId;
     const wakeStatus = wake?.status ?? row.wakeStatus;
     const runStatus = run?.status ?? row.runStatus;
     const changed = state !== row.state
+      || wakeupRequestId !== row.wakeupRequestId
       || deliveryErrorCode !== row.deliveryErrorCode
       || deliveredAt?.getTime() !== row.deliveredAt?.getTime()
       || acknowledgedAt?.getTime() !== row.acknowledgedAt?.getTime()
@@ -424,8 +439,9 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       || runId !== row.runId
       || runStatus !== row.runStatus;
     if (!changed) return row;
-    return db.update(workRecordAssignmentGapEscalations).set({
+    const updated = await db.update(workRecordAssignmentGapEscalations).set({
       state,
+      wakeupRequestId,
       wakeStatus,
       runId,
       runStatus,
@@ -433,7 +449,12 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       deliveredAt,
       acknowledgedAt,
       updatedAt: new Date(),
-    }).where(eq(workRecordAssignmentGapEscalations.id, row.id)).returning().then((rows) => rows[0]);
+    }).where(and(
+      eq(workRecordAssignmentGapEscalations.id, row.id),
+      eq(workRecordAssignmentGapEscalations.deliveryAttempt, row.deliveryAttempt),
+    )).returning().then((rows) => rows[0] ?? null);
+    return updated ?? db.select().from(workRecordAssignmentGapEscalations)
+      .where(eq(workRecordAssignmentGapEscalations.id, row.id)).then((rows) => rows[0]);
   }
 
   async function latestAssignmentEscalation(

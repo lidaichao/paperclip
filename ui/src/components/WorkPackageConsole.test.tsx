@@ -235,7 +235,7 @@ describe("WorkPackageConsole", () => {
 
     await render();
 
-    expect(container.textContent).toContain("CEO 已确认协调通知");
+    expect(container.textContent).toContain("CEO 运行已结束；请核对负责人是否补齐");
   });
 
   it("offers in-place reconciliation and retry after a persisted CEO delivery failure", async () => {
