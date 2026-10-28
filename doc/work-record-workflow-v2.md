@@ -18,6 +18,8 @@ all prepare/reconcile/claim writes return `403` with
 `work_record_workflow_v2_disabled`.
 
 - `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/preview`
+- `GET /api/companies/:companyId/projects/:projectId/work-record-capabilities`
+- `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/assignment-gap-escalations`
 - `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/prepare`
 - `GET /api/companies/:companyId/projects/:projectId/work-package-dispatch/:batchId`
 - `POST /api/companies/:companyId/projects/:projectId/work-package-dispatch/:batchId/reconcile`
@@ -28,7 +30,14 @@ all prepare/reconcile/claim writes return `403` with
 - `POST /api/companies/:companyId/projects/:projectId/work-record-quality/defect-links`
 
 Preview computes the current whole-package descendant closure or the exact
-selected-record set. Prepare always binds root/dependency revisions and may
+selected-record set. It remains readable for Viewer members and returns every
+missing PO, execution owner, and independent QA owner in `eligibility.blockers`.
+Any blocker disables prepare for the entire scope. The assignment-gap escalation
+route records the full blocker set and available CEO target in the activity log;
+it never changes an assignment. Existing owners can only change through the
+separate compare-and-set assignment command. The capabilities endpoint lets the
+UI fail closed and explain the required role before any write request. Prepare
+always binds root/dependency revisions and may
 also pin the returned `expectedScopeDigest`; the server recomputes and stores
 the digest under the routing lock either way. The client request key replays only the
 same payload digest; a different payload returns `409`. Company/project misses

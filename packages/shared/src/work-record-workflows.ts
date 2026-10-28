@@ -185,6 +185,13 @@ export const prepareWorkPackageDispatchSchema = z
     expectedScopeDigest: digestSchema.optional(),
   }));
 
+export const escalateWorkPackageAssignmentGapsSchema = z
+  .intersection(workPackageScopeSchema, z.object({
+    clientRequestId: requestIdSchema,
+    requestPayloadDigest: digestSchema,
+    expectedScopeDigest: digestSchema,
+  }));
+
 const qualityVerdictBaseSchema = z.object({
   workflowVersion: z.literal(WORK_RECORD_WORKFLOW_VERSION).default(WORK_RECORD_WORKFLOW_VERSION),
   clientRequestId: requestIdSchema,
@@ -270,6 +277,7 @@ export const fillWorkRecordAssignmentGapSchema = z.object({
 
 export type PrepareWorkPackageDispatch = z.infer<typeof prepareWorkPackageDispatchSchema>;
 export type PreviewWorkPackageDispatch = z.infer<typeof previewWorkPackageDispatchSchema>;
+export type EscalateWorkPackageAssignmentGaps = z.infer<typeof escalateWorkPackageAssignmentGapsSchema>;
 export type RecordPoQualityVerdict = z.infer<typeof recordPoQualityVerdictSchema>;
 export type RecordQaQualityVerdict = z.infer<typeof recordQaQualityVerdictSchema>;
 export type LinkWorkPackageDefect = z.infer<typeof linkWorkPackageDefectSchema>;

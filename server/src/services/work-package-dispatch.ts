@@ -214,23 +214,35 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       }));
     }
 
-    const missingAssignments = scoped.filter((record) => !record.assigneeAgentId);
-    if (missingAssignments.length > 0) {
-      throw unprocessable("Every dispatched work record requires an assignee", details(
-        "work_package_assignment_required",
-        { recordIds: missingAssignments.map((record) => record.id) },
-      ));
-    }
+    const blockers = scoped.flatMap((record) => {
+      const result: Array<{
+        code: "missing_po" | "missing_assignee" | "missing_qa";
+        recordId: string;
+        title: string;
+        requiredRole: "PO" | "执行人" | "QA";
+      }> = [];
+      if (!record.assigneeAgentId) {
+        const rootPo = input.scopeKind === "whole_package" && record.id === input.rootRecordId;
+        result.push({
+          code: rootPo ? "missing_po" : "missing_assignee",
+          recordId: record.id,
+          title: record.title,
+          requiredRole: rootPo ? "PO" : "执行人",
+        });
+      }
+      if (record.kind === "defect" && (!record.qaAssigneeAgentId || record.qaAssigneeAgentId === record.assigneeAgentId)) {
+        result.push({ code: "missing_qa", recordId: record.id, title: record.title, requiredRole: "QA" });
+      }
+      return result;
+    });
     for (const record of scoped) {
-      await assertAssignableAgent(database as Db, companyId, record.assigneeAgentId, { kind: "work" });
+      if (record.assigneeAgentId) {
+        await assertAssignableAgent(database as Db, companyId, record.assigneeAgentId, { kind: "work" });
+      }
       if (record.kind === "defect") {
-        if (!record.qaAssigneeAgentId || record.qaAssigneeAgentId === record.assigneeAgentId) {
-          throw unprocessable("Independent defects require distinct repair and QA assignees", details(
-            "work_record_quality_assignment_required",
-            { recordId: record.id },
-          ));
+        if (record.qaAssigneeAgentId && record.qaAssigneeAgentId !== record.assigneeAgentId) {
+          await assertAssignableAgent(database as Db, companyId, record.qaAssigneeAgentId, { kind: "work" });
         }
-        await assertAssignableAgent(database as Db, companyId, record.qaAssigneeAgentId, { kind: "work" });
       }
     }
 
@@ -261,6 +273,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       maxDepth: Math.min(maxDepth, WORK_PACKAGE_MAX_DEPTH),
       records: scoped,
       edges,
+      eligibility: { canPrepare: blockers.length === 0, blockers },
     };
   }
 
@@ -282,6 +295,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         predecessorRecordId: edge.predecessorRecordId,
         successorRecordId: edge.successorRecordId,
       })),
+      eligibility: scope.eligibility,
     };
   }
 
@@ -321,6 +335,15 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       }
 
       const scope = await computeScope(tx, companyId, projectId, input, true);
+      if (!scope.eligibility.canPrepare) {
+        throw unprocessable("Work-package ownership gaps must be resolved before dispatch", details(
+          "work_package_assignment_required",
+          {
+            recordIds: [...new Set(scope.eligibility.blockers.map((blocker) => blocker.recordId))],
+            blockers: scope.eligibility.blockers,
+          },
+        ));
+      }
       if (input.expectedScopeDigest !== undefined && scope.scopeDigest !== input.expectedScopeDigest) {
         throw conflict("Work-package scope changed after preview", details("work_record_workflow_stale_revision", {
           expectedScopeDigest: input.expectedScopeDigest,
@@ -1128,5 +1151,13 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     return processed;
   }
 
-  return { preview, prepare, getBatch: batchView, reconcile, reconcileAll, processOutbox, writesEnabled };
+  async function assignmentEscalationTarget(companyId: string) {
+    return db.select({ id: agents.id }).from(agents).where(and(
+      eq(agents.companyId, companyId),
+      eq(agents.role, "ceo"),
+      ne(agents.status, "terminated"),
+    )).orderBy(asc(agents.createdAt), asc(agents.id)).then((rows) => rows[0]?.id ?? null);
+  }
+
+  return { preview, prepare, getBatch: batchView, reconcile, reconcileAll, processOutbox, assignmentEscalationTarget, writesEnabled };
 }

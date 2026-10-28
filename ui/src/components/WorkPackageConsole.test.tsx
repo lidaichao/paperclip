@@ -12,12 +12,16 @@ import { WorkPackageConsole } from "./WorkPackageConsole";
 const liveRunsMock = vi.hoisted(() => vi.fn());
 const qualityMock = vi.hoisted(() => vi.fn());
 const previewMock = vi.hoisted(() => vi.fn());
+const capabilitiesMock = vi.hoisted(() => vi.fn());
+const escalateMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/api/heartbeats", () => ({ heartbeatsApi: { liveRunsForCompany: liveRunsMock } }));
 vi.mock("@/api/work-records", () => ({
   workRecordsApi: {
     quality: qualityMock,
     previewPackage: previewMock,
+    capabilities: capabilitiesMock,
+    escalateAssignmentGaps: escalateMock,
     packageBatch: vi.fn(),
     preparePackage: vi.fn(),
     reconcilePackage: vi.fn(),
@@ -78,6 +82,16 @@ const preview: WorkPackageDispatchPreview = {
   recordCount: 3, edgeCount: 1, maxDepth: 1,
   records: records.map((item, index) => ({ id: item.id, title: item.title, revision: item.revision, dependencySetRevision: item.dependencySetRevision, parentRecordId: item.parentRecordId, assigneeAgentId: item.assigneeAgentId, qaAssigneeAgentId: item.qaAssigneeAgentId, depth: index === 0 ? 0 : 1 })),
   edges: [{ predecessorRecordId: ROOT_ID, successorRecordId: CHILD_ID }],
+  eligibility: { canPrepare: true, blockers: [] },
+};
+
+const writableCapabilities = {
+  preparePackage: { allowed: true, requiredRole: "Operator", reason: null },
+  escalateAssignmentGaps: { allowed: true, requiredRole: "Operator", reason: null },
+  recordPoVerdict: { allowed: true, requiredRole: "PO", reason: null },
+  recordQaVerdict: { allowed: true, requiredRole: "QA", reason: null },
+  linkDefect: { allowed: true, requiredRole: "PO/QA", reason: null },
+  reconcile: { allowed: true, requiredRole: "Operator", reason: null },
 };
 
 async function flush() {
@@ -96,6 +110,7 @@ describe("WorkPackageConsole", () => {
     localStorage.clear(); sessionStorage.clear();
     liveRunsMock.mockResolvedValue([{ issueId: "issue-1", status: "running" }]);
     qualityMock.mockResolvedValue(quality); previewMock.mockResolvedValue(preview);
+    capabilitiesMock.mockResolvedValue(writableCapabilities);
     container = document.createElement("div"); document.body.appendChild(container);
     client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
     client.setQueryData(queryKeys.liveRuns("company-1"), [{ issueId: "issue-1", status: "running" }]);
@@ -143,6 +158,39 @@ describe("WorkPackageConsole", () => {
     expect(container.textContent).toContain("前置尚未完成");
     expect(container.textContent).toContain("发布工作包 → 实现子项");
     expect(container.textContent).toContain("范围摘要 scope-digest");
+  });
+
+  it("keeps facts readable while pre-disabling viewer writes with role explanations", async () => {
+    capabilitiesMock.mockResolvedValueOnce(Object.fromEntries(Object.entries(writableCapabilities).map(([key, value]) => [key, { ...value, allowed: false, reason: `需要 ${value.requiredRole}；当前 Viewer 仅可读取事实。` }])));
+    await render();
+    expect(container.textContent).toContain("发布工作包");
+    expect(container.textContent).toContain("当前为只读权限");
+    expect(container.textContent).toContain("当前 Viewer 仅可读取事实");
+    expect([...container.querySelectorAll("button")].find((node) => node.textContent?.includes("PO 验收通过"))?.disabled).toBe(true);
+  });
+
+  it("lists every ownership gap, blocks prepare, and records CEO escalation without overwriting owners", async () => {
+    const gapPreview = {
+      ...preview,
+      eligibility: { canPrepare: false, blockers: [
+        { code: "missing_po" as const, recordId: ROOT_ID, title: "发布工作包", requiredRole: "PO" as const },
+        { code: "missing_assignee" as const, recordId: CHILD_ID, title: "实现子项", requiredRole: "执行人" as const },
+      ] },
+    };
+    previewMock.mockResolvedValueOnce(gapPreview);
+    escalateMock.mockResolvedValueOnce({ clientRequestId: "gap", scopeDigest: preview.scopeDigest, targetCeoAgentId: "ceo-1", state: "recorded", recordedAt: new Date(), missingRecordIds: [ROOT_ID, CHILD_ID] });
+    await render();
+    const previewButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("预览整个工作包")) as HTMLButtonElement;
+    await act(async () => previewButton.click()); await flush();
+    expect(container.textContent).toContain("发布工作包 · 缺少 PO");
+    expect(container.textContent).toContain("实现子项 · 缺少 执行人");
+    const prepareButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认范围并准备派发")) as HTMLButtonElement;
+    expect(prepareButton.disabled).toBe(true);
+    const escalationButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("上报 CEO 协调")) as HTMLButtonElement;
+    await act(async () => escalationButton.click()); await flush();
+    expect(escalateMock).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain("不会覆盖已有负责人");
+    expect(container.textContent).toContain("等待 CEO 协调");
   });
 
   it("counts create, reuse, completed, and blocked preview records as exclusive categories", async () => {

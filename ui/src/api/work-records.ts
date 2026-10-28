@@ -1,5 +1,6 @@
 import type {
   CreateWorkRecord,
+  EscalateWorkPackageAssignmentGaps,
   DispatchWorkRecord,
   LinkWorkPackageDefect,
   PrepareWorkPackageDispatch,
@@ -9,6 +10,8 @@ import type {
   UpdateWorkRecord,
   WorkPackageDispatchBatchView,
   WorkPackageDispatchPreview,
+  WorkPackageAssignmentEscalationReceipt,
+  WorkRecordConsoleCapabilities,
   WorkRecord,
   WorkRecordDispatchRequestResult,
   WorkRecordDispatchResult,
@@ -34,6 +37,10 @@ export const workRecordsApi = {
     api.post<WorkPackageDispatchPreview>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/preview`, input),
   preparePackage: (companyId: string, projectId: string, input: PrepareWorkPackageDispatch) =>
     api.post<WorkPackageDispatchBatchView>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/prepare`, input),
+  capabilities: (companyId: string, projectId: string) =>
+    api.get<WorkRecordConsoleCapabilities>(`/companies/${companyId}/projects/${projectId}/work-record-capabilities`),
+  escalateAssignmentGaps: (companyId: string, projectId: string, input: EscalateWorkPackageAssignmentGaps) =>
+    api.post<WorkPackageAssignmentEscalationReceipt>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/assignment-gap-escalations`, input),
   packageBatch: (companyId: string, projectId: string, batchId: string) =>
     api.get<WorkPackageDispatchBatchView>(`/companies/${companyId}/projects/${projectId}/work-package-dispatch/${batchId}`),
   reconcilePackage: (companyId: string, projectId: string, batchId: string) =>

@@ -196,6 +196,39 @@ export interface WorkPackageDispatchPreview {
     predecessorRecordId: string;
     successorRecordId: string;
   }>;
+  eligibility: {
+    canPrepare: boolean;
+    blockers: Array<{
+      code: "missing_po" | "missing_assignee" | "missing_qa";
+      recordId: string;
+      title: string;
+      requiredRole: "PO" | "执行人" | "QA";
+    }>;
+  };
+}
+
+export interface WorkRecordActionCapability {
+  allowed: boolean;
+  requiredRole: string;
+  reason: string | null;
+}
+
+export interface WorkRecordConsoleCapabilities {
+  preparePackage: WorkRecordActionCapability;
+  escalateAssignmentGaps: WorkRecordActionCapability;
+  recordPoVerdict: WorkRecordActionCapability;
+  recordQaVerdict: WorkRecordActionCapability;
+  linkDefect: WorkRecordActionCapability;
+  reconcile: WorkRecordActionCapability;
+}
+
+export interface WorkPackageAssignmentEscalationReceipt {
+  clientRequestId: string;
+  scopeDigest: string;
+  targetCeoAgentId: string | null;
+  state: "recorded" | "ceo_unavailable";
+  recordedAt: Date;
+  missingRecordIds: string[];
 }
 
 export interface WorkPackageDispatchBatch {

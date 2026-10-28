@@ -598,16 +598,36 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     ]);
   }, 30_000);
 
-  it("D02 rejects a whole package with one missing owner without a batch, issue, intent, or release", async () => {
+  it("D02 previews every missing owner, preserves named owners, and rejects prepare without side effects", async () => {
     const context = await seed();
-    const root = await record(context, "Root");
-    await record(context, "Unassigned child", { parentRecordId: root.id, assigned: false });
+    const root = await record(context, "Root without PO", { assigned: false });
+    const missingChild = await record(context, "Unassigned child", { parentRecordId: root.id, assigned: false });
+    const assignedChild = await record(context, "Named owner stays", { parentRecordId: root.id });
     const service = workPackageDispatchService(db, { writesEnabled: true });
-    await expect(service.preview(context.company.id, context.project.id, scopeInput(context, {
+    const input = scopeInput(context, {
       scopeKind: "whole_package",
       rootRecordId: root.id,
       selectedRecordIds: [],
-    }))).rejects.toMatchObject({ status: 422, details: { code: "work_package_assignment_required" } });
+    });
+    const preview = await service.preview(context.company.id, context.project.id, input);
+    expect(preview.eligibility.canPrepare).toBe(false);
+    expect(preview.eligibility.blockers).toEqual(expect.arrayContaining([
+        { code: "missing_po", recordId: root.id, title: "Root without PO", requiredRole: "PO" },
+        { code: "missing_assignee", recordId: missingChild.id, title: "Unassigned child", requiredRole: "执行人" },
+    ]));
+    expect(preview.eligibility.blockers).toHaveLength(2);
+    expect(preview.records.find((item) => item.id === assignedChild.id)?.assigneeAgentId).toBe(context.agent.id);
+    await expect(service.prepare(context.company.id, context.project.id, {
+      ...input,
+      clientRequestId: "missing-owner-prepare",
+      requestPayloadDigest: "missing-owner-prepare",
+      expectedScopeDigest: preview.scopeDigest,
+      expectedRootRevision: preview.rootRevision,
+      expectedDependencySetRevision: preview.dependencySetRevision,
+    }, { actorType: "system", actorId: "test" })).rejects.toMatchObject({
+      status: 422,
+      details: { code: "work_package_assignment_required" },
+    });
     expect(await db.select().from(workRecordDispatchBatches).where(eq(workRecordDispatchBatches.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(workRecordDispatchBatchItems).where(eq(workRecordDispatchBatchItems.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(workRecordIssueLinks).where(eq(workRecordIssueLinks.companyId, context.company.id))).toHaveLength(0);

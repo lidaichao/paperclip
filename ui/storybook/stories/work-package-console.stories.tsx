@@ -50,28 +50,45 @@ const quality: WorkRecordQualityView = {
   ], items: [], verdicts: [{ id: "verdict-one", cycleId: "99999999-9999-4999-8999-999999999999", itemId: "item-one", defectRecordId: null, outcome: "return", reason: "窄屏列表发生位移", evidenceRefs: ["artifact://narrow-screen"], actorAgentId: "agent-po", actorUserId: null, actorRunId: null, createdAt: new Date("2026-10-28T06:55:00Z") }] },
 };
 
-function Harness() {
+type Scenario = "success" | "viewer" | "pending" | "error";
+
+function Harness({ scenario = "success" }: { scenario?: Scenario }) {
   const queryClient = useQueryClient();
-  const storyWindow = window as typeof window & { __workPackageFixtureInstalled?: boolean };
-  if (!storyWindow.__workPackageFixtureInstalled) {
-    const fixtureFetch = window.fetch.bind(window);
-    storyWindow.__workPackageFixtureInstalled = true;
-    window.fetch = (input, init) => {
+  const storyWindow = window as typeof window & { __workPackageOriginalFetch?: typeof window.fetch };
+  storyWindow.__workPackageOriginalFetch ??= window.fetch.bind(window);
+  const fixtureFetch = storyWindow.__workPackageOriginalFetch;
+  window.fetch = (input, init) => {
       const rawUrl = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       const url = new URL(rawUrl, window.location.origin);
       if (url.pathname.endsWith(`/work-records/${ROOT_ID}/quality`)) return Promise.resolve(Response.json(quality));
+      if (url.pathname.endsWith("/work-record-capabilities")) {
+        const allowed = scenario !== "viewer";
+        const capability = (requiredRole: string) => ({ allowed, requiredRole, reason: allowed ? null : `需要 ${requiredRole}；当前 Viewer 仅可读取事实。` });
+        return Promise.resolve(Response.json({
+          preparePackage: capability("公司 Operator、Admin 或 Owner"),
+          escalateAssignmentGaps: capability("公司 Operator、Admin 或 Owner"),
+          recordPoVerdict: capability("PO，或公司 Operator、Admin、Owner"),
+          recordQaVerdict: capability("QA，或公司 Operator、Admin、Owner"),
+          linkDefect: capability("PO/QA，或公司 Operator、Admin、Owner"),
+          reconcile: capability("公司 Operator、Admin 或 Owner"),
+        }));
+      }
+      if (url.pathname.endsWith("/live-runs")) {
+        if (scenario === "pending") return new Promise(() => undefined);
+        if (scenario === "error") return Promise.resolve(Response.json({ error: "fixture failure" }, { status: 503 }));
+        return Promise.resolve(Response.json([{ issueId: "issue-repair", status: "running" }, { issueId: "issue-root", status: "queued" }]));
+      }
       if (url.pathname.endsWith("/work-package-dispatch/preview")) return Promise.resolve(Response.json({
         workflowVersion: 2, projectId: PROJECT_ID, rootRecordId: ROOT_ID, scopeKind: "whole_package",
         scopeDigest: "storybook-scope-digest", rootRevision: 2, dependencySetRevision: 1,
         recordCount: records.length, edgeCount: 1, maxDepth: 1,
         records: records.map((item, index) => ({ id: item.id, title: item.title, revision: item.revision, dependencySetRevision: 1, parentRecordId: item.parentRecordId, assigneeAgentId: item.assigneeAgentId, qaAssigneeAgentId: item.qaAssigneeAgentId, depth: index === 0 ? 0 : 1 })),
         edges: [{ predecessorRecordId: REPAIR_ID, successorRecordId: QA_ID }],
+        eligibility: { canPrepare: true, blockers: [] },
       }));
       return fixtureFetch(input, init);
-    };
-  }
+  };
   queryClient.setQueryData(queryKeys.workRecords.quality(COMPANY_ID, PROJECT_ID, ROOT_ID), quality);
-  queryClient.setQueryData(queryKeys.liveRuns(COMPANY_ID), [{ issueId: "issue-repair", status: "running" }]);
   return <main className="min-h-screen bg-background p-4 text-foreground"><WorkPackageConsole companyId={COMPANY_ID} projectId={PROJECT_ID} records={records} agentNames={{ "agent-po": "卡罗尔", "agent-developer": "Rabbit", "agent-qa": "Belle" }} recordsLoading={false} recordsError={null} onRetryRecords={() => undefined} /></main>;
 }
 
@@ -80,3 +97,6 @@ export default meta;
 type Story = StoryObj<typeof Harness>;
 export const Desktop: Story = {};
 export const Narrow: Story = { parameters: { viewport: { defaultViewport: "mobile" } } };
+export const Viewer: Story = { args: { scenario: "viewer" } };
+export const Pending: Story = { args: { scenario: "pending" } };
+export const Error: Story = { args: { scenario: "error" } };

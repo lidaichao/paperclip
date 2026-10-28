@@ -3,6 +3,7 @@ import type { Db } from "@paperclipai/db";
 import {
   createWorkRecordSchema,
   dispatchWorkRecordSchema,
+  escalateWorkPackageAssignmentGapsSchema,
   fillWorkRecordAssignmentGapSchema,
   linkWorkPackageDefectSchema,
   prepareWorkPackageDispatchSchema,
@@ -12,7 +13,7 @@ import {
   updateWorkRecordSchema,
 } from "@paperclipai/shared";
 import { validate } from "../middleware/validate.js";
-import { HttpError, forbidden } from "../errors.js";
+import { HttpError, conflict, forbidden, unprocessable } from "../errors.js";
 import { authorizationDeniedDetails } from "../services/authorization.js";
 import { appendHeartbeatRunEvent } from "../services/heartbeat-run-events.js";
 import {
@@ -22,7 +23,7 @@ import {
   workRecordQualityService,
   workRecordService,
 } from "../services/index.js";
-import { assertCompanyAccess, getActorInfo, hasCompanyAccess } from "./authz.js";
+import { assertAuthenticated, assertCompanyAccess, getActorInfo, hasCompanyAccess } from "./authz.js";
 
 export function workRecordRoutes(db: Db) {
   const router = Router();
@@ -42,6 +43,28 @@ export function workRecordRoutes(db: Db) {
       });
       if (!decision.allowed) throw forbidden(decision.explanation, authorizationDeniedDetails(decision));
     }
+  }
+
+  function assertCompanyReadAccess(req: Parameters<typeof getActorInfo>[0], companyId: string) {
+    assertAuthenticated(req);
+    if (hasCompanyAccess(req, companyId)) return;
+    if (req.actor.type === "agent") throw forbidden("Agent key cannot access another company");
+    throw forbidden("User does not have access to this company");
+  }
+
+  function isReadOnlyViewer(req: Parameters<typeof getActorInfo>[0], companyId: string) {
+    if (req.actor.type === "board") {
+      if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return false;
+      return req.actor.memberships?.some((item) => item.companyId === companyId && item.status === "active" && item.membershipRole === "viewer") ?? true;
+    }
+    if (req.actor.type === "agent" && req.actor.onBehalfOfUserId) {
+      return req.actor.onBehalfOfMemberships?.some((item) => item.companyId === companyId && item.status === "active" && item.membershipRole === "viewer") ?? true;
+    }
+    return false;
+  }
+
+  function actionCapability(allowed: boolean, requiredRole: string) {
+    return { allowed, requiredRole, reason: allowed ? null : `需要 ${requiredRole}；当前 Viewer 仅可读取事实。` };
   }
 
   async function logPackageRunEvent(req: Parameters<typeof getActorInfo>[0], action: string, payload: Record<string, unknown>) {
@@ -194,16 +217,65 @@ export function workRecordRoutes(db: Db) {
     return result;
   }
 
+  router.get("/companies/:companyId/projects/:projectId/work-record-capabilities", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    assertCompanyAccess(req, companyId);
+    const writable = !isReadOnlyViewer(req, companyId);
+    res.json({
+      preparePackage: actionCapability(writable, "公司 Operator、Admin、Owner，或具 tasks:assign 权限的 Agent"),
+      escalateAssignmentGaps: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
+      recordPoVerdict: actionCapability(writable, "PO，或公司 Operator、Admin、Owner"),
+      recordQaVerdict: actionCapability(writable, "QA，或公司 Operator、Admin、Owner"),
+      linkDefect: actionCapability(writable, "PO/QA，或公司 Operator、Admin、Owner"),
+      reconcile: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
+    });
+  });
+
   router.post("/companies/:companyId/projects/:projectId/work-package-dispatch/preview", validate(previewWorkPackageDispatchSchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyReadAccess(req, companyId);
+    const preview = await packages.preview(companyId, projectId, req.body);
+    res.json(preview);
+  });
+
+  router.post("/companies/:companyId/projects/:projectId/work-package-dispatch/assignment-gap-escalations", validate(escalateWorkPackageAssignmentGapsSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
     const projectId = req.params.projectId as string;
     assertCompanyAccess(req, companyId);
     const preview = await packages.preview(companyId, projectId, req.body);
-    await assertPackageAssignmentAccess(req, companyId, projectId, preview.records.flatMap((record) => [
-      record.assigneeAgentId,
-      record.qaAssigneeAgentId,
-    ]));
-    res.json(preview);
+    if (preview.scopeDigest !== req.body.expectedScopeDigest) {
+      throw conflict("Work-package scope changed after preview", { code: "work_record_workflow_stale_revision", currentScopeDigest: preview.scopeDigest });
+    }
+    if (preview.eligibility.canPrepare) {
+      throw unprocessable("Work-package has no ownership gaps to escalate", { code: "work_package_assignment_gap_missing" });
+    }
+    const actor = getActorInfo(req);
+    const targetCeoAgentId = await packages.assignmentEscalationTarget(companyId);
+    const recordedAt = new Date();
+    const missingRecordIds = [...new Set(preview.eligibility.blockers.map((blocker) => blocker.recordId))];
+    const receipt = {
+      clientRequestId: req.body.clientRequestId,
+      scopeDigest: preview.scopeDigest,
+      targetCeoAgentId,
+      state: targetCeoAgentId ? "recorded" as const : "ceo_unavailable" as const,
+      recordedAt,
+      missingRecordIds,
+    };
+    await logActivity(db, {
+      companyId,
+      actorType: actor.actorType,
+      actorId: actor.actorId,
+      agentId: actor.agentId,
+      runId: actor.runId,
+      agentApiKeyId: actor.agentApiKeyId,
+      action: "work_record.assignment_gap_escalated",
+      entityType: "work_package_scope",
+      entityId: preview.scopeDigest,
+      details: { projectId, ...receipt, blockers: preview.eligibility.blockers },
+    });
+    await logPackageRunEvent(req, "work_record_assignment_gap_escalated", { projectId, ...receipt });
+    res.status(201).json(receipt);
   });
 
   router.post("/companies/:companyId/projects/:projectId/work-package-dispatch/prepare", validate(prepareWorkPackageDispatchSchema), async (req, res) => {

@@ -20,6 +20,7 @@ const logActivity = vi.hoisted(() => vi.fn());
 const packageService = vi.hoisted(() => ({
   preview: vi.fn(),
   prepare: vi.fn(),
+  assignmentEscalationTarget: vi.fn(),
   getBatch: vi.fn(),
   reconcile: vi.fn(),
 }));
@@ -103,6 +104,12 @@ describe("work-record route authorization", () => {
     access.decide.mockResolvedValue({ allowed: true });
     service.list.mockResolvedValue([]);
     service.getDispatchRequest.mockResolvedValue({ state: "linked" });
+    packageService.preview.mockResolvedValue({
+      scopeDigest: "viewer-scope",
+      records: [],
+      eligibility: { canPrepare: false, blockers: [{ code: "missing_po", recordId: "22222222-2222-4222-8222-222222222222", title: "缺少 PO", requiredRole: "PO" }] },
+    });
+    packageService.assignmentEscalationTarget.mockResolvedValue("33333333-3333-4333-8333-333333333333");
     qualityService.get.mockResolvedValue({ cycle: null, items: [], verdicts: [], links: [] });
     qualityService.auditSnapshot.mockResolvedValue({
       recordRevision: 4,
@@ -156,6 +163,66 @@ describe("work-record route authorization", () => {
       .expect(403, { error: "Viewer access is read-only" });
     expect(packageService.preview).not.toHaveBeenCalled();
     expect(packageService.prepare).not.toHaveBeenCalled();
+  });
+
+  it("lets viewers preview facts and returns preflight capability denials before write attempts", async () => {
+    const app = createApp(viewer);
+    const projectId = "11111111-1111-4111-8111-111111111111";
+    const previewBody = {
+      workflowVersion: 2,
+      projectId,
+      rootRecordId: "22222222-2222-4222-8222-222222222222",
+      scopeKind: "whole_package",
+      selectedRecordIds: [],
+    };
+    const capabilities = await request(app)
+      .get(`/api/companies/company-1/projects/${projectId}/work-record-capabilities`)
+      .expect(200);
+    expect(capabilities.body).toMatchObject({
+      preparePackage: { allowed: false, requiredRole: expect.stringContaining("Operator") },
+      recordPoVerdict: { allowed: false, requiredRole: expect.stringContaining("PO") },
+      recordQaVerdict: { allowed: false, requiredRole: expect.stringContaining("QA") },
+    });
+    const previewResponse = await request(app)
+      .post(`/api/companies/company-1/projects/${projectId}/work-package-dispatch/preview`)
+      .send(previewBody)
+      .expect(200);
+    expect(previewResponse.body.eligibility.blockers).toHaveLength(1);
+    await request(app)
+      .post(`/api/companies/company-1/projects/${projectId}/work-package-dispatch/assignment-gap-escalations`)
+      .send({ ...previewBody, clientRequestId: "viewer-gap", requestPayloadDigest: "viewer-gap", expectedScopeDigest: "viewer-scope" })
+      .expect(403, { error: "Viewer access is read-only" });
+    expect(logActivity).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "work_record.assignment_gap_escalated" }));
+  });
+
+  it("records an authorized CEO ownership-gap escalation without changing assignments", async () => {
+    const admin = {
+      ...viewer,
+      userId: "admin-1",
+      memberships: [{ companyId: "company-1", membershipRole: "admin", status: "active" }],
+      isInstanceAdmin: true,
+    } as Express.Request["actor"];
+    const app = createApp(admin);
+    const projectId = "11111111-1111-4111-8111-111111111111";
+    const response = await request(app)
+      .post(`/api/companies/company-1/projects/${projectId}/work-package-dispatch/assignment-gap-escalations`)
+      .send({
+        workflowVersion: 2,
+        projectId,
+        rootRecordId: "22222222-2222-4222-8222-222222222222",
+        scopeKind: "whole_package",
+        selectedRecordIds: [],
+        clientRequestId: "admin-gap",
+        requestPayloadDigest: "admin-gap",
+        expectedScopeDigest: "viewer-scope",
+      })
+      .expect(201);
+    expect(response.body).toMatchObject({ state: "recorded", scopeDigest: "viewer-scope", missingRecordIds: ["22222222-2222-4222-8222-222222222222"] });
+    expect(logActivity).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      action: "work_record.assignment_gap_escalated",
+      details: expect.objectContaining({ targetCeoAgentId: "33333333-3333-4333-8333-333333333333" }),
+    }));
+    expect(service.fillAssignmentGap).not.toHaveBeenCalled();
   });
 
   it("allows quality reads but keeps PO/QA verdicts and defect links read-only for viewers", async () => {
