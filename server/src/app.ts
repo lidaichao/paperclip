@@ -66,6 +66,7 @@ import { projectRoutes } from "./routes/projects.js";
 import { workRecordRoutes } from "./routes/work-records.js";
 import { issueRoutes } from "./routes/issues.js";
 import { createNonOverlappingWorkRecordTick, workRecordService } from "./services/work-records.js";
+import { createWorkRecordWorkflowTick } from "./services/work-record-workflow-tick.js";
 import { workPackageDispatchService } from "./services/work-package-dispatch.js";
 import { workRecordQualityService } from "./services/work-record-quality.js";
 import { issueTreeControlRoutes } from "./routes/issue-tree-control.js";
@@ -1127,35 +1128,25 @@ export async function createApp(
   const workRecords = workRecordService(db);
   const workPackages = workPackageDispatchService(db);
   const workQuality = workRecordQualityService(db);
-  let workRecordCandidateCursor: string | null = null;
-  let workQualityCandidateCursor: string | null = null;
-  let workPackageCandidateCursor: string | null = null;
+  const runWorkflowTick = createWorkRecordWorkflowTick({
+    records: (afterId) => workRecords.reconcilePage(100, afterId),
+    qualityCycles: (afterId) => workQuality.reconcilePage(25, afterId),
+    packages: (afterId) => workPackages.reconcilePage(25, afterId),
+    legacyOutbox: () => workRecords.processOutbox(connectionIntentHeartbeat.wakeup, 25),
+    workflowV2Outbox: () => workPackages.processOutbox(connectionIntentHeartbeat.wakeup, 25),
+  });
   const runWorkRecordTick = createNonOverlappingWorkRecordTick(async () => {
     const startedAt = Date.now();
-    const recordPage = await workRecords.reconcilePage(100, workRecordCandidateCursor);
-    workRecordCandidateCursor = recordPage.nextAfterId;
-    const qualityPage = await workQuality.reconcilePage(25, workQualityCandidateCursor);
-    workQualityCandidateCursor = qualityPage.nextAfterId;
-    const packagePage = await workPackages.reconcilePage(25, workPackageCandidateCursor);
-    workPackageCandidateCursor = packagePage.nextAfterId;
-    const legacyOutboxProcessed = await workRecords.processOutbox(connectionIntentHeartbeat.wakeup, 25);
-    const workflowV2OutboxProcessed = await workPackages.processOutbox(connectionIntentHeartbeat.wakeup, 25);
+    const tick = await runWorkflowTick();
     logger.debug({
       durationMs: Date.now() - startedAt,
       candidates: {
-        records: recordPage.processed,
-        qualityCycles: qualityPage.processed,
-        packages: packagePage.processed,
+        records: { scanned: tick.candidates.records.processed, succeeded: tick.candidates.records.succeeded, failures: tick.candidates.records.failures },
+        qualityCycles: { scanned: tick.candidates.qualityCycles.processed, succeeded: tick.candidates.qualityCycles.succeeded, failures: tick.candidates.qualityCycles.failures },
+        packages: { scanned: tick.candidates.packages.processed, succeeded: tick.candidates.packages.succeeded, failures: tick.candidates.packages.failures },
       },
-      outbox: {
-        legacyProcessed: legacyOutboxProcessed,
-        workflowV2Processed: workflowV2OutboxProcessed,
-      },
-      wrapped: {
-        records: workRecordCandidateCursor === null,
-        qualityCycles: workQualityCandidateCursor === null,
-        packages: workPackageCandidateCursor === null,
-      },
+      outbox: tick.outbox,
+      wrapped: tick.wrapped,
     }, "work_record_workflow_tick");
   });
   // The process-recovery E2E owns the worker lifecycle explicitly. Keep its

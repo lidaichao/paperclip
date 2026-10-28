@@ -329,18 +329,43 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     const companyId = req.params.companyId as string;
     const projectId = req.params.projectId as string;
     assertCompanyAccess(req, companyId);
-    const preview = await packages.preview(companyId, projectId, req.body);
-    await assertPackageAssignmentAccess(req, companyId, projectId, preview.records.flatMap((record) => [
-      record.assigneeAgentId,
-      record.qaAssigneeAgentId,
-    ]));
     const actor = getActorInfo(req);
-    const result = await packages.prepare(companyId, projectId, req.body, {
-      actorType: actor.actorType,
-      actorId: actor.actorId,
-      agentId: actor.agentId,
-      userId: actor.actorType === "user" ? actor.actorId : null,
-    });
+    let result: Awaited<ReturnType<typeof packages.prepare>>;
+    try {
+      const preview = await packages.preview(companyId, projectId, req.body);
+      await assertPackageAssignmentAccess(req, companyId, projectId, preview.records.flatMap((record) => [
+        record.assigneeAgentId,
+        record.qaAssigneeAgentId,
+      ]));
+      result = await packages.prepare(companyId, projectId, req.body, {
+        actorType: actor.actorType,
+        actorId: actor.actorId,
+        agentId: actor.agentId,
+        userId: actor.actorType === "user" ? actor.actorId : null,
+      });
+    } catch (error) {
+      const errorSummary = commandError(error);
+      await logActivity(db, {
+        companyId,
+        actorType: actor.actorType,
+        actorId: actor.actorId,
+        agentId: actor.agentId,
+        runId: actor.runId,
+        agentApiKeyId: actor.agentApiKeyId,
+        action: "work_record.dispatch_command",
+        entityType: "work_record_dispatch_command",
+        entityId: `prepare:${req.body.clientRequestId}`,
+        details: {
+          companyId,
+          projectId,
+          requestKey: req.body.clientRequestId,
+          outcome: errorSummary.status === 409 ? "conflict" : "rejected",
+          error: errorSummary,
+          command: "prepare",
+        },
+      });
+      throw error;
+    }
     await logActivity(db, {
       companyId,
       actorType: actor.actorType,

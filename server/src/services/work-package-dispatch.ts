@@ -21,6 +21,7 @@ import {
   workRecordQualityCycles,
   workRecordQualityItems,
 } from "@paperclipai/db";
+import { reconcileCandidatesIndependently } from "./work-record-candidate-scan.js";
 import {
   WORK_PACKAGE_MAX_DEPTH,
   WORK_RECORD_LIST_DEFAULT_LIMIT,
@@ -101,6 +102,7 @@ function digest(value: unknown) {
 }
 
 const ASSIGNMENT_GAP_DELIVERY_STALE_MS = 60_000;
+const WORK_RECORD_OPERATIONS_WINDOW_HOURS = 24;
 const FAILED_WAKE_STATUSES = new Set(["skipped", "failed", "cancelled"]);
 const FAILED_RUN_STATUSES = new Set(["failed", "cancelled", "timed_out"]);
 
@@ -1313,7 +1315,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
   }
 
   async function reconcilePage(limit = 25, afterId: string | null = null) {
-    if (!writesEnabled) return { processed: 0, nextAfterId: null };
+    if (!writesEnabled) return { processed: 0, succeeded: 0, failures: [], nextAfterId: null };
     const batches = await db.select({ companyId: workRecordDispatchBatches.companyId, projectId: workRecordDispatchBatches.projectId, id: workRecordDispatchBatches.id })
       .from(workRecordDispatchBatches)
       .where(and(
@@ -1324,11 +1326,12 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       .limit(limit + 1);
     const hasMore = batches.length > limit;
     const candidates = hasMore ? batches.slice(0, limit) : batches;
-    for (const batch of candidates) {
-      await reconcile(batch.companyId, batch.projectId, batch.id, { actorType: "system", actorId: "work-package-reconciler" });
-    }
+    const settled = await reconcileCandidatesIndependently(candidates, (batch) =>
+      reconcile(batch.companyId, batch.projectId, batch.id, { actorType: "system", actorId: "work-package-reconciler" }));
     return {
       processed: candidates.length,
+      succeeded: settled.succeeded,
+      failures: settled.failures,
       nextAfterId: hasMore ? candidates.at(-1)?.id ?? null : null,
     };
   }
@@ -1548,14 +1551,11 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       eq(projects.id, projectId),
     )).then((rows) => rows[0] ?? null);
     if (!project) throw notFound("Project not found");
+
     const [outbox] = await db.execute<{
-      pending_count: number;
-      retry_count: number;
-      processing_count: number;
-      dead_letter_count: number;
-      oldest_actionable_age_seconds: number | null;
-      attempt_p95: number | null;
-      lease_reclaim_count: number;
+      pending_count: number; retry_count: number; processing_count: number; dead_letter_count: number;
+      oldest_actionable_age_seconds: number | null; attempt_p95: number | null;
+      lease_reclaim_count: number; superseded_count: number;
     }>(sql`
       select
         count(*) filter (where state = 'pending')::int as pending_count,
@@ -1563,74 +1563,217 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         count(*) filter (where state = 'processing')::int as processing_count,
         count(*) filter (where state = 'dead_letter')::int as dead_letter_count,
         extract(epoch from (now() - min(created_at) filter (where state in ('pending', 'retry', 'processing'))))::float8 as oldest_actionable_age_seconds,
-        percentile_cont(0.95) within group (order by attempt_count)::float8 as attempt_p95,
-        count(*) filter (where recovery_count > 0)::int as lease_reclaim_count
+        percentile_cont(0.95) within group (order by attempt_count)
+          filter (where state in ('pending', 'retry', 'processing') and updated_at >= now() - interval '24 hours')::float8 as attempt_p95,
+        count(*) filter (where recovery_count > 0)::int as lease_reclaim_count,
+        count(*) filter (where state = 'superseded')::int as superseded_count
       from work_record_outbox
       where company_id = ${companyId} and project_id = ${projectId} and workflow_version = 2
     `);
+
     const [execution] = await db.execute<{
-      intent_count: number;
-      active_intent_count: number;
-      wake_count: number;
-      run_count: number;
-      cost_event_count: number;
-      cost_cents: number;
+      intent_count: number; active_intent_count: number; wake_count: number; run_count: number;
+      cost_event_count: number; cost_cents: number; duplicate_wake_intent_count: number;
+      duplicate_run_intent_count: number; duplicate_active_intent_issue_count: number;
+      duplicate_active_run_issue_count: number;
+    }>(sql`
+      with scoped_intents as (
+        select * from work_record_execution_intents
+        where company_id = ${companyId} and project_id = ${projectId}
+      ), intent_facts as (
+        select i.id, i.state, i.issue_id,
+          count(distinct w.id)::int as wake_count,
+          count(distinct r.id)::int as run_count,
+          count(distinct c.id)::int as cost_event_count,
+          coalesce(sum(c.cost_cents), 0)::int as cost_cents
+        from scoped_intents i
+        left join agent_wakeup_requests w
+          on w.company_id = i.company_id
+         and w.idempotency_key = ('work-record-intent:' || i.id::text || ':' || i.generation::text)
+        left join heartbeat_runs r on r.company_id = i.company_id and r.wakeup_request_id = w.id
+        left join cost_events c on c.company_id = i.company_id and c.heartbeat_run_id = r.id
+        group by i.id, i.state, i.issue_id
+      ), active_intent_issues as (
+        select issue_id from scoped_intents
+        where issue_id is not null
+          and state in ('pending', 'waiting_dependencies', 'waiting_governance', 'ready', 'queued', 'running')
+        group by issue_id having count(*) > 1
+      ), active_run_issues as (
+        select f.issue_id from intent_facts f
+        join scoped_intents i on i.id = f.id
+        join agent_wakeup_requests w
+          on w.company_id = i.company_id
+         and w.idempotency_key = ('work-record-intent:' || i.id::text || ':' || i.generation::text)
+        join heartbeat_runs r on r.company_id = i.company_id and r.wakeup_request_id = w.id
+        where f.issue_id is not null and r.status in ('queued', 'running')
+        group by f.issue_id having count(distinct r.id) > 1
+      )
+      select count(*)::int as intent_count,
+        count(*) filter (where f.state in ('pending', 'waiting_dependencies', 'waiting_governance', 'ready', 'queued', 'running'))::int as active_intent_count,
+        coalesce(sum(f.wake_count), 0)::int as wake_count,
+        coalesce(sum(f.run_count), 0)::int as run_count,
+        coalesce(sum(f.cost_event_count), 0)::int as cost_event_count,
+        coalesce(sum(f.cost_cents), 0)::int as cost_cents,
+        count(*) filter (where f.wake_count > 1)::int as duplicate_wake_intent_count,
+        count(*) filter (where f.run_count > 1)::int as duplicate_run_intent_count,
+        (select count(*)::int from active_intent_issues) as duplicate_active_intent_issue_count,
+        (select count(*)::int from active_run_issues) as duplicate_active_run_issue_count
+      from intent_facts f
+    `);
+
+    const [consistency] = await db.execute<{
+      stale_event_count: number; projection_lag_count: number; projection_lag_max_seconds: number | null;
+      reconcile_repair_count: number; orphan_link_count: number; orphan_intent_count: number;
+      scope_digest_mismatch_count: number;
     }>(sql`
       select
-        count(distinct i.id)::int as intent_count,
-        count(distinct i.id) filter (
-          where i.state in ('pending', 'waiting_dependencies', 'waiting_governance', 'ready', 'queued', 'running')
-        )::int as active_intent_count,
-        count(distinct w.id)::int as wake_count,
-        count(distinct r.id)::int as run_count,
-        count(distinct c.id)::int as cost_event_count,
-        coalesce(sum(c.cost_cents), 0)::int as cost_cents
-      from work_record_execution_intents i
-      left join agent_wakeup_requests w
-        on w.company_id = i.company_id
-       and w.idempotency_key = ('work-record-intent:' || i.id::text || ':' || i.generation::text)
-      left join heartbeat_runs r on r.company_id = i.company_id and r.wakeup_request_id = w.id
-      left join cost_events c on c.company_id = i.company_id and c.heartbeat_run_id = r.id
-      where i.company_id = ${companyId} and i.project_id = ${projectId}
+        (select count(*)::int from work_record_outbox
+          where company_id = ${companyId} and project_id = ${projectId} and workflow_version = 2
+            and state = 'superseded' and last_error is not null) as stale_event_count,
+        (select count(*)::int from work_record_execution_projections p
+          join issues i on i.company_id = p.company_id and i.id = p.issue_id
+          where p.company_id = ${companyId} and p.project_id = ${projectId}
+            and (p.sync_state <> 'current' or p.issue_status_version < i.status_version)) as projection_lag_count,
+        (select extract(epoch from max(now() - p.projected_at))::float8 from work_record_execution_projections p
+          join issues i on i.company_id = p.company_id and i.id = p.issue_id
+          where p.company_id = ${companyId} and p.project_id = ${projectId}
+            and (p.sync_state <> 'current' or p.issue_status_version < i.status_version)) as projection_lag_max_seconds,
+        (select count(*)::int from activity_log a
+          where a.company_id = ${companyId}
+            and a.action in ('work_record.reconciled', 'work_package.dispatch_reconciled')
+            and a.created_at >= now() - interval '24 hours'
+            and a.details ->> 'projectId' = ${projectId}) as reconcile_repair_count,
+        (select count(*)::int from work_records r
+          where r.company_id = ${companyId} and r.project_id = ${projectId}
+            and r.dispatch_state <> 'not_dispatched'
+            and not exists (select 1 from work_record_issue_links l
+              where l.company_id = r.company_id and l.project_id = r.project_id
+                and l.record_id = r.id and l.purpose = 'primary')) as orphan_link_count,
+        (select count(*)::int from work_record_execution_intents i
+          where i.company_id = ${companyId} and i.project_id = ${projectId}
+            and i.state in ('pending', 'waiting_dependencies', 'waiting_governance', 'ready', 'queued', 'running')
+            and i.issue_id is null) as orphan_intent_count,
+        (select count(*)::int from activity_log a
+          where a.company_id = ${companyId} and a.created_at >= now() - interval '24 hours'
+            and a.details ->> 'projectId' = ${projectId}
+            and a.details -> 'error' ->> 'code' = 'work_record_workflow_stale_revision') as scope_digest_mismatch_count
     `);
-    const actionableOutboxEvents = Number(outbox?.pending_count ?? 0) +
-      Number(outbox?.retry_count ?? 0) +
-      Number(outbox?.processing_count ?? 0) +
-      Number(outbox?.dead_letter_count ?? 0);
+
+    const [quality] = await db.execute<{
+      po_wait_count: number; po_wait_oldest_seconds: number | null; qa_wait_count: number;
+      qa_wait_oldest_seconds: number | null; max_rework_round: number; impact_wait_count: number;
+      impact_wait_oldest_seconds: number | null; unverified_defect_count: number;
+    }>(sql`
+      select
+        count(*) filter (where c.state = 'open' and c.quality_phase = 'po_acceptance')::int as po_wait_count,
+        extract(epoch from (now() - min(c.updated_at) filter (where c.state = 'open' and c.quality_phase = 'po_acceptance')))::float8 as po_wait_oldest_seconds,
+        count(*) filter (where c.state = 'open' and c.quality_phase = 'qa_retest')::int as qa_wait_count,
+        extract(epoch from (now() - min(c.updated_at) filter (where c.state = 'open' and c.quality_phase = 'qa_retest')))::float8 as qa_wait_oldest_seconds,
+        coalesce(max(c.cycle_number), 0)::int as max_rework_round,
+        count(*) filter (where c.state = 'open' and c.quality_phase = 'impact_review')::int as impact_wait_count,
+        extract(epoch from (now() - min(c.updated_at) filter (where c.state = 'open' and c.quality_phase = 'impact_review')))::float8 as impact_wait_oldest_seconds,
+        (select count(distinct l.defect_record_id)::int from work_record_quality_links l
+          where l.company_id = ${companyId} and l.project_id = ${projectId}
+            and not exists (select 1 from work_record_quality_verdicts v
+              where v.company_id = l.company_id and v.project_id = l.project_id
+                and v.defect_record_id = l.defect_record_id and v.outcome = 'pass')) as unverified_defect_count
+      from work_record_quality_cycles c
+      where c.company_id = ${companyId} and c.project_id = ${projectId}
+    `);
+
+    const [governance] = await db.execute<{
+      total_wait_count: number; oldest_wait_seconds: number | null; budget_wait_count: number;
+      pause_wait_count: number; approval_wait_count: number; other_wait_count: number;
+    }>(sql`
+      select count(*)::int as total_wait_count,
+        extract(epoch from (now() - min(updated_at)))::float8 as oldest_wait_seconds,
+        count(*) filter (where lower(coalesce(waiting_reason, '')) like '%budget%')::int as budget_wait_count,
+        count(*) filter (where lower(coalesce(waiting_reason, '')) like '%pause%')::int as pause_wait_count,
+        count(*) filter (where lower(coalesce(waiting_reason, '')) like '%approval%')::int as approval_wait_count,
+        count(*) filter (where lower(coalesce(waiting_reason, '')) not like '%budget%'
+          and lower(coalesce(waiting_reason, '')) not like '%pause%'
+          and lower(coalesce(waiting_reason, '')) not like '%approval%')::int as other_wait_count
+      from work_record_execution_intents
+      where company_id = ${companyId} and project_id = ${projectId} and state = 'waiting_governance'
+    `);
+
+    const [rejections] = await db.execute<{
+      forbidden_count: number; conflict_count: number; unprocessable_count: number; other_count: number;
+      role_denied_count: number; cross_scope_count: number;
+    }>(sql`
+      select
+        count(*) filter (where a.details -> 'error' ->> 'status' = '403')::int as forbidden_count,
+        count(*) filter (where a.details -> 'error' ->> 'status' = '409')::int as conflict_count,
+        count(*) filter (where a.details -> 'error' ->> 'status' = '422')::int as unprocessable_count,
+        count(*) filter (where a.details -> 'error' ->> 'status' not in ('403', '409', '422'))::int as other_count,
+        count(*) filter (where a.details -> 'error' ->> 'status' = '403')::int as role_denied_count,
+        count(*) filter (where a.details -> 'error' ->> 'code' in ('work_record_workflow_project_boundary', 'work_record_quality_target_invalid'))::int as cross_scope_count
+      from activity_log a
+      where a.company_id = ${companyId}
+        and a.action in ('work_record.quality_command', 'work_record.dispatch_command')
+        and a.created_at >= now() - interval '24 hours'
+        and a.details ->> 'projectId' = ${projectId}
+        and a.details ->> 'outcome' in ('conflict', 'rejected')
+    `);
+
+    const actionableOutboxEvents = Number(outbox?.pending_count ?? 0) + Number(outbox?.retry_count ?? 0) +
+      Number(outbox?.processing_count ?? 0) + Number(outbox?.dead_letter_count ?? 0);
     const activeIntents = Number(execution?.active_intent_count ?? 0);
     return {
       workflowVersion: 2,
       featureFlagEnabled: writesEnabled,
       outbox: {
-        pending: Number(outbox?.pending_count ?? 0),
-        retry: Number(outbox?.retry_count ?? 0),
-        processing: Number(outbox?.processing_count ?? 0),
-        deadLetter: Number(outbox?.dead_letter_count ?? 0),
+        pending: Number(outbox?.pending_count ?? 0), retry: Number(outbox?.retry_count ?? 0),
+        processing: Number(outbox?.processing_count ?? 0), deadLetter: Number(outbox?.dead_letter_count ?? 0),
         oldestActionableAgeSeconds: outbox?.oldest_actionable_age_seconds == null ? null : Number(outbox.oldest_actionable_age_seconds),
         attemptP95: outbox?.attempt_p95 == null ? null : Number(outbox.attempt_p95),
-        recoveredEventCount: Number(outbox?.lease_reclaim_count ?? 0),
-        maxAttempts: WORK_RECORD_OUTBOX_MAX_ATTEMPTS,
+        attemptWindow: { hours: WORK_RECORD_OPERATIONS_WINDOW_HOURS, states: ["pending", "retry", "processing"], timestampField: "updatedAt" },
+        recoveredEventCount: Number(outbox?.lease_reclaim_count ?? 0), maxAttempts: WORK_RECORD_OUTBOX_MAX_ATTEMPTS,
       },
       execution: {
-        intents: Number(execution?.intent_count ?? 0),
-        activeIntents,
-        wakes: Number(execution?.wake_count ?? 0),
-        runs: Number(execution?.run_count ?? 0),
-        costEvents: Number(execution?.cost_event_count ?? 0),
-        costCents: Number(execution?.cost_cents ?? 0),
+        intents: Number(execution?.intent_count ?? 0), activeIntents,
+        wakes: Number(execution?.wake_count ?? 0), runs: Number(execution?.run_count ?? 0),
+        costEvents: Number(execution?.cost_event_count ?? 0), costCents: Number(execution?.cost_cents ?? 0),
+      },
+      consistency: {
+        supersededEvents: Number(outbox?.superseded_count ?? 0), staleEvents: Number(consistency?.stale_event_count ?? 0),
+        projectionLag: { count: Number(consistency?.projection_lag_count ?? 0), maxSeconds: consistency?.projection_lag_max_seconds == null ? null : Number(consistency.projection_lag_max_seconds) },
+        reconcileRepairsLast24Hours: Number(consistency?.reconcile_repair_count ?? 0),
+        orphanLinks: Number(consistency?.orphan_link_count ?? 0), orphanIntents: Number(consistency?.orphan_intent_count ?? 0),
+        scopeDigestMismatchesLast24Hours: Number(consistency?.scope_digest_mismatch_count ?? 0),
+      },
+      runtimeSafety: {
+        duplicateWakeIntents: Number(execution?.duplicate_wake_intent_count ?? 0),
+        duplicateRunIntents: Number(execution?.duplicate_run_intent_count ?? 0),
+        issuesWithMultipleActiveIntents: Number(execution?.duplicate_active_intent_issue_count ?? 0),
+        issuesWithMultipleActiveRuns: Number(execution?.duplicate_active_run_issue_count ?? 0),
+      },
+      quality: {
+        poWait: { count: Number(quality?.po_wait_count ?? 0), oldestSeconds: quality?.po_wait_oldest_seconds == null ? null : Number(quality.po_wait_oldest_seconds) },
+        qaWait: { count: Number(quality?.qa_wait_count ?? 0), oldestSeconds: quality?.qa_wait_oldest_seconds == null ? null : Number(quality.qa_wait_oldest_seconds) },
+        maxReworkRound: Number(quality?.max_rework_round ?? 0),
+        cancellationImpactWait: { count: Number(quality?.impact_wait_count ?? 0), oldestSeconds: quality?.impact_wait_oldest_seconds == null ? null : Number(quality.impact_wait_oldest_seconds) },
+        unverifiedDefects: Number(quality?.unverified_defect_count ?? 0),
+      },
+      governance: {
+        totalWait: Number(governance?.total_wait_count ?? 0),
+        oldestWaitSeconds: governance?.oldest_wait_seconds == null ? null : Number(governance.oldest_wait_seconds),
+        budgetWait: Number(governance?.budget_wait_count ?? 0), pauseWait: Number(governance?.pause_wait_count ?? 0),
+        approvalWait: Number(governance?.approval_wait_count ?? 0), otherWait: Number(governance?.other_wait_count ?? 0),
+      },
+      rejections: {
+        windowHours: WORK_RECORD_OPERATIONS_WINDOW_HOURS,
+        byStatus: { forbidden403: Number(rejections?.forbidden_count ?? 0), conflict409: Number(rejections?.conflict_count ?? 0), unprocessable422: Number(rejections?.unprocessable_count ?? 0), other: Number(rejections?.other_count ?? 0) },
+        roleDenied: Number(rejections?.role_denied_count ?? 0), crossScope: Number(rejections?.cross_scope_count ?? 0),
       },
       scanBudget: {
-        intervalMs: 2_000,
-        recordCandidatesPerTick: WORK_RECORD_LIST_DEFAULT_LIMIT,
-        packageCandidatesPerTick: 25,
-        qualityCandidatesPerTick: 25,
-        maxListPageSize: WORK_RECORD_LIST_MAX_LIMIT,
-        upperBoundCandidateChecksPerMinute: 4_500,
+        intervalMs: 2_000, recordCandidatesPerTick: WORK_RECORD_LIST_DEFAULT_LIMIT,
+        packageCandidatesPerTick: 25, qualityCandidatesPerTick: 25,
+        maxListPageSize: WORK_RECORD_LIST_MAX_LIMIT, upperBoundCandidateChecksPerMinute: 4_500,
       },
       rollback: {
         safeForOldBinary: actionableOutboxEvents === 0 && activeIntents === 0,
-        actionableOutboxEvents,
-        activeIntents,
+        actionableOutboxEvents, activeIntents,
         restriction: "Disable workflow-v2 writes and drain or resolve every active intent and actionable/dead-letter outbox event before starting an old binary.",
       },
       generatedAt: new Date(),

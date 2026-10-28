@@ -21,12 +21,24 @@ on a production instance without the product-approved gray rollout.
 With board read access, inspect one project:
 
 ```sh
-curl -sS "$PAPERCLIP_API_URL/api/companies/$COMPANY_ID/projects/$PROJECT_ID/work-record-workflow/operations"
+: "${PAPERCLIP_API_URL:?set the Paperclip API base URL}"
+: "${BOARD_API_KEY:?export a named board API key for the operator account}"
+: "${COMPANY_ID:?set the company ID}"
+: "${PROJECT_ID:?set the project ID}"
+
+curl -fsS \
+  -H "Authorization: Bearer $BOARD_API_KEY" \
+  "$PAPERCLIP_API_URL/api/companies/$COMPANY_ID/projects/$PROJECT_ID/work-record-workflow/operations"
 ```
 
-The response includes feature-flag state, outbox counts/age/attempt p95,
-workflow intent/wake/run counts, attributed cost events/cents, scan budget, and
-the old-binary rollback preflight. Alert when any of these is true:
+The response includes feature-flag state, outbox counts/age, consistency and
+projection lag, per-intent duplicate wake/run alarms, PO/QA/cancellation wait,
+governance waits, 403/409/422 rejection classes, attributed cost, scan budget,
+and the old-binary rollback preflight. `outbox.attemptP95` is deliberately
+limited to pending/retry/processing rows whose `updatedAt` falls within the
+reported 24-hour window; completed historical rows cannot keep that alarm
+raised forever. Dead-letter and oldest-actionable-age alarms remain unbounded
+until an operator resolves the underlying row. Alert when any of these is true:
 
 1. `outbox.deadLetter > 0`.
 2. `outbox.oldestActionableAgeSeconds > 60` for two consecutive samples.
@@ -45,8 +57,9 @@ event. Record the observed attempt count and a reason:
 
 ```sh
 curl -sS -X POST \
+  -H "Authorization: Bearer $BOARD_API_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"expectedAttemptCount":5,"reason":"operator verified dependency recovery"}' \
+  --data-binary '{"expectedAttemptCount":5,"reason":"operator verified dependency recovery"}' \
   "$PAPERCLIP_API_URL/api/companies/$COMPANY_ID/projects/$PROJECT_ID/work-record-workflow/outbox/$EVENT_ID/recover"
 ```
 
@@ -81,6 +94,11 @@ Fresh and M1-upgrade migration proof:
 pnpm exec vitest run packages/db/src/work-record-workflow-v2-migration.test.ts \
   packages/db/src/migration-snapshot-drift.test.ts
 ```
+
+The migration suite contains a dedicated `0294 -> 0295` case. It removes only
+the 0295 journal row and 0295 schema additions, verifies 0295 is the sole
+pending migration, reapplies it, and compares the pre-existing outbox row
+before and after the upgrade.
 
 ## Gray rollout and rollback gate
 

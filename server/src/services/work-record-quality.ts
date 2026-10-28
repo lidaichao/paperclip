@@ -14,6 +14,7 @@ import {
   workRecordQualityLinks,
   workRecordQualityVerdicts,
 } from "@paperclipai/db";
+import { reconcileCandidatesIndependently } from "./work-record-candidate-scan.js";
 import {
   WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED_BY_DEFAULT,
   classifyWorkRecordCommandReplay,
@@ -1104,7 +1105,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
   }
 
   async function reconcilePage(limit = 25, afterId: string | null = null) {
-    if (!writesEnabled) return { processed: 0, nextAfterId: null };
+    if (!writesEnabled) return { processed: 0, succeeded: 0, failures: [], nextAfterId: null };
     const cycles = await db.select({
       id: workRecordQualityCycles.id,
       companyId: workRecordQualityCycles.companyId,
@@ -1115,9 +1116,12 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     )).orderBy(asc(workRecordQualityCycles.id)).limit(limit + 1);
     const hasMore = cycles.length > limit;
     const candidates = hasMore ? cycles.slice(0, limit) : cycles;
-    for (const cycle of candidates) await reconcileCycle(cycle.companyId, cycle.projectId, cycle.id);
+    const settled = await reconcileCandidatesIndependently(candidates, (cycle) =>
+      reconcileCycle(cycle.companyId, cycle.projectId, cycle.id));
     return {
       processed: candidates.length,
+      succeeded: settled.succeeded,
+      failures: settled.failures,
       nextAfterId: hasMore ? candidates.at(-1)?.id ?? null : null,
     };
   }

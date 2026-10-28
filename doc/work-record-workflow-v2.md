@@ -94,6 +94,22 @@ HTTP response, heartbeat denial reason, and zero-effective-wake/run assertion
 for every authorization, governance, pause, hold, budget, and execution-lock
 case. Recovery evidence records before/after IDs and counts at each failpoint.
 
+The process-level M2-R05 proof lives in
+`tests/e2e/work-package-process-recovery.spec.ts`. It starts a real isolated
+Paperclip server, PostgreSQL database, API, and Chromium UI, then launches a
+separate workflow worker. The parent sends `SIGKILL` only after the worker
+reports `after_partial_materialization`, `after_outbox_commit`, or
+`before_projection_update`, restarts a new worker against the same database,
+and retains DB/API snapshots plus final UI screenshots. Set
+`PAPERCLIP_M2_R05_EVIDENCE_DIR` to keep the JSON and PNG evidence outside the
+default Playwright result directory. Run the isolated proof with
+`node cli/node_modules/tsx/dist/cli.mjs tests/e2e/run-work-package-process-recovery.ts`;
+the wrapper uses the repository PostgreSQL test helper so Windows does not
+depend on Playwright onboarding's fixed embedded-database bootstrap port. The
+wrapper also sets the E2E-only `PAPERCLIP_E2E_OWNS_WORK_RECORD_TICK=true`
+switch: the API/UI process remains an observer while each killed/restarted
+child is the sole owner of reconciliation and outbox delivery.
+
 The M2-C ledger lives in
 `server/src/__tests__/work-record-quality-cycle.test.ts`. Set
 `PAPERCLIP_M2C_EVIDENCE_DIR` to retain `quality-cycle-evidence.json`,

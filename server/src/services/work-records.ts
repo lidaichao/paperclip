@@ -23,6 +23,7 @@ import {
   workRecordQualityCycles,
   workRecordQualityLinks,
 } from "@paperclipai/db";
+import { reconcileCandidatesIndependently } from "./work-record-candidate-scan.js";
 import type {
   CreateWorkRecord,
   DispatchWorkRecord,
@@ -1084,9 +1085,12 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       .limit(limit + 1);
     const hasMore = rows.length > limit;
     const candidates = hasMore ? rows.slice(0, limit) : rows;
-    for (const row of candidates) await reconcileRecord(row.companyId, row.projectId, row.id);
+    const settled = await reconcileCandidatesIndependently(candidates, (row) =>
+      reconcileRecord(row.companyId, row.projectId, row.id));
     return {
       processed: candidates.length,
+      succeeded: settled.succeeded,
+      failures: settled.failures,
       nextAfterId: hasMore ? candidates.at(-1)?.id ?? null : null,
     };
   }

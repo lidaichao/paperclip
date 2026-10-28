@@ -156,6 +156,8 @@ export interface DatabaseClientOptions {
    * `postgres.js`).
    */
   applicationName?: string;
+  /** postgres.js query hook used by bounded diagnostics and performance tests. */
+  debug?: (connection: number, query: string, parameters: unknown[], parameterTypes: number[]) => void;
 }
 
 /**
@@ -252,6 +254,7 @@ export function postgresJsOptions(options: DatabaseClientOptions): Record<string
   if (options.applicationName !== undefined) {
     driverOptions.connection = { application_name: options.applicationName };
   }
+  if (options.debug !== undefined) driverOptions.debug = options.debug;
   return driverOptions;
 }
 

@@ -12,6 +12,9 @@ import {
 const migrationFile = "0289_green_lady_deathstrike.sql";
 const migrationSql = await readFile(new URL(`./migrations/${migrationFile}`, import.meta.url), "utf8");
 const migrationHash = createHash("sha256").update(migrationSql).digest("hex");
+const hardeningMigrationFile = "0295_serious_swordsman.sql";
+const hardeningMigrationSql = await readFile(new URL(`./migrations/${hardeningMigrationFile}`, import.meta.url), "utf8");
+const hardeningMigrationHash = createHash("sha256").update(hardeningMigrationSql).digest("hex");
 const cleanups: Array<() => Promise<void>> = [];
 const support = await getEmbeddedPostgresTestSupport();
 const describePostgres = support.supported ? describe : describe.skip;
@@ -228,6 +231,51 @@ describePostgres("work-record workflow v2 migration", () => {
         quality_cycle_id: null,
         quality_item_id: null,
         execution_intent_id: null,
+      });
+      expect((await inspectMigrations(database.connectionString)).status).toBe("upToDate");
+    } finally {
+      await sql.end();
+    }
+  }, EMBEDDED_POSTGRES_TEST_TIMEOUT_MS);
+
+  it("upgrades a real 0294-shaped database through 0295 and preserves existing outbox rows", async () => {
+    const database = await startEmbeddedPostgresTestDatabase("paperclip-workflow-v2-0294-upgrade-");
+    cleanups.push(database.cleanup);
+    const sql = postgres(database.connectionString, { max: 1, onnotice: () => {} });
+    try {
+      const row = await seedBase(sql);
+      const outboxId = await insertLegacyOutbox(sql, row);
+      const [before] = await sql`SELECT id, company_id, project_id, record_id, issue_id,
+        event_key, event_type, dispatch_round, dependency_set_revision, blocked_cycle,
+        payload_digest, state, attempt_count, created_at, updated_at
+        FROM work_record_outbox WHERE id = ${outboxId}`;
+
+      await sql.unsafe(`
+        DROP INDEX work_record_outbox_project_state_idx;
+        ALTER TABLE work_record_outbox DROP CONSTRAINT work_record_outbox_state_check;
+        ALTER TABLE work_record_outbox
+          DROP COLUMN recovery_count,
+          DROP COLUMN dead_lettered_at,
+          DROP COLUMN last_recovered_at;
+      `);
+      await sql`DELETE FROM drizzle.__drizzle_migrations WHERE hash = ${hardeningMigrationHash}`;
+
+      expect(await inspectMigrations(database.connectionString)).toMatchObject({
+        status: "needsMigrations",
+        pendingMigrations: [hardeningMigrationFile],
+      });
+      await applyPendingMigrations(database.connectionString);
+
+      const [after] = await sql`SELECT id, company_id, project_id, record_id, issue_id,
+        event_key, event_type, dispatch_round, dependency_set_revision, blocked_cycle,
+        payload_digest, state, attempt_count, created_at, updated_at,
+        recovery_count, dead_lettered_at, last_recovered_at
+        FROM work_record_outbox WHERE id = ${outboxId}`;
+      expect(after).toMatchObject({
+        ...before,
+        recovery_count: 0,
+        dead_lettered_at: null,
+        last_recovered_at: null,
       });
       expect((await inspectMigrations(database.connectionString)).status).toBe("upToDate");
     } finally {

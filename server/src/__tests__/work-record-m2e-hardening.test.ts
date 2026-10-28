@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { cpus, freemem, platform, release, totalmem, tmpdir } from "node:os";
 import path from "node:path";
 import express from "express";
 import request from "supertest";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   agents,
@@ -21,6 +21,7 @@ import {
   runDatabaseRestore,
   workRecordDependencies,
   workRecordDispatchBatches,
+  workRecordExecutionIntents,
   workRecordIssueLinks,
   workRecordOutbox,
   workRecords,
@@ -30,6 +31,8 @@ import { errorHandler } from "../middleware/error-handler.js";
 import { workRecordRoutes } from "../routes/work-records.js";
 import { workPackageDispatchService } from "../services/work-package-dispatch.js";
 import { workRecordService } from "../services/work-records.js";
+import { reconcileCandidatesIndependently } from "../services/work-record-candidate-scan.js";
+import { createWorkRecordWorkflowTick } from "../services/work-record-workflow-tick.js";
 import { getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase } from "./helpers/embedded-postgres.js";
 
 const support = await getEmbeddedPostgresTestSupport();
@@ -63,10 +66,14 @@ describeDb("M2-E workflow hardening", () => {
     return { company, project, agent, records: workRecordService(db) };
   }
 
-  function createApi(companyId: string, membershipRole: "admin" | "viewer" = "admin") {
+  function createApi(
+    companyId: string,
+    membershipRole: "admin" | "viewer" = "admin",
+    database: ReturnType<typeof createDb> = db,
+  ) {
     const previous = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
     process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = "true";
-    const router = workRecordRoutes(db);
+    const router = workRecordRoutes(database);
     if (previous === undefined) delete process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
     else process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED = previous;
     const app = express();
@@ -110,6 +117,47 @@ describeDb("M2-E workflow hardening", () => {
       expectedDependencySetRevision: preview.dependencySetRevision,
     }, { actorType: "system", actorId: "m2e-test" });
   }
+
+  it("isolates a bad candidate, advances to the next page, and still reaches both outboxes", async () => {
+    const candidates = [{ id: "0001" }, { id: "0002" }];
+    const visited: string[] = [];
+    const outboxes: string[] = [];
+
+    const scan = async (afterId: string | null) => {
+      const rows = candidates.filter((candidate) => afterId === null || candidate.id > afterId).slice(0, 1);
+      const settled = await reconcileCandidatesIndependently(rows, async (candidate) => {
+        visited.push(candidate.id);
+        if (candidate.id === "0001") throw Object.assign(new Error("injected candidate failure"), { code: "m2e_bad_candidate" });
+      });
+      return { ...settled, nextAfterId: rows.at(-1)?.id ?? null };
+    };
+
+    const emptyPage = async () => ({ processed: 0, succeeded: 0, failures: [], nextAfterId: null });
+    const tick = createWorkRecordWorkflowTick({
+      records: async (afterId) => {
+        const page = await scan(afterId);
+        return { processed: 1, ...page };
+      },
+      qualityCycles: emptyPage,
+      packages: emptyPage,
+      legacyOutbox: async () => { outboxes.push("legacy"); return 1; },
+      workflowV2Outbox: async () => { outboxes.push("workflow-v2"); return 1; },
+    });
+
+    const first = await tick();
+    expect(first.candidates.records).toEqual({
+      processed: 1,
+      succeeded: 0,
+      failures: [{ id: "0001", code: "m2e_bad_candidate" }],
+      nextAfterId: "0001",
+    });
+    expect(first.outbox).toEqual({ legacyProcessed: 1, workflowV2Processed: 1 });
+    const second = await tick();
+    expect(second.candidates.records).toEqual({ processed: 1, succeeded: 1, failures: [], nextAfterId: "0002" });
+    expect(second.outbox).toEqual({ legacyProcessed: 1, workflowV2Processed: 1 });
+    expect(visited).toEqual(["0001", "0002"]);
+    expect(outboxes).toEqual(["legacy", "workflow-v2", "legacy", "workflow-v2"]);
+  });
 
   it("paginates records compatibly and rotates package reconciliation candidates", async () => {
     const context = await seed("M2-E pagination");
@@ -226,9 +274,57 @@ describeDb("M2-E workflow hardening", () => {
       costCents: 37,
       occurredAt: new Date(),
     });
+    await db.update(workRecordExecutionIntents).set({
+      state: "waiting_governance",
+      waitingReason: "budget_hard_stop",
+      updatedAt: new Date(),
+    }).where(eq(workRecordExecutionIntents.id, event.executionIntentId!));
+    await db.update(workRecordOutbox).set({
+      attemptCount: 99,
+      updatedAt: new Date(Date.now() - 48 * 60 * 60 * 1_000),
+    }).where(eq(workRecordOutbox.id, event.id));
+
+    const preview = await request(app)
+      .post(`/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/preview`)
+      .send(input(context.project.id, [target.id]))
+      .expect(200);
+    await request(app)
+      .post(`/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/prepare`)
+      .send({
+        ...input(context.project.id, [target.id]),
+        clientRequestId: "m2e-stale-scope-metric",
+        requestPayloadDigest: "m2e-stale-scope-metric",
+        expectedScopeDigest: "stale-scope-digest",
+        expectedRootRevision: preview.body.rootRevision,
+        expectedDependencySetRevision: preview.body.dependencySetRevision,
+      })
+      .expect(409);
     const after = await service.operationsMetrics(context.company.id, context.project.id);
-    expect(after.outbox).toMatchObject({ deadLetter: 0, recoveredEventCount: 1 });
+    expect(after.outbox).toMatchObject({
+      deadLetter: 0,
+      recoveredEventCount: 1,
+      attemptP95: null,
+      attemptWindow: { hours: 24, states: ["pending", "retry", "processing"], timestampField: "updatedAt" },
+    });
     expect(after.execution).toMatchObject({ runs: 1, costEvents: 1, costCents: 37 });
+    expect(after.consistency).toMatchObject({
+      staleEvents: 0,
+      orphanLinks: 0,
+      orphanIntents: 0,
+      scopeDigestMismatchesLast24Hours: 1,
+    });
+    expect(after.runtimeSafety).toEqual({
+      duplicateWakeIntents: 0,
+      duplicateRunIntents: 0,
+      issuesWithMultipleActiveIntents: 0,
+      issuesWithMultipleActiveRuns: 0,
+    });
+    expect(after.quality).toMatchObject({ maxReworkRound: 0, unverifiedDefects: 0 });
+    expect(after.governance).toMatchObject({ totalWait: 1, budgetWait: 1, pauseWait: 0, approvalWait: 0 });
+    expect(after.rejections).toMatchObject({
+      windowHours: 24,
+      byStatus: { forbidden403: 0, conflict409: 1, unprocessable422: 0 },
+    });
     expect(after.rollback).toMatchObject({ safeForOldBinary: false, activeIntents: 1, actionableOutboxEvents: 0 });
   }, 30_000);
 
@@ -314,18 +410,140 @@ describeDb("M2-E workflow hardening", () => {
     });
     expect(await db.select().from(workRecordDispatchBatches).where(eq(workRecordDispatchBatches.companyId, context.company.id)))
       .toHaveLength(0);
+    await db.delete(workRecords).where(eq(workRecords.id, extraRecordId));
+
+    let queryCount = 0;
+    const measuredDb = createDb(tempDb!.connectionString, {
+      applicationName: "paperclip-m2e-performance",
+      debug: () => { queryCount += 1; },
+    });
+    const performanceApp = createApi(context.company.id, "admin", measuredDb);
+    const listPath = `/api/companies/${context.company.id}/projects/${context.project.id}/work-records`;
+    const previewPath = `/api/companies/${context.company.id}/projects/${context.project.id}/work-package-dispatch/preview`;
+    const slo = {
+      listP95Ms: 2_000,
+      readinessP95Ms: 2_000,
+      maxQueriesPerRequest: 25,
+      maxResponseBytes: 2 * 1024 * 1024,
+      maxRssGrowthBytes: 128 * 1024 * 1024,
+      maxLockWaiters: 0,
+      minimumLogicalCpu: 2,
+      minimumMemoryBytes: 4 * 1024 * 1024 * 1024,
+    };
+    const environment = {
+      platform: platform(),
+      release: release(),
+      architecture: process.arch,
+      node: process.version,
+      logicalCpu: cpus().length,
+      cpuModel: cpus()[0]?.model ?? "unknown",
+      totalMemoryBytes: totalmem(),
+      freeMemoryBytesAtStart: freemem(),
+      postgresVersion: (await measuredDb.execute<{ version: string }>(sql`select version() as version`))[0]?.version ?? "unknown",
+    };
+    expect(environment.logicalCpu).toBeGreaterThanOrEqual(slo.minimumLogicalCpu);
+    expect(environment.totalMemoryBytes).toBeGreaterThanOrEqual(slo.minimumMemoryBytes);
+
+    const requestSample = async (kind: "list" | "readiness") => {
+      queryCount = 0;
+      const cpuBefore = process.cpuUsage();
+      const rssBefore = process.memoryUsage().rss;
+      const startedAt = performance.now();
+      const response = kind === "list"
+        ? await request(performanceApp).get(`${listPath}?limit=100`).expect(200)
+        : await request(performanceApp).post(previewPath).send(command).expect(200);
+      const cpu = process.cpuUsage(cpuBefore);
+      return {
+        latencyMs: performance.now() - startedAt,
+        queryCount,
+        responseBytes: Buffer.byteLength(response.text, "utf8"),
+        cpuMicros: cpu.user + cpu.system,
+        rssGrowthBytes: Math.max(0, process.memoryUsage().rss - rssBefore),
+      };
+    };
+
+    // Warm both paths before collecting the fixed 30-sample evidence set.
+    await requestSample("list");
+    await requestSample("readiness");
+    queryCount = 0;
+    await request(performanceApp).get(`${listPath}?limit=1`).expect(200);
+    const oneRowQueryCount = queryCount;
+    queryCount = 0;
+    const firstPage = await request(performanceApp).get(`${listPath}?limit=100`).expect(200);
+    const hundredRowQueryCount = queryCount;
+    const secondPage = await request(performanceApp)
+      .get(`${listPath}?limit=100&afterId=${firstPage.body.nextCursor}`).expect(200);
+    expect(firstPage.body.items).toHaveLength(100);
+    expect(secondPage.body.items).toHaveLength(100);
+    expect(secondPage.body.nextCursor).toBeNull();
+    expect(new Set([...firstPage.body.items, ...secondPage.body.items].map((row: { id: string }) => row.id)).size).toBe(200);
+    expect(hundredRowQueryCount).toBeLessThanOrEqual(oneRowQueryCount + 1);
+
+    const listSamples = [] as Awaited<ReturnType<typeof requestSample>>[];
+    const readinessSamples = [] as Awaited<ReturnType<typeof requestSample>>[];
+    const lockWaiters: number[] = [];
+    for (let sample = 0; sample < 30; sample += 1) {
+      listSamples.push(await requestSample("list"));
+      readinessSamples.push(await requestSample("readiness"));
+      const [locks] = await measuredDb.execute<{ count: number }>(sql`
+        select count(*)::int as count from pg_stat_activity
+        where datname = current_database() and wait_event_type = 'Lock'
+      `);
+      lockWaiters.push(Number(locks?.count ?? 0));
+    }
+    const percentile = (values: number[], ratio: number) => {
+      const sorted = [...values].sort((left, right) => left - right);
+      return sorted[Math.ceil((sorted.length - 1) * ratio)];
+    };
+    const summarize = (samples: typeof listSamples) => ({
+      raw: samples,
+      latencyMs: { p50: percentile(samples.map((sample) => sample.latencyMs), 0.5), p95: percentile(samples.map((sample) => sample.latencyMs), 0.95), max: Math.max(...samples.map((sample) => sample.latencyMs)) },
+      queryCount: { min: Math.min(...samples.map((sample) => sample.queryCount)), max: Math.max(...samples.map((sample) => sample.queryCount)) },
+      responseBytes: { max: Math.max(...samples.map((sample) => sample.responseBytes)) },
+      cpuMicros: { p95: percentile(samples.map((sample) => sample.cpuMicros), 0.95) },
+      rssGrowthBytes: { max: Math.max(...samples.map((sample) => sample.rssGrowthBytes)) },
+    });
+    const listPerformance = summarize(listSamples);
+    const readinessPerformance = summarize(readinessSamples);
+    expect(listPerformance.latencyMs.p95).toBeLessThanOrEqual(slo.listP95Ms);
+    expect(readinessPerformance.latencyMs.p95).toBeLessThanOrEqual(slo.readinessP95Ms);
+    expect(Math.max(listPerformance.queryCount.max, readinessPerformance.queryCount.max)).toBeLessThanOrEqual(slo.maxQueriesPerRequest);
+    expect(Math.max(listPerformance.responseBytes.max, readinessPerformance.responseBytes.max)).toBeLessThanOrEqual(slo.maxResponseBytes);
+    expect(Math.max(listPerformance.rssGrowthBytes.max, readinessPerformance.rssGrowthBytes.max)).toBeLessThanOrEqual(slo.maxRssGrowthBytes);
+    expect(Math.max(...lockWaiters)).toBeLessThanOrEqual(slo.maxLockWaiters);
+
+    const listPlan = await measuredDb.execute(sql.raw(`explain (analyze, buffers, format json)
+      select id from work_records
+      where company_id = '${context.company.id}' and project_id = '${context.project.id}'
+      order by id asc limit 101`));
+    const readinessPlan = await measuredDb.execute(sql.raw(`explain (analyze, buffers, format json)
+      select not exists (
+        select 1 from work_record_quality_items qi
+        join work_record_quality_cycles qc on qc.id = qi.cycle_id
+        where qc.company_id = '${context.company.id}' and qc.project_id = '${context.project.id}'
+          and qi.required = true and qi.state <> 'accepted'
+      ) as ready`));
 
     durationsMs.sort((left, right) => left - right);
     const evidence = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       testedCommit: process.env.PAPERCLIP_M2E_TESTED_COMMIT ?? null,
+      environment,
+      slo,
       fixture: { records: 200, maxDepth: 8, edges: 2_000, samples: durationsMs.length },
-      latencyMs: {
+      servicePreviewLatencyMs: {
         min: durationsMs[0],
         p50: durationsMs[Math.floor((durationsMs.length - 1) * 0.5)],
         p95: durationsMs[Math.ceil((durationsMs.length - 1) * 0.95)],
         max: durationsMs.at(-1),
       },
+      api: {
+        pagination: { pageSize: 100, pages: 2, uniqueRecords: 200, oneRowQueryCount, hundredRowQueryCount },
+        list: listPerformance,
+        readiness: readinessPerformance,
+        lockWaiters,
+      },
+      queryPlans: { list: listPlan, readiness: readinessPlan },
       rejected: [
         { code: "work_package_scope_too_large", actual: 201 },
         { code: "work_package_depth_too_large", actual: 9 },
