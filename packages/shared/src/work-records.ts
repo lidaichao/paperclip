@@ -228,10 +228,15 @@ export interface WorkPackageAssignmentEscalationReceipt {
   clientRequestId: string;
   scopeDigest: string;
   targetCeoAgentId: string | null;
-  state: "pending" | "delivering" | "delivered" | "ceo_unavailable" | "delivery_failed";
+  state: "pending" | "delivering" | "queued" | "delivered" | "acknowledged" | "ceo_unavailable" | "delivery_failed";
+  deliveryAttempt: number;
   wakeupRequestId: string | null;
+  wakeStatus: string | null;
+  runId: string | null;
+  runStatus: string | null;
   deliveryErrorCode: string | null;
   deliveredAt: Date | null;
+  acknowledgedAt: Date | null;
   recordedAt: Date;
   updatedAt: Date;
   missingRecordIds: string[];

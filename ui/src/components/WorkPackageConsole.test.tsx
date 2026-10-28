@@ -181,7 +181,7 @@ describe("WorkPackageConsole", () => {
       ], escalation: null },
     };
     previewMock.mockResolvedValueOnce(gapPreview);
-    escalateMock.mockResolvedValueOnce({ id: "escalation-1", clientRequestId: "gap", scopeDigest: preview.scopeDigest, targetCeoAgentId: "ceo-1", state: "delivered", wakeupRequestId: "wake-1", deliveryErrorCode: null, deliveredAt: new Date(), recordedAt: new Date(), updatedAt: new Date(), missingRecordIds: [ROOT_ID, CHILD_ID], replayed: false });
+    escalateMock.mockResolvedValueOnce({ id: "escalation-1", clientRequestId: "gap", scopeDigest: preview.scopeDigest, targetCeoAgentId: "ceo-1", state: "queued", deliveryAttempt: 1, wakeupRequestId: "wake-1", wakeStatus: "queued", runId: null, runStatus: null, deliveryErrorCode: null, deliveredAt: null, acknowledgedAt: null, recordedAt: new Date(), updatedAt: new Date(), missingRecordIds: [ROOT_ID, CHILD_ID], replayed: false });
     await render();
     const previewButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("预览整个工作包")) as HTMLButtonElement;
     await act(async () => previewButton.click()); await flush();
@@ -193,7 +193,7 @@ describe("WorkPackageConsole", () => {
     await act(async () => escalationButton.click()); await flush();
     expect(escalateMock).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain("不会覆盖已有负责人");
-    expect(container.textContent).toContain("协调通知已送达");
+    expect(container.textContent).toContain("协调通知已入队，尚未送达");
   });
 
   it("restores the persisted CEO coordination state after a fresh render", async () => {
@@ -203,9 +203,14 @@ describe("WorkPackageConsole", () => {
       scopeDigest: preview.scopeDigest,
       targetCeoAgentId: "ceo-1",
       state: "delivered",
+      deliveryAttempt: 1,
       wakeupRequestId: "wake-1",
+      wakeStatus: "claimed",
+      runId: "run-1",
+      runStatus: "running",
       deliveryErrorCode: null,
       deliveredAt: new Date(),
+      acknowledgedAt: null,
       recordedAt: new Date(),
       updatedAt: new Date(),
       missingRecordIds: [ROOT_ID, CHILD_ID],
@@ -215,8 +220,54 @@ describe("WorkPackageConsole", () => {
     await render();
 
     expect(latestEscalationMock).toHaveBeenCalledWith("company-1", "project-1", ROOT_ID);
-    expect(container.textContent).toContain("负责人缺口已上报 CEO，协调通知已送达");
+    expect(container.textContent).toContain("负责人缺口已上报 CEO，CEO 已接收协调通知，等待确认");
     expect(container.textContent).toContain("不会覆盖已有负责人");
+  });
+
+  it("renders CEO confirmation separately from queueing and delivery", async () => {
+    latestEscalationMock.mockResolvedValueOnce({
+      id: "escalation-1", clientRequestId: "gap", scopeDigest: preview.scopeDigest,
+      targetCeoAgentId: "ceo-1", state: "acknowledged", deliveryAttempt: 1,
+      wakeupRequestId: "wake-1", wakeStatus: "completed", runId: "run-1", runStatus: "succeeded",
+      deliveryErrorCode: null, deliveredAt: new Date(), acknowledgedAt: new Date(),
+      recordedAt: new Date(), updatedAt: new Date(), missingRecordIds: [ROOT_ID, CHILD_ID], replayed: false,
+    });
+
+    await render();
+
+    expect(container.textContent).toContain("CEO 已确认协调通知");
+  });
+
+  it("offers in-place reconciliation and retry after a persisted CEO delivery failure", async () => {
+    const failedReceipt = {
+      id: "escalation-1", clientRequestId: "gap", scopeDigest: preview.scopeDigest,
+      targetCeoAgentId: "ceo-1", state: "delivery_failed" as const, deliveryAttempt: 1,
+      wakeupRequestId: "wake-1", wakeStatus: "failed", runId: "run-1", runStatus: "failed",
+      deliveryErrorCode: "ceo_run_failed", deliveredAt: null, acknowledgedAt: null,
+      recordedAt: new Date(), updatedAt: new Date(), missingRecordIds: [ROOT_ID, CHILD_ID], replayed: false,
+    };
+    const gapPreview = {
+      ...preview,
+      eligibility: { canPrepare: false, blockers: [
+        { code: "missing_po" as const, recordId: ROOT_ID, title: "发布工作包", requiredRole: "PO" as const },
+      ], escalation: failedReceipt },
+    };
+    latestEscalationMock.mockResolvedValue(failedReceipt);
+    previewMock.mockResolvedValueOnce(gapPreview);
+    escalateMock.mockResolvedValueOnce({ ...failedReceipt, state: "queued", deliveryAttempt: 2, wakeStatus: "queued", runId: null, runStatus: null, deliveryErrorCode: null });
+
+    await render();
+    const previewButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("预览整个工作包")) as HTMLButtonElement;
+    await act(async () => previewButton.click()); await flush();
+    const reconcileButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("核对通知状态")) as HTMLButtonElement;
+    await act(async () => reconcileButton.click()); await flush();
+    const retryButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("重试上报 CEO")) as HTMLButtonElement;
+    expect(retryButton.disabled).toBe(false);
+    await act(async () => retryButton.click()); await flush();
+
+    expect(latestEscalationMock).toHaveBeenCalledTimes(2);
+    expect(escalateMock).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain("协调通知已入队，尚未送达");
   });
 
   it("counts create, reuse, completed, and blocked preview records as exclusive categories", async () => {

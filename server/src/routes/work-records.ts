@@ -267,7 +267,7 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       userId: actor.actorType === "user" ? actor.actorId : null,
       runId: actor.runId,
     }, async (delivery) => {
-      const idempotencyKey = `work-record-assignment-gap:${delivery.escalationId}`;
+      const idempotencyKey = `work-record-assignment-gap:${delivery.escalationId}:${delivery.deliveryAttempt}`;
       await heartbeat.wakeup(delivery.targetCeoAgentId, {
         source: "automation",
         triggerDetail: "system",
@@ -295,10 +295,16 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
         eq(agentWakeupRequests.companyId, delivery.companyId),
         eq(agentWakeupRequests.idempotencyKey, idempotencyKey),
       )).then((rows) => rows[0] ?? null);
-      if (!wakeup || ["skipped", "failed", "cancelled"].includes(wakeup.status)) {
+      if (!wakeup) {
         throw new Error("CEO wakeup was not accepted");
       }
-      return { wakeupRequestId: wakeup.id };
+      return {
+        wakeupRequestId: wakeup.id,
+        wakeStatus: wakeup.status,
+        runId: wakeup.runId,
+        claimedAt: wakeup.claimedAt,
+        finishedAt: wakeup.finishedAt,
+      };
     });
     if (!receipt.replayed) {
       await logActivity(db, {

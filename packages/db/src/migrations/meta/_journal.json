@@ -2045,6 +2045,13 @@
       "when": 1793168304184,
       "tag": "0293_magical_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 294,
+      "version": "7",
+      "when": 1793169257786,
+      "tag": "0294_lively_rhino",
+      "breakpoints": true
     }
   ]
 }

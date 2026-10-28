@@ -253,9 +253,14 @@ export const workRecordAssignmentGapEscalations = pgTable(
     missingRecordIds: jsonb("missing_record_ids").$type<string[]>().notNull(),
     targetCeoAgentId: uuid("target_ceo_agent_id").references(() => agents.id, { onDelete: "set null" }),
     state: text("state").notNull().default("pending"),
+    deliveryAttempt: integer("delivery_attempt").notNull().default(0),
     wakeupRequestId: uuid("wakeup_request_id").references(() => agentWakeupRequests.id, { onDelete: "set null" }),
+    wakeStatus: text("wake_status"),
+    runId: uuid("run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
+    runStatus: text("run_status"),
     deliveryErrorCode: text("delivery_error_code"),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
     actorAgentId: uuid("actor_agent_id").references(() => agents.id, { onDelete: "set null" }),
     actorUserId: text("actor_user_id"),
     actorRunId: uuid("actor_run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
@@ -279,7 +284,7 @@ export const workRecordAssignmentGapEscalations = pgTable(
       .on(table.companyId, table.projectId, table.scopeDigest),
     rootCreatedIdx: index("work_record_assignment_gap_escalations_root_created_idx")
       .on(table.companyId, table.projectId, table.rootRecordId, table.createdAt),
-    stateCheck: check("work_record_assignment_gap_escalations_state_check", sql`${table.state} IN ('pending', 'delivering', 'delivered', 'ceo_unavailable', 'delivery_failed')`),
+    stateCheck: check("work_record_assignment_gap_escalations_state_check", sql`${table.state} IN ('pending', 'delivering', 'queued', 'delivered', 'acknowledged', 'ceo_unavailable', 'delivery_failed')`),
   }),
 );
 

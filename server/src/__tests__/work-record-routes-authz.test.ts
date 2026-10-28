@@ -120,10 +120,15 @@ describe("work-record route authorization", () => {
       clientRequestId: "admin-gap",
       scopeDigest: "viewer-scope",
       targetCeoAgentId: "33333333-3333-4333-8333-333333333333",
-      state: "delivered",
+      state: "queued",
+      deliveryAttempt: 1,
       wakeupRequestId: "55555555-5555-4555-8555-555555555555",
+      wakeStatus: "queued",
+      runId: null,
+      runStatus: null,
       deliveryErrorCode: null,
-      deliveredAt: new Date(),
+      deliveredAt: null,
+      acknowledgedAt: null,
       recordedAt: new Date(),
       updatedAt: new Date(),
       missingRecordIds: ["22222222-2222-4222-8222-222222222222"],
@@ -236,7 +241,7 @@ describe("work-record route authorization", () => {
         expectedScopeDigest: "viewer-scope",
       })
       .expect(201);
-    expect(response.body).toMatchObject({ state: "delivered", scopeDigest: "viewer-scope", missingRecordIds: ["22222222-2222-4222-8222-222222222222"] });
+    expect(response.body).toMatchObject({ state: "queued", scopeDigest: "viewer-scope", missingRecordIds: ["22222222-2222-4222-8222-222222222222"] });
     expect(logActivity).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       action: "work_record.assignment_gap_escalated",
       details: expect.objectContaining({ targetCeoAgentId: "33333333-3333-4333-8333-333333333333", wakeupRequestId: "55555555-5555-4555-8555-555555555555" }),

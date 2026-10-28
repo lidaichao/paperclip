@@ -1,9 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
-import { and, asc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
   agentWakeupRequests,
   agents,
+  heartbeatRuns,
   issues,
   issueRelations,
   workRecords,
@@ -55,8 +56,15 @@ type AssignmentGapDelivery = (input: {
   rootRecordId: string | null;
   scopeDigest: string;
   missingRecordIds: string[];
+  deliveryAttempt: number;
   actor: Actor;
-}) => Promise<{ wakeupRequestId: string }>;
+}) => Promise<{
+  wakeupRequestId: string;
+  wakeStatus: string;
+  runId: string | null;
+  claimedAt: Date | null;
+  finishedAt: Date | null;
+}>;
 type Wakeup = (agentId: string, options: {
   source: "assignment";
   triggerDetail: "system";
@@ -86,6 +94,10 @@ type ScopeEdge = typeof workRecordDependencies.$inferSelect;
 function digest(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
+
+const ASSIGNMENT_GAP_DELIVERY_STALE_MS = 60_000;
+const FAILED_WAKE_STATUSES = new Set(["skipped", "failed", "cancelled"]);
+const FAILED_RUN_STATUSES = new Set(["failed", "cancelled", "timed_out"]);
 
 function writesEnabledFromEnv() {
   const value = process.env.PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED;
@@ -293,11 +305,14 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
 
   async function preview(companyId: string, projectId: string, input: PreviewWorkPackageDispatch) {
     const scope = await computeScope(db, companyId, projectId, input);
-    const escalation = await db.select().from(workRecordAssignmentGapEscalations).where(and(
+    const persistedEscalation = await db.select().from(workRecordAssignmentGapEscalations).where(and(
       eq(workRecordAssignmentGapEscalations.companyId, companyId),
       eq(workRecordAssignmentGapEscalations.projectId, projectId),
       eq(workRecordAssignmentGapEscalations.scopeDigest, scope.scopeDigest),
     )).then((rows) => rows[0] ?? null);
+    const escalation = persistedEscalation
+      ? await reconcileAssignmentEscalation(persistedEscalation)
+      : null;
     return {
       ...scope,
       records: scope.records.map((record) => ({
@@ -331,14 +346,94 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       scopeDigest: row.scopeDigest,
       targetCeoAgentId: row.targetCeoAgentId,
       state: row.state as WorkPackageAssignmentEscalationReceipt["state"],
+      deliveryAttempt: row.deliveryAttempt,
       wakeupRequestId: row.wakeupRequestId,
+      wakeStatus: row.wakeStatus,
+      runId: row.runId,
+      runStatus: row.runStatus,
       deliveryErrorCode: row.deliveryErrorCode,
       deliveredAt: row.deliveredAt,
+      acknowledgedAt: row.acknowledgedAt,
       recordedAt: row.createdAt,
       updatedAt: row.updatedAt,
       missingRecordIds: row.missingRecordIds,
       replayed,
     };
+  }
+
+  async function reconcileAssignmentEscalation(
+    row: typeof workRecordAssignmentGapEscalations.$inferSelect,
+  ) {
+    const wake = row.wakeupRequestId
+      ? await db.select().from(agentWakeupRequests).where(and(
+          eq(agentWakeupRequests.companyId, row.companyId),
+          eq(agentWakeupRequests.id, row.wakeupRequestId),
+        )).then((rows) => rows[0] ?? null)
+      : null;
+    const run = wake?.runId
+      ? await db.select().from(heartbeatRuns).where(and(
+          eq(heartbeatRuns.companyId, row.companyId),
+          eq(heartbeatRuns.id, wake.runId),
+        )).then((rows) => rows[0] ?? null)
+      : wake
+        ? await db.select().from(heartbeatRuns).where(and(
+            eq(heartbeatRuns.companyId, row.companyId),
+            eq(heartbeatRuns.wakeupRequestId, wake.id),
+          )).orderBy(desc(heartbeatRuns.createdAt)).then((rows) => rows[0] ?? null)
+        : null;
+
+    let state = row.state;
+    let deliveryErrorCode = row.deliveryErrorCode;
+    let deliveredAt = row.deliveredAt;
+    let acknowledgedAt = row.acknowledgedAt;
+    if (wake) {
+      if (FAILED_WAKE_STATUSES.has(wake.status) || (run && FAILED_RUN_STATUSES.has(run.status))) {
+        state = "delivery_failed";
+        deliveryErrorCode = run && FAILED_RUN_STATUSES.has(run.status)
+          ? `ceo_run_${run.status}`
+          : `ceo_wakeup_${wake.status}`;
+      } else if (wake.status === "completed" || run?.status === "succeeded" || run?.status === "completed") {
+        state = "acknowledged";
+        deliveryErrorCode = null;
+        deliveredAt ??= wake.claimedAt ?? run?.startedAt ?? new Date();
+        acknowledgedAt ??= wake.finishedAt ?? run?.finishedAt ?? new Date();
+      } else if (wake.status === "claimed" || run?.status === "running") {
+        state = "delivered";
+        deliveryErrorCode = null;
+        deliveredAt ??= wake.claimedAt ?? run?.startedAt ?? new Date();
+      } else {
+        state = "queued";
+        deliveryErrorCode = null;
+      }
+    } else if (
+      row.state === "delivering"
+      && Date.now() - row.updatedAt.getTime() >= ASSIGNMENT_GAP_DELIVERY_STALE_MS
+    ) {
+      state = "delivery_failed";
+      deliveryErrorCode = "ceo_wakeup_timeout";
+    }
+
+    const runId = run?.id ?? wake?.runId ?? row.runId;
+    const wakeStatus = wake?.status ?? row.wakeStatus;
+    const runStatus = run?.status ?? row.runStatus;
+    const changed = state !== row.state
+      || deliveryErrorCode !== row.deliveryErrorCode
+      || deliveredAt?.getTime() !== row.deliveredAt?.getTime()
+      || acknowledgedAt?.getTime() !== row.acknowledgedAt?.getTime()
+      || wakeStatus !== row.wakeStatus
+      || runId !== row.runId
+      || runStatus !== row.runStatus;
+    if (!changed) return row;
+    return db.update(workRecordAssignmentGapEscalations).set({
+      state,
+      wakeStatus,
+      runId,
+      runStatus,
+      deliveryErrorCode,
+      deliveredAt,
+      acknowledgedAt,
+      updatedAt: new Date(),
+    }).where(eq(workRecordAssignmentGapEscalations.id, row.id)).returning().then((rows) => rows[0]);
   }
 
   async function latestAssignmentEscalation(
@@ -421,16 +516,39 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       return { row, replayed: false };
     });
 
-    if (!persisted.row.targetCeoAgentId || persisted.row.state !== "pending") {
-      return assignmentEscalationReceipt(persisted.row, persisted.replayed);
+    const current = await reconcileAssignmentEscalation(persisted.row);
+    if (!["pending", "ceo_unavailable", "delivery_failed"].includes(current.state)) {
+      return assignmentEscalationReceipt(current, persisted.replayed);
+    }
+    const targetCeoAgentId = current.state === "pending" && current.targetCeoAgentId
+      ? current.targetCeoAgentId
+      : await assignmentEscalationTarget(companyId, db);
+    if (!targetCeoAgentId) {
+      const unavailable = current.state === "ceo_unavailable"
+        ? current
+        : await db.update(workRecordAssignmentGapEscalations).set({
+            state: "ceo_unavailable",
+            targetCeoAgentId: null,
+            updatedAt: new Date(),
+          }).where(eq(workRecordAssignmentGapEscalations.id, current.id)).returning().then((rows) => rows[0]);
+      return assignmentEscalationReceipt(unavailable, persisted.replayed);
     }
 
     const claimed = await db.update(workRecordAssignmentGapEscalations).set({
       state: "delivering",
+      targetCeoAgentId,
+      deliveryAttempt: sql`${workRecordAssignmentGapEscalations.deliveryAttempt} + 1`,
+      wakeupRequestId: null,
+      wakeStatus: null,
+      runId: null,
+      runStatus: null,
+      deliveryErrorCode: null,
+      deliveredAt: null,
+      acknowledgedAt: null,
       updatedAt: new Date(),
     }).where(and(
-      eq(workRecordAssignmentGapEscalations.id, persisted.row.id),
-      eq(workRecordAssignmentGapEscalations.state, "pending"),
+      eq(workRecordAssignmentGapEscalations.id, current.id),
+      inArray(workRecordAssignmentGapEscalations.state, ["pending", "ceo_unavailable", "delivery_failed"]),
     )).returning().then((rows) => rows[0] ?? null);
     if (!claimed) {
       const current = await db.select().from(workRecordAssignmentGapEscalations)
@@ -449,13 +567,20 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         rootRecordId: claimed.rootRecordId,
         scopeDigest: claimed.scopeDigest,
         missingRecordIds: claimed.missingRecordIds,
+        deliveryAttempt: claimed.deliveryAttempt,
         actor,
       });
+      const failed = FAILED_WAKE_STATUSES.has(result.wakeStatus);
+      const acknowledged = result.wakeStatus === "completed";
+      const accepted = result.wakeStatus === "claimed";
       delivered = await db.update(workRecordAssignmentGapEscalations).set({
-        state: "delivered",
+        state: failed ? "delivery_failed" : acknowledged ? "acknowledged" : accepted ? "delivered" : "queued",
         wakeupRequestId: result.wakeupRequestId,
-        deliveryErrorCode: null,
-        deliveredAt: new Date(),
+        wakeStatus: result.wakeStatus,
+        runId: result.runId,
+        deliveryErrorCode: failed ? `ceo_wakeup_${result.wakeStatus}` : null,
+        deliveredAt: accepted || acknowledged ? result.claimedAt ?? new Date() : null,
+        acknowledgedAt: acknowledged ? result.finishedAt ?? new Date() : null,
         updatedAt: new Date(),
       }).where(eq(workRecordAssignmentGapEscalations.id, claimed.id)).returning().then((rows) => rows[0]);
     } catch {
@@ -465,7 +590,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         updatedAt: new Date(),
       }).where(eq(workRecordAssignmentGapEscalations.id, claimed.id)).returning().then((rows) => rows[0]);
     }
-    return assignmentEscalationReceipt(delivered, persisted.replayed);
+    return assignmentEscalationReceipt(await reconcileAssignmentEscalation(delivered), persisted.replayed);
   }
 
   async function batchView(companyId: string, projectId: string, batchId: string) {
