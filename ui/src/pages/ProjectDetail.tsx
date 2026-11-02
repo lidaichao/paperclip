@@ -50,7 +50,7 @@ import {
 
 /* ── Top-level tab types ── */
 
-type ProjectBaseTab = "list" | "records" | "plugin-operations" | "workspaces" | "configuration" | "budget";
+type ProjectBaseTab = "list" | "plans" | "defects" | "plugin-operations" | "workspaces" | "configuration" | "budget";
 type ProjectPluginTab = `plugin:${string}`;
 type ProjectTab = ProjectBaseTab | ProjectPluginTab;
 
@@ -67,7 +67,8 @@ function resolveProjectTab(pathname: string, projectId: string): ProjectTab | nu
   if (tab === "configuration") return "configuration";
   if (tab === "budget") return "budget";
   if (tab === "issues") return "list";
-  if (tab === "records") return "records";
+  if (tab === "plans" || tab === "records") return "plans";
+  if (tab === "defects") return "defects";
   if (tab === "plugin-operations") return "plugin-operations";
   if (tab === "workspaces") return "workspaces";
   return null;
@@ -514,8 +515,12 @@ export function ProjectDetail() {
       navigate(`/projects/${canonicalProjectRef}/plugin-operations`, { replace: true });
       return;
     }
-    if (activeTab === "records") {
-      navigate(`/projects/${canonicalProjectRef}/records`, { replace: true });
+    if (activeTab === "plans") {
+      navigate(`/projects/${canonicalProjectRef}/plans`, { replace: true });
+      return;
+    }
+    if (activeTab === "defects") {
+      navigate(`/projects/${canonicalProjectRef}/defects`, { replace: true });
       return;
     }
     if (activeTab === "workspaces") {
@@ -649,6 +654,10 @@ export function ProjectDetail() {
     return <Navigate to={`/projects/${canonicalProjectRef}/issues`} replace />;
   }
 
+  if (location.pathname.endsWith("/records")) {
+    return <Navigate to={`/projects/${canonicalProjectRef}/plans`} replace />;
+  }
+
   // Redirect bare /projects/:id to cached tab or default /issues
   if (routeProjectRef && activeTab === null) {
     let cachedTab: string | null = null;
@@ -667,8 +676,11 @@ export function ProjectDetail() {
     if (cachedTab === "plugin-operations" && project?.managedByPlugin) {
       return <Navigate to={`/projects/${canonicalProjectRef}/plugin-operations`} replace />;
     }
-    if (cachedTab === "records") {
-      return <Navigate to={`/projects/${canonicalProjectRef}/records`} replace />;
+    if (cachedTab === "records" || cachedTab === "plans") {
+      return <Navigate to={`/projects/${canonicalProjectRef}/plans`} replace />;
+    }
+    if (cachedTab === "defects") {
+      return <Navigate to={`/projects/${canonicalProjectRef}/defects`} replace />;
     }
     if (cachedTab === "workspaces" && workspaceTabDecisionLoaded && showWorkspacesTab) {
       return <Navigate to={`/projects/${canonicalProjectRef}/workspaces`} replace />;
@@ -706,8 +718,10 @@ export function ProjectDetail() {
     }
     if (tab === "workspaces") {
       navigate(`/projects/${canonicalProjectRef}/workspaces`);
-    } else if (tab === "records") {
-      navigate(`/projects/${canonicalProjectRef}/records`);
+    } else if (tab === "plans") {
+      navigate(`/projects/${canonicalProjectRef}/plans`);
+    } else if (tab === "defects") {
+      navigate(`/projects/${canonicalProjectRef}/defects`);
     } else if (tab === "budget") {
       navigate(`/projects/${canonicalProjectRef}/budget`);
     } else if (tab === "plugin-operations") {
@@ -841,7 +855,8 @@ export function ProjectDetail() {
         <PageTabBar
           items={[
             { value: "list", label: l10n("local.tasks_b3a60e61") },
-            { value: "records", label: "业务记录" },
+            { value: "plans", label: "计划" },
+            { value: "defects", label: "缺陷" },
 
             ...(project.managedByPlugin ? [{ value: "plugin-operations", label: l10n("local.plugin_operations_5d078940") }] : []),
             ...(showWorkspacesTab ? [{ value: "workspaces", label: l10n("local.workspaces_1377264b") }] : []),
@@ -864,8 +879,12 @@ export function ProjectDetail() {
         <ProjectIssuesList projectId={project.id} companyId={resolvedCompanyId} />
       )}
 
-      {activeTab === "records" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} />
+      {activeTab === "plans" && project?.id && resolvedCompanyId && (
+        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" />
+      )}
+
+      {activeTab === "defects" && project?.id && resolvedCompanyId && (
+        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="defect" />
       )}
 
       {activeTab === "plugin-operations" && project?.id && resolvedCompanyId && project.managedByPlugin && (

@@ -43,6 +43,7 @@ const mockCompanyContext = vi.hoisted(() => ({
 }));
 const mockUsePluginSlots = vi.hoisted(() => vi.fn(() => ({ slots: [] as unknown[], isLoading: false })));
 const mockPluginSlotMount = vi.hoisted(() => vi.fn());
+const mockProjectWorkRecords = vi.hoisted(() => vi.fn());
 
 vi.mock("../api/projects", () => ({ projectsApi: mockProjectsApi }));
 vi.mock("../api/issues", () => ({ issuesApi: mockIssuesApi }));
@@ -110,6 +111,12 @@ vi.mock("../components/IssuesList", () => ({
   IssuesList: (props: unknown) => {
     mockIssuesList(props);
     return <div data-testid="issues-list" />;
+  },
+}));
+vi.mock("../components/ProjectWorkRecords", () => ({
+  ProjectWorkRecords: (props: { kind: "plan" | "defect" }) => {
+    mockProjectWorkRecords(props);
+    return <div data-testid="project-work-records" data-kind={props.kind} />;
   },
 }));
 
@@ -266,6 +273,43 @@ describe("ProjectDetail", () => {
     const props = mockIssuesList.mock.calls.at(-1)?.[0];
     expect(props).toEqual(expect.objectContaining({ projectId: "project-1" }));
     expect(props).not.toHaveProperty("projectTimelineHref");
+  });
+
+  it.each([
+    ["/projects/project-1/plans", "plan"],
+    ["/projects/project-1/defects", "defect"],
+  ] as const)("renders stable plan and defect entries for %s", async (pathname, kind) => {
+    mockLocation.pathname = pathname;
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    await act(async () => {
+      root = createRoot(container);
+      root.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.textContent).toContain("计划");
+    expect(container.textContent).toContain("缺陷");
+    expect(container.querySelector('[data-testid="project-work-records"]')?.getAttribute("data-kind")).toBe(kind);
+  });
+
+  it("redirects the legacy records deep link to plans", async () => {
+    mockLocation.pathname = "/projects/project-1/records";
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    await act(async () => {
+      root = createRoot(container);
+      root.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.querySelector('[data-testid="navigate"]')?.textContent).toBe("/projects/project-1/plans");
   });
 
   describe("plugin detail-tab deep links", () => {

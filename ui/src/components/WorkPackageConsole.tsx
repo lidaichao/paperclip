@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deriveWorkRecordDisplayState, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordQualityView } from "@paperclipai/shared";
+import { deriveWorkRecordDisplayState, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordKind, type WorkRecordQualityView } from "@paperclipai/shared";
 import { CheckCircle2, ChevronRight, PackageCheck, RefreshCw, WifiOff } from "lucide-react";
 import { heartbeatsApi } from "@/api/heartbeats";
 import { workRecordsApi } from "@/api/work-records";
@@ -130,8 +130,18 @@ function assignmentEscalationRetryable(receipt: WorkPackageAssignmentEscalationR
   return receipt?.state === "ceo_unavailable" || receipt?.state === "delivery_failed";
 }
 
-export function WorkPackageConsole({ companyId, projectId, records, agentNames, recordsLoading, recordsError, onRetryRecords }: {
-  companyId: string; projectId: string; records: WorkRecord[]; agentNames: Record<string, string>; recordsLoading: boolean; recordsError: Error | null; onRetryRecords: () => unknown;
+export function WorkPackageConsole({ companyId, projectId, records, visibleKind, agentNames, recordsLoading, recordsError, onRetryRecords, onEditRecord, onReopenRecord, reopeningRecordId }: {
+  companyId: string;
+  projectId: string;
+  records: WorkRecord[];
+  visibleKind?: WorkRecordKind;
+  agentNames: Record<string, string>;
+  recordsLoading: boolean;
+  recordsError: Error | null;
+  onRetryRecords: () => unknown;
+  onEditRecord?: (record: WorkRecord) => void;
+  onReopenRecord?: (record: WorkRecord) => void;
+  reopeningRecordId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const online = useConnectivity();
@@ -146,11 +156,19 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
   const batchStorageKey = `work-package-batch:${companyId}:${projectId}`;
   const [batchId, setBatchId] = useState(() => localStorage.getItem(batchStorageKey) ?? "");
 
+  const visibleRecords = useMemo(
+    () => visibleKind ? records.filter((record) => record.kind === visibleKind) : records,
+    [records, visibleKind],
+  );
   useEffect(() => {
-    if (records.length > 0 && (!selectedId || !records.some((record) => record.id === selectedId))) {
-      setSelectedId(records.find((record) => !record.parentRecordId)?.id ?? records[0].id);
+    if (selectedId && !visibleRecords.some((record) => record.id === selectedId)) setSelectedId(null);
+    if (!visibleKind && visibleRecords.length > 0 && !selectedId) {
+      setSelectedId(visibleRecords.find((record) => !record.parentRecordId)?.id ?? visibleRecords[0].id);
     }
-  }, [records, selectedId]);
+  }, [selectedId, visibleKind, visibleRecords]);
+  useEffect(() => {
+    setChecked((current) => current.filter((id) => visibleRecords.some((record) => record.id === id)));
+  }, [visibleRecords]);
   useEffect(() => {
     setBatchId(localStorage.getItem(batchStorageKey) ?? "");
   }, [batchStorageKey]);
@@ -162,7 +180,7 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
     if (online) void queryClient.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) });
   }, [companyId, online, projectId, queryClient]);
 
-  const selected = records.find((record) => record.id === selectedId) ?? null;
+  const selected = visibleRecords.find((record) => record.id === selectedId) ?? null;
   const qualityDraftKey = selected ? `work-package-quality-draft:${companyId}:${projectId}:${selected.id}` : null;
   useEffect(() => {
     if (!qualityDraftKey) return;
@@ -189,8 +207,8 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
     const visit = (record: WorkRecord, depth: number) => { if (seen.has(record.id)) return; seen.add(record.id); result.push({ record, depth }); for (const child of childrenByParent.get(record.id) ?? []) visit(child, depth + 1); };
     for (const root of records.filter((record) => !record.parentRecordId)) visit(root, 0);
     for (const record of records) visit(record, 0);
-    return result;
-  }, [childrenByParent, records]);
+    return visibleKind ? result.filter(({ record }) => record.kind === visibleKind) : result;
+  }, [childrenByParent, records, visibleKind]);
 
   const selectedRoot = useMemo(() => {
     if (!selected) return null;
@@ -299,9 +317,12 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
     ?? null;
   const escalationRetryable = assignmentEscalationRetryable(persistedEscalation);
 
-  if (recordsLoading) return <div role="status" aria-label="正在加载工作包" className="space-y-3"><Skeleton className="h-11 w-2/5" /><Skeleton className="h-24 w-full" /><Skeleton className="h-24 w-full" /></div>;
-  if (recordsError) return <div className="flex items-center justify-between gap-3 text-sm text-destructive"><p>工作包加载失败：{recordsError.message}</p><Button className="min-h-11" variant="outline" onClick={onRetryRecords}>重试</Button></div>;
-  if (records.length === 0) return <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">还没有业务记录。请添加子任务，或先为工作包设置 PO。</p>;
+  const surfaceLabel = visibleKind === "defect" ? "缺陷" : visibleKind === "plan" ? "计划" : "业务记录";
+  const packageActionsEnabled = visibleKind !== "defect";
+
+  if (recordsLoading) return <div role="status" aria-label={`正在加载${surfaceLabel}`} className="space-y-3"><Skeleton className="h-11 w-2/5" />{Array.from({ length: 12 }, (_, index) => <Skeleton key={index} className="h-10 w-full" />)}</div>;
+  if (recordsError) return <div className="flex min-h-11 items-center justify-between gap-3 text-sm text-destructive"><p>{surfaceLabel}加载失败：{recordsError.message}</p><Button variant="outline" onClick={onRetryRecords}>重试</Button></div>;
+  if (visibleRecords.length === 0) return <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed p-6 text-sm text-muted-foreground">还没有{surfaceLabel}。使用右上角的新建操作添加第一条记录。</div>;
 
   const prepareCapability = capabilities.data?.preparePackage;
   const poCapability = capabilities.data?.recordPoVerdict;
@@ -318,46 +339,50 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
       </div>
       {permissionExplanation ? <p role="note" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">当前为只读权限：事实和范围预览仍可查看；准备派发、PO/QA 判定及缺口上报已禁用。{permissionExplanation}</p> : null}
       {persistedEscalation ? <p role="status" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">{assignmentEscalationMessage(persistedEscalation)}；工作包保持阻断，且不会覆盖已有负责人。</p> : null}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><h2 id="work-package-title" className="text-lg font-semibold">工作包与质量证据</h2><p className="text-sm text-muted-foreground">列表宽度保持稳定；详情在固定区域原位核对。</p></div>
-        <div className="flex flex-wrap gap-2"><Button className="min-h-11" variant="outline" disabled={!online || checked.length === 0 || previewScope.isPending} onClick={() => previewScope.mutate("selected_records")}>预览所选 {checked.length || ""}</Button><Button className="min-h-11" disabled={!online || !selected || previewScope.isPending} onClick={() => previewScope.mutate("whole_package")}>预览整个工作包</Button></div>
+      <div className="flex min-h-11 flex-wrap items-end justify-between gap-3">
+        <div><h2 id="work-package-title" className="text-base font-semibold">{visibleKind === "defect" ? "缺陷与质量证据" : "工作包与质量证据"}</h2><p className="text-sm text-muted-foreground">选择一行查看详情；列表位置保持稳定。</p></div>
+        {packageActionsEnabled ? <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={!online || checked.length === 0 || previewScope.isPending} onClick={() => previewScope.mutate("selected_records")}>预览所选 {checked.length || ""}</Button><Button disabled={!online || !selected || previewScope.isPending} onClick={() => previewScope.mutate("whole_package")}>预览整个工作包</Button></div> : <div className="min-h-9" aria-hidden="true" />}
       </div>
-      <div className="grid items-start gap-4 xl:grid-cols-3">
-        <Card className="self-start xl:col-span-2">
-          <CardHeader><CardTitle>工作包行</CardTitle><CardDescription>业务、派发、质量和真实运行是四套独立状态。</CardDescription></CardHeader>
-          <CardContent className="space-y-2">
+      <div className={cn("items-start gap-4", selected && "grid xl:grid-cols-3")}>
+        <Card className={cn("self-start", selected && "xl:col-span-2")}>
+          <CardHeader className="py-3"><CardTitle>{surfaceLabel}列表</CardTitle><CardDescription>业务、派发、质量和真实运行保持独立。</CardDescription></CardHeader>
+          <CardContent className="divide-y p-0">
             {ordered.map(({ record, depth }) => {
               const childRecords = childrenByParent.get(record.id) ?? [];
               const completeChildren = childRecords.filter((child) => child.businessStatus === "done").length;
               const firstHold = record.dependencies.find((item) => item.holdReason)?.holdReason;
-              return <div key={record.id} className={`flex items-start gap-1 rounded-md border p-1 ${record.id === selectedId ? "bg-muted/50 ring-1 ring-ring" : ""}`} data-selected={record.id === selectedId ? "true" : "false"}>
-                <label className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md focus-within:ring-2 focus-within:ring-ring"><span className="sr-only">选择 {record.title}</span><input aria-label={`选择 ${record.title}`} type="checkbox" className="size-4 accent-primary" checked={checked.includes(record.id)} onChange={(event) => setChecked((current) => event.target.checked ? [...new Set([...current, record.id])] : current.filter((id) => id !== record.id))} /></label>
-                <button type="button" aria-current={record.id === selectedId ? "true" : undefined} className="min-h-11 min-w-0 flex-1 rounded-md p-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setSelectedId(record.id)}>
-                  <span className="flex flex-wrap items-center gap-2"><span className="font-medium">{record.title}</span><StatusBadge record={record} liveStatus={liveAvailable && record.execution.issueId ? liveByIssue.get(record.execution.issueId) : undefined} liveUnknown={!liveAvailable} /></span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{depth > 0 ? "子项 · " : ""}{record.kind === "defect" ? "缺陷" : "计划"} · 执行 {record.assigneeAgentId ? agentNames[record.assigneeAgentId] ?? "未知" : "未分配"} · QA {record.qaAssigneeAgentId ? agentNames[record.qaAssigneeAgentId] ?? "未知" : "未分配"} · 业务 {BUSINESS[record.businessStatus]} · 派发 {DISPATCH[record.dispatchState]} · 质量 {QUALITY[record.quality.phase]} · 子项 {completeChildren}/{childRecords.length} · {firstHold ? `阻断 ${HOLD[firstHold] ?? firstHold}` : "无阻断"}</span>
-                </button><ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground" />
+              return <div key={record.id} className={cn("flex min-h-10 items-center gap-1 px-1", record.id === selectedId && "bg-muted/50")} data-testid="work-record-row" data-kind={record.kind} data-selected={record.id === selectedId ? "true" : "false"}>
+                {packageActionsEnabled ? <label className="flex size-10 shrink-0 cursor-pointer items-center justify-center focus-within:ring-2 focus-within:ring-ring"><span className="sr-only">选择 {record.title}</span><input aria-label={`选择 ${record.title}`} type="checkbox" className="size-4 accent-primary" checked={checked.includes(record.id)} onChange={(event) => setChecked((current) => event.target.checked ? [...new Set([...current, record.id])] : current.filter((id) => id !== record.id))} /></label> : null}
+                <button type="button" aria-current={record.id === selectedId ? "true" : undefined} className="grid min-h-10 min-w-0 flex-1 items-center gap-1 px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-6" onClick={() => setSelectedId(record.id)}>
+                  <span className="min-w-0 truncate text-sm font-medium sm:col-span-2">{depth > 0 ? "子项 · " : ""}{record.title}</span>
+                  <span className="text-xs text-muted-foreground">{BUSINESS[record.businessStatus]}</span>
+                  <span className="text-xs text-muted-foreground">{record.assigneeAgentId ? agentNames[record.assigneeAgentId] ?? "未知" : "未分配"}</span>
+                  <span className="hidden text-xs text-muted-foreground sm:block">{QUALITY[record.quality.phase]}</span>
+                  <span className="flex items-center justify-end gap-2"><StatusBadge record={record} liveStatus={liveAvailable && record.execution.issueId ? liveByIssue.get(record.execution.issueId) : undefined} liveUnknown={!liveAvailable} />{firstHold ? <span className="sr-only">{HOLD[firstHold] ?? firstHold}</span> : null}{childRecords.length ? <span className="sr-only">子项 {completeChildren}/{childRecords.length}</span> : null}</span>
+                </button><ChevronRight className="size-4 shrink-0 text-muted-foreground" />
               </div>;
             })}
           </CardContent>
         </Card>
 
-        <Card className="self-start xl:col-span-1">
+        {selected ? <Card className="self-start xl:col-span-1">
           <CardHeader><CardTitle>原位详情</CardTitle><CardDescription>选择其他行不会挤压或移动列表。</CardDescription></CardHeader>
           <CardContent className="space-y-4">
             {selected ? <>
-              <div><h3 className="font-semibold">{selected.title}</h3><p className="text-xs text-muted-foreground">修订 {selected.revision} · 派发轮次 {selected.dispatchRound}</p></div>
+              <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{selected.title}</h3><p className="text-xs text-muted-foreground">修订 {selected.revision} · 派发轮次 {selected.dispatchRound}</p></div>{onEditRecord ? <Button size="sm" variant="outline" onClick={() => onEditRecord(selected)}>编辑</Button> : null}</div>
               <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Stat label="业务状态">{BUSINESS[selected.businessStatus]}</Stat><Stat label="派发状态">{DISPATCH[selected.dispatchState]}</Stat><Stat label="质量阶段">{QUALITY[selected.quality.phase]} · 第 {selected.quality.cycleNumber ?? 0} 轮</Stat><Stat label="下一责任">{nextOwner(selected, quality.data, agentNames)}</Stat><Stat label="真实运行">{!liveAvailable ? "暂不可确认" : selected.execution.issueId && liveByIssue.get(selected.execution.issueId) ? `真实${liveByIssue.get(selected.execution.issueId) === "running" ? "运行中" : "排队中"}` : selected.execution.lastRunStatus ? RUN[selected.execution.lastRunStatus] ?? `已结束 · ${selected.execution.lastRunStatus}` : "无实时运行"}</Stat><Stat label="执行投影">{PROJECTION[selected.execution.projectionState] ?? selected.execution.projectionState}{selected.execution.projectionError ? ` · ${selected.execution.projectionError}` : ""}</Stat><Stat label="缺陷证据">{selected.quality.defectCount} 条</Stat></dl>
               {selected.dependencies.length ? <div><h4 className="text-sm font-medium">依赖与阻断</h4><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{selected.dependencies.map((item) => <li key={item.predecessorRecordId}>{item.title}{item.holdReason ? ` · ${HOLD[item.holdReason] ?? item.holdReason}` : " · 已满足"}</li>)}</ul></div> : <p className="text-sm text-muted-foreground">无前置依赖。</p>}
               <div><h4 className="text-sm font-medium">通知证据</h4><p className="text-sm text-muted-foreground">{deliveryLabel(selected).delivered}</p><p className="text-sm text-muted-foreground">{deliveryLabel(selected).acknowledged}</p></div>
               {selected.recovery.canReconcile ? <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"><p className="text-destructive">{selected.recovery.message ?? "状态需要重新核对"}</p><Button className="mt-2 min-h-11" variant="outline" size="sm" disabled={!online || reconcileCapability?.allowed !== true || reconcileRecord.isPending} onClick={() => reconcileRecord.mutate(selected.id)}><RefreshCw className="mr-2 size-4" />重新核对当前记录</Button>{reconcileCapability?.allowed === false ? <p className="mt-2 text-xs text-muted-foreground">{reconcileCapability.reason}</p> : null}</div> : null}
               {selected.execution.issueId ? <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to={`/issues/${selected.execution.issueIdentifier ?? selected.execution.issueId}`}>打开唯一主任务 {selected.execution.issueIdentifier ?? ""}</Link> : <p className="text-sm text-muted-foreground">尚未建立主任务。</p>}
               {selected.execution.lastRunId && selected.execution.lastRunAgentId ? <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to={`/agents/${selected.execution.lastRunAgentId}/runs/${selected.execution.lastRunId}`}>打开最近真实运行</Link> : null}
+              {onReopenRecord && (selected.businessStatus === "done" || selected.businessStatus === "cancelled") ? <Button variant="outline" disabled={reopeningRecordId === selected.id} onClick={() => onReopenRecord(selected)}>{reopeningRecordId === selected.id ? "重新打开中…" : "重新打开缺陷"}</Button> : null}
             </> : null}
           </CardContent>
-        </Card>
+        </Card> : null}
       </div>
 
-      {preview ? <Card><CardHeader><CardTitle>派发前范围预览</CardTitle><CardDescription>{previewMode === "whole_package" ? "整个工作包" : "仅所选记录"} · {preview.recordCount} 项 · {preview.edgeCount} 条依赖 · 最大深度 {preview.maxDepth}</CardDescription></CardHeader><CardContent className="space-y-4">
+      {packageActionsEnabled && preview ? <Card><CardHeader><CardTitle>派发前范围预览</CardTitle><CardDescription>{previewMode === "whole_package" ? "整个工作包" : "仅所选记录"} · {preview.recordCount} 项 · {preview.edgeCount} 条依赖 · 最大深度 {preview.maxDepth}</CardDescription></CardHeader><CardContent className="space-y-4">
         {previewMode === "selected_records" ? <p className="rounded-md bg-muted/50 p-3 text-sm">只处理下列所选记录；不会派发父项、兄弟项或前置记录。未满足的前置仍会保持来源阻断。</p> : <p className="rounded-md bg-muted/50 p-3 text-sm">范围根记录：{recordTitle(records, preview.rootRecordId)}。已有关联会复用，已完成项不会重启。</p>}
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><Stat label="将新建">{previewCounts.create}</Stat><Stat label="将复用">{previewCounts.reuse}</Stat><Stat label="保持完成">{previewCounts.completed}</Stat><Stat label="安全受阻">{previewCounts.blocked}</Stat></div>
         {!preview.eligibility.canPrepare ? <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"><p className="font-medium text-destructive">负责人缺口会阻断整包派发</p><ul className="mt-2 space-y-1 text-muted-foreground">{preview.eligibility.blockers.map((blocker) => <li key={`${blocker.code}:${blocker.recordId}`}>{blocker.title} · 缺少 {blocker.requiredRole}</li>)}</ul><div className="mt-3 flex flex-wrap items-center gap-3"><Button className="min-h-11" variant="outline" disabled={!online || previewMode !== "whole_package" || escalateCapability?.allowed !== true || escalateAssignmentGaps.isPending || Boolean(persistedEscalation && !escalationRetryable)} onClick={() => escalateAssignmentGaps.mutate()}>{escalationRetryable ? "重试上报 CEO" : persistedEscalation ? "已上报 CEO" : "上报 CEO 协调"}</Button>{persistedEscalation ? <Button className="min-h-11" variant="ghost" disabled={!online || assignmentEscalation.isFetching} onClick={() => assignmentEscalation.refetch()}><RefreshCw className="mr-2 size-4" />核对通知状态</Button> : null}{persistedEscalation ? <p className="text-muted-foreground">{assignmentEscalationMessage(persistedEscalation)}；不会覆盖已有负责人。</p> : <p className="text-muted-foreground">上报只记录缺口，不会覆盖已有负责人。</p>}</div>{escalateCapability?.allowed === false ? <p className="mt-2 text-xs text-muted-foreground">{escalateCapability.reason}</p> : null}</div> : null}
@@ -366,18 +391,18 @@ export function WorkPackageConsole({ companyId, projectId, records, agentNames, 
         <p className="break-all font-mono text-xs text-muted-foreground">范围摘要 {preview.scopeDigest}</p><div className="flex flex-wrap items-center justify-end gap-3">{prepareCapability?.allowed === false ? <p className="text-sm text-muted-foreground">{prepareCapability.reason}</p> : null}<Button className="min-h-11" disabled={!online || prepareCapability?.allowed !== true || !preview.eligibility.canPrepare || prepare.isPending} onClick={() => prepare.mutate()}><PackageCheck className="mr-2 size-4" />确认范围并准备派发</Button></div>
       </CardContent></Card> : null}
 
-      {batch.data ? <Card><CardHeader><CardTitle>最近派发批次</CardTitle><CardDescription>{BATCH[batch.data.batch.state] ?? batch.data.batch.state} · {batch.data.items.length} 项 · <span className="break-all font-mono">{batch.data.batch.id}</span></CardDescription></CardHeader><CardContent><div className="flex flex-wrap gap-2">{batch.data.items.map((item) => <Badge key={item.id} variant={item.materializationState === "failed" || item.materializationState === "blocked" ? "destructive" : "secondary"}>{records.find((record) => record.id === item.recordId)?.title ?? item.recordId} · {MATERIALIZATION[item.materializationState] ?? item.materializationState}</Badge>)}</div>{batch.data.batch.state === "failed" || batch.data.batch.state === "blocked" ? <Button className="mt-3 min-h-11" variant="outline" disabled={!online || reconcileCapability?.allowed !== true || reconcile.isPending} onClick={() => reconcile.mutate()}><RefreshCw className="mr-2 size-4" />原位核对并恢复</Button> : null}</CardContent></Card> : null}
+      {packageActionsEnabled && batch.data ? <Card><CardHeader><CardTitle>最近派发批次</CardTitle><CardDescription>{BATCH[batch.data.batch.state] ?? batch.data.batch.state} · {batch.data.items.length} 项 · <span className="break-all font-mono">{batch.data.batch.id}</span></CardDescription></CardHeader><CardContent><div className="flex flex-wrap gap-2">{batch.data.items.map((item) => <Badge key={item.id} variant={item.materializationState === "failed" || item.materializationState === "blocked" ? "destructive" : "secondary"}>{records.find((record) => record.id === item.recordId)?.title ?? item.recordId} · {MATERIALIZATION[item.materializationState] ?? item.materializationState}</Badge>)}</div>{batch.data.batch.state === "failed" || batch.data.batch.state === "blocked" ? <Button className="mt-3 min-h-11" variant="outline" disabled={!online || reconcileCapability?.allowed !== true || reconcile.isPending} onClick={() => reconcile.mutate()}><RefreshCw className="mr-2 size-4" />原位核对并恢复</Button> : null}</CardContent></Card> : null}
 
       {selected ? <Card><CardHeader><CardTitle>质量轮次与专用命令</CardTitle><CardDescription>PO 与 QA 使用独立命令；原因和证据随判定留存。</CardDescription></CardHeader><CardContent className="space-y-4">
         {quality.isLoading ? <p className="text-sm text-muted-foreground">正在加载质量证据…</p> : null}
         {quality.error ? <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-destructive"><p>质量证据加载失败：{quality.error.message}</p><Button className="min-h-11" variant="outline" size="sm" disabled={!online || quality.isFetching} onClick={() => quality.refetch()}>重试加载</Button></div> : null}
-        {activeCycle ? <><div className="flex flex-wrap gap-2"><Badge>第 {activeCycle.cycleNumber} 轮</Badge><Badge variant="secondary">{QUALITY[activeCycle.qualityPhase]}</Badge><Badge variant="outline">{CYCLE_KIND[activeCycle.kind] ?? activeCycle.kind}</Badge></div><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{(quality.data?.items ?? []).map((item) => <div key={item.id} className="rounded-md border p-3"><p className="text-sm font-medium">{ROLE[item.role]} · {ITEM_STATE[item.state]}</p><p className="mt-1 text-xs text-muted-foreground">{records.find((record) => record.id === item.recordId)?.title ?? item.recordId}{item.defectRecordId ? ` · 缺陷 ${recordTitle(records, item.defectRecordId)}` : ""}</p></div>)}</div>
+        {activeCycle && selected.kind === "plan" ? <><div className="flex flex-wrap gap-2"><Badge>第 {activeCycle.cycleNumber} 轮</Badge><Badge variant="secondary">{QUALITY[activeCycle.qualityPhase]}</Badge><Badge variant="outline">{CYCLE_KIND[activeCycle.kind] ?? activeCycle.kind}</Badge></div><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{(quality.data?.items ?? []).map((item) => <div key={item.id} className="rounded-md border p-3"><p className="text-sm font-medium">{ROLE[item.role]} · {ITEM_STATE[item.state]}</p><p className="mt-1 text-xs text-muted-foreground">{records.find((record) => record.id === item.recordId)?.title ?? item.recordId}{item.defectRecordId ? ` · 缺陷 ${recordTitle(records, item.defectRecordId)}` : ""}</p></div>)}</div>
           <label className="block space-y-1 text-sm font-medium"><span>判定原因</span><Textarea value={reason} onChange={(event) => { setReason(event.target.value); updateDraft({ reason: event.target.value }); }} placeholder="必填：说明通过或退回依据" /></label>
           <label className="block space-y-1 text-sm font-medium"><span>证据引用（每行一个）</span><Textarea value={evidenceRefs} onChange={(event) => { setEvidenceRefs(event.target.value); updateDraft({ evidenceRefs: event.target.value }); }} placeholder="artifact://…" /></label>
           <div className="grid gap-3 md:grid-cols-2"><label className="space-y-1 text-sm font-medium"><span>缺陷记录</span><select className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm" value={defectRecordId} onChange={(event) => { setDefectRecordId(event.target.value); updateDraft({ defectRecordId: event.target.value }); }}><option value="">请选择</option>{records.filter((record) => record.kind === "defect").map((record) => <option key={record.id} value={record.id}>{record.title}</option>)}</select></label><label className="space-y-1 text-sm font-medium"><span>原修复记录（可选）</span><select className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm" value={repairRecordId} onChange={(event) => { setRepairRecordId(event.target.value); updateDraft({ repairRecordId: event.target.value }); }}><option value="">归属不明，交 PO 判断</option>{records.filter((record) => record.kind === "plan" && record.id !== selected.id).map((record) => <option key={record.id} value={record.id}>{record.title}</option>)}</select></label></div>
           <div className="flex flex-wrap gap-2"><Button className="min-h-11" variant="outline" disabled={!online || linkCapability?.allowed !== true || !reason.trim() || !qaItem || !defectRecordId || linkDefect.isPending} onClick={() => linkDefect.mutate()}>{repairRecordId ? "关联缺陷证据" : "关联缺陷并交 PO 判断"}</Button><Button className="min-h-11" variant="outline" disabled={!online || qaCapability?.allowed !== true || !reason.trim() || !qaItem || !defectRecordId || qaVerdict.isPending} onClick={() => qaVerdict.mutate("return")}>QA 退回</Button><Button className="min-h-11" variant="outline" disabled={!online || qaCapability?.allowed !== true || !reason.trim() || !qaItem || !defectRecordId || qaVerdict.isPending} onClick={() => qaVerdict.mutate("pass")}>QA 通过</Button><Button className="min-h-11" variant="outline" disabled={!online || poCapability?.allowed !== true || !reason.trim() || !poItem || checked.length === 0 || poVerdict.isPending} onClick={() => poVerdict.mutate("return")}>PO 退回所选</Button><Button className="min-h-11" disabled={!online || poCapability?.allowed !== true || !reason.trim() || !poItem || poVerdict.isPending} onClick={() => poVerdict.mutate("approve")}>PO 验收通过</Button></div>
           {poCapability?.allowed === false || qaCapability?.allowed === false ? <p className="text-sm text-muted-foreground">PO/QA 写入已按权限预先禁用：{poCapability?.reason ?? qaCapability?.reason}</p> : null}
-        </> : <div className="flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle2 className="size-4" />当前没有开放质量轮次。</div>}
+        </> : selected.kind === "defect" ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle2 className="size-4" />缺陷判定由关联计划的质量链维护；此处保留证据和历史。</div> : <div className="flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle2 className="size-4" />当前没有开放质量轮次。</div>}
         {(quality.data?.links.length ?? 0) > 0 ? <div><h4 className="text-sm font-medium">缺陷与原任务关系</h4><ul className="mt-2 space-y-1 text-sm text-muted-foreground">{quality.data!.links.map((link) => <li key={link.id}>{recordTitle(records, link.defectRecordId)} → 修复 {recordTitle(records, link.repairRecordId)} → QA {recordTitle(records, link.qaRecordId)}</li>)}</ul></div> : null}
         {(quality.data?.history.cycles.length ?? 0) > 0 ? <div><h4 className="text-sm font-medium">返工与验收历史</h4><ol className="mt-2 space-y-3 border-l pl-4">{quality.data!.history.cycles.map((cycle) => { const verdicts = quality.data!.history.verdicts.filter((verdict) => verdict.cycleId === cycle.id); return <li key={cycle.id} className="space-y-2"><div><p className="text-sm font-medium">第 {cycle.cycleNumber} 轮 · {QUALITY[cycle.qualityPhase]} · {CYCLE_STATE[cycle.state] ?? cycle.state}</p><p className="text-xs text-muted-foreground">{CYCLE_KIND[cycle.kind] ?? cycle.kind} · {cycle.reason ?? "未记录轮次原因"} · {time(cycle.createdAt)}</p></div>{verdicts.length > 0 ? <ul className="space-y-2">{verdicts.map((verdict) => <li key={verdict.id} className="rounded-md bg-muted/50 p-3 text-sm"><p className="font-medium">{VERDICT[verdict.outcome] ?? verdict.outcome} · {verdict.defectRecordId ? recordTitle(records, verdict.defectRecordId) : "工作包"}</p><p className="mt-1 text-muted-foreground">{verdict.reason ?? "未记录判定原因"} · {time(verdict.createdAt)}</p>{verdict.evidenceRefs.length > 0 ? <ul className="mt-2 space-y-1 font-mono text-xs text-muted-foreground">{verdict.evidenceRefs.map((ref) => <li key={ref} className="break-all">{ref}</li>)}</ul> : <p className="mt-2 text-xs text-muted-foreground">未附证据引用</p>}</li>)}</ul> : <p className="text-xs text-muted-foreground">本轮尚无判定。</p>}</li>; })}</ol></div> : null}
       </CardContent></Card> : null}

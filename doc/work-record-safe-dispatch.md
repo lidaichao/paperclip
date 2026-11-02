@@ -11,6 +11,14 @@ This document describes the M1 vertical path from a project business record to a
 
 All reads and writes require company access. The service additionally scopes every record and predecessor lookup to the same company and project. Composite database foreign keys enforce those boundaries for dependencies, dispatch commands, primary issue links, holds, outbox rows, and projections.
 
+## Project UI routes
+
+- `/projects/:projectId/plans` shows only `kind=plan` records and retains package, dependency, dispatch, live-run, and PO/QA evidence controls.
+- `/projects/:projectId/defects` shows only `kind=defect` records and supports reopening the same record without creating a duplicate execution record.
+- The legacy `/projects/:projectId/records` deep link redirects to the plan route.
+
+Creating, editing, or preassigning either kind remains non-executing. Package materialization starts only after the operator previews the scope and explicitly confirms preparation.
+
 ## Transaction and delivery contract
 
 Dependency validation and replacement run under one project-scoped transaction advisory lock. This serializes graph writers for a company/project, so concurrent opposite-edge updates cannot both pass cycle detection and commit. Dispatch separately takes the same per-record transaction lock used by editing and reconciliation. Its transaction creates or reuses the idempotent dispatch command, creates the primary issue, writes the permanent primary link, materializes source holds and available native issue blocker edges, creates the execution projection, writes the first release outbox row when already ready, and records the dispatch round. No issue/link can commit before its source hold or ready outbox state. Database constraints allow only one `primary` link per record and only one record to claim an issue as its primary execution target; `reference` links intentionally remain many-to-one. The UI also preserves its `clientRequestId` in session storage until a response succeeds.

@@ -12,6 +12,7 @@ import { WorkPackageConsole } from "./WorkPackageConsole";
 const liveRunsMock = vi.hoisted(() => vi.fn());
 const qualityMock = vi.hoisted(() => vi.fn());
 const previewMock = vi.hoisted(() => vi.fn());
+const prepareMock = vi.hoisted(() => vi.fn());
 const capabilitiesMock = vi.hoisted(() => vi.fn());
 const escalateMock = vi.hoisted(() => vi.fn());
 const latestEscalationMock = vi.hoisted(() => vi.fn());
@@ -25,7 +26,7 @@ vi.mock("@/api/work-records", () => ({
     escalateAssignmentGaps: escalateMock,
     latestAssignmentGapEscalation: latestEscalationMock,
     packageBatch: vi.fn(),
-    preparePackage: vi.fn(),
+    preparePackage: prepareMock,
     reconcilePackage: vi.fn(),
     reconcile: vi.fn(),
     recordPoVerdict: vi.fn(),
@@ -55,7 +56,7 @@ function record(overrides: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title"
     blockedCycle: 0, dependencies: [],
     execution: { issueId: "issue-1", issueIdentifier: "LUN-1", issueStatus: "in_progress", issueStatusVersion: 1, lastRunId: "run-1", lastRunStatus: null, lastRunAgentId: "agent-po", lastRunStartedAt: new Date(), lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: new Date() },
     recovery: { code: null, message: null, canReconcile: false, lastConfirmedAt: new Date() },
-    delivery: { eventKey: "event-1", deliveryState: "delivered", deliveredAt: new Date(), attemptCount: 1, lastError: null, wakeRequestId: "wake-1", wakeStatus: "completed", acknowledgedAt: new Date(), runId: "run-1" },
+    delivery: { eventKey: "event-1", deliveryState: "delivered", deliveredAt: new Date(), attemptCount: 1, lastError: null, wakeRequestId: "wake-1", wakeStatus: "completed", acknowledgedAt: new Date(), runId: "run-1", recoveryCount: 0, deadLetteredAt: null, lastRecoveredAt: null },
     quality: { cycleId: CYCLE_ID, cycleNumber: 1, cycleRevision: 1, phase: "po_acceptance", defectCount: 1 },
     createdAt: new Date(), updatedAt: new Date(), ...rest,
   };
@@ -125,8 +126,8 @@ describe("WorkPackageConsole", () => {
     act(() => root.unmount()); client.clear(); container.remove(); vi.clearAllMocks();
   });
 
-  async function render(currentRecords = records) {
-    await act(async () => root.render(<QueryClientProvider client={client}><WorkPackageConsole companyId="company-1" projectId="project-1" records={currentRecords} agentNames={{ "agent-po": "卡罗尔", "agent-qa": "Belle" }} recordsLoading={false} recordsError={null} onRetryRecords={() => undefined} /></QueryClientProvider>));
+  async function render(currentRecords = records, visibleKind?: "plan" | "defect") {
+    await act(async () => root.render(<QueryClientProvider client={client}><WorkPackageConsole companyId="company-1" projectId="project-1" records={currentRecords} visibleKind={visibleKind} agentNames={{ "agent-po": "卡罗尔", "agent-qa": "Belle" }} recordsLoading={false} recordsError={null} onRetryRecords={() => undefined} /></QueryClientProvider>));
     await flush(); await flush();
   }
 
@@ -161,6 +162,36 @@ describe("WorkPackageConsole", () => {
     expect(container.textContent).toContain("前置尚未完成");
     expect(container.textContent).toContain("发布工作包 → 实现子项");
     expect(container.textContent).toContain("范围摘要 scope-digest");
+  });
+
+  it("keeps plans and defects isolated without opening details by default", async () => {
+    await render(records, "plan");
+    expect(container.textContent).toContain("发布工作包");
+    expect(container.textContent).not.toContain("回归缺陷");
+    expect(container.querySelector('[aria-current="true"]')).toBeNull();
+
+    await render(records, "defect");
+    expect(container.textContent).toContain("回归缺陷");
+    expect(container.textContent).not.toContain("发布工作包");
+    expect(container.textContent).not.toContain("预览整个工作包");
+  });
+
+  it("enters the dispatch chain only after explicit confirmation", async () => {
+    prepareMock.mockResolvedValueOnce({ batch: { id: "batch-1" }, records });
+    await render(records, "plan");
+    expect(prepareMock).not.toHaveBeenCalled();
+
+    const rootRow = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("发布工作包")) as HTMLButtonElement;
+    await act(async () => rootRow.click());
+    const previewButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("预览整个工作包")) as HTMLButtonElement;
+    await act(async () => previewButton.click());
+    await flush();
+    expect(prepareMock).not.toHaveBeenCalled();
+
+    const confirmButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认范围并准备派发")) as HTMLButtonElement;
+    await act(async () => confirmButton.click());
+    await flush();
+    expect(prepareMock).toHaveBeenCalledTimes(1);
   });
 
   it("keeps facts readable while pre-disabling viewer writes with role explanations", async () => {

@@ -289,6 +289,8 @@ function boardRoutes(streamlinedUiEnabled: boolean) {
       <Route path="projects/:projectId/issues" element={<ProjectDetail />} />
       <Route path="projects/:projectId/issues/:filter" element={<ProjectDetail />} />
       <Route path="projects/:projectId/records" element={<ProjectDetail />} />
+      <Route path="projects/:projectId/plans" element={<ProjectDetail />} />
+      <Route path="projects/:projectId/defects" element={<ProjectDetail />} />
       <Route element={<IsolatedWorkspacesRouteGate />}>
         <Route path="projects/:projectId/workspaces/:workspaceId" element={<ProjectWorkspaceDetail />} />
       </Route>
