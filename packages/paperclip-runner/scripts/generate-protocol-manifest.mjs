@@ -15,8 +15,8 @@ import {
   listJsonFiles,
   loadSchemaCatalog,
   portableRelative,
+  portableTextSha256,
   readJson,
-  sha256,
 } from "./protocol-contract.mjs";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -89,7 +89,7 @@ export async function buildProtocolManifest() {
 
     fixtures.push({
       path: relativePath,
-      sha256: sha256(source),
+      sha256: portableTextSha256(source),
       expectation,
       compatibilityCase,
     });
@@ -108,7 +108,7 @@ export async function buildProtocolManifest() {
     schemas: schemas.map((record) => ({
       path: portableRelative(protocolRoot, record.path),
       id: record.value.$id,
-      sha256: sha256(record.source),
+      sha256: portableTextSha256(record.source),
     })),
     fixtures,
   };

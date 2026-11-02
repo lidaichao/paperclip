@@ -42,6 +42,10 @@ export function sha256(source) {
   return createHash("sha256").update(source).digest("hex");
 }
 
+export function portableTextSha256(source) {
+  return sha256(source.replaceAll("\r\n", "\n"));
+}
+
 function collectReferences(value, output = []) {
   if (Array.isArray(value)) {
     for (const item of value) collectReferences(item, output);
