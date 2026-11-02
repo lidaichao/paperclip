@@ -228,9 +228,13 @@ async function compatibilityState(connectionString: string) {
             and column_name in ('recovery_count', 'dead_lettered_at', 'last_recovered_at')) as rollback_columns,
         (select count(*)::int from pg_indexes
           where schemaname = 'public' and indexname = 'work_record_outbox_project_state_idx') as rollback_indexes,
-        (select count(*)::int from information_schema.table_constraints
-          where table_schema = 'public' and table_name = 'work_record_outbox'
-            and constraint_name = 'work_record_outbox_state_check') as rollback_constraints,
+        (select count(*)::int
+          from pg_constraint constraint_definition
+          join pg_class relation on relation.oid = constraint_definition.conrelid
+          join pg_namespace namespace on namespace.oid = relation.relnamespace
+          where namespace.nspname = 'public'
+            and relation.relname = 'work_record_outbox'
+            and constraint_definition.conname = 'work_record_outbox_state_check') as rollback_constraints,
         (select count(*)::int from activity_log
           where action = 'migration_journal.stable_identity_backfilled') as identity_audit_facts,
         (select count(*)::int from work_records) as retained_records
@@ -501,6 +505,9 @@ try {
     || !compatibleState.migrationNameColumn
     || compatibleState.namedMigrationRows !== compatibleState.migrationRows
     || compatibleState.distinctMigrationNames !== compatibleState.migrationRows
+    || compatibleState.rollbackColumns !== 3
+    || compatibleState.rollbackIndexes !== 1
+    || compatibleState.rollbackConstraints !== 1
     || compatibleState.rollbackColumns !== targetStateBefore.rollbackColumns
     || compatibleState.rollbackIndexes !== targetStateBefore.rollbackIndexes
     || compatibleState.rollbackConstraints !== targetStateBefore.rollbackConstraints

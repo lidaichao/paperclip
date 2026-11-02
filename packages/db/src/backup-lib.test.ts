@@ -137,7 +137,8 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
             "payload" text NOT NULL,
             "state" "public"."backup_test_state" NOT NULL,
             "metadata" jsonb,
-            "created_at" timestamptz NOT NULL DEFAULT now()
+            "created_at" timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT "backup_test_records_title_check" CHECK (length("title") > 0)
           );
         `);
         await sourceSql.unsafe(`
@@ -240,6 +241,20 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
           WHERE "title" = 'triggered'
         `);
         expect(triggeredRows).toEqual([{ state: "done" }]);
+
+        const checkConstraints = await restoreSql.unsafe<{ conname: string }[]>(`
+          SELECT conname
+          FROM pg_constraint
+          WHERE conrelid = 'public.backup_test_records'::regclass
+            AND conname = 'backup_test_records_title_check'
+        `);
+        expect(checkConstraints).toEqual([{ conname: "backup_test_records_title_check" }]);
+        await expect(
+          restoreSql.unsafe(`
+            INSERT INTO "public"."backup_test_records" ("title", "payload", "state")
+            VALUES ('', 'rejected', 'pending')
+          `),
+        ).rejects.toMatchObject({ code: "23514", constraint_name: "backup_test_records_title_check" });
       } finally {
         await sourceSql.end();
         await restoreSql.end();
