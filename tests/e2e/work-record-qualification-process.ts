@@ -44,7 +44,8 @@ export function requireM2eTestedCommit(input: {
   env?: NodeJS.ProcessEnv;
   currentCommit?: string;
 }) {
-  const testedCommit = (input.env ?? process.env).PAPERCLIP_M2E_TESTED_COMMIT?.trim();
+  const env = input.env === undefined ? process.env : input.env;
+  const testedCommit = env.PAPERCLIP_M2E_TESTED_COMMIT?.trim();
   if (!testedCommit) {
     throw new Error("PAPERCLIP_M2E_TESTED_COMMIT is required");
   }
@@ -167,20 +168,39 @@ function killPid(pid: number, signal: NodeJS.Signals) {
   }
 }
 
+type StopServerDependencies = Pick<
+  ProcessEvidenceDependencies,
+  "readPortOwner" | "isAlive"
+> & {
+  killPid: (pid: number, signal: NodeJS.Signals) => void;
+  waitForStopped: typeof waitForStopped;
+};
+
+const defaultStopServerDependencies: StopServerDependencies = {
+  readPortOwner: defaultDependencies.readPortOwner,
+  isAlive: defaultDependencies.isAlive,
+  killPid,
+  waitForStopped,
+};
+
 export async function stopAndVerifyQualifiedServer(
   evidence: QualifiedServerProcess,
-  dependencies: Pick<ProcessEvidenceDependencies, "readPortOwner" | "isAlive"> = defaultDependencies,
+  dependencies: StopServerDependencies = defaultStopServerDependencies,
 ): Promise<QualifiedServerExit> {
-  killPid(evidence.actualListenerPid, "SIGTERM");
-  if (!evidence.listenerIsTsxLauncher) killPid(evidence.tsxLauncherPid, "SIGTERM");
-  await waitForStopped(evidence, 5_000, dependencies);
+  dependencies.killPid(evidence.actualListenerPid, "SIGTERM");
+  if (!evidence.listenerIsTsxLauncher) {
+    dependencies.killPid(evidence.tsxLauncherPid, "SIGTERM");
+  }
+  await dependencies.waitForStopped(evidence, 5_000, dependencies);
 
   const ownerBeforeForce = await dependencies.readPortOwner(evidence.actualListenerPort);
   if (ownerBeforeForce === evidence.actualListenerPid && dependencies.isAlive(evidence.actualListenerPid)) {
-    killPid(evidence.actualListenerPid, "SIGKILL");
+    dependencies.killPid(evidence.actualListenerPid, "SIGKILL");
   }
-  if (dependencies.isAlive(evidence.tsxLauncherPid)) killPid(evidence.tsxLauncherPid, "SIGKILL");
-  await waitForStopped(evidence, 2_000, dependencies);
+  if (dependencies.isAlive(evidence.tsxLauncherPid)) {
+    dependencies.killPid(evidence.tsxLauncherPid, "SIGKILL");
+  }
+  await dependencies.waitForStopped(evidence, 2_000, dependencies);
 
   const portOwnerPidAfterExit = await dependencies.readPortOwner(evidence.actualListenerPort);
   const result: QualifiedServerExit = {
