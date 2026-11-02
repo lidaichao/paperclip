@@ -24,6 +24,11 @@ import { createBetterAuthInstance } from "../../server/src/auth/better-auth.js";
 import type { Config } from "../../server/src/config.js";
 import { workPackageDispatchService } from "../../server/src/services/work-package-dispatch.js";
 import { workRecordService } from "../../server/src/services/work-records.js";
+import {
+  captureQualifiedServerProcess,
+  requireM2eTestedCommit,
+  stopAndVerifyQualifiedServer,
+} from "./work-record-qualification-process.js";
 
 type CliResult = {
   args: string[];
@@ -43,6 +48,7 @@ const evidenceDir = process.env.PAPERCLIP_M2E_EVIDENCE_DIR?.trim();
 if (!evidenceDir) throw new Error("PAPERCLIP_M2E_EVIDENCE_DIR is required");
 
 const repoRoot = process.cwd();
+const testedCommit = requireM2eTestedCommit({ repoRoot });
 const cliTsx = path.join(repoRoot, "cli", "node_modules", "tsx", "dist", "cli.mjs");
 const serverTsx = path.join(repoRoot, "server", "node_modules", "tsx", "dist", "cli.mjs");
 const cliEntry = path.join(repoRoot, "cli", "src", "index.ts");
@@ -511,7 +517,12 @@ try {
     legacyRecord.id,
     sourceKeyFile,
   );
-  await stopServer(sourceServer);
+  if (!sourceServer.child.pid) throw new Error("Source tsx launcher PID was unavailable");
+  const sourceProcess = await captureQualifiedServerProcess({
+    tsxLauncherPid: sourceServer.child.pid,
+    port: sourcePort,
+  });
+  const sourceExit = await stopAndVerifyQualifiedServer(sourceProcess);
   sourceServerLog = `${sourceServer.output()}\npipeErrors=${JSON.stringify(sourceServer.pipeErrors())}\n`;
   sourceServer = null;
 
@@ -550,11 +561,19 @@ try {
     legacyRecord.id,
     targetKeyFile,
   );
+  if (!targetServer.child.pid) throw new Error("Target tsx launcher PID was unavailable");
+  const targetProcess = await captureQualifiedServerProcess({
+    tsxLauncherPid: targetServer.child.pid,
+    port: targetPort,
+  });
+  const targetExit = await stopAndVerifyQualifiedServer(targetProcess);
+  targetServerLog = `${targetServer.output()}\npipeErrors=${JSON.stringify(targetServer.pipeErrors())}\n`;
+  targetServer = null;
 
   await mkdir(evidenceDir, { recursive: true });
   await writeFile(path.join(evidenceDir, "authenticated-backup-restore.json"), `${JSON.stringify({
-    schemaVersion: 1,
-    testedCommit: process.env.PAPERCLIP_M2B_TESTED_COMMIT ?? null,
+    schemaVersion: 2,
+    testedCommit,
     database: {
       sourceIdentity: sourceUrl.pathname,
       targetIdentity: targetUrl.pathname,
@@ -580,9 +599,14 @@ try {
       checksumFailureLeftTargetEmpty: targetAfterFailedPreflight.tableCount === 0,
       unchangedSourceProcessRestarted: true,
       sourceSmoke: sourceFallbackSmoke,
+      sourceProcess: {
+        ...sourceProcess,
+        exit: sourceExit,
+      },
     },
     restoredProcess: {
-      isolatedPort: targetPort,
+      ...targetProcess,
+      exit: targetExit,
       smoke: restoredSmoke,
     },
     retainedData: {

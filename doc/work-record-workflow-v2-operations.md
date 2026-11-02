@@ -247,26 +247,138 @@ corepack pnpm@9.15.4 --dir "$PAPERCLIP_OLD_BINARY_ROOT" install --frozen-lockfil
 corepack pnpm@9.15.4 --dir "$PAPERCLIP_OLD_BINARY_ROOT" --filter @paperclipai/shared exec tsc
 corepack pnpm@9.15.4 --dir "$PAPERCLIP_OLD_BINARY_ROOT/packages/plugins/sdk" exec tsc
 PAPERCLIP_OLD_BINARY_COMMIT=65b3d9ae48d02abdeb8f310500e93fcf30105a2d \
+PAPERCLIP_M2E_TESTED_COMMIT="$(git rev-parse HEAD)" \
 PAPERCLIP_M2E_EVIDENCE_DIR="$PAPERCLIP_RUN_SCRATCH_DIR/m2e" \
 pnpm exec tsx tests/e2e/run-work-record-old-binary-rollback.ts
 ```
 
-PowerShell:
+### Windows three-run qualification
+
+Use a deliberately short old-checkout path and evidence root. Do **not** place
+the old worktree under a deeply nested `PAPERCLIP_RUN_SCRATCH_DIR`: pnpm's
+dependency tree plus the worktree prefix can exceed the Windows path limit and
+fail with `ENAMETOOLONG` before the qualification starts. The worktree and every
+evidence directory below are new, isolated paths; none of these commands reads
+or binds the current port 3100 instance.
+
+Run this from a clean, committed candidate checkout in PowerShell. The scripts
+require the full candidate commit through `PAPERCLIP_M2E_TESTED_COMMIT` and fail
+if it is empty, abbreviated, or different from `HEAD`.
 
 ```powershell
-git worktree add $env:PAPERCLIP_OLD_BINARY_ROOT 65b3d9ae48d02abdeb8f310500e93fcf30105a2d
-corepack pnpm@9.15.4 --dir $env:PAPERCLIP_OLD_BINARY_ROOT install --frozen-lockfile
-corepack pnpm@9.15.4 --dir $env:PAPERCLIP_OLD_BINARY_ROOT --filter @paperclipai/shared exec tsc
-corepack pnpm@9.15.4 --dir (Join-Path $env:PAPERCLIP_OLD_BINARY_ROOT 'packages/plugins/sdk') exec tsc
-$env:PAPERCLIP_OLD_BINARY_COMMIT = '65b3d9ae48d02abdeb8f310500e93fcf30105a2d'
-$env:PAPERCLIP_M2E_EVIDENCE_DIR = Join-Path $env:PAPERCLIP_RUN_SCRATCH_DIR 'm2e'
-pnpm exec tsx tests/e2e/run-work-record-old-binary-rollback.ts
+$oldCommit = '65b3d9ae48d02abdeb8f310500e93fcf30105a2d'
+$oldRoot = 'C:\pc-m2e-old'
+$evidenceRoot = 'C:\pc-m2e-proof'
+$testedCommit = (git rev-parse HEAD).Trim()
+
+if ($LASTEXITCODE -ne 0 -or $testedCommit -notmatch '^[0-9a-f]{40}$') {
+  throw 'Could not resolve the full candidate commit.'
+}
+if (git status --porcelain) { throw 'Commit the candidate before qualification.' }
+if (Test-Path -LiteralPath $oldRoot) { throw "$oldRoot already exists; choose another short empty path." }
+if (Test-Path -LiteralPath $evidenceRoot) { throw "$evidenceRoot already exists; preserve it and choose a fresh root." }
+
+git worktree add --detach $oldRoot $oldCommit
+if ($LASTEXITCODE -ne 0) { throw 'Old worktree creation failed.' }
+corepack pnpm@9.15.4 --dir $oldRoot install --frozen-lockfile
+if ($LASTEXITCODE -ne 0) { throw 'Old worktree install failed.' }
+corepack pnpm@9.15.4 --dir $oldRoot --filter @paperclipai/shared exec tsc
+if ($LASTEXITCODE -ne 0) { throw 'Old shared build failed.' }
+corepack pnpm@9.15.4 --dir (Join-Path $oldRoot 'packages/plugins/sdk') exec tsc
+if ($LASTEXITCODE -ne 0) { throw 'Old plugin SDK build failed.' }
+
+New-Item -ItemType Directory -Path $evidenceRoot | Out-Null
+$env:PAPERCLIP_M2E_TESTED_COMMIT = $testedCommit
+$env:PAPERCLIP_OLD_BINARY_ROOT = $oldRoot
+$env:PAPERCLIP_OLD_BINARY_COMMIT = $oldCommit
 ```
 
-For qualification, run the authenticated restore and old-binary drill three
-times each with a fresh evidence directory. Every invocation must exit `0`.
-Retain each JSON result and the raw `source-server.log`, `target-server.log`, or
-`old-binary-server.log`. A failed invocation is evidence of a closed gate; do
-not rerun over the same rollback database or waive it with a later success.
+Run three authenticated restores. Each invocation gets its own evidence
+directory and records its exit code before the loop can stop:
+
+```powershell
+$exitRecords = @()
+foreach ($round in 1..3) {
+  $runDir = Join-Path $evidenceRoot "authenticated-$round"
+  New-Item -ItemType Directory -Path $runDir | Out-Null
+  $env:PAPERCLIP_M2E_EVIDENCE_DIR = $runDir
+  pnpm exec tsx tests/e2e/run-work-record-authenticated-restore.ts
+  $code = $LASTEXITCODE
+  $exitRecords += [pscustomobject]@{ drill = 'authenticated-restore'; round = $round; exitCode = $code; evidenceDir = $runDir }
+  if ($code -ne 0) {
+    $exitRecords | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $evidenceRoot 'exit-codes.json')
+    throw "Authenticated restore round $round failed with exit code $code; preserve $runDir."
+  }
+}
+```
+
+Run three old-binary rollbacks, again with independent evidence directories:
+
+```powershell
+foreach ($round in 1..3) {
+  $runDir = Join-Path $evidenceRoot "old-binary-$round"
+  New-Item -ItemType Directory -Path $runDir | Out-Null
+  $env:PAPERCLIP_M2E_EVIDENCE_DIR = $runDir
+  pnpm exec tsx tests/e2e/run-work-record-old-binary-rollback.ts
+  $code = $LASTEXITCODE
+  $exitRecords += [pscustomobject]@{ drill = 'old-binary-rollback'; round = $round; exitCode = $code; evidenceDir = $runDir }
+  if ($code -ne 0) {
+    $exitRecords | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $evidenceRoot 'exit-codes.json')
+    throw "Old-binary rollback round $round failed with exit code $code; preserve $runDir."
+  }
+}
+$exitRecords | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $evidenceRoot 'exit-codes.json')
+```
+
+Verify the six native results. This check requires the fixed commit in every
+JSON, three distinct restored/rollback databases, real listener and launcher
+PIDs, and post-exit proof that both PIDs and the port listener are gone:
+
+```powershell
+$authResults = 1..3 | ForEach-Object {
+  Get-Content -LiteralPath (Join-Path $evidenceRoot "authenticated-$_\authenticated-backup-restore.json") -Raw |
+    ConvertFrom-Json
+}
+$oldResults = 1..3 | ForEach-Object {
+  Get-Content -LiteralPath (Join-Path $evidenceRoot "old-binary-$_\old-binary-rollback.json") -Raw |
+    ConvertFrom-Json
+}
+
+$badAuth = @($authResults | Where-Object {
+  $_.testedCommit -ne $testedCommit -or
+  -not $_.failureWithdrawal.sourceProcess.actualListenerPid -or
+  -not $_.failureWithdrawal.sourceProcess.tsxLauncherPid -or
+  -not $_.failureWithdrawal.sourceProcess.actualListenerPort -or
+  $_.failureWithdrawal.sourceProcess.exit.tsxLauncherAliveAfterExit -or
+  $_.failureWithdrawal.sourceProcess.exit.actualListenerAliveAfterExit -or
+  -not $_.failureWithdrawal.sourceProcess.exit.noResidualListener -or
+  -not $_.restoredProcess.actualListenerPid -or
+  -not $_.restoredProcess.tsxLauncherPid -or
+  -not $_.restoredProcess.actualListenerPort -or
+  $_.restoredProcess.exit.tsxLauncherAliveAfterExit -or
+  $_.restoredProcess.exit.actualListenerAliveAfterExit -or
+  -not $_.restoredProcess.exit.noResidualListener
+})
+$badOld = @($oldResults | Where-Object {
+  $_.testedCommit -ne $testedCommit -or
+  -not $_.oldBinary.process.actualListenerPid -or
+  -not $_.oldBinary.process.tsxLauncherPid -or
+  -not $_.oldBinary.process.actualListenerPort -or
+  $_.oldBinary.exit.tsxLauncherAliveAfterExit -or
+  $_.oldBinary.exit.actualListenerAliveAfterExit -or
+  -not $_.oldBinary.exit.noResidualListener
+})
+
+if ($badAuth.Count -or $badOld.Count) { throw 'One or more native process-evidence checks failed.' }
+if (@($authResults.database.targetIdentity | Select-Object -Unique).Count -ne 3) { throw 'Authenticated targets were not independent.' }
+if (@($oldResults.rollbackDatabaseIdentity | Select-Object -Unique).Count -ne 3) { throw 'Rollback targets were not independent.' }
+Get-Content -LiteralPath (Join-Path $evidenceRoot 'exit-codes.json') -Raw | ConvertFrom-Json |
+  Format-Table drill, round, exitCode, evidenceDir
+```
+
+Every displayed exit code must be `0`. Retain each JSON result and the raw
+`source-server.log`, `target-server.log`, or `old-binary-server.log`. A failed
+invocation is evidence of a closed gate; do not rerun over the same evidence
+directory or rollback database, and do not waive it with a later success.
 
 No command in this runbook authorizes production gray rollout or deployment.

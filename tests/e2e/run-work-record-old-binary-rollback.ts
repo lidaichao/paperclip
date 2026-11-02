@@ -23,6 +23,11 @@ import {
 import type { PreviewWorkPackageDispatch } from "../../packages/shared/src/index.js";
 import { workPackageDispatchService } from "../../server/src/services/work-package-dispatch.js";
 import { workRecordService } from "../../server/src/services/work-records.js";
+import {
+  captureQualifiedServerProcess,
+  requireM2eTestedCommit,
+  stopAndVerifyQualifiedServer,
+} from "./work-record-qualification-process.js";
 
 const ROLLBACK_MIGRATION = "0295_serious_swordsman";
 const ROLLBACK_MIGRATION_CREATED_AT = 1_793_194_458_579;
@@ -337,6 +342,7 @@ const evidenceDir = process.env.PAPERCLIP_M2E_EVIDENCE_DIR?.trim();
 if (!oldRoot) throw new Error("PAPERCLIP_OLD_BINARY_ROOT is required");
 if (!approvedOldCommit) throw new Error("PAPERCLIP_OLD_BINARY_COMMIT is required");
 if (!evidenceDir) throw new Error("PAPERCLIP_M2E_EVIDENCE_DIR is required");
+const testedCommit = requireM2eTestedCommit({ repoRoot: process.cwd() });
 
 const oldCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: oldRoot, encoding: "utf8" }).trim();
 if (oldCommit !== approvedOldCommit) {
@@ -543,16 +549,22 @@ try {
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,
   });
-  child.stdout?.on("data", (chunk) => { processLog.stdout += String(chunk); });
-  child.stderr?.on("data", (chunk) => { processLog.stderr += String(chunk); });
-  for (const stream of [child.stdout, child.stderr]) {
+  const runningChild = child;
+  runningChild.stdout?.on("data", (chunk) => { processLog.stdout += String(chunk); });
+  runningChild.stderr?.on("data", (chunk) => { processLog.stderr += String(chunk); });
+  for (const stream of [runningChild.stdout, runningChild.stderr]) {
     stream?.on("error", (error: NodeJS.ErrnoException) => {
       processLog.pipeErrors.push(`${error.code ?? "stream_error"}: ${error.message}`);
     });
   }
-  const health = await waitForHealth(baseUrl, child, () => `${processLog.stdout}\n${processLog.stderr}`);
-  if (!child.pid || child.exitCode !== null || child.signalCode !== null) throw new Error("Old binary PID was not live after ready health");
-  process.kill(child.pid, 0);
+  const health = await waitForHealth(baseUrl, runningChild, () => `${processLog.stdout}\n${processLog.stderr}`);
+  if (!runningChild.pid || runningChild.exitCode !== null || runningChild.signalCode !== null) {
+    throw new Error("Old binary tsx launcher PID was not live after ready health");
+  }
+  const oldBinaryProcess = await captureQualifiedServerProcess({
+    tsxLauncherPid: runningChild.pid,
+    port,
+  });
   const listResponse = await fetch(`${baseUrl}/api/companies/${company.id}/projects/${project.id}/work-records`, {
     headers: { connection: "close" },
   });
@@ -567,10 +579,12 @@ try {
   if (JSON.stringify(sourceStateAfter) !== JSON.stringify(sourceStateBefore)) {
     throw new Error(`Source database changed during rollback drill: ${JSON.stringify({ sourceStateBefore, sourceStateAfter })}`);
   }
+  const oldBinaryExit = await stopAndVerifyQualifiedServer(oldBinaryProcess);
+  child = null;
 
   await writeFile(path.join(evidenceDir, "old-binary-rollback.json"), `${JSON.stringify({
-    schemaVersion: 3,
-    testedCommit: process.env.PAPERCLIP_M2E_TESTED_COMMIT ?? null,
+    schemaVersion: 4,
+    testedCommit,
     oldBinaryCommit: oldCommit,
     sourceDatabaseIdentity: sourceUrl.pathname,
     rollbackDatabaseIdentity: targetUrl.pathname,
@@ -608,8 +622,10 @@ try {
       rollbackTargetCanBeDiscarded: true,
     },
     oldBinary: {
-      pid: child.pid,
-      pidLiveAfterReady: true,
+      pid: oldBinaryProcess.actualListenerPid,
+      launcherPid: oldBinaryProcess.tsxLauncherPid,
+      process: oldBinaryProcess,
+      exit: oldBinaryExit,
       health,
       listedRecordCount: listed.length,
       retainedLegacyRecordId: legacyRecord.id,
