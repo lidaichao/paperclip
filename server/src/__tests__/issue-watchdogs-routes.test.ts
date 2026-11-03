@@ -499,11 +499,11 @@ describeEmbeddedPostgres("issue watchdog routes", () => {
       .put(`/api/issues/${watchedChildId}/watchdog`)
       .send({ agentId: watchdogAgentId, instructions: "Create a nested watchdog" });
     expect(deniedNestedWatchdog.status, JSON.stringify(deniedNestedWatchdog.body)).toBe(403);
-    expect(deniedNestedWatchdog.body.error).toBe("Task-watchdog runs cannot change watchdog configuration.");
+    expect(deniedNestedWatchdog.body.error).toBe("任务监控运行不能更改监控配置。");
 
     const deniedWatchdogRemoval = await request(app).delete(`/api/issues/${watchedRootId}/watchdog`);
     expect(deniedWatchdogRemoval.status, JSON.stringify(deniedWatchdogRemoval.body)).toBe(403);
-    expect(deniedWatchdogRemoval.body.error).toBe("Task-watchdog runs cannot change watchdog configuration.");
+    expect(deniedWatchdogRemoval.body.error).toBe("任务监控运行不能更改监控配置。");
 
     const nestedWatchdogs = await db
       .select({ id: issueWatchdogs.id })

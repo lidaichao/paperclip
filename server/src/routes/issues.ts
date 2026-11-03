@@ -530,7 +530,7 @@ function noopTaskWatchdogService(): TaskWatchdogService {
     getActiveForIssue: async () => null,
     listActiveSummariesForIssues: async () => new Map(),
     upsertForIssue: async () => {
-      throw unprocessable("Task watchdog service is unavailable");
+      throw unprocessable("任务监控服务当前不可用");
     },
     disableForIssue: async () => null,
     reconcileTaskWatchdogs: async () => ({
@@ -772,7 +772,7 @@ async function sanitizeIssueCreateAttribution<T extends object>(
     });
     res
       .status(422)
-      .json({ error: "Agent-created issues cannot set responsibleUserId" });
+      .json({ error: "智能体创建任务时不能设置 responsibleUserId" });
     return null;
   }
 
@@ -4102,7 +4102,7 @@ export function issueRoutes(
   ) {
     if (!(await actorIsLowTrustReview(req, companyId, issue))) return false;
     res.status(403).json({
-      error: "Low-trust actors cannot use this control-plane surface",
+      error: "低信任级别的操作者不能使用此控制面功能",
     });
     return true;
   }
@@ -4566,7 +4566,7 @@ export function issueRoutes(
       input.metadata,
     );
     if (!parsed.success) {
-      throw unprocessable("Invalid attachment artifact metadata", {
+      throw unprocessable("附件产物元数据无效", {
         code: "invalid_attachment_artifact_metadata",
         details: parsed.error.issues,
       });
@@ -4896,12 +4896,12 @@ export function issueRoutes(
     assertCompanyAccess(req, companyId);
     if (req.actor.type === "board") return true;
     if (!req.actor.agentId) {
-      res.status(403).json({ error: "Agent authentication required" });
+      res.status(403).json({ error: "需要智能体身份验证" });
       return false;
     }
     const actorAgent = await agentsSvc.getById(req.actor.agentId);
     if (!actorAgent || actorAgent.companyId !== companyId) {
-      res.status(403).json({ error: "Forbidden" });
+      res.status(403).json({ error: "无权执行此操作" });
       return false;
     }
     if (
@@ -4909,7 +4909,7 @@ export function issueRoutes(
       Boolean(actorAgent.permissions?.canCreateAgents)
     )
       return true;
-    res.status(403).json({ error: "Missing permission to link approvals" });
+    res.status(403).json({ error: "缺少关联审批的权限" });
     return false;
   }
 
@@ -5122,7 +5122,7 @@ export function issueRoutes(
     if (decision.allowed) return true;
     res
       .status(403)
-      .json({ error: "Issue is outside this actor's authorization boundary" });
+      .json({ error: "任务超出当前操作者的授权范围" });
     return false;
   }
 
@@ -5165,7 +5165,7 @@ export function issueRoutes(
     if (req.actor.type !== "agent") return true;
     const actorAgentId = req.actor.agentId;
     if (!actorAgentId) {
-      res.status(403).json({ error: "Agent authentication required" });
+      res.status(403).json({ error: "需要智能体身份验证" });
       return false;
     }
     const watchdogScope = await resolveTaskWatchdogMutationScope(db, req.actor);
@@ -5249,7 +5249,7 @@ export function issueRoutes(
     if (req.actor.type !== "agent") return null;
     const runId = req.actor.runId?.trim();
     if (runId) return runId;
-    res.status(401).json({ error: "Agent run id required" });
+    res.status(401).json({ error: "必须提供智能体运行 ID" });
     return null;
   }
 
@@ -5286,7 +5286,7 @@ export function issueRoutes(
     if (req.actor.type !== "agent") return true;
     const actorAgentId = req.actor.agentId;
     if (!actorAgentId) {
-      res.status(403).json({ error: "Agent authentication required" });
+      res.status(403).json({ error: "需要智能体身份验证" });
       return false;
     }
     // Task-watchdog runs receive a scoped *grant* to mutate issues inside the
@@ -5365,7 +5365,7 @@ export function issueRoutes(
       // adopted the default-open rule still refuse another agent's issue.
       if (!options.allowVisibleIssueWrite) {
         res.status(403).json({
-          error: "Agent cannot mutate another agent's issue",
+          error: "智能体不能修改分派给其他智能体的任务",
           details: {
             issueId: issue.id,
             assigneeAgentId: issue.assigneeAgentId,
@@ -5447,7 +5447,7 @@ export function issueRoutes(
     const scope = await resolveTaskWatchdogMutationScope(db, req.actor);
     if (scope.kind !== "watchdog") return false;
     res.status(403).json({
-      error: "Task-watchdog runs cannot change watchdog configuration.",
+      error: "任务监控运行不能更改监控配置。",
       details: {
         watchedIssueId: scope.watchedIssueId,
         watchdogId: scope.watchdogId,
@@ -5725,7 +5725,7 @@ export function issueRoutes(
     interactionId: string,
   ) {
     if (issue.conversationAgentId && req.actor.type === "board" && req.actor.userId !== issue.conversationUserId) {
-      throw forbidden("Only the conversation owner can respond to chat interactions");
+      throw forbidden("只有对话所有者才能响应对话交互");
     }
     // Actor-only gates deliberately precede the interaction lookup. An actor
     // outside the issue's trusted/watchdog scope must not learn whether an
