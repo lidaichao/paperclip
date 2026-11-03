@@ -4234,7 +4234,7 @@ export function companySkillService(db: Db) {
       if (!catalogSkill) {
         return {
           supported: false,
-          reason: "Catalog entry is no longer available in the shipped manifest.",
+          reason: "发布清单中已不存在此目录条目。",
           trackingRef: catalogId,
           currentRef: skill.sourceRef ?? statusMeta.originHash,
           latestRef: null,
@@ -4702,11 +4702,11 @@ export function companySkillService(db: Db) {
         throw notFound(input.target === "folder" ? "Skill folder not found" : "Skill file not found");
       }
       if (deletedPaths.includes("SKILL.md")) {
-        throw unprocessable("SKILL.md cannot be deleted.");
+        throw unprocessable("不能删除 SKILL.md。");
       }
 
       const absolutePath = resolveLocalSkillFilePath(skill, normalizedPath);
-      if (!absolutePath) throw notFound("Skill file not found");
+      if (!absolutePath) throw notFound("未找到技能文件");
 
       await fs.rm(absolutePath, {
         recursive: input.target === "folder",
@@ -4750,13 +4750,13 @@ export function companySkillService(db: Db) {
       const audit = await auditInstalledSkillBytes(skill);
       await persistAuditMetadata(skill, audit);
       if (audit.verdict === "fail") {
-        throw unprocessable("Skill update is blocked by hard-stop audit findings.", {
+        throw unprocessable("技能更新被强制停止级别的审计问题阻止。", {
           updateHoldReason: "audit_hard_stop",
           audit,
         });
       }
       if (audit.originHash && audit.installedHash !== audit.originHash && !options.force) {
-        throw unprocessable("Skill update is held because local modifications were detected; rerun with --force to discard them.", {
+        throw unprocessable("检测到本地修改，技能更新已暂停；如需丢弃修改，请使用 --force 重新运行。", {
           updateHoldReason: "local_modifications",
           audit,
         });
@@ -4766,11 +4766,11 @@ export function companySkillService(db: Db) {
     if (skill.sourceType === "catalog") {
       const catalogId = asString(getSkillMeta(skill).catalogId);
       if (!catalogId) {
-        throw unprocessable("Catalog skill metadata is incomplete.");
+        throw unprocessable("目录技能元数据不完整。");
       }
       const catalogSkill = resolveCatalogSkillIfPresent(catalogId);
       if (!catalogSkill) {
-        throw unprocessable("Catalog entry is no longer available in the shipped manifest.", {
+        throw unprocessable("发布清单中已不存在此目录条目。", {
           updateHoldReason: "origin_unavailable",
         });
       }
@@ -4788,7 +4788,7 @@ export function companySkillService(db: Db) {
       };
       const candidateAudit = await auditInstalledSkillBytes(snapshotSkill);
       if (candidateAudit.verdict === "fail") {
-        throw unprocessable("Catalog update is blocked by hard-stop audit findings.", {
+        throw unprocessable("目录更新被强制停止级别的审计问题阻止。", {
           updateHoldReason: "audit_hard_stop",
           audit: candidateAudit,
         });
@@ -4831,12 +4831,12 @@ export function companySkillService(db: Db) {
         .where(and(eq(companySkills.id, skill.id), eq(companySkills.companyId, companyId)))
         .returning()
         .then((rows) => rows[0] ?? null);
-      if (!row) throw notFound("Skill not found");
+      if (!row) throw notFound("未找到技能");
       const updated = toCompanySkill(row);
       const postAudit = await auditInstalledSkillBytes(updated);
       if (postAudit.verdict === "fail") {
         await persistAuditMetadata(updated, postAudit);
-        throw unprocessable("Catalog update produced hard-stop audit findings.", {
+        throw unprocessable("目录更新产生了强制停止级别的审计问题。", {
           updateHoldReason: "audit_hard_stop",
           audit: postAudit,
         });
@@ -4845,7 +4845,7 @@ export function companySkillService(db: Db) {
     }
 
     if (!skill.sourceLocator) {
-      throw unprocessable("Skill source locator is missing.");
+      throw unprocessable("缺少技能来源定位信息。");
     }
 
     const result = await readUrlSkillImports(companyId, skill.sourceLocator, skill.slug);
@@ -4862,7 +4862,7 @@ export function companySkillService(db: Db) {
     const skill = await getById(companyId, skillId);
     if (!skill) return null;
     if (skill.sourceType !== "catalog") {
-      throw unprocessable("Only catalog-managed company skills support reset.");
+      throw unprocessable("只有目录托管的公司技能支持重置。");
     }
 
     const metadata = getSkillMeta(skill);
@@ -4870,7 +4870,7 @@ export function companySkillService(db: Db) {
     const snapshotLocator = asString(metadata.originSnapshotLocator);
     const targetDir = normalizeSkillDirectory(skill);
     if (!originHash || !targetDir) {
-      throw unprocessable("Catalog skill origin metadata is incomplete.", {
+      throw unprocessable("目录技能来源元数据不完整。", {
         updateHoldReason: "origin_unavailable",
       });
     }
@@ -4886,7 +4886,7 @@ export function companySkillService(db: Db) {
       }
     }
     if (!sourceDir) {
-      throw conflict("Pinned catalog origin bytes are unavailable; run skills update explicitly instead.", {
+      throw conflict("固定的目录来源内容不可用，请改为明确执行技能更新。", {
         updateHoldReason: "origin_unavailable",
       });
     }
@@ -4900,7 +4900,7 @@ export function companySkillService(db: Db) {
       },
     });
     if (originAudit.installedHash !== originHash || originAudit.verdict === "fail") {
-      throw unprocessable("Pinned catalog origin failed audit and cannot be restored.", {
+      throw unprocessable("固定的目录来源未通过审计，无法恢复。", {
         updateHoldReason: originAudit.verdict === "fail" ? "audit_hard_stop" : "origin_unavailable",
         audit: originAudit,
       });
@@ -4909,7 +4909,7 @@ export function companySkillService(db: Db) {
     const preAudit = await auditInstalledSkillBytes(skill);
     await persistAuditMetadata(skill, preAudit);
     if (preAudit.installedHash !== originHash && !options.force) {
-      throw unprocessable("Skill reset would discard local modifications; rerun with --force after confirming reset.", {
+      throw unprocessable("重置技能会丢弃本地修改；确认后请使用 --force 重新运行。", {
         updateHoldReason: "local_modifications",
         audit: preAudit,
       });
@@ -4943,12 +4943,12 @@ export function companySkillService(db: Db) {
       .where(and(eq(companySkills.id, skill.id), eq(companySkills.companyId, companyId)))
       .returning()
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Skill not found");
+    if (!row) throw notFound("未找到技能");
     const reset = toCompanySkill(row);
     const postAudit = await auditInstalledSkillBytes(reset);
     if (postAudit.installedHash !== originHash || postAudit.verdict === "fail") {
       await persistAuditMetadata(reset, postAudit);
-      throw unprocessable("Catalog reset did not restore a passing pinned origin.", {
+      throw unprocessable("目录重置未能恢复通过审计的固定来源。", {
         updateHoldReason: postAudit.verdict === "fail" ? "audit_hard_stop" : "origin_unavailable",
         audit: postAudit,
       });
@@ -4961,26 +4961,26 @@ export function companySkillService(db: Db) {
     input: CompanySkillProjectBrowseRequest,
   ): Promise<CompanySkillProjectBrowseResult> {
     const project = (await projects.listByIds(companyId, [input.projectId]))[0];
-    if (!project) throw notFound("Project not found");
+    if (!project) throw notFound("未找到项目");
     const workspace = project.workspaces.find((entry) => entry.id === input.workspaceId);
-    if (!workspace) throw notFound("Project workspace not found");
+    if (!workspace) throw notFound("未找到项目工作区");
     const workspaceCwd = asString(workspace.cwd);
     if (!workspaceCwd || workspace.sourceType === "remote_managed") {
-      throw unprocessable("Project workspace is not available for local browsing.");
+      throw unprocessable("项目工作区不支持本地浏览。");
     }
 
     const normalizedPath = input.path?.trim() ? normalizeProjectScanSelectionPath(input.path) : ".";
-    if (!normalizedPath) throw unprocessable("Project workspace path is invalid.");
+    if (!normalizedPath) throw unprocessable("项目工作区路径无效。");
     const workspaceRoot = await fs.realpath(path.resolve(workspaceCwd)).catch(() => null);
-    if (!workspaceRoot) throw unprocessable("Project workspace is not available locally.");
+    if (!workspaceRoot) throw unprocessable("项目工作区在本地不可用。");
     const targetPath = await fs.realpath(path.resolve(workspaceRoot, normalizedPath)).catch(() => null);
-    if (!targetPath) throw notFound("Project workspace folder not found");
+    if (!targetPath) throw notFound("未找到项目工作区文件夹");
     const relativeTarget = path.relative(workspaceRoot, targetPath);
     if (relativeTarget === ".." || relativeTarget.startsWith(`..${path.sep}`) || path.isAbsolute(relativeTarget)) {
-      throw forbidden("Project workspace path is outside the workspace.");
+      throw forbidden("项目工作区路径位于工作区之外。");
     }
     const targetStat = await fs.stat(targetPath);
-    if (!targetStat.isDirectory()) throw unprocessable("Project workspace path must be a folder.");
+    if (!targetStat.isDirectory()) throw unprocessable("项目工作区路径必须是文件夹。");
 
     const directoryEntries = await fs.readdir(targetPath, { withFileTypes: true });
     const visibleDirectoryEntries = directoryEntries.filter((entry) => (
@@ -5672,7 +5672,7 @@ export function companySkillService(db: Db) {
           const holdReason = audit.verdict === "fail" ? "audit_hard_stop" : "local_modifications";
           const message = audit.verdict === "fail"
             ? "Catalog skill has hard-stop audit findings; rerun with --force to replace it."
-            : "Catalog skill has local modifications; rerun with --force to replace it.";
+            : "目录技能存在本地修改；如需替换，请使用 --force 重新运行。";
           throw unprocessable(message, {
             updateHoldReason: holdReason,
             audit,

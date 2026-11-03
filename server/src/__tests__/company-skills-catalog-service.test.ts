@@ -414,7 +414,7 @@ describeEmbeddedPostgres("companySkillService.installFromCatalog", () => {
 
     expect(status).toMatchObject({
       supported: false,
-      reason: "Catalog entry is no longer available in the shipped manifest.",
+      reason: "发布清单中已不存在此目录条目。",
       trackingRef: sampleCatalogSkill.id,
       latestRef: null,
       hasUpdate: false,
@@ -467,7 +467,7 @@ describeEmbeddedPostgres("companySkillService.installFromCatalog", () => {
 
     await expect(svc.resetSkill(companyId, installed.skill.id)).rejects.toMatchObject({
       status: 422,
-      message: expect.stringContaining("local modifications"),
+      message: expect.stringContaining("本地修改"),
     });
 
     const reset = await svc.resetSkill(companyId, installed.skill.id, { force: true });
