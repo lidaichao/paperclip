@@ -12575,6 +12575,21 @@
     "this_agent_10300378": "This agent",
     "all_scopes_10300379": "All scopes",
     "webhook_trigger_restored_10300380": "Webhook trigger restored",
-    "webhook_triggers_restored_value_10300381": "{{v0}} webhook triggers restored"
+    "webhook_triggers_restored_value_10300381": "{{v0}} webhook triggers restored",
+    "allowed_for_10300382": "Allowed for",
+    "ask_first_for_10300383": "Ask first for",
+    "off_for_10300384": "Off for",
+    "agent_value_10300385": "Agent {{v0}}",
+    "board_user_value_10300386": "Board user {{v0}}",
+    "project_value_10300387": "Project {{v0}}",
+    "issue_value_10300388": "Issue {{v0}}",
+    "one_tool_allowed_10300389": "1 tool allowed",
+    "value_tools_allowed_10300390": "{{v0}} tools allowed",
+    "gateway_endpoint_10300391": "Gateway endpoint",
+    "gateway_bearer_token_10300392": "Gateway bearer token",
+    "imported_app_10300393": "Imported app",
+    "untitled_profile_10300394": "Untitled profile",
+    "unknown_app_10300395": "Unknown app",
+    "unknown_routine_10300396": "Unknown routine"
   }
 }

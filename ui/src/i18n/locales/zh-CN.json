@@ -12575,6 +12575,21 @@
     "this_agent_10300378": "此智能体",
     "all_scopes_10300379": "所有范围",
     "webhook_trigger_restored_10300380": "Webhook 触发器已恢复",
-    "webhook_triggers_restored_value_10300381": "已恢复 {{v0}} 个 Webhook 触发器"
+    "webhook_triggers_restored_value_10300381": "已恢复 {{v0}} 个 Webhook 触发器",
+    "allowed_for_10300382": "允许",
+    "ask_first_for_10300383": "需先询问",
+    "off_for_10300384": "关闭",
+    "agent_value_10300385": "智能体 {{v0}}",
+    "board_user_value_10300386": "管理端用户 {{v0}}",
+    "project_value_10300387": "项目 {{v0}}",
+    "issue_value_10300388": "任务 {{v0}}",
+    "one_tool_allowed_10300389": "允许使用 1 个工具",
+    "value_tools_allowed_10300390": "允许使用 {{v0}} 个工具",
+    "gateway_endpoint_10300391": "网关端点",
+    "gateway_bearer_token_10300392": "网关访问令牌",
+    "imported_app_10300393": "已导入的应用",
+    "untitled_profile_10300394": "未命名配置",
+    "unknown_app_10300395": "未知应用",
+    "unknown_routine_10300396": "未知例程"
   }
 }

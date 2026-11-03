@@ -49,10 +49,6 @@ function shortId(value: string | null | undefined) {
   return value.length > 12 ? `${value.slice(0, 8)}...` : value;
 }
 
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
 function dateValue(value: Date | string | null | undefined) {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
@@ -68,12 +64,12 @@ function latestTokenActivity(gateway: ToolMcpGatewayWithTokens) {
 }
 
 function formatOwner(gateway: ToolMcpGatewayWithTokens, agentNames: Map<string, string>) {
-  if (gateway.agentId) return agentNames.get(gateway.agentId) ?? `Agent ${shortId(gateway.agentId)}`;
+  if (gateway.agentId) return agentNames.get(gateway.agentId) ?? l10n("local.agent_value_10300385", { v0: shortId(gateway.agentId) });
   if (gateway.createdByAgentId) {
-    return agentNames.get(gateway.createdByAgentId) ?? `Agent ${shortId(gateway.createdByAgentId)}`;
+    return agentNames.get(gateway.createdByAgentId) ?? l10n("local.agent_value_10300385", { v0: shortId(gateway.createdByAgentId) });
   }
-  if (gateway.createdByUserId) return `Board user ${shortId(gateway.createdByUserId)}`;
-  return "Board";
+  if (gateway.createdByUserId) return l10n("local.board_user_value_10300386", { v0: shortId(gateway.createdByUserId) });
+  return l10n("local.board_4816cbfd");
 }
 
 function formatScope(
@@ -83,26 +79,32 @@ function formatScope(
 ) {
   if (gateway.contextScopeType !== "none" && gateway.contextScopeId) {
     if (gateway.contextScopeType === "project") {
-      return `Project ${projectNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId)}`;
+      return l10n("local.project_value_10300387", { v0: projectNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId) });
     }
     if (gateway.contextScopeType === "agent") {
-      return `Agent ${agentNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId)}`;
+      return l10n("local.agent_value_10300385", { v0: agentNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId) });
     }
     return `${gateway.contextScopeType} ${shortId(gateway.contextScopeId)}`;
   }
-  if (gateway.projectId) return `Project ${projectNames.get(gateway.projectId) ?? shortId(gateway.projectId)}`;
-  if (gateway.issueId) return `Issue ${shortId(gateway.issueId)}`;
-  if (gateway.agentId) return `Agent ${agentNames.get(gateway.agentId) ?? shortId(gateway.agentId)}`;
-  return "Company";
+  if (gateway.projectId) return l10n("local.project_value_10300387", { v0: projectNames.get(gateway.projectId) ?? shortId(gateway.projectId) });
+  if (gateway.issueId) return l10n("local.issue_value_10300388", { v0: shortId(gateway.issueId) });
+  if (gateway.agentId) return l10n("local.agent_value_10300385", { v0: agentNames.get(gateway.agentId) ?? shortId(gateway.agentId) });
+  return l10n("local.company_de4743c8");
 }
 
 function formatAllowedTools(profile: ToolProfileWithDetails | undefined) {
-  if (!profile) return "Profile unavailable";
+  if (!profile) return l10n("local.profile_unavailable_158e5a22");
   const allowed = profile.summary.allowedToolCount;
   if (profile.summary.accessMode === "all_except") {
-    return `${pluralize(Math.max(profile.summary.totalToolCount - profile.summary.excludedToolCount, 0), "tool")} allowed`;
+    const count = Math.max(profile.summary.totalToolCount - profile.summary.excludedToolCount, 0);
+    return count === 1
+      ? l10n("local.one_tool_allowed_10300389")
+      : l10n("local.value_tools_allowed_10300390", { v0: count });
   }
-  return allowed === 0 ? "No tools allowed" : `${pluralize(allowed, "tool")} allowed`;
+  if (allowed === 0) return l10n("local.no_tools_allowed_e8e116ae");
+  return allowed === 1
+    ? l10n("local.one_tool_allowed_10300389")
+    : l10n("local.value_tools_allowed_10300390", { v0: allowed });
 }
 
 function formatSnippetConfig(config: Record<string, unknown>) {
@@ -361,7 +363,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                     ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => void copyText(endpoint, "Gateway endpoint")}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => void copyText(endpoint, l10n("local.gateway_endpoint_10300391"))}>
                       <Copy className="mr-1.5 h-3.5 w-3.5" />
                       {l10n("local.copy_endpoint_ae2b823a")}</Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => startIssuing(gateway.id)}>
@@ -504,7 +506,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                   <div className="space-y-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="font-medium text-foreground">{l10n("local.new_token_for_e049eb94")}{" "}{createdToken.name}</div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => void copyText(createdToken.token, "Gateway bearer token")}>
+                      <Button type="button" variant="outline" size="sm" onClick={() => void copyText(createdToken.token, l10n("local.gateway_bearer_token_10300392"))}>
                         <Copy className="mr-1.5 h-3.5 w-3.5" />
                         {l10n("local.copy_token_d35b4ef7")}</Button>
                     </div>

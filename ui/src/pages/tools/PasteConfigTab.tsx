@@ -216,7 +216,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
         access: "all_agents",
       });
     },
-    onSuccess: () => setActivatedName(connectResult?.application.name ?? "Imported app"),
+    onSuccess: () => setActivatedName(connectResult?.application.name ?? l10n("local.imported_app_10300393")),
   });
 
   const drafts = preview?.drafts ?? [];

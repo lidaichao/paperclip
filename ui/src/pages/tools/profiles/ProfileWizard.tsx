@@ -154,7 +154,7 @@ export function ProfileWizard({
       if (!draftId) {
         const created = await toolsApi.createProfile(companyId, {
           profileKey: profileKey || slugifyProfileKey(name) || "profile",
-          name: name.trim() || "Untitled profile",
+          name: name.trim() || l10n("local.untitled_profile_10300394"),
           description: description.trim() || null,
           status: "draft",
           defaultAction: newToolsAction,
@@ -165,7 +165,7 @@ export function ProfileWizard({
       }
       const updated = await toolsApi.updateProfile(draftId, {
         profileKey: profileKey || undefined,
-        name: name.trim() || "Untitled profile",
+        name: name.trim() || l10n("local.untitled_profile_10300394"),
         description: description.trim() || null,
         defaultAction: newToolsAction,
         entries,

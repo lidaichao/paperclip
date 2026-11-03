@@ -738,7 +738,7 @@ function buildAllowRows(
     .filter((tool) => includeAllExcept || included.some((entry) => entryMatchesTool(entry, tool)))
     .map((tool) => {
       const match = includeAllExcept ? null : included.find((entry) => entryMatchesTool(entry, tool)) ?? null;
-      const app = appNames.get(tool.applicationId ?? "") ?? connectionNames.get(tool.connectionId) ?? "Unknown app";
+      const app = appNames.get(tool.applicationId ?? "") ?? connectionNames.get(tool.connectionId) ?? l10n("local.unknown_app_10300395");
       const connection = connections.find((item) => item.id === tool.connectionId);
       return {
         id: tool.id,
@@ -793,7 +793,7 @@ function capabilityText(tool: ToolProfileNewToolReviewItem): string {
 function newToolsAppLabel(tools: ToolProfileNewToolReviewItem[]): string {
   const names = [...new Set(tools.map((tool) => tool.applicationName ?? tool.connectionName).filter(Boolean))] as string[];
   if (names.length === 0) return l10n("local.an_app_094f9581");
-  if (names.length === 1) return names[0] ?? "An app";
+  if (names.length === 1) return names[0] ?? l10n("local.an_app_094f9581");
   if (names.length === 2) return l10n("local.value_and_value_598386a7", {v0: (names[0]), v1: (names[1])});
   return l10n("local.value_and_value_more_apps_f0be5e25", {v0: (names[0]), v1: (names.length - 1)});
 }
@@ -812,9 +812,9 @@ function assignmentLabel(
   maps: ReturnType<typeof useProfilesData>["maps"],
 ): string {
   if (binding.targetType === "company") return l10n("local.organization_default_804a1f08");
-  if (binding.targetType === "agent") return maps.agentsById.get(binding.targetId) ?? "Unknown agent";
-  if (binding.targetType === "project") return maps.projectsById.get(binding.targetId) ?? "Unknown project";
-  if (binding.targetType === "routine") return maps.routinesById.get(binding.targetId) ?? "Unknown routine";
+  if (binding.targetType === "agent") return maps.agentsById.get(binding.targetId) ?? l10n("local.unknown_agent_342b4ab2");
+  if (binding.targetType === "project") return maps.projectsById.get(binding.targetId) ?? l10n("local.unknown_project_ed51cfef");
+  if (binding.targetType === "routine") return maps.routinesById.get(binding.targetId) ?? l10n("local.unknown_routine_10300396");
   if (binding.targetId === companyId) return l10n("local.organization_d764d425");
   return binding.targetId;
 }
