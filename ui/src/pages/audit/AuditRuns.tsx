@@ -34,17 +34,50 @@ function runDuration(run: HeartbeatRun) {
   const end = run.finishedAt ? new Date(run.finishedAt).getTime() : null;
   if (start == null || end == null || !Number.isFinite(start) || !Number.isFinite(end)) return null;
   const seconds = Math.max(0, Math.round((end - start) / 1000));
-  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 60) return l10n("local.manual_duration_s", { v0: seconds });
   const minutes = Math.floor(seconds / 60);
-  return `${minutes}m ${seconds % 60}s`;
+  return l10n("local.manual_duration_ms", { v0: minutes, v1: seconds % 60 });
 }
 
 function readableSource(source: string) {
-  return source.replaceAll("_", " ");
+  switch (source) {
+    case "timer":
+      return l10n("local.timer_cdeec2b3");
+    case "assignment":
+      return l10n("local.assignment_153cdaae");
+    case "on_demand":
+      return l10n("local.on_demand_ceaa2444");
+    case "automation":
+      return l10n("local.automation_6d65ed5c");
+    case "manual":
+      return l10n("local.manual_source_0d200003");
+    case "schedule":
+      return l10n("local.schedule_f4830a1d");
+    case "webhook":
+      return l10n("local.webhook_4814f62c");
+    case "retry":
+      return l10n("local.retry_942087cc");
+    case "running":
+      return l10n("local.running_f4ccae29");
+    case "queued":
+      return l10n("local.queued_661ff40a");
+    case "succeeded":
+      return l10n("local.succeeded_6d9a6f97");
+    case "failed":
+      return l10n("local.failed_031a8f0f");
+    case "timed_out":
+      return l10n("local.timed_out_9718cc76");
+    case "cancelled":
+      return l10n("local.cancelled_d353a99e");
+    case "interrupted":
+      return l10n("local.interrupted_132d124d");
+    default:
+      return source.replaceAll("_", " ");
+  }
 }
 
 function routineRunTitle(run: RoutineRunSummary) {
-  return run.linkedIssue?.title ?? run.trigger?.label ?? "Routine run";
+  return run.linkedIssue?.title ?? run.trigger?.label ?? l10n("local.routine_run_dda37a7a");
 }
 
 function RoutineScopedRuns({
@@ -258,7 +291,9 @@ export function AuditRuns({ companyId, routineId }: { companyId: string; routine
       ) : visibleRuns.length === 0 ? (
         <EmptyState
           icon={agentId !== ALL || status !== ALL ? CircleDotDashed : Activity}
-          message={agentId !== ALL || status !== ALL ? "No runs match these filters." : "No runs yet."}
+          message={agentId !== ALL || status !== ALL
+            ? l10n("local.no_runs_match_filters_0d200004")
+            : l10n("local.no_runs_yet_72a85758")}
         />
       ) : (
         <ul className="divide-y divide-border border-y border-border" aria-label={l10n("local.recent_runs_237112b8")}>

@@ -248,6 +248,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.resubmit_failed_0d000006).toBe("重新提交失败");
     expect(messages.no_recent_agent_runs_0d100001).toBe("暂无最近运行的智能体。");
     expect(messages.agent_not_ready_to_duplicate_0d100002).toBe("该智能体暂时无法复制");
+    expect(messages.create_organization_to_view_live_runs_0d200001).toContain("创建组织");
+    expect(messages.no_runs_match_filters_0d200004).toContain("筛选条件");
+    expect(messages.dismissed_in_browser_0d200005).toBe("已在此浏览器中关闭");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

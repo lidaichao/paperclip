@@ -34,7 +34,9 @@ export function AnnouncementWell({ health }: { health?: HealthStatus }) {
     userId, companyId: selectedCompanyId,
     enabled: Boolean(userId && !loading && selectedCompanyId && !onboardingOpen),
     onSaveFailure: (savedLocally) => toastActions?.pushToast({
-      title: savedLocally ? "Dismissed in this browser" : "Dismissed for this visit",
+      title: savedLocally
+        ? l10n("local.dismissed_in_browser_0d200005")
+        : l10n("local.dismissed_for_visit_0d200006"),
       body: l10n("local.could_not_save_across_devices_retry_when_reconnected_a7620309"),
       tone: "info", dedupeKey: "announcement-dismissal-sync",
     }),

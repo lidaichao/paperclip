@@ -11690,6 +11690,12 @@
     "revision_request_failed_0d000005": "Revision request failed",
     "resubmit_failed_0d000006": "Resubmit failed",
     "no_recent_agent_runs_0d100001": "No recent agent runs.",
-    "agent_not_ready_to_duplicate_0d100002": "Agent is not ready to duplicate"
+    "agent_not_ready_to_duplicate_0d100002": "Agent is not ready to duplicate",
+    "create_organization_to_view_live_runs_0d200001": "Create an organization to view live runs.",
+    "select_organization_to_view_live_runs_0d200002": "Select an organization to view live runs.",
+    "manual_source_0d200003": "Manual",
+    "no_runs_match_filters_0d200004": "No runs match these filters.",
+    "dismissed_in_browser_0d200005": "Dismissed in this browser",
+    "dismissed_for_visit_0d200006": "Dismissed for this visit"
   }
 }

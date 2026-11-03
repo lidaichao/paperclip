@@ -24,7 +24,9 @@ export function DashboardLive() {
     return (
       <EmptyState
         icon={RadioTower}
-        message={companies.length === 0 ? "Create an organization to view live runs." : "Select an organization to view live runs."}
+        message={companies.length === 0
+          ? l10n("local.create_organization_to_view_live_runs_0d200001")
+          : l10n("local.select_organization_to_view_live_runs_0d200002")}
       />
     );
   }

@@ -11690,6 +11690,12 @@
     "revision_request_failed_0d000005": "请求修改失败",
     "resubmit_failed_0d000006": "重新提交失败",
     "no_recent_agent_runs_0d100001": "暂无最近运行的智能体。",
-    "agent_not_ready_to_duplicate_0d100002": "该智能体暂时无法复制"
+    "agent_not_ready_to_duplicate_0d100002": "该智能体暂时无法复制",
+    "create_organization_to_view_live_runs_0d200001": "请先创建组织，再查看实时运行。",
+    "select_organization_to_view_live_runs_0d200002": "请选择组织以查看实时运行。",
+    "manual_source_0d200003": "手动",
+    "no_runs_match_filters_0d200004": "没有符合当前筛选条件的运行记录。",
+    "dismissed_in_browser_0d200005": "已在此浏览器中关闭",
+    "dismissed_for_visit_0d200006": "已在本次访问中关闭"
   }
 }
