@@ -12097,6 +12097,21 @@
     "save_repositories_0f900014": "保存代码库",
     "confirm_this_is_my_account_0f900015": "确认这是我的账户",
     "save_behavior_0f900016": "保存行为设置",
-    "verify_response_finish_0f900017": "验证响应并完成"
+    "verify_response_finish_0f900017": "验证响应并完成",
+    "included_authors_0fa00001": "包含的作者",
+    "included_authors_help_0fa00002": "留空则包含所有已授权作者。每行填写一个用户名或匹配规则。",
+    "excluded_authors_0fa00003": "排除的作者",
+    "username_glob_per_line_0fa00004": "每行填写一个用户名或匹配规则。",
+    "target_branches_0fa00005": "目标分支",
+    "all_branches_glob_help_0fa00006": "留空则包含所有分支。支持 * 和 **。",
+    "excluded_target_branches_0fa00007": "排除的目标分支",
+    "excluded_branches_help_0fa00008": "这些分支永远不会自动审查。支持 * 和 **。",
+    "required_labels_0fa00009": "必需标签",
+    "required_labels_help_0fa00010": "必须同时存在列出的全部标签。",
+    "excluded_labels_0fa00011": "排除标签",
+    "excluded_labels_help_0fa00012": "存在任一列出的标签时，不会自动审查。",
+    "ignored_file_paths_0fa00013": "忽略的文件路径",
+    "ignored_paths_help_0fa00014": "手动和自动分析都会排除这些路径。支持 * 和 **。",
+    "lookup_failed_0fa00015": "查询失败"
   }
 }

@@ -12097,6 +12097,21 @@
     "save_repositories_0f900014": "Save repositories",
     "confirm_this_is_my_account_0f900015": "Confirm this is my account",
     "save_behavior_0f900016": "Save behavior",
-    "verify_response_finish_0f900017": "Verify response and finish"
+    "verify_response_finish_0f900017": "Verify response and finish",
+    "included_authors_0fa00001": "Included authors",
+    "included_authors_help_0fa00002": "Leave empty to include any authorized author. One username or glob per line.",
+    "excluded_authors_0fa00003": "Excluded authors",
+    "username_glob_per_line_0fa00004": "One username or glob per line.",
+    "target_branches_0fa00005": "Target branches",
+    "all_branches_glob_help_0fa00006": "Leave empty for all branches. Supports * and **.",
+    "excluded_target_branches_0fa00007": "Excluded target branches",
+    "excluded_branches_help_0fa00008": "Never automatically review these branches. Supports * and **.",
+    "required_labels_0fa00009": "Required labels",
+    "required_labels_help_0fa00010": "All listed labels must be present.",
+    "excluded_labels_0fa00011": "Excluded labels",
+    "excluded_labels_help_0fa00012": "Any listed label prevents automatic review.",
+    "ignored_file_paths_0fa00013": "Ignored file paths",
+    "ignored_paths_help_0fa00014": "Excluded from manual and automatic analysis. Supports * and **.",
+    "lookup_failed_0fa00015": "Lookup failed"
   }
 }

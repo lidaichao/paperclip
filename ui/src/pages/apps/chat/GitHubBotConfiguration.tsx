@@ -130,38 +130,38 @@ export function GitHubPolicyEditor({
             [
               [
                 "includeAuthors",
-                "Included authors",
-                "Leave empty to include any authorized author. One username or glob per line.",
+                l10n("local.included_authors_0fa00001"),
+                l10n("local.included_authors_help_0fa00002"),
               ],
               [
                 "excludeAuthors",
-                "Excluded authors",
-                "One username or glob per line.",
+                l10n("local.excluded_authors_0fa00003"),
+                l10n("local.username_glob_per_line_0fa00004"),
               ],
               [
                 "targetBranches",
-                "Target branches",
-                "Leave empty for all branches. Supports * and **.",
+                l10n("local.target_branches_0fa00005"),
+                l10n("local.all_branches_glob_help_0fa00006"),
               ],
               [
                 "excludedBranches",
-                "Excluded target branches",
-                "Never automatically review these branches. Supports * and **.",
+                l10n("local.excluded_target_branches_0fa00007"),
+                l10n("local.excluded_branches_help_0fa00008"),
               ],
               [
                 "requiredLabels",
-                "Required labels",
-                "All listed labels must be present.",
+                l10n("local.required_labels_0fa00009"),
+                l10n("local.required_labels_help_0fa00010"),
               ],
               [
                 "excludedLabels",
-                "Excluded labels",
-                "Any listed label prevents automatic review.",
+                l10n("local.excluded_labels_0fa00011"),
+                l10n("local.excluded_labels_help_0fa00012"),
               ],
               [
                 "ignoredPaths",
-                "Ignored file paths",
-                "Excluded from manual and automatic analysis. Supports * and **.",
+                l10n("local.ignored_file_paths_0fa00013"),
+                l10n("local.ignored_paths_help_0fa00014"),
               ],
             ] as const
           ).map(([key, label, help]) => (
@@ -604,7 +604,9 @@ export function GitHubAccessEditor({
                     setCandidate(await githubChatApi.lookup(endpointId, login));
                   } catch (error) {
                     setError(
-                      error instanceof Error ? error.message : "Lookup failed",
+                      error instanceof Error
+                        ? error.message
+                        : l10n("local.lookup_failed_0fa00015"),
                     );
                   } finally {
                     setBusy(false);
