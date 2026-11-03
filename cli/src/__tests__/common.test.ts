@@ -96,7 +96,7 @@ describe("resolveCommandContext", () => {
 
     expect(() =>
       resolveCommandContext({ context: contextPath, apiBase: "http://localhost:3100" }, { requireCompany: true }),
-    ).toThrow(/Company ID is required/);
+    ).toThrow(/必须提供公司 ID/);
   });
 
   it("resolves api base by explicit, env, profile, then config/default precedence", () => {
@@ -193,9 +193,9 @@ describe("apiPath", () => {
   });
 
   it("rejects empty dynamic path segments", () => {
-    expect(() => apiPath`/api/issues/${""}`).toThrow("Cannot build API path with an empty path segment.");
-    expect(() => apiPath`/api/issues/${undefined}`).toThrow("Cannot build API path with an empty path segment.");
-    expect(() => apiPath`/api/issues/${null}`).toThrow("Cannot build API path with an empty path segment.");
-    expect(() => apiPath`/api/issues/${" "}`).toThrow("Cannot build API path with an empty path segment.");
+    expect(() => apiPath`/api/issues/${""}`).toThrow("无法使用空路径片段构建 API 路径。");
+    expect(() => apiPath`/api/issues/${undefined}`).toThrow("无法使用空路径片段构建 API 路径。");
+    expect(() => apiPath`/api/issues/${null}`).toThrow("无法使用空路径片段构建 API 路径。");
+    expect(() => apiPath`/api/issues/${" "}`).toThrow("无法使用空路径片段构建 API 路径。");
   });
 });

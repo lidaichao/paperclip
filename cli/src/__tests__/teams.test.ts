@@ -575,7 +575,7 @@ describe("teams CLI commands", () => {
         body: JSON.stringify({}),
       }),
     );
-    expect(String(errorSpy.mock.calls[0]?.[0])).toContain("API error 422");
+    expect(String(errorSpy.mock.calls[0]?.[0])).toContain("API 错误 422");
     expect(String(errorSpy.mock.calls[0]?.[0])).toContain("development-only");
   });
 });

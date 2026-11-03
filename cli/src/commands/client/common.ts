@@ -29,17 +29,17 @@ export interface ResolvedClientContext {
 
 export function addCommonClientOptions(command: Command, opts?: { includeCompany?: boolean }): Command {
   command
-    .option("-c, --config <path>", "Path to Paperclip config file")
-    .option("-d, --data-dir <path>", "Paperclip data directory root (isolates state from ~/.paperclip)")
-    .option("--context <path>", "Path to CLI context file")
-    .option("--profile <name>", "CLI context profile name")
-    .option("--api-base <url>", "Base URL for the Paperclip API")
-    .option("--api-key <token>", "Bearer token for agent-authenticated calls")
-    .option("--run-id <id>", "Heartbeat run id for agent-authenticated mutations (checkout/release/interactions/in-progress update); falls back to $PAPERCLIP_RUN_ID")
-    .option("--json", "Output raw JSON");
+    .option("-c, --config <path>", "Alice 配置文件路径")
+    .option("-d, --data-dir <path>", "Alice 数据目录根路径（与 ~/.paperclip 中的状态隔离）")
+    .option("--context <path>", "命令行上下文文件路径")
+    .option("--profile <name>", "命令行上下文配置名称")
+    .option("--api-base <url>", "Alice API 基础地址")
+    .option("--api-key <token>", "用于智能体身份验证请求的 Bearer 令牌")
+    .option("--run-id <id>", "智能体变更操作所需的心跳运行 ID；未提供时使用 $PAPERCLIP_RUN_ID")
+    .option("--json", "输出原始 JSON");
 
   if (opts?.includeCompany) {
-    command.option("-C, --company-id <id>", "Company ID (overrides context default)");
+    command.option("-C, --company-id <id>", "公司 ID（覆盖上下文默认值）");
   }
 
   return command;
@@ -66,7 +66,7 @@ export function resolveCommandContext(
 
   if (opts?.requireCompany && !companyId) {
     throw new Error(
-      "Company ID is required. Pass --company-id, set PAPERCLIP_COMPANY_ID, or set context profile companyId via `paperclipai context set`.",
+      "必须提供公司 ID。请传入 --company-id、设置 PAPERCLIP_COMPANY_ID，或通过 `paperclipai context set` 设置上下文配置的 companyId。",
     );
   }
 
@@ -125,7 +125,7 @@ export function apiPath(strings: TemplateStringsArray, ...values: Array<string |
   let path = strings[0] ?? "";
   values.forEach((value, index) => {
     if (value === null || value === undefined || String(value).trim() === "") {
-      throw new Error("Cannot build API path with an empty path segment.");
+      throw new Error("无法使用空路径片段构建 API 路径。");
     }
     path += `${encodeURIComponent(String(value))}${strings[index + 1] ?? ""}`;
   });
@@ -202,7 +202,7 @@ export function printOutput(data: unknown, opts: { json?: boolean; label?: strin
 
   if (Array.isArray(data)) {
     if (data.length === 0) {
-      console.log(pc.dim("(empty)"));
+      console.log(pc.dim("（空）"));
       return;
     }
     for (const item of data) {
@@ -221,7 +221,7 @@ export function printOutput(data: unknown, opts: { json?: boolean; label?: strin
   }
 
   if (data === undefined || data === null) {
-    console.log(pc.dim("(null)"));
+    console.log(pc.dim("（空值）"));
     return;
   }
 
@@ -288,7 +288,7 @@ function readKeyFromProfileEnv(profile: ClientContextProfile): string | undefine
 export function handleCommandError(error: unknown): never {
   if (error instanceof ApiRequestError) {
     const detailSuffix = error.details !== undefined ? ` details=${JSON.stringify(error.details)}` : "";
-    console.error(pc.red(`API error ${error.status}: ${error.message}${detailSuffix}`));
+    console.error(pc.red(`API 错误 ${error.status}：${error.message}${detailSuffix}`));
     process.exit(1);
   }
 
