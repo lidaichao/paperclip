@@ -11749,6 +11749,20 @@
     "carries_over_value_from_case_to_each_value_0d700014": "把此案例的{{v0}}继承到每个{{v1}}。",
     "moves_case_to_value_when_pieces_created_0d700015": "拆分项创建完成后，立即将此案例移至{{v0}}。",
     "waits_every_value_finished_then_moves_case_to_value_0d700016": "等待所有{{v0}}完成，再将此案例移至{{v1}}。",
-    "empty_list_skips_case_to_value_0d700017": "如果智能体返回空列表，此案例将直接跳转到{{v0}}。"
+    "empty_list_skips_case_to_value_0d700017": "如果智能体返回空列表，此案例将直接跳转到{{v0}}。",
+    "value_is_archived_0d800001": "{{v0}} 已归档",
+    "switched_to_value_0d800002": "已切换到 {{v0}}。",
+    "you_can_unarchive_it_from_this_list_0d800003": "你可以在此列表中取消归档。",
+    "pause_external_override_0d800004": "暂停外部覆盖",
+    "resume_external_override_0d800005": "恢复外部覆盖",
+    "failed_to_update_experimental_settings_0d800006": "更新实验性设置失败。",
+    "turning_off_agent_chat_preserves_conversations_0d800007": "关闭后会保留对话，并允许正在运行的任务完成，但无法发送新消息。",
+    "turning_off_cases_hides_tab_and_keeps_data_0d800008": "关闭案例功能后将隐藏页签并禁用案例接口，但会保留现有案例数据。",
+    "turning_off_chat_connectors_hides_setup_keeps_connections_0d800009": "关闭后将隐藏对话设置、频道和关联任务控制；现有对话连接会继续运行，GitHub 等工具连接器仍可使用。",
+    "turning_off_mcp_aggregators_hides_setup_keeps_connections_0d800010": "关闭后将隐藏这些连接器的设置入口，但现有 MCP 连接会继续运行。",
+    "enabling_status_cards_also_enables_summaries_0d800011": "启用状态卡片时也会启用摘要。",
+    "turning_off_streamlined_ui_restores_legacy_shell_0d800012": "关闭后将恢复旧版界面框架和导航，任务与页面数据不会改变。",
+    "status_cards_require_summaries_0d800013": "状态卡片依赖摘要；禁用摘要时也会禁用状态卡片。",
+    "switching_takes_effect_immediately_no_task_data_affected_0d800014": "切换后立即生效，不会影响任务数据。"
   }
 }

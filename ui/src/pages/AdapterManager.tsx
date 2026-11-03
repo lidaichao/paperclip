@@ -561,8 +561,8 @@ export function AdapterManager() {
                   isToggling={isBuiltinOverride ? overrideMutation.isPending : toggleMutation.isPending}
                   isReloading={reloadMutation.isPending}
                   isReinstalling={reinstallMutation.isPending}
-                  toggleTitleDisabled={isBuiltinOverride ? "Pause external override" : undefined}
-                  toggleTitleEnabled={isBuiltinOverride ? "Resume external override" : undefined}
+                  toggleTitleDisabled={isBuiltinOverride ? l10n("local.pause_external_override_0d800004") : undefined}
+                  toggleTitleEnabled={isBuiltinOverride ? l10n("local.resume_external_override_0d800005") : undefined}
                   disabledBadgeLabel={isBuiltinOverride ? l10n("local.override_paused_63bd03a0") : undefined}
                 />
               );

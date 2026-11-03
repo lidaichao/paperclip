@@ -11749,6 +11749,20 @@
     "carries_over_value_from_case_to_each_value_0d700014": "Carries over {{v0}} from this case onto each {{v1}}.",
     "moves_case_to_value_when_pieces_created_0d700015": "Moves this case to {{v0}} as soon as the pieces are created.",
     "waits_every_value_finished_then_moves_case_to_value_0d700016": "Waits until every {{v0}} is finished, then moves this case to {{v1}}.",
-    "empty_list_skips_case_to_value_0d700017": "If the agent returns an empty list, this case skips ahead to {{v0}}."
+    "empty_list_skips_case_to_value_0d700017": "If the agent returns an empty list, this case skips ahead to {{v0}}.",
+    "value_is_archived_0d800001": "{{v0}} is archived",
+    "switched_to_value_0d800002": "Switched to {{v0}}.",
+    "you_can_unarchive_it_from_this_list_0d800003": "You can unarchive it from this list.",
+    "pause_external_override_0d800004": "Pause external override",
+    "resume_external_override_0d800005": "Resume external override",
+    "failed_to_update_experimental_settings_0d800006": "Failed to update experimental settings.",
+    "turning_off_agent_chat_preserves_conversations_0d800007": "Turning this off preserves conversations and lets active runs finish, but prevents new messages.",
+    "turning_off_cases_hides_tab_and_keeps_data_0d800008": "Turning Cases off hides the tab and blocks the case API; existing case data is kept.",
+    "turning_off_chat_connectors_hides_setup_keeps_connections_0d800009": "Turning this off hides chat setup, channels, and connected-task controls. Existing chat connections keep running. GitHub and other tool connectors stay available.",
+    "turning_off_mcp_aggregators_hides_setup_keeps_connections_0d800010": "Turning this off hides setup for these connectors. Existing MCP connections keep running.",
+    "enabling_status_cards_also_enables_summaries_0d800011": "Enabling Status Cards also enables Summaries.",
+    "turning_off_streamlined_ui_restores_legacy_shell_0d800012": "Turning this off restores the legacy shell and navigation. Task and page data are unchanged.",
+    "status_cards_require_summaries_0d800013": "Status Cards requires Summaries. Disabling Summaries also disables Status Cards.",
+    "switching_takes_effect_immediately_no_task_data_affected_0d800014": "Switching takes effect immediately. No task data is affected."
   }
 }

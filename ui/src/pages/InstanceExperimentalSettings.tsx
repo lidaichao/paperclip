@@ -172,7 +172,7 @@ export function InstanceExperimentalSettings() {
       if (context?.previousSettings) {
         queryClient.setQueryData(queryKeys.instance.experimentalSettings, context.previousSettings);
       }
-      setActionError(error instanceof Error ? error.message : "Failed to update experimental settings.");
+      setActionError(error instanceof Error ? error.message : l10n("local.failed_to_update_experimental_settings_0d800006"));
     },
   });
 
@@ -192,7 +192,7 @@ export function InstanceExperimentalSettings() {
 
   const inWorktree = isWorktreeRuntime();
   // Present only on cloud-managed instances: keys the managed overlay controls
-  // render locked with the "Managed by Paperclip Cloud" badge. Self-hosted
+  // render locked with the "Managed by Alice Cloud" badge. Self-hosted
   // responses carry no `managedKeys`, so every card stays editable.
   const managedKeys = experimentalQuery.data?.managedKeys ?? {};
   const enableWorktreeRunExecution = experimentalQuery.data?.enableWorktreeRunExecution === true;
@@ -291,13 +291,26 @@ export function InstanceExperimentalSettings() {
         <ExperimentalToggleCard
           title={l10n("local.agent_chat_f085d2e8")}
           description={l10n("local.talk_to_each_agent_in_one_ongoing_conversatio_d7ba56fa")}
-          footnote="Turning this off preserves conversations and lets active runs finish, but prevents new messages."
+          footnote={l10n("local.turning_off_agent_chat_preserves_conversations_0d800007")}
           checked={experimentalQuery.data?.enableAgentChat ?? false}
           onCheckedChange={(checked) => toggleMutation.mutate({ enableAgentChat: checked })}
           disabled={toggleMutation.isPending}
           settingKey="enableAgentChat"
           managed={managedKeys.enableAgentChat}
           ariaLabel={l10n("local.toggle_agent_chat_experimental_setting_84010c30")}
+        />
+
+        <ExperimentalToggleCard
+          title={l10n("local.paperclip_runner_aacfc564")}
+          description={l10n("local.allow_new_codex_agents_to_select_the_experime_813b44bc")}
+          checked={enableNativeRunner}
+          onCheckedChange={(checked) =>
+            toggleMutation.mutate({ enableNativeRunner: checked })
+          }
+          disabled={toggleMutation.isPending}
+          settingKey="enableNativeRunner"
+          managed={managedKeys.enableNativeRunner}
+          ariaLabel={l10n("local.toggle_paperclip_runner_experimental_setting_ea8847b8")}
         />
 
         <ExperimentalToggleCard
@@ -325,7 +338,7 @@ export function InstanceExperimentalSettings() {
         <ExperimentalToggleCard
           title={l10n("local.cases_2249bd50")}
           description={l10n("local.durable_work_products_blog_posts_tweet_storms_fc07b489")}
-          footnote="Turning Cases off hides the tab and blocks the case API; existing case data is kept."
+          footnote={l10n("local.turning_off_cases_hides_tab_and_keeps_data_0d800008")}
           checked={enableCases}
           onCheckedChange={(checked) => toggleMutation.mutate({ enableCases: checked })}
           disabled={toggleMutation.isPending}
@@ -337,7 +350,7 @@ export function InstanceExperimentalSettings() {
         <ExperimentalToggleCard
           title={l10n("local.chat_connectors_b5191e9e")}
           description={l10n("local.connect_agents_to_slack_github_discord_micros_c36451e5")}
-          footnote="Turning this off hides chat setup, channels, and connected-task controls. Existing chat connections keep running. GitHub and other tool connectors stay available."
+          footnote={l10n("local.turning_off_chat_connectors_hides_setup_keeps_connections_0d800009")}
           checked={enableChatConnectors}
           onCheckedChange={(checked) => toggleMutation.mutate({ enableChatConnectors: checked })}
           disabled={toggleMutation.isPending}
@@ -430,26 +443,13 @@ export function InstanceExperimentalSettings() {
         <ExperimentalToggleCard
           title={l10n("local.mcp_aggregators_201c35f6")}
           description={l10n("local.connect_zapier_arcade_composio_connect_and_ex_e32c20f3")}
-          footnote="Turning this off hides setup for these connectors. Existing MCP connections keep running."
+          footnote={l10n("local.turning_off_mcp_aggregators_hides_setup_keeps_connections_0d800010")}
           checked={experimentalQuery.data?.enableMcpAggregators === true}
           onCheckedChange={(checked) => toggleMutation.mutate({ enableMcpAggregators: checked })}
           disabled={toggleMutation.isPending}
           settingKey="enableMcpAggregators"
           managed={managedKeys.enableMcpAggregators}
           ariaLabel={l10n("local.toggle_mcp_aggregators_experimental_setting_8d4a17ea")}
-        />
-
-        <ExperimentalToggleCard
-          title={l10n("local.paperclip_runner_aacfc564")}
-          description={l10n("local.allow_new_codex_agents_to_select_the_experime_813b44bc")}
-          checked={enableNativeRunner}
-          onCheckedChange={(checked) =>
-            toggleMutation.mutate({ enableNativeRunner: checked })
-          }
-          disabled={toggleMutation.isPending}
-          settingKey="enableNativeRunner"
-          managed={managedKeys.enableNativeRunner}
-          ariaLabel={l10n("local.toggle_paperclip_runner_experimental_setting_ea8847b8")}
         />
 
         <ExperimentalToggleCard
@@ -468,7 +468,7 @@ export function InstanceExperimentalSettings() {
         <ExperimentalToggleCard
           title={l10n("local.status_cards_a992c41e")}
           description={l10n("local.enable_the_experimental_shared_status_card_bo_7e3b32f6")}
-          footnote="Enabling Status Cards also enables Summaries."
+          footnote={l10n("local.enabling_status_cards_also_enables_summaries_0d800011")}
           checked={enableStatusCards}
           onCheckedChange={(checked) =>
             toggleMutation.mutate(
@@ -486,7 +486,7 @@ export function InstanceExperimentalSettings() {
         <ExperimentalToggleCard
           title={l10n("local.streamlined_ui_7e741dd5")}
           description={l10n("local.use_the_simplified_main_sidebar_shared_tasks_07709940")}
-          footnote="Turning this off restores the legacy shell and navigation. Task and page data are unchanged."
+          footnote={l10n("local.turning_off_streamlined_ui_restores_legacy_shell_0d800012")}
           checked={enableStreamlinedUi}
           onCheckedChange={(checked) => toggleMutation.mutate({ enableStreamlinedUi: checked })}
           disabled={toggleMutation.isPending}
@@ -498,7 +498,7 @@ export function InstanceExperimentalSettings() {
         <ExperimentalToggleCard
           title={l10n("local.summaries_87bc590e")}
           description={l10n("local.show_summarizer_generated_status_slots_on_pro_b36fdb9b")}
-          footnote="Status Cards requires Summaries. Disabling Summaries also disables Status Cards."
+          footnote={l10n("local.status_cards_require_summaries_0d800013")}
           checked={enableSummaries}
           onCheckedChange={(checked) =>
             toggleMutation.mutate(
@@ -539,6 +539,19 @@ export function InstanceExperimentalSettings() {
           </div>
 
           <ExperimentalToggleCard
+            title={l10n("local.paperclip_developer_mode_583aec77")}
+            description={l10n("local.show_internal_paperclip_maintainer_tools_and_661a5edf")}
+            checked={enablePaperclipDeveloperMode}
+            onCheckedChange={(checked) =>
+              toggleMutation.mutate({ enablePaperclipDeveloperMode: checked })
+            }
+            disabled={toggleMutation.isPending}
+            settingKey="enablePaperclipDeveloperMode"
+            managed={managedKeys.enablePaperclipDeveloperMode}
+            ariaLabel={l10n("local.toggle_paperclip_developer_mode_experimental_8db37380")}
+          />
+
+          <ExperimentalToggleCard
             title={l10n("local.auto_restart_dev_server_when_idle_0a38cef9")}
             description={l10n("local.in_pnpm_dev_once_wait_for_all_queued_and_runn_4c4156aa")}
             checked={autoRestartDevServerWhenIdle}
@@ -562,19 +575,6 @@ export function InstanceExperimentalSettings() {
             settingKey="enableManagedSandboxOnly"
             managed={managedKeys.enableManagedSandboxOnly}
             ariaLabel={l10n("local.toggle_managed_environment_only_experimental_227e72b3")}
-          />
-
-          <ExperimentalToggleCard
-            title={l10n("local.paperclip_developer_mode_583aec77")}
-            description={l10n("local.show_internal_paperclip_maintainer_tools_and_661a5edf")}
-            checked={enablePaperclipDeveloperMode}
-            onCheckedChange={(checked) =>
-              toggleMutation.mutate({ enablePaperclipDeveloperMode: checked })
-            }
-            disabled={toggleMutation.isPending}
-            settingKey="enablePaperclipDeveloperMode"
-            managed={managedKeys.enablePaperclipDeveloperMode}
-            ariaLabel={l10n("local.toggle_paperclip_developer_mode_experimental_8db37380")}
           />
 
           {showWorktreeRunExecution ? (
@@ -680,7 +680,7 @@ export function InstanceExperimentalSettings() {
           <ExperimentalToggleCard
             title={l10n("local.classic_task_interface_bc2e9527")}
             description={l10n("local.restores_the_previous_task_detail_page_the_pa_089d2f79")}
-            footnote="Switching takes effect immediately. No task data is affected."
+            footnote={l10n("local.switching_takes_effect_immediately_no_task_data_affected_0d800014")}
             checked={enableClassicTaskInterface}
             onCheckedChange={(checked) =>
               toggleMutation.mutate({ enableClassicTaskInterface: checked })

@@ -270,6 +270,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.then_wait_every_value_finished_before_moving_to_value_0d700008).toContain("等待所有");
     expect(messages.links_every_value_to_case_for_progress_rollup_0d700013).toContain("汇总进度");
     expect(messages.empty_list_skips_case_to_value_0d700017).toContain("空列表");
+    expect(messages.value_is_archived_0d800001).toBe("{{v0}} 已归档");
+    expect(messages.pause_external_override_0d800004).toBe("暂停外部覆盖");
+    expect(messages.failed_to_update_experimental_settings_0d800006).toContain("实验性设置");
+    expect(messages.turning_off_agent_chat_preserves_conversations_0d800007).toContain("无法发送新消息");
+    expect(messages.status_cards_require_summaries_0d800013).toContain("依赖摘要");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

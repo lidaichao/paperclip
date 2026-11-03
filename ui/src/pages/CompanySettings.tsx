@@ -151,7 +151,7 @@ export function CompanySettings() {
       // still makes sense (another active company, the Cloud portfolio, or
       // the companies list), with a toast naming what happened.
       const archived = companies.find((company) => company.id === companyId);
-      const archivedName = archived?.name ?? "Organization";
+      const archivedName = archived?.name ?? l10n("local.organization_d764d425");
       const departure = resolveCompanyArchiveDeparture({
         archivedCompanyId: companyId,
         companies,
@@ -166,8 +166,8 @@ export function CompanySettings() {
       }
       if (departure.kind === "company") {
         toastActions?.pushToast({
-          title: `${archivedName} is archived`,
-          body: `Switched to ${departure.company.name}.`,
+          title: l10n("local.value_is_archived_0d800001", { v0: archivedName }),
+          body: l10n("local.switched_to_value_0d800002", { v0: departure.company.name }),
           tone: "info",
           dedupeKey: `company-archive-departure:${companyId}`,
         });
@@ -175,8 +175,8 @@ export function CompanySettings() {
         navigate(`/${departure.company.issuePrefix}/dashboard`, { replace: true });
       } else {
         toastActions?.pushToast({
-          title: `${archivedName} is archived`,
-          body: "You can unarchive it from this list.",
+          title: l10n("local.value_is_archived_0d800001", { v0: archivedName }),
+          body: l10n("local.you_can_unarchive_it_from_this_list_0d800003"),
           tone: "info",
           dedupeKey: `company-archive-departure:${companyId}`,
         });
