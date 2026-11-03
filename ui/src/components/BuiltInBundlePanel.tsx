@@ -77,25 +77,25 @@ function resourceActionCopy(
   if (resource.stockStatus === "stock_update_available") {
     return {
       title: l10n("local.update_value_to_the_newest_default_10ee7429", {v0: (label)}),
-      body: `You haven't edited this, so Paperclip will replace it with the newer shipped version. Nothing you customized is affected, and your adapter credentials and settings are not touched.`,
+      body: l10n("local.alice_replaces_unedited_resource_with_newer_default_4ae1d59f"),
       confirmLabel: l10n("local.update_c1c1009d"),
-      triggerLabel: "Update",
+      triggerLabel: l10n("local.update_c1c1009d"),
     };
   }
   if (resource.stockStatus === "operator_modified") {
     return {
       title: l10n("local.reset_value_to_the_shipped_default_893d9f25", {v0: (label)}),
-      body: `This replaces your edited version with Paperclip's current default. Your edits can't be recovered. Adapter credentials and settings are not touched.`,
+      body: l10n("local.alice_replaces_edited_resource_with_current_default_8f547c33"),
       confirmLabel: l10n("local.reset_value_48d6c5e4", {v0: (label)}),
-      triggerLabel: "Reset",
+      triggerLabel: l10n("local.reset_daee7606"),
     };
   }
   if (resource.stockStatus === "missing") {
     return {
       title: l10n("local.recreate_value_80c89b7b", {v0: (label)}),
-      body: `This resource is missing. Paperclip will recreate it from the shipped default. Adapter credentials and settings are not touched.`,
+      body: l10n("local.alice_recreates_missing_resource_from_default_25f57bf2"),
       confirmLabel: l10n("local.recreate_15efb691"),
-      triggerLabel: "Recreate",
+      triggerLabel: l10n("local.recreate_15efb691"),
     };
   }
   return null;
@@ -210,11 +210,11 @@ function BundleRow({ label, secondary, chips, detail, detailTone = "muted", acti
 function driftDetail(resource: BuiltInManagedResourceState): string | undefined {
   switch (resource.stockStatus) {
     case "operator_modified":
-      return "You've edited this. Your changes are kept until you reset.";
+      return l10n("local.edited_resource_kept_until_reset_2788671b");
     case "stock_update_available":
-      return "Paperclip shipped a newer default.";
+      return l10n("local.alice_shipped_newer_default_843f7d52");
     case "missing":
-      return "Not materialized yet — recreate it from the shipped default.";
+      return l10n("local.resource_not_materialized_recreate_from_default_0a26115a");
     default:
       return undefined;
   }

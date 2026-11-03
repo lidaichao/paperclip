@@ -12,23 +12,23 @@ function formatRelativeTimestamp(value: string | null): string | null {
   if (Number.isNaN(timestamp)) return null;
 
   const deltaMs = Date.now() - timestamp;
-  if (deltaMs < 60_000) return "just now";
+  if (deltaMs < 60_000) return l10n("local.just_now_5c3ec983");
   const deltaMinutes = Math.round(deltaMs / 60_000);
-  if (deltaMinutes < 60) return `${deltaMinutes}m ago`;
+  if (deltaMinutes < 60) return l10n("local.minutes_ago_16c1d660", { v0: deltaMinutes });
   const deltaHours = Math.round(deltaMinutes / 60);
-  if (deltaHours < 24) return `${deltaHours}h ago`;
+  if (deltaHours < 24) return l10n("local.hours_ago_60a4dedb", { v0: deltaHours });
   const deltaDays = Math.round(deltaHours / 24);
-  return `${deltaDays}d ago`;
+  return l10n("local.days_ago_fa78e0aa", { v0: deltaDays });
 }
 
 function describeReason(devServer: DevServerHealthStatus): string {
   if (devServer.reason === "backend_changes_and_pending_migrations") {
-    return "backend files changed and migrations are pending";
+    return l10n("local.backend_files_changed_and_migrations_pending_b0a0dc8c");
   }
   if (devServer.reason === "pending_migrations") {
-    return "pending migrations need a fresh boot";
+    return l10n("local.pending_migrations_need_fresh_boot_11b03cc3");
   }
-  return "backend files changed since this server booted";
+  return l10n("local.backend_files_changed_since_server_booted_e7eb45c6");
 }
 
 export function DevRestartBanner({ devServer }: { devServer?: DevServerHealthStatus }) {
@@ -51,8 +51,8 @@ export function DevRestartBanner({ devServer }: { devServer?: DevServerHealthSta
   async function requestRestartNow() {
     const warning =
       currentDevServer.activeRunCount > 0
-        ? `Restart Paperclip now? This may interrupt ${activeRunLabel}.`
-        : "Restart Paperclip now?";
+        ? l10n("local.restart_alice_now_may_interrupt_live_runs_89c78fc4", { v0: activeRunLabel })
+        : l10n("local.restart_alice_now_704f60f7");
     if (!window.confirm(warning)) return;
 
     setRestartPending(true);
@@ -60,7 +60,11 @@ export function DevRestartBanner({ devServer }: { devServer?: DevServerHealthSta
       await healthApi.requestDevServerRestart();
     } catch (error) {
       setRestartPending(false);
-      window.alert(error instanceof Error ? error.message : "Failed to request restart");
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : l10n("local.failed_to_request_restart_9f76b99d"),
+      );
     }
   }
 

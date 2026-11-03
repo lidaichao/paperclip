@@ -10927,6 +10927,23 @@
     "could_not_check_local_sign_in_92fbc1ab": "Could not check local sign-in.",
     "could_not_save_across_devices_retry_when_reconnected_a7620309": "Couldn’t save across devices. We’ll retry when you reconnect or return.",
     "confirmation_accepted_53726dcf": "Confirmation accepted",
-    "confirmation_declined_6a5a6f37": "Confirmation declined"
+    "confirmation_declined_6a5a6f37": "Confirmation declined",
+    "alice_replaces_unedited_resource_with_newer_default_4ae1d59f": "You haven't edited this, so Alice will replace it with the newer shipped version. Nothing you customized is affected, and your adapter credentials and settings are not touched.",
+    "alice_replaces_edited_resource_with_current_default_8f547c33": "This replaces your edited version with Alice's current default. Your edits can't be recovered. Adapter credentials and settings are not touched.",
+    "alice_recreates_missing_resource_from_default_25f57bf2": "This resource is missing. Alice will recreate it from the shipped default. Adapter credentials and settings are not touched.",
+    "edited_resource_kept_until_reset_2788671b": "You've edited this. Your changes are kept until you reset.",
+    "alice_shipped_newer_default_843f7d52": "Alice shipped a newer default.",
+    "resource_not_materialized_recreate_from_default_0a26115a": "Not materialized yet — recreate it from the shipped default.",
+    "just_now_5c3ec983": "just now",
+    "minutes_ago_16c1d660": "{{v0}}m ago",
+    "hours_ago_60a4dedb": "{{v0}}h ago",
+    "days_ago_fa78e0aa": "{{v0}}d ago",
+    "backend_files_changed_and_migrations_pending_b0a0dc8c": "Backend files changed and migrations are pending.",
+    "pending_migrations_need_fresh_boot_11b03cc3": "Pending migrations need a fresh boot.",
+    "backend_files_changed_since_server_booted_e7eb45c6": "Backend files changed since this server booted.",
+    "restart_alice_now_may_interrupt_live_runs_89c78fc4": "Restart Alice now? This may interrupt {{v0}}.",
+    "restart_alice_now_704f60f7": "Restart Alice now?",
+    "failed_to_request_restart_9f76b99d": "Failed to request restart.",
+    "grok_instructions_file_hint_alice_426049a1": "Absolute path to a Markdown file (for example, AGENTS.md) that defines this agent's behavior. Alice stages it into the Grok workspace as Agents.md when possible."
   }
 }

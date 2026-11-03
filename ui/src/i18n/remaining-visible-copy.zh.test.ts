@@ -72,5 +72,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.could_not_save_across_devices_retry_when_reconnected_a7620309).toBe(
       "无法跨设备保存。重新连接或返回后将自动重试。",
     );
+    expect(messages.alice_shipped_newer_default_843f7d52).toBe("Alice 已提供更新的默认版本。");
+    expect(messages.restart_alice_now_704f60f7).toBe("现在重启 Alice？");
+    expect(messages.grok_instructions_file_hint_alice_426049a1).toContain(
+      "Alice 会在可行时将其放入 Grok 工作区",
+    );
   });
 });

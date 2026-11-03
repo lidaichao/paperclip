@@ -10927,6 +10927,23 @@
     "could_not_check_local_sign_in_92fbc1ab": "无法检查本地登录状态。",
     "could_not_save_across_devices_retry_when_reconnected_a7620309": "无法跨设备保存。重新连接或返回后将自动重试。",
     "confirmation_accepted_53726dcf": "已接受确认",
-    "confirmation_declined_6a5a6f37": "已拒绝确认"
+    "confirmation_declined_6a5a6f37": "已拒绝确认",
+    "alice_replaces_unedited_resource_with_newer_default_4ae1d59f": "你尚未编辑此资源，Alice 将用新版本替换它。你的自定义内容不受影响，适配器凭据和设置也不会改变。",
+    "alice_replaces_edited_resource_with_current_default_8f547c33": "这会用 Alice 当前的默认版本替换你编辑过的资源。此操作无法恢复你的修改，但不会改变适配器凭据和设置。",
+    "alice_recreates_missing_resource_from_default_25f57bf2": "此资源缺失。Alice 将根据随附的默认版本重新创建它，且不会改变适配器凭据和设置。",
+    "edited_resource_kept_until_reset_2788671b": "你已编辑此资源；在重置前会保留这些修改。",
+    "alice_shipped_newer_default_843f7d52": "Alice 已提供更新的默认版本。",
+    "resource_not_materialized_recreate_from_default_0a26115a": "此资源尚未生成，请根据随附的默认版本重新创建。",
+    "just_now_5c3ec983": "刚刚",
+    "minutes_ago_16c1d660": "{{v0}} 分钟前",
+    "hours_ago_60a4dedb": "{{v0}} 小时前",
+    "days_ago_fa78e0aa": "{{v0}} 天前",
+    "backend_files_changed_and_migrations_pending_b0a0dc8c": "后端文件已更改，且存在待执行的迁移。",
+    "pending_migrations_need_fresh_boot_11b03cc3": "待执行的迁移需要重新启动。",
+    "backend_files_changed_since_server_booted_e7eb45c6": "后端文件在本次服务启动后发生了更改。",
+    "restart_alice_now_may_interrupt_live_runs_89c78fc4": "现在重启 Alice？这可能会中断 {{v0}}。",
+    "restart_alice_now_704f60f7": "现在重启 Alice？",
+    "failed_to_request_restart_9f76b99d": "请求重启失败。",
+    "grok_instructions_file_hint_alice_426049a1": "定义智能体行为的 Markdown 文件绝对路径（例如 AGENTS.md）。Alice 会在可行时将其放入 Grok 工作区并命名为 Agents.md。"
   }
 }
