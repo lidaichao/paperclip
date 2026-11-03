@@ -183,6 +183,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.run_heartbeat_every_0c960009).toBe("心跳运行间隔");
     expect(messages.sign_in_to_environment_0c960011).toBe("登录运行环境");
     expect(messages.another_sign_in_attempt_active_0c960012).toContain("另一个登录流程正在进行");
+    expect(messages.zapier_gallery_tagline_0c970001).toContain("9,000 多款应用");
+    expect(messages.github_gallery_copy_0c970003).toContain("拉取请求");
+    expect(messages.railway_gallery_short_0c970008).toContain("容器访问");
+    expect(messages.posthog_gallery_tagline_0c970009).toContain("功能开关和实验");
+    expect(messages.gmail_gallery_copy_0c970014).toContain("创建草稿");
+    expect(messages.google_workspace_search_gallery_copy_0c970021).toContain("Google 工作区");
+    expect(messages.generic_app_gallery_copy_0c970027).toBe("授权智能体访问此应用。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
