@@ -11864,6 +11864,21 @@
     "could_not_test_agent_0e500002": "Could not test the agent.",
     "could_not_create_agent_0e500003": "Could not create the agent.",
     "could_not_remove_unused_setup_credential_0e500004": "Could not remove an unused setup credential. Remove it from Secrets before retrying.",
-    "could_not_connect_provider_0e500005": "Could not connect to the provider."
+    "could_not_connect_provider_0e500005": "Could not connect to the provider.",
+    "on_webhook_delivery_0e600001": "On webhook delivery",
+    "every_hour_at_minute_0e600002": "Every hour at :{{v0}}",
+    "every_day_at_time_0e600003": "Every day at {{v0}}",
+    "weekdays_at_time_0e600004": "Weekdays at {{v0}}",
+    "every_dayname_at_time_0e600005": "Every {{v0}} at {{v1}}",
+    "monthly_on_day_at_time_0e600006": "Monthly on day {{v0}} at {{v1}}",
+    "no_schedule_set_0e600007": "No schedule set",
+    "enter_five_field_cron_expression_0e600008": "Enter a 5-field cron expression.",
+    "use_exactly_five_fields_count_0e600009": "Use exactly 5 fields; this has {{v0}}.",
+    "cron_fields_must_use_valid_syntax_0e600010": "Cron fields must use valid numbers, ranges, lists, wildcards, or steps.",
+    "valid_cron_0e600011": "Valid cron.",
+    "valid_cron_no_upcoming_fires_0e600012": "Valid cron, but no upcoming fires were found.",
+    "value_active_0e600013": "{{v0}} active",
+    "no_runs_0e600014": "No runs",
+    "value_bound_0e600015": "{{v0}} bound"
   }
 }

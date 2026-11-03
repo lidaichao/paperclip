@@ -176,13 +176,13 @@ export function RoutineOverview() {
         <OverviewFact
           icon={Clock3}
           label={l10n("local.next_run_b3c0ab96")}
-          value={schedule.nextRunAt ? formatRoutineTimestamp(schedule.nextRunAt) : hasWebhook ? "On webhook delivery" : "Not scheduled"}
+          value={schedule.nextRunAt ? formatRoutineTimestamp(schedule.nextRunAt) : hasWebhook ? l10n("local.on_webhook_delivery_0e600001") : l10n("local.not_scheduled_b3e24789")}
           detail={schedule.nextRunAt ? l10n("local.scheduled_4724f344") : hasWebhook ? l10n("local.waiting_for_an_incoming_request_042e1123") : l10n("local.add_or_enable_a_schedule_dfefacb8")}
         />
         <OverviewFact
           icon={Play}
           label={l10n("local.last_run_512a4821")}
-          value={lastRun ? <StatusBadge status={lastRun.status} /> : "No runs yet"}
+          value={lastRun ? <StatusBadge status={lastRun.status} /> : l10n("local.no_runs_yet_306b45db")}
           detail={lastRun ? formatRoutineTimestamp(lastRun.triggeredAt) : l10n("local.run_manually_or_wait_for_a_trigger_0977c040")}
         />
       </div>

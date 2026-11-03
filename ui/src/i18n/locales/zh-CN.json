@@ -11864,6 +11864,21 @@
     "could_not_test_agent_0e500002": "无法测试智能体。",
     "could_not_create_agent_0e500003": "无法创建智能体。",
     "could_not_remove_unused_setup_credential_0e500004": "无法删除未使用的配置凭据。请在密钥页面删除后重试。",
-    "could_not_connect_provider_0e500005": "无法连接到服务商。"
+    "could_not_connect_provider_0e500005": "无法连接到服务商。",
+    "on_webhook_delivery_0e600001": "收到回调通知时",
+    "every_hour_at_minute_0e600002": "每小时的第 {{v0}} 分钟",
+    "every_day_at_time_0e600003": "每天 {{v0}}",
+    "weekdays_at_time_0e600004": "工作日 {{v0}}",
+    "every_dayname_at_time_0e600005": "每周{{v0}} {{v1}}",
+    "monthly_on_day_at_time_0e600006": "每月 {{v0}} 日 {{v1}}",
+    "no_schedule_set_0e600007": "尚未设置计划",
+    "enter_five_field_cron_expression_0e600008": "请输入包含 5 个字段的 Cron 表达式。",
+    "use_exactly_five_fields_count_0e600009": "必须使用 5 个字段；当前有 {{v0}} 个。",
+    "cron_fields_must_use_valid_syntax_0e600010": "Cron 字段必须使用有效的数字、范围、列表、通配符或步长。",
+    "valid_cron_0e600011": "Cron 表达式有效。",
+    "valid_cron_no_upcoming_fires_0e600012": "Cron 表达式有效，但未找到后续触发时间。",
+    "value_active_0e600013": "{{v0}} 个已启用",
+    "no_runs_0e600014": "无运行记录",
+    "value_bound_0e600015": "已绑定 {{v0}} 个"
   }
 }

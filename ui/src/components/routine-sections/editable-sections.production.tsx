@@ -1,6 +1,6 @@
 import { l10n, englishPluralSuffix } from "../../i18n";
 import { AgentAvatar } from "@/components/AgentAvatar";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowRight,
   Braces,
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/StatusBadge";
 import {
   Select,
   SelectContent,
@@ -325,7 +326,7 @@ export function OverviewSection({
         <SummaryCard
           icon={Clock3}
           label={l10n("local.triggers_e62f2148")}
-          value={activeTriggers === 0 ? "None" : `${activeTriggers} active`}
+          value={activeTriggers === 0 ? l10n("local.none_dc937b59") : l10n("local.value_active_0e600013", { v0: activeTriggers })}
           hint={nextFire ? l10n("local.next_fire_value_3fd50bc5", {v0: (nextFire)}) : l10n("local.no_schedule_44904077")}
           to={() => navigateToSection("triggers")}
           ariaLabel={l10n("local.value_triggers_open_triggers_83c01ed8", {v0: (activeTriggers)})}
@@ -333,7 +334,7 @@ export function OverviewSection({
         <SummaryCard
           icon={KeyRound}
           label={l10n("local.secrets_d8707d41")}
-          value={boundSecrets === 0 ? "None" : `${boundSecrets} bound`}
+          value={boundSecrets === 0 ? l10n("local.none_dc937b59") : l10n("local.value_bound_0e600015", { v0: boundSecrets })}
           hint={l10n("local.manage_bound_secrets_0b00dd96")}
           to={() => navigateToSection("secrets")}
           ariaLabel={l10n("local.value_secrets_bound_open_secrets_68e0713c", {v0: (boundSecrets)})}
@@ -341,7 +342,7 @@ export function OverviewSection({
         <SummaryCard
           icon={Play}
           label={l10n("local.last_run_512a4821")}
-          value={lastRun ? lastRun.status.replaceAll("_", " ") : "No runs"}
+          value={lastRun ? <StatusBadge status={lastRun.status} /> : l10n("local.no_runs_0e600014")}
           hint={lastRun ? timeAgo(lastRun.triggeredAt) : l10n("local.trigger_a_run_177f8dfa")}
           to={() => navigateToSection("runs")}
           ariaLabel={lastRun ? l10n("local.last_run_value_open_runs_52ffac04", {v0: (lastRun.status)}) : l10n("local.no_runs_open_runs_b6004279")}
@@ -393,7 +394,7 @@ function SummaryCard({
 }: {
   icon: typeof Clock3;
   label: string;
-  value: string;
+  value: ReactNode;
   hint: string;
   to: () => void;
   ariaLabel: string;

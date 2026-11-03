@@ -127,28 +127,22 @@ function describeSchedule(cron: string): string {
 
   switch (preset) {
     case "every_minute":
-      return "Every minute";
+      return l10n("local.every_minute_3c14fb8a");
     case "every_hour":
-      return `Every hour at :${minute.padStart(2, "0")}`;
+      return l10n("local.every_hour_at_minute_0e600002", { v0: minute.padStart(2, "0") });
     case "every_day":
-      return `Every day at ${timeStr}`;
+      return l10n("local.every_day_at_time_0e600003", { v0: timeStr });
     case "weekdays":
-      return `Weekdays at ${timeStr}`;
+      return l10n("local.weekdays_at_time_0e600004", { v0: timeStr });
     case "weekly": {
       const day = DAYS_OF_WEEK.find((d) => d.value === dayOfWeek)?.label ?? dayOfWeek;
-      return `Every ${day} at ${timeStr}`;
+      return l10n("local.every_dayname_at_time_0e600005", { v0: day, v1: timeStr });
     }
     case "monthly":
-      return `Monthly on the ${dayOfMonth}${ordinalSuffix(Number(dayOfMonth))} at ${timeStr}`;
+      return l10n("local.monthly_on_day_at_time_0e600006", { v0: dayOfMonth, v1: timeStr });
     case "custom":
-      return cron || "No schedule set";
+      return cron || l10n("local.no_schedule_set_0e600007");
   }
-}
-
-function ordinalSuffix(n: number): string {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return s[(v - 20) % 10] || s[v] || s[0];
 }
 
 export { describeSchedule };
@@ -162,7 +156,7 @@ export function getScheduleCronValidation(cron: string): {
   if (!trimmed) {
     return {
       valid: false,
-      message: "Enter a 5-field cron expression.",
+      message: l10n("local.enter_five_field_cron_expression_0e600008"),
       nextFires: [],
     };
   }
@@ -171,7 +165,7 @@ export function getScheduleCronValidation(cron: string): {
   if (fields.length !== 5) {
     return {
       valid: false,
-      message: `Use exactly 5 fields; this has ${fields.length}.`,
+      message: l10n("local.use_exactly_five_fields_count_0e600009", { v0: fields.length }),
       nextFires: [],
     };
   }
@@ -179,7 +173,7 @@ export function getScheduleCronValidation(cron: string): {
   if (!parseCronExpression(trimmed)) {
     return {
       valid: false,
-      message: "Cron fields must use valid numbers, ranges, lists, wildcards, or steps.",
+      message: l10n("local.cron_fields_must_use_valid_syntax_0e600010"),
       nextFires: [],
     };
   }
@@ -187,7 +181,7 @@ export function getScheduleCronValidation(cron: string): {
   const nextFires = nextCronFires(trimmed, 3, { timeZone: "UTC" });
   return {
     valid: true,
-    message: nextFires.length > 0 ? "Valid cron." : "Valid cron, but no upcoming fires were found.",
+    message: nextFires.length > 0 ? l10n("local.valid_cron_0e600011") : l10n("local.valid_cron_no_upcoming_fires_0e600012"),
     nextFires,
   };
 }

@@ -328,6 +328,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.could_not_test_agent_0e500002).toBe("无法测试智能体。");
     expect(messages.could_not_remove_unused_setup_credential_0e500004).toContain("密钥页面");
     expect(messages.could_not_connect_provider_0e500005).toBe("无法连接到服务商。");
+    expect(messages.on_webhook_delivery_0e600001).toBe("收到回调通知时");
+    expect(messages.monthly_on_day_at_time_0e600006).toContain("每月");
+    expect(messages.valid_cron_0e600011).toBe("Cron 表达式有效。");
+    expect(messages.no_runs_0e600014).toBe("无运行记录");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
