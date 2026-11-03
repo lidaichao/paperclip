@@ -12251,6 +12251,20 @@
     "no_draft_to_finish_10300054": "没有可完成的草稿。",
     "could_not_update_assignment_10300055": "无法更新分配项 {{v0}}{{v1}}。",
     "failed_to_connect_plugin_stream_10300056": "无法连接插件数据流“{{v0}}”。",
-    "failed_to_fetch_plugin_module_10300057": "无法获取插件模块：{{v0}} {{v1}}"
+    "failed_to_fetch_plugin_module_10300057": "无法获取插件模块：{{v0}} {{v1}}",
+    "parser_worker_init_timed_out_10300058": "解析器工作线程初始化超时。",
+    "worker_error_10300059": "工作线程错误：{{v0}}",
+    "annotation_panel_requires_target_10300060": "文档批注面板需要批注目标。",
+    "timeline_pagination_did_not_advance_10300061": "时间线分页没有继续推进。",
+    "timeline_response_was_empty_10300062": "时间线返回结果为空。",
+    "empty_cron_field_element_10300063": "计划字段中存在空项。",
+    "invalid_cron_step_10300064": "计划步长无效。",
+    "invalid_cron_range_10300065": "计划范围无效。",
+    "invalid_cron_start_10300066": "计划起始值无效。",
+    "invalid_cron_range_order_10300067": "计划范围无效（起始值大于结束值）。",
+    "invalid_cron_value_10300068": "计划值无效。",
+    "empty_cron_field_10300069": "计划字段为空。",
+    "cron_value_out_of_range_10300070": "计划值 {{v0}} 超出范围。",
+    "unable_to_resolve_weekday_10300071": "无法解析 {{v0}} 对应的星期信息。"
   }
 }

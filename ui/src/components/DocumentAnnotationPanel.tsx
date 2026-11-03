@@ -111,7 +111,9 @@ export function AnnotationPanelBody(props: AnnotationPanelProps) {
   const bodyTestId = props.isMobile ? "document-annotation-panel" : undefined;
   const annotationTarget = useMemo<DocumentAnnotationTarget>(() => {
     if (props.target) return props.target;
-    if (!props.issueId) throw new Error("Document annotation panel requires an annotation target.");
+    if (!props.issueId) {
+      throw new Error(l10n("local.annotation_panel_requires_target_10300060"));
+    }
     return { kind: "issue", issueId: props.issueId, documentKey: props.documentKey };
   }, [props.documentKey, props.issueId, props.target]);
 

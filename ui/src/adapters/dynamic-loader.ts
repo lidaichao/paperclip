@@ -1,3 +1,5 @@
+import { l10n } from "../i18n";
+
 /**
  * Dynamic UI parser loading for external adapters — sandboxed execution.
  *
@@ -120,7 +122,7 @@ function initSandboxedWorker(source: string): Promise<SandboxedParser> {
     const timeout = setTimeout(() => {
       drainPendingRequests(sandbox);
       worker.terminate();
-      reject(new Error("Parser worker init timed out"));
+      reject(new Error(l10n("local.parser_worker_init_timed_out_10300058")));
     }, 5000);
 
     worker.onmessage = (e: MessageEvent<SandboxResponse>) => {
@@ -162,7 +164,7 @@ function initSandboxedWorker(source: string): Promise<SandboxedParser> {
       clearTimeout(timeout);
       drainPendingRequests(sandbox);
       worker.terminate();
-      reject(new Error(`Worker error: ${ev.message}`));
+      reject(new Error(l10n("local.worker_error_10300059", { v0: ev.message })));
     };
 
     // Send the parser source to the worker for evaluation.

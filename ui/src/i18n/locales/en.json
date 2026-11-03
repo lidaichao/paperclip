@@ -12251,6 +12251,20 @@
     "no_draft_to_finish_10300054": "No draft to finish.",
     "could_not_update_assignment_10300055": "Could not update assignment {{v0}}{{v1}}.",
     "failed_to_connect_plugin_stream_10300056": "Failed to connect to plugin stream “{{v0}}”.",
-    "failed_to_fetch_plugin_module_10300057": "Failed to fetch plugin module: {{v0}} {{v1}}"
+    "failed_to_fetch_plugin_module_10300057": "Failed to fetch plugin module: {{v0}} {{v1}}",
+    "parser_worker_init_timed_out_10300058": "Parser worker initialization timed out.",
+    "worker_error_10300059": "Worker error: {{v0}}",
+    "annotation_panel_requires_target_10300060": "Document annotation panel requires an annotation target.",
+    "timeline_pagination_did_not_advance_10300061": "Timeline pagination did not advance.",
+    "timeline_response_was_empty_10300062": "Timeline response was empty.",
+    "empty_cron_field_element_10300063": "Empty schedule field element.",
+    "invalid_cron_step_10300064": "Invalid schedule step.",
+    "invalid_cron_range_10300065": "Invalid schedule range.",
+    "invalid_cron_start_10300066": "Invalid schedule start.",
+    "invalid_cron_range_order_10300067": "Invalid schedule range (start > end).",
+    "invalid_cron_value_10300068": "Invalid schedule value.",
+    "empty_cron_field_10300069": "Empty schedule field.",
+    "cron_value_out_of_range_10300070": "Schedule value {{v0}} is out of range.",
+    "unable_to_resolve_weekday_10300071": "Unable to resolve weekday for {{v0}}."
   }
 }

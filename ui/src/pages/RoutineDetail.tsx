@@ -232,7 +232,9 @@ export function RoutineDetail() {
   });
   const createSecret = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedCompanyId) throw new Error("Select an organization to create secrets");
+      if (!selectedCompanyId) {
+        throw new Error(l10n("local.select_organization_to_create_secrets_c1e2a413"));
+      }
       return secretsApi.create(selectedCompanyId, input);
     },
     onSuccess: () => {
