@@ -12200,6 +12200,8 @@
     "workflow_10300003": "工作流",
     "parent_task_10300004": "父任务",
     "blocked_by_task_step_10300005": "受 {{v0}} 阻塞 · 步骤 {{v1}}",
-    "blocked_by_task_10300006": "受 {{v0}} 阻塞"
+    "blocked_by_task_10300006": "受 {{v0}} 阻塞",
+    "your_first_agent_10300007": "你的第一个智能体",
+    "choose_saved_api_key_or_enter_new_10300008": "选择已保存的 API 密钥，或输入新密钥"
   }
 }

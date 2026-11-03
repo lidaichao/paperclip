@@ -274,8 +274,10 @@ export function AgentProviderConnection({
               <OnboardingLoginCard
                 instruction={
                   savedKeys.options.length
-                    ? "Choose a saved API key or enter a new one"
-                    : `Provide your ${provider} API key to connect`
+                    ? l10n("local.choose_saved_api_key_or_enter_new_10300008")
+                    : l10n("local.provide_api_key_to_connect_0f200010", {
+                        v0: provider,
+                      })
                 }
               >
                 <SavedProviderKeySelect

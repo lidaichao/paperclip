@@ -12200,6 +12200,8 @@
     "workflow_10300003": "Workflow",
     "parent_task_10300004": "Parent Task",
     "blocked_by_task_step_10300005": "blocked by {{v0}} · step {{v1}}",
-    "blocked_by_task_10300006": "blocked by {{v0}}"
+    "blocked_by_task_10300006": "blocked by {{v0}}",
+    "your_first_agent_10300007": "Your first agent",
+    "choose_saved_api_key_or_enter_new_10300008": "Choose a saved API key or enter a new one"
   }
 }

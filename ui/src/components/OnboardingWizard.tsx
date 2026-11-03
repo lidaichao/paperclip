@@ -2581,7 +2581,11 @@ function OnboardingWizardInner({
                         <motion.span key={step} {...titleSwapMotion} className="inline-block">
                           {step === 4
                             ? l10n("local.paperclip_works_with_your_subscription_or_api_d71eb161")
-                            : l10n("local.value_is_ready_to_work_5f5013c1", {v0: (agentName.trim() || "Your first agent")})}
+                            : l10n("local.value_is_ready_to_work_5f5013c1", {
+                                v0:
+                                  agentName.trim() ||
+                                  l10n("local.your_first_agent_10300007"),
+                              })}
                         </motion.span>
                       </p>
                     </motion.div>
@@ -2775,9 +2779,13 @@ function OnboardingWizardInner({
                       </p>
                     ) : credentialMode === "api" ? (
                       <OnboardingLoginCard
-                        instruction={savedKeys.options.length ? "Choose a saved API key or enter a new one" : `Provide your ${
-                          CONNECT_SOURCE_NAMES[adapterType] ?? adapterType
-                        } API key to connect`}
+                        instruction={
+                          savedKeys.options.length
+                            ? l10n("local.choose_saved_api_key_or_enter_new_10300008")
+                            : l10n("local.provide_api_key_to_connect_0f200010", {
+                                v0: CONNECT_SOURCE_NAMES[adapterType] ?? adapterType,
+                              })
+                        }
                       >
                         <SavedProviderKeySelect {...savedKeys} disabled={loading || adapterEnvLoading} value={selectedApiKey?.id ?? ""} onChange={(id) => {
                           setSelectedSavedKey(createdCompanyId ? { companyId: createdCompanyId, envKey: apiKeyEnvKeyFor(adapterType), id } : null);
