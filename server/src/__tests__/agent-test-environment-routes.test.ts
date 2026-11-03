@@ -451,7 +451,7 @@ describe("agent test-environment route", () => {
 
   it("fails adoption of an api_key connection the provider no longer accepts", async () => {
     mockManagedRuntime("api_key");
-    mockValidateAiApiKey.mockRejectedValueOnce(Object.assign(new Error("The provider rejected this API key."), { status: 422 }));
+    mockValidateAiApiKey.mockRejectedValueOnce(Object.assign(new Error("提供商拒绝了此 API 密钥。"), { status: 422 }));
     const app = await createApp();
     const res = await request(app)
       .post("/api/companies/company-1/adapters/external_test/test-environment")

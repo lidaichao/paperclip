@@ -70,7 +70,7 @@ export async function assertAiConnectionCreateAccess(
       .limit(1);
     if (!grant || (grant.owner ?? grant.creator) !== userId)
       throw forbidden(
-        "Only the account owner can reconnect this AI connection",
+        "只有账户所有者可以重新连接此 AI 连接",
       );
   }
   const membership = req.actor.memberships?.find(
@@ -93,7 +93,7 @@ export async function assertAiConnectionCreateAccess(
     (input.ownership === "shared" || input.allAgents)
   )
     throw forbidden(
-      "A connection manager must authorize company-shared access",
+      "公司共享访问必须由连接管理员授权",
     );
   if (!input.connectionId && !manager && input.agentIds.length) {
     for (const id of input.agentIds) {
@@ -106,11 +106,11 @@ export async function assertAiConnectionCreateAccess(
           })
         ).allowed
       )
-        throw forbidden("You cannot configure this agent");
+        throw forbidden("你无权配置此智能体");
     }
   }
   if (membership?.membershipRole === "viewer")
-    throw forbidden("Viewers cannot create AI connections");
+    throw forbidden("查看者不能创建 AI 连接");
   return userId;
 }
 
@@ -155,20 +155,20 @@ export async function validateAiApiKey(
           : { Authorization: `Bearer ${key}` },
     });
   } catch {
-    throw unprocessable("Could not verify the account. Try again.");
+    throw unprocessable("无法验证账户，请重试。");
   }
   await response.body?.cancel();
   if (!response.ok)
     throw unprocessable(
       response.status === 401 || response.status === 403
-        ? "The provider rejected this API key."
-        : "The provider could not verify this account. Try again.",
+        ? "提供商拒绝了此 API 密钥。"
+        : "提供商无法验证此账户，请重试。",
     );
 }
 
 export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLocalAiLogin>[0] = {}) {
   function assertLocalLoginAvailable() {
-    if (!supportsLocalAiLogin(options)) throw unprocessable("Server-host subscription sign-in is unavailable on this hosted instance. Choose a supported sign-in environment or use an API key.");
+    if (!supportsLocalAiLogin(options)) throw unprocessable("当前托管实例不支持服务器端订阅登录。请选择受支持的登录环境或使用 API 密钥。");
   }
   const router = Router();
   const service = aiConnectionService(db);
@@ -177,7 +177,7 @@ export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLo
     assertBoard(req);
     assertCompanyAccess(req, req.params.companyId as string);
     if (req.actor.source !== "local_implicit")
-      throw forbidden("Only the local operator can connect this machine's CLI account.");
+      throw forbidden("只有本机操作员可以连接此设备的命令行账户。");
   }
   router.post("/companies/:companyId/ai-connections/local/attempts", validate(localAiLoginStartSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
@@ -213,7 +213,7 @@ export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLo
     res.setHeader("Cache-Control", "no-store");
     const agentId = req.query.agentId;
     if (agentId !== undefined && !z.string().uuid().safeParse(agentId).success)
-      throw unprocessable("Invalid agent ID");
+      throw unprocessable("智能体 ID 无效");
     res.json({
       currentUserId,
       connections: await service.list(
@@ -230,7 +230,7 @@ export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLo
       assertBoard(req);
       assertCompanyAccess(req, companyId);
       if (!z.string().uuid().safeParse(req.params.connectionId).success)
-        throw unprocessable("Invalid connection ID");
+        throw unprocessable("连接 ID 无效");
       const [connection] = await db
         .select()
         .from(toolConnections)
@@ -242,7 +242,7 @@ export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLo
           ),
         );
       if (!connection || !(await service.list(companyId, getActorInfo(req).actorId)).some(account => account.id === connection.id))
-        throw notFound("AI connection not found");
+        throw notFound("未找到 AI 连接");
       res.setHeader("Cache-Control", "no-store");
       res.json(
         await db
@@ -278,7 +278,7 @@ export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLo
       );
       if (input.method !== "api_key")
         throw unprocessable(
-          "Use the existing provider sign-in flow to connect a subscription",
+          "请使用现有的提供商登录流程连接订阅",
         );
       const attemptStartedAt = new Date();
       await validateAiApiKey(input.provider, input.apiKey!);
@@ -303,7 +303,7 @@ export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLo
       if (input.provider === "anthropic" && !localSessionId) assertLocalOperator(req);
       const userId = await assertAiConnectionCreateAccess(db, req, companyId, input);
       if (localSessionId || input.provider === "openai" || input.provider === "xai") {
-        if (!localSessionId) throw unprocessable("Start a separate local sign-in for this connection before connecting.");
+        if (!localSessionId) throw unprocessable("请先为此连接启动独立的本地登录，再进行连接。");
         res.status(201).json(await localLogin.complete(companyId, userId, localSessionId, input));
         return;
       }
@@ -324,9 +324,9 @@ export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLo
           (m) => m.companyId === companyId && m.membershipRole === "viewer",
         )
       )
-        throw forbidden("Viewers cannot change defaults");
+        throw forbidden("查看者不能更改默认设置");
       if (!z.string().uuid().safeParse(req.body.grantId).success)
-        throw unprocessable("Choose a personal connection");
+        throw unprocessable("请选择个人连接");
       await service.setDefault(companyId, userId, req.body.grantId);
       await logActivity(db, {
         companyId,
@@ -362,7 +362,7 @@ export function aiConnectionRoutes(db: Db, options: Parameters<typeof supportsLo
           ),
         );
       if (!session?.connectionId)
-        throw notFound("The login has not saved a connection");
+        throw notFound("此次登录尚未保存连接");
       res.setHeader("Cache-Control", "no-store");
       res.json(session);
     },

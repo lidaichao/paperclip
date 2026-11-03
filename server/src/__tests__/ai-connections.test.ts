@@ -91,13 +91,13 @@ describe("managed AI connections", () => {
     expect((await service.select({ ...input, userId })).grant.id).toBe(api.grantId);
     expect((await service.list(companyId, userId)).filter(account => account.isDefault).map(account => account.grantId)).toEqual([api.grantId]);
     await db.update(connectionGrants).set({ status: "revoked" }).where(eq(connectionGrants.id, api.grantId));
-    await expect(service.select({ ...input, userId })).rejects.toThrow("Reconnect");
+    await expect(service.select({ ...input, userId })).rejects.toThrow("重新连接");
     await create(userId, "Another API");
-    await expect(service.select({ ...input, userId })).rejects.toThrow("Reconnect");
+    await expect(service.select({ ...input, userId })).rejects.toThrow("重新连接");
     await service.setDefault(companyId, userId, subscription.grantId);
     expect((await service.select({ ...input, userId })).attribution).toMatchObject({ method: "subscription", grantId: subscription.grantId });
     expect((await service.list(companyId, userId)).filter(account => account.isDefault)).toHaveLength(1);
-    await expect(service.select({ ...input, userId, binding: { ...binding, mode: "delegated", ...subscription } })).rejects.toThrow("incompatible");
+    await expect(service.select({ ...input, userId, binding: { ...binding, mode: "delegated", ...subscription } })).rejects.toThrow("不兼容");
   });
 
   it("backfills provider defaults repeatably without deleting old preferences or replacing an unavailable choice", async () => {
@@ -112,7 +112,7 @@ describe("managed AI connections", () => {
     const migration = await readFile(new URL("../../../packages/db/src/migrations/0277_uneven_lady_deathstrike.sql", import.meta.url), "utf8");
     for (let pass = 0; pass < 2; pass++) for (const statement of migration.split("--> statement-breakpoint").filter(value => value.trim())) await db.execute(sql.raw(statement));
     expect(await db.select().from(aiConnectionDefaults).where(eq(aiConnectionDefaults.userId, userId))).toEqual(legacyRows);
-    await expect(service.select({ ...input, userId })).rejects.toThrow("Reconnect");
+    await expect(service.select({ ...input, userId })).rejects.toThrow("重新连接");
     await service.setDefault(companyId, userId, subscription.grantId);
     for (const statement of migration.split("--> statement-breakpoint").filter(value => value.trim())) await db.execute(sql.raw(statement));
     expect((await service.select({ ...input, userId })).grant.id).toBe(subscription.grantId);
@@ -130,7 +130,7 @@ describe("managed AI connections", () => {
     expect((await service.list(companyId, userId)).filter(account => account.isDefault).map(account => account.grantId)).toEqual([subscription.grantId]);
     await db.update(connectionGrants).set({ status: "revoked" }).where(eq(connectionGrants.id, subscription.grantId));
     await create(userId, "Rolling second API");
-    await expect(service.select({ ...input, userId })).rejects.toThrow("Reconnect");
+    await expect(service.select({ ...input, userId })).rejects.toThrow("重新连接");
     await db.update(aiConnectionDefaults).set({ grantId: api.grantId, updatedAt: new Date() })
       .where(and(eq(aiConnectionDefaults.userId, userId), eq(aiConnectionDefaults.method, "api_key")));
     expect((await service.select({ ...input, userId })).grant.id).toBe(api.grantId);
@@ -165,42 +165,42 @@ describe("managed AI connections", () => {
     await create("alice", "Alice third");
     expect(await toolAccessService(db).getConnection(selected.connection.id, companyId)).toMatchObject({ healthStatus: "missing_secret", requiresReauthorization: true });
     expect((await toolAccessService(db).listConnections(companyId)).find(connection => connection.id === selected.connection.id)?.healthStatus).toBe("missing_secret");
-    await expect(service.select({ ...input, userId: "alice" })).rejects.toThrow("Reconnect");
+    await expect(service.select({ ...input, userId: "alice" })).rejects.toThrow("重新连接");
     const second = (await service.list(companyId, "alice")).find(a => a.name === "Alice second")!;
     await service.setDefault(companyId, "alice", second.grantId);
     expect((await service.select({ ...input, userId: "alice" })).grant.id).toBe(second.grantId);
-    await expect(service.setDefault(companyId, "bob", second.grantId)).rejects.toThrow("owner");
+    await expect(service.setDefault(companyId, "bob", second.grantId)).rejects.toThrow("所有者");
   });
   it("uses human access for every selection; an agent delegation cannot override Just me", async () => {
     const personal = await service.select({ ...input, userId: "alice" });
     const delegated = { ...binding, mode: "delegated" as const, connectionId: personal.connection.id, grantId: personal.grant.id };
-    await expect(service.select({ ...input, userId: "bob", binding: delegated })).rejects.toThrow("not shared");
+    await expect(service.select({ ...input, userId: "bob", binding: delegated })).rejects.toThrow("未共享");
     // Existing delegation records no longer confer an independent AI permission.
     await db.insert(connectionGrantDelegations).values({ companyId, grantId: personal.grant.id, agentId, createdByUserId: "alice" });
-    await expect(service.select({ ...input, userId: "bob", binding: delegated })).rejects.toThrow("not shared");
+    await expect(service.select({ ...input, userId: "bob", binding: delegated })).rejects.toThrow("未共享");
     expect((await service.select({ ...input, userId: "alice", binding: delegated })).grant.id).toBe(personal.grant.id);
     expect((await service.list(companyId, "bob", agentId)).some(account => account.id === personal.connection.id)).toBe(false);
-    await expect(toolAccessService(db).createConnectionGrantDelegation(personal.connection.id, personal.grant.id, agentId, "alice")).rejects.toThrow("human access settings");
+    await expect(toolAccessService(db).createConnectionGrantDelegation(personal.connection.id, personal.grant.id, agentId, "alice")).rejects.toThrow("人员访问设置");
   });
   it("applies the existing human audience editor to AI listing and execution without a second authorization", async () => {
     const shared = await create("alice", "Engineering", "shared");
     const sharedBinding = { ...binding, mode: "shared" as const, ...shared };
     const tools = toolAccessService(db);
     await tools.replaceConnectionGrantMembers(shared.connectionId, shared.grantId, ["alice"], { userId: "alice" });
-    await expect(service.select({ ...input, userId: "bob", binding: sharedBinding })).rejects.toThrow("not shared");
+    await expect(service.select({ ...input, userId: "bob", binding: sharedBinding })).rejects.toThrow("未共享");
     expect((await service.list(companyId, "bob", agentId)).some(account => account.id === shared.connectionId)).toBe(false);
     await tools.replaceConnectionGrantMembers(shared.connectionId, shared.grantId, ["bob"], { userId: "alice" });
     expect((await service.select({ ...input, userId: "bob", binding: sharedBinding })).grant.id).toBe(shared.grantId);
     expect((await service.list(companyId, "bob", agentId)).some(account => account.id === shared.connectionId)).toBe(true);
-    await expect(service.select({ ...input, userId: "alice", binding: sharedBinding })).rejects.toThrow("not shared");
+    await expect(service.select({ ...input, userId: "alice", binding: sharedBinding })).rejects.toThrow("未共享");
     await tools.replaceConnectionGrantMembers(shared.connectionId, shared.grantId, [], { userId: "alice" });
     for (const userId of ["alice", "bob"]) {
       expect((await service.select({ ...input, userId, binding: sharedBinding })).grant.id).toBe(shared.grantId);
     }
-    await expect(service.select({ ...input, userId: null, binding: sharedBinding })).rejects.toThrow("not shared");
+    await expect(service.select({ ...input, userId: null, binding: sharedBinding })).rejects.toThrow("未共享");
     // Human permission still cannot bypass the separate agent-access setting.
     await db.delete(toolConnectionInstalls).where(eq(toolConnectionInstalls.connectionId, shared.connectionId));
-    await expect(service.select({ ...input, userId: "bob", binding: sharedBinding })).rejects.toThrow("not permitted for this agent");
+    await expect(service.select({ ...input, userId: "bob", binding: sharedBinding })).rejects.toThrow("无权使用");
     expect(sharedBinding).toEqual({ ...binding, mode: "shared", ...shared });
   });
   it("isolates concurrent homes and overrides ambient credentials without changing the model", async () => {
@@ -214,8 +214,8 @@ describe("managed AI connections", () => {
     await Promise.all([a.cleanup(), b.cleanup()]); await expect(access(ae.HOME)).rejects.toThrow();
   });
   it("blocks missing identity, incompatible providers, and cross-company explicit selections", async () => {
-    await expect(service.select({ ...input, userId: null })).rejects.toThrow("responsible user");
-    await expect(service.select({ ...input, userId: "alice", adapterType: "codex_local" })).rejects.toThrow("compatible");
+    await expect(service.select({ ...input, userId: null })).rejects.toThrow("责任用户");
+    await expect(service.select({ ...input, userId: "alice", adapterType: "codex_local" })).rejects.toThrow("兼容");
     const account = await service.select({ ...input, userId: "alice" });
     await expect(service.select({ ...input, companyId: otherCompanyId, userId: "alice", binding: { ...binding, mode: "shared", connectionId: account.connection.id, grantId: account.grant.id } })).rejects.toThrow();
   });
@@ -233,7 +233,7 @@ describe("managed AI connections", () => {
     expect(await service.save(companyId, "alice", { ...intent, agentIds: [] }, "fixture-subscription", sessionId)).toEqual(first);
     const cancelled = randomUUID();
     await db.insert(adapterAuthSessions).values({ companyId, environmentId: environment.id, adapterType: "claude_local", startedByUserId: "alice", publicSessionId: cancelled, status: "cancelled", expiresAt: new Date(Date.now() + 60000) });
-    await expect(service.save(companyId, "alice", { ...intent, agentIds: [] }, "fixture-never-save", cancelled)).rejects.toThrow("no longer active");
+    await expect(service.save(companyId, "alice", { ...intent, agentIds: [] }, "fixture-never-save", cancelled)).rejects.toThrow("已失效");
   });
   it("preserves connection identity and defaults through reconnect; revocation wins over older attempts", async () => {
     const current = await service.select({ ...input, userId: "bob" });
@@ -243,8 +243,8 @@ describe("managed AI connections", () => {
     expect(await service.credential(await service.select({ ...input, userId: "bob" }))).toBe("fixture-reconnected");
     const beforeRevocation = new Date(Date.now() - 1000);
     await db.update(connectionGrants).set({ status: "revoked", updatedAt: new Date() }).where(eq(connectionGrants.id, current.grant.id));
-    await expect(service.save(companyId, "bob", reconnect, "fixture-stale", undefined, beforeRevocation)).rejects.toThrow("changed");
-    await expect(service.select({ ...input, userId: "bob" })).rejects.toThrow("Reconnect");
+    await expect(service.save(companyId, "bob", reconnect, "fixture-stale", undefined, beforeRevocation)).rejects.toThrow("已发生变化");
+    await expect(service.select({ ...input, userId: "bob" })).rejects.toThrow("重新连接");
   });
   it("rejects invalid purpose/transport combinations in the database", async () => {
     const selected = await service.select({ ...input, userId: "alice" });
@@ -469,12 +469,12 @@ describe("managed AI connections", () => {
     const otherAgent = randomUUID();
     await db.insert(agents).values({ id: otherAgent, companyId, name: "Other" });
     await db.insert(connectionGrantDelegations).values({ companyId, grantId: selected.grant.id, agentId: otherAgent, createdByUserId: "bob" });
-    await expect(service.select({ ...input, agentId: otherAgent, userId: "bob", binding: { ...binding, method: selected.attribution.method, mode: "delegated", connectionId: selected.connection.id, grantId: selected.grant.id } })).rejects.toThrow("not shared");
+    await expect(service.select({ ...input, agentId: otherAgent, userId: "bob", binding: { ...binding, method: selected.attribution.method, mode: "delegated", connectionId: selected.connection.id, grantId: selected.grant.id } })).rejects.toThrow("未共享");
     const [environment] = await db.select().from(environments).limit(1);
     const sessionId = randomUUID();
     const intent = { provider: "anthropic", method: "subscription", ownership: "personal", name: "Expired", agentIds: [], allAgents: true } as const;
     await db.insert(adapterAuthSessions).values({ companyId, environmentId: environment.id, adapterType: "claude_local", startedByUserId: "alice", publicSessionId: sessionId, status: "submitting", aiConnection: { ...intent, agentIds: [] }, expiresAt: new Date(Date.now() - 1000) });
-    await expect(service.save(companyId, "alice", { ...intent, agentIds: [] }, "fixture-never-save", sessionId)).rejects.toThrow("no longer active");
+    await expect(service.save(companyId, "alice", { ...intent, agentIds: [] }, "fixture-never-save", sessionId)).rejects.toThrow("已失效");
     expect((await service.list(companyId, "alice")).some(account => account.name === "Expired")).toBe(false);
   });
   it("authorizes account creation, reconnect and defaults at the HTTP boundary before provider calls", async () => {
@@ -566,7 +566,7 @@ describe("managed AI connections", () => {
       for (const endpoint of [base, `${base}/attempts`, `${base}/check`]) {
         const result = await request(app).post(endpoint).send(intent);
         expect(result.status).toBe(422);
-        expect(result.body.error).toContain("unavailable on this hosted instance");
+        expect(result.body.error).toContain("当前托管实例不支持");
       }
       expect(reader).not.toHaveBeenCalled();
     } finally { reader.mockRestore(); }
@@ -610,7 +610,7 @@ describe("managed AI connections", () => {
   });
   it("rejects invalid credentials without exposing the provider response", async () => {
     const request = vi.fn().mockResolvedValue(new Response("secret-provider-body", { status: 401 }));
-    await expect(validateAiApiKey("anthropic", "fixture", request)).rejects.toThrow("rejected");
+    await expect(validateAiApiKey("anthropic", "fixture", request)).rejects.toThrow("拒绝");
     expect(request.mock.calls[0][1].redirect).toBe("error");
   });
   it("uses the authenticated responsible user for agent-originated configuration and tests", async () => {
@@ -656,12 +656,12 @@ describe("managed AI connections", () => {
     expect(await canInstallSharedAiConnectionForNewAgent(db, req("alice", "viewer"), companyId, selected)).toBe(false);
     expect(await canInstallSharedAiConnectionForNewAgent(db, { actor: { type: "agent", onBehalfOfUserId: "alice" } } as express.Request, companyId, selected)).toBe(false);
     const selectionInput = { ...input, agentId: futureAgentId, userId: "alice", binding: selected };
-    await expect(service.select(selectionInput)).rejects.toThrow("not permitted for this agent");
+    await expect(service.select(selectionInput)).rejects.toThrow("无权使用");
     const run = await prepareManagedAiRuntime(db, { companyId, agentId: futureAgentId, responsibleUserId: "alice", adapterType: "claude_local", binding: selected, config: { cwd: home, model: "same-model" }, allowUninstalledShared: true });
     expect(run.config.model).toBe("same-model");
     await run.cleanup();
     await db.insert(connectionGrantMembers).values({ companyId, grantId: account.grantId, subjectType: "user", subjectId: "bob" });
-    await expect(service.select({ ...selectionInput, allowUninstalledShared: true })).rejects.toThrow("not shared with the responsible user");
+    await expect(service.select({ ...selectionInput, allowUninstalledShared: true })).rejects.toThrow("未共享给责任用户");
     await db.delete(connectionGrantMembers).where(eq(connectionGrantMembers.grantId, account.grantId));
     await db.insert(agents).values({ id: futureAgentId, companyId, name: "New shared agent", adapterType: "claude_local" });
     await db.insert(toolConnectionInstalls).values({ companyId, connectionId: account.connectionId, targetType: "agent", targetId: futureAgentId, createdByUserId: "alice" });

@@ -180,7 +180,7 @@ export function aiConnectionService(db: Db) {
         )
         .for("update");
       if (!row)
-        throw forbidden("Only the owner can choose their personal default");
+        throw forbidden("只有所有者可以选择自己的个人默认连接");
       if (
         row.connection.connectionPurpose !== "ai" ||
         row.grant.status !== "active" ||
@@ -188,7 +188,7 @@ export function aiConnectionService(db: Db) {
         row.connection.healthStatus !== "ok"
       )
         throw unprocessable(
-          "Reconnect this account before making it your default",
+          "请先重新连接此账户，再将其设为默认连接",
         );
       const metadata = aiConnectionMetadataSchema.parse(
         row.connection.config.ai,
@@ -232,16 +232,16 @@ export function aiConnectionService(db: Db) {
       )
     )
       throw unprocessable(
-        "Select an AI connection compatible with this harness and model",
+        "请选择与当前运行框架和模型兼容的 AI 连接",
         { code: "ai_connection_incompatible" },
       );
     if (binding.mode === "responsible_user" && !userId)
       throw unprocessable(
-        "This run needs a responsible user to select an AI connection",
+        "此次运行需要指定责任用户才能选择 AI 连接",
         { code: "ai_connection_responsible_user_missing" },
       );
     if (userId && !(await membership(companyId, userId)))
-      throw forbidden("The responsible user is not an active company member");
+      throw forbidden("责任用户不是公司的有效成员");
     const defaultRow =
       binding.mode === "responsible_user"
         ? (
@@ -264,7 +264,7 @@ export function aiConnectionService(db: Db) {
         : binding.grantId;
     if (!grantId)
       throw unprocessable(
-        "Connect an account and choose your personal default",
+        "请连接账户并选择个人默认连接",
         { code: "ai_connection_default_missing" },
       );
     const row = (await rows(companyId)).find(
@@ -274,7 +274,7 @@ export function aiConnectionService(db: Db) {
           r.connection.id === binding.connectionId),
     );
     if (!row)
-      throw unprocessable("The selected AI connection is unavailable", {
+      throw unprocessable("所选 AI 连接不可用", {
         code: "ai_connection_missing",
       });
     const { connection, grant } = row;
@@ -285,11 +285,11 @@ export function aiConnectionService(db: Db) {
       (binding.mode !== "responsible_user" && metadata.data.method !== binding.method) ||
       !isAiConnectionCompatible(metadata.data, input.adapterType, input.model, input.runnerProvider, input.acpxAgent)
     )
-      throw unprocessable("The selected AI connection is incompatible", {
+      throw unprocessable("所选 AI 连接不兼容", {
         code: "ai_connection_incompatible",
       });
     if (aiSubscriptionNeedsIsolatedLogin(connection.config))
-      throw unprocessable("Reconnect this subscription with a separate sign-in to protect your existing terminal login.", {
+      throw unprocessable("请使用独立登录重新连接此订阅，以保护现有终端登录。", {
         code: "ai_connection_unavailable", connectionId: connection.id,
       });
     if (
@@ -302,7 +302,7 @@ export function aiConnectionService(db: Db) {
           connection.config.aiLegacyAdoption === true
         ))
     )
-      throw unprocessable("Reconnect or validate the selected AI account", {
+      throw unprocessable("请重新连接或验证所选 AI 账户", {
         code: "ai_connection_unavailable",
         connectionId: connection.id,
       });
@@ -311,17 +311,17 @@ export function aiConnectionService(db: Db) {
       !(await membership(companyId, grant.subjectUserId))
     )
       throw forbidden(
-        "The account owner is no longer an active company member",
+        "账户所有者已不是公司的有效成员",
       );
     if (
       binding.mode === "responsible_user" &&
       (grant.kind !== "user" || grant.subjectUserId !== userId)
     )
-      throw forbidden("The default must belong to the responsible user");
+      throw forbidden("默认连接必须属于责任用户");
     if (binding.mode === "shared" && grant.kind !== "organization")
-      throw forbidden("Select a company-shared account");
+      throw forbidden("请选择公司共享账户");
     if (binding.mode === "delegated" && grant.kind !== "user")
-      throw forbidden("Select a personal account");
+      throw forbidden("请选择个人账户");
     const audience = await db
       .select()
       .from(connectionGrantMembers)
@@ -332,7 +332,7 @@ export function aiConnectionService(db: Db) {
     // The existing human-access permission is authoritative for every binding,
     // including old explicit personal selections. Agent delegation cannot bypass it.
     if (!canUseCredential(grant, userId, audience))
-      throw forbidden("This credential is not shared with the responsible user");
+      throw forbidden("此凭据未共享给责任用户");
     const installs = await db
       .select()
       .from(toolConnectionInstalls)
@@ -360,7 +360,7 @@ export function aiConnectionService(db: Db) {
         (input.allowUninstalledShared && binding.mode === "shared" && grant.kind === "organization")
       )
     )
-      throw forbidden("This connection is not permitted for this agent");
+      throw forbidden("此智能体无权使用该连接");
     return {
       ...row,
       attribution: {
@@ -378,7 +378,7 @@ export function aiConnectionService(db: Db) {
       (r) => r.configPath === "ai.credential",
     );
     if (!ref)
-      throw unprocessable("Reconnect this AI account", {
+      throw unprocessable("请重新连接此 AI 账户", {
         code: "ai_connection_credential_missing",
       });
     const [secret] = await db
@@ -391,7 +391,7 @@ export function aiConnectionService(db: Db) {
         ),
       );
     if (!secret)
-      throw unprocessable("Reconnect this AI account", {
+      throw unprocessable("请重新连接此 AI 账户", {
         code: "ai_connection_credential_missing",
       });
     const context = {
@@ -406,7 +406,7 @@ export function aiConnectionService(db: Db) {
         secret.ownerUserId !== row.grant.subjectUserId ||
         !secret.userSecretDefinitionId
       )
-        throw forbidden("Credential ownership mismatch");
+        throw forbidden("凭据所有权不匹配");
       const result = await secrets.resolveUserSecretValue(
         row.connection.companyId,
         {
@@ -417,7 +417,7 @@ export function aiConnectionService(db: Db) {
         },
         context,
       );
-      if (!result) throw unprocessable("Reconnect this AI account");
+      if (!result) throw unprocessable("请重新连接此 AI 账户");
       return result.value;
     }
     return secrets.resolveSecretValue(
@@ -436,27 +436,27 @@ export function aiConnectionService(db: Db) {
     attemptStartedAt = new Date(),
   ) {
     if (!(await membership(companyId, userId)))
-      throw forbidden("An active company member must own this connection");
+      throw forbidden("此连接必须由公司的有效成员持有");
     const reconnect = input.connectionId
       ? (await rows(companyId)).find(
           (r) => r.connection.id === input.connectionId,
         )
       : undefined;
     if (input.connectionId && !reconnect)
-      throw notFound("AI connection not found");
+      throw notFound("未找到 AI 连接");
     if (
       reconnect &&
       (reconnect.grant.createdByUserId !== userId ||
         (reconnect.grant.kind === "user" &&
           reconnect.grant.subjectUserId !== userId))
     )
-      throw forbidden("Only the account owner can reconnect it");
+      throw forbidden("只有账户所有者可以重新连接");
     if (
       reconnect &&
       (reconnect.connection.config.ai as AiConnectionMetadata).provider !==
         input.provider
     )
-      throw unprocessable("Reconnect cannot change providers");
+      throw unprocessable("重新连接时不能更改提供商");
     if (
       reconnect &&
       ((reconnect.connection.config.ai as AiConnectionMetadata).method !==
@@ -464,7 +464,7 @@ export function aiConnectionService(db: Db) {
         (reconnect.grant.kind === "user") !== (input.ownership === "personal"))
     )
       throw unprocessable(
-        "Reconnect cannot change the sign-in method or ownership",
+        "重新连接时不能更改登录方式或所有权",
       );
     const id = reconnect?.connection.id ?? randomUUID();
     const grantId = reconnect?.grant.id ?? randomUUID();
@@ -484,7 +484,7 @@ export function aiConnectionService(db: Db) {
             ),
           )
           .for("update");
-        if (!session) throw forbidden("Login session ownership mismatch");
+        if (!session) throw forbidden("登录会话所有权不匹配");
         attemptStartedAt = session.createdAt;
 
         if (session.connectionId && session.connectionGrantId)
@@ -498,7 +498,7 @@ export function aiConnectionService(db: Db) {
           ) ||
           (session.expiresAt && session.expiresAt.getTime() <= Date.now())
         )
-          throw unprocessable("The login attempt is no longer active");
+          throw unprocessable("此次登录尝试已失效");
         if (
           !session.aiConnection ||
           session.aiConnection.provider !== input.provider ||
@@ -509,7 +509,7 @@ export function aiConnectionService(db: Db) {
           JSON.stringify(session.aiConnection.agentIds) !==
             JSON.stringify(input.agentIds)
         )
-          throw forbidden("Login target mismatch");
+          throw forbidden("登录目标不匹配");
       }
       if (reconnect) {
         const [current] = await tx
@@ -522,7 +522,7 @@ export function aiConnectionService(db: Db) {
           current.updatedAt.getTime() !== reconnect.grant.updatedAt.getTime() ||
           current.updatedAt.getTime() > attemptStartedAt.getTime()
         )
-          throw unprocessable("The connection changed. Start reconnect again.");
+          throw unprocessable("连接已发生变化，请重新开始连接。");
       }
       let secretId = reconnect?.grant.credentialSecretRefs.find(
         (r) => r.configPath === "ai.credential",
@@ -587,7 +587,7 @@ export function aiConnectionService(db: Db) {
             ),
           );
         if (targets.length !== new Set(input.agentIds).size)
-          throw forbidden("Agent does not belong to this company");
+          throw forbidden("智能体不属于此公司");
       }
       const key = `app-gallery:${input.provider}`;
       await tx
@@ -616,7 +616,7 @@ export function aiConnectionService(db: Db) {
             ),
           ),
         );
-      if (!app) throw unprocessable("Could not find the provider application");
+      if (!app) throw unprocessable("未找到提供商应用");
       if (reconnect)
         await tx
           .update(toolConnections)
