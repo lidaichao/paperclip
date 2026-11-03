@@ -297,7 +297,7 @@ async function assertPlatformProvisionedEnvironmentWritable(
     isTenantEnvVarsOnlyPatch(options.patchBody) &&
     isTenantEditableManagedSandbox(environment)
   ) return;
-  throw forbidden("Platform-provisioned environments are platform-managed on cloud-managed instances", {
+  throw forbidden("云托管实例中由平台提供的运行环境由平台统一管理", {
     code: "environment_platform_managed",
   });
 }
@@ -352,10 +352,10 @@ export function environmentRoutes(
 
   function assertCanAccessInstanceEnvironments(req: Request) {
     if (req.actor.type !== "board") {
-      throw forbidden("Instance environment management is restricted to board operators");
+      throw forbidden("只有看板操作员才能管理实例运行环境");
     }
     if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
-    throw forbidden("Instance admin access required");
+    throw forbidden("需要实例管理员权限");
   }
 
   function assertCanReadInstanceEnvironments(req: Request) {
@@ -364,12 +364,12 @@ export function environmentRoutes(
 
   function assertCustomImageCompanyAccess(req: Request, companyId: string) {
     if (req.actor.type !== "board") {
-      throw forbidden("Board access required");
+      throw forbidden("需要看板访问权限");
     }
     if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
     const allowedCompanies = req.actor.companyIds ?? [];
     if (!allowedCompanies.includes(companyId)) {
-      throw forbidden("User does not have access to this company");
+      throw forbidden("用户无权访问此公司");
     }
   }
 
@@ -715,7 +715,7 @@ export function environmentRoutes(
     assertCanAccessInstanceEnvironments(req);
     const impact = await svc.getDeleteBlastRadius(req.params.id as string);
     if (!impact) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     res.json(impact);
@@ -811,7 +811,7 @@ export function environmentRoutes(
     assertCanAccessInstanceEnvironments(req);
     const session = await customImages.getSessionById(req.params.sessionId as string);
     if (!session) {
-      res.status(404).json({ error: "Environment customImage setup session not found" });
+      res.status(404).json({ error: "未找到运行环境的自定义镜像设置会话" });
       return;
     }
     await resolveCustomImageSessionCompanyId(req, session);
@@ -829,7 +829,7 @@ export function environmentRoutes(
       assertCanAccessInstanceEnvironments(req);
       const session = await customImages.getSessionById(req.params.sessionId as string);
       if (!session) {
-        res.status(404).json({ error: "Environment customImage setup session not found" });
+        res.status(404).json({ error: "未找到运行环境的自定义镜像设置会话" });
         return;
       }
       const companyId = await resolveCustomImageSessionCompanyId(req, session);
@@ -894,7 +894,7 @@ export function environmentRoutes(
       assertCanAccessInstanceEnvironments(req);
       const session = await customImages.getSessionById(req.params.sessionId as string);
       if (!session) {
-        res.status(404).json({ error: "Environment customImage setup session not found" });
+        res.status(404).json({ error: "未找到运行环境的自定义镜像设置会话" });
         return;
       }
       const companyId = await resolveCustomImageSessionCompanyId(req, session);
@@ -926,7 +926,7 @@ export function environmentRoutes(
       assertCanAccessInstanceEnvironments(req);
       const session = await customImages.getSessionById(req.params.sessionId as string);
       if (!session) {
-        res.status(404).json({ error: "Environment customImage setup session not found" });
+        res.status(404).json({ error: "未找到运行环境的自定义镜像设置会话" });
         return;
       }
       const companyId = await resolveCustomImageSessionCompanyId(req, session);
@@ -1018,7 +1018,7 @@ export function environmentRoutes(
     if (req.body.driver === "local") {
       const existingLocal = await svc.list({ driver: "local" });
       if (existingLocal.length > 0) {
-        throw conflict("A local environment already exists for this instance.");
+        throw conflict("此实例已存在本地运行环境。");
       }
     }
     const actor = getActorInfo(req);
@@ -1077,7 +1077,7 @@ export function environmentRoutes(
     assertCanReadInstanceEnvironments(req);
     const environment = await svc.getById(req.params.id as string);
     if (!environment || (environment.driver === "local" && (await isManagedSandboxOnlyInstance()))) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     res.json(presentEnvironmentForRead(req, environment));
@@ -1087,7 +1087,7 @@ export function environmentRoutes(
     assertCanAccessInstanceEnvironments(req);
     const environment = await svc.getById(req.params.id as string);
     if (!environment) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     // Metadata only (name / status / owning company) — never secret values.
@@ -1103,7 +1103,7 @@ export function environmentRoutes(
     assertCanReadInstanceEnvironments(req);
     const environment = await svc.getById(req.params.id as string);
     if (!environment) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     const leases = await svc.listLeases(environment.id, {
@@ -1116,7 +1116,7 @@ export function environmentRoutes(
     assertCanReadInstanceEnvironments(req);
     const lease = await svc.getLeaseById(req.params.leaseId as string);
     if (!lease) {
-      res.status(404).json({ error: "Environment lease not found" });
+      res.status(404).json({ error: "未找到运行环境租约" });
       return;
     }
     res.json(lease);
@@ -1126,7 +1126,7 @@ export function environmentRoutes(
     assertCanAccessInstanceEnvironments(req);
     const existing = await svc.getById(req.params.id as string);
     if (!existing) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     await assertPlatformProvisionedEnvironmentWritable(existing, {
@@ -1229,7 +1229,7 @@ export function environmentRoutes(
       return updated;
     });
     if (!environment) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     let customImageReconciliation: Awaited<
@@ -1262,14 +1262,14 @@ export function environmentRoutes(
     assertCanAccessInstanceEnvironments(req);
     const existing = await svc.getById(req.params.id as string);
     if (!existing) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     await assertPlatformProvisionedEnvironmentWritable(existing);
     const actor = getActorInfo(req);
     let impact = await svc.getDeleteBlastRadius(existing.id);
     if (!impact) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     // With explicit consent, destroy the environment's reusable sandbox leases
@@ -1315,7 +1315,7 @@ export function environmentRoutes(
       destroyedReusableSandboxLeaseCount = destroyResult.destroyed;
       impact = await svc.getDeleteBlastRadius(existing.id);
       if (!impact) {
-        res.status(404).json({ error: "Environment not found" });
+        res.status(404).json({ error: "未找到运行环境" });
         return;
       }
     }
@@ -1332,7 +1332,7 @@ export function environmentRoutes(
     if (!removed) {
       const latestImpact = await svc.getDeleteBlastRadius(existing.id);
       if (!latestImpact) {
-        res.status(404).json({ error: "Environment not found" });
+        res.status(404).json({ error: "未找到运行环境" });
         return;
       }
       rejectEnvironmentDelete({ actor, environment: existing, impact: latestImpact });
@@ -1383,7 +1383,7 @@ export function environmentRoutes(
     assertCanAccessInstanceEnvironments(req);
     const environment = await svc.getById(req.params.id as string);
     if (!environment) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到运行环境" });
       return;
     }
     const actor = getActorInfo(req);

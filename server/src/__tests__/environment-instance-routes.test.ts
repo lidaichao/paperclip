@@ -236,7 +236,7 @@ describe("environment instance routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Instance admin");
+    expect(res.body.error).toContain("需要实例管理员权限");
     expect(mockEnvironmentService.create).not.toHaveBeenCalled();
   });
 

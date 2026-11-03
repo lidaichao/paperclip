@@ -1169,7 +1169,7 @@ describe("environment routes", () => {
     const res = await request(app).get("/api/environments/missing/delete-blast-radius");
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Environment not found");
+    expect(res.body.error).toBe("未找到运行环境");
   });
 
   it("returns provider capabilities for the company", async () => {
@@ -1440,7 +1440,7 @@ describe("environment routes", () => {
       });
 
     expect(res.status).toBe(409);
-    expect(res.body.error).toBe("A local environment already exists for this instance.");
+    expect(res.body.error).toBe("此实例已存在本地运行环境。");
     expect(mockEnvironmentService.create).not.toHaveBeenCalled();
   });
 
@@ -1465,7 +1465,7 @@ describe("environment routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Instance admin access required");
+    expect(res.body.error).toContain("需要实例管理员权限");
     expect(mockEnvironmentService.create).not.toHaveBeenCalled();
   });
 
@@ -1488,7 +1488,7 @@ describe("environment routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Instance admin access required");
+    expect(res.body.error).toContain("需要实例管理员权限");
     expect(mockEnvironmentService.create).not.toHaveBeenCalled();
   });
 
@@ -1519,7 +1519,7 @@ describe("environment routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("board operators");
+    expect(res.body.error).toContain("只有看板操作员才能管理实例运行环境");
     expect(mockEnvironmentService.create).not.toHaveBeenCalled();
   });
 
@@ -2578,7 +2578,7 @@ describe("environment routes", () => {
     });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("board operators");
+    expect(res.body.error).toContain("只有看板操作员才能管理实例运行环境");
     expect(mockEnvironmentService.create).not.toHaveBeenCalled();
   });
 
@@ -2929,7 +2929,7 @@ describe("environment routes", () => {
       .send({ status: "archived" });
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Environment not found");
+    expect(res.body.error).toBe("未找到运行环境");
     expect(mockLogActivity).not.toHaveBeenCalled();
   });
 
@@ -3330,7 +3330,7 @@ describe("environment routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Instance admin access required");
+    expect(res.body.error).toContain("需要实例管理员权限");
     expect(mockSecretService.resolveSecretValueForEphemeralAccess).not.toHaveBeenCalled();
     expect(mockProbeEnvironment).not.toHaveBeenCalled();
   });
