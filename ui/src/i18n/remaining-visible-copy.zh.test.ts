@@ -313,6 +313,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.unable_to_stop_retry_0e100003).toBe("无法停止，请重试。");
     expect(messages.could_not_save_changes_0e100004).toBe("保存更改失败。");
     expect(messages.could_not_unlink_account_0e100005).toBe("无法解除此账户的关联。");
+    expect(messages.retry_promoted_0e200001).toBe("已提前执行重试");
+    expect(messages.retry_already_running_0e200002).toBe("重试已在运行");
+    expect(messages.no_scheduled_retry_0e200003).toBe("没有待执行的计划重试");
+    expect(messages.missing_issue_id_0e200005).toBe("缺少任务编号");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

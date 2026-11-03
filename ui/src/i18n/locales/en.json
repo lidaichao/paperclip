@@ -11841,6 +11841,11 @@
     "could_not_use_connection_0e100002": "Could not use this connection.",
     "unable_to_stop_retry_0e100003": "Unable to stop. Try again.",
     "could_not_save_changes_0e100004": "Could not save changes.",
-    "could_not_unlink_account_0e100005": "Could not unlink this account."
+    "could_not_unlink_account_0e100005": "Could not unlink this account.",
+    "retry_promoted_0e200001": "Retry promoted",
+    "retry_already_running_0e200002": "Retry already running",
+    "no_scheduled_retry_0e200003": "No scheduled retry",
+    "could_not_retry_now_0e200004": "Couldn't retry now",
+    "missing_issue_id_0e200005": "Missing issue id"
   }
 }

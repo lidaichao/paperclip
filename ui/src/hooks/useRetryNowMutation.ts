@@ -23,10 +23,10 @@ function readErrorMessage(error: unknown): string {
 }
 
 export const RETRY_NOW_OUTCOME_HEADLINE: Record<IssueRetryNowOutcome, string> = {
-  promoted: "Retry promoted",
-  already_promoted: "Retry already running",
-  no_scheduled_retry: "No scheduled retry",
-  gate_suppressed: "Couldn't retry now",
+  promoted: l10n("local.retry_promoted_0e200001"),
+  already_promoted: l10n("local.retry_already_running_0e200002"),
+  no_scheduled_retry: l10n("local.no_scheduled_retry_0e200003"),
+  gate_suppressed: l10n("local.could_not_retry_now_0e200004"),
 };
 
 export function useRetryNowMutation(
@@ -39,7 +39,7 @@ export function useRetryNowMutation(
 
   const mutation = useMutation({
     mutationFn: () => {
-      if (!issueId) throw new Error("Missing issue id");
+      if (!issueId) throw new Error(l10n("local.missing_issue_id_0e200005"));
       return issuesApi.retryScheduledRetryNow(issueId);
     },
     onSuccess: (response) => {

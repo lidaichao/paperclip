@@ -11841,6 +11841,11 @@
     "could_not_use_connection_0e100002": "无法使用此连接。",
     "unable_to_stop_retry_0e100003": "无法停止，请重试。",
     "could_not_save_changes_0e100004": "保存更改失败。",
-    "could_not_unlink_account_0e100005": "无法解除此账户的关联。"
+    "could_not_unlink_account_0e100005": "无法解除此账户的关联。",
+    "retry_promoted_0e200001": "已提前执行重试",
+    "retry_already_running_0e200002": "重试已在运行",
+    "no_scheduled_retry_0e200003": "没有待执行的计划重试",
+    "could_not_retry_now_0e200004": "目前无法重试",
+    "missing_issue_id_0e200005": "缺少任务编号"
   }
 }
