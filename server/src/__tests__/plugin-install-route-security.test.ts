@@ -283,8 +283,8 @@ describeEmbeddedPostgres("plugin install route security floor", () => {
         .send({ packageName: "/nonexistent/plugin/dir", isLocalPath: true });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain("Invalid localPath");
-      expect(res.body.error).toContain("does not exist");
+      expect(res.body.error).toContain("本地路径无效");
+      expect(res.body.error).toContain("路径不存在");
       expect(mockLifecycle.load).not.toHaveBeenCalled();
     });
 
@@ -296,8 +296,8 @@ describeEmbeddedPostgres("plugin install route security floor", () => {
         .send({ packageName: "/tmp/foo\u0000bar", isLocalPath: true });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain("Invalid localPath");
-      expect(res.body.error).toContain("null byte");
+      expect(res.body.error).toContain("本地路径无效");
+      expect(res.body.error).toContain("空字符");
       expect(mockLifecycle.load).not.toHaveBeenCalled();
     });
 
@@ -313,8 +313,8 @@ describeEmbeddedPostgres("plugin install route security floor", () => {
         .send({ packageName: filePath, isLocalPath: true });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain("Invalid localPath");
-      expect(res.body.error).toContain("not a directory");
+      expect(res.body.error).toContain("本地路径无效");
+      expect(res.body.error).toContain("不是目录");
       expect(mockLifecycle.load).not.toHaveBeenCalled();
     });
 

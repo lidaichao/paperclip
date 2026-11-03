@@ -376,7 +376,7 @@ describe.sequential("plugin install and upgrade authz", () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/outside the selected company/i);
+    expect(res.body.error).toContain("所选公司之外");
     expect(mockSecretService.syncSecretRefsForTarget).not.toHaveBeenCalled();
     expect(mockRegistry.upsertConfig).not.toHaveBeenCalled();
   }, 20_000);

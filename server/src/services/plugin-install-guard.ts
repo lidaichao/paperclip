@@ -52,7 +52,7 @@ export async function canonicalizeLocalPluginPath(
   rawPath: string,
 ): Promise<LocalPluginPathValidation> {
   if (rawPath.includes("\0")) {
-    return { ok: false, reason: "path contains a null byte" };
+    return { ok: false, reason: "路径包含空字符" };
   }
 
   const absolutePath = path.resolve(rawPath);
@@ -61,13 +61,13 @@ export async function canonicalizeLocalPluginPath(
   try {
     canonicalPath = await realpath(absolutePath);
   } catch {
-    return { ok: false, reason: `path does not exist: ${absolutePath}` };
+    return { ok: false, reason: `路径不存在：${absolutePath}` };
   }
 
   try {
     const stats = await stat(canonicalPath);
     if (!stats.isDirectory()) {
-      return { ok: false, reason: `path is not a directory: ${canonicalPath}` };
+      return { ok: false, reason: `路径不是目录：${canonicalPath}` };
     }
   } catch {
     return { ok: false, reason: `path is not readable: ${canonicalPath}` };

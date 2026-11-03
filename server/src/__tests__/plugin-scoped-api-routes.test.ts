@@ -453,7 +453,7 @@ describe.sequential("plugin scoped API routes", () => {
       .get(`/api/plugins/${pluginId}/api/summary?companyId=${companyId}`);
 
     expect(res.status).toBe(503);
-    expect(res.body.error).toContain("worker is not running");
+    expect(res.body.error).toContain("工作进程未运行");
     expect(workerManager.call).not.toHaveBeenCalled();
   });
 

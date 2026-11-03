@@ -71,14 +71,14 @@ describe("canonicalizeLocalPluginPath", () => {
   it("rejects paths containing a null byte", async () => {
     const result = await canonicalizeLocalPluginPath("/tmp/foo\0bar");
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toContain("null byte");
+    if (!result.ok) expect(result.reason).toContain("空字符");
   });
 
   it("rejects nonexistent paths", async () => {
     const dir = await makeTempDir("guard-missing-");
     const result = await canonicalizeLocalPluginPath(path.join(dir, "does-not-exist"));
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toContain("does not exist");
+    if (!result.ok) expect(result.reason).toContain("路径不存在");
   });
 
   it("rejects paths that resolve to a file rather than a directory", async () => {
@@ -87,7 +87,7 @@ describe("canonicalizeLocalPluginPath", () => {
     await writeFile(file, "not a directory", "utf8");
     const result = await canonicalizeLocalPluginPath(file);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toContain("not a directory");
+    if (!result.ok) expect(result.reason).toContain("不是目录");
   });
 });
 
