@@ -66,7 +66,7 @@ function eventActorValues(actor: CaseActor) {
 async function assertCasesEnabled(db: Db) {
   const experimental = await instanceSettingsService(db).getExperimental();
   if (!experimental.enableCases) {
-    throw forbidden("Cases are disabled");
+    throw forbidden("案例功能已停用");
   }
 }
 
@@ -87,7 +87,7 @@ async function lockCaseLabels(db: CaseRouteDb, input: { companyId: string; caseI
 
 function parseDocumentKey(raw: string | undefined) {
   const parsed = documentKeySchema.safeParse(raw);
-  if (!parsed.success) throw badRequest("Invalid document key", parsed.error.issues);
+  if (!parsed.success) throw badRequest("文档键无效", parsed.error.issues);
   return parsed.data;
 }
 
@@ -155,7 +155,7 @@ function caseLookupCompanyIds(req: Request) {
 
 async function assertCaseAccess(db: Db, req: Request, idOrIdentifier: string) {
   const row = await loadCaseByIdOrIdentifier(db, idOrIdentifier, caseLookupCompanyIds(req));
-  if (!row || !hasCompanyAccess(req, row.companyId)) throw notFound("Case not found");
+  if (!row || !hasCompanyAccess(req, row.companyId)) throw notFound("未找到案例");
   assertCompanyAccess(req, row.companyId);
   return row;
 }
@@ -181,7 +181,7 @@ async function assertProjectBelongsToCompany(db: CaseRouteDb, input: { companyId
     .where(and(eq(projects.id, input.projectId), eq(projects.companyId, input.companyId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw unprocessable("Project does not belong to company");
+  if (!row) throw unprocessable("项目不属于当前公司");
 }
 
 async function assertParentCaseBelongsToCompany(db: CaseRouteDb, input: {
@@ -191,7 +191,7 @@ async function assertParentCaseBelongsToCompany(db: CaseRouteDb, input: {
 }) {
   if (!input.parentCaseId) return;
   if (input.caseId && input.parentCaseId === input.caseId) {
-    throw unprocessable("A case cannot be its own parent");
+    throw unprocessable("案例不能以自身作为父案例");
   }
   const row = await db
     .select({ id: cases.id })
@@ -199,7 +199,7 @@ async function assertParentCaseBelongsToCompany(db: CaseRouteDb, input: {
     .where(and(eq(cases.id, input.parentCaseId), eq(cases.companyId, input.companyId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw unprocessable("Parent case does not belong to company");
+  if (!row) throw unprocessable("父案例不属于当前公司");
 }
 
 async function assertLabelsBelongToCompany(db: CaseRouteDb, companyId: string, labelIds: string[]) {
@@ -210,7 +210,7 @@ async function assertLabelsBelongToCompany(db: CaseRouteDb, companyId: string, l
     .from(labels)
     .where(and(eq(labels.companyId, companyId), inArray(labels.id, uniqueIds)));
   if (rows.length !== uniqueIds.length) {
-    throw unprocessable("One or more labels do not belong to company");
+    throw unprocessable("一个或多个标签不属于当前公司");
   }
 }
 
@@ -368,7 +368,7 @@ async function nextCaseIdentity(db: CaseRouteDb, companyId: string) {
     .from(companies)
     .where(eq(companies.id, companyId))
     .limit(1);
-  if (!company) throw notFound("Company not found");
+  if (!company) throw notFound("未找到公司");
   const [maxRow] = await db
     .select({ maxNum: sql<number>`coalesce(max(${cases.caseNumber}), 0)` })
     .from(cases)
@@ -671,7 +671,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
     const companyId = req.params.companyId as string;
     assertCompanyAccess(req, companyId);
     const parsed = listCasesQuerySchema.safeParse(req.query);
-    if (!parsed.success) throw badRequest("Invalid case list query", parsed.error.issues);
+    if (!parsed.success) throw badRequest("案例列表查询无效", parsed.error.issues);
     const query = parsed.data;
     const filters = [eq(cases.companyId, companyId)];
     const typeFilters = parseQueryList(query.types ?? query.type);
@@ -684,7 +684,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
     } else if (statusFilters.length > 0) {
       for (const status of statusFilters) {
         if (!CASE_STATUSES.includes(status as (typeof CASE_STATUSES)[number])) {
-          throw badRequest("Invalid case status");
+          throw badRequest("案例状态无效");
         }
       }
       filters.push(statusFilters.length === 1 ? eq(cases.status, statusFilters[0]!) : inArray(cases.status, statusFilters));
@@ -692,7 +692,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
 
     const projectFilters = parseQueryList(query.projectIds ?? query.projectId ?? query.project);
     for (const projectId of projectFilters) {
-      if (!isUuidLike(projectId)) throw badRequest("Invalid project id");
+      if (!isUuidLike(projectId)) throw badRequest("项目 ID 无效");
     }
     const includeNoProject = parseBooleanQuery(query.includeNoProject);
     if (projectFilters.length > 0 && includeNoProject) {
@@ -736,7 +736,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
     if (!caseRow) return next();
     const key = parseDocumentKey(req.params.key as string);
     const link = await loadCaseDocumentLink(db, { companyId: caseRow.companyId, caseId: caseRow.id, key });
-    if (!link) throw notFound("Case document not found");
+    if (!link) throw notFound("未找到案例文档");
     res.json(caseDocumentResponse({ key, document: link.document }));
   });
 
@@ -761,7 +761,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
       key,
       req.params.threadId as string,
     );
-    if (!thread) throw notFound("Annotation thread not found");
+    if (!thread) throw notFound("未找到批注线程");
     res.json(thread);
   });
 
@@ -903,21 +903,21 @@ export function caseRoutes(db: Db, storage: StorageService) {
         .then((rows) => rows[0] ?? null);
 
       if (existing?.document.lockedAt) {
-        throw conflict("Document is locked", {
+        throw conflict("文档已锁定", {
           key,
           documentId: existing.document.id,
           lockedAt: existing.document.lockedAt,
         });
       }
       if (existing && !body.baseRevisionId) {
-        throw conflict("Case document update requires baseRevisionId", {
+        throw conflict("更新案例文档需要提供 baseRevisionId", {
           code: "stale_base_revision",
           latestRevisionId: existing.document.latestRevisionId,
           latestRevisionNumber: existing.document.latestRevisionNumber,
         });
       }
       if (existing && body.baseRevisionId !== existing.document.latestRevisionId) {
-        throw conflict("Case document was updated by someone else", {
+        throw conflict("案例文档已被其他人更新", {
           code: "stale_base_revision",
           latestRevisionId: existing.document.latestRevisionId,
           latestRevisionNumber: existing.document.latestRevisionNumber,
@@ -925,7 +925,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
         });
       }
       if (!existing && body.baseRevisionId) {
-        throw conflict("Case document does not exist yet", {
+        throw conflict("案例文档尚不存在", {
           code: "stale_base_revision",
           latestRevisionId: null,
           latestRevisionNumber: null,
@@ -1029,7 +1029,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
     const result = await db.transaction(async (tx) => {
       await lockCaseDocumentKey(tx, { companyId: caseRow.companyId, caseId: caseRow.id, key });
       const link = await loadCaseDocumentLink(tx, { companyId: caseRow.companyId, caseId: caseRow.id, key });
-      if (!link) throw notFound("Case document not found");
+      if (!link) throw notFound("未找到案例文档");
       if (link.document.lockedAt) return caseDocumentResponse({ key, document: link.document });
       const now = new Date();
       const [document] = await tx.update(documents).set({
@@ -1051,7 +1051,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
     const result = await db.transaction(async (tx) => {
       await lockCaseDocumentKey(tx, { companyId: caseRow.companyId, caseId: caseRow.id, key });
       const link = await loadCaseDocumentLink(tx, { companyId: caseRow.companyId, caseId: caseRow.id, key });
-      if (!link) throw notFound("Case document not found");
+      if (!link) throw notFound("未找到案例文档");
       if (!link.document.lockedAt) return caseDocumentResponse({ key, document: link.document });
       const now = new Date();
       const [document] = await tx.update(documents).set({
@@ -1076,9 +1076,9 @@ export function caseRoutes(db: Db, storage: StorageService) {
     const result = await db.transaction(async (tx) => {
       await lockCaseDocumentKey(tx, { companyId: caseRow.companyId, caseId: caseRow.id, key });
       const existing = await loadCaseDocumentLink(tx, { companyId: caseRow.companyId, caseId: caseRow.id, key });
-      if (!existing) throw notFound("Case document not found");
+      if (!existing) throw notFound("未找到案例文档");
       if (existing.document.lockedAt) {
-        throw conflict("Document is locked", {
+        throw conflict("文档已锁定", {
           key,
           documentId: existing.document.id,
           lockedAt: existing.document.lockedAt,
@@ -1090,9 +1090,9 @@ export function caseRoutes(db: Db, storage: StorageService) {
         .where(and(eq(documentRevisions.id, revisionId), eq(documentRevisions.documentId, existing.document.id)))
         .limit(1)
         .then((rows) => rows[0] ?? null);
-      if (!sourceRevision) throw notFound("Case document revision not found");
+      if (!sourceRevision) throw notFound("未找到案例文档版本");
       if (existing.document.latestRevisionId === sourceRevision.id) {
-        throw conflict("Selected revision is already the latest revision", {
+        throw conflict("所选版本已经是最新版本", {
           currentRevisionId: existing.document.latestRevisionId,
         });
       }
@@ -1164,7 +1164,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
       const link = await loadCaseDocumentLink(tx, { companyId: caseRow.companyId, caseId: caseRow.id, key });
       if (!link) return;
       if (link.document.lockedAt) {
-        throw conflict("Document is locked", {
+        throw conflict("文档已锁定", {
           key,
           documentId: link.document.id,
           lockedAt: link.document.lockedAt,
@@ -1189,7 +1189,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
         .where(and(eq(issues.id, body.issueId), eq(issues.companyId, caseRow.companyId)))
         .limit(1)
         .then((rows) => rows[0] ?? null);
-      if (!issue) throw unprocessable("Issue does not belong to case company");
+      if (!issue) throw unprocessable("任务不属于案例所在公司");
       const now = new Date();
       const [link] = await tx.insert(caseIssueLinks).values({
         companyId: caseRow.companyId,
@@ -1240,8 +1240,8 @@ export function caseRoutes(db: Db, storage: StorageService) {
       throw err;
     }
     const file = (req as Request & { file?: { mimetype: string; buffer: Buffer; originalname: string } }).file;
-    if (!file) throw badRequest("Missing file field 'file'");
-    if (file.buffer.length <= 0) throw unprocessable("Attachment is empty");
+    if (!file) throw badRequest("缺少文件字段 'file'");
+    if (file.buffer.length <= 0) throw unprocessable("附件为空");
 
     const stored = await storage.putFile({
       companyId: caseRow.companyId,
@@ -1289,7 +1289,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
     const caseRow = await resolveSharedPathCase(db, req, req.params.id as string);
     if (!caseRow) return next();
     const parsed = listEventsQuerySchema.safeParse(req.query);
-    if (!parsed.success) throw badRequest("Invalid case events query", parsed.error.issues);
+    if (!parsed.success) throw badRequest("案例事件查询无效", parsed.error.issues);
     const rows = await db
       .select()
       .from(caseEvents)
@@ -1327,7 +1327,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
       ))
       .limit(1)
       .then((rows) => rows[0] ?? null);
-    if (!link) throw notFound("Case document not found");
+    if (!link) throw notFound("未找到案例文档");
     const revisions = await db
       .select()
       .from(documentRevisions)
@@ -1370,7 +1370,7 @@ export function caseRoutes(db: Db, storage: StorageService) {
     await assertCasesEnabled(db);
     const issueIdOrIdentifier = (req.params.issueId as string).trim();
     const issue = await loadIssueByIdOrIdentifier(db, issueIdOrIdentifier, caseLookupCompanyIds(req));
-    if (!issue || !hasCompanyAccess(req, issue.companyId)) throw notFound("Issue not found");
+    if (!issue || !hasCompanyAccess(req, issue.companyId)) throw notFound("未找到任务");
     assertCompanyAccess(req, issue.companyId);
     const rows = await db
       .select({ link: caseIssueLinks, caseRow: cases })
