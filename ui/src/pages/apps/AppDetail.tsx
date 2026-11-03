@@ -199,10 +199,10 @@ export function AppDetail({ renderActions, onReconnect }: {
   const owner = connection ? connectionOwnerProfile(connection, userProfileById) : null;
   const baseAppName = connection
     ? logoEntry ? appDefinitionName(logoEntry) : humanizeConnectionDisplayName(connection)
-    : "App";
+    : l10n("local.app_0d04bfeb");
   const appName = connection
     ? connectionDisplayNameForOwner(connection, baseAppName, owner)
-    : "App";
+    : l10n("local.app_0d04bfeb");
   const successNoticeShownFor = useRef<string | null>(null);
 
   useEffect(() => {
@@ -352,7 +352,7 @@ export function AppDetail({ renderActions, onReconnect }: {
   const startPersonalAuth = useMutation({
     mutationFn: () => {
       const subjectUserId = grantsQuery.data?.currentUserId;
-      if (!subjectUserId) throw new Error("Sign in again to connect your own account.");
+      if (!subjectUserId) throw new Error(l10n("local.sign_in_again_connect_own_account_0f800010"));
       return toolsApi.startPersonalAuthorization(selectedCompanyId!, connectionId, {
         subjectUserId,
         returnTo: appTabHref(connectionId, "permissions"),
@@ -396,12 +396,18 @@ export function AppDetail({ renderActions, onReconnect }: {
         title: l10n("local.audience_saved_b7ee24e0"),
         body: (grant.members?.length ?? 0) === 0
           ? l10n("local.every_organization_member_can_use_this_identi_5c8fd994")
-          : l10n("local.value_value_can_use_this_identity_68b80c63", {v0: (grant.members?.length), v1: (grant.members?.length === 1 ? "member" : "members")}),
+          : grant.members?.length === 1
+            ? l10n("local.one_member_can_use_identity_0f800011", { v0: grant.members.length })
+            : l10n("local.members_can_use_identity_0f800012", { v0: grant.members?.length ?? 0 }),
         tone: "success",
       });
     },
     onError: (error) =>
-      setAudienceError(error instanceof Error ? error.message : "We couldn't save that audience."),
+      setAudienceError(
+        error instanceof Error
+          ? error.message
+          : l10n("local.couldnt_save_audience_0f800013"),
+      ),
   });
 
   const refreshTools = useMutation({
@@ -665,7 +671,7 @@ export function AppDetail({ renderActions, onReconnect }: {
                 refreshPending={refreshTools.isPending}
                 permissionChangeWarning={
                   connection.credentialPolicy === "per_agent" && managedIdentityGrant?.providerTenant?.github
-                    ? "Shell Git and gh use this account for the run and are not constrained by per-tool Ask-first controls."
+                    ? l10n("local.shell_git_not_constrained_ask_first_0f800014")
                     : undefined
                 }
                 onSaveAccess={(next) => apply({ access: connection.connectionPurpose === "ai" || managesRemoteMcpAccess ? next : accessIncludingInstalls(next, install) })}

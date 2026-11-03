@@ -35,7 +35,7 @@ export function AdvancedPanel({
   onRemove,
   onReplaced,
   canReplaceCredential = true,
-  credentialUnavailableMessage = "You don't have permission to replace this identity's credential.",
+  credentialUnavailableMessage = l10n("local.no_permission_replace_identity_credential_0f800009"),
   appToggleDisabled,
   onToggleApp,
   identityGrant = null,
@@ -424,7 +424,7 @@ export function DangerZone({
   onRemove,
   onReplaced,
   canReplaceCredential = true,
-  credentialUnavailableMessage = "You don't have permission to replace this identity's credential.",
+  credentialUnavailableMessage = l10n("local.no_permission_replace_identity_credential_0f800009"),
   toggleDisabled = false,
   onToggleConnection,
   identityGrant = null,
@@ -597,8 +597,8 @@ export function connectionAddress(connection: ToolConnection): string {
   const config = connection.config ?? connection.transportConfig ?? {};
   const value = config.url ?? config.endpoint ?? config.remoteUrl;
   if (typeof value === "string" && value.trim().length > 0) return redactUrlSecrets(value);
-  if (connection.transport === "local_stdio") return "Local command";
-  return "Not set";
+  if (connection.transport === "local_stdio") return l10n("local.local_command_9b08984b");
+  return l10n("local.not_set_4895f731");
 }
 
 export function connectionTransportLabel(transport: ToolConnection["transport"]): string {

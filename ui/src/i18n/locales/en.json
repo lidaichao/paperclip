@@ -12066,6 +12066,20 @@
     "check_field_formats_0f700023": "Check the field formats above — a value may be the wrong type or shape.",
     "check_more_options_fields_0f700024": "Open ‘More options’ to confirm any advanced fields are filled in correctly.",
     "app_rate_limiting_retry_0f700025": "The app is rate-limiting calls right now — wait a moment and run it again.",
-    "check_inputs_try_again_0f700026": "Check the inputs above and try again."
+    "check_inputs_try_again_0f700026": "Check the inputs above and try again.",
+    "all_current_future_repositories_0f800001": "All current and future repositories",
+    "mixed_repository_access_0f800002": "Mixed access; scope varies by installation",
+    "one_repository_selected_0f800003": "{{v0}} selected repository",
+    "repositories_selected_0f800004": "{{v0}} selected repositories",
+    "agents_stop_acting_as_you_0f800005": "Agents will stop acting as you. Work that needs this identity can ask you to connect again.",
+    "agents_stop_acting_as_person_0f800006": "Agents will stop acting as this person. They can connect again themselves; no one else can do it for them.",
+    "installed_agents_lose_shared_identity_0f800007": "Installed agents lose this shared identity immediately.",
+    "members_agents_lose_shared_identity_0f800008": "Eligible members and installed agents will lose this shared identity immediately.",
+    "no_permission_replace_identity_credential_0f800009": "You don't have permission to replace this identity's credential.",
+    "sign_in_again_connect_own_account_0f800010": "Sign in again to connect your own account.",
+    "one_member_can_use_identity_0f800011": "{{v0}} member can use this identity",
+    "members_can_use_identity_0f800012": "{{v0}} members can use this identity",
+    "couldnt_save_audience_0f800013": "We couldn't save that audience.",
+    "shell_git_not_constrained_ask_first_0f800014": "Shell Git and gh use this account for the run and are not constrained by per-tool Ask-first controls."
   }
 }

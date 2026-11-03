@@ -297,13 +297,15 @@ function GitHubConnectionSummary({
       ? github.installationUrl
       : null;
   const repositoryWarning = github.repositorySelection === "all"
-    ? "All current and future repositories"
+    ? l10n("local.all_current_future_repositories_0f800001")
     : github.repositorySelection === "mixed"
-      ? "Mixed access; scope varies by installation"
+      ? l10n("local.mixed_repository_access_0f800002")
       : null;
   const repositorySummary = github.repositorySelection === "none"
     ? l10n("local.no_repositories_selected_cfc95621")
-    : l10n("local.value_selected_value_c372c5aa", {v0: (github.repositoryCount), v1: (github.repositoryCount === 1 ? "repository" : "repositories")});
+    : github.repositoryCount === 1
+      ? l10n("local.one_repository_selected_0f800003", { v0: github.repositoryCount })
+      : l10n("local.repositories_selected_0f800004", { v0: github.repositoryCount });
   return (
     <div className="divide-y divide-border border-y border-border">
       <div className="py-3">
@@ -603,11 +605,11 @@ export function RevokeGrantDialog({
     : l10n("local.revoke_the_organization_identity_2606ac93");
   const body = personal
     ? isOwnIdentity
-      ? "Agents will stop acting as you. Work that needs this identity can ask you to connect again."
-      : "Agents will stop acting as this person. They can connect again themselves; no one else can do it for them."
+      ? l10n("local.agents_stop_acting_as_you_0f800005")
+      : l10n("local.agents_stop_acting_as_person_0f800006")
     : credentialPolicy === "per_user"
-      ? "Installed agents lose this shared identity immediately."
-      : "Eligible members and installed agents will lose this shared identity immediately.";
+      ? l10n("local.installed_agents_lose_shared_identity_0f800007")
+      : l10n("local.members_agents_lose_shared_identity_0f800008");
 
   return (
     <AlertDialog open onOpenChange={(open) => { if (!open) onCancel(); }}>

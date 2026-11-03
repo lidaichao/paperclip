@@ -12066,6 +12066,20 @@
     "check_field_formats_0f700023": "请检查上方字段格式，某个值的类型或结构可能不正确。",
     "check_more_options_fields_0f700024": "请展开“更多选项”，确认高级字段填写正确。",
     "app_rate_limiting_retry_0f700025": "应用当前限制了调用频率，请稍后重新运行。",
-    "check_inputs_try_again_0f700026": "请检查上方输入后重试。"
+    "check_inputs_try_again_0f700026": "请检查上方输入后重试。",
+    "all_current_future_repositories_0f800001": "所有当前及未来的代码库",
+    "mixed_repository_access_0f800002": "混合访问；范围因安装项而异",
+    "one_repository_selected_0f800003": "已选择 {{v0}} 个代码库",
+    "repositories_selected_0f800004": "已选择 {{v0}} 个代码库",
+    "agents_stop_acting_as_you_0f800005": "智能体将停止以你的身份操作。需要此身份的工作可以请求你重新连接。",
+    "agents_stop_acting_as_person_0f800006": "智能体将停止以此人的身份操作。对方可以自行重新连接，其他人无法代为连接。",
+    "installed_agents_lose_shared_identity_0f800007": "已安装的智能体将立即失去此共享身份。",
+    "members_agents_lose_shared_identity_0f800008": "符合条件的成员和已安装的智能体将立即失去此共享身份。",
+    "no_permission_replace_identity_credential_0f800009": "你没有权限替换此身份的凭据。",
+    "sign_in_again_connect_own_account_0f800010": "请重新登录后连接你自己的账户。",
+    "one_member_can_use_identity_0f800011": "{{v0}} 名成员可以使用此身份",
+    "members_can_use_identity_0f800012": "{{v0}} 名成员可以使用此身份",
+    "couldnt_save_audience_0f800013": "无法保存适用成员范围。",
+    "shell_git_not_constrained_ask_first_0f800014": "命令行 Git 和 gh 在运行时使用此账户，不受单项工具“运行前询问”设置约束。"
   }
 }
