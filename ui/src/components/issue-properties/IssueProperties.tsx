@@ -1304,16 +1304,16 @@ export function IssueProperties({
   const monitorPrimary = monitorNextCheckAt
     ? formatMonitorEtaLabel(monitorNextCheckAt, monitorNow)
     : monitorState?.status === "cleared"
-      ? "Cleared"
-      : "None";
+      ? l10n("local.cleared_0ed00001")
+      : l10n("local.none_dc937b59");
   const monitorSecondary = monitorNextCheckAt
     ? monitorIsDueNow
-      ? "checking momentarily…"
-      : `${formatMonitorAbsolute(monitorNextCheckAt, {}, monitorNow)}${monitorIsOverdue ? " · fires on next tick" : monitorAttemptCount > 0 ? ` · Attempt ${monitorAttemptCount}` : ""}`
+      ? l10n("local.checking_momentarily_0ed00002")
+      : `${formatMonitorAbsolute(monitorNextCheckAt, {}, monitorNow)}${monitorIsOverdue ? ` · ${l10n("local.fires_on_next_tick_0ed00003")}` : monitorAttemptCount > 0 ? ` · ${l10n("local.attempt_value_0ed00004", { v0: monitorAttemptCount })}` : ""}`
     : monitorState?.status === "cleared"
       ? [
-          monitorLastTriggeredAt ? `last checked ${timeAgo(monitorLastTriggeredAt)}` : null,
-          monitorAttemptCount > 0 ? `after attempt ${monitorAttemptCount}` : null,
+          monitorLastTriggeredAt ? l10n("local.last_checked_value_0ed00005", { v0: timeAgo(monitorLastTriggeredAt) }) : null,
+          monitorAttemptCount > 0 ? l10n("local.after_attempt_value_0ed00006", { v0: monitorAttemptCount }) : null,
         ].filter(Boolean).join(" · ")
       : null;
   const monitorTrigger = (
@@ -1407,7 +1407,7 @@ export function IssueProperties({
   const scheduledRetryRelativeLabel = (() => {
     if (!scheduledRetryRelative) return l10n("local.pending_schedule_0ec00003");
     const action = scheduledRetryIsContinuation ? l10n("local.manual_monitor_continuation") : l10n("local.manual_monitor_retry");
-    if (scheduledRetryRelative === "now") return `${action} due now`;
+    if (scheduledRetryRelative === "now") return l10n("local.action_due_now_0ed00007", { v0: action });
     return `${action} ${displayMonitorRelative(scheduledRetryRelative)}`;
   })();
   const scheduledRetryRetryNowSuccess = retryNow.isSuccess

@@ -361,6 +361,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.task_not_attached_to_workspace_0ec00002).toContain("尚未关联工作区");
     expect(messages.pending_schedule_0ec00003).toBe("等待调度");
     expect(messages.board_users_0ec00004).toBe("看板用户");
+    expect(messages.cleared_0ed00001).toBe("已清除");
+    expect(messages.checking_momentarily_0ed00002).toBe("即将检查…");
+    expect(messages.fires_on_next_tick_0ed00003).toContain("下次轮询");
+    expect(messages.attempt_value_0ed00004).toContain("第 {{v0}} 次尝试");
+    expect(messages.last_checked_value_0ed00005).toContain("上次检查");
+    expect(messages.after_attempt_value_0ed00006).toContain("清除");
+    expect(messages.action_due_now_0ed00007).toContain("现已到期");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

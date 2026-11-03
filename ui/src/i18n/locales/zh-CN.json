@@ -11916,6 +11916,13 @@
     "failed_to_unarchive_issue_0ec00001": "恢复此任务失败，请重试。",
     "task_not_attached_to_workspace_0ec00002": "此任务尚未关联工作区。",
     "pending_schedule_0ec00003": "等待调度",
-    "board_users_0ec00004": "看板用户"
+    "board_users_0ec00004": "看板用户",
+    "cleared_0ed00001": "已清除",
+    "checking_momentarily_0ed00002": "即将检查…",
+    "fires_on_next_tick_0ed00003": "将在下次轮询时触发",
+    "attempt_value_0ed00004": "第 {{v0}} 次尝试",
+    "last_checked_value_0ed00005": "上次检查于{{v0}}",
+    "after_attempt_value_0ed00006": "在第 {{v0}} 次尝试后清除",
+    "action_due_now_0ed00007": "{{v0}}现已到期"
   }
 }

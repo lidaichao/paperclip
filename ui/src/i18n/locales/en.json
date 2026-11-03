@@ -11916,6 +11916,13 @@
     "failed_to_unarchive_issue_0ec00001": "Failed to unarchive this issue. Please try again.",
     "task_not_attached_to_workspace_0ec00002": "This task is not attached to a workspace.",
     "pending_schedule_0ec00003": "Pending schedule",
-    "board_users_0ec00004": "Board users"
+    "board_users_0ec00004": "Board users",
+    "cleared_0ed00001": "Cleared",
+    "checking_momentarily_0ed00002": "Checking momentarily…",
+    "fires_on_next_tick_0ed00003": "fires on next tick",
+    "attempt_value_0ed00004": "Attempt {{v0}}",
+    "last_checked_value_0ed00005": "last checked {{v0}}",
+    "after_attempt_value_0ed00006": "after attempt {{v0}}",
+    "action_due_now_0ed00007": "{{v0}} due now"
   }
 }
