@@ -791,7 +791,7 @@ export function accessService(db: Db) {
         throw conflict("You cannot remove yourself");
       }
       if (toArchive.length > 0 && (await isInstanceAdmin(userId))) {
-        throw conflict("Instance admins cannot be removed from company access");
+        throw conflict("不能从公司访问权限中移除实例管理员");
       }
       const protectedArchives = toArchive.filter((row) => row.membershipRole === "owner" || row.membershipRole === "admin");
       if (protectedArchives.length > 0) {

@@ -169,7 +169,7 @@ describe.sequential("POST /companies/:companyId/openclaw/invite-prompt", () => {
       .send({});
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
   });
 
   it("rejects CEO agent callers outside the target company scope", async () => {
@@ -293,6 +293,6 @@ describe.sequential("POST /companies/:companyId/openclaw/invite-prompt", () => {
       .send({});
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("Permission denied");
+    expect(res.body.error).toBe("权限不足");
   });
 });

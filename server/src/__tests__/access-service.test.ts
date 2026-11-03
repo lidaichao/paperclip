@@ -243,7 +243,7 @@ describeEmbeddedPostgres("access service", () => {
 
     await expect(
       access.setUserCompanyAccess(operator.principalId, [], { actorUserId: owner.principalId }),
-    ).rejects.toThrow("Instance admins cannot be removed from company access");
+    ).rejects.toThrow("不能从公司访问权限中移除实例管理员");
   });
 
   it("sweeps personal grants when instance-level company access is removed", async () => {

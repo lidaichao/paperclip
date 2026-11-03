@@ -39,48 +39,48 @@ describe("buildInviteOnboardingTextDocument", () => {
       allowedHostnames: [],
     });
 
-    expect(text).toContain("Paperclip Agent Onboarding");
+    expect(text).toContain("Alice 智能体接入");
     expect(text).toContain("/api/invites/token-123/accept");
     expect(text).toContain("/api/join-requests/{requestId}/claim-api-key");
     expect(text).toContain("/api/invites/token-123/onboarding.txt");
     expect(text).toContain("/api/invites/token-123/skills/paperclip");
-    expect(text).toContain("Suggested Paperclip base URLs to try");
+    expect(text).toContain("建议尝试的 Alice 根地址");
     expect(text).toContain("http://localhost:3100");
     expect(text).toContain("host.docker.internal");
     expect(text).toContain("paperclipApiUrl");
     expect(text).toContain('"adapterType": "openclaw_gateway"');
     expect(text).toContain("headers.x-openclaw-token");
-    expect(text).toContain("Do NOT use /v1/responses or /hooks/*");
+    expect(text).toContain("不得使用 /v1/responses 或 /hooks/*");
     expect(text).toContain('adapterType: "hermes_gateway"');
     expect(text).toContain('"adapterType": "hermes_gateway"');
     expect(text).toContain("API_SERVER_ENABLED=true");
     expect(text).toContain("API_SERVER_KEY");
-    expect(text).toContain("Set agentDefaultsPayload.apiKey to the exact same value as API_SERVER_KEY");
+    expect(text).toContain("将 agentDefaultsPayload.apiKey 设为与 API_SERVER_KEY 完全相同的值");
     expect(text).toContain("hermes gateway run --replace --accept-hooks");
-    expect(text).toContain("Default Hermes API server port: 8642");
+    expect(text).toContain("Hermes API 服务默认端口：8642");
     expect(text).toContain("agentDefaultsPayload.apiBaseUrl");
     expect(text).toContain("agentDefaultsPayload.paperclipApiUrl");
     expect(text).toContain("hermes_local");
-    expect(text).toContain("Hermes-originated Paperclip API usage");
+    expect(text).toContain("Hermes 调用 Alice API");
     expect(text).toContain("http://127.0.0.1:8642");
     expect(text).toContain("http://127.0.0.1:9119");
     expect(text).toContain("http://127.0.0.1:9119/chat");
-    expect(text).toContain("map to /api");
-    expect(text).toContain("/chat and the dashboard root are browser UI routes");
+    expect(text).toContain("映射到 /api");
+    expect(text).toContain("/chat 和仪表盘根地址是浏览器界面路由");
     expect(text).toContain("/api/v1/runs");
-    expect(text).toContain("Do not rotate or invent a Paperclip key manually");
+    expect(text).toContain("不要手动轮换或编造 Alice 密钥");
     expect(text).toContain("http://192.168.1.25:8642");
     expect(text).toContain("tailnet-name.ts.net:8642");
     expect(text).toContain("http://host.docker.internal:8642");
     expect(text).toContain("https://hermes-gateway.example");
-    expect(text).toContain("set the first reachable candidate as agentDefaultsPayload.paperclipApiUrl");
+    expect(text).toContain("将第一个可访问的候选地址设为 agentDefaultsPayload.paperclipApiUrl");
     expect(text).toContain("PAPERCLIP_API_KEY");
-    expect(text).toContain("Store the parsed token field from the raw HTTP JSON response");
-    expect(text).toContain("A token value containing literal ... or [redacted]");
-    expect(text).toContain("The response body includes the full token exactly once");
-    expect(text).toContain("Do not persist displayed previews containing literal ... or [redacted]");
-    expect(text).toContain("Use your runtime's normal skill or instruction installation path.");
-    expect(text).toContain("Decide which Paperclip adapter type matches your runtime.");
+    expect(text).toContain("从原始 HTTP JSON 响应中提取 token 字段");
+    expect(text).toContain("包含字面量 ... 或 [redacted] 的值");
+    expect(text).toContain("响应体只会返回一次完整令牌");
+    expect(text).toContain("不要保存包含字面量 ... 或 [redacted] 的显示预览");
+    expect(text).toContain("请使用当前运行环境常规的技能或指令安装路径");
+    expect(text).toContain("确认哪种 Alice 适配器类型与你的运行环境匹配");
   });
 
   it("includes loopback diagnostics for authenticated/private onboarding", () => {
@@ -107,9 +107,9 @@ describe("buildInviteOnboardingTextDocument", () => {
       allowedHostnames: [],
     });
 
-    expect(text).toContain("Connectivity diagnostics");
-    expect(text).toContain("loopback hostname");
-    expect(text).toContain("If none are reachable");
+    expect(text).toContain("连接诊断");
+    expect(text).toContain("回环主机名");
+    expect(text).toContain("若所有候选地址均不可访问");
   });
 
   it("includes inviter message in the onboarding text when provided", () => {
@@ -138,7 +138,7 @@ describe("buildInviteOnboardingTextDocument", () => {
       allowedHostnames: [],
     });
 
-    expect(text).toContain("Message from inviter");
+    expect(text).toContain("邀请者留言");
     expect(text).toContain("prioritize flaky test triage first");
   });
 

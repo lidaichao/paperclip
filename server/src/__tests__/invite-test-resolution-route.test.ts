@@ -188,7 +188,7 @@ describe.sequential("GET /invites/:token/test-resolution", () => {
       .query({ url: "https://gateway.example.test/health" });
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Invite not found");
+    expect(res.body.error).toBe("未找到邀请");
     expect(lookup).not.toHaveBeenCalled();
     expect(requestHead).not.toHaveBeenCalled();
   });

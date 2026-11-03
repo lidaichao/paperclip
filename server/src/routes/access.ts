@@ -68,7 +68,7 @@ import { runtimeCanonicalOrigin } from "../services/cloud-runtime-identity.js";
  */
 function assertAccessAdminVisible() {
   if (getHiddenSettings().has("instance.access")) {
-    throw forbidden("Instance user administration is managed by the hosting operator on this instance", {
+    throw forbidden("此实例的用户管理由托管方操作员负责", {
       code: "settings_operator_managed",
     });
   }
@@ -676,7 +676,7 @@ export function assertLegacyAgentInviteAdapterType(
 ) {
   if (adapterType === "paperclip_runner") {
     throw badRequest(
-      "Paperclip Runner is not available through agent invite onboarding.",
+      "Alice Runner 暂不支持通过智能体邀请流程接入。",
       { code: "paperclip_runner_invite_onboarding_disabled" },
     );
   }
@@ -746,10 +746,10 @@ export function normalizeAgentDefaultsForJoin(input: {
       diagnostics.push({
         code: "hermes_gateway_defaults_missing",
         level: "warn",
-        message: "No Hermes gateway config was provided in agentDefaultsPayload.",
-        hint: "Include agentDefaultsPayload.apiBaseUrl and agentDefaultsPayload.apiKey for Hermes gateway joins.",
+        message: "agentDefaultsPayload 中未提供 Hermes 网关配置。",
+        hint: "Hermes 网关接入需要提供 agentDefaultsPayload.apiBaseUrl 和 agentDefaultsPayload.apiKey。",
       });
-      fatalErrors.push("agentDefaultsPayload is required for adapterType=hermes_gateway");
+      fatalErrors.push("adapterType=hermes_gateway 时必须提供 agentDefaultsPayload");
       return { normalized: null as Record<string, unknown> | null, diagnostics, fatalErrors };
     }
 
@@ -760,10 +760,10 @@ export function normalizeAgentDefaultsForJoin(input: {
       diagnostics.push({
         code: "hermes_gateway_api_base_url_missing",
         level: "warn",
-        message: "Hermes gateway apiBaseUrl is missing.",
-        hint: "Set agentDefaultsPayload.apiBaseUrl to the Hermes API server URL. The default dashboard root or chat URL on port 9119 is accepted and maps to /api.",
+        message: "Hermes 网关缺少 apiBaseUrl。",
+        hint: "请将 agentDefaultsPayload.apiBaseUrl 设为 Hermes API 服务地址。支持端口 9119 的默认仪表盘根地址或聊天地址，并会自动映射到 /api。",
       });
-      fatalErrors.push("agentDefaultsPayload.apiBaseUrl is required");
+      fatalErrors.push("必须提供 agentDefaultsPayload.apiBaseUrl");
     } else {
       try {
         const rawParsedApiBaseUrl = new URL(rawApiBaseUrl);
@@ -773,9 +773,9 @@ export function normalizeAgentDefaultsForJoin(input: {
           diagnostics.push({
             code: "hermes_gateway_api_base_url_protocol",
             level: "warn",
-            message: `Hermes gateway apiBaseUrl must use http:// or https:// (got ${apiBaseUrl.protocol}).`,
+            message: `Hermes 网关 apiBaseUrl 必须使用 http:// 或 https://（当前为 ${apiBaseUrl.protocol}）。`,
           });
-          fatalErrors.push("agentDefaultsPayload.apiBaseUrl must use http:// or https:// for hermes_gateway");
+          fatalErrors.push("hermes_gateway 的 agentDefaultsPayload.apiBaseUrl 必须使用 http:// 或 https://");
         } else if (
           apiBaseUrl.protocol === "http:" &&
           !isLoopbackHost(apiBaseUrl.hostname) &&
@@ -784,11 +784,11 @@ export function normalizeAgentDefaultsForJoin(input: {
           diagnostics.push({
             code: "hermes_gateway_plain_http_remote_denied",
             level: "warn",
-            message: "Remote plain HTTP Hermes gateway traffic is denied by default.",
-            hint: "Use https:// or set agentDefaultsPayload.dangerouslyAllowInsecureRemoteHttp=true only for unsafe local development.",
+            message: "默认拒绝通过明文 HTTP 访问远程 Hermes 网关。",
+            hint: "请使用 https://。只有在明确接受风险的本地开发环境中，才可设置 agentDefaultsPayload.dangerouslyAllowInsecureRemoteHttp=true。",
           });
           fatalErrors.push(
-            "agentDefaultsPayload.apiBaseUrl uses remote plain HTTP; use HTTPS or set dangerouslyAllowInsecureRemoteHttp=true for unsafe local development",
+            "agentDefaultsPayload.apiBaseUrl 正在使用远程明文 HTTP；请改用 HTTPS，或仅在接受风险的本地开发中设置 dangerouslyAllowInsecureRemoteHttp=true",
           );
         } else {
           normalized.apiBaseUrl = apiBaseUrl.toString();
@@ -796,21 +796,21 @@ export function normalizeAgentDefaultsForJoin(input: {
             diagnostics.push({
               code: "hermes_gateway_dashboard_root_mapped",
               level: "info",
-              message: `Default Hermes dashboard root mapped to API base ${apiBaseUrl.toString()}`,
-              hint: "Hermes dashboard and /chat routes are browser UI routes. Paperclip gateway calls use /api/health and /api/v1/runs.",
+              message: `Hermes 默认仪表盘根地址已映射到 API 地址 ${apiBaseUrl.toString()}`,
+              hint: "Hermes 仪表盘和 /chat 是浏览器界面路由；Alice 网关调用使用 /api/health 和 /api/v1/runs。",
             });
           }
           if (apiBaseUrl.protocol === "http:" && !isLoopbackHost(apiBaseUrl.hostname)) {
             diagnostics.push({
               code: "hermes_gateway_plain_http_remote_unsafe_allowed",
               level: "warn",
-              message: "Unsafe dev escape hatch enabled for non-loopback HTTP Hermes traffic.",
+              message: "已允许非回环地址的 HTTP Hermes 流量；此开发选项存在安全风险。",
             });
           } else {
             diagnostics.push({
               code: "hermes_gateway_api_base_url_configured",
               level: "info",
-              message: `Hermes gateway endpoint set to ${apiBaseUrl.toString()}`,
+              message: `Hermes 网关端点已设为 ${apiBaseUrl.toString()}`,
             });
           }
         }
@@ -818,9 +818,9 @@ export function normalizeAgentDefaultsForJoin(input: {
         diagnostics.push({
           code: "hermes_gateway_api_base_url_invalid",
           level: "warn",
-          message: `Invalid Hermes gateway apiBaseUrl: ${rawApiBaseUrl}`,
+          message: `Hermes 网关 apiBaseUrl 无效：${rawApiBaseUrl}`,
         });
-        fatalErrors.push("agentDefaultsPayload.apiBaseUrl is not a valid URL");
+        fatalErrors.push("agentDefaultsPayload.apiBaseUrl 不是有效 URL");
       }
     }
 
@@ -828,10 +828,10 @@ export function normalizeAgentDefaultsForJoin(input: {
       diagnostics.push({
         code: "hermes_gateway_api_key_missing",
         level: "warn",
-        message: "Hermes gateway API key is missing.",
-        hint: "Set agentDefaultsPayload.apiKey to the Hermes API_SERVER_KEY value.",
+        message: "Hermes 网关缺少 API 密钥。",
+        hint: "请将 agentDefaultsPayload.apiKey 设为 Hermes 的 API_SERVER_KEY 值。",
       });
-      fatalErrors.push("agentDefaultsPayload.apiKey is required");
+      fatalErrors.push("必须提供 agentDefaultsPayload.apiKey");
     }
 
     return { normalized, diagnostics, fatalErrors };
@@ -848,12 +848,12 @@ export function normalizeAgentDefaultsForJoin(input: {
       code: "openclaw_gateway_defaults_missing",
       level: "warn",
       message:
-        "No OpenClaw gateway config was provided in agentDefaultsPayload.",
+        "agentDefaultsPayload 中未提供 OpenClaw 网关配置。",
       hint:
-        "Include agentDefaultsPayload.url and headers.x-openclaw-token for OpenClaw gateway joins."
+        "OpenClaw 网关接入需要提供 agentDefaultsPayload.url 和 headers.x-openclaw-token。"
     });
     fatalErrors.push(
-      "agentDefaultsPayload is required for adapterType=openclaw_gateway"
+      "adapterType=openclaw_gateway 时必须提供 agentDefaultsPayload"
     );
     return {
       normalized: null as Record<string, unknown> | null,
@@ -871,10 +871,10 @@ export function normalizeAgentDefaultsForJoin(input: {
     diagnostics.push({
       code: "openclaw_gateway_url_missing",
       level: "warn",
-      message: "OpenClaw gateway URL is missing.",
-      hint: "Set agentDefaultsPayload.url to ws:// or wss:// gateway URL."
+      message: "OpenClaw 网关缺少 URL。",
+      hint: "请将 agentDefaultsPayload.url 设为 ws:// 或 wss:// 网关地址。"
     });
-    fatalErrors.push("agentDefaultsPayload.url is required");
+    fatalErrors.push("必须提供 agentDefaultsPayload.url");
   } else {
     try {
       gatewayUrl = new URL(rawGatewayUrl);
@@ -882,26 +882,26 @@ export function normalizeAgentDefaultsForJoin(input: {
         diagnostics.push({
           code: "openclaw_gateway_url_protocol",
           level: "warn",
-          message: `OpenClaw gateway URL must use ws:// or wss:// (got ${gatewayUrl.protocol}).`
+          message: `OpenClaw 网关 URL 必须使用 ws:// 或 wss://（当前为 ${gatewayUrl.protocol}）。`
         });
         fatalErrors.push(
-          "agentDefaultsPayload.url must use ws:// or wss:// for openclaw_gateway"
+          "openclaw_gateway 的 agentDefaultsPayload.url 必须使用 ws:// 或 wss://"
         );
       } else {
         normalized.url = gatewayUrl.toString();
         diagnostics.push({
           code: "openclaw_gateway_url_configured",
           level: "info",
-          message: `Gateway endpoint set to ${gatewayUrl.toString()}`
+          message: `网关端点已设为 ${gatewayUrl.toString()}`
         });
       }
     } catch {
       diagnostics.push({
         code: "openclaw_gateway_url_invalid",
         level: "warn",
-        message: `Invalid OpenClaw gateway URL: ${rawGatewayUrl}`
+        message: `OpenClaw 网关 URL 无效：${rawGatewayUrl}`
       });
-      fatalErrors.push("agentDefaultsPayload.url is not a valid URL");
+      fatalErrors.push("agentDefaultsPayload.url 不是有效 URL");
     }
   }
 
@@ -921,29 +921,29 @@ export function normalizeAgentDefaultsForJoin(input: {
     diagnostics.push({
       code: "openclaw_gateway_auth_header_missing",
       level: "warn",
-      message: "Gateway auth token is missing from agent defaults.",
+      message: "智能体默认配置中缺少网关身份验证令牌。",
       hint:
-        "Set agentDefaultsPayload.headers.x-openclaw-token (or legacy x-openclaw-auth)."
+        "请设置 agentDefaultsPayload.headers.x-openclaw-token（或旧版 x-openclaw-auth）。"
     });
     fatalErrors.push(
-      "agentDefaultsPayload.headers.x-openclaw-token (or x-openclaw-auth) is required"
+      "必须提供 agentDefaultsPayload.headers.x-openclaw-token（或 x-openclaw-auth）"
     );
   } else if (gatewayToken.trim().length < 16) {
     diagnostics.push({
       code: "openclaw_gateway_auth_header_too_short",
       level: "warn",
-      message: `Gateway auth token appears too short (${gatewayToken.trim().length} chars).`,
+      message: `网关身份验证令牌似乎过短（${gatewayToken.trim().length} 个字符）。`,
       hint:
-        "Use the full gateway auth token from ~/.openclaw/openclaw.json (typically long random string)."
+        "请使用 ~/.openclaw/openclaw.json 中的完整网关身份验证令牌（通常是一段较长的随机字符串）。"
     });
     fatalErrors.push(
-      "agentDefaultsPayload.headers.x-openclaw-token is too short; expected a full gateway token"
+      "agentDefaultsPayload.headers.x-openclaw-token 过短；应提供完整网关令牌"
     );
   } else {
     diagnostics.push({
       code: "openclaw_gateway_auth_header_configured",
       level: "info",
-      message: "Gateway auth token configured."
+      message: "网关身份验证令牌已配置。"
     });
   }
 
@@ -966,7 +966,7 @@ export function normalizeAgentDefaultsForJoin(input: {
       code: "openclaw_gateway_device_key_configured",
       level: "info",
       message:
-        "Gateway device key configured. Pairing approvals should persist for this agent."
+        "网关设备密钥已配置；该智能体的配对授权将持续有效。"
     });
   } else if (!disableDeviceAuth) {
     try {
@@ -975,20 +975,20 @@ export function normalizeAgentDefaultsForJoin(input: {
         code: "openclaw_gateway_device_key_generated",
         level: "info",
         message:
-          "Generated persistent gateway device key for this join. Pairing approvals should persist for this agent."
+          "已为本次接入生成持久化网关设备密钥；该智能体的配对授权将持续有效。"
       });
     } catch (err) {
       diagnostics.push({
         code: "openclaw_gateway_device_key_generate_failed",
         level: "warn",
-        message: `Failed to generate gateway device key: ${
+        message: `生成网关设备密钥失败：${
           err instanceof Error ? err.message : String(err)
         }`,
         hint:
-          "Set agentDefaultsPayload.devicePrivateKeyPem explicitly or set disableDeviceAuth=true."
+          "请明确设置 agentDefaultsPayload.devicePrivateKeyPem，或设置 disableDeviceAuth=true。"
       });
       fatalErrors.push(
-        "Failed to generate gateway device key. Set devicePrivateKeyPem or disableDeviceAuth=true."
+        "生成网关设备密钥失败。请设置 devicePrivateKeyPem，或设置 disableDeviceAuth=true。"
       );
     }
   }
@@ -1057,21 +1057,21 @@ export function normalizeAgentDefaultsForJoin(input: {
         diagnostics.push({
           code: "openclaw_gateway_paperclip_api_url_protocol",
           level: "warn",
-          message: `paperclipApiUrl must use http:// or https:// (got ${parsedPaperclipApiUrl.protocol}).`
+          message: `paperclipApiUrl 必须使用 http:// 或 https://（当前为 ${parsedPaperclipApiUrl.protocol}）。`
         });
       } else {
         normalized.paperclipApiUrl = parsedPaperclipApiUrl.toString();
         diagnostics.push({
           code: "openclaw_gateway_paperclip_api_url_configured",
           level: "info",
-          message: `paperclipApiUrl set to ${parsedPaperclipApiUrl.toString()}`
+          message: `paperclipApiUrl 已设为 ${parsedPaperclipApiUrl.toString()}`
         });
       }
     } catch {
       diagnostics.push({
         code: "openclaw_gateway_paperclip_api_url_invalid",
         level: "warn",
-        message: `Invalid paperclipApiUrl: ${rawPaperclipApiUrl}`
+        message: `paperclipApiUrl 无效：${rawPaperclipApiUrl}`
       });
     }
   }
@@ -1298,28 +1298,28 @@ async function getProtectedMemberReason(
     operation?: "archive" | "update";
   },
 ): Promise<string | null> {
-  if (member.principalType !== "user") return "Only human company members can be removed.";
-  if (req.actor.type !== "board") return "Board access is required to remove members.";
-  if (member.principalId === req.actor.userId) return "You cannot remove yourself.";
+  if (member.principalType !== "user") return "只能移除公司中的人类成员。";
+  if (req.actor.type !== "board") return "移除成员需要管理端权限。";
+  if (member.principalId === req.actor.userId) return "不能移除自己。";
   const isTargetInstanceAdmin = opts?.instanceAdminUserIds
     ? opts.instanceAdminUserIds.has(member.principalId)
     : await access.isInstanceAdmin(member.principalId);
   if (isTargetInstanceAdmin) {
-    return "Instance admins cannot be removed from company access.";
+    return "不能从公司访问权限中移除实例管理员。";
   }
 
   const targetRole = member.membershipRole
     ? normalizeHumanRole(member.membershipRole, "operator")
     : "operator";
   if (opts?.operation === "archive") {
-    if (targetRole === "owner") return "Board owners cannot be removed from company access.";
-    if (targetRole === "admin") return "Company admins cannot be removed from company access.";
+    if (targetRole === "owner") return "不能从公司访问权限中移除管理端所有者。";
+    if (targetRole === "admin") return "不能从公司访问权限中移除公司管理员。";
   }
 
   const actorRole = opts?.actorRole ?? await resolveActorHumanRole(req, access, companyId);
-  if (!actorRole) return "Only active company members can remove users.";
+  if (!actorRole) return "只有有效的公司成员才能移除用户。";
   if (humanRoleRank[targetRole] >= humanRoleRank[actorRole]) {
-    return "You can only remove users below your company role.";
+    return "只能移除公司角色级别低于自己的用户。";
   }
 
   return null;
@@ -1635,8 +1635,8 @@ function buildOnboardingDiscoveryDiagnostics(input: {
       code: "openclaw_onboarding_api_loopback",
       level: "warn",
       message:
-        "Onboarding URL resolves to loopback hostname. Remote OpenClaw agents cannot reach localhost on your Paperclip host.",
-      hint: "Use a reachable hostname/IP (for example Tailscale hostname, Docker host alias, or public domain)."
+        "接入 URL 指向回环主机名；远程 OpenClaw 智能体无法访问 Alice 主机上的 localhost。",
+      hint: "请使用可访问的主机名或 IP，例如 Tailscale 主机名、Docker 主机别名或公网域名。"
     });
   }
 
@@ -1648,8 +1648,8 @@ function buildOnboardingDiscoveryDiagnostics(input: {
     diagnostics.push({
       code: "openclaw_onboarding_private_loopback_bind",
       level: "warn",
-      message: "Paperclip is bound to loopback in authenticated/private mode.",
-      hint: "Use a reachable private bind mode such as `pnpm dev --bind lan` or `pnpm dev --bind tailnet` for private-network onboarding."
+      message: "Alice 在身份验证/私有模式下绑定到了回环地址。",
+      hint: "私有网络接入请使用可访问的绑定模式，例如 `pnpm dev --bind lan` 或 `pnpm dev --bind tailnet`。"
     });
   }
 
@@ -1664,14 +1664,14 @@ function buildOnboardingDiscoveryDiagnostics(input: {
     diagnostics.push({
       code: "openclaw_onboarding_private_host_not_allowed",
       level: "warn",
-      message: `Onboarding host "${apiHost}" is not in allowed hostnames for authenticated/private mode.`,
+      message: `接入主机“${apiHost}”不在身份验证/私有模式允许的主机名列表中。`,
       // `apiHost` comes from the request base URL, so a requester controls it.
       // Never put that value into the guidance command. An operator or an agent
       // can paste the command into a shell, and that outer shell evaluates a
       // metacharacter span in the host before any CLI receives argv. A
       // direct-exec form such as `npx` does not stop the outer shell. Emit
       // a static `<host>` placeholder and keep the raw host in the message only.
-      hint: `Run npx paperclipai allowed-hostname <host>`
+      hint: `请运行 npx paperclipai allowed-hostname <host>`
     });
   }
 
@@ -1770,17 +1770,17 @@ function buildInviteOnboardingManifest(
     ),
     onboarding: {
       instructions:
-        "Join as an external Paperclip agent, save your one-time claim secret, wait for board approval, then claim your Paperclip API key through the standard claim endpoint. Use requestType='agent', include your agentName and capabilities, and set adapterType plus agentDefaultsPayload for your runtime when applicable. Hermes Gateway agents must use adapterType='hermes_gateway', start a clean Hermes install with API_SERVER_ENABLED=true and a fresh API_SERVER_KEY, then run `hermes gateway run --replace --accept-hooks`. Put the Hermes gateway URL in agentDefaultsPayload.apiBaseUrl, put the exact API_SERVER_KEY value in agentDefaultsPayload.apiKey, and put the reachable Paperclip base URL in agentDefaultsPayload.paperclipApiUrl. If you use the default Hermes dashboard root or /chat URL on port 9119, Paperclip maps it to /api automatically. OpenClaw Gateway agents must use adapterType='openclaw_gateway', set agentDefaultsPayload.url to a ws:// or wss:// gateway endpoint, and include agentDefaultsPayload.headers.x-openclaw-token.",
+        "以外部 Alice 智能体身份接入：保存一次性认领密钥，等待管理端批准，再通过标准认领端点领取 Alice API 密钥。使用 requestType='agent'，填写 agentName 和 capabilities，并按运行环境设置 adapterType 与 agentDefaultsPayload。Hermes Gateway 智能体必须使用 adapterType='hermes_gateway'；在全新 Hermes 安装中设置 API_SERVER_ENABLED=true 和新的 API_SERVER_KEY，再运行 `hermes gateway run --replace --accept-hooks`。将 Hermes 网关地址填入 agentDefaultsPayload.apiBaseUrl，将 API_SERVER_KEY 的准确值填入 agentDefaultsPayload.apiKey，并将 Hermes 可访问的 Alice 地址填入 agentDefaultsPayload.paperclipApiUrl。若使用端口 9119 的默认 Hermes 仪表盘根地址或 /chat 地址，Alice 会自动映射到 /api。OpenClaw Gateway 智能体必须使用 adapterType='openclaw_gateway'，将 agentDefaultsPayload.url 设为 ws:// 或 wss:// 网关端点，并提供 agentDefaultsPayload.headers.x-openclaw-token。",
       inviteMessage: extractInviteMessage(invite),
       recommendedAdapterType: null,
       requiredFields: {
         requestType: "agent",
-        agentName: "Display name for this agent",
+        agentName: "该智能体的显示名称",
         adapterType:
-          "Adapter type for this runtime. Use 'openclaw_gateway' only for OpenClaw Gateway agents. Use 'hermes_gateway' only for Hermes Gateway agents.",
-        capabilities: "Optional capability summary",
+          "当前运行环境的适配器类型。只有 OpenClaw Gateway 智能体使用 'openclaw_gateway'；只有 Hermes Gateway 智能体使用 'hermes_gateway'。",
+        capabilities: "可选的能力摘要",
         agentDefaultsPayload:
-          "Runtime-specific adapter config. OpenClaw Gateway agents must include url (ws:// or wss://) and headers.x-openclaw-token. Hermes Gateway agents must include apiBaseUrl, apiKey set to the Hermes API_SERVER_KEY, and paperclipApiUrl. A default Hermes dashboard root or /chat URL such as http://127.0.0.1:9119/chat is accepted and maps to /api. Other runtimes should include the config their adapter expects."
+          "运行环境专用的适配器配置。OpenClaw Gateway 智能体必须提供 url（ws:// 或 wss://）和 headers.x-openclaw-token。Hermes Gateway 智能体必须提供 apiBaseUrl、设为 Hermes API_SERVER_KEY 的 apiKey，以及 paperclipApiUrl。支持默认 Hermes 仪表盘根地址或 /chat 地址（例如 http://127.0.0.1:9119/chat），并会映射到 /api。其他运行环境请提供对应适配器所需的配置。"
       },
       registrationEndpoint: {
         method: "POST",
@@ -1792,7 +1792,7 @@ function buildInviteOnboardingManifest(
         path: "/api/join-requests/{requestId}/claim-api-key",
         body: {
           claimSecret:
-            "one-time claim secret returned when the join request is created"
+            "创建接入请求时返回的一次性认领密钥"
         }
       },
       connectivity: {
@@ -1805,8 +1805,8 @@ function buildInviteOnboardingManifest(
         guidance:
           opts.deploymentMode === "authenticated" &&
           opts.deploymentExposure === "private"
-            ? "If OpenClaw runs on another machine, ensure the Paperclip hostname is reachable and allowed via `npx paperclipai allowed-hostname <host>`."
-            : "Ensure OpenClaw can reach this Paperclip API base URL for invite, claim, and skill bootstrap calls."
+            ? "如果 OpenClaw 运行在其他机器上，请确保 Alice 主机名可访问，并已通过 `npx paperclipai allowed-hostname <host>` 加入允许列表。"
+            : "请确保 OpenClaw 能访问此 Alice API 根地址，以完成邀请、认领和技能初始化调用。"
       },
       textInstructions: {
         path: onboardingTextPath,
@@ -1817,7 +1817,7 @@ function buildInviteOnboardingManifest(
         name: "paperclip",
         path: skillPath,
         url: skillUrl,
-        installPath: "runtime-specific Paperclip skill location"
+        installPath: "运行环境专用的 Alice 技能目录"
       }
     }
   };
@@ -1869,11 +1869,11 @@ export function buildInviteOnboardingTextDocument(
   };
 
   appendBlock(`
-    # Paperclip Agent Onboarding
+    # Alice 智能体接入
 
-    This document is meant to be readable by both humans and agents.
+    本文档供人类和智能体共同阅读。
 
-    ## Invite
+    ## 邀请信息
     - inviteType: ${invite.inviteType}
     - allowedJoinTypes: ${invite.allowedJoinTypes}
     - expiresAt: ${invite.expiresAt.toISOString()}
@@ -1885,38 +1885,38 @@ export function buildInviteOnboardingTextDocument(
 
   if (onboarding.inviteMessage) {
     appendBlock(`
-      ## Message from inviter
+      ## 邀请者留言
       ${onboarding.inviteMessage}
     `);
   }
 
   appendBlock(`
-    ## Step 0
+    ## 第 0 步
 
-    Decide which Paperclip adapter type matches your runtime.
+    确认哪种 Alice 适配器类型与你的运行环境匹配。
 
-    Use adapterType only when there is a matching Paperclip adapter. Put runtime-specific settings in agentDefaultsPayload.
+    只有存在匹配的 Alice 适配器时才设置 adapterType；运行环境专用配置放入 agentDefaultsPayload。
 
-    ## Step 1: Submit agent join request
+    ## 第 1 步：提交智能体接入请求
     ${onboarding.registrationEndpoint.method} ${
     onboarding.registrationEndpoint.url
   }
 
-    Body (JSON):
+    请求体（JSON）：
     {
       "requestType": "agent",
-      "agentName": "My Agent",
+      "agentName": "我的智能体",
       "adapterType": "adapter_type_for_this_runtime",
-      "capabilities": "Short summary of what this agent can do",
+      "capabilities": "该智能体能力的简短说明",
       "agentDefaultsPayload": {}
     }
 
-    OpenClaw Gateway payload example:
+    OpenClaw Gateway 请求体示例：
     {
       "requestType": "agent",
-      "agentName": "My OpenClaw Agent",
+      "agentName": "我的 OpenClaw 智能体",
       "adapterType": "openclaw_gateway",
-      "capabilities": "OpenClaw gateway agent",
+      "capabilities": "OpenClaw 网关智能体",
       "agentDefaultsPayload": {
         "url": "wss://your-openclaw-gateway.example",
         "paperclipApiUrl": "https://paperclip-hostname-your-agent-can-reach:3100",
@@ -1928,29 +1928,29 @@ export function buildInviteOnboardingTextDocument(
       }
     }
 
-    For OpenClaw Gateway, include agentDefaultsPayload.headers.x-openclaw-token with your gateway token. Legacy x-openclaw-auth is also accepted, but x-openclaw-token is preferred. Do NOT use /v1/responses or /hooks/* in this gateway join flow.
+    使用 OpenClaw Gateway 时，请在 agentDefaultsPayload.headers.x-openclaw-token 中提供网关令牌。也兼容旧版 x-openclaw-auth，但优先使用 x-openclaw-token。此网关接入流程不得使用 /v1/responses 或 /hooks/*。
 
-    Hermes Gateway setup:
+    Hermes Gateway 配置：
     - adapterType: "hermes_gateway"
-    - For a clean Hermes install, generate a fresh random gateway key and start Hermes with API_SERVER_ENABLED=true and API_SERVER_KEY=<random-gateway-key>.
-    - Run: hermes gateway run --replace --accept-hooks
-    - Default Hermes API server port: 8642.
-    - Set agentDefaultsPayload.apiBaseUrl to the Hermes gateway URL Paperclip can reach.
-    - Set agentDefaultsPayload.apiKey to the exact same value as API_SERVER_KEY. This is the Hermes gateway key, not the Paperclip key.
-    - If you only have the default Hermes dashboard or chat URL, http://127.0.0.1:9119 and http://127.0.0.1:9119/chat are accepted and map to /api automatically.
-    - Watch out: /chat and the dashboard root are browser UI routes. Paperclip tests /api/health and starts runs with /api/v1/runs after mapping them to the API base.
-    - Set agentDefaultsPayload.paperclipApiUrl to the Paperclip base URL Hermes can reach.
-    - Use hermes_local when Paperclip should start Hermes on the Paperclip host.
-    - Use hermes_gateway when Paperclip should call an already-running Hermes API server.
-    - After board approval, claim the Paperclip API key once with the claim endpoint below and save it as PAPERCLIP_API_KEY. Store the parsed token field from the raw HTTP JSON response before printing or summarizing it; do not copy token values from chat, transcript, or tool-output previews. A token value containing literal ... or [redacted] is a masked display preview, not a valid key. Do not rotate or invent a Paperclip key manually.
-    - Hermes-originated Paperclip API usage means Hermes calls Paperclip with PAPERCLIP_API_URL and PAPERCLIP_API_KEY after approval/key claim. Do not confuse that with agentDefaultsPayload.apiBaseUrl, which points Paperclip to Hermes.
+    - 对全新 Hermes 安装生成新的随机网关密钥，并使用 API_SERVER_ENABLED=true 和 API_SERVER_KEY=<随机网关密钥> 启动 Hermes。
+    - 运行：hermes gateway run --replace --accept-hooks
+    - Hermes API 服务默认端口：8642。
+    - 将 agentDefaultsPayload.apiBaseUrl 设为 Alice 能访问的 Hermes 网关地址。
+    - 将 agentDefaultsPayload.apiKey 设为与 API_SERVER_KEY 完全相同的值。这是 Hermes 网关密钥，不是 Alice 密钥。
+    - 若只有默认 Hermes 仪表盘或聊天地址，也可使用 http://127.0.0.1:9119 或 http://127.0.0.1:9119/chat，系统会自动映射到 /api。
+    - 注意：/chat 和仪表盘根地址是浏览器界面路由。Alice 映射为 API 根地址后，会探测 /api/health，并通过 /api/v1/runs 启动运行。
+    - 将 agentDefaultsPayload.paperclipApiUrl 设为 Hermes 能访问的 Alice 根地址。
+    - 若需由 Alice 在本机启动 Hermes，请使用 hermes_local。
+    - 若需由 Alice 调用已经运行的 Hermes API 服务，请使用 hermes_gateway。
+    - 管理端批准后，通过下方认领端点一次性领取 Alice API 密钥，并保存为 PAPERCLIP_API_KEY。打印或摘要前，先从原始 HTTP JSON 响应中提取 token 字段并存入私密位置；不要从聊天、转录或工具输出预览中复制令牌。包含字面量 ... 或 [redacted] 的值是经过遮罩的预览，不是有效密钥。不要手动轮换或编造 Alice 密钥。
+    - Hermes 调用 Alice API，指的是批准并认领密钥后，Hermes 使用 PAPERCLIP_API_URL 和 PAPERCLIP_API_KEY 调用 Alice。不要与 agentDefaultsPayload.apiBaseUrl 混淆；后者是 Alice 调用 Hermes 的地址。
 
-    Hermes Gateway payload example:
+    Hermes Gateway 请求体示例：
     {
       "requestType": "agent",
-      "agentName": "My Hermes Gateway Agent",
+      "agentName": "我的 Hermes Gateway 智能体",
       "adapterType": "hermes_gateway",
-      "capabilities": "Hermes gateway agent",
+      "capabilities": "Hermes 网关智能体",
       "agentDefaultsPayload": {
         "apiBaseUrl": "http://127.0.0.1:8642",
         "apiKey": "<same-value-as-API_SERVER_KEY>",
@@ -1958,52 +1958,52 @@ export function buildInviteOnboardingTextDocument(
       }
     }
 
-    Hermes Gateway network examples:
-    - Local loopback API server: agentDefaultsPayload.apiBaseUrl = "http://127.0.0.1:8642" and agentDefaultsPayload.paperclipApiUrl = "http://127.0.0.1:3100".
-    - Local loopback dashboard root or chat URL: agentDefaultsPayload.apiBaseUrl = "http://127.0.0.1:9119" or "http://127.0.0.1:9119/chat"; Paperclip maps either one to "http://127.0.0.1:9119/api".
-    - LAN/private network: use reachable private addresses, for example agentDefaultsPayload.apiBaseUrl = "http://192.168.1.25:8642" and agentDefaultsPayload.paperclipApiUrl = "http://192.168.1.10:3100".
-    - Private overlay: use overlay DNS names, for example agentDefaultsPayload.apiBaseUrl = "http://hermes-host.tailnet-name.ts.net:8642" and agentDefaultsPayload.paperclipApiUrl = "http://paperclip-host.tailnet-name.ts.net:3100".
-    - Docker: if Paperclip runs in Docker and Hermes runs on the host, use agentDefaultsPayload.apiBaseUrl = "http://host.docker.internal:8642"; if both run in Compose, use the Hermes service name.
-    - Reverse proxy/TLS: use HTTPS origins, for example agentDefaultsPayload.apiBaseUrl = "https://hermes-gateway.example" and agentDefaultsPayload.paperclipApiUrl = "https://paperclip.example".
+    Hermes Gateway 网络示例：
+    - 本机回环 API 服务：agentDefaultsPayload.apiBaseUrl = "http://127.0.0.1:8642"，agentDefaultsPayload.paperclipApiUrl = "http://127.0.0.1:3100"。
+    - 本机回环仪表盘根地址或聊天地址：agentDefaultsPayload.apiBaseUrl = "http://127.0.0.1:9119" 或 "http://127.0.0.1:9119/chat"；Alice 会将两者映射为 "http://127.0.0.1:9119/api"。
+    - 局域网/私有网络：使用可访问的私有地址，例如 agentDefaultsPayload.apiBaseUrl = "http://192.168.1.25:8642"，agentDefaultsPayload.paperclipApiUrl = "http://192.168.1.10:3100"。
+    - 私有覆盖网络：使用覆盖网络 DNS 名称，例如 agentDefaultsPayload.apiBaseUrl = "http://hermes-host.tailnet-name.ts.net:8642"，agentDefaultsPayload.paperclipApiUrl = "http://paperclip-host.tailnet-name.ts.net:3100"。
+    - Docker：若 Alice 在 Docker 中运行、Hermes 在宿主机运行，使用 agentDefaultsPayload.apiBaseUrl = "http://host.docker.internal:8642"；若两者都在 Compose 中运行，使用 Hermes 服务名。
+    - 反向代理/TLS：使用 HTTPS 来源，例如 agentDefaultsPayload.apiBaseUrl = "https://hermes-gateway.example"，agentDefaultsPayload.paperclipApiUrl = "https://alice.example"。
 
-    Expected response includes:
-    - request id
-    - one-time claimSecret
+    预期响应包含：
+    - 请求 ID
+    - 一次性 claimSecret
     - claimApiKeyPath
 
-    ## Step 2: Wait for board approval
-    The board approves the join request in Paperclip before key claim is allowed.
+    ## 第 2 步：等待管理端批准
+    只有管理端在 Alice 中批准接入请求后，才能认领密钥。
 
-    ## Step 3: Claim API key (one-time)
+    ## 第 3 步：一次性认领 API 密钥
     ${
       onboarding.claimEndpointTemplate.method
     } /api/join-requests/{requestId}/claim-api-key
 
-    Body (JSON):
+    请求体（JSON）：
     {
       "claimSecret": "<one-time-claim-secret>"
     }
 
-    On successful claim, save the full JSON response somewhere private for your runtime and set PAPERCLIP_API_KEY and PAPERCLIP_API_URL for future Paperclip API calls. The response body includes the full token exactly once, but runtime displays and tool summaries may mask or truncate it. Write the raw response token directly to private storage before logging anything, then verify it with an authenticated Paperclip API call. Do not persist displayed previews containing literal ... or [redacted].
+    认领成功后，将完整 JSON 响应保存到运行环境的私密位置，并设置 PAPERCLIP_API_KEY 和 PAPERCLIP_API_URL，供后续 Alice API 调用使用。响应体只会返回一次完整令牌；运行环境显示和工具摘要可能会遮罩或截断它。记录任何日志前，先将原始响应中的令牌直接写入私密存储，再通过一次已验证身份的 Alice API 调用进行核验。不要保存包含字面量 ... 或 [redacted] 的显示预览。
 
-    Important:
-    - claim secrets expire
-    - claim secrets are single-use
-    - claim fails before board approval
+    重要事项：
+    - 认领密钥会过期
+    - 认领密钥只能使用一次
+    - 管理端批准前无法认领
 
-    ## Step 4: Install Paperclip skill
+    ## 第 4 步：安装 Alice 技能
     GET ${onboarding.skill.url}
-    Install path: ${onboarding.skill.installPath}
+    安装路径：${onboarding.skill.installPath}
 
-    Use your runtime's normal skill or instruction installation path.
+    请使用当前运行环境常规的技能或指令安装路径。
 
-    ## Text onboarding URL
+    ## 文本接入说明 URL
     ${onboarding.textInstructions.url}
 
-    ## Connectivity guidance
+    ## 连接指引
     ${
       onboarding.connectivity?.guidance ??
-      "Ensure Paperclip is reachable from your OpenClaw runtime."
+      "请确保 OpenClaw 运行环境能够访问 Alice。"
     }
   `);
 
@@ -2016,34 +2016,34 @@ export function buildInviteOnboardingTextDocument(
     : [];
 
   if (connectionCandidates.length > 0) {
-    lines.push("## Suggested Paperclip base URLs to try");
+    lines.push("## 建议尝试的 Alice 根地址");
     for (const candidate of connectionCandidates) {
       lines.push(`- ${candidate}`);
     }
     appendBlock(`
 
-      Test each candidate with:
+      按以下方式测试每个候选地址：
       - GET <candidate>/api/health
-      - set the first reachable candidate as agentDefaultsPayload.paperclipApiUrl when submitting your join request
+      - 提交接入请求时，将第一个可访问的候选地址设为 agentDefaultsPayload.paperclipApiUrl
 
-      If none are reachable: ask your human operator for a reachable hostname/address and help them update network configuration.
-      For authenticated/private mode, they may need:
+      若所有候选地址均不可访问：请向人类操作员索取可访问的主机名或地址，并协助更新网络配置。
+      身份验证/私有模式可能需要：
       - npx paperclipai allowed-hostname <host>
-      - then restart Paperclip and retry onboarding.
+      - 然后重启 Alice 并重新尝试接入。
     `);
   }
 
   if (diagnostics.length > 0) {
-    lines.push("## Connectivity diagnostics");
+    lines.push("## 连接诊断");
     for (const diag of diagnostics) {
       lines.push(`- [${diag.level}] ${diag.message}`);
-      if (diag.hint) lines.push(`  hint: ${diag.hint}`);
+      if (diag.hint) lines.push(`  提示：${diag.hint}`);
     }
   }
 
   appendBlock(`
 
-    ## Helpful endpoints
+    ## 常用端点
     ${onboarding.registrationEndpoint.path}
     ${onboarding.claimEndpointTemplate.path}
     ${onboarding.skill.path}
@@ -2456,7 +2456,7 @@ async function defaultInviteResolutionHeadRequest(
     });
     req.setTimeout(timeoutMs, () => {
       if (settled) return;
-      const error = new Error("Invite resolution probe timed out");
+      const error = new Error("邀请地址解析探测超时");
       error.name = "AbortError";
       req.destroy(error);
     });
@@ -2506,7 +2506,7 @@ async function lookupInviteResolutionHostname(
     ]);
   } catch (error) {
     if (error instanceof Error && "status" in error) throw error;
-    throw badRequest("url hostname could not be resolved");
+    throw badRequest("无法解析 URL 主机名");
   } finally {
     if (timeout) clearTimeout(timeout);
   }
@@ -2548,7 +2548,7 @@ async function resolveInviteResolutionTarget(
   }
   const results = await lookupInviteResolutionHostname(hostname, network);
   if (results.length === 0) {
-    throw badRequest("url hostname did not resolve to any addresses");
+    throw badRequest("URL 主机名未解析到任何地址");
   }
 
   const resolvedAddresses = results.map((result) => result.address);
@@ -2597,7 +2597,7 @@ async function probeInviteResolutionTarget(
         method: "HEAD",
         durationMs,
         httpStatus: response.httpStatus,
-        message: `Webhook endpoint responded to HEAD with HTTP ${response.httpStatus}.`
+        message: `Webhook 端点已响应 HEAD 请求，HTTP 状态码为 ${response.httpStatus}。`
       };
     }
     return {
@@ -2606,8 +2606,8 @@ async function probeInviteResolutionTarget(
       durationMs,
       httpStatus: response.httpStatus,
       message: response.httpStatus === null
-        ? "Webhook endpoint probe did not return an HTTP status."
-        : `Webhook endpoint probe returned HTTP ${response.httpStatus}.`
+        ? "Webhook 端点探测未返回 HTTP 状态码。"
+        : `Webhook 端点探测返回 HTTP ${response.httpStatus}。`
     };
   } catch (error) {
     const durationMs = Date.now() - startedAt;
@@ -2617,7 +2617,7 @@ async function probeInviteResolutionTarget(
         method: "HEAD",
         durationMs,
         httpStatus: null,
-        message: `Webhook endpoint probe timed out after ${timeoutMs}ms.`
+        message: `Webhook 端点探测在 ${timeoutMs} 毫秒后超时。`
       };
     }
     return {
@@ -2628,7 +2628,7 @@ async function probeInviteResolutionTarget(
       message:
         error instanceof Error
           ? error.message
-          : "Webhook endpoint probe failed."
+          : "Webhook 端点探测失败。"
     };
   }
 }
@@ -2675,7 +2675,7 @@ export function accessRoutes(
     if (!result.allowed) {
       res.setHeader("Retry-After", String(result.retryAfterSeconds));
       next(
-        tooManyRequests("Too many invite requests", {
+        tooManyRequests("邀请请求过多", {
           retryAfterSeconds: result.retryAfterSeconds,
         }),
       );
@@ -2688,17 +2688,17 @@ export function accessRoutes(
     if (req.actor.type !== "board") throw unauthorized();
     if (isLocalImplicit(req)) return;
     const allowed = await access.isInstanceAdmin(req.actor.userId);
-    if (!allowed) throw forbidden("Instance admin required");
+    if (!allowed) throw forbidden("需要实例管理员权限");
   }
 
   router.get("/board-claim/:token", async (req, res) => {
     const token = (req.params.token as string).trim();
     const code =
       typeof req.query.code === "string" ? req.query.code.trim() : undefined;
-    if (!token) throw notFound("Board claim challenge not found");
+    if (!token) throw notFound("未找到管理端认领验证请求");
     const challenge = inspectBoardClaimChallenge(token, code);
     if (challenge.status === "invalid")
-      throw notFound("Board claim challenge not found");
+      throw notFound("未找到管理端认领验证请求");
     res.json(challenge);
   });
 
@@ -2706,14 +2706,14 @@ export function accessRoutes(
     const token = (req.params.token as string).trim();
     const code =
       typeof req.body?.code === "string" ? req.body.code.trim() : undefined;
-    if (!token) throw notFound("Board claim challenge not found");
-    if (!code) throw badRequest("Claim code is required");
+    if (!token) throw notFound("未找到管理端认领验证请求");
+    if (!code) throw badRequest("必须提供认领码");
     if (
       req.actor.type !== "board" ||
       req.actor.source !== "session" ||
       !req.actor.userId
     ) {
-      throw unauthorized("Sign in before claiming board ownership");
+      throw unauthorized("请先登录，再认领管理端所有权");
     }
 
     const claimed = await claimBoardOwnership(db, {
@@ -2723,10 +2723,10 @@ export function accessRoutes(
     });
 
     if (claimed.status === "invalid")
-      throw notFound("Board claim challenge not found");
+      throw notFound("未找到管理端认领验证请求");
     if (claimed.status === "expired")
       throw conflict(
-        "Board claim challenge expired. Restart server to generate a new one."
+        "管理端认领验证请求已过期。请重启服务器以生成新的验证请求。"
       );
     if (claimed.status === "claimed") {
       res.json({
@@ -2736,7 +2736,7 @@ export function accessRoutes(
       return;
     }
 
-    throw conflict("Board claim challenge is no longer available");
+    throw conflict("管理端认领验证请求已不可用");
   });
 
   router.post("/bootstrap/claim", async (req, res) => {
@@ -2744,21 +2744,21 @@ export function accessRoutes(
       opts.deploymentMode !== "authenticated" ||
       opts.deploymentExposure !== "private"
     ) {
-      throw notFound("Browser first-admin claim is not available");
+      throw notFound("浏览器首位管理员认领当前不可用");
     }
     if (
       req.actor.type !== "board" ||
       req.actor.source !== "session" ||
       !req.actor.userId
     ) {
-      throw unauthorized("Sign in from a browser session before claiming first admin");
+      throw unauthorized("请先在浏览器会话中登录，再认领首位管理员");
     }
 
     const claimed = await claimFirstInstanceAdmin(db, {
       userId: req.actor.userId,
     });
     if (claimed.status === "already_claimed") {
-      throw conflict("Someone else has already claimed this instance");
+      throw conflict("此实例已被其他人认领");
     }
 
     res.json({ claimed: true, userId: claimed.userId });
@@ -2791,9 +2791,9 @@ export function accessRoutes(
     const id = (req.params.id as string).trim();
     const token =
       typeof req.query.token === "string" ? req.query.token.trim() : "";
-    if (!id || !token) throw notFound("CLI auth challenge not found");
+    if (!id || !token) throw notFound("未找到命令行身份验证请求");
     const challenge = await boardAuth.describeCliAuthChallenge(id, token);
-    if (!challenge) throw notFound("CLI auth challenge not found");
+    if (!challenge) throw notFound("未找到命令行身份验证请求");
 
     const isSignedInBoardUser =
       req.actor.type === "board" &&
@@ -2822,7 +2822,7 @@ export function accessRoutes(
         req.actor.type !== "board" ||
         (!req.actor.userId && !isLocalImplicit(req))
       ) {
-        throw unauthorized("Sign in before approving CLI access");
+        throw unauthorized("请先登录，再批准命令行访问");
       }
 
       const userId = req.actor.userId ?? "local-board";
@@ -2881,7 +2881,7 @@ export function accessRoutes(
 
   router.get("/cli-auth/me", async (req, res) => {
     if (req.actor.type !== "board" || !req.actor.userId) {
-      throw unauthorized("Board authentication required");
+      throw unauthorized("需要管理端身份验证");
     }
     const accessSnapshot = await boardAuth.resolveBoardAccess(req.actor.userId);
     res.json({
@@ -2897,7 +2897,7 @@ export function accessRoutes(
 
   router.get("/board-api-keys", async (req, res) => {
     if (req.actor.type !== "board" || !req.actor.userId) {
-      throw unauthorized("Board authentication required");
+      throw unauthorized("需要管理端身份验证");
     }
     const keys = await boardAuth.listBoardApiKeys(req.actor.userId, {
       includeInactive: req.query.includeInactive === "true",
@@ -2910,7 +2910,7 @@ export function accessRoutes(
     validate(createBoardApiKeySchema),
     async (req, res) => {
       if (req.actor.type !== "board" || !req.actor.userId) {
-        throw unauthorized("Board authentication required");
+        throw unauthorized("需要管理端身份验证");
       }
 
       if (req.body.requestedCompanyId) {
@@ -2950,16 +2950,16 @@ export function accessRoutes(
 
   router.delete("/board-api-keys/:keyId", async (req, res) => {
     if (req.actor.type !== "board" || !req.actor.userId) {
-      throw unauthorized("Board authentication required");
+      throw unauthorized("需要管理端身份验证");
     }
     const keyId = (req.params.keyId as string).trim();
     if (!isUuidLike(keyId)) {
-      throw badRequest("Invalid board API key ID");
+      throw badRequest("管理端 API 密钥 ID 无效");
     }
     const key = await boardAuth.getBoardApiKeyForUser(keyId, req.actor.userId);
-    if (!key) throw notFound("Board API key not found");
+    if (!key) throw notFound("未找到管理端 API 密钥");
     const revoked = await boardAuth.revokeBoardApiKey(key.id);
-    if (!revoked) throw notFound("Board API key not found");
+    if (!revoked) throw notFound("未找到管理端 API 密钥");
 
     const companyIds = await boardAuth.resolveBoardActivityCompanyIds({
       userId: req.actor.userId,
@@ -2986,7 +2986,7 @@ export function accessRoutes(
 
   router.post("/cli-auth/revoke-current", async (req, res) => {
     if (req.actor.type !== "board" || req.actor.source !== "board_key") {
-      throw badRequest("Current board API key context is required");
+      throw badRequest("需要当前管理端 API 密钥上下文");
     }
     const key = await boardAuth.assertCurrentBoardKey(
       req.actor.keyId,
@@ -3028,7 +3028,7 @@ export function accessRoutes(
         req.actor.agentId,
         permissionKey
       );
-      if (!allowed) throw forbidden("Permission denied");
+      if (!allowed) throw forbidden("权限不足");
       return;
     }
     if (req.actor.type !== "board") throw unauthorized();
@@ -3038,7 +3038,7 @@ export function accessRoutes(
       req.actor.userId,
       permissionKey
     );
-    if (!allowed) throw forbidden("Permission denied");
+    if (!allowed) throw forbidden("权限不足");
   }
 
   async function assertCanGenerateOpenClawInvitePrompt(
@@ -3047,20 +3047,20 @@ export function accessRoutes(
   ) {
     assertCompanyAccess(req, companyId);
     if (req.actor.type === "agent") {
-      if (!req.actor.agentId) throw forbidden("Agent authentication required");
+      if (!req.actor.agentId) throw forbidden("需要智能体身份验证");
       const actorAgent = await agents.getById(req.actor.agentId);
       if (!actorAgent || actorAgent.companyId !== companyId) {
-        throw forbidden("Agent key cannot access another company");
+        throw forbidden("智能体密钥不能访问其他公司");
       }
       if (actorAgent.role !== "ceo") {
-        throw forbidden("Only CEO agents can generate OpenClaw invite prompts");
+        throw forbidden("只有 CEO 智能体可以生成 OpenClaw 邀请提示");
       }
       return;
     }
     if (req.actor.type !== "board") throw unauthorized();
     if (isLocalImplicit(req)) return;
     const allowed = await access.canUser(companyId, req.actor.userId, "users:invite");
-    if (!allowed) throw forbidden("Permission denied");
+    if (!allowed) throw forbidden("权限不足");
   }
 
   async function createCompanyInviteForCompany(input: {
@@ -3115,7 +3115,7 @@ export function accessRoutes(
       }
     }
     if (!token || !created) {
-      throw conflict("Failed to generate a unique invite token. Please retry.");
+      throw conflict("生成唯一邀请令牌失败，请重试。");
     }
 
     return { token, created, normalizedAgentMessage };
@@ -3128,10 +3128,10 @@ export function accessRoutes(
     companyId: string;
   }) {
     if (input.joinRequest.requestType !== "human") {
-      throw badRequest("Only human join requests can be approved through a human invite");
+      throw badRequest("人类成员邀请只能批准人类成员接入请求");
     }
     if (!input.joinRequest.requestingUserId) {
-      throw conflict("Join request missing user identity");
+      throw conflict("接入请求缺少用户身份");
     }
 
     const membershipRole = resolveHumanInviteRole(
@@ -3310,7 +3310,7 @@ export function accessRoutes(
     assertAuthenticated(req);
     const skillName = (req.params.skillName as string).trim().toLowerCase();
     const markdown = readSkillMarkdown(skillName);
-    if (!markdown) throw notFound("Skill not found");
+    if (!markdown) throw notFound("未找到技能");
     res.type("text/markdown").send(markdown);
   });
 
@@ -3427,7 +3427,7 @@ export function accessRoutes(
 
   router.get("/invites/:token", async (req, res) => {
     const token = (req.params.token as string).trim();
-    if (!token) throw notFound("Invite not found");
+    if (!token) throw notFound("未找到邀请");
     const invite = await db
       .select()
       .from(invites)
@@ -3440,7 +3440,7 @@ export function accessRoutes(
       inviteExpired(invite) ||
       (invite.acceptedAt && !inviteJoinRequest)
     ) {
-      throw notFound("Invite not found");
+      throw notFound("未找到邀请");
     }
 
     const companyBranding = await getInviteCompanyBranding(invite.companyId, token);
@@ -3459,7 +3459,7 @@ export function accessRoutes(
 
   router.get("/invites/:token/logo", async (req, res, next) => {
     const token = (req.params.token as string).trim();
-    if (!token) throw notFound("Invite not found");
+    if (!token) throw notFound("未找到邀请");
     const invite = await db
       .select()
       .from(invites)
@@ -3472,19 +3472,19 @@ export function accessRoutes(
       inviteExpired(invite) ||
       (invite.acceptedAt && !inviteJoinRequest)
     ) {
-      throw notFound("Invite not found");
+      throw notFound("未找到邀请");
     }
 
     const logoAsset = await getInviteLogoAsset(invite.companyId);
     if (!logoAsset || !logoAsset.companyId) {
-      throw notFound("Invite logo not found");
+      throw notFound("未找到邀请标志");
     }
     const companyId = logoAsset.companyId;
 
     const storage = getStorageService();
     const logoHead = await storage.headObject(companyId, logoAsset.objectKey);
     if (!logoHead.exists) {
-      throw notFound("Invite logo not found");
+      throw notFound("未找到邀请标志");
     }
     const object = await storage.getObject(companyId, logoAsset.objectKey);
     const responseContentType =
@@ -3513,14 +3513,14 @@ export function accessRoutes(
 
   router.get("/invites/:token/onboarding", async (req, res) => {
     const token = (req.params.token as string).trim();
-    if (!token) throw notFound("Invite not found");
+    if (!token) throw notFound("未找到邀请");
     const invite = await db
       .select()
       .from(invites)
       .where(eq(invites.tokenHash, hashToken(token)))
       .then((rows) => rows[0] ?? null);
     if (!invite || invite.revokedAt || inviteExpired(invite)) {
-      throw notFound("Invite not found");
+      throw notFound("未找到邀请");
     }
 
     const companyBranding = await getInviteCompanyBranding(invite.companyId);
@@ -3532,14 +3532,14 @@ export function accessRoutes(
 
   router.get("/invites/:token/onboarding.txt", async (req, res) => {
     const token = (req.params.token as string).trim();
-    if (!token) throw notFound("Invite not found");
+    if (!token) throw notFound("未找到邀请");
     const invite = await db
       .select()
       .from(invites)
       .where(eq(invites.tokenHash, hashToken(token)))
       .then((rows) => rows[0] ?? null);
     if (!invite || invite.revokedAt || inviteExpired(invite)) {
-      throw notFound("Invite not found");
+      throw notFound("未找到邀请");
     }
 
     const companyBranding = await getInviteCompanyBranding(invite.companyId);
@@ -3555,14 +3555,14 @@ export function accessRoutes(
 
   router.get("/invites/:token/skills/index", async (req, res) => {
     const token = (req.params.token as string).trim();
-    if (!token) throw notFound("Invite not found");
+    if (!token) throw notFound("未找到邀请");
     const invite = await db
       .select()
       .from(invites)
       .where(eq(invites.tokenHash, hashToken(token)))
       .then((rows) => rows[0] ?? null);
     if (!invite || invite.revokedAt || inviteExpired(invite)) {
-      throw notFound("Invite not found");
+      throw notFound("未找到邀请");
     }
 
     res.json({
@@ -3577,46 +3577,46 @@ export function accessRoutes(
 
   router.get("/invites/:token/skills/:skillName", async (req, res) => {
     const token = (req.params.token as string).trim();
-    if (!token) throw notFound("Invite not found");
+    if (!token) throw notFound("未找到邀请");
     const invite = await db
       .select()
       .from(invites)
       .where(eq(invites.tokenHash, hashToken(token)))
       .then((rows) => rows[0] ?? null);
     if (!invite || invite.revokedAt || inviteExpired(invite)) {
-      throw notFound("Invite not found");
+      throw notFound("未找到邀请");
     }
 
     const skillName = (req.params.skillName as string).trim().toLowerCase();
-    if (skillName !== "paperclip") throw notFound("Skill not found");
+    if (skillName !== "paperclip") throw notFound("未找到技能");
     const markdown = readSkillMarkdown(skillName);
-    if (!markdown) throw notFound("Skill not found");
+    if (!markdown) throw notFound("未找到技能");
     res.type("text/markdown").send(markdown);
   });
 
   router.get("/invites/:token/test-resolution", async (req, res) => {
     const token = (req.params.token as string).trim();
-    if (!token) throw notFound("Invite not found");
+    if (!token) throw notFound("未找到邀请");
     const invite = await db
       .select()
       .from(invites)
       .where(eq(invites.tokenHash, hashToken(token)))
       .then((rows) => rows[0] ?? null);
     if (!invite || invite.revokedAt || inviteExpired(invite)) {
-      throw notFound("Invite not found");
+      throw notFound("未找到邀请");
     }
 
     const rawUrl =
       typeof req.query.url === "string" ? req.query.url.trim() : "";
-    if (!rawUrl) throw badRequest("url query parameter is required");
+    if (!rawUrl) throw badRequest("必须提供 url 查询参数");
     let target: URL;
     try {
       target = new URL(rawUrl);
     } catch {
-      throw badRequest("url must be an absolute http(s) URL");
+      throw badRequest("url 必须是绝对的 http(s) URL");
     }
     if (target.protocol !== "http:" && target.protocol !== "https:") {
-      throw badRequest("url must use http or https");
+      throw badRequest("url 必须使用 http 或 https");
     }
 
     const parsedTimeoutMs =
@@ -3642,7 +3642,7 @@ export function accessRoutes(
     validate(acceptInviteSchema),
     async (req, res) => {
       const token = (req.params.token as string).trim();
-      if (!token) throw notFound("Invite not found");
+      if (!token) throw notFound("未找到邀请");
 
       const invite = await db
         .select()
@@ -3650,7 +3650,7 @@ export function accessRoutes(
         .where(eq(invites.tokenHash, hashToken(token)))
         .then((rows) => rows[0] ?? null);
       if (!invite || invite.revokedAt || inviteExpired(invite)) {
-        throw notFound("Invite not found");
+        throw notFound("未找到邀请");
       }
       const inviteAlreadyAccepted = Boolean(invite.acceptedAt);
       const existingJoinRequestForInvite = inviteAlreadyAccepted
@@ -3662,16 +3662,16 @@ export function accessRoutes(
         : null;
 
       if (invite.inviteType === "bootstrap_ceo") {
-        if (inviteAlreadyAccepted) throw notFound("Invite not found");
+        if (inviteAlreadyAccepted) throw notFound("未找到邀请");
         if (req.body.requestType !== "human") {
-          throw badRequest("Bootstrap invite requires human request type");
+          throw badRequest("初始化邀请需要人类成员请求类型");
         }
         if (
           req.actor.type !== "board" ||
           (!req.actor.userId && !isLocalImplicit(req))
         ) {
           throw unauthorized(
-            "Authenticated user required for bootstrap acceptance"
+            "接受初始化邀请需要已通过身份验证的用户"
           );
         }
         const userId = req.actor.userId ?? "local-board";
@@ -3691,13 +3691,13 @@ export function accessRoutes(
               .returning()
               .then((rows) => rows[0] ?? null);
             if (!updatedInvite) {
-              throw conflict("Bootstrap invite is no longer available");
+              throw conflict("初始化邀请已不可用");
             }
             return updatedInvite;
           },
         });
         if (claimed.status === "already_claimed") {
-          throw conflict("Someone else has already claimed this instance");
+          throw conflict("此实例已被其他人认领");
         }
         const updatedInvite = claimed.value ?? invite;
         res.status(202).json({
@@ -3711,17 +3711,17 @@ export function accessRoutes(
 
       const requestType = req.body.requestType as "human" | "agent";
       const companyId = invite.companyId;
-      if (!companyId) throw conflict("Invite is missing company scope");
+      if (!companyId) throw conflict("邀请缺少公司范围");
       if (
         invite.allowedJoinTypes !== "both" &&
         invite.allowedJoinTypes !== requestType
       ) {
-        throw badRequest(`Invite does not allow ${requestType} joins`);
+        throw badRequest(`该邀请不允许 ${requestType} 类型接入`);
       }
 
       if (requestType === "human" && req.actor.type !== "board") {
         throw unauthorized(
-          "Human invite acceptance requires authenticated user"
+          "接受人类成员邀请需要已通过身份验证的用户"
         );
       }
       if (
@@ -3729,20 +3729,20 @@ export function accessRoutes(
         !req.actor.userId &&
         !isLocalImplicit(req)
       ) {
-        throw unauthorized("Authenticated user is required");
+        throw unauthorized("需要已通过身份验证的用户");
       }
       if (
         requestType === "human" &&
         actorHasActiveUserMembership(req, companyId)
       ) {
-        throw conflict("You already belong to this company");
+        throw conflict("你已经是该公司的成员");
       }
       if (requestType === "agent" && !req.body.agentName) {
         if (
           !inviteAlreadyAccepted ||
           !existingJoinRequestForInvite?.agentName
         ) {
-          throw badRequest("agentName is required for agent join requests");
+          throw badRequest("智能体接入请求必须提供 agentName");
         }
       }
 
@@ -3777,13 +3777,13 @@ export function accessRoutes(
           existingJoinRequest: existingJoinRequestForInvite
         })
       ) {
-        throw notFound("Invite not found");
+        throw notFound("未找到邀请");
       }
       const replayJoinRequestId = inviteAlreadyAccepted
         ? existingJoinRequestForInvite?.id ?? null
         : null;
       if (inviteAlreadyAccepted && !replayJoinRequestId) {
-        throw conflict("Join request not found");
+        throw conflict("未找到接入请求");
       }
 
       const replayMergedDefaults = inviteAlreadyAccepted
@@ -3965,7 +3965,7 @@ export function accessRoutes(
             .then((rows) => rows[0]);
 
       if (!created) {
-        throw conflict("Join request not found");
+        throw conflict("未找到接入请求");
       }
 
       if (
@@ -3977,7 +3977,7 @@ export function accessRoutes(
       ) {
         const existingAgent = await agents.getById(created.createdAgentId);
         if (!existingAgent) {
-          throw conflict("Approved join request agent not found");
+          throw conflict("未找到已批准接入请求对应的智能体");
         }
         const existingAdapterConfig = isPlainObject(existingAgent.adapterConfig)
           ? (existingAgent.adapterConfig as Record<string, unknown>)
@@ -3991,7 +3991,7 @@ export function accessRoutes(
           adapterConfig: nextAdapterConfig
         });
         if (!updatedAgent) {
-          throw conflict("Approved join request agent not found");
+          throw conflict("未找到已批准接入请求对应的智能体");
         }
         await logActivity(db, {
           companyId,
@@ -4137,14 +4137,14 @@ export function accessRoutes(
       .from(invites)
       .where(eq(invites.id, id))
       .then((rows) => rows[0] ?? null);
-    if (!invite) throw notFound("Invite not found");
+    if (!invite) throw notFound("未找到邀请");
     if (invite.inviteType === "bootstrap_ceo") {
       await assertInstanceAdmin(req);
     } else {
-      if (!invite.companyId) throw conflict("Invite is missing company scope");
+      if (!invite.companyId) throw conflict("邀请缺少公司范围");
       await assertCompanyPermission(req, invite.companyId, "users:invite");
     }
-    if (invite.acceptedAt) throw conflict("Invite already consumed");
+    if (invite.acceptedAt) throw conflict("邀请已被使用");
     if (invite.revokedAt) return res.json(invite);
 
     const revoked = await db
@@ -4210,21 +4210,21 @@ export function accessRoutes(
           )
         )
         .then((rows) => rows[0] ?? null);
-      if (!existing) throw notFound("Join request not found");
+      if (!existing) throw notFound("未找到接入请求");
       if (existing.status !== "pending_approval")
-        throw conflict("Join request is not pending");
+        throw conflict("接入请求不处于待处理状态");
 
       const invite = await db
         .select()
         .from(invites)
         .where(eq(invites.id, existing.inviteId))
         .then((rows) => rows[0] ?? null);
-      if (!invite) throw notFound("Invite not found");
+      if (!invite) throw notFound("未找到邀请");
 
       let createdAgentId: string | null = existing.createdAgentId ?? null;
       if (existing.requestType === "human") {
         if (!existing.requestingUserId)
-          throw conflict("Join request missing user identity");
+          throw conflict("接入请求缺少用户身份");
         const membershipRole = resolveHumanInviteRole(
           invite.defaultsPayload as Record<string, unknown> | null,
         );
@@ -4252,12 +4252,12 @@ export function accessRoutes(
         const managerId = resolveJoinRequestAgentManagerId(existingAgents);
         if (!managerId) {
           throw conflict(
-            "Join request cannot be approved because this company has no active CEO"
+            "该公司没有有效的 CEO，无法批准接入请求"
           );
         }
 
         const agentName = deduplicateAgentName(
-          existing.agentName ?? "New Agent",
+          existing.agentName ?? "新智能体",
           existingAgents.map((a) => ({
             id: a.id,
             name: a.name,
@@ -4360,9 +4360,9 @@ export function accessRoutes(
           )
         )
         .then((rows) => rows[0] ?? null);
-      if (!existing) throw notFound("Join request not found");
+      if (!existing) throw notFound("未找到接入请求");
       if (existing.status !== "pending_approval")
-        throw conflict("Join request is not pending");
+        throw conflict("接入请求不处于待处理状态");
 
       const rejected = await db
         .update(joinRequests)
@@ -4402,35 +4402,35 @@ export function accessRoutes(
         .from(joinRequests)
         .where(eq(joinRequests.id, requestId))
         .then((rows) => rows[0] ?? null);
-      if (!joinRequest) throw notFound("Join request not found");
+      if (!joinRequest) throw notFound("未找到接入请求");
       if (joinRequest.requestType !== "agent")
-        throw badRequest("Only agent join requests can claim API keys");
+        throw badRequest("只有智能体接入请求可以认领 API 密钥");
       if (joinRequest.status !== "approved")
-        throw conflict("Join request must be approved before key claim");
+        throw conflict("认领密钥前必须先批准接入请求");
       if (!joinRequest.createdAgentId)
-        throw conflict("Join request has no created agent");
+        throw conflict("接入请求尚未创建智能体");
       if (!joinRequest.claimSecretHash)
-        throw conflict("Join request is missing claim secret metadata");
+        throw conflict("接入请求缺少认领密钥元数据");
       if (
         !tokenHashesMatch(joinRequest.claimSecretHash, presentedClaimSecretHash)
       ) {
-        throw forbidden("Invalid claim secret");
+        throw forbidden("认领密钥无效");
       }
       if (
         joinRequest.claimSecretExpiresAt &&
         joinRequest.claimSecretExpiresAt.getTime() <= Date.now()
       ) {
-        throw conflict("Claim secret expired");
+        throw conflict("认领密钥已过期");
       }
       if (joinRequest.claimSecretConsumedAt)
-        throw conflict("Claim secret already used");
+        throw conflict("认领密钥已被使用");
 
       const existingKey = await db
         .select({ id: agentApiKeys.id })
         .from(agentApiKeys)
         .where(eq(agentApiKeys.agentId, joinRequest.createdAgentId))
         .then((rows) => rows[0] ?? null);
-      if (existingKey) throw conflict("API key already claimed");
+      if (existingKey) throw conflict("API 密钥已被认领");
 
       const consumed = await db
         .update(joinRequests)
@@ -4443,7 +4443,7 @@ export function accessRoutes(
         )
         .returning({ id: joinRequests.id })
         .then((rows) => rows[0] ?? null);
-      if (!consumed) throw conflict("Claim secret already used");
+      if (!consumed) throw conflict("认领密钥已被使用");
 
       const created = await agents.createApiKey(
         joinRequest.createdAgentId,
@@ -4503,11 +4503,11 @@ export function accessRoutes(
       const memberId = req.params.memberId as string;
       await assertCompanyPermission(req, companyId, "users:manage_permissions");
       const memberToUpdate = await access.getMemberById(companyId, memberId);
-      if (!memberToUpdate) throw notFound("Member not found");
+      if (!memberToUpdate) throw notFound("未找到成员");
       await assertCanManageCompanyMember(req, access, companyId, memberToUpdate);
 
       const updated = await access.updateMember(companyId, memberId, req.body);
-      if (!updated) throw notFound("Member not found");
+      if (!updated) throw notFound("未找到成员");
 
       await logActivity(db, {
         companyId,
@@ -4525,7 +4525,7 @@ export function accessRoutes(
       const member = (await loadCompanyMemberRecords(db, companyId)).find(
         (entry) => entry.id === memberId,
       );
-      if (!member) throw notFound("Member not found");
+      if (!member) throw notFound("未找到成员");
       res.json(member);
     }
   );
@@ -4538,7 +4538,7 @@ export function accessRoutes(
       const memberId = req.params.memberId as string;
       await assertCompanyPermission(req, companyId, "users:manage_permissions");
       const memberToUpdate = await access.getMemberById(companyId, memberId);
-      if (!memberToUpdate) throw notFound("Member not found");
+      if (!memberToUpdate) throw notFound("未找到成员");
       await assertCanManageCompanyMember(req, access, companyId, memberToUpdate);
 
       const updated = await access.updateMemberAndPermissions(
@@ -4551,7 +4551,7 @@ export function accessRoutes(
         },
         req.actor.userId ?? null,
       );
-      if (!updated) throw notFound("Member not found");
+      if (!updated) throw notFound("未找到成员");
 
       await logActivity(db, {
         companyId,
@@ -4570,7 +4570,7 @@ export function accessRoutes(
       const member = (await loadCompanyMemberRecords(db, companyId)).find(
         (entry) => entry.id === memberId,
       );
-      if (!member) throw notFound("Member not found");
+      if (!member) throw notFound("未找到成员");
       res.json(member);
     }
   );
@@ -4583,13 +4583,13 @@ export function accessRoutes(
       const memberId = req.params.memberId as string;
       await assertCompanyPermission(req, companyId, "users:manage_permissions");
       const memberToArchive = await access.getMemberById(companyId, memberId);
-      if (!memberToArchive) throw notFound("Member not found");
+      if (!memberToArchive) throw notFound("未找到成员");
       await assertCanManageCompanyMember(req, access, companyId, memberToArchive, "archive");
 
       const result = await access.archiveMember(companyId, memberId, {
         reassignment: req.body.reassignment ?? null,
       });
-      if (!result) throw notFound("Member not found");
+      if (!result) throw notFound("未找到成员");
 
       await logActivity(db, {
         companyId,
@@ -4608,7 +4608,7 @@ export function accessRoutes(
       const member = (await loadCompanyMemberRecords(db, companyId, { includeArchived: true })).find(
         (entry) => entry.id === memberId,
       );
-      if (!member) throw notFound("Member not found");
+      if (!member) throw notFound("未找到成员");
       res.json({
         member,
         reassignedIssueCount: result.reassignedIssueCount,
@@ -4624,7 +4624,7 @@ export function accessRoutes(
       const memberId = req.params.memberId as string;
       await assertCompanyPermission(req, companyId, "users:manage_permissions");
       const memberToUpdate = await access.getMemberById(companyId, memberId);
-      if (!memberToUpdate) throw notFound("Member not found");
+      if (!memberToUpdate) throw notFound("未找到成员");
       await assertCanManageCompanyMember(req, access, companyId, memberToUpdate);
       const updated = await access.setMemberPermissions(
         companyId,
@@ -4632,7 +4632,7 @@ export function accessRoutes(
         req.body.grants ?? [],
         req.actor.userId ?? null
       );
-      if (!updated) throw notFound("Member not found");
+      if (!updated) throw notFound("未找到成员");
       await logActivity(db, {
         companyId,
         actorType: "user",
@@ -4647,7 +4647,7 @@ export function accessRoutes(
       const member = (await loadCompanyMemberRecords(db, companyId)).find(
         (entry) => entry.id === memberId,
       );
-      if (!member) throw notFound("Member not found");
+      if (!member) throw notFound("未找到成员");
       res.json(member);
     }
   );
@@ -4731,7 +4731,7 @@ export function accessRoutes(
       assertAccessAdminVisible();
       const userId = req.params.userId as string;
       const removed = await access.demoteInstanceAdmin(userId);
-      if (!removed) throw notFound("Instance admin role not found");
+      if (!removed) throw notFound("未找到实例管理员角色");
       res.json(removed);
     }
   );

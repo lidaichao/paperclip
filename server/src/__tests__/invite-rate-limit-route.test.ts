@@ -87,7 +87,7 @@ describe("invite-token endpoint rate limiting", () => {
       expect(limited.status).toBe(429);
       expect(limited.headers["retry-after"]).toBe("60");
       expect(limited.body).toMatchObject({
-        error: "Too many invite requests",
+        error: "邀请请求过多",
         details: { retryAfterSeconds: 60 },
       });
     },

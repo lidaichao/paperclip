@@ -160,7 +160,7 @@ describe("normalizeAgentDefaultsForJoin (hermes_gateway)", () => {
       allowedHostnames: [],
     });
 
-    expect(normalized.fatalErrors.join("\n")).toContain("remote plain HTTP");
+    expect(normalized.fatalErrors.join("\n")).toContain("远程明文 HTTP");
     expect(normalized.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -219,7 +219,7 @@ describe("normalizeAgentDefaultsForJoin (hermes_gateway)", () => {
         }),
         expect.objectContaining({
           code: "hermes_gateway_api_base_url_configured",
-          message: "Hermes gateway endpoint set to http://127.0.0.1:9119/api",
+          message: "Hermes 网关端点已设为 http://127.0.0.1:9119/api",
         }),
       ]),
     );

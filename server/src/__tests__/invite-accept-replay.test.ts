@@ -9,7 +9,7 @@ import {
 describe("assertLegacyAgentInviteAdapterType", () => {
   it("rejects native runner for new and pending agent-invite onboarding", () => {
     expect(() => assertLegacyAgentInviteAdapterType("paperclip_runner")).toThrow(
-      "Paperclip Runner is not available through agent invite onboarding.",
+      "Alice Runner 暂不支持通过智能体邀请流程接入。",
     );
     expect(() => assertLegacyAgentInviteAdapterType("claude_local")).not.toThrow();
     expect(() => assertLegacyAgentInviteAdapterType(null)).not.toThrow();

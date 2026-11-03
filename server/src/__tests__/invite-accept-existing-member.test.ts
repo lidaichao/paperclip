@@ -338,7 +338,7 @@ describe("POST /invites/:token/accept", () => {
       .send({ requestType: "human" });
 
     expect(res.status).toBe(409);
-    expect(res.body.error).toBe("You already belong to this company");
+    expect(res.body.error).toBe("你已经是该公司的成员");
     expect(updateMock).not.toHaveBeenCalled();
   });
 
@@ -356,7 +356,7 @@ describe("POST /invites/:token/accept", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe(
-      "Paperclip Runner is not available through agent invite onboarding.",
+      "Alice Runner 暂不支持通过智能体邀请流程接入。",
     );
     expect(insert).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();

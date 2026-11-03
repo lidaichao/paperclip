@@ -140,7 +140,7 @@ describe("GET /invites/:token/logo", () => {
     const res = await request(app).get("/api/invites/pcp_invite_test/logo");
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Invite logo not found");
+    expect(res.body.error).toBe("未找到邀请标志");
     expect(mockStorage.getObject).not.toHaveBeenCalled();
   });
 });
