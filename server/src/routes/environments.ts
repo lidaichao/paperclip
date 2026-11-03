@@ -840,7 +840,7 @@ export function environmentRoutes(
       });
       const now = new Date();
       if (refreshed.session.status !== "waiting_for_user") {
-        throw conflict(`Cannot create terminal session token from setup status "${refreshed.session.status}".`);
+        throw conflict(`无法在“${refreshed.session.status}”设置状态下创建终端会话令牌。`);
       }
       const setupExpiresAt = requireFutureCustomImageSetupExpiry(refreshed.session, now);
       const payloadValidation = validateCustomImageSetupSshPayload(refreshed.connectionPayload, now);

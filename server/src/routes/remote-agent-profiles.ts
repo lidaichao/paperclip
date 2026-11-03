@@ -12,18 +12,18 @@ import { assertBoard, assertCompanyAccess, getActorInfo } from "./authz.js";
 
 function remoteAgentService(value: unknown): RemoteAgentService {
   if (value !== "aws_bedrock_agentcore_harness") {
-    throw unprocessable("Unsupported remote agent service");
+    throw unprocessable("不支持此远程智能体服务");
   }
   return value;
 }
 
 function profileInput(value: unknown): RemoteAgentProfileInput {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw unprocessable("Remote Agent profile body is required");
+    throw unprocessable("需要远程智能体资料请求体");
   }
   const body = value as Record<string, unknown>;
   if ("credentialSecretId" in body) {
-    throw unprocessable("AWS AgentCore profiles use workload identity, not a credential secret");
+    throw unprocessable("AWS AgentCore 资料使用工作负载身份，而不是凭据密钥");
   }
   return {
     profileKey: String(body.profileKey ?? ""),

@@ -348,7 +348,7 @@ describe("secret routes", () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body).toMatchObject({ error: "User identity required for user-specific secrets" });
+    expect(res.body).toMatchObject({ error: "用户专属密钥需要用户身份" });
     expect(mockSecretService.createCurrentUserSecretValue).not.toHaveBeenCalled();
     expect(mockLogActivity).not.toHaveBeenCalled();
   });

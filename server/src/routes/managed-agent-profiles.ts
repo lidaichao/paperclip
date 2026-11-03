@@ -11,7 +11,7 @@ import { assertBoard, assertCompanyAccess, getActorInfo } from "./authz.js";
 
 function profileInput(value: unknown): ManagedAgentProfileInput {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw unprocessable("Managed Agent profile body is required");
+    throw unprocessable("需要托管智能体资料请求体");
   }
   const body = value as Record<string, unknown>;
   return {

@@ -86,7 +86,7 @@ function assertCompanySecretWrite(req: Parameters<typeof assertBoard>[0], compan
 function currentUserId(req: Parameters<typeof assertBoard>[0]) {
   assertBoard(req);
   if (req.actor.userId) return req.actor.userId;
-  throw unauthorized("User identity required for user-specific secrets");
+  throw unauthorized("用户专属密钥需要用户身份");
 }
 
 function boardActorUser(req: Parameters<typeof assertBoard>[0]) {

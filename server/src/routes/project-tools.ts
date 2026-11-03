@@ -19,9 +19,9 @@ export function projectToolRoutes(db: Db) {
     if (method === "tools/list") return send({ tools: definitions });
     if (method !== "tools/call") return res.json({ jsonrpc: "2.0", id, error: { code: -32601, message: "Method not found" } });
     try {
-      if (!definitions.some(tool => tool.name === params?.name)) throw forbidden("Tool is unavailable in this mode");
+      if (!definitions.some(tool => tool.name === params?.name)) throw forbidden("此模式下无法使用该工具");
       const apiUrl = process.env.PAPERCLIP_API_URL;
-      if (!apiUrl) throw new Error("Paperclip API origin is unavailable");
+      if (!apiUrl) throw new Error("Alice API 源地址不可用");
       const result = await callProjectTool({
         name: params.name, arguments: params.arguments ?? {}, apiUrl,
         token: req.header("authorization")!.replace(/^Bearer\s+/i, ""),

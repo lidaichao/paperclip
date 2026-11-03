@@ -29,7 +29,7 @@ export function instanceDatabaseBackupRoutes(service: InstanceDatabaseBackupServ
     // owner-admins — the result would also echo the server-side backup
     // directory path, which managed tenants must not see.
     if (isCloudManagedInstance()) {
-      throw forbidden("Database backups are platform-managed on cloud-managed instances", {
+      throw forbidden("云托管实例的数据库备份由平台管理", {
         code: "database_backups_platform_managed",
       });
     }
