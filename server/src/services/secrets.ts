@@ -2060,7 +2060,7 @@ export function secretService(db: Db | DbTransaction) {
     const existing = await getByName(companyId, input.name);
     if (existing) throw conflict(`Secret already exists: ${input.name}`);
     const key = normalizeSecretKey(input.key);
-    if (!key) throw unprocessable("Secret key is required");
+    if (!key) throw unprocessable("必须提供密钥键名");
     const duplicateKey = await db
       .select()
       .from(companySecrets)
@@ -2145,7 +2145,7 @@ export function secretService(db: Db | DbTransaction) {
           .where(eq(companySecrets.id, reservedSecret.id))
           .returning()
           .then((rows) => rows[0]);
-        if (!secret) throw notFound("Secret not found");
+        if (!secret) throw notFound("未找到密钥");
         return secret;
       });
     } catch (error) {
@@ -2188,7 +2188,7 @@ export function secretService(db: Db | DbTransaction) {
     const existing = await getByName(companyId, input.name);
     if (existing) throw conflict(`Secret already exists: ${input.name}`);
     const key = normalizeSecretKey(input.key ?? input.name);
-    if (!key) throw unprocessable("Secret key is required");
+    if (!key) throw unprocessable("必须提供密钥键名");
     const duplicateKey = await db
       .select()
       .from(companySecrets)
@@ -2209,13 +2209,13 @@ export function secretService(db: Db | DbTransaction) {
       providerConfigId: input.providerConfigId,
     });
     if (managedMode === "external_reference" && !input.externalRef?.trim()) {
-      throw unprocessable("External reference secrets require externalRef");
+      throw unprocessable("外部引用密钥需要 externalRef");
     }
     if (managedMode === "paperclip_managed" && input.externalRef?.trim()) {
-      throw unprocessable("Managed secrets cannot override externalRef");
+      throw unprocessable("托管密钥不能覆盖 externalRef");
     }
     if (managedMode === "paperclip_managed" && !input.value?.trim()) {
-      throw unprocessable("Managed secrets require value");
+      throw unprocessable("托管密钥需要提供值");
     }
     const providerWriteContext = {
       companyId,
@@ -2346,7 +2346,7 @@ export function secretService(db: Db | DbTransaction) {
           .returning()
           .then((rows) => rows[0]);
 
-        if (!secret) throw notFound("Secret not found");
+        if (!secret) throw notFound("未找到密钥");
         return secret;
       });
     } catch (error) {
@@ -2401,8 +2401,8 @@ export function secretService(db: Db | DbTransaction) {
     actor?: { userId?: string | null; agentId?: string | null },
   ) {
     const secret = await getById(secretId);
-    if (!secret) throw notFound("Secret not found");
-    if (secret.status !== "active") throw unprocessable("Cannot rotate a non-active secret");
+    if (!secret) throw notFound("未找到密钥");
+    if (secret.status !== "active") throw unprocessable("无法轮换非活动状态的密钥");
     if (input.expectedLatestVersion !== undefined && secret.latestVersion !== input.expectedLatestVersion) {
       throw conflict(SECRET_VERSION_STALE_CONFLICT);
     }
@@ -2421,7 +2421,7 @@ export function secretService(db: Db | DbTransaction) {
     if (externalValueWrite) {
       const currentRef = secret.externalRef?.trim();
       if (!currentRef) {
-        throw unprocessable("External reference secrets require externalRef");
+        throw unprocessable("外部引用密钥需要 externalRef");
       }
       if (input.externalRef?.trim() && input.externalRef.trim() !== currentRef) {
         throw unprocessable(
@@ -2429,7 +2429,7 @@ export function secretService(db: Db | DbTransaction) {
         );
       }
       if (input.providerVersionRef?.trim()) {
-        throw unprocessable("Value updates cannot pin providerVersionRef");
+        throw unprocessable("更新密钥值时不能固定 providerVersionRef");
       }
       if (!provider.updateExternalSecretValue) {
         throw unprocessable(
@@ -2438,13 +2438,13 @@ export function secretService(db: Db | DbTransaction) {
       }
     }
     if (secret.managedMode === "external_reference" && !(input.externalRef ?? secret.externalRef)?.trim()) {
-      throw unprocessable("External reference secrets require externalRef");
+      throw unprocessable("外部引用密钥需要 externalRef");
     }
     if (secret.managedMode !== "external_reference" && input.externalRef?.trim()) {
-      throw unprocessable("Managed secrets cannot override externalRef");
+      throw unprocessable("托管密钥不能覆盖 externalRef");
     }
     if (secret.managedMode !== "external_reference" && !input.value?.trim()) {
-      throw unprocessable("Managed secrets require value");
+      throw unprocessable("托管密钥需要提供值");
     }
     const providerWriteContext = {
       companyId: secret.companyId,
@@ -2618,8 +2618,8 @@ export function secretService(db: Db | DbTransaction) {
     },
   ) {
     const secret = await getById(secretId);
-    if (!secret) throw notFound("Secret not found");
-    if (secret.status === "deleted") throw notFound("Secret not found");
+    if (!secret) throw notFound("未找到密钥");
+    if (secret.status === "deleted") throw notFound("未找到密钥");
 
     if (patch.name && patch.name !== secret.name) {
       const duplicate = await getByName(secret.companyId, patch.name);
@@ -2628,7 +2628,7 @@ export function secretService(db: Db | DbTransaction) {
       }
     }
     const nextKey = patch.key ? normalizeSecretKey(patch.key) : secret.key;
-    if (!nextKey) throw unprocessable("Secret key is required");
+    if (!nextKey) throw unprocessable("必须提供密钥键名");
     if (nextKey !== secret.key) {
       const duplicateKey = await db
         .select()
@@ -2646,10 +2646,10 @@ export function secretService(db: Db | DbTransaction) {
     }
     const deleting = patch.status === "deleted";
     if (deleting && secret.managedMode === "paperclip_managed") {
-      throw unprocessable("Managed secrets must be deleted through DELETE /secrets/:id");
+      throw unprocessable("托管密钥必须通过 DELETE /secrets/:id 删除");
     }
     if (secret.managedMode !== "external_reference" && patch.externalRef !== undefined) {
-      throw unprocessable("Managed secrets cannot override externalRef");
+      throw unprocessable("托管密钥不能覆盖 externalRef");
     }
     if (
       secret.managedMode === "external_reference" &&

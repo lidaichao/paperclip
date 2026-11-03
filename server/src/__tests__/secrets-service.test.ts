@@ -4187,14 +4187,14 @@ describeEmbeddedPostgres("secretService", () => {
       svc.update(secret.id, {
         externalRef: "arn:aws:secretsmanager:us-east-1:123456789012:secret:paperclip/prod/company-b/openai-api-key",
       }),
-    ).rejects.toThrow(/Managed secrets cannot override externalRef/i);
+    ).rejects.toThrow(/托管密钥不能覆盖 externalRef/);
 
     await expect(
       svc.rotate(secret.id, {
         value: "rotated-runtime-secret",
         externalRef: "arn:aws:secretsmanager:us-east-1:123456789012:secret:paperclip/prod/company-b/openai-api-key",
       }),
-    ).rejects.toThrow(/Managed secrets cannot override externalRef/i);
+    ).rejects.toThrow(/托管密钥不能覆盖 externalRef/);
   });
 
   it("rejects generic update retargeting for external reference secrets", async () => {
