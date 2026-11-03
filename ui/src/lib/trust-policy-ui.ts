@@ -164,11 +164,19 @@ export function summarizeLowTrustBoundaryTarget(
   boundary: LowTrustBoundary | null | undefined,
 ) {
   const target = getSingleLowTrustBoundaryTarget(boundary);
-  if (target?.type === "project") return `Project ${target.id.slice(0, 8)}`;
-  if (target?.type === "root_issue") return `Root issue ${target.id.slice(0, 8)}`;
-  if (target?.type === "issue") return `Issue ${target.id.slice(0, 8)}`;
-  if (!boundary || countBoundaryTargets(boundary) === 0) return "No boundary selected";
-  return `${countBoundaryTargets(boundary)} boundaries`;
+  if (target?.type === "project") {
+    return l10n("local.project_value_10300139", { v0: target.id.slice(0, 8) });
+  }
+  if (target?.type === "root_issue") {
+    return l10n("local.root_issue_value_10300140", { v0: target.id.slice(0, 8) });
+  }
+  if (target?.type === "issue") {
+    return l10n("local.issue_value_eb7f7533", { v0: target.id.slice(0, 8) });
+  }
+  if (!boundary || countBoundaryTargets(boundary) === 0) {
+    return l10n("local.no_boundary_selected_10300141");
+  }
+  return l10n("local.value_boundaries_10300142", { v0: countBoundaryTargets(boundary) });
 }
 
 export function lowTrustBoundaryHasScope(boundary: LowTrustBoundary | null | undefined) {

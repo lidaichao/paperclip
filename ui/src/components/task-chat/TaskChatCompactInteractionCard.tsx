@@ -86,39 +86,49 @@ export interface TaskChatCompactInteractionCardProps extends SharedInteractionPr
 
 const KIND_COPY = {
   suggest_tasks: {
-    fallbackTitle: "Suggested tasks",
+    fallbackTitle: l10n("local.suggested_tasks_5addd6ff"),
     label: l10n("local.tasks_b3a60e61"),
     icon: GitBranch,
   },
   ask_user_questions: {
-    fallbackTitle: "Questions",
+    fallbackTitle: l10n("local.questions_9a72221a"),
     label: l10n("local.questions_9a72221a"),
     icon: CircleHelp,
   },
   request_confirmation: {
-    fallbackTitle: "Confirmation",
+    fallbackTitle: l10n("local.confirmation_d7430705"),
     label: l10n("local.confirmation_d7430705"),
     icon: CheckCircle2,
   },
   request_checkbox_confirmation: {
-    fallbackTitle: "Choose options",
+    fallbackTitle: l10n("local.choose_options_0cb00001"),
     label: l10n("local.selection_ca406707"),
     icon: ListChecks,
   },
   request_item_verdicts: {
-    fallbackTitle: "Review items",
+    fallbackTitle: l10n("local.review_items_0cb00002"),
     label: l10n("local.review_aff0766a"),
     icon: MessageSquareQuote,
   },
   connection_intent: {
-    fallbackTitle: "Connect service",
+    fallbackTitle: l10n("local.connect_service_0cb00003"),
     label: l10n("local.connection_639a40e8"),
     icon: Plug,
   },
 } as const;
 
+const INTERACTION_STATUS_LABELS: Record<IssueThreadInteraction["status"], string> = {
+  pending: l10n("local.pending_331551b0"),
+  accepted: l10n("local.accepted_a00fb0c5"),
+  rejected: l10n("local.rejected_aea4a04a"),
+  answered: l10n("local.answered_66559035"),
+  cancelled: l10n("local.cancelled_d353a99e"),
+  expired: l10n("local.expired_424a2551"),
+  failed: l10n("local.failed_031a8f0f"),
+};
+
 function statusLabel(status: IssueThreadInteraction["status"]): string {
-  return status.replaceAll("_", " ");
+  return INTERACTION_STATUS_LABELS[status];
 }
 
 function statusTone(status: IssueThreadInteraction["status"]): string {

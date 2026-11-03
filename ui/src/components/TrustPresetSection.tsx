@@ -23,10 +23,14 @@ import { cn } from "../lib/utils";
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
 
-function formatCount(value: readonly unknown[] | undefined, singular: string, plural: string) {
+function formatCount(
+  value: readonly unknown[] | undefined,
+  singularKey: string,
+  pluralKey: string,
+) {
   const count = value?.length ?? 0;
   if (count === 0) return "-";
-  return `${count} ${count === 1 ? singular : plural}`;
+  return l10n(count === 1 ? singularKey : pluralKey, { v0: count });
 }
 
 function PolicyRow({ label, value }: { label: string; value: string }) {
@@ -175,7 +179,11 @@ export function TrustPresetSection({
                           {candidatesLoading
                             ? l10n("local.loading_ba3bbbe1")
                             : targetCandidates.length === 0
-                              ? l10n("local.no_value_available_85ce314a", {v0: (targetType === "project" ? "projects" : "issues")})
+                              ? l10n("local.no_value_available_85ce314a", {
+                                  v0: targetType === "project"
+                                    ? l10n("local.projects_04e2a972")
+                                    : l10n("local.issues_02e3fe5a"),
+                                })
                               : l10n("local.select_boundary_5009d413")}
                         </option>
                         {targetCandidates.map((candidate) => (
@@ -225,19 +233,47 @@ export function TrustPresetSection({
                 onToggle={() => setPolicyOpen((open) => !open)}
               >
                 <div className="divide-y divide-border/60 text-foreground">
-                  <PolicyRow label={l10n("local.preset_7252e7ce")} value="Low-trust review v1" />
-                  <PolicyRow label={l10n("local.raw_output_f3dbf20a")} value="Quarantined from higher-trust agents" />
-                  <PolicyRow label={l10n("local.projects_04e2a972")} value={formatCount(boundary?.projectIds, "project", "projects")} />
+                  <PolicyRow label={l10n("local.preset_7252e7ce")} value={l10n("local.low_trust_review_v1_10300128")} />
+                  <PolicyRow label={l10n("local.raw_output_f3dbf20a")} value={l10n("local.quarantined_from_higher_trust_agents_10300129")} />
+                  <PolicyRow
+                    label={l10n("local.projects_04e2a972")}
+                    value={formatCount(
+                      boundary?.projectIds,
+                      "local.one_project_10300131",
+                      "local.value_projects_10300132",
+                    )}
+                  />
                   <PolicyRow label={l10n("local.root_issue_9cfea50f")} value={boundary?.rootIssueId ? boundary.rootIssueId.slice(0, 8) : "-"} />
-                  <PolicyRow label={l10n("local.explicit_issues_5093b25d")} value={formatCount(boundary?.issueIds, "issue", "issues")} />
-                  <PolicyRow label={l10n("local.allowed_agents_ab33e0e8")} value={formatCount(boundary?.allowedAgentIds, "agent", "agents")} />
+                  <PolicyRow
+                    label={l10n("local.explicit_issues_5093b25d")}
+                    value={formatCount(
+                      boundary?.issueIds,
+                      "local.one_issue_10300133",
+                      "local.value_issues_10300134",
+                    )}
+                  />
+                  <PolicyRow
+                    label={l10n("local.allowed_agents_ab33e0e8")}
+                    value={formatCount(
+                      boundary?.allowedAgentIds,
+                      "local.one_agent_10300135",
+                      "local.value_agents_10300136",
+                    )}
+                  />
                   <PolicyRow label={l10n("local.allowed_tools_73f3619d")} value={boundary?.allowedToolClasses?.join(" · ") || "-"} />
-                  <PolicyRow label={l10n("local.allowed_secrets_29e561fc")} value={formatCount(boundary?.allowedSecretBindingIds, "binding", "bindings")} />
+                  <PolicyRow
+                    label={l10n("local.allowed_secrets_29e561fc")}
+                    value={formatCount(
+                      boundary?.allowedSecretBindingIds,
+                      "local.one_binding_10300137",
+                      "local.value_bindings_10300138",
+                    )}
+                  />
                   <PolicyRow label={l10n("local.promotion_target_ac1fff63")} value={boundary?.outputPromotionTarget?.issueId?.slice(0, 8) ?? "-"} />
                   <PolicyRow
                     label={l10n("local.ee_fields_5cf54800")}
                     value={Object.keys(policy ?? {}).some((key) => !["trustPreset", "reviewPreset", "trustBoundary"].includes(key))
-                      ? "Custom advanced policy fields preserved"
+                      ? l10n("local.custom_advanced_policy_fields_preserved_10300130")
                       : "-"}
                   />
                 </div>

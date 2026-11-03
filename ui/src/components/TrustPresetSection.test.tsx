@@ -68,7 +68,7 @@ describe("TrustPresetSection", () => {
     expect(view.text()).toContain("Containment active");
     expect(view.text()).toContain("Boundary type");
     expect(view.text()).toContain("Paperclip App");
-    expect(view.text()).toContain("Get Paperclip EE.");
+    expect(view.text()).toContain("Get Alice EE.");
     expect(view.text()).not.toContain("Managed by EE/API");
   });
 

@@ -12315,6 +12315,27 @@
     "manual_intervention_required_10300118": "Manual intervention required",
     "value_manual_intervention_required_10300119": "{{v0}} Manual intervention required.",
     "continued_run_10300120": "Continued run",
-    "retried_run_10300121": "Retried run"
+    "retried_run_10300121": "Retried run",
+    "new_cards_open_to_board_or_agents_10300122": "New cards are open — the board or any agent can respond, including the one that asked.",
+    "request_keeps_requested_audience_10300123": "A request keeps whatever audience it asks for.",
+    "new_cards_exclude_creator_10300124": "New cards exclude the agent that created them, so the answer comes from someone else.",
+    "new_cards_wait_for_human_10300125": "New cards wait for a person on the board. Agents are turned away.",
+    "anyone_card_narrowed_to_exclude_creator_10300126": "Even a card that asks for Anyone is narrowed to exclude its creator.",
+    "every_card_waits_for_human_10300127": "Every card of this kind waits for a person, whatever it asked for.",
+    "low_trust_review_v1_10300128": "Low-trust review v1",
+    "quarantined_from_higher_trust_agents_10300129": "Quarantined from higher-trust agents",
+    "custom_advanced_policy_fields_preserved_10300130": "Custom advanced policy fields preserved",
+    "one_project_10300131": "1 project",
+    "value_projects_10300132": "{{v0}} projects",
+    "one_issue_10300133": "1 issue",
+    "value_issues_10300134": "{{v0}} issues",
+    "one_agent_10300135": "1 agent",
+    "value_agents_10300136": "{{v0}} agents",
+    "one_binding_10300137": "1 binding",
+    "value_bindings_10300138": "{{v0}} bindings",
+    "project_value_10300139": "Project {{v0}}",
+    "root_issue_value_10300140": "Root issue {{v0}}",
+    "no_boundary_selected_10300141": "No boundary selected",
+    "value_boundaries_10300142": "{{v0}} boundaries"
   }
 }

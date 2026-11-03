@@ -12315,6 +12315,27 @@
     "manual_intervention_required_10300118": "需要人工处理",
     "value_manual_intervention_required_10300119": "{{v0}} 需要人工处理。",
     "continued_run_10300120": "已续接运行",
-    "retried_run_10300121": "已重试运行"
+    "retried_run_10300121": "已重试运行",
+    "new_cards_open_to_board_or_agents_10300122": "新卡片默认开放：看板用户或任意智能体都可以响应，包括发起请求的智能体。",
+    "request_keeps_requested_audience_10300123": "请求将保留其指定的响应对象。",
+    "new_cards_exclude_creator_10300124": "新卡片将排除创建它的智能体，确保由其他人或智能体回答。",
+    "new_cards_wait_for_human_10300125": "新卡片将等待看板用户响应，不允许智能体处理。",
+    "anyone_card_narrowed_to_exclude_creator_10300126": "即使卡片指定任意人响应，也会缩小范围并排除创建者。",
+    "every_card_waits_for_human_10300127": "此类卡片无论指定谁响应，都将等待看板用户处理。",
+    "low_trust_review_v1_10300128": "低信任评审 v1",
+    "quarantined_from_higher_trust_agents_10300129": "与高信任智能体隔离",
+    "custom_advanced_policy_fields_preserved_10300130": "已保留自定义高级策略字段",
+    "one_project_10300131": "1 个项目",
+    "value_projects_10300132": "{{v0}} 个项目",
+    "one_issue_10300133": "1 个任务",
+    "value_issues_10300134": "{{v0}} 个任务",
+    "one_agent_10300135": "1 个智能体",
+    "value_agents_10300136": "{{v0}} 个智能体",
+    "one_binding_10300137": "1 个绑定",
+    "value_bindings_10300138": "{{v0}} 个绑定",
+    "project_value_10300139": "项目 {{v0}}",
+    "root_issue_value_10300140": "根任务 {{v0}}",
+    "no_boundary_selected_10300141": "未选择边界",
+    "value_boundaries_10300142": "{{v0}} 个边界"
   }
 }

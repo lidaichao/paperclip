@@ -54,20 +54,20 @@ const UNSET_LABELS: Record<GovernanceField, string> = {
 };
 
 const UNSET_EFFECTS: Record<GovernanceField, string> = {
-  defaultPolicy: "New cards are open — the board or any agent can respond, including the one that asked.",
-  cap: "A request keeps whatever audience it asks for.",
+  defaultPolicy: l10n("local.new_cards_open_to_board_or_agents_10300122"),
+  cap: l10n("local.request_keeps_requested_audience_10300123"),
 };
 
 const DEFAULT_POLICY_EFFECTS: Record<IssueThreadInteractionCanonicalResolverPolicy, string> = {
   anyone: UNSET_EFFECTS.defaultPolicy,
-  not_creator: "New cards exclude the agent that created them, so the answer comes from someone else.",
-  human_only: "New cards wait for a person on the board. Agents are turned away.",
+  not_creator: l10n("local.new_cards_exclude_creator_10300124"),
+  human_only: l10n("local.new_cards_wait_for_human_10300125"),
 };
 
 const CAP_EFFECTS: Record<IssueThreadInteractionCanonicalResolverPolicy, string> = {
   anyone: UNSET_EFFECTS.cap,
-  not_creator: "Even a card that asks for Anyone is narrowed to exclude its creator.",
-  human_only: "Every card of this kind waits for a person, whatever it asked for.",
+  not_creator: l10n("local.anyone_card_narrowed_to_exclude_creator_10300126"),
+  human_only: l10n("local.every_card_waits_for_human_10300127"),
 };
 
 function governanceOptions(field: GovernanceField): {
