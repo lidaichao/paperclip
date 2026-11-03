@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "shopify",
   "name": "Shopify",
-  "description": "Search a store's products and policies, and manage shopping carts.",
+  "description": "搜索商店商品和政策，并管理购物车。",
   "categories": [
     "commerce"
   ],
@@ -22,7 +22,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Recommended for Shopify's current UCP catalog, cart, and checkout tools.",
+      "whenToUse": "推荐用于 Shopify 当前的 UCP 商品目录、购物车和结账工具。",
       "defaults": {
         "serverUrlTemplate": "https://{storeDomain}/api/ucp/mcp",
         "toolArgumentDefaults": {
@@ -33,17 +33,17 @@
           }
         }
       },
-      "guidanceMd": "Connect Shopify's current UCP server for shopper-facing catalog and commerce tools. Paperclip supplies the required agent profile automatically.",
+      "guidanceMd": "连接 Shopify 当前的 UCP 服务器，使用面向顾客的商品目录和商务工具。Alice 会自动提供所需的智能体资料。",
       "riskTier": "S3",
-      "label": "Shopify UCP commerce",
+      "label": "Shopify UCP 商务",
       "tenantFields": [
         {
           "key": "storeDomain",
-          "label": "Store domain",
+          "label": "商店域名",
           "type": "text",
           "required": true,
           "placeholder": "your-store.myshopify.com",
-          "helperMd": "Enter the permanent myshopify.com domain without https://. Custom storefront domains are not the MCP endpoint.",
+          "helperMd": "输入不带 https:// 的永久 myshopify.com 域名。自定义店面域名不是 MCP 地址。",
           "validation": {
             "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*\\.myshopify\\.com$",
             "maxLength": 255
@@ -54,9 +54,9 @@
         "docs": "https://shopify.dev/docs/agents/catalog/storefront-catalog"
       },
       "warnings": [
-        "This is Shopify's shopper-facing UCP server, not Admin API access. It does not manage merchant products or customers.",
-        "The storefront must be public. A private or password-protected storefront returns HTTP 401 even when the merchant is signed in to Shopify Admin.",
-        "Paperclip currently uses Shopify's documented hosted agent-profile fixture while Paperclip's production UCP profile is being established."
+        "这是 Shopify 面向顾客的 UCP 服务器，不是 Admin API；它不能管理商家的商品或客户。",
+        "店面必须公开。即使商家已登录 Shopify Admin，私有或受密码保护的店面仍会返回 HTTP 401。",
+        "在 Alice 的正式 UCP 资料建立完成前，Alice 暂时使用 Shopify 文档提供的托管智能体资料示例。"
       ],
       "requiredResourceFilters": [
         "store"
@@ -69,21 +69,21 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use Shopify's compatibility server when agents need storefront policy and FAQ search.",
+      "whenToUse": "当智能体需要搜索店面政策和常见问题时，使用 Shopify 兼容服务器。",
       "defaults": {
         "serverUrlTemplate": "https://{storeDomain}/api/mcp"
       },
-      "guidanceMd": "Connect Shopify's official Storefront MCP server for shopper-facing catalog, policy, and cart tools.",
+      "guidanceMd": "连接 Shopify 官方 Storefront MCP 服务器，使用面向顾客的商品目录、政策和购物车工具。",
       "riskTier": "S3",
-      "label": "Storefront policies and compatibility tools",
+      "label": "店面政策与兼容工具",
       "tenantFields": [
         {
           "key": "storeDomain",
-          "label": "Store domain",
+          "label": "商店域名",
           "type": "text",
           "required": true,
           "placeholder": "your-store.myshopify.com",
-          "helperMd": "Enter the permanent myshopify.com domain without https://. Custom storefront domains are not the MCP endpoint.",
+          "helperMd": "输入不带 https:// 的永久 myshopify.com 域名。自定义店面域名不是 MCP 地址。",
           "validation": {
             "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*\\.myshopify\\.com$",
             "maxLength": 255
@@ -94,8 +94,8 @@
         "docs": "https://shopify.dev/docs/apps/build/storefront-mcp/servers/storefront"
       },
       "warnings": [
-        "This is Shopify's Storefront MCP, not Admin API access. It does not manage merchant products, orders, or customers.",
-        "The storefront must be public. A private or password-protected storefront returns HTTP 401 even when the merchant is signed in to Shopify Admin."
+        "这是 Shopify Storefront MCP，不是 Admin API；它不能管理商家的商品、订单或客户。",
+        "店面必须公开。即使商家已登录 Shopify Admin，私有或受密码保护的店面仍会返回 HTTP 401。"
       ],
       "requiredResourceFilters": [
         "store"
@@ -104,14 +104,14 @@
   ],
   "docsUrl": "https://shopify.dev/docs/apps/build/storefront-mcp/servers/storefront",
   "setupPrerequisite": {
-    "title": "Launch the storefront before connecting",
-    "description": "Shopify's Storefront MCP is a public, no-auth endpoint. Paperclip cannot use the merchant's Shopify Admin session to bypass a private storefront.",
+    "title": "连接前先公开店面",
+    "description": "Shopify Storefront MCP 是无需身份验证的公开地址。Alice 不能使用商家的 Shopify Admin 会话绕过私有店面限制。",
     "steps": [
-      "Select a Shopify plan; Shopify keeps trial storefronts private until a plan is selected.",
-      "In Shopify Admin, open Online Store → Preferences and set Storefront visibility to Public (remove password protection).",
-      "Use the permanent <store>.myshopify.com domain in Paperclip, even if the store also has a custom domain."
+      "选择一个 Shopify 套餐；在选择套餐前，Shopify 会保持试用店面为私有状态。",
+      "在 Shopify Admin 中打开“在线商店 → 偏好设置”，把店面可见性设为“公开”（移除密码保护）。",
+      "即使商店还配置了自定义域名，也要在 Alice 中使用永久的 <store>.myshopify.com 域名。"
     ],
-    "actionLabel": "Open Shopify Admin",
+    "actionLabel": "打开 Shopify Admin",
     "actionUrl": "https://admin.shopify.com/"
   }
 }

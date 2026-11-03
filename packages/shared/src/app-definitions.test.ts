@@ -886,11 +886,11 @@ describe("AppDefinition catalog", () => {
     ).toBe("https://paperclip-demo.myshopify.com/api/mcp");
     expect(resolveConnectionMethodServerUrl(ucp!, {})).toBeNull();
     expect(shopify?.setupPrerequisite).toMatchObject({
-      title: "Launch the storefront before connecting",
+      title: "连接前先公开店面",
       actionUrl: "https://admin.shopify.com/",
     });
     expect(shopify?.setupPrerequisite?.steps?.join(" ")).toContain(
-      "Storefront visibility to Public",
+      "店面可见性设为“公开”",
     );
   });
   it("offers PostHog OAuth and API-key methods with zero-config defaults and advanced narrowing", () => {

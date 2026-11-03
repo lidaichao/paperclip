@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "supabase",
   "name": "Supabase",
-  "description": "Connect Supabase's provider-hosted MCP server.",
+  "description": "连接 Supabase 官方托管的 MCP 服务器。",
   "categories": [
     "data"
   ],
@@ -23,28 +23,28 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.supabase.com/mcp"
       },
-      "guidanceMd": "Connect Supabase in the browser and scope the connection to one development project. Write tools start enabled and remain governed by Paperclip's action policies.",
+      "guidanceMd": "在浏览器中连接 Supabase，并把连接范围限制到一个开发项目。写入工具默认启用，且始终受 Alice 操作策略治理。",
       "riskTier": "S4",
-      "label": "Sign in with Supabase",
+      "label": "使用 Supabase 登录",
       "consoleLinks": {
         "docs": "https://supabase.com/docs/guides/ai-tools/mcp"
       },
       "warnings": [
-        "A Supabase account; use a development project and review write actions before connecting production data.",
-        "Do not connect production data unless you have reviewed Supabase's MCP security guidance."
+        "需要 Supabase 账户；请使用开发项目，并在连接生产数据前审查写入操作。",
+        "除非已阅读 Supabase 的 MCP 安全指南，否则不要连接生产数据。"
       ],
       "tenantFields": [
         {
           "key": "projectRef",
-          "label": "Project reference",
+          "label": "项目引用",
           "type": "text",
           "required": true,
           "placeholder": "abcdefghijklmnopqrst",
-          "helperMd": "Scope the connection to one development project.",
+          "helperMd": "把连接范围限制到一个开发项目。",
           "transport": {
             "location": "query",
             "name": "project_ref"
@@ -52,10 +52,10 @@
         },
         {
           "key": "readOnly",
-          "label": "Read-only mode",
+          "label": "只读模式",
           "type": "checkbox",
           "defaultValue": false,
-          "helperMd": "Enable this to prevent the connection from changing the database.",
+          "helperMd": "启用后，阻止此连接修改数据库。",
           "transport": {
             "location": "query",
             "name": "read_only",
@@ -64,11 +64,11 @@
         },
         {
           "key": "features",
-          "label": "Feature groups",
+          "label": "功能组",
           "type": "textarea",
           "advanced": true,
           "placeholder": "database,docs",
-          "helperMd": "Optional comma-separated feature groups.",
+          "helperMd": "可选，使用逗号分隔功能组。",
           "transport": {
             "location": "query",
             "name": "features",
@@ -87,17 +87,17 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.supabase.com/mcp"
       },
-      "guidanceMd": "Use a customer-created Supabase key scoped to one development project. Write tools start enabled and remain governed by Paperclip's action policies.",
+      "guidanceMd": "使用自行创建的 Supabase 密钥，并把范围限制到一个开发项目。写入工具默认启用，且始终受 Alice 操作策略治理。",
       "riskTier": "S4",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Supabase API key",
+          "label": "Supabase API 密钥",
           "type": "password",
           "required": true,
           "placeholder": "sbp_...",
@@ -114,17 +114,17 @@
         "docs": "https://supabase.com/docs/guides/ai-tools/mcp"
       },
       "warnings": [
-        "A Supabase account; use a development project and review write actions before connecting production data.",
-        "Do not connect production data unless you have reviewed Supabase's MCP security guidance."
+        "需要 Supabase 账户；请使用开发项目，并在连接生产数据前审查写入操作。",
+        "除非已阅读 Supabase 的 MCP 安全指南，否则不要连接生产数据。"
       ],
       "tenantFields": [
         {
           "key": "projectRef",
-          "label": "Project reference",
+          "label": "项目引用",
           "type": "text",
           "required": true,
           "placeholder": "abcdefghijklmnopqrst",
-          "helperMd": "Scope the connection to one development project.",
+          "helperMd": "把连接范围限制到一个开发项目。",
           "transport": {
             "location": "query",
             "name": "project_ref"
@@ -132,10 +132,10 @@
         },
         {
           "key": "readOnly",
-          "label": "Read-only mode",
+          "label": "只读模式",
           "type": "checkbox",
           "defaultValue": false,
-          "helperMd": "Enable this to prevent the connection from changing the database.",
+          "helperMd": "启用后，阻止此连接修改数据库。",
           "transport": {
             "location": "query",
             "name": "read_only",
@@ -144,11 +144,11 @@
         },
         {
           "key": "features",
-          "label": "Feature groups",
+          "label": "功能组",
           "type": "textarea",
           "advanced": true,
           "placeholder": "database,docs",
-          "helperMd": "Optional comma-separated feature groups.",
+          "helperMd": "可选，使用逗号分隔功能组。",
           "transport": {
             "location": "query",
             "name": "features",
