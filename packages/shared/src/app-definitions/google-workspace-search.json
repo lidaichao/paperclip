@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "google-workspace-search",
   "name": "Google Workspace Search",
-  "description": "Search Gmail, Drive, Calendar, and Chat through one read-only Google Workspace search tool.",
+  "description": "通过一个只读的 Google Workspace 搜索工具检索 Gmail、云端硬盘、日历和 Chat。",
   "categories": [
     "data",
     "productivity"
@@ -16,29 +16,29 @@
   ],
   "docsUrl": "https://developers.google.com/workspace/guides/universal-search-mcp",
   "setupPrerequisite": {
-    "title": "Google Developer Preview access required",
-    "description": "Google must register both the Workspace email used to authorize Paperclip and the Google Cloud project that owns the OAuth client. Registration is limited to those emails and projects; it does not enable unrelated Paperclip customers.",
+    "title": "需要 Google 开发者预览计划权限",
+    "description": "Google 必须登记用于授权 Alice 的 Workspace 邮箱，以及拥有 OAuth 客户端的 Google Cloud 项目。登记仅对指定邮箱和项目生效，不会为其他 Alice 用户开放权限。",
     "steps": [
-      "Apply with the Workspace email that will sign in and the Google Cloud project that owns the OAuth client.",
-      "Wait for the Google Group notification and then Google's final project-registration email, usually within a couple of days.",
-      "Add every additional tester email or Cloud project through Google's member request forms before connecting."
+      "使用准备登录的 Workspace 邮箱，以及拥有 OAuth 客户端的 Google Cloud 项目提交申请。",
+      "等待 Google 群组通知和最终项目登记邮件，通常需要几天。",
+      "连接前，通过 Google 成员申请表添加所有额外测试邮箱或 Cloud 项目。"
     ],
-    "actionLabel": "Apply or verify Developer Preview enrollment",
+    "actionLabel": "申请或确认开发者预览计划资格",
     "actionUrl": "https://developers.google.com/workspace/preview"
   },
   "redirectConstraints": "https-or-loopback-http",
   "methods": [
     {
       "key": "paperclip-read",
-      "label": "Connect with Paperclip",
+      "label": "连接 Alice",
       "transport": "mcp_remote",
       "auth": "oauth",
       "oauthStrategy": "paperclip_cloud_connector",
       "connectorProfile": "workspace-search.read",
       "capabilityProfile": {
         "key": "read",
-        "label": "Search Workspace",
-        "description": "Search Gmail, Drive, Calendar, and Chat without write access."
+        "label": "搜索 Workspace",
+        "description": "以只读方式搜索 Gmail、云端硬盘、日历和 Chat。"
       },
       "grantKinds": [
         "user",
@@ -47,7 +47,7 @@
       "ownershipModes": [
         "platform_shared"
       ],
-      "whenToUse": "Use Paperclip-managed OAuth for cross-product Workspace search.",
+      "whenToUse": "使用 Alice 管理的 OAuth 进行跨产品 Workspace 搜索。",
       "defaults": {
         "serverUrl": "https://workspacemcp.googleapis.com/mcp/v1",
         "scopesHint": [
@@ -57,22 +57,22 @@
           "https://www.googleapis.com/auth/chat.messages.readonly"
         ]
       },
-      "guidanceMd": "Connect Google Workspace Search for one read-only search tool spanning Gmail, Drive, Calendar, and Chat.",
+      "guidanceMd": "连接 Google Workspace 搜索，使用一个只读工具同时检索 Gmail、云端硬盘、日历和 Chat。",
       "warnings": [
-        "This requests read access to all four supported search corpora.",
-        "Google Workspace MCP servers are in Developer Preview."
+        "这会申请对四类受支持搜索数据的读取权限。",
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S3"
     },
     {
       "key": "customer-read-oauth",
-      "label": "Use your own Google OAuth app",
+      "label": "使用自己的 Google OAuth 应用",
       "transport": "mcp_remote",
       "auth": "oauth",
       "capabilityProfile": {
         "key": "read",
-        "label": "Search Workspace",
-        "description": "Search Gmail, Drive, Calendar, and Chat without write access."
+        "label": "搜索 Workspace",
+        "description": "以只读方式搜索 Gmail、云端硬盘、日历和 Chat。"
       },
       "grantKinds": [
         "user",
@@ -81,7 +81,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a customer-owned OAuth client for cross-product Workspace search.",
+      "whenToUse": "使用自有 OAuth 客户端进行跨产品 Workspace 搜索。",
       "defaults": {
         "serverUrl": "https://workspacemcp.googleapis.com/mcp/v1",
         "authorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
@@ -98,14 +98,14 @@
           "prompt": "consent"
         }
       },
-      "guidanceMd": "Enable the Gmail, Drive, Calendar, Chat, and Workspace MCP APIs, then register Paperclip's callback URI.",
+      "guidanceMd": "启用 Gmail、Drive、Calendar、Chat 和 Workspace MCP API，然后登记 Alice 的回调地址。",
       "consoleLinks": {
         "register": "https://console.cloud.google.com/auth/clients",
         "docs": "https://developers.google.com/workspace/guides/universal-search-mcp"
       },
       "warnings": [
-        "This requests read access to all four supported search corpora.",
-        "Google Workspace MCP servers are in Developer Preview."
+        "这会申请对四类受支持搜索数据的读取权限。",
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S3"
     }

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "google-sheets",
   "name": "Google Sheets",
-  "description": "Read and update Google Sheets spreadsheets.",
+  "description": "读取和更新 Google 表格。",
   "categories": [
     "data",
     "productivity"
@@ -18,29 +18,29 @@
   ],
   "docsUrl": "https://developers.google.com/workspace/sheets/api/reference/mcp",
   "setupPrerequisite": {
-    "title": "Google Developer Preview access required",
-    "description": "Google must register both the Workspace email used to authorize Paperclip and the Google Cloud project that owns the OAuth client. Registration is limited to those emails and projects; it does not enable unrelated Paperclip customers.",
+    "title": "需要 Google 开发者预览计划权限",
+    "description": "Google 必须登记用于授权 Alice 的 Workspace 邮箱，以及拥有 OAuth 客户端的 Google Cloud 项目。登记仅对指定邮箱和项目生效，不会为其他 Alice 用户开放权限。",
     "steps": [
-      "Apply with the Workspace email that will sign in and the Google Cloud project that owns the OAuth client.",
-      "Wait for the Google Group notification and then Google's final project-registration email, usually within a couple of days.",
-      "Add every additional tester email or Cloud project through Google's member request forms before connecting."
+      "使用准备登录的 Workspace 邮箱，以及拥有 OAuth 客户端的 Google Cloud 项目提交申请。",
+      "等待 Google 群组通知和最终项目登记邮件，通常需要几天。",
+      "连接前，通过 Google 成员申请表添加所有额外测试邮箱或 Cloud 项目。"
     ],
-    "actionLabel": "Apply or verify Developer Preview enrollment",
+    "actionLabel": "申请或确认开发者预览计划资格",
     "actionUrl": "https://developers.google.com/workspace/preview"
   },
   "redirectConstraints": "https-or-loopback-http",
   "methods": [
     {
       "key": "paperclip-read",
-      "label": "Connect with Paperclip",
+      "label": "连接 Alice",
       "transport": "mcp_remote",
       "auth": "oauth",
       "oauthStrategy": "paperclip_cloud_connector",
       "connectorProfile": "sheets.read",
       "capabilityProfile": {
         "key": "read",
-        "label": "Read only",
-        "description": "Read spreadsheet values and structure."
+        "label": "只读",
+        "description": "读取表格数据和结构。"
       },
       "grantKinds": [
         "user",
@@ -49,7 +49,7 @@
       "ownershipModes": [
         "platform_shared"
       ],
-      "whenToUse": "Use Paperclip-managed OAuth for read-only Sheets access.",
+      "whenToUse": "使用 Alice 管理的 OAuth，以只读方式访问 Google 表格。",
       "defaults": {
         "serverUrl": "https://sheetsmcp.googleapis.com/mcp/v1",
         "scopesHint": [
@@ -57,21 +57,21 @@
           "https://www.googleapis.com/auth/spreadsheets.readonly"
         ]
       },
-      "guidanceMd": "Connect Google Sheets to read spreadsheets.",
+      "guidanceMd": "连接 Google 表格，以读取电子表格。",
       "warnings": [
-        "Google Workspace MCP servers are in Developer Preview."
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S3"
     },
     {
       "key": "customer-read-oauth",
-      "label": "Use your own Google OAuth app",
+      "label": "使用自己的 Google OAuth 应用",
       "transport": "mcp_remote",
       "auth": "oauth",
       "capabilityProfile": {
         "key": "read",
-        "label": "Read only",
-        "description": "Read spreadsheet values and structure."
+        "label": "只读",
+        "description": "读取表格数据和结构。"
       },
       "grantKinds": [
         "user",
@@ -80,7 +80,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a customer-owned OAuth client for read-only Sheets access.",
+      "whenToUse": "使用自有 OAuth 客户端，以只读方式访问 Google 表格。",
       "defaults": {
         "serverUrl": "https://sheetsmcp.googleapis.com/mcp/v1",
         "authorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
@@ -95,27 +95,27 @@
           "prompt": "consent"
         }
       },
-      "guidanceMd": "Enable the Drive, Sheets, and Sheets MCP APIs, then register Paperclip's callback URI.",
+      "guidanceMd": "启用 Drive API、Sheets API 和 Sheets MCP API，然后登记 Alice 的回调地址。",
       "consoleLinks": {
         "register": "https://console.cloud.google.com/auth/clients",
         "docs": "https://developers.google.com/workspace/guides/configure-mcp-servers"
       },
       "warnings": [
-        "Google Workspace MCP servers are in Developer Preview."
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S3"
     },
     {
       "key": "paperclip-write",
-      "label": "Connect with Paperclip",
+      "label": "连接 Alice",
       "transport": "mcp_remote",
       "auth": "oauth",
       "oauthStrategy": "paperclip_cloud_connector",
       "connectorProfile": "sheets.write",
       "capabilityProfile": {
         "key": "write",
-        "label": "Read & edit",
-        "description": "Read and update spreadsheet values, formulas, and dimensions."
+        "label": "读取和编辑",
+        "description": "读取和更新表格数据、公式及行列尺寸。"
       },
       "grantKinds": [
         "user",
@@ -124,7 +124,7 @@
       "ownershipModes": [
         "platform_shared"
       ],
-      "whenToUse": "Use Paperclip-managed OAuth to read and update Sheets.",
+      "whenToUse": "使用 Alice 管理的 OAuth 读取和更新 Google 表格。",
       "defaults": {
         "serverUrl": "https://sheetsmcp.googleapis.com/mcp/v1",
         "scopesHint": [
@@ -133,22 +133,22 @@
           "https://www.googleapis.com/auth/spreadsheets"
         ]
       },
-      "guidanceMd": "Connect Google Sheets to read and update spreadsheets.",
+      "guidanceMd": "连接 Google 表格，以读取和更新电子表格。",
       "warnings": [
-        "Spreadsheet updates require approval.",
-        "Google Workspace MCP servers are in Developer Preview."
+        "更新电子表格需要批准。",
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S4"
     },
     {
       "key": "customer-write-oauth",
-      "label": "Use your own Google OAuth app",
+      "label": "使用自己的 Google OAuth 应用",
       "transport": "mcp_remote",
       "auth": "oauth",
       "capabilityProfile": {
         "key": "write",
-        "label": "Read & edit",
-        "description": "Read and update spreadsheet values, formulas, and dimensions."
+        "label": "读取和编辑",
+        "description": "读取和更新表格数据、公式及行列尺寸。"
       },
       "grantKinds": [
         "user",
@@ -157,7 +157,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a customer-owned OAuth client to read and update Sheets.",
+      "whenToUse": "使用自有 OAuth 客户端读取和更新 Google 表格。",
       "defaults": {
         "serverUrl": "https://sheetsmcp.googleapis.com/mcp/v1",
         "authorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
@@ -173,35 +173,35 @@
           "prompt": "consent"
         }
       },
-      "guidanceMd": "Enable the Drive, Sheets, and Sheets MCP APIs, then register Paperclip's callback URI.",
+      "guidanceMd": "启用 Drive API、Sheets API 和 Sheets MCP API，然后登记 Alice 的回调地址。",
       "consoleLinks": {
         "register": "https://console.cloud.google.com/auth/clients",
         "docs": "https://developers.google.com/workspace/guides/configure-mcp-servers"
       },
       "warnings": [
-        "Spreadsheet updates require approval.",
-        "Google Workspace MCP servers are in Developer Preview."
+        "更新电子表格需要批准。",
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S4"
     },
     {
       "key": "local",
-      "label": "Use the Paperclip robot account",
+      "label": "使用 Alice 机器人账户",
       "transport": "local_stdio",
       "auth": "none",
       "capabilityProfile": {
         "key": "robot",
-        "label": "Share selected sheets",
-        "description": "Share only named spreadsheets with the Paperclip robot account."
+        "label": "共享指定表格",
+        "description": "仅向 Alice 机器人账户共享指定的电子表格。"
       },
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Share selected spreadsheets with the Paperclip robot account instead of connecting a Google identity.",
+      "whenToUse": "把指定电子表格共享给 Alice 机器人账户，无需连接 Google 身份。",
       "defaults": {
         "templateKey": "paperclip.google-sheets"
       },
-      "guidanceMd": "Share each spreadsheet with the Paperclip robot email, then paste the sheet links.",
+      "guidanceMd": "把每个电子表格共享给 Alice 机器人邮箱，然后粘贴表格链接。",
       "riskTier": "S3",
       "requiredResourceFilters": [
         "spreadsheet"

@@ -689,10 +689,10 @@ describe("AppDefinition catalog", () => {
         "https://developers.google.com/workspace/preview",
       );
       expect(prerequisite?.description, slug).toContain(
-        "does not enable unrelated Paperclip customers",
+        "不会为其他 Alice 用户开放权限",
       );
       expect(prerequisite?.steps?.join(" "), slug).toContain(
-        "final project-registration email",
+        "最终项目登记邮件",
       );
     }
   });

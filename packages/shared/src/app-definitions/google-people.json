@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "google-people",
   "name": "Google People",
-  "description": "Search contacts and directory profiles with the Google People API.",
+  "description": "使用 Google People API 搜索联系人和目录个人资料。",
   "categories": [
     "communication",
     "productivity"
@@ -16,29 +16,29 @@
   ],
   "docsUrl": "https://developers.google.com/people/api/mcp",
   "setupPrerequisite": {
-    "title": "Google Developer Preview access required",
-    "description": "Google must register both the Workspace email used to authorize Paperclip and the Google Cloud project that owns the OAuth client. Registration is limited to those emails and projects; it does not enable unrelated Paperclip customers.",
+    "title": "需要 Google 开发者预览计划权限",
+    "description": "Google 必须登记用于授权 Alice 的 Workspace 邮箱，以及拥有 OAuth 客户端的 Google Cloud 项目。登记仅对指定邮箱和项目生效，不会为其他 Alice 用户开放权限。",
     "steps": [
-      "Apply with the Workspace email that will sign in and the Google Cloud project that owns the OAuth client.",
-      "Wait for the Google Group notification and then Google's final project-registration email, usually within a couple of days.",
-      "Add every additional tester email or Cloud project through Google's member request forms before connecting."
+      "使用准备登录的 Workspace 邮箱，以及拥有 OAuth 客户端的 Google Cloud 项目提交申请。",
+      "等待 Google 群组通知和最终项目登记邮件，通常需要几天。",
+      "连接前，通过 Google 成员申请表添加所有额外测试邮箱或 Cloud 项目。"
     ],
-    "actionLabel": "Apply or verify Developer Preview enrollment",
+    "actionLabel": "申请或确认开发者预览计划资格",
     "actionUrl": "https://developers.google.com/workspace/preview"
   },
   "redirectConstraints": "https-or-loopback-http",
   "methods": [
     {
       "key": "paperclip-read",
-      "label": "Connect with Paperclip",
+      "label": "连接 Alice",
       "transport": "mcp_remote",
       "auth": "oauth",
       "oauthStrategy": "paperclip_cloud_connector",
       "connectorProfile": "people.read",
       "capabilityProfile": {
         "key": "read",
-        "label": "Read contacts",
-        "description": "Search contacts, directory people, and your profile."
+        "label": "读取联系人",
+        "description": "搜索联系人、组织目录成员和个人资料。"
       },
       "grantKinds": [
         "user",
@@ -47,7 +47,7 @@
       "ownershipModes": [
         "platform_shared"
       ],
-      "whenToUse": "Use Paperclip-managed OAuth for Google People access.",
+      "whenToUse": "使用 Alice 管理的 OAuth 访问 Google People。",
       "defaults": {
         "serverUrl": "https://people.googleapis.com/mcp/v1",
         "scopesHint": [
@@ -56,21 +56,21 @@
           "https://www.googleapis.com/auth/contacts.readonly"
         ]
       },
-      "guidanceMd": "Connect Google People to search contacts and directory profiles.",
+      "guidanceMd": "连接 Google People，以搜索联系人和目录个人资料。",
       "warnings": [
-        "Google Workspace MCP servers are in Developer Preview."
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S3"
     },
     {
       "key": "customer-read-oauth",
-      "label": "Use your own Google OAuth app",
+      "label": "使用自己的 Google OAuth 应用",
       "transport": "mcp_remote",
       "auth": "oauth",
       "capabilityProfile": {
         "key": "read",
-        "label": "Read contacts",
-        "description": "Search contacts, directory people, and your profile."
+        "label": "读取联系人",
+        "description": "搜索联系人、组织目录成员和个人资料。"
       },
       "grantKinds": [
         "user",
@@ -79,7 +79,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a customer-owned OAuth client for Google People access.",
+      "whenToUse": "使用自有 OAuth 客户端访问 Google People。",
       "defaults": {
         "serverUrl": "https://people.googleapis.com/mcp/v1",
         "authorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
@@ -95,14 +95,14 @@
           "prompt": "consent"
         }
       },
-      "guidanceMd": "Enable the People and People MCP APIs, then register Paperclip's callback URI.",
+      "guidanceMd": "启用 People API 和 People MCP API，然后登记 Alice 的回调地址。",
       "consoleLinks": {
         "register": "https://console.cloud.google.com/auth/clients",
         "docs": "https://developers.google.com/workspace/guides/configure-mcp-servers"
       },
       "warnings": [
-        "Directory search availability depends on your Workspace account.",
-        "Google Workspace MCP servers are in Developer Preview."
+        "能否搜索组织目录取决于你的 Workspace 账户。",
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S3"
     }

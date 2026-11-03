@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "google-chat",
   "name": "Google Chat",
-  "description": "Search and read Google Chat conversations and send messages.",
+  "description": "搜索和读取 Google Chat 对话并发送消息。",
   "categories": [
     "communication",
     "productivity"
@@ -17,29 +17,29 @@
   ],
   "docsUrl": "https://developers.google.com/workspace/chat/api/reference/mcp",
   "setupPrerequisite": {
-    "title": "Google Developer Preview access required",
-    "description": "Google must register both the Workspace email used to authorize Paperclip and the Google Cloud project that owns the OAuth client. Registration is limited to those emails and projects; it does not enable unrelated Paperclip customers.",
+    "title": "需要 Google 开发者预览计划权限",
+    "description": "Google 必须登记用于授权 Alice 的 Workspace 邮箱，以及拥有 OAuth 客户端的 Google Cloud 项目。登记仅对指定邮箱和项目生效，不会为其他 Alice 用户开放权限。",
     "steps": [
-      "Apply with the Workspace email that will sign in and the Google Cloud project that owns the OAuth client.",
-      "Wait for the Google Group notification and then Google's final project-registration email, usually within a couple of days.",
-      "Add every additional tester email or Cloud project through Google's member request forms before connecting."
+      "使用准备登录的 Workspace 邮箱，以及拥有 OAuth 客户端的 Google Cloud 项目提交申请。",
+      "等待 Google 群组通知和最终项目登记邮件，通常需要几天。",
+      "连接前，通过 Google 成员申请表添加所有额外测试邮箱或 Cloud 项目。"
     ],
-    "actionLabel": "Apply or verify Developer Preview enrollment",
+    "actionLabel": "申请或确认开发者预览计划资格",
     "actionUrl": "https://developers.google.com/workspace/preview"
   },
   "redirectConstraints": "https-or-loopback-http",
   "methods": [
     {
       "key": "paperclip-read",
-      "label": "Connect with Paperclip",
+      "label": "连接 Alice",
       "transport": "mcp_remote",
       "auth": "oauth",
       "oauthStrategy": "paperclip_cloud_connector",
       "connectorProfile": "chat.read",
       "capabilityProfile": {
         "key": "read",
-        "label": "Read only",
-        "description": "Search conversations and read messages."
+        "label": "只读",
+        "description": "搜索对话并读取消息。"
       },
       "grantKinds": [
         "user",
@@ -48,7 +48,7 @@
       "ownershipModes": [
         "platform_shared"
       ],
-      "whenToUse": "Use Paperclip-managed OAuth for read-only Chat access.",
+      "whenToUse": "使用 Alice 管理的 OAuth，以只读方式访问 Google Chat。",
       "defaults": {
         "serverUrl": "https://chatmcp.googleapis.com/mcp/v1",
         "scopesHint": [
@@ -56,21 +56,21 @@
           "https://www.googleapis.com/auth/chat.messages.readonly"
         ]
       },
-      "guidanceMd": "Connect Google Chat to search conversations and read messages. Read/unread filtering and membership listing are not supported.",
+      "guidanceMd": "连接 Google Chat，以搜索对话和读取消息。暂不支持按已读或未读筛选，也不支持列出成员。",
       "warnings": [
-        "Google Workspace MCP servers are in Developer Preview."
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S3"
     },
     {
       "key": "customer-read-oauth",
-      "label": "Use your own Google OAuth app",
+      "label": "使用自己的 Google OAuth 应用",
       "transport": "mcp_remote",
       "auth": "oauth",
       "capabilityProfile": {
         "key": "read",
-        "label": "Read only",
-        "description": "Search conversations and read messages."
+        "label": "只读",
+        "description": "搜索对话并读取消息。"
       },
       "grantKinds": [
         "user",
@@ -79,7 +79,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a customer-owned OAuth client for read-only Chat access.",
+      "whenToUse": "使用自有 OAuth 客户端，以只读方式访问 Google Chat。",
       "defaults": {
         "serverUrl": "https://chatmcp.googleapis.com/mcp/v1",
         "authorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
@@ -94,28 +94,28 @@
           "prompt": "consent"
         }
       },
-      "guidanceMd": "Enable the Chat and Chat MCP APIs, configure a Chat app, then register Paperclip's callback URI. Read/unread filtering and membership listing are not supported.",
+      "guidanceMd": "启用 Chat API 和 Chat MCP API，配置 Chat 应用，然后登记 Alice 的回调地址。暂不支持按已读或未读筛选，也不支持列出成员。",
       "consoleLinks": {
         "register": "https://console.cloud.google.com/auth/clients",
         "docs": "https://developers.google.com/workspace/guides/configure-mcp-servers"
       },
       "warnings": [
-        "A Google Chat app must be configured in the Cloud project.",
-        "Google Workspace MCP servers are in Developer Preview."
+        "必须在 Cloud 项目中配置 Google Chat 应用。",
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S3"
     },
     {
       "key": "paperclip-write",
-      "label": "Connect with Paperclip",
+      "label": "连接 Alice",
       "transport": "mcp_remote",
       "auth": "oauth",
       "oauthStrategy": "paperclip_cloud_connector",
       "connectorProfile": "chat.write",
       "capabilityProfile": {
         "key": "write",
-        "label": "Read & send",
-        "description": "Read Chat and send messages."
+        "label": "读取和发送",
+        "description": "读取 Chat 对话并发送消息。"
       },
       "grantKinds": [
         "user",
@@ -124,7 +124,7 @@
       "ownershipModes": [
         "platform_shared"
       ],
-      "whenToUse": "Use Paperclip-managed OAuth to read Chat and send messages.",
+      "whenToUse": "使用 Alice 管理的 OAuth 读取 Google Chat 并发送消息。",
       "defaults": {
         "serverUrl": "https://chatmcp.googleapis.com/mcp/v1",
         "scopesHint": [
@@ -133,22 +133,22 @@
           "https://www.googleapis.com/auth/chat.messages.create"
         ]
       },
-      "guidanceMd": "Connect Google Chat to read conversations and send approved messages. Read/unread filtering and membership listing are not supported.",
+      "guidanceMd": "连接 Google Chat，以读取对话并发送经过批准的消息。暂不支持按已读或未读筛选，也不支持列出成员。",
       "warnings": [
-        "Sending messages requires approval.",
-        "Google Workspace MCP servers are in Developer Preview."
+        "发送消息需要批准。",
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S4"
     },
     {
       "key": "customer-write-oauth",
-      "label": "Use your own Google OAuth app",
+      "label": "使用自己的 Google OAuth 应用",
       "transport": "mcp_remote",
       "auth": "oauth",
       "capabilityProfile": {
         "key": "write",
-        "label": "Read & send",
-        "description": "Read Chat and send messages."
+        "label": "读取和发送",
+        "description": "读取 Chat 对话并发送消息。"
       },
       "grantKinds": [
         "user",
@@ -157,7 +157,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a customer-owned OAuth client to read Chat and send messages.",
+      "whenToUse": "使用自有 OAuth 客户端读取 Google Chat 并发送消息。",
       "defaults": {
         "serverUrl": "https://chatmcp.googleapis.com/mcp/v1",
         "authorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
@@ -173,15 +173,15 @@
           "prompt": "consent"
         }
       },
-      "guidanceMd": "Enable the Chat and Chat MCP APIs, configure a Chat app, then register Paperclip's callback URI. Read/unread filtering and membership listing are not supported.",
+      "guidanceMd": "启用 Chat API 和 Chat MCP API，配置 Chat 应用，然后登记 Alice 的回调地址。暂不支持按已读或未读筛选，也不支持列出成员。",
       "consoleLinks": {
         "register": "https://console.cloud.google.com/auth/clients",
         "docs": "https://developers.google.com/workspace/guides/configure-mcp-servers"
       },
       "warnings": [
-        "Sending messages requires approval.",
-        "A Google Chat app must be configured in the Cloud project.",
-        "Google Workspace MCP servers are in Developer Preview."
+        "发送消息需要批准。",
+        "必须在 Cloud 项目中配置 Google Chat 应用。",
+        "Google Workspace MCP 服务器仍处于开发者预览阶段。"
       ],
       "riskTier": "S4"
     }
