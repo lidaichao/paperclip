@@ -38,7 +38,7 @@ export function AppsReview() {
           {l10n("local.actions_your_agents_want_to_run_that_need_you_03373029")}</p>
       </header>
 
-      <ReviewQueueCard emptyState="reassure" heading="Waiting for your OK" />
+      <ReviewQueueCard emptyState="reassure" />
     </div>
   );
 }

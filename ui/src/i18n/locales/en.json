@@ -11813,6 +11813,9 @@
     "create_hiring_plan_prompt_0dc00009": "Create a hiring plan for {{v0}}. List the next roles to hire, in priority order, with a short rationale for each.",
     "outline_first_30_days_prompt_0dc00010": "Outline our first 30 days. Break it into weekly priorities with who owns what.",
     "write_intro_pitch_prompt_0dc00011": "Write a short intro pitch for {{v0}} that I could reuse for investors, customers, or recruits.",
-    "assistant_0dc00012": "Assistant"
+    "assistant_0dc00012": "Assistant",
+    "authorization_code_0dd00001": "Authorization code",
+    "paste_authorization_code_here_0dd00002": "Paste authorization code here",
+    "waiting_for_your_ok_0dd00003": "Waiting for your OK"
   }
 }

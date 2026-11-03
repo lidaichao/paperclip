@@ -11813,6 +11813,9 @@
     "create_hiring_plan_prompt_0dc00009": "为 {{v0}} 制定招聘计划，按优先级列出下一批岗位，并简要说明每个岗位的理由。",
     "outline_first_30_days_prompt_0dc00010": "规划前 30 天工作，按周拆分优先事项，并明确每项工作的负责人。",
     "write_intro_pitch_prompt_0dc00011": "为 {{v0}} 撰写一段简短介绍，可用于投资人、客户或招聘场景。",
-    "assistant_0dc00012": "助理"
+    "assistant_0dc00012": "助理",
+    "authorization_code_0dd00001": "授权码",
+    "paste_authorization_code_here_0dd00002": "在此粘贴授权码",
+    "waiting_for_your_ok_0dd00003": "等待你的确认"
   }
 }

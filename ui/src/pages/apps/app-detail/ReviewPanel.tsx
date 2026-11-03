@@ -26,7 +26,6 @@ export function ReviewPanel({
       ) : null}
       <ReviewQueueCard
         connectionId={connectionId}
-        heading="Waiting for your OK"
         emptyState={showsQuarantinedActions ? "hidden" : "reassure"}
         plain
       />

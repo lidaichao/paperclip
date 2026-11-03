@@ -360,8 +360,8 @@ export function OnboardingCardField({
   onSubmit,
   onPaste,
   disabled,
-  label = "Authorization code",
-  placeholder = "Paste authorization code here",
+  label = l10n("local.authorization_code_0dd00001"),
+  placeholder = l10n("local.paste_authorization_code_here_0dd00002"),
   masked = false,
   autoFocus = false,
 }: {

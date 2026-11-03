@@ -28,7 +28,7 @@ import { MarkdownBody } from "@/components/MarkdownBody";
 export function ReviewQueueCard({
   connectionId,
   emptyState = "hidden",
-  heading = "Waiting for your OK",
+  heading = l10n("local.waiting_for_your_ok_0dd00003"),
   plain = false,
 }: {
   connectionId?: string;

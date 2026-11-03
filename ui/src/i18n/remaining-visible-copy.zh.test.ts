@@ -295,6 +295,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.board_welcome_with_mission_0dc00006).toContain("团队负责人");
     expect(messages.create_hiring_plan_prompt_0dc00009).toContain("招聘计划");
     expect(messages.assistant_0dc00012).toBe("助理");
+    expect(messages.authorization_code_0dd00001).toBe("授权码");
+    expect(messages.paste_authorization_code_here_0dd00002).toBe("在此粘贴授权码");
+    expect(messages.waiting_for_your_ok_0dd00003).toBe("等待你的确认");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
