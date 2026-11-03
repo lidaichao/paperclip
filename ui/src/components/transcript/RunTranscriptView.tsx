@@ -185,6 +185,58 @@ function humanizeLabel(value: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function localizedTranscriptStatus(value: string): string {
+  switch (value) {
+    case "backlog":
+      return l10n("local.backlog_bf986e9a");
+    case "todo":
+      return l10n("local.todo_4ff402d7");
+    case "in_progress":
+    case "executing":
+      return l10n("local.in_progress_2b6b853c");
+    case "in_review":
+      return l10n("local.in_review_2677214a");
+    case "done":
+      return l10n("local.done_11a6767d");
+    case "cancelled":
+      return l10n("local.cancelled_8b47045e");
+    case "blocked":
+      return l10n("local.blocked_18f2a094");
+    case "pending":
+      return l10n("local.pending_331551b0");
+    case "resolved":
+      return l10n("local.resolved_5be3c2c8");
+    case "expired":
+      return l10n("local.expired_424a2551");
+    case "interrupted":
+      return l10n("local.interrupted_132d124d");
+    case "running":
+      return l10n("local.running_f4ccae29");
+    case "completed":
+      return l10n("local.completed_22a970d2");
+    case "failed":
+    case "failure":
+      return l10n("local.failed_031a8f0f");
+    case "succeeded":
+      return l10n("local.succeeded_5dceaece");
+    case "error":
+      return l10n("local.error_54a0e8c1");
+    case "denied":
+      return l10n("local.denied_da404deb");
+    case "authorized":
+    case "allowed":
+      return l10n("local.allowed_1bb201d1");
+    default:
+      return humanizeLabel(value);
+  }
+}
+
+function localizedRuntimeRequestType(value: "permission" | "input"): string {
+  return value === "permission"
+    ? l10n("local.permission_229efc8f")
+    : l10n("local.input_36ecb4f8");
+}
+
 function stripWrappedShell(command: string): string {
   const trimmed = compactWhitespace(command);
   const shellWrapped = trimmed.match(/^(?:(?:\/bin\/)?(?:zsh|bash|sh)|cmd(?:\.exe)?(?:\s+\/d)?(?:\s+\/s)?(?:\s+\/c)?)\s+(?:-lc|\/c)\s+(.+)$/i);
@@ -266,7 +318,9 @@ function summarizeToolInput(name: string, input: unknown, density: TranscriptDen
   const record = asRecord(input);
   if (!record) {
     const serialized = compactWhitespace(formatUnknown(input));
-    return serialized ? truncate(serialized, compactMax) : `Inspect ${name} input`;
+    return serialized
+      ? truncate(serialized, compactMax)
+      : l10n("local.inspect_tool_input_0cf00001", { v0: name });
   }
 
   const command = typeof record.command === "string"
@@ -287,14 +341,33 @@ function summarizeToolInput(name: string, input: unknown, density: TranscriptDen
   if (Array.isArray(record.paths) && record.paths.length > 0) {
     const first = record.paths.find((value): value is string => typeof value === "string" && value.trim().length > 0);
     if (first) {
-      return truncate(`${record.paths.length} paths, starting with ${first}`, compactMax);
+      return truncate(
+        l10n("local.paths_starting_with_0cf00002", {
+          v0: record.paths.length,
+          v1: first,
+        }),
+        compactMax,
+      );
     }
   }
 
   const keys = Object.keys(record);
-  if (keys.length === 0) return `No ${name} input`;
-  if (keys.length === 1) return truncate(`${keys[0]} payload`, compactMax);
-  return truncate(`${keys.length} fields: ${keys.slice(0, 3).join(", ")}`, compactMax);
+  if (keys.length === 0) {
+    return l10n("local.no_tool_input_0cf00003", { v0: name });
+  }
+  if (keys.length === 1) {
+    return truncate(
+      l10n("local.field_payload_0cf00004", { v0: keys[0] }),
+      compactMax,
+    );
+  }
+  return truncate(
+    l10n("local.fields_summary_0cf00005", {
+      v0: keys.length,
+      v1: keys.slice(0, 3).join(", "),
+    }),
+    compactMax,
+  );
 }
 
 function parseStructuredToolResult(result: string | undefined) {
@@ -336,20 +409,26 @@ function isCommandTool(name: string, input: unknown): boolean {
 }
 
 function displayToolName(name: string, input: unknown): string {
-  if (isCommandTool(name, input)) return "Executing command";
+  if (isCommandTool(name, input)) return l10n("local.executing_command_d7ad4e19");
   return humanizeLabel(name);
 }
 
 function summarizeToolResult(result: string | undefined, isError: boolean | undefined, density: TranscriptDensity): string {
-  if (!result) return isError ? "Tool failed" : "Waiting for result";
+  if (!result) {
+    return isError
+      ? l10n("local.tool_failed_0cf00006")
+      : l10n("local.waiting_for_result_0cf00007");
+  }
   const structured = parseStructuredToolResult(result);
   if (structured) {
     if (structured.body) {
       return truncate(structured.body.split("\n")[0] ?? structured.body, density === "compact" ? 84 : 140);
     }
-    if (structured.status === "completed") return "Completed";
+    if (structured.status === "completed") return l10n("local.completed_22a970d2");
     if (structured.status === "failed" || structured.status === "error") {
-      return structured.exitCode ? `Failed with exit code ${structured.exitCode}` : "Failed";
+      return structured.exitCode
+        ? l10n("local.failed_with_exit_code_0cf00008", { v0: structured.exitCode })
+        : l10n("local.failed_031a8f0f");
     }
   }
   const lines = result
@@ -407,7 +486,9 @@ function summarizeToolDecision(decision: ToolRunDecision | null): { label: strin
     return {
       label: l10n("local.needs_approval_db0e960b"),
       className: "text-amber-700 dark:text-amber-300",
-      detail: `Action request ${decision.pendingAction.actionRequestId.slice(0, 8)}`,
+      detail: l10n("local.action_request_value_0cf00009", {
+        v0: decision.pendingAction.actionRequestId.slice(0, 8),
+      }),
     };
   }
   if (decision.denialReason || decision.invocation.status === "denied" || decision.outcome === "denied") {
@@ -448,7 +529,7 @@ function parseSystemActivity(text: string): { activityId?: string; name: string;
   if (!match) return null;
   return {
     status: match[1].toLowerCase() === "started" ? "running" : "completed",
-    name: humanizeLabel(match[2] ?? "Activity"),
+    name: humanizeLabel(match[2] ?? l10n("local.activity_38da1505")),
     activityId: match[3] || undefined,
   };
 }
@@ -604,31 +685,68 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
       blocks.push({
         type: "event",
         ts: entry.ts,
-        label: entry.complete ? "workspace diff" : "workspace changes",
+        label: entry.complete
+          ? l10n("local.workspace_diff_a4472b52")
+          : l10n("local.workspace_changes_1ac656d5"),
         tone: "info",
-        text: `${entry.totals.files} changed ${entry.totals.files === 1 ? "file" : "files"}`,
-        detail: entry.source === "runner_verified" ? "Verified from workspace" : "Reported by harness",
+        text: entry.totals.files === 1
+          ? l10n("local.one_changed_file_0cf00010")
+          : l10n("local.changed_files_count_0cf00011", { v0: entry.totals.files }),
+        detail: entry.source === "runner_verified"
+          ? l10n("local.verified_from_workspace_0cf00012")
+          : l10n("local.reported_by_harness_0cf00013"),
       });
       continue;
     }
 
     if (entry.kind === "workspace_file_reference") {
-      blocks.push({ type: "event", ts: entry.ts, label: "file reference", tone: "info", text: entry.displayName, detail: entry.path });
+      blocks.push({
+        type: "event",
+        ts: entry.ts,
+        label: l10n("local.file_reference_0cf00014"),
+        tone: "info",
+        text: entry.displayName,
+        detail: entry.path,
+      });
       continue;
     }
 
     if (entry.kind === "runtime_request") {
-      blocks.push({ type: "event", ts: entry.ts, label: `runtime ${entry.requestType}`, tone: entry.status === "pending" ? "warn" : "info", text: entry.prompt, detail: entry.status });
+      blocks.push({
+        type: "event",
+        ts: entry.ts,
+        label: l10n("local.runtime_request_type_0cf00015", {
+          v0: localizedRuntimeRequestType(entry.requestType),
+        }),
+        tone: entry.status === "pending" ? "warn" : "info",
+        text: entry.prompt,
+        detail: localizedTranscriptStatus(entry.status),
+      });
       continue;
     }
 
     if (entry.kind === "run_result") {
-      blocks.push({ type: "event", ts: entry.ts, label: `result · ${entry.disposition}`, tone: entry.disposition === "blocked" ? "warn" : "info", text: entry.summary });
+      blocks.push({
+        type: "event",
+        ts: entry.ts,
+        label: l10n("local.result_with_status_0cf00016", {
+          v0: localizedTranscriptStatus(entry.disposition),
+        }),
+        tone: entry.disposition === "blocked" ? "warn" : "info",
+        text: entry.summary,
+      });
       continue;
     }
 
     if (entry.kind === "run_terminal") {
-      blocks.push({ type: "event", ts: entry.ts, label: "terminal", tone: entry.runState === "failed" ? "error" : "info", text: `${entry.runState} · ${entry.disposition}`, detail: entry.stopReason });
+      blocks.push({
+        type: "event",
+        ts: entry.ts,
+        label: l10n("local.terminal_state_0cf00017"),
+        tone: entry.runState === "failed" ? "error" : "info",
+        text: `${localizedTranscriptStatus(entry.runState)} · ${localizedTranscriptStatus(entry.disposition)}`,
+        detail: entry.stopReason,
+      });
       continue;
     }
 
@@ -675,7 +793,7 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
           type: "tool",
           ts: entry.ts,
           endTs: entry.ts,
-          name: entry.toolName ?? "tool",
+          name: entry.toolName ?? l10n("local.tool_2e53bdcd"),
           toolUseId: entry.toolUseId,
           input: null,
           result: entry.content,
@@ -690,9 +808,14 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
       blocks.push({
         type: "event",
         ts: entry.ts,
-        label: "init",
+        label: l10n("local.initialization_0cf00018"),
         tone: "info",
-        text: `model ${entry.model}${entry.sessionId ? ` • session ${entry.sessionId}` : ""}`,
+        text: entry.sessionId
+          ? l10n("local.model_value_session_value_0cf00020", {
+              v0: entry.model,
+              v1: entry.sessionId,
+            })
+          : l10n("local.model_value_0cf00019", { v0: entry.model }),
       });
       continue;
     }
@@ -701,9 +824,13 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
       blocks.push({
         type: "event",
         ts: entry.ts,
-        label: "result",
+        label: l10n("local.result_6e7d50e8"),
         tone: entry.isError ? "error" : "info",
-        text: entry.text.trim() || entry.errors[0] || (entry.isError ? "Run failed" : "Completed"),
+        text: entry.text.trim()
+          || entry.errors[0]
+          || (entry.isError
+            ? l10n("local.run_failed_97fddf2d")
+            : l10n("local.completed_22a970d2")),
         detail:
           !entry.isError && entry.text.trim().length > 0
             ? `${formatTokens(entry.inputTokens)} / ${formatTokens(entry.outputTokens)} / $${entry.costUsd.toFixed(6)}`
@@ -877,8 +1004,8 @@ function TranscriptProviderActivity({ block, density }: { block: Extract<Transcr
     </button>
     {open ? <div className="mt-2 space-y-2 border-l border-border pl-5 text-xs">
       {steps.length > 0 ? <ol className="space-y-1">{steps.map((step, index) => <li key={String(step.stepId ?? index)}><span className="mr-2" aria-hidden="true">{step.status === "completed" ? "✓" : step.status === "blocked" ? "!" : "○"}</span>{String(step.body ?? "")}</li>)}</ol> : null}
-      {children.length > 0 ? <ul className="space-y-1">{children.map((child, index) => <li key={String(child.childId ?? index)}><strong>{String(child.role ?? "Child agent")}</strong> · {String(child.status ?? "unknown")}<div className="text-muted-foreground">{String(child.summary ?? "")}</div></li>)}</ul> : null}
-      {sources.length > 0 ? <ul className="space-y-1">{sources.map((source, index) => { const url = typeof source.url === "string" && /^https?:\/\//.test(source.url) ? source.url : null; return <li key={String(source.sourceId ?? index)}>{url ? <a className="underline" href={url} target="_blank" rel="noreferrer">{String(source.title ?? url)}</a> : String(source.title ?? "Unavailable source")} <span className="text-muted-foreground">{l10n("local.provider_reported_3f242260")}</span></li>; })}</ul> : null}
+      {children.length > 0 ? <ul className="space-y-1">{children.map((child, index) => <li key={String(child.childId ?? index)}><strong>{String(child.role ?? l10n("local.child_agent_0cf00021"))}</strong> · {typeof child.status === "string" ? localizedTranscriptStatus(child.status) : l10n("local.unknown_b23a6a84")}<div className="text-muted-foreground">{String(child.summary ?? "")}</div></li>)}</ul> : null}
+      {sources.length > 0 ? <ul className="space-y-1">{sources.map((source, index) => { const url = typeof source.url === "string" && /^https?:\/\//.test(source.url) ? source.url : null; return <li key={String(source.sourceId ?? index)}>{url ? <a className="underline" href={url} target="_blank" rel="noreferrer">{String(source.title ?? url)}</a> : String(source.title ?? l10n("local.unavailable_source_0cf00022"))} <span className="text-muted-foreground">{l10n("local.provider_reported_3f242260")}</span></li>; })}</ul> : null}
       {output ? <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-background p-2 font-mono">{output}</pre> : null}
       {block.family === "model_identity" ? <div><span className="text-muted-foreground">{l10n("local.requested_2d9e2828")}</span> {String(block.payload.requestedModel ?? "—")} · <span className="text-muted-foreground">{l10n("local.effective_a4f3df62")}</span> {String(block.payload.effectiveModel ?? "—")}</div> : null}
     </div> : null}
@@ -1108,7 +1235,7 @@ function TranscriptToolCard({
                 <div className="mb-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
                   {l10n("local.input_36ecb4f8")}</div>
                 <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-(length:--text-micro) text-foreground/80">
-                  {formatToolPayload(block.input) || "<empty>"}
+                  {formatToolPayload(block.input) || l10n("local.empty_c6c094bc")}
                 </pre>
               </div>
               <div>
@@ -1118,7 +1245,9 @@ function TranscriptToolCard({
                   "overflow-x-auto whitespace-pre-wrap break-words font-mono text-(length:--text-micro)",
                   block.status === "error" ? "text-red-700 dark:text-red-300" : "text-foreground/80",
                 )}>
-                  {block.result ? formatToolPayload(block.result) : "Waiting for result..."}
+                  {block.result
+                    ? formatToolPayload(block.result)
+                    : l10n("local.waiting_for_result_ellipsis_0cf00023")}
                 </pre>
               </div>
             </div>
@@ -1400,7 +1529,7 @@ function TranscriptToolGroup({
                 <div>
                   <div className="mb-0.5 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">{l10n("local.input_36ecb4f8")}</div>
                   <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-(length:--text-micro) text-foreground/80">
-                    {formatToolPayload(item.input) || "<empty>"}
+                    {formatToolPayload(item.input) || l10n("local.empty_c6c094bc")}
                   </pre>
                 </div>
                 {item.result && (
@@ -1483,7 +1612,7 @@ function TranscriptEventRow({
           <span className="mt-(--sz-7px) h-1.5 w-1.5 shrink-0 rounded-full bg-current/50" />
         )}
         <div className="min-w-0 flex-1">
-          {block.label === "result" && block.tone !== "error" ? (
+          {block.label === l10n("local.result_6e7d50e8") && block.tone !== "error" ? (
             <MarkdownBody
               className={cn(
                 "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0 text-sky-700 dark:text-sky-300",
@@ -1847,7 +1976,7 @@ export function RunTranscriptView({
   limit,
   streaming = false,
   collapseStdout = false,
-  emptyMessage = "No transcript yet.",
+  emptyMessage,
   className,
   thinkingClassName,
   externalReferences,
@@ -1864,7 +1993,7 @@ export function RunTranscriptView({
   if (entries.length === 0) {
     return (
       <div className={cn("rounded-2xl border border-dashed border-border/70 bg-background/40 p-4 text-sm text-muted-foreground", className)}>
-        {emptyMessage}
+        {emptyMessage ?? l10n("local.no_transcript_yet_0cf00024")}
       </div>
     );
   }

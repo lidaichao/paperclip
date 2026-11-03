@@ -237,6 +237,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.live_runs_only_filter_0ce00006).toContain("实时运行");
     expect(messages.inbox_zero_0ce00009).toBe("收件箱已清空。");
     expect(messages.no_inbox_items_match_filters_0ce00012).toContain("筛选条件");
+    expect(messages.inspect_tool_input_0cf00001).toContain("查看 {{v0}} 的输入");
+    expect(messages.changed_files_count_0cf00011).toBe("已变更 {{v0}} 个文件");
+    expect(messages.runtime_request_type_0cf00015).toBe("运行时{{v0}}请求");
+    expect(messages.model_value_session_value_0cf00020).toContain("会话 {{v1}}");
+    expect(messages.no_transcript_yet_0cf00024).toBe("暂无运行记录。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
