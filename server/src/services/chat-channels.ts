@@ -4041,7 +4041,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     operation: TelegramMaintenancePayload["operation"],
   ) {
     const record = await endpointRecord(endpoint.id);
-    if (!record) throw notFound("Chat endpoint not found");
+    if (!record) throw notFound("未找到聊天端点");
     const context = runtimeContextForRecord(record);
     const subscriptionScope =
       operation === "stop_subscription"
@@ -5842,7 +5842,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
   function serializeEndpoint(
     row: Awaited<ReturnType<typeof endpointRecord>>,
   ): ChatEndpoint {
-    if (!row) throw notFound("Chat endpoint not found");
+    if (!row) throw notFound("未找到聊天端点");
     const endpoint = row.endpoint;
     return {
       id: endpoint.id,
@@ -5937,7 +5937,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     input: CreateChatEndpointInput,
     actorUserId?: string | null,
   ) {
-    if ((input.provider as string) === "agentmail") throw badRequest("Use the email inbox setup API for AgentMail");
+    if ((input.provider as string) === "agentmail") throw badRequest("请使用 AgentMail 的邮件收件箱配置接口");
     const agent = await db
       .select({ id: agents.id, name: agents.name, status: agents.status })
       .from(agents)
@@ -5949,7 +5949,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       )
       .then((rows) => rows[0] ?? null);
     if (!agent)
-      throw unprocessable("The selected agent does not belong to this company");
+      throw unprocessable("所选智能体不属于此公司");
     if (!isAgentStatusInvokable(agent.status)) {
       throw unprocessable(
         "The selected agent must be active before it can be connected to chat",
@@ -5984,7 +5984,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             ),
           )
           .then((rows) => rows[0] ?? null);
-        if (!application) throw notFound("App not found");
+        if (!application) throw notFound("未找到应用");
         const sourceTemplateKey =
           typeof application.metadata.sourceTemplateKey === "string"
             ? application.metadata.sourceTemplateKey
@@ -6074,8 +6074,8 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     actorUserId?: string | null,
   ) {
     const initial = await endpointRecord(endpointId);
-    if (!initial) throw notFound("Chat endpoint not found");
-    if (initial.endpoint.provider === "agentmail") throw badRequest("Use the email inbox API for AgentMail");
+    if (!initial) throw notFound("未找到聊天端点");
+    if (initial.endpoint.provider === "agentmail") throw badRequest("请使用 AgentMail 的邮件收件箱接口");
     await withCredentialMutationLease(
       initial.endpoint,
       async (credentialLease) => {
@@ -6083,22 +6083,22 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         // Once a disable returns, no send that sampled the previous grant can
         // still begin or finish behind it.
         const existing = await endpointRecord(endpointId);
-        if (!existing) throw notFound("Chat endpoint not found");
+        if (!existing) throw notFound("未找到聊天端点");
         const values: Partial<typeof chatEndpoints.$inferInsert> = {
           updatedAt: new Date(),
         };
         if (input.communicationInstructions !== undefined) {
           if (existing.endpoint.provider !== "slack") {
-            throw unprocessable("Communication instructions are currently supported for Slack connections");
+            throw unprocessable("通信指令目前仅支持 Slack 连接");
           }
           values.communicationInstructions = input.communicationInstructions;
         }
         if (input.slackApp) {
           if (existing.endpoint.provider !== "slack") {
-            throw unprocessable("Slack app details only apply to Slack connections");
+            throw unprocessable("Slack 应用详情仅适用于 Slack 连接");
           }
           if (existing.endpoint.status !== "draft" || existing.endpoint.botExternalId) {
-            throw conflict("Slack app details can only be edited before connecting the app");
+            throw conflict("Slack 应用详情只能在连接应用前编辑");
           }
           values.setup = {
             ...existing.endpoint.setup,
@@ -6109,7 +6109,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         if (input.allowDirectMessages !== undefined)
           values.allowDirectMessages = input.allowDirectMessages;
         if (input.allowGroupChats && existing.endpoint.provider === "imessage-photon" && (!existing.endpoint.botExternalId || existing.endpoint.botExternalId.startsWith("photon-project:")))
-          throw unprocessable("Photon shared channels support direct messages only; groups require a dedicated channel");
+          throw unprocessable("Photon 共享频道仅支持私信；群组需要专用频道");
         if (input.allowGroupChats !== undefined)
           values.allowGroupChats = input.allowGroupChats;
         if (input.allowUnlinkedPeople !== undefined)
@@ -6171,13 +6171,13 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
   ): Promise<VerifiedProviderIdentity> {
     if (provider === "imessage-photon") {
       const inspection = await inspectPhotonCredentials(credentials.projectId, credentials.projectSecret);
-      if (inspection.allocation !== (credentials.allocation ?? "dedicated")) throw unprocessable("Photon allocation changed; inspect the project again");
+      if (inspection.allocation !== (credentials.allocation ?? "dedicated")) throw unprocessable("Photon 分配方式已变化，请重新检查项目");
       if (inspection.allocation === "shared") {
-        if (!inspection.eligible) throw unprocessable("Photon shared project is unavailable");
+        if (!inspection.eligible) throw unprocessable("Photon 共享项目不可用");
         return { providerAccountId: inspection.projectId, providerAccountLabel: inspection.projectName, botExternalId: photonSharedIdentity(inspection.projectId), botUsername: null, botLabel: `${inspection.projectName} (DM only)` };
       }
       const line = inspection.lines.find((candidate) => candidate.lineId === credentials.lineId && candidate.eligible);
-      if (!line || !inspection.eligible) throw unprocessable("Select an eligible dedicated Photon line");
+      if (!line || !inspection.eligible) throw unprocessable("请选择符合条件的 Photon 专用线路");
       return { providerAccountId: inspection.projectId, providerAccountLabel: inspection.projectName, botExternalId: line.phoneNumber, botUsername: line.phoneNumber, botLabel: line.phoneNumber };
     }
     if (provider === "slack") {
@@ -6577,12 +6577,12 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           )
           .for("update")
           .then((rows) => rows[0] ?? null);
-        if (!current) throw notFound("Chat connection not found");
+        if (!current) throw notFound("未找到聊天连接");
         if (
           credentialFingerprint(current.refs) !==
           credentialFingerprint(previousRefs)
         ) {
-          throw conflict("Chat credentials changed during rotation", {
+          throw conflict("轮换期间聊天凭据发生变化", {
             code: "chat_endpoint_credentials_changed",
           });
         }
@@ -6680,7 +6680,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         )
         .for("update")
         .then((rows) => rows[0] ?? null);
-      if (!current) throw notFound("Chat connection not found");
+      if (!current) throw notFound("未找到聊天连接");
       refs = current.refs;
       await tx
         .delete(companySecretBindings)
@@ -6744,7 +6744,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0] ?? null);
-    if (!connection) throw notFound("Chat connection not found");
+    if (!connection) throw notFound("未找到聊天连接");
     const values = await resolveCredentialRefs(endpoint, connection.refs);
     if (endpoint.provider === "imessage-photon") {
       const configuration = photonChannelConfigurationSchema.parse(connection.config.photon);
