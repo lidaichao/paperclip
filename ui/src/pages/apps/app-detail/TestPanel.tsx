@@ -165,7 +165,9 @@ export function ActionTestDialog({
           <p className="py-6 text-sm text-muted-foreground">{l10n("local.no_agents_are_available_to_test_as_3d77dc6d")}</p>
         ) : accessQuery.isError && !accessQuery.data ? (
           <TestLoadError
-            message={`We couldn't load ${selectedAgentBase?.name ?? "this agent"}'s permissions.`}
+            message={l10n("local.couldnt_load_agent_permissions_0f700001", {
+              v0: selectedAgentBase?.name ?? l10n("local.this_agent_0f700002"),
+            })}
             onRetry={() => { void accessQuery.refetch(); }}
           />
         ) : !selectedAgent ? (
@@ -370,7 +372,9 @@ export function TestPanel({
   if (testAgentAccessQuery.isError && !testAgentAccessQuery.data) {
     return (
       <TestLoadError
-        message={`We couldn't load ${selectedAgentBase?.name ?? "this agent"}'s permissions.`}
+        message={l10n("local.couldnt_load_agent_permissions_0f700001", {
+          v0: selectedAgentBase?.name ?? l10n("local.this_agent_0f700002"),
+        })}
         onRetry={() => { void testAgentAccessQuery.refetch(); }}
       />
     );
@@ -435,7 +439,7 @@ export function TestPanel({
         <div className="space-y-6">
           {visibleRead.length > 0 && selectedAgent && (
             <ActionGroup
-              heading={`Read (${visibleRead.length})`}
+              heading={l10n("local.read_value_4a8a12ac", { v0: visibleRead.length })}
               entries={visibleRead}
               decisionFor={decisionFor}
               agent={selectedAgent}
@@ -444,7 +448,7 @@ export function TestPanel({
           )}
           {visibleWrite.length > 0 && selectedAgent && (
             <ActionGroup
-              heading={`Write (${visibleWrite.length})`}
+              heading={l10n("local.write_value_4f9cbca3", { v0: visibleWrite.length })}
               entries={visibleWrite}
               decisionFor={decisionFor}
               agent={selectedAgent}
@@ -453,8 +457,8 @@ export function TestPanel({
           )}
           {visibleQuarantined.length > 0 && selectedAgent && (
             <ActionGroup
-              heading={`New (${visibleQuarantined.length})`}
-              subheading="New actions wait, switched off, until you turn them on."
+              heading={l10n("local.new_value_0f700003", { v0: visibleQuarantined.length })}
+              subheading={l10n("local.new_actions_wait_off_0f700004")}
               entries={visibleQuarantined}
               decisionFor={() => "off" as const}
               agent={selectedAgent}
@@ -1010,7 +1014,11 @@ function RunningCard({
   elapsedMs: number;
   onCancel: () => void;
 }) {
-  const verb = entry.isReadOnly ? "Reading from" : entry.isWrite ? "Writing to" : "Calling";
+  const runningDescription = entry.isReadOnly
+    ? l10n("local.reading_from_app_as_agent_0f700005", { v0: appName, v1: agentName })
+    : entry.isWrite
+      ? l10n("local.writing_to_app_as_agent_0f700006", { v0: appName, v1: agentName })
+      : l10n("local.calling_app_as_agent_0f700007", { v0: appName, v1: agentName });
   return (
     <div className="rounded-md border border-border bg-muted/30 p-4">
       <div className="flex items-center gap-2">
@@ -1018,7 +1026,7 @@ function RunningCard({
         <span className="text-sm font-medium text-foreground">{l10n("local.running_46c54136")}</span>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        {verb} {appName} {l10n("local.as_f4bf9f7f")}{" "}{agentName}.
+        {runningDescription}
       </p>
       <div className="mt-3 flex items-center justify-between">
         <span className="text-xs text-muted-foreground">{l10n("local.started_ecbc89cd")}{" "}{seconds(elapsedMs)} {l10n("local.ago_press_cancel_to_stop_5ee9f4f3")}</span>
@@ -1197,11 +1205,17 @@ function writeVerb(entry: ToolCatalogEntry): string | null {
 
 function successHeadline(value: unknown, entry: ToolCatalogEntry, appName: string): string {
   const verb = writeVerb(entry);
-  if (!entry.isReadOnly && verb) return `Worked. Row ${verb}.`;
+  if (!entry.isReadOnly && verb === "added") return l10n("local.worked_row_added_0f700008");
+  if (!entry.isReadOnly && verb === "updated") return l10n("local.worked_row_updated_0f700009");
+  if (!entry.isReadOnly && verb === "removed") return l10n("local.worked_row_removed_0f700010");
   const rows = asRows(value);
-  if (rows) return `Worked. ${rows.length} ${rows.length === 1 ? "row" : "rows"} came back.`;
-  if (isEmptyResult(value)) return "Worked. No data to show.";
-  return `Worked. ${appName} sent back the result.`;
+  if (rows) {
+    return rows.length === 1
+      ? l10n("local.worked_one_row_returned_0f700011", { v0: rows.length })
+      : l10n("local.worked_rows_returned_0f700012", { v0: rows.length });
+  }
+  if (isEmptyResult(value)) return l10n("local.worked_no_data_0f700013");
+  return l10n("local.worked_app_returned_result_0f700014", { v0: appName });
 }
 
 function AllowedResult({
@@ -1556,8 +1570,8 @@ function OffExplanation({
   const others = allAgents.filter((a) => a.id !== agent.id);
 
   const whyBody = entry.status === "quarantined"
-    ? "This action is new and hasn't been turned on yet."
-    : `${agent.name}'s access profile sets this action to Off.`;
+    ? l10n("local.action_new_not_enabled_0f700015")
+    : l10n("local.agent_profile_sets_action_off_0f700016", { v0: agent.name });
 
   // "Last changed by {Actor} · {relativeTime}" — only the access config carries
   // this; a quarantined action has never been configured, so there's nothing to
@@ -1565,7 +1579,12 @@ function OffExplanation({
   const { lastChangedAt, lastChangedByName } = agent.effectiveAccess;
   const auditHint =
     entry.status !== "quarantined" && lastChangedAt
-      ? l10n("local.last_changedvalue_value_e37aa2e2", {v0: (lastChangedByName ? ` by ${lastChangedByName}` : ""), v1: (relTime(new Date(lastChangedAt)))})
+      ? lastChangedByName
+        ? l10n("local.last_changed_by_actor_0f700017", {
+            v0: lastChangedByName,
+            v1: relTime(new Date(lastChangedAt)),
+          })
+        : l10n("local.last_changed_at_0f700018", { v0: relTime(new Date(lastChangedAt)) })
       : null;
 
   return (
@@ -1636,25 +1655,25 @@ export function errorHints(message: string, reasonCode: string | null | undefine
   const haystack = `${reasonCode ?? ""} ${message}`.toUpperCase();
   if (haystack.includes("NOT_FOUND")) {
     return [
-      "Double-check the ID or name you entered — pick it from a dropdown if one is offered.",
-      "Make sure this agent has access to that resource in the connected account.",
+      l10n("local.check_id_or_name_0f700019"),
+      l10n("local.ensure_agent_resource_access_0f700020"),
     ];
   }
   if (haystack.includes("PERMISSION") || haystack.includes("FORBIDDEN") || haystack.includes("UNAUTHORIZED")) {
     return [
-      "The connected account may not have permission for this action.",
-      "Reconnect the app from Setup if its access was recently changed.",
+      l10n("local.connected_account_may_lack_permission_0f700021"),
+      l10n("local.reconnect_app_after_access_change_0f700022"),
     ];
   }
   if (haystack.includes("INVALID_ARGUMENT") || haystack.includes("INVALID") || haystack.includes("BAD_REQUEST")) {
     return [
-      "Check the field formats above — a value may be the wrong type or shape.",
-      "Open “More options” to confirm any advanced fields are filled in correctly.",
+      l10n("local.check_field_formats_0f700023"),
+      l10n("local.check_more_options_fields_0f700024"),
     ];
   }
   if (haystack.includes("RATE_LIMIT") || haystack.includes("RESOURCE_EXHAUSTED") || haystack.includes("429")) {
-    return ["The app is rate-limiting calls right now — wait a moment and run it again."];
+    return [l10n("local.app_rate_limiting_retry_0f700025")];
   }
   // Locked generic fallback (copy-spec decision #2).
-  return ["Check the inputs above and try again."];
+  return [l10n("local.check_inputs_try_again_0f700026")];
 }
