@@ -19,16 +19,16 @@ interface ActivityListOptions extends BaseClientOptions {
 }
 
 export function registerActivityCommands(program: Command): void {
-  const activity = program.command("activity").description("Activity log operations");
+  const activity = program.command("activity").description("活动日志操作");
 
   addCommonClientOptions(
     activity
       .command("list")
-      .description("List company activity log entries")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .option("--agent-id <id>", "Filter by agent ID")
-      .option("--entity-type <type>", "Filter by entity type")
-      .option("--entity-id <id>", "Filter by entity ID")
+      .description("列出公司活动日志")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .option("--agent-id <id>", "按智能体编号筛选")
+      .option("--entity-type <type>", "按实体类型筛选")
+      .option("--entity-id <id>", "按实体编号筛选")
       .action(async (opts: ActivityListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -74,9 +74,9 @@ export function registerActivityCommands(program: Command): void {
   addCommonClientOptions(
     activity
       .command("create")
-      .description("Create a company activity log entry")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .requiredOption("--payload-json <json>", "CreateActivity JSON payload")
+      .description("创建公司活动日志")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .requiredOption("--payload-json <json>", "CreateActivity JSON 数据")
       .action(async (opts: ActivityListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -92,8 +92,8 @@ export function registerActivityCommands(program: Command): void {
   addCommonClientOptions(
     activity
       .command("issue")
-      .description("List activity for an issue")
-      .argument("<issueId>", "Issue ID")
+      .description("列出任务活动")
+      .argument("<issueId>", "任务编号")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);

@@ -14,13 +14,13 @@ interface DashboardGetOptions extends BaseClientOptions {
 }
 
 export function registerDashboardCommands(program: Command): void {
-  const dashboard = program.command("dashboard").description("Dashboard summary operations");
+  const dashboard = program.command("dashboard").description("仪表盘摘要操作");
 
   addCommonClientOptions(
     dashboard
       .command("get")
-      .description("Get dashboard summary for a company")
-      .requiredOption("-C, --company-id <id>", "Company ID")
+      .description("获取公司的仪表盘摘要")
+      .requiredOption("-C, --company-id <id>", "公司编号")
       .action(async (opts: DashboardGetOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });

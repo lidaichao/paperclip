@@ -12,7 +12,7 @@ export function registerEmailCommands(program: Command) {
   const email = program
     .command("email")
     .description(
-      "Explicitly send and inspect task-bound AgentMail conversations",
+      "显式发送并检查绑定任务的 AgentMail 对话",
     );
   addCommonClientOptions(email.command("inboxes"), {
     includeCompany: true,
@@ -29,7 +29,7 @@ export function registerEmailCommands(program: Command) {
         .command(verb)
         .requiredOption(
           "--file <path>",
-          "JSON request file, including a stable idempotencyKey",
+          "JSON 请求文件，必须包含稳定的 idempotencyKey",
         ),
       { includeCompany: true },
     ).action(async (opts: BaseClientOptions & { file: string }) => {
@@ -39,7 +39,7 @@ export function registerEmailCommands(program: Command) {
       );
       if ((verb === "reply") !== Boolean(input.conversationId))
         throw new Error(
-          `${verb} requires ${verb === "reply" ? "an existing conversation" : "a parent task and a new conversation"}`,
+          `${verb} 需要${verb === "reply" ? "现有对话" : "父任务和新对话"}`,
         );
       printOutput(
         await ctx.api.post(`/api/companies/${ctx.companyId}/email/send`, input),
@@ -48,7 +48,7 @@ export function registerEmailCommands(program: Command) {
     });
   }
   addCommonClientOptions(
-    email.command("thread").argument("<issueId>", "Email task ID"),
+    email.command("thread").argument("<issueId>", "邮件任务编号"),
     { includeCompany: true },
   ).action(async (issueId: string, opts: BaseClientOptions) => {
     const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -62,7 +62,7 @@ export function registerEmailCommands(program: Command) {
   addCommonClientOptions(
     email
       .command("delivery")
-      .argument("<publicationId>", "Publication ID returned by send"),
+      .argument("<publicationId>", "发送操作返回的发布编号"),
     { includeCompany: true },
   ).action(async (publicationId: string, opts: BaseClientOptions) => {
     const ctx = resolveCommandContext(opts, { requireCompany: true });

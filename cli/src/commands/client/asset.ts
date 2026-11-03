@@ -21,17 +21,17 @@ interface AssetOptions extends BaseClientOptions {
 }
 
 export function registerAssetCommands(program: Command): void {
-  const asset = program.command("asset").description("Asset operations");
+  const asset = program.command("asset").description("资源操作");
 
   addCommonClientOptions(
     asset
       .command("image:upload")
-      .description("Upload a company image asset")
-      .requiredOption("--file <path>", "Image file path")
-      .option("-C, --company-id <id>", "Company ID")
-      .option("--namespace <value>", "Asset namespace suffix")
-      .option("--alt <text>", "Alt text metadata")
-      .option("--title <text>", "Title metadata")
+      .description("上传公司图片资源")
+      .requiredOption("--file <path>", "图片文件路径")
+      .option("-C, --company-id <id>", "公司编号")
+      .option("--namespace <value>", "资源命名空间后缀")
+      .option("--alt <text>", "替代文本元数据")
+      .option("--title <text>", "标题元数据")
       .action(async (opts: AssetOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -47,9 +47,9 @@ export function registerAssetCommands(program: Command): void {
   addCommonClientOptions(
     asset
       .command("logo:upload")
-      .description("Upload a company logo")
-      .requiredOption("--file <path>", "Logo file path")
-      .option("-C, --company-id <id>", "Company ID")
+      .description("上传公司标志")
+      .requiredOption("--file <path>", "标志文件路径")
+      .option("-C, --company-id <id>", "公司编号")
       .action(async (opts: AssetOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -65,9 +65,9 @@ export function registerAssetCommands(program: Command): void {
   addCommonClientOptions(
     asset
       .command("content")
-      .description("Download asset content")
-      .argument("<assetId>", "Asset ID")
-      .option("--out <path>", "Write content to a file instead of stdout")
+      .description("下载资源内容")
+      .argument("<assetId>", "资源编号")
+      .option("--out <path>", "将内容写入文件，而不是标准输出")
       .action(async (assetId: string, opts: AssetOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -92,7 +92,7 @@ async function uploadAsset(
   opts: AssetOptions,
 ): Promise<unknown> {
   if (!opts.file?.trim()) {
-    throw new Error("--file is required");
+    throw new Error("必须提供 --file");
   }
   const bytes = await readFile(opts.file);
   const form = new FormData();
@@ -126,7 +126,7 @@ async function parseFetchResponse(response: Response): Promise<unknown> {
     const message =
       typeof parsed === "object" && parsed !== null && "error" in parsed && typeof parsed.error === "string"
         ? parsed.error
-        : `Request failed with status ${response.status}`;
+        : `请求失败，状态码：${response.status}`;
     throw new ApiRequestError(response.status, message, undefined, parsed);
   }
   return parsed;

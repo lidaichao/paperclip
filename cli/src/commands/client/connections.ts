@@ -16,7 +16,7 @@ async function callRuntimeConnectionTool(
   const endpoint = process.env[endpointEnv]?.trim();
   const token = process.env.PAPERCLIP_RUNTIME_TOOLS_TOKEN?.trim();
   if (!endpoint || !token) {
-    throw new Error("This command requires the runtime connection environment from an active heartbeat run");
+    throw new Error("此命令需要处于活动心跳运行提供的运行时连接环境中");
   }
   const response = await fetch(endpoint, {
     method: "POST",
@@ -32,7 +32,7 @@ async function callRuntimeConnectionTool(
   if (!response.ok) {
     const message = parsed && typeof parsed === "object" && "error" in parsed
       ? String((parsed as { error: unknown }).error)
-      : `Runtime connection request failed with ${response.status}`;
+      : `运行时连接请求失败，状态码：${response.status}`;
     throw new Error(message);
   }
   return parsed;
@@ -45,13 +45,13 @@ function writeResult(value: unknown, options: RuntimeConnectionOptions) {
 export function registerConnectionIntentCommands(program: Command) {
   const connections = program
     .command("connections")
-    .description("Search or request connections from an active heartbeat run")
+    .description("在活动心跳运行中搜索或申请连接")
     .addHelpText("after", `\n${CONNECTION_INTENT_AGENT_GUIDANCE}\n`);
 
   connections
     .command("search")
-    .argument("[query]", "Service name or capability")
-    .option("--json", "Print formatted JSON")
+    .argument("[query]", "服务名称或能力")
+    .option("--json", "输出格式化 JSON")
     .action(async (query: string | undefined, options: RuntimeConnectionOptions) => {
       const input = connectionsSearchInputSchema.parse({ query: query ?? "" });
       writeResult(await callRuntimeConnectionTool(
@@ -62,8 +62,8 @@ export function registerConnectionIntentCommands(program: Command) {
 
   connections
     .command("request")
-    .argument("<service>", "Connectable service slug")
-    .option("--json", "Print formatted JSON")
+    .argument("<service>", "可连接服务的标识")
+    .option("--json", "输出格式化 JSON")
     .action(async (service: string, options: RuntimeConnectionOptions) => {
       const input = connectionRequestInputSchema.parse({ service });
       writeResult(await callRuntimeConnectionTool(
