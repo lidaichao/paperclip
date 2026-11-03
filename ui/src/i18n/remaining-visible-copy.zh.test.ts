@@ -143,5 +143,15 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
     expect(messages.webhook_url_84805a75).toBe("回调通知地址");
     expect(Object.values(messages).filter((value) => /webhook/i.test(value))).toEqual([]);
+    expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
+    expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
+    expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");
+    expect(messages.the_provider_rejected_the_selected_model_chec_e8030a7c).toContain("服务商拒绝了所选模型");
+    expect(messages.we_couldn_t_confirm_whether_this_comment_was_d18cbb20).toContain("可能已经出现在对话中");
+    expect(messages.we_couldn_t_load_who_this_connection_acts_as_8d0b5a1b).toContain("刷新页面后重试");
+    expect(messages.connected_this_account_is_saved_in_connection_95a419a8).toContain("连接管理");
+    expect(messages.the_routine_is_paused_enable_its_automatic_tr_28f90721).toBe("例行任务已暂停。准备使用此计划时，请启用自动触发器。");
+    expect(messages.allow_new_codex_agents_to_select_the_experime_813b44bc).toContain("新手引导仍使用旧版适配器");
+    expect(messages.paperclip_could_not_validate_this_skill_as_ag_11cb7a41).toContain("智能体技能 Markdown");
   });
 });
