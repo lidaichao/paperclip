@@ -2075,7 +2075,7 @@ describe.sequential("agent permission routes", () => {
     const res = await requestApp(app, (baseUrl) => request(baseUrl).post("/api/heartbeat-runs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/cancel").send({}));
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Heartbeat run not found");
+    expect(res.body.error).toBe("未找到智能体运行记录");
     expect(mockHeartbeatService.cancelRun).not.toHaveBeenCalled();
   });
 });

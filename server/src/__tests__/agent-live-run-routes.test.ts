@@ -419,7 +419,7 @@ describe("agent live run routes", () => {
             request(url)[method](`/api/heartbeat-runs/${encodeURIComponent(runId)}${suffix}`).send({}),
           );
           expect(response.status, `${method} ${suffix}: ${JSON.stringify(response.body)}`).toBe(400);
-          expect(response.body).toEqual({ error: "Invalid heartbeat run ID" });
+          expect(response.body).toEqual({ error: "智能体运行 ID 无效" });
         }
         expect(mockHeartbeatService.getRun).not.toHaveBeenCalled();
         expect(mockHeartbeatService.getRunLogAccess).not.toHaveBeenCalled();
@@ -450,7 +450,7 @@ describe("agent live run routes", () => {
           request(url).get(`/api/heartbeat-runs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa${suffix}`),
         );
         expect(response.status).toBe(404);
-        expect(response.body).toEqual({ error: "Heartbeat run not found" });
+        expect(response.body).toEqual({ error: "未找到智能体运行记录" });
       }
       expect(lookup).toHaveBeenCalledTimes(2);
       expect(mockHeartbeatService.readLog).not.toHaveBeenCalled();

@@ -6421,7 +6421,7 @@ export function agentRoutes(
         return ownerUserId;
       },
       requestSchema: startClaudeSetupTokenSessionRequestSchema,
-      invalidRequestError: "The Claude login start request is invalid.",
+      invalidRequestError: "Claude 登录启动请求无效。",
       guardAfterValidate: (data) => {
         // The setup-token route drives a login on a pseudo-terminal and records a
         // stored session identifier on success. It serves any adapter whose
@@ -6431,7 +6431,7 @@ export function agentRoutes(
         // capability with a fixed 400.
         const capability = getRegistryLoginCapability(data.adapterType);
         if (capability?.completionClaim !== "storedSessionId") {
-          res.status(400).json({ error: "This adapter does not support a setup-token login." });
+          res.status(400).json({ error: "此适配器不支持使用设置令牌登录。" });
           return true;
         }
         // The five follow-up routes and the restart reaper both read only the
@@ -6443,7 +6443,7 @@ export function agentRoutes(
         // same fixed 400 as the capability check above, so the response
         // discloses no difference between the two rejection reasons.
         if (data.adapterType !== SETUP_TOKEN_ADAPTER_TYPE) {
-          res.status(400).json({ error: "This adapter does not support a setup-token login." });
+          res.status(400).json({ error: "此适配器不支持使用设置令牌登录。" });
           return true;
         }
         if (!SETUP_TOKEN_LOGIN_TRANSPORT_READY) {
@@ -6462,7 +6462,7 @@ export function agentRoutes(
     const { environmentId, adapterType } = data;
     if (data.aiConnection) {
       await assertAiConnectionCreateAccess(db, req, companyId, data.aiConnection);
-      if (!isAiConnectionCompatible(data.aiConnection, adapterType)) throw unprocessable("Incompatible login method");
+      if (!isAiConnectionCompatible(data.aiConnection, adapterType)) throw unprocessable("登录方式不兼容");
     }
     const confirmedOverwrite: ClaudeSetupTokenOverwrite | null = data.overwrite ?? null;
 
@@ -6820,14 +6820,14 @@ export function agentRoutes(
     const runId = req.params.runId as string;
     // isUuidLike accepts surrounding whitespace, but PostgreSQL UUID inputs do not.
     if (runId !== runId.trim() || !isUuidLike(runId)) {
-      throw badRequest("Invalid heartbeat run ID");
+      throw badRequest("智能体运行 ID 无效");
     }
     return runId;
   }
 
   router.get("/heartbeat-runs/:runId", async (req, res) => {
     const runId = readHeartbeatRunId(req);
-    const run = await getAccessibleResource(req, res, heartbeat.getRun(runId), "Heartbeat run not found");
+    const run = await getAccessibleResource(req, res, heartbeat.getRun(runId), "未找到智能体运行记录");
     if (!run) return;
     if (!(await assertRunTelemetryReadAllowed(req, res, run.companyId))) return;
     const retryExhaustedReason = await heartbeat.getRetryExhaustedReason(runId);
@@ -6845,12 +6845,12 @@ export function agentRoutes(
   router.post("/heartbeat-runs/:runId/cancel", async (req, res) => {
     assertBoard(req);
     const runId = readHeartbeatRunId(req);
-    const existing = await getAccessibleResource(req, res, heartbeat.getRun(runId), "Heartbeat run not found");
+    const existing = await getAccessibleResource(req, res, heartbeat.getRun(runId), "未找到智能体运行记录");
     if (!existing) return;
     // Stamp the cancellation as operator-initiated (this route is board-only).
     // Recovery reads this to stand down instead of classifying the cancelled
     // run as agent stranding and re-waking the agent the operator just stopped.
-    const run = await heartbeat.cancelRun(runId, "Cancelled by a board operator", {
+    const run = await heartbeat.cancelRun(runId, "由控制台操作员取消", {
       resultJson: {
         cancelledByActorType: "user",
         cancelledByUserId: req.actor.userId ?? null,
@@ -6882,16 +6882,16 @@ export function agentRoutes(
         req,
         res,
         heartbeat.getRun(runId),
-        "Heartbeat run not found",
+        "未找到智能体运行记录",
       );
       if (!existing) return;
       if (existing.runtimeMode !== "native" || existing.status !== "running") {
         throw conflict(
-          "This runner session is no longer accepting runtime responses.",
+          "此运行器会话已不再接收运行时响应。",
         );
       }
       if (!requestId || requestId.length > 160) {
-        throw badRequest("A runtime request identifier is required.");
+        throw badRequest("必须提供运行时请求标识。");
       }
       const resolutionActor: NativeRuntimeRequestResolver = {
         type: "user",
@@ -6907,7 +6907,7 @@ export function agentRoutes(
         requestId,
       });
       if (!pendingRequest) {
-        throw conflict("This runtime request is stale or is no longer pending.");
+        throw conflict("此运行时请求已过期或不再处于待处理状态。");
       }
       try {
         assertNativeRuntimeRequestResolverAuthorized(
@@ -6918,8 +6918,8 @@ export function agentRoutes(
         if (error instanceof NativeRuntimeRequestResolutionAuthorizationError) {
           throw forbidden(
             pendingRequest.resolverPolicy === "instance_admin"
-              ? "Instance admin access is required to resolve privileged runtime approvals."
-              : "This actor is not authorized to resolve the runtime request.",
+              ? "处理高权限运行审批需要实例管理员权限。"
+              : "当前操作者无权处理此运行时请求。",
           );
         }
         throw error;
@@ -6960,7 +6960,7 @@ export function agentRoutes(
         }
       } catch (error) {
         if (error instanceof HarnessRuntimeRequestResolutionError) {
-          throw badRequest("Invalid runtime request response.");
+          throw badRequest("运行时请求响应无效。");
         }
         throw error;
       }
@@ -6979,7 +6979,7 @@ export function agentRoutes(
           || currentPendingRequest.requestKind !== pendingRequest.requestKind
           || currentPendingRequest.turnId !== pendingRequest.turnId
         ) {
-          throw conflict("This runtime request is stale or is no longer pending.");
+          throw conflict("此运行时请求已过期或不再处于待处理状态。");
         }
         let queued: { commandId: string };
         try {
@@ -7003,7 +7003,7 @@ export function agentRoutes(
                   currentPendingRequest.turnId
               ) {
                 throw conflict(
-                  "This runtime request is stale or is no longer pending.",
+                  "此运行时请求已过期或不再处于待处理状态。",
                 );
               }
               assertNativeRuntimeRequestResolverAuthorized(
@@ -7018,7 +7018,7 @@ export function agentRoutes(
             error.code === "runtime_request_resolution_conflict"
           ) {
             throw conflict(
-              "A different response was already submitted for this runtime request.",
+              "此运行时请求已经提交了其他响应。",
             );
           }
           if (
@@ -7033,7 +7033,7 @@ export function agentRoutes(
               error.code === "runtime_request_stale_turn"
             ) {
               throw conflict(
-                "The runner session is no longer accepting runtime responses.",
+                "运行器会话已不再接收运行时响应。",
               );
             }
             throw error;
@@ -7065,14 +7065,14 @@ export function agentRoutes(
       } catch (error) {
         if (error instanceof NativeRuntimeRequestResolutionAuthorizationError) {
           throw forbidden(
-            "This actor is not authorized to resolve the runtime request.",
+            "当前操作者无权处理此运行时请求。",
           );
         }
         if (error instanceof RunnerPrpRuntimeRequestResolutionError) {
           throw conflict(
             error.code === "runtime_request_resolution_conflict"
-              ? "A different response was already submitted for this runtime request."
-              : "The runner session is no longer accepting runtime responses.",
+              ? "此运行时请求已经提交了其他响应。"
+              : "运行器会话已不再接收运行时响应。",
           );
         }
         throw error;
@@ -7082,11 +7082,11 @@ export function agentRoutes(
 
   router.post("/heartbeat-runs/:runId/watchdog-decisions", async (req, res) => {
     const runId = readHeartbeatRunId(req);
-    const existing = await getAccessibleResource(req, res, heartbeat.getRun(runId), "Heartbeat run not found");
+    const existing = await getAccessibleResource(req, res, heartbeat.getRun(runId), "未找到智能体运行记录");
     if (!existing) return;
     const decision = typeof req.body?.decision === "string" ? req.body.decision : "";
     if (!["snooze", "continue", "dismissed_false_positive"].includes(decision)) {
-      res.status(400).json({ error: "Unsupported watchdog decision" });
+      res.status(400).json({ error: "不支持此监控处置决定" });
       return;
     }
     const evaluationIssueId = typeof req.body?.evaluationIssueId === "string" ? req.body.evaluationIssueId : null;
@@ -7095,7 +7095,7 @@ export function agentRoutes(
       ? new Date(String(req.body?.snoozedUntil ?? ""))
       : null;
     if (decision === "snooze" && (!snoozedUntil || Number.isNaN(snoozedUntil.getTime()) || snoozedUntil <= new Date())) {
-      res.status(400).json({ error: "snoozedUntil must be a future ISO datetime" });
+      res.status(400).json({ error: "snoozedUntil 必须是未来的 ISO 日期时间" });
       return;
     }
 
@@ -7119,7 +7119,7 @@ export function agentRoutes(
       req,
       res,
       heartbeat.getRun(runId),
-      "Heartbeat run not found",
+      "未找到智能体运行记录",
     );
     if (!run) return;
     const inspection = await providerTraces.inspect(run.id, run.companyId);
@@ -7148,7 +7148,7 @@ export function agentRoutes(
         req,
         res,
         heartbeat.getRun(runId),
-        "Heartbeat run not found",
+        "未找到智能体运行记录",
       );
       if (!run) return;
 
@@ -7205,13 +7205,13 @@ export function agentRoutes(
       const runId = readHeartbeatRunId(req);
       const frameId = Number(req.params.frameId);
       if (!Number.isSafeInteger(frameId) || frameId < 1) {
-        throw badRequest("Invalid provider trace frame id");
+        throw badRequest("服务商追踪帧 ID 无效");
       }
       const run = await getAccessibleResource(
         req,
         res,
         heartbeat.getRun(runId),
-        "Heartbeat run not found",
+        "未找到智能体运行记录",
       );
       if (!run) return;
       const frame = await providerTraces.revealFrame(
@@ -7219,7 +7219,7 @@ export function agentRoutes(
         run.companyId,
         frameId,
       );
-      if (!frame) throw notFound("Provider trace frame not found");
+      if (!frame) throw notFound("未找到服务商追踪帧");
       await logActivity(db, {
         companyId: run.companyId,
         actorType: "user",
@@ -7247,11 +7247,11 @@ export function agentRoutes(
         req,
         res,
         heartbeat.getRun(runId),
-        "Heartbeat run not found",
+        "未找到智能体运行记录",
       );
       if (!run) return;
       const download = await providerTraces.download(run.id, run.companyId);
-      if (!download) throw notFound("Provider trace not found");
+      if (!download) throw notFound("未找到服务商追踪记录");
       await logActivity(db, {
         companyId: run.companyId,
         actorType: "user",
@@ -7282,11 +7282,11 @@ export function agentRoutes(
       req,
       res,
       heartbeat.getRun(runId),
-      "Heartbeat run not found",
+      "未找到智能体运行记录",
     );
     if (!run) return;
     const removed = await providerTraces.remove(run.id, run.companyId);
-    if (!removed) throw notFound("Provider trace not found");
+    if (!removed) throw notFound("未找到服务商追踪记录");
     await logActivity(db, {
       companyId: run.companyId,
       actorType: "user",
@@ -7301,7 +7301,7 @@ export function agentRoutes(
 
   router.get("/heartbeat-runs/:runId/events", async (req, res) => {
     const runId = readHeartbeatRunId(req);
-    const run = await getAccessibleResource(req, res, heartbeat.getRun(runId), "Heartbeat run not found");
+    const run = await getAccessibleResource(req, res, heartbeat.getRun(runId), "未找到智能体运行记录");
     if (!run) return;
     if (!(await assertRunTelemetryReadAllowed(req, res, run.companyId))) return;
 
@@ -7320,7 +7320,7 @@ export function agentRoutes(
 
   router.get("/heartbeat-runs/:runId/log", async (req, res) => {
     const runId = readHeartbeatRunId(req);
-    const run = await getAccessibleResource(req, res, heartbeat.getRunLogAccess(runId), "Heartbeat run not found");
+    const run = await getAccessibleResource(req, res, heartbeat.getRunLogAccess(runId), "未找到智能体运行记录");
     if (!run) return;
     if (!(await assertRunTelemetryReadAllowed(req, res, run.companyId))) return;
 
@@ -7337,7 +7337,7 @@ export function agentRoutes(
 
   router.get("/heartbeat-runs/:runId/workspace-operations", async (req, res) => {
     const runId = readHeartbeatRunId(req);
-    const run = await getAccessibleResource(req, res, heartbeat.getRun(runId), "Heartbeat run not found");
+    const run = await getAccessibleResource(req, res, heartbeat.getRun(runId), "未找到智能体运行记录");
     if (!run) return;
     if (!(await assertRunTelemetryReadAllowed(req, res, run.companyId))) return;
 
@@ -7349,7 +7349,7 @@ export function agentRoutes(
 
   router.get("/workspace-operations/:operationId/log", async (req, res) => {
     const operationId = req.params.operationId as string;
-    const operation = await getAccessibleResource(req, res, workspaceOperations.getById(operationId), "Workspace operation not found");
+    const operation = await getAccessibleResource(req, res, workspaceOperations.getById(operationId), "未找到工作区操作记录");
     if (!operation) return;
     if (!(await assertRunTelemetryReadAllowed(req, res, operation.companyId))) return;
 
@@ -7372,7 +7372,7 @@ export function agentRoutes(
       req,
       res,
       identifier ? issueSvc.getByIdentifier(identifier) : issueSvc.getById(rawId),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
 
@@ -7426,7 +7426,7 @@ export function agentRoutes(
   });
 
   router.get("/issues/:issueId/execution", async (req, res) => {
-    const issue = await getAccessibleResource(req, res, issueService(db).getById(req.params.issueId as string), "Issue not found");
+    const issue = await getAccessibleResource(req, res, issueService(db).getById(req.params.issueId as string), "未找到任务");
     if (!issue) return;
     const [run] = await db.select({ id: heartbeatRuns.id, agentId: heartbeatRuns.agentId }).from(heartbeatRuns).where(and(
       eq(heartbeatRuns.companyId, issue.companyId),
@@ -7443,7 +7443,7 @@ export function agentRoutes(
       req,
       res,
       identifier ? issueSvc.getByIdentifier(identifier) : issueSvc.getById(rawId),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
 

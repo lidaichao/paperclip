@@ -781,7 +781,7 @@ describe("company-and-environment setup-token route — object-level authorizati
       adapterType: "gemini_local",
     });
     expect(res.status, JSON.stringify(res.body)).toBe(400);
-    expect(res.body.error).toBe("This adapter does not support a setup-token login.");
+    expect(res.body.error).toBe("此适配器不支持使用设置令牌登录。");
     // The route rejected the adapter before any sandbox, lease, or store side
     // effect: no cleanup record, no lease acquire, no pseudo-terminal start, and
     // no environment or provider guard call.
@@ -884,7 +884,7 @@ describe("company-and-environment setup-token route — fail-closed environment"
 
     const res = await startCompanySession(app);
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("The selected environment belongs to another company.");
+    expect(res.body.error).toBe("所选环境属于其他公司。");
     // No rejected environment reached the store.
     expect(transport.records).toEqual([]);
   });
