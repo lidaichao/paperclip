@@ -3938,7 +3938,7 @@ export function companySkillService(db: Db) {
   ): Promise<CompanySkillForkResult> {
     await ensureSkillInventoryCurrent(companyId);
     const source = await getById(companyId, skillId);
-    if (!source) throw notFound("Skill not found");
+    if (!source) throw notFound("未找到技能");
     const existing = await listFull(companyId);
     const usedSlugs = new Set(existing.map((skill) => normalizeSkillSlug(skill.slug) ?? skill.slug));
     const forkSlug = uniqueSkillSlug(normalizeSkillSlug(input.slug ?? `${source.slug}-fork`) ?? `${source.slug}-fork`, usedSlugs);
@@ -4010,7 +4010,7 @@ export function companySkillService(db: Db) {
       .where(and(eq(companySkills.id, source.id), eq(companySkills.companyId, companyId)));
     await createVersion(companyId, forked.id, { label: "Initial version" }, actor);
     const persistedFork = await getById(companyId, forked.id).then((skill) => {
-      if (!skill) throw notFound("Forked skill not found");
+      if (!skill) throw notFound("未找到复制后的技能");
       return skill;
     });
     let reassignments: CompanySkillForkReassignment[];
@@ -4033,7 +4033,7 @@ export function companySkillService(db: Db) {
     input: CompanySkillRenameRequest,
   ): Promise<CompanySkillRenameResult> {
     await ensureSkillInventoryCurrent(companyId);
-    if (!await getById(companyId, skillId)) throw notFound("Skill not found");
+    if (!await getById(companyId, skillId)) throw notFound("未找到技能");
     const managedRoot = resolveManagedSkillsRoot(companyId);
     let result: CompanySkillRenameResult | undefined;
     let restoreSource: (() => Promise<void>) | undefined;
@@ -4049,10 +4049,10 @@ export function companySkillService(db: Db) {
           }
 
           const newName = input.name.trim();
-          if (!newName) throw unprocessable("Skill name is required.");
+          if (!newName) throw unprocessable("必须提供技能名称。");
           const newSlug = normalizeSkillSlug(input.slug ?? null) ?? normalizeSkillSlug(newName);
           if (!newSlug) {
-            throw unprocessable("Skill name must contain at least one letter or number to derive a slug.");
+            throw unprocessable("技能名称必须至少包含一个字母或数字，才能生成标识符。");
           }
           const newKey = `company/${companyId}/${newSlug}`;
 
@@ -4141,7 +4141,7 @@ export function companySkillService(db: Db) {
               .where(and(eq(companySkills.id, skill.id), eq(companySkills.companyId, companyId)))
               .returning({ id: companySkills.id })
               .then((rows) => rows[0] ?? null);
-            if (!updated) throw notFound("Skill not found");
+            if (!updated) throw notFound("未找到技能");
 
             for (const item of plannedReassignments) {
               const row = await tx
@@ -4171,7 +4171,7 @@ export function companySkillService(db: Db) {
           }
 
           const renamed = await getById(companyId, skill.id, tx);
-          if (!renamed) throw notFound("Renamed skill not found");
+          if (!renamed) throw notFound("未找到重命名后的技能");
           return { skill: renamed, previousName, previousSlug, previousKey, reassignments: plannedReassignments };
         }, [normalizeSkillSlug(input.slug ?? null) ?? normalizeSkillSlug(input.name) ?? ""]);
       } catch (error) {
@@ -4306,7 +4306,7 @@ export function companySkillService(db: Db) {
     const normalizedPath = normalizePortablePath(relativePath || "SKILL.md");
     const fileEntry = skill.fileInventory.find((entry) => entry.path === normalizedPath);
     if (!fileEntry) {
-      throw notFound("Skill file not found");
+      throw notFound("未找到技能文件");
     }
 
     const source = deriveSkillSourceInfo(skill);
@@ -4322,7 +4322,7 @@ export function companySkillService(db: Db) {
       } else if (normalizedPath === "SKILL.md") {
         content = skill.markdown;
       } else {
-        throw notFound("Skill file is unavailable: the skill source directory is missing.");
+        throw notFound("技能文件不可用：缺少技能来源目录。");
       }
     } else if (skill.sourceType === "github" || skill.sourceType === "skills_sh") {
       const metadata = getSkillMeta(skill);
@@ -4337,7 +4337,7 @@ export function companySkillService(db: Db) {
         ? normalizeGitHubSkillDirectory(rawRepoSkillDir, "")
         : normalizeGitHubSkillDirectory(rawRepoSkillDir, skill.slug);
       if (!owner || !repo) {
-        throw unprocessable("Skill source metadata is incomplete.");
+        throw unprocessable("技能来源元数据不完整。");
       }
       const repoPath = normalizePortablePath(path.posix.join(repoSkillDir, normalizedPath));
       try {
@@ -4351,11 +4351,11 @@ export function companySkillService(db: Db) {
       }
     } else if (skill.sourceType === "url") {
       if (normalizedPath !== "SKILL.md") {
-        throw notFound("This skill source only exposes SKILL.md");
+        throw notFound("此技能来源仅公开 SKILL.md");
       }
       content = skill.markdown;
     } else {
-      throw unprocessable("Unsupported skill source.");
+      throw unprocessable("不支持此技能来源。");
     }
 
     return {
@@ -4376,7 +4376,7 @@ export function companySkillService(db: Db) {
   ): Promise<CompanySkill> {
     await ensureSkillInventoryCurrent(companyId);
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
 
     const sharingScope = Object.prototype.hasOwnProperty.call(input, "sharingScope")
       ? normalizeMutableSharingScope(input.sharingScope)
@@ -4417,7 +4417,7 @@ export function companySkillService(db: Db) {
       .where(and(eq(companySkills.id, skillId), eq(companySkills.companyId, companyId)))
       .returning()
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Skill not found");
+    if (!row) throw notFound("未找到技能");
     return toCompanySkill(row);
   }
 
@@ -4434,7 +4434,7 @@ export function companySkillService(db: Db) {
       ? await getById(companyId, input.forkedFromSkillId)
       : null;
     if (input.forkedFromSkillId && !forkSource) {
-      throw notFound("Fork source skill not found");
+      throw notFound("未找到复制来源技能");
     }
     const sharingScope = normalizeMutableSharingScope(input.sharingScope) ?? "company";
     const managedRoot = resolveManagedSkillsRoot(companyId);
@@ -4589,7 +4589,7 @@ export function companySkillService(db: Db) {
   ): Promise<T> {
     await ensureSkillInventoryCurrent(companyId);
     const initial = await getById(companyId, skillId);
-    if (!initial) throw notFound("Skill not found");
+    if (!initial) throw notFound("未找到技能");
     return db.transaction(async (tx) => {
       // Share the creation/deletion name lock. The identity must be checked
       // again after waiting: a new skill can now own the same source folder.
@@ -4597,8 +4597,8 @@ export function companySkillService(db: Db) {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`${companyId}:${slug}`}, 0))`);
       }
       const skill = await getById(companyId, skillId, tx);
-      if (!skill) throw notFound("Skill not found");
-      if (skill.slug !== initial.slug) throw conflict("Skill was renamed. Retry the operation.");
+      if (!skill) throw notFound("未找到技能");
+      if (skill.slug !== initial.slug) throw conflict("技能已被重命名，请重试此操作。");
       return mutate(skill, tx);
     });
   }
@@ -4633,7 +4633,7 @@ export function companySkillService(db: Db) {
 
       const normalizedPath = normalizePortablePath(relativePath);
       const absolutePath = resolveLocalSkillFilePath(skill, normalizedPath);
-      if (!absolutePath) throw notFound("Skill file not found");
+      if (!absolutePath) throw notFound("未找到技能文件");
 
       const previousContent = await fs.readFile(absolutePath, "utf8").catch(() => null);
       await fs.mkdir(path.dirname(absolutePath), { recursive: true });
@@ -4667,7 +4667,7 @@ export function companySkillService(db: Db) {
 
       const updated = await getById(companyId, skillId, tx);
       const detail = updated ? await readLoadedSkillFile(updated, normalizedPath) : null;
-      if (!detail) throw notFound("Skill file not found");
+      if (!detail) throw notFound("未找到技能文件");
       return detail;
     });
   }
@@ -4687,7 +4687,7 @@ export function companySkillService(db: Db) {
 
       const normalizedPath = normalizePortablePath(input.path);
       if (!normalizedPath) {
-        throw unprocessable("Skill file path is required.");
+        throw unprocessable("必须提供技能文件路径。");
       }
 
       const deletedPaths = input.target === "folder"
