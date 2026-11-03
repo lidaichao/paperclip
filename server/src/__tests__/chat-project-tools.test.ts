@@ -48,16 +48,16 @@ const support = await getEmbeddedPostgresTestSupport();
   it("rejects creation, child helpers, and reparenting under a chat, while retaining legacy children", async () => {
     const f = await server.fixture({ conversation: true });
     const svc = issueService(server.db);
-    await expect(svc.create(f.companyId, { title: "Invalid", parentId: f.issueId })).rejects.toThrow(/cannot have new subtasks/);
-    await expect(svc.createChild(f.issueId, { title: "Invalid" })).rejects.toThrow(/cannot have new subtasks/);
+    await expect(svc.create(f.companyId, { title: "Invalid", parentId: f.issueId })).rejects.toThrow(/不能新建子任务/);
+    await expect(svc.createChild(f.issueId, { title: "Invalid" })).rejects.toThrow(/不能新建子任务/);
     await expect(svc.importIssues(f.companyId, [{
       id: randomUUID(), ref: "imported", title: "Imported child", parentId: f.issueId,
       projectId: null, projectWorkspaceId: null, description: null, assigneeAgentId: null,
       status: "backlog", priority: "medium", billingCode: null, assigneeAdapterOverrides: null,
       executionWorkspaceSettings: null, labelIds: [], monitorNotes: null, monitorScheduledBy: null,
-    }])).rejects.toThrow(/cannot have new subtasks/);
+    }])).rejects.toThrow(/不能新建子任务/);
     const ordinary = await svc.create(f.companyId, { title: "Ordinary" });
-    await expect(svc.update(ordinary.id, { parentId: f.issueId })).rejects.toThrow(/cannot have new subtasks/);
+    await expect(svc.update(ordinary.id, { parentId: f.issueId })).rejects.toThrow(/不能新建子任务/);
     await server.db.update(issues).set({ parentId: f.issueId }).where(eq(issues.id, ordinary.id));
     expect(await svc.update(ordinary.id, { title: "Legacy edited", parentId: f.issueId })).toMatchObject({ title: "Legacy edited" });
     expect(await svc.update(ordinary.id, { parentId: null })).toMatchObject({ parentId: null });
@@ -90,7 +90,7 @@ const support = await getEmbeddedPostgresTestSupport();
     const feed = await activityService(server.db).forIssue(f.issueId);
     expect(feed.filter(event => event.action === "project.created")).toHaveLength(1);
     expect(feed.find(event => event.action === "project.created")).toMatchObject({ entityId: project.id, runId: f.runId, details: { sourceIssueId: f.issueId } });
-    await expect(call(f, "create_project", { ...input, name: "Changed" })).rejects.toThrow(/different inputs/);
+    await expect(call(f, "create_project", { ...input, name: "Changed" })).rejects.toThrow(/不同的输入/);
   });
 
   it("includes an explicit workspace repository in the committed project card", async () => {
@@ -107,7 +107,7 @@ const support = await getEmbeddedPostgresTestSupport();
     const project = await call(f, "create_project", { name: "Across repos", repositoryUrls: ["https://github.com/example/web.git", "https://github.com/example/api", "https://github.com/example/web/"], idempotencyKey: "urls" }) as any;
     expect(project.workspaces.map((w: any) => w.repoUrl).sort()).toEqual(["https://github.com/example/api", "https://github.com/example/web"]);
     expect(project.workspaces.filter((w: any) => w.isPrimary)).toHaveLength(1);
-    await expect(call(f, "create_project", { name: "Invalid", repositoryUrls: ["https://github.com/example/api"], workspace: { repoUrl: "https://github.com/example/web" }, idempotencyKey: "conflict" })).rejects.toThrow(/either workspace/);
+    await expect(call(f, "create_project", { name: "Invalid", repositoryUrls: ["https://github.com/example/api"], workspace: { repoUrl: "https://github.com/example/web" }, idempotencyKey: "conflict" })).rejects.toThrow(/选择一种方式/);
     await expect(call(f, "create_project", { name: "Invalid", repositoryUrls: ["https://user:password@github.com/example/api"], idempotencyKey: "credentials" })).rejects.toThrow(/without credentials/);
   });
 

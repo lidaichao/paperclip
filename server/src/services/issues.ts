@@ -8486,7 +8486,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, issueId))
         .then((rows) => rows[0] ?? null);
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
       return getCurrentScheduledRetryForIssue(issue.id, issue.companyId);
     },
 
@@ -8496,7 +8496,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, issueId))
         .then((rows) => rows[0] ?? null);
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
       const relations = await getIssueRelationSummaryMap(
         issue.companyId,
         [issueId],
@@ -8514,7 +8514,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, issueId))
         .then((rows) => rows[0] ?? null);
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
 
       const cappedMax = Math.max(
         0,
@@ -8576,7 +8576,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, issueId))
         .then((rows) => rows[0] ?? null);
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
 
       const maxWakeRequests = Math.max(
         0,
@@ -8688,7 +8688,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, issueId))
         .then((rows) => rows[0] ?? null);
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
 
       const maxDepth = Math.max(
         0,
@@ -9022,7 +9022,7 @@ export function issueService(db: Db) {
         .then(
           (rows: Array<{ id: string; companyId: string }>) => rows[0] ?? null,
         );
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
       const readiness = await listIssueDependencyReadinessMap(
         dbOrTx,
         issue.companyId,
@@ -9234,7 +9234,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, parentIssueId))
         .then((rows) => rows[0] ?? null);
-      if (!parent) throw notFound("Parent issue not found");
+      if (!parent) throw notFound("未找到父任务");
       await assertExecutionTaskParent(db, parent.companyId, parent.id);
 
       const idempotencyKey = data.idempotencyKey?.trim();
@@ -9254,7 +9254,7 @@ export function issueService(db: Db) {
         if (existingChild) {
           if (existingChild.parentId !== parent.id) {
             throw conflict(
-              "Child creation idempotency key belongs to another parent issue",
+              "子任务创建幂等键属于其他父任务",
             );
           }
           data.onDeduplicated?.("idempotency_key");
@@ -9282,7 +9282,7 @@ export function issueService(db: Db) {
         );
       if (childCount >= MAX_CHILD_ISSUES_CREATED_BY_HELPER) {
         throw unprocessable(
-          `Parent issue already has the maximum ${MAX_CHILD_ISSUES_CREATED_BY_HELPER} child issues for this helper`,
+          `此辅助工具已为父任务创建最多 ${MAX_CHILD_ISSUES_CREATED_BY_HELPER} 个子任务`,
         );
       }
 
@@ -9395,7 +9395,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, sourceIssueId))
         .then((rows) => rows[0] ?? null);
-      if (!sourceIssue) throw notFound("Source issue not found");
+      if (!sourceIssue) throw notFound("未找到来源任务");
 
       const requestFingerprint =
         createAcceptedPlanDecompositionRequestFingerprint({
@@ -9426,7 +9426,7 @@ export function issueService(db: Db) {
           .then((rows) => rows[0] ?? null);
         if (!belongsToPlanDocument) {
           throw unprocessable(
-            "acceptedPlanRevisionId must belong to the source issue's plan document",
+            "acceptedPlanRevisionId 必须属于来源任务的计划文档",
           );
         }
 
@@ -9440,7 +9440,7 @@ export function issueService(db: Db) {
         );
         if (!acceptedInteraction) {
           throw unprocessable(
-            "acceptedPlanRevisionId must have an accepted plan confirmation",
+            "acceptedPlanRevisionId 必须具有已接受的计划确认记录",
           );
         }
 
@@ -9484,14 +9484,14 @@ export function issueService(db: Db) {
             .returning();
           if (!created)
             throw new Error(
-              "Failed to create accepted-plan decomposition claim",
+              "创建已接受计划的拆解声明失败",
             );
           return created;
         }
 
         if (existing.requestFingerprint !== requestFingerprint) {
           throw conflict(
-            "Accepted-plan decomposition already exists for this revision with a different child set",
+            "此修订已存在使用不同子任务集合的已接受计划拆解",
           );
         }
 
@@ -9516,10 +9516,10 @@ export function issueService(db: Db) {
             .where(eq(issuePlanDecompositions.id, currentClaim.id))
             .then((rows) => rows[0] ?? null);
           if (!claim)
-            throw notFound("Accepted-plan decomposition claim not found");
+            throw notFound("未找到已接受计划的拆解声明");
           if (claim.requestFingerprint !== requestFingerprint) {
             throw conflict(
-              "Accepted-plan decomposition already exists for this revision with a different child set",
+                "此修订已存在使用不同子任务集合的已接受计划拆解",
             );
           }
 
@@ -9565,7 +9565,7 @@ export function issueService(db: Db) {
               .returning();
             if (!completed)
               throw new Error(
-                "Failed to complete accepted-plan decomposition claim",
+                "完成已接受计划的拆解声明失败",
               );
             return {
               claim: completed,
@@ -9576,7 +9576,7 @@ export function issueService(db: Db) {
           const nextChildInput = data.children[existingChildIssueIds.length];
           if (!nextChildInput) {
             throw new Error(
-              "Accepted-plan decomposition child cursor moved past the requested children",
+              "已接受计划的拆解子任务游标超出了请求的子任务范围",
             );
           }
 
@@ -9610,7 +9610,7 @@ export function issueService(db: Db) {
             .returning();
           if (!updatedClaim)
             throw new Error(
-              "Failed to persist accepted-plan decomposition progress",
+              "保存已接受计划的拆解进度失败",
             );
           return {
             claim: updatedClaim,
@@ -9768,7 +9768,7 @@ export function issueService(db: Db) {
         delete issueData.executionWorkspaceSettings;
       }
       if (data.assigneeAgentId && data.assigneeUserId) {
-        throw unprocessable("Issue can only have one assignee");
+        throw unprocessable("任务只能有一位负责人");
       }
       if (data.assigneeAgentId) {
         await assertAssignableAgent(db, companyId, data.assigneeAgentId, {
@@ -9783,7 +9783,7 @@ export function issueService(db: Db) {
         !data.assigneeAgentId &&
         !data.assigneeUserId
       ) {
-        throw unprocessable("in_progress issues require an assignee");
+        throw unprocessable("进行中的任务必须有负责人");
       }
       const persist = async (tx: DbTransaction) => {
         await assertExecutionTaskParent(tx as unknown as Db, companyId, issueData.parentId);
