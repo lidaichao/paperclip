@@ -925,7 +925,7 @@ describe("secret routes", () => {
     );
 
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: "Secret not found" });
+    expect(res.body).toEqual({ error: "未找到密钥" });
     expect(mockSecretService.listBindingReferences).not.toHaveBeenCalled();
   });
 
@@ -937,7 +937,7 @@ describe("secret routes", () => {
     );
 
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: "Secret not found" });
+    expect(res.body).toEqual({ error: "未找到密钥" });
     expect(mockSecretService.listBindingReferences).not.toHaveBeenCalled();
   });
 
@@ -965,7 +965,7 @@ describe("secret routes", () => {
     );
 
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: "Secret not found" });
+    expect(res.body).toEqual({ error: "未找到密钥" });
     expect(mockSecretService.listAccessEvents).not.toHaveBeenCalled();
   });
 
@@ -977,7 +977,7 @@ describe("secret routes", () => {
     );
 
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: "Secret not found" });
+    expect(res.body).toEqual({ error: "未找到密钥" });
     expect(mockSecretService.listAccessEvents).not.toHaveBeenCalled();
   });
 

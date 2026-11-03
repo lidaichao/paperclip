@@ -75,7 +75,7 @@ function hasSecretDefinitionAdminAccess(req: Parameters<typeof assertBoard>[0], 
 
 function assertSecretDefinitionAdmin(req: Parameters<typeof assertBoard>[0], companyId: string) {
   if (hasSecretDefinitionAdminAccess(req, companyId)) return;
-  throw forbidden("Company admin access required");
+  throw forbidden("需要公司管理员权限");
 }
 
 function assertCompanySecretWrite(req: Parameters<typeof assertBoard>[0], companyId: string) {
@@ -128,7 +128,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
 
   function agentSecretContext(req: Parameters<typeof assertBoard>[0]) {
     if (req.actor.type !== "agent" || !req.actor.agentId || !req.actor.companyId || !req.actor.runId) {
-      throw forbidden("Run-bound agent authentication required");
+      throw forbidden("需要绑定到当前运行的智能体身份验证");
     }
     return {
       companyId: req.actor.companyId,
@@ -144,7 +144,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
   async function proposalAgentContext(req: Parameters<typeof assertBoard>[0]) {
     const context = agentSecretContext(req);
     if (req.actor.source !== "agent_jwt" || req.actor.keyScope?.kind === "task_bridge" || req.actor.keyScope?.kind === "skill_test") {
-      throw forbidden("Secret proposals require a verified run-bound agent token");
+      throw forbidden("提交密钥提案需要已验证且绑定到当前运行的智能体令牌");
     }
     const decision = await access.decide({
       actor: req.actor,
@@ -167,7 +167,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
     targetId: string | null;
   }) {
     if (proposal.kind !== "binding") return null;
-    if (!proposal.targetId) throw unprocessable("Binding proposal target is missing");
+    if (!proposal.targetId) throw unprocessable("密钥绑定提案缺少目标");
     return access.decide({
       actor: req.actor,
       action: "agent_config:update",
@@ -256,7 +256,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
     const companyId = req.params.companyId as string;
     assertCompanySecretWrite(req, companyId);
     const proposal = await proposals.getById(companyId, req.params.id as string);
-    if (!proposal) throw notFound("Secret proposal not found");
+    if (!proposal) throw notFound("未找到密钥提案");
     await assertCanResolveProposal({
       db,
       actor: req.actor,
@@ -286,9 +286,9 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
     const companyId = req.params.companyId as string;
     assertCompanyAccess(req, companyId);
     const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
-    if (!reason) throw unprocessable("Rejection reason is required");
+    if (!reason) throw unprocessable("必须填写拒绝原因");
     const existing = await proposals.getById(companyId, req.params.id as string);
-    if (!existing) throw notFound("Secret proposal not found");
+    if (!existing) throw notFound("未找到密钥提案");
     await assertCanResolveProposal({
       db,
       actor: req.actor,
@@ -337,7 +337,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
     const context = agentSecretContext(req);
     const available = await svc.listAgentSecretAccess(context.companyId, context);
     const secret = available.find((entry) => entry.key === req.params.key);
-    if (!secret) throw forbidden("Secret access is not granted for this agent");
+    if (!secret) throw forbidden("此智能体未获得该密钥的访问权限");
     const resolution = await svc.resolveSecretValueForAgentAccess(
       context.companyId,
       secret.secretId,
@@ -452,7 +452,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
 
   router.get("/secret-provider-configs/:id", async (req, res) => {
     assertBoard(req);
-    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(req.params.id as string), "Provider vault not found");
+    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(req.params.id as string), "未找到服务商密钥库");
     if (!existing) return;
     res.json(existing);
   });
@@ -460,7 +460,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
   router.patch("/secret-provider-configs/:id", validate(updateSecretProviderConfigSchema), async (req, res) => {
     assertBoard(req);
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(id), "Provider vault not found");
+    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(id), "未找到服务商密钥库");
     if (!existing) return;
 
     const updated = await svc.updateProviderConfig(id, {
@@ -470,7 +470,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
       config: req.body.config,
     });
     if (!updated) {
-      res.status(404).json({ error: "Provider vault not found" });
+      res.status(404).json({ error: "未找到服务商密钥库" });
       return;
     }
 
@@ -495,12 +495,12 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
   router.delete("/secret-provider-configs/:id", async (req, res) => {
     assertBoard(req);
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(id), "Provider vault not found");
+    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(id), "未找到服务商密钥库");
     if (!existing) return;
 
     const removed = await svc.removeProviderConfig(id);
     if (!removed) {
-      res.status(404).json({ error: "Provider vault not found" });
+      res.status(404).json({ error: "未找到服务商密钥库" });
       return;
     }
 
@@ -524,12 +524,12 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
   router.post("/secret-provider-configs/:id/default", async (req, res) => {
     assertBoard(req);
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(id), "Provider vault not found");
+    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(id), "未找到服务商密钥库");
     if (!existing) return;
 
     const updated = await svc.setDefaultProviderConfig(id);
     if (!updated) {
-      res.status(404).json({ error: "Provider vault not found" });
+      res.status(404).json({ error: "未找到服务商密钥库" });
       return;
     }
 
@@ -553,12 +553,12 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
   router.post("/secret-provider-configs/:id/health", async (req, res) => {
     assertBoard(req);
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(id), "Provider vault not found");
+    const existing = await getAccessibleResource(req, res, svc.getProviderConfigById(id), "未找到服务商密钥库");
     if (!existing) return;
 
     const health = await svc.checkProviderConfigHealth(id);
     if (!health) {
-      res.status(404).json({ error: "Provider vault not found" });
+      res.status(404).json({ error: "未找到服务商密钥库" });
       return;
     }
 
@@ -666,7 +666,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
         boardActorUser(req),
       );
       if (!updated) {
-        res.status(404).json({ error: "User secret definition not found" });
+        res.status(404).json({ error: "未找到用户密钥定义" });
         return;
       }
       const activityActor = userSecretDefinitionActivityActor(req);
@@ -699,7 +699,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
       boardActorUser(req),
     );
     if (!removed) {
-      res.status(404).json({ error: "User secret definition not found" });
+      res.status(404).json({ error: "未找到用户密钥定义" });
       return;
     }
     const activityActor = userSecretDefinitionActivityActor(req);
@@ -794,7 +794,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
         { userId: ownerUserId, agentId: null },
       );
       if (!updated) {
-        res.status(404).json({ error: "User secret value not found" });
+        res.status(404).json({ error: "未找到用户密钥值" });
         return;
       }
 
@@ -864,7 +864,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
     const ownerUserId = currentUserId(req);
     const removed = await svc.removeCurrentUserSecretValue(companyId, ownerUserId, secretId);
     if (!removed) {
-      res.status(404).json({ error: "User secret value not found" });
+      res.status(404).json({ error: "未找到用户密钥值" });
       return;
     }
 
@@ -997,11 +997,11 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
       req,
       res,
       fetched && isCompanyScopedSecret(fetched) ? fetched : null,
-      "Secret not found",
+      "未找到密钥",
     );
     if (!existing) return;
     if (existing.status === "deleted") {
-      res.status(404).json({ error: "Secret not found" });
+      res.status(404).json({ error: "未找到密钥" });
       return;
     }
 
@@ -1037,11 +1037,11 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
       req,
       res,
       fetched && isCompanyScopedSecret(fetched) ? fetched : null,
-      "Secret not found",
+      "未找到密钥",
     );
     if (!existing) return;
     if (existing.status === "deleted") {
-      res.status(404).json({ error: "Secret not found" });
+      res.status(404).json({ error: "未找到密钥" });
       return;
     }
 
@@ -1056,7 +1056,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
     });
 
     if (!updated) {
-      res.status(404).json({ error: "Secret not found" });
+      res.status(404).json({ error: "未找到密钥" });
       return;
     }
 
@@ -1081,7 +1081,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
       req,
       res,
       fetched && isCompanyScopedSecret(fetched) ? fetched : null,
-      "Secret not found",
+      "未找到密钥",
     );
     if (!existing) return;
     const bindings = await svc.listBindingReferences(existing.companyId, existing.id);
@@ -1096,7 +1096,7 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
       req,
       res,
       fetched && isCompanyScopedSecret(fetched) ? fetched : null,
-      "Secret not found",
+      "未找到密钥",
     );
     if (!existing) return;
     const events = await svc.listAccessEvents(existing.companyId, existing.id);
@@ -1111,13 +1111,13 @@ export function secretRoutes(db: Db, deps: SecretRoutesDeps = {}) {
       req,
       res,
       fetched && isCompanyScopedSecret(fetched) ? fetched : null,
-      "Secret not found",
+      "未找到密钥",
     );
     if (!existing) return;
 
     const removed = await svc.remove(id);
     if (!removed) {
-      res.status(404).json({ error: "Secret not found" });
+      res.status(404).json({ error: "未找到密钥" });
       return;
     }
 
