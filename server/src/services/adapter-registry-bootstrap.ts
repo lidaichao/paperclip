@@ -48,7 +48,7 @@ export function parseAdapterRegistryEnv(
   try {
     parsed = JSON.parse(rawText);
   } catch (err) {
-    throw new Error(`PAPERCLIP_ADAPTERS must be valid JSON: ${(err as Error).message}`);
+    throw new Error(`PAPERCLIP_ADAPTERS 必须是有效的 JSON：${(err as Error).message}`);
   }
 
   const result = adapterRegistrySchema.safeParse(parsed);

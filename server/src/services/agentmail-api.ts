@@ -186,7 +186,7 @@ export function agentmailApi(apiKey: string, fetchImpl: typeof fetch = fetch) {
       );
     }
     if (response.status === 204) return undefined as T;
-    if (!response.body) throw new Error("Empty AgentMail response");
+    if (!response.body) throw new Error("AgentMail 返回了空响应");
     const reader = response.body.getReader();
     const parts: Uint8Array[] = [];
     let bytes = 0;
@@ -196,7 +196,7 @@ export function agentmailApi(apiKey: string, fetchImpl: typeof fetch = fetch) {
         if (part.done) break;
         bytes += part.value.length;
         if (bytes > 16 * 1024 * 1024)
-          throw new Error("AgentMail response exceeds the processing limit");
+          throw new Error("AgentMail 响应超过处理上限");
         parts.push(part.value);
       }
     } finally {

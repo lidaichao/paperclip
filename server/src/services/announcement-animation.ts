@@ -7,7 +7,7 @@ import { ANNOUNCEMENT_ANIMATION_MAX_BYTES } from "@paperclipai/shared";
 // CSP on delivery also blocks all network requests, including CSS URLs.
 export function validateAnnouncementAnimation(bytes: Uint8Array): string {
   if (!bytes.length || bytes.byteLength > ANNOUNCEMENT_ANIMATION_MAX_BYTES) {
-    throw new Error("Invalid or oversized announcement animation");
+    throw new Error("公告动画无效或文件过大");
   }
   const source = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   const dom = new JSDOM("");
@@ -24,7 +24,7 @@ export function validateAnnouncementAnimation(bytes: Uint8Array): string {
       ALLOW_ARIA_ATTR: false,
     });
     if (purifier.removed.length) {
-      throw new Error("Animation must contain only visual HTML/CSS or inline SVG; scripts, navigation, resources and interactive elements are not supported");
+      throw new Error("动画只能包含视觉 HTML/CSS 或内联 SVG；不支持脚本、导航、外部资源和交互元素");
     }
     return html;
   } finally {

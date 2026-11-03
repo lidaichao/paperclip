@@ -104,7 +104,7 @@ export function artifactReviewDocumentService(db: Db, storage: StorageService) {
     // indistinguishable: canonical metadata must reference an attachment on
     // the same issue and company.
     if (!attachment || attachment.companyId !== issue.companyId || attachment.issueId !== issue.id) {
-      throw unprocessable("Work product attachment must reference an attachment on the same issue", {
+      throw unprocessable("工作成果附件必须引用同一任务中的附件", {
         code: "invalid_attachment_artifact_metadata",
         attachmentId: metadata.attachmentId,
       });
@@ -145,7 +145,7 @@ export function artifactReviewDocumentService(db: Db, storage: StorageService) {
     try {
       body = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks));
     } catch {
-      throw unprocessable("Markdown attachment is not valid UTF-8", {
+      throw unprocessable("Markdown 附件不是有效的 UTF-8", {
         code: "invalid_review_document_encoding",
         attachmentId: attachment.id,
       });
@@ -159,11 +159,11 @@ export function artifactReviewDocumentService(db: Db, storage: StorageService) {
     ): Promise<EnsureArtifactReviewDocumentResult> => {
       const { issue, workProduct } = input;
       if (workProduct.issueId !== issue.id || workProduct.companyId !== issue.companyId) {
-        throw notFound("Work product not found");
+        throw notFound("未找到工作成果");
       }
       const metadata = getAttachmentArtifactWorkProductMetadata(workProduct);
       if (!metadata) {
-        throw unprocessable("Work product is not an attachment-backed Paperclip artifact", {
+        throw unprocessable("工作成果不是由附件支持的 Alice 制品", {
           code: "not_attachment_backed_artifact",
           workProductId: workProduct.id,
         });
@@ -239,7 +239,7 @@ export function artifactReviewDocumentService(db: Db, storage: StorageService) {
           throw error;
         }
       }
-      throw conflict("Concurrent review-document updates did not converge", { key });
+      throw conflict("并发审阅文档更新未能收敛", { key });
     },
   };
 }

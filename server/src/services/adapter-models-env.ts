@@ -18,20 +18,20 @@ export function parseAdapterModelsEnv(
   try {
     parsed = JSON.parse(raw);
   } catch (e) {
-    throw new Error(`PAPERCLIP_ADAPTER_MODELS must be valid JSON: ${(e as Error).message}`);
+    throw new Error(`PAPERCLIP_ADAPTER_MODELS 必须是有效的 JSON：${(e as Error).message}`);
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("PAPERCLIP_ADAPTER_MODELS must be a JSON object mapping adapterType to an array of {id,label}");
+    throw new Error("PAPERCLIP_ADAPTER_MODELS 必须是将 adapterType 映射到 {id,label} 数组的 JSON 对象");
   }
   const out: Record<string, AdapterModelEntry[]> = {};
   for (const [type, list] of Object.entries(parsed as Record<string, unknown>)) {
     if (!Array.isArray(list)) {
-      throw new Error(`PAPERCLIP_ADAPTER_MODELS[${type}] must be an array`);
+      throw new Error(`PAPERCLIP_ADAPTER_MODELS[${type}] 必须是数组`);
     }
     out[type] = list.map((m) => {
       const o = m as Record<string, unknown>;
       if (typeof o.id !== "string" || !o.id) {
-        throw new Error(`PAPERCLIP_ADAPTER_MODELS[${type}] entries require a non-empty string id`);
+        throw new Error(`PAPERCLIP_ADAPTER_MODELS[${type}] 的条目必须提供非空字符串 id`);
       }
       return { id: o.id, label: typeof o.label === "string" ? o.label : o.id };
     });

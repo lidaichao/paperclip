@@ -18,8 +18,8 @@ export function verifyAppWebhook(input: {
     if (!timingSafeEqual(expected, provided)) throw unauthorized();
     let value: unknown;
     try { value = JSON.parse(input.rawBody.toString("utf8")); }
-    catch { throw badRequest("Invalid webhook JSON"); }
-    if (!value || typeof value !== "object" || Array.isArray(value)) throw badRequest("Webhook payload must be an object");
+    catch { throw badRequest("Webhook JSON 无效"); }
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw badRequest("Webhook 载荷必须是对象");
     const payload = value as Record<string, unknown>;
     return {
       payload, ignored: false, meetingMetadata: false,
