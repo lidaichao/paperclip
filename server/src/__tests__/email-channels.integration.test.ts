@@ -391,7 +391,7 @@ describe("AgentMail durable email pipeline", () => {
       });
     };
     await expect(deliver("someone-else@agentmail.to")).rejects.toThrow(
-      /inbox/i,
+      /其他收件箱/,
     );
     await deliver(f.address);
     await deliver(f.address);
@@ -510,7 +510,7 @@ describe("AgentMail durable email pipeline", () => {
         { ...input, text: "Changed" },
         { userId: "email-board" },
       ),
-    ).rejects.toThrow(/different content/);
+    ).rejects.toThrow(/不同内容/);
     await f.service.tick();
     await f.service.tick();
     expect(f.sends).toHaveLength(1);
@@ -529,7 +529,7 @@ describe("AgentMail durable email pipeline", () => {
     await f.receive(f.message("reply-after-bounce", sent.thread_id));
     expect(await f.service.publication(queued.id, f.companyId)).toMatchObject({
       outcome: "failed",
-      error: "AgentMail reported message.bounced",
+      error: "AgentMail 报告：message.bounced",
     });
   });
 
@@ -563,7 +563,7 @@ describe("AgentMail durable email pipeline", () => {
       attachmentIds: [attachmentId], idempotencyKey: randomUUID() });
     const wrongTask = await issueService(db).create(f.companyId, { title: "Other task", status: "todo", assigneeAgentId: f.agentId });
     await expect(f.service.queueSend(f.companyId, { ...input, parentIssueId: wrongTask.id }, { userId: "email-board" }))
-      .rejects.toThrow("attachments must belong to the source task");
+      .rejects.toThrow("邮件附件必须属于来源任务");
     const queued = await f.service.queueSend(f.companyId, input, { userId: "email-board" });
     await f.service.tick();
     expect(await f.service.publication(queued.id, f.companyId)).toMatchObject({ outcome: "sent", error: null });
@@ -638,13 +638,13 @@ describe("AgentMail durable email pipeline", () => {
         event_type: "message.received",
         message: { inbox_id: "other@agentmail.to", message_id: "foreign" },
       }),
-    ).rejects.toThrow(/different inbox/);
+    ).rejects.toThrow(/其他收件箱/);
     await expect(
       f.service.queueSend(f.companyId, input, {
         agentId: randomUUID(),
         runId: randomUUID(),
       }),
-    ).rejects.toThrow(/assigned agent/);
+    ).rejects.toThrow(/已分配的智能体/);
     await f.service.queueSend(f.companyId, input, { userId: "email-board" });
     await db
       .update(companyMemberships)
@@ -717,7 +717,7 @@ describe("AgentMail durable email pipeline", () => {
     expect(result.status).toBe("archived");
     await expect(
       f.service.control(f.endpointId, "resume", { userId: "email-board" }),
-    ).rejects.toThrow(/disconnected/);
+    ).rejects.toThrow(/已断开连接/);
     expect(
       await db
         .select()
@@ -975,7 +975,7 @@ describe("AgentMail durable email pipeline", () => {
     const f = await fixture("websocket");
     f.setWebhookError(403);
     await expect(f.service.reconnect(f.endpointId, "replacement-test-key", "webhook", { userId: "email-board" }))
-      .rejects.toThrow("Enable webhook create/read/delete permissions");
+      .rejects.toThrow("启用 Webhook 创建、读取和删除权限");
     expect(await f.service.getEndpoint(f.endpointId)).toMatchObject({ status: "active" });
     await f.receive(f.message());
     expect(f.wakeup).toHaveBeenCalledTimes(1);
@@ -1147,7 +1147,7 @@ describe("AgentMail durable email pipeline", () => {
         },
         { userId: "email-board" },
       ),
-    ).rejects.toThrow(/boundary/);
+    ).rejects.toThrow(/项目或根任务边界/);
     const [project] = await db
       .insert(projects)
       .values({ companyId: f.companyId, name: "Email work" })
@@ -1179,7 +1179,7 @@ describe("AgentMail durable email pipeline", () => {
         },
         { userId: "email-board" },
       ),
-    ).rejects.toThrow(/sandbox environment/);
+    ).rejects.toThrow(/沙盒环境/);
     await instanceSettingsService(db).updateExperimental({ enableIsolatedWorkspaces: true });
     await f.receive(f.message());
     const [task] = await db
