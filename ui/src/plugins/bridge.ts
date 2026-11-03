@@ -1,3 +1,5 @@
+import { l10n } from "../i18n";
+
 /**
  * Plugin UI bridge runtime — concrete implementations of the bridge hooks.
  *
@@ -656,7 +658,9 @@ export function usePluginStream<T = unknown>(
     source.onerror = () => {
       setConnecting(false);
       setConnected(false);
-      setError(new Error(`Failed to connect to plugin stream "${channel}"`));
+      setError(
+        new Error(l10n("local.failed_to_connect_plugin_stream_10300056", { v0: channel })),
+      );
       source.close();
       if (sourceRef.current === source) {
         sourceRef.current = null;

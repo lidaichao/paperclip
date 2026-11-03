@@ -185,7 +185,7 @@ export function ProfileWizard({
 
   const finish = useMutation({
     mutationFn: async () => {
-      if (!draftId) throw new Error("No draft to finish");
+      if (!draftId) throw new Error(l10n("local.no_draft_to_finish_10300054"));
       const entries = buildEntries(appGroups, selections, advancedRules, newToolsAction);
       const profile = await toolsApi.updateProfile(draftId, {
         defaultAction: newToolsAction,
@@ -388,7 +388,13 @@ async function reconcileBindings(
       const rollbacks = await Promise.allSettled(completed.reverse().map((done) => done.rollback()));
       const rollbackFailures = rollbacks.filter((result) => result.status === "rejected").length;
       const suffix = rollbackFailures > 0 ? `; ${rollbackFailures} rollback operation(s) also failed` : "";
-      throw new Error(`Could not update assignment ${operation.key}${suffix}`, { cause: error });
+      throw new Error(
+        l10n("local.could_not_update_assignment_10300055", {
+          v0: operation.key,
+          v1: suffix,
+        }),
+        { cause: error },
+      );
     }
   }
 }

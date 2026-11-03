@@ -431,7 +431,12 @@ async function importPluginModule(url: string): Promise<Record<string, unknown>>
   // Fetch the module source text
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to fetch plugin module: ${response.status} ${response.statusText}`);
+    throw new Error(
+      l10n("local.failed_to_fetch_plugin_module_10300057", {
+        v0: response.status,
+        v1: response.statusText,
+      }),
+    );
   }
 
   const source = await response.text();

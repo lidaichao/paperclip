@@ -23,12 +23,12 @@ export async function readGitHubPrivateKeyFile(
 ): Promise<string> {
   if (file.size === 0) {
     throw new Error(
-      "That file is empty. Choose the private key downloaded from your GitHub App.",
+      l10n("local.github_private_key_file_empty_10300046"),
     );
   }
   if (file.size > GITHUB_PRIVATE_KEY_FILE_MAX_BYTES) {
     throw new Error(
-      "That file is too large. Choose a GitHub App private key smaller than 64 KB.",
+      l10n("local.github_private_key_file_too_large_10300047"),
     );
   }
 
@@ -42,7 +42,7 @@ export async function readGitHubPrivateKeyFile(
   }
   if (!value.trim()) {
     throw new Error(
-      "That file is empty. Choose the private key downloaded from your GitHub App.",
+      l10n("local.github_private_key_file_empty_10300046"),
     );
   }
   return value;

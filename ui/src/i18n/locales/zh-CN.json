@@ -12239,6 +12239,18 @@
     "select_organization_before_profile_avatar_10300042": "上传个人头像前，请先选择组织。",
     "no_user_selected_10300043": "尚未选择用户。",
     "no_project_selected_10300044": "尚未选择项目。",
-    "only_remote_http_drafts_can_be_activated_10300045": "只有远程 HTTP 草稿可以通过粘贴的配置进行检查和启用。"
+    "only_remote_http_drafts_can_be_activated_10300045": "只有远程 HTTP 草稿可以通过粘贴的配置进行检查和启用。",
+    "github_private_key_file_empty_10300046": "该文件为空。请选择从 GitHub App 下载的私钥。",
+    "github_private_key_file_too_large_10300047": "该文件过大。请选择小于 64 KB 的 GitHub App 私钥。",
+    "avatar_unavailable_10300048": "头像不可用。",
+    "account_confirmation_creation_failed_10300049": "无法创建账户确认，请重试。",
+    "app_brand_manifest_request_failed_10300050": "应用品牌清单请求失败（{{v0}}）。",
+    "app_brand_manifest_invalid_10300051": "应用品牌清单无效。",
+    "clipboard_unavailable_10300052": "剪贴板不可用。",
+    "clipboard_copy_failed_10300053": "无法复制到剪贴板。",
+    "no_draft_to_finish_10300054": "没有可完成的草稿。",
+    "could_not_update_assignment_10300055": "无法更新分配项 {{v0}}{{v1}}。",
+    "failed_to_connect_plugin_stream_10300056": "无法连接插件数据流“{{v0}}”。",
+    "failed_to_fetch_plugin_module_10300057": "无法获取插件模块：{{v0}} {{v1}}"
   }
 }

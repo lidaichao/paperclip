@@ -37,7 +37,9 @@ export function SlackIdentityStep({ endpointId, command, testStartedAt, onConnec
     mutationFn: async (principalId: string) => {
       const { confirmationUrl } = await chatEndpointsApi.createLinkIntent(endpointId, principalId);
       const token = new URL(confirmationUrl, window.location.origin).searchParams.get("token");
-      if (!token) throw new Error("Could not create the account confirmation. Try again.");
+      if (!token) {
+        throw new Error(l10n("local.account_confirmation_creation_failed_10300049"));
+      }
       await chatEndpointsApi.confirmIdentityLink(token);
     },
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.chatEndpoints.principals(endpointId) }),

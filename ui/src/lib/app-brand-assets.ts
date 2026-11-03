@@ -1,3 +1,5 @@
+import { l10n } from "../i18n";
+
 export type AppBrandManifestProvider = {
   slug: string;
   provider: string;
@@ -47,9 +49,17 @@ async function loadManifest(): Promise<AppBrandManifest> {
   if (!manifestPromise) {
     manifestPromise = fetch("/brands/apps/manifest.json", { credentials: "same-origin" })
       .then(async (response) => {
-        if (!response.ok) throw new Error(`App brand manifest request failed (${response.status})`);
+        if (!response.ok) {
+          throw new Error(
+            l10n("local.app_brand_manifest_request_failed_10300050", {
+              v0: response.status,
+            }),
+          );
+        }
         const value: unknown = await response.json();
-        if (!isManifest(value)) throw new Error("App brand manifest is invalid");
+        if (!isManifest(value)) {
+          throw new Error(l10n("local.app_brand_manifest_invalid_10300051"));
+        }
         return value;
       })
       .catch((error) => {
