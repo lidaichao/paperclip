@@ -26,7 +26,7 @@ export function ChatCommunicationInstructions({ value, onSave }: {
         setDraft(null);
         setSaved(true);
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Couldn’t save instructions. Try again.");
+        setError(cause instanceof Error ? cause.message : l10n("local.could_not_save_instructions_10300290"));
       } finally {
         setPending(false);
       }

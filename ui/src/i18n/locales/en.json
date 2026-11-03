@@ -12483,6 +12483,18 @@
     "delete_profile_removes_one_assignment_10300286": "This permanently deletes the profile and removes 1 assignment.",
     "webhook_trigger_created_10300287": "Webhook trigger created",
     "webhook_secret_rotated_10300288": "Webhook secret rotated",
-    "could_not_load_routine_10300289": "We couldn't load this routine."
+    "could_not_load_routine_10300289": "We couldn't load this routine.",
+    "could_not_save_instructions_10300290": "Couldn’t save instructions. Try again.",
+    "skills_imported_10300291": "Skills imported",
+    "nothing_imported_10300292": "Nothing imported",
+    "one_skill_imported_from_project_10300293": "1 skill imported as a reference from {{v1}}.",
+    "value_skills_imported_from_project_10300294": "{{v0}} skills imported as references from {{v1}}.",
+    "the_project_10300295": "the project",
+    "no_skills_imported_10300296": "No skills were imported.",
+    "import_failed_10300297": "Import failed",
+    "skill_already_imported_10300298": "Skill already imported",
+    "skill_could_not_be_added_10300299": "Skill could not be added",
+    "selected_folder_no_valid_skill_md_10300300": "The selected folder does not contain a valid SKILL.md file.",
+    "could_not_inspect_skill_10300301": "Could not inspect skill"
   }
 }

@@ -366,17 +366,27 @@ export function ImportSkillsFromProjectDialog({
       const importedCount = result.imported.length;
       toast.pushToast({
         tone: importedCount > 0 ? "success" : "warn",
-        title: importedCount > 0 ? "Skills imported" : "Nothing imported",
+        title: importedCount > 0
+          ? l10n("local.skills_imported_10300291")
+          : l10n("local.nothing_imported_10300292"),
         body:
           importedCount > 0
-            ? `${importedCount} skill${importedCount === 1 ? "" : "s"} imported as references from ${selectedProject?.name ?? "the project"}.`
-            : "No skills were imported.",
+            ? l10n(
+              importedCount === 1
+                ? "local.one_skill_imported_from_project_10300293"
+                : "local.value_skills_imported_from_project_10300294",
+              {
+                v0: importedCount,
+                v1: selectedProject?.name ?? l10n("local.the_project_10300295"),
+              },
+            )
+            : l10n("local.no_skills_imported_10300296"),
       });
     },
     onError: (error) => {
       toast.pushToast({
         tone: "error",
-        title: "Import failed",
+        title: l10n("local.import_failed_10300297"),
         body: readableErrorMessage(error),
       });
     },
@@ -462,12 +472,14 @@ export function ImportSkillsFromProjectDialog({
       } else {
         toast.pushToast({
           tone: "warn",
-          title: candidate?.status === "already_imported" ? "Skill already imported" : "Skill could not be added",
-          body: candidate?.reason ?? "The selected folder does not contain a valid SKILL.md file.",
+          title: candidate?.status === "already_imported"
+            ? l10n("local.skill_already_imported_10300298")
+            : l10n("local.skill_could_not_be_added_10300299"),
+          body: candidate?.reason ?? l10n("local.selected_folder_no_valid_skill_md_10300300"),
         });
       }
     } catch (error) {
-      toast.pushToast({ tone: "error", title: "Could not inspect skill", body: readableErrorMessage(error) });
+      toast.pushToast({ tone: "error", title: l10n("local.could_not_inspect_skill_10300301"), body: readableErrorMessage(error) });
     } finally {
       setBrowseAddingKey(null);
     }

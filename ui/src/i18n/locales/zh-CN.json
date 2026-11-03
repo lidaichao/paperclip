@@ -12483,6 +12483,18 @@
     "delete_profile_removes_one_assignment_10300286": "这将永久删除该配置，并移除 1 项分配。",
     "webhook_trigger_created_10300287": "Webhook 触发器已创建",
     "webhook_secret_rotated_10300288": "Webhook 密钥已轮换",
-    "could_not_load_routine_10300289": "无法加载此自动化流程。"
+    "could_not_load_routine_10300289": "无法加载此自动化流程。",
+    "could_not_save_instructions_10300290": "无法保存说明，请重试。",
+    "skills_imported_10300291": "技能已导入",
+    "nothing_imported_10300292": "未导入任何内容",
+    "one_skill_imported_from_project_10300293": "已从 {{v1}} 导入 1 个技能引用。",
+    "value_skills_imported_from_project_10300294": "已从 {{v1}} 导入 {{v0}} 个技能引用。",
+    "the_project_10300295": "该项目",
+    "no_skills_imported_10300296": "没有导入任何技能。",
+    "import_failed_10300297": "导入失败",
+    "skill_already_imported_10300298": "该技能已导入",
+    "skill_could_not_be_added_10300299": "无法添加该技能",
+    "selected_folder_no_valid_skill_md_10300300": "所选文件夹中没有有效的 SKILL.md 文件。",
+    "could_not_inspect_skill_10300301": "无法检查技能"
   }
 }
