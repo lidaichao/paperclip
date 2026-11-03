@@ -1016,7 +1016,7 @@ export function IssueProperties({
       return agentName(value.slice("agent:".length)) ?? value.slice("agent:".length, "agent:".length + 8);
     }
     if (value.startsWith("user:")) {
-      return userLabel(value.slice("user:".length)) ?? "User";
+      return userLabel(value.slice("user:".length)) ?? l10n("local.user_b512d97e");
     }
     return value;
   };
@@ -2870,7 +2870,7 @@ export function IssueProperties({
             ) : (
               <span className="flex min-w-0 items-center gap-1.5">
                 <Identity
-                  name={actualUserLabel(originatingActor.id) ?? originatingUserProfile?.label ?? "User"}
+                  name={actualUserLabel(originatingActor.id) ?? originatingUserProfile?.label ?? l10n("local.user_b512d97e")}
                   avatarUrl={originatingUserProfile?.image ?? null}
                   size="sm"
                 />
