@@ -862,7 +862,13 @@ export function buildHostServices(
     companyId: string,
   ): T => {
     if (!inCompany(record, companyId)) {
-      throw new Error(`${entityName} not found`);
+      const entityLabels: Record<string, string> = {
+        Agent: "智能体",
+        Goal: "目标",
+        Issue: "任务",
+        Project: "项目",
+      };
+      throw new Error(`未找到${entityLabels[entityName] ?? entityName}`);
     }
     return record;
   };

@@ -17039,7 +17039,7 @@ export function toolAccessService(
           )
         : eq(toolApplications.id, applicationId);
       const [row] = await db.select().from(toolApplications).where(where);
-      if (!row) throw notFound("Tool application not found");
+      if (!row) throw notFound("未找到工具应用");
       return toApplication(row);
     },
 
@@ -17051,7 +17051,7 @@ export function toolAccessService(
         .select()
         .from(toolApplications)
         .where(eq(toolApplications.id, applicationId));
-      if (!existing) throw notFound("Tool application not found");
+      if (!existing) throw notFound("未找到工具应用");
       await assertOptionalPlugin(input.pluginId);
       await assertOptionalAgent(
         existing.companyId,
@@ -17071,7 +17071,7 @@ export function toolAccessService(
           )
           .limit(1);
         if (duplicate) {
-          throw conflict("A tool access record with that name already exists", {
+          throw conflict("已存在同名的工具访问记录", {
             code: "tool_access_name_conflict",
           });
         }
@@ -17100,7 +17100,7 @@ export function toolAccessService(
         .select()
         .from(toolApplications)
         .where(eq(toolApplications.id, applicationId));
-      if (!existing) throw notFound("Tool application not found");
+      if (!existing) throw notFound("未找到工具应用");
       // Guard: never orphan connections. The caller must remove the connections
       // or archive the application instead — there is no force-cascade in v1.
       const linkedConnections = await db
@@ -17132,7 +17132,7 @@ export function toolAccessService(
         }
         throw error;
       }
-      if (!row) throw notFound("Tool application not found");
+      if (!row) throw notFound("未找到工具应用");
       return toApplication(row);
     },
 
@@ -17344,7 +17344,7 @@ export function toolAccessService(
       let applicationId = input.applicationId;
       let applicationNamespace = input.applicationName ?? input.name;
       const transport = input.transport;
-      if (!transport) throw badRequest("Tool connection transport is required");
+      if (!transport) throw badRequest("必须提供工具连接传输方式");
       const config = normalizeGoogleSheetsConnectionConfig(
         input.config ?? input.transportConfig ?? {},
       );
@@ -17560,7 +17560,7 @@ export function toolAccessService(
           ),
         )
         .limit(1);
-      if (!grant) throw notFound("Connection grant not found");
+      if (!grant) throw notFound("未找到连接授权");
       if (grant.kind !== "organization") {
         throw badRequest(
           "Only an organization identity has an audience; a personal identity belongs to its owner",
@@ -17702,7 +17702,7 @@ export function toolAccessService(
     ) => {
       const connection = await getConnectionRow(idOrUid);
       if (connection.connectionPurpose === "ai") {
-        throw badRequest("AI credentials use the connection's human access settings, not agent delegation");
+        throw badRequest("AI 凭据使用连接的人员访问设置，不使用智能体委派");
       }
       return db.transaction(async (tx) => {
         // Membership removal/suspension takes this same row lock before sweeping
@@ -17756,7 +17756,7 @@ export function toolAccessService(
             ),
           )
           .limit(1);
-        if (!targetAgent) throw notFound("Agent not found");
+        if (!targetAgent) throw notFound("未找到智能体");
         const [existing] = await tx
           .select()
           .from(connectionGrantDelegations)
@@ -17808,7 +17808,7 @@ export function toolAccessService(
           ),
         )
         .returning();
-      if (!delegation) throw notFound("Connection grant delegation not found");
+      if (!delegation) throw notFound("未找到连接授权委派");
       const binding = actorBinding(actor);
       await db.insert(toolAccessAuditEvents).values({
         companyId: connection.companyId,
@@ -17865,7 +17865,7 @@ export function toolAccessService(
             binding.actorType === "user" ? binding.actorId : null,
         })
         .returning();
-      if (!grant) throw new Error("Failed to create connection installation");
+      if (!grant) throw new Error("无法创建连接安装记录");
       await db.insert(toolAccessAuditEvents).values({
         companyId: connection.companyId,
         connectionId: connection.id,
@@ -17901,7 +17901,7 @@ export function toolAccessService(
           ),
         )
         .limit(1);
-      if (!currentGrant) throw notFound("Connection grant not found");
+      if (!currentGrant) throw notFound("未找到连接授权");
       let providerRevocation = "not_applicable";
       if (
         connection.credentialSource === "vercel_connect" &&
@@ -17919,7 +17919,7 @@ export function toolAccessService(
           providerRevocation = "manage_in_vercel";
         } else if (currentGrant.externalCredential?.subjectType === "user") {
           try {
-            if (!vercelConnect) throw new Error("Vercel Connect unavailable");
+            if (!vercelConnect) throw new Error("Vercel Connect 不可用");
             await vercelConnect.revoke(request);
             providerRevocation = "success";
           } catch {
@@ -17966,7 +17966,7 @@ export function toolAccessService(
             ),
           )
           .returning();
-        if (!updated) throw notFound("Connection grant not found");
+        if (!updated) throw notFound("未找到连接授权");
         if (removedDelegations.length > 0) {
           await tx.insert(toolAccessAuditEvents).values(
             removedDelegations.map((delegation) => ({
@@ -17987,7 +17987,7 @@ export function toolAccessService(
         }
         return updated;
       });
-      if (!grant) throw notFound("Connection grant not found");
+      if (!grant) throw notFound("未找到连接授权");
       await db.insert(toolAccessAuditEvents).values({
         companyId: connection.companyId,
         connectionId: connection.id,
@@ -18271,7 +18271,7 @@ export function toolAccessService(
       input: UpdateToolConnection,
     ): Promise<ToolConnection> => {
       const existing = await getConnectionRow(connectionId);
-      if (existing.connectionPurpose === "ai" && (input.config || input.transportConfig || input.credentialRefs || input.credentialSecretRefs || (input.credentialPolicy && input.credentialPolicy !== existing.credentialPolicy))) throw badRequest("Use AI account reconnect to change credentials. Provider, sign-in method, and ownership cannot be changed.");
+      if (existing.connectionPurpose === "ai" && (input.config || input.transportConfig || input.credentialRefs || input.credentialSecretRefs || (input.credentialPolicy && input.credentialPolicy !== existing.credentialPolicy))) throw badRequest("请通过重新连接 AI 账号来更改凭据。服务提供商、登录方式和所有权无法更改。");
       const config = normalizeGoogleSheetsConnectionConfig(
         input.config ?? input.transportConfig ?? existing.config,
       );

@@ -15879,7 +15879,7 @@ describeEmbeddedPostgres("tool access service", () => {
 
     expect(res.status).toBe(409);
     expect(res.body).toMatchObject({
-      error: "A tool access record with that name already exists",
+      error: "已存在同名的工具访问记录",
     });
   });
 

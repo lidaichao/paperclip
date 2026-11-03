@@ -88,7 +88,7 @@ describeEmbeddedPostgres("plugin access and authorization host services", () => 
         principalId: otherAgent.id,
         grants: [{ permissionKey: "tasks:assign" }],
       }),
-    ).rejects.toThrow("Agent not found");
+    ).rejects.toThrow("未找到智能体");
 
     const rows = await db.select().from(principalPermissionGrants);
     expect(rows).toEqual([]);
