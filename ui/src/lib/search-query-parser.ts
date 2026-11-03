@@ -44,7 +44,7 @@ export const SEARCH_OPERATOR_SUGGESTIONS: SearchOperatorSuggestion[] = [
   { token: "status:todo", label: l10n("local.open_todo_tasks_b26fc880"), description: l10n("local.filter_by_task_status_979aaadd") },
   { token: "status:blocked", label: l10n("local.blocked_tasks_fb016622"), description: l10n("local.find_blocked_work_3118bf05") },
   { token: "assignee:me", label: l10n("local.assigned_to_me_82adb506"), description: l10n("local.use_your_current_board_user_65756130") },
-  { token: "project:\"Paperclip App\"", label: l10n("local.project_name_25498193"), description: l10n("local.quote_multi_word_project_names_cac260f3") },
+  { token: "project:\"Alice App\"", label: l10n("local.project_name_25498193"), description: l10n("local.quote_multi_word_project_names_cac260f3") },
   { token: "label:bug", label: l10n("local.label_0e66373f"), description: l10n("local.filter_by_issue_label_649f2d50") },
   { token: "priority:high", label: l10n("local.high_priority_b699a8c8"), description: l10n("local.filter_by_priority_48b74b8f") },
   { token: "updated:>7d", label: l10n("local.recently_updated_474b2a86"), description: l10n("local.updated_in_the_last_7_days_a8503d73") },

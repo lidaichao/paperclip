@@ -70,14 +70,18 @@ export function StandaloneBrowserControls({ mobile }: { mobile: boolean }) {
     const url = window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title: document.title || "Paperclip", url });
+        await navigator.share({ title: document.title || "Alice", url });
         return;
       }
       await copyTextToClipboard(url);
-      toastActions?.pushToast({ title: "Link copied", tone: "success" });
+      toastActions?.pushToast({ title: l10n("local.link_copied_d12860c2"), tone: "success" });
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      toastActions?.pushToast({ title: "Share failed", body: "Try opening the page in your browser.", tone: "error" });
+      toastActions?.pushToast({
+        title: l10n("local.share_failed_10300072"),
+        body: l10n("local.try_opening_page_in_browser_10300073"),
+        tone: "error",
+      });
     }
   }, [toastActions]);
 

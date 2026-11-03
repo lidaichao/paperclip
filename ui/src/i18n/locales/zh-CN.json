@@ -12265,6 +12265,25 @@
     "invalid_cron_value_10300068": "计划值无效。",
     "empty_cron_field_10300069": "计划字段为空。",
     "cron_value_out_of_range_10300070": "计划值 {{v0}} 超出范围。",
-    "unable_to_resolve_weekday_10300071": "无法解析 {{v0}} 对应的星期信息。"
+    "unable_to_resolve_weekday_10300071": "无法解析 {{v0}} 对应的星期信息。",
+    "share_failed_10300072": "分享失败。",
+    "try_opening_page_in_browser_10300073": "请尝试在浏览器中打开此页面。",
+    "organization_admin_can_change_skill_policy_10300074": "组织管理员可以修改技能策略以允许此操作。",
+    "organization_admin_access_required_10300075": "此操作需要组织管理权限，请联系管理员进行修改。",
+    "sign_in_to_manage_skills_10300076": "请登录后管理技能。",
+    "skill_belongs_to_another_organization_10300077": "此技能属于其他组织。",
+    "skill_source_outside_allowed_workspace_10300078": "此技能来源不在允许的工作区内。",
+    "skill_source_failed_validation_10300079": "此技能来源未通过验证。",
+    "skill_contains_unsafe_content_10300080": "此技能包含不安全内容。",
+    "skill_exposes_secret_value_10300081": "此技能暴露了密钥值。",
+    "action_unavailable_for_current_actor_10300082": "当前操作者无法执行此操作。",
+    "sign_in_and_try_again_10300083": "请登录后重试。",
+    "open_skill_from_owning_organization_10300084": "请从拥有此技能的组织中打开它。",
+    "import_from_alice_workspace_or_managed_directory_10300085": "请从已配置的 Alice 工作区或组织托管技能目录导入。",
+    "fix_flagged_source_and_retry_10300086": "请修复标记出的来源问题后重试。",
+    "remove_unsafe_pattern_before_saving_10300087": "保存前，请移除获取后执行或其他不安全模式。",
+    "remove_secret_value_before_saving_10300088": "保存前，请移除密钥值。",
+    "retry_from_account_with_access_10300089": "请使用有权执行此操作的账户重试。",
+    "fix_flagged_issue_and_try_again_10300090": "请修复标记出的问题后重试。"
   }
 }

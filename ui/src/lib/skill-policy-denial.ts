@@ -59,33 +59,31 @@ export interface SkillDenial {
   remediation: string;
 }
 
-const DEFAULT_POLICY_REMEDIATION =
-  "An organization administrator can change the skill policy to allow this.";
-const DEFAULT_ADMIN_REMEDIATION =
-  "This requires organization administration access. Ask an administrator to make this change.";
+const DEFAULT_POLICY_REMEDIATION = l10n("local.organization_admin_can_change_skill_policy_10300074");
+const DEFAULT_ADMIN_REMEDIATION = l10n("local.organization_admin_access_required_10300075");
 
 /** Human-readable titles for the platform-invariant codes (State C). */
 const PLATFORM_TITLES: Record<string, string> = {
-  skill_authentication_required: "Sign in to manage skills.",
-  skill_company_boundary_denied: "This skill belongs to another organization.",
-  skill_workspace_boundary_denied: "This skill source is outside an allowed workspace.",
-  skill_source_validation_failed: "This skill source failed validation.",
-  skill_unsafe_content_blocked: "This skill contains unsafe content.",
-  skill_secret_handling_blocked: "This skill exposes a secret value.",
-  skill_actor_restricted: "This action isn't available for the current actor.",
+  skill_authentication_required: l10n("local.sign_in_to_manage_skills_10300076"),
+  skill_company_boundary_denied: l10n("local.skill_belongs_to_another_organization_10300077"),
+  skill_workspace_boundary_denied: l10n("local.skill_source_outside_allowed_workspace_10300078"),
+  skill_source_validation_failed: l10n("local.skill_source_failed_validation_10300079"),
+  skill_unsafe_content_blocked: l10n("local.skill_contains_unsafe_content_10300080"),
+  skill_secret_handling_blocked: l10n("local.skill_exposes_secret_value_10300081"),
+  skill_actor_restricted: l10n("local.action_unavailable_for_current_actor_10300082"),
 };
 
 /** Default remediation copy per platform-invariant code — framed as a fix, never a grant. */
 const PLATFORM_REMEDIATIONS: Record<string, string> = {
-  skill_authentication_required: "Sign in and try again.",
-  skill_company_boundary_denied: "Open the skill from the organization that owns it.",
+  skill_authentication_required: l10n("local.sign_in_and_try_again_10300083"),
+  skill_company_boundary_denied: l10n("local.open_skill_from_owning_organization_10300084"),
   skill_workspace_boundary_denied:
-    "Import from a configured Paperclip workspace or the organization managed-skill directory.",
-  skill_source_validation_failed: "Fix the flagged source and retry.",
+    l10n("local.import_from_alice_workspace_or_managed_directory_10300085"),
+  skill_source_validation_failed: l10n("local.fix_flagged_source_and_retry_10300086"),
   skill_unsafe_content_blocked:
-    "Remove the fetch-and-execute or unsafe pattern before saving.",
-  skill_secret_handling_blocked: "Remove the secret value before saving.",
-  skill_actor_restricted: "Retry from an account with access to this action.",
+    l10n("local.remove_unsafe_pattern_before_saving_10300087"),
+  skill_secret_handling_blocked: l10n("local.remove_secret_value_before_saving_10300088"),
+  skill_actor_restricted: l10n("local.retry_from_account_with_access_10300089"),
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -155,7 +153,7 @@ export function classifySkillDenial(
       remediation:
         remediation
         ?? (code && PLATFORM_REMEDIATIONS[code])
-        ?? "Fix the flagged issue and try again.",
+        ?? l10n("local.fix_flagged_issue_and_try_again_10300090"),
     };
   }
 
