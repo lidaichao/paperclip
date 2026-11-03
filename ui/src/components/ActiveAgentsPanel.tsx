@@ -49,13 +49,13 @@ interface ActiveAgentsPanelProps {
 
 export function ActiveAgentsPanel({
   companyId,
-  title = "Agents",
+  title = l10n("local.agents_279b44d2"),
   minRunCount = MIN_DASHBOARD_RUNS,
   fetchLimit,
   cardLimit = DASHBOARD_RUN_CARD_LIMIT,
   gridClassName,
   cardClassName,
-  emptyMessage = "No recent agent runs.",
+  emptyMessage = l10n("local.no_recent_agent_runs_0d100001"),
   queryScope = "dashboard",
   showMoreLink = true,
   showTranscripts = false,

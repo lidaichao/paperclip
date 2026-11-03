@@ -246,6 +246,8 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.board_approval_0d000004).toBe("管理方审批");
     expect(messages.revision_request_failed_0d000005).toBe("请求修改失败");
     expect(messages.resubmit_failed_0d000006).toBe("重新提交失败");
+    expect(messages.no_recent_agent_runs_0d100001).toBe("暂无最近运行的智能体。");
+    expect(messages.agent_not_ready_to_duplicate_0d100002).toBe("该智能体暂时无法复制");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

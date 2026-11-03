@@ -53,7 +53,7 @@ import type {
 export function RunButton({
   onClick,
   disabled,
-  label = "Run now",
+  label = l10n("local.run_now_09913977"),
   size = "sm",
 }: {
   onClick: () => void;
@@ -160,8 +160,8 @@ export function AgentActionButtons({
   agent,
   companyId,
   size = "sm",
-  assignLabel = "Assign Task",
-  runLabel = "Run now",
+  assignLabel = l10n("local.assign_task_5dcdad5a"),
+  runLabel = l10n("local.run_now_09913977"),
   showStatus = true,
   showRun = true,
   actionsDisabled = false,
@@ -317,7 +317,7 @@ export function AgentActionButtons({
   const duplicateAgent = useMutation({
     mutationFn: async () => {
       if (!resolvedCompanyId) {
-        throw new Error("Agent is not ready to duplicate");
+        throw new Error(l10n("local.agent_not_ready_to_duplicate_0d100002"));
       }
       const instructionsBundle = await loadDuplicateInstructionsBundle(agent.id, resolvedCompanyId);
       const payload = buildDuplicateAgentPayload(agent, instructionsBundle);

@@ -11688,6 +11688,8 @@
     "budget_override_0d000003": "预算例外",
     "board_approval_0d000004": "管理方审批",
     "revision_request_failed_0d000005": "请求修改失败",
-    "resubmit_failed_0d000006": "重新提交失败"
+    "resubmit_failed_0d000006": "重新提交失败",
+    "no_recent_agent_runs_0d100001": "暂无最近运行的智能体。",
+    "agent_not_ready_to_duplicate_0d100002": "该智能体暂时无法复制"
   }
 }

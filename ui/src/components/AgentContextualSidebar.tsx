@@ -53,7 +53,7 @@ export function AgentContextualSidebar({
   agentRef,
   agentId,
   agentName,
-  labels = { secrets: "Secrets & variables" },
+  labels = { secrets: l10n("local.secrets_variables_bd56b51e") },
 }: {
   agentRef: string;
   agentId?: string;
@@ -69,7 +69,7 @@ export function AgentContextualSidebar({
     enabled: shouldResolveAgent && Boolean(agentRef && selectedCompanyId),
   });
   const resolvedId = agentId ?? resolvedAgent?.id;
-  const resolvedName = agentName ?? resolvedAgent?.name ?? "Agent";
+  const resolvedName = agentName ?? resolvedAgent?.name ?? l10n("local.agent_11b39c93");
 
   return (
     <ContextualSidebarFrame
