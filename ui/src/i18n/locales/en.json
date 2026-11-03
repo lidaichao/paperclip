@@ -12413,6 +12413,12 @@
     "skill_md_needs_description_10300216": "SKILL.md needs a description.",
     "expected_list_edit_yaml_10300217": "Expected a list — edit in YAML.",
     "file_loaded_one_line_10300218": "File loaded, 1 line.",
-    "file_loaded_value_lines_10300219": "File loaded, {{v0}} lines."
+    "file_loaded_value_lines_10300219": "File loaded, {{v0}} lines.",
+    "open_side_panel_tab_10300220": "Open a side panel tab",
+    "choose_view_or_resource_10300221": "Choose a view or resource to open.",
+    "search_tabs_and_resources_10300222": "Search tabs and resources…",
+    "no_matching_tabs_or_resources_10300223": "No matching tabs or resources.",
+    "tools_access_requires_admin_10300224": "You do not have permission to view this. Tools & Access requires board/admin access.",
+    "tools_access_not_available_yet_10300225": "Tools & Access isn't available on this server yet — try refreshing after the next deployment."
   }
 }

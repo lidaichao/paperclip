@@ -93,10 +93,10 @@ export function SidePanelLauncher({
   trigger,
   open: controlledOpen,
   onOpenChange,
-  title = "Open a side panel tab",
-  description = "Choose a view or resource to open.",
-  placeholder = "Search tabs and resources…",
-  emptyMessage = "No matching tabs or resources.",
+  title = l10n("local.open_side_panel_tab_10300220"),
+  description = l10n("local.choose_view_or_resource_10300221"),
+  placeholder = l10n("local.search_tabs_and_resources_10300222"),
+  emptyMessage = l10n("local.no_matching_tabs_or_resources_10300223"),
   className,
 }: SidePanelLauncherProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);

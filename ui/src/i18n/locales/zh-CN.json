@@ -12413,6 +12413,12 @@
     "skill_md_needs_description_10300216": "SKILL.md 需要填写描述。",
     "expected_list_edit_yaml_10300217": "此处应为列表，请在 YAML 中编辑。",
     "file_loaded_one_line_10300218": "文件已加载，共 1 行。",
-    "file_loaded_value_lines_10300219": "文件已加载，共 {{v0}} 行。"
+    "file_loaded_value_lines_10300219": "文件已加载，共 {{v0}} 行。",
+    "open_side_panel_tab_10300220": "打开侧边面板标签页",
+    "choose_view_or_resource_10300221": "选择要打开的视图或资源。",
+    "search_tabs_and_resources_10300222": "搜索标签页和资源",
+    "no_matching_tabs_or_resources_10300223": "没有匹配的标签页或资源。",
+    "tools_access_requires_admin_10300224": "你无权查看此内容。“工具与访问”需要董事会成员或管理员权限。",
+    "tools_access_not_available_yet_10300225": "此服务器暂不支持“工具与访问”，请在下次部署后刷新重试。"
   }
 }
