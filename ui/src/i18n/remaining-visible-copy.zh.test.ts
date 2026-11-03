@@ -614,6 +614,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.optional_what_revised_10200011).toContain("修改哪些内容");
     expect(messages.optional_tell_agent_changes_10200012).toContain("希望如何修改");
     expect(messages.defer_10200013).toBe("暂缓");
+    expect(messages.older_than_day_10300001).toContain("一天前");
+    expect(messages.older_than_week_10300002).toContain("一周前");
+    expect(messages.workflow_10300003).toBe("工作流");
+    expect(messages.parent_task_10300004).toBe("父任务");
+    expect(messages.blocked_by_task_step_10300005).toContain("步骤");
+    expect(messages.blocked_by_task_10300006).toContain("阻塞");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

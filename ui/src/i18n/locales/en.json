@@ -12194,6 +12194,12 @@
     "authorization_request_expired_10200010": "This authorization request expired",
     "optional_what_revised_10200011": "Optional: what would you like revised?",
     "optional_tell_agent_changes_10200012": "Optional: tell the agent what you'd change.",
-    "defer_10200013": "Defer"
+    "defer_10200013": "Defer",
+    "older_than_day_10300001": "Older than a day",
+    "older_than_week_10300002": "Older than a week",
+    "workflow_10300003": "Workflow",
+    "parent_task_10300004": "Parent Task",
+    "blocked_by_task_step_10300005": "blocked by {{v0}} · step {{v1}}",
+    "blocked_by_task_10300006": "blocked by {{v0}}"
   }
 }

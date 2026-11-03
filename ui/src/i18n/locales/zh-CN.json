@@ -12194,6 +12194,12 @@
     "authorization_request_expired_10200010": "此授权请求已过期",
     "optional_what_revised_10200011": "选填：你希望修改哪些内容？",
     "optional_tell_agent_changes_10200012": "选填：告诉智能体你希望如何修改。",
-    "defer_10200013": "暂缓"
+    "defer_10200013": "暂缓",
+    "older_than_day_10300001": "早于一天前",
+    "older_than_week_10300002": "早于一周前",
+    "workflow_10300003": "工作流",
+    "parent_task_10300004": "父任务",
+    "blocked_by_task_step_10300005": "受 {{v0}} 阻塞 · 步骤 {{v1}}",
+    "blocked_by_task_10300006": "受 {{v0}} 阻塞"
   }
 }
