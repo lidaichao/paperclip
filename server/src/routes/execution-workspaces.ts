@@ -103,7 +103,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
       resource: { type: "company", companyId },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Execution workspaces are outside this actor's authorization boundary" });
+    res.status(403).json({ error: "执行工作区超出当前操作者的授权范围" });
     return false;
   }
 
@@ -114,7 +114,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
       resource: { type: "company", companyId },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Runtime service control is outside this actor's authorization boundary" });
+    res.status(403).json({ error: "运行时服务控制超出当前操作者的授权范围" });
     return false;
   }
 
@@ -143,7 +143,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
     const parsed = workspaceOverviewQuerySchema.safeParse(req.query);
     if (!parsed.success) {
       res.status(422).json({
-        error: "Invalid workspace overview query",
+        error: "工作区概览查询无效",
         details: parsed.error.flatten(),
       });
       return;
@@ -155,7 +155,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
   router.get("/execution-workspaces/:id", async (req, res) => {
     const id = req.params.id as string;
-    const workspace = await getAccessibleResource(req, res, svc.getById(id), "Execution workspace not found");
+    const workspace = await getAccessibleResource(req, res, svc.getById(id), "未找到执行工作区");
     if (!workspace) return;
     if (!(await assertExecutionWorkspaceReadAllowed(req, res, workspace.companyId))) return;
     res.json(workspace);
@@ -163,12 +163,12 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
   router.get("/execution-workspaces/:id/close-readiness", async (req, res) => {
     const id = req.params.id as string;
-    const workspace = await getAccessibleResource(req, res, svc.getById(id), "Execution workspace not found");
+    const workspace = await getAccessibleResource(req, res, svc.getById(id), "未找到执行工作区");
     if (!workspace) return;
     if (!(await assertExecutionWorkspaceReadAllowed(req, res, workspace.companyId))) return;
     const readiness = await svc.getCloseReadiness(id);
     if (!readiness) {
-      res.status(404).json({ error: "Execution workspace not found" });
+      res.status(404).json({ error: "未找到执行工作区" });
       return;
     }
     res.json(readiness);
@@ -185,7 +185,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
   router.post("/execution-workspaces/:id/login-handoff", async (req, res) => {
     const id = req.params.id as string;
     assertBoard(req);
-    const workspace = await getAccessibleResource(req, res, svc.getById(id), "Execution workspace not found");
+    const workspace = await getAccessibleResource(req, res, svc.getById(id), "未找到执行工作区");
     if (!workspace) return;
     // Opening a workspace board is a runtime-control-grade action: it hands the
     // caller an authenticated session inside the cloned instance.
@@ -257,7 +257,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
   router.get("/execution-workspaces/:id/workspace-operations", async (req, res) => {
     const id = req.params.id as string;
-    const workspace = await getAccessibleResource(req, res, svc.getById(id), "Execution workspace not found");
+    const workspace = await getAccessibleResource(req, res, svc.getById(id), "未找到执行工作区");
     if (!workspace) return;
     if (!(await assertExecutionWorkspaceReadAllowed(req, res, workspace.companyId))) return;
     const operations = await workspaceOperationsSvc.listForExecutionWorkspace(id);
@@ -268,11 +268,11 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
     const id = req.params.id as string;
     const action = String(req.params.action ?? "").trim().toLowerCase();
     if (action !== "start" && action !== "stop" && action !== "restart" && action !== "repair" && action !== "run") {
-      res.status(404).json({ error: "Workspace command action not found" });
+      res.status(404).json({ error: "未找到工作区命令操作" });
       return;
     }
 
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Execution workspace not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到执行工作区");
     if (!existing) return;
     if (!(await assertRuntimeManageAllowed(req, res, existing.companyId))) return;
 
@@ -284,7 +284,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
     const workspaceCwd = existing.cwd;
     if (!workspaceCwd) {
-      res.status(422).json({ error: "Execution workspace needs a local path before Paperclip can run workspace commands" });
+      res.status(422).json({ error: "执行工作区需要先设置本地路径，Alice 才能运行工作区命令" });
       return;
     }
 
@@ -335,11 +335,11 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
       ? findWorkspaceCommandDefinition(effectiveRuntimeConfig, target.workspaceCommandId ?? null)
       : null;
     if (target.workspaceCommandId && !workspaceCommand) {
-      res.status(404).json({ error: "Workspace command not found for this execution workspace" });
+      res.status(404).json({ error: "此执行工作区中未找到对应命令" });
       return;
     }
     if (target.runtimeServiceId && !(existing.runtimeServices ?? []).some((service) => service.id === target.runtimeServiceId)) {
-      res.status(404).json({ error: "Runtime service not found for this execution workspace" });
+      res.status(404).json({ error: "此执行工作区中未找到对应的运行时服务" });
       return;
     }
     const matchedRuntimeService =
@@ -356,7 +356,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
       && selectedServiceIndex !== null
       && (selectedServiceIndex < 0 || selectedServiceIndex >= configuredServices.length)
     ) {
-      res.status(422).json({ error: "Selected runtime service is not defined in this execution workspace runtime config" });
+      res.status(422).json({ error: "所选运行时服务未在此执行工作区的运行时配置中定义" });
       return;
     }
     if (workspaceCommand?.kind === "job" && action !== "run") {
@@ -368,12 +368,12 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
       return;
     }
     if (action === "run" && !workspaceCommand) {
-      res.status(422).json({ error: "Select a workspace job to run" });
+      res.status(422).json({ error: "请选择要运行的工作区任务" });
       return;
     }
 
     if ((action === "start" || action === "restart") && !effectiveRuntimeConfig) {
-      res.status(422).json({ error: "Execution workspace has no workspace command configuration or inherited project workspace default" });
+      res.status(422).json({ error: "执行工作区没有工作区命令配置，也未继承项目工作区的默认配置" });
       return;
     }
 
@@ -390,7 +390,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
       try {
         manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
       } catch {
-        throw unprocessable("Workspace seed manifest is malformed; repair source identity cannot be trusted.", {
+        throw unprocessable("工作区种子清单格式错误，无法信任修复来源身份。", {
           code: "workspace_repair_precondition_failed",
           reason: "seed_manifest_malformed",
           repairPhase: "precondition_validation",
@@ -428,7 +428,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
             ? [cliDist]
             : null;
         if (!repairCliArgs) {
-          throw new Error("Workspace repair cannot find a runnable Paperclip CLI in the base workspace.");
+          throw new Error("工作区修复无法在基础工作区中找到可运行的 Alice 命令行工具。");
         }
       } catch (error) {
         throw unprocessable(
@@ -577,7 +577,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
           }
           const availableWorkspace = await ensureWorkspaceAvailable();
           if (!availableWorkspace) {
-            throw new Error("Execution workspace needs a local path before Paperclip can run workspace commands");
+            throw new Error("执行工作区需要先设置本地路径，Alice 才能运行工作区命令");
           }
           return await runWorkspaceJobForControl({
             actor: {
@@ -808,7 +808,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
             if (repairRestartsRuntimeServices) {
               const availableWorkspace = await ensureWorkspaceAvailable();
               if (!availableWorkspace) {
-                throw new Error("Execution workspace needs a local path before Paperclip can restart it.");
+                throw new Error("执行工作区需要先设置本地路径，Alice 才能重新启动它。");
               }
               startedServices = await startRuntimeServicesForWorkspaceControl({
                 db,
@@ -864,7 +864,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
         if (action === "start" || action === "restart") {
           const availableWorkspace = await ensureWorkspaceAvailable();
           if (!availableWorkspace) {
-            throw new Error("Execution workspace needs a local path before Paperclip can manage local runtime services");
+            throw new Error("执行工作区需要先设置本地路径，Alice 才能管理本地运行时服务");
           }
           let startedServices;
           try {
@@ -1006,7 +1006,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
     const workspace = await svc.getById(id);
     if (!workspace) {
-      res.status(404).json({ error: "Execution workspace not found" });
+      res.status(404).json({ error: "未找到执行工作区" });
       return;
     }
 
@@ -1048,7 +1048,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
   router.post("/execution-workspaces/:id/reconcile-branch", validate(reconcileExecutionWorkspaceBranchSchema), async (req, res) => {
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Execution workspace not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到执行工作区");
     if (!existing) return;
     assertBoard(req);
     if (!(await assertRuntimeManageAllowed(req, res, existing.companyId))) return;
@@ -1137,7 +1137,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
   router.patch("/execution-workspaces/:id", validate(updateExecutionWorkspaceSchema), async (req, res) => {
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Execution workspace not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到执行工作区");
     if (!existing) return;
     if (!(await assertRuntimeManageAllowed(req, res, existing.companyId))) return;
     assertNoAgentHostWorkspaceCommandMutation(
@@ -1177,13 +1177,13 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
     if (req.body.status === "archived" && existing.status !== "archived") {
       const readiness = await svc.getCloseReadiness(existing.id);
       if (!readiness) {
-        res.status(404).json({ error: "Execution workspace not found" });
+        res.status(404).json({ error: "未找到执行工作区" });
         return;
       }
 
       if (readiness.state === "blocked") {
         res.status(409).json({
-          error: readiness.blockingReasons[0] ?? "Execution workspace cannot be closed right now",
+          error: readiness.blockingReasons[0] ?? "当前无法关闭执行工作区",
           closeReadiness: readiness,
         });
         return;
@@ -1201,7 +1201,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
         closedAt,
       });
       if (!archiveResult) {
-        res.status(404).json({ error: "Execution workspace not found" });
+        res.status(404).json({ error: "未找到执行工作区" });
         return;
       }
       if (archiveResult.outcome === "reopen_pending") {
@@ -1211,7 +1211,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
         // artifact cleanup, so the archive control never removes the rebuilt
         // worktree during the reopen consumption window.
         res.status(409).json({
-          error: "Execution workspace was reopened and cannot be archived right now",
+          error: "执行工作区已重新打开，目前无法归档",
         });
         return;
       }
@@ -1347,7 +1347,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
     } else {
       const updatedWorkspace = await svc.update(id, patch);
       if (!updatedWorkspace) {
-        res.status(404).json({ error: "Execution workspace not found" });
+        res.status(404).json({ error: "未找到执行工作区" });
         return;
       }
       workspace = updatedWorkspace;

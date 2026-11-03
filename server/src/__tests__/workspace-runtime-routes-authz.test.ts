@@ -392,7 +392,7 @@ describe.sequential("workspace runtime service route authorization", () => {
         .post(`/api/execution-workspaces/${executionWorkspaceId}/runtime-services/start`)
         .send({});
       expect(executionRes.status, JSON.stringify(executionRes.body)).toBe(403);
-      expect(executionRes.body.error).toContain("authorization boundary");
+      expect(executionRes.body.error).toContain("授权范围");
 
       expect(mockAssertCanManageProjectWorkspaceRuntimeServices).not.toHaveBeenCalled();
       expect(mockAssertCanManageExecutionWorkspaceRuntimeServices).not.toHaveBeenCalled();
@@ -646,7 +646,7 @@ describe.sequential("workspace runtime service route authorization", () => {
       .send({});
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toContain("Execution workspace not found");
+    expect(res.body.error).toContain("未找到执行工作区");
     expect(mockExecutionWorkspaceService.getById).toHaveBeenCalledWith(executionWorkspaceId);
   });
 });
