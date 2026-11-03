@@ -51,5 +51,10 @@ describe("remaining visible Chinese copy", () => {
       "暂无测试运行记录。请选择智能体并开始运行。",
     );
     expect(messages.no_team_catalog_configured_23ebee3c).toBe("尚未配置团队目录。");
+    expect(messages.nothing_needs_you_right_now_e9877921).toBe("目前没有需要你处理的内容。");
+    expect(messages.no_stages_configured_6acf8a75).toBe("尚未配置阶段。");
+    expect(messages.advanced_child_settings_hidden_while_break_into_pieces_enabled_1e9928a3).toBe(
+      "启用“拆分为更小条目”后，高级子条目设置会隐藏。请在自动化中配置该流程。",
+    );
   });
 });

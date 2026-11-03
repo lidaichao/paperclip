@@ -10873,6 +10873,19 @@
     "this_organization_has_no_projects_yet_762e2c96": "This organization has no projects yet.",
     "select_an_organization_to_browse_team_catalog_1f79077e": "Select an organization to browse the team catalog.",
     "no_team_catalog_configured_23ebee3c": "No team catalog configured.",
-    "no_teams_match_this_filter_86e30a3c": "No teams match this filter."
+    "no_teams_match_this_filter_86e30a3c": "No teams match this filter.",
+    "no_pipelines_match_your_search_7c7fb9a3": "No pipelines match your search.",
+    "no_pipelines_yet_c725173b": "No pipelines yet.",
+    "add_stages_in_pipeline_settings_to_enable_board_88b2fd38": "Add stages in pipeline settings to enable the board.",
+    "select_an_organization_to_view_review_queue_88a5078c": "Select an organization to view the review queue.",
+    "nothing_needs_you_right_now_e9877921": "Nothing needs you right now.",
+    "select_an_organization_to_view_learnings_420c3893": "Select an organization to view learnings.",
+    "no_learnings_yet_42e2e414": "No learnings yet.",
+    "select_an_organization_to_edit_pipeline_settings_101756e5": "Select an organization to edit pipeline settings.",
+    "no_pipeline_selected_0583aa64": "No pipeline selected.",
+    "no_stages_configured_6acf8a75": "No stages configured.",
+    "add_first_stage_6bb7ca6b": "Add first stage",
+    "nothing_runs_here_automatically_items_wait_until_moved_41a192b6": "Nothing runs here automatically. Items wait until a person moves them, or you can pick an agent to run this step.",
+    "advanced_child_settings_hidden_while_break_into_pieces_enabled_1e9928a3": "Advanced child settings are hidden while Break into smaller pieces is enabled. Configure that workflow in Automation."
   }
 }

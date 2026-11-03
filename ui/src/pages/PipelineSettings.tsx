@@ -2123,11 +2123,11 @@ export function PipelineSettings() {
   };
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Hexagon} message="Select an organization to edit pipeline settings." />;
+    return <EmptyState icon={Hexagon} message={l10n("local.select_an_organization_to_edit_pipeline_settings_101756e5")} />;
   }
 
   if (!pipelineId) {
-    return <EmptyState icon={Hexagon} message="No pipeline selected." />;
+    return <EmptyState icon={Hexagon} message={l10n("local.no_pipeline_selected_0583aa64")} />;
   }
 
   if (pipelineQuery.isLoading) {
@@ -2139,7 +2139,7 @@ export function PipelineSettings() {
   }
 
   if (!pipeline) {
-    return <EmptyState icon={Hexagon} message="Pipeline not found." />;
+    return <EmptyState icon={Hexagon} message={l10n("local.pipeline_not_found_97115fd9")} />;
   }
 
   const isArchived = Boolean(pipeline.archivedAt);
@@ -2619,8 +2619,8 @@ export function PipelineSettings() {
           {stages.length === 0 ? (
             <EmptyState
               icon={GitBranch}
-              message="No stages configured."
-              action="Add first stage"
+              message={l10n("local.no_stages_configured_6acf8a75")}
+              action={l10n("local.add_first_stage_6bb7ca6b")}
               onAction={() => addStage.mutate(null)}
             />
           ) : (
@@ -3101,7 +3101,7 @@ export function PipelineSettings() {
                       ) : (
                         <EmptyState
                           icon={Pause}
-                          message="Nothing runs here automatically. Items wait until a person moves them, or you can pick an agent to run this step."
+                          message={l10n("local.nothing_runs_here_automatically_items_wait_until_moved_41a192b6")}
                         />
                       )}
                       <div className="space-y-3">
@@ -3179,7 +3179,7 @@ export function PipelineSettings() {
                       {isPipelineTerminalStageKind(stageKind) ? null : breakdownEnabled ? (
                         <EmptyState
                           icon={SlidersHorizontal}
-                          message="Advanced child settings are hidden while Break into smaller pieces is enabled. Configure that workflow in Automation."
+                          message={l10n("local.advanced_child_settings_hidden_while_break_into_pieces_enabled_1e9928a3")}
                         />
                       ) : (
                         <div className="divide-y divide-border border-b border-border">

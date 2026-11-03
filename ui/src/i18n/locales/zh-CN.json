@@ -10873,6 +10873,19 @@
     "this_organization_has_no_projects_yet_762e2c96": "此组织暂无项目。",
     "select_an_organization_to_browse_team_catalog_1f79077e": "请选择组织以浏览团队目录。",
     "no_team_catalog_configured_23ebee3c": "尚未配置团队目录。",
-    "no_teams_match_this_filter_86e30a3c": "没有符合当前筛选条件的团队。"
+    "no_teams_match_this_filter_86e30a3c": "没有符合当前筛选条件的团队。",
+    "no_pipelines_match_your_search_7c7fb9a3": "没有符合搜索条件的流水线。",
+    "no_pipelines_yet_c725173b": "暂无流水线。",
+    "add_stages_in_pipeline_settings_to_enable_board_88b2fd38": "请在流水线设置中添加阶段以启用看板。",
+    "select_an_organization_to_view_review_queue_88a5078c": "请选择组织以查看审核队列。",
+    "nothing_needs_you_right_now_e9877921": "目前没有需要你处理的内容。",
+    "select_an_organization_to_view_learnings_420c3893": "请选择组织以查看经验记录。",
+    "no_learnings_yet_42e2e414": "暂无经验记录。",
+    "select_an_organization_to_edit_pipeline_settings_101756e5": "请选择组织以编辑流水线设置。",
+    "no_pipeline_selected_0583aa64": "尚未选择流水线。",
+    "no_stages_configured_6acf8a75": "尚未配置阶段。",
+    "add_first_stage_6bb7ca6b": "添加第一个阶段",
+    "nothing_runs_here_automatically_items_wait_until_moved_41a192b6": "此处不会自动运行。条目会等待人工移动，你也可以选择智能体执行此步骤。",
+    "advanced_child_settings_hidden_while_break_into_pieces_enabled_1e9928a3": "启用“拆分为更小条目”后，高级子条目设置会隐藏。请在自动化中配置该流程。"
   }
 }

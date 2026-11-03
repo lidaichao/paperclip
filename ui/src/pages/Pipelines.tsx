@@ -733,7 +733,7 @@ export function PipelinesIndexTable({
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState icon={Hexagon} message="No pipelines match your search." />
+        <EmptyState icon={Hexagon} message={l10n("local.no_pipelines_match_your_search_7c7fb9a3")} />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-(--sz-780px) border-collapse text-sm">
@@ -967,8 +967,8 @@ function PipelinesIndex() {
       {pipelines.length === 0 && !pipelinesQuery.error ? (
         <EmptyState
           icon={Hexagon}
-          message="No pipelines yet."
-          action="New pipeline"
+          message={l10n("local.no_pipelines_yet_c725173b")}
+          action={l10n("local.new_pipeline_43604bb1")}
           onAction={() => setNewPipelineOpen(true)}
         />
       ) : (
@@ -1707,8 +1707,8 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
         </div>
         <EmptyState
           icon={Hexagon}
-          message="Add stages in pipeline settings to enable the board."
-          action="Open settings"
+          message={l10n("local.add_stages_in_pipeline_settings_to_enable_board_88b2fd38")}
+          action={l10n("local.open_settings_3f940108")}
           onAction={() => navigate(`/pipelines/${pipelineId}/settings`)}
         />
       </div>
@@ -5004,7 +5004,7 @@ export function ReviewQueue() {
   }, [activeRowId, decideRow, openItem, visibleRows]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Hexagon} message="Select an organization to view the review queue." />;
+    return <EmptyState icon={Hexagon} message={l10n("local.select_an_organization_to_view_review_queue_88a5078c")} />;
   }
 
   if (attentionQuery.isLoading || reviewCasesQuery.isLoading) {
@@ -5037,7 +5037,7 @@ export function ReviewQueue() {
       ) : null}
 
       {visibleRows.length === 0 ? (
-        <EmptyState icon={Check} message="Nothing needs you right now." />
+        <EmptyState icon={Check} message={l10n("local.nothing_needs_you_right_now_e9877921")} />
       ) : (
         <div className="space-y-6">
           {groupedRows.map((group) => (
@@ -5127,7 +5127,7 @@ export function Learnings() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={BookOpenText} message="Select an organization to view learnings." />;
+    return <EmptyState icon={BookOpenText} message={l10n("local.select_an_organization_to_view_learnings_420c3893")} />;
   }
 
   if (learningsQuery.isLoading && !learningsQuery.data) {
@@ -5163,7 +5163,7 @@ export function Learnings() {
       {learningsQuery.error ? (
         <p className="text-sm text-destructive">{l10n("local.could_not_load_learnings_ceb0103c")}</p>
       ) : groups.length === 0 ? (
-        <EmptyState icon={BookOpenText} message="No learnings yet." />
+        <EmptyState icon={BookOpenText} message={l10n("local.no_learnings_yet_42e2e414")} />
       ) : (
         <div className="space-y-6">
           {groups.map((group) => (
