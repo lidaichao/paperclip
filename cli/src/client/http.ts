@@ -205,12 +205,12 @@ async function toApiError(response: Response): Promise<ApiRequestError> {
     const message =
       (typeof body.error === "string" && body.error.trim()) ||
       (typeof body.message === "string" && body.message.trim()) ||
-      `Request failed with status ${response.status}`;
+      `请求失败，状态码：${response.status}`;
 
     return new ApiRequestError(response.status, message, body.details, parsed);
   }
 
-  return new ApiRequestError(response.status, `Request failed with status ${response.status}`, undefined, parsed);
+  return new ApiRequestError(response.status, `请求失败，状态码：${response.status}`, undefined, parsed);
 }
 
 function buildConnectionErrorMessage(input: {
@@ -221,21 +221,21 @@ function buildConnectionErrorMessage(input: {
 }): string {
   const healthUrl = buildHealthCheckUrl(input.url);
   const lines = [
-    "Could not reach the Paperclip API.",
+    "无法连接 Alice API。",
     "",
-    `Request: ${input.method} ${input.url}`,
+    `请求：${input.method} ${input.url}`,
   ];
   if (input.causeMessage) {
-    lines.push(`Cause: ${input.causeMessage}`);
+    lines.push(`原因：${input.causeMessage}`);
   }
   lines.push(
     "",
-    "This usually means the Paperclip server is not running, the configured URL is wrong, or the request is being blocked before it reaches Paperclip.",
+    "这通常表示 Alice 服务未运行、配置的网址错误，或请求在到达 Alice 前被拦截。",
     "",
-    "Try:",
-    "- Start Paperclip with `pnpm dev` (from a source checkout) or `npx paperclipai run`.",
-    `- Verify the server is reachable with \`curl ${healthUrl}\`.`,
-    `- If Paperclip is running elsewhere, pass \`--api-base ${input.apiBase.replace(/\/+$/, "")}\` or set \`PAPERCLIP_API_URL\`.`,
+    "请尝试：",
+    "- 在源码仓库运行 `pnpm dev`，或运行 `npx paperclipai run` 启动 Alice。",
+    `- 运行 \`curl ${healthUrl}\`，确认服务可访问。`,
+    `- 如果 Alice 运行在其他地址，请传入 \`--api-base ${input.apiBase.replace(/\/+$/, "")}\`，或设置 \`PAPERCLIP_API_URL\`。`,
   );
   return lines.join("\n");
 }
