@@ -35,8 +35,10 @@ function buildBreakdownTitle(summary: ExternalObjectSummary): string {
     if (!count) continue;
     parts.push(`${count} ${externalObjectCategoryLabel(category).toLowerCase()}`);
   }
-  if (summary.staleCount > 0) parts.push(`${summary.staleCount} stale`);
-  parts.push(`${summary.total} total`);
+  if (summary.staleCount > 0) {
+    parts.push(l10n("local.value_stale_10300212", { v0: summary.staleCount }));
+  }
+  parts.push(l10n("local.value_total_10300213", { v0: summary.total }));
   return l10n("local.external_objects_value_758ef502", {v0: (parts.join(", "))});
 }
 

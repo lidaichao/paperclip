@@ -17,7 +17,7 @@ export function SetupWizardSidebar() {
 
 export function SetupWizardNavigation({
   labels,
-  ariaLabel = "Setup progress",
+  ariaLabel = l10n("local.setup_progress_e9b4495a"),
   takeover = false,
   inline = false,
   step,

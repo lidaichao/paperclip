@@ -200,15 +200,17 @@ function collectValidation(form: FormModel, isSkillFile: boolean): ValidationIss
   const issues: ValidationIssue[] = [];
   const name = form.name.trim();
   const description = form.description.trim();
-  if (isSkillFile && !name) issues.push({ field: "name", message: "SKILL.md needs a name." });
+  if (isSkillFile && !name) {
+    issues.push({ field: "name", message: l10n("local.skill_md_needs_name_10300214") });
+  }
   if (name && !SLUG_RE.test(name)) {
-    issues.push({ field: "name", message: "Use lowercase letters, numbers and hyphens." });
+    issues.push({ field: "name", message: l10n("local.use_lowercase_numbers_hyphens_10300215") });
   }
   if (isSkillFile && !description) {
-    issues.push({ field: "description", message: "SKILL.md needs a description." });
+    issues.push({ field: "description", message: l10n("local.skill_md_needs_description_10300216") });
   }
   if (form.allowedToolsPresent && form.allowedTools === null) {
-    issues.push({ field: "allowed-tools", message: "Expected a list — edit in YAML." });
+    issues.push({ field: "allowed-tools", message: l10n("local.expected_list_edit_yaml_10300217") });
   }
   return issues;
 }

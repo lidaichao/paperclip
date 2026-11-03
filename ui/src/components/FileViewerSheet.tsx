@@ -259,7 +259,10 @@ export function FileContentViewer({ content, highlightedLine, onLoaded }: FileCo
 
   useEffect(() => {
     if (!lines) return;
-    onLoaded?.(`File loaded, ${lines.length} ${lines.length === 1 ? "line" : "lines"}.`);
+    onLoaded?.(l10n(
+      lines.length === 1 ? "local.file_loaded_one_line_10300218" : "local.file_loaded_value_lines_10300219",
+      { v0: lines.length },
+    ));
   }, [lines, onLoaded]);
 
   useEffect(() => {

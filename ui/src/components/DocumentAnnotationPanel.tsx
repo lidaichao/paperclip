@@ -543,7 +543,7 @@ export function useCopyAnnotationLink() {
       if (typeof window === "undefined") return;
       const { pathname } = window.location;
       const hash = `#document-${encodeURIComponent(documentKey)}&thread=${encodeURIComponent(threadId)}`;
-      void copyWithToast(`${window.location.origin}${pathname}${hash}`, "Link copied");
+      void copyWithToast(`${window.location.origin}${pathname}${hash}`, l10n("local.link_copied_d12860c2"));
     },
     [copyWithToast],
   );
