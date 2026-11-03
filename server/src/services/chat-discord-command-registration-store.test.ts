@@ -247,6 +247,10 @@ suite("Discord command ownership store (real PostgreSQL, no network)", () => {
       receipt: Record<string, unknown>;
     };
     const prior = discordPaperclipCommandDefinition(registration.ownerId);
+    prior.description = `Paperclip session controls [pc:${registration.ownerId}]`;
+    prior.options[0]!.description = "Show the current Paperclip task";
+    prior.options[1]!.description =
+      "Start a new task in a DM or show new-thread guidance";
     prior.options[2]!.description = "Close the current Paperclip task";
     const remote = f.remote[0]!;
     f.remote[0] = {

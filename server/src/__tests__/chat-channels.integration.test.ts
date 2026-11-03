@@ -12158,7 +12158,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         idempotencyKey: `run:${runId}:${progressState}:${endpoint.id}`,
         payload: {
           text:
-            progressState === "queued" ? "Maya is queued." : "Maya is working…",
+            progressState === "queued" ? "Maya 已加入队列。" : "Maya 正在处理…",
           progressState,
         },
         state: "pending",
@@ -12176,13 +12176,13 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     const providerRuntime = context.runtime.endpoints.get(endpoint.id);
     expect(providerRuntime?.posts).toEqual([
-      { threadId: thread.thread.id, text: "Maya is queued." },
+      { threadId: thread.thread.id, text: "Maya 已加入队列。" },
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
         threadId: thread.thread.id,
         messageId: "outbound-1",
-        text: "Maya is working…",
+        text: "Maya 正在处理…",
       },
       {
         threadId: thread.thread.id,
@@ -14616,7 +14616,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       issueId: conversation.issueId,
       idempotencyKey: `setup-transport:failed:${endpoint.id}`,
       payload: {
-        text: "Maya stopped before completing this turn.",
+        text: "Maya 在完成本轮任务前停止。",
         progressState: "failed",
       },
       state: "pending",
@@ -14987,7 +14987,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(
       runtime.endpoints
         .get(endpoint.id)
-        ?.edits.some((edit) => edit.text === "Maya stopped at your request.") ??
+        ?.edits.some((edit) => edit.text === "Maya 已按你的要求停止。") ??
         false,
     ).toBe(true);
 
@@ -15272,7 +15272,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(
       runtime.endpoints
         .get(endpoint.id)
-        ?.posts.some((post) => post.text === "Maya stopped at your request.") ??
+        ?.posts.some((post) => post.text === "Maya 已按你的要求停止。") ??
         false,
     ).toBe(true);
 
@@ -25568,7 +25568,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       conversationId: conversation.id,
       issueId: conversation.issueId,
       idempotencyKey: `run:${runId}:queued:${endpoint.id}`,
-      payload: { text: "Maya is queued.", progressState: "queued" },
+      payload: { text: "Maya 已加入队列。", progressState: "queued" },
       state: "pending",
     });
     await service.processPendingPublications();
@@ -25578,7 +25578,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       conversationId: conversation.id,
       issueId: conversation.issueId,
       idempotencyKey: `run:${runId}:working:${endpoint.id}`,
-      payload: { text: "Maya is working…", progressState: "working" },
+      payload: { text: "Maya 正在处理…", progressState: "working" },
       state: "pending",
     });
     await service.processPendingPublications();
@@ -25595,14 +25595,14 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(providerRuntime?.posts).toEqual([
       {
         threadId: thread.thread.id,
-        text: "Maya is queued.",
+        text: "Maya 已加入队列。",
       },
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
         threadId: thread.thread.id,
         messageId: "outbound-1",
-        text: "Maya is working…",
+        text: "Maya 正在处理…",
       },
       {
         threadId: thread.thread.id,
@@ -26439,7 +26439,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       conversationId: conversation.id,
       issueId: conversation.issueId,
       idempotencyKey: `run:${runId}:working:${endpoint.id}`,
-      payload: { text: "Maya is working…", progressState: "working" },
+      payload: { text: "Maya 正在处理…", progressState: "working" },
       state: "pending",
     });
     await service.processPendingPublications();
@@ -26478,7 +26478,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     });
     const providerRuntime = runtime.endpoints.get(endpoint.id);
     expect(providerRuntime?.posts.map((post) => post.text)).toEqual([
-      "Maya is working…",
+      "Maya 正在处理…",
     ]);
     const statusPublication = (
       await db
@@ -26502,7 +26502,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       .where(eq(issues.id, conversation.issueId));
     await service.processPendingPublications();
     expect(providerRuntime?.posts.map((post) => post.text)).toEqual([
-      "Maya is working…",
+      "Maya 正在处理…",
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
@@ -26524,7 +26524,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     // Both updates own the run's existing provider message. Applying the edit
     // log yields one terminal message with no stale working/status sibling.
     expect(providerRuntime?.posts.map((post) => post.text)).toEqual([
-      "Maya is working…",
+      "Maya 正在处理…",
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
@@ -26973,7 +26973,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           conversationId: conversation.id,
           issueId: conversation.issueId,
           idempotencyKey: `run:${runId}:working:${endpoint.id}`,
-          payload: { text: "Maya is working…", progressState: "working" },
+          payload: { text: "Maya 正在处理…", progressState: "working" },
           state: "pending",
         })
         .returning();
@@ -27148,7 +27148,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           }),
         ).toBe(removals[0]!.id);
         expect(f.providerRuntime.posts.map((post) => post.text)).toEqual([
-          "Maya is working…",
+          "Maya 正在处理…",
         ]);
         expect(f.providerRuntime.edits).toEqual([
           {
@@ -27731,7 +27731,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           },
         ]);
         expect(f.providerRuntime.posts.map((post) => post.text)).toEqual([
-          "Maya is working…",
+          "Maya 正在处理…",
           "This chat conversation is closed. Send another message to start a new task.",
         ]);
       } finally {
@@ -27984,7 +27984,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         conversationId: conversation.id,
         issueId: conversation.issueId,
         idempotencyKey: `run:${runId}:working:${endpoint.id}`,
-        payload: { text: "Maya is working…", progressState: "working" },
+        payload: { text: "Maya 正在处理…", progressState: "working" },
         state: "pending",
       });
       await service.processPendingPublications();
@@ -28020,7 +28020,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
       const providerRuntime = runtime.endpoints.get(endpoint.id);
       expect(providerRuntime?.posts.map((post) => post.text)).toEqual([
-        "Maya is working…",
+        "Maya 正在处理…",
       ]);
       expect(providerRuntime?.edits).toEqual([
         {
@@ -28142,7 +28142,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         conversationId: firstConversation.id,
         issueId: firstConversation.issueId,
         idempotencyKey: `session-blocker:${randomUUID()}`,
-        payload: { text: "Maya is working…", progressState: "working" },
+        payload: { text: "Maya 正在处理…", progressState: "working" },
         state: "pending",
       });
       await first.service.processPendingPublications();
@@ -28307,7 +28307,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         conversationId: conversation.id,
         issueId: conversation.issueId,
         idempotencyKey: `run:${runId}:working:${endpoint.id}`,
-        payload: { text: "Maya is working…", progressState: "working" },
+        payload: { text: "Maya 正在处理…", progressState: "working" },
         state: "pending",
       })
       .returning();
@@ -28578,7 +28578,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         issueId: conversation.issueId,
         idempotencyKey: `run:${runId}:${milestone}:${endpoint.id}`,
         payload: {
-          text: milestone === "queued" ? "Maya is queued." : "Maya is working…",
+          text: milestone === "queued" ? "Maya 已加入队列。" : "Maya 正在处理…",
           progressState: milestone,
         },
         state: "pending",
@@ -28634,13 +28634,13 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     const providerRuntime = runtime.endpoints.get(endpoint.id);
     expect(providerRuntime?.posts).toEqual([
-      { threadId: thread.thread.id, text: "Maya is queued." },
+      { threadId: thread.thread.id, text: "Maya 已加入队列。" },
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
         threadId: thread.thread.id,
         messageId: "outbound-1",
-        text: "Maya is working…",
+        text: "Maya 正在处理…",
       },
       {
         threadId: thread.thread.id,
@@ -28700,7 +28700,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await stageControlPublication("Status sampled after the run finished");
     await service.processPendingPublications();
     expect(providerRuntime?.posts).toEqual([
-      { threadId: thread.thread.id, text: "Maya is queued." },
+      { threadId: thread.thread.id, text: "Maya 已加入队列。" },
       { threadId: thread.thread.id, text: expect.stringMatching(/ — /) },
     ]);
   });
@@ -28753,8 +28753,8 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         payload: {
           text:
             milestone === "working"
-              ? "Maya is working…"
-              : "Maya stopped before completing this turn.",
+              ? "Maya 正在处理…"
+              : "Maya 在完成本轮任务前停止。",
           progressState: milestone,
         },
         state: "pending",
@@ -28764,13 +28764,13 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     const providerRuntime = runtime.endpoints.get(endpoint.id);
     expect(providerRuntime?.posts).toEqual([
-      { threadId: thread.thread.id, text: "Maya is working…" },
+      { threadId: thread.thread.id, text: "Maya 正在处理…" },
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
         threadId: thread.thread.id,
         messageId: "outbound-1",
-        text: "Maya stopped before completing this turn.",
+        text: "Maya 在完成本轮任务前停止。",
       },
     ]);
   });
@@ -28925,7 +28925,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         payload: expect.objectContaining({
           progressState: "failed",
           text: expect.stringContaining(
-            "Maya stopped before completing this turn.",
+            "Maya 在完成本轮任务前停止。",
           ),
         }),
         state: "published",
@@ -28936,7 +28936,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         {
           threadId: dm.thread.id,
           text: expect.stringContaining(
-            "Maya stopped before completing this turn.",
+            "Maya 在完成本轮任务前停止。",
           ),
         },
       ]),
@@ -29080,7 +29080,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         payload: expect.objectContaining({
           progressState: "failed",
           text: expect.stringContaining(
-            "Maya stopped before completing this turn.",
+            "Maya 在完成本轮任务前停止。",
           ),
         }),
         state: "published",
@@ -32457,12 +32457,12 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         state: "published",
         payload: {
           progressState: "failed",
-          text: expect.stringContaining("couldn't safely start this turn"),
+          text: expect.stringContaining("无法安全开始本轮任务"),
         },
       });
       expect(
         providerRuntime.posts.filter((post) =>
-          post.text.includes("couldn't safely start this turn"),
+          post.text.includes("无法安全开始本轮任务"),
         ),
       ).toHaveLength(1);
       expect(wakeup).toHaveBeenCalledTimes(1);
@@ -34928,7 +34928,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       conversationId: conversation.id,
       issueId: conversation.issueId,
       idempotencyKey: `run:${runId}:working:${endpoint.id}`,
-      payload: { text: "Maya is working…", progressState: "working" },
+      payload: { text: "Maya 正在处理…", progressState: "working" },
       state: "published",
       providerMessageId: "telegram-working-message-1",
       createdAt: workingCreatedAt,
@@ -36805,7 +36805,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         response_action: "errors",
         errors: {
           [select.block_id]:
-            "This form is no longer authorized. Close it and open the linked Paperclip task.",
+            "此表单已失去授权。请关闭表单并打开关联的 Alice 任务。",
         },
       });
       expect(await submissionState()).toEqual(before);
@@ -37530,7 +37530,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         action: "errors",
         errors: {
           [selectField.id]:
-            "This form is no longer authorized. Close it and open the linked Paperclip task.",
+            "此表单已失去授权。请关闭表单并打开关联的 Alice 任务。",
         },
       };
       await expect(
@@ -37901,7 +37901,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       conversationId: conversation.id,
       issueId: conversation.issueId,
       idempotencyKey: `run:${sourceRunId}:working:${endpoint.id}`,
-      payload: { text: "Maya is working…", progressState: "working" },
+      payload: { text: "Maya 正在处理…", progressState: "working" },
       state: "pending",
     });
     await service.processPendingPublications();
@@ -38246,7 +38246,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       conversationId: conversation.id,
       issueId: conversation.issueId,
       idempotencyKey: `run:${sourceRunId}:queued:${endpoint.id}`,
-      payload: { text: "Maya is queued.", progressState: "queued" },
+      payload: { text: "Maya 已加入队列。", progressState: "queued" },
       state: "pending",
     });
     await service.processPendingPublications();
@@ -40071,7 +40071,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       ) ?? [],
     ).toEqual([]);
     expect(publication.payload.text).toContain(
-      "Open the task in Paperclip to respond",
+      "在 Alice 中打开任务并回复",
     );
     expect(callbacks.onModalSubmit).toBeTypeOf("function");
     expect(callbacks.onModalClose).toBeUndefined();
@@ -46351,7 +46351,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
               conversationId: f.conversation.id,
               issueId: f.conversation.issueId,
               idempotencyKey: `run:${runId}:working:${f.endpoint.id}`,
-              payload: { text: "Maya is working…", progressState: "working" },
+              payload: { text: "Maya 正在处理…", progressState: "working" },
               state: "pending",
             })
             .returning();
@@ -47222,7 +47222,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           await f.service.processPendingPublications();
           expect(
             f.runtime.get(f.endpoint.id)?.posts.map((post) => post.text),
-          ).toContain("Maya is working…");
+          ).toContain("Maya 正在处理…");
           await db
             .update(heartbeatRuns)
             .set({ status: "succeeded", finishedAt: new Date() })
@@ -54833,13 +54833,13 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await service.processPendingPublications();
     const providerRuntime = runtime.endpoints.get(endpoint.id);
     expect(providerRuntime?.posts).toEqual([
-      { threadId: dm.thread.id, text: "Maya is working…" },
+      { threadId: dm.thread.id, text: "Maya 正在处理…" },
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
         threadId: dm.thread.id,
         messageId: "outbound-2",
-        text: "Maya needs a Paperclip admin to safely recover this turn before more work can start. Open the task in Paperclip for details.",
+        text: "Maya 需要 Alice 管理员安全恢复本轮任务，之后才能继续工作。 请在 Alice 中打开任务查看详情。",
       },
     ]);
     expect(JSON.stringify(providerRuntime?.edits)).not.toContain(
@@ -55053,13 +55053,13 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     const providerRuntime = runtime.endpoints.get(endpoint.id);
     expect(providerRuntime?.posts).toEqual([
-      { threadId: dm.thread.id, text: "Maya is working…" },
+      { threadId: dm.thread.id, text: "Maya 正在处理…" },
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
         threadId: dm.thread.id,
         messageId: "outbound-2",
-        text: "Maya completed this turn.",
+        text: "Maya 已完成本轮任务。",
       },
     ]);
     expect(
@@ -55200,7 +55200,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
       const providerRuntime = runtime.endpoints.get(endpoint.id);
       expect(providerRuntime?.posts).toEqual([
-        { threadId: dm.thread.id, text: "Maya is working…" },
+        { threadId: dm.thread.id, text: "Maya 正在处理…" },
       ]);
       expect(providerRuntime?.edits).toEqual([
         {
@@ -55208,7 +55208,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           messageId: "outbound-2",
           text: publishesComment
             ? `Explicit Telegram reply via ${authorizationReason}`
-            : "Maya completed this turn.",
+            : "Maya 已完成本轮任务。",
         },
       ]);
       await expect(
@@ -58158,7 +58158,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         {
           threadId: context.thread.thread.id,
           messageId: originalWorking!.providerMessageId,
-          text: "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+          text: "Maya 在完成本轮任务前停止。 请在 Alice 中打开任务查看详情。",
         },
       ]);
 
@@ -58214,7 +58214,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           providerMessageId: originalWorking!.providerMessageId,
           payload: {
             progressState: "failed",
-            text: "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+            text: "Maya 在完成本轮任务前停止。 请在 Alice 中打开任务查看详情。",
           },
         }),
       ]);
@@ -59106,7 +59106,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         idempotencyKey: `run:${runId}:${progressState}:${endpoint.id}`,
         payload: {
           text:
-            progressState === "queued" ? "Maya is queued." : "Maya is working…",
+            progressState === "queued" ? "Maya 已加入队列。" : "Maya 正在处理…",
           progressState,
         },
         state: "pending",
@@ -59124,13 +59124,13 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     const providerRuntime = runtime.endpoints.get(endpoint.id);
     expect(providerRuntime?.posts).toEqual([
-      { threadId: dm.thread.id, text: "Maya is queued." },
+      { threadId: dm.thread.id, text: "Maya 已加入队列。" },
     ]);
     expect(providerRuntime?.edits).toEqual([
       {
         threadId: dm.thread.id,
         messageId: "outbound-2",
-        text: "Maya is working…",
+        text: "Maya 正在处理…",
       },
       {
         threadId: dm.thread.id,
@@ -63936,7 +63936,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             conversationId: context.conversation.id,
             issueId: context.issue.id,
             idempotencyKey: `run:${context.runId}:working:${context.endpoint.id}`,
-            payload: { text: "Maya is working…" },
+            payload: { text: "Maya 正在处理…" },
             state: "delivery_unknown",
           });
         if (mutation === "digest_changed")
@@ -64649,7 +64649,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         issueId: context.issue.id,
         idempotencyKey: `run:${runId}:failed:${context.endpoint.id}`,
         payload: {
-          text: "Maya stopped before completing this turn.",
+          text: "Maya 在完成本轮任务前停止。",
           progressState: "failed",
         },
         state: "published",
@@ -66197,7 +66197,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           issueId: context.conversation.issueId,
           idempotencyKey: `run:${runId}:failed:${context.endpoint.id}`,
           payload: {
-            text: "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+            text: "Maya 在完成本轮任务前停止。 请在 Alice 中打开任务查看详情。",
             progressState: "failed",
           },
         });
@@ -66211,7 +66211,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           {
             threadId: context.thread.thread.id,
             messageId: queued.providerMessageId,
-            text: "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+            text: "Maya 在完成本轮任务前停止。 请在 Alice 中打开任务查看详情。",
           },
         ]);
         expect(JSON.stringify(runtime.edits)).not.toContain("was not started");
@@ -66313,7 +66313,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         {
           threadId: context.thread.thread.id,
           messageId: queued.providerMessageId,
-          text: "This follow-up was not started. Open the task in Paperclip for details.",
+          text: "后续操作未启动。请在 Alice 中打开任务查看详情。",
         },
       ]);
       expect(JSON.stringify(runtime.edits)).not.toMatch(

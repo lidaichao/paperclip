@@ -687,7 +687,7 @@ describe("chat question forms", () => {
       action: "errors",
       errors: {
         [payload.fields[0]!.fieldId]:
-          "This form is no longer authorized. Close it and open the linked Paperclip task.",
+          "此表单已失去授权。请关闭表单并打开关联的 Alice 任务。",
       },
     });
     expect(chatQuestionFormDenialResponse()).toEqual({ action: "clear" });

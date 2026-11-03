@@ -103,22 +103,22 @@ export function discordPaperclipCommandDefinition(publicOwnerId: string) {
   return {
     type: 1,
     name: "paperclip",
-    description: `Paperclip session controls [pc:${publicOwnerId}]`,
+    description: `Alice 会话控制 [pc:${publicOwnerId}]`,
     options: [
       {
         type: 1,
         name: "status",
-        description: "Show the current Paperclip task",
+        description: "显示当前 Alice 任务",
       },
       {
         type: 1,
         name: "new",
-        description: "Start a new task in a DM or show new-thread guidance",
+        description: "在私信中开始新任务，或显示新话题指引",
       },
       {
         type: 1,
         name: "close",
-        description: "Close the current chat conversation",
+        description: "关闭当前聊天会话",
       },
     ],
     default_member_permissions: null,
@@ -132,6 +132,10 @@ export function discordPaperclipCommandDefinition(publicOwnerId: string) {
 // it never enables command handling before a current definition is confirmed.
 function priorCloseCopyDefinition(id: string) {
   const definition = discordPaperclipCommandDefinition(id);
+  definition.description = `Paperclip session controls [pc:${id}]`;
+  definition.options[0]!.description = "Show the current Paperclip task";
+  definition.options[1]!.description =
+    "Start a new task in a DM or show new-thread guidance";
   definition.options[2]!.description = "Close the current Paperclip task";
   return definition;
 }

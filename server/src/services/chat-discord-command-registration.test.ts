@@ -114,6 +114,10 @@ describe("Discord owned native-command registration", () => {
     const f = fixture();
     await reconcileDiscordCommandRegistration(f.options());
     const prior = discordPaperclipCommandDefinition(f.stored.ownerId);
+    prior.description = `Paperclip session controls [pc:${f.stored.ownerId}]`;
+    prior.options[0]!.description = "Show the current Paperclip task";
+    prior.options[1]!.description =
+      "Start a new task in a DM or show new-thread guidance";
     prior.options[2]!.description = "Close the current Paperclip task";
     if (f.stored.phase !== "registered") throw new Error("Missing receipt");
     f.stored = {
@@ -246,7 +250,7 @@ describe("Discord owned native-command registration", () => {
     );
     expect(
       definition.options.find((option) => option.name === "close"),
-    ).toMatchObject({ description: "Close the current chat conversation" });
+    ).toMatchObject({ description: "关闭当前聊天会话" });
   });
 
   it("creates one namespaced command after durable intent and preserves unrelated commands", async () => {

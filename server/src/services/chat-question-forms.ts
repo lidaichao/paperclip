@@ -134,7 +134,7 @@ export type ChatQuestionFormValidationResult =
     };
 
 const CHAT_QUESTION_FORM_DENIAL_MESSAGE =
-  "This form is no longer authorized. Close it and open the linked Paperclip task.";
+  "此表单已失去授权。请关闭表单并打开关联的 Alice 任务。";
 
 /**
  * Provider callbacks must be acknowledged after Paperclip has durably denied a
@@ -601,9 +601,9 @@ export function buildChatQuestionFormModal(
     callbackId,
     title:
       boundedLabel(
-        interaction.payload.title ?? interaction.title ?? "Input needed",
+        interaction.payload.title ?? interaction.title ?? "需要输入",
         payload.nativeProvider === "discord" ? 45 : 24,
-      ) || "Input needed",
+      ) || "需要输入",
     submitLabel:
       boundedLabel(interaction.payload.submitLabel ?? "Submit", 24) || "Submit",
     closeLabel: "Cancel",

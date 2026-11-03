@@ -9,16 +9,16 @@ describe("chat run milestone projection", () => {
       projectSafeChatPublication({
         classification: "external",
         source: "safe_milestone",
-        text: "Maya is working…",
+        text: "Maya 正在处理…",
         progressState: "working",
       }),
-    ).toEqual({ text: "Maya is working…", progressState: "working" });
+    ).toEqual({ text: "Maya 正在处理…", progressState: "working" });
     expect(
       JSON.stringify(
         projectSafeChatPublication({
           classification: "external",
           source: "safe_milestone",
-          text: "Maya stopped before completing this turn.",
+          text: "Maya 在完成本轮任务前停止。",
           progressState: "failed",
         }),
       ),
@@ -35,7 +35,7 @@ describe("chat run milestone projection", () => {
         publicBaseUrl: "https://paperclip.example/path",
       }),
     ).toBe(
-      "Maya couldn't safely start this turn because this task was started for an unlinked external guest and isolated guest execution isn't available. Ask a Paperclip admin to create a private identity link for this account or enable isolated guest execution, then start a new task. Open the task in Paperclip: https://paperclip.example/issues/issue-1",
+      "Maya 无法安全开始本轮任务：该任务由未关联的外部访客发起，但隔离访客执行不可用。请让 Alice 管理员为此账户创建私有身份关联，或启用隔离访客执行，然后新建任务。 在 Alice 中打开任务：https://paperclip.example/issues/issue-1",
     );
     expect(
       safeMilestoneText({
@@ -46,7 +46,7 @@ describe("chat run milestone projection", () => {
         publicBaseUrl: null,
       }),
     ).toBe(
-      "Maya couldn't safely start this turn because this task was started for an unlinked external guest and isolated guest execution isn't available. Ask a Paperclip admin to create a private identity link for this account or enable isolated guest execution, then start a new task. Open the task in Paperclip for details.",
+      "Maya 无法安全开始本轮任务：该任务由未关联的外部访客发起，但隔离访客执行不可用。请让 Alice 管理员为此账户创建私有身份关联，或启用隔离访客执行，然后新建任务。 请在 Alice 中打开任务查看详情。",
     );
   });
 
@@ -58,7 +58,7 @@ describe("chat run milestone projection", () => {
       issueId: "issue-1",
     });
     expect(text).toBe(
-      "Maya couldn't safely continue this turn. A Paperclip admin needs to review the run before it can be retried. Open the task in Paperclip for details.",
+      "Maya 无法安全继续本轮任务。请由 Alice 管理员检查此次运行后再重试。 请在 Alice 中打开任务查看详情。",
     );
     expect(text).not.toMatch(/digest|source.seq|semantic|replay.conflict/i);
   });
@@ -72,15 +72,15 @@ describe("chat run milestone projection", () => {
         issueId: "issue-1",
       }),
     ).toBe(
-      "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+      "Maya 在完成本轮任务前停止。 请在 Alice 中打开任务查看详情。",
     );
   });
 
   it.each([
-    [null, " Open the task in Paperclip for details."],
+    [null, " 请在 Alice 中打开任务查看详情。"],
     [
       "https://paperclip.example",
-      " Open the task in Paperclip: https://paperclip.example/issues/issue-1",
+      " 在 Alice 中打开任务：https://paperclip.example/issues/issue-1",
     ],
   ])(
     "explains retained-session recovery without encouraging duplicate requests (%s)",
@@ -93,7 +93,7 @@ describe("chat run milestone projection", () => {
         publicBaseUrl,
       });
       expect(text).toBe(
-        "Maya couldn't start this turn because an earlier session needs recovery. Your request is saved. Ask a Paperclip admin to recover that session before retrying; sending the request again won't repair it." +
+        "Maya 无法开始本轮任务，因为较早的会话需要恢复。你的请求已保存。请由 Alice 管理员恢复该会话后再重试；重复发送请求无法解决问题。" +
           suffix,
       );
       expect(text).not.toMatch(
@@ -119,7 +119,7 @@ describe("chat run milestone projection", () => {
         issueId: "issue-1",
       }),
     ).toBe(
-      "Maya needs a Paperclip admin to safely recover this turn before more work can start. Open the task in Paperclip for details.",
+      "Maya 需要 Alice 管理员安全恢复本轮任务，之后才能继续工作。 请在 Alice 中打开任务查看详情。",
     );
   });
 
@@ -134,7 +134,7 @@ describe("chat run milestone projection", () => {
           issueId: "issue-1",
         }),
       ).toBe(
-        "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+        "Maya 在完成本轮任务前停止。 请在 Alice 中打开任务查看详情。",
       );
     },
   );
@@ -148,7 +148,7 @@ describe("chat run milestone projection", () => {
         issueId: "issue-1",
       }),
     ).toBe(
-      "Maya couldn't complete this turn because the model provider's usage allowance is exhausted. A Paperclip admin needs to restore capacity before retrying. Open the task in Paperclip for details.",
+      "Maya 未能完成本轮任务，因为模型服务商的使用额度已耗尽。请由 Alice 管理员恢复容量后重试。 请在 Alice 中打开任务查看详情。",
     );
   });
 
@@ -160,7 +160,7 @@ describe("chat run milestone projection", () => {
         milestone: "failed",
         issueId: "issue-1",
       }),
-    ).toBe("Maya stopped at your request.");
+    ).toBe("Maya 已按你的要求停止。");
   });
 
   it("projects a successful run without an explicit reply as a generic completion", () => {
@@ -170,7 +170,7 @@ describe("chat run milestone projection", () => {
         milestone: "completed",
         issueId: "issue-1",
       }),
-    ).toBe("Maya completed this turn.");
+    ).toBe("Maya 已完成本轮任务。");
   });
 });
 

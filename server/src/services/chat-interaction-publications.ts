@@ -189,7 +189,7 @@ function textForQuestionInteraction(
   taskUrl: string | null,
 ): string {
   const lines = [
-    interaction.payload.title ?? interaction.title ?? "Input needed",
+    interaction.payload.title ?? interaction.title ?? "需要输入",
     "",
   ];
   for (const question of interaction.payload.questions) {
@@ -199,18 +199,18 @@ function textForQuestionInteraction(
   }
   lines.push(
     taskUrl
-      ? `Open the task in Paperclip to respond: ${taskUrl}`
-      : "Open the task in Paperclip to respond.",
+      ? `在 Alice 中打开任务并回复：${taskUrl}`
+      : "请在 Alice 中打开任务并回复。",
   );
   return lines.join("\n");
 }
 
 function genericInteractionText(taskUrl: string | null): string {
   return [
-    "This task needs an authorized response in Paperclip.",
+    "此任务需要在 Alice 中获得授权回复。",
     taskUrl
-      ? `Open the task in Paperclip to respond: ${taskUrl}`
-      : "Open the task in Paperclip to respond.",
+      ? `在 Alice 中打开任务并回复：${taskUrl}`
+      : "请在 Alice 中打开任务并回复。",
   ]
     .filter((value): value is string => Boolean(value))
     .join("\n\n");
@@ -394,16 +394,16 @@ export async function enqueueIssueInteractionChatPublications(
               ? (question?.prompt ??
                 interaction.payload.title ??
                 interaction.title ??
-                "Input needed")
+                "需要输入")
               : interaction.kind === "request_confirmation"
                 ? interaction.payload.prompt
-                : "Response needed in Paperclip",
+                : "需要在 Alice 中回复",
           body:
             interaction.kind === "ask_user_questions"
               ? (question?.helpText ?? undefined)
               : interaction.kind === "request_confirmation"
                 ? (interaction.payload.detailsMarkdown ?? undefined)
-                : "Open the task in Paperclip to review and respond.",
+                : "请在 Alice 中打开任务进行审阅和回复。",
           actions,
         },
       },

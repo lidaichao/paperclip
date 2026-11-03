@@ -63,7 +63,7 @@ describe("external Paperclip task links", () => {
           publicBaseUrl: baseUrl,
         }),
       ).toBe(
-        "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+        "Maya 在完成本轮任务前停止。 请在 Alice 中打开任务查看详情。",
       );
     },
   );

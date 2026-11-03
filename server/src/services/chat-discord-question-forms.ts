@@ -332,6 +332,6 @@ export function discordQuestionFormCorrectionModal(
 export const discordQuestionFormDenialResponse = (): ModalResponse => ({
   action: "errors",
   errors: {
-    form: "This form is no longer authorized. Open the linked Paperclip task.",
+    form: "此表单已失去授权。请打开关联的 Alice 任务。",
   },
 });

@@ -9,9 +9,9 @@ import { unprocessable } from "../errors.js";
 
 /** Read an owned login home, or an explicitly authorized local-operator import. */
 export async function readVerifiedLocalAiCredential(provider: AiProvider, loginHome?: string): Promise<string> {
-  if (provider === "openrouter") throw unprocessable("OpenRouter requires an API key.");
+  if (provider === "openrouter") throw unprocessable("OpenRouter 需要 API 密钥。");
   if ((provider === "openai" || provider === "xai") && !loginHome)
-    throw unprocessable("Start a separate local sign-in for this connection before connecting.");
+    throw unprocessable("请先为此连接单独启动本地登录，再进行连接。");
   try {
     if (provider === "anthropic") {
       // Never change process.env or fall back to the server account when an
@@ -56,7 +56,7 @@ export async function readVerifiedLocalAiCredential(provider: AiProvider, loginH
   } catch {
     // Provider/CLI errors may contain credential material; never return them.
     throw unprocessable(provider === "anthropic" && !loginHome
-      ? "Could not verify the local subscription. Run claude auth login in a terminal on the machine running Paperclip, then try Connect again."
-      : "Could not verify the local subscription. Run the sign-in command shown for this connection, finish signing in, then try Connect again.");
+      ? "无法验证本地订阅。请在运行 Alice 的机器上打开终端，执行 claude auth login，然后重新连接。"
+      : "无法验证本地订阅。请执行此连接显示的登录命令，完成登录后重新连接。");
   }
 }

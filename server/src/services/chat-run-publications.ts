@@ -148,29 +148,29 @@ export function safeMilestoneText(input: {
   issueId: string;
   publicBaseUrl?: string | null;
 }): string {
-  if (input.milestone === "queued") return `${input.agentName} is queued.`;
-  if (input.milestone === "working") return `${input.agentName} is working…`;
+  if (input.milestone === "queued") return `${input.agentName} 已加入队列。`;
+  if (input.milestone === "working") return `${input.agentName} 正在处理…`;
   if (input.milestone === "completed")
-    return `${input.agentName} completed this turn.`;
+    return `${input.agentName} 已完成本轮任务。`;
   if (input.errorCode === "slack_session_stopped")
-    return `${input.agentName} stopped at your request.`;
+    return `${input.agentName} 已按你的要求停止。`;
   const taskUrl = safeChatTaskUrl(input.publicBaseUrl, input.issueId);
   const recovery =
     input.milestone === "waiting_for_input"
-      ? `${input.agentName} needs a Paperclip admin to safely recover this turn before more work can start.`
+      ? `${input.agentName} 需要 Alice 管理员安全恢复本轮任务，之后才能继续工作。`
       : input.errorCode === "low_trust_isolation_unavailable"
-        ? `${input.agentName} couldn't safely start this turn because this task was started for an unlinked external guest and isolated guest execution isn't available. Ask a Paperclip admin to create a private identity link for this account or enable isolated guest execution, then start a new task.`
+        ? `${input.agentName} 无法安全开始本轮任务：该任务由未关联的外部访客发起，但隔离访客执行不可用。请让 Alice 管理员为此账户创建私有身份关联，或启用隔离访客执行，然后新建任务。`
         : input.errorCode === "native_provider_usage_limit"
-          ? `${input.agentName} couldn't complete this turn because the model provider's usage allowance is exhausted. A Paperclip admin needs to restore capacity before retrying.`
+          ? `${input.agentName} 未能完成本轮任务，因为模型服务商的使用额度已耗尽。请由 Alice 管理员恢复容量后重试。`
           : input.errorCode === "native_event_replay_conflict"
-            ? `${input.agentName} couldn't safely continue this turn. A Paperclip admin needs to review the run before it can be retried.`
+            ? `${input.agentName} 无法安全继续本轮任务。请由 Alice 管理员检查此次运行后再重试。`
             : input.errorCode === "native_session_cleanup_quarantined"
-              ? `${input.agentName} couldn't start this turn because an earlier session needs recovery. Your request is saved. Ask a Paperclip admin to recover that session before retrying; sending the request again won't repair it.`
-              : `${input.agentName} stopped before completing this turn.`;
+              ? `${input.agentName} 无法开始本轮任务，因为较早的会话需要恢复。你的请求已保存。请由 Alice 管理员恢复该会话后再重试；重复发送请求无法解决问题。`
+              : `${input.agentName} 在完成本轮任务前停止。`;
   return `${recovery}${
     taskUrl
-      ? ` Open the task in Paperclip: ${taskUrl}`
-      : " Open the task in Paperclip for details."
+      ? ` 在 Alice 中打开任务：${taskUrl}`
+      : " 请在 Alice 中打开任务查看详情。"
   }`;
 }
 
