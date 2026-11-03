@@ -2925,7 +2925,7 @@ export function companySkillService(db: Db) {
   async function assertLocalImportSourceAllowed(companyId: string, source: string) {
     const sourceRealPath = await fs.realpath(path.resolve(source)).catch(() => null);
     if (!sourceRealPath) {
-      throw unprocessable("Local skill source is not available", {
+      throw unprocessable("本地技能来源不可用", {
         code: "skill_source_validation_failed",
       });
     }
@@ -2941,7 +2941,7 @@ export function companySkillService(db: Db) {
       (root) => sourceRealPath === root || sourceRealPath.startsWith(`${root}${path.sep}`),
     );
     if (!allowed) {
-      throw forbidden("Local skill source is outside approved company workspace roots", {
+      throw forbidden("本地技能来源位于公司批准的工作区根目录之外", {
         code: "skill_workspace_boundary_denied",
         remediation: "Import from a configured Paperclip workspace or the company managed-skill directory.",
       });
@@ -3185,7 +3185,7 @@ export function companySkillService(db: Db) {
         .where(eq(companies.id, companyId))
         .then((rows) => rows.length > 0);
       if (!companyExists) {
-        throw notFound("Company not found");
+        throw notFound("未找到公司");
       }
       const bundledSkills = await ensureBundledSkills(companyId);
       await ensureBundledSkillReleases(companyId, bundledSkills);
@@ -3432,7 +3432,7 @@ export function companySkillService(db: Db) {
       .where(eq(companySkills.id, skill.id))
       .returning()
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Skill not found");
+    if (!row) throw notFound("未找到技能");
     return toCompanySkill(row);
   }
 
@@ -3459,7 +3459,7 @@ export function companySkillService(db: Db) {
     const skill = await getById(companyId, skillId);
     if (!skill) return null;
     if (skill.sourceType !== "catalog" && skill.sourceType !== "local_path") {
-      throw unprocessable("Only local-path and catalog-managed company skills support audit.");
+      throw unprocessable("只有本地路径和目录托管的公司技能支持审计。");
     }
     const audit = await auditInstalledSkillBytes(skill);
     await persistAuditMetadata(skill, audit);
@@ -3566,7 +3566,7 @@ export function companySkillService(db: Db) {
 
   async function listVersions(companyId: string, skillId: string): Promise<CompanySkillVersion[]> {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     const rows = await db
       .select()
       .from(companySkillVersions)
@@ -3584,7 +3584,7 @@ export function companySkillService(db: Db) {
   ): Promise<CompanySkillVersion> {
     if (!options.skipInventoryRefresh) await ensureSkillInventoryCurrent(companyId);
     const skill = options.skill ?? await getById(companyId, skillId, options.database);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     const fileInventory = serializeVersionFileInventory(
       options.fileInventory ?? await collectVersionFileInventory(companyId, skill),
     );
@@ -3628,7 +3628,7 @@ export function companySkillService(db: Db) {
       return row;
     };
     const versionRow = options.database ? await persist(options.database) : await db.transaction(persist);
-    if (!versionRow) throw notFound("Failed to persist skill version");
+    if (!versionRow) throw notFound("技能版本未能保存");
     return toCompanySkillVersion(versionRow);
   }
 
@@ -3648,12 +3648,12 @@ export function companySkillService(db: Db) {
   function actorStarClause(actor: SkillActor) {
     if (actor.type === "agent" && actor.agentId) return eq(companySkillStars.agentId, actor.agentId);
     if (actor.type === "user" && actor.userId) return eq(companySkillStars.userId, actor.userId);
-    throw unprocessable("Skill stars require an agent or board user actor.");
+    throw unprocessable("技能星标操作需要智能体或工作台用户身份。");
   }
 
   async function starSkill(companyId: string, skillId: string, actor: SkillActor) {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     const existing = await db
       .select({ id: companySkillStars.id })
       .from(companySkillStars)
@@ -3672,7 +3672,7 @@ export function companySkillService(db: Db) {
 
   async function unstarSkill(companyId: string, skillId: string, actor: SkillActor) {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     await db
       .delete(companySkillStars)
       .where(and(eq(companySkillStars.companyId, companyId), eq(companySkillStars.companySkillId, skillId), actorStarClause(actor)));
@@ -3681,7 +3681,7 @@ export function companySkillService(db: Db) {
 
   async function listComments(companyId: string, skillId: string): Promise<CompanySkillComment[]> {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     const rows = await db
       .select()
       .from(companySkillComments)
@@ -3701,7 +3701,7 @@ export function companySkillService(db: Db) {
     actor: SkillActor,
   ): Promise<CompanySkillComment> {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     if (input.parentCommentId) {
       const parent = await db
         .select({ id: companySkillComments.id })
@@ -3713,7 +3713,7 @@ export function companySkillService(db: Db) {
           isNull(companySkillComments.deletedAt),
         ))
         .then((rows) => rows[0] ?? null);
-      if (!parent) throw notFound("Parent comment not found");
+      if (!parent) throw notFound("未找到父评论");
     }
     const row = await db
       .insert(companySkillComments)
@@ -3727,14 +3727,14 @@ export function companySkillService(db: Db) {
       })
       .returning()
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Failed to persist skill comment");
+    if (!row) throw notFound("技能评论未能保存");
     return toCompanySkillComment(row);
   }
 
   function assertCanMutateComment(comment: CompanySkillComment, actor: SkillActor) {
     if (actor.type === "user") return;
     if (actor.type === "agent" && actor.agentId && comment.authorAgentId === actor.agentId) return;
-    throw unprocessable("Only the comment author or a board user can modify this skill comment.");
+    throw unprocessable("只有评论作者或工作台用户可以修改此技能评论。");
   }
 
   async function updateComment(
@@ -3754,7 +3754,7 @@ export function companySkillService(db: Db) {
         isNull(companySkillComments.deletedAt),
       ))
       .then((rows) => rows[0] ?? null);
-    if (!existing) throw notFound("Skill comment not found");
+    if (!existing) throw notFound("未找到技能评论");
     const comment = toCompanySkillComment(existing);
     assertCanMutateComment(comment, actor);
     const row = await db
@@ -3768,7 +3768,7 @@ export function companySkillService(db: Db) {
       ))
       .returning()
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Skill comment not found");
+    if (!row) throw notFound("未找到技能评论");
     return toCompanySkillComment(row);
   }
 
@@ -3788,7 +3788,7 @@ export function companySkillService(db: Db) {
         isNull(companySkillComments.deletedAt),
       ))
       .then((rows) => rows[0] ?? null);
-    if (!existing) throw notFound("Skill comment not found");
+    if (!existing) throw notFound("未找到技能评论");
     const comment = toCompanySkillComment(existing);
     assertCanMutateComment(comment, actor);
     const row = await db
@@ -3802,7 +3802,7 @@ export function companySkillService(db: Db) {
       ))
       .returning()
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Skill comment not found");
+    if (!row) throw notFound("未找到技能评论");
     return toCompanySkillComment(row);
   }
 
@@ -3826,7 +3826,7 @@ export function companySkillService(db: Db) {
     return requestedAgentIds.map((agentId) => {
       const agent = byId.get(agentId)!;
       if (agent.companyId !== companyId) {
-        throw unprocessable("Cannot reassign a skill for an agent in another company.", { agentId });
+        throw unprocessable("无法为其他公司的智能体重新分配技能。", { agentId });
       }
       const adapterConfig = agent.adapterConfig as Record<string, unknown>;
       const desiredEntries = resolveDesiredSkillEntries(skills, adapterConfig);

@@ -657,7 +657,7 @@ describeEmbeddedPostgres("companySkillService.list", () => {
   it("rejects skill inventory refresh for a missing company", async () => {
     await expect(svc.list(randomUUID())).rejects.toMatchObject({
       status: 404,
-      message: "Company not found",
+      message: "未找到公司",
     });
   });
 
@@ -970,7 +970,7 @@ describeEmbeddedPostgres("companySkillService.list", () => {
 
     await expect(svc.auditSkill(companyId, skillId)).rejects.toMatchObject({
       status: 422,
-      message: "Only local-path and catalog-managed company skills support audit.",
+      message: "只有本地路径和目录托管的公司技能支持审计。",
     });
     await expect(svc.getById(companyId, skillId)).resolves.toMatchObject({
       metadata: { sourceKind: "github", owner: "acme", repo: "remote-skill" },
