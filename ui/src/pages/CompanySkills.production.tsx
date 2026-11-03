@@ -4902,7 +4902,11 @@ export function CompanySkills() {
         tone: "success",
         title: ids.length === 1 ? l10n("local.skill_moved_f9a58f83") : l10n("local.skills_moved_7d315bbc"),
         body: folderId
-          ? l10n("local.filed_under_value_0fe911a3", {v0: (skillFolderResult?.folders.find((folder) => folder.id === folderId)?.name ?? "folder")})
+          ? l10n("local.filed_under_value_0fe911a3", {
+              v0:
+                skillFolderResult?.folders.find((folder) => folder.id === folderId)?.name ??
+                l10n("local.folder_034a0062"),
+            })
           : l10n("local.moved_to_unfiled_82f0c284"),
       });
     } catch (moveError) {
@@ -5405,7 +5409,7 @@ export function CompanySkills() {
             if (!card.skillId) return;
             setMoveDialog({
               skillIds: [card.skillId],
-              title: `Move "${card.name}"`,
+              title: l10n("local.move_named_value_10300009", { v0: card.name }),
               subtitle: l10n("local.choose_destination_folder_3c4c523a"),
               currentFolderId: card.folderId ?? null,
             });
@@ -5438,7 +5442,12 @@ export function CompanySkills() {
               tone: "success",
               title: l10n("local.skill_moved_f9a58f83"),
               body: folderId
-                ? l10n("local.moved_value_to_value_a861c0d6", {v0: (card.name), v1: (skillFolderResult?.folders.find((folder) => folder.id === folderId)?.name ?? "folder")})
+                ? l10n("local.moved_value_to_value_a861c0d6", {
+                    v0: card.name,
+                    v1:
+                      skillFolderResult?.folders.find((folder) => folder.id === folderId)?.name ??
+                      l10n("local.folder_034a0062"),
+                  })
                 : l10n("local.moved_value_to_unfiled_035c84e3", {v0: (card.name)}),
               action: {
                 label: l10n("local.undo_a8283ade"),
@@ -5506,7 +5515,7 @@ export function CompanySkills() {
           onUpdateSettings={(updates) => activeDetail && updateSkillSettings.mutate({ skillId: activeDetail.id, updates })}
           onMoveToFolder={activeDetail ? () => setMoveDialog({
             skillIds: [activeDetail.id],
-            title: `Move "${activeDetail.name}"`,
+            title: l10n("local.move_named_value_10300009", { v0: activeDetail.name }),
             subtitle: l10n("local.choose_destination_folder_3c4c523a"),
             currentFolderId: activeDetail.folderId ?? null,
           }) : undefined}
