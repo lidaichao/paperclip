@@ -5324,10 +5324,10 @@ describeEmbeddedPostgres("tool access service", () => {
     expect(res.body.capabilities).toEqual({
       canCreateOrganizationGrant: false,
       organizationGrantReason:
-        "Only a company owner, administrator, or connection manager can share this credential with the organization.",
+        "只有公司所有者、管理员或连接管理员才能与组织共享此凭据。",
       canSetCompanyInstall: false,
       companyInstallReason:
-        "Only someone who can configure this connection can choose this.",
+        "只有有权配置此连接的用户才能选择此项。",
     });
   });
 
@@ -10419,7 +10419,7 @@ describeEmbeddedPostgres("tool access service", () => {
     expect(connectRes.body).toMatchObject({
       code: "oauth_redirect_origin_unsupported",
       error:
-        "This Paperclip needs a browser-reachable HTTPS address (or loopback HTTP) before browser sign-in can start.",
+        "开始浏览器登录前，Alice 需要一个浏览器可访问的 HTTPS 地址（或回环 HTTP 地址）。",
     });
   });
 

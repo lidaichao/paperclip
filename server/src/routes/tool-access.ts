@@ -86,9 +86,9 @@ import { connectionIntentDeliveryService } from "../services/connection-intent-d
 import type { heartbeatService } from "../services/heartbeat.js";
 
 const COMPANY_INSTALL_DENIAL_REASON =
-  "Only someone who can configure this connection can choose this.";
+  "只有有权配置此连接的用户才能选择此项。";
 const ORGANIZATION_GRANT_DENIAL_REASON =
-  "Only a company owner, administrator, or connection manager can share this credential with the organization.";
+  "只有公司所有者、管理员或连接管理员才能与组织共享此凭据。";
 type Heartbeat = ReturnType<typeof heartbeatService>;
 
 /** Allowlist (e.g. Google Sheets allowed spreadsheet ids) lives in connection config. */
@@ -188,7 +188,7 @@ export function connectionIntentOAuthOutcomeHtml(input: {
     }
   })();
   const targetOrigin = JSON.stringify(openerOrigin ?? "");
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Connection authorization</title></head><body><p>Returning to Paperclip…</p><script>const message=${message};const targetOrigin=${targetOrigin}||window.location.origin;if(window.opener&&window.opener!==window){window.opener.postMessage(message,targetOrigin);window.close();}else{window.location.replace(${fallback});}</script></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>连接授权</title></head><body><p>正在返回 Alice…</p><script>const message=${message};const targetOrigin=${targetOrigin}||window.location.origin;if(window.opener&&window.opener!==window){window.opener.postMessage(message,targetOrigin);window.close();}else{window.location.replace(${fallback});}</script></body></html>`;
 }
 
 function normalizeCloudConnectorEnrollmentReturnTo(returnTo?: string | null): string | null {
@@ -214,7 +214,7 @@ export function cloudConnectorEnrollmentOutcomeHtml(issuePrefix: string, returnT
   const fallback = JSON.stringify(fallbackPath).replaceAll("<", "\\u003c");
   // This document is served only after server-verified enrollment. The parent
   // independently re-reads enrollment status; browser messages grant no access.
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Paperclip connected</title></head><body><p>Paperclip is connected. Return to your task to finish connecting the app.</p><script>if(window.opener&&window.opener!==window){window.close();}else{const link=document.createElement("a");link.href=${fallback};link.textContent=${JSON.stringify(issueId ? "Return to task" : "Continue setup")};document.body.append(link);}</script></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Alice 已连接</title></head><body><p>Alice 已连接。请返回任务完成应用连接。</p><script>if(window.opener&&window.opener!==window){window.close();}else{const link=document.createElement("a");link.href=${fallback};link.textContent=${JSON.stringify(issueId ? "返回任务" : "继续设置")};document.body.append(link);}</script></body></html>`;
 }
 
 export function cloudConnectorEnrollmentReturnPath(issuePrefix: string, returnTo?: string | null): string {
@@ -416,7 +416,7 @@ export function toolAccessRoutes(
       ?? requestLoopbackBaseUrl(req);
     if (!baseUrl) {
       throw unprocessable(
-        "This Paperclip needs a browser-reachable HTTPS address (or loopback HTTP) before browser sign-in can start.",
+        "开始浏览器登录前，Alice 需要一个浏览器可访问的 HTTPS 地址（或回环 HTTP 地址）。",
         { code: "oauth_redirect_origin_unsupported" },
       );
     }
@@ -828,7 +828,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
             ? vercelConnect.configured
               ? null
               : "Vercel Connect needs workload OIDC or PAPERCLIP_VERCEL_CONNECT_ACCESS_TOKEN."
-            : "Vercel Connect setup is disabled on this Paperclip instance.",
+            : "此 Alice 实例已禁用 Vercel Connect 设置。",
         },
       },
       apps: APP_STORE_DEFINITIONS.filter((app) => enableMcpAggregators || !isRemoteMcpConnectorId(app.slug)).map((app) =>
@@ -1006,7 +1006,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   router.post("/tools/oauth/cloud-connector/enrollment", async (req, res) => {
     assertInstanceAdmin(req);
     const companyId = typeof req.body?.companyId === "string" ? req.body.companyId : "";
-    if (!companyId) throw badRequest("Paperclip Cloud enrollment requires a company");
+    if (!companyId) throw badRequest("接入 Alice 云服务需要指定公司");
     assertCompanyAccess(req, companyId);
     const origin = new URL(oauthRedirectUri(req)).origin;
     const returnTo = normalizeCloudConnectorEnrollmentReturnTo(
@@ -1022,7 +1022,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
         returnTo,
       });
     } catch {
-      throw unprocessable("Paperclip Cloud enrollment could not be started", {
+      throw unprocessable("无法启动 Alice 云服务接入", {
         code: "paperclip_cloud_connector_enrollment_failed",
       });
     }
@@ -1043,13 +1043,13 @@ function connectorEnrollmentPrincipal(req: Request): string {
     const enrollmentId = typeof req.query.enrollment_id === "string" ? req.query.enrollment_id : "";
     const approvalCode = typeof req.query.approval_code === "string" ? req.query.approval_code : "";
     const state = typeof req.query.state === "string" ? req.query.state : "";
-    if (!enrollmentId || !approvalCode || !state) throw badRequest("Invalid Paperclip Cloud enrollment callback");
+    if (!enrollmentId || !approvalCode || !state) throw badRequest("Alice 云服务接入回调无效");
     const pending = loadPaperclipCloudConnectorIdentity()?.pending;
     if (pending?.companyId && !hasCompanyAccess(req, pending.companyId)) {
-      throw notFound("Paperclip Cloud enrollment not found");
+      throw notFound("未找到 Alice 云服务接入记录");
     }
     if (pending?.initiatedBy && pending.initiatedBy !== connectorEnrollmentPrincipal(req)) {
-      throw notFound("Paperclip Cloud enrollment not found");
+      throw notFound("未找到 Alice 云服务接入记录");
     }
     const [company] = pending?.companyId
       ? await db
@@ -1058,13 +1058,13 @@ function connectorEnrollmentPrincipal(req: Request): string {
         .where(eq(companies.id, pending.companyId))
         .limit(1)
       : [];
-    if (!company) throw notFound("Paperclip Cloud enrollment not found");
+    if (!company) throw notFound("未找到 Alice 云服务接入记录");
     let status;
     try {
       status = await completePaperclipCloudConnectorEnrollment({ enrollmentId, approvalCode, state });
       invalidatePaperclipCloudConnectorCapabilities();
     } catch {
-      throw badRequest("Invalid or expired Paperclip Cloud enrollment callback");
+      throw badRequest("Alice 云服务接入回调无效或已过期");
     }
     if (pending?.companyId) {
       await logActivity(db, {
