@@ -1076,7 +1076,7 @@ describeEmbeddedPostgres("heartbeat dependency-aware queued run selection", () =
     expect(blockedRun?.finishedAt).toBeTruthy();
     expect(blockedRun?.resultJson).toMatchObject({ stopReason: "issue_dependencies_blocked" });
     expect(blockedWakeup?.status).toBe("skipped");
-    expect(blockedWakeup?.error).toContain("dependencies are still blocked");
+    expect(blockedWakeup?.error).toContain("任务依赖仍处于受阻状态");
     expect(blockedIssue).toMatchObject({
       executionRunId: null,
       executionAgentNameKey: null,

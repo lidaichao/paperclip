@@ -12,9 +12,9 @@ export type ParsedExecutionWorkspaceMode = Exclude<ExecutionWorkspaceMode, "inhe
 
 export const WORKSPACE_WORKTREE_REQUIRES_PROJECT_CODE = "workspace_worktree_requires_project";
 export const WORKSPACE_WORKTREE_REQUIRES_PROJECT_REMEDIATION =
-  "Attach a project to the task, or bind a reusable execution workspace, then retry.";
+  "请为任务关联项目，或绑定可复用的执行工作区，然后重试。";
 export const WORKSPACE_WORKTREE_REQUIRES_PROJECT_MESSAGE =
-  `This task is set to run in an isolated git worktree, but it has no project and no reusable execution workspace to create the worktree from. ${WORKSPACE_WORKTREE_REQUIRES_PROJECT_REMEDIATION}`;
+  `此任务设置为在隔离的 Git 工作树中运行，但没有项目，也没有可用于创建工作树的可复用执行工作区。${WORKSPACE_WORKTREE_REQUIRES_PROJECT_REMEDIATION}`;
 
 type WorkspaceStrategyType = ExecutionWorkspaceStrategy["type"];
 

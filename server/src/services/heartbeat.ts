@@ -4678,8 +4678,8 @@ export async function buildPaperclipRuntimeMcpServers(input: {
     try {
       const created = await access.createProfile(input.agent.companyId, {
         profileKey,
-        name: `Native ${input.agent.id.slice(0, 8)} ${assignmentDigest.slice(0, 12)}`,
-        description: "Immutable Paperclip Runner MCP assignment profile.",
+        name: `原生 ${input.agent.id.slice(0, 8)} ${assignmentDigest.slice(0, 12)}`,
+        description: "不可变的 Alice Runner MCP 分配配置。",
         status: "active",
         defaultAction: "deny",
         metadata: {
@@ -4730,9 +4730,9 @@ export async function buildPaperclipRuntimeMcpServers(input: {
       const created = await service.createNamedGateway({
         companyId: input.agent.companyId,
         body: {
-          name: `Native ${input.agent.name} ${assignmentDigest.slice(0, 8)}`,
+          name: `原生 ${input.agent.name} ${assignmentDigest.slice(0, 8)}`,
           slug,
-          description: "Run-scoped Paperclip Runner MCP gateway.",
+          description: "运行范围内的 Alice Runner MCP 网关。",
           profileId: profile!.id,
           defaultProfileMode: "gateway_only",
           metadata: {
@@ -5076,11 +5076,11 @@ export async function createManagedMcpRunConfig(input: {
       companyId: input.agent.companyId,
       gatewayId: gateway.id,
       body: {
-        name: `Managed ${input.agent.name} ${input.runId.slice(0, 8)}`,
+        name: `托管 ${input.agent.name} ${input.runId.slice(0, 8)}`,
         subjectType: "heartbeat_run",
         subjectId: input.runId,
-        clientLabel: `${input.agent.name} managed local adapter`,
-        ownerNote: `Short-lived Paperclip-managed MCP token for heartbeat run ${input.runId}.`,
+        clientLabel: `${input.agent.name} 托管本地适配器`,
+        ownerNote: `供心跳运行 ${input.runId} 使用的 Alice 托管短期 MCP 令牌。`,
         allowedActions: ["tools/list", "tools/call"],
         expiresAt,
       },
@@ -7054,12 +7054,24 @@ function mergeExternalAttachmentOmissions(
 function externalAttachmentOmissionNotice(
   omission: ExternalAttachmentOmission,
 ) {
+  const reasonLabels: Record<string, string> = {
+    attachment_limit: "超过附件数量上限",
+    companion_unavailable: "配套文件不可用",
+    declared_too_large: "声明的文件大小超限",
+    download_unavailable: "无法下载",
+    downloaded_too_large: "下载后的文件大小超限",
+    empty_download: "下载内容为空",
+    preview_unavailable: "预览不可用",
+    processing_failed: "处理失败",
+    storage_unavailable: "存储不可用",
+    unsupported_type: "不支持的文件类型",
+  };
   const entries = Object.entries(omission.reasons);
   const omitted = entries.reduce((total, [, count]) => total + count, 0);
   const reasons = entries
-    .map(([reason, count]) => `${reason.replaceAll("_", " ")}: ${count}`)
-    .join(", ");
-  return `Paperclip could not import every attachment from this exact external message: ${omitted} attachment${omitted === 1 ? " was" : "s were"} omitted (${reasons}). Treat omitted attachments as unavailable; do not infer their contents or substitute an older workspace file.`;
+    .map(([reason, count]) => `${reasonLabels[reason] ?? "其他原因"}：${count}`)
+    .join("，");
+  return `Alice 无法导入这条外部消息中的所有附件：已省略 ${omitted} 个附件（${reasons}）。请将这些附件视为不可用；不要推测其内容，也不要用工作区中的旧文件替代。`;
 }
 
 function enrichWakeContextSnapshot(input: {
@@ -11333,15 +11345,15 @@ export function heartbeatService(
     );
     const reason =
       input.clearReason === "timeout_exceeded"
-        ? "its timeout was reached"
-        : "its maximum attempt count was reached";
+        ? "已达到超时时间"
+        : "已达到最大尝试次数";
     return [
-      `Paperclip cleared the scheduled external-service monitor for ${label} because ${reason}.`,
+      `Alice 已清除 ${label} 的定时外部服务监控，因为${reason}。`,
       "",
-      `- Attempt count: ${input.nextAttemptCount}`,
-      `- Recovery policy: ${input.recoveryPolicy}`,
+      `- 尝试次数：${input.nextAttemptCount}`,
+      `- 恢复策略：${input.recoveryPolicy}`,
       "",
-      "Next action: inspect the external service state, record the result on this issue, and restore an explicit execution or waiting path if more work remains.",
+      "下一步：检查外部服务状态，将结果记录到此任务；如果仍有工作，请恢复明确的执行或等待路径。",
     ].join("\n");
   }
 
@@ -12207,15 +12219,15 @@ export function heartbeatService(
       readNonEmptyString(latestRun.error);
 
     const handoffMarkdown = [
-      "Paperclip session handoff:",
-      `- Previous session: ${sessionId}`,
-      issueId ? `- Issue: ${issueId}` : "",
-      `- Rotation reason: ${reason}`,
-      latestTextSummary ? `- Last run summary: ${latestTextSummary}` : "",
+      "Alice 会话交接：",
+      `- 上一个会话：${sessionId}`,
+      issueId ? `- 任务：${issueId}` : "",
+      `- 轮换原因：${reason}`,
+      latestTextSummary ? `- 上次运行摘要：${latestTextSummary}` : "",
       input.continuationSummaryBody
-        ? `- Issue continuation summary: ${input.continuationSummaryBody.slice(0, 1_500)}`
+        ? `- 任务续接摘要：${input.continuationSummaryBody.slice(0, 1_500)}`
         : "",
-      "Continue from the current task state. Rebuild only the minimum context you need.",
+      "请从当前任务状态继续，只重建必要的最小上下文。",
     ]
       .filter(Boolean)
       .join("\n");
@@ -17924,7 +17936,7 @@ export function heartbeatService(
   ) {
     const now = new Date();
     const reason =
-      "Cancelled because issue dependencies are still blocked; Paperclip will wake the assignee when blockers resolve";
+      "任务依赖仍处于受阻状态，因此已取消；阻塞解除后 Alice 将唤醒负责人";
     const cancelled = await setRunStatus(run.id, "cancelled", {
       finishedAt: now,
       error: reason,
@@ -24392,14 +24404,14 @@ export function heartbeatService(
               adapter.runtimeToolDelivery ?? "invocation_context";
             if (runtimeTools && runtimeToolDelivery === "native_mcp") {
               runtimeMcpServers.unshift({
-                name: "Paperclip connections",
+                name: "Alice connections",
                 url: runtimeTools.mcpEndpoint,
                 token: runtimeTools.bearerToken,
                 connectionId: "paperclip-runtime-tools",
               });
             }
             if (authToken && configuredPaperclipApiBaseUrl() && issueRef) {
-              runtimeMcpServers.unshift({ name: "Paperclip projects", url: `${paperclipApiBaseUrl()}/api/mcp/project-tools`,
+              runtimeMcpServers.unshift({ name: "Alice projects", url: `${paperclipApiBaseUrl()}/api/mcp/project-tools`,
                 token: authToken, connectionId: "paperclip-project-tools" });
             }
             const runtimeMcp = createAdapterRuntimeMcpAccess(runtimeMcpServers);
@@ -27737,11 +27749,11 @@ export function heartbeatService(
                 issue.id,
               );
               const blockedComment = [
-                `Paperclip blocked ${issueLabel} before dispatch because its workspace settings are not runnable.`,
+                `Alice 在派发前阻止了 ${issueLabel}，因为其工作区设置无法运行。`,
                 "",
-                `- Code: \`${WORKSPACE_WORKTREE_REQUIRES_PROJECT_CODE}\``,
-                `- Reason: ${WORKSPACE_WORKTREE_REQUIRES_PROJECT_MESSAGE}`,
-                `- Next action: ${WORKSPACE_WORKTREE_REQUIRES_PROJECT_REMEDIATION}`,
+                `- 代码：\`${WORKSPACE_WORKTREE_REQUIRES_PROJECT_CODE}\``,
+                `- 原因：${WORKSPACE_WORKTREE_REQUIRES_PROJECT_MESSAGE}`,
+                `- 下一步：${WORKSPACE_WORKTREE_REQUIRES_PROJECT_REMEDIATION}`,
               ].join("\n");
               await tx
                 .update(issues)
