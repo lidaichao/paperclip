@@ -65,8 +65,28 @@ export interface DecisionCardProps {
 // --- small helpers ----------------------------------------------------------
 
 function humanStatus(status: string | null | undefined): string {
-  if (!status) return "unknown";
-  return status.replaceAll("_", " ");
+  switch (status) {
+    case "backlog":
+      return l10n("local.backlog_bf986e9a");
+    case "todo":
+      return l10n("local.todo_4ff402d7");
+    case "in_progress":
+      return l10n("local.in_progress_c1f88e9d");
+    case "in_review":
+      return l10n("local.in_review_c3905914");
+    case "done":
+      return l10n("local.done_11a6767d");
+    case "blocked":
+      return l10n("local.blocked_18f2a094");
+    case "cancelled":
+      return l10n("local.cancelled_d353a99e");
+    case null:
+    case undefined:
+    case "":
+      return l10n("local.unknown_b764cdc0");
+    default:
+      return status.replaceAll("_", " ");
+  }
 }
 
 function issueLabel(ref: DecisionIssueRef | null, fallbackId: string): string {
@@ -75,8 +95,25 @@ function issueLabel(ref: DecisionIssueRef | null, fallbackId: string): string {
   return l10n("local.issue_value_47bb61ef", {v0: (fallbackId.slice(0, 8))});
 }
 
-function pluralize(count: number, singular: string): string {
-  return `${count} ${count === 1 ? singular : `${singular}s`}`;
+function blockerCount(count: number): string {
+  return l10n(
+    count === 1 ? "local.manual_decision_one_blocker" : "local.manual_decision_many_blockers",
+    { v0: count },
+  );
+}
+
+function issueCount(count: number): string {
+  return l10n(
+    count === 1 ? "local.manual_decision_one_issue" : "local.manual_decision_many_issues",
+    { v0: count },
+  );
+}
+
+function targetCount(count: number): string {
+  return l10n(
+    count === 1 ? "local.manual_decision_one_target" : "local.manual_decision_many_targets",
+    { v0: count },
+  );
 }
 
 function isDestructiveOption(option: DecisionOption): boolean {
@@ -110,11 +147,11 @@ function effectSummary(
     case "assign_issue":
       return l10n("local.reassign_value_662f73b7", {v0: (target)});
     case "resolve_blocker":
-      return l10n("local.unblock_value_remove_value_8bcff809", {v0: (target), v1: (pluralize(effect.removeBlockedByIssueIds.length, "blocker"))});
+      return l10n("local.unblock_value_remove_value_8bcff809", {v0: (target), v1: (blockerCount(effect.removeBlockedByIssueIds.length))});
     case "cancel_issue_tree": {
       const snapshot = snapshots[effect.targetIssueId];
       const descendantCount = snapshot?.descendantCount ?? snapshot?.descendantIds?.length ?? snapshot?.childCount ?? 0;
-      return l10n("local.cancel_value_and_its_sub_tree_value_65e7bb96", {v0: (target), v1: (pluralize(descendantCount + 1, "issue"))});
+      return l10n("local.cancel_value_and_its_sub_tree_value_65e7bb96", {v0: (target), v1: (issueCount(descendantCount + 1))});
     }
     default:
       return l10n("local.apply_effect_4b92049a");
@@ -122,10 +159,10 @@ function effectSummary(
 }
 
 const FAILURE_CAUSE: Record<string, string> = {
-  deny_decision_intersection: "blocked by the permission boundary (fail-closed)",
-  invalid_effect_reference: "a referenced issue no longer exists",
-  target_changed: "the target changed since this was proposed",
-  effect_execution_failed: "the effect errored while running",
+  deny_decision_intersection: l10n("local.manual_decision_failure_permission_boundary"),
+  invalid_effect_reference: l10n("local.manual_decision_failure_reference_gone"),
+  target_changed: l10n("local.manual_decision_failure_target_changed"),
+  effect_execution_failed: l10n("local.manual_decision_failure_effect_error"),
 };
 
 interface ResultRow {
@@ -143,43 +180,55 @@ function executionRow(
   const target = issueLabel(targetRef, execution.targetIssueId);
   const result = execution.result ?? {};
   if (execution.status === "skipped") {
-    return { key: execution.id, status: "skipped", summary: `Skipped ${target} — target changed since proposal`, link: targetRef };
+    return {
+      key: execution.id,
+      status: "skipped",
+      summary: l10n("local.manual_decision_skipped_target_changed", { v0: target }),
+      link: targetRef,
+    };
   }
   if (execution.status === "failed") {
-    const cause = FAILURE_CAUSE[execution.error ?? ""] ?? execution.error ?? "the effect could not run";
-    return { key: execution.id, status: "failed", summary: `Failed on ${target} — ${cause}`, link: targetRef };
+    const cause = FAILURE_CAUSE[execution.error ?? ""] ?? execution.error ?? l10n("local.manual_decision_failure_fallback");
+    return {
+      key: execution.id,
+      status: "failed",
+      summary: l10n("local.manual_decision_failed_on", { v0: target, v1: cause }),
+      link: targetRef,
+    };
   }
   if (execution.status === "claimed") {
-    return { key: execution.id, status: "claimed", summary: `Running on ${target}…`, link: targetRef };
+    return { key: execution.id, status: "claimed", summary: l10n("local.manual_decision_running_on", { v0: target }), link: targetRef };
   }
   // executed
   switch (execution.effectType) {
     case "comment_on_issue":
-      return { key: execution.id, status: "executed", summary: `Commented on ${target}`, link: targetRef };
+      return { key: execution.id, status: "executed", summary: l10n("local.manual_decision_commented_on", { v0: target }), link: targetRef };
     case "create_issue": {
       const createdId = typeof result.issueId === "string" ? result.issueId : null;
       const created = createdId ? resolve(createdId) : null;
       return {
         key: execution.id,
         status: "executed",
-        summary: `Created ${created ? issueLabel(created, createdId!) : "a new issue"}`,
+        summary: l10n("local.manual_decision_created", {
+          v0: created ? issueLabel(created, createdId!) : l10n("local.manual_decision_new_issue"),
+        }),
         link: created ?? targetRef,
       };
     }
     case "update_issue_status":
-      return { key: execution.id, status: "executed", summary: `Set ${target} to ${humanStatus(typeof result.status === "string" ? result.status : null)}`, link: targetRef };
+      return { key: execution.id, status: "executed", summary: l10n("local.manual_decision_set_to", { v0: target, v1: humanStatus(typeof result.status === "string" ? result.status : null) }), link: targetRef };
     case "assign_issue":
-      return { key: execution.id, status: "executed", summary: `Reassigned ${target}`, link: targetRef };
+      return { key: execution.id, status: "executed", summary: l10n("local.manual_decision_reassigned", { v0: target }), link: targetRef };
     case "resolve_blocker": {
       const removed = Array.isArray(result.removedBlockedByIssueIds) ? result.removedBlockedByIssueIds.length : 0;
-      return { key: execution.id, status: "executed", summary: `Removed ${pluralize(removed, "blocker")} from ${target}`, link: targetRef };
+      return { key: execution.id, status: "executed", summary: l10n("local.manual_decision_removed_blockers", { v0: blockerCount(removed), v1: target }), link: targetRef };
     }
     case "cancel_issue_tree": {
       const cancelled = Array.isArray(result.cancelledIssueIds) ? result.cancelledIssueIds.length : 0;
-      return { key: execution.id, status: "executed", summary: `Cancelled ${pluralize(cancelled, "issue")} under ${target}`, link: targetRef };
+      return { key: execution.id, status: "executed", summary: l10n("local.manual_decision_cancelled_issues", { v0: issueCount(cancelled), v1: target }), link: targetRef };
     }
     default:
-      return { key: execution.id, status: "executed", summary: `Applied effect on ${target}`, link: targetRef };
+      return { key: execution.id, status: "executed", summary: l10n("local.manual_decision_applied_effect", { v0: target }), link: targetRef };
   }
 }
 
@@ -390,7 +439,7 @@ export function DecisionCard({
         <div className="mt-3 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2">
           <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-200">
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-            {pluralize(staleTargetIds.length, "target")} {l10n("local.changed_since_this_was_proposed_0ab996c3")}</div>
+            {targetCount(staleTargetIds.length)} {l10n("local.changed_since_this_was_proposed_0ab996c3")}</div>
           <ul className="mt-1.5 space-y-1 text-xs text-amber-900/90 dark:text-amber-100/90">
             {staleTargetIds.map((id) => {
               const ref = resolveIssue(id);
@@ -497,7 +546,7 @@ export function DecisionCard({
                     {previewRows && previewRows.length > 0 ? (
                       <>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {pluralize(previewRows.length, "issue")} {l10n("local.will_be_cancelled_f707853f")}</p>
+                          {issueCount(previewRows.length)} {l10n("local.will_be_cancelled_f707853f")}</p>
                         <ul className="mt-1 max-h-40 space-y-0.5 overflow-auto text-xs">
                           {previewRows.map((row) => (
                             <li key={row.id} className="flex items-center gap-1.5">
@@ -541,7 +590,7 @@ export function DecisionCard({
                         onClick={() => onDecide?.(option.id, inputValues)}
                       >
                         {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                        {previewRows ? l10n("local.cancel_value_db3da0ce", {v0: (pluralize(previewRows.length, "issue"))}) : l10n("local.cancel_tree_85c1703a")}
+                        {previewRows ? l10n("local.cancel_value_db3da0ce", {v0: (issueCount(previewRows.length))}) : l10n("local.cancel_tree_85c1703a")}
                       </Button>
                     </div>
                   </div>
