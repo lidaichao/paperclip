@@ -12480,6 +12480,9 @@
     "one_agent_count_10300283": "1 个智能体",
     "one_assignment_count_10300284": "1 项分配",
     "profile_stops_applying_one_agent_10300285": "此配置将不再应用于 1 个智能体，之后仍可恢复。",
-    "delete_profile_removes_one_assignment_10300286": "这将永久删除该配置，并移除 1 项分配。"
+    "delete_profile_removes_one_assignment_10300286": "这将永久删除该配置，并移除 1 项分配。",
+    "webhook_trigger_created_10300287": "Webhook 触发器已创建",
+    "webhook_secret_rotated_10300288": "Webhook 密钥已轮换",
+    "could_not_load_routine_10300289": "无法加载此自动化流程。"
   }
 }

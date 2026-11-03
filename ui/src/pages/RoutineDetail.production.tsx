@@ -84,14 +84,14 @@ export function buildRoutineProjectOptions(
 }
 
 const SECTION_TITLES: Record<RoutineSectionKey, string> = {
-  overview: "Overview",
-  triggers: "Triggers",
-  variables: "Variables",
-  secrets: "Secrets",
-  delivery: "Delivery",
-  runs: "Runs",
-  activity: "Activity",
-  history: "History",
+  overview: l10n("local.overview_d4b1ea57"),
+  triggers: l10n("local.triggers_e62f2148"),
+  variables: l10n("local.variables_02db55ba"),
+  secrets: l10n("local.secrets_d8707d41"),
+  delivery: l10n("local.delivery_52bfe584"),
+  runs: l10n("local.runs_848f54e8"),
+  activity: l10n("local.activity_38da1505"),
+  history: l10n("local.history_0e769600"),
 };
 
 function isRoutineSection(value: string | undefined | null): value is RoutineSectionKey {
@@ -494,7 +494,7 @@ export function RoutineDetail() {
     onSuccess: async (result) => {
       if (result.secretMaterial) {
         setSecretMessage({
-          title: "Webhook trigger created",
+          title: l10n("local.webhook_trigger_created_10300287"),
           entries: [{ webhookUrl: result.secretMaterial.webhookUrl, webhookSecret: result.secretMaterial.webhookSecret }],
         });
       } else {
@@ -557,7 +557,7 @@ export function RoutineDetail() {
     mutationFn: (id: string): Promise<RotateRoutineTriggerResponse> => routinesApi.rotateTriggerSecret(id),
     onSuccess: async (result) => {
       setSecretMessage({
-        title: "Webhook secret rotated",
+        title: l10n("local.webhook_secret_rotated_10300288"),
         entries: [{ webhookUrl: result.secretMaterial.webhookUrl, webhookSecret: result.secretMaterial.webhookSecret }],
       });
       await Promise.all([
@@ -703,7 +703,7 @@ export function RoutineDetail() {
     return (
       <EmptyState
         icon={AlertCircle}
-        message={error instanceof Error ? error.message : "We couldn't load this routine."}
+        message={error instanceof Error ? error.message : l10n("local.could_not_load_routine_10300289")}
       />
     );
   }

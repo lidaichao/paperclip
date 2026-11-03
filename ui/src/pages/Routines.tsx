@@ -1438,7 +1438,7 @@ export function Routines() {
         result={railFolderResult}
         selection={folderSelection}
         allLabel={l10n("local.all_routines_4a8c7842")}
-        itemLabelPlural="Routines"
+        itemLabelPlural={l10n("local.routines_61b7bb44")}
         onSelect={setFolderSelection}
         onCreate={() => openCreateFolder()}
       />
