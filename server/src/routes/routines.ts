@@ -92,7 +92,7 @@ export function routineRoutes(
     if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
     const allowed = await access.canUser(companyId, req.actor.userId, "tasks:assign");
     if (!allowed) {
-      throw forbidden("Missing permission: tasks:assign");
+      throw forbidden("缺少权限：tasks:assign");
     }
   }
 
@@ -101,7 +101,7 @@ export function routineRoutes(
     if (req.actor.type === "board") return;
     if (req.actor.type !== "agent" || !req.actor.agentId) throw unauthorized();
     if (assigneeAgentId !== req.actor.agentId) {
-      throw forbidden("Agents can only manage routines assigned to themselves");
+      throw forbidden("智能体只能管理分配给自己的例行任务");
     }
   }
 
@@ -112,7 +112,7 @@ export function routineRoutes(
     if (req.actor.type === "board") return routine;
     if (req.actor.type !== "agent" || !req.actor.agentId) throw unauthorized();
     if (routine.assigneeAgentId !== req.actor.agentId) {
-      throw forbidden("Agents can only manage routines assigned to themselves");
+      throw forbidden("智能体只能管理分配给自己的例行任务");
     }
     return routine;
   }
@@ -192,7 +192,7 @@ export function routineRoutes(
   });
 
   router.get("/routines/:id", async (req, res) => {
-    const detail = await getAccessibleResource(req, res, svc.getDetail(req.params.id as string), "Routine not found");
+    const detail = await getAccessibleResource(req, res, svc.getDetail(req.params.id as string), "未找到例行任务");
     if (!detail) return;
     res.json(detail);
   });
@@ -200,7 +200,7 @@ export function routineRoutes(
   router.get("/routines/:id/revisions", async (req, res) => {
     const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
     if (!routine) {
-      res.status(404).json({ error: "Routine not found" });
+      res.status(404).json({ error: "未找到例行任务" });
       return;
     }
     const revisions = await svc.listRevisions(routine.id);
@@ -210,7 +210,7 @@ export function routineRoutes(
   router.get("/routines/:id/description/annotations", async (req, res) => {
     const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
     if (!routine) {
-      res.status(404).json({ error: "Routine not found" });
+      res.status(404).json({ error: "未找到例行任务" });
       return;
     }
     const status = req.query.status === "resolved" || req.query.status === "all" ? req.query.status : "open";
@@ -224,7 +224,7 @@ export function routineRoutes(
   router.get("/routines/:id/description/annotations/:threadId", async (req, res) => {
     const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
     if (!routine) {
-      res.status(404).json({ error: "Routine not found" });
+      res.status(404).json({ error: "未找到例行任务" });
       return;
     }
     const thread = await documentAnnotationsSvc.getThreadForRoutineDocument(
@@ -233,7 +233,7 @@ export function routineRoutes(
       req.params.threadId as string,
     );
     if (!thread) {
-      res.status(404).json({ error: "Annotation thread not found" });
+      res.status(404).json({ error: "未找到批注线程" });
       return;
     }
     res.json(thread);
@@ -245,7 +245,7 @@ export function routineRoutes(
     async (req, res) => {
       const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
       if (!routine) {
-        res.status(404).json({ error: "Routine not found" });
+        res.status(404).json({ error: "未找到例行任务" });
         return;
       }
       const { actor, annotationActor } = annotationActorInput(req);
@@ -286,7 +286,7 @@ export function routineRoutes(
     async (req, res) => {
       const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
       if (!routine) {
-        res.status(404).json({ error: "Routine not found" });
+        res.status(404).json({ error: "未找到例行任务" });
         return;
       }
       const { actor, annotationActor } = annotationActorInput(req);
@@ -325,7 +325,7 @@ export function routineRoutes(
     async (req, res) => {
       const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
       if (!routine) {
-        res.status(404).json({ error: "Routine not found" });
+        res.status(404).json({ error: "未找到例行任务" });
         return;
       }
       const { actor, annotationActor } = annotationActorInput(req);
@@ -363,7 +363,7 @@ export function routineRoutes(
   router.patch("/routines/:id", validate(updateRoutineSchema), async (req, res) => {
     const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
     if (!routine) {
-      res.status(404).json({ error: "Routine not found" });
+      res.status(404).json({ error: "未找到例行任务" });
       return;
     }
     const assigneeWillChange =
@@ -384,7 +384,7 @@ export function routineRoutes(
       req.body.assigneeAgentId !== undefined &&
       req.body.assigneeAgentId !== req.actor.agentId
     ) {
-      throw forbidden("Agents can only assign routines to themselves");
+      throw forbidden("智能体只能将例行任务分配给自己");
     }
     const updated = await svc.update(routine.id, req.body, {
       agentId: req.actor.type === "agent" ? req.actor.agentId : null,
@@ -421,7 +421,7 @@ export function routineRoutes(
   router.post("/routines/:id/revisions/:revisionId/restore", async (req, res) => {
     const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
     if (!routine) {
-      res.status(404).json({ error: "Routine not found" });
+      res.status(404).json({ error: "未找到例行任务" });
       return;
     }
     await assertBoardCanAssignTasks(req, routine.companyId);
@@ -454,7 +454,7 @@ export function routineRoutes(
   });
 
   router.get("/routines/:id/runs", async (req, res) => {
-    const routine = await getAccessibleResource(req, res, svc.get(req.params.id as string), "Routine not found");
+    const routine = await getAccessibleResource(req, res, svc.get(req.params.id as string), "未找到例行任务");
     if (!routine) return;
     const limit = Number(req.query.limit ?? 50);
     const result = await svc.listRuns(routine.id, Number.isFinite(limit) ? limit : 50);
@@ -464,7 +464,7 @@ export function routineRoutes(
   router.post("/routines/:id/triggers", validate(createRoutineTriggerSchema), async (req, res) => {
     const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
     if (!routine) {
-      res.status(404).json({ error: "Routine not found" });
+      res.status(404).json({ error: "未找到例行任务" });
       return;
     }
     await assertBoardCanAssignTasks(req, routine.companyId);
@@ -500,12 +500,12 @@ export function routineRoutes(
   router.patch("/routine-triggers/:id", validate(updateRoutineTriggerSchema), async (req, res) => {
     const trigger = await svc.getTrigger(req.params.id as string);
     if (!trigger) {
-      res.status(404).json({ error: "Routine trigger not found" });
+      res.status(404).json({ error: "未找到例行任务触发器" });
       return;
     }
     const routine = await assertCanManageExistingRoutine(req, trigger.routineId);
     if (!routine) {
-      res.status(404).json({ error: "Routine trigger not found" });
+      res.status(404).json({ error: "未找到例行任务触发器" });
       return;
     }
     await assertBoardCanAssignTasks(req, routine.companyId);
@@ -543,12 +543,12 @@ export function routineRoutes(
   router.delete("/routine-triggers/:id", async (req, res) => {
     const trigger = await svc.getTrigger(req.params.id as string);
     if (!trigger) {
-      res.status(404).json({ error: "Routine trigger not found" });
+      res.status(404).json({ error: "未找到例行任务触发器" });
       return;
     }
     const routine = await assertCanManageExistingRoutine(req, trigger.routineId);
     if (!routine) {
-      res.status(404).json({ error: "Routine trigger not found" });
+      res.status(404).json({ error: "未找到例行任务触发器" });
       return;
     }
     const deleted = await svc.deleteTrigger(trigger.id, {
@@ -588,12 +588,12 @@ export function routineRoutes(
     async (req, res) => {
       const trigger = await svc.getTrigger(req.params.id as string);
       if (!trigger) {
-        res.status(404).json({ error: "Routine trigger not found" });
+        res.status(404).json({ error: "未找到例行任务触发器" });
         return;
       }
       const routine = await assertCanManageExistingRoutine(req, trigger.routineId);
       if (!routine) {
-        res.status(404).json({ error: "Routine trigger not found" });
+        res.status(404).json({ error: "未找到例行任务触发器" });
         return;
       }
       const rotated = await svc.rotateTriggerSecret(trigger.id, {
@@ -629,7 +629,7 @@ export function routineRoutes(
   router.post("/routines/:id/run", validateIssueMutationBody(runRoutineSchema), async (req, res) => {
     const routine = await assertCanManageExistingRoutine(req, req.params.id as string);
     if (!routine) {
-      res.status(404).json({ error: "Routine not found" });
+      res.status(404).json({ error: "未找到例行任务" });
       return;
     }
     await assertBoardCanAssignTasks(req, routine.companyId);
@@ -658,7 +658,7 @@ export function routineRoutes(
       throw unsupportedMediaType("Send the webhook payload with Content-Type: application/json");
     }
     if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
-      throw badRequest("Webhook payload must be a JSON object");
+      throw badRequest("Webhook 载荷必须是 JSON 对象");
     }
     const result = await svc.firePublicTrigger(req.params.publicId as string, {
       authorizationHeader: req.header("authorization"),
