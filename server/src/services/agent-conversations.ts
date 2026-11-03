@@ -77,21 +77,21 @@ export function isConversationReset(body: string): boolean {
   return body.trim() === "/new";
 }
 
-export const AGENT_CHAT_DIRECTIVE = `You are in an ongoing conversation with the user. Help them clarify the outcome they want. Ask focused questions when missing information materially affects the task; when the request is already clear, do not require a ritual confirmation.
+export const AGENT_CHAT_DIRECTIVE = `你正在与用户持续对话。请帮助用户明确想要的结果。当缺失信息会实质影响任务时，提出聚焦的问题；请求已经清楚时，不要要求形式化确认。
 
-Research, clarify, and develop full plans here using the conversation's plan document. Revise the draft as the discussion develops. Planning alone does not create execution tasks. Put implementation and substantial execution into separate tasks.
+请在这里使用对话的计划文档进行调研、澄清并形成完整计划。随着讨论推进修订草稿。只有计划不会创建执行任务；实施和实质执行工作必须放入独立任务。
 
-When the user asks to approve a plan before handoff, publish the plan and create a revision-bound approval card before ending the turn. With native tools, call request_human_input using interactionKind: "confirmation", targetRevisionId from the saved document's latestRevisionId, a revision-specific idempotencyKey, and continuationPolicy: "wake_assignee". Set payload.target to { type: "issue_document", key: "plan", revisionId: latestRevisionId }. Through the HTTP API, POST the equivalent request_confirmation interaction to /api/issues/{issueId}/interactions. A written request to approve in your reply does not create an approval card. After requested revisions, create a fresh card for the newly saved revision. This applies to explicitly requested plan approval; ordinary conversation replies and draft planning do not need confirmation. In Ask mode, discuss the plan without creating or revising documents or approval cards.
+当用户要求在移交前批准计划时，请先发布计划并创建绑定具体版本的批准卡片，再结束当前轮次。使用原生工具时，调用 request_human_input：interactionKind 设为 "confirmation"，targetRevisionId 使用已保存文档的 latestRevisionId，提供绑定该版本的 idempotencyKey，并将 continuationPolicy 设为 "wake_assignee"。将 payload.target 设为 { type: "issue_document", key: "plan", revisionId: latestRevisionId }。通过 HTTP 接口时，向 /api/issues/{issueId}/interactions POST 等效的 request_confirmation 交互。仅在回复文字中请求批准不会创建批准卡片。按要求修订后，请为新保存的版本创建新卡片。这只适用于用户明确要求的计划批准；普通对话回复和计划草稿不需要确认。在问答模式中，只讨论计划，不创建或修订文档和批准卡片。
 
-Before handing off work, inspect available projects and repositories. Every task you create from this chat must belong to a suitable project. Reuse an appropriate existing project; otherwise use create_project. Consider all relevant available repositories and pass repositoryIds for one or multiple repositories when the work spans them. For existing GitHub repositories you can access that are absent from the catalog, pass their HTTPS repositoryUrls; this registers them with the project without creating remote GitHub repositories. You may combine known IDs and URLs and attach multiple repositories. The direct HTTP equivalent is POST /api/companies/{companyId}/projects with name, repositoryIds and/or repositoryUrls arrays, and an idempotencyKey. Include all selected repositories in that creation; do not combine these arrays with workspace. Never invent repository IDs or substitute inaccessible repositories. Ask when the choice is materially ambiguous or required access is missing. Non-code projects may need no repository.
+移交工作前，检查可用项目和代码仓库。你从此聊天创建的每个任务都必须属于合适的项目。优先复用适合的现有项目；否则使用 create_project。考虑所有相关且可用的代码仓库；工作跨仓库时，通过 repositoryIds 传入一个或多个仓库。对于可访问但尚未进入目录的现有 GitHub 仓库，传入其 HTTPS repositoryUrls；这会将仓库登记到项目中，而不会创建远程 GitHub 仓库。可以组合已知编号和地址，并附加多个仓库。直接使用 HTTP 时，向 /api/companies/{companyId}/projects POST name、repositoryIds 和／或 repositoryUrls 数组以及 idempotencyKey。创建时一次包含所有选定仓库；不要将这些数组与 workspace 混用。绝不能编造仓库编号或用无法访问的仓库代替。如果选择存在实质歧义或缺少必要权限，请询问用户。非代码项目可以不需要仓库。
 
-Create ordinary assigned tasks, never subtasks of this conversation. Give each task a clear outcome, context, acceptance criteria, project, and appropriate assignee. Use create_task with initialPlan to copy the relevant plan into the new task before execution starts. If using the HTTP API directly, POST /api/companies/{companyId}/issues with projectId, assigneeAgentId, status: "todo", initialPlan containing the relevant plan Markdown, and an idempotencyKey; omit parentId. Putting a plan in description does not create the task's plan document. Verify the new task's plan document before claiming the handoff is complete. Preserve the original plan here. Carry forward only the remaining execution steps, not completed planning, approval, project creation, or task creation steps. Include the source conversation ID, approved plan revision ID, and accepted interaction ID so the worker can verify the recorded approval. State the approved scope and what is already done; do not claim the new plan document has its own approval. The worker should execute that authorized scope, and ask again only if scope changes or another applicable gate requires it. When splitting work, include the relevant part of the plan in each task. Create and link each task before claiming it exists.
+创建普通的已分配任务，绝不能创建为此对话的子任务。为每个任务提供清晰的结果、上下文、验收标准、项目和合适的负责人。使用 create_task 并通过 initialPlan 在执行开始前把相关计划复制到新任务。直接使用 HTTP 时，向 /api/companies/{companyId}/issues POST：projectId、assigneeAgentId、status: "todo"、包含相关计划 Markdown 的 initialPlan 以及 idempotencyKey；不要提供 parentId。把计划写进 description 并不会创建任务计划文档。声称移交完成前，先验证新任务的计划文档。请在这里保留原计划。只传递剩余执行步骤，不要传递已完成的规划、批准、项目创建或任务创建步骤。包含源对话编号、已批准计划版本编号和已接受交互编号，使执行者能够核对已记录批准。说明获批范围和已经完成的内容；不要声称新计划文档自身已经获批。执行者应执行该授权范围，只有范围变化或其他适用门禁要求时才再次询问。拆分工作时，把计划的相关部分写入每个任务。声称任务存在前，先创建并链接每个任务。
 
-For review or follow-up tasks, include the existing source materials the assignee needs, not just task identifiers or a rubric. Read the source task's saved documents and comments, then copy the relevant existing content into the handoff or attach resources the recipient can actually read. A new task's tools may only expose its own documents and history. Supplying existing source material is coordination, not creating the assigned deliverable.
+对于评审或跟进任务，应包含负责人所需的现有源材料，而不只是任务编号或检查标准。读取源任务保存的文档和评论，再把相关现有内容复制到移交说明中，或附加接收者确实能读取的资源。新任务的工具可能只能访问自身文档和历史记录。提供现有源材料属于协调，不等于替负责人制作交付物。
 
-For status updates, distinguish recorded task status from active execution and verified progress. Read the latest relevant comments and run outcome before explaining a blocker or claiming work is underway. Use the advertised API tools for another task's details when needed. A completed dependency does not prove a block is stale; report the assignee's recorded reason. Agent configuration may be redacted: an empty configuration object without configuration-read permission does not prove settings are disabled or at their defaults. If the evidence is unavailable, say what you could verify and what remains unknown rather than guessing or recommending a status change.
+更新状态时，区分任务记录状态、实际执行状态和已核实进度。解释阻塞或声称工作正在进行前，先读取最新相关评论和运行结果。需要查看其他任务详情时，使用已声明的接口工具。依赖已完成并不能证明阻塞理由已经失效；请报告负责人记录的原因。智能体配置可能经过脱敏：没有配置读取权限时，空配置对象不能证明设置已禁用或处于默认值。证据不可用时，请说明能够核实的内容和仍未知的内容，不要猜测或建议修改状态。
 
-Keep discussion here and leave the conversation available for the next message. Link handed-off tasks in your reply; do not make this conversation blocked by their completion or wait for them. After creating an assigned task, let its own run execute the work; do not create its deliverables or change its execution status from this chat. Reply normally and end your turn; Paperclip manages the conversation waiting state. Do not change its status, create a review confirmation just to finish a reply, mark it complete, or poll for another reply. An accepted plan authorizes handoff to execution tasks, never implementation on this conversation. Honor normal approvals. Ask mode is non-mutating. Plan mode supports research and writing/revising the plan; hand off for execution only through the normal authorized workflow.`;
+请在这里保持讨论，并让对话能够接收下一条消息。在回复中链接已移交任务；不要让这些任务的完成阻塞此对话，也不要等待它们完成。创建已分配任务后，让任务自己的运行过程执行工作；不要在此聊天中制作该任务的交付物或修改其执行状态。正常回复并结束当前轮次；Alice 会管理对话的等待状态。不要修改此对话状态，不要仅为了结束回复而创建评审确认，不要把它标记为完成，也不要轮询下一条回复。已接受计划只授权移交给执行任务，绝不授权在此对话中实施。遵守正常审批。问答模式不允许变更；计划模式支持调研和编写或修订计划；只能通过正常授权流程移交执行。`;
 
 /** A reset keeps history visible, but parked input from a stopped session cannot become a new turn. */
 export function currentConversationCommentCondition() {
@@ -175,7 +175,7 @@ export async function prepareConversationTurn(
       const expiredQuestions = await tx.update(issueThreadInteractions).set({
         status: "expired", resolvedAt: new Date(), updatedAt: new Date(),
         resolvedByUserId: comment.authorUserId,
-        result: { version: 1, outcome: "withdrawn", reason: "New conversation session", answers: [], summaryMarkdown: null },
+        result: { version: 1, outcome: "withdrawn", reason: "新的对话会话", answers: [], summaryMarkdown: null },
       }).where(and(eq(issueThreadInteractions.companyId, issue.companyId),
         eq(issueThreadInteractions.issueId, issue.id), eq(issueThreadInteractions.status, "pending"),
         eq(issueThreadInteractions.kind, "ask_user_questions"))).returning({ id: issueThreadInteractions.id });
@@ -443,7 +443,7 @@ export async function resumeConversationForReset(db: Db, comment: typeof issueCo
     const released = await tx.update(issueTreeHolds).set({
       status: "released", releasedAt: new Date(), updatedAt: new Date(),
       releasedByActorType: "user", releasedByUserId: comment.authorUserId,
-      releaseReason: "Resumed by /new", releaseMetadata: { commentId: comment.id, wakeAgents: false },
+      releaseReason: "通过 /new 恢复", releaseMetadata: { commentId: comment.id, wakeAgents: false },
     }).where(and(eq(issueTreeHolds.companyId, issue.companyId),
       eq(issueTreeHolds.rootIssueId, issue.id), eq(issueTreeHolds.mode, "pause"),
       eq(issueTreeHolds.status, "active"))).returning();
@@ -451,7 +451,7 @@ export async function resumeConversationForReset(db: Db, comment: typeof issueCo
       publications.push((await persistActivity(tx as unknown as Db, {
         companyId: issue.companyId, actorType: "user", actorId: comment.authorUserId!,
         action: "issue.tree_hold_released", entityType: "issue", entityId: issue.id,
-        details: { holdId: hold.id, mode: "pause", reason: "Resumed by /new", commentId: comment.id },
+        details: { holdId: hold.id, mode: "pause", reason: "通过 /new 恢复", commentId: comment.id },
       })).publication);
     }
   });

@@ -960,12 +960,12 @@ describe("conversation execution wake policy", () => {
 
 describe("chat prompt policy", () => {
   it("preserves explicit plan approval while avoiding ritual confirmations for ordinary chat", () => {
-    expect(AGENT_CHAT_DIRECTIVE).toContain("When the user asks to approve a plan before handoff");
-    expect(AGENT_CHAT_DIRECTIVE).toContain('interactionKind: "confirmation"');
-    expect(AGENT_CHAT_DIRECTIVE).toContain("targetRevisionId from the saved document's latestRevisionId");
-    expect(AGENT_CHAT_DIRECTIVE).toContain('payload.target to { type: "issue_document", key: "plan", revisionId: latestRevisionId }');
-    expect(AGENT_CHAT_DIRECTIVE).toContain("ordinary conversation replies and draft planning do not need confirmation");
-    expect(AGENT_CHAT_DIRECTIVE).toContain("In Ask mode, discuss the plan without creating or revising documents or approval cards");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("当用户要求在移交前批准计划时");
+    expect(AGENT_CHAT_DIRECTIVE).toContain('interactionKind 设为 "confirmation"');
+    expect(AGENT_CHAT_DIRECTIVE).toContain("targetRevisionId 使用已保存文档的 latestRevisionId");
+    expect(AGENT_CHAT_DIRECTIVE).toContain('payload.target 设为 { type: "issue_document", key: "plan", revisionId: latestRevisionId }');
+    expect(AGENT_CHAT_DIRECTIVE).toContain("普通对话回复和计划草稿不需要确认");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("在问答模式中，只讨论计划，不创建或修订文档和批准卡片");
   });
 
   it.each([true, false])("preserves rejected-plan changes in task markdown (includeDescription=%s)", (includeDescription) => {
@@ -977,13 +977,13 @@ describe("chat prompt policy", () => {
       acceptedPlan: { revisionId: "stale-approved-plan" },
       includeDescription,
     });
-    expect(prompt).toContain("Rejected plan review directive:");
+    expect(prompt).toContain("计划评审被拒指令：");
     expect(prompt).toContain("Add CHAT_REVIEW_MARKER and a validation step.");
-    expect(prompt).toContain("not approval to implement or hand off execution tasks");
-    expect(prompt).toContain("first GET /api/issues/{issueId}/documents/plan");
-    expect(prompt).toContain("baseRevisionId set to that latestRevisionId");
-    expect(prompt).toContain("Bind the new approval request to the revision returned by the successful update");
-    expect(prompt).not.toContain("Accepted chat plan directive:");
+    expect(prompt).toContain("不代表批准实施或移交执行任务");
+    expect(prompt).toContain("先 GET /api/issues/{issueId}/documents/plan");
+    expect(prompt).toContain("baseRevisionId 设为该 latestRevisionId");
+    expect(prompt).toContain("新的批准请求必须绑定到成功更新后返回的版本");
+    expect(prompt).not.toContain("已接受的聊天计划指令：");
     expect(prompt).not.toContain("stale-approved-plan");
   });
   it.each(["standard", "ask", "planning"])(
@@ -1005,8 +1005,8 @@ describe("chat prompt policy", () => {
       expect(prompt).toContain(AGENT_CHAT_DIRECTIVE);
       expect(prompt).not.toContain("Pre-boundary summary");
       expect(prompt).not.toContain("old-approved-plan");
-      expect(prompt).not.toContain("Implement the accepted plan on this issue");
-      expect(prompt).toContain("Create and link each task before claiming it exists");
+      expect(prompt).not.toContain("请在此任务上实施已接受的计划");
+      expect(prompt).toContain("声称任务存在前，先创建并链接每个任务");
     },
   );
 });
