@@ -207,7 +207,9 @@ export function ConnectClientDialog({
               emptyMessage={l10n("local.no_copyable_tokens_fe96bdc5")}
               contentWidth="auto"
               triggerClassName="h-8 w-auto max-w-xs rounded-full px-3"
-              renderValue={(option) => option ? `${option.label} · ${maskedTokenLabel(option.token)}` : "Issue a token"}
+              renderValue={(option) => option
+                ? `${option.label} · ${maskedTokenLabel(option.token)}`
+                : l10n("local.issue_a_token_1418067b")}
               renderOption={(option) => (
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate">{option.label}</span>
@@ -238,7 +240,10 @@ export function ConnectClientDialog({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => void copyText(`Authorization: Bearer ${selectedToken.token}`, "Authorization header")}
+              onClick={() => void copyText(
+                `Authorization: Bearer ${selectedToken.token}`,
+                l10n("local.authorization_header_8e68075c"),
+              )}
             >
               <Copy className="mr-1 h-3.5 w-3.5" />
               {l10n("local.copy_header_575ecd50")}</Button>
@@ -294,7 +299,7 @@ export function ConnectClientDialog({
                     <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-2 font-mono text-xs text-muted-foreground">
                       {endpoint}
                     </code>
-                    <Button variant="outline" size="sm" onClick={() => void copyText(endpoint, "Endpoint URL")}>
+                    <Button variant="outline" size="sm" onClick={() => void copyText(endpoint, l10n("local.endpoint_url_2578179d"))}>
                       <Copy className="mr-1 h-3.5 w-3.5" />
                       {l10n("local.copy_e21f935f")}</Button>
                   </div>
@@ -324,7 +329,7 @@ export function ConnectClientDialog({
                 </pre>
                 {activeSnippet.notes.length > 0 ? (
                   <ul className="space-y-1 text-xs text-muted-foreground">
-                    {activeSnippet.notes.map((note) => <li key={note}>{note}</li>)}
+                    {activeSnippet.notes.map((note) => <li key={note}>{localizedClientNote(note)}</li>)}
                   </ul>
                 ) : null}
               </div>
@@ -345,4 +350,19 @@ export function ConnectClientDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+function localizedClientNote(note: string): string {
+  switch (note) {
+    case "Use the full Paperclip origin before the endpoint path.":
+      return l10n("local.use_full_alice_origin_0fd00005");
+    case "Recent Claude Desktop builds support remote HTTP MCP servers.":
+      return l10n("local.claude_desktop_remote_http_support_0fd00006");
+    case "Place this under your MCP extension or editor MCP settings.":
+      return l10n("local.place_under_mcp_settings_0fd00007");
+    case "Use the equivalent remote HTTP MCP add command for your installed version.":
+      return l10n("local.use_equivalent_mcp_add_command_0fd00008");
+    default:
+      return note;
+  }
 }

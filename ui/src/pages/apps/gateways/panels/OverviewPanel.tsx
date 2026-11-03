@@ -115,7 +115,7 @@ export function OverviewPanel({
       <section className="rounded-lg border border-border bg-muted/30 p-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-foreground">{l10n("local.how_clients_connect_0b9f00af")}</h3>
-          <Button variant="outline" size="sm" onClick={() => void copy(snippet, "Client config")}>
+          <Button variant="outline" size="sm" onClick={() => void copy(snippet, l10n("local.client_config_0fd00003"))}>
             <Copy className="mr-1 h-3.5 w-3.5" />
             {l10n("local.copy_e21f935f")}</Button>
         </div>

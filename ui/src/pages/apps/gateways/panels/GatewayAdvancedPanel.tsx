@@ -87,7 +87,7 @@ export function GatewayAdvancedPanel({
           <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-2 font-mono text-xs text-muted-foreground">
             {endpoint}
           </code>
-          <Button variant="outline" size="sm" onClick={() => void copy(endpoint, "Endpoint URL")}>
+          <Button variant="outline" size="sm" onClick={() => void copy(endpoint, l10n("local.endpoint_url_2578179d"))}>
             <Copy className="mr-1 h-3.5 w-3.5" />
             {l10n("local.copy_e21f935f")}</Button>
         </div>
@@ -96,7 +96,7 @@ export function GatewayAdvancedPanel({
       <section className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">{l10n("local.raw_configuration_493d4f27")}</h3>
-          <Button variant="outline" size="sm" onClick={() => void copy(rawConfig, "Gateway config JSON")}>
+          <Button variant="outline" size="sm" onClick={() => void copy(rawConfig, l10n("local.gateway_config_json_0fd00004"))}>
             <Copy className="mr-1 h-3.5 w-3.5" />
             {l10n("local.copy_json_7708c6e2")}</Button>
         </div>

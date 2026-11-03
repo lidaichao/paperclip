@@ -539,6 +539,14 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.local_board_0fc00001).toBe("本地控制台");
     expect(messages.signed_in_account_0fc00002).toBe("当前登录账户");
     expect(messages.email_address_0fc00003).toBe("邮箱地址");
+    expect(messages.client_0fd00001).toBe("客户端");
+    expect(messages.tool_call_0fd00002).toBe("工具调用");
+    expect(messages.client_config_0fd00003).toBe("客户端配置");
+    expect(messages.gateway_config_json_0fd00004).toContain("网关配置");
+    expect(messages.use_full_alice_origin_0fd00005).toContain("Alice 服务地址");
+    expect(messages.claude_desktop_remote_http_support_0fd00006).toContain("远程 HTTP MCP");
+    expect(messages.place_under_mcp_settings_0fd00007).toContain("MCP 设置");
+    expect(messages.use_equivalent_mcp_add_command_0fd00008).toContain("添加命令");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

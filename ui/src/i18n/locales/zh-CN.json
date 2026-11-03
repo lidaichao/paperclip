@@ -12119,6 +12119,14 @@
     "replace_credential_restore_access_0fb00004": "请替换凭据以恢复访问。",
     "local_board_0fc00001": "本地控制台",
     "signed_in_account_0fc00002": "当前登录账户",
-    "email_address_0fc00003": "邮箱地址"
+    "email_address_0fc00003": "邮箱地址",
+    "client_0fd00001": "客户端",
+    "tool_call_0fd00002": "工具调用",
+    "client_config_0fd00003": "客户端配置",
+    "gateway_config_json_0fd00004": "网关配置 JSON",
+    "use_full_alice_origin_0fd00005": "请在端点路径前补充完整的 Alice 服务地址。",
+    "claude_desktop_remote_http_support_0fd00006": "较新的 Claude Desktop 版本支持远程 HTTP MCP 服务器。",
+    "place_under_mcp_settings_0fd00007": "请将此配置放入 MCP 扩展或编辑器的 MCP 设置中。",
+    "use_equivalent_mcp_add_command_0fd00008": "请使用当前安装版本所支持的等效远程 HTTP MCP 添加命令。"
   }
 }

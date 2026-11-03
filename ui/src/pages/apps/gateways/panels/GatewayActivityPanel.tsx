@@ -66,9 +66,9 @@ function Fact({ label, value, mono = false }: { label: string; value: string; mo
 function ActivityRow({ event }: { event: ToolGatewayActivityEvent }) {
   const [open, setOpen] = useState(false);
   const outcome = OUTCOME_META[event.normalizedOutcome] ?? OUTCOME_META.unknown;
-  const actor = event.agentDisplayName ?? "Client";
-  const app = event.appDisplayName ?? event.connectionDisplayName ?? event.applicationDisplayName ?? "App";
-  const tool = event.toolDisplayName ?? event.invocation?.toolName ?? "Tool call";
+  const actor = event.agentDisplayName ?? l10n("local.client_0fd00001");
+  const app = event.appDisplayName ?? event.connectionDisplayName ?? event.applicationDisplayName ?? l10n("local.app_0d04bfeb");
+  const tool = event.toolDisplayName ?? event.invocation?.toolName ?? l10n("local.tool_call_0fd00002");
   const rawTool = event.invocation?.toolName ?? detailString(event.details, "tool") ?? detailString(event.details, "toolName");
   const reason = detailString(event.details, "reasonCode");
   const argumentsText = formatSummary(
