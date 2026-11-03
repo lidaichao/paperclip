@@ -207,6 +207,14 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.activity_summary_more_0c990047).toContain("另有 {{v1}} 项");
     expect(messages.no_tool_activity_0c990049).toBe("没有工具活动");
     expect(messages.runner_activity_4da41ca2).toBe("运行器活动");
+    expect(messages.monday_0ca00001).toBe("星期一");
+    expect(messages.connect_sending_app_to_alice_routine_0ca00008).toContain("Alice 例行任务");
+    expect(messages.webhook_url_value_0ca00009).toContain("回调通知地址");
+    expect(messages.github_secret_signature_guidance_0ca00015).toContain("不要使用 Bearer 身份验证");
+    expect(messages.unique_idempotency_key_guidance_0ca00023).toContain("避免启用后重复测试");
+    expect(messages.finish_setup_in_alice_enable_webhook_0ca00028).toContain("在 Alice 中完成设置");
+    expect(messages.schedule_every_weekday_at_0ca00032).toBe("每周{{v0}} {{v1}}");
+    expect(messages.choose_trigger_0ca00035).toBe("选择触发方式");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

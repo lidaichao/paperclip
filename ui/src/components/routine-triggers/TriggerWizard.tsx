@@ -46,6 +46,20 @@ export const defaultTriggerDraft: TriggerDraft = {
   timezone: "America/Chicago",
   created: false,
 };
+
+function weekdayLabel(day: string): string {
+  const labels: Record<string, string> = {
+    Monday: l10n("local.monday_0ca00001"),
+    Tuesday: l10n("local.tuesday_0ca00002"),
+    Wednesday: l10n("local.wednesday_0ca00003"),
+    Thursday: l10n("local.thursday_0ca00004"),
+    Friday: l10n("local.friday_0ca00005"),
+    Saturday: l10n("local.saturday_0ca00006"),
+    Sunday: l10n("local.sunday_0ca00007"),
+  };
+  return labels[day] ?? day;
+}
+
 export function webhookAgentInstructions(
   sender: TriggerDraft["sender"],
   routineTitle: string,
@@ -55,52 +69,61 @@ export function webhookAgentInstructions(
   signingMode: TriggerDraft["signingMode"] = "app_webhook",
 ) {
   const common = [
-    `Connect the sending app to the Paperclip routine ${JSON.stringify(routineTitle)}.`,
-    `Webhook URL: ${webhookUrl}`,
-    "Send an HTTP POST request with a JSON object as the body (not an array or string).",
-    "Content-Type: application/json",
+    l10n("local.connect_sending_app_to_alice_routine_0ca00008", { v0: JSON.stringify(routineTitle) }),
+    l10n("local.webhook_url_value_0ca00009", { v0: webhookUrl }),
+    l10n("local.send_http_post_json_object_0ca00010"),
+    l10n("local.content_type_application_json_0ca00011"),
   ];
   const auth =
     sender === "github"
       ? [
-          "In GitHub, open your repository → Settings → Webhooks → Add webhook.",
-          "Use the webhook URL above as Payload URL and select application/json as Content type.",
-          `Secret: ${webhookSecret}`,
-          "Paste this value into GitHub’s Secret field. GitHub signs requests with X-Hub-Signature-256; do not use Bearer authentication.",
-          "Select the events that should start this routine, enable the webhook, and save.",
-          "To check the connection, open Recent Deliveries and redeliver an event.",
+          l10n("local.github_open_add_webhook_0ca00012"),
+          l10n("local.github_use_payload_url_json_0ca00013"),
+          l10n("local.secret_value_0ca00014", { v0: webhookSecret }),
+          l10n("local.github_secret_signature_guidance_0ca00015"),
+          l10n("local.github_select_events_enable_save_0ca00016"),
+          l10n("local.github_recent_deliveries_redeliver_0ca00017"),
         ]
       : [
-          `Secret key: ${webhookSecret}`,
+          l10n("local.secret_key_value_0ca00018", { v0: webhookSecret }),
           ...(signingMode === "bearer" ? [] : [
-            `If the app asks for a signing secret, paste the secret key above. Paperclip accepts HMAC-SHA256 over the exact request body in ${signingMode === "fireflies_hmac" ? "X-Hub-Signature" : "X-Hub-Signature or X-Hub-Signature-256"}, formatted sha256=<hex digest>.`,
+            l10n("local.signing_secret_hmac_guidance_0ca00019", { v0: signingMode === "fireflies_hmac" ? "X-Hub-Signature" : "X-Hub-Signature or X-Hub-Signature-256" }),
           ]),
           ...(signingMode === "fireflies_hmac" ? [] : [
-            `For apps with custom headers, use Authorization: Bearer ${webhookSecret}`,
+            l10n("local.custom_header_bearer_guidance_0ca00020", { v0: webhookSecret }),
           ]),
-          "Subscribe only to the events that should start this routine. Public services need a publicly reachable HTTPS URL.",
-          "In the sending app, add a webhook using this URL, POST method, JSON body, and headers, then save it.",
-          "Send a unique Idempotency-Key header for each event and reuse it on retries, so retrying a setup test after activation cannot start the routine.",
-          'Example JSON body: {"event":"deployment.completed","environment":"production"}',
-          "To check the connection, send a test event from the app or perform the action that triggers a delivery.",
+          l10n("local.subscribe_events_public_https_0ca00021"),
+          l10n("local.add_webhook_post_json_headers_0ca00022"),
+          l10n("local.unique_idempotency_key_guidance_0ca00023"),
+          l10n("local.example_json_body_0ca00024"),
+          l10n("local.send_test_event_check_connection_0ca00025"),
         ];
   return [
     ...common,
     ...auth,
-    "Open Check connection in Paperclip to see whether the event arrived and authentication passed.",
+    l10n("local.open_check_connection_in_alice_0ca00026"),
     ...(setupPending
       ? [
-          "During setup, deliveries only test the connection. They do not start the routine or create a task.",
-          "Finish setup in Paperclip to enable this webhook for future events. Test events are not replayed.",
+          l10n("local.setup_deliveries_only_test_connection_0ca00027"),
+          l10n("local.finish_setup_in_alice_enable_webhook_0ca00028"),
         ]
       : [
-          "This webhook is enabled. Deliveries can start the routine and create tasks.",
+          l10n("local.webhook_enabled_deliveries_start_routine_0ca00029"),
         ]),
-    "Store the key securely; do not put it in source control or logs.",
+    l10n("local.store_key_securely_0ca00030"),
   ].join("\n");
 }
 export function describeSchedule(draft: TriggerDraft) {
-  return `${draft.frequency === "daily" ? "Every day" : draft.frequency === "weekly" ? `Every ${draft.weekday}` : "Every weekday"} at ${draft.time}`;
+  if (draft.frequency === "daily") {
+    return l10n("local.schedule_every_day_at_0ca00031", { v0: draft.time });
+  }
+  if (draft.frequency === "weekly") {
+    return l10n("local.schedule_every_weekday_at_0ca00032", {
+      v0: weekdayLabel(draft.weekday),
+      v1: draft.time,
+    });
+  }
+  return l10n("local.schedule_every_workday_at_0ca00033", { v0: draft.time });
 }
 export function RoutineTriggerWizard({
   initialDraft,
@@ -142,7 +165,7 @@ export function RoutineTriggerWizard({
         setSaveError(
           error instanceof Error
             ? error.message
-            : "Couldn’t save. Please try again.",
+            : l10n("local.could_not_save_try_again_0ca00034"),
         );
       } finally {
         setBusy(false);
@@ -177,8 +200,8 @@ export function RoutineTriggerWizard({
   const schedule = draft.kind === "schedule";
   const github = draft.sender === "github";
   const labels = schedule
-    ? ["Choose trigger", "Set schedule", "Review schedule"]
-    : ["Choose trigger", "Connect your app", "Check connection"];
+    ? [l10n("local.choose_trigger_0ca00035"), l10n("local.set_schedule_0ca00036"), l10n("local.review_schedule_98c00356")]
+    : [l10n("local.choose_trigger_0ca00035"), l10n("local.connect_your_app_0ca00037"), l10n("local.check_connection_be5dff52")];
   function patch(values: Partial<TriggerDraft>) {
     setDraft((current) => ({ ...current, ...values }));
   }
@@ -203,7 +226,7 @@ export function RoutineTriggerWizard({
           ? l10n("local.set_a_schedule_b967d9c5")
           : l10n("local.review_your_schedule_6204c309")
         : draft.step === 1
-          ? l10n("local.connect_value_2a49bf94", {v0: (github ? "GitHub" : "your app")})
+          ? l10n("local.connect_value_2a49bf94", {v0: (github ? "GitHub" : l10n("local.your_app_4696a335"))})
           : l10n("local.check_your_connection_c2886bc3");
   const subtitle =
     draft.step === 0
@@ -246,14 +269,13 @@ export function RoutineTriggerWizard({
                 {
                   kind: "schedule",
                   label: l10n("local.on_a_schedule_8c4f3450"),
-                  detail: "Every day, on weekdays, or once a week.",
+                  detail: l10n("local.schedule_trigger_detail_0ca00038"),
                   Icon: CalendarClock,
                 },
                 {
                   kind: "webhook",
                   label: l10n("local.when_another_app_sends_a_webhook_d7f97da1"),
-                  detail:
-                    "When something happens in GitHub, another app, or a script.",
+                  detail: l10n("local.webhook_trigger_detail_0ca00039"),
                   Icon: Webhook,
                 },
               ] as const
@@ -337,7 +359,7 @@ export function RoutineTriggerWizard({
                     "Saturday",
                     "Sunday",
                   ].map((day) => (
-                    <option key={day}>{day}</option>
+                    <option key={day} value={day}>{weekdayLabel(day)}</option>
                   ))}
                 </select>
               </div>
