@@ -64,7 +64,18 @@ const program = new Command();
 const DATA_DIR_OPTION_HELP =
   "Alice 数据目录根路径（与 ~/.paperclip 中的状态隔离）";
 
+const HELP_SECTION_TITLES: Record<string, string> = {
+  "Usage:": "用法：",
+  "Arguments:": "参数：",
+  "Options:": "选项：",
+  "Global Options:": "全局选项：",
+  "Commands:": "命令：",
+};
+
 program.enablePositionalOptions();
+program.configureHelp({
+  styleTitle: (title) => HELP_SECTION_TITLES[title] ?? title,
+});
 
 program
   .name("paperclipai")
@@ -294,6 +305,18 @@ auth
   .action(bootstrapCeoInvite);
 
 registerClientAuthCommands(auth);
+
+function localizeHelpCommands(command: Command): void {
+  command.helpOption("-h, --help", "显示帮助");
+  if (command.commands.length > 0) {
+    command.addHelpCommand("help [command]", "显示命令帮助");
+  }
+  for (const child of command.commands) {
+    localizeHelpCommands(child);
+  }
+}
+
+localizeHelpCommands(program);
 
 async function main(): Promise<void> {
   warnIfUnsupportedNodeVersion(process.versions.node, (message) => console.warn(message));
