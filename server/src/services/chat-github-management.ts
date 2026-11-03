@@ -37,7 +37,7 @@ export function githubChatManagementService(db: Db, fetchImpl = fetch) {
         and(eq(chatEndpoints.id, id), eq(chatEndpoints.provider, "github")),
       );
     if (!row || row.status === "archived")
-      throw notFound("GitHub bot not found");
+      throw notFound("未找到 GitHub 机器人");
     return row;
   }
   async function member(companyId: string, userId: string) {
@@ -156,7 +156,7 @@ export function githubChatManagementService(db: Db, fetchImpl = fetch) {
         .where(eq(chatGitHubConfigurations.endpointId, endpointId))
         .for("update");
       if ((current?.revision ?? 0) !== parsed.expectedRevision)
-        throw conflict("This configuration changed. Refresh before saving.");
+        throw conflict("此配置已发生变化，请刷新后再保存。");
       const values = {
         companyId: bot.companyId,
         endpointId,
@@ -238,7 +238,7 @@ export function githubChatManagementService(db: Db, fetchImpl = fetch) {
     const bot = await endpoint(endpointId);
     await member(bot.companyId, userId);
     if (!bot.providerAccountId)
-      throw conflict("Verify the bot App installation first");
+      throw conflict("请先验证机器人应用安装");
     const verified = await toolAccessService(db).verifyPersonalGitHubIdentity(
       bot.companyId,
       connectionId,
@@ -301,7 +301,7 @@ export function githubChatManagementService(db: Db, fetchImpl = fetch) {
         )
         .for("update");
       if (!grant)
-        throw forbidden("Your personal GitHub connection was revoked");
+        throw forbidden("你的个人 GitHub 连接已被撤销");
       const values = {
         companyId: bot.companyId,
         endpointId,
@@ -425,7 +425,7 @@ export function githubChatManagementService(db: Db, fetchImpl = fetch) {
                 !/^[1-9][0-9]*$/.test(repositoryId) ||
                 !Number.isSafeInteger(Number(repositoryId))
               )
-                throw new Error("Unavailable repository");
+                throw new Error("仓库不可用");
               const issued = await githubBotRequest<{ token?: string }>(
                 fetchImpl,
                 credentials.appJwt,
@@ -444,7 +444,7 @@ export function githubChatManagementService(db: Db, fetchImpl = fetch) {
                   },
                 },
               );
-              if (!issued.token) throw new Error("Missing installation token");
+              if (!issued.token) throw new Error("缺少安装令牌");
             } catch {
               inaccessible.push(resource.label ?? resource.providerResourceId);
             }
@@ -596,7 +596,7 @@ export function githubChatManagementService(db: Db, fetchImpl = fetch) {
     identity,
     lookupPerson: async (login: string) => {
       if (!/^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}(?:\[bot\])?$/.test(login))
-        throw badRequest("Enter a GitHub username");
+        throw badRequest("请输入 GitHub 用户名");
       const user = await githubBotRequest<{
         id?: number;
         login?: string;
@@ -608,7 +608,7 @@ export function githubChatManagementService(db: Db, fetchImpl = fetch) {
         !["User", "Bot"].includes(user.type ?? "") ||
         !user.login
       )
-        throw badRequest("Choose a GitHub person or bot account");
+        throw badRequest("请选择 GitHub 个人或机器人账号");
       return { githubUserId: String(user.id), login: user.login };
     },
     reviews: async (endpointId: string) => {

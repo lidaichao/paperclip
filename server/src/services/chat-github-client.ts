@@ -32,7 +32,7 @@ export async function githubBotRequest<T>(
     path.includes("\\") ||
     path.split("/").includes("..")
   )
-    throw forbidden("Invalid GitHub operation path");
+    throw forbidden("GitHub 操作路径无效");
   let response: Response;
   try {
     response = await fetchImpl(`https://api.github.com${path}`, {
@@ -65,7 +65,7 @@ export async function githubBotRequest<T>(
   }
   if (response.status === 204) return undefined as T;
   const reader = response.body?.getReader();
-  if (!reader) throw unprocessable("GitHub returned an empty response");
+  if (!reader) throw unprocessable("GitHub 返回了空响应");
   const chunks: Uint8Array[] = [];
   let size = 0;
   try {
@@ -111,7 +111,7 @@ export async function githubBotCredentials(
       ),
     );
   if (!row || ["archived", "revoked", "paused"].includes(row.endpoint.status))
-    throw conflict("GitHub bot connection is unavailable");
+    throw conflict("GitHub 机器人连接不可用");
   const secrets = secretService(db);
   const credentials: Record<string, string> = {};
   for (const key of [
@@ -138,7 +138,7 @@ export async function githubBotCredentials(
     );
   }
   if (!credentials.appId || !credentials.privateKey)
-    throw conflict("Connect the GitHub App before continuing");
+    throw conflict("请先连接 GitHub 应用，再继续操作");
   return {
     ...row,
     credentials,
@@ -160,13 +160,13 @@ export async function githubBotRepositoryToken(
     result.connection.status !== "active" ||
     !["active", "verifying"].includes(result.endpoint.status)
   )
-    throw conflict("GitHub bot connection is not active");
+    throw conflict("GitHub 机器人连接未激活");
   if (
     !result.credentials.installationId ||
     !/^[1-9][0-9]*$/.test(repositoryId) ||
     !Number.isSafeInteger(Number(repositoryId))
   )
-    throw conflict("Verify the GitHub App installation first");
+    throw conflict("请先验证 GitHub 应用安装");
   const issued = await githubBotRequest<{ token?: string }>(
     fetchImpl,
     result.appJwt,
@@ -186,6 +186,6 @@ export async function githubBotRepositoryToken(
     },
   );
   if (!issued.token)
-    throw unprocessable("GitHub did not issue an installation token");
+    throw unprocessable("GitHub 未签发安装令牌");
   return issued.token;
 }
