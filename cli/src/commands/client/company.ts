@@ -125,11 +125,11 @@ const IMPORT_INCLUDE_OPTIONS: Array<{
   label: string;
   hint: string;
 }> = [
-  { value: "company", label: "Company", hint: "name, branding, and company settings" },
-  { value: "projects", label: "Projects", hint: "projects and workspace metadata" },
-  { value: "issues", label: "Tasks", hint: "tasks and recurring routines" },
-  { value: "agents", label: "Agents", hint: "agent records and org structure" },
-  { value: "skills", label: "Skills", hint: "company skill packages and references" },
+  { value: "company", label: "公司", hint: "名称、品牌和公司设置" },
+  { value: "projects", label: "项目", hint: "项目和工作区元数据" },
+  { value: "issues", label: "任务", hint: "任务和周期性例行工作" },
+  { value: "agents", label: "智能体", hint: "智能体记录和组织结构" },
+  { value: "skills", label: "技能", hint: "公司技能包和引用" },
 ];
 
 const IMPORT_PREVIEW_SAMPLE_LIMIT = 6;
@@ -183,7 +183,7 @@ function parseInclude(
     skills: values.includes("skills"),
   };
   if (!include.company && !include.agents && !include.projects && !include.issues && !include.skills) {
-    throw new Error("Invalid --include value. Use one or more of: company,agents,projects,issues,tasks,skills");
+    throw new Error("无效的 --include 值。请使用以下一个或多个值：company、agents、projects、issues、tasks、skills");
   }
   return include;
 }
@@ -340,19 +340,19 @@ function countTotal(catalog: ImportSelectionCatalog, group: ImportSelectableGrou
 }
 
 function summarizeGroupSelection(catalog: ImportSelectionCatalog, state: ImportSelectionState, group: ImportSelectableGroup): string {
-  return `${countSelected(state, group)}/${countTotal(catalog, group)} selected`;
+  return `已选择 ${countSelected(state, group)}/${countTotal(catalog, group)}`;
 }
 
 function getGroupLabel(group: ImportSelectableGroup): string {
   switch (group) {
     case "projects":
-      return "Projects";
+      return "项目";
     case "issues":
-      return "Tasks";
+      return "任务";
     case "agents":
-      return "Agents";
+      return "智能体";
     case "skills":
-      return "Skills";
+      return "技能";
   }
 }
 
@@ -412,7 +412,7 @@ function buildDefaultImportAdapterMessages(
     .map((adapterType) => adapterType.replace(/_/g, "-"));
   const agentCount = Object.keys(overrides).length;
   return [
-    `Using ${adapterTypes.join(", ")} adapter${adapterTypes.length === 1 ? "" : "s"} for ${agentCount} imported ${pluralize(agentCount, "agent")} without an explicit adapter.`,
+    `已为 ${agentCount} 个未明确指定适配器的导入智能体使用 ${adapterTypes.join("、")} 适配器。`,
   ];
 }
 
@@ -422,51 +422,51 @@ async function promptForImportSelection(preview: CompanyPortabilityPreviewResult
 
   while (true) {
     const choice = await p.select<ImportSelectableGroup | "company" | "confirm">({
-      message: "Select what Paperclip should import",
+      message: "选择 Alice 要导入的内容",
       options: [
         {
           value: "company",
-          label: state.company ? "Company: included" : "Company: skipped",
-          hint: catalog.company.files.length > 0 ? "toggle company metadata" : "no company metadata in package",
+          label: state.company ? "公司：包含" : "公司：跳过",
+          hint: catalog.company.files.length > 0 ? "切换公司元数据" : "包中没有公司元数据",
         },
         {
           value: "projects",
-          label: "Select Projects",
+          label: "选择项目",
           hint: summarizeGroupSelection(catalog, state, "projects"),
         },
         {
           value: "issues",
-          label: "Select Tasks",
+          label: "选择任务",
           hint: summarizeGroupSelection(catalog, state, "issues"),
         },
         {
           value: "agents",
-          label: "Select Agents",
+          label: "选择智能体",
           hint: summarizeGroupSelection(catalog, state, "agents"),
         },
         {
           value: "skills",
-          label: "Select Skills",
+          label: "选择技能",
           hint: summarizeGroupSelection(catalog, state, "skills"),
         },
         {
           value: "confirm",
-          label: "Confirm",
-          hint: `${buildSelectedFilesFromImportSelection(catalog, state).length} files selected`,
+          label: "确认",
+          hint: `已选择 ${buildSelectedFilesFromImportSelection(catalog, state).length} 个文件`,
         },
       ],
       initialValue: "confirm",
     });
 
     if (p.isCancel(choice)) {
-      p.cancel("Import cancelled.");
+      p.cancel("已取消导入。");
       process.exit(0);
     }
 
     if (choice === "confirm") {
       const selectedFiles = buildSelectedFilesFromImportSelection(catalog, state);
       if (selectedFiles.length === 0) {
-        p.note("Select at least one import target before confirming.", "Nothing selected");
+        p.note("确认前请至少选择一个导入目标。", "尚未选择");
         continue;
       }
       return selectedFiles;
@@ -474,7 +474,7 @@ async function promptForImportSelection(preview: CompanyPortabilityPreviewResult
 
     if (choice === "company") {
       if (catalog.company.files.length === 0) {
-        p.note("This package does not include company metadata to toggle.", "No company metadata");
+        p.note("此包不包含可切换的公司元数据。", "没有公司元数据");
         continue;
       }
       state.company = !state.company;
@@ -484,12 +484,12 @@ async function promptForImportSelection(preview: CompanyPortabilityPreviewResult
     const group = choice;
     const groupItems = catalog[group];
     if (groupItems.length === 0) {
-      p.note(`This package does not include any ${getGroupLabel(group).toLowerCase()}.`, `No ${getGroupLabel(group)}`);
+      p.note(`此包不包含任何${getGroupLabel(group)}。`, `没有${getGroupLabel(group)}`);
       continue;
     }
 
     const selection = await p.multiselect<string>({
-      message: `${getGroupLabel(group)} to import. Space toggles, enter returns to the main menu.`,
+      message: `选择要导入的${getGroupLabel(group)}。空格切换，回车返回主菜单。`,
       options: groupItems.map((item) => ({
         value: item.key,
         label: item.label,
@@ -499,7 +499,7 @@ async function promptForImportSelection(preview: CompanyPortabilityPreviewResult
     });
 
     if (p.isCancel(selection)) {
-      p.cancel("Import cancelled.");
+      p.cancel("已取消导入。");
       process.exit(0);
     }
 
@@ -511,14 +511,14 @@ function summarizeInclude(include: CompanyPortabilityInclude): string {
   const labels = IMPORT_INCLUDE_OPTIONS
     .filter((option) => include[option.value])
     .map((option) => option.label.toLowerCase());
-  return labels.length > 0 ? labels.join(", ") : "nothing selected";
+  return labels.length > 0 ? labels.join("、") : "尚未选择";
 }
 
 function formatSourceLabel(source: { type: "inline"; rootPath?: string | null } | { type: "github"; url: string }): string {
   if (source.type === "github") {
-    return `GitHub: ${source.url}`;
+    return `GitHub：${source.url}`;
   }
-  return `Local package: ${source.rootPath?.trim() || "(current folder)"}`;
+  return `本地包：${source.rootPath?.trim() || "（当前文件夹）"}`;
 }
 
 function formatTargetLabel(
@@ -527,10 +527,10 @@ function formatTargetLabel(
 ): string {
   if (target.mode === "existing_company") {
     const targetName = preview?.targetCompanyName?.trim();
-    const targetId = preview?.targetCompanyId?.trim() || target.companyId?.trim() || "unknown-company";
+    const targetId = preview?.targetCompanyId?.trim() || target.companyId?.trim() || "未知公司";
     return targetName ? `${targetName} (${targetId})` : targetId;
   }
-  return target.newCompanyName?.trim() || preview?.manifest.company?.name || "new company";
+  return target.newCompanyName?.trim() || preview?.manifest.company?.name || "新公司";
 }
 
 function pluralize(count: number, singular: string, plural = `${singular}s`): string {
@@ -541,64 +541,70 @@ function summarizePlanCounts(
   plans: Array<{ action: "create" | "update" | "skip" }>,
   noun: string,
 ): string {
-  if (plans.length === 0) return `0 ${pluralize(0, noun)} selected`;
+  if (plans.length === 0) return `已选择 0 个${noun}`;
   const createCount = plans.filter((plan) => plan.action === "create").length;
   const updateCount = plans.filter((plan) => plan.action === "update").length;
   const skipCount = plans.filter((plan) => plan.action === "skip").length;
   const parts: string[] = [];
-  if (createCount > 0) parts.push(`${createCount} create`);
-  if (updateCount > 0) parts.push(`${updateCount} update`);
-  if (skipCount > 0) parts.push(`${skipCount} skip`);
-  return `${plans.length} ${pluralize(plans.length, noun)} total (${parts.join(", ")})`;
+  if (createCount > 0) parts.push(`创建 ${createCount}`);
+  if (updateCount > 0) parts.push(`更新 ${updateCount}`);
+  if (skipCount > 0) parts.push(`跳过 ${skipCount}`);
+  return `共 ${plans.length} 个${noun}（${parts.join("，")}）`;
 }
 
 function summarizeImportAgentResults(agents: CompanyPortabilityImportResult["agents"]): string {
-  if (agents.length === 0) return "0 agents changed";
+  if (agents.length === 0) return "未变更智能体";
   const created = agents.filter((agent) => agent.action === "created").length;
   const updated = agents.filter((agent) => agent.action === "updated").length;
   const skipped = agents.filter((agent) => agent.action === "skipped").length;
   const parts: string[] = [];
-  if (created > 0) parts.push(`${created} created`);
-  if (updated > 0) parts.push(`${updated} updated`);
-  if (skipped > 0) parts.push(`${skipped} skipped`);
-  return `${agents.length} ${pluralize(agents.length, "agent")} total (${parts.join(", ")})`;
+  if (created > 0) parts.push(`创建 ${created}`);
+  if (updated > 0) parts.push(`更新 ${updated}`);
+  if (skipped > 0) parts.push(`跳过 ${skipped}`);
+  return `共 ${agents.length} 个智能体（${parts.join("，")}）`;
 }
 
 function summarizeImportSkillResults(skills: CompanyPortabilityImportResult["skills"]): string {
-  if (skills.length === 0) return "0 skills changed";
+  if (skills.length === 0) return "未变更技能";
   const actions = ["created", "renamed", "replaced", "skipped"] as const;
+  const labels: Record<(typeof actions)[number], string> = {
+    created: "创建",
+    renamed: "重命名",
+    replaced: "替换",
+    skipped: "跳过",
+  };
   const parts = actions.flatMap((action) => {
     const count = skills.filter((skill) => skill.action === action).length;
-    return count > 0 ? [`${count} ${action}`] : [];
+    return count > 0 ? [`${labels[action]} ${count}`] : [];
   });
-  return `${skills.length} ${pluralize(skills.length, "skill")} total (${parts.join(", ")})`;
+  return `共 ${skills.length} 个技能（${parts.join("，")}）`;
 }
 
 function summarizeImportProjectResults(projects: CompanyPortabilityImportResult["projects"]): string {
-  if (projects.length === 0) return "0 projects changed";
+  if (projects.length === 0) return "未变更项目";
   const created = projects.filter((project) => project.action === "created").length;
   const updated = projects.filter((project) => project.action === "updated").length;
   const skipped = projects.filter((project) => project.action === "skipped").length;
   const parts: string[] = [];
-  if (created > 0) parts.push(`${created} created`);
-  if (updated > 0) parts.push(`${updated} updated`);
-  if (skipped > 0) parts.push(`${skipped} skipped`);
-  return `${projects.length} ${pluralize(projects.length, "project")} total (${parts.join(", ")})`;
+  if (created > 0) parts.push(`创建 ${created}`);
+  if (updated > 0) parts.push(`更新 ${updated}`);
+  if (skipped > 0) parts.push(`跳过 ${skipped}`);
+  return `共 ${projects.length} 个项目（${parts.join("，")}）`;
 }
 
 function actionChip(action: string): string {
   switch (action) {
     case "create":
     case "created":
-      return pc.green(action);
+      return pc.green("创建");
     case "update":
     case "updated":
-      return pc.yellow(action);
+      return pc.yellow("更新");
     case "skip":
     case "skipped":
     case "none":
     case "unchanged":
-      return pc.dim(action);
+      return pc.dim(action === "skip" || action === "skipped" ? "跳过" : "不变");
     default:
       return action;
   }
@@ -618,7 +624,7 @@ function appendPreviewExamples(
     lines.push(`- ${actionChip(entry.action)} ${entry.label}${reason}`);
   }
   if (entries.length > shown.length) {
-    lines.push(pc.dim(`- +${entries.length - shown.length} more`));
+    lines.push(pc.dim(`- 另有 ${entries.length - shown.length} 项`));
   }
 }
 
@@ -640,37 +646,37 @@ export function renderCompanyImportPreview(
   },
 ): string {
   const lines: string[] = [
-    `${pc.bold("Source")}  ${meta.sourceLabel}`,
-    `${pc.bold("Target")}  ${meta.targetLabel}`,
-    `${pc.bold("Include")} ${summarizeInclude(preview.include)}`,
-    `${pc.bold("Mode")}    ${preview.collisionStrategy} collisions`,
+    `${pc.bold("来源")}  ${meta.sourceLabel}`,
+    `${pc.bold("目标")}  ${meta.targetLabel}`,
+    `${pc.bold("包含")}  ${summarizeInclude(preview.include)}`,
+    `${pc.bold("模式")}  冲突策略：${preview.collisionStrategy}`,
     "",
-    pc.bold("Package"),
-    `- company: ${preview.manifest.company?.name ?? preview.manifest.source?.companyName ?? "not included"}`,
-    `- agents: ${preview.manifest.agents.length}`,
-    `- projects: ${preview.manifest.projects.length}`,
-    `- tasks: ${preview.manifest.issues.length}`,
-    `- skills: ${preview.manifest.skills.length}`,
+    pc.bold("数据包"),
+    `- 公司：${preview.manifest.company?.name ?? preview.manifest.source?.companyName ?? "未包含"}`,
+    `- 智能体：${preview.manifest.agents.length}`,
+    `- 项目：${preview.manifest.projects.length}`,
+    `- 任务：${preview.manifest.issues.length}`,
+    `- 技能：${preview.manifest.skills.length}`,
   ];
 
   if (preview.envInputs.length > 0) {
     const requiredCount = preview.envInputs.filter((item) => item.requirement === "required").length;
-    lines.push(`- env inputs: ${preview.envInputs.length} (${requiredCount} required)`);
+    lines.push(`- 环境输入：${preview.envInputs.length}（必填 ${requiredCount}）`);
   }
 
   lines.push("");
-  lines.push(pc.bold("Plan"));
-  lines.push(`- company: ${actionChip(preview.plan.companyAction === "none" ? "unchanged" : preview.plan.companyAction)}`);
-  lines.push(`- agents: ${summarizePlanCounts(preview.plan.agentPlans, "agent")}`);
-  lines.push(`- projects: ${summarizePlanCounts(preview.plan.projectPlans, "project")}`);
-  lines.push(`- tasks: ${summarizePlanCounts(preview.plan.issuePlans, "task")}`);
+  lines.push(pc.bold("计划"));
+  lines.push(`- 公司：${actionChip(preview.plan.companyAction === "none" ? "unchanged" : preview.plan.companyAction)}`);
+  lines.push(`- 智能体：${summarizePlanCounts(preview.plan.agentPlans, "智能体")}`);
+  lines.push(`- 项目：${summarizePlanCounts(preview.plan.projectPlans, "项目")}`);
+  lines.push(`- 任务：${summarizePlanCounts(preview.plan.issuePlans, "任务")}`);
   if (preview.include.skills) {
-    lines.push(`- skills: ${preview.manifest.skills.length} ${pluralize(preview.manifest.skills.length, "skill")} packaged`);
+    lines.push(`- 技能：已打包 ${preview.manifest.skills.length} 个`);
   }
 
   appendPreviewExamples(
     lines,
-    "Agent examples",
+    "智能体示例",
     preview.plan.agentPlans.map((plan) => ({
       action: plan.action,
       label: `${plan.slug} -> ${plan.plannedName}`,
@@ -679,7 +685,7 @@ export function renderCompanyImportPreview(
   );
   appendPreviewExamples(
     lines,
-    "Project examples",
+    "项目示例",
     preview.plan.projectPlans.map((plan) => ({
       action: plan.action,
       label: `${plan.slug} -> ${plan.plannedName}`,
@@ -688,7 +694,7 @@ export function renderCompanyImportPreview(
   );
   appendPreviewExamples(
     lines,
-    "Task examples",
+    "任务示例",
     preview.plan.issuePlans.map((plan) => ({
       action: plan.action,
       label: `${plan.slug} -> ${plan.plannedTitle}`,
@@ -696,9 +702,9 @@ export function renderCompanyImportPreview(
     })),
   );
 
-  appendMessageBlock(lines, pc.cyan("Info"), meta.infoMessages ?? []);
-  appendMessageBlock(lines, pc.yellow("Warnings"), preview.warnings);
-  appendMessageBlock(lines, pc.red("Errors"), preview.errors);
+  appendMessageBlock(lines, pc.cyan("信息"), meta.infoMessages ?? []);
+  appendMessageBlock(lines, pc.yellow("警告"), preview.warnings);
+  appendMessageBlock(lines, pc.red("错误"), preview.errors);
 
   return lines.join("\n");
 }
@@ -709,20 +715,20 @@ export function renderCompanyImportResult(
 ): string {
   const skills = result.skills ?? [];
   const lines: string[] = [
-    `${pc.bold("Target")}  ${meta.targetLabel}`,
-    `${pc.bold("Company")} ${result.company.name} (${actionChip(result.company.action)})`,
-    `${pc.bold("Agents")}  ${summarizeImportAgentResults(result.agents)}`,
-    `${pc.bold("Skills")}  ${summarizeImportSkillResults(skills)}`,
-    `${pc.bold("Projects")} ${summarizeImportProjectResults(result.projects)}`,
+    `${pc.bold("目标")}    ${meta.targetLabel}`,
+    `${pc.bold("公司")}    ${result.company.name}（${actionChip(result.company.action)}）`,
+    `${pc.bold("智能体")}  ${summarizeImportAgentResults(result.agents)}`,
+    `${pc.bold("技能")}    ${summarizeImportSkillResults(skills)}`,
+    `${pc.bold("项目")}    ${summarizeImportProjectResults(result.projects)}`,
   ];
 
   if (meta.companyUrl) {
-    lines.splice(1, 0, `${pc.bold("URL")}     ${meta.companyUrl}`);
+    lines.splice(1, 0, `${pc.bold("网址")}    ${meta.companyUrl}`);
   }
 
   appendPreviewExamples(
     lines,
-    "Agent results",
+    "智能体结果",
     result.agents.map((agent) => ({
       action: agent.action,
       label: `${agent.slug} -> ${agent.name}`,
@@ -731,7 +737,7 @@ export function renderCompanyImportResult(
   );
   appendPreviewExamples(
     lines,
-    "Skill results",
+    "技能结果",
     skills.map((skill) => ({
       action: skill.action,
       label: `${skill.originalSlug} -> ${skill.slug}`,
@@ -740,7 +746,7 @@ export function renderCompanyImportResult(
   );
   appendPreviewExamples(
     lines,
-    "Project results",
+    "项目结果",
     result.projects.map((project) => ({
       action: project.action,
       label: `${project.slug} -> ${project.name}`,
@@ -750,14 +756,14 @@ export function renderCompanyImportResult(
 
   if (result.envInputs.length > 0) {
     lines.push("");
-    lines.push(pc.bold("Env inputs"));
+    lines.push(pc.bold("环境输入"));
     lines.push(
-      `- ${result.envInputs.length} ${pluralize(result.envInputs.length, "input")} may need values after import`,
+      `- 导入后可能需要填写 ${result.envInputs.length} 个环境输入值`,
     );
   }
 
-  appendMessageBlock(lines, pc.cyan("Info"), meta.infoMessages ?? []);
-  appendMessageBlock(lines, pc.yellow("Warnings"), result.warnings);
+  appendMessageBlock(lines, pc.cyan("信息"), meta.infoMessages ?? []);
+  appendMessageBlock(lines, pc.yellow("警告"), result.warnings);
 
   return lines.join("\n");
 }
@@ -779,7 +785,7 @@ export function resolveCompanyImportApiPath(input: {
   if (input.targetMode === "existing_company") {
     const companyId = input.companyId?.trim();
     if (!companyId) {
-      throw new Error("Existing-company imports require a companyId to resolve the API route.");
+      throw new Error("导入到现有公司时必须提供 companyId 才能确定 API 路由。");
     }
     return input.dryRun
       ? apiPath`/api/companies/${companyId}/imports/preview`
@@ -808,12 +814,12 @@ export function resolveCompanyImportApplyConfirmationMode(input: {
   }
   if (input.json) {
     throw new Error(
-      "Applying a company import with --json requires --yes. Use --dry-run first to inspect the preview.",
+      "使用 --json 应用公司导入时必须同时使用 --yes。请先用 --dry-run 检查预览。",
     );
   }
   if (!input.interactive) {
     throw new Error(
-      "Applying a company import from a non-interactive terminal requires --yes. Use --dry-run first to inspect the preview.",
+      "从非交互式终端应用公司导入时必须使用 --yes。请先用 --dry-run 检查预览。",
     );
   }
   return "prompt";
@@ -902,7 +908,7 @@ export function normalizeGithubImportSource(input: string, refOverride?: string)
   }
 
   if (!looksLikeRepoUrl(trimmed)) {
-    throw new Error("GitHub source must be a GitHub or GitHub Enterprise URL, or owner/repo[/path] shorthand.");
+    throw new Error("GitHub 来源必须是 GitHub、GitHub Enterprise 网址，或 owner/repo[/path] 简写。");
   }
   if (!ref) {
     return trimmed;
@@ -912,7 +918,7 @@ export function normalizeGithubImportSource(input: string, refOverride?: string)
   const hostname = url.hostname;
   const parts = url.pathname.split("/").filter(Boolean);
   if (parts.length < 2) {
-    throw new Error("Invalid GitHub URL.");
+    throw new Error("无效的 GitHub 网址。");
   }
 
   const owner = parts[0]!;
@@ -1156,7 +1162,7 @@ export async function uploadCompanyImportTransfer(
     manifest,
   );
   if (!created) {
-    throw new Error("Import transfer declaration returned no data.");
+    throw new Error("导入传输声明未返回数据。");
   }
   if (created.alreadyCompleted) {
     // The server keys transfers by content, and this exact zip already
@@ -1193,7 +1199,7 @@ export async function uploadCompanyImportTransfer(
       // import resumes from them instead of starting over.
       throw lastError instanceof Error
         ? lastError
-        : new Error(`Import transfer part ${part.index} failed to upload.`);
+        : new Error(`导入传输分片 ${part.index} 上传失败。`);
     }
     uploadedParts += 1;
     uploadedBytes += part.byteSize;
@@ -1228,7 +1234,7 @@ export function resolveExportOutputPath(root: string, relativePath: string): str
   const filePath = path.resolve(resolvedRoot, relativePath);
   const rootPrefix = resolvedRoot.endsWith(path.sep) ? resolvedRoot : `${resolvedRoot}${path.sep}`;
   if (filePath !== resolvedRoot && !filePath.startsWith(rootPrefix)) {
-    throw new Error(`Refusing to write export file outside output directory: ${relativePath}`);
+    throw new Error(`拒绝将导出文件写到输出目录之外：${relativePath}`);
   }
   return filePath;
 }
@@ -1241,7 +1247,7 @@ export async function confirmOverwriteExportDirectory(
   const stats = await stat(root).catch(() => null);
   if (!stats) return;
   if (!stats.isDirectory()) {
-    throw new Error(`Export output path ${root} exists and is not a directory.`);
+    throw new Error(`导出路径 ${root} 已存在，但不是目录。`);
   }
 
   const entries = await readdir(root);
@@ -1253,16 +1259,16 @@ export async function confirmOverwriteExportDirectory(
   if (opts.force) return;
 
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new Error(`Export output directory ${root} already contains files. Re-run interactively, pass --force, or choose an empty directory.`);
+    throw new Error(`导出目录 ${root} 已包含文件。请改用交互模式、传入 --force，或选择空目录。`);
   }
 
   const confirmed = await p.confirm({
-    message: `Overwrite existing files in ${root}?`,
+    message: `是否覆盖 ${root} 中的现有文件？`,
     initialValue: false,
   });
 
   if (p.isCancel(confirmed) || !confirmed) {
-    throw new Error("Export cancelled.");
+    throw new Error("已取消导出。");
   }
 }
 
@@ -1277,7 +1283,7 @@ export function resolveCompanyForDeletion(
 ): Company {
   const selector = normalizeSelector(selectorRaw);
   if (!selector) {
-    throw new Error("Company selector is required.");
+    throw new Error("必须提供公司选择器。");
   }
 
   const idMatch = companies.find((company) => company.id === selector);
@@ -1285,21 +1291,21 @@ export function resolveCompanyForDeletion(
 
   if (by === "id") {
     if (!idMatch) {
-      throw new Error(`No company found by ID '${selector}'.`);
+      throw new Error(`未找到 ID 为“${selector}”的公司。`);
     }
     return idMatch;
   }
 
   if (by === "prefix") {
     if (!prefixMatch) {
-      throw new Error(`No company found by shortname/prefix '${selector}'.`);
+      throw new Error(`未找到短名称或前缀为“${selector}”的公司。`);
     }
     return prefixMatch;
   }
 
   if (idMatch && prefixMatch && idMatch.id !== prefixMatch.id) {
     throw new Error(
-      `Selector '${selector}' is ambiguous (matches both an ID and a shortname). Re-run with --by id or --by prefix.`,
+      `选择器“${selector}”存在歧义，同时匹配 ID 和短名称。请改用 --by id 或 --by prefix。`,
     );
   }
 
@@ -1307,19 +1313,19 @@ export function resolveCompanyForDeletion(
   if (prefixMatch) return prefixMatch;
 
   throw new Error(
-    `No company found for selector '${selector}'. Use company ID or issue prefix (for example PAP).`,
+    `未找到选择器“${selector}”对应的公司。请使用公司 ID 或任务前缀（例如 PAP）。`,
   );
 }
 
 export function assertDeleteConfirmation(company: Company, opts: CompanyDeleteOptions): void {
   if (!opts.yes) {
-    throw new Error("Deletion requires --yes.");
+    throw new Error("删除操作必须使用 --yes。");
   }
 
   const confirm = opts.confirm?.trim();
   if (!confirm) {
     throw new Error(
-      "Deletion requires --confirm <value> where value matches the company ID or issue prefix.",
+      "删除操作必须使用 --confirm <value>，且该值需匹配公司 ID 或任务前缀。",
     );
   }
 
@@ -1327,29 +1333,29 @@ export function assertDeleteConfirmation(company: Company, opts: CompanyDeleteOp
   const confirmsByPrefix = confirm.toUpperCase() === company.issuePrefix.toUpperCase();
   if (!confirmsById && !confirmsByPrefix) {
     throw new Error(
-      `Confirmation '${confirm}' does not match target company. Expected ID '${company.id}' or prefix '${company.issuePrefix}'.`,
+      `确认值“${confirm}”与目标公司不匹配。应为 ID“${company.id}”或前缀“${company.issuePrefix}”。`,
     );
   }
 }
 
 function assertDeleteFlags(opts: CompanyDeleteOptions): void {
   if (!opts.yes) {
-    throw new Error("Deletion requires --yes.");
+    throw new Error("删除操作必须使用 --yes。");
   }
   if (!opts.confirm?.trim()) {
     throw new Error(
-      "Deletion requires --confirm <value> where value matches the company ID or issue prefix.",
+      "删除操作必须使用 --confirm <value>，且该值需匹配公司 ID 或任务前缀。",
     );
   }
 }
 
 export function registerCompanyCommands(program: Command): void {
-  const company = program.command("company").description("Company operations");
+  const company = program.command("company").description("公司操作");
 
   addCommonClientOptions(
     company
       .command("list")
-      .description("List companies")
+      .description("列出公司")
       .action(async (opts: CompanyCommandOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1365,12 +1371,12 @@ export function registerCompanyCommands(program: Command): void {
           }
 
           const formatted = rows.map((row) => ({
-            id: row.id,
-            name: row.name,
-            status: row.status,
-            budgetMonthlyCents: row.budgetMonthlyCents,
-            spentMonthlyCents: row.spentMonthlyCents,
-            requireBoardApprovalForNewAgents: row.requireBoardApprovalForNewAgents,
+            编号: row.id,
+            名称: row.name,
+            状态: row.status,
+            月度预算分: row.budgetMonthlyCents,
+            月度支出分: row.spentMonthlyCents,
+            新智能体需控制面审批: row.requireBoardApprovalForNewAgents,
           }));
           for (const row of formatted) {
             console.log(formatInlineRecord(row));
@@ -1384,8 +1390,8 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("get")
-      .description("Get one company")
-      .argument("<companyId>", "Company ID")
+      .description("获取一家公司")
+      .argument("<companyId>", "公司 ID")
       .action(async (companyId: string, opts: CompanyCommandOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1400,7 +1406,7 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("current")
-      .description("Get the current scoped company from --company-id, context, env, or agent authentication")
+      .description("从 --company-id、上下文、环境变量或智能体认证获取当前公司")
       .action(async (opts: CompanyCommandOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1417,7 +1423,7 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("stats")
-      .description("Get company stats")
+      .description("获取公司统计数据")
       .action(async (opts: CompanyCommandOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1431,8 +1437,8 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("create")
-      .description("Create a company")
-      .requiredOption("--payload-json <json>", "CreateCompany JSON payload")
+      .description("创建公司")
+      .requiredOption("--payload-json <json>", "CreateCompany JSON 数据")
       .action(async (opts: CompanyJsonOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1446,9 +1452,9 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("update")
-      .description("Update a company")
-      .argument("<companyId>", "Company ID")
-      .requiredOption("--payload-json <json>", "UpdateCompany JSON payload")
+      .description("更新公司")
+      .argument("<companyId>", "公司 ID")
+      .requiredOption("--payload-json <json>", "UpdateCompany JSON 数据")
       .action(async (companyId: string, opts: CompanyJsonOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1462,9 +1468,9 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("branding:update")
-      .description("Update company branding")
-      .argument("<companyId>", "Company ID")
-      .requiredOption("--payload-json <json>", "UpdateCompanyBranding JSON payload")
+      .description("更新公司品牌")
+      .argument("<companyId>", "公司 ID")
+      .requiredOption("--payload-json <json>", "UpdateCompanyBranding JSON 数据")
       .action(async (companyId: string, opts: CompanyJsonOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1478,8 +1484,8 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("archive")
-      .description("Archive a company")
-      .argument("<companyId>", "Company ID")
+      .description("归档公司")
+      .argument("<companyId>", "公司 ID")
       .action(async (companyId: string, opts: CompanyCommandOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1490,25 +1496,25 @@ export function registerCompanyCommands(program: Command): void {
       }),
   );
 
-  addCompanyJsonPost(company, "export:preview", "Preview a portable company export", "exports/preview");
-  addCompanyJsonPost(company, "export:api", "Export a company through the raw API route", "exports");
-  addCompanyJsonPost(company, "import:preview", "Preview a safe company import through the raw API route", "imports/preview");
-  addCompanyJsonPost(company, "import:apply", "Apply a safe company import through the raw API route", "imports/apply");
+  addCompanyJsonPost(company, "export:preview", "预览可移植公司导出", "exports/preview");
+  addCompanyJsonPost(company, "export:api", "通过原始 API 路由导出公司", "exports");
+  addCompanyJsonPost(company, "import:preview", "通过原始 API 路由预览安全的公司导入", "imports/preview");
+  addCompanyJsonPost(company, "import:apply", "通过原始 API 路由应用安全的公司导入", "imports/apply");
 
   addCommonClientOptions(
     company
       .command("feedback:list")
-      .description("List feedback traces for a company")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .option("--target-type <type>", "Filter by target type")
-      .option("--vote <vote>", "Filter by vote value")
-      .option("--status <status>", "Filter by trace status")
-      .option("--project-id <id>", "Filter by project ID")
-      .option("--issue-id <id>", "Filter by issue ID")
-      .option("--from <iso8601>", "Only include traces created at or after this timestamp")
-      .option("--to <iso8601>", "Only include traces created at or before this timestamp")
-      .option("--shared-only", "Only include traces eligible for sharing/export")
-      .option("--include-payload", "Include stored payload snapshots in the response")
+      .description("列出公司的反馈追踪记录")
+      .requiredOption("-C, --company-id <id>", "公司 ID")
+      .option("--target-type <type>", "按目标类型筛选")
+      .option("--vote <vote>", "按投票值筛选")
+      .option("--status <status>", "按追踪状态筛选")
+      .option("--project-id <id>", "按项目 ID 筛选")
+      .option("--issue-id <id>", "按任务卡 ID 筛选")
+      .option("--from <iso8601>", "仅包含此时间戳及之后创建的记录")
+      .option("--to <iso8601>", "仅包含此时间戳及之前创建的记录")
+      .option("--shared-only", "仅包含可共享或导出的记录")
+      .option("--include-payload", "在响应中包含已存储的数据快照")
       .action(async (opts: CompanyFeedbackOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -1540,19 +1546,19 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("feedback:export")
-      .description("Export feedback traces for a company")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .option("--target-type <type>", "Filter by target type")
-      .option("--vote <vote>", "Filter by vote value")
-      .option("--status <status>", "Filter by trace status")
-      .option("--project-id <id>", "Filter by project ID")
-      .option("--issue-id <id>", "Filter by issue ID")
-      .option("--from <iso8601>", "Only include traces created at or after this timestamp")
-      .option("--to <iso8601>", "Only include traces created at or before this timestamp")
-      .option("--shared-only", "Only include traces eligible for sharing/export")
-      .option("--include-payload", "Include stored payload snapshots in the export")
-      .option("--out <path>", "Write export to a file path instead of stdout")
-      .option("--format <format>", "Export format: json or ndjson", "ndjson")
+      .description("导出公司的反馈追踪记录")
+      .requiredOption("-C, --company-id <id>", "公司 ID")
+      .option("--target-type <type>", "按目标类型筛选")
+      .option("--vote <vote>", "按投票值筛选")
+      .option("--status <status>", "按追踪状态筛选")
+      .option("--project-id <id>", "按项目 ID 筛选")
+      .option("--issue-id <id>", "按任务卡 ID 筛选")
+      .option("--from <iso8601>", "仅包含此时间戳及之后创建的记录")
+      .option("--to <iso8601>", "仅包含此时间戳及之前创建的记录")
+      .option("--shared-only", "仅包含可共享或导出的记录")
+      .option("--include-payload", "在导出中包含已存储的数据快照")
+      .option("--out <path>", "写入文件路径，而不是标准输出")
+      .option("--format <format>", "导出格式：json 或 ndjson", "ndjson")
       .action(async (opts: CompanyFeedbackOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -1569,7 +1575,7 @@ export function registerCompanyCommands(program: Command): void {
               );
               return;
             }
-            console.log(`Wrote ${traces.length} feedback trace(s) to ${opts.out}`);
+            console.log(`已将 ${traces.length} 条反馈追踪记录写入 ${opts.out}`);
             return;
           }
           process.stdout.write(`${serialized}${serialized.endsWith("\n") ? "" : "\n"}`);
@@ -1583,18 +1589,18 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("export")
-      .description("Export a company into a portable markdown package")
-      .argument("<companyId>", "Company ID")
-      .requiredOption("--out <path>", "Output directory")
-      .option("--include <values>", "Comma-separated include set: company,agents,projects,issues,tasks,skills", "company,agents")
-      .option("--skills <values>", "Comma-separated skill slugs/keys to export")
-      .option("--projects <values>", "Comma-separated project shortnames/ids to export")
-      .option("--issues <values>", "Comma-separated issue identifiers/ids to export")
-      .option("--project-issues <values>", "Comma-separated project shortnames/ids whose issues should be exported")
-      .option("--expand-referenced-skills", "Vendor skill contents instead of exporting upstream references", false)
+      .description("将公司导出为可移植 Markdown 包")
+      .argument("<companyId>", "公司 ID")
+      .requiredOption("--out <path>", "输出目录")
+      .option("--include <values>", "以逗号分隔的包含项：company、agents、projects、issues、tasks、skills", "company,agents")
+      .option("--skills <values>", "要导出的技能标识或键名，以逗号分隔")
+      .option("--projects <values>", "要导出的项目短名称或 ID，以逗号分隔")
+      .option("--issues <values>", "要导出的任务卡编号或 ID，以逗号分隔")
+      .option("--project-issues <values>", "要导出其任务卡的项目短名称或 ID，以逗号分隔")
+      .option("--expand-referenced-skills", "打包技能内容，而不是导出上游引用", false)
       .option(
         "--force",
-        "Overwrite a non-empty output directory without the interactive confirmation (required for non-interactive/automated runs such as the nightly backup routine)",
+        "无需交互确认即可覆盖非空输出目录（夜间备份等非交互或自动运行必须使用）",
         false,
       )
       .action(async (companyId: string, opts: CompanyExportOptions) => {
@@ -1613,7 +1619,7 @@ export function registerCompanyCommands(program: Command): void {
             },
           );
           if (!exported) {
-            throw new Error("Export request returned no data");
+            throw new Error("导出请求未返回数据。");
           }
           await confirmOverwriteExportDirectory(opts.out!, { force: Boolean(opts.force) });
           await writeExportToFolder(opts.out!, exported);
@@ -1630,7 +1636,7 @@ export function registerCompanyCommands(program: Command): void {
           );
           if (!ctx.json && exported.warnings.length > 0) {
             for (const warning of exported.warnings) {
-              console.log(`warning=${warning}`);
+              console.log(`警告=${warning}`);
             }
           }
         } catch (err) {
@@ -1642,18 +1648,18 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("import")
-      .description("Import a portable markdown company package from local path, URL, or GitHub")
-      .argument("<fromPathOrUrl>", "Source path or URL")
-      .option("--include <values>", "Comma-separated include set: company,agents,projects,issues,tasks,skills")
-      .option("--target <mode>", "Target mode: new | existing")
-      .option("-C, --company-id <id>", "Existing target company ID")
-      .option("--new-company-name <name>", "Name override for --target new")
-      .option("--agents <list>", "Comma-separated agent slugs to import, or all", "all")
-      .option("--collision <mode>", "Collision strategy: rename | skip | replace", "rename")
-      .option("--ref <value>", "Git ref to use for GitHub imports (branch, tag, or commit)")
-      .option("--paperclip-url <url>", "Alias for --api-base on this command")
-      .option("--yes", "Accept default selection and skip the pre-import confirmation prompt", false)
-      .option("--dry-run", "Run preview only without applying", false)
+      .description("从本地路径、网址或 GitHub 导入可移植 Markdown 公司包")
+      .argument("<fromPathOrUrl>", "来源路径或网址")
+      .option("--include <values>", "以逗号分隔的包含项：company、agents、projects、issues、tasks、skills")
+      .option("--target <mode>", "目标模式：new 或 existing")
+      .option("-C, --company-id <id>", "现有目标公司 ID")
+      .option("--new-company-name <name>", "覆盖 --target new 使用的公司名称")
+      .option("--agents <list>", "要导入的智能体标识，以逗号分隔；或使用 all", "all")
+      .option("--collision <mode>", "冲突策略：rename、skip 或 replace", "rename")
+      .option("--ref <value>", "GitHub 导入使用的 Git 引用（分支、标签或提交）")
+      .option("--paperclip-url <url>", "此命令中 --api-base 的别名")
+      .option("--yes", "接受默认选择并跳过导入前确认", false)
+      .option("--dry-run", "仅运行预览，不实际应用", false)
       .action(async (fromPathOrUrl: string, opts: CompanyImportOptions) => {
         try {
           if (!opts.apiBase?.trim() && opts.paperclipUrl?.trim()) {
@@ -1663,20 +1669,20 @@ export function registerCompanyCommands(program: Command): void {
           const interactiveView = isInteractiveTerminal() && !ctx.json;
           const from = fromPathOrUrl.trim();
           if (!from) {
-            throw new Error("Source path or URL is required.");
+            throw new Error("必须提供来源路径或网址。");
           }
 
           const include = resolveImportInclude(opts.include);
           const agents = parseAgents(opts.agents);
           const collision = (opts.collision ?? "rename").toLowerCase() as CompanyCollisionMode;
           if (!["rename", "skip", "replace"].includes(collision)) {
-            throw new Error("Invalid --collision value. Use: rename, skip, replace");
+            throw new Error("无效的 --collision 值。请使用 rename、skip 或 replace。");
           }
 
           const inferredTarget = opts.target ?? (opts.companyId || ctx.companyId ? "existing" : "new");
           const target = inferredTarget.toLowerCase() as CompanyImportTargetMode;
           if (!["new", "existing"].includes(target)) {
-            throw new Error("Invalid --target value. Use: new | existing");
+            throw new Error("无效的 --target 值。请使用 new 或 existing。");
           }
 
           const existingTargetCompanyId = opts.companyId?.trim() || ctx.companyId;
@@ -1692,7 +1698,7 @@ export function registerCompanyCommands(program: Command): void {
                 };
 
           if (targetPayload.mode === "existing_company" && !targetPayload.companyId) {
-            throw new Error("Target existing company requires --company-id (or context default companyId).");
+            throw new Error("以现有公司为目标时必须提供 --company-id，或在上下文中设置默认 companyId。");
           }
 
           let sourcePayload:
@@ -1706,14 +1712,14 @@ export function registerCompanyCommands(program: Command): void {
           if (isHttpUrl(from) || isGithubSource) {
             if (!looksLikeRepoUrl(from) && !isGithubShorthand(from)) {
               throw new Error(
-                "Only GitHub URLs and local paths are supported for import. " +
-                "Generic HTTP URLs are not supported. Use a GitHub or GitHub Enterprise URL (https://github.com/... or https://ghe.example.com/...) or a local directory path.",
+                "导入仅支持 GitHub 网址和本地路径。" +
+                "不支持普通 HTTP 网址。请使用 GitHub、GitHub Enterprise 网址（https://github.com/... 或 https://ghe.example.com/...）或本地目录路径。",
               );
             }
             sourcePayload = { type: "github", url: normalizeGithubImportSource(from, opts.ref) };
           } else {
             if (opts.ref?.trim()) {
-              throw new Error("--ref is only supported for GitHub import sources.");
+              throw new Error("--ref 仅支持 GitHub 导入来源。");
             }
             chunkedZip = await resolveChunkedImportZip(
               from,
@@ -1759,7 +1765,7 @@ export function registerCompanyCommands(program: Command): void {
                 : ({ uploadedParts, totalParts, uploadedBytes, totalBytes }) => {
                     console.log(
                       pc.dim(
-                        `Uploaded part ${uploadedParts}/${totalParts} (${Math.round(uploadedBytes / (1024 * 1024))} of ${Math.round(totalBytes / (1024 * 1024))} MB)`,
+                        `已上传分片 ${uploadedParts}/${totalParts}（${Math.round(uploadedBytes / (1024 * 1024))}/${Math.round(totalBytes / (1024 * 1024))} MB）`,
                       ),
                     );
                   },
@@ -1778,7 +1784,7 @@ export function registerCompanyCommands(program: Command): void {
                   ...transferMeta,
                 });
             if (!initialPreview) {
-              throw new Error("Import preview returned no data.");
+              throw new Error("导入预览未返回数据。");
             }
             selectedFiles = await promptForImportSelection(initialPreview);
           }
@@ -1795,7 +1801,7 @@ export function registerCompanyCommands(program: Command): void {
               })
             : await ctx.api.post<CompanyPortabilityPreviewResult>(previewApiPath, previewPayload);
           if (!preview) {
-            throw new Error("Import preview returned no data.");
+            throw new Error("导入预览未返回数据。");
           }
           const adapterOverrides = buildDefaultImportAdapterOverrides(preview);
           const adapterMessages = buildDefaultImportAdapterMessages(adapterOverrides);
@@ -1805,7 +1811,7 @@ export function registerCompanyCommands(program: Command): void {
               printOutput(preview, { json: true });
             } else {
               printCompanyImportView(
-                "Import Preview",
+                "导入预览",
                 renderCompanyImportPreview(preview, {
                   sourceLabel,
                   targetLabel: formatTargetLabel(targetPayload, preview),
@@ -1819,7 +1825,7 @@ export function registerCompanyCommands(program: Command): void {
 
           if (!ctx.json) {
             printCompanyImportView(
-              "Import Preview",
+              "导入预览",
               renderCompanyImportPreview(preview, {
                 sourceLabel,
                 targetLabel: formatTargetLabel(targetPayload, preview),
@@ -1836,11 +1842,11 @@ export function registerCompanyCommands(program: Command): void {
           });
           if (confirmationMode === "prompt") {
             const confirmed = await p.confirm({
-              message: "Apply this import? (y/N)",
+              message: "是否应用此导入？（y/N）",
               initialValue: false,
             });
             if (p.isCancel(confirmed) || !confirmed) {
-              p.log.warn("Import cancelled.");
+              p.log.warn("已取消导入。");
               return;
             }
           }
@@ -1860,7 +1866,7 @@ export function registerCompanyCommands(program: Command): void {
                 adapterOverrides,
               });
           if (!imported) {
-            throw new Error("Import request returned no data.");
+            throw new Error("导入请求未返回数据。");
           }
           const tc = getTelemetryClient();
           if (tc) {
@@ -1884,7 +1890,7 @@ export function registerCompanyCommands(program: Command): void {
             printOutput(imported, { json: true });
           } else {
             printCompanyImportView(
-              "Import Result",
+              "导入结果",
               renderCompanyImportResult(imported, {
                 targetLabel,
                 companyUrl,
@@ -1894,14 +1900,14 @@ export function registerCompanyCommands(program: Command): void {
             );
             if (interactiveView && companyUrl) {
               const openImportedCompany = await p.confirm({
-                message: "Open the imported company in your browser?",
+                message: "是否在浏览器中打开导入的公司？",
                 initialValue: true,
               });
               if (!p.isCancel(openImportedCompany) && openImportedCompany) {
                 if (await openUrl(companyUrl)) {
-                  p.log.info(`Opened ${companyUrl}`);
+                  p.log.info(`已打开 ${companyUrl}`);
                 } else {
-                  p.log.warn(`Could not open your browser automatically. Open this URL manually:\n${companyUrl}`);
+                  p.log.warn(`无法自动打开浏览器，请手动打开此网址：\n${companyUrl}`);
                 }
               }
             }
@@ -1915,23 +1921,23 @@ export function registerCompanyCommands(program: Command): void {
   addCommonClientOptions(
     company
       .command("delete")
-      .description("Delete a company by ID or shortname/prefix (destructive)")
-      .argument("<selector>", "Company ID or issue prefix (for example PAP)")
+      .description("通过 ID 或短名称/前缀删除公司（破坏性操作）")
+      .argument("<selector>", "公司 ID 或任务前缀（例如 PAP）")
       .option(
         "--by <mode>",
-        "Selector mode: auto | id | prefix",
+        "选择器模式：auto、id 或 prefix",
         "auto",
       )
-      .option("--yes", "Required safety flag to confirm destructive action", false)
+      .option("--yes", "确认破坏性操作所需的安全参数", false)
       .option(
         "--confirm <value>",
-        "Required safety value: target company ID or shortname/prefix",
+        "必填安全值：目标公司 ID 或短名称/前缀",
       )
       .action(async (selector: string, opts: CompanyDeleteOptions) => {
         try {
           const by = (opts.by ?? "auto").trim().toLowerCase() as CompanyDeleteSelectorMode;
           if (!["auto", "id", "prefix"].includes(by)) {
-            throw new Error(`Invalid --by mode '${opts.by}'. Expected one of: auto, id, prefix.`);
+            throw new Error(`无效的 --by 模式“${opts.by}”。请使用 auto、id 或 prefix。`);
           }
 
           const ctx = resolveCommandContext(opts);
@@ -1945,7 +1951,7 @@ export function registerCompanyCommands(program: Command): void {
             if (byId) {
               target = byId;
             } else if (by === "id") {
-              throw new Error(`No company found by ID '${normalizedSelector}'.`);
+              throw new Error(`未找到 ID 为“${normalizedSelector}”的公司。`);
             }
           }
 
@@ -1967,7 +1973,7 @@ export function registerCompanyCommands(program: Command): void {
             } catch (error) {
               if (error instanceof ApiRequestError && error.status === 403 && error.message.includes("Board access required")) {
                 throw new Error(
-                  "Board access is required to resolve companies across the instance. Use a company ID/prefix for your current company, or run with board authentication.",
+                  "跨实例查找公司需要控制面访问权限。请使用当前公司的 ID/前缀，或通过控制面认证运行。",
                 );
               }
               throw error;
@@ -1975,7 +1981,7 @@ export function registerCompanyCommands(program: Command): void {
           }
 
           if (!target) {
-            throw new Error(`No company found for selector '${normalizedSelector}'.`);
+            throw new Error(`未找到选择器“${normalizedSelector}”对应的公司。`);
           }
 
           assertDeleteConfirmation(target, opts);
@@ -2023,7 +2029,7 @@ async function createCompanyForContext(ctx: {
   } catch (error) {
     if (isBoardAccessRequiredError(error) || isInstanceAdminRequiredError(error)) {
       throw new Error(
-        "Creating companies requires board/instance-admin authentication. Agent API keys are scoped to one company; use `paperclipai company list --json` or `paperclipai company current --json` to select the scoped company, or rerun create with a board token/login.",
+        "创建公司需要控制面或实例管理员认证。智能体 API 密钥仅限一家公司；请使用 `paperclipai company list --json` 或 `paperclipai company current --json` 选择对应公司，或使用控制面令牌/登录重新运行创建命令。",
       );
     }
     throw error;
@@ -2040,7 +2046,7 @@ async function resolveCurrentCompanyId(ctx: { companyId?: string; api: { get<T>(
   } catch (error) {
     if (error instanceof ApiRequestError && (error.status === 401 || error.status === 403)) {
       throw new Error(
-        "Current company is not available. Pass --company-id, set PAPERCLIP_COMPANY_ID, set a context profile companyId, or authenticate with an agent API key.",
+        "无法获取当前公司。请传入 --company-id、设置 PAPERCLIP_COMPANY_ID、在上下文配置中设置 companyId，或使用智能体 API 密钥认证。",
       );
     }
     throw error;
@@ -2049,7 +2055,7 @@ async function resolveCurrentCompanyId(ctx: { companyId?: string; api: { get<T>(
   const fromAgent = agent?.companyId?.trim();
   if (fromAgent) return fromAgent;
   throw new Error(
-    "Current company is not available. Pass --company-id, set PAPERCLIP_COMPANY_ID, set a context profile companyId, or authenticate with an agent API key.",
+    "无法获取当前公司。请传入 --company-id、设置 PAPERCLIP_COMPANY_ID、在上下文配置中设置 companyId，或使用智能体 API 密钥认证。",
   );
 }
 
@@ -2066,8 +2072,8 @@ function addCompanyJsonPost(parent: Command, name: string, description: string, 
     parent
       .command(name)
       .description(description)
-      .argument("<companyId>", "Company ID")
-      .requiredOption("--payload-json <json>", "JSON payload")
+      .argument("<companyId>", "公司 ID")
+      .requiredOption("--payload-json <json>", "JSON 数据")
       .action(async (companyId: string, opts: CompanyJsonOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
