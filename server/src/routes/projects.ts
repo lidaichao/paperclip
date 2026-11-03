@@ -55,7 +55,7 @@ export function projectRoutes(db: Db) {
   async function repositoryViewer(req: Request) {
     if (req.actor.type === "board") return { userId: req.actor.userId ?? null, localTrusted: req.actor.source === "local_implicit" };
     const context = await projectToolContext(db, req.actor);
-    if (!context.userId) throw forbidden("Repository access requires a responsible user");
+    if (!context.userId) throw forbidden("访问代码仓库需要明确的责任用户");
     return context;
   }
 
@@ -137,7 +137,7 @@ export function projectRoutes(db: Db) {
     if (!companyId) return rawId;
     const resolved = await svc.resolveByReference(companyId, rawId);
     if (resolved.ambiguous) {
-      throw conflict("Project shortname is ambiguous in this company. Use the project ID.");
+      throw conflict("此公司内存在重名的项目短名称，请使用项目 ID。");
     }
     return resolved.project?.id ?? rawId;
   }
@@ -149,7 +149,7 @@ export function projectRoutes(db: Db) {
       resource: { type: "project", companyId: project.companyId, projectId: project.id },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Project is outside this actor's authorization boundary" });
+    res.status(403).json({ error: "该项目超出当前操作者的授权范围" });
     return false;
   }
 
@@ -160,7 +160,7 @@ export function projectRoutes(db: Db) {
       resource: { type: "company", companyId },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Runtime service control is outside this actor's authorization boundary" });
+    res.status(403).json({ error: "运行时服务控制超出当前操作者的授权范围" });
     return false;
   }
 
@@ -193,7 +193,7 @@ export function projectRoutes(db: Db) {
 
   router.put("/projects/:id/repositories", validate(z.object({ repositoryIds: z.array(z.string().regex(/^\d+$/)) })), async (req, res) => {
     assertBoard(req);
-    const project = await getAccessibleResource(req, res, svc.getById(req.params.id as string), "Project not found");
+    const project = await getAccessibleResource(req, res, svc.getById(req.params.id as string), "未找到项目");
     if (!project) return;
     const repositories = await selectedRepositories(req, project.companyId, req.body.repositoryIds, project.workspaces);
     const updated = await svc.replaceRepositories(project.id, repositories);
@@ -216,7 +216,7 @@ export function projectRoutes(db: Db) {
 
   router.get("/projects/:id", async (req, res) => {
     const id = req.params.id as string;
-    const project = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+    const project = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
     if (!project) return;
     if (!(await assertProjectReadAllowed(req, res, project))) return;
     res.json(project);
@@ -224,7 +224,7 @@ export function projectRoutes(db: Db) {
 
   router.get("/projects/:id/external-object-summary", async (req, res) => {
     const id = req.params.id as string;
-    const project = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+    const project = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
     if (!project) return;
     const summary = await externalObjectsSvc.getProjectSummary(project.id);
     res.json(summary);
@@ -260,7 +260,7 @@ export function projectRoutes(db: Db) {
         { strictMode: strictSecretsMode, fieldPath: "env" },
       );
     }
-    if (workspace && (repositoryIds || repositoryUrls)) throw unprocessable("Use either workspace or repositoryIds/repositoryUrls when creating a project");
+    if (workspace && (repositoryIds || repositoryUrls)) throw unprocessable("创建项目时，请在工作区与 repositoryIds/repositoryUrls 之间选择一种方式");
     const urlRepositories = (repositoryUrls ?? []).map(normalizeProjectRepositoryUrl);
     const repositories = repositoryIds ? await selectedRepositories(req, companyId, repositoryIds) : null;
     const actor = getActorInfo(req);
@@ -274,9 +274,9 @@ export function projectRoutes(db: Db) {
           sql`${activityLog.details}->>'idempotencyKey' = ${receiptKey}`,
         ));
         if (prior) {
-          if (prior.details?.fingerprint !== fingerprint) throw conflict("Project idempotency key was used with different inputs");
+          if (prior.details?.fingerprint !== fingerprint) throw conflict("项目幂等键已被用于不同的输入");
           const project = await projectService(tx as unknown as Db).getById(prior.entityId);
-          if (!project) throw conflict("Previously created project is no longer available");
+          if (!project) throw conflict("先前创建的项目已不可用");
           return { project, publication: null, duplicate: true };
         }
       }
@@ -292,7 +292,7 @@ export function projectRoutes(db: Db) {
         registeredUrls.push(repo);
       }
       const createdWorkspace = workspace ? await service.createWorkspace(project.id, workspace) : null;
-      if (workspace && !createdWorkspace) throw unprocessable("Invalid project workspace payload");
+      if (workspace && !createdWorkspace) throw unprocessable("项目工作区数据无效");
       const hydrated = await service.getById(project.id);
       const activity = await persistActivity(tx as unknown as Db, {
         companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
@@ -323,7 +323,7 @@ export function projectRoutes(db: Db) {
 
   router.patch("/projects/:id", validate(updateProjectSchema), async (req, res) => {
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
     if (!existing) return;
     const body = { ...req.body };
     assertNoAgentHostWorkspaceCommandMutation(
@@ -345,7 +345,7 @@ export function projectRoutes(db: Db) {
     }
     const project = await svc.update(id, body);
     if (!project) {
-      res.status(404).json({ error: "Project not found" });
+      res.status(404).json({ error: "未找到项目" });
       return;
     }
     if (body.env !== undefined) {
@@ -379,7 +379,7 @@ export function projectRoutes(db: Db) {
 
   router.get("/projects/:id/workspaces", async (req, res) => {
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
     if (!existing) return;
     const workspaces = await svc.listWorkspaces(id);
     res.json(workspaces);
@@ -387,7 +387,7 @@ export function projectRoutes(db: Db) {
 
   router.post("/projects/:id/workspaces", validate(createProjectWorkspaceSchema), async (req, res) => {
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
     if (!existing) return;
     assertNoAgentHostWorkspaceCommandMutation(
       req,
@@ -396,7 +396,7 @@ export function projectRoutes(db: Db) {
     await assertNoManagedSandboxWorkspacePath(req.body);
     const workspace = await svc.createWorkspace(id, req.body);
     if (!workspace) {
-      res.status(422).json({ error: "Invalid project workspace payload" });
+      res.status(422).json({ error: "项目工作区数据无效" });
       return;
     }
 
@@ -426,7 +426,7 @@ export function projectRoutes(db: Db) {
     async (req, res) => {
       const id = req.params.id as string;
       const workspaceId = req.params.workspaceId as string;
-      const existing = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+      const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
       if (!existing) return;
       assertNoAgentHostWorkspaceCommandMutation(
         req,
@@ -435,12 +435,12 @@ export function projectRoutes(db: Db) {
       await assertNoManagedSandboxWorkspacePath(req.body);
       const workspaceExists = (await svc.listWorkspaces(id)).some((workspace) => workspace.id === workspaceId);
       if (!workspaceExists) {
-        res.status(404).json({ error: "Project workspace not found" });
+        res.status(404).json({ error: "未找到项目工作区" });
         return;
       }
       const workspace = await svc.updateWorkspace(id, workspaceId, req.body);
       if (!workspace) {
-        res.status(422).json({ error: "Invalid project workspace payload" });
+        res.status(422).json({ error: "项目工作区数据无效" });
         return;
       }
 
@@ -468,16 +468,16 @@ export function projectRoutes(db: Db) {
     const workspaceId = req.params.workspaceId as string;
     const action = String(req.params.action ?? "").trim().toLowerCase();
     if (action !== "start" && action !== "stop" && action !== "restart" && action !== "run") {
-      res.status(404).json({ error: "Workspace command action not found" });
+      res.status(404).json({ error: "未找到工作区命令操作" });
       return;
     }
 
-    const project = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+    const project = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
     if (!project) return;
 
     const workspace = project.workspaces.find((entry) => entry.id === workspaceId) ?? null;
     if (!workspace) {
-      res.status(404).json({ error: "Project workspace not found" });
+      res.status(404).json({ error: "未找到项目工作区" });
       return;
     }
     if (!(await assertRuntimeManageAllowed(req, res, project.companyId))) return;
@@ -488,7 +488,7 @@ export function projectRoutes(db: Db) {
       && isSharedWorkspace
       && SHARED_WORKSPACE_STOP_AND_RESTART_ACTIONS.has(action)
     ) {
-      throw forbidden("Missing permission to manage workspace runtime services");
+      throw forbidden("缺少管理工作区运行时服务的权限");
     }
 
     await assertCanManageProjectWorkspaceRuntimeServices(db, req, {
@@ -498,7 +498,7 @@ export function projectRoutes(db: Db) {
 
     const workspaceCwd = workspace.cwd;
     if (!workspaceCwd) {
-      res.status(422).json({ error: "Project workspace needs a local path before Paperclip can run workspace commands" });
+      res.status(422).json({ error: "项目工作区需要先设置本地路径，Alice 才能运行工作区命令" });
       return;
     }
 
@@ -509,11 +509,11 @@ export function projectRoutes(db: Db) {
       ? findWorkspaceCommandDefinition(runtimeConfig, target.workspaceCommandId ?? null)
       : null;
     if (target.workspaceCommandId && !workspaceCommand) {
-      res.status(404).json({ error: "Workspace command not found for this project workspace" });
+      res.status(404).json({ error: "此项目工作区中未找到对应命令" });
       return;
     }
     if (target.runtimeServiceId && !(workspace.runtimeServices ?? []).some((service) => service.id === target.runtimeServiceId)) {
-      res.status(404).json({ error: "Runtime service not found for this project workspace" });
+      res.status(404).json({ error: "此项目工作区中未找到对应的运行时服务" });
       return;
     }
     const matchedRuntimeService =
@@ -530,7 +530,7 @@ export function projectRoutes(db: Db) {
       && selectedServiceIndex !== null
       && (selectedServiceIndex < 0 || selectedServiceIndex >= configuredServices.length)
     ) {
-      res.status(422).json({ error: "Selected runtime service is not defined in this project workspace runtime config" });
+      res.status(422).json({ error: "所选运行时服务未在此项目工作区的运行时配置中定义" });
       return;
     }
     if (workspaceCommand?.kind === "job" && action !== "run") {
@@ -542,11 +542,11 @@ export function projectRoutes(db: Db) {
       return;
     }
     if (action === "run" && !workspaceCommand) {
-      res.status(422).json({ error: "Select a workspace job to run" });
+      res.status(422).json({ error: "请选择要运行的工作区任务" });
       return;
     }
     if ((action === "start" || action === "restart") && !runtimeConfig) {
-      res.status(422).json({ error: "Project workspace has no workspace command configuration" });
+      res.status(422).json({ error: "项目工作区尚未配置工作区命令" });
       return;
     }
 
@@ -746,11 +746,11 @@ export function projectRoutes(db: Db) {
   router.delete("/projects/:id/workspaces/:workspaceId", async (req, res) => {
     const id = req.params.id as string;
     const workspaceId = req.params.workspaceId as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
     if (!existing) return;
     const workspace = await svc.removeWorkspace(id, workspaceId);
     if (!workspace) {
-      res.status(404).json({ error: "Project workspace not found" });
+      res.status(404).json({ error: "未找到项目工作区" });
       return;
     }
 
@@ -774,11 +774,11 @@ export function projectRoutes(db: Db) {
 
   router.delete("/projects/:id", async (req, res) => {
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Project not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到项目");
     if (!existing) return;
     const project = await svc.remove(id);
     if (!project) {
-      res.status(404).json({ error: "Project not found" });
+      res.status(404).json({ error: "未找到项目" });
       return;
     }
 

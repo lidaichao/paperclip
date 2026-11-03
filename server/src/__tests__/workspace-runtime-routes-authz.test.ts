@@ -386,7 +386,7 @@ describe.sequential("workspace runtime service route authorization", () => {
         .post(`/api/projects/${projectId}/workspaces/${workspaceId}/runtime-services/start`)
         .send({});
       expect(projectRes.status, JSON.stringify(projectRes.body)).toBe(403);
-      expect(projectRes.body.error).toContain("authorization boundary");
+      expect(projectRes.body.error).toContain("授权范围");
 
       const executionRes = await request(await createExecutionWorkspaceApp(actor))
         .post(`/api/execution-workspaces/${executionWorkspaceId}/runtime-services/start`)
@@ -445,7 +445,7 @@ describe.sequential("workspace runtime service route authorization", () => {
 
     for (const res of responses) {
       expect(res.status).toBe(403);
-      expect(res.body.error).toContain("Missing permission");
+      expect(res.body.error).toContain("缺少管理工作区运行时服务的权限");
       expect(mockProjectService.getById).toHaveBeenCalledWith(projectId);
       expect(mockAssertCanManageProjectWorkspaceRuntimeServices).not.toHaveBeenCalled();
     }
@@ -555,7 +555,7 @@ describe.sequential("workspace runtime service route authorization", () => {
       .send({});
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toContain("Project not found");
+    expect(res.body.error).toContain("未找到项目");
     expect(mockProjectService.getById).toHaveBeenCalledWith(projectId);
   });
 
