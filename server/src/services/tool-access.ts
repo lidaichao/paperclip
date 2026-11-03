@@ -15277,7 +15277,7 @@ export function toolAccessService(
           ),
         )
         .limit(1);
-      if (!githubGrant) throw new Error("GitHub grant was not persisted");
+      if (!githubGrant) throw new Error("GitHub 授权未能保存");
       await Promise.all(
         githubMetadata.installationIds.map((installationId) =>
           cloudConnector.setWebhookBinding({
@@ -15347,7 +15347,7 @@ export function toolAccessService(
   }): Promise<ConnectToolAppResult> {
     const stateRow = await consumeOAuthState(input.state, input.actor);
     if (stateRow.codeVerifier !== "vercel-connect") {
-      throw badRequest("OAuth state does not belong to a Vercel Connect flow");
+      throw badRequest("OAuth 状态不属于 Vercel Connect 流程");
     }
     if (input.error) {
       await rejectPendingOAuthInteraction(stateRow, input.actor);
@@ -15603,7 +15603,7 @@ export function toolAccessService(
     // Neither a code nor an error is not a usable answer either. It still spends
     // the request: the recovery is a fresh authorization, not a state left live
     // waiting for a better callback.
-    if (!input.code) throw badRequest("OAuth callback is missing a code");
+    if (!input.code) throw badRequest("OAuth 回调缺少授权码");
 
     let connection = await getConnectionRow(
       stateRow.connectionId,
@@ -15846,7 +15846,7 @@ export function toolAccessService(
           .where(eq(toolConnections.id, connection.id))
           .returning();
         if (!updatedConnection)
-          throw new Error("OAuth connection was not found");
+          throw new Error("未找到 OAuth 连接");
         connection = updatedConnection;
         await tx
           .update(toolApplications)
@@ -15911,7 +15911,7 @@ export function toolAccessService(
         .from(toolApplications)
         .where(eq(toolApplications.id, connection.applicationId));
       if (!application)
-        throw new Error("OAuth connection application was not found");
+        throw new Error("未找到 OAuth 连接应用");
       const suggestedDefaults = galleryEntry
         ? recommendedDefaultsForApp(
             galleryEntry,
@@ -16180,12 +16180,12 @@ export function toolAccessService(
       enabled: connection.enabled,
     };
     if (connection.authKind !== "oauth")
-      throw badRequest("This connection does not use browser sign-in");
+      throw badRequest("此连接未使用浏览器登录");
     if (connection.status === "archived")
-      throw conflict("Archived app connections cannot be finished");
+      throw conflict("已归档的应用连接无法完成配置");
     const actorUserId = actor?.actorType === "user" ? actor.actorId : null;
     if (!actorUserId)
-      throw badRequest("Finishing browser sign-in requires a signed-in user");
+      throw badRequest("完成浏览器登录需要用户先登录 Alice");
 
     const [personalGrant] = await db
       .select()
@@ -16244,7 +16244,7 @@ export function toolAccessService(
         connection.credentialPolicy === "shared" &&
         connection.credentialSecretRefs.length > 0
       ) {
-        throw conflict("This connection already uses a company identity");
+        throw conflict("此连接已使用公司身份");
       }
       [connection] = await db
         .update(toolConnections)
@@ -16346,7 +16346,7 @@ export function toolAccessService(
             },
           );
           if (!resolved)
-            throw unprocessable("The connected identity could not be read");
+            throw unprocessable("无法读取已连接的身份");
           const promoted = await createOrRotateOAuthSecret({
             companyId,
             connection,
@@ -16558,7 +16558,7 @@ export function toolAccessService(
   ): Promise<ToolAppMetadataPreflightResult> {
     const app = getConnectableAppDefinition(galleryKey);
     if (!app || app.availability?.available === false)
-      throw notFound("App not found");
+      throw notFound("未找到应用");
     const method = connectionMethodFor(app, methodKey);
     await assertMcpAggregatorSetupEnabled(app.slug, method.key);
     if (method.transport !== "mcp_remote" || !method.defaults?.serverUrl) {
@@ -16666,18 +16666,18 @@ export function toolAccessService(
     /** Identity-only verification: no bot installation/repository access required. */
     verifyPersonalGitHubIdentity: async (companyId: string, connectionId: string, userId: string) => {
       const [connection] = await db.select().from(toolConnections).where(and(eq(toolConnections.companyId, companyId), eq(toolConnections.id, connectionId), eq(toolConnections.enabled, true)));
-      if (!connection || (connection.config.sourceTemplateKey !== "github" && connection.transportConfig?.sourceTemplateKey !== "github")) throw notFound("GitHub connection not found");
+      if (!connection || (connection.config.sourceTemplateKey !== "github" && connection.transportConfig?.sourceTemplateKey !== "github")) throw notFound("未找到 GitHub 连接");
       const [ownGrant] = await db.select().from(connectionGrants).where(and(eq(connectionGrants.companyId, companyId), eq(connectionGrants.connectionId, connectionId), eq(connectionGrants.kind, "user"), eq(connectionGrants.subjectUserId, userId), eq(connectionGrants.status, "active")));
-      if (!ownGrant) throw forbidden("Connect your own GitHub account first. Shared and agent connections cannot prove your identity.");
+      if (!ownGrant) throw forbidden("请先连接你自己的 GitHub 账号。共享连接和智能体连接无法证明你的身份。");
       const actor = { actorType: "user" as const, actorId: userId };
       const grant = await refreshOAuthGrantCredentials({ companyId, connectionId, grantId: ownGrant.id, actor });
       const accessRef = grant.credentialSecretRefs.find(ref => ref.configPath === "oauth.access_token");
-      if (!accessRef) throw unprocessable("Reconnect your personal GitHub connection");
+      if (!accessRef) throw unprocessable("请重新连接你的个人 GitHub 连接");
       const { value } = await resolveOAuthGrantSecret(connection, grant, accessRef, actor, undefined);
       const identity = await githubBotRequest<{ id?: number; login?: string; avatar_url?: string }>(fetch, value, "/user");
-      if (!Number.isSafeInteger(identity.id) || !identity.id || !identity.login || !/^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}$/.test(identity.login)) throw unprocessable("GitHub returned an invalid account identity");
+      if (!Number.isSafeInteger(identity.id) || !identity.id || !identity.login || !/^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}$/.test(identity.login)) throw unprocessable("GitHub 返回的账号身份无效");
       const [current] = await db.select({ id: connectionGrants.id }).from(connectionGrants).where(and(eq(connectionGrants.id, grant.id), eq(connectionGrants.companyId, companyId), eq(connectionGrants.subjectUserId, userId), eq(connectionGrants.status, "active")));
-      if (!current) throw forbidden("Your GitHub connection was revoked. Connect it again.");
+      if (!current) throw forbidden("你的 GitHub 连接已被撤销，请重新连接。");
       return { githubUserId: String(identity.id), login: identity.login, avatarUrl: identity.avatar_url ?? null, connectionId, grantId: grant.id };
     },
     preflightGalleryAppMetadata,
@@ -16709,7 +16709,7 @@ export function toolAccessService(
       }
       const existing = await getAdminStdioTemplate(companyId, input.templateId);
       if (existing)
-        throw conflict("A stdio command template already uses this templateId");
+        throw conflict("已有标准输入输出命令模板使用此 templateId");
       const tools = input.tools
         .map((tool) => normalizeToolDescriptor(tool))
         .filter((tool): tool is McpToolDescriptor => Boolean(tool));
@@ -16739,9 +16739,9 @@ export function toolAccessService(
       templateId: string,
     ): Promise<ToolStdioCommandTemplate> => {
       if (builtInStdioTemplate(templateId))
-        throw unprocessable("Built-in stdio templates cannot be disabled");
+        throw unprocessable("无法停用内置标准输入输出模板");
       const existing = await getAdminStdioTemplate(companyId, templateId);
-      if (!existing) throw notFound("Stdio command template not found");
+      if (!existing) throw notFound("未找到标准输入输出命令模板");
       if (existing.status === "disabled")
         return toStdioCommandTemplate(existing);
       const at = now();
@@ -16928,7 +16928,7 @@ export function toolAccessService(
       const definition = findExample(exampleId);
       const rows = await exampleRows(companyId, definition);
       if (!rows.connection || !rows.profile || !rows.profileBinding) {
-        throw conflict("Install this tool example before running smoke checks");
+        throw conflict("请先安装此工具示例，再运行冒烟检查");
       }
       const catalog =
         rows.catalog.length > 0
