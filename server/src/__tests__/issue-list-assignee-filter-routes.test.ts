@@ -780,7 +780,7 @@ describeEmbeddedPostgres("issue list routes assigneeAgentId filter", () => {
 
     expect(res.status).toBe(422);
     expect(res.body).toMatchObject({
-      error: "assigneeAgentId must be a UUID or 'null'",
+      error: "assigneeAgentId 必须是 UUID 或 null",
     });
   });
 

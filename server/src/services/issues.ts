@@ -301,7 +301,7 @@ function wakeDiagnosticActivityTargetsIssue(issueId: string) {
 function assertTransition(from: string, to: string) {
   if (from === to) return;
   if (!ALL_ISSUE_STATUSES.includes(to)) {
-    throw conflict(`Unknown issue status: ${to}`);
+    throw conflict(`未知任务状态：${to}`);
   }
 }
 
@@ -1914,7 +1914,7 @@ async function assertExecutionTaskParent(db: Db, companyId: string, parentId?: s
   if (!parentId) return;
   const [parent] = await db.select({ conversationAgentId: issues.conversationAgentId })
     .from(issues).where(and(eq(issues.id, parentId), eq(issues.companyId, companyId)));
-  if (parent?.conversationAgentId) throw unprocessable("Conversations cannot have new subtasks; create a task in a project instead");
+  if (parent?.conversationAgentId) throw unprocessable("会话不能新建子任务；请改为在项目中创建任务");
 }
 
 type DbTransaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -2782,7 +2782,7 @@ async function getWorkspaceInheritanceIssue(
     .where(and(eq(issues.id, issueId), eq(issues.companyId, companyId)))
     .then((rows) => rows[0] ?? null);
   if (!issue) {
-    throw notFound("Workspace inheritance issue not found");
+    throw notFound("未找到工作区继承任务");
   }
   return issue;
 }
@@ -6196,7 +6196,7 @@ function assertValidAssigneeAgentFilter(
     typeof assigneeAgentFilter === "string" &&
     !isUuidLike(assigneeAgentFilter)
   ) {
-    throw unprocessable("assigneeAgentId must be a UUID or 'null'");
+    throw unprocessable("assigneeAgentId 必须是 UUID 或 null");
   }
 }
 
@@ -6717,14 +6717,14 @@ export function issueService(db: Db) {
     authorType: IssueCommentAuthorType,
   ) {
     if (actor.agentId && authorType !== "agent") {
-      throw unprocessable("Comment authorType must match authenticated actor");
+      throw unprocessable("评论 authorType 必须与已认证的操作者一致");
     }
     if (actor.userId && authorType !== "user") {
-      throw unprocessable("Comment authorType must match authenticated actor");
+      throw unprocessable("评论 authorType 必须与已认证的操作者一致");
     }
     if (!actor.agentId && !actor.userId && authorType !== "system") {
       throw unprocessable(
-        "System comments cannot use user or agent authorType without an author id",
+        "系统评论在没有作者 ID 时不能使用用户或智能体 authorType",
       );
     }
   }
@@ -7126,7 +7126,7 @@ export function issueService(db: Db) {
       )
       .then((rows) => rows[0] ?? null);
     if (!membership) {
-      throw notFound("Assignee user not found");
+      throw notFound("未找到被分配的用户");
     }
   }
 
@@ -7145,12 +7145,12 @@ export function issueService(db: Db) {
       .from(projectWorkspaces)
       .where(eq(projectWorkspaces.id, projectWorkspaceId))
       .then((rows) => rows[0] ?? null);
-    if (!workspace) throw notFound("Project workspace not found");
+    if (!workspace) throw notFound("未找到项目工作区");
     if (workspace.companyId !== companyId)
-      throw unprocessable("Project workspace must belong to same company");
+      throw unprocessable("项目工作区必须属于同一公司");
     if (projectId && workspace.projectId !== projectId) {
       throw unprocessable(
-        "Project workspace must belong to the selected project",
+        "项目工作区必须属于所选项目",
       );
     }
     return workspace;
@@ -7171,12 +7171,12 @@ export function issueService(db: Db) {
       .from(executionWorkspaces)
       .where(eq(executionWorkspaces.id, executionWorkspaceId))
       .then((rows) => rows[0] ?? null);
-    if (!workspace) throw notFound("Execution workspace not found");
+    if (!workspace) throw notFound("未找到执行工作区");
     if (workspace.companyId !== companyId)
-      throw unprocessable("Execution workspace must belong to same company");
+      throw unprocessable("执行工作区必须属于同一公司");
     if (projectId && workspace.projectId !== projectId) {
       throw unprocessable(
-        "Execution workspace must belong to the selected project",
+        "执行工作区必须属于所选项目",
       );
     }
     return workspace;
@@ -7195,7 +7195,7 @@ export function issueService(db: Db) {
         and(eq(labels.companyId, companyId), inArray(labels.id, labelIds)),
       );
     if (existing.length !== new Set(labelIds).size) {
-      throw unprocessable("One or more labels are invalid for this company");
+      throw unprocessable("一个或多个标签对此公司无效");
     }
   }
 
@@ -7375,7 +7375,7 @@ export function issueService(db: Db) {
       while (queue.length > 0) {
         const current = queue.shift()!;
         if (current === blockerIssueId) {
-          throw unprocessable("Blocking relations cannot contain cycles");
+          throw unprocessable("阻塞关系不能形成循环");
         }
         if (visited.has(current)) continue;
         visited.add(current);
@@ -7393,7 +7393,7 @@ export function issueService(db: Db) {
   ) {
     const deduped = [...new Set(blockedByIssueIds)];
     if (deduped.some((candidate) => candidate === issueId)) {
-      throw unprocessable("Issue cannot be blocked by itself");
+      throw unprocessable("任务不能阻塞自身");
     }
 
     if (deduped.length > 0) {
@@ -7412,7 +7412,7 @@ export function issueService(db: Db) {
         );
       if (relatedIssues.length !== deduped.length) {
         throw unprocessable(
-          "Blocked-by issues must belong to the same company",
+          "阻塞此任务的任务必须属于同一公司",
         );
       }
       await assertNoBlockingCycles(companyId, issueId, deduped, dbOrTx);
@@ -7848,13 +7848,13 @@ export function issueService(db: Db) {
 
     list: async (companyId: string, filters?: IssueFilters) => {
       if (filters?.sortField === "id" && filters.attention) {
-        throw unprocessable("ID ordering is not supported for blocked attention lists");
+        throw unprocessable("阻塞注意事项列表不支持按 ID 排序");
       }
       if (filters?.afterId !== undefined && (
         !isUuidLike(filters.afterId) || filters.sortField !== "id" ||
         filters.sortDir !== "asc" || (filters.offset ?? 0) !== 0
       )) {
-        throw unprocessable("afterId requires a UUID, ascending ID order and no offset");
+        throw unprocessable("afterId 要求使用 UUID、按 ID 升序排列且不能设置 offset");
       }
       if (filters?.attention === "blocked") {
         return listBlockedInboxIssues(db, companyId, {

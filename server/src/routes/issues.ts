@@ -8052,7 +8052,7 @@ export function issueRoutes(
       if (typeof assigneeAgentFilterRaw !== "string") {
         res
           .status(422)
-          .json({ error: "assigneeAgentId must be a UUID or 'null'" });
+          .json({ error: "assigneeAgentId 必须是 UUID 或 null" });
         return;
       }
       const normalizedAssigneeAgentFilter = assigneeAgentFilterRaw.trim();
@@ -8065,7 +8065,7 @@ export function issueRoutes(
       } else {
         res
           .status(422)
-          .json({ error: "assigneeAgentId must be a UUID or 'null'" });
+          .json({ error: "assigneeAgentId 必须是 UUID 或 null" });
         return;
       }
     }

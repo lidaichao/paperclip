@@ -645,7 +645,7 @@ describeEmbeddedPostgres("pipeline routes", () => {
       .from(pipelineAutomationExecutions)
       .where(eq(pipelineAutomationExecutions.id, executionId));
     expect(execution!.executionIssueId).toBeNull();
-    expect(execution!.error).toContain("Project workspace must belong to the selected project");
+    expect(execution!.error).toContain("项目工作区必须属于所选项目");
   });
 
   it("keeps legacy stage automation with only assignee and instructions compatible", async () => {
