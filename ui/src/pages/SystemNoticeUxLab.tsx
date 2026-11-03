@@ -233,7 +233,7 @@ export function SystemNoticeUxLab() {
           <SystemNotice
             tone="danger"
             label={l10n("local.system_alert_2b1c663e")}
-            source={{ label: "Paperclip", href: "/PAP/agents" }}
+            source={{ label: "Alice", href: "/PAP/agents" }}
             timestamp="2026-05-04T16:48:00.000Z"
             body={l10n("local.paperclip_could_not_resolve_this_issue_s_miss_c1bc4a74")}
             metadata={[

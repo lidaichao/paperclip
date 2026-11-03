@@ -452,7 +452,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
           <div className="mx-auto w-full max-w-md">
             <div className="mb-8 flex items-center gap-2">
               <FlaskConical className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Paperclip</span>
+              <span className="text-sm font-medium">Alice</span>
             </div>
             <h3 className="text-xl font-semibold">
               {mode === "sign_in" ? l10n("local.sign_in_to_paperclip_315a9e5c") : l10n("local.create_your_paperclip_account_f6c4b1d0")}
