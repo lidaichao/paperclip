@@ -28,7 +28,7 @@ export function MembershipAction({
   const label = pending
     ? pendingState === "left" ? l10n("local.leaving_9b6b4fb6") : l10n("local.joining_7c56c61f")
     : isLeft ? l10n("local.join_fd30fe68") : l10n("local.leave_fc6e4a40");
-  const ariaLabel = `${isLeft ? "Join" : "Leave"} ${resourceName}`;
+  const ariaLabel = `${isLeft ? l10n("local.join_fd30fe68") : l10n("local.leave_fc6e4a40")} ${resourceName}`;
   const Icon = pending ? Loader2 : isLeft ? LogIn : LogOut;
 
   function handleClick(event: MouseEvent<HTMLButtonElement>) {

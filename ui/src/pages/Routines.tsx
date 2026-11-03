@@ -1310,14 +1310,16 @@ export function Routines() {
             <div className="py-12">
               <EmptyState
                 icon={Repeat}
-                message="No active routines. Use Create routine to define the first recurring workflow."
+                message={l10n("local.manual_no_active_routines")}
               />
             </div>
           ) : sortedRoutines.length === 0 ? (
             <div className="py-12">
               <EmptyState
                 icon={Repeat}
-                message={folderSelection === "all" ? "No routines match this view." : "This folder is empty."}
+                message={folderSelection === "all"
+                  ? l10n("local.manual_no_routines_match")
+                  : l10n("local.this_folder_is_empty_bd88d713")}
               />
               {folderSelection !== "all" ? (
                 <div className="mt-3 flex justify-center">

@@ -142,15 +142,21 @@ export function InstanceGeneralSettings({ embedded = false }: { embedded?: boole
           <div className="grid gap-3 md:grid-cols-3">
             <StatusBox
               label={l10n("local.auth_readiness_44d62a3b")}
-              value={healthQuery.data?.authReady ? "Ready" : "Not ready"}
+              value={healthQuery.data?.authReady
+                ? l10n("local.ready_b24d6d33")
+                : l10n("local.manual_not_ready")}
             />
             <StatusBox
               label={l10n("local.bootstrap_status_7123a7d2")}
-              value={healthQuery.data?.bootstrapStatus === "bootstrap_pending" ? "Setup required" : "Ready"}
+              value={healthQuery.data?.bootstrapStatus === "bootstrap_pending"
+                ? l10n("local.manual_setup_required")
+                : l10n("local.ready_b24d6d33")}
             />
             <StatusBox
               label={l10n("local.bootstrap_invite_af37c023")}
-              value={healthQuery.data?.bootstrapInviteActive ? "Active" : "None"}
+              value={healthQuery.data?.bootstrapInviteActive
+                ? l10n("local.active_96879611")
+                : l10n("local.none_dc937b59")}
             />
           </div>
         </div>

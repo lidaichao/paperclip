@@ -10390,6 +10390,19 @@
     "po_qa_675cfba6": "PO/QA 写入已按权限预先禁用：",
     "qa_38427d89": "QA 通过",
     "qa_48947c06": "QA",
-    "qa_fd96a11b": "QA 退回"
+    "qa_fd96a11b": "QA 退回",
+    "manual_select_organization_projects": "Select an organization to view projects.",
+    "manual_no_projects_yet": "No projects yet.",
+    "manual_my_projects": "My Projects",
+    "manual_other_projects": "Other Projects",
+    "manual_no_active_routines": "No active routines. Use Create routine to define the first recurring workflow.",
+    "manual_no_routines_match": "No routines match this view.",
+    "manual_finished_at": "Finished {{v0}}",
+    "manual_started_at": "Started {{v0}}",
+    "manual_queued_at": "Queued {{v0}}",
+    "manual_not_ready": "Not ready",
+    "manual_setup_required": "Setup required",
+    "manual_planned": "planned",
+    "manual_custom_connector_description": "A custom connector configured for this organization."
   }
 }

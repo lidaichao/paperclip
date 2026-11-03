@@ -10077,5 +10077,6 @@
   "po/qa 写入已按权限预先禁用：": "local.po_qa_675cfba6",
   "qa 通过": "local.qa_38427d89",
   "qa": "local.qa_48947c06",
-  "qa 退回": "local.qa_fd96a11b"
+  "qa 退回": "local.qa_fd96a11b",
+  "planned": "local.manual_planned"
 }

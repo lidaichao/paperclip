@@ -68,6 +68,7 @@ import {
   appDefinitionDescription,
   appDefinitionLogoUrl,
   appDefinitionName,
+  localizedBundledAppDescription,
   appDefinitionSlug,
   type AppGalleryDisplayEntry,
 } from "./app-definition-display";
@@ -417,10 +418,13 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
         key: `gallery:${slug}`,
         slug,
         name: appDefinitionName(entry),
-        description:
+        description: localizedBundledAppDescription(
+          slug,
+          appDefinitionName(entry),
           !chatConnectorsEnabled && chatProviderForSlug(slug)
             ? appCopyFor(slug).tagline
             : appDefinitionDescription(entry),
+        ),
         brandKey: slug,
         logoUrl: appDefinitionLogoUrl(entry),
         darkLogoUrl: appDefinitionDarkLogoUrl(entry),
@@ -532,7 +536,7 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
         name: application.name,
         description:
           application.description ??
-          "A custom connector configured for this organization.",
+          l10n("local.manual_custom_connector_description"),
         brandKey: applicationSlug ?? application.name,
         entry: null,
         applications: [application],

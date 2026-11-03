@@ -17,6 +17,7 @@ import {
   appDefinitionLogoUrl,
   appDefinitionName,
   appDefinitionSlug,
+  localizedBundledAppDescription,
   type AppGalleryDisplayEntry,
 } from "./app-definition-display";
 import { connectionAddress } from "./AppDetail";
@@ -168,7 +169,11 @@ export function AppNotConnected() {
     <div className="max-w-3xl space-y-6 pb-12">
       <ApplicationHeader
         applicationName={application.name}
-        description={application.description}
+        description={localizedBundledAppDescription(
+          appSourceSlug,
+          application.name,
+          application.description ?? "",
+        )}
         logoUrl={logoUrl}
         darkLogoUrl={darkLogoUrl}
         connectedCount={activeConnections.length}

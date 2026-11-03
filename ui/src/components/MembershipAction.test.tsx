@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { i18n } from "../i18n";
 import { MembershipAction } from "./MembershipAction";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,6 +79,25 @@ describe("MembershipAction", () => {
 
     expect(button().getAttribute("aria-label")).toBe("Join Growth");
     expect(button().textContent).toContain("Join");
+  });
+
+  it("localizes the accessible action label in Simplified Chinese", async () => {
+    await i18n.changeLanguage("zh-CN");
+    try {
+      await renderAction(
+        <MembershipAction
+          state="joined"
+          resourceName="卡罗尔"
+          onJoin={() => {}}
+          onLeave={() => {}}
+        />,
+      );
+
+      expect(button().getAttribute("aria-label")).toBe("退出 卡罗尔");
+      expect(button().textContent).toContain("退出");
+    } finally {
+      await i18n.changeLanguage("en");
+    }
   });
 
   it("prevents row navigation when clicked", async () => {

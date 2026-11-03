@@ -120,7 +120,7 @@ export function Projects() {
   const sortLabel = PROJECT_SORT_OPTIONS.find((option) => option.field === sortField)?.label ?? l10n("local.name_dcd1d522");
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Hexagon} message="Select an organization to view projects." />;
+    return <EmptyState icon={Hexagon} message={l10n("local.manual_select_organization_projects")} />;
   }
 
   if (isLoading) {
@@ -179,8 +179,8 @@ export function Projects() {
       {!isLoading && projects.length === 0 && (
         <EmptyState
           icon={Hexagon}
-          message="No projects yet."
-          action="Add Project"
+          message={l10n("local.manual_no_projects_yet")}
+          action={l10n("local.add_project_44b7ce21")}
           onAction={openNewProject}
         />
       )}
@@ -188,8 +188,8 @@ export function Projects() {
       {projects.length > 0 && (
         <div className="space-y-6">
           {([
-            ["My Projects", groupedProjects.mine],
-            ["Other Projects", groupedProjects.other],
+            [l10n("local.manual_my_projects"), groupedProjects.mine],
+            [l10n("local.manual_other_projects"), groupedProjects.other],
           ] as const).map(([label, sectionProjects]) => {
             if (sectionProjects.length === 0) return null;
 

@@ -171,8 +171,10 @@ export const AgentRunCard = memo(function AgentRunCard({
   const statusLabel = runStatusLabels[run.status] ?? run.status.replace(/[_-]/g, " ");
   const runUrl = `/agents/${run.agentId}/runs/${run.id}`;
   const timestamp = run.finishedAt
-    ? `Finished ${relativeTime(run.finishedAt)}`
-    : run.startedAt ? `Started ${relativeTime(run.startedAt)}` : `Queued ${relativeTime(run.createdAt)}`;
+    ? l10n("local.manual_finished_at", { v0: relativeTime(run.finishedAt) })
+    : run.startedAt
+      ? l10n("local.manual_started_at", { v0: relativeTime(run.startedAt) })
+      : l10n("local.manual_queued_at", { v0: relativeTime(run.createdAt) });
   const taskStatus = issue?.status === "in_review" && issue.externalConversationState === "waiting" ? "idle" : issue?.status ?? "backlog";
   const taskTitle = issue?.title ?? (issueLoadFailed ? l10n("local.task_unavailable_8e7e1576") : l10n("local.loading_task_d417ed35"));
 

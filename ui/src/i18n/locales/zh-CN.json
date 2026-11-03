@@ -10390,6 +10390,19 @@
     "po_qa_675cfba6": "PO/QA 写入已按权限预先禁用：",
     "qa_38427d89": "QA 通过",
     "qa_48947c06": "QA",
-    "qa_fd96a11b": "QA 退回"
+    "qa_fd96a11b": "QA 退回",
+    "manual_select_organization_projects": "请选择组织以查看项目。",
+    "manual_no_projects_yet": "还没有项目。",
+    "manual_my_projects": "我的项目",
+    "manual_other_projects": "其他项目",
+    "manual_no_active_routines": "暂无启用的例行任务。使用“创建例行任务”定义第一个周期性工作流程。",
+    "manual_no_routines_match": "没有符合当前视图的例行任务。",
+    "manual_finished_at": "{{v0}}完成",
+    "manual_started_at": "{{v0}}开始",
+    "manual_queued_at": "{{v0}}进入队列",
+    "manual_not_ready": "未就绪",
+    "manual_setup_required": "需要设置",
+    "manual_planned": "已规划",
+    "manual_custom_connector_description": "为当前组织配置的自定义连接器。"
   }
 }
