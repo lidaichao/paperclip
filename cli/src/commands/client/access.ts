@@ -28,7 +28,7 @@ export function registerAccessCommands(program: Command): void {
   addCommonClientOptions(
     program
       .command("health")
-      .description("Check API health")
+      .description("检查 API 健康状态")
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -39,13 +39,13 @@ export function registerAccessCommands(program: Command): void {
       }),
   );
 
-  const access = program.command("access").description("Access and auth inspection operations");
+  const access = program.command("access").description("访问权限与认证检查操作");
   addWhoamiCommand(access);
 
   addCommonClientOptions(
     program
       .command("openapi")
-      .description("Print the OpenAPI document")
+      .description("输出 OpenAPI 文档")
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -56,16 +56,16 @@ export function registerAccessCommands(program: Command): void {
       }),
   );
 
-  const profile = program.command("profile").description("Current user profile operations");
-  addSimpleGet(profile, "session", "Get auth session", "/api/auth/get-session");
-  addSimpleGet(profile, "get", "Get current auth profile", "/api/auth/profile");
-  addJsonPatch(profile, "update", "Update current auth profile", "/api/auth/profile");
+  const profile = program.command("profile").description("当前用户资料操作");
+  addSimpleGet(profile, "session", "获取认证会话", "/api/auth/get-session");
+  addSimpleGet(profile, "get", "获取当前认证资料", "/api/auth/profile");
+  addJsonPatch(profile, "update", "更新当前认证资料", "/api/auth/profile");
   addCommonClientOptions(
     profile
       .command("company-user")
-      .description("Get a user profile within a company")
-      .argument("<userSlug>", "User slug")
-      .option("-C, --company-id <id>", "Company ID")
+      .description("获取公司内的用户资料")
+      .argument("<userSlug>", "用户标识")
+      .option("-C, --company-id <id>", "公司 ID")
       .action(async (userSlug: string, opts: CompanyOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -77,14 +77,14 @@ export function registerAccessCommands(program: Command): void {
     { includeCompany: false },
   );
 
-  const invite = program.command("invite").description("Invite operations");
-  addCompanyList(invite, "list", "List company invites", "invites");
-  addCompanyPost(invite, "create", "Create an invite", "invites");
+  const invite = program.command("invite").description("邀请操作");
+  addCompanyList(invite, "list", "列出公司邀请", "invites");
+  addCompanyPost(invite, "create", "创建邀请", "invites");
   addCommonClientOptions(
     invite
       .command("revoke")
-      .description("Revoke an invite")
-      .argument("<inviteId>", "Invite ID")
+      .description("撤销邀请")
+      .argument("<inviteId>", "邀请 ID")
       .action(async (inviteId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -94,18 +94,18 @@ export function registerAccessCommands(program: Command): void {
         }
       }),
   );
-  for (const [name, suffix] of [
-    ["show", ""],
-    ["logo", "logo"],
-    ["onboarding", "onboarding"],
-    ["onboarding:text", "onboarding.txt"],
-    ["skills:index", "skills/index"],
+  for (const [name, suffix, description] of [
+    ["show", "", "获取邀请详情"],
+    ["logo", "logo", "获取邀请标志"],
+    ["onboarding", "onboarding", "获取邀请引导内容"],
+    ["onboarding:text", "onboarding.txt", "获取邀请引导文本"],
+    ["skills:index", "skills/index", "获取邀请技能索引"],
   ] as const) {
     addCommonClientOptions(
       invite
         .command(name)
-        .description(`Get invite ${name}`)
-        .argument("<token>", "Invite token")
+        .description(description)
+        .argument("<token>", "邀请令牌")
         .action(async (token: string, opts: BaseClientOptions) => {
           try {
             const ctx = resolveCommandContext(opts);
@@ -120,9 +120,9 @@ export function registerAccessCommands(program: Command): void {
   addCommonClientOptions(
     invite
       .command("test-resolution")
-      .description("Test invite URL resolution")
-      .argument("<token>", "Invite token")
-      .requiredOption("--url <url>", "URL to test")
+      .description("测试邀请链接解析")
+      .argument("<token>", "邀请令牌")
+      .requiredOption("--url <url>", "要测试的 URL")
       .action(async (token: string, opts: QueryOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -136,9 +136,9 @@ export function registerAccessCommands(program: Command): void {
   addCommonClientOptions(
     invite
       .command("skill")
-      .description("Get invite skill markdown")
-      .argument("<token>", "Invite token")
-      .argument("<skillName>", "Skill name")
+      .description("获取邀请技能的 Markdown 内容")
+      .argument("<token>", "邀请令牌")
+      .argument("<skillName>", "技能名称")
       .action(async (token: string, skillName: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -151,9 +151,9 @@ export function registerAccessCommands(program: Command): void {
   addCommonClientOptions(
     invite
       .command("accept")
-      .description("Accept an invite")
-      .argument("<token>", "Invite token")
-      .option("--payload-json <json>", "Invite accept JSON payload", "{}")
+      .description("接受邀请")
+      .argument("<token>", "邀请令牌")
+      .option("--payload-json <json>", "接受邀请所需的 JSON 数据", "{}")
       .action(async (token: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -164,14 +164,14 @@ export function registerAccessCommands(program: Command): void {
       }),
   );
 
-  const join = program.command("join").description("Join request operations");
+  const join = program.command("join").description("加入申请操作");
   addCommonClientOptions(
     join
       .command("list")
-      .description("List join requests")
-      .option("-C, --company-id <id>", "Company ID")
-      .option("--status <status>", "Filter by status (pending_approval, approved, rejected; pending alias accepted)")
-      .option("--request-type <type>", "Filter by request type")
+      .description("列出加入申请")
+      .option("-C, --company-id <id>", "公司 ID")
+      .option("--status <status>", "按状态筛选（pending_approval、approved、rejected；也接受 pending）")
+      .option("--request-type <type>", "按申请类型筛选")
       .action(async (opts: QueryOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -192,9 +192,9 @@ export function registerAccessCommands(program: Command): void {
   addCommonClientOptions(
     join
       .command("claim-key")
-      .description("Claim an agent API key for an approved join request")
-      .argument("<requestId>", "Join request ID")
-      .requiredOption("--claim-secret <secret>", "Claim secret")
+      .description("为已批准的加入申请领取智能体 API 密钥")
+      .argument("<requestId>", "加入申请 ID")
+      .requiredOption("--claim-secret <secret>", "领取密钥")
       .action(async (requestId: string, opts: BaseClientOptions & { claimSecret: string }) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -205,21 +205,21 @@ export function registerAccessCommands(program: Command): void {
       }),
   );
 
-  const member = program.command("member").description("Company member operations");
-  addCompanyList(member, "list", "List company members", "members");
-  addCompanyList(member, "user-directory", "List company user directory", "user-directory");
+  const member = program.command("member").description("公司成员操作");
+  addCompanyList(member, "list", "列出公司成员", "members");
+  addCompanyList(member, "user-directory", "列出公司用户目录", "user-directory");
   addMemberPatch(member, "update", "members");
   addMemberPatch(member, "role-and-grants", "members", "role-and-grants");
   addMemberPatch(member, "permissions", "members", "permissions");
   addMemberPost(member, "archive", "members", "archive");
 
-  const admin = program.command("admin").description("Instance admin operations");
-  const user = admin.command("user").description("Admin user operations");
+  const admin = program.command("admin").description("实例管理员操作");
+  const user = admin.command("user").description("管理员用户操作");
   addCommonClientOptions(
     user
       .command("list")
-      .description("List users")
-      .option("--query <text>", "Search query")
+      .description("列出用户")
+      .option("--query <text>", "搜索内容")
       .action(async (opts: QueryOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -235,8 +235,8 @@ export function registerAccessCommands(program: Command): void {
   addCommonClientOptions(
     user
       .command("company-access")
-      .description("Get user company access")
-      .argument("<userId>", "User ID")
+      .description("获取用户的公司访问权限")
+      .argument("<userId>", "用户 ID")
       .action(async (userId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -249,9 +249,9 @@ export function registerAccessCommands(program: Command): void {
   addCommonClientOptions(
     user
       .command("company-access:update")
-      .description("Update user company access")
-      .argument("<userId>", "User ID")
-      .requiredOption("--payload-json <json>", "UpdateUserCompanyAccess JSON payload")
+      .description("更新用户的公司访问权限")
+      .argument("<userId>", "用户 ID")
+      .requiredOption("--payload-json <json>", "UpdateUserCompanyAccess JSON 数据")
       .action(async (userId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -262,16 +262,16 @@ export function registerAccessCommands(program: Command): void {
       }),
   );
 
-  const instance = program.command("instance").description("Instance operations");
-  addSimpleGet(instance, "scheduler-heartbeats", "List scheduler heartbeat agents", "/api/instance/scheduler-heartbeats");
-  addSimpleGet(instance, "settings:general", "Get general instance settings", "/api/instance/settings/general");
-  addJsonPatch(instance, "settings:general:update", "Update general instance settings", "/api/instance/settings/general");
-  addSimpleGet(instance, "settings:experimental", "Get experimental instance settings", "/api/instance/settings/experimental");
-  addJsonPatch(instance, "settings:experimental:update", "Update experimental instance settings", "/api/instance/settings/experimental");
+  const instance = program.command("instance").description("实例操作");
+  addSimpleGet(instance, "scheduler-heartbeats", "列出调度器心跳智能体", "/api/instance/scheduler-heartbeats");
+  addSimpleGet(instance, "settings:general", "获取实例常规设置", "/api/instance/settings/general");
+  addJsonPatch(instance, "settings:general:update", "更新实例常规设置", "/api/instance/settings/general");
+  addSimpleGet(instance, "settings:experimental", "获取实例实验性设置", "/api/instance/settings/experimental");
+  addJsonPatch(instance, "settings:experimental:update", "更新实例实验性设置", "/api/instance/settings/experimental");
   addCommonClientOptions(
     instance
       .command("database-backup")
-      .description("Create a database backup")
+      .description("创建数据库备份")
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -282,23 +282,23 @@ export function registerAccessCommands(program: Command): void {
       }),
   );
 
-  const sidebar = program.command("sidebar").description("Sidebar preference and badge operations");
-  addSimpleGet(sidebar, "preferences", "Get current sidebar preferences", "/api/sidebar-preferences/me");
-  addJsonPut(sidebar, "preferences:update", "Update current sidebar preferences", "/api/sidebar-preferences/me");
-  addCompanyList(sidebar, "project-preferences", "Get current project sidebar preferences", "sidebar-preferences/me");
-  addCompanyPut(sidebar, "project-preferences:update", "Update current project sidebar preferences", "sidebar-preferences/me");
-  addCompanyList(sidebar, "badges", "Get sidebar badges", "sidebar-badges");
+  const sidebar = program.command("sidebar").description("侧边栏偏好与徽标操作");
+  addSimpleGet(sidebar, "preferences", "获取当前侧边栏偏好", "/api/sidebar-preferences/me");
+  addJsonPut(sidebar, "preferences:update", "更新当前侧边栏偏好", "/api/sidebar-preferences/me");
+  addCompanyList(sidebar, "project-preferences", "获取当前项目侧边栏偏好", "sidebar-preferences/me");
+  addCompanyPut(sidebar, "project-preferences:update", "更新当前项目侧边栏偏好", "sidebar-preferences/me");
+  addCompanyList(sidebar, "badges", "获取侧边栏徽标", "sidebar-badges");
 
-  const inbox = program.command("inbox").description("Board inbox operations");
-  addCompanyList(inbox, "dismissals", "List dismissed inbox items", "inbox-dismissals");
-  addCompanyPost(inbox, "dismiss", "Dismiss an inbox item", "inbox-dismissals");
+  const inbox = program.command("inbox").description("工作台收件箱操作");
+  addCompanyList(inbox, "dismissals", "列出已忽略的收件箱项目", "inbox-dismissals");
+  addCompanyPost(inbox, "dismiss", "忽略收件箱项目", "inbox-dismissals");
 
-  const boardClaim = program.command("board-claim").description("Board claim token operations");
+  const boardClaim = program.command("board-claim").description("工作台领取令牌操作");
   addCommonClientOptions(
     boardClaim
       .command("show")
-      .description("Inspect a board claim token")
-      .argument("<token>", "Claim token")
+      .description("检查工作台领取令牌")
+      .argument("<token>", "领取令牌")
       .action(async (token: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -311,9 +311,9 @@ export function registerAccessCommands(program: Command): void {
   addCommonClientOptions(
     boardClaim
       .command("claim")
-      .description("Claim a board claim token")
-      .argument("<token>", "Claim token")
-      .option("--payload-json <json>", "Claim JSON payload", "{}")
+      .description("使用工作台领取令牌")
+      .argument("<token>", "领取令牌")
+      .option("--payload-json <json>", "领取所需的 JSON 数据", "{}")
       .action(async (token: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -324,17 +324,17 @@ export function registerAccessCommands(program: Command): void {
       }),
   );
 
-  const openclaw = program.command("openclaw").description("OpenClaw integration helpers");
-  addCompanyPost(openclaw, "invite-prompt", "Create an OpenClaw invite prompt", "openclaw/invite-prompt");
+  const openclaw = program.command("openclaw").description("OpenClaw 集成工具");
+  addCompanyPost(openclaw, "invite-prompt", "创建 OpenClaw 邀请提示词", "openclaw/invite-prompt");
 
-  const publicSkills = program.command("available-skill").description("Public skill catalog operations");
-  addSimpleGet(publicSkills, "list", "List available skills", "/api/skills/available");
-  addSimpleGet(publicSkills, "index", "Get available skill index", "/api/skills/index");
+  const publicSkills = program.command("available-skill").description("公共技能目录操作");
+  addSimpleGet(publicSkills, "list", "列出可用技能", "/api/skills/available");
+  addSimpleGet(publicSkills, "index", "获取可用技能索引", "/api/skills/index");
   addCommonClientOptions(
     publicSkills
       .command("get")
-      .description("Get available skill markdown")
-      .argument("<skillName>", "Skill name")
+      .description("获取可用技能的 Markdown 内容")
+      .argument("<skillName>", "技能名称")
       .action(async (skillName: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -345,14 +345,14 @@ export function registerAccessCommands(program: Command): void {
       }),
   );
 
-  const llm = program.command("llm").description("LLM prompt documentation");
-  addSimpleGet(llm, "agent-configuration", "Get agent configuration prompt docs", "/api/llms/agent-configuration.txt");
-  addSimpleGet(llm, "agent-icons", "Get agent icon prompt docs", "/api/llms/agent-icons.txt");
+  const llm = program.command("llm").description("大语言模型提示词文档");
+  addSimpleGet(llm, "agent-configuration", "获取智能体配置提示词文档", "/api/llms/agent-configuration.txt");
+  addSimpleGet(llm, "agent-icons", "获取智能体图标提示词文档", "/api/llms/agent-icons.txt");
   addCommonClientOptions(
     llm
       .command("agent-configuration:adapter")
-      .description("Get adapter-specific agent configuration prompt docs")
-      .argument("<adapterType>", "Adapter type")
+      .description("获取适配器专用的智能体配置提示词文档")
+      .argument("<adapterType>", "适配器类型")
       .action(async (adapterType: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -368,7 +368,7 @@ function addWhoamiCommand(parent: Command): void {
   addCommonClientOptions(
     parent
       .command("whoami")
-      .description("Show current CLI auth identity")
+      .description("显示当前命令行认证身份")
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -397,7 +397,7 @@ function addSimpleGet(parent: Command, name: string, description: string, path: 
 }
 
 function addJsonPatch(parent: Command, name: string, description: string, path: string): void {
-  addCommonClientOptions(parent.command(name).description(description).requiredOption("--payload-json <json>", "JSON payload").action(async (opts: JsonPayloadOptions) => {
+  addCommonClientOptions(parent.command(name).description(description).requiredOption("--payload-json <json>", "JSON 数据").action(async (opts: JsonPayloadOptions) => {
     try {
       const ctx = resolveCommandContext(opts);
       printOutput(await ctx.api.patch(path, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
@@ -408,7 +408,7 @@ function addJsonPatch(parent: Command, name: string, description: string, path: 
 }
 
 function addJsonPut(parent: Command, name: string, description: string, path: string): void {
-  addCommonClientOptions(parent.command(name).description(description).requiredOption("--payload-json <json>", "JSON payload").action(async (opts: JsonPayloadOptions) => {
+  addCommonClientOptions(parent.command(name).description(description).requiredOption("--payload-json <json>", "JSON 数据").action(async (opts: JsonPayloadOptions) => {
     try {
       const ctx = resolveCommandContext(opts);
       printOutput(await ctx.api.put(path, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
@@ -420,7 +420,7 @@ function addJsonPut(parent: Command, name: string, description: string, path: st
 
 function addCompanyList(parent: Command, name: string, description: string, path: string): void {
   addCommonClientOptions(
-    parent.command(name).description(description).option("-C, --company-id <id>", "Company ID").action(async (opts: CompanyOptions) => {
+    parent.command(name).description(description).option("-C, --company-id <id>", "公司 ID").action(async (opts: CompanyOptions) => {
       try {
         const ctx = resolveCommandContext(opts, { requireCompany: true });
         printOutput(await ctx.api.get(`${apiPath`/api/companies/${ctx.companyId}`}/${path}`), { json: ctx.json });
@@ -434,7 +434,7 @@ function addCompanyList(parent: Command, name: string, description: string, path
 
 function addCompanyPut(parent: Command, name: string, description: string, path: string): void {
   addCommonClientOptions(
-    parent.command(name).description(description).option("-C, --company-id <id>", "Company ID").requiredOption("--payload-json <json>", "JSON payload").action(async (opts: JsonPayloadOptions) => {
+    parent.command(name).description(description).option("-C, --company-id <id>", "公司 ID").requiredOption("--payload-json <json>", "JSON 数据").action(async (opts: JsonPayloadOptions) => {
       try {
         const ctx = resolveCommandContext(opts, { requireCompany: true });
         printOutput(await ctx.api.put(`${apiPath`/api/companies/${ctx.companyId}`}/${path}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
@@ -448,7 +448,7 @@ function addCompanyPut(parent: Command, name: string, description: string, path:
 
 function addCompanyPost(parent: Command, name: string, description: string, path: string): void {
   addCommonClientOptions(
-    parent.command(name).description(description).option("-C, --company-id <id>", "Company ID").requiredOption("--payload-json <json>", "JSON payload").action(async (opts: JsonPayloadOptions) => {
+    parent.command(name).description(description).option("-C, --company-id <id>", "公司 ID").requiredOption("--payload-json <json>", "JSON 数据").action(async (opts: JsonPayloadOptions) => {
       try {
         const ctx = resolveCommandContext(opts, { requireCompany: true });
         printOutput(await ctx.api.post(`${apiPath`/api/companies/${ctx.companyId}`}/${path}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
@@ -462,7 +462,7 @@ function addCompanyPost(parent: Command, name: string, description: string, path
 
 function addJoinAction(parent: Command, action: "approve" | "reject"): void {
   addCommonClientOptions(
-    parent.command(action).description(`${action} a join request`).argument("<requestId>", "Join request ID").option("-C, --company-id <id>", "Company ID").action(async (requestId: string, opts: CompanyOptions) => {
+    parent.command(action).description(action === "approve" ? "批准加入申请" : "拒绝加入申请").argument("<requestId>", "加入申请 ID").option("-C, --company-id <id>", "公司 ID").action(async (requestId: string, opts: CompanyOptions) => {
       try {
         const ctx = resolveCommandContext(opts, { requireCompany: true });
         printOutput(await ctx.api.post(`${apiPath`/api/companies/${ctx.companyId}/join-requests/${requestId}`}/${action}`, {}), { json: ctx.json });
@@ -476,7 +476,7 @@ function addJoinAction(parent: Command, action: "approve" | "reject"): void {
 
 function addMemberPatch(parent: Command, name: string, path: string, suffix?: string): void {
   addCommonClientOptions(
-    parent.command(name).description(`${name} a member`).argument("<memberId>", "Member ID").option("-C, --company-id <id>", "Company ID").requiredOption("--payload-json <json>", "JSON payload").action(async (memberId: string, opts: JsonPayloadOptions) => {
+    parent.command(name).description({ update: "更新成员", "role-and-grants": "更新成员角色和授权", permissions: "更新成员权限" }[name] ?? "更新成员").argument("<memberId>", "成员 ID").option("-C, --company-id <id>", "公司 ID").requiredOption("--payload-json <json>", "JSON 数据").action(async (memberId: string, opts: JsonPayloadOptions) => {
       try {
         const ctx = resolveCommandContext(opts, { requireCompany: true });
         const route = `${apiPath`/api/companies/${ctx.companyId}`}/${path}/${encodeURIComponent(memberId)}${suffix ? `/${suffix}` : ""}`;
@@ -491,7 +491,7 @@ function addMemberPatch(parent: Command, name: string, path: string, suffix?: st
 
 function addMemberPost(parent: Command, name: string, path: string, suffix: string): void {
   addCommonClientOptions(
-    parent.command(name).description(`${name} a member`).argument("<memberId>", "Member ID").option("-C, --company-id <id>", "Company ID").option("--payload-json <json>", "JSON payload", "{}").action(async (memberId: string, opts: JsonPayloadOptions) => {
+    parent.command(name).description(name === "archive" ? "归档成员" : "操作成员").argument("<memberId>", "成员 ID").option("-C, --company-id <id>", "公司 ID").option("--payload-json <json>", "JSON 数据", "{}").action(async (memberId: string, opts: JsonPayloadOptions) => {
       try {
         const ctx = resolveCommandContext(opts, { requireCompany: true });
         printOutput(await ctx.api.post(`${apiPath`/api/companies/${ctx.companyId}`}/${path}/${encodeURIComponent(memberId)}/${suffix}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
@@ -504,7 +504,7 @@ function addMemberPost(parent: Command, name: string, path: string, suffix: stri
 }
 
 function addAdminUserPost(parent: Command, name: string, suffix: string): void {
-  addCommonClientOptions(parent.command(name).description(`${name} instance admin`).argument("<userId>", "User ID").action(async (userId: string, opts: BaseClientOptions) => {
+  addCommonClientOptions(parent.command(name).description(name === "promote" ? "提升为实例管理员" : "取消实例管理员权限").argument("<userId>", "用户 ID").action(async (userId: string, opts: BaseClientOptions) => {
     try {
       const ctx = resolveCommandContext(opts);
       printOutput(await ctx.api.post(`${apiPath`/api/admin/users/${userId}`}/${suffix}`, {}), { json: ctx.json });
