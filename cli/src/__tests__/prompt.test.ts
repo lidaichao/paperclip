@@ -54,7 +54,7 @@ describe("prompt handoff", () => {
 
     await expect(runAgentPrompt("worker", "Do the work", { context: contextPath, apiKey: "agent-token" }))
       .rejects
-      .toThrow(/persona=board/);
+      .toThrow(/身份为 board/);
   });
 
   it("fails when the supplied agent key belongs to a different agent", async () => {
@@ -66,7 +66,7 @@ describe("prompt handoff", () => {
     await expect(runAgentPrompt("other-agent", "Do the work", {
       apiBase: "http://localhost:3100",
       apiKey: "agent-token",
-    })).rejects.toThrow(/Agent key belongs to Worker/);
+    })).rejects.toThrow(/智能体密钥属于 Worker/);
   });
 
   it("creates an assigned issue and wakes the authenticated agent", async () => {
@@ -121,7 +121,7 @@ describe("prompt handoff", () => {
     await expect(runBoardPrompt("worker", "Do the work", {
       context: contextPath,
       apiKey: "board-token",
-    })).rejects.toThrow(/persona=agent/);
+    })).rejects.toThrow(/身份为 agent/);
   });
 
   it("creates an assigned issue and wakes the target agent with board auth", async () => {
