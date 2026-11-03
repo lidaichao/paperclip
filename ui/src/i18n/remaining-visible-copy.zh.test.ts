@@ -154,5 +154,7 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.allow_new_codex_agents_to_select_the_experime_813b44bc).toContain("新手引导仍使用旧版适配器");
     expect(messages.paperclip_could_not_validate_this_skill_as_ag_11cb7a41).toContain("智能体技能 Markdown");
     expect(Object.values(messages).filter((value) => /\bURL\b/.test(value))).toEqual([]);
+    expect(Object.values(messages).filter((value) => /Application ID|Client ID|Client Secret|Tenant ID|Signing Secret|Alice Runner|Runner Inspector/.test(value))).toEqual([]);
+    expect(Object.values(messages).filter((value) => /请求 地址|此 地址|实例 地址|回调 地址|网关 地址/.test(value))).toEqual([]);
   });
 });
