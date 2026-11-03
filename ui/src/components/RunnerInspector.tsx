@@ -215,11 +215,11 @@ function visibilityDecision(event: HeartbeatRunEvent) {
     return {
       visible: false,
       surface: "run_debug",
-      container: "Runner Inspector",
+      container: l10n("local.runner_inspector_02dc4408"),
       state: "hidden",
       action: "none",
       reasonCode: "presentation_surface_unregistered",
-      reason: "No production surface registration exists for this event type.",
+      reason: l10n("local.no_production_surface_registration_0ee00001"),
     };
   }
   return {
@@ -485,7 +485,7 @@ function JsonNode({
   );
 }
 
-function JsonExplorer({ value, label = "Search this JSON" }: { value: unknown; label?: string }) {
+function JsonExplorer({ value, label = l10n("local.search_this_json_0ee00002") }: { value: unknown; label?: string }) {
   const [query, setQuery] = useState("");
   return (
     <div className="overflow-hidden rounded-md border border-border bg-muted/20">
@@ -525,7 +525,7 @@ function fieldMappings(entry: TraceEntry): ProviderTraceFieldMapping[] {
         .map((path) => ({
           inputPath: path,
           action: "dropped" as const,
-          reason: text(entry.reason) || "Field was not carried into the next stage",
+          reason: text(entry.reason) || l10n("local.field_not_carried_to_next_stage_0ee00003"),
         }))
     : [];
   return [...explicit, ...legacy];
@@ -593,12 +593,12 @@ function typedPrpFields(event: HeartbeatRunEvent) {
   const payload = record(prp.payload);
   const item = record(payload.item);
   return [
-    ["Event type", event.eventType],
-    ["Source event", text(prp.sourceEventId)],
-    ["Sequence", scalar(prp.sourceSequence) || String(event.seq)],
-    ["Item type", text(item.type) || text(payload.kind)],
-    ["Status", text(payload.status) || text(item.status)],
-    ["Query", text(payload.query) || text(item.query)],
+    [l10n("local.event_type_0ee00004"), event.eventType],
+    [l10n("local.source_event_0ee00005"), text(prp.sourceEventId)],
+    [l10n("local.sequence_0ee00006"), scalar(prp.sourceSequence) || String(event.seq)],
+    [l10n("local.item_type_0ee00007"), text(item.type) || text(payload.kind)],
+    [l10n("local.status_920e413c"), text(payload.status) || text(item.status)],
+    [l10n("local.query_b80a3756"), text(payload.query) || text(item.query)],
   ].filter(([, value]) => Boolean(value));
 }
 
@@ -611,7 +611,7 @@ function ProductionSurfacePreview({ event, runId }: { event: HeartbeatRunEvent; 
   );
   const item = transcriptToTaskChatItems(entries, {
     runId,
-    agentName: "Runner",
+    agentName: l10n("local.runner_0ee00008"),
     running: false,
   }).find((candidate): candidate is TaskChatProtocolItem => candidate.kind === "protocol");
   if (item) return <TaskChatProtocolCard item={item} />;
@@ -758,7 +758,7 @@ export function RunnerInspector({
       })
       .catch((cause) => {
         if (!active || rawTraceAccessEpochRef.current !== loadEpoch) return;
-        setError(cause instanceof Error ? cause.message : "Runner inspection failed");
+        setError(cause instanceof Error ? cause.message : l10n("local.runner_inspection_failed_0ee00009"));
       })
       .finally(() => {
         if (active && rawTraceAccessEpochRef.current === loadEpoch) {
@@ -958,7 +958,7 @@ export function RunnerInspector({
     } catch (cause) {
       if (rawTraceAccessRef.current?.epoch === deletionAccess.epoch) {
         setError(
-          cause instanceof Error ? cause.message : "Raw trace deletion failed",
+          cause instanceof Error ? cause.message : l10n("local.raw_trace_deletion_failed_0ee00010"),
         );
       }
       return;
@@ -1087,7 +1087,7 @@ export function RunnerInspector({
               <div className="space-y-6 p-5">
                 {loading ? <p className="text-sm text-muted-foreground">{l10n("local.loading_run_pipeline_b2b94be9")}</p> : null}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                  <StatCard label={l10n("local.provider_472590ae")} value={capturedProviders.join(", ") || inspection?.trace?.provider || "PRP only"} detail={inspection?.trace ? l10n("local.captured_through_value_be848a0f", {v0: (inspection.trace.provider)}) : l10n("local.capture_was_off_e061c53d")} />
+                  <StatCard label={l10n("local.provider_472590ae")} value={capturedProviders.join(", ") || inspection?.trace?.provider || l10n("local.prp_only_0ee00011")} detail={inspection?.trace ? l10n("local.captured_through_value_be848a0f", {v0: (inspection.trace.provider)}) : l10n("local.capture_was_off_e061c53d")} />
                   <StatCard label={l10n("local.raw_frames_f1494b22")} value={frames.length} detail={inspection?.trace ? formatBytes(inspection.trace.byteCount) : l10n("local.no_exact_bytes_b144fb58")} />
                   <StatCard label={l10n("local.operations_358cc201")} value={operations.length} detail={l10n("local.correlated_groups_2dff3c1f")} />
                   <StatCard label={l10n("local.prp_events_8fe17fe8")} value={events.length} detail={l10n("local.value_visible_6fe47f66", {v0: (visibleEventCount)})} />

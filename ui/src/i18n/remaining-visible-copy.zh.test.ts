@@ -368,6 +368,17 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.last_checked_value_0ed00005).toContain("上次检查");
     expect(messages.after_attempt_value_0ed00006).toContain("清除");
     expect(messages.action_due_now_0ed00007).toContain("现已到期");
+    expect(messages.no_production_surface_registration_0ee00001).toContain("尚未注册生产界面");
+    expect(messages.search_this_json_0ee00002).toBe("搜索此 JSON");
+    expect(messages.field_not_carried_to_next_stage_0ee00003).toContain("下一阶段");
+    expect(messages.event_type_0ee00004).toBe("事件类型");
+    expect(messages.source_event_0ee00005).toBe("来源事件");
+    expect(messages.sequence_0ee00006).toBe("序号");
+    expect(messages.item_type_0ee00007).toBe("条目类型");
+    expect(messages.runner_0ee00008).toBe("运行器");
+    expect(messages.runner_inspection_failed_0ee00009).toContain("检查失败");
+    expect(messages.raw_trace_deletion_failed_0ee00010).toContain("删除原始追踪记录失败");
+    expect(messages.prp_only_0ee00011).toBe("仅 PRP");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
