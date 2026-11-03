@@ -166,6 +166,16 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.instructions_file_gemini_prompt_0c940002).toContain("Gemini 提示词前");
     expect(messages.instructions_file_kimi_prompt_0c940003).toContain("Kimi 提示词前");
     expect(messages.instructions_file_system_prompt_0c940004).toContain("注入系统提示词");
+    expect(messages.choose_agent_0c950001).toBe("选择智能体");
+    expect(messages.alice_could_not_read_pem_file_0c950005).toContain("重新选择 .pem 文件");
+    expect(messages.alice_messaging_endpoint_0c950014).toBe("Alice 消息接收地址");
+    expect(messages.slack_app_name_help_0c950022).toContain("Slack 应用目录");
+    expect(messages.discover_and_link_messages_identity_0c950031).toContain("权限管理");
+    expect(messages.unlinked_account_guest_work_off_0c950037).toContain("不会重新执行");
+    expect(messages.link_sender_to_alice_person_0c950042).toContain("Alice 用户");
+    expect(messages.open_installed_bot_text_channel_0c950046).toBe("打开已安装机器人的文字频道。");
+    expect(messages.open_installed_issue_or_pull_request_0c950052).toContain("议题或拉取请求");
+    expect(messages.reply_in_agent_thread_0c950060).toContain("讨论串");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

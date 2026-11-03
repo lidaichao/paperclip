@@ -63,6 +63,18 @@ const providerNames: Record<ChatProvider, string> = {
 
 const knownProviders = new Set(Object.keys(providerNames));
 
+function slackSetupNavigationLabels(): string[] {
+  return [
+    l10n("local.choose_agent_0c950001"),
+    l10n("local.create_slack_app_7e043d9f"),
+    l10n("local.add_credentials_0c950002"),
+    l10n("local.verify_slack_connection_f64c0a1d"),
+    l10n("local.add_avatar_0c950003"),
+    l10n("local.connect_your_slack_account_afd67dc6"),
+    l10n("local.try_it_0c950004"),
+  ];
+}
+
 function isProvider(value: string | null): value is ChatProvider {
   return value !== null && knownProviders.has(value);
 }
@@ -117,7 +129,7 @@ function ChatConnectionPurpose({ provider, onChat, onTools }: {
   }, [setBreadcrumbs]);
   return (
       <div className="max-w-2xl space-y-6">
-        <ChatSetupNavigation labels={provider === "slack" ? ["Choose agent", "Create Slack app", "Add credentials", "Verify Slack connection", "Add avatar", "Connect your Slack account", "Try it"] : undefined} step={0} availableStep={0} onSelect={onChat} />
+        <ChatSetupNavigation labels={provider === "slack" ? slackSetupNavigationLabels() : undefined} step={0} availableStep={0} onSelect={onChat} />
         <div>
           <h1 className="text-xl font-bold">{l10n("local.choose_how_to_connect_aeb54e4f")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -471,7 +483,7 @@ function ChatSdkEndpointSetup() {
   return (
     <div className="max-w-2xl space-y-6">
       <ChatSetupNavigation
-        labels={isSlack ? ["Choose agent", "Create Slack app", "Add credentials", "Verify Slack connection", "Add avatar", "Connect your Slack account", "Try it"] : undefined}
+        labels={isSlack ? slackSetupNavigationLabels() : undefined}
         step={step}
         availableStep={availableStep}
         disabled={createEndpoint.isPending || setupAction.isPending || generateSetupSecret.isPending || testConnection.isPending}
@@ -747,7 +759,7 @@ function ProviderConnectStep({
       setPrivateKeyFileError(
         error instanceof Error
           ? error.message
-          : "Paperclip couldn't read that file. Choose the .pem file again or paste the private key.",
+          : l10n("local.alice_could_not_read_pem_file_0c950005"),
       );
     } finally {
       if (privateKeyReadGuard.isCurrent(readRevision)) {
@@ -805,12 +817,12 @@ features:
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   agent_view:
-    agent_description: "Work with a Paperclip agent in a task-backed conversation."
+    agent_description: ${JSON.stringify(l10n("local.work_with_alice_agent_in_task_conversation_0c950006"))}
   bot_user:
     display_name: ${JSON.stringify(slackBotName)}
   slash_commands:
     - command: ${JSON.stringify(slackCommand)}
-      description: ${JSON.stringify(`Start or manage work with ${agentName}`)}
+      description: ${JSON.stringify(l10n("local.start_or_manage_work_with_agent_0c950007", { v0: agentName }))}
       usage_hint: ${JSON.stringify("status | new | close | <task>")}
       should_escape: false
       url: ${JSON.stringify(slackWebhookUrl)}
@@ -885,15 +897,15 @@ settings:
               commands: [
                 {
                   title: "/status",
-                  description: "Show the active Paperclip task status",
+                  description: l10n("local.show_active_alice_task_status_0c950008"),
                 },
                 {
                   title: "/new",
-                  description: "Start a new Paperclip task in this chat",
+                  description: l10n("local.start_new_alice_task_in_chat_0c950009"),
                 },
                 {
                   title: "/close",
-                  description: "Close the active chat conversation",
+                  description: l10n("local.close_active_chat_conversation_0c950010"),
                 },
               ],
             },
@@ -951,9 +963,9 @@ settings:
         >
           {l10n("local.open_discord_developer_portal_090b2a59")}{" "}<ExternalLink />
         </Button>
-        {field("applicationId", "Application ID", "text")}
-        {field("guildId", "Server ID", "text")}
-        {field("botToken", "Bot token")}
+        {field("applicationId", l10n("local.application_id_0c950011"), "text")}
+        {field("guildId", l10n("local.server_id_0c950012"), "text")}
+        {field("botToken", l10n("local.bot_token_0c950013"))}
         {installUrl && (
           <Button asChild variant="outline">
             <a href={installUrl} target="_blank" rel="noreferrer">
@@ -1010,7 +1022,7 @@ settings:
         >
           {l10n("local.open_botfather_a099b632")}{" "}<ExternalLink />
         </Button>
-        {field("botToken", "Bot token")}
+        {field("botToken", l10n("local.bot_token_0c950013"))}
         {!endpoint.setup?.webhookUrl && (
           <p className="text-sm text-destructive">
             {l10n("local.configure_a_public_https_url_for_this_papercl_be61462c")}</p>
@@ -1082,12 +1094,12 @@ settings:
           </Button>
         </div>
         {endpointValue(
-          "Paperclip messaging endpoint",
+          l10n("local.alice_messaging_endpoint_0c950014"),
           endpoint.setup?.messagingEndpoint,
         )}
-        {field("clientId", "Application / Client ID", "text")}
-        {field("tenantId", "Directory / Tenant ID", "text")}
-        {field("clientSecret", "Client secret value")}
+        {field("clientId", l10n("local.application_client_id_0c950015"), "text")}
+        {field("tenantId", l10n("local.directory_tenant_id_0c950016"), "text")}
+        {field("clientSecret", l10n("local.client_secret_value_0c950017"))}
         <section className="space-y-3 rounded-lg border border-border p-4">
           <div>
             <h2 className="text-sm font-semibold">
@@ -1221,10 +1233,10 @@ settings:
           </ol>
         )}
         {endpointValue(
-          "Paperclip homepage URL",
+          l10n("local.alice_homepage_url_0c950018"),
           publicOrigin(endpoint.setup?.webhookUrl),
         )}
-        {endpointValue("Paperclip webhook URL", endpoint.setup?.webhookUrl)}
+        {endpointValue(l10n("local.alice_webhook_url_0c950019"), endpoint.setup?.webhookUrl)}
         <Button
           variant="outline"
           onClick={() =>
@@ -1241,7 +1253,7 @@ settings:
           {repairing ? l10n("local.open_github_app_settings_1395525a") : l10n("local.open_new_github_app_form_09512a8d")}{" "}
           <ExternalLink />
         </Button>
-        {field("appId", "GitHub App ID", "text")}
+        {field("appId", l10n("local.github_app_id_0c950020"), "text")}
         <div className="grid gap-2 text-sm font-medium">
           <label htmlFor="github-private-key">{l10n("local.private_key_pem_1a5ad986")}</label>
           <div className="relative">
@@ -1443,7 +1455,7 @@ settings:
           <summary className="cursor-pointer text-muted-foreground">{l10n("local.troubleshooting_c3af076f")}</summary>
           <div className="mt-3 space-y-3">
             <p className="text-muted-foreground">{l10n("local.if_the_request_url_is_missing_or_different_pa_f35fe901")}</p>
-            {endpointValue("Paperclip webhook URL", endpoint.setup?.webhookUrl)}
+            {endpointValue(l10n("local.alice_webhook_url_0c950019"), endpoint.setup?.webhookUrl)}
           </div>
         </details>
         <div className="flex items-center justify-between gap-3">
@@ -1486,9 +1498,9 @@ settings:
       <div hidden={slackStage !== "app"} className="space-y-5">
         <div className="space-y-3 text-sm">
           {([
-            ["appName", "Slack app name", 35, "The name of your app in Slack’s app directory and settings."],
-            ["botName", "Bot display name", 80, "The name people see when your bot sends a message. Use lowercase letters, numbers, periods, hyphens, or underscores."],
-            ["command", "Slash command", 32, "The command people type in Slack to talk to this agent. Start with /, followed by lowercase letters, numbers, hyphens, or underscores."],
+            ["appName", l10n("local.slack_app_name_0c950021"), 35, l10n("local.slack_app_name_help_0c950022")],
+            ["botName", l10n("local.bot_display_name_0c950023"), 80, l10n("local.bot_display_name_help_0c950024")],
+            ["command", l10n("local.slash_command_label_ec8382bc"), 32, l10n("local.slash_command_help_0c950025")],
           ] as const).map(([key, label, maxLength, help]) => (
             <div key={key} className="grid items-center gap-2 sm:grid-cols-2">
               <div className="flex items-center gap-1.5">
@@ -1715,20 +1727,20 @@ function TryStep({
     (identity) => identity.status !== "linked",
   );
   const freshConversationInstruction =
-    provider === "imessage-photon" ? "send a fresh message to your Photon number" : provider === "telegram"
-      ? "start a fresh conversation with /new and send the test message again"
+    provider === "imessage-photon" ? l10n("local.send_fresh_message_to_photon_number_0c950026") : provider === "telegram"
+      ? l10n("local.start_fresh_telegram_conversation_0c950027")
       : provider === "github"
-        ? "start a new issue or pull request conversation and mention the agent again"
+        ? l10n("local.start_fresh_github_conversation_0c950028")
         : provider === "microsoft-teams"
-          ? "start a new channel post and mention the agent again"
-          : "send a new root mention to the agent";
+          ? l10n("local.start_fresh_teams_post_0c950029")
+          : l10n("local.send_new_root_mention_0c950030");
   const identityGuidance = provider === "slack" ? null : provider === "imessage-photon" && principalsQuery.isSuccess && (identities.length === 0 || unlinkedIdentities.length > 0)
-    ? { tone: "info" as const, title: l10n("local.link_your_messages_identity_6f8fceda"), body: "Send one message to discover your phone number or Apple account address, then link that exact identity in Access. Send a fresh request after linking; earlier messages do not start work." }
+    ? { tone: "info" as const, title: l10n("local.link_your_messages_identity_6f8fceda"), body: l10n("local.discover_and_link_messages_identity_0c950031") }
     : principalsQuery.isError
     ? {
         tone: "warning" as const,
         title: l10n("local.identity_readiness_could_not_be_checked_eadefdc5"),
-        body: `Review Access before expecting an agent reply. After linking the account you are testing, ${freshConversationInstruction}.`,
+        body: l10n("local.review_access_then_start_fresh_conversation_0c950032", { v0: freshConversationInstruction }),
       }
     : !principalsQuery.isSuccess || guestIsolationState === "loading"
       ? null
@@ -1739,28 +1751,28 @@ function TryStep({
               title: l10n("local.link_the_account_you_re_testing_8e3ed069"),
               body:
                 provider === "telegram"
-                  ? "Tap Start in Telegram to discover your account; the welcome does not start an agent run. Link the account privately in Access, then return and send the test message."
-                  : `Your first ${providerNames[provider]} message discovers the external account, but isolated guest work is off, so it cannot safely start ${agentName}. Send it once, link that account privately in Access, then ${freshConversationInstruction}.`,
+                  ? l10n("local.telegram_discover_then_link_account_0c950033")
+                  : l10n("local.first_message_discover_then_link_account_0c950034", { v0: providerNames[provider], v1: agentName, v2: freshConversationInstruction }),
             }
           : {
               tone: "info" as const,
               title: l10n("local.your_first_message_identifies_your_account_c6aabd33"),
               body:
                 provider === "telegram"
-                  ? "Tap Start in Telegram to discover your account. Until linked, it is a restricted guest and still needs a sandbox-backed isolated run; test that path intentionally, or link it in Access and then send the test message."
-                  : `Until linked, the account is a restricted guest and still needs a sandbox-backed isolated run. Test that guest path intentionally, or link the account in Access and then ${freshConversationInstruction}.`,
+                  ? l10n("local.telegram_restricted_guest_guidance_0c950035")
+                  : l10n("local.restricted_guest_guidance_0c950036", { v0: freshConversationInstruction }),
             }
         : unlinkedIdentities.length > 0
           ? guestIsolationState === "disabled"
             ? {
                 tone: "warning" as const,
                 title: l10n("local.link_the_account_you_re_testing_8e3ed069"),
-                body: `An observed external account is unlinked, and isolated guest work is off, so it cannot safely start ${agentName}. Link the account in Access, then ${freshConversationInstruction}; Paperclip does not replay the refused request.`,
+                body: l10n("local.unlinked_account_guest_work_off_0c950037", { v0: agentName, v1: freshConversationInstruction }),
               }
             : {
                 tone: "info" as const,
                 title: l10n("local.unlinked_identity_detected_f9a121ab"),
-                body: `An unlinked account is a restricted guest and still needs a sandbox-backed isolated run. Test guest access intentionally, or link the account in Access and then ${freshConversationInstruction}.`,
+                body: l10n("local.unlinked_restricted_guest_guidance_0c950038", { v0: freshConversationInstruction }),
               }
           : null;
   const providerBotUsername = botUsername?.replace(/^@/, "");
@@ -1774,38 +1786,38 @@ function TryStep({
   const slackTestMessage = l10n("local.value_you_there_7f8577e4", {v0: (botMention.startsWith("@") ? botMention : `@${botMention}`)});
   const instructions =
     provider === "imessage-photon" ? [
-      photonAllocation === "shared" ? "In your Photon project, enroll your sender in Users and find its assigned number in Get started. Send a fresh message to that number from Apple Messages." : `Open Apple Messages and send a fresh message to ${botUsername ?? botLabel ?? "the dedicated number"}.`,
-      "Link the discovered sender to a Paperclip person in Access, then send a fresh request.",
-      "Wait for the agent’s actual reply. Setup completes after that reply is delivered.",
-      ...(photonAllocation === "shared" ? ["This Pro-compatible channel supports DMs only. Group messages cannot start work."] : ["For a group: add the number in Messages, send a message, enable the discovered group in Settings, then send a fresh request."]),
+      photonAllocation === "shared" ? l10n("local.photon_shared_sender_test_step_0c950039") : l10n("local.photon_dedicated_number_test_step_0c950040", { v0: botUsername ?? botLabel ?? l10n("local.dedicated_number_0c950041") }),
+      l10n("local.link_sender_to_alice_person_0c950042"),
+      l10n("local.wait_for_agent_reply_0c950043"),
+      ...(photonAllocation === "shared" ? [l10n("local.photon_shared_dm_only_0c950044")] : [l10n("local.photon_group_test_step_0c950045")]),
     ] : provider === "discord"
       ? [
-          "Open a text channel where the bot is installed.",
-          `Mention ${botMention} in a new root message.`,
-          `Reply once inside ${agentName}'s new Discord thread.`,
+          l10n("local.open_installed_bot_text_channel_0c950046"),
+          l10n("local.mention_bot_in_new_root_message_0c950047", { v0: botMention }),
+          l10n("local.reply_in_new_discord_thread_0c950048", { v0: agentName }),
         ]
       : provider === "telegram"
         ? [
-            "Open the bot's private chat.",
-            "Tap Start.",
-            "Send “Help me test this”.",
+            l10n("local.open_bot_private_chat_0c950049"),
+            l10n("local.tap_start_0c950050"),
+            l10n("local.send_help_me_test_this_0c950051"),
           ]
         : provider === "github"
           ? [
-              "Open an installed issue or pull request.",
-              `Mention ${botMention} in a comment.`,
-              "Add another comment to continue the same task.",
+              l10n("local.open_installed_issue_or_pull_request_0c950052"),
+              l10n("local.mention_bot_in_comment_0c950053", { v0: botMention }),
+              l10n("local.add_comment_to_continue_task_0c950054"),
             ]
           : provider === "microsoft-teams"
             ? [
-                "Open an installed channel and start a new post.",
-                `Mention ${botMention} in the post.`,
-                "Reply once beneath the post.",
+                l10n("local.open_installed_channel_new_post_0c950055"),
+                l10n("local.mention_bot_in_post_0c950056", { v0: botMention }),
+                l10n("local.reply_beneath_post_0c950057"),
               ]
             : [
-                `Open a channel and invite ${botMention} if needed.`,
-                `Mention ${botMention} in a new channel message.`,
-                `Reply once in ${agentName}'s thread.`,
+                l10n("local.open_channel_invite_bot_0c950058", { v0: botMention }),
+                l10n("local.mention_bot_in_new_channel_message_0c950059", { v0: botMention }),
+                l10n("local.reply_in_agent_thread_0c950060", { v0: agentName }),
               ];
   return (
     <div className="space-y-5">
