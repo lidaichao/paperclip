@@ -33,7 +33,7 @@ export function attentionRoutes(db: Db) {
     const cursor = optionalQueryString(req.query.cursor, "cursor");
     const sortValue = optionalQueryString(req.query.sort, "sort");
     if (sortValue !== undefined && sortValue !== "activity" && sortValue !== "decide") {
-      throw badRequest("sort must be 'activity' or 'decide'");
+      throw badRequest("sort 必须是 activity 或 decide");
     }
     const limitValue = optionalQueryString(req.query.limit, "limit");
     const limit = limitValue === undefined ? undefined : Number(limitValue);

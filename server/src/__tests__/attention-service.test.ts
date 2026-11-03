@@ -1865,13 +1865,13 @@ describeEmbeddedPostgres("attention service", () => {
     expect(internalSnapshot.nextCursor).toBeNull();
 
     await expect(attentionService(db).list(companyId, { userId: "board-user", all: true }))
-      .rejects.toThrow("all requires a queue filter");
+      .rejects.toThrow("使用 all 时必须提供队列筛选条件");
     await expect(attentionService(db).list(companyId, {
       userId: "board-user",
       queue: "bulk-review",
       all: true,
       limit: 25,
-    })).rejects.toThrow("all cannot be combined with cursor or limit");
+    })).rejects.toThrow("all 不能与 cursor 或 limit 同时使用");
   });
 
   it("does not apply the open-decision safety limit to complete snapshots", async () => {
@@ -2033,10 +2033,10 @@ describeEmbeddedPostgres("attention service", () => {
     expect(completeFeed.body.nextCursor).toBeNull();
     await request(app(board))
       .get(`/api/companies/${companyId}/attention?activitySince=yesterday`)
-      .expect(400, { error: "activitySince must be an ISO timestamp" });
+      .expect(400, { error: "activitySince 必须是 ISO 时间戳" });
     await request(app(board))
       .get(`/api/companies/${companyId}/attention?sort=oldest`)
-      .expect(400, { error: "sort must be 'activity' or 'decide'" });
+      .expect(400, { error: "sort 必须是 activity 或 decide" });
     await request(app(agent)).get(`/api/companies/${companyId}/attention`).expect(403);
   });
 

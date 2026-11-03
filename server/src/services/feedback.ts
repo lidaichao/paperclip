@@ -65,7 +65,7 @@ const MAX_SKILLS = 20;
 const MAX_INSTRUCTION_FILES = 20;
 const MAX_TRACE_FILE_CHARS = 10_000_000;
 const DEFAULT_INSTANCE_SETTINGS_SINGLETON_KEY = "default";
-const FEEDBACK_EXPORT_BACKEND_NOT_CONFIGURED = "Feedback export backend is not configured";
+const FEEDBACK_EXPORT_BACKEND_NOT_CONFIGURED = "尚未配置反馈导出后端";
 
 type FeedbackTraceRow = typeof feedbackExports.$inferSelect & {
   issueIdentifier: string | null;
@@ -740,7 +740,7 @@ async function buildOpenCodeTraceFiles(input: {
 
 function truncateFailureReason(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
-  return message.trim().slice(0, 1_000) || "Feedback export failed";
+  return message.trim().slice(0, 1_000) || "反馈导出失败";
 }
 
 function mapTraceRow(row: FeedbackTraceRow, includePayload: boolean): FeedbackTrace {
@@ -812,13 +812,13 @@ async function resolveFeedbackTarget(
       .then((rows) => rows[0] ?? null);
 
     if (!targetComment || targetComment.issueId !== issue.id || targetComment.companyId !== issue.companyId) {
-      throw notFound("Feedback target not found");
+      throw notFound("未找到反馈目标");
     }
     if (targetComment.deletedAt) {
-      throw notFound("Feedback target not found");
+      throw notFound("未找到反馈目标");
     }
     if (!targetComment.authorAgentId) {
-      throw unprocessable("Feedback voting is only available on agent-authored issue comments");
+      throw unprocessable("只能对智能体撰写的任务评论进行反馈投票");
     }
 
     const record: ResolvedFeedbackTarget = {
@@ -879,10 +879,10 @@ async function resolveFeedbackTarget(
       .then((rows) => rows.find((row) => row.issueId === issue.id) ?? null);
 
     if (!targetRevision || targetRevision.companyId !== issue.companyId) {
-      throw notFound("Feedback target not found");
+      throw notFound("未找到反馈目标");
     }
     if (!targetRevision.createdByAgentId) {
-      throw unprocessable("Feedback voting is only available on agent-authored document revisions");
+      throw unprocessable("只能对智能体撰写的文档修订进行反馈投票");
     }
 
     const record: ResolvedFeedbackTarget = {
@@ -918,7 +918,7 @@ async function resolveFeedbackTarget(
     return record;
   }
 
-  throw unprocessable("Unsupported feedback target type");
+      throw unprocessable("不支持此反馈目标类型");
 }
 
 async function listIssueContextItems(
@@ -1921,7 +1921,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
           .from(issues)
           .where(eq(issues.id, input.issueId))
           .then((rows) => rows[0] ?? null);
-        if (!issue) throw notFound("Issue not found");
+  if (!issue) throw notFound("未找到任务");
 
         const target = await resolveFeedbackTarget(tx, issue, input.targetType, input.targetId);
 
@@ -1933,7 +1933,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
           .from(companies)
           .where(eq(companies.id, issue.companyId))
           .then((rows) => rows[0] ?? null);
-        if (!existingCompany) throw notFound("Company not found");
+  if (!existingCompany) throw notFound("未找到公司");
 
         const now = new Date();
         const normalizedReason = normalizeReason(input.vote, input.reason);

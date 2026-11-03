@@ -30,7 +30,7 @@ export interface AnnouncementFeedOptions {
 export async function readAnnouncementBytes(response: Response, maximum: number): Promise<Buffer> {
   if (Number(response.headers.get("content-length")) > maximum) {
     await response.body?.cancel();
-    throw new Error("Announcement response is too large");
+      throw new Error("公告响应内容过大");
   }
   const reader = response.body?.getReader();
   if (!reader) return Buffer.alloc(0);
@@ -41,7 +41,7 @@ export async function readAnnouncementBytes(response: Response, maximum: number)
       const { done, value } = await reader.read();
       if (done) break;
       length += value.byteLength;
-      if (length > maximum) throw new Error("Announcement response is too large");
+    if (length > maximum) throw new Error("公告响应内容过大");
       chunks.push(value);
     }
     return Buffer.concat(chunks, length);
@@ -71,7 +71,7 @@ export function announcementFeedService(options: AnnouncementFeedOptions) {
   function endpoint() {
     const url = new URL(options.feedUrl ?? DEFAULT_ANNOUNCEMENT_FEED_URL);
     if (url.protocol !== "https:" || url.username || url.password || url.hash || url.search) {
-      throw new Error("Announcement feed must be an HTTPS URL without credentials, query, or fragment");
+    throw new Error("公告源必须使用不含凭据、查询参数或片段的 HTTPS 地址");
     }
     return url;
   }
@@ -82,7 +82,7 @@ export function announcementFeedService(options: AnnouncementFeedOptions) {
     const deadline = new Promise<never>((_, reject) => {
       timer = setTimeout(() => {
         controller.abort();
-        reject(new Error("Announcement request timed out"));
+        reject(new Error("公告请求超时"));
       }, TIMEOUT_MS);
     });
     try {
@@ -111,11 +111,11 @@ export function announcementFeedService(options: AnnouncementFeedOptions) {
         }
         if (!response.ok || response.status >= 300) {
           await response.body?.cancel();
-          throw new Error("Announcement feed unavailable");
+    throw new Error("公告源不可用");
         }
         if (response.headers.get("content-type")?.split(";")[0]?.trim() !== "application/json") {
           await response.body?.cancel();
-          throw new Error("Announcement feed is not JSON");
+    throw new Error("公告源不是 JSON 格式");
         }
         const bytes = await readAnnouncementBytes(response, ANNOUNCEMENT_MANIFEST_MAX_BYTES);
         return { manifest: announcementManifestSchema.parse(JSON.parse(bytes.toString("utf8"))), etag: response.headers.get("etag"), ttl: ANNOUNCEMENT_CACHE_MS };
@@ -128,7 +128,7 @@ export function announcementFeedService(options: AnnouncementFeedOptions) {
       available = false;
       nextCheck = now() + ANNOUNCEMENT_FAILURE_MS;
       // Do not log remote content or operator URLs (which can carry secrets).
-      logger.warn("Announcement feed unavailable; retrying on demand after cooldown");
+      logger.warn("公告源不可用；冷却结束后将按需重试");
     }
   }
 
@@ -159,11 +159,11 @@ export function announcementFeedService(options: AnnouncementFeedOptions) {
           const contentType = response.headers.get("content-type")?.split(";")[0]?.trim();
           if (!response.ok || contentType !== expected) {
             await response.body?.cancel();
-            throw new Error("Invalid announcement asset response");
+    throw new Error("公告资源响应无效");
           }
           const bytes = await readAnnouncementBytes(response, kind === "animation" ? ANNOUNCEMENT_ANIMATION_MAX_BYTES : ANNOUNCEMENT_IMAGE_MAX_BYTES);
           const hash = createHash("sha256").update(bytes).digest("hex");
-          if (!path.startsWith(`assets/${hash}.`)) throw new Error("Announcement asset digest mismatch");
+  if (!path.startsWith(`assets/${hash}.`)) throw new Error("公告资源摘要不匹配");
           return { path, bytes: kind === "animation" ? Buffer.from(validateAnnouncementAnimation(bytes)) : bytes, contentType };
         });
         slot.cache = result;

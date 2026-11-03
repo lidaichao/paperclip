@@ -531,21 +531,21 @@ function decodeCursor(cursor: string, sort: AttentionSortMode) {
   try {
     const decoded = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as Record<string, unknown>;
     if (decoded.v !== 1 || decoded.sort !== sort || typeof decoded.id !== "string" || !decoded.id) {
-      throw new Error("invalid cursor shape");
+      throw new Error("游标结构无效");
     }
     return decoded.id;
   } catch {
-    throw badRequest("Invalid attention cursor");
+    throw badRequest("注意事项游标无效");
   }
 }
 
 function parseActivityBoundary(value: string | undefined, field: "activitySince" | "activityUntil") {
   if (value === undefined) return null;
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) {
-    throw badRequest(`${field} must be an ISO timestamp`);
+      throw badRequest(`${field} 必须是 ISO 时间戳`);
   }
   const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) throw badRequest(`${field} must be an ISO timestamp`);
+    if (!Number.isFinite(parsed)) throw badRequest(`${field} 必须是 ISO 时间戳`);
   return parsed;
 }
 
@@ -1074,7 +1074,7 @@ export function attentionService(db: Db, serviceOptions: AttentionServiceOptions
   return {
     list: async (companyId: string, options: AttentionListOptions = {}): Promise<AttentionFeed> => {
       if (options.all && !options.queue && !options.allowUnscopedAll) {
-        throw badRequest("all requires a queue filter");
+      throw badRequest("使用 all 时必须提供队列筛选条件");
       }
       const [prefix, dismissals] = await Promise.all([
         companyPrefix(db, companyId),
@@ -1875,7 +1875,7 @@ export function attentionService(db: Db, serviceOptions: AttentionServiceOptions
       const activitySince = parseActivityBoundary(options.activitySince, "activitySince");
       const activityUntil = parseActivityBoundary(options.activityUntil, "activityUntil");
       if (activitySince != null && activityUntil != null && activitySince > activityUntil) {
-        throw badRequest("activitySince must be before or equal to activityUntil");
+      throw badRequest("activitySince 必须早于或等于 activityUntil");
       }
       const queueKey = options.queue?.trim() || null;
       const visibleItems = enrichedItems.filter((item) => {
@@ -1889,7 +1889,7 @@ export function attentionService(db: Db, serviceOptions: AttentionServiceOptions
       });
 
       const sort = options.sort ?? "activity";
-      if (sort !== "activity" && sort !== "decide") throw badRequest("sort must be 'activity' or 'decide'");
+    if (sort !== "activity" && sort !== "decide") throw badRequest("sort 必须是 activity 或 decide");
       const selectedComparator = sort === "decide"
         ? (left: AttentionItem, right: AttentionItem) => compareDecideItems(left, right, now)
         : compareAttentionItems;
@@ -1902,20 +1902,20 @@ export function attentionService(db: Db, serviceOptions: AttentionServiceOptions
       let nextCursor: string | null;
       if (options.all) {
         if (options.cursor || options.limit !== undefined) {
-          throw badRequest("all cannot be combined with cursor or limit");
+      throw badRequest("all 不能与 cursor 或 limit 同时使用");
         }
         items = rankedItems;
         nextCursor = null;
       } else {
         const limit = options.limit ?? ATTENTION_PAGE_DEFAULT_LIMIT;
         if (!Number.isInteger(limit) || limit < 1 || limit > ATTENTION_PAGE_MAX_LIMIT) {
-          throw badRequest(`limit must be an integer between 1 and ${ATTENTION_PAGE_MAX_LIMIT}`);
+      throw badRequest(`limit 必须是 1 到 ${ATTENTION_PAGE_MAX_LIMIT} 之间的整数`);
         }
         let pageStart = 0;
         if (options.cursor) {
           const cursorItemId = decodeCursor(options.cursor, sort);
           const cursorIndex = rankedItems.findIndex((item) => item.id === cursorItemId);
-          if (cursorIndex < 0) throw badRequest("Attention cursor no longer matches the filtered feed");
+    if (cursorIndex < 0) throw badRequest("注意事项游标已与筛选后的信息流不匹配");
           pageStart = cursorIndex + 1;
         }
         items = rankedItems.slice(pageStart, pageStart + limit);

@@ -963,7 +963,7 @@ describeEmbeddedPostgres("feedbackService.saveIssueVote", () => {
         vote: "up",
         authorUserId: "user-1",
       }),
-    ).rejects.toThrow("Feedback voting is only available on agent-authored issue comments");
+    ).rejects.toThrow("只能对智能体撰写的任务评论进行反馈投票");
   });
 
   it("flushes pending shared traces into configured object storage and marks them sent", async () => {
@@ -1153,7 +1153,7 @@ describeEmbeddedPostgres("feedbackService.saveIssueVote", () => {
     });
     expect(traces[0]?.status).toBe("failed");
     expect(traces[0]?.attemptCount).toBe(1);
-    expect(traces[0]?.failureReason).toBe("Feedback export backend is not configured");
+    expect(traces[0]?.failureReason).toBe("尚未配置反馈导出后端");
     expect(traces[0]?.exportedAt).toBeNull();
   });
 });
