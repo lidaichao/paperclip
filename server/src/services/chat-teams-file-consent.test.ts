@@ -195,7 +195,7 @@ describe("Teams personal file consent foundation", () => {
         endpointId: uuid(99),
         onConsent,
       }),
-    ).toThrow("already installed");
+    ).toThrow("已安装");
     expect(on).toHaveBeenCalledTimes(2);
   });
 
@@ -446,7 +446,7 @@ describe("Teams personal file consent foundation", () => {
     expect(inspect(upload)).not.toContain("PRIVATE-UPLOAD-CANARY");
     expect(() =>
       buildTeamsUploadedFileCard(upload, { kind: "uploaded" }),
-    ).toThrow("not confirmed");
+    ).toThrow("尚未确认");
     const request = vi.fn();
     await expect(
       exchangeTeamsFileUpload({
@@ -457,7 +457,7 @@ describe("Teams personal file consent foundation", () => {
         authorize: async () => {},
         request,
       }),
-    ).rejects.toThrow("binding");
+    ).rejects.toThrow("绑定");
     await expect(
       exchangeTeamsFileUpload({
         upload,
@@ -467,7 +467,7 @@ describe("Teams personal file consent foundation", () => {
         authorize: async () => {},
         request,
       }),
-    ).rejects.toThrow("bytes");
+    ).rejects.toThrow("字节");
     expect(request).not.toHaveBeenCalled();
     await expect(
       upload.exchange("put", Buffer.from("edited"), {
@@ -475,14 +475,14 @@ describe("Teams personal file consent foundation", () => {
         authorize: async () => {},
         request,
       }),
-    ).rejects.toThrow("bytes");
+    ).rejects.toThrow("字节");
     await expect(
       upload.exchange("put", bytes, {
         byteSize: 1,
         authorize: async () => {},
         request,
       }),
-    ).rejects.toThrow("binding");
+    ).rejects.toThrow("绑定");
     expect(request).not.toHaveBeenCalled();
   });
 

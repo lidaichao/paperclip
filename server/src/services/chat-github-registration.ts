@@ -55,7 +55,7 @@ export function githubChatRegistrationService(
     const origin = httpsOrigin(options.publicOrigin());
     const ingress = httpsOrigin(options.webhookOrigin());
     if (!name.trim() || name.length > 34)
-      throw badRequest("Enter an App name with at most 34 characters");
+      throw badRequest("请输入不超过 34 个字符的应用名称");
     const [endpoint] = await db
       .select()
       .from(chatEndpoints)
@@ -66,7 +66,7 @@ export function githubChatRegistrationService(
         ),
       );
     if (!endpoint || endpoint.status === "archived")
-      throw notFound("GitHub bot not found");
+      throw notFound("未找到 GitHub 机器人");
     if (endpoint.botExternalId)
       throw conflict(
         "This bot already has a GitHub App. Reconnect its existing credentials.",
@@ -83,7 +83,7 @@ export function githubChatRegistrationService(
         ),
       );
     if (!member || member.membershipRole === "viewer")
-      throw forbidden("An active company member is required");
+      throw forbidden("需要有效的公司成员身份");
     const [company] = await db
       .select({ issuePrefix: companies.issuePrefix })
       .from(companies)
@@ -161,7 +161,7 @@ export function githubChatRegistrationService(
       !/^[A-Za-z0-9_-]{43}$/.test(state) ||
       !/^[a-zA-Z0-9_-]{1,256}$/.test(code)
     )
-      throw badRequest("Invalid GitHub registration return");
+      throw badRequest("GitHub 注册返回信息无效");
     const origin = httpsOrigin(options.publicOrigin());
     // Claim before exchange. A timeout is intentionally not retried with a
     // new exchange: the recovery UI must start a new single-use registration.
@@ -194,7 +194,7 @@ export function githubChatRegistrationService(
           ),
         );
       if (!member || member.membershipRole === "viewer")
-        throw forbidden("The configuring member no longer has access");
+        throw forbidden("执行配置的成员已无访问权限");
       const app = await githubBotRequest<{
         id?: number;
         pem?: string;

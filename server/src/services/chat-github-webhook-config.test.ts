@@ -114,7 +114,7 @@ describe("GitHub App webhook reconnect", () => {
     async (url) => {
       const fetch = vi.fn(async () => json(config));
       await expect(resync(fetch, url)).rejects.toThrow(
-        "configuration is incomplete",
+        "配置不完整",
       );
       expect(fetch).not.toHaveBeenCalled();
     },

@@ -221,7 +221,7 @@ const context = (row: Row): TeamsFilePrivateContext => ({
   authorityDigest: row.authorityDigest,
 });
 function fail(): never {
-  throw new Error("Teams file transfer authority or state changed");
+  throw new Error("Teams 文件传输权限或状态已变化");
 }
 
 /** Durable protocol only; no runtime registration. Activation supplies project

@@ -379,7 +379,7 @@ suite(
         const before = await f.read();
         await expect(
           f.service().process(f.a.companyId, f.created.id),
-        ).rejects.toThrow("Teams file transfer authority or state changed");
+        ).rejects.toThrow("Teams 文件传输权限或状态已变化");
         expect(await f.read()).toEqual(before);
         expect(f.opts.postConsent).not.toHaveBeenCalled();
         expect(f.opts.uploadRequest).not.toHaveBeenCalled();
@@ -729,7 +729,7 @@ suite(
       ]) {
         await expect(
           restoreTeamsFileConsentBinding({ ...ctx, ...changed }, material),
-        ).rejects.toThrow("Teams private state could not be restored");
+        ).rejects.toThrow("无法恢复 Teams 私有状态");
       }
       const binding = await restoreTeamsFileConsentBinding(ctx, material);
       await expect(

@@ -71,7 +71,7 @@ export function createTeamsFileConsentBinding(
     schema: SCHEMA,
     token: `pcfc_${randomBytes(32).toString("base64url")}`,
   });
-  if (!parsed.success) throw new Error("Invalid Teams file consent binding");
+  if (!parsed.success) throw new Error("Teams 文件授权绑定无效");
   return Object.freeze(parsed.data);
 }
 
@@ -103,7 +103,7 @@ async function sealPrivate(
   value: unknown,
 ): Promise<TeamsFileCiphertext> {
   const parsed = privateContextSchema.safeParse(context);
-  if (!parsed.success) throw new Error("Invalid Teams private state");
+  if (!parsed.success) throw new Error("Teams 私有状态无效");
   try {
     const prepared = await getSecretProvider("local_encrypted").createSecret({
       value: JSON.stringify({
@@ -115,7 +115,7 @@ async function sealPrivate(
     });
     return prepared.material;
   } catch {
-    throw new Error("Teams private state could not be sealed");
+    throw new Error("无法封装 Teams 私有状态");
   }
 }
 
@@ -149,7 +149,7 @@ async function openPrivate(
       throw new Error();
     return envelope.value;
   } catch {
-    throw new Error("Teams private state could not be restored");
+    throw new Error("无法恢复 Teams 私有状态");
   }
 }
 
@@ -163,7 +163,7 @@ export async function sealTeamsFileConsentBinding(
     parsed.companyId !== context.companyId ||
     parsed.endpointId !== context.endpointId
   )
-    throw new Error("Invalid Teams private binding");
+    throw new Error("Teams 私有绑定无效");
   return sealPrivate(context, "binding", parsed);
 }
 
@@ -179,7 +179,7 @@ export async function restoreTeamsFileConsentBinding(
     binding.companyId !== context.companyId ||
     binding.endpointId !== context.endpointId
   )
-    throw new Error("Invalid Teams private binding");
+    throw new Error("Teams 私有绑定无效");
   return binding;
 }
 
@@ -265,7 +265,7 @@ export function teamsFileConsentProgress(phase: TeamsFileConsentPhase) {
 
 export function buildTeamsFileConsentCard(binding: TeamsFileConsentBinding) {
   const validated = parseTeamsFileConsentBinding(binding);
-  if (!validated) throw new Error("Invalid Teams file consent binding");
+  if (!validated) throw new Error("Teams 文件授权绑定无效");
   return {
     contentType: "application/vnd.microsoft.teams.card.file.consent" as const,
     name: validated.filename,
@@ -367,7 +367,7 @@ class UploadCapability {
       context.companyId !== binding.companyId ||
       context.endpointId !== binding.endpointId
     )
-      throw new Error("Invalid Teams upload binding");
+      throw new Error("Teams 上传绑定无效");
     return sealPrivate(context, "upload", {
       bindingDigest: digest(binding),
       info: this.#info,
@@ -384,7 +384,7 @@ class UploadCapability {
       context.companyId !== binding.companyId ||
       context.endpointId !== binding.endpointId
     )
-      throw new Error("Invalid Teams upload binding");
+      throw new Error("Teams 上传绑定无效");
     const value = z
       .object({
         bindingDigest: z.string(),
@@ -401,7 +401,7 @@ class UploadCapability {
       typeof sharePointUrl(value.info.contentUrl, true) === "string" ||
       (value.confirmed && !value.putStarted)
     )
-      throw new Error("Invalid Teams upload state");
+      throw new Error("Teams 上传状态无效");
     const result = new UploadCapability(value.info, binding);
     result.#confirmed = value.confirmed;
     result.#putStarted = value.putStarted;
@@ -411,7 +411,7 @@ class UploadCapability {
     return this.#bindingDigest === digest(binding);
   }
   fileInfo() {
-    if (!this.#confirmed) throw new Error("Teams upload is not confirmed");
+    if (!this.#confirmed) throw new Error("Teams 上传尚未确认");
     return {
       contentType: "application/vnd.microsoft.teams.card.file.info" as const,
       name: this.#info.name,
@@ -428,7 +428,7 @@ class UploadCapability {
       (operation !== "put" && operation !== "status") ||
       options.byteSize !== this.#byteSize
     )
-      throw new Error("Invalid Teams upload binding");
+      throw new Error("Teams 上传绑定无效");
     // The capability is itself a security boundary; calling it directly cannot
     // bypass the outer convenience function's exact-byte checks or mutate a
     // caller-owned Buffer while current authorization is awaited.
@@ -440,7 +440,7 @@ class UploadCapability {
         snapshot.length !== this.#byteSize ||
         createHash("sha256").update(snapshot).digest("hex") !== this.#sha256)
     )
-      throw new Error("Teams upload bytes do not match consent");
+      throw new Error("Teams 上传字节与授权信息不匹配");
     const controller = new AbortController();
     const signal = options.signal
       ? AbortSignal.any([options.signal, controller.signal])
@@ -583,7 +583,7 @@ class ConsentEvent {
       context.companyId !== binding.companyId ||
       context.endpointId !== binding.endpointId
     )
-      throw new Error("Invalid Teams consent scope");
+      throw new Error("Teams 授权范围无效");
     return sealPrivate(context, "response", {
       bindingDigest: digest(binding),
       activityId: this.activityId,
@@ -609,7 +609,7 @@ class ConsentEvent {
       context.companyId !== binding.companyId ||
       context.endpointId !== binding.endpointId
     )
-      throw new Error("Invalid Teams consent scope");
+      throw new Error("Teams 授权范围无效");
     const value = z
       .object({
         bindingDigest: z.string(),
@@ -628,14 +628,14 @@ class ConsentEvent {
       value.bindingDigest !== digest(binding) ||
       (value.action === "decline" && value.upload !== null)
     )
-      throw new Error("Invalid Teams response state");
+      throw new Error("Teams 响应状态无效");
     if (
       value.upload &&
       typeof value.upload !== "string" &&
       (typeof sharePointUrl(value.upload.uploadUrl) === "string" ||
         typeof sharePointUrl(value.upload.contentUrl, true) === "string")
     )
-      throw new Error("Invalid Teams response state");
+      throw new Error("Teams 响应状态无效");
     return new ConsentEvent(
       binding.companyId,
       binding.endpointId,
@@ -713,7 +713,7 @@ export async function sealTeamsFileConsentEvent(
   event: TeamsFileConsentEvent,
 ) {
   if (!consentEventMatches(event, binding))
-    throw new Error("Invalid Teams consent scope");
+    throw new Error("Teams 授权范围无效");
   return event.seal(context, binding);
 }
 export async function restoreTeamsFileConsentEvent(
@@ -724,7 +724,7 @@ export async function restoreTeamsFileConsentEvent(
   try {
     return await ConsentEvent.restore(context, binding, material);
   } catch {
-    throw new Error("Teams response state could not be restored");
+    throw new Error("无法恢复 Teams 响应状态");
   }
 }
 export async function sealTeamsFileUpload(
@@ -733,7 +733,7 @@ export async function sealTeamsFileUpload(
   upload: TeamsFileUploadCapability,
 ) {
   if (!(upload instanceof UploadCapability))
-    throw new Error("Invalid Teams upload state");
+    throw new Error("Teams 上传状态无效");
   return upload.seal(context, binding);
 }
 export async function restoreTeamsFileUpload(
@@ -744,7 +744,7 @@ export async function restoreTeamsFileUpload(
   try {
     return await UploadCapability.restore(context, binding, material);
   } catch {
-    throw new Error("Teams upload state could not be restored");
+    throw new Error("无法恢复 Teams 上传状态");
   }
 }
 
@@ -810,11 +810,11 @@ export function installTeamsFileConsentHook(
     typeof app.on !== "function" ||
     typeof onConsent !== "function"
   )
-    throw new Error("Invalid Teams consent hook configuration");
+    throw new Error("Teams 授权钩子配置无效");
   // Per-App ownership only: no process-global callback registry or credential
   // store. Reinitialization must not silently add duplicate effect callbacks.
   if (Object.hasOwn(app, INSTALLED_HOOK))
-    throw new Error("Teams consent hook already installed");
+    throw new Error("Teams 授权钩子已安装");
   Object.defineProperty(app, INSTALLED_HOOK, { value: true });
   for (const action of ["accept", "decline"] as const)
     app.on(`file.consent.${action}`, async ({ activity }) => {
@@ -972,7 +972,7 @@ export async function exchangeTeamsFileUpload(
     !(input.upload instanceof UploadCapability) ||
     !input.upload.matches(binding)
   )
-    throw new Error("Invalid Teams upload binding");
+    throw new Error("Teams 上传绑定无效");
   const bytes =
     input.operation === "put" && Buffer.isBuffer(input.bytes)
       ? Buffer.from(input.bytes)
@@ -983,7 +983,7 @@ export async function exchangeTeamsFileUpload(
       bytes.length !== binding.byteSize ||
       createHash("sha256").update(bytes).digest("hex") !== binding.sha256)
   )
-    throw new Error("Teams upload bytes do not match consent");
+    throw new Error("Teams 上传字节与授权信息不匹配");
   if (Date.parse(binding.expiresAt) <= Date.now())
     return { kind: "uncertain", reason: "session_unavailable" };
   return input.upload.exchange(input.operation, bytes, {
@@ -999,7 +999,7 @@ export function buildTeamsUploadedFileCard(
   outcome: TeamsUploadOutcome,
 ) {
   if (!(upload instanceof UploadCapability) || outcome.kind !== "uploaded")
-    throw new Error("Teams upload is not confirmed");
+    throw new Error("Teams 上传尚未确认");
   return upload.fileInfo();
 }
 
@@ -1020,7 +1020,7 @@ async function classifyTeamsUploadResponse(
       if (result.done) break;
       length += result.value.length;
       if (length > MAX_RESPONSE_BYTES)
-        throw new Error("Teams upload response too large");
+        throw new Error("Teams 上传响应过大");
       chunks.push(result.value);
     }
     if (

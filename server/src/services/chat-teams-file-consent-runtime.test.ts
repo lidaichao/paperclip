@@ -303,7 +303,7 @@ describe("Teams opt-in file-consent runtime", () => {
       throw new Error("Missing exact upload capability");
     expect(() =>
       buildTeamsUploadedFileCard(decision.upload, { kind: "uploaded" }),
-    ).toThrow("not confirmed");
+    ).toThrow("尚未确认");
     const uploadRequest = vi.fn(
       async () =>
         new Response(

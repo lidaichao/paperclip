@@ -702,7 +702,7 @@ export async function resyncGitHubAppWebhook(input: {
     webhookUrl.hash ||
     !input.webhookSecret
   ) {
-    throw new Error("GitHub webhook configuration is incomplete");
+    throw new Error("GitHub Webhook 配置不完整");
   }
 
   let response: Response;
@@ -743,7 +743,7 @@ export async function resyncGitHubAppWebhook(input: {
   let config: Record<string, unknown>;
   const reader = response.body?.getReader();
   try {
-    if (!reader) throw new Error("Missing webhook configuration response");
+    if (!reader) throw new Error("缺少 Webhook 配置响应");
     const chunks: Uint8Array[] = [];
     let size = 0;
     while (true) {
@@ -751,13 +751,13 @@ export async function resyncGitHubAppWebhook(input: {
       if (chunk.done) break;
       size += chunk.value.byteLength;
       if (size > MAX_CONFIG_RESPONSE_BYTES) {
-        throw new Error("Oversized webhook configuration response");
+        throw new Error("Webhook 配置响应过大");
       }
       chunks.push(chunk.value);
     }
     const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString("utf8"));
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error("Invalid webhook configuration response");
+      throw new Error("Webhook 配置响应无效");
     }
     config = parsed as Record<string, unknown>;
   } catch {
