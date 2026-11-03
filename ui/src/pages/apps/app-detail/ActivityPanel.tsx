@@ -167,32 +167,44 @@ export function humanizeEvent(
   // For Test-tab calls, surface "<User> tested as <Agent>" so prosumer test runs are
   // distinguishable from real heartbeat agent activity in the audit trail (PAP-11415).
   const who = testRunnerLabel
-    ? `${testRunnerLabel} tested as ${agentName ?? "an agent"}`
-    : agentName ?? "An agent";
+    ? l10n("local.tested_as_agent_0f600001", {
+        v0: testRunnerLabel,
+        v1: agentName ?? l10n("local.an_agent_0f600002"),
+      })
+    : agentName ?? l10n("local.an_agent_capital_0f600003");
   // The raw gateway tool name is prefixed (e.g. `mcp.app-gallery-link-…:kv-set`);
   // humanize it to "Kv Set" to match the cross-app Activity view (PAP-11105).
-  const action = event.toolName ? humanizeConnectionDisplayName(event.toolName) : "an action";
+  const action = event.toolName
+    ? humanizeConnectionDisplayName(event.toolName)
+    : l10n("local.an_action_0f600004");
   switch (event.eventType) {
     case "call_completed":
       return {
         primary: event.outcome === "success"
-          ? `${who} used ${action}`
-          : `${who} ran ${action}, but it didn't finish`,
+          ? l10n("local.actor_used_action_0f600005", { v0: who, v1: action })
+          : l10n("local.actor_ran_action_unfinished_0f600006", { v0: who, v1: action }),
       };
     case "call_failed":
-      return { primary: `${action} didn't work for ${lower(who)}` };
+      return {
+        primary: l10n("local.action_failed_for_actor_0f600007", {
+          v0: action,
+          v1: lower(who),
+        }),
+      };
     case "call_denied":
       return {
         primary: testRunnerLabel
-          ? `${who} - ${action} is turned off`
-          : `Blocked ${action} - it isn't turned on`,
+          ? l10n("local.actor_action_turned_off_0f600008", { v0: who, v1: action })
+          : l10n("local.blocked_action_not_enabled_0f600009", { v0: action }),
       };
     case "approval_requested":
-      return { primary: `${who} asked before running ${action}` };
+      return {
+        primary: l10n("local.actor_asked_before_action_0f600010", { v0: who, v1: action }),
+      };
     case "approval_resolved":
       return { primary: humanizeApprovalResolved(action, actionRequest) };
     default:
-      return { primary: `${who} used ${action}` };
+      return { primary: l10n("local.actor_used_action_0f600005", { v0: who, v1: action }) };
   }
 }
 
@@ -200,7 +212,7 @@ function humanizeApprovalResolved(
   action: string,
   actionRequest?: ActivityPanelProps["actionRequests"][string],
 ): string {
-  const resolver = actionRequest?.resolverDisplayName ?? "Someone";
+  const resolver = actionRequest?.resolverDisplayName ?? l10n("local.someone_864c855e");
   if (actionRequest?.status === "approved") return l10n("local.value_approved_value_2f3c0947", {v0: (resolver), v1: (action)});
   if (actionRequest?.status === "rejected") return l10n("local.value_said_no_to_value_7aba9cfd", {v0: (resolver), v1: (action)});
   return l10n("local.value_reviewed_value_8a61f483", {v0: (resolver), v1: (action)});
@@ -212,7 +224,7 @@ function humanizeLifecycleEvent(
   appName: string,
   agentName: string | null,
 ): string {
-  const who = event.actorDisplayName ?? agentName ?? "Someone";
+  const who = event.actorDisplayName ?? agentName ?? l10n("local.someone_864c855e");
   switch (event.type) {
     case "app_connected":
       return l10n("local.value_connected_value_7f21dc36", {v0: (who), v1: (appName)});
@@ -228,7 +240,9 @@ function humanizeLifecycleEvent(
       return humanizeAllowlistChange(who, event.details);
     case "actions_quarantined": {
       const count = numberFrom(event.details?.count);
-      return l10n("local.value_new_value_need_review_e9b65e79", {v0: (count), v1: (count === 1 ? "action" : "actions")});
+      return count === 1
+        ? l10n("local.new_action_needs_review_0f600013", { v0: count })
+        : l10n("local.new_actions_need_review_0f600014", { v0: count });
     }
     default:
       return l10n("local.value_updated_this_app_46d322b4", {v0: (who)});
@@ -239,10 +253,14 @@ function humanizeAllowlistChange(who: string, details: Record<string, unknown> |
   const added = numberFrom(details?.added);
   const removed = numberFrom(details?.removed);
   if (added > 0 && removed === 0) {
-    return l10n("local.value_added_value_value_to_the_allowlist_856215dd", {v0: (who), v1: (added), v2: (added === 1 ? "sheet" : "sheets")});
+    return added === 1
+      ? l10n("local.actor_added_sheet_allowlist_0f600015", { v0: who, v1: added })
+      : l10n("local.actor_added_sheets_allowlist_0f600016", { v0: who, v1: added });
   }
   if (removed > 0 && added === 0) {
-    return l10n("local.value_removed_value_value_from_the_allowlist_e2fa4047", {v0: (who), v1: (removed), v2: (removed === 1 ? "sheet" : "sheets")});
+    return removed === 1
+      ? l10n("local.actor_removed_sheet_allowlist_0f600017", { v0: who, v1: removed })
+      : l10n("local.actor_removed_sheets_allowlist_0f600018", { v0: who, v1: removed });
   }
   if (added > 0 && removed > 0) {
     return l10n("local.value_updated_the_allowlist_added_value_remov_1ac3b195", {v0: (who), v1: (added), v2: (removed)});
@@ -251,7 +269,9 @@ function humanizeAllowlistChange(who: string, details: Record<string, unknown> |
 }
 
 function lifecycleLinkLabel(event: ToolConnectionLifecycleEvent): string {
-  return event.type === "actions_quarantined" ? "Review permissions" : "View permissions";
+  return event.type === "actions_quarantined"
+    ? l10n("local.review_permissions_0f600011")
+    : l10n("local.view_permissions_0f600012");
 }
 
 function numberFrom(value: unknown): number {
@@ -260,7 +280,9 @@ function numberFrom(value: unknown): number {
 }
 
 function lower(who: string): string {
-  return who === "An agent" ? "an agent" : who;
+  return who === l10n("local.an_agent_capital_0f600003")
+    ? l10n("local.an_agent_0f600002")
+    : who;
 }
 
 function dotColor(event: ToolCallEvent): string {

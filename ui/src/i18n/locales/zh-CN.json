@@ -12022,6 +12022,24 @@
     "read_only_mode_0f500006": "只读模式",
     "feature_groups_0f500007": "功能组",
     "individual_tools_0f500008": "单独工具",
-    "response_mode_0f500009": "响应模式"
+    "response_mode_0f500009": "响应模式",
+    "tested_as_agent_0f600001": "{{v0}} 以 {{v1}} 身份测试",
+    "an_agent_0f600002": "某个智能体",
+    "an_agent_capital_0f600003": "某个智能体",
+    "an_action_0f600004": "某个操作",
+    "actor_used_action_0f600005": "{{v0}} 使用了 {{v1}}",
+    "actor_ran_action_unfinished_0f600006": "{{v0}} 运行了 {{v1}}，但未完成",
+    "action_failed_for_actor_0f600007": "{{v0}} 未能为 {{v1}} 正常运行",
+    "actor_action_turned_off_0f600008": "{{v0}} — {{v1}} 已关闭",
+    "blocked_action_not_enabled_0f600009": "已阻止 {{v0}} — 该操作尚未启用",
+    "actor_asked_before_action_0f600010": "{{v0}} 请求在运行 {{v1}} 前确认",
+    "review_permissions_0f600011": "审核权限",
+    "view_permissions_0f600012": "查看权限",
+    "new_action_needs_review_0f600013": "有 {{v0}} 个新操作需要审核",
+    "new_actions_need_review_0f600014": "有 {{v0}} 个新操作需要审核",
+    "actor_added_sheet_allowlist_0f600015": "{{v0}} 向允许列表添加了 {{v1}} 个表格",
+    "actor_added_sheets_allowlist_0f600016": "{{v0}} 向允许列表添加了 {{v1}} 个表格",
+    "actor_removed_sheet_allowlist_0f600017": "{{v0}} 从允许列表移除了 {{v1}} 个表格",
+    "actor_removed_sheets_allowlist_0f600018": "{{v0}} 从允许列表移除了 {{v1}} 个表格"
   }
 }

@@ -12022,6 +12022,24 @@
     "read_only_mode_0f500006": "Read-only mode",
     "feature_groups_0f500007": "Feature groups",
     "individual_tools_0f500008": "Individual tools",
-    "response_mode_0f500009": "Response mode"
+    "response_mode_0f500009": "Response mode",
+    "tested_as_agent_0f600001": "{{v0}} tested as {{v1}}",
+    "an_agent_0f600002": "an agent",
+    "an_agent_capital_0f600003": "An agent",
+    "an_action_0f600004": "an action",
+    "actor_used_action_0f600005": "{{v0}} used {{v1}}",
+    "actor_ran_action_unfinished_0f600006": "{{v0}} ran {{v1}}, but it didn't finish",
+    "action_failed_for_actor_0f600007": "{{v0}} didn't work for {{v1}}",
+    "actor_action_turned_off_0f600008": "{{v0}} - {{v1}} is turned off",
+    "blocked_action_not_enabled_0f600009": "Blocked {{v0}} - it isn't turned on",
+    "actor_asked_before_action_0f600010": "{{v0}} asked before running {{v1}}",
+    "review_permissions_0f600011": "Review permissions",
+    "view_permissions_0f600012": "View permissions",
+    "new_action_needs_review_0f600013": "{{v0}} new action needs review",
+    "new_actions_need_review_0f600014": "{{v0}} new actions need review",
+    "actor_added_sheet_allowlist_0f600015": "{{v0}} added {{v1}} sheet to the allowlist",
+    "actor_added_sheets_allowlist_0f600016": "{{v0}} added {{v1}} sheets to the allowlist",
+    "actor_removed_sheet_allowlist_0f600017": "{{v0}} removed {{v1}} sheet from the allowlist",
+    "actor_removed_sheets_allowlist_0f600018": "{{v0}} removed {{v1}} sheets from the allowlist"
   }
 }
