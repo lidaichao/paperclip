@@ -12284,6 +12284,22 @@
     "remove_unsafe_pattern_before_saving_10300087": "Remove the fetch-and-execute or unsafe pattern before saving.",
     "remove_secret_value_before_saving_10300088": "Remove the secret value before saving.",
     "retry_from_account_with_access_10300089": "Retry from an account with access to this action.",
-    "fix_flagged_issue_and_try_again_10300090": "Fix the flagged issue and try again."
+    "fix_flagged_issue_and_try_again_10300090": "Fix the flagged issue and try again.",
+    "workspace_handoff_not_configured_10300091": "This instance has no workspace login handoff configured, so opening the board falls back to snapshot-local credentials.",
+    "workspace_no_cloned_user_identity_10300092": "Your session has no cloned user to sign in as, so opening the board falls back to snapshot-local credentials.",
+    "workspace_runtime_not_publishing_url_10300093": "No healthy runtime service is publishing a URL for this workspace yet.",
+    "workspace_runtime_url_unusable_10300094": "The runtime row is publishing a URL Alice cannot open.",
+    "cloned_database_not_ready_for_login_10300095": "The cloned database is not ready to accept a login yet.",
+    "isolated_database_not_answering_10300096": "The isolated database is not answering.",
+    "clone_restored_no_data_rows_10300097": "The clone restored no organization or issue rows.",
+    "cloned_product_tables_unreadable_10300098": "The cloned product tables could not be read.",
+    "cloned_user_has_no_active_membership_10300099": "No cloned user has an active organization membership.",
+    "cloned_identity_tables_unreadable_10300100": "The cloned identity tables could not be read.",
+    "workspace_started_without_handoff_key_10300101": "The workspace was started without a login handoff key.",
+    "seed_manifest_unreadable_10300102": "The seed manifest is unreadable, so the restore cannot be trusted.",
+    "last_recorded_phase_10300103": "Last recorded phase: {{v0}}.",
+    "workspace_clone_failed_readiness_contract_10300104": "The workspace is serving, but its clone did not pass the readiness contract.",
+    "alice_is_confirming_clone_10300105": "Alice is still confirming the clone.",
+    "bounded_repair_replaces_isolated_database_10300106": "One bounded repair replaces the isolated database."
   }
 }

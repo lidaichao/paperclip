@@ -12284,6 +12284,22 @@
     "remove_unsafe_pattern_before_saving_10300087": "保存前，请移除获取后执行或其他不安全模式。",
     "remove_secret_value_before_saving_10300088": "保存前，请移除密钥值。",
     "retry_from_account_with_access_10300089": "请使用有权执行此操作的账户重试。",
-    "fix_flagged_issue_and_try_again_10300090": "请修复标记出的问题后重试。"
+    "fix_flagged_issue_and_try_again_10300090": "请修复标记出的问题后重试。",
+    "workspace_handoff_not_configured_10300091": "此实例未配置工作区登录交接，因此打开看板时将改用快照本地凭据。",
+    "workspace_no_cloned_user_identity_10300092": "当前会话没有可用于登录的克隆用户，因此打开看板时将改用快照本地凭据。",
+    "workspace_runtime_not_publishing_url_10300093": "当前没有健康的运行时服务为此工作区提供访问地址。",
+    "workspace_runtime_url_unusable_10300094": "运行时记录提供的地址无法由 Alice 打开。",
+    "cloned_database_not_ready_for_login_10300095": "克隆数据库尚未准备好接受登录。",
+    "isolated_database_not_answering_10300096": "隔离数据库没有响应。",
+    "clone_restored_no_data_rows_10300097": "克隆未恢复任何组织或任务数据。",
+    "cloned_product_tables_unreadable_10300098": "无法读取克隆后的产品数据表。",
+    "cloned_user_has_no_active_membership_10300099": "没有克隆用户拥有有效的组织成员身份。",
+    "cloned_identity_tables_unreadable_10300100": "无法读取克隆后的身份数据表。",
+    "workspace_started_without_handoff_key_10300101": "工作区启动时未配置登录交接密钥。",
+    "seed_manifest_unreadable_10300102": "无法读取种子清单，因此不能信任本次恢复结果。",
+    "last_recorded_phase_10300103": "最后记录的阶段：{{v0}}。",
+    "workspace_clone_failed_readiness_contract_10300104": "工作区正在提供服务，但其克隆未通过就绪校验。",
+    "alice_is_confirming_clone_10300105": "Alice 仍在确认克隆状态。",
+    "bounded_repair_replaces_isolated_database_10300106": "一次受限修复将替换隔离数据库。"
   }
 }
