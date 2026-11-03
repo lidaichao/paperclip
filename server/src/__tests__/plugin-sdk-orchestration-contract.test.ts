@@ -252,6 +252,6 @@ describe("plugin SDK orchestration contract", () => {
 
     await expect(
       harness.ctx.issues.requestWakeup(blockedIssueId, companyId),
-    ).rejects.toThrow("Issue is blocked by unresolved blockers");
+    ).rejects.toThrow("任务被尚未解决的阻塞项阻塞");
   });
 });

@@ -346,7 +346,7 @@ describeEmbeddedPostgres("stale issue execution lock routes", () => {
       .send({ title: "Should fail" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(409);
-    expect(res.body?.error).toBe("Issue run ownership conflict");
+    expect(res.body?.error).toBe("任务运行归属冲突");
   });
 
   it("preserves live checkout ownership on checkout conflicts without retry side effects", async () => {
@@ -383,7 +383,7 @@ describeEmbeddedPostgres("stale issue execution lock routes", () => {
 
     expect(res.status, JSON.stringify(res.body)).toBe(409);
     expect(res.body).toMatchObject({
-      error: "Issue checkout conflict",
+      error: "任务签出冲突",
     });
 
     const row = await db

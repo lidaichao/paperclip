@@ -361,7 +361,7 @@ describe.sequential("plugin scoped API routes", () => {
       status: "in_progress",
       assigneeAgentId: agentId,
     });
-    const conflict = new Error("Issue run ownership conflict") as Error & { status?: number };
+    const conflict = new Error("任务运行归属冲突") as Error & { status?: number };
     conflict.status = 409;
     mockIssueService.assertCheckoutOwner.mockRejectedValue(conflict);
     const { app, workerManager } = await createApp({

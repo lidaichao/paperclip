@@ -3834,7 +3834,7 @@ describe.sequential("issue comment reopen routes", () => {
     });
     const { unprocessable } = await import("../errors.js");
     mockIssueService.update.mockRejectedValue(
-      unprocessable("Issue can only have one assignee"),
+      unprocessable("任务只能有一位负责人"),
     );
 
     const res = await request(

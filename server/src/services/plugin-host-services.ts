@@ -2180,7 +2180,7 @@ export function buildHostServices(
         const relations = await issues.getRelationSummaries(issue.id);
         const unresolvedBlockers = relations.blockedBy.filter((blocker) => blocker.status !== "done");
         if (unresolvedBlockers.length > 0) {
-          throw new Error("Issue is blocked by unresolved blockers");
+          throw new Error("任务被尚未解决的阻塞项阻塞");
         }
         const budgetBlock = await budgets.getInvocationBlock(companyId, issue.assigneeAgentId, {
           issueId: issue.id,
@@ -2248,7 +2248,7 @@ export function buildHostServices(
           const relations = await issues.getRelationSummaries(issue.id);
           const unresolvedBlockers = relations.blockedBy.filter((blocker) => blocker.status !== "done");
           if (unresolvedBlockers.length > 0) {
-            throw new Error("Issue is blocked by unresolved blockers");
+            throw new Error("任务被尚未解决的阻塞项阻塞");
           }
           const budgetBlock = await budgets.getInvocationBlock(companyId, issue.assigneeAgentId, {
             issueId: issue.id,

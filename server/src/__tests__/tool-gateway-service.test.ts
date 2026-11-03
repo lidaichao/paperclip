@@ -416,7 +416,7 @@ describeEmbeddedPostgres("tool gateway service", () => {
     for (const noteId of ["one", "two"]) await expect(gateway.executeTool({ sessionToken: session.token, tool: "mcp-remote-fixture:update_note", parameters: { noteId, body: "reviewed body" } })).rejects.toMatchObject({ reasonCode: "approval_required" });
     const requests = await db.select().from(toolActionRequests);
     expect(requests).toHaveLength(2);
-    await expect(issueService(db).update(issue.id, { status: "done", actorAgentId: agent.id })).rejects.toThrow("waiting for a connection review");
+    await expect(issueService(db).update(issue.id, { status: "done", actorAgentId: agent.id })).rejects.toThrow("正在等待连接审核");
     await db.update(heartbeatRuns).set({ status: "succeeded" }).where(eq(heartbeatRuns.id, run.id));
     await gateway.approveActionRequest({ companyId: company.id, actionRequestId: requests[0].id, actor: { userId: "reviewer" } });
     expect(wakeup).not.toHaveBeenCalled();

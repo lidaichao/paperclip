@@ -672,7 +672,7 @@ describeEmbeddedPostgres("plugin orchestration APIs", () => {
         companyId,
         reason: "mission_advance",
       }),
-    ).rejects.toThrow("Issue is blocked by unresolved blockers");
+    ).rejects.toThrow("任务被尚未解决的阻塞项阻塞");
   });
 
   it("narrows orchestration cost summaries by subtree and billing code", async () => {

@@ -10269,7 +10269,7 @@ export function issueService(db: Db) {
           })
           .from(companies)
           .where(eq(companies.id, companyId));
-        if (!company) throw notFound("Target company not found");
+        if (!company) throw notFound("未找到目标公司");
         const base = Math.max(company.issueCounter ?? 0, currentMax);
         await tx
           .update(companies)
@@ -10371,7 +10371,7 @@ export function issueService(db: Db) {
             }
           }
           if (row.status === "in_progress" && !row.assigneeAgentId) {
-            throw unprocessable("in_progress issues require an assignee");
+            throw unprocessable("进行中的任务必须有负责人");
           }
 
           const projectId = row.projectId ?? null;
@@ -10611,7 +10611,7 @@ export function issueService(db: Db) {
           || data.assigneeUserId || data.conversationAgentId !== undefined || data.conversationUserId !== undefined
           || data.conversationState !== undefined || data.conversationSessionGeneration !== undefined
           || data.conversationBoundaryCommentId !== undefined || data.status === "done" || data.status === "cancelled") {
-          throw unprocessable("Conversation identity is fixed; finish the reply instead of completing or reassigning the conversation");
+          throw unprocessable("会话身份已固定；请完成回复，不要结束会话或重新分配负责人");
         }
       }
 
@@ -10640,7 +10640,7 @@ export function issueService(db: Db) {
           .then((rows: Array<{ id: string }>) => rows[0] ?? null);
         if (externalBinding) {
           throw conflict(
-            "Agent assignment cannot change while this task is bound to an external channel",
+            "任务绑定外部频道时不能更改智能体负责人",
             {
               code: "chat_binding_agent_locked",
               conversationId: externalBinding.id,
@@ -10654,7 +10654,7 @@ export function issueService(db: Db) {
       if (options.bindRuntimeSharedWorkspace) {
         const workspaceId = issueData.executionWorkspaceId ?? existing.executionWorkspaceId;
         if (!workspaceId) {
-          throw unprocessable("Runtime workspace binding requires an existing shared workspace");
+          throw unprocessable("绑定运行时工作区需要已有的共享工作区");
         }
         const [workspace] = await dbOrTx
           .select({ mode: executionWorkspaces.mode })
@@ -10668,7 +10668,7 @@ export function issueService(db: Db) {
           (issueData.executionWorkspacePreference ?? existing.executionWorkspacePreference) !== "reuse_existing" ||
           (issueData.executionWorkspaceSettings ?? existing.executionWorkspaceSettings)?.mode !== "shared_workspace"
         ) {
-          throw unprocessable("Runtime workspace binding requires an existing shared workspace");
+          throw unprocessable("绑定运行时工作区需要已有的共享工作区");
         }
       }
       // Warm sandbox continuity is runtime bookkeeping, independent of the
@@ -10714,14 +10714,14 @@ export function issueService(db: Db) {
           : existing.assigneeUserId;
 
       if (nextAssigneeAgentId && nextAssigneeUserId) {
-        throw unprocessable("Issue can only have one assignee");
+        throw unprocessable("任务只能有一位负责人");
       }
       if (
         patch.status === "in_progress" &&
         !nextAssigneeAgentId &&
         !nextAssigneeUserId
       ) {
-        throw unprocessable("in_progress issues require an assignee");
+        throw unprocessable("进行中的任务必须有负责人");
       }
       if (patch.status === "in_progress") {
         const dependencyReadiness =
@@ -10749,7 +10749,7 @@ export function issueService(db: Db) {
             unresolvedBlockerIssueIds,
             dependencyReadiness?.pendingFinalizeBlockerIssueIds,
           );
-          throw unprocessable("Issue is blocked by unresolved blockers", {
+          throw unprocessable("任务被尚未解决的阻塞项阻塞", {
             unresolvedBlockerIssueIds,
             unresolvedBlockers,
           });
@@ -10894,7 +10894,7 @@ export function issueService(db: Db) {
         if (!receiptExisting) return null;
         if (actorAgentId && patch.status === "done") {
           const [review] = await tx.select({ id: toolActionRequests.id }).from(toolActionRequests).where(and(eq(toolActionRequests.companyId, existing.companyId), eq(toolActionRequests.issueId, id), inArray(toolActionRequests.status, ["pending", "approved", "executing"]))).limit(1);
-          if (review) throw conflict("This task is waiting for a connection review. Finish unrelated work, then yield in_review without retrying the governed call.", { code: "tool_review_pending", actionRequestId: review.id });
+          if (review) throw conflict("此任务正在等待连接审核。请先完成无关工作，然后进入 in_review 状态，不要重试受治理的调用。", { code: "tool_review_pending", actionRequestId: review.id });
         }
 
         const [previousLabelsByIssueId, previousRelationSummaries] = await Promise.all([
@@ -11025,7 +11025,7 @@ export function issueService(db: Db) {
                 if (nativeQuestion) {
                   if (dbOrTx !== db && !postCommitActions) {
                     throw new Error(
-                      "Terminal native question updates in an external transaction require a post-commit action queue",
+                      "在外部事务中更新终态原生问题需要提交后操作队列",
                     );
                   }
                   const runId = await requestNativeQuestionRunCancellation(
@@ -11197,7 +11197,7 @@ export function issueService(db: Db) {
         ) {
           if (dbOrTx !== db && !postCommitActivityPublications) {
             throw new Error(
-              "Human completion in an external transaction requires a post-commit activity queue",
+              "在外部事务中由人工完成任务需要提交后活动队列",
             );
           }
           const now = new Date();
@@ -11308,7 +11308,7 @@ export function issueService(db: Db) {
           // to issues.id stay restricted on purpose.
           if (isForeignKeyViolation(err)) {
             throw conflict(
-              "Issue cannot be deleted because another record still references it.",
+              "其他记录仍在引用此任务，因此无法删除。",
             );
           }
           throw err;
@@ -11348,7 +11348,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, id))
         .then((rows) => rows[0] ?? null);
-      if (!issueCompany) throw notFound("Issue not found");
+      if (!issueCompany) throw notFound("未找到任务");
       await assertAssignableAgent(db, issueCompany.companyId, agentId, {
         kind: "work",
       });
@@ -11366,7 +11366,7 @@ export function issueService(db: Db) {
           activePauseHold,
         ))
       ) {
-        throw conflict("Issue checkout blocked by active subtree pause hold", {
+        throw conflict("任务签出被启用中的子树暂停保留阻止", {
           issueId: id,
           holdId: activePauseHold.holdId,
           rootIssueId: activePauseHold.rootIssueId,
@@ -11397,7 +11397,7 @@ export function issueService(db: Db) {
           unresolvedBlockerIssueIds,
           readiness?.pendingFinalizeBlockerIssueIds,
         );
-        throw unprocessable("Issue is blocked by unresolved blockers", {
+        throw unprocessable("任务被尚未解决的阻塞项阻塞", {
           unresolvedBlockerIssueIds,
           unresolvedBlockers,
         });
@@ -11460,7 +11460,7 @@ export function issueService(db: Db) {
         .where(eq(issues.id, id))
         .then((rows) => rows[0] ?? null);
 
-      if (!current) throw notFound("Issue not found");
+      if (!current) throw notFound("未找到任务");
 
       if (
         current.assigneeAgentId === agentId &&
@@ -11513,7 +11513,7 @@ export function issueService(db: Db) {
             .from(issues)
             .where(eq(issues.id, id))
             .then((rows) => rows[0] ?? null);
-          if (!row) throw notFound("Issue not found");
+          if (!row) throw notFound("未找到任务");
           const [enriched] = await withIssueLabels(db, [row]);
           return enriched;
         }
@@ -11579,12 +11579,12 @@ export function issueService(db: Db) {
           .from(issues)
           .where(eq(issues.id, id))
           .then((rows) => rows[0] ?? null);
-        if (!row) throw notFound("Issue not found");
+        if (!row) throw notFound("未找到任务");
         const [enriched] = await withIssueLabels(db, [row]);
         return enriched;
       }
 
-      throw conflict("Issue checkout conflict", {
+      throw conflict("任务签出冲突", {
         issueId: current.id,
         status: current.status,
         assigneeAgentId: current.assigneeAgentId,
@@ -11614,7 +11614,7 @@ export function issueService(db: Db) {
           .then((rows) => rows[0] ?? null);
       const current = await loadCurrent();
 
-      if (!current) throw notFound("Issue not found");
+      if (!current) throw notFound("未找到任务");
 
       const resolveSameRunOwnership = (candidate: {
         id: string;
@@ -11720,11 +11720,11 @@ export function issueService(db: Db) {
       if (resolved.ownership) return resolved.ownership;
 
       const latest = resolved.latest ?? (await loadCurrent());
-      if (!latest) throw notFound("Issue not found");
+      if (!latest) throw notFound("未找到任务");
       const resolvedLatest = await resolveOwnership(latest);
       if (resolvedLatest.ownership) return resolvedLatest.ownership;
       if (resolvedLatest.latest) {
-        throw conflict("Issue run ownership conflict", {
+        throw conflict("任务运行归属冲突", {
           issueId: resolvedLatest.latest.id,
           status: resolvedLatest.latest.status,
           assigneeAgentId: resolvedLatest.latest.assigneeAgentId,
@@ -11735,7 +11735,7 @@ export function issueService(db: Db) {
         });
       }
 
-      throw conflict("Issue run ownership conflict", {
+      throw conflict("任务运行归属冲突", {
         issueId: latest.id,
         status: latest.status,
         assigneeAgentId: latest.assigneeAgentId,
@@ -11767,7 +11767,7 @@ export function issueService(db: Db) {
           existing.assigneeAgentId &&
           existing.assigneeAgentId !== actorAgentId
         ) {
-          throw conflict("Only assignee can release issue");
+          throw conflict("只有负责人可以释放任务");
         }
         if (
           actorAgentId &&
@@ -11781,7 +11781,7 @@ export function issueService(db: Db) {
             tx,
           );
           if (!stale) {
-            throw conflict("Only checkout run can release issue", {
+            throw conflict("只有签出此任务的运行可以释放任务", {
               issueId: existing.id,
               assigneeAgentId: existing.assigneeAgentId,
               checkoutRunId: existing.checkoutRunId,

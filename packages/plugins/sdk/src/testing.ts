@@ -1664,7 +1664,7 @@ export function createTestHarness(options: TestHarnessOptions): TestHarness {
           record.assigneeAgentId !== input.actorAgentId ||
           (record.checkoutRunId !== null && record.checkoutRunId !== input.actorRunId)
         ) {
-          throw new Error("Issue run ownership conflict");
+          throw new Error("任务运行归属冲突");
         }
         return {
           issueId: record.id,
@@ -1683,7 +1683,7 @@ export function createTestHarness(options: TestHarnessOptions): TestHarness {
           throw new Error(`Issue is not wakeable in status: ${record.status}`);
         }
         const unresolved = issueRelationSummary(issueId).blockedBy.filter((blocker) => blocker.status !== "done");
-        if (unresolved.length > 0) throw new Error("Issue is blocked by unresolved blockers");
+        if (unresolved.length > 0) throw new Error("任务被尚未解决的阻塞项阻塞");
         return { queued: true, runId: randomUUID() };
       },
       async requestWakeups(issueIds, companyId) {
@@ -1697,7 +1697,7 @@ export function createTestHarness(options: TestHarnessOptions): TestHarness {
             throw new Error(`Issue is not wakeable in status: ${record.status}`);
           }
           const unresolved = issueRelationSummary(issueId).blockedBy.filter((blocker) => blocker.status !== "done");
-          if (unresolved.length > 0) throw new Error("Issue is blocked by unresolved blockers");
+          if (unresolved.length > 0) throw new Error("任务被尚未解决的阻塞项阻塞");
           results.push({ issueId, queued: true, runId: randomUUID() });
         }
         return results;
