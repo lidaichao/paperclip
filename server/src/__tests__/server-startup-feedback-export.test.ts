@@ -699,7 +699,7 @@ describe("startServer feedback export wiring", () => {
     }));
 
     await expect(startServer()).rejects.toThrow(
-      "authenticated public deployments require DATABASE_URL or config.database.connectionString",
+      "启用身份验证的公网部署必须设置 DATABASE_URL 或 config.database.connectionString",
     );
     expect(createDbMock).not.toHaveBeenCalled();
   });
@@ -713,7 +713,7 @@ describe("startServer feedback export wiring", () => {
     }));
 
     await expect(startServer()).rejects.toThrow(
-      "authenticated public deployments require DATABASE_URL to be a postgres/postgresql connection string",
+      "启用身份验证的公网部署要求 DATABASE_URL 为 postgres/postgresql 连接字符串",
     );
     expect(createDbMock).not.toHaveBeenCalled();
   });

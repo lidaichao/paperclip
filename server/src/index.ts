@@ -286,7 +286,7 @@ async function startServerWithDatabaseTeardown(
       if (!apply) {
         throw new Error(
           `${label} has pending migrations (${formatPendingMigrationSummary(state.pendingMigrations)}). ` +
-            "Refusing to start against a stale schema. Run pnpm db:migrate or set PAPERCLIP_MIGRATION_AUTO_APPLY=true.",
+            "拒绝使用过期的数据库架构启动。请运行 pnpm db:migrate，或设置 PAPERCLIP_MIGRATION_AUTO_APPLY=true。",
         );
       }
   
@@ -307,7 +307,7 @@ async function startServerWithDatabaseTeardown(
       throw migrationRefusalError(
         state,
         `${label} has pending migrations (${formatPendingMigrationSummary(state.pendingMigrations)}). ` +
-          "Refusing to start against a stale schema. Run pnpm db:migrate or set PAPERCLIP_MIGRATION_AUTO_APPLY=true.",
+          "拒绝使用过期的数据库架构启动。请运行 pnpm db:migrate，或设置 PAPERCLIP_MIGRATION_AUTO_APPLY=true。",
       );
     }
 
@@ -337,12 +337,12 @@ async function startServerWithDatabaseTeardown(
       // real misconfiguration and stays an always-reported Error.
       throw new StartupRefusalError(
         "database-contract-unmet",
-        "authenticated public deployments require DATABASE_URL or config.database.connectionString; refusing embedded PostgreSQL fallback",
+        "启用身份验证的公网部署必须设置 DATABASE_URL 或 config.database.connectionString；拒绝回退到内嵌 PostgreSQL",
       );
     }
     if (!isPostgresConnectionString(config.databaseUrl)) {
       throw new Error(
-        "authenticated public deployments require DATABASE_URL to be a postgres/postgresql connection string",
+        "启用身份验证的公网部署要求 DATABASE_URL 为 postgres/postgresql 连接字符串",
       );
     }
   }
@@ -442,7 +442,7 @@ async function startServerWithDatabaseTeardown(
       EmbeddedPostgres = mod.default as EmbeddedPostgresCtor;
     } catch {
       throw new Error(
-        "Embedded PostgreSQL mode requires dependency `embedded-postgres`. Reinstall dependencies (without omitting required packages), or set DATABASE_URL for external Postgres.",
+        "内嵌 PostgreSQL 模式需要 `embedded-postgres` 依赖。请重新安装依赖（不要省略必需软件包），或设置 DATABASE_URL 以使用外部 PostgreSQL。",
       );
     }
     await prepareEmbeddedPostgresNativeRuntime();
@@ -516,7 +516,7 @@ async function startServerWithDatabaseTeardown(
       port = embeddedPostgresOwnerPort(readFileSync(postmasterPidFile, "utf8"), dataDir, runningPid);
       const actualDataDir = await getPostgresDataDirectory(`postgres://paperclip:paperclip@127.0.0.1:${port}/postgres`);
       if (typeof actualDataDir !== "string" || resolve(actualDataDir) !== resolve(dataDir)) {
-        throw new Error("Refusing to reuse PostgreSQL: its data directory belongs to another instance.");
+        throw new Error("拒绝复用 PostgreSQL：其数据目录属于另一个实例。");
       }
       logger.warn(`Embedded PostgreSQL already running; reusing existing process (pid=${runningPid}, port=${port})`);
     } else {
@@ -527,7 +527,7 @@ async function startServerWithDatabaseTeardown(
           typeof actualDataDir !== "string" ||
           resolve(actualDataDir) !== resolve(dataDir)
         ) {
-          throw new Error("reachable postgres does not use the expected embedded data directory");
+          throw new Error("可访问的 PostgreSQL 未使用预期的内嵌数据目录");
         }
         await ensurePostgresDatabase(configuredAdminConnectionString, "paperclip");
         logger.warn(
@@ -654,24 +654,24 @@ async function startServerWithDatabaseTeardown(
   if (config.deploymentMode === "local_trusted" && !isLoopbackHost(config.host)) {
     throw new Error(
       `local_trusted mode requires loopback host binding (received: ${config.host}). ` +
-        "Use authenticated mode for non-loopback deployments.",
+        "非本机回环地址部署请使用身份验证模式。",
     );
   }
   
   if (config.deploymentMode === "local_trusted" && config.deploymentExposure !== "private") {
-    throw new Error("local_trusted mode only supports private exposure");
+    throw new Error("local_trusted 模式仅支持私有网络暴露");
   }
   
   if (config.deploymentMode === "authenticated") {
     if (config.authBaseUrlMode === "explicit" && !config.authPublicBaseUrl) {
-      throw new Error("auth.baseUrlMode=explicit requires auth.publicBaseUrl");
+      throw new Error("auth.baseUrlMode=explicit 时必须设置 auth.publicBaseUrl");
     }
     if (config.deploymentExposure === "public") {
       if (config.authBaseUrlMode !== "explicit") {
-        throw new Error("authenticated public exposure requires auth.baseUrlMode=explicit");
+        throw new Error("启用身份验证的公网暴露要求 auth.baseUrlMode=explicit");
       }
       if (!config.authPublicBaseUrl) {
-        throw new Error("authenticated public exposure requires auth.publicBaseUrl");
+        throw new Error("启用身份验证的公网暴露要求设置 auth.publicBaseUrl");
       }
     }
   }
@@ -816,7 +816,7 @@ async function startServerWithDatabaseTeardown(
     trigger: InstanceDatabaseBackupTrigger,
   ): Promise<InstanceDatabaseBackupRunResult | null> => {
     if (databaseBackupInFlight) {
-      const message = "Database backup already in progress";
+      const message = "数据库备份正在进行中";
       if (trigger === "scheduled") {
         logger.warn("Skipping scheduled database backup because a previous backup is still running");
         return null;
@@ -890,7 +890,7 @@ async function startServerWithDatabaseTeardown(
       runManualBackup: async () => {
         const result = await runServerDatabaseBackup("manual");
         if (!result) {
-          throw conflict("Database backup already in progress");
+          throw conflict("数据库备份正在进行中");
         }
         return result;
       },
@@ -1862,7 +1862,7 @@ async function startServerWithDatabaseTeardown(
   setStartupRecoveryPhase("ready");
   logger.info(`Server startup recovery complete on ${config.host}:${listenPort}`);
   void systemdNotify(["--ready", `--status=Listening on ${config.host}:${listenPort}`]).then((notified) => {
-    if (notified) logger.info("Notified systemd that Paperclip is ready");
+    if (notified) logger.info("已通知 systemd：Alice 已就绪");
   });
   if (process.env.PAPERCLIP_OPEN_ON_LISTEN === "true") {
     const openHost = config.host === "0.0.0.0" || config.host === "::" ? "127.0.0.1" : config.host;
@@ -1873,7 +1873,7 @@ async function startServerWithDatabaseTeardown(
         logger.info(`Opened browser at ${url}`);
       })
       .catch((err) => {
-        logger.warn({ err, url }, "Failed to open browser on startup");
+        logger.warn({ err, url }, "启动时无法打开浏览器");
       });
   }
   printStartupBanner({
@@ -2069,7 +2069,7 @@ function isMainModule(metaUrl: string): boolean {
 
 if (isMainModule(import.meta.url)) {
   void startServer().catch(async (err) => {
-    logger.error({ err }, "Paperclip server failed to start");
+    logger.error({ err }, "Alice 服务器启动失败");
     // Supervised-transient refusals in managed-cloud deployments are an
     // expected provisioning phase (see startup-refusals.ts) — they log
     // and exit nonzero but do not page Sentry.
