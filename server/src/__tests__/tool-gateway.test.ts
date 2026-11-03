@@ -4326,7 +4326,7 @@ rl.on("line", (line) => {
 
     for (const res of [approve, decline]) {
       expect(res.status).toBe(403);
-      expect(res.body.error).toContain("Viewer access is read-only");
+      expect(res.body.error).toContain("只读成员只能查看，不能修改");
     }
   });
 
@@ -4347,25 +4347,25 @@ rl.on("line", (line) => {
       .get("/api/tool-gateway/runtime-slots")
       .query({ companyId: company.id });
     expect(list.status).toBe(403);
-    expect(list.body.error).toBe("Board access required");
+    expect(list.body.error).toBe("需要看板访问权限");
 
     const stop = await request(app)
       .post("/api/tool-gateway/runtime-slots/slot-1/stop")
       .send({ companyId: company.id });
     expect(stop.status).toBe(403);
-    expect(stop.body.error).toBe("Board access required");
+    expect(stop.body.error).toBe("需要看板访问权限");
 
     const restart = await request(app)
       .post("/api/tool-gateway/runtime-slots/slot-1/restart")
       .send({ companyId: company.id });
     expect(restart.status).toBe(403);
-    expect(restart.body.error).toBe("Board access required");
+    expect(restart.body.error).toBe("需要看板访问权限");
 
     const audit = await request(app)
       .get("/api/tool-gateway/audit")
       .query({ companyId: company.id });
     expect(audit.status).toBe(403);
-    expect(audit.body.error).toBe("Board access required");
+    expect(audit.body.error).toBe("需要看板访问权限");
   });
 
   it("allows board runtime control and audit reads through explicit board permissions", async () => {

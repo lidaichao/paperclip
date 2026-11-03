@@ -44,7 +44,7 @@ describe("assertCompanyAccess", () => {
       },
     });
 
-    expect(() => assertCompanyAccess(req, "company-1")).toThrow("Viewer access is read-only");
+    expect(() => assertCompanyAccess(req, "company-1")).toThrow("只读成员只能查看，不能修改");
   });
 
   it("rejects writes when membership details are present but omit the target company", () => {
@@ -59,7 +59,7 @@ describe("assertCompanyAccess", () => {
       },
     });
 
-    expect(() => assertCompanyAccess(req, "company-1")).toThrow("User does not have active company access");
+    expect(() => assertCompanyAccess(req, "company-1")).toThrow("用户没有有效的公司访问权限");
   });
 
   it("allows legacy board actors that only provide company ids", () => {
@@ -89,7 +89,7 @@ describe("assertCompanyAccess", () => {
       },
     });
 
-    expect(() => assertCompanyAccess(req, "company-1")).toThrow("User does not have access to this company");
+    expect(() => assertCompanyAccess(req, "company-1")).toThrow("用户无权访问此公司");
   });
 
   it("allows local trusted board access without explicit membership", () => {
@@ -236,7 +236,7 @@ describe("hasCompanyAccess", () => {
     });
 
     expect(hasCompanyAccess(req, "company-1")).toBe(false);
-    expect(() => assertCompanyAccess(req, "company-1")).toThrow("User does not have access to this company");
+    expect(() => assertCompanyAccess(req, "company-1")).toThrow("用户无权访问此公司");
   });
 
   it("allows local trusted board access without explicit membership", () => {
@@ -312,6 +312,6 @@ describe("assertBoardOrgAccess", () => {
     });
 
     expect(hasBoardOrgAccess(req)).toBe(false);
-    expect(() => assertBoardOrgAccess(req)).toThrow("Company membership or instance admin access required");
+    expect(() => assertBoardOrgAccess(req)).toThrow("需要公司成员资格或实例管理员权限");
   });
 });

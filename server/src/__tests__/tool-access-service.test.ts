@@ -15972,7 +15972,7 @@ describeEmbeddedPostgres("tool access service", () => {
 
     for (const res of responses) {
       expect(res.status).toBe(403);
-      expect(res.body.error).toContain("Viewer access is read-only");
+      expect(res.body.error).toContain("只读成员只能查看，不能修改");
     }
   });
 
@@ -16174,7 +16174,7 @@ describeEmbeddedPostgres("tool access service", () => {
 
     for (const res of responses) {
       expect(res.status).toBe(403);
-      expect(res.body.error).toContain("Viewer access is read-only");
+      expect(res.body.error).toContain("只读成员只能查看，不能修改");
     }
   });
 

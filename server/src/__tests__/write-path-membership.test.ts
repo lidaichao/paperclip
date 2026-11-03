@@ -140,7 +140,7 @@ describe.sequential("write-path membership checks (viewer / inactive)", () => {
       );
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("Viewer access is read-only");
+      expect(res.body.error).toBe("只读成员只能查看，不能修改");
       expect(mockGoalService.update).not.toHaveBeenCalled();
     });
 
@@ -151,7 +151,7 @@ describe.sequential("write-path membership checks (viewer / inactive)", () => {
       );
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("Viewer access is read-only");
+      expect(res.body.error).toBe("只读成员只能查看，不能修改");
       expect(mockGoalService.remove).not.toHaveBeenCalled();
     });
 
@@ -164,7 +164,7 @@ describe.sequential("write-path membership checks (viewer / inactive)", () => {
       );
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("Viewer access is read-only");
+      expect(res.body.error).toBe("只读成员只能查看，不能修改");
       expect(mockGoalService.create).not.toHaveBeenCalled();
     });
 
@@ -199,7 +199,7 @@ describe.sequential("write-path membership checks (viewer / inactive)", () => {
       );
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("User does not have active company access");
+      expect(res.body.error).toBe("用户没有有效的公司访问权限");
       expect(mockGoalService.update).not.toHaveBeenCalled();
     });
 
@@ -210,7 +210,7 @@ describe.sequential("write-path membership checks (viewer / inactive)", () => {
       );
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("User does not have active company access");
+      expect(res.body.error).toBe("用户没有有效的公司访问权限");
       expect(mockGoalService.remove).not.toHaveBeenCalled();
     });
 
@@ -223,7 +223,7 @@ describe.sequential("write-path membership checks (viewer / inactive)", () => {
       );
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("User does not have active company access");
+      expect(res.body.error).toBe("用户没有有效的公司访问权限");
       expect(mockGoalService.create).not.toHaveBeenCalled();
     });
   });

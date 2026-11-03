@@ -158,13 +158,13 @@ describe("work-record route authorization", () => {
 
   it("keeps viewer access read-only for reconcile/recovery", async () => {
     const app = createApp(viewer);
-    await request(app).post("/api/companies/company-1/projects/project-1/work-records/record-1/reconcile").send({}).expect(403, { error: "Viewer access is read-only" });
+    await request(app).post("/api/companies/company-1/projects/project-1/work-records/record-1/reconcile").send({}).expect(403, { error: "只读成员只能查看，不能修改" });
     expect(service.recoverRecord).not.toHaveBeenCalled();
   });
 
   it("rejects cross-company reads before the service can disclose records", async () => {
     const app = createApp(viewer);
-    await request(app).get("/api/companies/company-2/projects/project-2/work-records").expect(403, { error: "User does not have access to this company" });
+    await request(app).get("/api/companies/company-2/projects/project-2/work-records").expect(403, { error: "用户无权访问此公司" });
     expect(service.list).not.toHaveBeenCalled();
   });
 
@@ -184,7 +184,7 @@ describe("work-record route authorization", () => {
         expectedDependencySetRevision: 1,
         expectedScopeDigest: "viewer-denied",
       })
-      .expect(403, { error: "Viewer access is read-only" });
+      .expect(403, { error: "只读成员只能查看，不能修改" });
     expect(packageService.preview).not.toHaveBeenCalled();
     expect(packageService.prepare).not.toHaveBeenCalled();
   });
@@ -215,7 +215,7 @@ describe("work-record route authorization", () => {
     await request(app)
       .post(`/api/companies/company-1/projects/${projectId}/work-package-dispatch/assignment-gap-escalations`)
       .send({ ...previewBody, clientRequestId: "viewer-gap", requestPayloadDigest: "viewer-gap", expectedScopeDigest: "viewer-scope" })
-      .expect(403, { error: "Viewer access is read-only" });
+      .expect(403, { error: "只读成员只能查看，不能修改" });
     expect(logActivity).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "work_record.assignment_gap_escalated" }));
   });
 
@@ -286,7 +286,7 @@ describe("work-record route authorization", () => {
         reason: "viewer must not write",
         evidenceRefs: [],
       })
-      .expect(403, { error: "Viewer access is read-only" });
+      .expect(403, { error: "只读成员只能查看，不能修改" });
     expect(qualityService.get).toHaveBeenCalledWith("company-1", projectId, recordId);
     expect(qualityService.recordPoVerdict).not.toHaveBeenCalled();
   });
@@ -306,7 +306,7 @@ describe("work-record route authorization", () => {
         expectedRecordRevision: 1,
         expectedAssigneeAgentId: null,
       })
-      .expect(403, { error: "Viewer access is read-only" });
+      .expect(403, { error: "只读成员只能查看，不能修改" });
     expect(service.fillAssignmentGap).not.toHaveBeenCalled();
     expect(logActivity).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       action: "work_record.assignment_command",
@@ -315,7 +315,7 @@ describe("work-record route authorization", () => {
         recordId,
         requestKey: "viewer-assignment-denied",
         outcome: "rejected",
-        error: { status: 403, code: "http_error" },
+        error: expect.objectContaining({ status: 403, code: "http_error" }),
       }),
     }));
   });

@@ -337,7 +337,7 @@ describe.sequential("company route cross-company authorization", () => {
     const res = await buildRequest(app);
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toMatch(/another company|access to this company|active company access/i);
+    expect(res.body.error).toMatch(/其他公司|无权访问此公司|有效的公司访问权限/);
     assertNoTargetMutationSideEffects();
   });
 
@@ -354,17 +354,17 @@ describe.sequential("company route cross-company authorization", () => {
 
     const archive = await request(app).post(`/api/companies/${companyAId}/archive`).send({});
     expect(archive.status).toBe(403);
-    expect(archive.body.error).toContain("Board access required");
+    expect(archive.body.error).toContain("需要看板访问权限");
     const remove = await request(app).delete(`/api/companies/${companyAId}`);
     expect(remove.status).toBe(403);
-    expect(remove.body.error).toContain("Board access required");
+    expect(remove.body.error).toContain("需要看板访问权限");
   });
 
   it("covers board actor access for non-member, viewer, active member, local trusted board, and instance admin without target membership", async () => {
     const nonMemberApp = await createApp(boardActor({ userId: "outsider" }));
     const nonMember = await request(nonMemberApp).get(`/api/companies/${companyBId}`);
     expect(nonMember.status).toBe(403);
-    expect(nonMember.body.error).toContain("access to this company");
+    expect(nonMember.body.error).toContain("无权访问此公司");
 
     vi.clearAllMocks();
     resetMockDefaults();
@@ -376,7 +376,7 @@ describe.sequential("company route cross-company authorization", () => {
     await request(viewerApp).get(`/api/companies/${companyBId}`).expect(200);
     const viewerWrite = await request(viewerApp).patch(`/api/companies/${companyBId}`).send({ description: "Nope" });
     expect(viewerWrite.status).toBe(403);
-    expect(viewerWrite.body.error).toContain("Viewer access is read-only");
+    expect(viewerWrite.body.error).toContain("只读成员只能查看，不能修改");
     expect(mockCompanyService.update).not.toHaveBeenCalled();
     expect(mockLogActivity).not.toHaveBeenCalled();
 
@@ -414,10 +414,10 @@ describe.sequential("company route cross-company authorization", () => {
     }));
     const adminRead = await request(adminWithoutMembershipApp).get(`/api/companies/${companyBId}`);
     expect(adminRead.status).toBe(403);
-    expect(adminRead.body.error).toContain("access to this company");
+    expect(adminRead.body.error).toContain("无权访问此公司");
     const adminWrite = await request(adminWithoutMembershipApp).patch(`/api/companies/${companyBId}`).send({ description: "Admin" });
     expect(adminWrite.status).toBe(403);
-    expect(adminWrite.body.error).toContain("access to this company");
+    expect(adminWrite.body.error).toContain("无权访问此公司");
     assertNoTargetMutationSideEffects();
   });
 });

@@ -215,7 +215,7 @@ describe("environment instance routes", () => {
     const res = await request(app).get("/api/companies/company-1/environments");
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Board access required");
+    expect(res.body.error).toContain("需要看板访问权限");
   });
 
   it("rejects non-admin signed-in board members from mutating instance environments", async () => {

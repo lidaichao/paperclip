@@ -527,7 +527,7 @@ describe.sequential("company portability routes", () => {
       ]) {
         const res = await request(app).post(path).send(exportRequest);
         expect(res.status, `${path}: ${JSON.stringify(res.body)}`).toBe(403);
-        expect(res.body.error).toMatch(/Instance admin|Board access/);
+        expect(res.body.error).toMatch(/实例管理员|看板访问权限/);
       }
     }
 
@@ -668,7 +668,7 @@ describe.sequential("company portability routes", () => {
       const res = await request(app).post(path).send(exportRequest);
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toContain("another company");
+      expect(res.body.error).toContain("不能访问其他公司");
     }
     expect(mockCompanyPortabilityService.exportBundle).not.toHaveBeenCalled();
     expect(mockCompanyPortabilityService.previewExport).not.toHaveBeenCalled();
@@ -717,7 +717,7 @@ describe.sequential("company portability routes", () => {
       });
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toContain("another company");
+      expect(res.body.error).toContain("不能访问其他公司");
     }
     expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
     expect(mockCompanyPortabilityService.importBundle).not.toHaveBeenCalled();
@@ -769,7 +769,7 @@ describe.sequential("company portability routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Board access required");
+    expect(res.body.error).toContain("需要看板访问权限");
   });
 
   it.sequential("keeps global import preview board-only before validating request shape", async () => {
@@ -786,7 +786,7 @@ describe.sequential("company portability routes", () => {
       .send({ target: { mode: "existing_company", companyId: "not-a-uuid" } });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Board access required");
+    expect(res.body.error).toContain("需要看板访问权限");
     expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
   });
 
@@ -809,7 +809,7 @@ describe.sequential("company portability routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Instance admin");
+    expect(res.body.error).toContain("需要实例管理员权限");
     expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
   });
 
@@ -919,7 +919,7 @@ describe.sequential("company portability routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Instance admin");
+    expect(res.body.error).toContain("需要实例管理员权限");
     expect(mockCompanyPortabilityService.importBundle).not.toHaveBeenCalled();
   });
 
@@ -1236,7 +1236,7 @@ describe.sequential("company portability routes", () => {
     const res = await request(app).get("/api/companies/import/jobs/import-does-not-exist");
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Board access required");
+    expect(res.body.error).toContain("需要看板访问权限");
   });
 
   it.sequential("returns 404 for an unknown import job id", async () => {

@@ -31,7 +31,7 @@ export function assertAuthenticated(req: Request) {
 
 export function assertBoard(req: Request) {
   if (req.actor.type !== "board") {
-    throw forbidden("Board access required");
+    throw forbidden("需要看板访问权限");
   }
 }
 
@@ -50,7 +50,7 @@ export function assertBoardOrgAccess(req: Request) {
   if (hasBoardOrgAccess(req)) {
     return;
   }
-  throw forbidden("Company membership or instance admin access required");
+  throw forbidden("需要公司成员资格或实例管理员权限");
 }
 
 export function assertBoardOrAgent(req: Request) {
@@ -61,7 +61,7 @@ export function assertBoardOrAgent(req: Request) {
     assertBoardOrgAccess(req);
     return;
   }
-  throw forbidden("Board or agent access required");
+  throw forbidden("需要看板或智能体访问权限");
 }
 
 export function assertInstanceAdmin(req: Request) {
@@ -69,13 +69,13 @@ export function assertInstanceAdmin(req: Request) {
   if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) {
     return;
   }
-  throw forbidden("Instance admin access required");
+  throw forbidden("需要实例管理员权限");
 }
 
 export function assertCompanyAccess(req: Request, companyId: string) {
   assertAuthenticated(req);
   if (req.actor.type === "agent" && req.actor.companyId !== companyId) {
-    throw forbidden("Agent key cannot access another company");
+    throw forbidden("智能体密钥不能访问其他公司");
   }
   if (req.actor.type === "agent" && req.actor.onBehalfOfUserId?.trim()) {
     const membership = req.actor.onBehalfOfMemberships?.find(
@@ -86,7 +86,7 @@ export function assertCompanyAccess(req: Request, companyId: string) {
         req,
         companyId,
         "RESPONSIBLE_USER_UNAVAILABLE",
-        "Responsible user is unavailable for this company",
+        "责任用户在此公司中不可用",
       );
       return;
     }
@@ -97,24 +97,24 @@ export function assertCompanyAccess(req: Request, companyId: string) {
         req,
         companyId,
         "RESPONSIBLE_USER_UNAUTHORIZED",
-        "Responsible user is not authorized for write access",
+        "责任用户无权执行写入操作",
       );
     }
   }
   if (req.actor.type === "board" && req.actor.source !== "local_implicit") {
     const allowedCompanies = req.actor.companyIds ?? [];
     if (!allowedCompanies.includes(companyId)) {
-      throw forbidden("User does not have access to this company");
+      throw forbidden("用户无权访问此公司");
     }
     const method = typeof req.method === "string" ? req.method.toUpperCase() : "GET";
     const isSafeMethod = ["GET", "HEAD", "OPTIONS"].includes(method);
     if (!isSafeMethod && !req.actor.isInstanceAdmin && Array.isArray(req.actor.memberships)) {
       const membership = req.actor.memberships.find((item) => item.companyId === companyId);
       if (!membership || membership.status !== "active") {
-        throw forbidden("User does not have active company access");
+        throw forbidden("用户没有有效的公司访问权限");
       }
       if (membership.membershipRole === "viewer") {
-        throw forbidden("Viewer access is read-only");
+        throw forbidden("只读成员只能查看，不能修改");
       }
     }
   }

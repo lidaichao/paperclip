@@ -1354,7 +1354,7 @@ describe("environment routes", () => {
     const res = await request(app).get("/api/companies/company-1/environments");
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Board access required");
+    expect(res.body.error).toContain("需要看板访问权限");
     expect(mockEnvironmentService.list).not.toHaveBeenCalled();
   });
 
@@ -1378,7 +1378,7 @@ describe("environment routes", () => {
     const res = await request(app).get("/api/environments/env-1");
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Board access required");
+    expect(res.body.error).toContain("需要看板访问权限");
   });
 
   it("creates an environment and logs activity", async () => {
@@ -2666,7 +2666,7 @@ describe("environment routes", () => {
     const res = await request(app).get("/api/companies/company-1/environments");
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Board access required");
+    expect(res.body.error).toContain("需要看板访问权限");
     expect(mockEnvironmentService.list).not.toHaveBeenCalled();
   });
 

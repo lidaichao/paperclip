@@ -887,6 +887,6 @@ describe("company artifacts route authorization", () => {
     const res = await request(app).get("/api/companies/company-denied/artifacts");
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("Agent key cannot access another company");
+    expect(res.body.error).toBe("智能体密钥不能访问其他公司");
   });
 });
