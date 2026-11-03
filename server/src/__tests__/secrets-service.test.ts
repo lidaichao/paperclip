@@ -1303,7 +1303,7 @@ describeEmbeddedPostgres("secretService", () => {
       actorSource: "agent_key",
       heartbeatRunId,
       registerForRedaction,
-    })).rejects.toThrow(/run-bound agent token/i);
+    })).rejects.toThrow(/绑定运行记录的智能体令牌/);
 
     await expect(svc.resolveSecretValueForAgentAccess(companyId, secret.id, "latest", {
       agentId,
@@ -1320,7 +1320,7 @@ describeEmbeddedPostgres("secretService", () => {
       actorSource: "agent_jwt",
       heartbeatRunId: randomUUID(),
       registerForRedaction,
-    })).rejects.toThrow(/verified heartbeat run/i);
+    })).rejects.toThrow(/已验证的心跳运行记录/);
 
     await expect(svc.resolveSecretValueForAgentAccess(companyId, secret.id, "latest", {
       agentId,
@@ -1328,21 +1328,21 @@ describeEmbeddedPostgres("secretService", () => {
       actorSource: "agent_jwt",
       heartbeatRunId,
       registerForRedaction,
-    })).rejects.toThrow(/not granted/i);
+    })).rejects.toThrow(/未获得密钥访问权限/);
 
     await db.update(heartbeatRuns).set({ status: "succeeded" }).where(eq(heartbeatRuns.id, heartbeatRunId));
     await expect(svc.listAgentSecretAccess(companyId, {
       agentId,
       actorSource: "agent_jwt",
       heartbeatRunId,
-    })).rejects.toThrow(/verified heartbeat run/i);
+    })).rejects.toThrow(/已验证的心跳运行记录/);
     await expect(svc.resolveSecretValueForAgentAccess(companyId, secret.id, "latest", {
       agentId,
       configPath: "access.GRANTED",
       actorSource: "agent_jwt",
       heartbeatRunId,
       registerForRedaction,
-    })).rejects.toThrow(/verified heartbeat run/i);
+    })).rejects.toThrow(/已验证的心跳运行记录/);
 
     expect(registerForRedaction).not.toHaveBeenCalled();
     const events = await svc.listAccessEvents(companyId, secret.id);

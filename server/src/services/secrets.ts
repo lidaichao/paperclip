@@ -1359,10 +1359,10 @@ export function secretService(db: Db | DbTransaction) {
     const bindingContext = options?.bindingContext;
     const accessContext = options?.accessContext ?? bindingContext;
     const secret = await getById(secretId);
-    if (!secret) throw notFound("Secret not found");
-    if (secret.companyId !== companyId) throw unprocessable("Secret must belong to same company");
+    if (!secret) throw notFound("未找到密钥");
+    if (secret.companyId !== companyId) throw unprocessable("密钥必须属于同一公司");
     if (secret.scope !== "company" && !options?.allowUserSecretScope) {
-      throw unprocessable("User-scoped secrets must be resolved through user secret declarations", {
+      throw unprocessable("用户范围的密钥必须通过用户密钥声明解析", {
         code: "secret_scope_invalid",
       });
     }
@@ -1371,16 +1371,16 @@ export function secretService(db: Db | DbTransaction) {
     const configPath = accessContext?.configPath ?? null;
     try {
       if (secret.status === "deleted") {
-        throw new HttpError(404, "Secret not found", { code: "secret_deleted" });
+        throw new HttpError(404, "未找到密钥", { code: "secret_deleted" });
       }
       if (secret.status !== "active") {
-        throw unprocessable("Secret is not active", { code: "secret_inactive" });
+        throw unprocessable("密钥未处于活动状态", { code: "secret_inactive" });
       }
       const binding = await assertBindingContext(companyId, secret.id, bindingContext);
       const versionRow = await getSecretVersion(secret.id, resolvedVersion);
-      if (!versionRow) throw new HttpError(404, "Secret version not found", { code: "version_missing" });
+      if (!versionRow) throw new HttpError(404, "未找到密钥版本", { code: "version_missing" });
       if (versionRow.status === "disabled" || versionRow.status === "destroyed" || versionRow.revokedAt) {
-        throw unprocessable("Secret version is not active", { code: "version_inactive" });
+        throw unprocessable("密钥版本未处于活动状态", { code: "version_inactive" });
       }
       const provider = getSecretProvider(providerId);
       const providerConfig = await getSelectableRuntimeProviderConfig({
@@ -1479,13 +1479,13 @@ export function secretService(db: Db | DbTransaction) {
     context: SecretConsumerContext,
   ): Promise<string> {
     if (context.consumerType !== "system" || context.consumerId !== "environment-probe-config") {
-      throw forbidden("Ephemeral secret resolution is limited to draft environment probes");
+      throw forbidden("临时密钥解析仅限环境草稿探测");
     }
     if (
       (context.actorType !== "agent" && context.actorType !== "user") ||
       !context.actorId?.trim()
     ) {
-      throw forbidden("Ephemeral secret resolution requires an authenticated actor");
+      throw forbidden("临时密钥解析需要已验证身份的操作方");
     }
     const actor =
       context.actorType === "agent"
@@ -1590,13 +1590,13 @@ export function secretService(db: Db | DbTransaction) {
     context: AgentSecretReadContext,
   ): Promise<{ value: string; version: number }> {
     if (context.actorSource !== "agent_jwt") {
-      throw forbidden("Agent secret access requires a run-bound agent token");
+      throw forbidden("智能体密钥访问需要绑定运行记录的智能体令牌");
     }
     if (!isUuidLike(context.heartbeatRunId)) {
-      throw forbidden("Agent secret access requires a verified heartbeat run");
+      throw forbidden("智能体密钥访问需要已验证的心跳运行记录");
     }
     if (!context.configPath.startsWith("env.") && !context.configPath.startsWith(AGENT_ACCESS_CONFIG_PATH_PREFIX)) {
-      throw forbidden("Secret access is not granted for this binding path");
+      throw forbidden("此绑定路径未获得密钥访问权限");
     }
     assertSecretBindingConfigPath({ targetType: "agent", configPath: context.configPath });
 
@@ -1611,7 +1611,7 @@ export function secretService(db: Db | DbTransaction) {
       ))
       .then((rows) => rows[0] ?? null);
     if (!run) {
-      throw forbidden("Agent secret access requires a verified heartbeat run");
+      throw forbidden("智能体密钥访问需要已验证的心跳运行记录");
     }
 
     const decision = await authorization.decide({
@@ -1653,7 +1653,7 @@ export function secretService(db: Db | DbTransaction) {
           eq(companySecretBindings.configPath, context.configPath),
         ))
         .then((rows) => rows[0] ?? null);
-      if (!binding) throw forbidden("Secret access is not granted for this agent");
+      if (!binding) throw forbidden("此智能体未获得密钥访问权限");
 
       const runContext = asRecord(run.contextSnapshot) ?? {};
       const manifest = (asRecord(runContext.paperclipSecrets) ?? {}).manifest;
@@ -1667,7 +1667,7 @@ export function secretService(db: Db | DbTransaction) {
       );
       const isDirectAgentBinding = binding.targetType === "agent" && binding.targetId === context.agentId;
       if (!isDirectAgentBinding && !manifestBindingIds.has(binding.id)) {
-        throw forbidden("Secret access is not granted for this agent run");
+        throw forbidden("此智能体运行未获得密钥访问权限");
       }
       bindingContext = {
         ...bindingContext,
@@ -1743,7 +1743,7 @@ export function secretService(db: Db | DbTransaction) {
         },
       }).catch(() => undefined);
       if (errorCode === "binding_missing" || errorCode === "secret_scope_invalid") {
-        throw forbidden("Secret access is not granted for this agent");
+        throw forbidden("此智能体未获得密钥访问权限");
       }
       throw error;
     }
@@ -1754,7 +1754,7 @@ export function secretService(db: Db | DbTransaction) {
     context: Omit<AgentSecretReadContext, "configPath" | "bindingId" | "registerForRedaction">,
   ): Promise<AgentSecretAccessEntry[]> {
     if (context.actorSource !== "agent_jwt" || !isUuidLike(context.heartbeatRunId)) {
-      throw forbidden("Agent secret access requires a run-bound agent token");
+      throw forbidden("智能体密钥访问需要绑定运行记录的智能体令牌");
     }
     const run = await db
       .select({ contextSnapshot: heartbeatRuns.contextSnapshot })
@@ -1766,7 +1766,7 @@ export function secretService(db: Db | DbTransaction) {
         eq(heartbeatRuns.status, "running"),
       ))
       .then((rows) => rows[0] ?? null);
-    if (!run) throw forbidden("Agent secret access requires a verified heartbeat run");
+    if (!run) throw forbidden("智能体密钥访问需要已验证的心跳运行记录");
 
     const decision = await authorization.decide({
       actor: {
@@ -1862,20 +1862,20 @@ export function secretService(db: Db | DbTransaction) {
     context?: SecretBindingContext,
   ): Promise<number> {
     const secret = await getById(secretId);
-    if (!secret) throw notFound("Secret not found");
-    if (secret.companyId !== companyId) throw unprocessable("Secret must belong to same company");
+    if (!secret) throw notFound("未找到密钥");
+    if (secret.companyId !== companyId) throw unprocessable("密钥必须属于同一公司");
     const resolvedVersion = version === "latest" ? secret.latestVersion : version;
     if (secret.status === "deleted") {
-      throw new HttpError(404, "Secret not found", { code: "secret_deleted" });
+      throw new HttpError(404, "未找到密钥", { code: "secret_deleted" });
     }
     if (secret.status !== "active") {
-      throw unprocessable("Secret is not active", { code: "secret_inactive" });
+      throw unprocessable("密钥未处于活动状态", { code: "secret_inactive" });
     }
     await assertBindingContext(companyId, secret.id, context);
     const versionRow = await getSecretVersion(secret.id, resolvedVersion);
-    if (!versionRow) throw new HttpError(404, "Secret version not found", { code: "version_missing" });
+    if (!versionRow) throw new HttpError(404, "未找到密钥版本", { code: "version_missing" });
     if (versionRow.status === "disabled" || versionRow.status === "destroyed" || versionRow.revokedAt) {
-      throw unprocessable("Secret version is not active", { code: "version_inactive" });
+      throw unprocessable("密钥版本未处于活动状态", { code: "version_inactive" });
     }
     return resolvedVersion;
   }
