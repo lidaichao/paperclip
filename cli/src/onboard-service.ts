@@ -96,12 +96,12 @@ export async function handoffToOnboardedService(
   const deps = { ...defaultDashboardDependencies, ...dependencies };
   const runtime = await deps.waitUntilReady();
   const dashboardUrl = resolveOnboardServiceDashboardUrl(config, runtime);
-  deps.info(`Paperclip dashboard: ${pc.cyan(dashboardUrl)}`);
+  deps.info(`Alice 仪表盘：${pc.cyan(dashboardUrl)}`);
 
   if (!runtime) {
     deps.warn(
-      `The background service started, but the dashboard is not ready yet. ` +
-        `Open ${dashboardUrl} after checking \`paperclipai service logs\`.`,
+      `后台服务已启动，但仪表盘尚未就绪。` +
+        `请先通过 \`paperclipai service logs\` 检查日志，再打开 ${dashboardUrl}。`,
     );
     return;
   }
@@ -109,9 +109,9 @@ export async function handoffToOnboardedService(
   if (!deps.isInteractive() || envDisablesBrowser()) return;
 
   if (await deps.openDashboard(dashboardUrl)) {
-    deps.success("Sent the Paperclip dashboard to your browser.");
+    deps.success("已在浏览器中打开 Alice 仪表盘。");
   } else {
-    deps.warn(`Could not open a browser automatically. Open ${dashboardUrl} manually.`);
+    deps.warn(`无法自动打开浏览器，请手动访问 ${dashboardUrl}。`);
   }
 }
 
@@ -148,7 +148,7 @@ const defaultDependencies: OnboardServiceDependencies = {
       return {
         ok: false,
         installedNow: false,
-        reason: `no executable exists at ${shimPath} (PAPERCLIP_SHIM_PATH), and it is outside the managed install store`,
+        reason: `${shimPath}（PAPERCLIP_SHIM_PATH）不存在可执行文件，且该路径不在托管安装目录中`,
       };
     }
     let manifest: InstallManifest | null = null;
@@ -169,8 +169,8 @@ const defaultDependencies: OnboardServiceDependencies = {
           ok: false,
           installedNow: false,
           reason:
-            `this build reports version ${packageVersion}, which is not an installable release; ` +
-            "run `paperclipai install` (or `paperclipai install --repo <repo> --ref <ref>` for source builds) first",
+            `当前构建报告的版本为 ${packageVersion}，不是可安装的发布版本；` +
+            "请先运行 `paperclipai install`（源码构建请运行 `paperclipai install --repo <repo> --ref <ref>`）",
         };
       }
     } catch (error) {
@@ -186,19 +186,19 @@ const defaultDependencies: OnboardServiceDependencies = {
     return {
       ok: false,
       installedNow: false,
-      reason: `the managed install completed but no executable shim appeared at ${shimPath}`,
+      reason: `托管安装已完成，但 ${shimPath} 未生成可执行入口`,
     };
   },
   confirm: async () => {
     const answer = await p.confirm({
-      message: "Install Paperclip as a background service?",
+      message: "是否将 Alice 安装为后台服务？",
       initialValue: true,
     });
     return !p.isCancel(answer) && answer === true;
   },
   confirmLinger: async () => {
     const answer = await p.confirm({
-      message: "Allow Paperclip to keep running after logout? This may request system authorization.",
+      message: "是否允许 Alice 在注销后继续运行？此操作可能需要系统授权。",
       initialValue: false,
     });
     return !p.isCancel(answer) && answer === true;
@@ -220,7 +220,7 @@ export async function handleOnboardService(
   const canPrompt = options.yes !== true && deps.isInteractive();
   if (!explicitlyRequested && !canPrompt) {
     deps.info(
-      "Background service not installed. Use `paperclipai onboard --install-service` or `paperclipai service install` to opt in.",
+      "未安装后台服务。如需启用，请运行 `paperclipai onboard --install-service` 或 `paperclipai service install`。",
     );
     return false;
   }
@@ -241,20 +241,20 @@ export async function handleOnboardService(
   const shim = await deps.ensureServiceShim();
   if (!shim.ok) {
     deps.warn(
-      `Background service not installed: ${shim.reason ?? "the managed install could not be completed"}. ` +
-        "Run `paperclipai install`, then `paperclipai service install`.",
+      `后台服务未安装：${shim.reason ?? "无法完成托管安装"}。` +
+        "请先运行 `paperclipai install`，再运行 `paperclipai service install`。",
     );
     return false;
   }
   if (shim.installedNow) {
-    deps.success("Installed the managed paperclipai payload and command shim for the service.");
+    deps.success("已为服务安装托管的 paperclipai 程序和命令入口。");
   }
 
   await detection.manager.install({ startNow: true, startOnLogin: true });
   if (!explicitlyRequested && detection.manager.enableLinger && await deps.confirmLinger()) {
     await detection.manager.enableLinger();
   }
-  deps.success(`Installed and started ${detection.manager.serviceName}.`);
+  deps.success(`已安装并启动 ${detection.manager.serviceName}。`);
   return true;
 }
 

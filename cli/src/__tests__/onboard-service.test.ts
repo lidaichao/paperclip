@@ -129,7 +129,7 @@ describe("onboard service policy", () => {
 
     expect(installed).toBe(true);
     expect(ensureServiceShim).toHaveBeenCalledOnce();
-    expect(success).toHaveBeenCalledWith(expect.stringContaining("managed paperclipai payload"));
+    expect(success).toHaveBeenCalledWith(expect.stringContaining("托管的 paperclipai 程序"));
     expect(detection.manager.install).toHaveBeenCalledWith({ startNow: true, startOnLogin: true });
   });
 
@@ -227,7 +227,7 @@ describe("onboarded service dashboard handoff", () => {
 
     expect(waitUntilReady).toHaveBeenCalledOnce();
     expect(openDashboard).toHaveBeenCalledWith("http://127.0.0.1:3101");
-    expect(success).toHaveBeenCalledWith(expect.stringContaining("Sent"));
+    expect(success).toHaveBeenCalledWith(expect.stringContaining("已在浏览器中打开 Alice 仪表盘"));
   });
 
   it("keeps the manual link and warns when service health does not become ready", async () => {
