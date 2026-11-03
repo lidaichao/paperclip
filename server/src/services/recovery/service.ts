@@ -2488,37 +2488,37 @@ export function recoveryService(
         : { routingPolicy: STRANDED_BOARD_ESCALATION_POLICY },
       nextAction:
         recoveryCause === SUCCESSFUL_RUN_MISSING_STATE_REASON
-          ? "Board operator: inspect the run evidence, then explicitly choose a valid issue disposition, retry the original owner, reassign, or intentionally resolve the task."
+          ? "团队操作员：检查运行证据，然后明确选择有效的任务处理方式、重试原负责人、重新分配，或主动结束任务。"
           : recoveryCause === "process_lost"
-            ? "Board operator: inspect the retry history, then explicitly retry the original owner, reassign, or intentionally resolve the task."
+            ? "团队操作员：检查重试历史，然后明确重试原负责人、重新分配，或主动结束任务。"
             : recoveryCause === "provider_quota"
-              ? "Wait for provider quota recovery, then retry the original assignee; do not wake a takeover owner."
+              ? "等待服务提供商额度恢复，然后重试原负责人；不要唤醒接管负责人。"
               : recoveryCause === "codex_output_inactivity_monitor"
-                ? "Board operator: inspect the inactivity evidence, then explicitly retry the original owner, reassign, or intentionally resolve the task."
+                ? "团队操作员：检查无活动证据，然后明确重试原负责人、重新分配，或主动结束任务。"
                 : recoveryCause === "workspace_validation_failed"
                   ? readWorkspaceValidationPayload(input.latestRun)?.reason ===
                     "git_worktree_branch_incoherence"
-                    ? "Board operator: repair the source task git worktree branch incoherence or choose a new execution workspace, then explicitly retry or reassign."
+                    ? "团队操作员：修复来源任务 Git 工作树的分支不一致问题，或选择新的执行工作区，然后明确重试或重新分配。"
                     : readWorkspaceValidationPayload(input.latestRun)
                           ?.reason ===
                         "git_worktree_base_materialization_failed"
-                      ? "Board operator: repair the project workspace repository URL or clone access, or configure a local checkout cwd, then explicitly retry or reassign."
-                      : "Board operator: repair the source task workspace link, project workspace cwd, or git checkout, then explicitly retry or reassign."
+                      ? "团队操作员：修复项目工作区的仓库 URL 或克隆权限，或配置本地检出的当前工作目录，然后明确重试或重新分配。"
+                      : "团队操作员：修复来源任务的工作区链接、项目工作区当前目录或 Git 检出，然后明确重试或重新分配。"
                   : recoveryCause === "configuration_incomplete"
                     ? readConfigurationIncompletePayload(input.latestRun)?.reason === "ai_connection_unavailable"
-                      ? "Reconnect the selected AI account or choose an available connection, then continue the task."
+                      ? "重新连接所选 AI 账户，或选择可用连接，然后继续任务。"
                       : readConfigurationIncompletePayload(input.latestRun)
                         ?.reason === SANDBOX_PROVIDER_PLUGIN_NOT_READY_REASON
-                      ? `Board operator: the sandbox provider plugin named in the run failure is not ready; ${sandboxProviderPluginRemedy(
+                      ? `团队操作员：运行失败信息中指定的沙箱服务提供商插件尚未就绪；请${sandboxProviderPluginRemedy(
                           readNonEmptyString(
                             readConfigurationIncompletePayload(input.latestRun)
                               ?.pluginStatus,
                           ) ?? "error",
-                        )}, then explicitly retry the original owner or reassign.`
-                      : "Board operator: bind the missing secret(s) named in the run failure, then explicitly retry the original owner or reassign."
+                        )}，然后明确重试原负责人或重新分配。`
+                      : "团队操作员：绑定运行失败信息中指定的缺失密钥，然后明确重试原负责人或重新分配。"
                     : recoveryCause === "execution_review_participant_recovery"
-                      ? "Board operator: repair the failed review participant path, restore a live reviewer, explicitly reassign, or record an intentional resolution."
-                      : "Board operator: inspect the evidence, repair the runtime if appropriate, then explicitly retry the original owner, reassign, or intentionally resolve the task.",
+                      ? "团队操作员：修复失败的评审参与者路径、恢复有效评审者、明确重新分配，或记录主动处理结果。"
+                      : "团队操作员：检查证据，必要时修复运行环境，然后明确重试原负责人、重新分配，或主动结束任务。",
       wakePolicy: isProviderQuotaWait
         ? {
             type: "monitor_only",
@@ -4928,10 +4928,10 @@ export function recoveryService(
             latestRun,
             notice: {
               body:
-                "Paperclip automatically retried dispatch for this assigned `todo` issue after a lost wake/run, " +
-                "but it still has no live execution path. " +
-                "Moving it to `blocked` so it is visible for intervention.",
-              title: "No live execution path",
+                "唤醒或运行丢失后，Alice 已自动重试派发这个已分配的 `todo` 任务，" +
+                "但任务仍没有有效的执行路径。" +
+                "已将其移至 `blocked` 状态，以便人工介入。",
+              title: "没有有效的执行路径",
               tone: "danger",
             },
           });
@@ -5047,8 +5047,8 @@ export function recoveryService(
               previousStatus: "in_progress",
               latestRun: successfulRun,
               comment:
-                "Paperclip automatically retried continuation for this assigned `in_progress` issue and the retry " +
-                "made progress, but it still has no live execution path. Moving it to `blocked` so it is visible for intervention.",
+                "Alice 已自动重试继续执行这个已分配的 `in_progress` 任务，且重试取得了进展，" +
+                "但任务仍没有有效的执行路径。已将其移至 `blocked` 状态，以便人工介入。",
             });
             if (updated) {
               result.escalated += 1;
@@ -5142,17 +5142,17 @@ export function recoveryService(
             );
           if (consecutive >= classification.maxAttempts) {
             const attemptCopy =
-              consecutive <= 1 ? "" : ` (${consecutive}× attempts)`;
+              consecutive <= 1 ? "" : `（${consecutive} 次尝试）`;
             const updated = await escalateStrandedAssignedIssue({
               issue,
               previousStatus: "in_progress",
               latestRun,
               notice: {
                 body:
-                  "Paperclip automatically retried continuation for this assigned `in_progress` issue after its live " +
-                  `execution disappeared, but it still has no live execution path${attemptCopy}. ` +
-                  "Moving it to `blocked` so it is visible for intervention.",
-                title: "No live execution path",
+                  "有效执行消失后，Alice 已自动重试继续执行这个已分配的 `in_progress` 任务，" +
+                  `但任务仍没有有效的执行路径${attemptCopy}。` +
+                  "已将其移至 `blocked` 状态，以便人工介入。",
+                title: "没有有效的执行路径",
                 tone: "danger",
               },
             });

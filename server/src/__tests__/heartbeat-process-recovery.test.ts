@@ -1337,16 +1337,16 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       routingPolicy: "board_escalation_no_takeover_v1",
     });
     if (input.cause === "execution_review_participant_recovery") {
-      expect(action.nextAction).toContain("failed review participant path");
+      expect(action.nextAction).toContain("修复失败的评审参与者路径");
     } else if (input.cause === "process_lost") {
       expect(action.nextAction).toContain(
-        "explicitly retry the original owner",
+        "明确重试原负责人",
       );
     } else {
       expect(action.nextAction).toContain(
         input.kind === "missing_disposition"
-          ? "valid issue disposition"
-          : "Board operator",
+          ? "有效的任务处理方式"
+          : "团队操作员",
       );
     }
 
@@ -4564,8 +4564,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       status: "active",
       ownerType: "board",
     });
-    expect(recoveryAction?.nextAction).toContain("sandbox provider plugin");
-    expect(recoveryAction?.nextAction).toContain("enable the plugin");
+    expect(recoveryAction?.nextAction).toContain("沙箱服务提供商插件");
+    expect(recoveryAction?.nextAction).toContain("启用插件");
 
     const notice = await waitForValue(async () => {
       const rows = await db
@@ -4578,8 +4578,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
         ) ?? null
       );
     });
-    expect(notice?.body).toContain("is in status `error`");
-    expect(notice?.body).not.toContain("secret/env bindings");
+    expect(notice?.body).toContain("当前状态为 `error`");
+    expect(notice?.body).not.toContain("密钥或环境变量绑定");
   });
 
   it("escalates (does not retry) an accepted-interaction-continuation setup failure whose message matches neither retryable pattern", async () => {
@@ -4855,7 +4855,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     });
     expect(
       commentMetadataRows(comments[0]).some(
-        (row) => row.label === "Recovery action",
+        (row) => row.label === "恢复操作",
       ),
     ).toBe(true);
 
@@ -5142,7 +5142,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       recoveryCause: "workspace_validation_failed",
     });
     expect(recoveryAction?.nextAction).toContain(
-      "repair the source task workspace link",
+      "修复来源任务的工作区链接",
     );
 
     const validationComment = await waitForValue(async () => {
@@ -5152,7 +5152,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
         .where(eq(issueComments.issueId, issueId));
       return (
         rows.find((comment) =>
-          comment.body.includes("workspace failed validation"),
+          comment.body.includes("工作区验证失败"),
         ) ?? null
       );
     });
@@ -5269,7 +5269,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       ownerAgentId: null,
       recoveryIssueId: null,
     });
-    expect(recoveryAction?.nextAction).toContain("bind the missing secret");
+    expect(recoveryAction?.nextAction).toContain("绑定运行失败信息中指定的缺失密钥");
 
     const configurationComment = await waitForValue(async () => {
       const rows = await db
@@ -5278,7 +5278,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
         .where(eq(issueComments.issueId, issueId));
       return (
         rows.find((comment) =>
-          comment.body.includes("secret/env bindings are missing"),
+          comment.body.includes("缺少必需的密钥或环境变量绑定"),
         ) ?? null
       );
     });
@@ -9328,7 +9328,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
         comments.find(
           (comment) =>
             comment.body.includes(
-              "pending execution-review participant once",
+              "已重试一次待处理的执行评审参与者",
             ) &&
             noticeMetadataReferencesRecoveryAction(
               comment.metadata,
@@ -10422,17 +10422,17 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .from(issueComments)
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
-    expect(comments[0]?.body).toContain("retried dispatch");
+    expect(comments[0]?.body).toContain("自动重试派发");
     expect(comments[0]?.body).not.toContain("sk-test-recovery-secret");
     expect(JSON.stringify(comments[0]?.metadata)).not.toContain(
       "sk-test-recovery-secret",
     );
     const failureSummary = commentMetadataRows(comments[0]).find(
-      (row) => row.type === "key_value" && row.label === "Failure summary",
+      (row) => row.type === "key_value" && row.label === "失败摘要",
     );
     expect(failureSummary).toMatchObject({
       type: "key_value",
-      label: "Failure summary",
+      label: "失败摘要",
     });
     expect(
       failureSummary?.type === "key_value" ? failureSummary.value : "",
@@ -10451,8 +10451,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       commentMetadataRows(comments[0]).some(
         (row) =>
           row.type === "key_value" &&
-          row.label === "Recovery owner" &&
-          row.value === "Board decision required",
+          row.label === "恢复负责人" &&
+          row.value === "需要团队决策",
       ),
     ).toBe(true);
   });
@@ -10998,7 +10998,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .from(issueComments)
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
-    expect(comments[0]?.body).toContain("retried continuation");
+    expect(comments[0]?.body).toContain("自动重试继续执行");
     expect(comments[0]?.presentation).toMatchObject({
       kind: "system_notice",
       tone: "danger",
@@ -11013,8 +11013,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       commentMetadataRows(comments[0]).some(
         (row) =>
           row.type === "key_value" &&
-          row.label === "Recovery owner" &&
-          row.value === "Board decision required",
+          row.label === "恢复负责人" &&
+          row.value === "需要团队决策",
       ),
     ).toBe(true);
   });
@@ -11059,7 +11059,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     expect(comments[0]?.body).not.toContain("- Failure: none recorded");
     expect(commentMetadataRows(comments[0])).toContainEqual({
       type: "key_value",
-      label: "Failure code",
+      label: "失败代码",
       value: "adapter_exit_code",
     });
   });
@@ -11169,11 +11169,11 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .from(issueComments)
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
-    expect(comments[0]?.body).toContain("retried continuation");
-    expect(comments[0]?.body).toContain("3× attempts");
+    expect(comments[0]?.body).toContain("自动重试继续执行");
+    expect(comments[0]?.body).toContain("3 次尝试");
     expect(commentMetadataRows(comments[0])).toContainEqual({
       type: "key_value",
-      label: "Failure code",
+      label: "失败代码",
       value: "adapter_failed",
     });
   });
@@ -13625,8 +13625,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .from(issueComments)
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
-    expect(comments[0]?.body).toContain("automatically retried continuation");
-    expect(comments[0]?.body).toContain("still has no live execution path");
+    expect(comments[0]?.body).toContain("已自动重试继续执行");
+    expect(comments[0]?.body).toContain("仍没有有效的执行路径");
     expect(
       noticeMetadataReferencesRecoveryAction(
         comments[0]?.metadata,
@@ -13637,8 +13637,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       commentMetadataRows(comments[0]).some(
         (row) =>
           row.type === "key_value" &&
-          row.label === "Recovery owner" &&
-          row.value === "Board decision required",
+          row.label === "恢复负责人" &&
+          row.value === "需要团队决策",
       ),
     ).toBe(true);
   });

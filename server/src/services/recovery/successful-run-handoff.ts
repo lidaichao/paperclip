@@ -106,7 +106,7 @@ export function noticeMetadataReferencesRecoveryAction(
   return (metadata?.sections ?? []).some((section) =>
     section.rows.some((row) =>
       row.type === "key_value" &&
-      row.label === "Recovery action" &&
+      (row.label === "Recovery action" || row.label === "恢复操作") &&
       row.value === recoveryActionId,
     ),
   );

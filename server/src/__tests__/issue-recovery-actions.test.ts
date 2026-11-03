@@ -1428,7 +1428,7 @@ describeEmbeddedPostgres("issue recovery actions", () => {
           cleanliness: "dirty",
         }),
       }),
-      nextAction: expect.stringContaining("git worktree branch incoherence"),
+      nextAction: expect.stringContaining("Git 工作树的分支不一致"),
       wakePolicy: expect.objectContaining({
         type: "board_escalation",
         reason: "workspace_validation_failed",
@@ -1444,7 +1444,7 @@ describeEmbeddedPostgres("issue recovery actions", () => {
     expect(escalationComments[0]?.presentation).toMatchObject({
       kind: "system_notice",
       tone: "danger",
-      title: "Workspace validation failed",
+      title: "工作区验证失败",
     });
     expect(enqueueWakeup).not.toHaveBeenCalled();
   });

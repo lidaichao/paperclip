@@ -25,15 +25,15 @@ export type StrandedRecoveryEscalationNotice = {
 };
 
 export const DEFAULT_STRANDED_RECOVERY_NOTICE_BODY =
-  "Paperclip could not restore a live execution path for this issue automatically. " +
-  "Moving it to `blocked` so it is visible for intervention.";
+  "Alice 无法自动恢复此任务的有效执行路径。" +
+  "已将其移至 `blocked` 状态，以便人工介入。";
 
-const DEFAULT_STRANDED_RECOVERY_NOTICE_TITLE = "Automatic recovery blocked";
+const DEFAULT_STRANDED_RECOVERY_NOTICE_TITLE = "自动恢复受阻";
 
 const STRANDED_RECOVERY_NOTICE_TITLES_BY_CAUSE: Record<string, string> = {
-  workspace_validation_failed: "Workspace validation failed",
-  configuration_incomplete: "Configuration incomplete",
-  execution_review_participant_recovery: "Review recovery stalled",
+  workspace_validation_failed: "工作区验证失败",
+  configuration_incomplete: "配置不完整",
+  execution_review_participant_recovery: "评审恢复停滞",
 };
 
 // Titles keyed by the source run's classified error code. The raw failure text
@@ -42,30 +42,30 @@ const STRANDED_RECOVERY_NOTICE_TITLES_BY_CAUSE: Record<string, string> = {
 // notice row can lead with. A mapped code outranks the seed titles because the
 // seeds describe the recovery family ("No live execution path"), not the cause.
 const STRANDED_RECOVERY_NOTICE_TITLES_BY_RUN_ERROR_CODE: Record<string, string> = {
-  provider_quota: "Error: usage limit reached",
-  claude_auth_required: "Error: not logged in to Claude",
-  acpx_auth_required: "Error: agent login required",
+  provider_quota: "错误：已达到用量上限",
+  claude_auth_required: "错误：尚未登录 Claude",
+  acpx_auth_required: "错误：需要登录智能体账户",
 };
 
 const WORKSPACE_SCAN_NOTICES: Record<string, { title: string; nextAction: string }> = {
-  workspace_git_scan_timeout: { title: "Workspace scan timed out", nextAction: "Check repository access and server load, then retry the task." },
-  workspace_git_scan_saturated: { title: "Workspace scan queue is full", nextAction: "Check server load and the workspace scan queue, then retry the task." },
-  workspace_git_scan_output_limit: { title: "Workspace scan exceeded its limit", nextAction: "Check the repository size and workspace scan output limit before retrying the task." },
-  workspace_git_scan_failed: { title: "Workspace scan failed", nextAction: "Inspect the failed run and check repository access and integrity before retrying the task." },
-  workspace_git_scan_cancelled: { title: "Workspace scan was cancelled", nextAction: "Inspect why workspace preparation was cancelled before retrying the task." },
+  workspace_git_scan_timeout: { title: "工作区扫描超时", nextAction: "检查仓库访问权限和服务器负载，然后重试任务。" },
+  workspace_git_scan_saturated: { title: "工作区扫描队列已满", nextAction: "检查服务器负载和工作区扫描队列，然后重试任务。" },
+  workspace_git_scan_output_limit: { title: "工作区扫描超出限制", nextAction: "检查仓库大小和工作区扫描输出限制，然后重试任务。" },
+  workspace_git_scan_failed: { title: "工作区扫描失败", nextAction: "检查失败的运行，并确认仓库访问权限和完整性，然后重试任务。" },
+  workspace_git_scan_cancelled: { title: "工作区扫描已取消", nextAction: "先查明工作区准备被取消的原因，再重试任务。" },
 };
 
 export function buildImmediateExecutionPathRecoveryNoticeSeed(input: {
   status: "todo" | "in_progress";
 }): StrandedRecoveryNoticeSeed {
   const retryDescription = input.status === "todo"
-    ? "Paperclip automatically retried dispatch for this assigned `todo` issue during terminal run recovery"
-    : "Paperclip automatically retried continuation for this assigned `in_progress` issue during terminal run recovery";
+    ? "Alice 在终止运行恢复期间，已自动重试派发这个已分配的 `todo` 任务"
+    : "Alice 在终止运行恢复期间，已自动重试继续执行这个已分配的 `in_progress` 任务";
   return {
     body:
-      `${retryDescription}, but it still has no live execution path. ` +
-      "Moving it to `blocked` so it is visible for intervention.",
-    title: "No live execution path",
+      `${retryDescription}，但任务仍没有有效的执行路径。` +
+      "已将其移至 `blocked` 状态，以便人工介入。",
+    title: "没有有效的执行路径",
     tone: "danger",
   };
 }
@@ -73,9 +73,9 @@ export function buildImmediateExecutionPathRecoveryNoticeSeed(input: {
 export function buildWorkspaceValidationRecoveryNoticeSeed(): StrandedRecoveryNoticeSeed {
   return {
     body:
-      "Paperclip stopped before launching the local adapter because the issue workspace failed validation. " +
-      "Moving it to `blocked` so the workspace link, cwd, or git checkout can be repaired before resuming.",
-    title: "Workspace validation failed",
+      "任务工作区验证失败，因此 Alice 在启动本地适配器前停止。" +
+      "已将任务移至 `blocked` 状态；修复工作区链接、当前工作目录或 Git 检出后再继续。",
+    title: "工作区验证失败",
     tone: "danger",
   };
 }
@@ -96,11 +96,11 @@ function readNonEmptyStringField(payload: Record<string, unknown> | null | undef
 export function sandboxProviderPluginRemedy(pluginStatus: string): string {
   switch (pluginStatus) {
     case "upgrade_pending":
-      return "review and approve the upgraded plugin's capabilities, then enable it (Plugins → Enable)";
+      return "检查并批准升级后的插件能力，然后启用插件（插件 → 启用）";
     case "disabled":
-      return "enable the plugin again (Plugins → Enable); an operator disabled it";
+      return "重新启用插件（插件 → 启用）；该插件此前被操作员禁用";
     default:
-      return "enable the plugin (Plugins → Enable); a server restart also re-activates a bundled plugin";
+      return "启用插件（插件 → 启用）；重启服务器也会重新激活内置插件";
   }
 }
 
@@ -115,30 +115,29 @@ export function buildConfigurationIncompleteRecoveryNoticeSeed(
 ): StrandedRecoveryNoticeSeed {
   if (readNonEmptyStringField(configurationIncomplete, "reason") === "ai_connection_unavailable") {
     return {
-      title: "AI connection needs attention",
-      body: "This task paused because its selected AI account is unavailable. Reconnect the account or choose an available connection to continue.",
-      nextAction: "Reconnect the selected AI account or choose an available connection, then continue the task.",
+      title: "AI 连接需要处理",
+      body: "所选 AI 账户不可用，因此任务已暂停。请重新连接该账户，或选择可用连接后继续。",
+      nextAction: "重新连接所选 AI 账户，或选择可用连接，然后继续任务。",
       tone: "danger",
     };
   }
   if (readNonEmptyStringField(configurationIncomplete, "reason") === SANDBOX_PROVIDER_PLUGIN_NOT_READY_REASON) {
-    const pluginKey = readNonEmptyStringField(configurationIncomplete, "pluginKey") ?? "the sandbox provider plugin";
-    const pluginStatus = readNonEmptyStringField(configurationIncomplete, "pluginStatus") ?? "not ready";
+    const pluginKey = readNonEmptyStringField(configurationIncomplete, "pluginKey") ?? "沙箱服务提供商插件";
+    const pluginStatus = readNonEmptyStringField(configurationIncomplete, "pluginStatus") ?? "未就绪";
     return {
       body:
-        `Paperclip stopped before dispatching the adapter because the sandbox provider plugin \`${pluginKey}\` ` +
-        `is in status \`${pluginStatus}\` and cannot lease a sandbox. Runs will keep failing the same way until the ` +
-        `plugin is \`ready\` again. Moving it to \`blocked\` so an operator can ${sandboxProviderPluginRemedy(pluginStatus)} ` +
-        "before resuming.",
-      title: "Configuration incomplete",
+        `沙箱服务提供商插件 \`${pluginKey}\` 当前状态为 \`${pluginStatus}\`，无法租用沙箱，因此 Alice 在派发适配器前停止。` +
+        `在插件恢复为 \`ready\` 前，运行会持续以相同原因失败。已将任务移至 \`blocked\` 状态，以便操作员先${sandboxProviderPluginRemedy(pluginStatus)}，` +
+        "然后再继续任务。",
+      title: "配置不完整",
       tone: "danger",
     };
   }
   return {
     body:
-      "Paperclip stopped before dispatching the adapter because required secret/env bindings are missing. " +
-      "Moving it to `blocked` so an operator can bind the missing secret(s) before resuming.",
-    title: "Configuration incomplete",
+      "缺少必需的密钥或环境变量绑定，因此 Alice 在派发适配器前停止。" +
+      "已将任务移至 `blocked` 状态，以便操作员绑定缺失的密钥后再继续。",
+    title: "配置不完整",
     tone: "danger",
   };
 }
@@ -146,10 +145,9 @@ export function buildConfigurationIncompleteRecoveryNoticeSeed(
 export function buildExecutionReviewParticipantRecoveryNoticeSeed(): StrandedRecoveryNoticeSeed {
   return {
     body:
-      "Paperclip retried the pending execution-review participant once, but the review stage still has no " +
-      "completed decision or live reviewer run. Moving it to `blocked` so the board can inspect the evidence, repair the " +
-      "reviewer runtime, restore the review stage, or record an intentional manual resolution.",
-    title: "Review recovery stalled",
+      "Alice 已重试一次待处理的执行评审参与者，但评审阶段仍没有已完成的决定或正在运行的评审任务。" +
+      "已将任务移至 `blocked` 状态，以便团队检查证据、修复评审运行环境、恢复评审阶段，或记录明确的人工处理结果。",
+    title: "评审恢复停滞",
     tone: "danger",
   };
 }
@@ -157,11 +155,9 @@ export function buildExecutionReviewParticipantRecoveryNoticeSeed(): StrandedRec
 export function buildExecutionReviewParticipantUnavailableNoticeSeed(): StrandedRecoveryNoticeSeed {
   return {
     body:
-      "Paperclip cannot continue the pending execution-review participant because the participant is not " +
-      "invokable and the review stage has no completed decision or live reviewer run. Moving it to `blocked` " +
-      "so the board can inspect the evidence, repair the reviewer runtime, restore the review stage, or record an " +
-      "intentional manual resolution.",
-    title: "Review recovery stalled",
+      "待处理的执行评审参与者无法调用，且评审阶段没有已完成的决定或正在运行的评审任务，因此 Alice 无法继续。" +
+      "已将任务移至 `blocked` 状态，以便团队检查证据、修复评审运行环境、恢复评审阶段，或记录明确的人工处理结果。",
+    title: "评审恢复停滞",
     tone: "danger",
   };
 }
@@ -186,7 +182,7 @@ export function buildStrandedRecoveryEscalationNotice(input: {
   const workspaceScan = WORKSPACE_SCAN_NOTICES[input.sourceRun?.errorCode ?? ""];
   const seed = workspaceScan ? {
     ...workspaceScan,
-    body: `Paperclip could not prepare the workspace before the agent started. Automatic recovery could not continue. ${workspaceScan.nextAction}`,
+    body: `Alice 无法在智能体启动前准备工作区，自动恢复无法继续。${workspaceScan.nextAction}`,
     tone: "danger" as const,
   } : input.seed;
   const fallbackBody = input.fallbackBody?.trim();
@@ -198,33 +194,33 @@ export function buildStrandedRecoveryEscalationNotice(input: {
     DEFAULT_STRANDED_RECOVERY_NOTICE_TITLE;
 
   const recoveryRows: NoticeMetadataRow[] = [
-    keyValueRow("Recovery action", input.recoveryActionId),
+    keyValueRow("恢复操作", input.recoveryActionId),
     input.recoveryOwner
-      ? agentLinkRow("Recovery owner", input.recoveryOwner)
+      ? agentLinkRow("恢复负责人", input.recoveryOwner)
       : keyValueRow(
-          "Recovery owner",
-          "Board decision required",
+          "恢复负责人",
+          "需要团队决策",
         ),
     keyValueRow(
-      "Next action",
+      "下一步操作",
       seed?.nextAction ?? (input.recoveryOwner
-        ? "The recovery owner should either restore a live execution path or record the manual resolution on the source issue"
-        : "Inspect the evidence, then retry the original owner, explicitly reassign, repair the execution path, or record an intentional resolution"),
+        ? "恢复负责人应恢复有效的执行路径，或在来源任务中记录人工处理结果"
+        : "检查证据，然后重试原负责人、明确重新分配、修复执行路径，或记录明确的处理结果"),
     ),
   ];
 
   const runRows: NoticeMetadataRow[] = [];
   if (input.sourceRun) {
-    runRows.push(runLinkRow("Source run", input.sourceRun));
+    runRows.push(runLinkRow("来源运行", input.sourceRun));
     const failureCode = input.sourceRun.errorCode?.trim();
-    if (failureCode) runRows.push(keyValueRow("Failure code", failureCode));
+    if (failureCode) runRows.push(keyValueRow("失败代码", failureCode));
     const failureSummary = input.sourceRun.errorSummary?.trim();
-    if (failureSummary) runRows.push(keyValueRow("Failure summary", failureSummary));
+    if (failureSummary) runRows.push(keyValueRow("失败摘要", failureSummary));
   }
 
   const sections: NoticeMetadataSection[] = [
-    { title: "Recovery", rows: recoveryRows },
-    ...(runRows.length > 0 ? [{ title: "Run evidence", rows: runRows }] : []),
+    { title: "恢复处理", rows: recoveryRows },
+    ...(runRows.length > 0 ? [{ title: "运行证据", rows: runRows }] : []),
   ];
 
   return {

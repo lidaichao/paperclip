@@ -16,12 +16,12 @@ function allRows(metadata: { sections: Array<{ rows: unknown[] }> }) {
 
 describe("stranded recovery notice seeds", () => {
   it.each([
-    ["todo dispatch", buildImmediateExecutionPathRecoveryNoticeSeed({ status: "todo" }), "No live execution path"],
-    ["in_progress continuation", buildImmediateExecutionPathRecoveryNoticeSeed({ status: "in_progress" }), "No live execution path"],
-    ["workspace validation", buildWorkspaceValidationRecoveryNoticeSeed(), "Workspace validation failed"],
-    ["configuration incomplete", buildConfigurationIncompleteRecoveryNoticeSeed(), "Configuration incomplete"],
-    ["review participant recovery", buildExecutionReviewParticipantRecoveryNoticeSeed(), "Review recovery stalled"],
-    ["review participant unavailable", buildExecutionReviewParticipantUnavailableNoticeSeed(), "Review recovery stalled"],
+    ["todo dispatch", buildImmediateExecutionPathRecoveryNoticeSeed({ status: "todo" }), "没有有效的执行路径"],
+    ["in_progress continuation", buildImmediateExecutionPathRecoveryNoticeSeed({ status: "in_progress" }), "没有有效的执行路径"],
+    ["workspace validation", buildWorkspaceValidationRecoveryNoticeSeed(), "工作区验证失败"],
+    ["configuration incomplete", buildConfigurationIncompleteRecoveryNoticeSeed(), "配置不完整"],
+    ["review participant recovery", buildExecutionReviewParticipantRecoveryNoticeSeed(), "评审恢复停滞"],
+    ["review participant unavailable", buildExecutionReviewParticipantUnavailableNoticeSeed(), "评审恢复停滞"],
   ])("%s seed has a short body plus title and tone", (_label, seed, expectedTitle) => {
     expect(seed.title).toBe(expectedTitle);
     expect(seed.tone).toBe("danger");
@@ -37,12 +37,12 @@ describe("stranded recovery notice seeds", () => {
       pluginKey: "paperclip.kubernetes-sandbox-provider",
       pluginStatus: "error",
     });
-    expect(seed.title).toBe("Configuration incomplete");
+    expect(seed.title).toBe("配置不完整");
     expect(seed.tone).toBe("danger");
     expect(seed.body).toContain("`paperclip.kubernetes-sandbox-provider`");
     expect(seed.body).toContain("`error`");
-    expect(seed.body).toContain("enable the plugin");
-    expect(seed.body).not.toContain("secret/env bindings");
+    expect(seed.body).toContain("启用插件");
+    expect(seed.body).not.toContain("密钥或环境变量绑定");
   });
 
   it("asks for a capability review before enabling an upgrade_pending plugin, and names an operator disable", () => {
@@ -51,26 +51,26 @@ describe("stranded recovery notice seeds", () => {
       pluginKey: "paperclip.daytona-sandbox-provider",
       pluginStatus: "upgrade_pending",
     });
-    expect(upgrade.body).toContain("review and approve the upgraded plugin's capabilities");
+    expect(upgrade.body).toContain("检查并批准升级后的插件能力");
     const disabled = buildConfigurationIncompleteRecoveryNoticeSeed({
       reason: "sandbox_provider_plugin_not_ready",
       pluginKey: "paperclip.daytona-sandbox-provider",
       pluginStatus: "disabled",
     });
-    expect(disabled.body).toContain("an operator disabled it");
+    expect(disabled.body).toContain("被操作员禁用");
   });
 
   it("keeps the secret-binding copy for other configuration gaps", () => {
     expect(buildConfigurationIncompleteRecoveryNoticeSeed({ reason: "secret_binding_missing" }).body).toContain(
-      "secret/env bindings",
+      "密钥或环境变量绑定",
     );
-    expect(buildConfigurationIncompleteRecoveryNoticeSeed(null).body).toContain("secret/env bindings");
+    expect(buildConfigurationIncompleteRecoveryNoticeSeed(null).body).toContain("密钥或环境变量绑定");
   });
 
   it("distinguishes todo dispatch from in_progress continuation copy", () => {
-    expect(buildImmediateExecutionPathRecoveryNoticeSeed({ status: "todo" }).body).toContain("retried dispatch");
+    expect(buildImmediateExecutionPathRecoveryNoticeSeed({ status: "todo" }).body).toContain("自动重试派发");
     expect(buildImmediateExecutionPathRecoveryNoticeSeed({ status: "in_progress" }).body).toContain(
-      "retried continuation",
+      "自动重试继续执行",
     );
   });
 });
@@ -83,10 +83,10 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
       recoveryOwner: null,
       sourceRun: { id: "failed-run", status: "failed", errorCode: "workspace_git_scan_timeout" },
     });
-    expect(notice.presentation.title).toBe("Workspace scan timed out");
-    expect(notice.body).toContain("before the agent started");
-    expect(notice.body).not.toContain("retried continuation");
-    expect(JSON.stringify(notice.metadata)).toContain("repository access and server load");
+    expect(notice.presentation.title).toBe("工作区扫描超时");
+    expect(notice.body).toContain("智能体启动前准备工作区");
+    expect(notice.body).not.toContain("自动重试继续执行");
+    expect(JSON.stringify(notice.metadata)).toContain("仓库访问权限和服务器负载");
   });
   const actionId = "6a2f8e64-6f5e-4b58-b7fd-111111111111";
   const owner = { id: "9b1c2d3e-4f50-4a61-8b72-222222222222", name: "CTO" };
@@ -111,32 +111,32 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
     expect(notice.presentation).toMatchObject({
       kind: "system_notice",
       tone: "danger",
-      title: "Workspace validation failed",
+      title: "工作区验证失败",
     });
     expect(notice.metadata.version).toBe(1);
     expect(notice.metadata.sourceRunId).toBe(sourceRun.id);
 
     const rows = allRows(notice.metadata);
-    expect(rows).toContainEqual({ type: "key_value", label: "Recovery action", value: actionId });
-    expect(rows).toContainEqual({ type: "agent_link", label: "Recovery owner", agentId: owner.id, name: owner.name });
+    expect(rows).toContainEqual({ type: "key_value", label: "恢复操作", value: actionId });
+    expect(rows).toContainEqual({ type: "agent_link", label: "恢复负责人", agentId: owner.id, name: owner.name });
     expect(rows).toContainEqual({
       type: "run_link",
-      label: "Source run",
+      label: "来源运行",
       runId: sourceRun.id,
       agentId: sourceRun.agentId,
       title: "failed",
     });
     expect(rows).toContainEqual({
       type: "key_value",
-      label: "Failure code",
+      label: "失败代码",
       value: "workspace_validation_failed",
     });
     expect(rows).toContainEqual({
       type: "key_value",
-      label: "Failure summary",
+      label: "失败摘要",
       value: sourceRun.errorSummary,
     });
-    expect(rows.some((row) => row.label === "Next action")).toBe(true);
+    expect(rows.some((row) => row.label === "下一步操作")).toBe(true);
   });
 
   it("records board escalation when there is no invokable recovery owner", () => {
@@ -147,9 +147,9 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
       sourceRun,
     });
 
-    const ownerRow = allRows(notice.metadata).find((row) => row.label === "Recovery owner");
+    const ownerRow = allRows(notice.metadata).find((row) => row.label === "恢复负责人");
     expect(ownerRow?.type).toBe("key_value");
-    expect(ownerRow?.value).toBe("Board decision required");
+    expect(ownerRow?.value).toBe("需要团队决策");
   });
 
   it("derives title from the recovery cause and body from the plain-comment fallback", () => {
@@ -162,7 +162,7 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
     });
 
     expect(notice.body).toBe("Legacy plain comment body.");
-    expect(notice.presentation.title).toBe("Configuration incomplete");
+    expect(notice.presentation.title).toBe("配置不完整");
     expect(notice.metadata.sourceRunId).toBeNull();
     expect(notice.metadata.sections).toHaveLength(1);
   });
@@ -175,7 +175,7 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
     });
 
     expect(notice.body).toBe(DEFAULT_STRANDED_RECOVERY_NOTICE_BODY);
-    expect(notice.presentation.title).toBe("Automatic recovery blocked");
+    expect(notice.presentation.title).toBe("自动恢复受阻");
   });
 
   it("omits the failure code row when the source run has no error code", () => {
@@ -195,13 +195,13 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
     const rows = allRows(notice.metadata);
     expect(rows).toContainEqual({
       type: "run_link",
-      label: "Source run",
+      label: "来源运行",
       runId: sourceRun.id,
       agentId: sourceRun.agentId,
       title: "cancelled",
     });
-    expect(rows.some((row) => row.label === "Failure code")).toBe(false);
-    expect(rows.some((row) => row.label === "Failure summary")).toBe(false);
+    expect(rows.some((row) => row.label === "失败代码")).toBe(false);
+    expect(rows.some((row) => row.label === "失败摘要")).toBe(false);
   });
 
   it("leads with the classified run failure code over the generic seed title", () => {
@@ -216,10 +216,10 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
       },
     });
 
-    expect(notice.presentation.title).toBe("Error: usage limit reached");
+    expect(notice.presentation.title).toBe("错误：已达到用量上限");
     expect(allRows(notice.metadata)).toContainEqual({
       type: "key_value",
-      label: "Failure code",
+      label: "失败代码",
       value: "provider_quota",
     });
   });
@@ -232,7 +232,7 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
         recoveryOwner: null,
         sourceRun: { ...sourceRun, errorCode: "claude_auth_required" },
       }).presentation.title,
-    ).toBe("Error: not logged in to Claude");
+    ).toBe("错误：尚未登录 Claude");
   });
 
   it("is matched by the metadata-based escalation dedupe matcher", () => {
@@ -257,8 +257,8 @@ describe("buildStrandedRecoveryEscalationNotice", () => {
 
 it("names the unavailable AI account instead of suggesting secret bindings", () => {
   const notice = buildConfigurationIncompleteRecoveryNoticeSeed({ reason: "ai_connection_unavailable", provider: "openai" });
-  expect(notice.nextAction).toContain("Reconnect the selected AI account");
-  expect(notice.title).toBe("AI connection needs attention");
-  expect(notice.body).toContain("Reconnect the account");
-  expect(notice.body).not.toContain("secret/env");
+  expect(notice.nextAction).toContain("重新连接所选 AI 账户");
+  expect(notice.title).toBe("AI 连接需要处理");
+  expect(notice.body).toContain("重新连接该账户");
+  expect(notice.body).not.toContain("密钥或环境变量");
 });
