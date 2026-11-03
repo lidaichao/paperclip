@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "zapier",
   "name": "Zapier",
-  "description": "Reach thousands of apps through your Zapier account.",
+  "description": "通过 Zapier 账户连接数千款应用。",
   "categories": [
     "productivity"
   ],
@@ -21,11 +21,11 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use the complete provider-generated MCP URL from Zapier.",
+      "whenToUse": "使用 Zapier 生成的完整 MCP 地址。",
       "defaults": {},
-      "guidanceMd": "Create a Zapier MCP server, then paste the complete generated connection URL. The token remains embedded in that URL.",
+      "guidanceMd": "创建 Zapier MCP 服务器，然后粘贴生成的完整连接地址。令牌会继续嵌入该地址中。",
       "riskTier": "S3",
-      "label": "Paste generated MCP URL"
+      "label": "粘贴生成的 MCP 地址"
     }
   ],
   "docsUrl": "https://docs.zapier.com/mcp/quickstart"

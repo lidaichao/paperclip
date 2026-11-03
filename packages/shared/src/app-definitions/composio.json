@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "composio",
   "name": "Composio",
-  "description": "Discover and use connected apps through Composio Connect.",
+  "description": "通过 Composio Connect 发现并使用已连接的应用。",
   "categories": [
     "productivity"
   ],
@@ -26,11 +26,11 @@
         "dcr",
         "customer"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务商托管的连接，以最快速度完成设置。",
       "defaults": {
         "serverUrl": "https://connect.composio.dev/mcp"
       },
-      "guidanceMd": "Sign in to Composio Connect, or paste an externally configured MCP session URL and headers.",
+      "guidanceMd": "登录 Composio Connect，或粘贴在外部配置好的 MCP 会话地址和请求头。",
       "riskTier": "S3",
       "label": "Composio Connect"
     }

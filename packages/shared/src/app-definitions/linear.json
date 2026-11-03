@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "linear",
   "name": "Linear",
-  "description": "Create, update, and read Linear issues.",
+  "description": "创建、更新和读取 Linear 议题。",
   "categories": [
     "productivity"
   ],
@@ -22,7 +22,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务商托管的连接，以最快速度完成设置。",
       "defaults": {
         "serverUrl": "https://mcp.linear.app/mcp",
         "authorizationEndpoint": "https://linear.app/oauth/authorize",
@@ -32,7 +32,7 @@
           "write"
         ]
       },
-      "guidanceMd": "Register a Linear OAuth app and add Paperclip's redirect URI before connecting.",
+      "guidanceMd": "连接前，请注册 Linear OAuth 应用并添加 Alice 的重定向地址。",
       "riskTier": "S2",
       "requiredResourceFilters": [
         "workspace",

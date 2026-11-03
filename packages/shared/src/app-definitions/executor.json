@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "executor",
   "name": "Executor",
-  "description": "Use the tools exposed by your Executor MCP connection.",
+  "description": "使用 Executor MCP 连接提供的工具。",
   "categories": [
     "productivity"
   ],
@@ -22,11 +22,11 @@
         "dcr",
         "customer"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务商托管的连接，以最快速度完成设置。",
       "defaults": {},
-      "guidanceMd": "Paste your Executor MCP URL. Sign in if required, or add a token or headers under Advanced authentication.",
+      "guidanceMd": "粘贴 Executor MCP 地址。按需登录，或在“高级身份验证”中添加令牌或请求头。",
       "riskTier": "S3",
-      "label": "Connect MCP server",
+      "label": "连接 MCP 服务器",
       "consoleLinks": {
         "docs": "https://executor.sh/docs/mcp-proxy"
       }
