@@ -11912,6 +11912,10 @@
     "unable_to_copy_system_notice_link_0eb00004": "Unable to copy system notice link",
     "upload_did_not_return_file_url_0eb00005": "Upload did not return a file URL",
     "file_type_cannot_be_attached_0eb00006": "This file type cannot be attached here",
-    "review_unavailable_0eb00007": "Review unavailable"
+    "review_unavailable_0eb00007": "Review unavailable",
+    "failed_to_unarchive_issue_0ec00001": "Failed to unarchive this issue. Please try again.",
+    "task_not_attached_to_workspace_0ec00002": "This task is not attached to a workspace.",
+    "pending_schedule_0ec00003": "Pending schedule",
+    "board_users_0ec00004": "Board users"
   }
 }

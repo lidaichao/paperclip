@@ -505,7 +505,7 @@ export function IssueProperties({
     onError: (error) => {
       setUnarchiveErrorMessage(error instanceof Error && error.message.trim().length > 0
         ? error.message
-        : "Failed to unarchive this issue. Please try again.");
+        : l10n("local.failed_to_unarchive_issue_0ec00001"));
     },
   });
 
@@ -524,7 +524,7 @@ export function IssueProperties({
   };
 
   const projectName = (id: string | null) => {
-    if (!id) return id?.slice(0, 8) ?? "None";
+    if (!id) return id?.slice(0, 8) ?? l10n("local.none_dc937b59");
     const project = orderedProjects.find((p) => p.id === id);
     return project?.name ?? id.slice(0, 8);
   };
@@ -620,7 +620,7 @@ export function IssueProperties({
   const controlWorkspaceRuntime = useMutation({
     mutationFn: (request: WorkspaceRuntimeControlRequest) => {
       const workspaceId = issue.currentExecutionWorkspace?.id ?? issue.executionWorkspaceId;
-      if (!workspaceId) throw new Error("This task is not attached to a workspace.");
+      if (!workspaceId) throw new Error(l10n("local.task_not_attached_to_workspace_0ec00002"));
       return executionWorkspacesApi.controlRuntimeCommands(workspaceId, request.action, request);
     },
     onSuccess: (result, request) => {
@@ -636,17 +636,17 @@ export function IssueProperties({
       setRuntimeActionErrorMessage(null);
       setRuntimeActionMessage(
         request.action === "run"
-          ? "Workspace job completed."
+          ? l10n("local.workspace_job_completed_0d900009")
           : request.action === "stop"
-            ? "Workspace service stopped."
+            ? l10n("local.workspace_service_stopped_0d900010")
             : request.action === "restart"
-              ? "Workspace service restarted."
-              : "Workspace service started.",
+              ? l10n("local.workspace_service_restarted_0d900011")
+              : l10n("local.workspace_service_started_0d900012"),
       );
     },
     onError: (error) => {
       setRuntimeActionMessage(null);
-      setRuntimeActionErrorMessage(error instanceof Error ? error.message : "Failed to control workspace commands.");
+      setRuntimeActionErrorMessage(error instanceof Error ? error.message : l10n("local.failed_to_control_workspace_commands_0d900013"));
     },
   });
   const pendingWorkspaceRuntimeAction = controlWorkspaceRuntime.isPending ? controlWorkspaceRuntime.variables ?? null : null;
@@ -1405,7 +1405,7 @@ export function IssueProperties({
   const scheduledRetryIsContinuation =
     scheduledRetry?.scheduledRetryReason === "max_turns_continuation";
   const scheduledRetryRelativeLabel = (() => {
-    if (!scheduledRetryRelative) return "Pending schedule";
+    if (!scheduledRetryRelative) return l10n("local.pending_schedule_0ec00003");
     const action = scheduledRetryIsContinuation ? l10n("local.manual_monitor_continuation") : l10n("local.manual_monitor_retry");
     if (scheduledRetryRelative === "now") return `${action} due now`;
     return `${action} ${displayMonitorRelative(scheduledRetryRelative)}`;
@@ -1784,7 +1784,7 @@ export function IssueProperties({
   const visibleAgentOptions = agentAssigneeOptions.filter((option) =>
     matchesAssigneeSearch(option.label, option.searchText),
   );
-  const showNoAssigneeOption = matchesAssigneeSearch("No assignee", "");
+  const showNoAssigneeOption = matchesAssigneeSearch(l10n("local.no_assignee_d64d8cec"), "");
   const sectionHeader = (text: string) => (
     <div className="px-2 pb-0.5 pt-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
       {text}
@@ -1822,17 +1822,17 @@ export function IssueProperties({
       />
       <div className="max-h-56 overflow-y-auto overscroll-contain">
         {showNoAssigneeOption
-          ? renderAssigneeOption({ kind: "none", value: "", label: "No assignee", searchText: "" })
+          ? renderAssigneeOption({ kind: "none", value: "", label: l10n("local.no_assignee_d64d8cec"), searchText: "" })
           : null}
         {visibleAgentOptions.length > 0 ? (
           <>
-            {sectionHeader("Agents")}
+            {sectionHeader(l10n("local.agents_279b44d2"))}
             {visibleAgentOptions.map((option) => renderAssigneeOption(option))}
           </>
         ) : null}
         {visibleUserOptions.length > 0 ? (
           <>
-            {sectionHeader("Board users")}
+            {sectionHeader(l10n("local.board_users_0ec00004"))}
             {visibleUserOptions.map((option) => renderAssigneeOption(option))}
           </>
         ) : null}
@@ -1948,7 +1948,7 @@ export function IssueProperties({
   );
   const projectPickerOptions = orderItemsBySelectedAndRecent(
     [
-      { id: "", kind: "none" as const, name: "No project", color: null as string | null },
+      { id: "", kind: "none" as const, name: l10n("local.no_project_f34c2be0"), color: null as string | null },
       ...orderedProjects.map((project) => ({
         id: project.id,
         kind: "project" as const,
@@ -2865,7 +2865,7 @@ export function IssueProperties({
                 to={`/agents/${originatingActor.id}`}
                 className="hover:underline"
               >
-                <AgentIdentity agent={agents?.find((agent) => agent.id === originatingActor.id) ?? { id: originatingActor.id, name: agentName(originatingActor.id) ?? "Agent" }} size="sm" />
+                <AgentIdentity agent={agents?.find((agent) => agent.id === originatingActor.id) ?? { id: originatingActor.id, name: agentName(originatingActor.id) ?? l10n("local.agent_11b39c93") }} size="sm" />
               </Link>
             ) : (
               <span className="flex min-w-0 items-center gap-1.5">

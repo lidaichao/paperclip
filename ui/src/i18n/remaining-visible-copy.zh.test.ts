@@ -357,6 +357,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.upload_did_not_return_file_url_0eb00005).toContain("文件地址");
     expect(messages.file_type_cannot_be_attached_0eb00006).toContain("不支持附加");
     expect(messages.review_unavailable_0eb00007).toBe("会话复核暂不可用");
+    expect(messages.failed_to_unarchive_issue_0ec00001).toContain("恢复此任务失败");
+    expect(messages.task_not_attached_to_workspace_0ec00002).toContain("尚未关联工作区");
+    expect(messages.pending_schedule_0ec00003).toBe("等待调度");
+    expect(messages.board_users_0ec00004).toBe("看板用户");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
