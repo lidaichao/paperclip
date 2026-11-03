@@ -78,23 +78,23 @@ export function formatScope(
 ): string {
   if (gateway.contextScopeType !== "none" && gateway.contextScopeId) {
     if (gateway.contextScopeType === "project") {
-      return `Project · ${projectNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId)}`;
+      return `${l10n("local.project_98595978")} · ${projectNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId)}`;
     }
     if (gateway.contextScopeType === "agent") {
-      return `Agent · ${agentNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId)}`;
+      return `${l10n("local.agent_11b39c93")} · ${agentNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId)}`;
     }
     return `${gateway.contextScopeType} · ${shortId(gateway.contextScopeId)}`;
   }
-  if (gateway.projectId) return `Project · ${projectNames.get(gateway.projectId) ?? shortId(gateway.projectId)}`;
-  if (gateway.agentId) return `Agent · ${agentNames.get(gateway.agentId) ?? shortId(gateway.agentId)}`;
-  return "Organization";
+  if (gateway.projectId) return `${l10n("local.project_98595978")} · ${projectNames.get(gateway.projectId) ?? shortId(gateway.projectId)}`;
+  if (gateway.agentId) return `${l10n("local.agent_11b39c93")} · ${agentNames.get(gateway.agentId) ?? shortId(gateway.agentId)}`;
+  return l10n("local.organization_d764d425");
 }
 
 export function formatOwner(gateway: ToolMcpGatewayWithTokens, agentNames: Map<string, string>): string {
   if (gateway.createdByAgentId) {
-    return agentNames.get(gateway.createdByAgentId) ?? `Agent ${shortId(gateway.createdByAgentId)}`;
+    return agentNames.get(gateway.createdByAgentId) ?? l10n("local.agent_value_10300385", { v0: shortId(gateway.createdByAgentId) });
   }
-  return "Board";
+  return l10n("local.board_4816cbfd");
 }
 
 /** Whether the gateway is exposing tools to clients right now. */
@@ -111,7 +111,7 @@ export function allowedToolsLabel(profile: ToolProfileWithDetails | undefined): 
       ? Math.max(totalToolCount - excludedToolCount, 0)
       : allowedToolCount;
   if (count === 0) return l10n("local.no_tools_allowed_e8e116ae");
-  return `${count} ${count === 1 ? "tool" : "tools"}`;
+  return `${count} ${count === 1 ? l10n("local.tool_7c9bbe5e") : l10n("local.tools_f9d35d43")}`;
 }
 
 export type GatewayAppRow = {

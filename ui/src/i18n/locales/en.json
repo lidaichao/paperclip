@@ -12646,6 +12646,10 @@
     "deliberating_10300449": "Deliberating",
     "github_pull_request_10300450": "GitHub pull request",
     "github_issue_10300451": "GitHub issue",
-    "the_board_10300452": "the board"
+    "the_board_10300452": "the board",
+    "remote_workspace_requires_ref_or_repo_10300453": "Remote-managed workspaces require a remote workspace reference or repository URL.",
+    "workspace_requires_local_path_or_repo_10300454": "Workspace requires at least one local path or repository URL.",
+    "local_workspace_path_must_be_absolute_10300455": "Local workspace path must be absolute.",
+    "repo_url_must_be_valid_10300456": "Repository URL must be a valid URL."
   }
 }
