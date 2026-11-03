@@ -803,7 +803,7 @@ export function agentRoutes(
           const managedSession = await adapterLoginStore.get(context.sessionId);
           if (managedSession?.aiConnection) {
             await adapterLoginStore.withCompanyAdapterPromotionLock(context.companyId, context.startedByUserId, context.adapterType, async () => {
-              if (!(await checkStagedCredentialReadiness(authBytes)).ready) throw new Error("Provider credential is not ready");
+              if (!(await checkStagedCredentialReadiness(authBytes)).ready) throw new Error("提供商凭据尚未就绪");
               await aiConnectionService(db).save(context.companyId, context.startedByUserId, managedSession.aiConnection!, authBytes.toString("utf8"), context.sessionId);
             });
             return;
@@ -1048,7 +1048,7 @@ export function agentRoutes(
           const managedSession = await adapterLoginStore.get(context.sessionId);
           if (managedSession?.aiConnection) {
             await adapterLoginStore.withCompanyAdapterPromotionLock(context.companyId, context.startedByUserId, context.adapterType, async () => {
-              if (!(await checkStagedGrokCredentialReadiness(authBytes)).ready) throw new Error("Provider credential is not ready");
+              if (!(await checkStagedGrokCredentialReadiness(authBytes)).ready) throw new Error("提供商凭据尚未就绪");
               await aiConnectionService(db).save(context.companyId, context.startedByUserId, managedSession.aiConnection!, authBytes.toString("utf8"), context.sessionId);
             });
             return;
@@ -1168,7 +1168,7 @@ export function agentRoutes(
     if ((await instanceSettings.getExperimental()).enableManagedSandboxOnly === true) {
       const managed = await environmentsSvc.findManagedSandboxEnvironment(companyId);
       if (!managed) {
-        throw unprocessable("The managed sandbox is unavailable. Restore Paperclip Computer and retry.", {
+        throw unprocessable("托管沙箱不可用。请恢复 Alice Computer 后重试。", {
           code: "managed_sandbox_unavailable",
         });
       }
@@ -1224,7 +1224,7 @@ export function agentRoutes(
           {
             code: "environment_not_found",
             level: "warn",
-            message: "Selected environment was not found. The test did not run.",
+            message: "未找到所选环境，测试未运行。",
           },
         ],
         release: noopRelease,
@@ -1254,8 +1254,8 @@ export function agentRoutes(
                 code: "managed_sandbox_unavailable",
                 level: "error",
                 message:
-                  "This instance runs agents only in its platform-managed sandbox, but no active managed sandbox environment exists. The test did not run.",
-                hint: "Restore the managed sandbox environment, then test again.",
+                  "此实例只允许智能体在平台托管沙箱中运行，但当前没有有效的托管沙箱环境，因此测试未运行。",
+                hint: "请先恢复托管沙箱环境，再重新测试。",
               },
             ],
             release: noopRelease,
@@ -1563,7 +1563,7 @@ export function agentRoutes(
       level: "info",
       message: `Environment test identity for "${input.environmentName}".`,
       detail: detailParts.join("; "),
-      hint: "Use these provider-neutral IDs when comparing model-test output with provider logs or refreshed environment snapshots.",
+      hint: "将模型测试输出与提供商日志或刷新后的环境快照对照时，请使用这些与提供商无关的 ID。",
     };
   }
 
@@ -1741,7 +1741,7 @@ export function agentRoutes(
     if (req.actor.type !== "agent") return null;
     const actorAgent = req.actor.agentId ? await svc.getById(req.actor.agentId) : null;
     if (!actorAgent || actorAgent.companyId !== companyId) {
-      throw forbidden("Agent key cannot access another company");
+      throw forbidden("智能体密钥不能访问其他公司");
     }
     return actorAgent;
   }
@@ -1760,7 +1760,7 @@ export function agentRoutes(
 
   async function assertBoardCanWakeAgent(req: Request, agent: { id: string; companyId: string }) {
     assertBoard(req);
-    if (!hasCompanyAccess(req, agent.companyId)) throw notFound("Agent not found");
+    if (!hasCompanyAccess(req, agent.companyId)) throw notFound("未找到智能体");
     assertCompanyAccess(req, agent.companyId);
     const decision = await access.decide({
       actor: req.actor, action: "agent:wake",
@@ -1857,7 +1857,7 @@ export function agentRoutes(
     // no company binding is instance-global and stays open to every member.
     const boundCompanyIds = await environmentsSvc.listBoundCompanyIds(environmentId);
     if (boundCompanyIds.length > 0 && !boundCompanyIds.includes(companyId)) {
-      throw forbidden("The selected environment belongs to another company.", {
+      throw forbidden("所选环境属于其他公司。", {
         code: "environment_company_mismatch",
       });
     }
@@ -2003,7 +2003,7 @@ export function agentRoutes(
   }
 
   async function getAccessibleAgent(req: Request, res: Response, id: string) {
-    const agent = await getAccessibleResource(req, res, svc.getById(id), "Agent not found");
+    const agent = await getAccessibleResource(req, res, svc.getById(id), "未找到智能体");
     if (!agent) return null;
     if (req.actor.type === "board") {
       await assertBoardCanManageAgentsForCompany(req, agent.companyId);
@@ -2039,7 +2039,7 @@ export function agentRoutes(
       return {
         status: "skipped" as const,
         reason: "wakeup_skipped",
-        message: "Wakeup was skipped.",
+        message: "已跳过唤醒。",
         issueId: null,
         executionRunId: null,
         executionAgentId: null,
@@ -2067,7 +2067,7 @@ export function agentRoutes(
       return {
         status: "skipped" as const,
         reason: "wakeup_skipped",
-        message: "Wakeup was skipped.",
+        message: "已跳过唤醒。",
         issueId,
         executionRunId: null,
         executionAgentId: null,
@@ -2080,7 +2080,7 @@ export function agentRoutes(
       return {
         status: "skipped" as const,
         reason: "wakeup_skipped",
-        message: "Wakeup was skipped.",
+        message: "已跳过唤醒。",
         issueId,
         executionRunId: issue.executionRunId,
         executionAgentId: null,
@@ -2096,7 +2096,7 @@ export function agentRoutes(
       reason: "issue_execution_deferred",
       message: executionAgentName
         ? `Wakeup was deferred because this issue is already being executed by ${executionAgentName}.`
-        : "Wakeup was deferred because this issue already has an active execution run.",
+        : "该任务已有正在执行的运行，唤醒已延后。",
       issueId,
       executionRunId: executionRun.id,
       executionAgentId: executionRun.agentId,
@@ -2106,7 +2106,7 @@ export function agentRoutes(
 
   async function assertCanUpdateAgent(req: Request, targetAgent: { id: string; companyId: string }) {
     if (!hasCompanyAccess(req, targetAgent.companyId)) {
-      throw notFound("Agent not found");
+      throw notFound("未找到智能体");
     }
     assertCompanyAccess(req, targetAgent.companyId);
     const decision = await access.decide({
@@ -2120,18 +2120,18 @@ export function agentRoutes(
 
   async function assertCanReadAgent(req: Request, targetAgent: { id: string; companyId: string }) {
     if (!hasCompanyAccess(req, targetAgent.companyId)) {
-      throw notFound("Agent not found");
+      throw notFound("未找到智能体");
     }
     assertCompanyAccess(req, targetAgent.companyId);
     if (req.actor.type === "board") {
       await assertCanReadConfigurations(req, targetAgent.companyId);
       return;
     }
-    if (!req.actor.agentId) throw forbidden("Agent authentication required");
+    if (!req.actor.agentId) throw forbidden("需要智能体身份验证");
 
     const actorAgent = await svc.getById(req.actor.agentId);
     if (!actorAgent || actorAgent.companyId !== targetAgent.companyId) {
-      throw forbidden("Agent key cannot access another company");
+      throw forbidden("智能体密钥不能访问其他公司");
     }
     const decision = await access.decide({
       actor: req.actor,
@@ -2146,7 +2146,7 @@ export function agentRoutes(
   function assertKnownAdapterType(type: string | null | undefined): string {
     const adapterType = typeof type === "string" ? type.trim() : "";
     if (!adapterType) {
-      throw unprocessable("Adapter type is required");
+      throw unprocessable("必须选择适配器类型");
     }
     if (!findServerAdapter(adapterType)) {
       throw unprocessable(`Unknown adapter type: ${adapterType}`);
@@ -2177,7 +2177,7 @@ export function agentRoutes(
       const experimental = await instanceSettings.getExperimental();
       if (experimental.enableNativeRunner !== true) {
         throw unprocessable(
-          "Paperclip Runner is experimental and disabled on this instance.",
+          "Alice Runner 仍处于试验阶段，且在此实例中未启用。",
           { code: "paperclip_runner_rollout_disabled" },
         );
       }
@@ -2238,7 +2238,7 @@ export function agentRoutes(
     const defaults = paperclipRunnerTransitionConfig(input.previousAdapterType, input.previousAdapterConfig.model, input.nextAdapterConfig.provider);
     if (!["claude_local", "codex_local", "opencode_local"].includes(input.previousAdapterType)
       && !isPaperclipRunnerProvider(input.nextAdapterConfig.provider)) {
-      throw unprocessable("Select a Paperclip Runner provider before converting this agent.");
+      throw unprocessable("转换此智能体前，请先选择 Alice Runner 提供商。");
     }
     const next = { ...defaults, ...input.nextAdapterConfig };
     if (!asNonEmptyString(next.model)) next.model = defaults.model;
@@ -2265,7 +2265,7 @@ export function agentRoutes(
     if (environmentId === undefined || environmentId === null) return;
     const environment = await environmentsSvc.getById(environmentId);
     if (!environment) {
-      throw unprocessable("Selected environment was not found");
+      throw unprocessable("未找到所选环境");
     }
     if (options?.allowedDrivers && !options.allowedDrivers.includes(environment.driver)) {
       throw unprocessable(`Environment driver "${environment.driver}" is not allowed here`);
@@ -2322,15 +2322,15 @@ export function agentRoutes(
 
     const companyId = await resolveCompanyIdForAgentReference(req);
     if (!companyId) {
-      throw unprocessable("Agent shortname lookup requires companyId query parameter");
+      throw unprocessable("按智能体简称查找时必须提供 companyId 查询参数");
     }
 
     const resolved = await svc.resolveByReference(companyId, raw);
     if (resolved.ambiguous) {
-      throw conflict("Agent shortname is ambiguous in this company. Use the agent ID.");
+      throw conflict("该智能体简称在当前公司中不唯一，请使用智能体 ID。");
     }
     if (!resolved.agent) {
-      throw notFound("Agent not found");
+      throw notFound("未找到智能体");
     }
     return resolved.agent.id;
   }
@@ -2445,7 +2445,7 @@ export function agentRoutes(
     const normalized = normalizeNewAgentRuntimeConfig(runtimeConfig);
     if (req.actor.type !== "agent" || normalized.aiConnection) return normalized;
     const manager = req.actor.agentId ? await svc.getById(req.actor.agentId) : null;
-    if (!manager || manager.companyId !== companyId) throw forbidden("Hiring agent is unavailable");
+    if (!manager || manager.companyId !== companyId) throw forbidden("发起招聘的智能体不可用");
     const binding = defaultAiConnectionForHire(adapterType, adapterConfig, manager.runtimeConfig?.aiConnection);
     if (binding) normalized.aiConnection = binding;
     return normalized;
@@ -2670,7 +2670,7 @@ export function agentRoutes(
     const cwd = asNonEmptyString(adapterConfig.cwd);
     if (!cwd) {
       throw unprocessable(
-        "Relative instructions path requires adapterConfig.cwd to be set to an absolute path",
+        "使用相对指令路径时，adapterConfig.cwd 必须设为绝对路径",
       );
     }
     if (!path.isAbsolute(cwd)) {
@@ -2761,7 +2761,7 @@ export function agentRoutes(
       || Object.prototype.hasOwnProperty.call(adapterConfig, "bootstrapPromptTemplate")
     ) {
       throw unprocessable(
-        "New agents must use instructionsBundle/AGENTS.md instead of adapterConfig.promptTemplate or bootstrapPromptTemplate",
+        "新智能体必须使用 instructionsBundle/AGENTS.md，不能使用 adapterConfig.promptTemplate 或 bootstrapPromptTemplate",
       );
     }
   }
@@ -2772,7 +2772,7 @@ export function agentRoutes(
     targetKeys: string[],
   ) {
     if (!hasCompanyAccess(req, targetAgent.companyId)) {
-      throw notFound("Agent not found");
+      throw notFound("未找到智能体");
     }
     assertCompanyAccess(req, targetAgent.companyId);
     const changeScope = { requiresChangeGrant: true };
@@ -2920,7 +2920,7 @@ export function agentRoutes(
       desiredSkills,
       desiredSkillEntries,
       entries: [],
-      warnings: ["This adapter does not implement skill sync yet."],
+      warnings: ["此适配器尚未实现技能同步。"],
     };
   }
 
@@ -3036,7 +3036,7 @@ export function agentRoutes(
     if (requestedDesiredSkills.some((entry) => entry.versionId !== null)) {
       const betaSkillsEnabled = (await instanceSettings.getExperimental()).enableBetaSkills === true;
       if (!betaSkillsEnabled) {
-        throw badRequest("Beta skill version pins require the Beta skills experimental setting to be enabled.");
+        throw badRequest("固定测试版技能版本前，必须启用“测试版技能”实验设置。");
       }
     }
 
@@ -3226,7 +3226,7 @@ export function agentRoutes(
     const environmentId = asNonEmptyString(req.query.environmentId);
     const environment = environmentId ? await environmentsSvc.getById(environmentId) : null;
     if (environmentId && !environment) {
-      res.status(404).json({ error: "Environment not found" });
+      res.status(404).json({ error: "未找到环境" });
       return;
     }
     const provider = asNonEmptyString(req.query.provider);
@@ -3235,7 +3235,7 @@ export function agentRoutes(
       return;
     }
     if (type === "paperclip_runner" && provider && !isPaperclipRunnerProvider(provider)) {
-      throw unprocessable("Unknown Paperclip Runner provider");
+      throw unprocessable("未知的 Alice Runner 提供商");
     }
     const modelAdapterType = type === "paperclip_runner"
       ? provider === "acpx" || provider === "claude_managed" ? "claude_local"
@@ -3285,7 +3285,7 @@ export function agentRoutes(
     }
     const boundCompanyIds = await environmentsSvc.listBoundCompanyIds(environmentId);
     if (boundCompanyIds.length > 0 && !boundCompanyIds.includes(companyId)) {
-      throw forbidden("The selected environment belongs to another company.", {
+      throw forbidden("所选环境属于其他公司。", {
         code: "environment_company_mismatch",
       });
     }
@@ -3320,10 +3320,10 @@ export function agentRoutes(
       try {
         if (typeof key !== "string" || !key) throw unprocessable("The selected account's API key was not available to verify.");
         await validateAiApiKey(binding.provider, key);
-        result.checks.push({ code: "ai_connection_api_key_reverified", level: "info", message: "The provider verified this API key for adoption." });
+        result.checks.push({ code: "ai_connection_api_key_reverified", level: "info", message: "提供商已验证此 API 密钥，可用于接入。" });
       } catch (error) {
         result.status = "fail";
-        result.checks.push({ code: "ai_connection_api_key_rejected", level: "error", message: error instanceof HttpError ? error.message : "Could not verify the account. Try again." });
+        result.checks.push({ code: "ai_connection_api_key_rejected", level: "error", message: error instanceof HttpError ? error.message : "无法验证该账户，请重试。" });
       }
       return result;
     }
@@ -3335,7 +3335,7 @@ export function agentRoutes(
     }
     if (!result.checks.some(check => /hello_probe_(passed|succeeded)$/.test(check.code))) {
       result.status = "fail";
-      result.checks.push({ code: "ai_connection_validation_incomplete", level: "error", message: "The selected account has not completed a provider hello test. Retry before adopting it." });
+      result.checks.push({ code: "ai_connection_validation_incomplete", level: "error", message: "所选账户尚未完成提供商连通测试，请重试后再接入。" });
     }
     return result;
   }
@@ -3360,7 +3360,7 @@ export function agentRoutes(
       const target = await resolveAdapterTestExecutionContext({ companyId, adapterType, environmentId: testEnvironmentId });
       let managed: Awaited<ReturnType<typeof prepareManagedAiRuntime>> | undefined;
       try {
-        if (!target.executionTarget && target.fallbackChecks.length > 0) throw unprocessable("The agent environment is not available for adoption");
+        if (!target.executionTarget && target.fallbackChecks.length > 0) throw unprocessable("智能体环境当前无法接入");
         managed = await prepareManagedAiRuntime(db, { companyId, agentId, responsibleUserId: userId, adapterType, binding, config, allowUninstalledPersonal: newAgent, allowUninstalledShared, allowLegacyValidation: true });
         const result = await testManagedEnvironment(adapterType, { companyId, adapterType, config: managed.config, executionTarget: target.executionTarget, environmentName: target.environmentName }, binding);
         if (result.status === "fail" || result.checks.some(check => check.code === ADAPTER_AUTH_MISSING_CHECK_CODE)) throw unprocessable("The selected AI connection failed validation in this agent’s environment. Run the agent test to see the failing checks.", {
@@ -3388,11 +3388,11 @@ export function agentRoutes(
       const inputAdapterConfig = aiBinding ? { ...req.body.adapterConfig, env: stripAiAuthBindings(req.body.adapterConfig?.env) } : (req.body?.adapterConfig ?? {}) as Record<string, unknown>;
       const savedAgentId = typeof req.body.agentId === "string" ? req.body.agentId : null;
       const savedAgent = savedAgentId
-        ? await getAccessibleResource(req, res, svc.getById(savedAgentId), "Agent not found")
+        ? await getAccessibleResource(req, res, svc.getById(savedAgentId), "未找到智能体")
         : null;
       if (savedAgentId) {
         if (!savedAgent) return;
-        if (savedAgent.companyId !== companyId) throw notFound("Agent not found");
+        if (savedAgent.companyId !== companyId) throw notFound("未找到智能体");
         await assertCanUpdateAgent(req, savedAgent);
       }
       const requestedEnvironmentId = await resolveAdapterTestEnvironmentId(
@@ -3428,7 +3428,7 @@ export function agentRoutes(
           const binding = asRecord(value);
           return binding?.type === "plain" && binding.value === REDACTED_EVENT_VALUE;
         })) {
-          throw unprocessable("Re-enter environment values when testing a different adapter");
+          throw unprocessable("测试其他适配器时，请重新填写环境参数");
         }
         adapterConfigForTest = canRestoreEnv
           ? restoreRedactedAgentEnv(inputAdapterConfig, savedAgent.adapterConfig)
@@ -4303,7 +4303,7 @@ export function agentRoutes(
   router.post("/agents/:id/config-revisions/:revisionId/rollback", async (req, res) => {
     const id = req.params.id as string;
     const revisionId = req.params.revisionId as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Agent not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到智能体");
     if (!existing) return;
     await assertCanUpdateAgent(req, existing);
 
@@ -4925,17 +4925,17 @@ export function agentRoutes(
 
   router.patch("/agents/:id/permissions", validate(updateAgentPermissionsSchema), async (req, res) => {
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Agent not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到智能体");
     if (!existing) return;
 
     if (req.actor.type === "agent") {
       const actorAgent = req.actor.agentId ? await svc.getById(req.actor.agentId) : null;
       if (!actorAgent || actorAgent.companyId !== existing.companyId) {
-        res.status(403).json({ error: "Forbidden" });
+        res.status(403).json({ error: "权限不足" });
         return;
       }
       if (actorAgent.role !== "ceo") {
-        res.status(403).json({ error: "Only CEO can manage permissions" });
+        res.status(403).json({ error: "只有 CEO 可以管理权限" });
         return;
       }
     } else {
@@ -4944,7 +4944,7 @@ export function agentRoutes(
 
     const agent = await svc.updatePermissions(id, req.body);
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 

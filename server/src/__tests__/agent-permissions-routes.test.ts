@@ -1834,7 +1834,7 @@ describe.sequential("agent permission routes", () => {
     // Cross-tenant requests return 404 (not 403) so the status code cannot be
     // used as an existence oracle for other tenants' agent ids.
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Agent not found");
+    expect(res.body.error).toBe("未找到智能体");
     expect(mockAgentService.updatePermissions).not.toHaveBeenCalled();
     expect(mockAccessService.setPrincipalPermission).not.toHaveBeenCalled();
   });

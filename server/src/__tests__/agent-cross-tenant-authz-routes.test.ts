@@ -395,7 +395,7 @@ describe.sequential("agent cross-tenant route authorization", () => {
       const res = await deniedCase.request(app);
 
       expect(res.status, `${deniedCase.label}: ${JSON.stringify(res.body)}`).toBe(404);
-      expect(res.body.error).toBe("Agent not found");
+      expect(res.body.error).toBe("未找到智能体");
       expect(mockAgentService.getById).toHaveBeenCalledWith(agentId);
       for (const mock of deniedCase.untouched) {
         expect(mock).not.toHaveBeenCalled();
@@ -575,7 +575,7 @@ describe.sequential("agent cross-tenant route authorization", () => {
     );
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Agent not found");
+    expect(res.body.error).toBe("未找到智能体");
     expect(mockAccessService.decide).not.toHaveBeenCalled();
     expect(mockAgentService.resume).not.toHaveBeenCalled();
   });

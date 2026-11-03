@@ -575,7 +575,7 @@ describe("agent test-environment route", () => {
         {
           code: "environment_not_found",
           level: "warn",
-          message: "Selected environment was not found. The test did not run.",
+          message: "未找到所选环境，测试未运行。",
         },
       ],
     });
