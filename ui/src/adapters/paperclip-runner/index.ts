@@ -102,7 +102,9 @@ function commandEntries(
   const output = text(item.aggregatedOutput, text(item.aggregated_output));
   const exitCode = item.exitCode ?? item.exit_code;
   const detail = [
-    typeof exitCode === "number" ? `exit_code: ${exitCode}` : "",
+    typeof exitCode === "number"
+      ? l10n("local.manual_runner_exit_code", { v0: exitCode })
+      : "",
     output,
   ].filter(Boolean).join("\n");
   return [{
@@ -110,7 +112,7 @@ function commandEntries(
     ts,
     toolUseId: id,
     toolName: "command",
-    content: detail || text(item.status, "command completed"),
+    content: detail || text(item.status, l10n("local.manual_runner_command_completed")),
     isError: toolFailure(item),
   }];
 }
@@ -158,7 +160,9 @@ function fileChangeEntries(
       ts,
       toolUseId: id,
       toolName: "file_change",
-      content: paths.length > 0 ? paths.join("\n") : "file change completed",
+      content: paths.length > 0
+        ? paths.join("\n")
+        : l10n("local.manual_runner_file_change_completed"),
       isError: toolFailure(item),
     },
   ];
@@ -171,7 +175,7 @@ function dynamicToolEntries(
   ts: string,
 ): TranscriptEntry[] {
   const id = itemId(event, item);
-  const name = text(item.tool, text(item.name, "Paperclip tool"));
+  const name = text(item.tool, text(item.name, l10n("local.manual_runner_alice_tool")));
   if (phase === "started") {
     return [{ kind: "tool_call", ts, name, toolUseId: id, input: item.arguments ?? item.input ?? {} }];
   }
@@ -180,7 +184,9 @@ function dynamicToolEntries(
     ts,
     toolUseId: id,
     toolName: name,
-    content: stringify(item.contentItems ?? item.result ?? item.output) || `${name} completed`,
+    content:
+      stringify(item.contentItems ?? item.result ?? item.output)
+      || l10n("local.manual_runner_value_completed", { v0: name }),
     isError: toolFailure(item),
   }];
 }
@@ -192,7 +198,7 @@ function genericToolEntries(
   ts: string,
 ): TranscriptEntry[] {
   const id = itemId(event, item);
-  const name = text(item.name, text(item.tool, "Tool"));
+  const name = text(item.name, text(item.tool, l10n("local.manual_runner_tool")));
   if (phase === "started") {
     return [{ kind: "tool_call", ts, name, toolUseId: id, input: item.input ?? item.arguments ?? {} }];
   }
@@ -201,7 +207,9 @@ function genericToolEntries(
     ts,
     toolUseId: text(item.tool_use_id, id),
     toolName: name,
-    content: stringify(item.content ?? item.result ?? item.output ?? item.error) || `${name} completed`,
+    content:
+      stringify(item.content ?? item.result ?? item.output ?? item.error)
+      || l10n("local.manual_runner_value_completed", { v0: name }),
     isError: toolFailure(item),
   }];
 }
@@ -474,7 +482,10 @@ function runtimeRequestEntry(
     .map(record)
     .map((field, index) => ({
       name: text(field.name, `answer_${index + 1}`).slice(0, 160),
-      label: text(field.label, text(field.name, `Answer ${index + 1}`)).slice(0, 240),
+      label: text(
+        field.label,
+        text(field.name, l10n("local.manual_runner_answer_value", { v0: index + 1 })),
+      ).slice(0, 240),
       placeholder: nullableText(field.placeholder)?.slice(0, 500) ?? null,
     }))
     .filter((field) => field.name && field.label)
@@ -491,7 +502,10 @@ function runtimeRequestEntry(
     turnId: nullableText(request.turnId) ?? nullableText(payload.turnId) ?? nullableText(event.turnId) ?? previous?.turnId ?? null,
     requestType,
     status,
-    prompt: text(request.prompt, previous?.prompt ?? "Runtime approval requested"),
+    prompt: text(
+      request.prompt,
+      previous?.prompt ?? l10n("local.manual_runner_runtime_approval_requested"),
+    ),
     choices,
     fields,
     questionSet,
@@ -538,7 +552,10 @@ function parseQuestionSet(value: unknown): PaperclipQuestionSet | null {
     const answerMode: PaperclipQuestion["answerMode"] = question.answerMode === "single_select" || question.answerMode === "multi_select" ? question.answerMode : "text";
     const options = (Array.isArray(question.options) ? question.options : []).map(record).slice(0, 128).map((option, optionIndex) => ({
       id: text(option.id, `option-${optionIndex + 1}`).slice(0, 160),
-      label: text(option.label, `Option ${optionIndex + 1}`).slice(0, 1_000),
+      label: text(
+        option.label,
+        l10n("local.manual_runner_option_value", { v0: optionIndex + 1 }),
+      ).slice(0, 1_000),
       ...(nullableText(option.description) ? { description: text(option.description).slice(0, 4_000) } : {}),
     }));
     const customAnswer = record(question.customAnswer);
@@ -550,7 +567,10 @@ function parseQuestionSet(value: unknown): PaperclipQuestionSet | null {
     const parsedQuestion: PaperclipQuestion = {
       id: text(question.id, `question-${questionIndex + 1}`).slice(0, 160),
       ...(nullableText(question.header) ? { header: text(question.header).slice(0, 1_000) } : {}),
-      prompt: text(question.prompt, `Question ${questionIndex + 1}`).slice(0, 4_000),
+      prompt: text(
+        question.prompt,
+        l10n("local.manual_runner_question_value", { v0: questionIndex + 1 }),
+      ).slice(0, 4_000),
       ...(nullableText(question.helpText) ? { helpText: text(question.helpText).slice(0, 4_000) } : {}),
       required: question.required === true,
       answerMode,
@@ -591,21 +611,30 @@ function runResultEntry(payload: JsonRecord, ts: string): Extract<TranscriptEntr
     kind: "run_result",
     ts,
     disposition,
-    summary: text(payload.summary, "Run completed"),
+    summary: text(payload.summary, l10n("local.manual_runner_run_completed")),
     objectiveSatisfied: typeof completion.objectiveSatisfied === "boolean" ? completion.objectiveSatisfied : null,
     verification: (Array.isArray(payload.verification) ? payload.verification : []).map(record).slice(0, 64).map((item) => ({
-      commandOrCheck: text(item.commandOrCheck, "Verification"),
+      commandOrCheck: text(
+        item.commandOrCheck,
+        l10n("local.manual_runner_verification"),
+      ),
       status: item.status === "passed" || item.status === "failed" ? item.status : "not_run",
       detail: nullableText(item.detail) ?? undefined,
       artifactRef: nullableText(item.artifactRef) ?? undefined,
     })),
     remainingWork: (Array.isArray(completion.remainingWork) ? completion.remainingWork : []).map(record).slice(0, 64).map((item) => ({
-      description: text(item.description, "Remaining work"),
+      description: text(
+        item.description,
+        l10n("local.manual_runner_remaining_work"),
+      ),
       blocksCompletion: item.blocksCompletion === true,
     })),
     blocker: Object.keys(blocker).length > 0 ? {
       reasonCode: text(blocker.reasonCode, "blocked"),
-      unblockAction: text(blocker.unblockAction, "Resolve the blocker to continue."),
+      unblockAction: text(
+        blocker.unblockAction,
+        l10n("local.manual_runner_resolve_blocker_to_continue"),
+      ),
       scope: blocker.scope === "task_wide" ? "task_wide" : "current_track",
     } : null,
     artifacts: (Array.isArray(payload.artifacts) ? payload.artifacts : []).map(record).slice(0, 64).map((item) => ({
@@ -641,7 +670,10 @@ function runTerminalEntry(payload: JsonRecord, ts: string): Extract<TranscriptEn
 function semanticToolEntries(eventType: string, payload: JsonRecord, ts: string): TranscriptEntry[] {
   const semantic = record(payload.semantic_tool ?? payload.semanticTool);
   const callId = text(semantic.callId, "semantic-tool");
-  const operationId = text(semantic.operationId, "Paperclip operation");
+  const operationId = text(
+    semantic.operationId,
+    l10n("local.manual_runner_alice_operation"),
+  );
   const content = record(semantic.content);
   const references = (Array.isArray(content.references) ? content.references : []).map(record);
   const input = {
@@ -658,7 +690,10 @@ function semanticToolEntries(eventType: string, payload: JsonRecord, ts: string)
     ts,
     toolUseId: callId,
     toolName: operationId,
-    content: [code, receipt ? `receipt: ${receipt}` : ""].filter(Boolean).join("\n"),
+    content: [
+      code,
+      receipt ? l10n("local.manual_runner_receipt_value", { v0: receipt }) : "",
+    ].filter(Boolean).join("\n"),
     isError: outcome === "denied" || outcome === "conflict" || outcome === "unavailable" || outcome === "failed",
   }];
 }
@@ -690,7 +725,22 @@ function parsePrpEvent(
       : rawStatus === "failed" || rawStatus === "denied" ? "failed"
         : rawStatus === "interrupted" || rawStatus === "cancelled" ? "interrupted"
           : (family === "plan" && payload.complete === true) || eventType.endsWith("completed") || rawStatus === "completed" ? "completed" : "informational";
-    const title = ({ plan: "Plan", tool_execution: "Tool execution", research: "Research", delegation: "Delegation", model_identity: "Model", context: "Context", artifact: "Artifact", review: "Review mode", hook: "Hook", memory: "Memory citation", safety: "Safety review", terminal: "Terminal input", wait: "Intentional wait", provider_notice: "Provider notice" } as const)[family];
+    const title = ({
+      plan: l10n("local.plan_0ff15403"),
+      tool_execution: l10n("local.manual_runner_tool_execution"),
+      research: l10n("local.manual_runner_research"),
+      delegation: l10n("local.manual_runner_delegation"),
+      model_identity: l10n("local.model_5e2c614c"),
+      context: l10n("local.context_a6e600a1"),
+      artifact: l10n("local.artifact_e06171a1"),
+      review: l10n("local.manual_runner_review_mode"),
+      hook: l10n("local.manual_runner_hook"),
+      memory: l10n("local.manual_runner_memory_citation"),
+      safety: l10n("local.manual_runner_safety_review"),
+      terminal: l10n("local.manual_runner_terminal_input"),
+      wait: l10n("local.manual_runner_intentional_wait"),
+      provider_notice: l10n("local.manual_runner_provider_notice"),
+    } as const)[family];
     const summary = family === "model_identity"
       ? text(payload.summary, text(payload.effectiveModel, text(payload.requestedModel, text(payload.provider, eventType))))
       : text(payload.summary, text(payload.name, text(payload.query, eventType)));
@@ -701,7 +751,13 @@ function parsePrpEvent(
   }
   if (eventType === "workspace.file.referenced") {
     const entry = workspaceFileReferenceEntry(payload, ts);
-    return entry ? [entry] : [{ kind: "system", ts, text: "Runner: Ignored an unsafe workspace file reference" }];
+    return entry
+      ? [entry]
+      : [{
+          kind: "system",
+          ts,
+          text: l10n("local.manual_runner_ignored_unsafe_workspace_reference"),
+        }];
   }
   if (eventType.startsWith("runtime_request.")) {
     const entry = runtimeRequestEntry(eventType, payload, event, ts, state);
@@ -717,13 +773,38 @@ function parsePrpEvent(
   }
   if (eventType === "session.started" || eventType === "session.resumed") {
     const context = record(payload.context);
-    const model = text(context.model, text(record(payload.model).name, "Paperclip runner"));
+    const model = text(
+      context.model,
+      text(record(payload.model).name, l10n("local.manual_runner_alice_runner")),
+    );
     const sessionId = text(payload.providerSessionId, text(payload.driverSessionId, text(event.normalizedSessionId)));
-    return [{ kind: "system", ts, text: `Paperclip session ${eventType === "session.resumed" ? "resumed" : "started"} · ${model}${sessionId ? ` · ${sessionId}` : ""}` }];
+    return [{
+      kind: "system",
+      ts,
+      text: l10n(
+        eventType === "session.resumed"
+          ? "local.manual_runner_session_resumed"
+          : "local.manual_runner_session_started",
+        { v0: model, v1: sessionId ? ` · ${sessionId}` : "" },
+      ),
+    }];
   }
-  if (eventType === "turn.started") return [{ kind: "system", ts, text: "Turn started" }];
-  if (eventType === "turn.completed") return [{ kind: "system", ts, text: "Turn completed" }];
-  if (eventType === "turn.failed") return [{ kind: "stderr", ts, text: text(record(payload.error).message, "Turn failed") }];
+  if (eventType === "turn.started") {
+    return [{ kind: "system", ts, text: l10n("local.manual_runner_turn_started") }];
+  }
+  if (eventType === "turn.completed") {
+    return [{ kind: "system", ts, text: l10n("local.manual_runner_turn_completed") }];
+  }
+  if (eventType === "turn.failed") {
+    return [{
+      kind: "stderr",
+      ts,
+      text: text(
+        record(payload.error).message,
+        l10n("local.manual_runner_turn_failed"),
+      ),
+    }];
+  }
   if (eventType === "item.started" || eventType === "item.completed") {
     if (payload.kind === "usage") return [usageEntry(payload, ts)];
     return parseItemEvent(event, payload, eventType === "item.started" ? "started" : "completed", ts, state);
@@ -731,7 +812,14 @@ function parsePrpEvent(
   if (eventType === "item.failed") {
     const item = record(payload.item);
     const error = record(payload.error);
-    return [{ kind: "stderr", ts, text: text(error.message, text(item.error, "Runner item failed")) }];
+    return [{
+      kind: "stderr",
+      ts,
+      text: text(
+        error.message,
+        text(item.error, l10n("local.manual_runner_item_failed")),
+      ),
+    }];
   }
   if (eventType === "item.delta") return parseDeltaEvent(event, payload, ts, state);
   if (eventType === "usage.reported") return [usageEntry(payload, ts)];
@@ -748,7 +836,13 @@ function parsePrpEvent(
   }
   if (eventType === "run.terminal") return [runTerminalEntry(payload, ts)];
   if (eventType === "harness.diagnostic" || eventType === "runner.diagnostic" || eventType === "session.failed" || eventType === "mcp_app.failed") {
-    return [{ kind: "system", ts, text: `Runner: ${text(payload.message, text(payload.code, eventType))}` }];
+    return [{
+      kind: "system",
+      ts,
+      text: l10n("local.manual_runner_message", {
+        v0: text(payload.message, text(payload.code, eventType)),
+      }),
+    }];
   }
   return [];
 }
