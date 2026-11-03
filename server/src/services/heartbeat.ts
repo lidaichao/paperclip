@@ -3768,8 +3768,8 @@ export function buildAnchorFallbackWorkspaceNotes(input: {
     const extraFailureCount = input.materializationFailures.length - 1;
     warnings.push(
       extraFailureCount > 0
-        ? `Failed to prepare the project workspace checkout (${first.error}), and ${extraFailureCount} other candidate workspace(s) also failed. Using fallback workspace "${input.fallbackCwd}" for this run.`
-        : `Failed to prepare the project workspace checkout: ${first.error}. Using fallback workspace "${input.fallbackCwd}" for this run.`,
+        ? `无法准备项目工作区检出（${first.error}），另外 ${extraFailureCount} 个候选工作区也失败。本次运行将使用回退工作区 "${input.fallbackCwd}"。`
+        : `无法准备项目工作区检出：${first.error}。本次运行将使用回退工作区 "${input.fallbackCwd}"。`,
     );
   }
   if (input.missingProjectCwds.length > 0) {
@@ -3777,15 +3777,15 @@ export function buildAnchorFallbackWorkspaceNotes(input: {
     const extraMissingCount = Math.max(0, input.missingProjectCwds.length - 1);
     warnings.push(
       extraMissingCount > 0
-        ? `Project workspace path "${firstMissing}" and ${extraMissingCount} other configured path(s) are not available yet. Using fallback workspace "${input.fallbackCwd}" for this run.`
-        : `Project workspace path "${firstMissing}" is not available yet. Using fallback workspace "${input.fallbackCwd}" for this run.`,
+        ? `项目工作区路径 "${firstMissing}" 以及另外 ${extraMissingCount} 个已配置路径暂不可用。本次运行将使用回退工作区 "${input.fallbackCwd}"。`
+        : `项目工作区路径 "${firstMissing}" 暂不可用。本次运行将使用回退工作区 "${input.fallbackCwd}"。`,
     );
   } else if (
     input.materializationFailures.length === 0 &&
     !input.hasConfiguredProjectCwd
   ) {
     warnings.push(
-      `Project workspace has no local cwd configured. Using fallback workspace "${input.fallbackCwd}" for this run.`,
+      `项目工作区未配置本地工作目录。本次运行将使用回退工作区 "${input.fallbackCwd}"。`,
     );
   }
   return warnings;

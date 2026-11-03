@@ -869,7 +869,7 @@ describe("buildAnchorFallbackWorkspaceNotes", () => {
       missingProjectCwds: [],
       hasConfiguredProjectCwd: false,
     })).toEqual([
-      'Failed to prepare the project workspace checkout: fatal: could not read Username. Using fallback workspace "/paperclip/workspaces/agent-1" for this run.',
+      '无法准备项目工作区检出：fatal: could not read Username。本次运行将使用回退工作区 "/paperclip/workspaces/agent-1"。',
     ]);
   });
 
@@ -886,7 +886,7 @@ describe("buildAnchorFallbackWorkspaceNotes", () => {
       missingProjectCwds: [],
       hasConfiguredProjectCwd: false,
     })).toEqual([
-      'Failed to prepare the project workspace checkout (clone timed out), and 1 other candidate workspace(s) also failed. Using fallback workspace "/fallback" for this run.',
+      '无法准备项目工作区检出（clone timed out），另外 1 个候选工作区也失败。本次运行将使用回退工作区 "/fallback"。',
     ]);
   });
 
@@ -899,7 +899,7 @@ describe("buildAnchorFallbackWorkspaceNotes", () => {
       hasConfiguredProjectCwd: true,
     })).toEqual([
       'Selected project workspace "workspace-9" is not available on this project.',
-      'Project workspace path "/missing/path" is not available yet. Using fallback workspace "/fallback" for this run.',
+      '项目工作区路径 "/missing/path" 暂不可用。本次运行将使用回退工作区 "/fallback"。',
     ]);
     expect(buildAnchorFallbackWorkspaceNotes({
       fallbackCwd: "/fallback",
@@ -908,7 +908,7 @@ describe("buildAnchorFallbackWorkspaceNotes", () => {
       missingProjectCwds: [],
       hasConfiguredProjectCwd: false,
     })).toEqual([
-      'Project workspace has no local cwd configured. Using fallback workspace "/fallback" for this run.',
+      '项目工作区未配置本地工作目录。本次运行将使用回退工作区 "/fallback"。',
     ]);
   });
 
@@ -924,8 +924,8 @@ describe("buildAnchorFallbackWorkspaceNotes", () => {
       missingProjectCwds: ["/missing/path"],
       hasConfiguredProjectCwd: true,
     })).toEqual([
-      'Failed to prepare the project workspace checkout: authentication failed. Using fallback workspace "/fallback" for this run.',
-      'Project workspace path "/missing/path" is not available yet. Using fallback workspace "/fallback" for this run.',
+      '无法准备项目工作区检出：authentication failed。本次运行将使用回退工作区 "/fallback"。',
+      '项目工作区路径 "/missing/path" 暂不可用。本次运行将使用回退工作区 "/fallback"。',
     ]);
   });
 });
