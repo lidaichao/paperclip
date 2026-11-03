@@ -461,7 +461,7 @@ export function MobileFolderSheet({
           />
           {result?.kind === "skill" ? (
             <>
-              {model.my ? renderBranch(model.my, "My Skills") : null}
+              {model.my ? renderBranch(model.my, l10n("local.my_skills_ea424d66")) : null}
               <div className="px-2 pb-0.5 pt-2 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
                 {l10n("local.organization_d764d425")}</div>
               {model.company.map((node) => renderBranch(node))}

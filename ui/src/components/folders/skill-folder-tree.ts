@@ -168,7 +168,7 @@ export function skillFolderDisplayPath(
   const trail = folderBreadcrumbTrail(model, folderId);
   if (trail.length === 0) return null;
   const labels = trail.map((folder) => reservedRootLabel(folder));
-  if (!trail[0]?.systemKey) labels.unshift("Organization");
+  if (!trail[0]?.systemKey) labels.unshift(l10n("local.organization_d764d425"));
   return labels.join(" / ");
 }
 

@@ -23,10 +23,10 @@ import { cn } from "../lib/utils";
  * driving Radix's portal open.
  */
 export function commentAttributionTooltip(agentName: string, userName: string): string {
-  return (
-    `${agentName} posted this on behalf of ${userName}. ${agentName} is not assigned to ` +
-    `this task — its authority to write here comes from ${userName}, and never exceeds it.`
-  );
+  return l10n("local.agent_posted_on_behalf_tooltip_10300377", {
+    v0: agentName,
+    v1: userName,
+  });
 }
 
 export function CommentAttributionChip({
@@ -42,7 +42,7 @@ export function CommentAttributionChip({
 }) {
   const user = userName?.trim();
   if (!user) return null;
-  const agent = agentName?.trim() || "This agent";
+  const agent = agentName?.trim() || l10n("local.this_agent_10300378");
 
   return (
     <Tooltip>

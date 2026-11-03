@@ -719,8 +719,8 @@ function SnoozeSubmenu({ onSnooze }: { onSnooze: (snoozedUntil: string) => void 
 function decideByProvenance(item: AttentionItem): string | null {
   const attribution = item.decideByAttribution;
   if (!attribution) return null;
-  if (attribution.type === "agent") return attribution.agentName ?? "an agent";
-  return "you";
+  if (attribution.type === "agent") return attribution.agentName ?? l10n("local.an_agent_647936ec");
+  return l10n("local.you_bb0347a4");
 }
 
 /** Compact "when does this snooze end" label, e.g. `in 2h`, `in 3d`. */

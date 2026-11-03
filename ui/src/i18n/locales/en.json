@@ -12570,6 +12570,8 @@
     "no_permission_change_agent_skills_10300373": "You don't have permission to change this agent's skills.",
     "the_project_working_tree_10300374": "the project working tree",
     "document_revision_10300375": "Document Revision",
-    "plan_revision_value_10300376": "plan revision {{v0}}"
+    "plan_revision_value_10300376": "plan revision {{v0}}",
+    "agent_posted_on_behalf_tooltip_10300377": "{{v0}} posted this on behalf of {{v1}}. {{v0}} is not assigned to this task — its authority to write here comes from {{v1}}, and never exceeds it.",
+    "this_agent_10300378": "This agent"
   }
 }

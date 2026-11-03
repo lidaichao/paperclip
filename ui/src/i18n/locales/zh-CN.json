@@ -12570,6 +12570,8 @@
     "no_permission_change_agent_skills_10300373": "你没有权限修改此智能体的技能。",
     "the_project_working_tree_10300374": "项目工作树",
     "document_revision_10300375": "文档修订版本",
-    "plan_revision_value_10300376": "计划修订版本 {{v0}}"
+    "plan_revision_value_10300376": "计划修订版本 {{v0}}",
+    "agent_posted_on_behalf_tooltip_10300377": "{{v0}} 代表 {{v1}} 发布了这条评论。{{v0}} 并未被分配到此任务；其在此处的写入权限来自 {{v1}}，且不会超出该权限范围。",
+    "this_agent_10300378": "此智能体"
   }
 }
