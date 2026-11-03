@@ -3816,7 +3816,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               payload.credentialFingerprint ||
             runtime.get(action!.endpointId) !== endpointRuntime
           )
-            throw new Error("GitHub receipt authority is no longer current");
+            throw new Error("GitHub 回执权限已不是当前版本");
         };
         const applied = await endpointRuntime.applyGitHubReceiptReaction(
           { ...payload, ...(githubReceipt ? { githubReceipt } : {}) },
@@ -3828,7 +3828,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           !githubReceipt ||
           (payload.operation === "add" && !githubReceipt.reactionId)
         )
-          throw new Error("GitHub receipt identity was not confirmed");
+          throw new Error("GitHub 回执身份未得到确认");
       } else if (payload.operation === "remove") {
         await adapter.removeReaction(
           payload.threadId,
@@ -4655,7 +4655,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         )
         .then((rows) => rows[0] ?? null));
     if (!publication) {
-      throw new Error("Task-control publication was not persisted");
+      throw new Error("任务控制发布记录未能保存");
     }
     await tx
       .insert(chatActions)
@@ -5323,7 +5323,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
                 }
               } else if (claim.endpoint.provider === "imessage-photon") {
                 const adapter = (await runtimeFor(claim.endpoint)).getProviderAdapter();
-                if (!(adapter instanceof PhotonChatAdapter)) throw new Error("Photon runtime unavailable");
+                if (!(adapter instanceof PhotonChatAdapter)) throw new Error("Photon 运行时不可用");
                 const receipt = await adapter.publish(payload.threadId, `effect:${action.id}`, projectSafeChatPublicationText(payload.text), {
                   assertCurrent: async () => { await credentialLease.assertOwned(); },
                 });
