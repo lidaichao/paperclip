@@ -1546,7 +1546,7 @@ describe.sequential("agent permission routes", () => {
       }));
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toContain('Environment driver "ssh" is not allowed here');
+    expect(res.body.error).toContain('此处不允许使用环境驱动“ssh”');
     expect(mockAgentService.create).not.toHaveBeenCalled();
   });
 
@@ -1629,7 +1629,7 @@ describe.sequential("agent permission routes", () => {
       }));
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toContain('Environment driver "ssh" is not allowed here');
+    expect(res.body.error).toContain('此处不允许使用环境驱动“ssh”');
     expect(mockAgentService.update).not.toHaveBeenCalled();
   });
 
@@ -1709,7 +1709,7 @@ describe.sequential("agent permission routes", () => {
       }));
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toContain('Environment driver "ssh" is not allowed here');
+    expect(res.body.error).toContain('此处不允许使用环境驱动“ssh”');
     expect(mockAgentService.update).not.toHaveBeenCalled();
   });
 

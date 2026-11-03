@@ -595,7 +595,7 @@ describe("agent routes adapter validation", () => {
     );
 
     expect(res.status, JSON.stringify(res.body)).toBe(422);
-    expect(String(res.body.error ?? res.body.message ?? "")).toContain(`Unknown adapter type: ${missingAdapterType}`);
+    expect(String(res.body.error ?? res.body.message ?? "")).toContain(`未知适配器类型：${missingAdapterType}`);
   });
 
   it("refuses to create an agent on an adapter the instance has disabled", async () => {

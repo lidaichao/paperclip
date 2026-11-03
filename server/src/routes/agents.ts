@@ -1129,7 +1129,7 @@ export function agentRoutes(
   async function assertAgentReadAllowed(req: Request, res: Response, agent: { id: string; companyId: string }) {
     const decision = await decideAgentRead(req, agent);
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Agent is outside this actor's authorization boundary" });
+    res.status(403).json({ error: "智能体不在当前操作者的授权范围内" });
     return false;
   }
 
@@ -1140,7 +1140,7 @@ export function agentRoutes(
       resource: { type: "company", companyId },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Run telemetry is outside this actor's authorization boundary" });
+    res.status(403).json({ error: "运行遥测数据不在当前操作者的授权范围内" });
     return false;
   }
 
@@ -1822,10 +1822,10 @@ export function agentRoutes(
   // effect.
   function assertDeviceLoginAdapter(type: string): void {
     if (getRegistryLoginCapability(type)?.panelMode !== "displayed_code") {
-      throw badRequest(`Adapter "${type}" does not support a device login.`);
+      throw badRequest(`适配器“${type}”不支持设备登录。`);
     }
     if (!isLoginCommandSupportedAdapterType(type)) {
-      throw badRequest(`Adapter "${type}" does not support a device login.`);
+      throw badRequest(`适配器“${type}”不支持设备登录。`);
     }
   }
 
@@ -2149,7 +2149,7 @@ export function agentRoutes(
       throw unprocessable("必须选择适配器类型");
     }
     if (!findServerAdapter(adapterType)) {
-      throw unprocessable(`Unknown adapter type: ${adapterType}`);
+      throw unprocessable(`未知适配器类型：${adapterType}`);
     }
     return adapterType;
   }
@@ -2268,7 +2268,7 @@ export function agentRoutes(
       throw unprocessable("未找到所选环境");
     }
     if (options?.allowedDrivers && !options.allowedDrivers.includes(environment.driver)) {
-      throw unprocessable(`Environment driver "${environment.driver}" is not allowed here`);
+      throw unprocessable(`此处不允许使用环境驱动“${environment.driver}”`);
     }
     if (environment.driver === "sandbox" && options?.allowedSandboxProviders) {
       const config = environment.config && typeof environment.config === "object"
@@ -2659,7 +2659,7 @@ export function agentRoutes(
       requireOpenCodeModelId(adapterConfig.model);
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
-      throw unprocessable(`Invalid opencode_local adapterConfig: ${reason}`);
+      throw unprocessable(`opencode_local adapterConfig 无效：${reason}`);
     }
   }
 
@@ -2674,7 +2674,7 @@ export function agentRoutes(
       );
     }
     if (!path.isAbsolute(cwd)) {
-      throw unprocessable("adapterConfig.cwd must be an absolute path to resolve relative instructions path");
+      throw unprocessable("adapterConfig.cwd 必须为绝对路径，才能解析相对指令路径");
     }
     return path.resolve(cwd, trimmed);
   }
@@ -3318,7 +3318,7 @@ export function agentRoutes(
       const envKey = AI_CONNECTION_CAPABILITIES[binding.provider].methods.api_key?.envKey;
       const key = envKey ? parseObject(context.config.env)[envKey] : undefined;
       try {
-        if (typeof key !== "string" || !key) throw unprocessable("The selected account's API key was not available to verify.");
+        if (typeof key !== "string" || !key) throw unprocessable("无法获取所选账号的 API 密钥以进行验证。");
         await validateAiApiKey(binding.provider, key);
         result.checks.push({ code: "ai_connection_api_key_reverified", level: "info", message: "提供商已验证此 API 密钥，可用于接入。" });
       } catch (error) {
@@ -3363,7 +3363,7 @@ export function agentRoutes(
         if (!target.executionTarget && target.fallbackChecks.length > 0) throw unprocessable("智能体环境当前无法接入");
         managed = await prepareManagedAiRuntime(db, { companyId, agentId, responsibleUserId: userId, adapterType, binding, config, allowUninstalledPersonal: newAgent, allowUninstalledShared, allowLegacyValidation: true });
         const result = await testManagedEnvironment(adapterType, { companyId, adapterType, config: managed.config, executionTarget: target.executionTarget, environmentName: target.environmentName }, binding);
-        if (result.status === "fail" || result.checks.some(check => check.code === ADAPTER_AUTH_MISSING_CHECK_CODE)) throw unprocessable("The selected AI connection failed validation in this agent’s environment. Run the agent test to see the failing checks.", {
+        if (result.status === "fail" || result.checks.some(check => check.code === ADAPTER_AUTH_MISSING_CHECK_CODE)) throw unprocessable("所选 AI 连接未通过此智能体环境的验证。请运行智能体测试查看失败项。", {
           code: "ai_connection_validation_failed",
           checks: result.checks.filter(check => check.level === "error" || check.code === ADAPTER_AUTH_MISSING_CHECK_CODE).map(check => ({ code: check.code, level: check.level })),
         });
@@ -3384,7 +3384,7 @@ export function agentRoutes(
       const adapter = requireServerAdapter(type);
 
       const aiBinding = req.body.aiConnection ? aiConnectionBindingSchema.parse(req.body.aiConnection) : undefined;
-      if (aiBinding && req.body.testCredentials && Object.keys(req.body.testCredentials).length) throw unprocessable("A managed connection test cannot override its credentials");
+      if (aiBinding && req.body.testCredentials && Object.keys(req.body.testCredentials).length) throw unprocessable("托管连接测试不能覆盖其凭据");
       const inputAdapterConfig = aiBinding ? { ...req.body.adapterConfig, env: stripAiAuthBindings(req.body.adapterConfig?.env) } : (req.body?.adapterConfig ?? {}) as Record<string, unknown>;
       const savedAgentId = typeof req.body.agentId === "string" ? req.body.agentId : null;
       const savedAgent = savedAgentId
@@ -4013,7 +4013,7 @@ export function agentRoutes(
     const unsupportedQueryParams = Object.keys(req.query).sort();
     if (unsupportedQueryParams.length > 0) {
       res.status(400).json({
-        error: `Unsupported query parameter${unsupportedQueryParams.length === 1 ? "" : "s"}: ${unsupportedQueryParams.join(", ")}`,
+        error: `不支持的查询参数：${unsupportedQueryParams.join(", ")}`,
       });
       return;
     }
@@ -4462,19 +4462,19 @@ export function agentRoutes(
         throw forbidden("只有智能体可以继承调用方的原生运行时设置");
       }
       if (hireInput.adapterType !== "paperclip_runner") {
-        throw unprocessable("inheritRuntimeFrom=caller requires adapterType=paperclip_runner");
+        throw unprocessable("inheritRuntimeFrom=caller 要求 adapterType=paperclip_runner");
       }
       const requestedConfig = (hireInput.adapterConfig ?? {}) as Record<string, unknown>;
       const requestedRuntime = (hireInput.runtimeConfig ?? {}) as Record<string, unknown>;
       if (Object.keys(requestedConfig).length > 0 || Object.keys(requestedRuntime).length > 0 || hireInput.defaultEnvironmentId !== undefined) {
-        throw unprocessable("inheritRuntimeFrom=caller cannot be combined with adapterConfig, runtimeConfig, or defaultEnvironmentId");
+        throw unprocessable("inheritRuntimeFrom=caller 不能与 adapterConfig、runtimeConfig 或 defaultEnvironmentId 同时使用");
       }
       const caller = await svc.getById(req.actor.agentId);
       if (!caller || caller.companyId !== companyId) {
         throw forbidden("调用方智能体不属于该公司");
       }
       if (caller.adapterType !== "paperclip_runner") {
-        throw unprocessable("The caller must use the paperclip_runner adapter");
+        throw unprocessable("调用方必须使用 paperclip_runner 适配器");
       }
       hireInput.adapterConfig = inheritNativeRunnerAdapterConfig(caller.adapterConfig);
       hireInput.defaultEnvironmentId = caller.defaultEnvironmentId ?? null;
@@ -5000,7 +5000,7 @@ export function agentRoutes(
     const adapterConfigKey = explicitKey ?? defaultKey;
     if (!adapterConfigKey) {
       res.status(422).json({
-        error: `No default instructions path key for adapter type '${existing.adapterType}'. Provide adapterConfigKey.`,
+        error: `适配器类型“${existing.adapterType}”没有默认指令路径键，请提供 adapterConfigKey。`,
       });
       return;
     }
@@ -5130,7 +5130,7 @@ export function agentRoutes(
 
     const relativePath = typeof req.query.path === "string" ? req.query.path : "";
     if (!relativePath.trim()) {
-      res.status(422).json({ error: "Query parameter 'path' is required" });
+      res.status(422).json({ error: "查询参数 path 为必填项" });
       return;
     }
 
@@ -5194,7 +5194,7 @@ export function agentRoutes(
 
     const relativePath = typeof req.query.path === "string" ? req.query.path : "";
     if (!relativePath.trim()) {
-      res.status(422).json({ error: "Query parameter 'path' is required" });
+      res.status(422).json({ error: "查询参数 path 为必填项" });
       return;
     }
 
@@ -5239,7 +5239,7 @@ export function agentRoutes(
     if (hasOwn(patchData, "adapterConfig")) {
       const adapterConfig = asRecord(patchData.adapterConfig);
       if (!adapterConfig) {
-        res.status(422).json({ error: "adapterConfig must be an object" });
+        res.status(422).json({ error: "adapterConfig 必须是对象" });
         return;
       }
       assertNoAgentAdapterConfigMutation(req, adapterConfig);
@@ -5264,7 +5264,7 @@ export function agentRoutes(
     if (hasOwn(patchData, "runtimeConfig")) {
       const runtimeConfig = asRecord(patchData.runtimeConfig);
       if (!runtimeConfig) {
-        res.status(422).json({ error: "runtimeConfig must be an object" });
+        res.status(422).json({ error: "runtimeConfig 必须是对象" });
         return;
       }
       assertProviderTraceSettingTransition(
@@ -5653,7 +5653,7 @@ export function agentRoutes(
     }
     const agent = await svc.remove(id);
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 
@@ -6226,7 +6226,7 @@ export function agentRoutes(
   const deriveSetupTokenOwnerUserId = (req: Request): string => {
     const actor = getActorInfo(req);
     if (actor.actorType !== "user") {
-      throw forbidden("A user must own a setup-token login session.");
+      throw forbidden("设置令牌登录会话必须归属于用户。");
     }
     return actor.actorId;
   };
@@ -6599,7 +6599,7 @@ export function agentRoutes(
     // echoes no input; it returns fixed error text only.
     const parsed = submitBrowserCodeRequestSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: "A valid browser code is required." });
+      res.status(400).json({ error: "需要有效的浏览器代码。" });
       return;
     }
     try {
