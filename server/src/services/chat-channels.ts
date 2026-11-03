@@ -20176,7 +20176,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       ["active"],
     );
     if (!record) {
-      throw forbidden("This chat action is not a current Paperclip question");
+      throw forbidden("此聊天操作不是当前 Alice 问题");
     }
     const deny = async (safelyKnown?: {
       conversationId?: string | null;
@@ -23360,7 +23360,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       });
     const queueSlackNotice = async (notice: string, principalId?: string | null) => {
       const effect = await db.transaction((tx) => stageSlackNotice(tx, notice, principalId));
-      if (!effect) throw new Error("Slack notice was not persisted");
+      if (!effect) throw new Error("Slack 通知未能保存");
       scheduleProviderEffect(effect.id, event.event.channel);
     };
     if (!["verifying", "active"].includes(record.endpoint.status)) {
@@ -23392,7 +23392,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       if (principal.principal.kind !== "user" || principal.principal.isBot) return;
       const effect = await db.transaction(async (tx) => {
         if (!(await runtimeCallbackEndpoint(tx, event.endpointId, runtimeContext, ["verifying", "active"]))) {
-          throw conflict("This Slack connection changed; send the connect command again");
+          throw conflict("此 Slack 连接已变化，请重新发送连接命令");
         }
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`chat-identity:${record.endpoint.companyId}:${principal.principal.id}`}, 0))`);
         const inserted = await tx.insert(chatActions).values({
@@ -23432,7 +23432,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           details: { principalId: principal.principal.id },
         });
         const staged = await stageSlackNotice(tx, notice, principal.principal.id);
-        if (!staged) throw new Error("Slack identity link notice was not persisted");
+        if (!staged) throw new Error("Slack 身份关联通知未能保存");
         return staged;
       });
       if (effect) scheduleProviderEffect(effect.id, event.event.channel);
@@ -23612,7 +23612,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           ),
         )
         .then((rows) => rows[0] ?? null));
-    if (!action) throw new Error("Slack command admission was not persisted");
+    if (!action) throw new Error("Slack 命令准入记录未能保存");
     // Slack has a tight acknowledgement budget. The unique action row is the
     // durable receipt; provider publication and Paperclip admission run behind
     // the acknowledgement under an atomic `received -> resolving` claim.
@@ -23707,7 +23707,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     try {
       await withCredentialMutationLease(endpoint, async (credentialLease) => {
         const currentRecord = await endpointRecord(endpoint.id);
-        if (!currentRecord) throw notFound("Chat endpoint not found");
+        if (!currentRecord) throw notFound("未找到聊天端点");
         const currentEndpoint = currentRecord.endpoint;
         const admittedRuntimeContext = lifecycleRuntimeFence(candidate);
         const currentRuntimeContext = runtimeContextForRecord(currentRecord);
@@ -23945,7 +23945,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               );
 
             const canonical = await endpointRecord(currentEndpoint.id);
-            if (!canonical) throw notFound("Chat endpoint not found");
+            if (!canonical) throw notFound("未找到聊天端点");
             const now = new Date();
             const intentionallyUnavailable =
               canonical.endpoint.status === "paused" ||
@@ -25096,7 +25096,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       if (staged === "ignored") return { kind: "ignored" };
       return staged;
     }
-    throw conflict("GitHub credentials changed during webhook authentication", {
+    throw conflict("Webhook 身份验证期间 GitHub 凭据发生变化", {
       code: "chat_endpoint_credentials_changed",
     });
   }
@@ -25670,14 +25670,14 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           for (const attempt of result.deliveries) {
             const timestamp = Date.parse(attempt.deliveredAt);
             if (timestamp > previousTimestamp)
-              throw new Error("GitHub recovery history ordering changed");
+              throw new Error("GitHub 恢复历史顺序发生变化");
             previousTimestamp = timestamp;
             if (timestamp >= floor) attempts.push(attempt);
           }
           if (previousTimestamp < floor) break;
           if (!result.nextCursor) break;
           if (result.nextCursor === cursor)
-            throw new Error("GitHub recovery pagination did not advance");
+            throw new Error("GitHub 恢复分页未能继续");
           cursor = result.nextCursor;
           truncated = page === 2;
         }
@@ -26623,7 +26623,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
 
     try {
       if (!options.heartbeat.cancelRun) {
-        throw new Error("Heartbeat cancellation is unavailable");
+        throw new Error("心跳取消功能不可用");
       }
       await options.heartbeat.cancelRun(
         claim.runId,
@@ -26846,7 +26846,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       (endpoint.status === "revoked" && !recoveringRevokedGitHubInstallation)
     ) {
       if (replayingDurableGitHubIngress) return ignoreSupersededIngress();
-      throw notFound("Chat endpoint not found");
+      throw notFound("未找到聊天端点");
     }
     recordChatWebhookStage("endpoint_resolved", endpoint.id);
     // A pause is a durable ingress fence. Providers generally retry non-2xx
@@ -27169,7 +27169,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     recordChatWebhookStage("runtime_ready");
     const runtimeContext = runtimeContexts.get(endpointRuntime as object);
     if (!runtimeContext) {
-      throw conflict("Chat endpoint runtime is not current", {
+      throw conflict("聊天端点运行时已不是当前版本", {
         code: "chat_endpoint_runtime_superseded",
       });
     }
