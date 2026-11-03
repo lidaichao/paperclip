@@ -11328,6 +11328,10 @@
     "file_viewer_failed_body_0c930007": "The viewer was unable to load this file.",
     "unable_to_load_file_0c930008": "Unable to load file.",
     "unable_to_load_file_content_0c930009": "Unable to load file content.",
-    "file_contents_unavailable_0c930010": "File contents unavailable."
+    "file_contents_unavailable_0c930010": "File contents unavailable.",
+    "instructions_file_runtime_prompt_0c940001": "Absolute path to a Markdown file (for example, AGENTS.md) that defines this agent’s behavior. Alice injects it into the prompt at runtime.",
+    "instructions_file_gemini_prompt_0c940002": "Absolute path to a Markdown file (for example, AGENTS.md) that defines this agent’s behavior. Alice prepends it to the Gemini prompt at runtime.",
+    "instructions_file_kimi_prompt_0c940003": "Absolute path to a Markdown file (for example, AGENTS.md) that defines this agent’s behavior. Alice prepends it to the Kimi prompt at runtime.",
+    "instructions_file_system_prompt_0c940004": "Absolute path to a Markdown file (for example, AGENTS.md) that defines this agent’s behavior. Alice injects it into the system prompt at runtime."
   }
 }

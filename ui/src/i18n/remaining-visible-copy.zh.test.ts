@@ -162,6 +162,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.file_viewer_unsupported_body_0c930006).toContain("文本、图片或视频预览");
     expect(messages.unable_to_load_file_content_0c930009).toBe("无法加载文件内容。");
     expect(messages.file_contents_unavailable_0c930010).toBe("文件内容不可用。");
+    expect(messages.instructions_file_runtime_prompt_0c940001).toContain("注入提示词");
+    expect(messages.instructions_file_gemini_prompt_0c940002).toContain("Gemini 提示词前");
+    expect(messages.instructions_file_kimi_prompt_0c940003).toContain("Kimi 提示词前");
+    expect(messages.instructions_file_system_prompt_0c940004).toContain("注入系统提示词");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

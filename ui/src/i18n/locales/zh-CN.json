@@ -11328,6 +11328,10 @@
     "file_viewer_failed_body_0c930007": "查看器无法加载此文件。",
     "unable_to_load_file_0c930008": "无法加载文件。",
     "unable_to_load_file_content_0c930009": "无法加载文件内容。",
-    "file_contents_unavailable_0c930010": "文件内容不可用。"
+    "file_contents_unavailable_0c930010": "文件内容不可用。",
+    "instructions_file_runtime_prompt_0c940001": "用于定义此智能体行为的 Markdown 文件绝对路径（例如 AGENTS.md）。Alice 会在运行时将其注入提示词。",
+    "instructions_file_gemini_prompt_0c940002": "用于定义此智能体行为的 Markdown 文件绝对路径（例如 AGENTS.md）。Alice 会在运行时将其添加到 Gemini 提示词前。",
+    "instructions_file_kimi_prompt_0c940003": "用于定义此智能体行为的 Markdown 文件绝对路径（例如 AGENTS.md）。Alice 会在运行时将其添加到 Kimi 提示词前。",
+    "instructions_file_system_prompt_0c940004": "用于定义此智能体行为的 Markdown 文件绝对路径（例如 AGENTS.md）。Alice 会在运行时将其注入系统提示词。"
   }
 }
