@@ -11896,6 +11896,12 @@
     "port_value_0e800005": "port {{v0}}",
     "open_service_0e800006": "Open service",
     "value_file_count_0e800007": "{{v0}} file",
-    "value_files_count_0e800008": "{{v0}} files"
+    "value_files_count_0e800008": "{{v0}} files",
+    "choose_or_enter_provider_model_0e900001": "Choose or enter a model in provider/model format.",
+    "enter_github_repository_url_0e900002": "Enter a GitHub repository URL.",
+    "enter_cursor_api_key_0e900003": "Enter a Cursor API key.",
+    "enter_value_or_select_organization_secret_0e900004": "Enter {{v0}} or select an organization secret.",
+    "enter_hermes_api_base_url_0e900005": "Enter the Hermes API base URL.",
+    "enter_kimi_api_model_name_0e900006": "Enter the Kimi API model name."
   }
 }

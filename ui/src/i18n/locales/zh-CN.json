@@ -11896,6 +11896,12 @@
     "port_value_0e800005": "端口 {{v0}}",
     "open_service_0e800006": "打开服务",
     "value_file_count_0e800007": "{{v0}} 个文件",
-    "value_files_count_0e800008": "{{v0}} 个文件"
+    "value_files_count_0e800008": "{{v0}} 个文件",
+    "choose_or_enter_provider_model_0e900001": "请选择或输入“提供商/模型”格式的模型。",
+    "enter_github_repository_url_0e900002": "请输入 GitHub 仓库地址。",
+    "enter_cursor_api_key_0e900003": "请输入 Cursor API 密钥。",
+    "enter_value_or_select_organization_secret_0e900004": "请输入 {{v0}}，或选择一个组织密钥。",
+    "enter_hermes_api_base_url_0e900005": "请输入 Hermes API 基础地址。",
+    "enter_kimi_api_model_name_0e900006": "请输入 Kimi API 模型名称。"
   }
 }

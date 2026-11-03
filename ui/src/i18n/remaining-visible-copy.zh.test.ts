@@ -341,6 +341,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.rev_value_0e800004).toContain("版本");
     expect(messages.value_file_count_0e800007).toBe("{{v0}} 个文件");
     expect(messages.value_files_count_0e800008).toBe("{{v0}} 个文件");
+    expect(messages.choose_or_enter_provider_model_0e900001).toContain("提供商/模型");
+    expect(messages.enter_github_repository_url_0e900002).toContain("GitHub 仓库地址");
+    expect(messages.enter_cursor_api_key_0e900003).toContain("Cursor API 密钥");
+    expect(messages.enter_value_or_select_organization_secret_0e900004).toContain("组织密钥");
+    expect(messages.enter_hermes_api_base_url_0e900005).toContain("Hermes API 基础地址");
+    expect(messages.enter_kimi_api_model_name_0e900006).toContain("Kimi API 模型名称");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
