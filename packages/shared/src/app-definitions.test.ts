@@ -926,7 +926,7 @@ describe("AppDefinition catalog", () => {
       });
       expect(method.configRequirements).toBeUndefined();
       expect(method.requiredResourceFilters).toBeUndefined();
-      expect(method.guidanceMd).toContain("optional advanced controls");
+      expect(method.guidanceMd).toContain("可选高级设置");
     }
   });
   it("requires only reviewed provider or safety-boundary configuration on the default path", () => {

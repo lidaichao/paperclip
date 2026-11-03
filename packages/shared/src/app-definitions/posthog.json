@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "posthog",
   "name": "PostHog",
-  "description": "Analyze product usage, errors, feature flags, and experiments with PostHog's hosted MCP server.",
+  "description": "使用 PostHog 托管的 MCP 服务器分析产品使用情况、错误、功能开关和实验。",
   "categories": [
     "analytics"
   ],
@@ -23,20 +23,20 @@
         "customer",
         "dcr"
       ],
-      "whenToUse": "Sign in with PostHog in the browser. Recommended for hosted PostHog accounts.",
+      "whenToUse": "在浏览器中登录 PostHog。推荐用于 PostHog 托管账户。",
       "defaults": {
         "serverUrl": "https://mcp.posthog.com/mcp"
       },
-      "guidanceMd": "Connect with PostHog's recommended defaults. Project pinning, read-only access, and catalog filters are optional advanced controls.",
+      "guidanceMd": "使用 PostHog 推荐的默认设置连接。固定项目、只读访问和目录筛选属于可选高级设置。",
       "riskTier": "S3",
       "tenantFields": [
         {
           "key": "projectId",
-          "label": "Pin to project ID",
+          "label": "固定到项目 ID",
           "type": "text",
           "advanced": true,
-          "placeholder": "Optional numeric project ID",
-          "helperMd": "Optional. Pin this connection to one project and remove PostHog's project-switching tool.",
+          "placeholder": "可选的数字项目 ID",
+          "helperMd": "可选。把此连接固定到一个项目，并移除 PostHog 的项目切换工具。",
           "validation": {
             "pattern": "^[0-9]+$",
             "maxLength": 32
@@ -48,11 +48,11 @@
         },
         {
           "key": "readOnly",
-          "label": "Read-only mode",
+          "label": "只读模式",
           "type": "checkbox",
           "advanced": true,
           "defaultValue": false,
-          "helperMd": "Turn on to hide tools that can change PostHog data.",
+          "helperMd": "启用后，隐藏可能修改 PostHog 数据的工具。",
           "transport": {
             "location": "query",
             "name": "readonly",
@@ -62,11 +62,11 @@
         },
         {
           "key": "features",
-          "label": "Feature groups",
+          "label": "功能组",
           "type": "textarea",
           "advanced": true,
-          "placeholder": "Optional comma-separated feature groups",
-          "helperMd": "Leave blank to expose every feature group, or enter a comma-separated list to narrow access.",
+          "placeholder": "可选，使用逗号分隔功能组",
+          "helperMd": "留空会开放所有功能组；也可以输入逗号分隔的列表来限制访问范围。",
           "validation": {
             "maxLength": 500
           },
@@ -78,11 +78,11 @@
         },
         {
           "key": "tools",
-          "label": "Individual tools",
+          "label": "单项工具",
           "type": "textarea",
           "advanced": true,
-          "placeholder": "Optional comma-separated tool names",
-          "helperMd": "Leave blank to expose all tools. Exact names here are combined with any feature groups.",
+          "placeholder": "可选，使用逗号分隔工具名称",
+          "helperMd": "留空会开放所有工具。这里填写的准确名称会与功能组设置合并生效。",
           "validation": {
             "maxLength": 2000
           },
@@ -94,26 +94,26 @@
         },
         {
           "key": "mode",
-          "label": "Tool response mode",
+          "label": "工具响应模式",
           "type": "select",
           "hidden": true,
           "required": true,
-          "placeholder": "Individual tools",
+          "placeholder": "单项工具",
           "defaultValue": "tools",
           "options": [
             {
               "value": "tools",
-              "label": "Individual tools"
+              "label": "单项工具"
             }
           ],
-          "helperMd": "Paperclip uses individual tools so every action can be governed. CLI mode remains unavailable until nested execution is governed.",
+          "helperMd": "Alice 使用单项工具，以便治理每个操作。在嵌套执行纳入治理前，CLI 模式仍不可用。",
           "transport": {
             "location": "query",
             "name": "mode"
           }
         }
       ],
-      "label": "Sign in with PostHog",
+      "label": "使用 PostHog 登录",
       "consoleLinks": {
         "docs": "https://posthog.com/docs/model-context-protocol"
       },
@@ -143,20 +143,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a PostHog personal API key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用 PostHog 个人 API 密钥。",
       "defaults": {
         "serverUrl": "https://mcp.posthog.com/mcp"
       },
-      "guidanceMd": "Connect with PostHog's recommended defaults. Project pinning, read-only access, and catalog filters are optional advanced controls.",
+      "guidanceMd": "使用 PostHog 推荐的默认设置连接。固定项目、只读访问和目录筛选属于可选高级设置。",
       "riskTier": "S3",
       "tenantFields": [
         {
           "key": "projectId",
-          "label": "Pin to project ID",
+          "label": "固定到项目 ID",
           "type": "text",
           "advanced": true,
-          "placeholder": "Optional numeric project ID",
-          "helperMd": "Optional. Pin this connection to one project and remove PostHog's project-switching tool.",
+          "placeholder": "可选的数字项目 ID",
+          "helperMd": "可选。把此连接固定到一个项目，并移除 PostHog 的项目切换工具。",
           "validation": {
             "pattern": "^[0-9]+$",
             "maxLength": 32
@@ -168,11 +168,11 @@
         },
         {
           "key": "readOnly",
-          "label": "Read-only mode",
+          "label": "只读模式",
           "type": "checkbox",
           "advanced": true,
           "defaultValue": false,
-          "helperMd": "Turn on to hide tools that can change PostHog data.",
+          "helperMd": "启用后，隐藏可能修改 PostHog 数据的工具。",
           "transport": {
             "location": "query",
             "name": "readonly",
@@ -182,11 +182,11 @@
         },
         {
           "key": "features",
-          "label": "Feature groups",
+          "label": "功能组",
           "type": "textarea",
           "advanced": true,
-          "placeholder": "Optional comma-separated feature groups",
-          "helperMd": "Leave blank to expose every feature group, or enter a comma-separated list to narrow access.",
+          "placeholder": "可选，使用逗号分隔功能组",
+          "helperMd": "留空会开放所有功能组；也可以输入逗号分隔的列表来限制访问范围。",
           "validation": {
             "maxLength": 500
           },
@@ -198,11 +198,11 @@
         },
         {
           "key": "tools",
-          "label": "Individual tools",
+          "label": "单项工具",
           "type": "textarea",
           "advanced": true,
-          "placeholder": "Optional comma-separated tool names",
-          "helperMd": "Leave blank to expose all tools. Exact names here are combined with any feature groups.",
+          "placeholder": "可选，使用逗号分隔工具名称",
+          "helperMd": "留空会开放所有工具。这里填写的准确名称会与功能组设置合并生效。",
           "validation": {
             "maxLength": 2000
           },
@@ -214,30 +214,30 @@
         },
         {
           "key": "mode",
-          "label": "Tool response mode",
+          "label": "工具响应模式",
           "type": "select",
           "hidden": true,
           "required": true,
-          "placeholder": "Individual tools",
+          "placeholder": "单项工具",
           "defaultValue": "tools",
           "options": [
             {
               "value": "tools",
-              "label": "Individual tools"
+              "label": "单项工具"
             }
           ],
-          "helperMd": "Paperclip uses individual tools so every action can be governed. CLI mode remains unavailable until nested execution is governed.",
+          "helperMd": "Alice 使用单项工具，以便治理每个操作。在嵌套执行纳入治理前，CLI 模式仍不可用。",
           "transport": {
             "location": "query",
             "name": "mode"
           }
         }
       ],
-      "label": "Use a personal API key",
+      "label": "使用个人 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "PostHog personal API key",
+          "label": "PostHog 个人 API 密钥",
           "type": "password",
           "required": true,
           "placeholder": "phx_...",
