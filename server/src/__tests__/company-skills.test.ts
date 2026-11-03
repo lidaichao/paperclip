@@ -89,7 +89,7 @@ describe("company skill import source parsing", () => {
     const source = "https://github.com/acme/private-skill?token=secret#token=secret";
 
     expect(() => parseSkillImportSourceInput(source)).toThrow(
-      "Remote skill source URLs cannot include credentials, query parameters, or fragments.",
+      "远程技能来源地址不能包含凭据、查询参数或片段。",
     );
     try {
       parseSkillImportSourceInput(source);
@@ -100,7 +100,7 @@ describe("company skill import source parsing", () => {
 
   it("rejects malformed remote URLs as validation errors", () => {
     expect(() => parseSkillImportSourceInput("https://")).toThrow(
-      "Invalid remote skill source URL.",
+      "远程技能来源地址无效。",
     );
   });
 

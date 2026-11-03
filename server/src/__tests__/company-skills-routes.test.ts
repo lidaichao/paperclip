@@ -925,7 +925,7 @@ describe("company skill mutation permissions", () => {
 
     expect(res.status, JSON.stringify(res.body)).toBe(422);
     expect(res.body).toEqual({
-      error: "Remote skill source URLs cannot include credentials, query parameters, or fragments.",
+      error: "远程技能来源地址不能包含凭据、查询参数或片段。",
     });
     expect(JSON.stringify(res.body)).not.toContain("secret");
     expect(mockCompanySkillPolicyService.evaluate).not.toHaveBeenCalled();
@@ -945,7 +945,7 @@ describe("company skill mutation permissions", () => {
 
     expect(res.status, JSON.stringify(res.body)).toBe(422);
     expect(res.body).toEqual({
-      error: "Invalid remote skill source URL.",
+      error: "远程技能来源地址无效。",
     });
     expect(mockCompanySkillPolicyService.evaluate).not.toHaveBeenCalled();
     expect(mockCompanySkillService.importFromSource).not.toHaveBeenCalled();

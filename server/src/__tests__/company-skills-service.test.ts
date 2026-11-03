@@ -1126,14 +1126,14 @@ describeEmbeddedPostgres("companySkillService.list", () => {
     });
     await expect(svc.updateSkill(companyId, skill.id, { sharingScope: "public_link" })).rejects.toMatchObject({
       status: 422,
-      message: "Public skill sharing is not available in this version.",
+      message: "当前版本不支持公开共享技能。",
     });
     await expect(svc.createLocalSkill(companyId, {
       name: "Public Skill",
       sharingScope: "public_link",
     })).rejects.toMatchObject({
       status: 422,
-      message: "Public skill sharing is not available in this version.",
+      message: "当前版本不支持公开共享技能。",
     });
   });
 

@@ -771,14 +771,14 @@ async function resolveGitHubCommitSha(owner: string, repo: string, ref: string, 
 function parseGitHubSourceUrl(rawUrl: string) {
   const url = parseRemoteSkillImportUrl(rawUrl);
   if (url.protocol !== "https:") {
-    throw unprocessable("GitHub source URL must use HTTPS");
+    throw unprocessable("GitHub 来源地址必须使用 HTTPS");
   }
   if (url.username || url.password || url.search || url.hash) {
-    throw unprocessable("Remote skill source URLs cannot include credentials, query parameters, or fragments.");
+    throw unprocessable("远程技能来源地址不能包含凭据、查询参数或片段。");
   }
   const parts = url.pathname.split("/").filter(Boolean);
   if (parts.length < 2) {
-    throw unprocessable("Invalid GitHub URL");
+    throw unprocessable("GitHub 地址无效");
   }
   const owner = parts[0]!;
   const repo = parts[1]!.replace(/\.git$/i, "");
@@ -803,14 +803,14 @@ function parseRemoteSkillImportUrl(rawUrl: string) {
   try {
     return new URL(rawUrl);
   } catch {
-    throw unprocessable("Invalid remote skill source URL.");
+    throw unprocessable("远程技能来源地址无效。");
   }
 }
 
 function normalizeRemoteSkillImportSource(rawUrl: string) {
   const url = parseRemoteSkillImportUrl(rawUrl);
   if (url.username || url.password || url.search || url.hash) {
-    throw unprocessable("Remote skill source URLs cannot include credentials, query parameters, or fragments.");
+    throw unprocessable("远程技能来源地址不能包含凭据、查询参数或片段。");
   }
   if (isGitRepoSkillImportSource(rawUrl)) {
     const hostname = url.hostname.toLowerCase() === "www.github.com" ? "github.com" : url.hostname.toLowerCase();
@@ -850,7 +850,7 @@ function extractCommandTokens(raw: string) {
 export function parseSkillImportSourceInput(rawInput: string): ParsedSkillImportSource {
   const trimmed = rawInput.trim();
   if (!trimmed) {
-    throw unprocessable("Skill source is required.");
+    throw unprocessable("必须提供技能来源。");
   }
 
   const warnings: string[] = [];
@@ -883,7 +883,7 @@ export function parseSkillImportSourceInput(rawInput: string): ParsedSkillImport
 
   const normalizedSource = source.trim();
   if (!normalizedSource) {
-    throw unprocessable("Skill source is required.");
+    throw unprocessable("必须提供技能来源。");
   }
   const normalizedRemoteSource = /^https?:\/\//i.test(normalizedSource)
     ? normalizeRemoteSkillImportSource(normalizedSource)
@@ -923,7 +923,7 @@ export function parseSkillImportSourceInput(rawInput: string): ParsedSkillImport
   }
 
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(canonicalSource) && !/^https:\/\//i.test(canonicalSource)) {
-    throw unprocessable("Remote skill sources must use HTTPS", {
+    throw unprocessable("远程技能来源必须使用 HTTPS", {
       code: "skill_source_validation_failed",
     });
   }
@@ -1579,7 +1579,7 @@ async function readLocalSkillImports(companyId: string, sourcePath: string): Pro
   await walkLocalFiles(root, root, allFiles);
   const skillPaths = allFiles.filter((entry) => path.posix.basename(entry).toLowerCase() === "skill.md");
   if (skillPaths.length === 0) {
-    throw unprocessable("No SKILL.md files were found in the provided path.");
+    throw unprocessable("指定路径中未找到 SKILL.md 文件。");
   }
 
   const imports: ImportedSkill[] = [];
@@ -1745,7 +1745,7 @@ async function readUrlSkillImports(
     };
   }
 
-  throw unprocessable("Unsupported skill source. Use a local path or URL.");
+  throw unprocessable("不支持此技能来源，请使用本地路径或地址。");
 }
 
 function normalizeFileInventory(row: { fileInventory: unknown }): CompanySkillFileInventoryEntry[] {
@@ -1824,9 +1824,9 @@ function normalizeMutableSharingScope(value: unknown): CompanySkillSharingScope 
   if (value === undefined || value === null) return null;
   if (value === "private" || value === "company") return value;
   if (value === "public_link") {
-    throw unprocessable("Public skill sharing is not available in this version.");
+    throw unprocessable("当前版本不支持公开共享技能。");
   }
-  throw unprocessable("Invalid skill sharing scope.");
+  throw unprocessable("技能共享范围无效。");
 }
 
 function normalizeCategoryName(value: unknown) {
@@ -2005,7 +2005,7 @@ function validateSkillTestTemplatePlaceholders(body: string) {
     }
   }
   if (body.replace(recognized, "").includes("{{") || body.replace(recognized, "").includes("}}")) {
-    throw unprocessable("Malformed template placeholder. Use explicit placeholders like {{skillName}}.");
+    throw unprocessable("模板占位符格式错误，请使用 {{skillName}} 这类明确占位符。");
   }
   if (unknown.size > 0) {
     throw unprocessable(`Unknown template placeholder${unknown.size === 1 ? "" : "s"}: ${Array.from(unknown).sort().join(", ")}`);
@@ -2226,7 +2226,7 @@ async function assertVersionMatchesSkill(
     ))
     .then((rows) => rows[0] ?? null);
   if (!row) {
-    throw unprocessable("Selected skill version does not belong to the requested company skill.", {
+    throw unprocessable("所选技能版本不属于指定的公司技能。", {
       versionId,
       skillId,
     });
