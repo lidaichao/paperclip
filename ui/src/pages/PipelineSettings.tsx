@@ -185,11 +185,11 @@ const STAGE_NAV_GROUPS: Array<{
 ];
 
 const STAGE_SECTION_TITLES: Record<StageSectionKey, string> = {
-  instructions: "Automation",
-  secrets: "Secrets",
-  activity: "Activity",
-  history: "History",
-  advanced: "Advanced",
+  instructions: l10n("local.automation_d909750b"),
+  secrets: l10n("local.secrets_d8707d41"),
+  activity: l10n("local.activity_38da1505"),
+  history: l10n("local.history_0e769600"),
+  advanced: l10n("local.advanced_9f088dbe"),
 };
 
 function parseStageSectionKey(value: string | null): StageSectionKey | null {
@@ -930,13 +930,18 @@ function automationVariableKind(value: unknown) {
 
 function automationVariablePreviewTitle(variable: AutomationVariableOption) {
   const preview = primitiveAutomationVariablePreview(variable.example);
-  const size = typeof variable.example === "string" ? `${variable.example.length} chars` : `${preview.length} chars`;
+  const size = l10n("local.character_count_value_b202984f", {
+    v0: typeof variable.example === "string" ? variable.example.length : preview.length,
+  });
   const lines = [
     variable.description,
-    `Example: ${automationVariableKind(variable.example)}, ${size}`,
+    l10n("local.example_kind_size_9a00137b", {
+      v0: automationVariableKind(variable.example),
+      v1: size,
+    }),
   ];
-  if (variable.exampleSource) lines.push(`From ${variable.exampleSource}`);
-  if (preview) lines.push(preview.length > 500 ? `${preview.slice(0, 500)}...` : preview);
+  if (variable.exampleSource) lines.push(l10n("local.from_value_c6197838", { v0: variable.exampleSource }));
+  if (preview) lines.push(preview.length > 500 ? `${preview.slice(0, 500)}…` : preview);
   return lines.join("\n");
 }
 
@@ -1049,7 +1054,7 @@ function buildAutomationVariableGroups(input: {
     fieldVariables.push({
       key,
       label: key.replace(/[_-]+/g, " ").replace(/([a-z0-9])([A-Z])/g, "$1 $2"),
-      description: `Field copied from the current item data.`,
+      description: l10n("local.field_copied_from_current_item_data_f27d56ad"),
       example: value,
       exampleSource,
     });
@@ -1059,7 +1064,7 @@ function buildAutomationVariableGroups(input: {
     { id: "item", label: l10n("local.current_item_542a6937"), variables: itemVariables },
   ];
   if (fieldVariables.length > 0) {
-    groups.push({ id: "fields", label: "Item fields", variables: fieldVariables });
+    groups.push({ id: "fields", label: l10n("local.item_fields_474f5bef"), variables: fieldVariables });
   }
   return groups;
 }
@@ -1128,7 +1133,7 @@ function CarriedFieldTokenHelper({
 function AutomationVariableTokenHelper({
   groups,
   onInsert,
-  label = "Available variables",
+  label = l10n("local.available_variables_66ba4500"),
 }: {
   groups: AutomationVariableGroup[];
   onInsert: (fieldKey: string) => void;
@@ -1392,7 +1397,7 @@ export function PipelineSettings() {
 
   const createSecret = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedCompanyId) throw new Error("Select an organization to create secrets");
+      if (!selectedCompanyId) throw new Error(l10n("local.select_organization_to_create_secrets_c1e2a413"));
       return secretsApi.create(selectedCompanyId, input);
     },
     onSuccess: () => {
@@ -1779,7 +1784,7 @@ export function PipelineSettings() {
         stageExecutionWorkspacePreference === "reuse_existing" &&
         !stageExecutionWorkspaceId
       ) {
-        throw new Error("Choose an existing workspace before saving this stage.");
+        throw new Error(l10n("local.choose_existing_workspace_before_saving_stage_03c49382"));
       }
       const parsedApproval = parseApprovalValue(selectedApproval);
       const nextRequiresApproval = stageKind === "review";
@@ -1958,8 +1963,8 @@ export function PipelineSettings() {
       const existingKeys = new Set(stages.map((stage) => stage.key));
       const autoAdvanceTarget = nextStageForInsert(stages, insertPosition);
       const created = await pipelinesApi.createStage(pipelineId, {
-        key: nextStageKey("New stage", existingKeys),
-        name: "New stage",
+        key: nextStageKey(l10n("local.new_stage_854628a6"), existingKeys),
+        name: l10n("local.new_stage_854628a6"),
         kind: "working",
         position: insertPosition,
         config: {
@@ -2840,9 +2845,9 @@ export function PipelineSettings() {
                           <FieldRow label={l10n("local.review_outcomes_c4a2bb75")}>
                             <div className="space-y-2">
                               {([
-                                ["Approved items move to", approveTarget, setApproveTarget, "Choose a stage"],
-                                ["Declined items move to", rejectTarget, setRejectTarget, "Choose a stage"],
-                                ["Items needing changes move to", requestChangesTarget, setRequestChangesTarget, "Stay in review"],
+                                [l10n("local.approved_items_move_to_8ef0703d"), approveTarget, setApproveTarget, l10n("local.choose_a_stage_4c407e46")],
+                                [l10n("local.declined_items_move_to_f96e633d"), rejectTarget, setRejectTarget, l10n("local.choose_a_stage_4c407e46")],
+                                [l10n("local.items_needing_changes_move_to_c2221c79"), requestChangesTarget, setRequestChangesTarget, l10n("local.stay_in_review_1fde448b")],
                               ] as const).map(([label, value, setValue, emptyLabel]) => (
                                 <div
                                   key={label}

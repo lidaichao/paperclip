@@ -11209,6 +11209,20 @@
     "last_rotated_value_86b64bbf": "Last rotated: {{v0}}",
     "last_resolved_value_8c72f5f8": "Last resolved: {{v0}}",
     "last_resolved_user_values_per_member_855bce82": "Last resolved: user values resolve per member",
-    "agent_already_has_env_var_80820d80": "{{v0}} already has an env var named {{v1}}."
+    "agent_already_has_env_var_80820d80": "{{v0}} already has an env var named {{v1}}.",
+    "character_count_value_b202984f": "{{v0}} chars",
+    "example_kind_size_9a00137b": "Example: {{v0}}, {{v1}}",
+    "from_value_c6197838": "From {{v0}}",
+    "field_copied_from_current_item_data_f27d56ad": "Field copied from the current item data.",
+    "item_fields_474f5bef": "Item fields",
+    "available_variables_66ba4500": "Available variables",
+    "select_organization_to_create_secrets_c1e2a413": "Select an organization to create secrets",
+    "choose_existing_workspace_before_saving_stage_03c49382": "Choose an existing workspace before saving this stage.",
+    "new_stage_854628a6": "New stage",
+    "approved_items_move_to_8ef0703d": "Approved items move to",
+    "declined_items_move_to_f96e633d": "Declined items move to",
+    "items_needing_changes_move_to_c2221c79": "Items needing changes move to",
+    "choose_a_stage_4c407e46": "Choose a stage",
+    "stay_in_review_1fde448b": "Stay in review"
   }
 }

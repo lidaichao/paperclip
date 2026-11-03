@@ -11209,6 +11209,20 @@
     "last_rotated_value_86b64bbf": "最近轮换：{{v0}}",
     "last_resolved_value_8c72f5f8": "最近解析：{{v0}}",
     "last_resolved_user_values_per_member_855bce82": "最近解析：用户值按成员分别解析",
-    "agent_already_has_env_var_80820d80": "{{v0}} 已有名为 {{v1}} 的环境变量。"
+    "agent_already_has_env_var_80820d80": "{{v0}} 已有名为 {{v1}} 的环境变量。",
+    "character_count_value_b202984f": "{{v0}} 个字符",
+    "example_kind_size_9a00137b": "示例：{{v0}}，{{v1}}",
+    "from_value_c6197838": "来源：{{v0}}",
+    "field_copied_from_current_item_data_f27d56ad": "从当前条目数据中复制的字段。",
+    "item_fields_474f5bef": "条目字段",
+    "available_variables_66ba4500": "可用变量",
+    "select_organization_to_create_secrets_c1e2a413": "请选择组织后再创建密钥",
+    "choose_existing_workspace_before_saving_stage_03c49382": "保存此阶段前，请选择已有工作区。",
+    "new_stage_854628a6": "新阶段",
+    "approved_items_move_to_8ef0703d": "通过后移动到",
+    "declined_items_move_to_f96e633d": "拒绝后移动到",
+    "items_needing_changes_move_to_c2221c79": "要求修改后移动到",
+    "choose_a_stage_4c407e46": "请选择阶段",
+    "stay_in_review_1fde448b": "留在评审阶段"
   }
 }

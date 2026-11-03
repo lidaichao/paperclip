@@ -123,5 +123,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.alice_resolves_reference_can_update_value_888e9f81).toContain("更新值");
     expect(messages.provider_vault_disabled_7baa5d89).toBe("此提供方密钥库已禁用。");
     expect(messages.last_resolved_user_values_per_member_855bce82).toContain("按成员分别解析");
+    expect(messages.available_variables_66ba4500).toBe("可用变量");
+    expect(messages.choose_existing_workspace_before_saving_stage_03c49382).toContain("选择已有工作区");
+    expect(messages.approved_items_move_to_8ef0703d).toBe("通过后移动到");
+    expect(messages.stay_in_review_1fde448b).toBe("留在评审阶段");
   });
 });
