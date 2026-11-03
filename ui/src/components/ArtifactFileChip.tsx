@@ -34,14 +34,25 @@ export function ArtifactFileChip({
   const display = typeof label !== "undefined" ? label : artifactFileDisplay(workspaceFileRef);
   const canOpen = !!(onOpen || viewer);
   const lineSuffix = workspaceFileRef.line
-    ? ` line ${workspaceFileRef.line}${workspaceFileRef.column ? ` column ${workspaceFileRef.column}` : ""}`
+    ? workspaceFileRef.column
+      ? l10n("local.file_line_and_column_10300153", {
+          v0: workspaceFileRef.line,
+          v1: workspaceFileRef.column,
+        })
+      : l10n("local.file_line_10300154", { v0: workspaceFileRef.line })
     : "";
   const ariaLabel = canOpen
     ? l10n("local.open_valuevalue_in_the_file_viewer_97f5d121", {v0: (workspaceFileRef.displayPath), v1: (lineSuffix)})
     : l10n("local.workspace_file_valuevalue_6f0403f2", {v0: (workspaceFileRef.displayPath), v1: (lineSuffix)});
   const tooltip = title ?? (canOpen
-    ? `Open ${workspaceFileRef.displayPath}${lineSuffix} in the file viewer`
-    : `Workspace file ${workspaceFileRef.displayPath}${lineSuffix}`);
+    ? l10n("local.open_valuevalue_in_the_file_viewer_97f5d121", {
+        v0: workspaceFileRef.displayPath,
+        v1: lineSuffix,
+      })
+    : l10n("local.workspace_file_valuevalue_6f0403f2", {
+        v0: workspaceFileRef.displayPath,
+        v1: lineSuffix,
+      }));
 
   const classNames = cn(
     "paperclip-artifact-file-chip inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-xs leading-tight text-foreground/90 align-middle no-underline hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",

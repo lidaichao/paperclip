@@ -458,7 +458,7 @@ export function IssueDocumentsSection({
   const isEmpty = sortedDocuments.length === 0 && !documentSubject.legacyPlanDocument;
   const newDocumentKeyError =
     draft?.isNew && draft.key.trim().length > 0 && !DOCUMENT_KEY_PATTERN.test(draft.key.trim())
-      ? "Use lowercase letters, numbers, -, or _, and start with a letter or number."
+      ? l10n("local.document_key_format_hint_10300151")
       : null;
 
   const resetAutosaveState = useCallback(() => {

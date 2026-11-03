@@ -131,13 +131,13 @@ export function IssueDocumentAnnotations({
 
   const newCommentDisabled = draftDirty || draftConflicted || historicalPreview || !doc.latestRevisionId;
   const newCommentDisabledReason = historicalPreview
-    ? "New comments are disabled while previewing a historical revision."
+    ? l10n("local.comments_disabled_for_historical_revision_10300147")
     : draftConflicted
-      ? "Resolve the document conflict before adding new comments."
+      ? l10n("local.resolve_document_conflict_before_commenting_10300148")
       : draftDirty
-        ? "Save the draft to anchor new comments."
+        ? l10n("local.save_draft_before_anchoring_comments_10300149")
         : !doc.latestRevisionId
-          ? "Document has no saved revision yet."
+          ? l10n("local.document_has_no_saved_revision_10300150")
           : null;
 
   const handleSelectionAnchorChange = useCallback((anchor: PendingAnchor | null) => {

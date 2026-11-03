@@ -12340,6 +12340,14 @@
     "automatic_continuation_value_10300143": "自动续接：{{v0}}",
     "automatic_retry_value_10300144": "自动重试：{{v0}}",
     "previous_sub_task_10300145": "上一个子任务",
-    "next_sub_task_10300146": "下一个子任务"
+    "next_sub_task_10300146": "下一个子任务",
+    "comments_disabled_for_historical_revision_10300147": "预览历史修订版本时不能添加新批注。",
+    "resolve_document_conflict_before_commenting_10300148": "请先解决文档冲突，再添加新批注。",
+    "save_draft_before_anchoring_comments_10300149": "请先保存草稿，再为新批注设置锚点。",
+    "document_has_no_saved_revision_10300150": "文档尚无已保存的修订版本。",
+    "document_key_format_hint_10300151": "请使用小写字母、数字、- 或 _，并以字母或数字开头。",
+    "sensitive_characters_hidden_10300152": "敏感内容——已隐藏 {{v0}} 个字符。点击眼睛图标可显示。",
+    "file_line_and_column_10300153": "（第 {{v0}} 行，第 {{v1}} 列）",
+    "file_line_10300154": "（第 {{v0}} 行）"
   }
 }

@@ -12340,6 +12340,14 @@
     "automatic_continuation_value_10300143": "Automatic continuation {{v0}}",
     "automatic_retry_value_10300144": "Automatic retry {{v0}}",
     "previous_sub_task_10300145": "Previous sub-task",
-    "next_sub_task_10300146": "Next sub-task"
+    "next_sub_task_10300146": "Next sub-task",
+    "comments_disabled_for_historical_revision_10300147": "New comments are disabled while previewing a historical revision.",
+    "resolve_document_conflict_before_commenting_10300148": "Resolve the document conflict before adding new comments.",
+    "save_draft_before_anchoring_comments_10300149": "Save the draft to anchor new comments.",
+    "document_has_no_saved_revision_10300150": "Document has no saved revision yet.",
+    "document_key_format_hint_10300151": "Use lowercase letters, numbers, -, or _, and start with a letter or number.",
+    "sensitive_characters_hidden_10300152": "Sensitive — {{v0}} characters hidden. Click the eye to reveal.",
+    "file_line_and_column_10300153": " line {{v0}}, column {{v1}}",
+    "file_line_10300154": " line {{v0}}"
   }
 }
