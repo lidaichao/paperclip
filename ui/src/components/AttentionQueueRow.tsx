@@ -342,7 +342,7 @@ export const AttentionQueueRow = memo(function AttentionQueueRow({
               role: "button",
               tabIndex: 0,
               "aria-expanded": expanded,
-              "aria-label": expanded ? "Collapse decision" : "Expand decision",
+              "aria-label": expanded ? l10n("local.collapse_decision_efeaeeda") : l10n("local.expand_decision_81b1c87f"),
               onClick: activate,
               onKeyDown: onHeaderKeyDown,
             }
@@ -500,11 +500,11 @@ function CompactDecisionActions({
       }
       if (item.sourceKind === "issue_thread_interaction") {
         const issueId = item.subject.metadata?.issueId;
-        if (typeof issueId !== "string") throw new Error("Missing issue reference for this decision.");
+        if (typeof issueId !== "string") throw new Error(l10n("local.missing_issue_reference_for_this_decision_1f2b96d3"));
         if (action === "accept") return issuesApi.acceptInteraction(issueId, item.subject.id);
         return issuesApi.rejectInteraction(issueId, item.subject.id);
       }
-      throw new Error("This decision must be completed from its detail view.");
+      throw new Error(l10n("local.decision_requires_detail_view_0f200007"));
     },
     onSuccess: (_result, action) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.attention(companyId) });

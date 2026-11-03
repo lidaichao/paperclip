@@ -30,7 +30,7 @@ export function AiConnectionIdentity({
           <Icon aria-hidden className="size-3" />
           {connection.ownership === "shared"
             ? l10n("local.company_shared_47e5dc16")
-            : l10n("local.personal_value_9012ca98", {v0: (connection.ownerName ?? "Account owner")})}
+            : l10n("local.personal_value_9012ca98", {v0: (connection.ownerName ?? l10n("local.account_owner_0f200009"))})}
         </span>
       </div>
     </div>

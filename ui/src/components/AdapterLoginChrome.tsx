@@ -459,7 +459,7 @@ export function ProviderApiKeyCard({
 }) {
   return (
     <OnboardingLoginCard
-      instruction={`Provide your ${providerName} API key to connect`}
+      instruction={l10n("local.provide_api_key_to_connect_0f200010", { v0: providerName })}
     >
       <OnboardingCardField {...field} label={l10n("local.api_key_16f0ee47")} masked />
     </OnboardingLoginCard>

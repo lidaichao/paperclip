@@ -416,6 +416,16 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.called_one_tool_0f100003).toContain("{{v0}} 个工具");
     expect(messages.called_tools_0f100004).toContain("{{v0}} 个工具");
     expect(messages.for_value_0f100005).toBe("耗时 {{v0}}");
+    expect(messages.budget_healthy_0f200001).toBe("预算健康");
+    expect(messages.budget_warning_0f200002).toBe("预算警告");
+    expect(messages.paused_by_budget_0f200003).toContain("预算限制");
+    expect(messages.lifetime_budget_0f200004).toBe("总预算");
+    expect(messages.monthly_utc_budget_0f200005).toBe("每月 UTC 预算");
+    expect(messages.refresh_or_request_admin_invite_0f200006).toContain("访问权限");
+    expect(messages.decision_requires_detail_view_0f200007).toContain("详情页");
+    expect(messages.pick_adapter_for_coach_0f200008).toContain("适配器");
+    expect(messages.account_owner_0f200009).toBe("账户所有者");
+    expect(messages.provide_api_key_to_connect_0f200010).toContain("API 密钥");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

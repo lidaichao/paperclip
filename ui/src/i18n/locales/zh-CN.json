@@ -11988,6 +11988,16 @@
     "ran_commands_0f100002": "运行了 {{v0}} 条命令",
     "called_one_tool_0f100003": "调用了 {{v0}} 个工具",
     "called_tools_0f100004": "调用了 {{v0}} 个工具",
-    "for_value_0f100005": "耗时 {{v0}}"
+    "for_value_0f100005": "耗时 {{v0}}",
+    "budget_healthy_0f200001": "预算健康",
+    "budget_warning_0f200002": "预算警告",
+    "paused_by_budget_0f200003": "因预算限制而暂停",
+    "lifetime_budget_0f200004": "总预算",
+    "monthly_utc_budget_0f200005": "每月 UTC 预算",
+    "refresh_or_request_admin_invite_0f200006": "请刷新页面后登录，或让现有管理员在“设置 → 访问权限”中邀请你。",
+    "decision_requires_detail_view_0f200007": "此决策必须在详情页中完成。",
+    "pick_adapter_for_coach_0f200008": "请选择一个可供此内置成员运行的适配器。",
+    "account_owner_0f200009": "账户所有者",
+    "provide_api_key_to_connect_0f200010": "请提供 {{v0}} API 密钥以建立连接"
   }
 }

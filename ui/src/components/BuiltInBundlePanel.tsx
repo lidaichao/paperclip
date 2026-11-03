@@ -263,10 +263,10 @@ export function BuiltInBundlePanel({
   let adapterDetail: string | undefined;
   if (status === "pending_approval") {
     adapterChip = "pending_approval";
-    adapterDetail = "Waiting on board hire approval before this coach can run.";
+    adapterDetail = l10n("local.waiting_on_board_hire_approval_before_it_can_96a74263");
   } else if (!adapterReady) {
     adapterChip = "needs_setup";
-    adapterDetail = "Pick an adapter this coach can run on.";
+    adapterDetail = l10n("local.pick_adapter_for_coach_0f200008");
   }
 
   const skill = findResource(resources, "skill");
@@ -336,7 +336,7 @@ export function BuiltInBundlePanel({
         {skill &&
           renderResourceRow(
             "skill",
-            "Skill",
+            l10n("local.skill_6df1bb18"),
             bundle.skill.displayName || skill.resourceKey,
             `/agents/${agentRef}/skills`,
             skill,
@@ -345,7 +345,7 @@ export function BuiltInBundlePanel({
         {instructions &&
           renderResourceRow(
             "instructions",
-            "Instructions",
+            l10n("local.instructions_934652dc"),
             bundle.instructions.entryFile,
             `/agents/${agentRef}/instructions`,
             instructions,

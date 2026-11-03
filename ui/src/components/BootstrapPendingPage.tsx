@@ -51,7 +51,7 @@ function claimErrorCopy(error: BootstrapPendingPageProps["claimError"]) {
   if (error?.status === 409) {
     return {
       title: l10n("local.someone_else_has_already_claimed_this_instanc_e9efa2de"),
-      body: "Refresh to sign in, or ask the existing admin to invite you from Settings -> Access.",
+      body: l10n("local.refresh_or_request_admin_invite_0f200006"),
     };
   }
   if (error?.status === 401) {

@@ -11988,6 +11988,16 @@
     "ran_commands_0f100002": "ran {{v0}} commands",
     "called_one_tool_0f100003": "called {{v0}} tool",
     "called_tools_0f100004": "called {{v0}} tools",
-    "for_value_0f100005": "for {{v0}}"
+    "for_value_0f100005": "for {{v0}}",
+    "budget_healthy_0f200001": "Budget healthy",
+    "budget_warning_0f200002": "Budget warning",
+    "paused_by_budget_0f200003": "Paused by budget",
+    "lifetime_budget_0f200004": "Lifetime budget",
+    "monthly_utc_budget_0f200005": "Monthly UTC budget",
+    "refresh_or_request_admin_invite_0f200006": "Refresh to sign in, or ask the existing admin to invite you from Settings → Access.",
+    "decision_requires_detail_view_0f200007": "This decision must be completed from its detail view.",
+    "pick_adapter_for_coach_0f200008": "Pick an adapter this coach can run on.",
+    "account_owner_0f200009": "Account owner",
+    "provide_api_key_to_connect_0f200010": "Provide your {{v0}} API key to connect"
   }
 }
