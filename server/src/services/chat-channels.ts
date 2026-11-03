@@ -28896,17 +28896,17 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
   }
 
   async function listActivityPage(endpointId: string, limit = 25, cursor?: string) {
-    if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw badRequest("Activity limit must be between 1 and 100");
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw badRequest("活动记录数量必须在 1 到 100 之间");
     let before: { createdAt: string; id: string } | undefined;
     if (cursor !== undefined) {
       try {
-        if (cursor.length > 256) throw new Error("Invalid cursor");
+        if (cursor.length > 256) throw new Error("游标无效");
         const value = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
         if (!Array.isArray(value) || value.length !== 2
           || typeof value[0] !== "string" || new Date(value[0]).toISOString() !== value[0]
-          || typeof value[1] !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value[1])) throw new Error("Invalid cursor");
+          || typeof value[1] !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value[1])) throw new Error("游标无效");
         before = { createdAt: value[0], id: value[1] };
-      } catch { throw badRequest("Invalid activity cursor"); }
+      } catch { throw badRequest("活动游标无效"); }
     }
     const rows = await listActivity(endpointId, { limit, before });
     const items = rows.slice(0, limit);
@@ -28930,7 +28930,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0] ?? null);
-    if (!delivery) throw notFound("Delivery not found");
+    if (!delivery) throw notFound("未找到投递记录");
     if (!delivery.conversationId)
       throw unprocessable(
         "Only a delivery already bound to a task can be replayed safely",
@@ -28957,7 +28957,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       );
     }
     if (delivery.state !== "failed") {
-      throw conflict("Only a failed delivery can be replayed", {
+      throw conflict("只能重放失败的投递", {
         code: "chat_delivery_not_failed",
       });
     }
@@ -28979,7 +28979,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         )
         .returning({ id: chatDeliveries.id });
       if (!claimed.length) {
-        throw conflict("This delivery is already being replayed", {
+        throw conflict("此投递正在重放", {
           code: "chat_delivery_replay_conflict",
         });
       }
@@ -29006,7 +29006,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       .where(eq(chatDeliveries.id, delivery.id))
       .then((rows) => rows[0] ?? null);
     if (replayed?.state !== "processed") {
-      throw conflict("The delivery replay did not complete", {
+      throw conflict("投递重放未完成", {
         code: "chat_delivery_replay_incomplete",
         state: replayed?.state ?? "missing",
       });
@@ -29024,9 +29024,9 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0] ?? null);
-    if (!publication) throw notFound("Publication not found");
+    if (!publication) throw notFound("未找到发布记录");
     if (publication.state !== "failed") {
-      throw conflict("Only a failed publication can be replayed", {
+      throw conflict("只能重放失败的发布", {
         code:
           publication.state === "delivery_unknown"
             ? "chat_publication_resolution_required"
@@ -29119,7 +29119,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         .returning({ id: chatPublications.id });
     });
     if (!claimed.length) {
-      throw conflict("This publication is already being replayed", {
+      throw conflict("此发布正在重放", {
         code: "chat_publication_replay_conflict",
       });
     }
@@ -29137,7 +29137,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     },
   ) {
     const initialRecord = await endpointRecord(endpointId);
-    if (!initialRecord) throw notFound("Chat endpoint not found");
+    if (!initialRecord) throw notFound("未找到聊天端点");
     await withCredentialMutationLease(
       initialRecord.endpoint,
       (credentialLease) =>
@@ -29154,7 +29154,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             )
             .for("update")
             .then((rows) => rows[0] ?? null);
-          if (!publication) throw notFound("Publication not found");
+          if (!publication) throw notFound("未找到发布记录");
           const transfer = await tx
             .select({
               id: chatTeamsFileTransfers.id,
@@ -29476,7 +29476,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     userId: string,
   ) {
     const initialRecord = await endpointRecord(endpointId);
-    if (!initialRecord) throw notFound("Chat endpoint not found");
+    if (!initialRecord) throw notFound("未找到聊天端点");
 
     if (resolution === "retry_anyway") {
       await withCredentialMutationLease(
@@ -29508,7 +29508,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               )
               .for("update")
               .then((rows) => rows[0] ?? null);
-            if (!action) throw notFound("Provider action not found");
+            if (!action) throw notFound("未找到服务商操作");
             if (action.status !== "delivery_unknown") {
               throw conflict(
                 "Only an unconfirmed provider action needs operator resolution",
@@ -29519,7 +29519,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             }
             const payload = providerEffectPayload(action.payload);
             if (!payload) {
-              throw conflict("This provider action cannot be retried safely", {
+              throw conflict("此服务商操作无法安全重试", {
                 code: "chat_action_retry_context_missing",
               });
             }
@@ -29582,7 +29582,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               )
               .returning({ id: chatActions.id });
             if (!claimed) {
-              throw conflict("This provider action is already being resolved", {
+              throw conflict("此服务商操作正在处理中", {
                 code: "chat_action_resolution_conflict",
               });
             }
@@ -29628,7 +29628,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             )
             .for("update")
             .then((rows) => rows[0] ?? null);
-          if (!action) throw notFound("Provider action not found");
+          if (!action) throw notFound("未找到服务商操作");
           if (action.status !== "delivery_unknown") {
             throw conflict(
               "Only an unconfirmed provider action needs operator resolution",
@@ -29639,7 +29639,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           }
           const payload = providerEffectPayload(action.payload);
           if (!payload) {
-            throw conflict("This provider action cannot be resolved safely", {
+            throw conflict("此服务商操作无法安全处理", {
               code: "chat_action_resolution_context_missing",
             });
           }
@@ -29696,7 +29696,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             )
             .returning({ id: chatActions.id });
           if (!resolved) {
-            throw conflict("This provider action is already being resolved", {
+            throw conflict("此服务商操作正在处理中", {
               code: "chat_action_resolution_conflict",
             });
           }
@@ -29774,7 +29774,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     userId: string,
   ) {
     const initialRecord = await endpointRecord(endpointId);
-    if (!initialRecord) throw notFound("Chat endpoint not found");
+    if (!initialRecord) throw notFound("未找到聊天端点");
     const initialAction = await db
       .select({ kind: chatActions.kind })
       .from(chatActions)
@@ -29785,18 +29785,18 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0] ?? null);
-    if (!initialAction) throw notFound("Provider action not found");
+    if (!initialAction) throw notFound("未找到服务商操作");
     if (initialAction.kind === "provider_effect") {
       await resolveProviderEffect(endpointId, actionId, resolution, userId);
       return;
     }
     if (initialRecord.endpoint.provider !== "slack") {
-      throw conflict("This provider action cannot be resolved here", {
+      throw conflict("无法在此处处理此服务商操作", {
         code: "chat_action_resolution_unsupported",
       });
     }
     if (resolution === "mark_delivered") {
-      throw conflict("A Slack task start cannot be marked delivered here", {
+      throw conflict("无法在此处将 Slack 任务启动标记为已送达", {
         code: "chat_action_resolution_unsupported",
       });
     }
@@ -29852,7 +29852,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               )
               .for("update")
               .then((rows) => rows[0] ?? null);
-            if (!action) throw notFound("Provider action not found");
+            if (!action) throw notFound("未找到服务商操作");
             if (action.status !== "delivery_unknown") {
               throw conflict(
                 "Only an unconfirmed provider action needs operator resolution",
@@ -29901,7 +29901,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       initialRecord.endpoint,
       async (credentialLease) => {
         const record = await endpointRecord(endpointId);
-        if (!record) throw notFound("Chat endpoint not found");
+        if (!record) throw notFound("未找到聊天端点");
         if (
           record.endpoint.provider !== "slack" ||
           !["verifying", "active"].includes(record.endpoint.status)
@@ -29924,7 +29924,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             ),
           )
           .then((rows) => rows[0] ?? null);
-        if (!action) throw notFound("Provider action not found");
+        if (!action) throw notFound("未找到服务商操作");
         const staleActionCanBeNormalized =
           (action.status === "received" &&
             action.updatedAt.getTime() <=
@@ -29953,7 +29953,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           );
         }
         if (!action.principalId) {
-          throw conflict("The original Slack account is no longer available", {
+          throw conflict("原 Slack 账号已不可用", {
             code: "chat_action_principal_missing",
           });
         }
@@ -29973,7 +29973,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           )
           .then((rows) => rows[0] ?? null);
         if (!principal || principal.isBot || principal.kind !== "user") {
-          throw conflict("The original Slack account is no longer available", {
+          throw conflict("原 Slack 账号已不可用", {
             code: "chat_action_principal_missing",
           });
         }
@@ -30091,7 +30091,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             )
             .for("update")
             .then((rows) => rows[0] ?? null);
-          if (!current) throw notFound("Provider action not found");
+          if (!current) throw notFound("未找到服务商操作");
           if (current.status !== "delivery_unknown") {
             throw conflict(
               "Only an unconfirmed provider action needs operator resolution",
