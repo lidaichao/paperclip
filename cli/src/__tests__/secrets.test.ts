@@ -245,8 +245,8 @@ describe("secrets CLI helpers", () => {
 
     expect(result.status).toBe("fail");
     expect(result.message).toContain("PAPERCLIP_SECRETS_AWS_DEPLOYMENT_ID");
-    expect(result.repairHint).toContain("AWS SDK default credential chain");
-    expect(result.repairHint).toContain("Do not store AWS root credentials");
+    expect(result.repairHint).toContain("AWS SDK 默认凭据链");
+    expect(result.repairHint).toContain("不要在 Alice 密钥中存储 AWS 根凭据");
   });
 
   it("passes AWS doctor checks when non-secret provider config is present", () => {
@@ -260,7 +260,7 @@ describe("secrets CLI helpers", () => {
 
     expect(result.status).toBe("pass");
     expect(result.message).toContain("prod-us-1");
-    expect(result.message).toContain("AWS_PROFILE/shared config");
+    expect(result.message).toContain("AWS_PROFILE/共享配置");
   });
 });
 

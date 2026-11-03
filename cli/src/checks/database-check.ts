@@ -15,11 +15,11 @@ export async function databaseCheck(config: PaperclipConfig, configPath?: string
   if (config.database.mode === "postgres") {
     if (!config.database.connectionString) {
       return {
-        name: "Database",
+        name: "数据库",
         status: "fail",
-        message: "PostgreSQL mode selected but no connection string configured",
+        message: "已选择 PostgreSQL 模式，但未配置连接字符串",
         canRepair: false,
-        repairHint: "Run `paperclipai configure --section database`",
+        repairHint: "请运行 `paperclipai configure --section database`",
       };
     }
 
@@ -28,17 +28,17 @@ export async function databaseCheck(config: PaperclipConfig, configPath?: string
       const db = createDb(config.database.connectionString);
       await db.execute("SELECT 1");
       return {
-        name: "Database",
+        name: "数据库",
         status: "pass",
-        message: "PostgreSQL connection successful",
+        message: "PostgreSQL 连接成功",
       };
     } catch (err) {
       return {
-        name: "Database",
+        name: "数据库",
         status: "fail",
-        message: `Cannot connect to PostgreSQL: ${err instanceof Error ? err.message : String(err)}`,
+        message: `无法连接 PostgreSQL：${err instanceof Error ? err.message : String(err)}`,
         canRepair: false,
-        repairHint: "Check your connection string and ensure PostgreSQL is running",
+        repairHint: "请检查连接字符串，并确认 PostgreSQL 正在运行",
       };
     }
   }
@@ -55,18 +55,17 @@ export async function databaseCheck(config: PaperclipConfig, configPath?: string
     // we're warning about.
     if (isInsideOsTmpDir(dataDir) && process.env.PAPERCLIP_IN_WORKTREE === "true") {
       return {
-        name: "Database",
+        name: "数据库",
         status: "warn",
         message:
-          `Embedded PostgreSQL data dir is inside the OS temp directory (${dataDir}) ` +
-          "while running in worktree mode (PAPERCLIP_IN_WORKTREE=true). Data stored here is " +
-          "ephemeral and will be lost on reboot or a temp cleanup. If this is your primary " +
-          "instance, PAPERCLIP_HOME / PAPERCLIP_IN_WORKTREE likely leaked into its environment, " +
-          "pointing it at a throwaway worktree home instead of your real data.",
+          `内置 PostgreSQL 数据目录位于系统临时目录中（${dataDir}），` +
+          "且当前以工作区模式运行（PAPERCLIP_IN_WORKTREE=true）。这里的数据是临时的，" +
+          "重启或清理临时文件后会丢失。如果这是主实例，PAPERCLIP_HOME / PAPERCLIP_IN_WORKTREE " +
+          "可能意外泄漏到其环境变量中，导致实例指向一次性工作区目录，而非真实数据目录。",
         canRepair: false,
         repairHint:
-          "If this is the primary instance, unset PAPERCLIP_HOME and PAPERCLIP_IN_WORKTREE " +
-          "(or pass --data-dir <persistent path>) and restart so it uses the persistent instance.",
+          "如果这是主实例，请取消设置 PAPERCLIP_HOME 和 PAPERCLIP_IN_WORKTREE " +
+          "（或传入 --data-dir <持久化路径>）并重启，使其使用持久化实例。",
       };
     }
 
@@ -75,17 +74,17 @@ export async function databaseCheck(config: PaperclipConfig, configPath?: string
     }
 
     return {
-      name: "Database",
+      name: "数据库",
       status: "pass",
-      message: `Embedded PostgreSQL configured at ${dataDir} (port ${config.database.embeddedPostgresPort})`,
+      message: `已在 ${dataDir} 配置内置 PostgreSQL（端口 ${config.database.embeddedPostgresPort}）`,
     };
   }
 
   return {
-    name: "Database",
+    name: "数据库",
     status: "fail",
-    message: `Unknown database mode: ${String(config.database.mode)}`,
+    message: `未知数据库模式：${String(config.database.mode)}`,
     canRepair: false,
-    repairHint: "Run `paperclipai configure --section database`",
+    repairHint: "请运行 `paperclipai configure --section database`",
   };
 }

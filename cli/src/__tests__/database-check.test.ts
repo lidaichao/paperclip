@@ -45,7 +45,7 @@ describe("databaseCheck — embedded postgres temp-dir guard", () => {
     const result = await databaseCheck(embeddedConfig(persistentDataDir), path.join(base, "config.json"));
 
     expect(result.status).toBe("pass");
-    expect(result.message).toContain("Embedded PostgreSQL configured at");
+    expect(result.message).toContain("配置内置 PostgreSQL");
   });
 
   it("warns when a worktree-mode data dir lives inside the OS temp directory", async () => {
@@ -58,8 +58,8 @@ describe("databaseCheck — embedded postgres temp-dir guard", () => {
     const result = await databaseCheck(embeddedConfig(tmpDataDir), path.join(base, "config.json"));
 
     expect(result.status).toBe("warn");
-    expect(result.message).toMatch(/temp directory/i);
-    expect(result.message).toMatch(/ephemeral/i);
+    expect(result.message).toMatch(/临时目录/);
+    expect(result.message).toMatch(/临时的/);
     expect(result.repairHint).toContain("PAPERCLIP_HOME");
     // Must warn BEFORE creating anything — don't bootstrap the throwaway temp dir.
     expect(fs.existsSync(tmpDataDir)).toBe(false);

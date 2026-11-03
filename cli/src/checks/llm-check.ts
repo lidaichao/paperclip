@@ -4,17 +4,17 @@ import type { CheckResult } from "./index.js";
 export async function llmCheck(config: PaperclipConfig): Promise<CheckResult> {
   if (!config.llm) {
     return {
-      name: "LLM provider",
+      name: "大模型服务商",
       status: "pass",
-      message: "No LLM provider configured (optional)",
+      message: "未配置大模型服务商（可选）",
     };
   }
 
   if (!config.llm.apiKey) {
     return {
-      name: "LLM provider",
+      name: "大模型服务商",
       status: "pass",
-      message: `${config.llm.provider} configured but no API key set (optional)`,
+      message: `已配置 ${config.llm.provider}，但未设置 API 密钥（可选）`,
     };
   }
 
@@ -34,49 +34,49 @@ export async function llmCheck(config: PaperclipConfig): Promise<CheckResult> {
         }),
       });
       if (res.ok || res.status === 400) {
-        return { name: "LLM provider", status: "pass", message: "Claude API key is valid" };
+        return { name: "大模型服务商", status: "pass", message: "Claude API 密钥有效" };
       }
       if (res.status === 401) {
         return {
-          name: "LLM provider",
+          name: "大模型服务商",
           status: "fail",
-          message: "Claude API key is invalid (401)",
+          message: "Claude API 密钥无效（401）",
           canRepair: false,
-          repairHint: "Run `paperclipai configure --section llm`",
+          repairHint: "请运行 `paperclipai configure --section llm`",
         };
       }
       return {
-        name: "LLM provider",
+        name: "大模型服务商",
         status: "warn",
-        message: `Claude API returned status ${res.status}`,
+        message: `Claude API 返回状态 ${res.status}`,
       };
     } else {
       const res = await fetch("https://api.openai.com/v1/models", {
         headers: { Authorization: `Bearer ${config.llm.apiKey}` },
       });
       if (res.ok) {
-        return { name: "LLM provider", status: "pass", message: "OpenAI API key is valid" };
+        return { name: "大模型服务商", status: "pass", message: "OpenAI API 密钥有效" };
       }
       if (res.status === 401) {
         return {
-          name: "LLM provider",
+          name: "大模型服务商",
           status: "fail",
-          message: "OpenAI API key is invalid (401)",
+          message: "OpenAI API 密钥无效（401）",
           canRepair: false,
-          repairHint: "Run `paperclipai configure --section llm`",
+          repairHint: "请运行 `paperclipai configure --section llm`",
         };
       }
       return {
-        name: "LLM provider",
+        name: "大模型服务商",
         status: "warn",
-        message: `OpenAI API returned status ${res.status}`,
+        message: `OpenAI API 返回状态 ${res.status}`,
       };
     }
   } catch {
     return {
-      name: "LLM provider",
+      name: "大模型服务商",
       status: "warn",
-      message: "Could not reach API to validate key",
+      message: "无法访问 API 以验证密钥",
     };
   }
 }
