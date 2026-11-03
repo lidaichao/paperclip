@@ -3731,8 +3731,8 @@ function ProviderVaultFields({
       <div className="grid gap-3 sm:grid-cols-2">
         <TextField label={l10n("local.aws_region_295e09c8")} value={form.region} onChange={(value) => setField("region", value)} placeholder="us-east-1" required />
         <TextField label={l10n("local.namespace_c4e4e7ab")} value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder={l10n("local.production_ab8e18ef")} />
-        <TextField label={l10n("local.secret_name_prefix_128f9dc3")} value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
-        <TextField label={l10n("local.kms_key_id_0670e40a")} value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/paperclip-secrets" />
+        <TextField label={l10n("local.secret_name_prefix_128f9dc3")} value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="alice" />
+        <TextField label={l10n("local.kms_key_id_0670e40a")} value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/alice-secrets" />
         <TextField label={l10n("local.owner_tag_57998397")} value={form.ownerTag} onChange={(value) => setField("ownerTag", value)} placeholder={l10n("local.platform_d294fcce")} />
         <TextField label={l10n("local.environment_tag_a2f25655")} value={form.environmentTag} onChange={(value) => setField("environmentTag", value)} placeholder={l10n("local.prod_6754af96")} />
       </div>
@@ -3742,10 +3742,10 @@ function ProviderVaultFields({
   if (form.provider === "gcp_secret_manager") {
     return (
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField label={l10n("local.project_id_ab8e81d7")} value={form.projectId} onChange={(value) => setField("projectId", value)} placeholder="paperclip-prod" />
+        <TextField label={l10n("local.project_id_ab8e81d7")} value={form.projectId} onChange={(value) => setField("projectId", value)} placeholder="alice-prod" />
         <TextField label={l10n("local.location_15b61974")} value={form.location} onChange={(value) => setField("location", value)} placeholder={l10n("local.global_8001c274")} />
         <TextField label={l10n("local.namespace_c4e4e7ab")} value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder={l10n("local.production_ab8e18ef")} />
-        <TextField label={l10n("local.secret_name_prefix_128f9dc3")} value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
+        <TextField label={l10n("local.secret_name_prefix_128f9dc3")} value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="alice" />
       </div>
     );
   }
@@ -3755,7 +3755,7 @@ function ProviderVaultFields({
       <TextField label={l10n("local.address_56ef8f20")} value={form.address} onChange={(value) => setField("address", value)} placeholder="https://vault.example.com" />
       <TextField label={l10n("local.namespace_c4e4e7ab")} value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder={l10n("local.admin_8c6976e5")} />
       <TextField label={l10n("local.mount_path_dfc326f2")} value={form.mountPath} onChange={(value) => setField("mountPath", value)} placeholder={l10n("local.secret_2bb80d53")} />
-      <TextField label={l10n("local.secret_path_prefix_e7033d27")} value={form.secretPathPrefix} onChange={(value) => setField("secretPathPrefix", value)} placeholder="paperclip/prod" />
+      <TextField label={l10n("local.secret_path_prefix_e7033d27")} value={form.secretPathPrefix} onChange={(value) => setField("secretPathPrefix", value)} placeholder="alice/prod" />
     </div>
   );
 }
