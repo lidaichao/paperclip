@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useRef, useState } from "react";
 
 /** Keeps stop requests independent of draft submission and prevents double clicks. */
@@ -15,7 +16,7 @@ export function useComposerStop(onStop?: () => Promise<void>, pending = false) {
       await onStop();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Unable to stop. Try again.",
+        err instanceof Error ? err.message : l10n("local.unable_to_stop_retry_0e100003"),
       );
     } finally {
       inFlight.current = false;

@@ -11836,6 +11836,11 @@
     "no_opencode_models_discovered_0e000007": "未发现 OpenCode 模型。请运行 `opencode models` 并完成服务商身份验证。",
     "configured_opencode_model_unavailable_0e000008": "配置的 OpenCode 模型不可用：{{v0}}",
     "failed_to_create_agent_0e000009": "创建智能体失败",
-    "failed_to_unset_anthropic_api_key_0e000010": "清除 ANTHROPIC_API_KEY 后重试失败。"
+    "failed_to_unset_anthropic_api_key_0e000010": "清除 ANTHROPIC_API_KEY 后重试失败。",
+    "could_not_connect_retry_0e100001": "连接失败，请重试。",
+    "could_not_use_connection_0e100002": "无法使用此连接。",
+    "unable_to_stop_retry_0e100003": "无法停止，请重试。",
+    "could_not_save_changes_0e100004": "保存更改失败。",
+    "could_not_unlink_account_0e100005": "无法解除此账户的关联。"
   }
 }

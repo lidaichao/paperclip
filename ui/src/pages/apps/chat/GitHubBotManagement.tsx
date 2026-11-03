@@ -49,7 +49,7 @@ export function GitHubBotManagement({
     try {
       await fn();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save changes.");
+      setError(e instanceof Error ? e.message : l10n("local.could_not_save_changes_0e100004"));
     } finally {
       setPending(false);
     }

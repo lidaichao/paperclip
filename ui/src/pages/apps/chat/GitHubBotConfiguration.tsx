@@ -462,7 +462,7 @@ export function GitHubAccessEditor({
                     setError(
                       e instanceof Error
                         ? e.message
-                        : "Could not unlink this account.",
+                        : l10n("local.could_not_unlink_account_0e100005"),
                     );
                   } finally {
                     setBusy(false);

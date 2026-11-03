@@ -11836,6 +11836,11 @@
     "no_opencode_models_discovered_0e000007": "No OpenCode models discovered. Run `opencode models` and authenticate providers.",
     "configured_opencode_model_unavailable_0e000008": "Configured OpenCode model is unavailable: {{v0}}",
     "failed_to_create_agent_0e000009": "Failed to create agent",
-    "failed_to_unset_anthropic_api_key_0e000010": "Failed to unset ANTHROPIC_API_KEY and retry."
+    "failed_to_unset_anthropic_api_key_0e000010": "Failed to unset ANTHROPIC_API_KEY and retry.",
+    "could_not_connect_retry_0e100001": "Could not connect. Please try again.",
+    "could_not_use_connection_0e100002": "Could not use this connection.",
+    "unable_to_stop_retry_0e100003": "Unable to stop. Try again.",
+    "could_not_save_changes_0e100004": "Could not save changes.",
+    "could_not_unlink_account_0e100005": "Could not unlink this account."
   }
 }

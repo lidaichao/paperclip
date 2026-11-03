@@ -309,6 +309,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.failed_to_create_organization_0e000005).toBe("创建组织失败");
     expect(messages.no_opencode_models_discovered_0e000007).toContain("opencode models");
     expect(messages.failed_to_create_agent_0e000009).toBe("创建智能体失败");
+    expect(messages.could_not_connect_retry_0e100001).toBe("连接失败，请重试。");
+    expect(messages.unable_to_stop_retry_0e100003).toBe("无法停止，请重试。");
+    expect(messages.could_not_save_changes_0e100004).toBe("保存更改失败。");
+    expect(messages.could_not_unlink_account_0e100005).toBe("无法解除此账户的关联。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
