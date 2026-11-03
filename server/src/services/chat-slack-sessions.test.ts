@@ -176,7 +176,7 @@ describe("Slack agent sessions", () => {
         status: "active",
         fetch,
       }),
-    ).rejects.toThrow("Invalid Slack session");
+    ).rejects.toThrow("Slack 会话目标或状态无效");
     expect(fetch).not.toHaveBeenCalled();
   });
 });

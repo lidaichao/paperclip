@@ -113,7 +113,7 @@ export async function setSlackSessionStatus(input: {
     !["processing", "active", "suspended", "closed"].includes(input.status)
   ) {
     throw Object.assign(
-      new Error("Invalid Slack session destination or status"),
+      new Error("Slack 会话目标或状态无效"),
       {
         code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED",
       },
@@ -142,7 +142,7 @@ export async function setSlackSessionStatus(input: {
     // Reapplying status is safe even when this attempt may have succeeded.
     // Deliberately omit the fetch exception: it may contain request headers.
     throw Object.assign(
-      new Error("Slack session status could not be confirmed"),
+      new Error("Slack 会话状态未能确认"),
       {
         code: "chat_slack_session_transport_failed",
       },
@@ -171,7 +171,7 @@ export async function setSlackSessionStatus(input: {
   }
   const retryAfter = Number(response.headers.get("retry-after"));
   throw Object.assign(
-    new Error(`Slack session status failed (${providerCode})`),
+    new Error(`Slack 会话状态更新失败（${providerCode}）`),
     {
       code: "chat_slack_session_status_failed",
       status: response.status,

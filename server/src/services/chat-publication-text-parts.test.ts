@@ -151,6 +151,6 @@ describe("lossless native publication text parts", () => {
           ...fields,
         },
       } as SafeChatPublicationPayload),
-    ).toThrow("Invalid durable publication text transport");
+    ).toThrow("持久化发布文本的传输数据无效");
   });
 });

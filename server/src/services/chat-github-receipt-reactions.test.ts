@@ -135,7 +135,9 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
     "https://elsewhere.example/owner/repo",
   ])("refuses invalid destinations before HTTP %s", async (thread) => {
     const test = fixture();
-    await expect(test.invoke("remove", thread)).rejects.toThrow();
+    await expect(test.invoke("remove", thread)).rejects.toThrow(
+      "GitHub 回执目标无效",
+    );
     expect(test.calls).toEqual([]);
   });
   it.each([
@@ -221,7 +223,7 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
               })
             : undefined,
       );
-      await expect(test.invoke()).rejects.toThrow("could not be confirmed");
+      await expect(test.invoke()).rejects.toThrow("GitHub 回执表情未能确认");
       expect(test.calls.some((call) => call.path.endsWith("/reactions"))).toBe(
         false,
       );
@@ -240,7 +242,7 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
         ? Response.json(page)
         : undefined,
     );
-    await expect(test.invoke()).rejects.toThrow("could not be confirmed");
+    await expect(test.invoke()).rejects.toThrow("GitHub 回执表情未能确认");
     expect(test.calls.some((call) => call.method === "DELETE")).toBe(false);
   });
 
@@ -257,7 +259,7 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
           )
         : undefined,
     );
-    await expect(test.invoke()).rejects.toThrow("could not be confirmed");
+    await expect(test.invoke()).rejects.toThrow("GitHub 回执表情未能确认");
     expect(test.calls.filter((call) => call.page)).toHaveLength(
       GITHUB_RECEIPT_MAX_PAGES,
     );
@@ -270,7 +272,7 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
   ])("does not replace durable reaction ownership %j", async (identity) => {
     const test = fixture();
     await expect(test.invoke("remove", undefined, identity)).rejects.toThrow(
-      "could not be confirmed",
+      "GitHub 回执表情未能确认",
     );
     expect(test.calls.some((call) => call.method === "DELETE")).toBe(false);
   });
@@ -282,7 +284,7 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
         test.current.mockRejectedValue(new Error("lost exact lease"));
       return undefined;
     });
-    await expect(test.invoke()).rejects.toThrow("could not be confirmed");
+    await expect(test.invoke()).rejects.toThrow("GitHub 回执表情未能确认");
     expect(test.calls.some((call) => call.method === "DELETE")).toBe(false);
   });
 
@@ -317,7 +319,9 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
         );
       });
       const result = test.invoke();
-      const rejected = expect(result).rejects.toThrow("could not be confirmed");
+      const rejected = expect(result).rejects.toThrow(
+        "GitHub 回执表情未能确认",
+      );
       await ready;
       await vi.advanceTimersByTimeAsync(GITHUB_RECEIPT_TIMEOUT_MS);
       await rejected;
@@ -338,7 +342,7 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
     await expect(test.invoke()).rejects.toMatchObject({
       status: 429,
       response: { headers: { "retry-after": "60" } },
-      message: "GitHub receipt reaction could not be confirmed (unconfirmed)",
+      message: "GitHub 回执表情未能确认（unconfirmed）",
     });
   });
 
@@ -363,7 +367,9 @@ describe("GitHub exact receipt reactions through pinned App auth", () => {
       return Response.json([]);
     });
     const result = test.invoke();
-    const rejection = expect(result).rejects.toThrow("could not be confirmed");
+    const rejection = expect(result).rejects.toThrow(
+      "GitHub 回执表情未能确认",
+    );
     await ready;
     await vi.advanceTimersByTimeAsync(GITHUB_RECEIPT_TIMEOUT_MS);
     release();

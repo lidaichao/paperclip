@@ -38,7 +38,7 @@ const SAFE_ERRORS = new Set([
 
 function unavailable() {
   return Object.assign(
-    new Error("Slack receipt reaction could not be confirmed"),
+    new Error("Slack 回执表情未能确认"),
     {
       name: "NetworkError",
       code: "chat_slack_receipt_transport_failed",
@@ -66,7 +66,7 @@ export async function applySlackReceiptReaction(
     !input.botToken ||
     /[\r\n]/.test(input.botToken)
   ) {
-    throw Object.assign(new Error("Invalid Slack receipt destination"), {
+    throw Object.assign(new Error("Slack 回执目标无效"), {
       code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED",
     });
   }
@@ -144,7 +144,7 @@ export async function applySlackReceiptReaction(
   if (response.ok && (!body || typeof body.ok !== "boolean"))
     throw unavailable();
   const retryAfter = response.headers.get("retry-after");
-  throw Object.assign(new Error(`Slack receipt reaction failed (${error})`), {
+  throw Object.assign(new Error(`Slack 回执表情操作失败（${error}）`), {
     code: response.ok
       ? "slack_webapi_platform_error"
       : "slack_webapi_http_error",

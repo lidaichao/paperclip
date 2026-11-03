@@ -20,7 +20,7 @@ const PREFIX = /^(`{3,256}|~{3,256})([A-Za-z0-9_+.-]{0,32})\n$/;
 const SUFFIX = /^\n(`{3,256}|~{3,256})\n?$/;
 
 function invalidTransport(): never {
-  throw Object.assign(new Error("Invalid durable publication text transport"), {
+  throw Object.assign(new Error("持久化发布文本的传输数据无效"), {
     name: "ValidationError",
     code: "VALIDATION_ERROR",
   });

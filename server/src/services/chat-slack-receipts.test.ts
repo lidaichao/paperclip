@@ -119,7 +119,10 @@ describe("bounded Slack receipt transport", () => {
         { ...mutation, ...change, botToken: token } as never,
         fetch,
       ),
-    ).rejects.toMatchObject({ code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED" });
+    ).rejects.toMatchObject({
+      code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED",
+      message: "Slack 回执目标无效",
+    });
     expect(fetch).not.toHaveBeenCalled();
   });
 

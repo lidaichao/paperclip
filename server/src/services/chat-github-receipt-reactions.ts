@@ -52,7 +52,7 @@ export function parseGitHubReceiptIdentity(
 }
 function unavailable(code = "unconfirmed") {
   return Object.assign(
-    new Error(`GitHub receipt reaction could not be confirmed (${code})`),
+    new Error(`GitHub 回执表情未能确认（${code}）`),
     {
       name: "NetworkError",
       code: "chat_github_receipt_unconfirmed",
@@ -84,11 +84,18 @@ export async function applyGitHubReceiptReaction(
       input.threadId,
     )
   ) {
-    throw Object.assign(new Error("Invalid GitHub receipt destination"), {
+    throw Object.assign(new Error("GitHub 回执目标无效"), {
       code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED",
     });
   }
-  const destination = adapter.decodeThreadId(input.threadId);
+  let destination: ReturnType<Adapter["decodeThreadId"]>;
+  try {
+    destination = adapter.decodeThreadId(input.threadId);
+  } catch {
+    throw Object.assign(new Error("GitHub 回执目标无效"), {
+      code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED",
+    });
+  }
   if (
     !/^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/.test(destination.owner) ||
     !/^[A-Za-z0-9_.-]{1,100}$/.test(destination.repo) ||
@@ -97,7 +104,7 @@ export async function applyGitHubReceiptReaction(
     (destination.reviewCommentId !== undefined &&
       !numericId(destination.reviewCommentId))
   ) {
-    throw Object.assign(new Error("Invalid GitHub receipt destination"), {
+    throw Object.assign(new Error("GitHub 回执目标无效"), {
       code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED",
     });
   }
