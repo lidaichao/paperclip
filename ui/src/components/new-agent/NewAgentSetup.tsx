@@ -710,7 +710,14 @@ function Setup({
                     <div className="mb-8">
                       <OnboardingHeading
                         title={l10n("local.connect_a_model_87bdaaf8")}
-                        lede={`Connect ${name} to ${connectionAdapter === "claude_local" ? "Claude" : connectionAdapter === "grok_local" ? "Grok" : "OpenAI"}.`}
+                        lede={l10n("local.connect_value_to_value_10300198", {
+                          v0: name,
+                          v1: connectionAdapter === "claude_local"
+                            ? "Claude"
+                            : connectionAdapter === "grok_local"
+                              ? "Grok"
+                              : "OpenAI",
+                        })}
                         center
                       />
                     </div>

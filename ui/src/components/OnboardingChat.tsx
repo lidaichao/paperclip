@@ -35,24 +35,24 @@ function detectHiringPlan(body: string): boolean {
 }
 
 const QUEUED_MESSAGES = [
-  "Heartbeat triggered, waking up...",
-  "Initializing...",
-  "Getting ready...",
+  l10n("local.heartbeat_triggered_waking_up_10300182"),
+  l10n("local.initializing_10300183"),
+  l10n("local.getting_ready_10300184"),
 ];
 
 const RUNNING_MESSAGES = [
-  "Working on a response...",
-  "Reading the conversation...",
-  "Thinking through the plan...",
-  "Drafting a response...",
-  "Still working...",
-  "Almost there...",
+  l10n("local.working_on_response_10300185"),
+  l10n("local.reading_conversation_10300186"),
+  l10n("local.thinking_through_plan_10300187"),
+  l10n("local.drafting_response_10300188"),
+  l10n("local.still_working_10300189"),
+  l10n("local.almost_there_10300190"),
 ];
 
 const WAITING_MESSAGES = [
-  "Waiting to wake up...",
-  "Heartbeat pending...",
-  "Should wake up soon...",
+  l10n("local.waiting_to_wake_up_10300191"),
+  l10n("local.heartbeat_pending_10300192"),
+  l10n("local.should_wake_up_soon_10300193"),
 ];
 
 function getCyclingMessage(messages: string[], elapsed: number, agentName: string): string {
@@ -72,9 +72,9 @@ function getRunStatusMessage(status: string, agentName: string, elapsed: number)
     case "failed":
       return l10n("local.value_encountered_an_error_ce9ce2ae", {v0: (agentName)});
     case "cancelled":
-      return `${agentName}'s run was cancelled`;
+      return l10n("local.value_run_was_cancelled_10300194", { v0: agentName });
     case "timed_out":
-      return `${agentName}'s run timed out`;
+      return l10n("local.value_run_timed_out_10300195", { v0: agentName });
     default:
       return l10n("local.value_is_thinking_bd75a752", {v0: (agentName)});
   }
@@ -268,10 +268,10 @@ export function OnboardingChat({
           companyGoal={companyGoal}
           hasComments={Boolean(comments?.length)}
           onDiscuss={() => {
-            setInput("I want to discuss the plan before you get started.");
+            setInput(l10n("local.discuss_plan_before_starting_10300196"));
             inputRef.current?.focus();
           }}
-          onStart={() => sendMessage("Yes, get started on the hiring plan!")}
+          onStart={() => sendMessage(l10n("local.start_hiring_plan_10300197"))}
         />
         {comments?.map((comment) => {
           const isAgent = Boolean(comment.authorAgentId);

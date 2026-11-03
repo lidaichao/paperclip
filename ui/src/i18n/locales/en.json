@@ -12375,6 +12375,25 @@
     "value_reconnect_account_to_continue_10300178": "{{v0}}. Reconnect this account to continue.",
     "use_api_key_instead_10300179": "Use API key instead",
     "use_subscription_instead_10300180": "Use subscription instead",
-    "name_your_organization_10300181": "Name your organization"
+    "name_your_organization_10300181": "Name your organization",
+    "heartbeat_triggered_waking_up_10300182": "Heartbeat triggered, waking up...",
+    "initializing_10300183": "Initializing...",
+    "getting_ready_10300184": "Getting ready...",
+    "working_on_response_10300185": "Working on a response...",
+    "reading_conversation_10300186": "Reading the conversation...",
+    "thinking_through_plan_10300187": "Thinking through the plan...",
+    "drafting_response_10300188": "Drafting a response...",
+    "still_working_10300189": "Still working...",
+    "almost_there_10300190": "Almost there...",
+    "waiting_to_wake_up_10300191": "Waiting to wake up...",
+    "heartbeat_pending_10300192": "Heartbeat pending...",
+    "should_wake_up_soon_10300193": "Should wake up soon...",
+    "value_run_was_cancelled_10300194": "{{v0}}'s run was cancelled",
+    "value_run_timed_out_10300195": "{{v0}}'s run timed out",
+    "discuss_plan_before_starting_10300196": "I want to discuss the plan before you get started.",
+    "start_hiring_plan_10300197": "Yes, get started on the hiring plan!",
+    "connect_value_to_value_10300198": "Connect {{v0}} to {{v1}}.",
+    "environment_test_failed_before_hiring_10300199": "The environment test failed. Fix the reported checks before you hire this agent.",
+    "no_working_authentication_before_hiring_10300200": "No working authentication was found. Fix the reported checks before you hire this agent."
   }
 }

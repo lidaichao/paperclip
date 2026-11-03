@@ -12375,6 +12375,25 @@
     "value_reconnect_account_to_continue_10300178": "{{v0}}。请重新连接此账户以继续。",
     "use_api_key_instead_10300179": "改用 API 密钥",
     "use_subscription_instead_10300180": "改用订阅",
-    "name_your_organization_10300181": "命名你的组织"
+    "name_your_organization_10300181": "命名你的组织",
+    "heartbeat_triggered_waking_up_10300182": "心跳已触发，正在唤醒…",
+    "initializing_10300183": "正在初始化…",
+    "getting_ready_10300184": "正在准备…",
+    "working_on_response_10300185": "正在组织回复…",
+    "reading_conversation_10300186": "正在阅读对话…",
+    "thinking_through_plan_10300187": "正在梳理计划…",
+    "drafting_response_10300188": "正在起草回复…",
+    "still_working_10300189": "仍在处理中…",
+    "almost_there_10300190": "即将完成…",
+    "waiting_to_wake_up_10300191": "正在等待唤醒…",
+    "heartbeat_pending_10300192": "心跳等待中…",
+    "should_wake_up_soon_10300193": "即将唤醒…",
+    "value_run_was_cancelled_10300194": "{{v0}} 的运行已取消",
+    "value_run_timed_out_10300195": "{{v0}} 的运行已超时",
+    "discuss_plan_before_starting_10300196": "开始前，我想先讨论一下计划。",
+    "start_hiring_plan_10300197": "好的，开始制定招聘计划！",
+    "connect_value_to_value_10300198": "将 {{v0}} 连接到 {{v1}}。",
+    "environment_test_failed_before_hiring_10300199": "环境测试失败。请先修复报告中的检查项，再聘用此智能体。",
+    "no_working_authentication_before_hiring_10300200": "未找到可用的身份验证。请先修复报告中的检查项，再聘用此智能体。"
   }
 }

@@ -2156,8 +2156,8 @@ function OnboardingWizardInner({
         if (blocksAgentCreate(result)) {
           setError(
             result.status === "fail"
-              ? "The environment test failed. Fix the reported checks before you hire this agent."
-              : "No working authentication was found. Fix the reported checks before you hire this agent.",
+              ? l10n("local.environment_test_failed_before_hiring_10300199")
+              : l10n("local.no_working_authentication_before_hiring_10300200"),
           );
           return;
         }
