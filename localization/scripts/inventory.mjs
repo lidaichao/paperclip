@@ -87,9 +87,16 @@ for(const file of inputFiles){
 }
 await fs.mkdir(path.join(kit,'integration'),{recursive:true});
 const rows=[...entries.values()].sort((a,b)=>a.key.localeCompare(b.key));
-await fs.writeFile(path.join(kit,'integration/source-map.json'),JSON.stringify(rows,null,2));
-await fs.writeFile(path.join(kit,'integration/occurrences.json'),JSON.stringify(occurrences,null,2));
-await fs.writeFile(path.join(kit,'integration/residual-candidates.json'),JSON.stringify(residual,null,2));
-await fs.writeFile(path.join(kit,'locale/en/catalog.json'),JSON.stringify(Object.fromEntries(rows.map(r=>[r.key,r.english])),null,2));
-await fs.writeFile(path.join(kit,'integration/surface-inventory.json'),JSON.stringify(inputFiles.map(f=>path.relative(root,f).replaceAll('\\','/')),null,2));
-console.log(JSON.stringify({files:inputFiles.length,unique:rows.length,occurrences:occurrences.length,residualCandidates:residual.length}));
+const auditOnly=process.argv.includes('--audit-only');
+if(auditOnly){
+ await fs.writeFile(path.join(kit,'integration/current-unlocalized-source-map.json'),JSON.stringify(rows,null,2));
+ await fs.writeFile(path.join(kit,'integration/current-unlocalized-occurrences.json'),JSON.stringify(occurrences,null,2));
+ await fs.writeFile(path.join(kit,'integration/current-residual-candidates.json'),JSON.stringify(residual,null,2));
+}else{
+ await fs.writeFile(path.join(kit,'integration/source-map.json'),JSON.stringify(rows,null,2));
+ await fs.writeFile(path.join(kit,'integration/occurrences.json'),JSON.stringify(occurrences,null,2));
+ await fs.writeFile(path.join(kit,'integration/residual-candidates.json'),JSON.stringify(residual,null,2));
+ await fs.writeFile(path.join(kit,'locale/en/catalog.json'),JSON.stringify(Object.fromEntries(rows.map(r=>[r.key,r.english])),null,2));
+ await fs.writeFile(path.join(kit,'integration/surface-inventory.json'),JSON.stringify(inputFiles.map(f=>path.relative(root,f).replaceAll('\\','/')),null,2));
+}
+console.log(JSON.stringify({mode:auditOnly?'audit-only':'inventory',files:inputFiles.length,unique:rows.length,occurrences:occurrences.length,residualCandidates:residual.length}));

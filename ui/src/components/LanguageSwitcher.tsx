@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Languages } from "lucide-react";
 import { i18n, setInterfaceLocale, type InterfaceLocale } from "@/i18n";
 
-/** Keep language names in their own language so this control is always discoverable. */
+/** 语言名称保留原文，便于用户在界面语言错误时仍能识别。 */
 export function LanguageSwitcher() {
   const [storageUnavailable, setStorageUnavailable] = useState(false);
 
@@ -18,9 +18,9 @@ export function LanguageSwitcher() {
           <Languages className="size-4" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-medium text-foreground">语言 / Language</span>
+          <span className="block text-sm font-medium text-foreground">界面语言</span>
           <select
-            aria-label="语言 / Language"
+            aria-label="界面语言"
             value={i18n.language === "en" ? "en" : "zh-CN"}
             onChange={(event) => changeLanguage(event.target.value as InterfaceLocale)}
             className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
@@ -29,14 +29,13 @@ export function LanguageSwitcher() {
             <option value="en">English</option>
           </select>
           <span className="mt-1 block text-xs text-muted-foreground">
-            切换将刷新页面 / Reloads the page
+            切换后将刷新页面
           </span>
         </span>
       </label>
       {storageUnavailable ? (
         <p role="alert" className="mt-2 text-xs text-destructive">
-          无法保存语言设置，请允许此网站使用浏览器存储。{" "}
-          Allow browser storage to save your language preference.
+          无法保存语言设置，请允许此网站使用浏览器存储。
         </p>
       ) : null}
     </div>

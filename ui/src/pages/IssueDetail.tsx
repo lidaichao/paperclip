@@ -705,9 +705,10 @@ function AttributionAvatar({
   actor: AttributionActor;
   via?: string | null;
 }) {
+  const displayLabel = label === "Assignee" ? "负责人" : "发起人";
   const accessibleLabel = via
-    ? `${label}: ${actor.name} · via ${via}`
-    : `${label}: ${actor.name}`;
+    ? `${displayLabel}：${actor.name} · 通过 ${via}`
+    : `${displayLabel}：${actor.name}`;
   const testIdLabel = label.toLowerCase();
 
   return (
@@ -735,7 +736,7 @@ function AttributionAvatar({
           )}
           <div className="min-w-0">
             <div className="text-(length:--text-nano) font-medium uppercase leading-none text-background/70">
-              {label}
+              {displayLabel}
             </div>
             <div className="max-w-48 truncate text-xs font-medium leading-4 text-background">
               {actor.name}

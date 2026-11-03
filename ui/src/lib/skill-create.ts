@@ -49,8 +49,8 @@ export function splitCategoryDraft(value: string) {
 }
 
 export function defaultSkillMarkdown(name: string, tagline: string) {
-  const title = name.trim() || "New Skill";
-  const summary = tagline.trim() || "Describe when agents should use this skill.";
+  const title = name.trim() || "新技能";
+  const summary = tagline.trim() || "说明智能体应在什么情况下使用此技能。";
   return [
     "---",
     `name: ${title}`,
@@ -61,15 +61,15 @@ export function defaultSkillMarkdown(name: string, tagline: string) {
     "",
     summary,
     "",
-    "## When To Use",
+    "## 使用场景",
     "",
-    "- Use this skill when the task needs its specialized workflow.",
+    "- 当任务需要此技能提供的专用流程时使用。",
     "",
-    "## Workflow",
+    "## 工作流程",
     "",
-    "1. Inspect the task context.",
-    "2. Apply the workflow carefully.",
-    "3. Report what changed and how it was verified.",
+    "1. 检查任务上下文。",
+    "2. 严格执行工作流程。",
+    "3. 说明改动内容与验证结果。",
     "",
   ].join("\n");
 }

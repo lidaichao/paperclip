@@ -62,12 +62,14 @@ export function transformMonitorFile(relative, original) {
       'banner display ETA');
     source = source.replaceAll('{v0: (eta)}', '{v0: (shownEta)}');
     source = source.replaceAll('${eta}', '${shownEta}');
-    source = once(source, 'stripTitle = `Resumes ${eta}`;', 'stripTitle = l10n("local.manual_monitor_resumes", { v0: shownEta });', 'scheduled strip');
+    source = once(source, 'stripTitle = `Resumes ${shownEta}`;', 'stripTitle = l10n("local.manual_monitor_resumes", { v0: shownEta });', 'scheduled strip');
     source = once(source, 'stripTitle = capitalize(eta);', 'stripTitle = capitalize(shownEta);', 'overdue strip');
   } else if (relative === 'components/issue-properties/IssueProperties.tsx') {
     source = addHelperImport(source);
     source = once(source, '>{monitorRelative}</div>', '>{monitorRelative ? displayMonitorRelative(monitorRelative) : null}</div>', 'monitor detail display');
-    if (source.includes('const action = scheduledRetryIsContinuation ? "Continuation" : "Retry";')) {
+    if (source.includes('const action = scheduledRetryIsContinuation ? l10n("local.manual_monitor_continuation") : l10n("local.manual_monitor_retry");')) {
+      // Already patched.
+    } else if (source.includes('const action = scheduledRetryIsContinuation ? "Continuation" : "Retry";')) {
       source = once(source,
         'const action = scheduledRetryIsContinuation ? "Continuation" : "Retry";',
         'const action = scheduledRetryIsContinuation ? l10n("local.manual_monitor_continuation") : l10n("local.manual_monitor_retry");',
@@ -82,7 +84,13 @@ export function transformMonitorFile(relative, original) {
     source = once(source, '>· {scheduledRetryRelative}</span>', '>· {displayMonitorRelative(scheduledRetryRelative)}</span>', 'retry detail display');
   } else if (relative === 'components/IssueBlockedNotice.tsx') {
     source = once(source, 'import { formatMonitorOffset } from "../lib/issue-monitor";', 'import { formatMonitorOffset, displayMonitorRelative } from "../lib/issue-monitor";', 'blocked notice import');
-    source = once(source, 'l10n("local.scheduled_value_2877115d", {v0: (relative)})', 'l10n("local.scheduled_value_2877115d", {v0: displayMonitorRelative(relative)})', 'blocked notice display');
+    if (source.includes('l10n("local.scheduled_value_2877115d", {v0: displayMonitorRelative(relative)})')) {
+      // Already patched.
+    } else if (source.includes('l10n("local.scheduled_value_2877115d", {v0: (relative)})')) {
+      source = once(source, 'l10n("local.scheduled_value_2877115d", {v0: (relative)})', 'l10n("local.scheduled_value_2877115d", {v0: displayMonitorRelative(relative)})', 'blocked notice display');
+    } else {
+      source = once(source, '`scheduled ${relative}`', '`scheduled ${displayMonitorRelative(relative)}`', 'blocked notice display');
+    }
   } else if (relative === 'components/IssueScheduledRetryCard.tsx') {
     source = once(source, 'import { formatMonitorOffset } from "@/lib/issue-monitor";', 'import { formatMonitorOffset, displayMonitorRelative } from "@/lib/issue-monitor";', 'retry card import');
     source = once(source, 'titleSuffix = "due now";', 'titleSuffix = displayMonitorRelative("due now");', 'retry card due display');

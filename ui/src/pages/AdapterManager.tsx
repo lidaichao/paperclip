@@ -397,7 +397,7 @@ export function AdapterManager() {
           <Cpu className="h-6 w-6 text-muted-foreground" />
           <h1 className="text-xl font-semibold">{l10n("local.adapters_d20547a8")}</h1>
           <Badge variant="outline" className="text-amber-600 border-amber-400">
-            Alpha
+            测试版
           </Badge>
         </div>
 
@@ -428,7 +428,7 @@ export function AdapterManager() {
                   onClick={() => setIsLocalPath(false)}
                 >
                   <Package className="h-3.5 w-3.5" />
-                  npm package
+                  npm 软件包
                 </button>
                 <button
                   type="button"
@@ -468,7 +468,7 @@ export function AdapterManager() {
                     <Label htmlFor="adapterPackageName">{l10n("local.package_name_75da9a76")}</Label>
                     <Input
                       id="adapterPackageName"
-                      placeholder="my-paperclip-adapter"
+                      placeholder="my-alice-adapter"
                       value={installPackage}
                       onChange={(e) => setInstallPackage(e.target.value)}
                     />
@@ -634,7 +634,7 @@ export function AdapterManager() {
             <DialogTitle>{l10n("local.remove_adapter_bc2ff903")}</DialogTitle>
             <DialogDescription>
               {l10n("local.are_you_sure_you_want_to_remove_the_dfcc1743")}{" "}<strong>{removeType}</strong> {l10n("local.adapter_it_will_be_unregistered_and_removed_f_d4e27ba4")}{removeType && adapters?.find((a) => a.type === removeType)?.packageName && (
-                <> npm packages will be cleaned up from disk.</>
+                <> 磁盘中的 npm 软件包也会被清理。</>
               )}
               {" "}{l10n("local.this_action_cannot_be_undone_3d6a4526")}</DialogDescription>
           </DialogHeader>
