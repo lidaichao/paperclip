@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "local-falcon",
   "name": "Local Falcon",
-  "description": "Connect Local Falcon's provider-hosted MCP server.",
+  "description": "连接 Local Falcon 官方托管的 MCP 服务器。",
   "categories": [
     "analytics"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.localfalcon.com"
       },
-      "guidanceMd": "Connect Local Falcon in the browser. A Local Falcon account with MCP access.",
+      "guidanceMd": "在浏览器中连接 Local Falcon。需要具备 MCP 访问权限的 Local Falcon 账户。",
       "riskTier": "S2",
-      "label": "Sign in with Local Falcon",
+      "label": "使用 Local Falcon 登录",
       "consoleLinks": {
         "docs": "https://docs.localfalcon.com/"
       },
       "warnings": [
-        "A Local Falcon account with MCP access."
+        "需要具备 MCP 访问权限的 Local Falcon 账户。"
       ]
     }
   ]

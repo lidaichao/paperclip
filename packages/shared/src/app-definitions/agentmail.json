@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "agentmail",
   "name": "AgentMail",
-  "description": "Give agents email inboxes and handle each conversation as a task.",
+  "description": "为智能体提供电子邮箱，并将每段邮件对话作为任务处理。",
   "categories": [
     "communication"
   ],
@@ -16,7 +16,7 @@
   "methods": [
     {
       "key": "email-agent",
-      "label": "Email with an agent",
+      "label": "与智能体收发邮件",
       "purpose": "channel",
       "provider": "agentmail",
       "transport": "rest_api",
@@ -24,18 +24,18 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Assign an inbox to an agent and manage email conversations in tasks.",
+      "whenToUse": "为智能体分配邮箱，并在任务中管理邮件对话。",
       "credentialFields": [
         {
           "key": "apiKey",
-          "label": "AgentMail API key",
+          "label": "AgentMail API 密钥",
           "type": "password",
           "placeholder": "am_…",
           "required": true,
           "secret": true
         }
       ],
-      "guidanceMd": "Connect an AgentMail API key, then create or select an inbox for your agent. WebSocket receiving works without a public URL.",
+      "guidanceMd": "连接 AgentMail API 密钥，然后为智能体创建或选择邮箱。使用 WebSocket 接收邮件时不需要公网 URL。",
       "consoleLinks": {
         "keys": "https://console.agentmail.to",
         "docs": "https://docs.agentmail.to/inboxes"

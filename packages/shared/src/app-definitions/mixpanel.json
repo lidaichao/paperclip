@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "mixpanel",
   "name": "Mixpanel",
-  "description": "Connect Mixpanel's provider-hosted MCP server.",
+  "description": "连接 Mixpanel 官方托管的 MCP 服务器。",
   "categories": [
     "analytics"
   ],
@@ -24,19 +24,19 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.mixpanel.com/mcp"
       },
-      "guidanceMd": "Connect Mixpanel in the browser. A Mixpanel account; the hosted MCP server is currently beta.",
+      "guidanceMd": "在浏览器中连接 Mixpanel。需要 Mixpanel 账户；其托管 MCP 服务器目前处于测试阶段。",
       "riskTier": "S3",
-      "label": "Sign in with Mixpanel",
+      "label": "使用 Mixpanel 登录",
       "consoleLinks": {
         "docs": "https://mixpanel.com/blog/mixpanel-mcp-server/"
       },
       "warnings": [
-        "A Mixpanel account; the hosted MCP server is currently beta.",
-        "This provider's hosted MCP server is currently beta or preview."
+        "需要 Mixpanel 账户；其托管 MCP 服务器目前处于测试阶段。",
+        "该服务提供商的托管 MCP 服务器目前处于测试或预览阶段。"
       ]
     }
   ]
