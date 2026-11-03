@@ -53,17 +53,17 @@ export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agent
   </InlineBanner>;
   const footer = (children: ReactNode) => <SetupWizardFooter onSaveExit={a.saveExit} disabled={busy}>{children}</SetupWizardFooter>;
 
-  const error = s.connectStatus === "invalid_url" ? { title: l10n("local.enter_a_valid_mcp_url_90cbbcb5"), body: "Paste the complete server URL, including https:// or http://. A dashboard page is not an MCP endpoint." }
-    : s.connectStatus === "oauth_failed" ? { title: l10n("local.value_couldn_t_connect_37b5bbb7", {v0: (provider.name)}), body: "Authorization did not complete. Your saved connection is still here, so you can try again." }
-    : s.connectStatus === "rejected" ? { title: l10n("local.credentials_were_rejected_73a49563"), body: `Check or replace the credentials from ${provider.name}, then reconnect. Your agent access and tool choices are preserved.` }
-    : s.connectStatus === "unreachable" ? { title: l10n("local.paperclip_could_not_reach_this_server_dd97cf34"), body: "Check that the endpoint is running and reachable from Paperclip, then try again. Your draft is still here." }
+  const error = s.connectStatus === "invalid_url" ? { title: l10n("local.enter_a_valid_mcp_url_90cbbcb5"), body: l10n("local.mcp_paste_complete_server_address_0c910004") }
+    : s.connectStatus === "oauth_failed" ? { title: l10n("local.value_couldn_t_connect_37b5bbb7", {v0: (provider.name)}), body: l10n("local.authorization_did_not_complete_your_saved_con_675b3b11") }
+    : s.connectStatus === "rejected" ? { title: l10n("local.credentials_were_rejected_73a49563"), body: l10n("local.mcp_check_provider_credentials_0c910005", { v0: provider.name }) }
+    : s.connectStatus === "unreachable" ? { title: l10n("local.paperclip_could_not_reach_this_server_dd97cf34"), body: l10n("local.mcp_check_endpoint_reachable_0c910006") }
     : null;
 
   return <div className={host === "dialog" ? "min-w-0 text-foreground" : "mx-auto max-w-6xl p-4 text-foreground sm:p-8"} data-remote-mcp-provider={provider.id}>
     <StepHeader headingRef={heading} appIdentity={{ name: provider.name, logoUrl: null }}
       title={s.step === "draft" ? l10n("local.continue_your_setup_e4e54fce") : s.setupComplete ? s.step === "access" ? l10n("local.who_can_use_this_connection_ba7dda12") : s.step === "connect" ? l10n("local.reconnect_value_e66847e3", {v0: (provider.name)}) : provider.name : undefined}
-      subtitle={currentStep >= 0 && !s.setupComplete ? l10n("local.step_value_of_2_87209571", {v0: (currentStep + 1)}) : s.step === "draft" ? l10n("local.your_value_setup_is_ready_to_resume_02663f8f", {v0: (provider.name)}) : s.step === "permissions" ? l10n("local.connectedvalue_value_actions_available_632f13bb", {v0: (s.identity ? ` as ${s.identity}` : ""), v1: (s.tools.length)}) : l10n("local.manage_this_value_connection_69a9d561", {v0: (provider.name)})}
-      step={currentStep >= 0 && !s.setupComplete ? "access" : "gallery"} activeIndex={currentStep} labels={["Access", "Connect"]} onCancel={busy || s.step === "management" || s.step === "permissions" || s.step === "draft" ? undefined : a.saveExit} />
+      subtitle={currentStep >= 0 && !s.setupComplete ? l10n("local.step_value_of_2_87209571", {v0: (currentStep + 1)}) : s.step === "draft" ? l10n("local.your_value_setup_is_ready_to_resume_02663f8f", {v0: (provider.name)}) : s.step === "permissions" ? l10n("local.connectedvalue_value_actions_available_632f13bb", {v0: (s.identity ? ` ${l10n("local.as_value_87cd310c", { v0: s.identity })}` : ""), v1: (s.tools.length)}) : l10n("local.manage_this_value_connection_69a9d561", {v0: (provider.name)})}
+      step={currentStep >= 0 && !s.setupComplete ? "access" : "gallery"} activeIndex={currentStep} labels={[l10n("local.access_ec5ba0ab"), l10n("local.connect_1a2303ed")]} onCancel={busy || s.step === "management" || s.step === "permissions" || s.step === "draft" ? undefined : a.saveExit} />
     <main className="space-y-6">
         {s.notice && <p role="status" className="text-sm text-muted-foreground">{s.notice}</p>}
 
@@ -86,12 +86,12 @@ export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agent
         {s.step === "connect" && <>
           <div className="space-y-3">
             <ol className="list-decimal space-y-2 pl-5 text-sm">{provider.instructions.map((instruction) => <li key={instruction}>{instruction}</li>)}</ol>
-            {external("setup", `Open ${provider.name} setup guide`)}
+            {external("setup", l10n("local.open_provider_setup_guide_0c910007", { v0: provider.name }))}
           </div>
           {s.connectStatus === "sign_in" && provider.supportsBrowserAuth ? <>
             <div role="status"><InlineBanner title={l10n("local.finish_signing_in_to_value_81e0cd67", {v0: (provider.name)})}>
               {l10n("local.complete_sign_in_in_the_provider_window_then_5b1f7130")}</InlineBanner></div>
-            <p className="text-sm text-muted-foreground">{l10n("local.if_a_window_did_not_open_2b43fd00")}{" "}{authorizationUrl ? <a className="text-current underline" href={authorizationUrl} onClick={() => a.openProvider("sign_in")} target="_blank" rel="noopener noreferrer">{l10n("local.open_sign_in_again_24857fcb")}</a> : external("sign_in", "open sign-in again")}.</p>
+            <p className="text-sm text-muted-foreground">{l10n("local.if_a_window_did_not_open_2b43fd00")}{" "}{authorizationUrl ? <a className="text-current underline" href={authorizationUrl} onClick={() => a.openProvider("sign_in")} target="_blank" rel="noopener noreferrer">{l10n("local.open_sign_in_again_24857fcb")}</a> : external("sign_in", l10n("local.open_sign_in_again_24857fcb"))}.</p>
             {footer(<><Button variant="outline" onClick={a.cancelConnect}>{l10n("local.cancel_sign_in_9effa0b7")}</Button><Button disabled>{l10n("local.waiting_for_sign_in_749a343a")}</Button></>)}
           </> : <form className="space-y-6" onSubmit={(event) => { event.preventDefault(); a.connect(); }}>
             {error && <div role="alert"><InlineBanner tone="danger" title={error.title}>{error.body}</InlineBanner></div>}

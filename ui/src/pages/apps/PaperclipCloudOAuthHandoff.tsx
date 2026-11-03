@@ -81,7 +81,11 @@ export function PaperclipCloudOAuthHandoffPage() {
       navigateTopLevel(target.url);
     } catch (caught) {
       setPhase("error");
-      setError(caught instanceof Error ? caught.message : "Paperclip couldn’t prepare secure sign-in.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : l10n("local.paperclip_couldn_t_prepare_the_provider_sign_4c14d5fc"),
+      );
     }
   }, []);
 

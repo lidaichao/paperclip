@@ -138,6 +138,17 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.team_trust_external_sources_tip_d6aa51d4).toContain("安装时解析");
     expect(messages.failed_to_load_team_install_preview_d243e628).toBe("无法加载团队安装预览。");
     expect(messages.skills_label_02b7848c).toBe("项技能");
+    expect(messages.preview_review_no_success_0c910001).toContain("直接进入评审");
+    expect(messages.alice_subscription_api_keys_0c910002).toContain("现有的订阅或 API 密钥");
+    expect(messages.provide_provider_api_key_0c910003).toBe("提供 {{v0}} API 密钥以连接");
+    expect(messages.mcp_paste_complete_server_address_0c910004).toContain("完整服务器地址");
+    expect(messages.mcp_check_provider_credentials_0c910005).toContain("智能体访问权限和工具选择将保留");
+    expect(messages.mcp_check_endpoint_reachable_0c910006).toContain("Alice 可以访问");
+    expect(messages.open_provider_setup_guide_0c910007).toBe("打开 {{v0}} 设置指南");
+    expect(messages.zapier_create_mcp_server_0c910101).toContain("创建 MCP 服务器");
+    expect(messages.arcade_copy_gateway_address_0c910109).toContain("MCP 网关地址");
+    expect(messages.composio_prefilled_external_session_0c910113).toContain("高级身份验证");
+    expect(messages.executor_workspace_address_reachable_alice_0c910118).toContain("Alice 可以访问");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

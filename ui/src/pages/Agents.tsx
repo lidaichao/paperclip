@@ -73,13 +73,13 @@ interface EnvironmentDescriptor {
 
 const localEnvironmentDescriptor: EnvironmentDescriptor = {
   label: l10n("local.local_8c31e6e7"),
-  detail: "Paperclip host",
+  detail: l10n("local.paperclip_host_e5b9978d"),
   title: l10n("local.local_paperclip_host_369767d8"),
 };
 
 const loadingEnvironmentDescriptor: EnvironmentDescriptor = {
   label: "—",
-  detail: "Loading environment",
+  detail: l10n("local.loading_environment_07bae8d3"),
   title: l10n("local.loading_environment_07bae8d3"),
 };
 

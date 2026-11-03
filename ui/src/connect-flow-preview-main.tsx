@@ -140,8 +140,8 @@ function ConnectFlowPreview({
   const apiMode = mode === "api";
   const handsOverCode = !apiMode && selectedId === "codex_local";
   const instructionTail = handsOverCode
-    ? " by providing the authorization code below"
-    : " then come back and enter authorization code";
+    ? l10n("local.authorization_by_providing_code_below_0c910008")
+    : l10n("local.authorization_return_enter_code_0c910009");
   const authUrl = OAUTH_URL[selectedId ?? "claude_local"]!;
 
   const after = (ms: number, fn: () => void) => {
@@ -312,8 +312,8 @@ function ConnectFlowPreview({
             title={done ? l10n("local.connected_22965568") : l10n("local.connect_a_model_87bdaaf8")}
             lede={
               done
-                ? "The step advances straight to Review — there is no success screen."
-                : "Paperclip works with your existing subscription or API keys."
+                ? l10n("local.preview_review_no_success_0c910001")
+                : l10n("local.alice_subscription_api_keys_0c910002")
             }
           />
         </div>
@@ -398,7 +398,7 @@ function ConnectFlowPreview({
                         // No link, because there is nowhere to sign in to. The
                         // key is pasted straight in, so the sentence only has
                         // to say what is wanted.
-                        `Provide your ${providerName} API key to connect`
+                        l10n("local.provide_provider_api_key_0c910003", { v0: providerName })
                       ) : (
                         <>
                           {/* The same destination as the button below. Two ways
