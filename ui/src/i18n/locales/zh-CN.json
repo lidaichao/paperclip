@@ -12181,6 +12181,19 @@
     "minimum_items_10100014": "至少需要 {{v0}} 项",
     "maximum_items_10100015": "最多允许 {{v0}} 项",
     "advanced_options_10100016": "高级选项",
-    "more_options_10100017": "更多选项"
+    "more_options_10100017": "更多选项",
+    "optional_explain_binding_rejection_10200001": "选填：说明为何不应创建此绑定。",
+    "agent_needs_your_provider_identity_10200002": "{{v0}} 需要使用你的 {{v1}} 身份，以你的身份执行工作。",
+    "agent_needed_person_provider_identity_10200003": "{{v0}} 曾需要使用 {{v1}} 的 {{v2}} 身份，以对方身份执行工作。",
+    "agent_needs_person_provider_identity_10200004": "{{v0}} 需要使用 {{v1}} 的 {{v2}} 身份，以对方身份执行工作。",
+    "no_one_else_complete_step_10200005": "其他人无法代你完成此步骤。",
+    "authorization_link_unavailable_10200006": "此授权链接不可用",
+    "waiting_for_person_10200007": "等待 {{v0}}",
+    "provider_connected_10200008": "{{v0}} 已连接",
+    "provider_not_connected_10200009": "未连接 {{v0}}",
+    "authorization_request_expired_10200010": "此授权请求已过期",
+    "optional_what_revised_10200011": "选填：你希望修改哪些内容？",
+    "optional_tell_agent_changes_10200012": "选填：告诉智能体你希望如何修改。",
+    "defer_10200013": "暂缓"
   }
 }

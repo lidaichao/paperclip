@@ -12181,6 +12181,19 @@
     "minimum_items_10100014": "Must have at least {{v0}} items",
     "maximum_items_10100015": "Must have at most {{v0}} items",
     "advanced_options_10100016": "Advanced options",
-    "more_options_10100017": "More options"
+    "more_options_10100017": "More options",
+    "optional_explain_binding_rejection_10200001": "Optional: explain why this binding should not be created.",
+    "agent_needs_your_provider_identity_10200002": "{{v0}} needs your {{v1}} identity for work running as you.",
+    "agent_needed_person_provider_identity_10200003": "{{v0}} needed {{v1}}'s {{v2}} identity for work running as them.",
+    "agent_needs_person_provider_identity_10200004": "{{v0}} needs {{v1}}'s {{v2}} identity for work running as them.",
+    "no_one_else_complete_step_10200005": "No one else can complete this step.",
+    "authorization_link_unavailable_10200006": "This authorization link is unavailable",
+    "waiting_for_person_10200007": "Waiting for {{v0}}",
+    "provider_connected_10200008": "{{v0}} connected",
+    "provider_not_connected_10200009": "{{v0}} was not connected",
+    "authorization_request_expired_10200010": "This authorization request expired",
+    "optional_what_revised_10200011": "Optional: what would you like revised?",
+    "optional_tell_agent_changes_10200012": "Optional: tell the agent what you'd change.",
+    "defer_10200013": "Defer"
   }
 }

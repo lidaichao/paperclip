@@ -140,7 +140,7 @@ function resolveActorLabel(args: {
     return agentMap?.get(agentId)?.name ?? agentId.slice(0, 8);
   }
   if (userId) {
-    return formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ?? "Board";
+    return formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ?? l10n("local.board_4816cbfd");
   }
   return l10n("local.unknown_b764cdc0");
 }
@@ -1215,7 +1215,7 @@ function AskUserQuestionsCard({
                 </div>
                 <TaskField
                   label={question.selectionMode === "single" ? l10n("local.pick_831a9d52") : l10n("local.pick_many_1c791936")}
-                  value={question.required ? "Required" : "Optional"}
+                  value={question.required ? l10n("local.required_4850b174") : l10n("local.optional_59be7133")}
                   tone="subtle"
                 />
               </div>
@@ -1998,7 +1998,7 @@ function RequestSecretProposalCard({
           approveVariant="cta"
           allowRevise={interaction.payload.allowDeclineReason !== false}
           rejectRequiresReason={interaction.payload.rejectRequiresReason === true}
-          reasonPlaceholder={interaction.payload.declineReasonPlaceholder ?? "Optional: explain why this binding should not be created."}
+          reasonPlaceholder={interaction.payload.declineReasonPlaceholder ?? l10n("local.optional_explain_binding_rejection_10200001")}
           working={working}
           actionError={actionError}
           canApprove={Boolean(onAcceptInteraction)}
@@ -2351,11 +2351,21 @@ function RequestConnectionAuthorizationCard({
   const agentLabel = requestingAgentLabel ?? l10n("local.an_agent_ea6a0363");
   const lead = isAddressee
     ? interaction.summary?.trim()
-      || `${agentLabel} needs your ${providerName} identity for work running as you.`
-    : `${agentLabel} ${state === "connected" ? "needed" : "needs"} ${addresseeLabel}'s ${providerName} identity for work running as them.`;
+      || l10n("local.agent_needs_your_provider_identity_10200002", { v0: agentLabel, v1: providerName })
+    : state === "connected"
+      ? l10n("local.agent_needed_person_provider_identity_10200003", {
+          v0: agentLabel,
+          v1: addresseeLabel,
+          v2: providerName,
+        })
+      : l10n("local.agent_needs_person_provider_identity_10200004", {
+          v0: agentLabel,
+          v1: addresseeLabel,
+          v2: providerName,
+        });
   // Only the actionable state needs the consent boundary spelled out; the other
   // states carry it in their own status line.
-  const consentSentence = state === "actionable" ? "No one else can complete this step." : null;
+  const consentSentence = state === "actionable" ? l10n("local.no_one_else_complete_step_10200005") : null;
 
   return (
     <div className="space-y-4">
@@ -2401,8 +2411,8 @@ function RequestConnectionAuthorizationCard({
             <ConnectionAuthorizationStatusLine
               Icon={TriangleAlert}
               testId="connection-authorization-no-target"
-              headline="This authorization link is unavailable"
-              detail={l10n("local.ask_value_to_send_a_fresh_value_authorization_4a48611e", {v0: (requestingAgentLabel ?? "the agent"), v1: (providerName)})}
+              headline={l10n("local.authorization_link_unavailable_10200006")}
+              detail={l10n("local.ask_value_to_send_a_fresh_value_authorization_4a48611e", {v0: (requestingAgentLabel ?? l10n("local.an_agent_647936ec")), v1: (providerName)})}
             />
           )}
           <InteractionActionError message={actionError} />
@@ -2411,14 +2421,14 @@ function RequestConnectionAuthorizationCard({
         <ConnectionAuthorizationStatusLine
           Icon={Clock}
           testId="connection-authorization-waiting"
-          headline={`Waiting for ${addresseeLabel}`}
+          headline={l10n("local.waiting_for_person_10200007", { v0: addresseeLabel })}
           detail={l10n("local.only_value_can_connect_their_own_value_accoun_fc6c2f7c", {v0: (addresseeLabel), v1: (providerName)})}
         />
       ) : state === "connected" ? (
         <ConnectionAuthorizationStatusLine
           Icon={CheckCircle2}
           testId="connection-authorization-connected"
-          headline={`${providerName} connected`}
+          headline={l10n("local.provider_connected_10200008", { v0: providerName })}
           detail={
             <>
               {l10n("local.connected_by_9952ce52")}{" "}
@@ -2438,10 +2448,12 @@ function RequestConnectionAuthorizationCard({
         <ConnectionAuthorizationStatusLine
           Icon={state === "declined" ? MinusCircle : CircleDashed}
           testId={state === "declined" ? "connection-authorization-declined" : "connection-authorization-expired"}
-          headline={state === "declined" ? `${providerName} was not connected` : "This authorization request expired"}
+          headline={state === "declined"
+            ? l10n("local.provider_not_connected_10200009", { v0: providerName })
+            : l10n("local.authorization_request_expired_10200010")}
           detail={
             declineReason
-              ?? l10n("local.value_can_ask_again_with_a_new_value_authoriz_91084260", {v0: (requestingAgentLabel ?? "The agent"), v1: (providerName)})
+              ?? l10n("local.value_can_ask_again_with_a_new_value_authoriz_91084260", {v0: (requestingAgentLabel ?? l10n("local.an_agent_ea6a0363")), v1: (providerName)})
           }
         />
       )}
@@ -2511,8 +2523,8 @@ function RequestConfirmationCard({
   const reasonPlaceholder =
     interaction.payload.declineReasonPlaceholder
     ?? (interaction.payload.acceptLabel === "Approve plan"
-      ? "Optional: what would you like revised?"
-      : "Optional: tell the agent what you'd change.");
+      ? l10n("local.optional_what_revised_10200011")
+      : l10n("local.optional_tell_agent_changes_10200012"));
 
   useEffect(() => {
     setActionError(null);
@@ -2856,7 +2868,7 @@ function RequestCheckboxConfirmationCard({
   const rejectRequiresReason = interaction.payload.rejectRequiresReason === true;
   const allowRevise = interaction.payload.allowDeclineReason !== false;
   const reasonPlaceholder =
-    interaction.payload.declineReasonPlaceholder ?? "Optional: tell the agent what you'd change.";
+    interaction.payload.declineReasonPlaceholder ?? l10n("local.optional_tell_agent_changes_10200012");
 
   const selectedCount = selectedOptionIds.size;
   const totalOptions = options.length;
@@ -3031,16 +3043,16 @@ function RequestCheckboxConfirmationCard({
 // --- Per-item verdicts (C3) ---------------------------------------------
 
 const VERDICT_LABEL: Record<RequestItemVerdictValue, string> = {
-  approve: "Approve",
-  reject: "Reject",
-  defer: "Defer",
+  approve: l10n("local.approve_6007acbe"),
+  reject: l10n("local.reject_ab604a36"),
+  defer: l10n("local.defer_10200013"),
 };
 
 /** Present-tense past-participle label for a resolved verdict chip. */
 const VERDICT_RESOLVED_LABEL: Record<RequestItemVerdictValue, string> = {
-  approve: "Approved",
-  reject: "Rejected",
-  defer: "Deferred",
+  approve: l10n("local.approved_87b42e40"),
+  reject: l10n("local.rejected_aea4a04a"),
+  defer: l10n("local.deferred_1fc4d2e6"),
 };
 
 function verdictChipClasses(verdict: RequestItemVerdictValue) {
