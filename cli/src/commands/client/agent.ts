@@ -221,12 +221,12 @@ function buildAgentEnvExports(input: {
 }
 
 export function registerAgentCommands(program: Command): void {
-  const agent = program.command("agent").description("Agent operations");
+  const agent = program.command("agent").description("智能体操作");
 
   addCommonClientOptions(
     agent
       .command("me")
-      .description("Show the current agent identity")
+      .description("显示当前智能体身份")
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -241,7 +241,7 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("inbox")
-      .description("List current agent assigned inbox items")
+      .description("列出当前分配给智能体的收件箱项目")
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -270,9 +270,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("inbox-mine")
-      .description("List current agent inbox items touched or archived by a board user")
-      .requiredOption("--user-id <id>", "Board user ID")
-      .option("--status <csv>", "Comma-separated issue statuses")
+      .description("列出工作台用户处理或归档过的当前智能体收件箱项目")
+      .requiredOption("--user-id <id>", "工作台用户 ID")
+      .option("--status <csv>", "以逗号分隔的任务状态")
       .action(async (opts: AgentInboxMineOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -289,8 +289,8 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("list")
-      .description("List agents for a company")
-      .requiredOption("-C, --company-id <id>", "Company ID")
+      .description("列出公司的智能体")
+      .requiredOption("-C, --company-id <id>", "公司 ID")
       .action(async (opts: AgentListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -329,8 +329,8 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("get")
-      .description("Get one agent")
-      .argument("<agentId>", "Agent ID")
+      .description("获取一个智能体")
+      .argument("<agentId>", "智能体 ID")
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -345,9 +345,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("create")
-      .description("Create an agent from a JSON payload")
-      .option("-C, --company-id <id>", "Company ID")
-      .requiredOption("--payload-json <json>", "CreateAgent JSON payload")
+      .description("根据 JSON 数据创建智能体")
+      .option("-C, --company-id <id>", "公司 ID")
+      .requiredOption("--payload-json <json>", "CreateAgent JSON 数据")
       .action(async (opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -364,9 +364,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("hire")
-      .description("Create an agent hire request")
-      .option("-C, --company-id <id>", "Company ID")
-      .requiredOption("--payload-json <json>", "CreateAgentHire JSON payload")
+      .description("创建智能体招募申请")
+      .option("-C, --company-id <id>", "公司 ID")
+      .requiredOption("--payload-json <json>", "CreateAgentHire JSON 数据")
       .action(async (opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -382,9 +382,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("update")
-      .description("Update an agent from a JSON payload")
-      .argument("<agentId>", "Agent ID")
-      .requiredOption("--payload-json <json>", "UpdateAgent JSON payload")
+      .description("根据 JSON 数据更新智能体")
+      .argument("<agentId>", "智能体 ID")
+      .requiredOption("--payload-json <json>", "UpdateAgent JSON 数据")
       .action(async (agentId: string, opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -400,12 +400,12 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("delete")
-      .description("Delete an agent")
-      .argument("<agentId>", "Agent ID")
-      .option("--yes", "Confirm deletion")
+      .description("删除智能体")
+      .argument("<agentId>", "智能体 ID")
+      .option("--yes", "确认删除")
       .action(async (agentId: string, opts: AgentDeleteOptions) => {
         try {
-          if (!opts.yes) throw new Error("Refusing to delete without --yes");
+          if (!opts.yes) throw new Error("未传入 --yes，拒绝执行删除。");
           const ctx = resolveCommandContext(opts);
           const result = await ctx.api.delete(apiPath`/api/agents/${agentId}`);
           printOutput(result, { json: ctx.json });
@@ -416,18 +416,18 @@ export function registerAgentCommands(program: Command): void {
   );
 
   for (const [name, path, description] of [
-    ["pause", "pause", "Pause an agent"],
-    ["resume", "resume", "Resume an agent"],
-    ["approve", "approve", "Approve a pending agent"],
-    ["terminate", "terminate", "Terminate an agent"],
-    ["heartbeat:invoke", "heartbeat/invoke", "Invoke an agent heartbeat"],
-    ["claude-login", "claude-login", "Trigger Claude login for an agent"],
+    ["pause", "pause", "暂停智能体"],
+    ["resume", "resume", "恢复智能体"],
+    ["approve", "approve", "批准待处理的智能体"],
+    ["terminate", "terminate", "终止智能体"],
+    ["heartbeat:invoke", "heartbeat/invoke", "触发智能体心跳"],
+    ["claude-login", "claude-login", "触发智能体的 Claude 登录"],
   ] as const) {
     addCommonClientOptions(
       agent
         .command(name)
         .description(description)
-        .argument("<agentId>", "Agent ID")
+        .argument("<agentId>", "智能体 ID")
         .action(async (agentId: string, opts: BaseClientOptions) => {
           try {
             const ctx = resolveCommandContext(opts);
@@ -443,9 +443,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("permissions:update")
-      .description("Update agent permissions")
-      .argument("<agentId>", "Agent ID")
-      .requiredOption("--payload-json <json>", "UpdateAgentPermissions JSON payload")
+      .description("更新智能体权限")
+      .argument("<agentId>", "智能体 ID")
+      .requiredOption("--payload-json <json>", "UpdateAgentPermissions JSON 数据")
       .action(async (agentId: string, opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -461,8 +461,8 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("configuration")
-      .description("Get redacted agent configuration")
-      .argument("<agentId>", "Agent ID")
+      .description("获取已脱敏的智能体配置")
+      .argument("<agentId>", "智能体 ID")
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -477,8 +477,8 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("config-revisions")
-      .description("List agent config revisions")
-      .argument("<agentId>", "Agent ID")
+      .description("列出智能体配置修订记录")
+      .argument("<agentId>", "智能体 ID")
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -493,9 +493,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("config-revision:get")
-      .description("Get one agent config revision")
-      .argument("<agentId>", "Agent ID")
-      .argument("<revisionId>", "Revision ID")
+      .description("获取一条智能体配置修订记录")
+      .argument("<agentId>", "智能体 ID")
+      .argument("<revisionId>", "修订记录 ID")
       .action(async (agentId: string, revisionId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -510,9 +510,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("config-revision:rollback")
-      .description("Roll an agent back to a config revision")
-      .argument("<agentId>", "Agent ID")
-      .argument("<revisionId>", "Revision ID")
+      .description("将智能体回滚到指定配置修订记录")
+      .argument("<agentId>", "智能体 ID")
+      .argument("<revisionId>", "修订记录 ID")
       .action(async (agentId: string, revisionId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -527,8 +527,8 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("runtime-state")
-      .description("Get agent runtime state")
-      .argument("<agentId>", "Agent ID")
+      .description("获取智能体运行时状态")
+      .argument("<agentId>", "智能体 ID")
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -543,9 +543,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("runtime-state:reset-session")
-      .description("Reset an agent runtime session")
-      .argument("<agentId>", "Agent ID")
-      .option("--task-key <key>", "Specific task session key")
+      .description("重置智能体运行时会话")
+      .argument("<agentId>", "智能体 ID")
+      .option("--task-key <key>", "指定任务会话键名")
       .action(async (agentId: string, opts: AgentResetSessionOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -561,8 +561,8 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("task-sessions")
-      .description("List agent task sessions")
-      .argument("<agentId>", "Agent ID")
+      .description("列出智能体任务会话")
+      .argument("<agentId>", "智能体 ID")
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -577,8 +577,8 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("skills")
-      .description("List agent skills")
-      .argument("<agentId>", "Agent ID")
+      .description("列出智能体技能")
+      .argument("<agentId>", "智能体 ID")
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -593,12 +593,12 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("skills:sync")
-      .description("Sync desired skills onto an agent")
-      .argument("<agentId>", "Agent ID")
-      .requiredOption("--desired-skills <csv>", "Desired skill names")
+      .description("将指定技能同步到智能体")
+      .argument("<agentId>", "智能体 ID")
+      .requiredOption("--desired-skills <csv>", "指定的技能名称")
       .requiredOption(
         "--mode <mode>",
-        "Merge mode: add keeps other skills; remove deletes only named skills; replace destructively overwrites the complete set",
+        "合并模式：add 保留其他技能；remove 只删除指定技能；replace 会覆盖完整技能集合",
       )
       .action(async (agentId: string, opts: AgentSkillsSyncOptions) => {
         try {
@@ -618,9 +618,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("instructions-path:update")
-      .description("Update an agent instructions path. Process adapters require adapterConfigKey and relative paths require adapterConfig.cwd.")
-      .argument("<agentId>", "Agent ID")
-      .requiredOption("--payload-json <json>", "UpdateAgentInstructionsPath JSON payload, for example {\"path\":\"/tmp/AGENTS.md\",\"adapterConfigKey\":\"instructionsFilePath\"}")
+      .description("更新智能体指令路径。进程适配器需要 adapterConfigKey，相对路径需要 adapterConfig.cwd。")
+      .argument("<agentId>", "智能体 ID")
+      .requiredOption("--payload-json <json>", "UpdateAgentInstructionsPath JSON 数据，例如 {\"path\":\"/tmp/AGENTS.md\",\"adapterConfigKey\":\"instructionsFilePath\"}")
       .action(async (agentId: string, opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -636,8 +636,8 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("instructions-bundle")
-      .description("Get an agent instructions bundle")
-      .argument("<agentId>", "Agent ID")
+      .description("获取智能体指令包")
+      .argument("<agentId>", "智能体 ID")
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -652,9 +652,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("instructions-bundle:update")
-      .description("Update an agent instructions bundle")
-      .argument("<agentId>", "Agent ID")
-      .requiredOption("--payload-json <json>", "UpdateAgentInstructionsBundle JSON payload")
+      .description("更新智能体指令包")
+      .argument("<agentId>", "智能体 ID")
+      .requiredOption("--payload-json <json>", "UpdateAgentInstructionsBundle JSON 数据")
       .action(async (agentId: string, opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -670,9 +670,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("instructions-file:get")
-      .description("Get an agent instructions file")
-      .argument("<agentId>", "Agent ID")
-      .requiredOption("--path <path>", "Bundle-relative file path")
+      .description("获取智能体指令文件")
+      .argument("<agentId>", "智能体 ID")
+      .requiredOption("--path <path>", "相对于指令包的文件路径")
       .action(async (agentId: string, opts: AgentInstructionsFileOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -688,12 +688,12 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("instructions-file:put")
-      .description("Create or update an agent instructions file")
-      .argument("<agentId>", "Agent ID")
-      .requiredOption("--path <path>", "Bundle-relative file path")
-      .option("--content <text>", "File content")
-      .option("--content-file <path>", "Read file content from disk")
-      .option("--clear-legacy-prompt-template", "Clear legacy prompt template")
+      .description("创建或更新智能体指令文件")
+      .argument("<agentId>", "智能体 ID")
+      .requiredOption("--path <path>", "相对于指令包的文件路径")
+      .option("--content <text>", "文件内容")
+      .option("--content-file <path>", "从磁盘读取文件内容")
+      .option("--clear-legacy-prompt-template", "清除旧版提示词模板")
       .action(async (agentId: string, opts: AgentInstructionsFilePutOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -714,9 +714,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("instructions-file:delete")
-      .description("Delete an agent instructions file")
-      .argument("<agentId>", "Agent ID")
-      .requiredOption("--path <path>", "Bundle-relative file path")
+      .description("删除智能体指令文件")
+      .argument("<agentId>", "智能体 ID")
+      .requiredOption("--path <path>", "相对于指令包的文件路径")
       .action(async (agentId: string, opts: AgentInstructionsFileOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -732,22 +732,22 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("wake")
-      .description("Request a heartbeat wakeup for an agent")
-      .argument("<agentRef>", "Agent ID or shortname/url-key")
-      .option("-C, --company-id <id>", "Company ID for shortname/url-key lookup")
-      .option("--source <source>", "Invocation source (timer, assignment, on_demand, automation)", "on_demand")
-      .option("--trigger <trigger>", "Trigger detail (manual, ping, callback, system)", "manual")
-      .option("--reason <text>", "Wakeup reason")
-      .option("--payload <json>", "JSON object payload")
-      .option("--idempotency-key <key>", "Wakeup idempotency key")
-      .option("--force-fresh-session", "Request a fresh adapter session")
+      .description("请求唤醒智能体心跳")
+      .argument("<agentRef>", "智能体 ID、短名称或 URL 键名")
+      .option("-C, --company-id <id>", "按短名称或 URL 键名查找时使用的公司 ID")
+      .option("--source <source>", "调用来源（timer、assignment、on_demand、automation）", "on_demand")
+      .option("--trigger <trigger>", "触发详情（manual、ping、callback、system）", "manual")
+      .option("--reason <text>", "唤醒原因")
+      .option("--payload <json>", "JSON 对象数据")
+      .option("--idempotency-key <key>", "唤醒幂等键")
+      .option("--force-fresh-session", "请求新的适配器会话")
       .action(async (agentRef: string, opts: AgentWakeOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
           const query = opts.companyId ? `?${new URLSearchParams({ companyId: opts.companyId }).toString()}` : "";
           const agentRow = await ctx.api.get<Agent>(`${apiPath`/api/agents/${agentRef}`}${query}`);
           if (!agentRow) {
-            throw new Error(`Agent not found: ${agentRef}`);
+            throw new Error(`未找到智能体：${agentRef}`);
           }
           const payload = wakeAgentSchema.parse({
             source: opts.source,
@@ -770,14 +770,14 @@ export function registerAgentCommands(program: Command): void {
     agent
       .command("local-cli")
       .description(
-        "Create an agent API key, install local Paperclip skills for Codex/Claude, and print shell exports",
+        "创建智能体 API 密钥、为 Codex/Claude 安装本地 Alice 技能，并输出终端环境变量",
       )
-      .argument("<agentRef>", "Agent ID or shortname/url-key")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .option("--key-name <name>", "API key label", "local-cli")
+      .argument("<agentRef>", "智能体 ID、短名称或 URL 键名")
+      .requiredOption("-C, --company-id <id>", "公司 ID")
+      .option("--key-name <name>", "API 密钥标签", "local-cli")
       .option(
         "--no-install-skills",
-        "Skip installing Paperclip skills into ~/.codex/skills, ~/.claude/skills, and ~/.kimi-code/skills",
+        "跳过将 Alice 技能安装到 ~/.codex/skills、~/.claude/skills 和 ~/.kimi-code/skills",
       )
       .action(async (agentRef: string, opts: AgentLocalCliOptions) => {
         try {
@@ -787,14 +787,14 @@ export function registerAgentCommands(program: Command): void {
             `${apiPath`/api/agents/${agentRef}`}?${query.toString()}`,
           );
           if (!agentRow) {
-            throw new Error(`Agent not found: ${agentRef}`);
+            throw new Error(`未找到智能体：${agentRef}`);
           }
 
           const now = new Date().toISOString().replaceAll(":", "-");
           const keyName = opts.keyName?.trim() ? opts.keyName.trim() : `local-cli-${now}`;
           const key = await ctx.api.post<CreatedAgentKey>(apiPath`/api/agents/${agentRow.id}/keys`, { name: keyName });
           if (!key) {
-            throw new Error("Failed to create API key");
+            throw new Error("创建 API 密钥失败");
           }
 
           const installSummaries: SkillsInstallSummary[] = [];
@@ -802,7 +802,7 @@ export function registerAgentCommands(program: Command): void {
             const skillsDir = await resolvePaperclipSkillsDir(__moduleDir, [path.resolve(process.cwd(), "skills")]);
             if (!skillsDir) {
               throw new Error(
-                "Could not locate local Paperclip skills directory. Expected ./skills in the repo checkout.",
+                "找不到本地 Alice 技能目录。仓库检出目录中应存在 ./skills。",
               );
             }
 
@@ -843,20 +843,20 @@ export function registerAgentCommands(program: Command): void {
             return;
           }
 
-          console.log(`Agent: ${agentRow.name} (${agentRow.id})`);
-          console.log(`API key created: ${key.name} (${key.id})`);
+          console.log(`智能体：${agentRow.name}（${agentRow.id}）`);
+          console.log(`API 密钥已创建：${key.name}（${key.id}）`);
           if (installSummaries.length > 0) {
             for (const summary of installSummaries) {
               console.log(
-                `${summary.tool}: linked=${summary.linked.length} removed=${summary.removed.length} skipped=${summary.skipped.length} failed=${summary.failed.length} target=${summary.target}`,
+                `${summary.tool}：已链接=${summary.linked.length} 已移除=${summary.removed.length} 已跳过=${summary.skipped.length} 失败=${summary.failed.length} 目标=${summary.target}`,
               );
               for (const failed of summary.failed) {
-                console.log(`  failed ${failed.name}: ${failed.error}`);
+                console.log(`  失败 ${failed.name}：${failed.error}`);
               }
             }
           }
           console.log("");
-          console.log("# Run this in your shell before launching codex/claude:");
+          console.log("# 启动 Codex 或 Claude 前，请在终端中运行以下命令：");
           console.log(exportsText);
         } catch (err) {
           handleCommandError(err);
@@ -870,7 +870,7 @@ function parseJsonObject(value: string | undefined): Record<string, unknown> | u
   if (value === undefined) return undefined;
   const parsed = JSON.parse(value) as unknown;
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error("--payload must be a JSON object");
+    throw new Error("--payload 必须是 JSON 对象");
   }
   return parsed as Record<string, unknown>;
 }
