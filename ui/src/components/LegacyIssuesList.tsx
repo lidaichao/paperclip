@@ -322,7 +322,9 @@ export function issueAgeBucket(date: Date | string, now: number = Date.now()): 0
 }
 
 export function issueAgeSeparatorLabel(bucket: 1 | 2): string {
-  return bucket === 1 ? "Older than a day" : "Older than a week";
+  return bucket === 1
+    ? l10n("local.older_than_day_10300001")
+    : l10n("local.older_than_week_10300002");
 }
 
 export function issueAgeBucketsCrossed(
@@ -976,7 +978,9 @@ export function IssuesList({
     if (currentUserId) {
       options.set(`user:${currentUserId}`, {
         id: `user:${currentUserId}`,
-        label: currentUserId === "local-board" ? "Board" : "Me",
+        label: currentUserId === "local-board"
+          ? l10n("local.board_4816cbfd")
+          : l10n("local.me_d30af076"),
         kind: "user",
         searchText: currentUserId === "local-board" ? "board me human local-board" : `me board human ${currentUserId}`,
       });
@@ -1824,12 +1828,12 @@ export function IssuesList({
                 <div className="p-2 space-y-0.5">
                   {/* PAP-411: "priority" sort option hidden behind SHOW_TASK_PRIORITY_UI (comparator stays dormant). */}
                   {([
-                    ["workflow", "Workflow"],
-                    ["status", "Status"],
-                    ["priority", "Priority"],
-                    ["title", "Title"],
-                    ["created", "Created"],
-                    ["updated", "Updated"],
+                    ["workflow", l10n("local.workflow_10300003")],
+                    ["status", l10n("local.status_920e413c")],
+                    ["priority", l10n("local.priority_d60dbba0")],
+                    ["title", l10n("local.title_7e8cd205")],
+                    ["created", l10n("local.created_d70b9e24")],
+                    ["updated", l10n("local.updated_3a5ecca1")],
                   ] as const)
                     .filter(([field]) => SHOW_TASK_PRIORITY_UI || field !== "priority")
                     .map(([field, label]) => (
@@ -1871,13 +1875,13 @@ export function IssuesList({
                 <div className="p-2 space-y-0.5">
                   {/* PAP-411: "priority" group-by option hidden behind SHOW_TASK_PRIORITY_UI (group logic stays dormant). */}
                   {([
-                    ["status", "Status"],
-                    ["priority", "Priority"],
-                    ["assignee", "Responsible"],
-                    ["project", "Project"],
-                    ["workspace", "Workspace"],
-                    ["parent", "Parent Task"],
-                    ["none", "None"],
+                    ["status", l10n("local.status_920e413c")],
+                    ["priority", l10n("local.priority_d60dbba0")],
+                    ["assignee", l10n("local.responsible_bc110a6d")],
+                    ["project", l10n("local.project_98595978")],
+                    ["workspace", l10n("local.workspace_87bb59ba")],
+                    ["parent", l10n("local.parent_task_10300004")],
+                    ["none", l10n("local.none_dc937b59")],
                   ] as const)
                     .filter(([value]) => SHOW_TASK_PRIORITY_UI || value !== "priority")
                     .map(([value, label]) => (
@@ -2034,8 +2038,15 @@ export function IssuesList({
                       if (!blockerIssue) return null;
                       const label = blockerIssue.identifier ?? blockerIssue.id.slice(0, 8);
                       const blockerStep = checklistMeta?.stepNumberByIssueId.get(blockerId);
-                      const blockerStepSuffix = blockerStep ? ` \u00b7 step ${blockerStep}` : "";
-                      return { blockerId, chipLabel: `blocked by ${label}${blockerStepSuffix}` };
+                      return {
+                        blockerId,
+                        chipLabel: blockerStep
+                          ? l10n("local.blocked_by_task_step_10300005", {
+                              v0: label,
+                              v1: blockerStep,
+                            })
+                          : l10n("local.blocked_by_task_10300006", { v0: label }),
+                      };
                     })
                     .filter((chip): chip is { blockerId: string; chipLabel: string } => chip !== null);
                   const firstVisibleBlockerChip = visibleBlockerChips[0] ?? null;
