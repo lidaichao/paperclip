@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "asana",
   "name": "Asana",
-  "description": "Connect Asana's provider-hosted MCP server.",
+  "description": "连接 Asana 官方托管的 MCP 服务器。",
   "categories": [
     "productivity"
   ],
@@ -23,13 +23,13 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Register an OAuth app with Asana, then enter its client ID and secret.",
+      "whenToUse": "在 Asana 中注册 OAuth 应用，然后输入客户端 ID 和密钥。",
       "defaults": {
         "serverUrl": "https://mcp.asana.com/v2/mcp"
       },
       "guidanceMd": "请在浏览器中连接 Asana。创建 Asana MCP OAuth 应用并登记 Alice 的回调地址；不支持 DCR。",
       "riskTier": "S3",
-      "label": "Use your own OAuth app",
+      "label": "使用自己的 OAuth 应用",
       "consoleLinks": {
         "register": "https://developers.asana.com/docs/integrating-with-asanas-mcp-server",
         "docs": "https://developers.asana.com/docs/integrating-with-asanas-mcp-server"

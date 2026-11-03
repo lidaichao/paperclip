@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "vercel",
   "name": "Vercel",
-  "description": "Inspect projects, deployments, and runtime logs.",
+  "description": "检查项目、部署和运行时日志。",
   "categories": [
     "developer"
   ],
@@ -23,11 +23,11 @@
         "customer",
         "dcr"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务提供商托管的连接以快速完成配置。",
       "defaults": {
         "serverUrl": "https://mcp.vercel.com/mcp"
       },
-      "guidanceMd": "Connect the Vercel team and projects agents should operate.",
+      "guidanceMd": "连接允许智能体操作的 Vercel 团队和项目。",
       "riskTier": "S3",
       "requiredResourceFilters": [
         "team",
@@ -38,6 +38,6 @@
   ],
   "availability": {
     "available": false,
-    "reason": "Vercel currently reviews and approves MCP clients."
+    "reason": "Vercel 目前会审核并批准 MCP 客户端。"
   }
 }

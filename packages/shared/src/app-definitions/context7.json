@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "context7",
   "name": "Context7",
-  "description": "Look up current documentation for software libraries.",
+  "description": "查询软件库的最新文档。",
   "categories": [
     "developer"
   ],
@@ -22,11 +22,11 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务提供商托管的连接以快速完成配置。",
       "defaults": {
         "serverUrl": "https://mcp.context7.com/mcp"
       },
-      "guidanceMd": "Connect Context7 to give agents current library documentation.",
+      "guidanceMd": "连接 Context7，为智能体提供最新的软件库文档。",
       "riskTier": "S1"
     }
   ]
