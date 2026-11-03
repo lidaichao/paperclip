@@ -12,7 +12,7 @@ export function inboxAgentPolicyRoutes(db: Db) {
   const policies = inboxAgentPolicyService(db);
 
   function selfUserId(req: Request) {
-    if (req.actor.type !== "board" || !req.actor.userId) throw unauthorized("Board user context required");
+    if (req.actor.type !== "board" || !req.actor.userId) throw unauthorized("需要看板用户身份");
     return req.actor.userId;
   }
 
@@ -20,7 +20,7 @@ export function inboxAgentPolicyRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     if (req.actor.type === "board") {
       if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
-      if (!req.actor.userId) throw unauthorized("Board user context required");
+      if (!req.actor.userId) throw unauthorized("需要看板用户身份");
       if (await access.canUser(companyId, req.actor.userId, "users:manage_permissions")) return;
     } else if (
       req.actor.type === "agent"
@@ -29,7 +29,7 @@ export function inboxAgentPolicyRoutes(db: Db) {
     ) {
       return;
     }
-    throw forbidden("Inbox agent policy administration authority required", {
+    throw forbidden("需要收件箱智能体策略管理权限", {
       code: "inbox_agent_policy_admin_required",
     });
   }
@@ -37,7 +37,7 @@ export function inboxAgentPolicyRoutes(db: Db) {
   async function assertActiveUserMembership(companyId: string, userId: string) {
     const membership = await access.getMembership(companyId, "user", userId);
     if (!membership || membership.status !== "active") {
-      throw notFound("Active company user membership not found");
+      throw notFound("未找到有效的公司用户成员关系");
     }
   }
 

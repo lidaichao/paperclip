@@ -163,7 +163,7 @@ export function companySkillRoutes(db: Db) {
     if (req.actor.type === "board") {
       return { type: "board", id: req.actor.userId ?? "board", role: "board" };
     }
-    throw unauthorized("Authentication required");
+    throw unauthorized("需要身份验证");
   }
 
   async function skillPolicyResource(input: {
@@ -203,7 +203,7 @@ export function companySkillRoutes(db: Db) {
     resource: SkillPolicyResourceInput = {},
   ) {
     if (req.actor.type === "none") {
-      throw unauthorized("Authentication required");
+      throw unauthorized("需要身份验证");
     }
     if (req.actor.type === "agent" && req.actor.companyId !== companyId) {
       throw forbidden("智能体密钥不能访问其他公司", { code: "skill_company_boundary_denied" });

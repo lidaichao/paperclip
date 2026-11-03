@@ -32,10 +32,10 @@ export function companySkillPolicyRoutes(db: Db) {
 
   function assertSkillPolicyCompanyAccess(req: Request, companyId: string) {
     if (req.actor.type === "none") {
-      throw new HttpError(401, "Authentication required", { code: "skill_authentication_required" });
+      throw new HttpError(401, "需要身份验证", { code: "skill_authentication_required" });
     }
     if (req.actor.type === "agent" && req.actor.companyId !== companyId) {
-      throw forbidden("Agent key cannot access another company", { code: "skill_company_boundary_denied" });
+      throw forbidden("智能体密钥不能访问其他公司", { code: "skill_company_boundary_denied" });
     }
     assertCompanyAccess(req, companyId);
   }
@@ -52,7 +52,7 @@ export function companySkillPolicyRoutes(db: Db) {
     ) {
       return;
     }
-    throw forbidden("Skill policy administration authority required", {
+    throw forbidden("需要技能策略管理权限", {
       code: "skill_policy_admin_required",
       remediation: "Ask a company administrator to manage the skill policy.",
     });
@@ -65,7 +65,7 @@ export function companySkillPolicyRoutes(db: Db) {
     if (req.actor.type === "board") {
       return { type: "board", id: req.actor.userId ?? "board", role: "board" };
     }
-    throw forbidden("Authenticated company actor required", { code: "skill_authentication_required" });
+    throw forbidden("需要通过身份验证的公司操作方", { code: "skill_authentication_required" });
   }
 
   router.get("/companies/:companyId/skill-policy", async (req, res) => {

@@ -1237,7 +1237,7 @@ describe("company skill mutation permissions", () => {
       .send({ source: "https://github.com/acme/private-skill?token=secret#token=secret" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(401);
-    expect(res.body).toEqual({ error: "Authentication required" });
+    expect(res.body).toEqual({ error: "需要身份验证" });
     expect(JSON.stringify(res.body)).not.toContain("secret");
     expect(mockAccessService.decide).not.toHaveBeenCalled();
     expect(mockCompanySkillPolicyService.evaluate).not.toHaveBeenCalled();
@@ -1252,7 +1252,7 @@ describe("company skill mutation permissions", () => {
       .send({ description: "Updated" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(401);
-    expect(res.body).toEqual({ error: "Authentication required" });
+    expect(res.body).toEqual({ error: "需要身份验证" });
     expect(mockCompanySkillService.getById).not.toHaveBeenCalled();
     expect(mockCompanySkillPolicyService.evaluate).not.toHaveBeenCalled();
     expect(mockCompanySkillService.updateSkill).not.toHaveBeenCalled();
