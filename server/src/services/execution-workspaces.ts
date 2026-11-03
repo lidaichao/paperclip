@@ -509,7 +509,7 @@ function explainGitWorktreeBranchReconcileInspection(input: {
   ancestryVerdict: GitWorktreeBranchAncestryVerdict;
 }) {
   if (!input.fromSha || !input.toSha) {
-    return `Paperclip could not determine branch ancestry because "${input.fromBranch}" or "${input.toBranch}" is missing a resolvable HEAD commit.`;
+    return `Alice 无法确定分支祖先关系，因为“${input.fromBranch}”或“${input.toBranch}”缺少可解析的 HEAD 提交。`;
   }
   if (input.fromSha === input.toSha) {
     return `The recorded branch "${input.fromBranch}" and checked-out branch "${input.toBranch}" resolve to the same commit.`;
@@ -520,7 +520,7 @@ function explainGitWorktreeBranchReconcileInspection(input: {
   if (input.ancestryVerdict === "diverged") {
     return `The recorded branch "${input.fromBranch}" is not an ancestor of the checked-out branch "${input.toBranch}".`;
   }
-  return `Paperclip could not determine whether "${input.toBranch}" is forward of "${input.fromBranch}".`;
+  return `Alice 无法确定“${input.toBranch}”是否位于“${input.fromBranch}”之后。`;
 }
 
 async function inspectExecutionWorkspaceBranchForReconcile(
@@ -533,7 +533,7 @@ async function inspectExecutionWorkspaceBranchForReconcile(
 
   const worktreePath = readNullableString(workspace.providerRef) ?? readNullableString(workspace.cwd);
   if (!worktreePath) {
-    throw unprocessable("Execution workspace needs a local worktree path before Paperclip can reconcile its branch record");
+    throw unprocessable("Alice 需要执行工作区的本地工作树路径，才能协调其分支记录");
   }
 
   const repoRoot = await readGitStdout(["rev-parse", "--show-toplevel"], worktreePath).catch(() => null);
@@ -543,7 +543,7 @@ async function inspectExecutionWorkspaceBranchForReconcile(
 
   const toBranch = await readGitStdout(["symbolic-ref", "--quiet", "--short", "HEAD"], worktreePath).catch(() => null);
   if (!toBranch) {
-    throw unprocessable("Execution workspace is detached; Paperclip cannot reconcile it to a branch name");
+    throw unprocessable("执行工作区处于分离状态；Alice 无法将其协调到分支名称");
   }
 
   const status = await runExpensiveGitStatus({
@@ -807,12 +807,12 @@ async function inspectGitCloseReadiness(workspace: ExecutionWorkspace): Promise<
   }
 
   if (!workspacePath) {
-    warnings.push("Workspace has no local path, so Paperclip cannot inspect git status before close.");
+    warnings.push("工作区没有本地路径，因此 Alice 无法在关闭前检查 Git 状态。");
     return { git: null, warnings, statusInspectionSucceeded: false };
   }
 
   if (!(await pathExists(workspacePath))) {
-    warnings.push(`Workspace path "${workspacePath}" does not exist, so Paperclip cannot inspect git status before close.`);
+    warnings.push(`工作区路径“${workspacePath}”不存在，因此 Alice 无法在关闭前检查 Git 状态。`);
     return {
       git: {
         repoRoot: null,
@@ -2338,7 +2338,7 @@ export function executionWorkspaceService(db: Db, opts: ExecutionWorkspaceServic
       const warnings = [...gitWarnings];
       const blockingReasons: string[] = [];
       if (!statusInspectionSucceeded) {
-        blockingReasons.push("Paperclip could not verify the workspace git status. Retry before destructive cleanup.");
+        blockingReasons.push("Alice 无法验证工作区的 Git 状态。请在执行破坏性清理前重试。");
       }
       const isSharedWorkspace = executionWorkspace.mode === "shared_workspace";
       const workspacePath = readNullableString(executionWorkspace.providerRef) ?? readNullableString(executionWorkspace.cwd);
@@ -2469,7 +2469,7 @@ export function executionWorkspaceService(db: Db, opts: ExecutionWorkspaceServic
         plannedActions.push({
           kind: "git_worktree_remove",
           label: "Remove git worktree",
-          description: `Paperclip will run git worktree cleanup for ${workspacePath}.`,
+          description: `Alice 将对 ${workspacePath} 执行 Git 工作树清理。`,
           command: `git worktree remove --force ${workspacePath}`,
         });
       }
@@ -2478,7 +2478,7 @@ export function executionWorkspaceService(db: Db, opts: ExecutionWorkspaceServic
         plannedActions.push({
           kind: "git_branch_delete",
           label: "Delete runtime-created branch",
-          description: "Paperclip will try to delete the runtime-created branch after removing the worktree.",
+          description: "Alice 将在移除工作树后尝试删除运行时创建的分支。",
           command: `git branch -d ${executionWorkspace.branchName}`,
         });
       }
@@ -2493,12 +2493,12 @@ export function executionWorkspaceService(db: Db, opts: ExecutionWorkspaceServic
             )
           : false;
         if (containsProjectWorkspace) {
-          warnings.push(`Paperclip will archive this workspace but keep "${workspacePath}" because it contains the project workspace.`);
+          warnings.push(`Alice 将归档此工作区，但会保留“${workspacePath}”，因为其中包含项目工作区。`);
         } else {
           plannedActions.push({
             kind: "remove_local_directory",
             label: "Remove runtime-created directory",
-            description: `Paperclip will remove the runtime-created directory at ${workspacePath}.`,
+            description: `Alice 将移除位于 ${workspacePath} 的运行时创建目录。`,
             command: `rm -rf ${workspacePath}`,
           });
         }
@@ -3402,7 +3402,7 @@ export function executionWorkspaceService(db: Db, opts: ExecutionWorkspaceServic
 
       const existing = toExecutionWorkspace(existingRow);
       if (!existing.sourceIssueId) {
-        throw unprocessable("Execution workspace needs a source issue before Paperclip can audit branch reconciliation");
+        throw unprocessable("Alice 需要执行工作区的来源任务，才能审计分支协调");
       }
 
       const inspection = await inspectExecutionWorkspaceBranchForReconcile(existing);
@@ -3515,7 +3515,7 @@ export function executionWorkspaceService(db: Db, opts: ExecutionWorkspaceServic
         const lockedRuntimeServices = (lockedRuntimeServicesByWorkspaceId.get(lockedRow.id) ?? []).map(toRuntimeService);
         const lockedWorkspace = toExecutionWorkspace(lockedRow, lockedRuntimeServices);
         if (!lockedWorkspace.sourceIssueId) {
-          throw unprocessable("Execution workspace needs a source issue before Paperclip can audit branch reconciliation");
+          throw unprocessable("Alice 需要执行工作区的来源任务，才能审计分支协调");
         }
 
         let updatedRow: ExecutionWorkspaceRow = lockedRow;

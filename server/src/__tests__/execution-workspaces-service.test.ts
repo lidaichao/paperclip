@@ -565,7 +565,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
         state: "blocked",
         isDestructiveCloseAllowed: false,
         blockingReasons: [
-          "Paperclip could not verify the workspace git status. Retry before destructive cleanup.",
+          "Alice 无法验证工作区的 Git 状态。请在执行破坏性清理前重试。",
         ],
       });
 
