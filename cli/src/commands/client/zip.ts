@@ -52,7 +52,7 @@ function crc32(bytes: Uint8Array) {
 export function createStoredZipArchive(files: Record<string, Uint8Array>, rootPath: string): Uint8Array {
   const entries = Object.entries(files).sort(([left], [right]) => left.localeCompare(right));
   if (entries.length > ZIP_MAX_ENTRIES) {
-    throw new Error(`Package has too many files to zip (${entries.length}; the zip format caps at ${ZIP_MAX_ENTRIES}).`);
+    throw new Error(`包内文件过多，无法压缩（${entries.length} 个；zip 格式上限为 ${ZIP_MAX_ENTRIES} 个）。`);
   }
   const encoder = new TextEncoder();
   const localChunks: Uint8Array[] = [];
@@ -91,7 +91,7 @@ export function createStoredZipArchive(files: Record<string, Uint8Array>, rootPa
     centralChunks.push(centralHeader);
     localOffset += localHeader.length + body.length;
     if (body.length > ZIP_MAX_OFFSET_BYTES || localOffset > ZIP_MAX_OFFSET_BYTES) {
-      throw new Error("Package is too large to zip in memory (zip64 archives are not supported).");
+      throw new Error("包过大，无法在内存中压缩（不支持 zip64 压缩包）。");
     }
   }
 

@@ -165,7 +165,7 @@ async function installSkillsForTarget(
                   ? `${err.message}; then ${linkErr.message}`
                   : err instanceof Error
                     ? err.message
-                    : `Failed to recover broken symlink: ${String(err)}`,
+                    : `恢复损坏的符号链接失败：${String(err)}`,
             });
             continue;
           }
