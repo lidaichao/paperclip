@@ -30187,7 +30187,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           return rows;
         });
         if (!claimed) {
-          throw conflict("This provider action is already being resolved", {
+          throw conflict("此服务商操作正在处理中", {
             code: "chat_action_resolution_conflict",
           });
         }
@@ -30272,7 +30272,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0]);
-    if (!anchor) throw notFound("Chat publication not found");
+    if (!anchor) throw notFound("未找到聊天发布记录");
     // An explicit Board send and every durable text/file transport part share
     // its comment. Read all parts without Activity's history limit; never
     // advance the worker or replay a provider side effect from this GET.
@@ -30310,7 +30310,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         asc(chatPublications.createdAt),
         asc(publicationTransportOrderKey(chatPublications)),
       );
-    if (!batch.length) throw notFound("Chat publication not found");
+    if (!batch.length) throw notFound("未找到聊天发布记录");
     return projectChatPublicationBatch(
       batch.map(({ publication, transfer }) =>
         projectChatFileTransfer(
@@ -30328,7 +30328,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
   ) {
     const emailBoundary = await endpointRecord(endpointId);
     if (emailBoundary?.endpoint.publicationMode === "explicit")
-      throw badRequest("Use an explicit email send action");
+      throw badRequest("请使用明确的邮件发送操作");
     const conversation = await db
       .select()
       .from(chatConversations)
@@ -30339,7 +30339,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0] ?? null);
-    if (!conversation) throw notFound("Conversation not found");
+    if (!conversation) throw notFound("未找到会话");
     const comment = await db
       .select()
       .from(issueComments)
@@ -30351,7 +30351,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0] ?? null);
-    if (!comment) throw notFound("Task comment not found");
+    if (!comment) throw notFound("未找到任务评论");
     const [publication] = await db
       .insert(chatPublications)
       .values({
@@ -30403,7 +30403,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
   ) {
     const emailBoundary = await endpointRecord(endpointId);
     if (emailBoundary?.endpoint.publicationMode === "explicit")
-      throw badRequest("Use an explicit email send action");
+      throw badRequest("请使用明确的邮件发送操作");
     // Browser request IDs are only unique within the conversation that issued
     // them. Include that durable task boundary so a retried key from another
     // conversation can neither suppress its send nor return the first task's
@@ -30474,7 +30474,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         )
         .for("update")
         .then((rows) => rows[0] ?? null);
-      if (!conversation) throw notFound("Conversation not found");
+      if (!conversation) throw notFound("未找到会话");
 
       const existing = await tx
         .select()
@@ -30531,7 +30531,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           rejected.result?.code !== rejectionCode ||
           !validRejectedIds(payload.attachmentIds)
         ) {
-          throw conflict("Board send rejection receipt is unavailable");
+          throw conflict("工作台发送拒绝回执不可用");
         }
         // The negative receipt is immutable, including when the caller retries
         // with different content or the previous owner comment was deleted.
@@ -31380,7 +31380,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         existing.conversationId !== scope.conversation.id ||
         teamsFileProofHash(existing.payload) !== teamsFileProofHash(payload)
       )
-        throw conflict("The Teams file recipient intent has changed", {
+        throw conflict("Teams 文件接收方意图已变化", {
           code: "chat_file_transfer_authority_changed",
         });
       return;
@@ -32166,7 +32166,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       credentialFingerprint: input.runtimeContext.credentialFingerprint,
     };
     if (!slackFileUploadReceiptPayload(payload)) {
-      throw new Error("Slack file upload receipt was malformed");
+      throw new Error("Slack 文件上传回执格式错误");
     }
     const providerActionId = `slack-file-receipt:${input.publication.id}:${publicationAttempt}`;
     const recordedAt = new Date();
@@ -32422,7 +32422,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
   ): Promise<void> {
     const scope = telegramStopSubscriptionScope(endpoint, context);
     if (!scope)
-      throw new Error("Telegram Stop subscription scope is unavailable");
+      throw new Error("Telegram 停止订阅范围不可用");
     await db.transaction(async (tx) => {
       await lease.assertOwned(tx);
       const current = await runtimeCallbackEndpoint(tx, endpoint.id, context, [
@@ -32434,7 +32434,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         current.botExternalId !== scope.botUserId ||
         current.publicId !== endpoint.publicId
       )
-        throw new Error("Telegram Stop subscription ownership changed");
+        throw new Error("Telegram 停止订阅所有权已变化");
       const [connection] = await tx
         .select()
         .from(toolConnections)
@@ -32581,7 +32581,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       try {
         value = await response.json();
       } catch {
-        throw new Error("Telegram subscription returned an invalid response");
+        throw new Error("Telegram 订阅返回了无效响应");
       }
       const result = plainObject(value);
       if (!response.ok || result.ok !== true) {
@@ -32637,7 +32637,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         drop_pending_updates: false,
       })) !== true
     )
-      throw new Error("Telegram subscription mutation was not confirmed");
+      throw new Error("Telegram 订阅变更未得到确认");
     if (
       !telegramStopSubscriptionConfirmed(
         await request("getWebhookInfo"),
@@ -32645,7 +32645,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         plan,
       )
     )
-      throw new Error("Telegram subscription verification changed");
+      throw new Error("Telegram 订阅验证已变化");
     await assertCurrent();
     await recordTelegramStopSubscription(endpoint, context, lease);
   }
@@ -32845,7 +32845,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         input.runtimeContext.credentialFingerprint ||
       registeredContext.version !== input.runtimeContext.version
     )
-      throw new Error("Telegram draft runtime authority changed");
+      throw new Error("Telegram 草稿运行时权限已变化");
     const draftRuntimeContext = { ...input.runtimeContext, endpointRuntime };
     const destination = telegramPrivateDraftDestination(
       input.conversation.externalThreadId,
@@ -32855,7 +32855,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       !input.conversation.isDirectMessage ||
       !input.endpoint.botExternalId
     )
-      throw new Error("Telegram private draft destination is invalid");
+      throw new Error("Telegram 私信草稿目标无效");
     const bindingBase = {
       version: 1 as const,
       publicationId: input.publication.id,
@@ -32883,7 +32883,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         .for("update")
         .then((rows) => rows[0] ?? null);
       if (!publication)
-        throw new Error("Telegram draft publication ownership changed");
+        throw new Error("Telegram 草稿发布所有权已变化");
       const providerActionId = `telegram-draft-publication:${publication.id}:${publication.attempts}`;
       const existing = await tx
         .select({ id: chatActions.id })
@@ -32899,7 +32899,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       // replay an uncertain final. A new explicit publication attempt gets a
       // fresh, never-before-used bot-global ID.
       if (existing.length)
-        throw new Error("Telegram draft attempt already exists");
+        throw new Error("Telegram 草稿尝试记录已存在");
       // NO CYCLE and no company/endpoint ownership: rollback, endpoint deletion
       // and bot re-binding cannot recycle a provider-visible draft identity.
       // Exhaustion is a refusal, never a fallback to a process-local/random ID.
@@ -32911,7 +32911,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         draftId: allocated[0]?.draftId,
       });
       if (!binding)
-        throw new Error("Telegram draft identity allocation was invalid");
+        throw new Error("Telegram 草稿身份分配无效");
       const [action] = await tx
         .insert(chatActions)
         .values({
@@ -32954,7 +32954,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           endpoint.botExternalId !== reserved.binding.botUserId ||
           runtime.get(endpoint.id) !== endpointRuntime
         )
-          throw new Error("Telegram draft endpoint authority changed");
+          throw new Error("Telegram 草稿端点权限已变化");
         const connection = await tx
           .select()
           .from(toolConnections)
@@ -32972,7 +32972,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           credentialFingerprint(connection.credentialSecretRefs) !==
             reserved.binding.credentialFingerprint
         )
-          throw new Error("Telegram draft credential authority changed");
+          throw new Error("Telegram 草稿凭据权限已变化");
         const conversation = await tx
           .select()
           .from(chatConversations)
@@ -32998,7 +32998,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           !publication ||
           publication.attempts !== reserved.binding.publicationAttempt
         )
-          throw new Error("Telegram draft attempt authority changed");
+          throw new Error("Telegram 草稿尝试权限已变化");
         if (
           action.status === "cancelled" &&
           action.result?.phase === "stopped" &&
@@ -33020,7 +33020,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           !["issued", "processing"].includes(action.status) ||
           !(await authorizeRetainedChatSourcePublication(tx, publication))
         )
-          throw new Error("Telegram draft source authority changed");
+          throw new Error("Telegram 草稿来源权限已变化");
         await tx
           .update(chatActions)
           .set({
@@ -33139,7 +33139,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     if (input.endpoint.provider === "imessage-photon") {
       const adapter = endpointRuntime.getProviderAdapter();
       if (!(adapter instanceof PhotonChatAdapter))
-        throw new Error("Photon publication runtime unavailable");
+        throw new Error("Photon 发布运行时不可用");
       const assertCurrent = async () => {
         await input.beforePhotonWrite?.();
         const current = await endpointRecord(input.endpoint.id);
