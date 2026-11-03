@@ -108,7 +108,7 @@ export function ConnectModelPreview({
           <OnboardingHeading
             center
             title={l10n("local.connect_a_model_87bdaaf8")}
-            lede="Paperclip works with your existing subscription or API keys."
+            lede={l10n("local.alice_works_with_subscription_or_api_keys_4ab168e3")}
           />
         </div>
 

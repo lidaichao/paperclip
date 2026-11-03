@@ -77,5 +77,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.grok_instructions_file_hint_alice_426049a1).toContain(
       "Alice 会在可行时将其放入 Grok 工作区",
     );
+    expect(messages.external_delivery_retry_body_alice_db868c38).toBe(
+      "Alice 将重试本次发布，并保留你的草稿和重试标识。",
+    );
+    expect(messages.webhook_loopback_warning_alice_50bda791).toContain(
+      "GitHub 等服务无法通过该地址访问你电脑上的 Alice",
+    );
+    expect(messages.new_in_alice_7a1d321b).toBe("Alice 新功能");
   });
 });

@@ -51,42 +51,42 @@ type PublicationFeedback = {
 const publicationFeedback: Record<ChatPublicationState, PublicationFeedback> = {
   awaiting_consent: {
     title: l10n("local.waiting_for_file_consent_56991603"),
-    body: "The recipient must accept the file card in Microsoft Teams. The file is not delivered yet; this send identity is kept while Paperclip waits.",
+    body: l10n("local.external_file_consent_waiting_body_2f08795d"),
     tone: "info",
   },
   published: {
     title: l10n("local.sent_to_channel_255e7030"),
-    body: "The board update was published to the connected conversation.",
+    body: l10n("local.external_update_published_body_bc52a34d"),
     tone: "success",
   },
   pending: {
     title: l10n("local.queued_for_channel_cf7ce8fc"),
-    body: "Delivery is still pending. Your draft is kept until Paperclip confirms publication.",
+    body: l10n("local.external_delivery_pending_body_alice_ec98a753"),
     tone: "info",
   },
   streaming: {
     title: l10n("local.publishing_to_channel_c303056d"),
-    body: "Delivery is still in progress. Your draft is kept until Paperclip confirms publication.",
+    body: l10n("local.external_delivery_streaming_body_alice_adbe355f"),
     tone: "info",
   },
   retry: {
     title: l10n("local.delivery_retry_scheduled_d4db8f71"),
-    body: "Paperclip will retry this publication. Your draft and retry identity are kept.",
+    body: l10n("local.external_delivery_retry_body_alice_db868c38"),
     tone: "warn",
   },
   delivery_unknown: {
     title: l10n("local.delivery_not_confirmed_521724ca"),
-    body: "The provider may have accepted this update. Resolve it in Activity before trying again to avoid a duplicate.",
+    body: l10n("local.external_delivery_unknown_body_d36e9947"),
     tone: "warn",
   },
   failed: {
     title: l10n("local.channel_delivery_failed_ce13a3ab"),
-    body: "Your draft is kept. Open Activity to retry this same publication safely.",
+    body: l10n("local.external_delivery_failed_body_9581851a"),
     tone: "error",
   },
   cancelled: {
     title: l10n("local.channel_delivery_cancelled_c918fc9f"),
-    body: "Your draft is kept. Some parts may already have been published; check Activity before starting a new send.",
+    body: l10n("local.external_delivery_cancelled_body_1d0ceefa"),
     tone: "info",
   },
 };
@@ -405,7 +405,7 @@ function ConnectedTaskComposer({
     } catch (error) {
       if (mounted.current) {
         setUploadError(
-          l10n("local.value_no_channel_message_was_sent_check_task_08453cdd", {v0: (error instanceof Error ? error.message : "Upload could not be confirmed.")}),
+          l10n("local.value_no_channel_message_was_sent_check_task_08453cdd", {v0: (error instanceof Error ? error.message : l10n("local.upload_could_not_be_confirmed_4e06b936"))}),
         );
       }
     } finally {
@@ -451,7 +451,7 @@ function ConnectedTaskComposer({
             ?.name ??
           taskAttachments.find((attachment) => attachment.id === id)
             ?.originalFilename ??
-          "Selected task file (details unavailable)",
+          l10n("local.selected_task_file_details_unavailable_7b1ec542"),
       }))
     : taskAttachments.filter(
         (attachment) =>
@@ -469,14 +469,14 @@ function ConnectedTaskComposer({
   const currentFeedback = mixedTerminal
     ? {
         title: l10n("local.delivery_settled_with_mixed_outcomes_308794c8"),
-        body: "Not every part was confirmed delivered. Review the outcomes below; dismissing this receipt does not resend anything.",
+        body: l10n("local.external_delivery_mixed_outcomes_body_ca62c7a4"),
         tone: "info" as const,
       }
     : currentPublication?.state === "cancelled" &&
         (batch?.awaitingConsent ?? 0) > 0
       ? {
           title: l10n("local.waiting_for_remaining_file_consent_15cf5433"),
-          body: "Some parts have settled. The remaining file cards still need the recipient's response; this send stays locked until the whole batch is resolved.",
+          body: l10n("local.external_delivery_waiting_remaining_consent_body_e4c8b130"),
           tone: "info" as const,
         }
       : currentPublication
@@ -726,16 +726,16 @@ function ConnectedTaskComposer({
                   batch.cancelled !== undefined &&
                   batch.awaitingConsent !== undefined
                     ? [
-                        `${batch.published} published`,
+                        l10n("local.value_published_b3d91bc9", { v0: batch.published }),
                         ...(batch.awaitingConsent
-                          ? [`${batch.awaitingConsent} awaiting consent`]
+                          ? [l10n("local.value_awaiting_consent_1f576247", { v0: batch.awaitingConsent })]
                           : []),
                         ...(batch.declined
-                          ? [`${batch.declined} declined`]
+                          ? [l10n("local.value_declined_e21f6e69", { v0: batch.declined })]
                           : []),
-                        ...(batch.expired ? [`${batch.expired} expired`] : []),
+                        ...(batch.expired ? [l10n("local.value_expired_099b6842", { v0: batch.expired })] : []),
                         ...(batch.cancelled
-                          ? [`${batch.cancelled} cancelled`]
+                          ? [l10n("local.value_cancelled_13e3bf80", { v0: batch.cancelled })]
                           : []),
                       ].join(" · ")
                     : l10n("local.value_of_value_parts_published_43244182", {v0: (batch.published), v1: (batch.total)})}
@@ -831,14 +831,14 @@ function ConnectedTaskComposer({
                     id,
                     name:
                       taskAttachments.find((attachment) => attachment.id === id)
-                        ?.originalFilename ?? "Unnamed attachment",
+                        ?.originalFilename ?? l10n("local.unnamed_attachment_a90dd5d8"),
                   })),
                   body: body.trim(),
                   idempotencyKey: idempotencyKey.current,
                   publication: null,
                 };
                 try {
-                  if (!storageKey) throw new Error("Missing delivery scope");
+                  if (!storageKey) throw new Error(l10n("local.missing_delivery_scope_fa79dcf4"));
                   writeBoardSendDraft(storageKey, input);
                 } catch {
                   setStorageError(

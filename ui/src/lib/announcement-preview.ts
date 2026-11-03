@@ -5,7 +5,7 @@ import type { Announcement } from "@paperclipai/shared";
 /** Design guide / Storybook only. Never a runtime feed fallback. */
 export const announcementPreview: Announcement = {
   id: "preview-work-together",
-  eyebrow: "New in Paperclip",
+  eyebrow: l10n("local.new_in_alice_7a1d321b"),
   title: l10n("local.give_your_next_idea_a_team_4e9241f6"),
   description: l10n("local.bring_agents_projects_and_work_together_set_t_c42c81b2"),
   image: { path: `assets/${"0".repeat(64)}.png`, alt: l10n("local.paperclip_ideas_become_work_b9965c07") },

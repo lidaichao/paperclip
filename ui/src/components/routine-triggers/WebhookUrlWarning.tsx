@@ -5,23 +5,23 @@ import { webhookUrlWarningReason } from "@/lib/webhook-url-warning";
 const warnings = {
   loopback: {
     title: l10n("local.other_apps_can_t_reach_this_localhost_url_a9a1746f"),
-    message: "This address points back to the machine sending the request. Services such as GitHub can’t use it to reach Paperclip on your computer.",
+    message: l10n("local.webhook_loopback_warning_alice_50bda791"),
   },
   private: {
     title: l10n("local.this_webhook_url_appears_to_be_private_c5cb1534"),
-    message: "Only senders with access to this network can reach this address. Apps on the public internet, such as GitHub, usually can’t deliver webhooks here.",
+    message: l10n("local.webhook_private_network_warning_b3128b70"),
   },
   tailscale: {
     title: l10n("local.this_tailscale_url_may_not_be_public_76597a67"),
-    message: "Tailscale Serve is private to your tailnet, even with HTTPS. Apps outside your tailnet need Tailscale Funnel or another public HTTPS address. If Funnel is already enabled for this URL, you can continue.",
+    message: l10n("local.webhook_tailscale_serve_warning_fd5ba028"),
   },
   https: {
     title: l10n("local.use_https_for_webhooks_from_other_apps_9ca07d2c"),
-    message: "This URL uses HTTP. Many apps require HTTPS, and HTTP does not encrypt webhook credentials or payloads.",
+    message: l10n("local.webhook_http_warning_0e2cd559"),
   },
   invalid: {
     title: l10n("local.check_the_webhook_url_4b75da52"),
-    message: "This is not a valid HTTP or HTTPS URL. Your sending app needs a complete address it can reach.",
+    message: l10n("local.webhook_invalid_url_warning_60aef7d4"),
   },
 };
 
