@@ -10508,6 +10508,24 @@
     "manual_task_chat_goal_action_failed": "无法执行目标操作。",
     "manual_task_chat_review_unavailable": "当前无法审查",
     "manual_task_chat_skip_failed": "无法跳过此请求。",
-    "manual_task_chat_new_session": "新会话"
+    "manual_task_chat_new_session": "新会话",
+    "manual_agent_instructions_file_hint": "定义此智能体行为的 Markdown 文件绝对路径（例如 AGENTS.md）。运行时会将其注入系统提示词。",
+    "manual_codex_instructions_file_hint": "定义此智能体行为的 Markdown 文件绝对路径（例如 AGENTS.md）。运行时会将其注入系统提示词。Codex 仍可能自动应用工作区内作用于当前仓库的 AGENTS.md 文件。",
+    "manual_runner_permission_codex_description": "Codex 会在禁止根权限，并限制工作区、网络和环境变量的 Alice 环境中自动运行。",
+    "manual_runner_permission_opencode_description": "控制 OpenCode 在已分配 Alice 环境中的工具权限。",
+    "manual_runner_permission_claude_description": "Claude 托管模式会按已认证的供应商配置和 Alice 策略无交互运行。",
+    "manual_runner_permission_agentcore_description": "AWS AgentCore 会按已认证的运行配置和 Alice 策略无交互运行。",
+    "manual_runner_permission_acpx_description": "控制 ACPX 智能体在已分配 Alice 环境中的操作权限。",
+    "manual_runner_permission_boundary": "所选模式不会扩大 Alice 的工作区、网络、凭据或计划权限边界。",
+    "manual_runner_permission_automatic_isolated": "自动（隔离）",
+    "manual_runner_permission_full_auto_allow": "完全自动（允许）",
+    "manual_runner_permission_ask": "请求授权",
+    "manual_runner_permission_deny_operations": "拒绝操作",
+    "manual_runner_permission_approve_all": "完全自动（全部批准）",
+    "manual_runner_permission_automatic_alice_actions": "自动执行 Alice 操作",
+    "manual_runner_permission_allow_alice_reads": "允许 Alice 读取",
+    "manual_runner_permission_deny_all": "全部拒绝",
+    "manual_runner_permission_on_request": "需要时询问",
+    "manual_runner_permission_untrusted": "仅允许不受信任命令"
   }
 }

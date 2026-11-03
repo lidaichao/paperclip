@@ -31,11 +31,51 @@ import {
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
 const instructionsFileHint =
-  "Absolute path to a markdown file (e.g. AGENTS.md) that defines this agent's behavior. Injected into the system prompt at runtime. Note: Codex may still auto-apply repo-scoped AGENTS.md files from the workspace.";
+  l10n("local.manual_codex_instructions_file_hint");
 const defaultOpenCodeRunnerModel = "openrouter/deepseek/deepseek-v4-flash-0731";
 const defaultAcpxClaudeModel = "claude-sonnet-5";
 const defaultClaudeManagedModel = "claude-sonnet-5";
 const defaultAwsAgentCoreModel = "global.anthropic.claude-sonnet-4-6";
+
+function runnerPermissionDescription(provider: PaperclipRunnerProvider): string {
+  switch (provider) {
+    case "codex":
+      return l10n("local.manual_runner_permission_codex_description");
+    case "opencode":
+      return l10n("local.manual_runner_permission_opencode_description");
+    case "claude_managed":
+      return l10n("local.manual_runner_permission_claude_description");
+    case "aws_agentcore":
+      return l10n("local.manual_runner_permission_agentcore_description");
+    case "acpx":
+      return l10n("local.manual_runner_permission_acpx_description");
+  }
+}
+
+function runnerPermissionLabel(mode: PaperclipRunnerPermissionMode): string {
+  switch (mode) {
+    case "never":
+      return l10n("local.manual_runner_permission_automatic_isolated");
+    case "allow":
+      return l10n("local.manual_runner_permission_full_auto_allow");
+    case "ask":
+      return l10n("local.manual_runner_permission_ask");
+    case "deny":
+      return l10n("local.manual_runner_permission_deny_operations");
+    case "approve-all":
+      return l10n("local.manual_runner_permission_approve_all");
+    case "approve-paperclip":
+      return l10n("local.manual_runner_permission_automatic_alice_actions");
+    case "approve-reads":
+      return l10n("local.manual_runner_permission_allow_alice_reads");
+    case "deny-all":
+      return l10n("local.manual_runner_permission_deny_all");
+    case "on-request":
+      return l10n("local.manual_runner_permission_on_request");
+    case "untrusted":
+      return l10n("local.manual_runner_permission_untrusted");
+  }
+}
 
 export function CodexLocalConfigFields({
   section,
@@ -374,7 +414,7 @@ export function CodexLocalConfigFields({
       {runnerManaged && runnerPermissionCapability.configurable && (runnerPermissionCapability.options.length > 1 || runnerPermissionModeUnsupported) && (
         <Field
           label={l10n("local.permission_mode_c7a8e6db")}
-          hint={`${runnerPermissionCapability.description} The selected mode does not widen Paperclip's workspace, network, credential, or planning boundaries.`}
+          hint={`${runnerPermissionDescription(runnerProvider)} ${l10n("local.manual_runner_permission_boundary")}`}
         >
           <Select
             value={
@@ -407,7 +447,7 @@ export function CodexLocalConfigFields({
               <SelectValue>
                 {runnerPermissionModeUnsupported
                   ? l10n("local.unsupported_saved_mode_select_a_qualified_mod_869b215d")
-                  : runnerPermissionCapability.options.find((option) => option.value === runnerPermissionMode)?.label}
+                  : runnerPermissionLabel(runnerPermissionMode as PaperclipRunnerPermissionMode)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -417,7 +457,7 @@ export function CodexLocalConfigFields({
               )}
               {runnerPermissionCapability.options.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {runnerPermissionLabel(option.value)}
                 </SelectItem>
               ))}
             </SelectContent>
