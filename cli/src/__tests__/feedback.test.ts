@@ -119,9 +119,9 @@ describe("renderFeedbackReport", () => {
       includePayloads: false,
     });
 
-    expect(report).toContain("Paperclip Feedback Report");
-    expect(report).toContain("thumbs up");
-    expect(report).toContain("thumbs down");
+    expect(report).toContain("Alice 反馈报告");
+    expect(report).toContain("好评");
+    expect(report).toContain("差评");
     expect(report).toContain("Needed more detail");
   });
 });

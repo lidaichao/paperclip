@@ -74,22 +74,22 @@ interface FeedbackExportResult {
 }
 
 export function registerFeedbackCommands(program: Command): void {
-  const feedback = program.command("feedback").description("Inspect and export local feedback traces");
+  const feedback = program.command("feedback").description("查看并导出本地反馈记录");
 
   addCommonClientOptions(
     feedback
       .command("report")
-      .description("Render a terminal report for company feedback traces")
-      .option("-C, --company-id <id>", "Company ID (overrides context default)")
-      .option("--target-type <type>", "Filter by target type")
-      .option("--vote <vote>", "Filter by vote value")
-      .option("--status <status>", "Filter by trace status")
-      .option("--project-id <id>", "Filter by project ID")
-      .option("--issue-id <id>", "Filter by issue ID")
-      .option("--from <iso8601>", "Only include traces created at or after this timestamp")
-      .option("--to <iso8601>", "Only include traces created at or before this timestamp")
-      .option("--shared-only", "Only include traces eligible for sharing/export")
-      .option("--payloads", "Include raw payload dumps in the terminal report", false)
+      .description("在终端生成公司反馈记录报告")
+      .option("-C, --company-id <id>", "公司 ID（覆盖上下文默认值）")
+      .option("--target-type <type>", "按目标类型筛选")
+      .option("--vote <vote>", "按评价结果筛选")
+      .option("--status <status>", "按记录状态筛选")
+      .option("--project-id <id>", "按项目 ID 筛选")
+      .option("--issue-id <id>", "按任务 ID 筛选")
+      .option("--from <iso8601>", "只包含此时间及之后创建的记录")
+      .option("--to <iso8601>", "只包含此时间及之前创建的记录")
+      .option("--shared-only", "只包含允许共享或导出的记录")
+      .option("--payloads", "在终端报告中包含原始数据", false)
       .action(async (opts: FeedbackReportOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -125,17 +125,17 @@ export function registerFeedbackCommands(program: Command): void {
   addCommonClientOptions(
     feedback
       .command("export")
-      .description("Export feedback votes and raw trace bundles into a folder plus zip archive")
-      .option("-C, --company-id <id>", "Company ID (overrides context default)")
-      .option("--target-type <type>", "Filter by target type")
-      .option("--vote <vote>", "Filter by vote value")
-      .option("--status <status>", "Filter by trace status")
-      .option("--project-id <id>", "Filter by project ID")
-      .option("--issue-id <id>", "Filter by issue ID")
-      .option("--from <iso8601>", "Only include traces created at or after this timestamp")
-      .option("--to <iso8601>", "Only include traces created at or before this timestamp")
-      .option("--shared-only", "Only include traces eligible for sharing/export")
-      .option("--out <path>", "Output directory (default: ./feedback-export-<timestamp>)")
+      .description("将反馈评价和原始记录包导出到文件夹及压缩包")
+      .option("-C, --company-id <id>", "公司 ID（覆盖上下文默认值）")
+      .option("--target-type <type>", "按目标类型筛选")
+      .option("--vote <vote>", "按评价结果筛选")
+      .option("--status <status>", "按记录状态筛选")
+      .option("--project-id <id>", "按项目 ID 筛选")
+      .option("--issue-id <id>", "按任务 ID 筛选")
+      .option("--from <iso8601>", "只包含此时间及之后创建的记录")
+      .option("--to <iso8601>", "只包含此时间及之前创建的记录")
+      .option("--shared-only", "只包含允许共享或导出的记录")
+      .option("--out <path>", "输出目录（默认：./feedback-export-<时间戳>）")
       .action(async (opts: FeedbackExportOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -172,8 +172,8 @@ export function registerFeedbackCommands(program: Command): void {
   addCommonClientOptions(
     feedback
       .command("trace")
-      .description("Get a feedback trace")
-      .argument("<traceId>", "Feedback trace ID")
+      .description("获取一条反馈记录")
+      .argument("<traceId>", "反馈记录 ID")
       .action(async (traceId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -187,8 +187,8 @@ export function registerFeedbackCommands(program: Command): void {
   addCommonClientOptions(
     feedback
       .command("bundle")
-      .description("Get a feedback trace bundle")
-      .argument("<traceId>", "Feedback trace ID")
+      .description("获取反馈记录包")
+      .argument("<traceId>", "反馈记录 ID")
       .action(async (traceId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -210,7 +210,7 @@ export async function resolveFeedbackCompanyId(
   const companyId = companies[0]?.id?.trim();
   if (!companyId) {
     throw new Error(
-      "Company ID is required. Pass --company-id, set PAPERCLIP_COMPANY_ID, or configure a CLI context default.",
+      "必须提供公司 ID。请传入 --company-id、设置 PAPERCLIP_COMPANY_ID，或配置命令行上下文默认值。",
     );
   }
   return companyId;
@@ -234,7 +234,7 @@ export function buildFeedbackTraceQuery(opts: FeedbackTraceQueryOptions, include
 export function normalizeFeedbackTraceExportFormat(value: string | undefined): "json" | "ndjson" {
   if (!value || value === "ndjson") return "ndjson";
   if (value === "json") return "json";
-  throw new Error(`Unsupported export format: ${value}`);
+  throw new Error(`不支持的导出格式：${value}`);
 }
 
 export function serializeFeedbackTraces(traces: FeedbackTrace[], format: string | undefined): string {
@@ -262,7 +262,7 @@ export async function fetchFeedbackTraceBundle(
 ): Promise<FeedbackTraceBundle> {
   const bundle = await ctx.api.get<FeedbackTraceBundle>(apiPath`/api/feedback-traces/${traceId}/bundle`);
   if (!bundle) {
-    throw new Error(`Feedback trace bundle ${traceId} not found`);
+    throw new Error(`未找到反馈记录包 ${traceId}`);
   }
   return bundle;
 }
@@ -298,32 +298,32 @@ export function renderFeedbackReport(input: {
 }): string {
   const lines: string[] = [];
   lines.push("");
-  lines.push(pc.bold(pc.magenta("Paperclip Feedback Report")));
+  lines.push(pc.bold(pc.magenta("Alice 反馈报告")));
   lines.push(pc.dim(new Date().toISOString()));
   lines.push(horizontalRule());
-  lines.push(`${pc.dim("Server:")}  ${input.apiBase}`);
-  lines.push(`${pc.dim("Company:")} ${input.companyId}`);
+  lines.push(`${pc.dim("服务器：")} ${input.apiBase}`);
+  lines.push(`${pc.dim("公司：")}   ${input.companyId}`);
   lines.push("");
 
   if (input.traces.length === 0) {
-    lines.push(pc.yellow("[!!] No feedback traces found."));
+    lines.push(pc.yellow("[!!] 未找到反馈记录。"));
     lines.push("");
     return lines.join("\n");
   }
 
-  lines.push(pc.bold(pc.cyan("Summary")));
+  lines.push(pc.bold(pc.cyan("汇总")));
   lines.push(horizontalRule());
-  lines.push(`  ${pc.green(pc.bold(String(input.summary.thumbsUp)))}  thumbs up`);
-  lines.push(`  ${pc.red(pc.bold(String(input.summary.thumbsDown)))}  thumbs down`);
-  lines.push(`  ${pc.yellow(pc.bold(String(input.summary.withReason)))}  downvotes with a reason`);
-  lines.push(`  ${pc.bold(String(input.summary.total))}  total traces`);
+  lines.push(`  ${pc.green(pc.bold(String(input.summary.thumbsUp)))}  好评`);
+  lines.push(`  ${pc.red(pc.bold(String(input.summary.thumbsDown)))}  差评`);
+  lines.push(`  ${pc.yellow(pc.bold(String(input.summary.withReason)))}  附带原因的差评`);
+  lines.push(`  ${pc.bold(String(input.summary.total))}  记录总数`);
   lines.push("");
-  lines.push(pc.dim("Export status:"));
-  for (const status of ["pending", "sent", "local_only", "failed"]) {
-    lines.push(`  ${padRight(status, 10)} ${input.summary.statuses[status] ?? 0}`);
+  lines.push(pc.dim("导出状态："));
+  for (const [status, label] of [["pending", "待处理"], ["sent", "已发送"], ["local_only", "仅本地"], ["failed", "失败"]] as const) {
+    lines.push(`  ${padRight(label, 10)} ${input.summary.statuses[status] ?? 0}`);
   }
   lines.push("");
-  lines.push(pc.bold(pc.cyan("Trace Details")));
+  lines.push(pc.bold(pc.cyan("记录详情")));
   lines.push(horizontalRule());
 
   for (const trace of input.traces) {
@@ -337,20 +337,20 @@ export function renderFeedbackReport(input: {
       `  ${voteColor(voteIcon)} ${pc.bold(issueRef)} ${pc.dim(compactText(trace.issueTitle, 64))}`,
     );
     lines.push(
-      `    ${pc.dim("Trace:")} ${trace.id.slice(0, 8)}  ${pc.dim("Status:")} ${trace.status}  ${pc.dim("Date:")} ${formatTimestamp(trace.createdAt)}`,
+      `    ${pc.dim("记录：")} ${trace.id.slice(0, 8)}  ${pc.dim("状态：")} ${trace.status}  ${pc.dim("日期：")} ${formatTimestamp(trace.createdAt)}`,
     );
-    lines.push(`    ${pc.dim("Target:")} ${label}`);
+    lines.push(`    ${pc.dim("目标：")} ${label}`);
     if (excerpt) {
-      lines.push(`    ${pc.dim("Excerpt:")} ${excerpt}`);
+      lines.push(`    ${pc.dim("摘要：")} ${excerpt}`);
     }
     if (reason) {
-      lines.push(`    ${pc.yellow(pc.bold("Reason:"))} ${pc.yellow(reason)}`);
+      lines.push(`    ${pc.yellow(pc.bold("原因："))} ${pc.yellow(reason)}`);
     }
     lines.push("");
   }
 
   if (input.includePayloads) {
-    lines.push(pc.bold(pc.cyan("Raw Payloads")));
+    lines.push(pc.bold(pc.cyan("原始数据")));
     lines.push(horizontalRule());
     for (const trace of input.traces) {
       if (!trace.payloadSnapshot) continue;
@@ -365,7 +365,7 @@ export function renderFeedbackReport(input: {
   }
 
   lines.push(horizontalRule());
-  lines.push(pc.dim(`Report complete. ${input.traces.length} trace(s) displayed.`));
+  lines.push(pc.dim(`报告生成完成，共显示 ${input.traces.length} 条记录。`));
   lines.push("");
   return lines.join("\n");
 }
@@ -470,25 +470,25 @@ export async function writeFeedbackExportBundle(input: {
 export function renderFeedbackExportSummary(exported: FeedbackExportResult): string {
   const lines: string[] = [];
   lines.push("");
-  lines.push(pc.bold(pc.magenta("Paperclip Feedback Export")));
+  lines.push(pc.bold(pc.magenta("Alice 反馈导出")));
   lines.push(pc.dim(exported.manifest.exportedAt));
   lines.push(horizontalRule());
-  lines.push(`${pc.dim("Company:")} ${exported.manifest.companyId}`);
-  lines.push(`${pc.dim("Output:")}  ${exported.outputDir}`);
-  lines.push(`${pc.dim("Archive:")} ${exported.zipPath}`);
+  lines.push(`${pc.dim("公司：")}   ${exported.manifest.companyId}`);
+  lines.push(`${pc.dim("输出：")}   ${exported.outputDir}`);
+  lines.push(`${pc.dim("压缩包：")} ${exported.zipPath}`);
   lines.push("");
-  lines.push(pc.bold("Export Summary"));
+  lines.push(pc.bold("导出汇总"));
   lines.push(horizontalRule());
-  lines.push(`  ${pc.green(pc.bold(String(exported.manifest.summary.thumbsUp)))}  thumbs up`);
-  lines.push(`  ${pc.red(pc.bold(String(exported.manifest.summary.thumbsDown)))}  thumbs down`);
-  lines.push(`  ${pc.yellow(pc.bold(String(exported.manifest.summary.withReason)))}  with reason`);
-  lines.push(`  ${pc.bold(String(exported.manifest.summary.uniqueIssues))}  unique issues`);
+  lines.push(`  ${pc.green(pc.bold(String(exported.manifest.summary.thumbsUp)))}  好评`);
+  lines.push(`  ${pc.red(pc.bold(String(exported.manifest.summary.thumbsDown)))}  差评`);
+  lines.push(`  ${pc.yellow(pc.bold(String(exported.manifest.summary.withReason)))}  附带原因`);
+  lines.push(`  ${pc.bold(String(exported.manifest.summary.uniqueIssues))}  个不同任务`);
   lines.push("");
-  lines.push(pc.dim("Files:"));
+  lines.push(pc.dim("文件："));
   lines.push(`  ${path.join(exported.outputDir, "index.json")}`);
-  lines.push(`  ${path.join(exported.outputDir, "votes")} (${exported.manifest.files.votes.length} files)`);
-  lines.push(`  ${path.join(exported.outputDir, "traces")} (${exported.manifest.files.traces.length} files)`);
-  lines.push(`  ${path.join(exported.outputDir, "full-traces")} (${exported.manifest.files.fullTraces.length} bundles)`);
+  lines.push(`  ${path.join(exported.outputDir, "votes")}（${exported.manifest.files.votes.length} 个文件）`);
+  lines.push(`  ${path.join(exported.outputDir, "traces")}（${exported.manifest.files.traces.length} 个文件）`);
+  lines.push(`  ${path.join(exported.outputDir, "full-traces")}（${exported.manifest.files.fullTraces.length} 个记录包）`);
   lines.push(`  ${exported.zipPath}`);
   lines.push("");
   return lines.join("\n");
@@ -556,11 +556,11 @@ async function ensureEmptyOutputDirectory(outputDir: string): Promise<void> {
   try {
     const info = await stat(outputDir);
     if (!info.isDirectory()) {
-      throw new Error(`Output path already exists and is not a directory: ${outputDir}`);
+      throw new Error(`输出路径已存在且不是目录：${outputDir}`);
     }
     const entries = await readdir(outputDir);
     if (entries.length > 0) {
-      throw new Error(`Output directory already exists and is not empty: ${outputDir}`);
+      throw new Error(`输出目录已存在且不为空：${outputDir}`);
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
