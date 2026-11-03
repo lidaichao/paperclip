@@ -10489,6 +10489,25 @@
     "manual_decision_reassigned": "已重新分配 {{v0}}",
     "manual_decision_removed_blockers": "已从 {{v1}} 移除 {{v0}}",
     "manual_decision_cancelled_issues": "已取消 {{v1}} 下的 {{v0}}",
-    "manual_decision_applied_effect": "已对 {{v0}} 执行操作"
+    "manual_decision_applied_effect": "已对 {{v0}} 执行操作",
+    "manual_task_chat_goal_no_extra_arguments": "/goal {{v0}} 不接受额外参数。",
+    "manual_task_chat_mode_standard_description": "执行任务并修改内容",
+    "manual_task_chat_mode_planning_description": "先制定计划，再开始执行",
+    "manual_task_chat_mode_ask_description": "仅回答问题，不做修改",
+    "manual_task_chat_plan_with": "与 {{v0}} 制定计划…",
+    "manual_task_chat_ask_agent": "询问 {{v0}}…",
+    "manual_task_chat_message_agent": "给 {{v0}} 发送消息…",
+    "manual_task_chat_plan_with_description": "与 {{v0}} 制定计划：只完善计划文档，不修改代码…",
+    "manual_task_chat_ask_agent_description": "向 {{v0}} 提问：只读分析，不执行操作…",
+    "manual_task_chat_message_agent_description": "给 {{v0}} 发送消息：描述你希望完成的工作…",
+    "manual_task_chat_the_agent": "智能体",
+    "manual_task_chat_edit_queued_message": "编辑排队中的消息…",
+    "manual_task_chat_upload_missing_url": "上传成功，但未返回文件地址",
+    "manual_task_chat_attachment_removed": "附件已被移除",
+    "manual_task_chat_file_type_unsupported": "此处不支持附加这种文件类型",
+    "manual_task_chat_goal_action_failed": "无法执行目标操作。",
+    "manual_task_chat_review_unavailable": "当前无法审查",
+    "manual_task_chat_skip_failed": "无法跳过此请求。",
+    "manual_task_chat_new_session": "新会话"
   }
 }

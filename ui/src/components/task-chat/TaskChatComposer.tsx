@@ -209,7 +209,7 @@ export function parseRunnerGoalCommand(value: string): ParsedRunnerGoalCommand {
     if (extra.length > 0) {
       return {
         matched: true,
-        error: `/goal ${subcommand} does not accept extra arguments.`,
+        error: l10n("local.manual_task_chat_goal_no_extra_arguments", { v0: subcommand }),
       };
     }
     return {
@@ -297,25 +297,25 @@ function AssigneeIdentityAvatar({
 }
 
 const MODE_DESCRIPTION: Partial<Record<IssueWorkMode, string>> = {
-  standard: "Make changes and run work",
-  planning: "Draft a plan before acting",
-  ask: "Answer questions only, no changes",
+  standard: l10n("local.manual_task_chat_mode_standard_description"),
+  planning: l10n("local.manual_task_chat_mode_planning_description"),
+  ask: l10n("local.manual_task_chat_mode_ask_description"),
 };
 
 /** v7 per-mode placeholder copy; `{agent}` is the pending assignee's name. */
 function modePlaceholder(mode: IssueWorkMode, agentName: string, mobile: boolean): string {
   if (mobile) {
-    if (mode === "planning") return `Plan with ${agentName}…`;
-    if (mode === "ask") return `Ask ${agentName}…`;
-    return `Message ${agentName}…`;
+    if (mode === "planning") return l10n("local.manual_task_chat_plan_with", { v0: agentName });
+    if (mode === "ask") return l10n("local.manual_task_chat_ask_agent", { v0: agentName });
+    return l10n("local.manual_task_chat_message_agent", { v0: agentName });
   }
   switch (mode) {
     case "planning":
-      return `Plan with ${agentName} — shapes the plan doc, no code changes…`;
+      return l10n("local.manual_task_chat_plan_with_description", { v0: agentName });
     case "ask":
-      return `Ask ${agentName} a question — read-only, nothing runs…`;
+      return l10n("local.manual_task_chat_ask_agent_description", { v0: agentName });
     default:
-      return `Message ${agentName} — describe what you want done…`;
+      return l10n("local.manual_task_chat_message_agent_description", { v0: agentName });
   }
 }
 
@@ -634,16 +634,16 @@ export function TaskChatComposer({
   const assigneeLabel =
     reassignOptions?.find((o) => o.id === assigneeValue)?.label ?? l10n("local.unassigned_14d33bd0");
   const assigneeName =
-    assigneeLabel === "Unassigned" ? "the agent" : assigneeLabel;
+    assigneeValue ? assigneeLabel : l10n("local.manual_task_chat_the_agent");
   const effectivePlaceholder = queuedEdit
-    ? "Edit queued message…"
+    ? l10n("local.manual_task_chat_edit_queued_message")
     : (placeholder ?? modePlaceholder(pendingMode, assigneeName, mobile));
   const goalUnavailable = runnerGoalCapability?.availability !== "available";
   const goalCommandOption: ActionCommandOption = {
     id: "action:goal",
     kind: "action",
     command: "goal",
-    name: "Goal",
+    name: l10n("local.goal_cdbf6975"),
     description:
       !runnerGoalCapability || runnerGoalCapability.verified === false
         ? l10n("local.support_will_be_verified_when_the_session_sta_12765256")
@@ -678,9 +678,9 @@ export function TaskChatComposer({
       const url = onAttachImage
         ? attachment?.contentPath
         : await onImageUpload?.(file);
-      if (!url) throw new Error("Upload did not return a file URL");
+      if (!url) throw new Error(l10n("local.manual_task_chat_upload_missing_url"));
       if (!attachmentsRef.current.some((item) => item.id === id))
-        throw new Error("Attachment was removed");
+        throw new Error(l10n("local.manual_task_chat_attachment_removed"));
       setAttachments((prev) =>
         prev.map((item) =>
           item.id === id
@@ -701,7 +701,7 @@ export function TaskChatComposer({
             ? {
                 ...item,
                 status: "error",
-                error: err instanceof Error ? err.message : "Upload failed",
+                error: err instanceof Error ? err.message : l10n("local.upload_failed_6efc5d27"),
               }
             : item,
         ),
@@ -725,7 +725,7 @@ export function TaskChatComposer({
               ? {
                   ...item,
                   status: "error",
-                  error: "This file type cannot be attached here",
+                  error: l10n("local.manual_task_chat_file_type_unsupported"),
                 }
               : item,
           ),
@@ -734,7 +734,7 @@ export function TaskChatComposer({
       }
       const attachment = await onAttachImage(file);
       if (!attachment?.contentPath)
-        throw new Error("Upload did not return a file URL");
+        throw new Error(l10n("local.manual_task_chat_upload_missing_url"));
       const name = attachment?.originalFilename ?? file.name;
       setAttachments((prev) =>
         prev.map((item) =>
@@ -756,7 +756,7 @@ export function TaskChatComposer({
             ? {
                 ...item,
                 status: "error",
-                error: err instanceof Error ? err.message : "Upload failed",
+                error: err instanceof Error ? err.message : l10n("local.upload_failed_6efc5d27"),
               }
             : item,
         ),
@@ -873,7 +873,7 @@ export function TaskChatComposer({
       if (!onRunnerGoalCommand) {
         setActionError(
           runnerGoalCapability?.reason ??
-            "Session goals are unsupported by this agent.",
+            l10n("local.session_goals_are_unsupported_by_this_agent_83fd8f12"),
         );
         return;
       }
@@ -883,7 +883,7 @@ export function TaskChatComposer({
       ) {
         setActionError(
           runnerGoalCapability.reason ??
-            "Session goals are unsupported by this agent.",
+            l10n("local.session_goals_are_unsupported_by_this_agent_83fd8f12"),
         );
         return;
       }
@@ -911,7 +911,7 @@ export function TaskChatComposer({
         setActionError(
           error instanceof Error
             ? error.message
-            : "The goal action could not be applied.",
+            : l10n("local.manual_task_chat_goal_action_failed"),
         );
       }
       return;
@@ -1067,7 +1067,7 @@ export function TaskChatComposer({
     if (!uncertainSubmission) return;
     setReviewError(false);
     try {
-      if (!onReviewConversation) throw new Error("Review unavailable");
+    if (!onReviewConversation) throw new Error(l10n("local.manual_task_chat_review_unavailable"));
       await onReviewConversation();
       if (mountedTaskKey.current !== draftKey) return;
       const reviewed = { ...uncertainSubmission, reviewed: true };
@@ -1100,7 +1100,7 @@ export function TaskChatComposer({
       setTakeoverError(
         cause instanceof Error
           ? cause.message
-          : "This request could not be skipped.",
+          : l10n("local.manual_task_chat_skip_failed"),
       );
     });
   }
@@ -1309,7 +1309,7 @@ export function TaskChatComposer({
               readOnly={disabled || !!uncertainSubmission}
               mentions={mentions}
               actionCommands={conversationMode ? [{
-                id: "action:new", kind: "action", command: "new", name: "New session",
+                id: "action:new", kind: "action", command: "new", name: l10n("local.manual_task_chat_new_session"),
                 description: l10n("local.start_fresh_context_here_preserving_conversat_130c3e63"), aliases: ["new"],
                 disabled,
               }] : [goalCommandOption]}

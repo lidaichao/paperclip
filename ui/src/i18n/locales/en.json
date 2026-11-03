@@ -10489,6 +10489,25 @@
     "manual_decision_reassigned": "Reassigned {{v0}}",
     "manual_decision_removed_blockers": "Removed {{v0}} from {{v1}}",
     "manual_decision_cancelled_issues": "Cancelled {{v0}} under {{v1}}",
-    "manual_decision_applied_effect": "Applied effect on {{v0}}"
+    "manual_decision_applied_effect": "Applied effect on {{v0}}",
+    "manual_task_chat_goal_no_extra_arguments": "/goal {{v0}} does not accept extra arguments.",
+    "manual_task_chat_mode_standard_description": "Make changes and run work",
+    "manual_task_chat_mode_planning_description": "Draft a plan before acting",
+    "manual_task_chat_mode_ask_description": "Answer questions only, no changes",
+    "manual_task_chat_plan_with": "Plan with {{v0}}…",
+    "manual_task_chat_ask_agent": "Ask {{v0}}…",
+    "manual_task_chat_message_agent": "Message {{v0}}…",
+    "manual_task_chat_plan_with_description": "Plan with {{v0}} — shapes the plan doc, no code changes…",
+    "manual_task_chat_ask_agent_description": "Ask {{v0}} a question — read-only, nothing runs…",
+    "manual_task_chat_message_agent_description": "Message {{v0}} — describe what you want done…",
+    "manual_task_chat_the_agent": "the agent",
+    "manual_task_chat_edit_queued_message": "Edit queued message…",
+    "manual_task_chat_upload_missing_url": "Upload did not return a file URL",
+    "manual_task_chat_attachment_removed": "Attachment was removed",
+    "manual_task_chat_file_type_unsupported": "This file type cannot be attached here",
+    "manual_task_chat_goal_action_failed": "The goal action could not be applied.",
+    "manual_task_chat_review_unavailable": "Review unavailable",
+    "manual_task_chat_skip_failed": "This request could not be skipped.",
+    "manual_task_chat_new_session": "New session"
   }
 }
