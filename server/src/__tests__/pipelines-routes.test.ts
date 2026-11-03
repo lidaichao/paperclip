@@ -267,7 +267,7 @@ describeEmbeddedPostgres("pipeline routes", () => {
     await http.get(`/api/cases/${blocked.body.case.id}/context-pack`).expect(200);
     const conversation = await http.post(`/api/cases/${blocked.body.case.id}/open-conversation`).expect(201);
     expect(conversation.body.created).toBe(true);
-    expect(conversation.body.issue.description).toContain("Pipeline Case Context");
+    expect(conversation.body.issue.description).toContain("流水线条目上下文");
     const sameConversation = await http.post(`/api/cases/${blocked.body.case.id}/open-conversation`).expect(200);
     expect(sameConversation.body.created).toBe(false);
     expect(sameConversation.body.issue.id).toBe(conversation.body.issue.id);

@@ -183,7 +183,7 @@ function withDerivedStageAutomation(
 }
 
 function extractIntakeFormFields(stage: typeof pipelineStages.$inferSelect | null) {
-  const baseFields = [{ key: "title", label: "Name", type: "text", required: true, options: [] as string[] }];
+  const baseFields = [{ key: "title", label: "名称", type: "text", required: true, options: [] as string[] }];
   const variables = stage?.config && typeof stage.config === "object" && !Array.isArray(stage.config)
     ? (stage.config as { variables?: unknown }).variables
     : null;
@@ -242,7 +242,7 @@ function isPgUniqueViolation(error: unknown) {
 
 function codedConflictForUnique(error: unknown): never {
   if (isPgUniqueViolation(error)) {
-    throw conflict("Duplicate pipeline resource key", { code: "duplicate_key" });
+    throw conflict("流水线资源键重复", { code: "duplicate_key" });
   }
   throw error;
 }
@@ -254,9 +254,14 @@ function assertPipelineCompanyAccess(req: Request, companyId: string) {
     if (
       error instanceof HttpError &&
       error.status === 403 &&
-      (error.message.includes("another company") || error.message.includes("does not have access"))
+      (
+        error.message.includes("another company") ||
+        error.message.includes("does not have access") ||
+        error.message.includes("不能访问其他公司") ||
+        error.message.includes("无权访问此公司")
+      )
     ) {
-      throw notFound("Pipeline resource not found");
+      throw notFound("未找到流水线资源");
     }
     throw error;
   }
@@ -265,7 +270,7 @@ function assertPipelineCompanyAccess(req: Request, companyId: string) {
 function actorForMutation(req: Request): PipelineActor {
   if (req.actor.type === "agent") {
     if (!req.actor.agentId) throw unauthorized();
-    if (!req.actor.runId) throw unprocessable("Agent pipeline mutations require a run id", { code: "run_id_required" });
+    if (!req.actor.runId) throw unprocessable("智能体修改流水线需要运行 ID", { code: "run_id_required" });
     return { type: "agent", agentId: req.actor.agentId, runId: req.actor.runId };
   }
   if (req.actor.type === "board") {
@@ -294,28 +299,28 @@ function parseEventTypesQuery(value: unknown): string[] | undefined {
     .filter((item) => item.length > 0);
   if (types.length === 0) return undefined;
   if (types.length > COMPANY_CASE_EVENTS_MAX_TYPES) {
-    throw badRequest(`types accepts at most ${COMPANY_CASE_EVENTS_MAX_TYPES} values`);
+    throw badRequest(`types 最多接受 ${COMPANY_CASE_EVENTS_MAX_TYPES} 个值`);
   }
   for (const type of types) {
-    if (!/^[a-z_]{1,64}$/.test(type)) throw badRequest(`Invalid event type: ${type}`);
+    if (!/^[a-z_]{1,64}$/.test(type)) throw badRequest(`事件类型无效：${type}`);
   }
   return [...new Set(types)];
 }
 
 function parseOptionalNonNegativeInteger(value: unknown, name: string) {
   if (value === undefined) return null;
-  if (Array.isArray(value)) throw badRequest(`${name} must be a single integer`);
+  if (Array.isArray(value)) throw badRequest(`${name} 必须是单个整数`);
   const raw = typeof value === "string" ? value.trim() : String(value);
-  if (!/^\d+$/.test(raw)) throw badRequest(`${name} must be a non-negative integer`);
+  if (!/^\d+$/.test(raw)) throw badRequest(`${name} 必须是非负整数`);
   const parsed = Number(raw);
-  if (!Number.isSafeInteger(parsed)) throw badRequest(`${name} is too large`);
+  if (!Number.isSafeInteger(parsed)) throw badRequest(`${name} 过大`);
   return parsed;
 }
 
 function parseCaseEventsQuery(query: Request["query"]) {
   const requestedLimit = parseOptionalNonNegativeInteger(query.limit, "limit");
   const offset = parseOptionalNonNegativeInteger(query.offset, "offset") ?? 0;
-  if (requestedLimit === 0) throw badRequest("limit must be a positive integer");
+  if (requestedLimit === 0) throw badRequest("limit 必须是正整数");
   return {
     limit: Math.min(requestedLimit ?? PIPELINE_CASE_EVENTS_DEFAULT_LIMIT, PIPELINE_CASE_EVENTS_MAX_LIMIT),
     offset,
@@ -329,7 +334,7 @@ async function resolvePipelineCompanyId(db: Db, pipelineId: string) {
     .where(eq(pipelines.id, pipelineId))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline not found");
+  if (!row) throw notFound("未找到流水线");
   return row.companyId;
 }
 
@@ -340,7 +345,7 @@ async function resolveCaseCompanyId(db: Db, caseId: string) {
     .where(eq(pipelineCases.id, caseId))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline case not found");
+  if (!row) throw notFound("未找到流水线条目");
   return row.companyId;
 }
 
@@ -439,7 +444,7 @@ async function listPipelineDocumentRevisions(db: Db, input: { companyId: string;
 function parseDocumentKey(rawKey: unknown) {
   const parsed = issueDocumentKeySchema.safeParse(String(rawKey ?? "").trim().toLowerCase());
   if (!parsed.success) {
-    throw badRequest("Invalid document key", parsed.error.issues);
+    throw badRequest("文档键无效", parsed.error.issues);
   }
   return parsed.data;
 }
@@ -513,7 +518,7 @@ async function resolveCasePipelineId(db: Db, input: { companyId: string; caseId:
     .where(and(eq(pipelineCases.companyId, input.companyId), eq(pipelineCases.id, input.caseId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline case not found");
+  if (!row) throw notFound("未找到流水线条目");
   return row.pipelineId;
 }
 
@@ -673,25 +678,25 @@ async function assertIssueLinkMutationAllowed(
     },
   });
   if (!decision.allowed) {
-    throw forbidden("Issue is outside this actor's authorization boundary");
+    throw forbidden("任务超出当前操作者的授权范围");
   }
   if (req.actor.type !== "agent") return;
   const actorAgentId = req.actor.agentId;
-  if (!actorAgentId) throw forbidden("Agent authentication required");
+  if (!actorAgentId) throw forbidden("需要智能体身份验证");
   if (input.issue.assigneeAgentId === null) return;
   if (input.issue.assigneeAgentId !== actorAgentId) {
     if (input.issue.status === "in_progress") {
-      throw conflict("Issue is checked out by another agent", {
+      throw conflict("任务已被其他智能体签出", {
         issueId: input.issue.id,
         assigneeAgentId: input.issue.assigneeAgentId,
         actorAgentId,
       });
     }
-    throw forbidden("Agent cannot mutate another agent's issue");
+    throw forbidden("智能体不能修改其他智能体的任务");
   }
   if (input.issue.status !== "in_progress") return;
   const runId = req.actor.runId?.trim();
-  if (!runId) throw unauthorized("Agent run id required");
+  if (!runId) throw unauthorized("需要智能体运行 ID");
   await input.issuesSvc.assertCheckoutOwner(input.issue.id, actorAgentId, runId);
 }
 
@@ -757,7 +762,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
     assertPipelineCompanyAccess(req, companyId);
     const caller = attentionCallerFor(req);
     const requestedLimit = parseOptionalNonNegativeInteger(req.query.limit, "limit");
-    if (requestedLimit === 0) throw badRequest("limit must be a positive integer");
+    if (requestedLimit === 0) throw badRequest("limit 必须是正整数");
     const limit = Math.min(requestedLimit ?? PIPELINE_ATTENTION_DEFAULT_LIMIT, PIPELINE_ATTENTION_MAX_LIMIT);
     res.json(await listPipelineAttention(db, { companyId, caller, limit }));
   });
@@ -767,7 +772,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
     assertPipelineCompanyAccess(req, companyId);
     const types = parseEventTypesQuery(req.query.types);
     const requestedLimit = parseOptionalNonNegativeInteger(req.query.limit, "limit");
-    if (requestedLimit === 0) throw badRequest("limit must be a positive integer");
+    if (requestedLimit === 0) throw badRequest("limit 必须是正整数");
     const limit = Math.min(requestedLimit ?? COMPANY_CASE_EVENTS_DEFAULT_LIMIT, COMPANY_CASE_EVENTS_MAX_LIMIT);
     const offset = parseOptionalNonNegativeInteger(req.query.offset, "offset") ?? 0;
     res.json(await listCompanyCaseEvents(db, { companyId, types, limit, offset }));
@@ -842,7 +847,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
           ok: false,
           error: {
             status: httpError.status ?? 500,
-            message: httpError.message ?? "Unknown error",
+            message: httpError.message ?? "未知错误",
             code: typeof details?.code === "string" ? details.code : undefined,
             details: httpError.details,
           },
@@ -863,7 +868,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         .from(pipelineDocuments)
         .where(and(eq(pipelineDocuments.companyId, companyId), eq(pipelineDocuments.pipelineId, pipelineId))),
     ]);
-    if (!pipeline) throw notFound("Pipeline not found");
+    if (!pipeline) throw notFound("未找到流水线");
     const automationRoutineIds = stages.flatMap((stage) => {
       const routineId = stageAutomationRoutineId(stage.config);
       return routineId ? [routineId] : [];
@@ -954,7 +959,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         .orderBy(desc(pipelineAutomationExecutions.updatedAt))
         .limit(50),
     ]);
-    if (!pipeline) throw notFound("Pipeline not found");
+    if (!pipeline) throw notFound("未找到流水线");
 
     const automationRoutineIds = stages.flatMap((stage) => {
       const routineId = stageAutomationRoutineId(stage.config);
@@ -1147,7 +1152,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
     const transitions = req.body.transitions.map((edge: z.infer<typeof replaceTransitionsSchema>["transitions"][number]) => {
       const from = byKey.get(edge.fromStageKey);
       const to = byKey.get(edge.toStageKey);
-      if (!from || !to) throw unprocessable("Transition references unknown stage", { code: "validation" });
+      if (!from || !to) throw unprocessable("流转规则引用了未知阶段", { code: "validation" });
       return { pipelineId, fromStageId: from.id, toStageId: to.id, label: edge.label ?? null };
     });
     const result = await db.transaction(async (tx) => {
@@ -1166,7 +1171,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
     const key = req.params.key as string;
     const companyId = await assertPipelineAccess(db, req, pipelineId);
     const row = await getPipelineDocumentRow(db, { companyId, pipelineId, key });
-    if (!row) throw notFound("Pipeline document not found");
+    if (!row) throw notFound("未找到流水线文档");
     res.json(row);
   });
 
@@ -1187,7 +1192,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         .then((rows) => rows[0] ?? null);
 
       if (existing && req.body.baseRevisionId && req.body.baseRevisionId !== existing.document.latestRevisionId) {
-        throw conflict("Pipeline document was updated by someone else", {
+        throw conflict("流水线文档已被其他人更新", {
           code: "stale_base_revision",
           latestRevision: existing.revision
             ? {
@@ -1205,7 +1210,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
       }
 
       if (!existing && req.body.baseRevisionId) {
-        throw conflict("Pipeline document does not exist yet", {
+        throw conflict("流水线文档尚不存在", {
           code: "stale_base_revision",
           latestRevision: null,
           latestRevisionId: null,
@@ -1296,7 +1301,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         .where(and(eq(pipelineDocuments.companyId, companyId), eq(pipelineDocuments.pipelineId, pipelineId), eq(pipelineDocuments.key, key)))
         .limit(1)
         .then((rows) => rows[0] ?? null);
-      if (!existing) throw notFound("Pipeline document not found");
+      if (!existing) throw notFound("未找到流水线文档");
 
       const sourceRevision = await tx
         .select()
@@ -1304,10 +1309,10 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         .where(and(eq(documentRevisions.id, revisionId), eq(documentRevisions.documentId, existing.document.id)))
         .limit(1)
         .then((rows) => rows[0] ?? null);
-      if (!sourceRevision) throw notFound("Pipeline document revision not found");
+      if (!sourceRevision) throw notFound("未找到流水线文档修订版本");
 
       if (existing.document.latestRevisionId === sourceRevision.id) {
-        throw conflict("Selected revision is already the latest revision", {
+        throw conflict("所选修订版本已经是最新版本", {
           currentRevisionId: existing.document.latestRevisionId,
         });
       }
@@ -1321,7 +1326,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         title: sourceRevision.title ?? null,
         format: sourceRevision.format,
         body: sourceRevision.body,
-        changeSummary: `Restored from revision ${sourceRevision.revisionNumber}`,
+        changeSummary: `已从修订版本 ${sourceRevision.revisionNumber} 恢复`,
         createdByAgentId: actor.type === "agent" ? actor.agentId : null,
         createdByUserId: actor.type === "user" ? actor.userId : null,
         createdByRunId: actor.type === "agent" ? actor.runId : null,
@@ -1472,7 +1477,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
       });
       return getPipelineCaseDocumentRow(tx, { companyId, caseId, key });
     });
-    if (!row) throw notFound("Pipeline case document not found");
+    if (!row) throw notFound("未找到流水线条目文档");
     res.json(row);
   });
 
@@ -1500,14 +1505,14 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         .then((rows) => rows[0] ?? null);
 
       if (existing && !req.body.baseRevisionId) {
-        throw conflict("Pipeline case document update requires baseRevisionId", {
+        throw conflict("更新流水线条目文档需要 baseRevisionId", {
           code: "stale_base_revision",
           latestRevisionId: existing.document.latestRevisionId,
           latestRevisionNumber: existing.document.latestRevisionNumber,
         });
       }
       if (existing && req.body.baseRevisionId !== existing.document.latestRevisionId) {
-        throw conflict("Pipeline case document was updated by someone else", {
+        throw conflict("流水线条目文档已被其他人更新", {
           code: "stale_base_revision",
           latestRevision: existing.revision
             ? {
@@ -1524,7 +1529,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         });
       }
       if (!existing && req.body.baseRevisionId) {
-        throw conflict("Pipeline case document does not exist yet", {
+        throw conflict("流水线条目文档尚不存在", {
           code: "stale_base_revision",
           latestRevision: null,
           latestRevisionId: null,
@@ -1687,7 +1692,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         ))
         .limit(1)
         .then((rows) => rows[0] ?? null);
-      if (!existing) throw notFound("Pipeline case document not found");
+      if (!existing) throw notFound("未找到流水线条目文档");
 
       const sourceRevision = await tx
         .select()
@@ -1695,9 +1700,9 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         .where(and(eq(documentRevisions.id, revisionId), eq(documentRevisions.documentId, existing.document.id)))
         .limit(1)
         .then((rows) => rows[0] ?? null);
-      if (!sourceRevision) throw notFound("Pipeline case document revision not found");
+      if (!sourceRevision) throw notFound("未找到流水线条目文档修订版本");
       if (existing.document.latestRevisionId === sourceRevision.id) {
-        throw conflict("Selected revision is already the latest revision", {
+        throw conflict("所选修订版本已经是最新版本", {
           currentRevisionId: existing.document.latestRevisionId,
         });
       }
@@ -1711,7 +1716,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
         title: sourceRevision.title ?? null,
         format: sourceRevision.format,
         body: sourceRevision.body,
-        changeSummary: `Restored from revision ${sourceRevision.revisionNumber}`,
+        changeSummary: `已从修订版本 ${sourceRevision.revisionNumber} 恢复`,
         createdByAgentId: actor.type === "agent" ? actor.agentId : null,
         createdByUserId: actor.type === "user" ? actor.userId : null,
         createdByRunId: actor.type === "agent" ? actor.runId : null,
@@ -1822,7 +1827,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
     const caseId = req.params.caseId as string;
     const companyId = await assertCaseAccess(db, req, caseId);
     const actor = actorForMutation(req);
-    if (req.body.force && actor.type === "agent") throw new HttpError(403, "Agents cannot force-release pipeline leases", { code: "forbidden" });
+    if (req.body.force && actor.type === "agent") throw new HttpError(403, "智能体不能强制释放流水线租约", { code: "forbidden" });
     res.json(await svc.releaseCase({ companyId, caseId, actor, leaseToken: req.body.leaseToken, force: req.body.force }));
   });
 
@@ -1913,7 +1918,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
       }
       const [issue] = await tx.insert(issueRows).values({
         companyId,
-        title: `Discuss: ${detail.case.title}`,
+        title: `讨论：${detail.case.title}`,
         description: buildCaseContextMarkdown(detail, bodyDocumentContext, outputSummaries),
         status: "todo",
         priority: "medium",
@@ -1979,7 +1984,7 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
     const companyId = await assertCaseAccess(db, req, caseId);
     const actor = actorForMutation(req);
     const targetIssue = await getIssueMutationTarget(db, { companyId, issueId: req.body.issueId });
-    if (!targetIssue) throw notFound("Issue not found");
+    if (!targetIssue) throw notFound("未找到任务");
     await assertIssueLinkMutationAllowed(req, { access, issuesSvc, issue: targetIssue });
     try {
       const link = await db.transaction(async (tx) => {
@@ -2020,9 +2025,9 @@ export function pipelineRoutes(db: Db, options: Parameters<typeof pipelineServic
       ))
       .limit(1)
       .then((rows) => rows[0] ?? null);
-    if (!existingLink) throw notFound("Pipeline case issue link not found");
+    if (!existingLink) throw notFound("未找到流水线条目与任务的关联");
     const targetIssue = await getIssueMutationTarget(db, { companyId, issueId: existingLink.issueId });
-    if (!targetIssue) throw notFound("Issue not found");
+    if (!targetIssue) throw notFound("未找到任务");
     await assertIssueLinkMutationAllowed(req, { access, issuesSvc, issue: targetIssue });
     const deleted = await db.transaction(async (tx) => {
       const [removed] = await tx
@@ -2168,7 +2173,7 @@ async function getCaseDetail(db: Db, companyId: string, caseId: string) {
     .where(and(eq(pipelineCases.companyId, companyId), eq(pipelineCases.id, caseId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline case not found");
+  if (!row) throw notFound("未找到流水线条目");
   const parentCasePromise = row.case.parentCaseId
     ? db
       .select({ case: pipelineCases, stage: pipelineStages, pipeline: pipelines })
@@ -2322,6 +2327,26 @@ function isWaitingIssueStatus(status: string) {
   return status === "backlog" || status === "todo" || status === "in_review";
 }
 
+function issueStatusLabel(status: string) {
+  return ({
+    backlog: "待规划",
+    todo: "待办",
+    in_progress: "进行中",
+    in_review: "审核中",
+    done: "已完成",
+    blocked: "受阻",
+    cancelled: "已取消",
+  } as Record<string, string>)[status] ?? status;
+}
+
+function issueLinkRoleLabel(role: string) {
+  return ({ automation: "自动化", work: "执行" } as Record<string, string>)[role] ?? role;
+}
+
+function terminalKindLabel(kind: string) {
+  return ({ done: "已完成", cancelled: "已取消" } as Record<string, string>)[kind] ?? kind;
+}
+
 function summarizeLinkedIssue(issue: typeof issueRows.$inferSelect) {
   return {
     id: issue.id,
@@ -2385,7 +2410,7 @@ async function assertStageAutomationTargetWriteAccess(
     .where(eq(pipelineStages.id, input.stage.id))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!stage) throw notFound("Pipeline stage not found");
+  if (!stage) throw notFound("未找到流水线阶段");
   const targetPipelineId = readStageAutomationTargetPipelineId(stage);
   if (!targetPipelineId) return;
   await assertPipelineWriteAccess(req, {
@@ -2412,7 +2437,7 @@ async function assertCurrentStageAutomationTargetWriteAccess(
     .where(and(eq(pipelineCases.companyId, input.companyId), eq(pipelineCases.id, input.caseId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline case not found");
+  if (!row) throw notFound("未找到流水线条目");
 
   const currentAutomationId = readStageAutomationId(row.stage);
   if (input.automationId && currentAutomationId !== input.automationId) return;
@@ -2465,7 +2490,7 @@ async function derivePipelineCaseLiveness(
     return {
       state: "terminal",
       reason: "terminal",
-      message: `Pipeline item is terminal (${row.case.terminalKind}).`,
+      message: `流水线条目已结束（${terminalKindLabel(row.case.terminalKind)}）。`,
     };
   }
 
@@ -2473,7 +2498,7 @@ async function derivePipelineCaseLiveness(
     return {
       state: "live",
       reason: "lease_active",
-      message: "Pipeline item has an active lease.",
+      message: "流水线条目存在有效租约。",
     };
   }
 
@@ -2497,7 +2522,7 @@ async function derivePipelineCaseLiveness(
     return {
       state: "blocked",
       reason: "case_blocked",
-      message: `Pipeline item is blocked by "${blockerCase.title}".`,
+      message: `流水线条目被“${blockerCase.title}”阻塞。`,
       blocker: {
         caseId: blockerCase.id,
         title: blockerCase.title,
@@ -2540,7 +2565,7 @@ async function derivePipelineCaseLiveness(
     return {
       state: "blocked",
       reason: "linked_issue_blocked",
-      message: `Linked ${blockedIssue.link.role} task is blocked.`,
+      message: `关联的${issueLinkRoleLabel(blockedIssue.link.role)}任务处于受阻状态。`,
       issue: summarizeLinkedIssue(blockedIssue.issue),
       blocker: blocker
         ? { issueId: blocker.id, title: blocker.title, status: blocker.status }
@@ -2552,7 +2577,7 @@ async function derivePipelineCaseLiveness(
     return {
       state: "live",
       reason: "linked_issue_active",
-      message: `Linked ${activeIssue.link.role} task is in progress.`,
+      message: `关联的${issueLinkRoleLabel(activeIssue.link.role)}任务正在执行。`,
       issue: summarizeLinkedIssue(activeIssue.issue),
     };
   }
@@ -2561,7 +2586,7 @@ async function derivePipelineCaseLiveness(
     return {
       state: isLiveIssueStatus(waitingIssue.issue.status) ? "waiting" : "attention",
       reason: "linked_issue_waiting",
-      message: `Linked ${waitingIssue.link.role} task is ${waitingIssue.issue.status}.`,
+      message: `关联的${issueLinkRoleLabel(waitingIssue.link.role)}任务状态为${issueStatusLabel(waitingIssue.issue.status)}。`,
       issue: summarizeLinkedIssue(waitingIssue.issue),
     };
   }
@@ -2597,7 +2622,7 @@ async function derivePipelineCaseLiveness(
         return {
           state: "attention",
           reason: "automation_failed",
-          message: "Pipeline automation permission has been restored; retry the failed automation ledger.",
+          message: "流水线自动化权限已恢复，请重试失败的自动化记录。",
           automation: {
             automationId: latestAutomation.automationId,
             routineId: latestAutomation.routineId,
@@ -2612,8 +2637,8 @@ async function derivePipelineCaseLiveness(
       state: fingerprint ? "blocked" : "attention",
       reason: fingerprint ? "permission_preflight_failed" : "automation_failed",
       message: fingerprint
-        ? "Pipeline automation is blocked until the configured assignee can write to the target pipeline."
-        : "Pipeline automation failed and needs retry or recovery.",
+        ? "流水线自动化受阻；配置的负责人获得目标流水线写入权限后才能继续。"
+        : "流水线自动化失败，需要重试或恢复。",
       automation: {
         automationId: latestAutomation.automationId,
         routineId: latestAutomation.routineId,
@@ -2631,7 +2656,7 @@ async function derivePipelineCaseLiveness(
       return {
         state: "attention",
         reason: "breakdown_pending",
-        message: "Breakdown stage has not recorded breakdown_created evidence yet.",
+        message: "拆解阶段尚未记录 breakdown_created 证据。",
       };
     }
     const expectedRequestKeys = readBreakdownRequestKeys(breakdownEvent.payload);
@@ -2654,7 +2679,7 @@ async function derivePipelineCaseLiveness(
       return {
         state: "blocked",
         reason: "breakdown_incomplete",
-        message: "Breakdown evidence does not match created child cases.",
+        message: "拆解证据与已创建的子条目不匹配。",
         breakdown: { expectedRequestKeys, createdRequestKeys, missingRequestKeys },
       };
     }
@@ -2663,7 +2688,7 @@ async function derivePipelineCaseLiveness(
       return {
         state: "waiting",
         reason: "children_waiting",
-        message: "Pipeline item is waiting for child items to finish.",
+        message: "流水线条目正在等待子条目完成。",
         breakdown: { expectedRequestKeys, createdRequestKeys, missingRequestKeys: [] },
       };
     }
@@ -2673,7 +2698,7 @@ async function derivePipelineCaseLiveness(
     return {
       state: "waiting",
       reason: "children_waiting",
-      message: "Pipeline item is waiting for child items to finish.",
+      message: "流水线条目正在等待子条目完成。",
     };
   }
 
@@ -2681,14 +2706,14 @@ async function derivePipelineCaseLiveness(
     return {
       state: "waiting",
       reason: "review_waiting",
-      message: "Pipeline item is waiting for stage review.",
+      message: "流水线条目正在等待阶段审核。",
     };
   }
 
   return {
     state: "attention",
     reason: "no_action_path",
-    message: "No lease, linked work, blocker, automation retry, review, or breakdown action path is visible.",
+    message: "未发现租约、关联工作、阻塞项、自动化重试、审核或拆解等可执行路径。",
   };
 }
 
@@ -2700,26 +2725,26 @@ function buildCaseContextMarkdown(
   const bodyDocumentMarkdown = formatPipelineConversationBodyDocumentContextMarkdown(bodyDocumentContext ?? null);
   const outputMarkdown = formatPipelineCaseOutputContextMarkdown(outputSummaries ?? null);
   return [
-    "## Pipeline Case Context",
+    "## 流水线条目上下文",
     "",
-    "## Conversation Instructions",
+    "## 对话说明",
     "",
-    "This task is the conversation thread for the linked pipeline item.",
-    "Treat user comments in this thread as feedback on that pipeline item unless the user explicitly says otherwise.",
-    "Iterate the pipeline item body document unless the user explicitly asks for item metadata, stage changes, or follow-up work.",
-    "Inspect connected documents and outputs when present; if feedback affects a connected document, revise it too so the item and supporting documents stay in sync.",
-    "Editing this discussion task itself is not the primary deliverable unless the user specifically requests it.",
+    "此任务是关联流水线条目的对话线程。",
+    "除非用户另有明确说明，否则将本线程中的用户评论视为对该流水线条目的反馈。",
+    "持续修改流水线条目的正文文档；只有用户明确要求时，才修改条目元数据、阶段或创建后续工作。",
+    "存在关联文档或输出时应一并检查；若反馈影响关联文档，也要同步修订，确保条目与支持材料一致。",
+    "除非用户明确要求，否则编辑此讨论任务本身不是主要交付物。",
     "",
     bodyDocumentMarkdown,
     bodyDocumentMarkdown ? "" : null,
     outputMarkdown,
     outputMarkdown ? "" : null,
-    "## Pipeline Item Context",
+    "## 流水线条目信息",
     "",
-    `Item: ${detail.case.title}`,
-    `Pipeline: ${detail.pipeline.name} (${detail.pipeline.key})`,
-    `Stage: ${detail.stage.name} (${detail.stage.key}, ${detail.stage.kind})`,
-    `Item link: /PAP/pipelines/${detail.pipeline.id}/items/${detail.case.id}`,
+    `条目：${detail.case.title}`,
+    `流水线：${detail.pipeline.name}（${detail.pipeline.key}）`,
+    `阶段：${detail.stage.name}（${detail.stage.key}，${detail.stage.kind}）`,
+    `条目链接：/PAP/pipelines/${detail.pipeline.id}/items/${detail.case.id}`,
     "",
     "```json",
     JSON.stringify({
