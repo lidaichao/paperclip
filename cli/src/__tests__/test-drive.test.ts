@@ -147,7 +147,7 @@ describe("test-drive data isolation", () => {
         undefined,
         { [variable]: "postgres://external-database" },
         readConfigFile,
-      )).toThrow(/requires its isolated embedded database/);
+      )).toThrow(/需要使用独立的内置数据库/);
       expect(readConfigFile).not.toHaveBeenCalled();
     },
   );
@@ -160,7 +160,7 @@ describe("test-drive data isolation", () => {
       "/tmp/reused/config.json",
       {},
       () => externalConfig,
-    )).toThrow(/cannot reuse.*external PostgreSQL database/);
+    )).toThrow(/无法复用已配置为外部 PostgreSQL 数据库/);
   });
 
   it("accepts an embedded configuration", () => {
@@ -179,7 +179,7 @@ describe("test-drive bootstrap validation", () => {
   it("uses Claude defaults and the canonical environment credential", () => {
     const resolved = resolveTestDriveBootstrap({}, { ANTHROPIC_API_KEY: "anthropic-secret" });
     expect(resolved).toMatchObject({
-      companyName: "Test Company",
+      companyName: "测试公司",
       agentName: "CEO",
       adapterType: "claude_local",
       credentialTarget: "ANTHROPIC_API_KEY",
@@ -211,12 +211,12 @@ describe("test-drive bootstrap validation", () => {
     expect(() => resolveTestDriveBootstrap(
       { harness: "opencode" },
       { OPENROUTER_API_KEY: "secret" },
-    )).toThrow(/require --model openrouter/);
+    )).toThrow(/要求使用 --model openrouter/);
     for (const model of ["anthropic/claude", "openrouter/", "openrouter//claude", "openrouter/a/"]) {
       expect(() => resolveTestDriveBootstrap(
         { harness: "opencode", model },
         { OPENROUTER_API_KEY: "secret" },
-      )).toThrow(/require --model openrouter/);
+      )).toThrow(/要求使用 --model openrouter/);
     }
 
     const model = "openrouter/publisher/family/model";
@@ -337,7 +337,7 @@ describe("test-drive API bootstrap", () => {
       linkedWorktree: false,
       instanceId: "default",
       env: { OPENROUTER_API_KEY: "secret" },
-    })).rejects.toThrow(/require --model openrouter/);
+    })).rejects.toThrow(/要求使用 --model openrouter/);
     expect(calls).toEqual([{ method: "GET", path: "/api/companies" }]);
   });
 
@@ -443,7 +443,7 @@ describe("test-drive worktree setting reconciliation", () => {
       delete: vi.fn(),
     } as unknown as TestDriveApi;
     await expect(reconcileTestDriveWorktreeExecution(api, "test-instance"))
-      .rejects.toThrow(/Could not arm/);
+      .rejects.toThrow(/无法为 Alice 实例/);
   });
 });
 

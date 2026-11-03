@@ -13,17 +13,17 @@ export function storageCheck(config: PaperclipConfig, configPath?: string): Chec
     try {
       fs.accessSync(baseDir, fs.constants.W_OK);
       return {
-        name: "Storage",
+        name: "存储",
         status: "pass",
-        message: `Local disk storage is writable: ${baseDir}`,
+        message: `本地磁盘存储可写：${baseDir}`,
       };
     } catch {
       return {
-        name: "Storage",
+        name: "存储",
         status: "fail",
-        message: `Local storage directory is not writable: ${baseDir}`,
+        message: `本地存储目录不可写：${baseDir}`,
         canRepair: false,
-        repairHint: "Check file permissions for storage.localDisk.baseDir",
+        repairHint: "请检查 storage.localDisk.baseDir 的文件权限",
       };
     }
   }
@@ -32,20 +32,20 @@ export function storageCheck(config: PaperclipConfig, configPath?: string): Chec
   const region = config.storage.s3.region.trim();
   if (!bucket || !region) {
     return {
-      name: "Storage",
+      name: "存储",
       status: "fail",
-      message: "S3 storage requires non-empty bucket and region",
+      message: "S3 存储要求存储桶和区域均不能为空",
       canRepair: false,
-      repairHint: "Run `paperclipai configure --section storage`",
+      repairHint: "请运行 `paperclipai configure --section storage`",
     };
   }
 
   return {
-    name: "Storage",
+    name: "存储",
     status: "warn",
-    message: `S3 storage configured (bucket=${bucket}, region=${region}). Reachability check is skipped in doctor.`,
+    message: `已配置 S3 存储（存储桶=${bucket}，区域=${region}）。诊断时跳过连通性检查。`,
     canRepair: false,
-    repairHint: "Verify credentials and endpoint in deployment environment",
+    repairHint: "请在部署环境中验证凭据和端点",
   };
 }
 

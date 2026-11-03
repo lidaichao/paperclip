@@ -6,28 +6,28 @@ export function configCheck(configPath?: string): CheckResult {
 
   if (!configExists(configPath)) {
     return {
-      name: "Config file",
+      name: "配置文件",
       status: "fail",
-      message: `Config file not found at ${filePath}`,
+      message: `在 ${filePath} 未找到配置文件`,
       canRepair: false,
-      repairHint: "Run `paperclipai onboard` to create one",
+      repairHint: "请运行 `paperclipai onboard` 创建配置文件",
     };
   }
 
   try {
     readConfig(configPath);
     return {
-      name: "Config file",
+      name: "配置文件",
       status: "pass",
-      message: `Valid config at ${filePath}`,
+      message: `配置有效：${filePath}`,
     };
   } catch (err) {
     return {
-      name: "Config file",
+      name: "配置文件",
       status: "fail",
-      message: `Invalid config: ${err instanceof Error ? err.message : String(err)}`,
+      message: `配置无效：${err instanceof Error ? err.message : String(err)}`,
       canRepair: false,
-      repairHint: "Run `paperclipai configure --section database` (or `paperclipai onboard` to recreate)",
+      repairHint: "请运行 `paperclipai configure --section database`（或运行 `paperclipai onboard` 重新创建）",
     };
   }
 }

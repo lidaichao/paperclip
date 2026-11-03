@@ -8,17 +8,17 @@ export async function portCheck(config: PaperclipConfig): Promise<CheckResult> {
 
   if (result.available) {
     return {
-      name: "Server port",
+      name: "服务端口",
       status: "pass",
-      message: `Port ${port} is available`,
+      message: `端口 ${port} 可用`,
     };
   }
 
   return {
-    name: "Server port",
+    name: "服务端口",
     status: "warn",
-    message: result.error ?? `Port ${port} is not available`,
+    message: result.error ?? `端口 ${port} 不可用`,
     canRepair: false,
-    repairHint: `Check what's using port ${port} with: lsof -i :${port}`,
+    repairHint: `请使用以下命令检查占用端口 ${port} 的程序：lsof -i :${port}`,
   };
 }

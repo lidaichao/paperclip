@@ -14,17 +14,17 @@ export function logCheck(config: PaperclipConfig, configPath?: string): CheckRes
   try {
     fs.accessSync(reportedDir, fs.constants.W_OK);
     return {
-      name: "Log directory",
+      name: "日志目录",
       status: "pass",
-      message: `Log directory is writable: ${reportedDir}`,
+      message: `日志目录可写：${reportedDir}`,
     };
   } catch {
     return {
-      name: "Log directory",
+      name: "日志目录",
       status: "fail",
-      message: `Log directory is not writable: ${logDir}`,
+      message: `日志目录不可写：${logDir}`,
       canRepair: false,
-      repairHint: "Check file permissions on the log directory",
+      repairHint: "请检查日志目录的文件权限",
     };
   }
 }

@@ -9,9 +9,9 @@ import type { CheckResult } from "./index.js";
 export function agentJwtSecretCheck(configPath?: string): CheckResult {
   if (readAgentJwtSecretFromEnv(configPath)) {
     return {
-      name: "Agent JWT secret",
+      name: "智能体 JWT 密钥",
       status: "pass",
-      message: "PAPERCLIP_AGENT_JWT_SECRET is set in environment",
+      message: "环境变量中已设置 PAPERCLIP_AGENT_JWT_SECRET",
     };
   }
 
@@ -20,21 +20,21 @@ export function agentJwtSecretCheck(configPath?: string): CheckResult {
 
   if (fileSecret) {
     return {
-      name: "Agent JWT secret",
+      name: "智能体 JWT 密钥",
       status: "warn",
-      message: `PAPERCLIP_AGENT_JWT_SECRET is present in ${envPath} but not loaded into environment`,
-      repairHint: `Set the value from ${envPath} in your shell before starting the Paperclip server`,
+      message: `${envPath} 中存在 PAPERCLIP_AGENT_JWT_SECRET，但尚未加载到环境变量`,
+      repairHint: `启动 Alice 服务前，请在终端中设置 ${envPath} 里的值`,
     };
   }
 
   return {
-    name: "Agent JWT secret",
+    name: "智能体 JWT 密钥",
     status: "fail",
-    message: `PAPERCLIP_AGENT_JWT_SECRET missing from environment and ${envPath}`,
+    message: `环境变量和 ${envPath} 中均缺少 PAPERCLIP_AGENT_JWT_SECRET`,
     canRepair: true,
     repair: () => {
       ensureAgentJwtSecret(configPath);
     },
-    repairHint: `Run with --repair to create ${envPath} containing PAPERCLIP_AGENT_JWT_SECRET`,
+    repairHint: `请使用 --repair 运行，以创建包含 PAPERCLIP_AGENT_JWT_SECRET 的 ${envPath}`,
   };
 }
