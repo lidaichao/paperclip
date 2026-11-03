@@ -11575,7 +11575,7 @@ export function issueRoutes(
       assertCompanyAccess(req, companyId);
       if (isSkillTestScopedActor(req)) {
         res.status(403).json({
-          error: "Skill-test run tokens cannot create issues.",
+          error: "技能测试运行令牌不能创建任务。",
           details: {
             scopedIssueId:
               req.actor.keyScope?.kind === "skill_test"
@@ -11671,7 +11671,7 @@ export function issueRoutes(
       if (req.actor.type === "agent" && effectiveParentId) {
         createParent = await svc.getById(effectiveParentId);
         if (!createParent || createParent.companyId !== companyId) {
-          res.status(404).json({ error: "Parent issue not found" });
+          res.status(404).json({ error: "未找到父任务" });
           return;
         }
         if (
@@ -12660,7 +12660,7 @@ export function issueRoutes(
           !membership?.membershipRole ||
           membership.membershipRole === "viewer"
         ) {
-          throw forbidden("Active non-viewer company membership required");
+          throw forbidden("需要有效且非只读的公司成员资格");
         }
       }
 
@@ -12837,7 +12837,7 @@ export function issueRoutes(
         ...updateFields
       } = req.body;
       if (existing.conversationAgentId && req.actor.type === "board" && commentBody) {
-        throw unprocessable("Send conversation messages through the comments endpoint with a clientRequestId");
+        throw unprocessable("请通过评论接口发送对话消息，并提供 clientRequestId");
       }
       if (
         deferWakeForGoal === true &&
@@ -12858,7 +12858,7 @@ export function issueRoutes(
         return;
       }
       if (commentAttachmentIds !== undefined && !commentBody) {
-        res.status(400).json({ error: "Attachment ids require a comment" });
+        res.status(400).json({ error: "提供附件 ID 时必须同时填写评论" });
         return;
       }
       const reviewPolicyChangeRequested =
@@ -12885,7 +12885,7 @@ export function issueRoutes(
       const shouldCancelActiveRunForCancelledStatus =
         existing.status !== "cancelled" && updateFields.status === "cancelled";
       if (resumeRequested === true && !commentBody) {
-        res.status(400).json({ error: "Follow-up intent requires a comment" });
+        res.status(400).json({ error: "提交跟进意图时必须同时填写评论" });
         return;
       }
       if (
@@ -13025,7 +13025,7 @@ export function issueRoutes(
       ) {
         res
           .status(409)
-          .json({ error: "Issue follow-up blocked by unresolved blockers" });
+          .json({ error: "任务仍有未解决的阻塞项，无法跟进" });
         return;
       }
       let interruptedRunId: string | null = null;
@@ -13061,7 +13061,7 @@ export function issueRoutes(
       if (interruptRequested) {
         if (!commentBody) {
           res.status(400).json({
-            error: "Interrupt is only supported when posting a comment",
+            error: "只有发布评论时才能请求打断当前执行",
           });
           return;
         }
@@ -13394,7 +13394,7 @@ export function issueRoutes(
       if (assigneeWillChange && actor.actorType === "agent" &&
           existing.assigneeAgentId === actor.agentId && updateFields.status === "in_review" &&
           await hasQueuedInteractionResponse(db, existing.companyId, existing.id, existing.assigneeAgentId)) {
-        throw conflict("The user already responded. Keep the current assignee so the queued response can continue after this run.", {
+        throw conflict("用户已经作出响应。请保留当前负责人，以便排队响应在本次运行结束后继续处理。", {
           code: "interaction_response_queued",
         });
       }
