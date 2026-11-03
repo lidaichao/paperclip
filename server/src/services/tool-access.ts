@@ -4052,7 +4052,7 @@ export function toolAccessService(
       );
     const count = Number(row?.count ?? 0);
     if (count >= limit) {
-      throw new HttpError(429, "Connection token mint rate limit exceeded", {
+      throw new HttpError(429, "连接令牌生成频率超过限制", {
         code: "rate_limited",
         path: input.path,
         limit,
@@ -5503,7 +5503,7 @@ export function toolAccessService(
         .where(eq(connectionGrants.id, existing.id))
         .returning();
       if (!updated)
-        throw new Error("Failed to update default connection grant");
+        throw new Error("无法更新默认连接授权");
       onMutation?.({ previous: existing, current: updated });
       return updated;
     }
@@ -5518,7 +5518,7 @@ export function toolAccessService(
         isDefault: true,
       })
       .returning();
-    if (!created) throw new Error("Failed to create default connection grant");
+    if (!created) throw new Error("无法创建默认连接授权");
     onMutation?.({ previous: null, current: created });
     return created;
   }
@@ -6951,17 +6951,17 @@ export function toolAccessService(
     for (let page = 0; ; page += 1) {
       const payload = await readMcpHttpResponse(response, listRequestId);
       const record = asRecord(payload);
-      if (record.error) throw new HttpError(502, "Remote MCP tool discovery failed", { code: "mcp_catalog_error" });
+      if (record.error) throw new HttpError(502, "远程 MCP 工具发现失败", { code: "mcp_catalog_error" });
       const result = asRecord(record.result);
-      if (!Array.isArray(result.tools)) throw new HttpError(502, "Remote MCP returned an invalid tool catalog", { code: "mcp_catalog_invalid" });
+      if (!Array.isArray(result.tools)) throw new HttpError(502, "远程 MCP 返回了无效的工具目录", { code: "mcp_catalog_invalid" });
       descriptors.push(...result.tools.map((tool) => normalizeToolDescriptor(tool)).filter((tool): tool is McpToolDescriptor => Boolean(tool)));
       const cursor = typeof result.nextCursor === "string" ? result.nextCursor : null;
       if (!cursor) break;
-      if (seenCursors.has(cursor) || page >= 99 || descriptors.length > 20_000) throw new HttpError(502, "Remote MCP tool catalog pagination did not finish", { code: "mcp_catalog_pagination" });
+      if (seenCursors.has(cursor) || page >= 99 || descriptors.length > 20_000) throw new HttpError(502, "远程 MCP 工具目录分页未能完成", { code: "mcp_catalog_pagination" });
       seenCursors.add(cursor);
       listRequestId = `paperclip-catalog-refresh-${page + 1}`;
       response = await sendToolsList(sessionHeaders, cursor);
-      if (!response.ok) throw new HttpError(502, "Remote MCP catalog page could not be read", { status: response.status });
+      if (!response.ok) throw new HttpError(502, "无法读取远程 MCP 目录页面", { status: response.status });
     }
     if (!isRailwayConnection(connection)) return descriptors;
     if (descriptors.some((tool) => normalizeRailwayToolName(tool.name).startsWith(RAILWAY_TOOL_PREFIX))) {
