@@ -7813,7 +7813,7 @@ export function toolAccessService(
     const definition = TOOL_EXAMPLES.find(
       (example) => example.id === exampleId,
     );
-    if (!definition) throw notFound("Tool example not found");
+    if (!definition) throw notFound("未找到工具示例");
     return definition;
   }
 
@@ -8310,7 +8310,7 @@ export function toolAccessService(
       if (!configPath.startsWith("headers.")) continue;
       const headerName = mcpRemoteHeaderNameFromConfigPath(configPath);
       if (!headerName)
-        throw badRequest("Header names cannot be blank.", {
+        throw badRequest("请求头名称不能为空。", {
           code: "mcp_header_rejected",
         });
       // The API schema already rejected unsafe headers, but this is the last
@@ -8988,7 +8988,7 @@ export function toolAccessService(
   ): Promise<OAuthProviderEndpoints> {
     const method = connectionMethodFor(app, methodKey);
     if (method.auth !== "oauth")
-      throw unprocessable("This app does not support sign in");
+      throw unprocessable("此应用不支持登录");
     let authorizationUrl = method.defaults?.authorizationEndpoint ?? null;
     let tokenUrl = method.defaults?.tokenEndpoint ?? null;
     const metadataUrl = method.defaults?.metadataUrl ?? null;
@@ -9097,7 +9097,7 @@ export function toolAccessService(
       !galleryEntry ||
       connectionMethodForConnection(galleryEntry, connection).auth !== "oauth"
     ) {
-      throw unprocessable("This app connection does not use sign in");
+      throw unprocessable("此应用连接未使用登录授权");
     }
     return galleryEntry;
   }
@@ -9178,7 +9178,7 @@ export function toolAccessService(
         }
       }
       if (!definition)
-        throw new Error("Failed to create personal OAuth secret definition");
+        throw new Error("无法创建个人 OAuth 密钥定义");
       const [existingUserValue] = await dbClient
         .select()
         .from(companySecrets)
@@ -9268,7 +9268,7 @@ export function toolAccessService(
     try {
       redirect = new URL(redirectUri);
     } catch {
-      throw unprocessable("OAuth callback URL is invalid", {
+      throw unprocessable("OAuth 回调地址无效", {
         code: "oauth_redirect_uri_invalid",
       });
     }
@@ -9683,7 +9683,7 @@ export function toolAccessService(
         ),
       )
       .returning();
-    if (!updated) throw notFound("Tool connection not found");
+    if (!updated) throw notFound("未找到工具连接");
     await syncCredentialBindings(updated);
     return updated;
   }
@@ -9751,7 +9751,7 @@ export function toolAccessService(
         ),
       )
       .returning();
-    if (!updated) throw notFound("Tool connection not found");
+    if (!updated) throw notFound("未找到工具连接");
     await syncCredentialBindings(updated);
     return updated;
   }
