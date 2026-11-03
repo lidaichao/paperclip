@@ -11696,6 +11696,7 @@
     "manual_source_0d200003": "Manual",
     "no_runs_match_filters_0d200004": "No runs match these filters.",
     "dismissed_in_browser_0d200005": "Dismissed in this browser",
-    "dismissed_for_visit_0d200006": "Dismissed for this visit"
+    "dismissed_for_visit_0d200006": "Dismissed for this visit",
+    "authentication_failed_0d300001": "Authentication failed"
   }
 }

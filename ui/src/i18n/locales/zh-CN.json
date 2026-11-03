@@ -11696,6 +11696,7 @@
     "manual_source_0d200003": "手动",
     "no_runs_match_filters_0d200004": "没有符合当前筛选条件的运行记录。",
     "dismissed_in_browser_0d200005": "已在此浏览器中关闭",
-    "dismissed_for_visit_0d200006": "已在本次访问中关闭"
+    "dismissed_for_visit_0d200006": "已在本次访问中关闭",
+    "authentication_failed_0d300001": "身份验证失败"
   }
 }

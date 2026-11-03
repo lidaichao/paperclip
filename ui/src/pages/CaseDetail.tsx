@@ -41,12 +41,12 @@ import { copyTextToClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<CaseStatus, string> = {
-  draft: "Draft",
-  in_progress: "In progress",
-  in_review: "In review",
-  approved: "Approved",
-  done: "Done",
-  cancelled: "Cancelled",
+  draft: l10n("local.draft_ebf12ef4"),
+  in_progress: l10n("local.in_progress_c1f88e9d"),
+  in_review: l10n("local.in_review_c3905914"),
+  approved: l10n("local.approved_87b42e40"),
+  done: l10n("local.done_11a6767d"),
+  cancelled: l10n("local.cancelled_d353a99e"),
 };
 
 const PRIMARY_FIELD_KEYS = ["name", "title", "body", "description"] as const;

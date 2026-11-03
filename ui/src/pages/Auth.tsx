@@ -64,7 +64,7 @@ export function AuthPage() {
       navigate(nextPath, { replace: true });
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      setError(err instanceof Error ? err.message : l10n("local.authentication_failed_0d300001"));
     },
   });
 

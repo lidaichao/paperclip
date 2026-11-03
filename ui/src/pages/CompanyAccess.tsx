@@ -317,7 +317,7 @@ export function CompanyAccess() {
                   context={
                     request.invite
                       ? `${request.invite.allowedJoinTypes} join invite${request.invite.humanRole ? ` • default role ${request.invite.humanRole}` : ""}`
-                      : "Invite metadata unavailable"
+                      : l10n("local.invite_metadata_unavailable_1ba4d74c")
                   }
                   detail={l10n("local.submitted_value_9640439c", {v0: (new Date(request.createdAt).toLocaleString())})}
                   approveLabel={l10n("local.approve_human_e3db02e8")}

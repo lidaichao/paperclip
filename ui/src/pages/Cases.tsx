@@ -325,7 +325,7 @@ function CaseTrailingColumns({
                     <button
                       type="button"
                       className="flex h-4 w-4 items-center justify-center rounded-sm transition-colors hover:bg-accent/50"
-                      aria-label={`${treeCollapsed ? "Expand" : "Collapse"} ${row.title}`}
+                      aria-label={`${treeCollapsed ? l10n("local.expand_07548c2c") : l10n("local.collapse_be6eb1fc")} ${row.title}`}
                       aria-expanded={!treeCollapsed}
                       onClick={(event) => {
                         event.preventDefault();
@@ -885,8 +885,13 @@ export function Cases() {
     for (const c of sorted) {
       let key: string;
       if (viewState.groupBy === "type") key = c.caseType;
-      else if (viewState.groupBy === "status") key = c.status;
-      else key = c.projectId ? projectName.get(c.projectId) ?? "Unknown project" : "No project";
+      else if (viewState.groupBy === "status") {
+        key = STATUS_FILTER_OPTIONS.find((option) => option.value === c.status)?.label ?? c.status;
+      } else {
+        key = c.projectId
+          ? projectName.get(c.projectId) ?? l10n("local.unknown_project_ed51cfef")
+          : l10n("local.no_project_ca4558db");
+      }
       const bucket = map.get(key);
       if (bucket) bucket.push(c);
       else map.set(key, [c]);
@@ -1014,16 +1019,16 @@ export function Cases() {
   }, [selectedIndex]);
 
   const activeFilters: FilterValue[] = [];
-  if (viewState.search.trim()) activeFilters.push({ key: "search", label: "Search", value: viewState.search.trim() });
+  if (viewState.search.trim()) activeFilters.push({ key: "search", label: l10n("local.search_49c266ba"), value: viewState.search.trim() });
   if (viewState.typeFilters.length > 0) {
-    activeFilters.push({ key: "type", label: "Type", value: viewState.typeFilters.join(", ") });
+    activeFilters.push({ key: "type", label: l10n("local.type_baaddf70"), value: viewState.typeFilters.join(", ") });
   }
   if (!usesDefaultStatusFilter) {
     activeFilters.push({
       key: "status",
-      label: "Status",
+      label: l10n("local.status_920e413c"),
       value: viewState.statusFilters.length === CASE_STATUSES.length
-        ? "All"
+        ? l10n("local.all_a52ace42")
         : viewState.statusFilters
           .map((status) => STATUS_FILTER_OPTIONS.find((option) => option.value === status)?.label ?? status)
           .join(", "),
@@ -1032,15 +1037,17 @@ export function Cases() {
   if (viewState.projectFilters.length > 0) {
     activeFilters.push({
       key: "project",
-      label: "Project",
+      label: l10n("local.project_98595978"),
       value: viewState.projectFilters
-        .map((projectId) => projectId === ALL ? "No project" : projectName.get(projectId) ?? "Project")
+        .map((projectId) => projectId === ALL
+          ? l10n("local.no_project_ca4558db")
+          : projectName.get(projectId) ?? l10n("local.project_98595978"))
         .join(", "),
     });
   }
   if (viewState.labelFilter !== ALL) {
-    const name = (labelsQuery.data ?? []).find((l) => l.id === viewState.labelFilter)?.name ?? "Label";
-    activeFilters.push({ key: "label", label: "Label", value: name });
+    const name = (labelsQuery.data ?? []).find((l) => l.id === viewState.labelFilter)?.name ?? l10n("local.label_0e66373f");
+    activeFilters.push({ key: "label", label: l10n("local.label_0e66373f"), value: name });
   }
 
   function removeFilter(key: string) {
@@ -1310,10 +1317,10 @@ export function Cases() {
               <CaseToolbarButton icon={Layers} title={l10n("local.group_34ca0e76")} active={viewState.groupBy !== "type"}>
                 <PopoverContent align="end" className="w-44 p-2">
                   {([
-                    ["type", "Type"],
-                    ["project", "Project"],
-                    ["status", "Status"],
-                    ["none", "None"],
+                    ["type", l10n("local.type_baaddf70")],
+                    ["project", l10n("local.project_98595978")],
+                    ["status", l10n("local.status_920e413c")],
+                    ["none", l10n("local.none_140bedbf")],
                   ] as const).map(([value, label]) => (
                     <button
                       key={value}
