@@ -360,10 +360,10 @@ describe("Teams opt-in file-consent runtime", () => {
         thread(),
         buildTeamsFileConsentCard(binding),
       ),
-    ).rejects.toThrow("not enabled");
+    ).rejects.toThrow("未启用");
     await expect(
       h.runtime.sendTeamsUploadedFileCard(thread(), {} as never),
-    ).rejects.toThrow("not enabled");
+    ).rejects.toThrow("未启用");
     expect(h.post).not.toHaveBeenCalled();
     expect(h.network).not.toHaveBeenCalled();
   });
@@ -529,7 +529,7 @@ describe("Teams opt-in file-consent runtime", () => {
               };
       await expect(
         h.runtime.sendTeamsFileConsentCard(thread(), corrupted as never),
-      ).rejects.toThrow("invalid file-card shape");
+      ).rejects.toThrow("文件卡结构无效");
       expect(h.post).not.toHaveBeenCalled();
     },
   );
@@ -546,7 +546,7 @@ describe("Teams opt-in file-consent runtime", () => {
           buildTeamsFileConsentCard(binding),
         ),
       ).rejects.toThrow(
-        mode === "missing ID" ? "receipt is unproven" : "result is unknown",
+        mode === "missing ID" ? "发送回执尚未确认" : "发送结果未知",
       );
       expect(h.post).toHaveBeenCalledTimes(1);
       expect(h.app.api.serviceUrl).not.toContain(uploadCanary);

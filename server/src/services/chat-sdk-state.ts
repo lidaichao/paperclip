@@ -71,19 +71,19 @@ function assertBoundedIdentifier(
   maximum: number,
 ): void {
   if (!value || value.length > maximum) {
-    throw new Error(`${label} must be between 1 and ${maximum} characters`);
+    throw new Error(`${label} 长度必须为 1 到 ${maximum} 个字符`);
   }
 }
 
 function assertTtl(label: string, ttlMs: number): void {
   if (!(Number.isFinite(ttlMs) && ttlMs > 0)) {
-    throw new Error(`${label} must be a positive finite number`);
+    throw new Error(`${label} 必须是大于 0 的有限数值`);
   }
 }
 
 function storageKey(kind: StateKind, logicalKey: string): string {
   assertBoundedIdentifier(
-    "Chat SDK state key",
+    "Chat SDK 状态键",
     logicalKey,
     MAX_LOGICAL_KEY_LENGTH,
   );
@@ -104,7 +104,7 @@ function decodeEnvelope(
     !("value" in envelope)
   ) {
     throw new Error(
-      `Invalid Chat SDK state envelope for ${expectedKind} (record version ${record.version})`,
+      `Chat SDK ${expectedKind} 状态封装无效（记录版本 ${record.version}）`,
     );
   }
   return envelope.value;
@@ -141,7 +141,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
     this.now = options.now ?? (() => new Date());
     this.maxValueBytes = options.maxValueBytes ?? DEFAULT_MAX_VALUE_BYTES;
     if (!(Number.isSafeInteger(this.maxValueBytes) && this.maxValueBytes > 0)) {
-      throw new Error("maxValueBytes must be a positive safe integer");
+      throw new Error("maxValueBytes 必须是正安全整数");
     }
   }
 
@@ -165,7 +165,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
     const current = await this.readLive("subscription", threadId);
     if (!current) return false;
     if (current.value !== true) {
-      throw new Error("Invalid Chat SDK subscription state");
+      throw new Error("Chat SDK 订阅状态无效");
     }
     return true;
   }
@@ -188,7 +188,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
       );
       if (written) return lock;
     }
-    throw this.casExhausted("acquire lock");
+    throw this.casExhausted("获取锁");
   }
 
   async extendLock(lock: Lock, ttlMs: number): Promise<boolean> {
@@ -215,7 +215,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
         return true;
       }
     }
-    throw this.casExhausted("extend lock");
+    throw this.casExhausted("延长锁");
   }
 
   async releaseLock(lock: Lock): Promise<void> {
@@ -244,7 +244,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
         return;
       }
     }
-    throw this.casExhausted("release lock");
+    throw this.casExhausted("释放锁");
   }
 
   async forceReleaseLock(threadId: string): Promise<void> {
@@ -283,7 +283,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
         return true;
       }
     }
-    throw this.casExhausted("set cache value if absent");
+    throw this.casExhausted("在缓存值不存在时写入");
   }
 
   async delete(key: string): Promise<void> {
@@ -300,7 +300,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
       options?.maxLength !== undefined &&
       !(Number.isSafeInteger(options.maxLength) && options.maxLength > 0)
     ) {
-      throw new Error("List maxLength must be a positive safe integer");
+      throw new Error("列表 maxLength 必须是正安全整数");
     }
     const storedKey = storageKey("list", key);
     const expiresAt = this.expiryFromTtl(options?.ttlMs);
@@ -308,7 +308,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
       const record = await this.persistence.read(this.scope, storedKey);
       const prior =
         record && !this.isExpired(record) ? decodeEnvelope(record, "list") : [];
-      if (!Array.isArray(prior)) throw new Error("Invalid Chat SDK list state");
+      if (!Array.isArray(prior)) throw new Error("Chat SDK 列表状态无效");
       const appended = [...prior, value];
       const next = options?.maxLength
         ? appended.slice(-options.maxLength)
@@ -325,14 +325,14 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
         return;
       }
     }
-    throw this.casExhausted("append list value");
+    throw this.casExhausted("追加列表值");
   }
 
   async getList<T = unknown>(key: string): Promise<T[]> {
     const current = await this.readLive("list", key);
     if (!current) return [];
     if (!Array.isArray(current.value))
-      throw new Error("Invalid Chat SDK list state");
+      throw new Error("Chat SDK 列表状态无效");
     return current.value as T[];
   }
 
@@ -343,7 +343,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
   ): Promise<number> {
     this.ensureConnected();
     if (!(Number.isSafeInteger(maxSize) && maxSize > 0)) {
-      throw new Error("Queue maxSize must be a positive safe integer");
+      throw new Error("队列 maxSize 必须是正安全整数");
     }
     const key = storageKey("queue", threadId);
     for (let attempt = 0; attempt < MAX_CAS_ATTEMPTS; attempt += 1) {
@@ -353,7 +353,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
           ? decodeEnvelope(record, "queue")
           : [];
       if (!Array.isArray(prior))
-        throw new Error("Invalid Chat SDK queue state");
+        throw new Error("Chat SDK 队列状态无效");
       const now = this.now().getTime();
       const live = (prior as QueueEntry[]).filter(
         (item) => item.expiresAt > now,
@@ -374,7 +374,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
         return next.length;
       }
     }
-    throw this.casExhausted("enqueue message");
+    throw this.casExhausted("将消息入队");
   }
 
   async dequeue(threadId: string): Promise<QueueEntry | null> {
@@ -396,7 +396,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
       }
       const value = decodeEnvelope(record, "queue");
       if (!Array.isArray(value))
-        throw new Error("Invalid Chat SDK queue state");
+        throw new Error("Chat SDK 队列状态无效");
       const now = this.now().getTime();
       const live = (value as QueueEntry[]).filter(
         (item) => item.expiresAt > now,
@@ -420,7 +420,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
             });
       if (updated) return entry;
     }
-    throw this.casExhausted("dequeue message");
+    throw this.casExhausted("将消息出队");
   }
 
   async queueDepth(threadId: string): Promise<number> {
@@ -442,7 +442,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
       }
       const value = decodeEnvelope(record, "queue");
       if (!Array.isArray(value))
-        throw new Error("Invalid Chat SDK queue state");
+        throw new Error("Chat SDK 队列状态无效");
       const now = this.now().getTime();
       const live = (value as QueueEntry[]).filter(
         (item) => item.expiresAt > now,
@@ -464,13 +464,13 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
             });
       if (updated) return live.length;
     }
-    throw this.casExhausted("read queue depth");
+    throw this.casExhausted("读取队列深度");
   }
 
   private ensureConnected(): void {
     if (!this.connected) {
       throw new Error(
-        "PaperclipChatSdkStateAdapter is not connected. Call connect() first.",
+        "PaperclipChatSdkStateAdapter 尚未连接，请先调用 connect()。",
       );
     }
   }
@@ -498,13 +498,13 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
     try {
       serialized = JSON.stringify(envelope);
     } catch (error) {
-      throw new Error(`Chat SDK ${kind} state is not JSON-serializable`, {
+      throw new Error(`Chat SDK ${kind} 状态无法序列化为 JSON`, {
         cause: error,
       });
     }
     if (Buffer.byteLength(serialized) > this.maxValueBytes) {
       throw new Error(
-        `Chat SDK ${kind} state exceeds the ${this.maxValueBytes}-byte limit`,
+        `Chat SDK ${kind} 状态超过 ${this.maxValueBytes} 字节限制`,
       );
     }
     return envelope;
@@ -547,7 +547,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
         return null;
       }
     }
-    throw this.casExhausted(`read ${kind} state`);
+    throw this.casExhausted(`读取 ${kind} 状态`);
   }
 
   private async write(
@@ -571,7 +571,7 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
       )
         return;
     }
-    throw this.casExhausted(`write ${kind} state`);
+    throw this.casExhausted(`写入 ${kind} 状态`);
   }
 
   private async deleteCurrent(
@@ -592,12 +592,12 @@ export class PaperclipChatSdkStateAdapter implements StateAdapter {
       )
         return;
     }
-    throw this.casExhausted(`delete ${kind} state`);
+    throw this.casExhausted(`删除 ${kind} 状态`);
   }
 
   private casExhausted(operation: string): Error {
     return new Error(
-      `Could not ${operation} after ${MAX_CAS_ATTEMPTS} concurrent state changes`,
+      `连续发生 ${MAX_CAS_ATTEMPTS} 次并发状态变更后仍无法${operation}`,
     );
   }
 }

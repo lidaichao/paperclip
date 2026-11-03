@@ -332,7 +332,7 @@ export async function enqueueIssueInteractionChatPublications(
           TELEGRAM_CALLBACK_DATA_LIMIT_BYTES,
       )
     ) {
-      throw new Error("Generated Telegram question action exceeds 64 bytes");
+      throw new Error("生成的 Telegram 问题操作超过 64 字节");
     }
     const actions: SafeExternalChatCardAction[] = formDraft
       ? [
@@ -565,7 +565,7 @@ export async function enqueueTerminalIssueInteractionChatPublications(
       .set({
         state: "cancelled",
         nextAttemptAt: null,
-        redactedError: "Interaction was resolved before provider publication",
+        redactedError: "交互在发送到服务商之前已解决",
         updatedAt: new Date(),
       })
       .where(
@@ -776,7 +776,7 @@ export async function cancelPendingIssueInteractionChatPublications(
     .set({
       state: "cancelled",
       nextAttemptAt: null,
-      redactedError: "Interaction was superseded before publication",
+      redactedError: "交互在发布前已被更新的请求取代",
       updatedAt: new Date(),
     })
     .where(

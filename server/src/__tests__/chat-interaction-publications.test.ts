@@ -925,7 +925,7 @@ describeEmbeddedPostgres(
               idempotencyKey: `interaction:${interaction.id}:${endpointId}`,
               state: "cancelled",
               redactedError:
-                "Interaction was resolved before provider publication",
+                "交互在发送到服务商之前已解决",
             }),
           ),
         ),
@@ -1188,7 +1188,7 @@ describeEmbeddedPostgres(
           (row) =>
             row.state === "cancelled" &&
             row.redactedError ===
-              "Interaction was resolved before provider publication",
+              "交互在发送到服务商之前已解决",
         ),
       ).toBe(true);
 

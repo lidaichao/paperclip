@@ -560,7 +560,7 @@ describe("Chat SDK endpoint runtime", () => {
             },
           }),
         ),
-      ).toThrow("Telegram attachment parser contract is unavailable");
+      ).toThrow("Telegram 附件解析器契约不可用");
     },
   );
 
@@ -940,13 +940,13 @@ describe("Chat SDK endpoint runtime", () => {
             retired: false,
             shutdownCalls: 0,
           });
-          expect(initializationResult).toMatch(/retired/);
+          expect(initializationResult).toMatch(/已停用/);
           expect(captures.discordGatewayDurations).toEqual([]);
           expect(sdkShutdown).toHaveBeenCalledOnce();
-          await expect(first.initialize()).rejects.toThrow(/retired/);
+          await expect(first.initialize()).rejects.toThrow(/已停用/);
           await expect(
             first.handleWebhook(new Request("https://paperclip.test/webhook")),
-          ).rejects.toThrow(/retired/);
+          ).rejects.toThrow(/已停用/);
           expect(initialize).toHaveBeenCalledOnce();
           if (operation === "replace") {
             expect(registry.get(options.endpointId)).not.toBe(first);
@@ -989,7 +989,7 @@ describe("Chat SDK endpoint runtime", () => {
         expect(await removing).toBe("SDK disconnect failed");
         expect(registry.get(options.endpointId)).toBeNull();
         expect(captures.chats).toHaveLength(1);
-        await expect(first.initialize()).rejects.toThrow(/retired/);
+        await expect(first.initialize()).rejects.toThrow(/已停用/);
         const next = await registry.replaceEndpoint(options);
         expect(registry.get(options.endpointId)).toBe(next);
         expect(shutdown).toHaveBeenCalledTimes(2);
@@ -1041,7 +1041,7 @@ describe("Chat SDK endpoint runtime", () => {
         const outcome = await ingress;
         await removing;
         expect(beforeSettlement).toEqual({ retired: false, shutdownCalls: 0 });
-        expect(outcome).toMatch(/retired/);
+        expect(outcome).toMatch(/已停用/);
         expect(shutdown).toHaveBeenCalledOnce();
       } finally {
         held.resolve();
@@ -1075,7 +1075,7 @@ describe("Chat SDK endpoint runtime", () => {
       try {
         const outcome = await initialized;
         await retired;
-        expect(outcome).toMatch(/retired/);
+        expect(outcome).toMatch(/已停用/);
         expect(captures.discordGatewayDurations).toEqual([]);
       } finally {
         await runtime.shutdown();
@@ -1105,7 +1105,7 @@ describe("Chat SDK endpoint runtime", () => {
             (response) => response.status,
             (error: Error) => error.message,
           );
-        expect(outcome).toMatch(/retired/);
+        expect(outcome).toMatch(/已停用/);
         expect(handler).not.toHaveBeenCalled();
       } finally {
         await retiring;
@@ -1190,7 +1190,7 @@ describe("Chat SDK endpoint runtime", () => {
       const latest = registry.replaceEndpoint(registryOptions());
       drain.resolve();
 
-      expect(await superseded).toMatch(/superseded/);
+      expect(await superseded).toMatch(/已被更新的请求取代/);
       const next = await latest;
       expect(registry.get("endpoint-1")).toBe(next);
       expect(shutdown).toHaveBeenCalledTimes(1);
@@ -1215,7 +1215,7 @@ describe("Chat SDK endpoint runtime", () => {
       const result = await replacement;
       await removal;
 
-      expect(result).toMatch(/superseded/);
+      expect(result).toMatch(/已被更新的请求取代/);
       expect(registry.get("endpoint-1")).toBeNull();
       expect(registry.list()).toEqual([]);
       expect(captures.chats).toHaveLength(1);
@@ -1268,10 +1268,10 @@ describe("Chat SDK endpoint runtime", () => {
       const result = await replacement;
       await closing;
 
-      expect(result).toMatch(/shutting down/);
+      expect(result).toMatch(/正在关闭/);
       expect(registry.list()).toEqual([]);
       await expect(registry.replaceEndpoint(registryOptions())).rejects.toThrow(
-        /shutting down/,
+        /正在关闭/,
       );
       expect(captures.chats).toHaveLength(1);
       expect(shutdown).toHaveBeenCalledTimes(1);
@@ -1467,7 +1467,7 @@ describe("Chat SDK endpoint runtime", () => {
     );
     expect(first.status).toBe(503);
     expect(first.headers.get("retry-after")).toBe("1");
-    expect(await first.text()).toContain("durably accept");
+    expect(await first.text()).toContain("持久化接收");
 
     const retried = await runtime.handleWebhook(
       new Request("https://paperclip.test/api/chat/webhooks/endpoint-1", {

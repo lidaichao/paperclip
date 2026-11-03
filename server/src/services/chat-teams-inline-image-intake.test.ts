@@ -123,7 +123,7 @@ describe("Teams source-bound inline image resources", () => {
     try {
       await vi.advanceTimersByTimeAsync(10_001);
       expect(settled).toBe(true);
-      expect(await result).toBe("Teams inline image download unavailable");
+      expect(await result).toBe("Teams 内联图片下载不可用");
       release("synthetic-never-transmitted-token");
       await vi.advanceTimersByTimeAsync(0);
       expect(adapterRequest).not.toHaveBeenCalled();
@@ -369,7 +369,7 @@ describe("Teams source-bound inline image resources", () => {
       );
       get.mockRejectedValue(new Error(`PRIVATE ${url}`));
       await expect(rehydrated.fetchData!()).rejects.toThrow(
-        "Teams inline image download unavailable",
+        "Teams 内联图片下载不可用",
       );
     } finally {
       get.mockRestore();

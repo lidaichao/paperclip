@@ -594,7 +594,7 @@ export class TeamsAdapterCompatibilityError extends Error {
   readonly code = "CHAT_ADAPTER_COMPATIBILITY_ERROR";
 
   constructor(detail: string) {
-    super(`The pinned Microsoft Teams adapter is incompatible: ${detail}`);
+    super(`固定版本的 Microsoft Teams 适配器不兼容：${detail}`);
     this.name = "TeamsAdapterCompatibilityError";
   }
 }
@@ -603,7 +603,7 @@ export class DiscordAdapterCompatibilityError extends Error {
   readonly code = "CHAT_ADAPTER_COMPATIBILITY_ERROR";
 
   constructor(detail: string) {
-    super(`The pinned Discord adapter is incompatible: ${detail}`);
+    super(`固定版本的 Discord 适配器不兼容：${detail}`);
     this.name = "DiscordAdapterCompatibilityError";
   }
 }
@@ -612,7 +612,7 @@ export class SlackAdapterCompatibilityError extends Error {
   readonly code = "CHAT_ADAPTER_COMPATIBILITY_ERROR";
 
   constructor(detail: string) {
-    super(`The pinned Slack adapter is incompatible: ${detail}`);
+    super(`固定版本的 Slack 适配器不兼容：${detail}`);
     this.name = "SlackAdapterCompatibilityError";
   }
 }
@@ -724,7 +724,7 @@ function installDiscordNativeCommands(
     typeof sdk.handleSlashCommandEvent !== "function"
   ) {
     throw new DiscordAdapterCompatibilityError(
-      "awaited native command dispatch is unavailable",
+      "等待原生命令分发的能力不可用",
     );
   }
   const original = discord.handleGatewayInteraction.bind(discord);
@@ -735,9 +735,9 @@ function installDiscordNativeCommands(
   const snowflake = (value: unknown): value is string =>
     typeof value === "string" && /^[1-9][0-9]{16,19}$/.test(value);
   const denied =
-    "This command is not available here. Open the Paperclip task or ask an operator to check your chat access.";
+    "此处无法使用该命令。请打开 Alice 任务，或让操作员检查你的聊天访问权限。";
   const unconfirmed =
-    "This command could not be confirmed. Check the Paperclip task before trying again.";
+    "无法确认该命令。请检查 Alice 任务后再重试。";
   discord.handleGatewayInteraction = async (interaction) => {
     if (!interaction.isChatInputCommand()) return await original(interaction);
     const startedAt = Date.now();
@@ -881,17 +881,17 @@ function assertDiscordAdapterCompatibility(adapter: Adapter, chat: Chat): void {
   const discord = adapter as unknown as DiscordAdapterInternals;
   if (discord.paperclipCompatibilityRevision !== "paperclip-discord-v6") {
     throw new DiscordAdapterCompatibilityError(
-      "Paperclip patch revision paperclip-discord-v6 is unavailable",
+      "Alice 补丁版本 paperclip-discord-v6 不可用",
     );
   }
   if (typeof discord.startGatewayListener !== "function") {
     throw new DiscordAdapterCompatibilityError(
-      "startGatewayListener is unavailable",
+      "startGatewayListener 不可用",
     );
   }
   if (typeof discord.ensureRootThread !== "function") {
     throw new DiscordAdapterCompatibilityError(
-      "ensureRootThread is unavailable",
+      "ensureRootThread 不可用",
     );
   }
   const internals = chat as unknown as DiscordChatInternals;
@@ -904,7 +904,7 @@ function assertDiscordAdapterCompatibility(adapter: Adapter, chat: Chat): void {
   ] as const) {
     if (typeof internals[method] !== "function") {
       throw new DiscordAdapterCompatibilityError(
-        `Chat.${method} is unavailable`,
+        `Chat.${method} 不可用`,
       );
     }
   }
@@ -962,7 +962,7 @@ const TEAMS_ACCEPTED_ACTIVITY_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1_000;
 function normalizedTeamsServiceUrl(value: unknown): string {
   if (typeof value !== "string" || value.length > 2048) {
     throw new TeamsServiceUrlValidationError(
-      "Teams destination is missing its verified service URL",
+      "Teams 目标缺少已验证的服务 URL",
     );
   }
   let parsed: URL;
@@ -970,7 +970,7 @@ function normalizedTeamsServiceUrl(value: unknown): string {
     parsed = new URL(value);
   } catch {
     throw new TeamsServiceUrlValidationError(
-      "Teams destination contains an invalid service URL",
+      "Teams 目标包含无效的服务 URL",
     );
   }
   if (
@@ -981,7 +981,7 @@ function normalizedTeamsServiceUrl(value: unknown): string {
     parsed.hash
   ) {
     throw new TeamsServiceUrlValidationError(
-      "Teams destination contains an invalid service URL",
+      "Teams 目标包含无效的服务 URL",
     );
   }
   return parsed.toString().replace(/\/+$/, "");
@@ -1006,7 +1006,7 @@ function trustedTeamsServiceUrl(
     isCanonicalTeamsConnectorPath(rawParsed.pathname);
   if (officialHost || normalized === configuredApiUrl) return normalized;
   throw new TeamsServiceUrlValidationError(
-    "Teams destination contains an untrusted service URL",
+    "Teams 目标包含不受信任的服务 URL",
   );
 }
 
@@ -1027,26 +1027,26 @@ export function scopeMicrosoftTeamsEgress(
 ): Adapter {
   const teams = adapter as unknown as TeamsAdapterInternals;
   if (!teams.app?.api) {
-    throw new TeamsAdapterCompatibilityError("app.api is unavailable");
+    throw new TeamsAdapterCompatibilityError("app.api 不可用");
   }
   if (typeof teams.decodeThreadId !== "function") {
-    throw new TeamsAdapterCompatibilityError("decodeThreadId is unavailable");
+    throw new TeamsAdapterCompatibilityError("decodeThreadId 不可用");
   }
   if (typeof teams.openDM !== "function") {
-    throw new TeamsAdapterCompatibilityError("openDM is unavailable");
+    throw new TeamsAdapterCompatibilityError("openDM 不可用");
   }
   if (typeof teams.cacheUserContext !== "function") {
-    throw new TeamsAdapterCompatibilityError("cacheUserContext is unavailable");
+    throw new TeamsAdapterCompatibilityError("cacheUserContext 不可用");
   }
   if (typeof teams.getIncomingUser !== "function") {
-    throw new TeamsAdapterCompatibilityError("getIncomingUser is unavailable");
+    throw new TeamsAdapterCompatibilityError("getIncomingUser 不可用");
   }
   if (typeof teams.getUser !== "function") {
-    throw new TeamsAdapterCompatibilityError("getUser is unavailable");
+    throw new TeamsAdapterCompatibilityError("getUser 不可用");
   }
   for (const methodName of TEAMS_THREAD_SCOPED_METHODS) {
     if (typeof teams[methodName] !== "function") {
-      throw new TeamsAdapterCompatibilityError(`${methodName} is unavailable`);
+      throw new TeamsAdapterCompatibilityError(`${methodName} 不可用`);
     }
   }
   if (
@@ -1054,13 +1054,13 @@ export function scopeMicrosoftTeamsEgress(
     !("http" in teams.app.api)
   ) {
     throw new TeamsAdapterCompatibilityError(
-      "the API client constructor or HTTP transport is unavailable",
+      "API 客户端构造函数或 HTTP 传输不可用",
     );
   }
   const apiDescriptor = Object.getOwnPropertyDescriptor(teams.app, "api");
   if (apiDescriptor && apiDescriptor.configurable === false) {
     throw new TeamsAdapterCompatibilityError(
-      "app.api cannot be scoped per asynchronous conversation",
+      "app.api 无法按异步会话限定范围",
     );
   }
   const trustedConfiguredApiUrl = configuredApiUrl
@@ -1091,7 +1091,7 @@ export function scopeMicrosoftTeamsEgress(
     const state = teams.chat?.getState();
     if (!state) {
       throw new TeamsAdapterCompatibilityError(
-        "durable accepted-activity state is unavailable",
+        "持久化的已接收活动状态不可用",
       );
     }
     const ttl = TEAMS_ACCEPTED_ACTIVITY_CACHE_TTL_MS;
@@ -1210,7 +1210,7 @@ export function scopeMicrosoftTeamsEgress(
     const decoded = teams.decodeThreadId!(threadId);
     if (typeof decoded.conversationId !== "string" || !decoded.conversationId) {
       throw new TeamsServiceUrlValidationError(
-        "Teams destination is missing its conversation identity",
+        "Teams 目标缺少会话标识",
       );
     }
     const persistedServiceUrl = await teams.chat
@@ -1222,7 +1222,7 @@ export function scopeMicrosoftTeamsEgress(
       decoded.serviceUrl == null
     ) {
       throw new TeamsServiceUrlValidationError(
-        "Teams file destination is missing its verified route",
+        "Teams 文件目标缺少已验证的路由",
       );
     }
     return await withServiceUrl(
@@ -1237,7 +1237,7 @@ export function scopeMicrosoftTeamsEgress(
       typeof teams.app.on !== "function"
     ) {
       throw new TeamsAdapterCompatibilityError(
-        "file-consent App hooks are unavailable",
+        "文件授权应用钩子不可用",
       );
     }
     teams.paperclipSendFileCard = async (threadId, kind, input) => {
@@ -1248,7 +1248,7 @@ export function scopeMicrosoftTeamsEgress(
             ? parseTeamsUploadedFileCard(input)
             : null;
       if (!card)
-        throw new TeamsAdapterCompatibilityError("invalid file-card shape");
+        throw new TeamsAdapterCompatibilityError("文件卡结构无效");
       const decoded = teams.decodeThreadId!(threadId);
       // Never infer personal scope from a missing type or conversation prefix.
       if (
@@ -1260,7 +1260,7 @@ export function scopeMicrosoftTeamsEgress(
         /;messageid=/i.test(decoded.conversationId)
       ) {
         throw new TeamsServiceUrlValidationError(
-          "Teams file cards require an exact personal conversation",
+          "Teams 文件卡需要精确匹配的个人会话",
         );
       }
       return await withThreadServiceUrl(
@@ -1278,7 +1278,7 @@ export function scopeMicrosoftTeamsEgress(
           } catch {
             // Provider errors may contain private card contexts. No implicit
             // retry: an uncertain POST remains caller-owned durable evidence.
-            throw new Error("Teams file-card send result is unknown");
+            throw new Error("Teams 文件卡发送结果未知");
           }
           if (
             !isRecord(result) ||
@@ -1287,7 +1287,7 @@ export function scopeMicrosoftTeamsEgress(
             result.id.length > 1024 ||
             /[\x00-\x20\x7f]/.test(result.id)
           ) {
-            throw new Error("Teams file-card send receipt is unproven");
+            throw new Error("Teams 文件卡发送回执尚未确认");
           }
           return { id: result.id };
         },
@@ -1303,7 +1303,7 @@ export function scopeMicrosoftTeamsEgress(
     const decoded = teams.decodeThreadId!(threadId);
     if (typeof decoded.conversationId !== "string" || !decoded.conversationId) {
       throw new TeamsServiceUrlValidationError(
-        "Teams destination is missing its conversation identity",
+        "Teams 目标缺少会话标识",
       );
     }
     const serviceUrl = trustedTeamsServiceUrl(
@@ -1313,7 +1313,7 @@ export function scopeMicrosoftTeamsEgress(
     const state = teams.chat?.getState();
     if (!state) {
       throw new TeamsAdapterCompatibilityError(
-        "durable route state is unavailable",
+        "持久化路由状态不可用",
       );
     }
     await state.set(
@@ -1356,7 +1356,7 @@ function createProviderAdapter(
 ): Adapter {
   const resolvedLogger = adapterLogger(logger);
   switch (config.provider) {
-    case "imessage-photon": throw new Error("Photon adapter requires scoped persistence");
+    case "imessage-photon": throw new Error("Photon 适配器需要限定范围的持久化");
     case "slack": {
       const adapterConfig: SlackAdapterConfig = {
         ...config.credentials,
@@ -1408,7 +1408,7 @@ function createProviderAdapter(
         let rejectOnAbort!: () => void;
         const aborted = new Promise<never>((_resolve, reject) => {
           rejectOnAbort = () =>
-            reject(signal.reason ?? new Error("GitHub API request timed out"));
+            reject(signal.reason ?? new Error("GitHub API 请求超时"));
           if (signal.aborted) rejectOnAbort();
           else signal.addEventListener("abort", rejectOnAbort, { once: true });
         });
@@ -1509,7 +1509,7 @@ function createProviderAdapter(
         typeof parser.createAttachment !== "function" ||
         typeof parser.parseTelegramMessage !== "function"
       ) {
-        throw new Error("Telegram attachment parser contract is unavailable");
+        throw new Error("Telegram 附件解析器契约不可用");
       }
       const extractAttachments = parser.extractAttachments.bind(adapter);
       const create = (
@@ -1926,7 +1926,7 @@ function registerCallbacks(
           // Resolving would tell the Gateway adapter to acknowledge a click
           // that never reached Paperclip's scoped action authorization.
           throw Object.assign(
-            new Error("Discord Gateway action is outside the configured guild"),
+            new Error("Discord 网关操作不属于已配置的服务器"),
             { code: "chat_discord_gateway_action_rejected" },
           );
         }
@@ -2117,7 +2117,7 @@ export class ChatSdkEndpointRuntime {
       };
       if (typeof adapter.processUpdate !== "function") {
         throw new Error(
-          "Telegram authenticated dispatch contract is unavailable",
+          "Telegram 身份验证分发契约不可用",
         );
       }
       const processUpdate = adapter.processUpdate.bind(this.adapter);
@@ -2244,7 +2244,7 @@ export class ChatSdkEndpointRuntime {
         options.providerConfig.provider !== "microsoft-teams"
       ) {
         throw new TeamsAdapterCompatibilityError(
-          "file-consent requires a configured tenant and App hook",
+          "文件授权需要已配置的租户和应用钩子",
         );
       }
       const callback = options.callbacks.onTeamsFileConsent!;
@@ -2284,7 +2284,7 @@ export class ChatSdkEndpointRuntime {
     if (this.adapter instanceof PhotonChatAdapter && this.discordGatewayEnabled && !this.photonReceiver) {
       const options = this.runtimeOptions;
       const config = options.providerConfig as ResolvedPhotonChatConfig;
-      if (!options.callbacks.onPhotonCheckpoint || !options.callbacks.onPhotonAssertOwned || !options.callbacks.onPhotonEvent || !options.callbacks.onPhotonFailure) throw new Error("Photon receiver requires durable admission callbacks");
+      if (!options.callbacks.onPhotonCheckpoint || !options.callbacks.onPhotonAssertOwned || !options.callbacks.onPhotonEvent || !options.callbacks.onPhotonFailure) throw new Error("Photon 接收器需要持久化准入回调");
       this.adapter.typingGuard = async (activeThreadId) => { this.assertNotRetired(); await options.callbacks.onPhotonAssertOwned!(activeThreadId); };
       this.photonReceiver = new PhotonReceiver({ client: this.adapter.client, state: this.adapter.state,
         lineId: config.credentials.lineId, intakeAfter: config.intakeAfter, allocation: config.credentials.allocation,
@@ -2308,7 +2308,7 @@ export class ChatSdkEndpointRuntime {
   }
 
   private assertNotRetired(): void {
-    if (this.retired) throw new Error("Chat SDK endpoint runtime was retired");
+    if (this.retired) throw new Error("聊天 SDK 端点运行时已停用");
   }
 
   private startDiscordGateway(): void {
@@ -2387,7 +2387,7 @@ export class ChatSdkEndpointRuntime {
     const handler = this.chat.webhooks[this.sdkAdapterKey];
     if (!handler) {
       throw new Error(
-        `Chat SDK webhook handler is unavailable for ${this.provider}`,
+        `${this.provider} 的聊天 SDK Webhook 处理程序不可用`,
       );
     }
     const providerUpdateId =
@@ -2406,7 +2406,7 @@ export class ChatSdkEndpointRuntime {
       responseDeadlineAt ?? Number.POSITIVE_INFINITY,
     );
     const retryableTimeout = () =>
-      new Response("Paperclip could not durably accept the event in time", {
+      new Response("Alice 未能及时持久化接收该事件", {
         status: 503,
         headers: {
           "content-type": "text/plain; charset=utf-8",
@@ -2467,7 +2467,7 @@ export class ChatSdkEndpointRuntime {
           return retryableTimeout();
       }
       if (response.ok && attempt.callbackError !== undefined) {
-        return new Response("Paperclip could not durably accept the event", {
+        return new Response("Alice 未能持久化接收该事件", {
           status: 503,
           headers: {
             "content-type": "text/plain; charset=utf-8",
@@ -2501,7 +2501,7 @@ export class ChatSdkEndpointRuntime {
       !telegramPrivateDraftDestination(threadId) ||
       adapter.paperclipDraftStopVersion !== 1
     ) {
-      throw new Error("Telegram durable draft transport is unavailable");
+      throw new Error("Telegram 持久化草稿传输不可用");
     }
     return adapter.stream(threadId, textStream, {
       paperclipDraftControl: control,
@@ -2523,7 +2523,7 @@ export class ChatSdkEndpointRuntime {
   ): Promise<{ id: string }> {
     if (this.provider !== "slack") {
       throw new SlackAdapterCompatibilityError(
-        "file publication receipt capture was called for a non-Slack endpoint",
+        "对非 Slack 端点调用了文件发布回执捕获",
       );
     }
     const slack = this.adapter as unknown as SlackAdapterInternals;
@@ -2532,7 +2532,7 @@ export class ChatSdkEndpointRuntime {
       typeof slack.paperclipResolveFileUploadReceipt !== "function"
     ) {
       throw new SlackAdapterCompatibilityError(
-        "file publication receipt capture is unavailable",
+        "文件发布回执捕获不可用",
       );
     }
     return await slack.paperclipFileUploadReceiptContext.run(
@@ -2548,13 +2548,13 @@ export class ChatSdkEndpointRuntime {
   ): Promise<string | null> {
     if (this.provider !== "slack") {
       throw new SlackAdapterCompatibilityError(
-        "file publication receipt lookup was called for a non-Slack endpoint",
+        "对非 Slack 端点调用了文件发布回执查询",
       );
     }
     const slack = this.adapter as unknown as SlackAdapterInternals;
     if (typeof slack.paperclipResolveFileUploadReceipt !== "function") {
       throw new SlackAdapterCompatibilityError(
-        "file publication receipt lookup is unavailable",
+        "文件发布回执查询不可用",
       );
     }
     return await slack.paperclipResolveFileUploadReceipt.call(
@@ -2581,7 +2581,7 @@ export class ChatSdkEndpointRuntime {
     const recorder = teams.paperclipRecordThreadServiceUrl;
     if (typeof recorder !== "function") {
       throw new TeamsAdapterCompatibilityError(
-        "durable route recorder is unavailable",
+        "持久化路由记录器不可用",
       );
     }
     await recorder.call(this.adapter, threadId, serviceUrl);
@@ -2589,7 +2589,7 @@ export class ChatSdkEndpointRuntime {
       const acceptedActivityRecorder = teams.paperclipRecordAcceptedActivity;
       if (typeof acceptedActivityRecorder !== "function") {
         throw new TeamsAdapterCompatibilityError(
-          "durable accepted-activity recorder is unavailable",
+          "持久化的已接收活动记录器不可用",
         );
       }
       await acceptedActivityRecorder.call(this.adapter, raw);
@@ -2621,7 +2621,7 @@ export class ChatSdkEndpointRuntime {
       typeof teams.paperclipSendFileCard !== "function"
     ) {
       throw new TeamsAdapterCompatibilityError(
-        "file-consent runtime is not enabled",
+        "文件授权运行时未启用",
       );
     }
     return await teams.paperclipSendFileCard(threadId, kind, card);
@@ -2654,7 +2654,7 @@ export class ChatSdkEndpointRuntime {
   }): Promise<void> {
     if (this.provider !== "discord") {
       throw new DiscordAdapterCompatibilityError(
-        "ensureDiscordRootThread was called for a non-Discord endpoint",
+        "对非 Discord 端点调用了 ensureDiscordRootThread",
       );
     }
     const discord = this.adapter as unknown as DiscordAdapterInternals & {
@@ -2666,7 +2666,7 @@ export class ChatSdkEndpointRuntime {
     };
     if (typeof discord.ensureRootThread !== "function") {
       throw new DiscordAdapterCompatibilityError(
-        "ensureRootThread is unavailable",
+        "ensureRootThread 不可用",
       );
     }
     await discord.ensureRootThread.call(
@@ -2813,7 +2813,7 @@ export class ChatSdkEndpointRuntime {
     fetchImpl?: typeof globalThis.fetch,
   ) {
     if (this.provider !== "github" || !this.githubReceiptApp)
-      throw new Error("GitHub receipt runtime unavailable");
+      throw new Error("GitHub 回执运行时不可用");
     return applyGitHubReceiptReaction(
       this.adapter,
       this.githubReceiptApp.appId,
@@ -2829,7 +2829,7 @@ export class ChatSdkEndpointRuntime {
     fetchImpl?: typeof globalThis.fetch,
   ): Promise<void> {
     if (this.provider !== "slack" || !this.slackReceiptBotToken)
-      throw new Error("Slack receipt runtime unavailable");
+      throw new Error("Slack 回执运行时不可用");
     await applySlackReceiptReaction(
       { ...input, botToken: this.slackReceiptBotToken },
       fetchImpl,
@@ -2848,7 +2848,7 @@ export class ChatSdkEndpointRuntime {
       receipt.endpointId !== this.endpointId
     ) {
       throw Object.assign(
-        new Error("Telegram private response runtime unavailable"),
+        new Error("Telegram 私密响应运行时不可用"),
         { code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED" },
       );
     }
@@ -2865,7 +2865,7 @@ export class ChatSdkEndpointRuntime {
   ): Promise<Buffer> {
     const fetcher = this.teamsInlineImageFetchers.get(attachment);
     if (!fetcher || signal.aborted)
-      throw new Error("Teams inline image download unavailable");
+      throw new Error("Teams 内联图片下载不可用");
     return await fetcher(signal);
   }
 
@@ -2974,7 +2974,7 @@ export class ChatSdkEndpointRuntime {
         let rejectDeadline!: () => void;
         const deadline = new Promise<never>((_resolve, reject) => {
           rejectDeadline = () =>
-            reject(new Error("Teams inline image download unavailable"));
+            reject(new Error("Teams 内联图片下载不可用"));
         });
         signal.addEventListener("abort", rejectDeadline, { once: true });
         const timer = setTimeout(() => controller.abort(), 10_000);
@@ -3015,14 +3015,14 @@ export class ChatSdkEndpointRuntime {
               !ArrayBuffer.isView(result.data)) ||
             result.data.byteLength > MAX_ATTACHMENT_BYTES
           )
-            throw new Error("Image exceeds attachment bound");
+            throw new Error("图片超过附件大小限制");
           return Buffer.from(
             result.data instanceof ArrayBuffer
               ? new Uint8Array(result.data)
               : result.data,
           );
         } catch {
-          throw new Error("Teams inline image download unavailable");
+          throw new Error("Teams 内联图片下载不可用");
         } finally {
           clearTimeout(timer);
           signal.removeEventListener("abort", rejectDeadline);
@@ -3163,7 +3163,7 @@ export class ChatSdkEndpointNotRegisteredError extends Error {
   readonly endpointId: string;
 
   constructor(endpointId: string) {
-    super(`No Chat SDK runtime is registered for endpoint ${endpointId}`);
+    super(`端点 ${endpointId} 未注册聊天 SDK 运行时`);
     this.name = "ChatSdkEndpointNotRegisteredError";
     this.endpointId = endpointId;
   }
@@ -3233,10 +3233,10 @@ export class ChatSdkRuntime {
     endpointId: string,
     generation: number,
   ): void {
-    if (this.shuttingDown) throw new Error("Chat SDK runtime is shutting down");
+    if (this.shuttingDown) throw new Error("聊天 SDK 运行时正在关闭");
     if (this.replacementGenerations.get(endpointId) !== generation) {
       throw new Error(
-        `Chat SDK runtime replacement for endpoint ${endpointId} was superseded`,
+        `端点 ${endpointId} 的聊天 SDK 运行时替换已被更新的请求取代`,
       );
     }
   }
@@ -3244,7 +3244,7 @@ export class ChatSdkRuntime {
   async replaceEndpoint(
     options: CreateChatSdkEndpointRuntimeOptions,
   ): Promise<ChatSdkEndpointRuntime> {
-    if (this.shuttingDown) throw new Error("Chat SDK runtime is shutting down");
+    if (this.shuttingDown) throw new Error("聊天 SDK 运行时正在关闭");
     const generation = this.nextReplacementGeneration(options.endpointId);
     return await this.enqueueLifecycle(options.endpointId, async () => {
       this.assertReplacementCurrent(options.endpointId, generation);

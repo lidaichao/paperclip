@@ -273,7 +273,7 @@ describe("chat provider inventory", () => {
         ) as unknown as typeof globalThis.fetch,
       }),
     ).rejects.toThrow(
-      "active installation has not granted the required access for: issues",
+      "当前安装实例未授予以下必需权限：issues",
     );
   });
 
@@ -285,7 +285,7 @@ describe("chat provider inventory", () => {
           response([]),
         ) as unknown as typeof globalThis.fetch,
       }),
-    ).rejects.toThrow("install this GitHub App");
+    ).rejects.toThrow("请先将此 GitHub 应用安装到所选仓库");
     await expect(
       discoverDedicatedGitHubAppInstallation({
         appJwt: "jwt",
@@ -293,7 +293,7 @@ describe("chat provider inventory", () => {
           response([{ id: 1 }, { id: 2 }]),
         ) as unknown as typeof globalThis.fetch,
       }),
-    ).rejects.toThrow("exactly one active installation");
+    ).rejects.toThrow("只能有一个有效安装实例");
   });
 
   it("fails closed when either provider rejects inventory", async () => {
@@ -304,7 +304,7 @@ describe("chat provider inventory", () => {
           response({ ok: false, error: "invalid_auth" }),
         ) as unknown as typeof globalThis.fetch,
       }),
-    ).rejects.toThrow("Slack inventory failed: invalid_auth");
+    ).rejects.toThrow("Slack 清单获取失败：invalid_auth");
     await expect(
       listGitHubInstallationRepositories({
         appJwt: "bad",
@@ -313,6 +313,6 @@ describe("chat provider inventory", () => {
           response({ message: "Not Found" }, 404),
         ) as unknown as typeof globalThis.fetch,
       }),
-    ).rejects.toThrow("GitHub inventory failed: Not Found");
+    ).rejects.toThrow("GitHub 清单获取失败：Not Found");
   });
 });

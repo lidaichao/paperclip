@@ -46,14 +46,14 @@ async function jsonResponse<T>(
   try {
     body = await response.json();
   } catch {
-    throw new Error(`${provider} returned an unreadable inventory response`);
+    throw new Error(`${provider} 返回了无法读取的清单响应`);
   }
   if (!response.ok) {
     const message =
       body && typeof body === "object" && "message" in body
         ? String((body as { message?: unknown }).message)
         : String(response.status);
-    throw new Error(`${provider} inventory failed: ${message}`);
+    throw new Error(`${provider} 清单获取失败：${message}`);
   }
   return body as T;
 }
@@ -90,7 +90,7 @@ export async function listSlackBotChannels(input: {
     }>(response, "Slack");
     if (!body.ok)
       throw new Error(
-        `Slack inventory failed: ${body.error ?? "unknown error"}`,
+        `Slack 清单获取失败：${body.error ?? "未知错误"}`,
       );
     for (const channel of body.channels ?? []) {
       if (!channel.id || !channel.is_member || channel.is_archived) continue;
@@ -137,7 +137,7 @@ export async function getSlackBotChannel(input: {
     };
   }>(response, "Slack");
   if (!body.ok) {
-    throw new Error(`Slack inventory failed: ${body.error ?? "unknown error"}`);
+    throw new Error(`Slack 清单获取失败：${body.error ?? "未知错误"}`);
   }
   const channel = body.channel;
   if (
@@ -186,7 +186,7 @@ export async function listGitHubInstallationRepositories(input: {
     "GitHub",
   );
   if (!tokenBody.token)
-    throw new Error("GitHub inventory failed: installation token was missing");
+    throw new Error("GitHub 清单获取失败：缺少安装令牌");
 
   const resources: ChatProviderResourceInventoryItem[] = [];
   let page = 1;
@@ -296,12 +296,12 @@ export async function discoverDedicatedGitHubAppInstallation(input: {
   );
   if (active.length === 0) {
     throw new Error(
-      "GitHub inventory failed: install this GitHub App on the selected repositories first",
+      "GitHub 清单获取失败：请先将此 GitHub 应用安装到所选仓库",
     );
   }
   if (active.length !== 1) {
     throw new Error(
-      "GitHub inventory failed: this chat connection requires a dedicated GitHub App with exactly one active installation",
+      "GitHub 清单获取失败：此聊天连接需要一个专用 GitHub 应用，且只能有一个有效安装实例",
     );
   }
   const installation = active[0]!;
@@ -315,7 +315,7 @@ export async function discoverDedicatedGitHubAppInstallation(input: {
     .map(([permission]) => permission);
   if (missingPermissions.length > 0) {
     throw new Error(
-      `GitHub inventory failed: the active installation has not granted the required access for: ${missingPermissions.join(", ")}. Approve the GitHub App permission update, then retry`,
+      `GitHub 清单获取失败：当前安装实例未授予以下必需权限：${missingPermissions.join(", ")}。请批准 GitHub 应用权限更新后重试`,
     );
   }
   return {

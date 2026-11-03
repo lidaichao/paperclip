@@ -73,12 +73,12 @@ function fixture(now: Date = new Date("2026-09-04T12:00:00.000Z")) {
 describe("PaperclipChatSdkStateAdapter", () => {
   it("requires Chat SDK lifecycle connection before state operations", async () => {
     const { state } = fixture();
-    await expect(state.get("key")).rejects.toThrow("is not connected");
+    await expect(state.get("key")).rejects.toThrow("尚未连接");
     await state.connect();
     await state.set("key", "value");
     expect(await state.get("key")).toBe("value");
     await state.disconnect();
-    await expect(state.get("key")).rejects.toThrow("is not connected");
+    await expect(state.get("key")).rejects.toThrow("尚未连接");
   });
 
   it("scopes and hashes persistent keys and wraps values in a versioned envelope", async () => {
@@ -182,7 +182,7 @@ describe("PaperclipChatSdkStateAdapter", () => {
     });
     await state.connect();
     await expect(state.set("large", "x".repeat(100))).rejects.toThrow(
-      "byte limit",
+      "字节限制",
     );
 
     const valid = createPaperclipChatSdkState({
@@ -196,7 +196,7 @@ describe("PaperclipChatSdkStateAdapter", () => {
     const record = persistence.records.get(`company-1\0endpoint-1\0${key}`)!;
     record.value = { value: "missing schema" };
     await expect(valid.get("corrupt")).rejects.toThrow(
-      "Invalid Chat SDK state envelope",
+      "Chat SDK cache 状态封装无效",
     );
   });
 });

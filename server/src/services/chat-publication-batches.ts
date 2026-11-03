@@ -57,7 +57,7 @@ export function projectChatFileTransfer(
     return {
       ...publication,
       state: "delivery_unknown",
-      redactedError: "File delivery state needs operator review.",
+      redactedError: "文件投递状态需要操作员复核。",
     };
   }
   const phase = transfer.phase as ChatFileTransferPhase;
@@ -84,7 +84,7 @@ export function projectChatFileTransfer(
     state: missingReceipt ? "delivery_unknown" : stateByPhase[phase],
     fileTransfer,
     ...(missingReceipt
-      ? { redactedError: "File delivery receipt needs operator review." }
+      ? { redactedError: "文件投递回执需要操作员复核。" }
       : {}),
   };
 }
@@ -93,7 +93,7 @@ export function projectChatFileTransfer(
 export function projectChatPublicationBatch(
   parts: ChatPublicationSummary[],
 ): ChatPublicationBatchStatus {
-  if (!parts.length) throw new Error("A publication batch cannot be empty");
+  if (!parts.length) throw new Error("发布批次不能为空");
   const consistent =
     new Set(parts.map((part) => part.id)).size === parts.length &&
     parts.every(

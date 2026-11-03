@@ -284,7 +284,7 @@ describe("Discord native command Gateway boundary", () => {
     expect(f.post).toHaveBeenCalledOnce();
     expect(f.patch).toHaveBeenCalledOnce();
     expect(JSON.stringify(f.patch.mock.calls)).toContain(
-      "could not be confirmed",
+      "无法确认该命令",
     );
     expect(JSON.stringify(f.patch.mock.calls)).not.toContain(
       "sensitive-bootstrap-error",
@@ -479,7 +479,7 @@ describe("Discord native command Gateway boundary", () => {
       expect(f.post).toHaveBeenCalledOnce();
       expect(f.patch).toHaveBeenCalledOnce();
       expect(JSON.stringify(f.patch.mock.calls)).toContain(
-        "not available here",
+        "此处无法使用该命令",
       );
     },
   );
@@ -496,7 +496,7 @@ describe("Discord native command Gateway boundary", () => {
     const f = await setup(callback);
     await f.adapter.handleGatewayInteraction(f.command());
     expect(JSON.stringify(f.patch.mock.calls)).toContain(
-      "could not be confirmed",
+      "无法确认该命令",
     );
   });
 
@@ -511,7 +511,7 @@ describe("Discord native command Gateway boundary", () => {
     expect(f.patch.mock.calls[0]?.[1]).toMatchObject({
       body: {
         content:
-          "This command is not available here. Open the Paperclip task or ask an operator to check your chat access.",
+          "此处无法使用该命令。请打开 Alice 任务，或让操作员检查你的聊天访问权限。",
         allowed_mentions: { parse: [] },
       },
     });
