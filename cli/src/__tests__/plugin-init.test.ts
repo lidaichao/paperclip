@@ -209,8 +209,8 @@ describe("plugin target diagnostics", () => {
     });
 
     expect(rendered).toContain("http://127.0.0.1:3100");
-    expect(rendered).toContain("version=9.9.9");
-    expect(rendered).toContain("mode=local_trusted");
+    expect(rendered).toContain("版本=9.9.9");
+    expect(rendered).toContain("模式=local_trusted");
   });
 
   it("formats unreachable diagnostics with a remediation hint", () => {
@@ -220,7 +220,7 @@ describe("plugin target diagnostics", () => {
       error: "ECONNREFUSED",
     });
 
-    expect(rendered).toContain("unreachable");
+    expect(rendered).toContain("不可访问");
     expect(rendered).toContain("--api-base");
     expect(rendered).toContain("PAPERCLIP_API_URL");
   });
