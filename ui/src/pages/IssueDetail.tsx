@@ -423,9 +423,13 @@ function isPlanConfirmationInteraction(
 function buildPlanDecisionResponseText(
   interaction: RequestConfirmationInteraction,
 ) {
-  if (interaction.status === "accepted") return "Approved plan";
+  if (interaction.status === "accepted") {
+    return l10n("local.approved_plan_0cd00001");
+  }
   const reason = interaction.result?.reason?.trim();
-  return reason ? `Requested changes\n\n${reason}` : "Requested changes";
+  return reason
+    ? l10n("local.requested_changes_with_reason_0cd00003", { v0: reason })
+    : l10n("local.requested_changes_0cd00002");
 }
 
 const FEEDBACK_TERMS_URL =
@@ -436,13 +440,15 @@ const JUMP_TO_LATEST_MAX_COMMENT_PAGES = 10;
 function treeControlPreviewErrorCopy(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403)
-      return "Only board users can preview subtree controls.";
+      return l10n("local.only_board_users_preview_subtree_controls_0cd00004");
     if (error.status === 409)
-      return "Preview is stale because subtree hold state changed. Retry to refresh.";
+      return l10n("local.subtree_preview_stale_retry_0cd00005");
     if (error.status === 422)
-      return "This subtree action is currently invalid for the selected tasks.";
+      return l10n("local.subtree_action_invalid_for_tasks_0cd00006");
   }
-  return error instanceof Error ? error.message : "Unable to load preview.";
+  return error instanceof Error
+    ? error.message
+    : l10n("local.unable_to_load_preview_0cd00007");
 }
 
 export function canBoardResolveRecoveryAction(
@@ -667,18 +673,20 @@ function ActorIdentity({
     const agent = agentMap.get(id);
     return <AgentIdentity agent={agent ?? { id, name: id.slice(0, 8) }} size="sm" />;
   }
-  if (evt.actorType === "system") return <Identity name="System" size="sm" />;
+  if (evt.actorType === "system") {
+    return <Identity name={l10n("local.system_6725e7bb")} size="sm" />;
+  }
   if (evt.actorType === "user") {
     const profile = userProfileMap?.get(id);
     return (
       <Identity
-        name={profile?.label ?? "Board"}
+        name={profile?.label ?? l10n("local.board_4816cbfd")}
         avatarUrl={profile?.image}
         size="sm"
       />
     );
   }
-  return <Identity name={id || "Unknown"} size="sm" />;
+  return <Identity name={id || l10n("local.unknown_b23a6a84")} size="sm" />;
 }
 
 export type AttributionActor = {
@@ -792,7 +800,7 @@ function IssueAttributionByline({
           name:
             formatUserLabel(issue.assigneeUserId, userLabelMap) ??
             userProfileMap.get(issue.assigneeUserId)?.label ??
-            "User",
+            l10n("local.user_04f8996d"),
           avatarUrl: userProfileMap.get(issue.assigneeUserId)?.image ?? null,
         }
       : null;
@@ -813,7 +821,7 @@ function IssueAttributionByline({
           name:
             formatUserLabel(originatingActor.id, userLabelMap) ??
             userProfileMap.get(originatingActor.id)?.label ??
-            "User",
+            l10n("local.user_04f8996d"),
           avatarUrl: userProfileMap.get(originatingActor.id)?.image ?? null,
         }
     : null;
@@ -1558,7 +1566,9 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
   const retryFailedRun = useMutation({
     mutationFn: async (runId: string) => {
       const failedRun = resolvedLinkedRuns.find((run) => run.runId === runId);
-      if (!failedRun) throw new Error("Failed run is no longer available.");
+      if (!failedRun) {
+        throw new Error(l10n("local.failed_run_no_longer_available_0cd00008"));
+      }
       return agentsApi.retryFailedRun(
         failedRun.agentId,
         failedRun.runId,
@@ -2077,9 +2087,7 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
     async (commentId: string, body: string, revision: string) => {
       const queueId = effectiveQueuedCommentQueue?.queueId;
       if (!queueId)
-        throw new Error(
-          "The queued message is awaiting server acknowledgement.",
-        );
+        throw new Error(l10n("local.queued_message_awaiting_ack_0cd00009"));
       try {
         storeQueuedCommentQueue(
           await issuesApi.editQueuedComment(issueId, commentId, {
@@ -2108,9 +2116,7 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
     async (orderedCommentIds: string[], revision: string) => {
       const queueId = effectiveQueuedCommentQueue?.queueId;
       if (!queueId)
-        throw new Error(
-          "The queued messages are awaiting server acknowledgement.",
-        );
+        throw new Error(l10n("local.queued_messages_awaiting_ack_0cd00010"));
       try {
         storeQueuedCommentQueue(
           await issuesApi.reorderQueuedComments(issueId, {
@@ -2136,9 +2142,7 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
       const queueId = effectiveQueuedCommentQueue?.queueId;
       const targetRunId = effectiveQueuedCommentQueue?.targetRunId;
       if (!queueId || !targetRunId)
-        throw new Error(
-          "The queued message no longer has an active run target.",
-        );
+        throw new Error(l10n("local.queued_message_no_active_run_0cd00011"));
       try {
         const nextQueue = await issuesApi.steerQueuedComment(
           issueId,
@@ -2202,9 +2206,7 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
     async (commentId: string, revision: string) => {
       const queueId = effectiveQueuedCommentQueue?.queueId;
       if (!queueId)
-        throw new Error(
-          "The queued message is awaiting server acknowledgement.",
-        );
+        throw new Error(l10n("local.queued_message_awaiting_ack_0cd00009"));
       try {
         storeQueuedCommentQueue(
           await issuesApi.discardQueuedComment(issueId, commentId, {
@@ -4127,9 +4129,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       if (mode === "resume") {
         const pauseHoldId = treeControlState?.activePauseHold?.holdId;
         if (!pauseHoldId) {
-          throw new Error(
-            "No active subtree pause hold is available to resume.",
-          );
+          throw new Error(l10n("local.no_active_subtree_pause_hold_0cd00012"));
         }
         const releasedHold = await issuesApi.releaseTreeHold(
           issueId!,
@@ -4177,7 +4177,14 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     onSuccess: (result) => {
       if (result.kind === "release" && result.hold.wakeFailures?.length) {
         setTreeControlWakeWarning(
-          `Pause released, but ${result.hold.wakeFailures.length} ${result.hold.wakeFailures.length === 1 ? "task" : "tasks"} could not start. ${result.hold.wakeFailures[0].message} Check the affected agents and try starting them again.`,
+          result.hold.wakeFailures.length === 1
+            ? l10n("local.pause_released_one_task_failed_0cd00013", {
+                v0: result.hold.wakeFailures[0].message,
+              })
+            : l10n("local.pause_released_tasks_failed_0cd00014", {
+                v0: result.hold.wakeFailures.length,
+                v1: result.hold.wakeFailures[0].message,
+              }),
         );
       }
       setTreeControlOpen(false);
@@ -5213,7 +5220,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         return issuesApi.uploadAttachment(conversation.agent.companyId, await resolveWritableIssueId(), file);
       }
       if (!loadedIssue)
-        throw new Error("Task details are still loading. Please try again.");
+        throw new Error(l10n("local.task_details_still_loading_0cd00015"));
       return issuesApi.uploadAttachment(
         loadedIssue.companyId,
         loadedIssue.id,
@@ -5229,7 +5236,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       if (!issueId) void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(result.issueId) });
     },
     onError: (err) => {
-      setAttachmentError(err instanceof Error ? err.message : "Upload failed");
+      setAttachmentError(
+        err instanceof Error ? err.message : l10n("local.upload_failed_6efc5d27"),
+      );
     },
   });
 
@@ -5259,7 +5268,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     },
     onError: (err) => {
       setAttachmentError(
-        err instanceof Error ? err.message : "Document import failed",
+        err instanceof Error
+          ? err.message
+          : l10n("local.document_import_failed_0cd00016"),
       );
     },
   });
@@ -5275,7 +5286,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       invalidateIssueDetail();
     },
     onError: (err) => {
-      setAttachmentError(err instanceof Error ? err.message : "Delete failed");
+      setAttachmentError(
+        err instanceof Error ? err.message : l10n("local.delete_failed_8727e2ba"),
+      );
     },
   });
 
@@ -6243,7 +6256,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       {
         id: "cancel",
         label: l10n("local.stop_and_cancel_d1fcb882"),
-        pendingLabel: "Stopping and cancelling...",
+        pendingLabel: l10n("local.stopping_and_cancelling_0cd00017"),
         isPending:
           stopAndFinalizeRun.isPending &&
           stopAndFinalizeRun.variables?.status === "cancelled",
@@ -6257,7 +6270,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
       {
         id: "done",
         label: l10n("local.stop_and_done_787e84f6"),
-        pendingLabel: "Stopping and marking done...",
+        pendingLabel: l10n("local.stopping_and_marking_done_0cd00018"),
         isPending:
           stopAndFinalizeRun.isPending &&
           stopAndFinalizeRun.variables?.status === "done",
@@ -6346,7 +6359,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
   const issueIdForResume = issue?.id ?? null;
   const resumeAssigneeAgent = useMutation({
     mutationFn: async () => {
-      if (!issueAssigneeAgentIdForResume) throw new Error("No assignee agent");
+      if (!issueAssigneeAgentIdForResume) {
+        throw new Error(l10n("local.no_assignee_agent_0cd00019"));
+      }
       await agentsApi.resume(
         issueAssigneeAgentIdForResume,
         issueCompanyIdForResume ?? undefined,
@@ -6365,7 +6380,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
             issueAssigneeAgentIdForResume,
             {
               source: "assignment",
-              reason: "Assignee resumed from the task page",
+              reason: l10n("local.assignee_resumed_from_task_page_0cd00020"),
               payload: {
                 issueId: issueIdForResume,
                 mutation: "assignee_resumed",
@@ -6447,14 +6462,22 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     mutationFn: async (
       request: import("../components/IssueRecoveryActionCard").RecoveryReissueRequest,
     ) => {
-      if (!issue) throw new Error("Task is not loaded yet.");
+      if (!issue) throw new Error(l10n("local.task_not_loaded_yet_0cd00021"));
       const sourceLabel = issue.identifier ?? l10n("local.the_stalled_task_701f1d79");
       const descriptionLines = [
-        `Re-issued from ${sourceLabel} on an isolated git worktree after a workspace branch divergence.`,
+        l10n("local.reissued_from_isolated_after_divergence_0cd00022", {
+          v0: sourceLabel,
+        }),
         "",
-        `- Base ref (live branch): \`${request.baseRef}\``,
+        l10n("local.base_ref_live_branch_markdown_0cd00023", {
+          v0: request.baseRef,
+        }),
         ...(request.expectedBranch
-          ? [`- Recorded branch: \`${request.expectedBranch}\``]
+          ? [
+              l10n("local.recorded_branch_markdown_0cd00024", {
+                v0: request.expectedBranch,
+              }),
+            ]
           : []),
         "",
         "---",
@@ -6462,7 +6485,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         issue.description ?? "",
       ];
       return issuesApi.create(issue.companyId, {
-        title: `Re-issue (isolated): ${issue.title ?? sourceLabel}`,
+        title: l10n("local.reissue_isolated_title_0cd00025", {
+          v0: issue.title ?? sourceLabel,
+        }),
         description: descriptionLines.join("\n"),
         priority: issue.priority,
         projectId: issue.projectId ?? null,
@@ -6539,12 +6564,12 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
         variables.mode === "quarantine_restore"
           ? {
               title: l10n("local.workspace_repaired_22f46fd2"),
-              body: "Dirty changes were quarantined onto a rescue branch and the recorded branch restored; the task will resume.",
+              body: l10n("local.dirty_changes_quarantined_task_resume_0cd00026"),
               tone: "success",
             }
           : {
               title: l10n("local.workspace_branch_reconciled_a01d3ef7"),
-              body: "The recorded branch now matches the live branch; the task will resume.",
+              body: l10n("local.recorded_branch_matches_task_resume_0cd00027"),
               tone: "success",
             },
       );
@@ -6664,7 +6689,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
     const badges = new Map<string, string>();
     for (const child of childIssues) {
       if (!heldIssueIds.has(child.id)) continue;
-      badges.set(child.id, "Paused");
+      badges.set(child.id, l10n("local.paused_a7a9dc5b"));
     }
     return badges;
   }, [childIssues, heldIssueIds]);
@@ -7700,7 +7725,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                           author: issue.createdByAgentId ? "agent" : "human",
                           authorName: issue.createdByAgentId
                             ? (agentMap.get(issue.createdByAgentId)?.name ??
-                              "Agent")
+                              l10n("local.agent_11b39c93"))
                             : undefined,
                           agent: issue.createdByAgentId ? agentMap.get(issue.createdByAgentId) ?? { id: issue.createdByAgentId } : undefined,
                         agentIcon: issue.createdByAgentId
@@ -7833,7 +7858,14 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                     } : undefined,
                     resumeHref: !activePauseHold.isRoot ? createIssueDetailPath(activePauseHoldRoot?.identifier ?? activePauseHold.rootIssueId) : undefined,
                   } : null}
-                  composerDisabledReason={issue.conversationAgentId && !instanceExperimentalSettings?.enableAgentChat ? "Agent Chat is disabled in Experimental settings." : treeControlStateError ? "Couldn’t check whether this task is paused. Refresh to try again." : null}
+                  composerDisabledReason={
+                    issue.conversationAgentId
+                      && !instanceExperimentalSettings?.enableAgentChat
+                      ? l10n("local.agent_chat_disabled_in_experimental_0cd00028")
+                      : treeControlStateError
+                        ? l10n("local.couldnt_check_task_paused_refresh_0cd00029")
+                        : null
+                  }
                   composerHint={composerHint}
                   queuedCommentReason={queuedCommentReason}
                   onVote={handleCommentVote}

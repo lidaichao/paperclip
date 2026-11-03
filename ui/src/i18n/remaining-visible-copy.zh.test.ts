@@ -227,6 +227,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.template_ready_for_skill_studio_runs_0cc00013).toBe("{{v0}} 已可用于技能工作室运行。");
     expect(messages.no_template_0cc00020).toBe("不使用模板");
     expect(messages.restore_of_version_0cc00033).toBe("恢复自 v{{v0}}");
+    expect(messages.approved_plan_0cd00001).toBe("已批准计划");
+    expect(messages.requested_changes_with_reason_0cd00003).toContain("{{v0}}");
+    expect(messages.queued_message_awaiting_ack_0cd00009).toContain("服务器确认");
+    expect(messages.pause_released_tasks_failed_0cd00014).toContain("{{v0}} 个任务");
+    expect(messages.reissue_isolated_title_0cd00025).toBe("隔离环境重新派发：{{v0}}");
+    expect(messages.agent_chat_disabled_in_experimental_0cd00028).toContain("智能体对话");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
