@@ -128,9 +128,9 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
   async function origin(companyId: string, agentId: string, runId: string) {
     const run = await db.select().from(heartbeatRuns).where(and(eq(heartbeatRuns.id, runId), eq(heartbeatRuns.companyId, companyId), eq(heartbeatRuns.agentId, agentId)))
       .then((rows) => rows[0] ?? null);
-    if (!run) throw forbidden("Decision provenance requires the origin run");
+    if (!run) throw forbidden("决策来源需要关联原始运行");
     const issueId = typeof run.contextSnapshot?.issueId === "string" ? run.contextSnapshot.issueId : null;
-    if (!issueId) throw unprocessable("Origin run is not issue-scoped");
+    if (!issueId) throw unprocessable("原始运行必须关联任务");
     return { run, issueId };
   }
 
@@ -161,14 +161,14 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
   async function snapshots(companyId: string, ids: string[], actor: AuthorizationActor, requiredActions: ReturnType<typeof targetActions>,
     cancellationTargetIds: ReadonlySet<string>, dbOrTx: Db) {
     const rows = ids.length ? await dbOrTx.select().from(issues).where(and(eq(issues.companyId, companyId), inArray(issues.id, ids))) : [];
-    if (rows.length !== ids.length) throw unprocessable("All referenced issues must exist in the company");
+    if (rows.length !== ids.length) throw unprocessable("引用的所有任务都必须存在于当前组织中");
     const result: Record<string, Snapshot> = {};
     for (const issue of rows) {
       const access = await authz.decide({ actor, action: "issue:read", resource: resource(issue) });
-      if (!access.allowed) throw forbidden("Decision target is outside the origin visibility boundary");
+      if (!access.allowed) throw forbidden("决策目标超出发起方的可见范围");
       for (const action of requiredActions.get(issue.id) ?? []) {
         const effectAccess = await authz.decide({ actor, action, resource: resource(issue) });
-        if (!effectAccess.allowed) throw forbidden("Decision effect exceeds the origin authority boundary");
+        if (!effectAccess.allowed) throw forbidden("决策效果超出发起方的权限范围");
       }
       const cancellationTarget = cancellationTargetIds.has(issue.id);
       const descendantIds = cancellationTarget ? await collectDescendantIds(companyId, issue.id, dbOrTx) : [];
@@ -178,7 +178,7 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
         const descendantAccess = await Promise.all(descendants.map((descendant) =>
           authz.decide({ actor, action: "issue:mutate", resource: resource(descendant) })));
         if (descendants.length !== descendantIds.length || descendantAccess.some((access) => !access.allowed)) {
-          throw forbidden("Decision effect exceeds the origin authority boundary");
+          throw forbidden("决策效果超出发起方的权限范围");
         }
       }
       result[issue.id] = { status: issue.status, assigneeAgentId: issue.assigneeAgentId, assigneeUserId: issue.assigneeUserId,
@@ -206,7 +206,7 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
         const equivalent = existing.title === input.title && existing.body === input.body &&
           canonicalJson(existing.options) === canonicalJson(input.options) && canonicalJson(existing.inputs ?? null) === canonicalJson(input.inputs ?? null) &&
           archiveEquivalent;
-        if (!equivalent) throw conflict("Decision idempotency key already used with a different payload");
+        if (!equivalent) throw conflict("决策幂等键已被其他请求使用");
         return existing;
       }
     }
@@ -214,7 +214,7 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
     const cap = Number(process.env.PAPERCLIP_DECISIONS_OPEN_CAP ?? 50);
     if (Number(open[0]?.value ?? 0) >= cap) throw tooManyRequests("Open decision cap reached");
     const expiresAt = input.expiresAt ?? new Date(Date.now() + 7 * DAY);
-    if (expiresAt.getTime() <= Date.now() || expiresAt.getTime() > Date.now() + 30 * DAY) throw unprocessable("expiresAt must be within 30 days");
+    if (expiresAt.getTime() <= Date.now() || expiresAt.getTime() > Date.now() + 30 * DAY) throw unprocessable("expiresAt 必须位于未来 30 天内");
     const ids = targetIds(input.options);
     const cancellationTargetIds = new Set(input.options.flatMap((option) => option.effects
       .filter((effect) => effect.type === "cancel_issue_tree").map((effect) => effect.targetIssueId)));
@@ -241,7 +241,7 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
         canonicalJson(existing.options) === canonicalJson(input.options) && canonicalJson(existing.inputs ?? null) === canonicalJson(input.inputs ?? null) &&
         archiveEquivalent;
       if (equivalent) return existing;
-      throw conflict("Decision idempotency key already used with a different payload");
+      throw conflict("决策幂等键已被其他请求使用");
     }
     if (ids.length) await dbOrTx.insert(decisionTargetIssues).values(ids.map((issueId) => ({ decisionId: id, issueId, companyId: input.companyId })));
     await logActivity(dbOrTx, { companyId: input.companyId, actorType: "agent", actorId: input.agentId, agentId: input.agentId,
@@ -546,7 +546,7 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
 
   async function runEffects(decision: typeof decisions.$inferSelect, userActor: AuthorizationActor) {
     const option = decision.options.find((item) => item.id === decision.chosenOptionId);
-    if (!option || !decision.decidedByUserId) throw unprocessable("Stored decision outcome is invalid");
+    if (!option || !decision.decidedByUserId) throw unprocessable("已保存的决策结果无效");
     const run = await db.select({ responsibleUserId: heartbeatRuns.responsibleUserId }).from(heartbeatRuns).where(eq(heartbeatRuns.id, decision.originRunId)).then((rows) => rows[0] ?? null);
     const metadata = decision.metadata as Record<string, unknown>;
     if (metadata.kind === "attention_archive_proposal") {
@@ -637,16 +637,16 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
 
   async function decide(input: { id: string; optionId: string; inputValues?: Record<string, string>; idempotencyKey?: string | null; decidedByUserId: string;
     userActor: AuthorizationActor; dismissed?: boolean; dismissReason?: string | null }) {
-    const current = await get(input.id); if (!current) throw notFound("Decision not found");
+    const current = await get(input.id); if (!current) throw notFound("未找到决策");
     const metadata = current.metadata as Record<string, unknown>;
-    if (!verifyDecisionSpec(spec({ id: current.id, options: current.options, targetSnapshots: current.targetSnapshots as Record<string, Snapshot> }), current.signedSpec)) throw forbidden("Decision signature verification failed");
+    if (!verifyDecisionSpec(spec({ id: current.id, options: current.options, targetSnapshots: current.targetSnapshots as Record<string, Snapshot> }), current.signedSpec)) throw forbidden("决策签名验证失败");
     if (current.status === "decided" && input.idempotencyKey && metadata.decideIdempotencyKey === input.idempotencyKey) {
-      if (current.decidedByUserId !== input.decidedByUserId) throw forbidden("Decision replay belongs to a different user");
+      if (current.decidedByUserId !== input.decidedByUserId) throw forbidden("该决策重放属于其他用户");
       return resumeDecision(current, input.userActor);
     }
     if (current.status === "decided" && current.chosenOptionId === input.optionId &&
       sameInputValues(current.inputValues ?? {}, input.inputValues ?? {})) {
-      if (current.decidedByUserId !== input.decidedByUserId) throw forbidden("Decision replay belongs to a different user");
+      if (current.decidedByUserId !== input.decidedByUserId) throw forbidden("该决策重放属于其他用户");
       return resumeDecision(current, input.userActor);
     }
     if (current.status !== "open") throw conflict("decision_already_resolved", { code: "decision_already_resolved" });
@@ -661,9 +661,9 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
       }
       throw conflict("decision_expired", { code: "decision_expired" });
     }
-    if (!current.options.some((option) => option.id === input.optionId)) throw unprocessable("Unknown optionId");
+    if (!current.options.some((option) => option.id === input.optionId)) throw unprocessable("未知 optionId");
     const values = input.inputValues ?? {};
-    for (const field of current.inputs ?? []) { const value = values[field.id] ?? ""; if (field.required && !value.trim()) throw unprocessable(`Input ${field.id} is required`); if (field.maxLength && value.length > field.maxLength) throw unprocessable(`Input ${field.id} is too long`); }
+    for (const field of current.inputs ?? []) { const value = values[field.id] ?? ""; if (field.required && !value.trim()) throw unprocessable(`输入项 ${field.id} 为必填项`); if (field.maxLength && value.length > field.maxLength) throw unprocessable(`输入项 ${field.id} 内容过长`); }
     const [claimed] = await db.update(decisions).set({ status: "decided", executionStatus: "running", chosenOptionId: input.optionId, inputValues: values,
       decidedByUserId: input.decidedByUserId, decidedAt: new Date(), updatedAt: new Date(), metadata: { ...metadata,
         decideIdempotencyKey: input.idempotencyKey ?? null,
@@ -680,8 +680,8 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
   }
 
   async function cancel(id: string, actor: { actorType: "agent" | "user"; actorId: string; runId?: string | null }) {
-    const current = await get(id); if (!current) throw notFound("Decision not found");
-    if (actor.actorType === "agent" && actor.actorId !== current.originAgentId) throw forbidden("Only the origin agent may cancel");
+    const current = await get(id); if (!current) throw notFound("未找到决策");
+    if (actor.actorType === "agent" && actor.actorId !== current.originAgentId) throw forbidden("只有发起该决策的智能体才能取消决策");
     if (current.status === "cancelled") {
       await deliverContinuation(current, "cancelled");
       return (await get(id))!;
@@ -695,8 +695,8 @@ export function decisionService(db: Db, options: DecisionServiceOptions) {
   }
 
   async function dismiss(id: string, userId: string, userActor: AuthorizationActor, reason?: string | null) {
-    const current = await get(id); if (!current) throw notFound("Decision not found");
-    if (!verifyDecisionSpec(spec({ id: current.id, options: current.options, targetSnapshots: current.targetSnapshots as Record<string, Snapshot> }), current.signedSpec)) throw forbidden("Decision signature verification failed");
+    const current = await get(id); if (!current) throw notFound("未找到决策");
+    if (!verifyDecisionSpec(spec({ id: current.id, options: current.options, targetSnapshots: current.targetSnapshots as Record<string, Snapshot> }), current.signedSpec)) throw forbidden("决策签名验证失败");
     const empty = current.options.find((option) => option.effects.length === 0);
     if (empty) return decide({ id, optionId: empty.id, decidedByUserId: userId, userActor, dismissed: true, dismissReason: reason });
     const [updated] = await db.update(decisions).set({ status: "decided", executionStatus: "succeeded", chosenOptionId: "dismissed", decidedByUserId: userId,

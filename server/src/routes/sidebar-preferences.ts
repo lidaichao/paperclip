@@ -8,7 +8,7 @@ import { assertBoard, assertCompanyAccess, getActorInfo } from "./authz.js";
 function requireBoardUserId(req: Request, res: Response): string | null {
   assertBoard(req);
   if (!req.actor.userId) {
-    res.status(403).json({ error: "Board user context required" });
+    res.status(403).json({ error: "需要看板用户上下文" });
     return null;
   }
   return req.actor.userId;

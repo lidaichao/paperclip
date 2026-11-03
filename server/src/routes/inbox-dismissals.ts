@@ -8,38 +8,38 @@ import { inboxDismissalService, logActivity } from "../services/index.js";
 const ITEM_KEY_RE = /^(approval|join|run|attention):.+$/;
 
 const inboxDismissalSchema = z.object({
-  itemKey: z.string().trim().min(1).regex(ITEM_KEY_RE, "Unsupported inbox item key"),
+  itemKey: z.string().trim().min(1).regex(ITEM_KEY_RE, "不支持的收件箱项目键"),
   kind: z.enum(["dismiss", "snooze"]).default("dismiss"),
   snoozedUntil: z.string().trim().optional(),
 }).superRefine((value, ctx) => {
   if (value.kind === "dismiss") {
     if (value.snoozedUntil != null) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["snoozedUntil"], message: "Dismissals must not include snoozedUntil" });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["snoozedUntil"], message: "忽略操作不能包含 snoozedUntil" });
     }
     return;
   }
 
   if (!value.snoozedUntil) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["snoozedUntil"], message: "Snooze requires snoozedUntil" });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["snoozedUntil"], message: "稍后提醒需要 snoozedUntil" });
     return;
   }
   const timestamp = new Date(value.snoozedUntil).getTime();
   if (!Number.isFinite(timestamp)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["snoozedUntil"], message: "snoozedUntil must be an ISO timestamp" });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["snoozedUntil"], message: "snoozedUntil 必须是 ISO 时间戳" });
     return;
   }
   if (timestamp <= Date.now()) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["snoozedUntil"], message: "snoozedUntil must be in the future" });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["snoozedUntil"], message: "snoozedUntil 必须晚于当前时间" });
   }
 });
 
 function requireBoardUser(req: Request, res: Response) {
   if (req.actor.type !== "board") {
-    res.status(403).json({ error: "Board authentication required" });
+    res.status(403).json({ error: "需要看板身份验证" });
     return null;
   }
   if (!req.actor.userId) {
-    res.status(403).json({ error: "Board user context required" });
+    res.status(403).json({ error: "需要看板用户上下文" });
     return null;
   }
   return req.actor.userId;
@@ -103,7 +103,7 @@ export function inboxDismissalRoutes(db: Db) {
 
     const itemKey = req.params.itemKey as string;
     if (!ITEM_KEY_RE.test(itemKey)) {
-      res.status(400).json({ error: "Unsupported inbox item key" });
+      res.status(400).json({ error: "不支持的收件箱项目键" });
       return;
     }
 

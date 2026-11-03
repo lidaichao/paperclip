@@ -260,7 +260,7 @@ describePg("decisionService", () => {
       options: [{ id: "yes", label: "Yes", effects: [{
         type: "update_issue_status", targetIssueId, staleness: "lenient", status: "in_progress",
       }] }],
-    })).rejects.toThrow("Decision effect exceeds the origin authority boundary");
+    })).rejects.toThrow("决策效果超出发起方的权限范围");
   });
 
   it("expires a decision atomically instead of executing after its deadline", async () => {
@@ -367,7 +367,7 @@ describePg("decisionService", () => {
     process.env.PAPERCLIP_AGENT_JWT_SECRET = "agent-jwt-secret-must-not-sign-decisions";
     try {
       await expect(service().decide({ id: created.id, optionId: "yes", decidedByUserId, userActor: boardActor() }))
-        .rejects.toThrow("Decision signature verification failed");
+        .rejects.toThrow("决策签名验证失败");
       expect(await db.select().from(issueComments).where(eq(issueComments.issueId, targetIssueId))).toHaveLength(0);
     } finally {
       if (originalHome === undefined) delete process.env.PAPERCLIP_HOME;
@@ -645,7 +645,7 @@ describePg("decisionService", () => {
     }] }] }).where(eq(decisions.id, created.id));
 
     await expect(service().dismiss(created.id, decidedByUserId, boardActor(), "No"))
-      .rejects.toThrow("Decision signature verification failed");
+      .rejects.toThrow("决策签名验证失败");
     expect((await service().get(created.id))?.status).toBe("open");
     expect(await db.select().from(activityLog).where(eq(activityLog.action, "decision.dismissed"))).toHaveLength(0);
   });
