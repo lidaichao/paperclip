@@ -202,7 +202,9 @@ function useMutationErrorToast() {
         return;
       }
       const body =
-        error instanceof Error && error.message ? error.message : "Please try again.";
+        error instanceof Error && error.message
+          ? error.message
+          : l10n("local.please_try_again_eea4fb33");
       toast?.pushToast({ tone: "error", title, body });
     },
     [toast],
@@ -498,7 +500,7 @@ function StudioNewSkillPanel({
     key: effectiveSlug || draft.name || "new-skill",
     skillId: null,
     catalogRef: null,
-    name: draft.name || "New Skill",
+    name: draft.name || l10n("local.new_skill_7fe2a91d"),
     slug: effectiveSlug || "skill",
     author: "you",
     version: null,
@@ -1135,11 +1137,17 @@ function StudioHeader({
   const copyShareLink = useCallback(() => {
     const href = typeof window !== "undefined" ? window.location.href : "";
     void copyTextToClipboard(href)
-      .then(() => toast?.pushToast({ tone: "success", title: "Link copied", body: "Skill Studio link copied to clipboard." }))
+      .then(() => toast?.pushToast({
+        tone: "success",
+        title: l10n("local.link_copied_d12860c2"),
+        body: l10n("local.skill_studio_link_copied_0cc00001"),
+      }))
       .catch((error) => toast?.pushToast({
         tone: "error",
-        title: "Copy failed",
-        body: error instanceof Error ? error.message : "Could not copy the link.",
+        title: l10n("local.copy_failed_5b50e7a6"),
+        body: error instanceof Error
+          ? error.message
+          : l10n("local.could_not_copy_link_0cc00002"),
       }));
   }, [toast]);
 
@@ -1196,7 +1204,7 @@ function SkillSwitcher({
   skills,
   loading,
   onSelectSkill,
-  emptyLabel = "Select skill",
+  emptyLabel = l10n("local.select_skill_4511ad1c"),
 }: {
   skill: CompanySkillDetail | null;
   skills: CompanySkillListItem[];
@@ -1343,7 +1351,7 @@ function SkillPane({
         queryKey: queryKeys.companySkills.versions(companyId, skillId),
       });
     },
-    onError: onError("Couldn't save file"),
+    onError: onError(l10n("local.couldnt_save_file_0cc00003")),
   });
 
   const createMutation = useMutation({
@@ -1364,7 +1372,7 @@ function SkillPane({
         queryKey: queryKeys.companySkills.versions(companyId, skillId),
       });
     },
-    onError: onError("Couldn't create file"),
+    onError: onError(l10n("local.couldnt_create_file_0cc00004")),
   });
 
   const deleteMutation = useMutation({
@@ -1385,7 +1393,7 @@ function SkillPane({
         queryKey: queryKeys.companySkills.versions(companyId, skillId),
       });
     },
-    onError: onError("Couldn't delete file"),
+    onError: onError(l10n("local.couldnt_delete_file_0cc00005")),
   });
 
   // Read-only skills (bundled Paperclip, remote GitHub, URL, skills.sh) reject
@@ -1980,7 +1988,7 @@ function InputPane({
         queryKey: queryKeys.companySkills.testInputs(companyId, skillId),
       });
     },
-    onError: onError("Couldn't save input"),
+    onError: onError(l10n("local.couldnt_save_input_0cc00006")),
   });
   const deleteMutation = useMutation({
     mutationFn: (inputId: string) => companySkillsApi.deleteTestInput(companyId, skillId, inputId),
@@ -1992,7 +2000,7 @@ function InputPane({
         queryKey: queryKeys.companySkills.testInputs(companyId, skillId),
       });
     },
-    onError: onError("Couldn't delete input"),
+    onError: onError(l10n("local.couldnt_delete_input_0cc00007")),
   });
 
   return (
@@ -2089,7 +2097,12 @@ function InputPane({
                             <DropdownMenuItem
                               onClick={() => {
                                 const input = inputs.find((i) => i.id === id);
-                                if (input) void copyWithToast(input.content, "Input content copied");
+                                if (input) {
+                                  void copyWithToast(
+                                    input.content,
+                                    l10n("local.input_content_copied_0cc00008"),
+                                  );
+                                }
                               }}
                             >
                               <Copy className="mr-2 h-4 w-4" /> {l10n("local.copy_content_4ad7ba81")}</DropdownMenuItem>
@@ -2339,8 +2352,8 @@ function RunsPane({
     updateTemplateSelection(resolution.selection);
     toast?.pushToast({
       tone: "warn",
-      title: "Run template reset",
-      body: "The saved run template is no longer available. Default test template is selected.",
+      title: l10n("local.run_template_reset_0cc00009"),
+      body: l10n("local.saved_run_template_unavailable_0cc00010"),
       dedupeKey: `skill-studio-template-reset:${companyId}`,
     });
   }, [
@@ -2373,9 +2386,9 @@ function RunsPane({
     hasUnsavedSkillEdits: skillDirty,
   });
   const templateGateReason = templatesQuery.isLoading
-    ? "Loading run templates"
+    ? l10n("local.loading_run_templates_0cc00011")
     : templatesQuery.isError
-      ? "Run templates couldn't load"
+      ? l10n("local.run_templates_could_not_load_b698b60f")
       : null;
 
   const createTemplateMutation = useMutation({
@@ -2389,11 +2402,13 @@ function RunsPane({
       });
       toast?.pushToast({
         tone: "success",
-        title: "Template saved",
-        body: `${template.name} is ready for Skills Studio runs.`,
+        title: l10n("local.template_saved_0cc00012"),
+        body: l10n("local.template_ready_for_skill_studio_runs_0cc00013", {
+          v0: template.name,
+        }),
       });
     },
-    onError: onError("Couldn't save template"),
+    onError: onError(l10n("local.couldnt_save_template_0cc00014")),
   });
 
   const updateTemplateMutation = useMutation({
@@ -2409,11 +2424,13 @@ function RunsPane({
       });
       toast?.pushToast({
         tone: "success",
-        title: "Template updated",
-        body: `${template.name} is ready for Skills Studio runs.`,
+        title: l10n("local.template_updated_0cc00015"),
+        body: l10n("local.template_ready_for_skill_studio_runs_0cc00013", {
+          v0: template.name,
+        }),
       });
     },
-    onError: onError("Couldn't update template"),
+    onError: onError(l10n("local.couldnt_update_template_0cc00016")),
   });
 
   const deleteTemplateMutation = useMutation({
@@ -2428,30 +2445,34 @@ function RunsPane({
       });
       toast?.pushToast({
         tone: "success",
-        title: "Template deleted",
-        body: `${template.name} was removed from Skills Studio runs.`,
+        title: l10n("local.template_deleted_0cc00017"),
+        body: l10n("local.template_removed_from_skill_studio_runs_0cc00018", {
+          v0: template.name,
+        }),
       });
     },
-    onError: onError("Couldn't delete template"),
+    onError: onError(l10n("local.couldnt_delete_template_0cc00019")),
   });
 
   const selectedTemplate = selectedTemplateId === null
     ? null
     : templates.find((template) => template.id === selectedTemplateId) ?? null;
   const selectedTemplateName = selectedTemplateId === null
-    ? "No template"
-    : selectedTemplate?.name ?? "Default test template";
+    ? l10n("local.no_template_0cc00020")
+    : selectedTemplate?.name ?? l10n("local.default_test_template_0cc00021");
   const runDisabledReason = gate.reason ?? templateGateReason;
 
   const createRunMutation = useMutation({
     mutationFn: () => {
       if (!templatesQuery.isSuccess) {
-        throw new Error(templateGateReason ?? "Run templates are not ready.");
+        throw new Error(
+          templateGateReason ?? l10n("local.run_templates_not_ready_0cc00022"),
+        );
       }
       const resolution = resolveRunTemplateSelection(selectedTemplateId, templates);
       if (resolution.recovered) {
         updateTemplateSelection(resolution.selection);
-        throw new Error("Selected run template is no longer available. The selection was reset.");
+        throw new Error(l10n("local.selected_run_template_unavailable_0cc00023"));
       }
       return companySkillsApi.createTestRun(companyId, skillId, buildCreateRunRequest({
         agentId: selectedAgentId!,
@@ -2466,7 +2487,7 @@ function RunsPane({
       });
       onSelectRun(run.id);
     },
-    onError: onError("Couldn't start run"),
+    onError: onError(l10n("local.couldnt_start_run_0cc00024")),
   });
 
   if (selectedRunId) {
@@ -2635,11 +2656,14 @@ function RunTemplateAdvancedPanel({
     const noTemplateOption: RunTemplateOption = {
       key: "no-template",
       value: NO_TEST_RUN_TEMPLATE_STORAGE_VALUE,
-      label: "No template",
-      title: "No template",
-      description: "Run only the input text.",
+      label: l10n("local.no_template_0cc00020"),
+      title: l10n("local.no_template_0cc00020"),
+      description: l10n("local.run_only_input_text_0cc00025"),
       builtIn: true,
-      searchText: "no template plain input",
+      searchText: [
+        l10n("local.no_template_0cc00020"),
+        l10n("local.run_only_input_text_0cc00025"),
+      ].join(" "),
     };
     const toOption = (template: CompanySkillTestRunTemplate): RunTemplateOption => ({
       key: template.id,
@@ -2648,7 +2672,13 @@ function RunTemplateAdvancedPanel({
       title: template.name,
       description: template.description,
       builtIn: template.builtIn,
-      searchText: [template.name, template.description ?? "", template.builtIn ? "built in" : "custom"].join(" "),
+      searchText: [
+        template.name,
+        template.description ?? "",
+        template.builtIn
+          ? l10n("local.built_in_78a6a8fe")
+          : l10n("local.custom_494ca78f"),
+      ].join(" "),
     });
     const builtIn = templates.filter((template) => template.builtIn).map(toOption);
     const custom = templates.filter((template) => !template.builtIn).map(toOption);
@@ -2819,7 +2849,13 @@ function RunTemplateDialog({
 
   useEffect(() => {
     if (!state) return;
-    setName(state.mode === "edit" ? source?.name ?? "" : source ? `${source.name} copy` : "");
+    setName(
+      state.mode === "edit"
+        ? source?.name ?? ""
+        : source
+          ? l10n("local.value_copy_0cc00026", { v0: source.name })
+          : "",
+    );
     setDescription(source?.description ?? "");
     setBody(source?.body ?? "");
   }, [source, state]);
@@ -2905,7 +2941,8 @@ function RunHistoryRow({
   const agent = agents.find((a) => a.id === run.agentId) ?? null;
   const removed = !agent;
   const snapshotName =
-    (run.agentConfigSnapshot?.name as string | undefined) ?? "Agent";
+    (run.agentConfigSnapshot?.name as string | undefined)
+      ?? l10n("local.agent_11b39c93");
   const name = agent?.name ?? snapshotName;
   return (
     <EntityRow
@@ -3025,7 +3062,7 @@ function RunDetailView({
       queryClient.invalidateQueries({
         queryKey: queryKeys.companySkills.testRunDetail(companyId, skillId, runId),
       }),
-    onError: onError("Couldn't cancel run"),
+    onError: onError(l10n("local.couldnt_cancel_run_0cc00027")),
   });
 
   // Re-run reproduces the VIEWED run's snapshots — pinned skill version, saved
@@ -3035,7 +3072,7 @@ function RunDetailView({
   const reRunMutation = useMutation({
     mutationFn: () => {
       const d = detailQuery.data;
-      if (!d) throw new Error("Run details are still loading.");
+      if (!d) throw new Error(l10n("local.run_details_still_loading_0cc00028"));
       return companySkillsApi.createTestRun(companyId, skillId, buildReRunRequest(d));
     },
     onSuccess: (run) => {
@@ -3044,7 +3081,7 @@ function RunDetailView({
       });
       onSelectRun(run.id);
     },
-    onError: onError("Couldn't re-run"),
+    onError: onError(l10n("local.couldnt_rerun_0cc00029")),
   });
 
   const deleteMutation = useMutation({
@@ -3055,7 +3092,7 @@ function RunDetailView({
       });
       onSelectRun(null);
     },
-    onError: onError("Couldn't delete run"),
+    onError: onError(l10n("local.couldnt_delete_run_0cc00030")),
   });
 
   const detail = detailQuery.data ?? null;
@@ -3086,7 +3123,9 @@ function RunDetailView({
 
   const agent = agents.find((a) => a.id === detail.agentId) ?? null;
   const agentName =
-    agent?.name ?? (detail.agentConfigSnapshot?.name as string | undefined) ?? "Agent";
+    agent?.name
+    ?? (detail.agentConfigSnapshot?.name as string | undefined)
+    ?? l10n("local.agent_11b39c93");
   const removed = !agent;
   const outputMode = runOutputMode(detail);
   const nonTerminal = !isTerminalRunStatus(detail.status);
@@ -3109,8 +3148,16 @@ function RunDetailView({
 
         {/* snapshot property block */}
         <div className="rounded-md border border-border text-xs">
-          <PropRow label={l10n("local.input_36ecb4f8")} value={detail.inputId ? "saved input" : "ad-hoc paste"} />
-          <PropRow label={l10n("local.template_0575f29d")} value={detail.templateName ?? "No template"} />
+          <PropRow
+            label={l10n("local.input_36ecb4f8")}
+            value={detail.inputId
+              ? l10n("local.saved_input_0cc00031")
+              : l10n("local.ad_hoc_paste_0cc00032")}
+          />
+          <PropRow
+            label={l10n("local.template_0575f29d")}
+            value={detail.templateName ?? l10n("local.no_template_0cc00020")}
+          />
           <PropRow label={l10n("local.skill_version_4ba07298")} value={`v${detail.skillVersion.revisionNumber}`} />
           <PropRow label={l10n("local.created_d70b9e24")} value={relativeTime(detail.createdAt)} />
         </div>
@@ -3419,7 +3466,9 @@ function VersionHistorySheet({
         await companySkillsApi.updateFile(companyId, skillId, file.path, file.content);
       }
       return companySkillsApi.createVersion(companyId, skillId, {
-        label: `Restore of v${version.revisionNumber}`,
+        label: l10n("local.restore_of_version_0cc00033", {
+          v0: version.revisionNumber,
+        }),
       });
     },
     onSuccess: () => {

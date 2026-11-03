@@ -222,6 +222,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.runner_returned_no_user_response_0cb00015).toContain("面向用户的回复");
     expect(messages.runtime_request_missing_provider_identity_0cb00019).toContain("服务商轮次标识");
     expect(messages.queue_reordering_unavailable_0cb00022).toContain("调整队列顺序");
+    expect(messages.skill_studio_link_copied_0cc00001).toContain("技能工作室链接");
+    expect(messages.saved_run_template_unavailable_0cc00010).toContain("默认测试模板");
+    expect(messages.template_ready_for_skill_studio_runs_0cc00013).toBe("{{v0}} 已可用于技能工作室运行。");
+    expect(messages.no_template_0cc00020).toBe("不使用模板");
+    expect(messages.restore_of_version_0cc00033).toBe("恢复自 v{{v0}}");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
