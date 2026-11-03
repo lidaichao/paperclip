@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "notion",
   "name": "Notion",
-  "description": "Read and update pages in your Notion workspace.",
+  "description": "读取和更新 Notion 工作区中的页面。",
   "categories": [
     "content"
   ],
@@ -22,11 +22,11 @@
         "customer",
         "dcr"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务商托管的连接，以最快速度完成设置。",
       "defaults": {
         "serverUrl": "https://mcp.notion.com/mcp"
       },
-      "guidanceMd": "Connect Notion for workspace content. Share only the pages and databases agents should use.",
+      "guidanceMd": "连接 Notion 工作区内容，并仅共享智能体需要使用的页面和数据库。",
       "riskTier": "S3",
       "requiredResourceFilters": [
         "workspace",

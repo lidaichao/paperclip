@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "github",
   "name": "GitHub",
-  "description": "Give agents repository tools or let people work with an agent from GitHub issues and pull requests.",
+  "description": "为智能体提供代码仓库工具，或让成员通过 GitHub 议题和拉取请求与智能体协作。",
   "categories": [
     "developer"
   ],
@@ -23,13 +23,13 @@
       "ownershipModes": [
         "platform_shared"
       ],
-      "whenToUse": "Connect your GitHub account for durable MCP, shell Git, gh, and repository access.",
+      "whenToUse": "连接 GitHub 账户，为 MCP、命令行 Git、gh 和仓库访问提供持久授权。",
       "defaults": {
         "serverUrl": "https://api.githubcopilot.com/mcp/"
       },
-      "guidanceMd": "Authorize Paperclip, then choose selected repositories in GitHub. You can edit repository access later from GitHub's installation settings.",
+      "guidanceMd": "授权 Alice 后，在 GitHub 中选择允许访问的仓库。之后可在 GitHub 的安装设置中修改仓库权限。",
       "riskTier": "S3",
-      "label": "Use this connection as an agent tool",
+      "label": "将此连接用作智能体工具",
       "purpose": "tool",
       "oauthStrategy": "paperclip_cloud_connector",
       "connectorProfile": "github.code",
@@ -38,7 +38,7 @@
         "agent"
       ],
       "warnings": [
-        "Shell Git and gh receive this identity for the run and are not constrained by per-tool Ask-first controls."
+        "命令行 Git 和 gh 会在本次运行中使用此身份，不受单项工具“执行前询问”设置的限制。"
       ],
       "requiredResourceFilters": [
         "organization",
@@ -52,18 +52,18 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务商托管的连接，以最快速度完成设置。",
       "defaults": {
         "serverUrl": "https://api.githubcopilot.com/mcp/"
       },
-      "guidanceMd": "Create a fine-grained token limited to the repositories agents should use.",
+      "guidanceMd": "创建细粒度令牌，并仅授权智能体需要使用的仓库。",
       "riskTier": "S3",
-      "label": "Personal access token (advanced)",
+      "label": "个人访问令牌（高级）",
       "purpose": "tool",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "GitHub token",
+          "label": "GitHub 令牌",
           "type": "password",
           "required": true,
           "placeholder": "github_pat_...",
@@ -82,7 +82,7 @@
     },
     {
       "key": "chat-agent",
-      "label": "Chat with an agent",
+      "label": "与智能体对话",
       "purpose": "channel",
       "provider": "github",
       "transport": "chat_sdk",
@@ -90,11 +90,11 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Let people in GitHub start and continue work with one Paperclip agent.",
+      "whenToUse": "让成员在 GitHub 中发起工作，并与一个 Alice 智能体持续协作。",
       "credentialFields": [
         {
           "key": "appId",
-          "label": "GitHub App ID",
+          "label": "GitHub 应用 ID",
           "type": "text",
           "required": true,
           "placeholder": "123456",
@@ -102,14 +102,14 @@
         },
         {
           "key": "privateKey",
-          "label": "Private key (PEM)",
+          "label": "私钥（PEM）",
           "type": "textarea",
           "required": true,
           "placeholder": "-----BEGIN RSA PRIVATE KEY-----",
           "secret": true
         }
       ],
-      "guidanceMd": "Generate the webhook secret in Paperclip, then create one private GitHub App with active SSL-verified webhooks, Issues and Pull requests read/write permission, and the selectable issue_comment and pull_request_review_comment events. GitHub sends installation and installation_repositories automatically. Install the App only on repositories where people may mention the agent.",
+      "guidanceMd": "先在 Alice 中生成 Webhook 密钥，再创建一个私有 GitHub 应用：启用经过 SSL 验证的 Webhook，授予议题和拉取请求读写权限，并选择 issue_comment 和 pull_request_review_comment 事件。GitHub 会自动发送 installation 和 installation_repositories 事件。请只把该应用安装到允许成员提及智能体的仓库。",
       "consoleLinks": {
         "register": "https://github.com/settings/apps/new",
         "docs": "https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app"

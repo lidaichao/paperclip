@@ -340,7 +340,7 @@ describe("AppDefinition catalog", () => {
       expect(app, slug).toBeTruthy();
       expect(channel, slug).toMatchObject({
         key: "chat-agent",
-        label: "Chat with an agent",
+        label: "与智能体对话",
         purpose: "channel",
         provider: slug,
         transport: "chat_sdk",
@@ -376,7 +376,7 @@ describe("AppDefinition catalog", () => {
         expect(
           toolMethods.some(
             (candidate) =>
-              candidate.label === "Use this connection as an agent tool",
+              candidate.label === "将此连接用作智能体工具",
           ),
           slug,
         ).toBe(true);
@@ -388,8 +388,8 @@ describe("AppDefinition catalog", () => {
         (method) => method.purpose === "channel",
       );
     expect(channel("github")?.guidanceMd).toContain("issue_comment");
-    expect(channel("discord")?.guidanceMd).toContain("Message Content intent");
-    expect(channel("discord")?.guidanceMd).toContain("Discord thread");
+    expect(channel("discord")?.guidanceMd).toContain("消息内容");
+    expect(channel("discord")?.guidanceMd).toContain("Discord 讨论串");
     expect(channel("github")?.guidanceMd).toContain("pull_request");
     expect(channel("github")?.guidanceMd).toContain(
       "pull_request_review_comment",
@@ -398,9 +398,9 @@ describe("AppDefinition catalog", () => {
       "installation_repositories",
     );
     expect(channel("github")?.guidanceMd).toContain(
-      "Generate the webhook secret in Paperclip",
+      "在 Alice 中生成 Webhook 密钥",
     );
-    expect(channel("github")?.guidanceMd).toContain("SSL-verified");
+    expect(channel("github")?.guidanceMd).toContain("SSL 验证");
     expect(channel("microsoft-teams")?.guidanceMd).toContain(
       "resource-specific",
     );
@@ -411,21 +411,21 @@ describe("AppDefinition catalog", () => {
       "ChatMessage.Read.Chat",
     );
     expect(channel("microsoft-teams")?.guidanceMd).toContain(
-      "work or school organization",
+      "工作或学校组织",
     );
     expect(channel("microsoft-teams")?.guidanceMd).toContain("teams.live.com");
     expect(channel("microsoft-teams")?.guidanceMd).toContain("groupChat");
     expect(channel("microsoft-teams")?.guidanceMd).toContain(
-      "receive every message",
+      "接收团队或群聊中的每条消息",
     );
     expect(channel("microsoft-teams")?.guidanceMd).toContain(
-      "One team install covers its standard channels",
+      "安装到一个团队即可覆盖其标准频道",
     );
     expect(channel("telegram")?.guidanceMd).toContain(
-      "public Paperclip webhook endpoint",
+      "Alice 的公开 Webhook 地址",
     );
-    expect(channel("slack")?.guidanceMd).toContain("reactions");
-    expect(channel("slack")?.guidanceMd).toContain("direct messages");
+    expect(channel("slack")?.guidanceMd).toContain("表情回应");
+    expect(channel("slack")?.guidanceMd).toContain("私信");
   });
   it("keeps a complete, unique, dated evidence ledger for all 48 researched MCP providers", () => {
     // Ledger-wide date reflects the last full re-verification (2026-08-26);

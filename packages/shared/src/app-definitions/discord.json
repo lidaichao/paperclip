@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "discord",
   "name": "Discord",
-  "description": "Let people start and continue Paperclip work with an agent from Discord.",
+  "description": "让成员通过 Discord 发起 Alice 工作，并与智能体持续协作。",
   "categories": [
     "communication"
   ],
@@ -17,7 +17,7 @@
   "methods": [
     {
       "key": "chat-agent",
-      "label": "Chat with an agent",
+      "label": "与智能体对话",
       "purpose": "channel",
       "provider": "discord",
       "transport": "chat_sdk",
@@ -25,19 +25,19 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Let people in Discord start and continue work with one Paperclip agent.",
+      "whenToUse": "让成员在 Discord 中发起工作，并与一个 Alice 智能体持续协作。",
       "credentialFields": [
         {
           "key": "botToken",
-          "label": "Bot token",
+          "label": "机器人令牌",
           "type": "password",
           "required": true,
-          "placeholder": "Paste the Discord bot token",
+          "placeholder": "粘贴 Discord 机器人令牌",
           "secret": true
         },
         {
           "key": "applicationId",
-          "label": "Application ID",
+          "label": "应用 ID",
           "type": "text",
           "required": true,
           "placeholder": "123456789012345678",
@@ -45,14 +45,14 @@
         },
         {
           "key": "guildId",
-          "label": "Server ID",
+          "label": "服务器 ID",
           "type": "text",
           "required": true,
           "placeholder": "123456789012345678",
           "secret": false
         }
       ],
-      "guidanceMd": "Create one dedicated Discord application and bot, enable the Message Content intent, install it in one server with the documented bot permissions, then connect its bot token, Application ID, and server ID. Paperclip starts one Discord thread per root bot mention and keeps the linked Paperclip task authoritative.",
+      "guidanceMd": "创建专用的 Discord 应用和机器人，启用“消息内容”意图，按文档要求授予机器人权限并安装到一个服务器，然后连接机器人令牌、应用 ID 和服务器 ID。每次在顶层消息提及机器人时，Alice 都会创建一个 Discord 讨论串，并以关联的 Alice 任务作为权威记录。",
       "consoleLinks": {
         "register": "https://discord.com/developers/applications",
         "docs": "https://discord.com/developers/docs/quick-start/getting-started"

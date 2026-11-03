@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "jira",
   "name": "Jira",
-  "description": "Connect Jira's provider-hosted MCP server.",
+  "description": "连接由 Jira 官方托管的 MCP 服务器。",
   "categories": [
     "productivity"
   ],
@@ -23,7 +23,7 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录由服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.atlassian.com/v1/mcp/authv2",
         "scopesHint": [
@@ -51,14 +51,14 @@
           "write:all:twg"
         ]
       },
-      "guidanceMd": "Connect Jira in the browser. An active Jira or Confluence site; tenant policy may require an administrator to approve the client.",
+      "guidanceMd": "在浏览器中连接 Jira。需要可用的 Jira 或 Confluence 站点；租户策略可能要求管理员批准此客户端。",
       "riskTier": "S3",
-      "label": "Sign in with Jira",
+      "label": "使用 Jira 登录",
       "consoleLinks": {
         "docs": "https://support.atlassian.com/atlassian-rovo-mcp-server/docs/getting-started-with-the-atlassian-remote-mcp-server/"
       },
       "warnings": [
-        "An active Jira or Confluence site; tenant policy may require an administrator to approve the client."
+        "需要可用的 Jira 或 Confluence 站点；租户策略可能要求管理员批准此客户端。"
       ]
     }
   ]

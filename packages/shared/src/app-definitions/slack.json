@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "slack",
   "name": "Slack",
-  "description": "Give agents Slack tools or let people start and continue Paperclip work from Slack.",
+  "description": "为智能体提供 Slack 工具，或让成员通过 Slack 发起 Alice 工作并持续协作。",
   "categories": [
     "communication"
   ],
@@ -22,7 +22,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务商托管的连接，以最快速度完成设置。",
       "defaults": {
         "serverUrl": "https://mcp.slack.com/mcp",
         "authorizationEndpoint": "https://slack.com/oauth/v2/authorize",
@@ -33,9 +33,9 @@
           "search:read"
         ]
       },
-      "guidanceMd": "Connect a Slack workspace and limit access to the channels agents need.",
+      "guidanceMd": "连接 Slack 工作区，并仅授权智能体需要使用的频道。",
       "riskTier": "S3",
-      "label": "Use this connection as an agent tool",
+      "label": "将此连接用作智能体工具",
       "purpose": "tool",
       "requiredResourceFilters": [
         "workspace",
@@ -44,7 +44,7 @@
     },
     {
       "key": "chat-agent",
-      "label": "Chat with an agent",
+      "label": "与智能体对话",
       "purpose": "channel",
       "provider": "slack",
       "transport": "chat_sdk",
@@ -52,11 +52,11 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Let people in Slack start and continue work with one Paperclip agent.",
+      "whenToUse": "让成员在 Slack 中发起工作，并与一个 Alice 智能体持续协作。",
       "credentialFields": [
         {
           "key": "botToken",
-          "label": "Bot User OAuth Token",
+          "label": "机器人用户 OAuth 令牌",
           "type": "password",
           "required": true,
           "placeholder": "xoxb-...",
@@ -64,14 +64,14 @@
         },
         {
           "key": "signingSecret",
-          "label": "Signing Secret",
+          "label": "签名密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste the Slack App signing secret",
+          "placeholder": "粘贴 Slack 应用签名密钥",
           "secret": true
         }
       ],
-      "guidanceMd": "Create and install one Slack App for this agent. Paperclip receives verified Events API requests and interactive callbacks, acknowledges with reactions, responds in direct messages, and starts one Paperclip task per new mentioned channel thread.",
+      "guidanceMd": "为此智能体创建并安装一个 Slack 应用。Alice 会接收经过验证的 Events API 请求和交互回调，通过表情回应确认，在私信中回复，并为每个首次提及智能体的频道讨论串创建一个 Alice 任务。",
       "consoleLinks": {
         "register": "https://api.slack.com/apps",
         "docs": "https://api.slack.com/start/quickstart"

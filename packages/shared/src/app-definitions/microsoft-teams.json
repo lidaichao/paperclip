@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "microsoft-teams",
   "name": "Microsoft Teams",
-  "description": "Let people start and continue Paperclip work with an agent from Microsoft Teams.",
+  "description": "让成员通过 Microsoft Teams 发起 Alice 工作，并与智能体持续协作。",
   "categories": [
     "communication"
   ],
@@ -16,7 +16,7 @@
   "methods": [
     {
       "key": "chat-agent",
-      "label": "Chat with an agent",
+      "label": "与智能体对话",
       "purpose": "channel",
       "provider": "microsoft-teams",
       "transport": "chat_sdk",
@@ -24,11 +24,11 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Let people in Microsoft Teams start and continue work with one Paperclip agent.",
+      "whenToUse": "让成员在 Microsoft Teams 中发起工作，并与一个 Alice 智能体持续协作。",
       "credentialFields": [
         {
           "key": "clientId",
-          "label": "Application / Client ID",
+          "label": "应用 / 客户端 ID",
           "type": "text",
           "required": true,
           "placeholder": "00000000-0000-0000-0000-000000000000",
@@ -36,7 +36,7 @@
         },
         {
           "key": "tenantId",
-          "label": "Directory / Tenant ID",
+          "label": "目录 / 租户 ID",
           "type": "text",
           "required": true,
           "placeholder": "00000000-0000-0000-0000-000000000000",
@@ -44,14 +44,14 @@
         },
         {
           "key": "clientSecret",
-          "label": "Client secret",
+          "label": "客户端密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste the client-secret value",
+          "placeholder": "粘贴客户端密钥值",
           "secret": true
         }
       ],
-      "guidanceMd": "Use a Microsoft 365 work or school organization where you can register an Entra app, create a single-tenant Azure Bot, and upload or install a Teams app. Personal or free Teams accounts at teams.live.com cannot complete this setup. Enable personal, team, and groupChat bot scopes and the ChannelMessage.Read.Group and ChatMessage.Read.Chat resource-specific application permissions. Those RSC grants let an installed app receive every message in a team or group chat without an @mention, so explain that access to installers. One team install covers its standard channels; private and shared channels require a separate installation and are not supported by this release.",
+      "guidanceMd": "请使用能够注册 Entra 应用、创建单租户 Azure 机器人并上传或安装 Teams 应用的 Microsoft 365 工作或学校组织。teams.live.com 的个人或免费 Teams 账户无法完成此设置。请启用 personal、team 和 groupChat 机器人范围，以及 ChannelMessage.Read.Group 和 ChatMessage.Read.Chat 资源特定（resource-specific）应用权限。这些 RSC 授权允许已安装的应用在没有 @提及 的情况下接收团队或群聊中的每条消息，因此必须向安装者说明此访问范围。安装到一个团队即可覆盖其标准频道；私有和共享频道需要单独安装，本版本暂不支持。",
       "consoleLinks": {
         "register": "https://dev.teams.microsoft.com/apps",
         "docs": "https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/create-a-bot-for-teams"

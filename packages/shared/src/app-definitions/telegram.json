@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "telegram",
   "name": "Telegram",
-  "description": "Let people start and continue Paperclip work with an agent from Telegram.",
+  "description": "让成员通过 Telegram 发起 Alice 工作，并与智能体持续协作。",
   "categories": [
     "communication"
   ],
@@ -18,7 +18,7 @@
   "methods": [
     {
       "key": "chat-agent",
-      "label": "Chat with an agent",
+      "label": "与智能体对话",
       "purpose": "channel",
       "provider": "telegram",
       "transport": "chat_sdk",
@@ -26,18 +26,18 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Let people in Telegram start and continue work with one Paperclip agent.",
+      "whenToUse": "让成员在 Telegram 中发起工作，并与一个 Alice 智能体持续协作。",
       "credentialFields": [
         {
           "key": "botToken",
-          "label": "Bot token",
+          "label": "机器人令牌",
           "type": "password",
           "required": true,
           "placeholder": "123456789:AA...",
           "secret": true
         }
       ],
-      "guidanceMd": "Create one dedicated bot with BotFather, then connect its token to the public Paperclip webhook endpoint.",
+      "guidanceMd": "使用 BotFather 创建一个专用机器人，然后把令牌连接到 Alice 的公开 Webhook 地址。",
       "consoleLinks": {
         "register": "https://t.me/BotFather",
         "docs": "https://core.telegram.org/bots/tutorial"
