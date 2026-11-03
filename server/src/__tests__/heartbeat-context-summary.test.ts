@@ -20,11 +20,11 @@ describe("buildPaperclipTaskMarkdown", () => {
           includeDescription,
         });
         expect(prompt).toContain("ACCEPTANCE_PHRASE");
-        expect(prompt).toContain("revision 1 (revision)");
+        expect(prompt).toContain("版本 1（revision）：");
         expect(prompt).toContain("````text");
-        expect(prompt).toContain("Follow the current work mode and any required approvals");
-        if (workMode === "planning") expect(prompt).toContain("Make the plan only");
-        if (workMode === "ask") expect(prompt).toContain("Answer the question directly");
+        expect(prompt).toContain("遵循当前工作模式以及所有必要审批");
+        if (workMode === "planning") expect(prompt).toContain("只制定计划");
+        if (workMode === "ask") expect(prompt).toContain("请直接在任务讨论中回答问题");
       }
     }
     expect(buildPaperclipTaskMarkdown({
@@ -38,11 +38,11 @@ describe("buildPaperclipTaskMarkdown", () => {
       interaction: { kind: "request_confirmation", status: "accepted" },
       acceptedPlan: { documentId: "plan-document", revisionId: "approved-revision", revisionNumber: 2 },
     });
-    expect(prompt).toContain("Perform that handoff now");
-    expect(prompt).toContain("ordinary assigned execution tasks");
-    expect(prompt).toContain("initialPlan before execution starts");
-    expect(prompt).toContain("revision 2 approved-revision");
-    expect(prompt).not.toContain("Implement the accepted plan on this issue");
+    expect(prompt).toContain("请立即完成移交");
+    expect(prompt).toContain("普通的已分配执行任务");
+    expect(prompt).toContain("写入 initialPlan");
+    expect(prompt).toContain("版本 2 approved-revision");
+    expect(prompt).not.toContain("请在此任务上实施已接受的计划");
   });
 
   it.each(["ask", "new-comment", "unbound-confirmation"])("does not treat %s as plan handoff authorization", (kind) => {
@@ -52,7 +52,7 @@ describe("buildPaperclipTaskMarkdown", () => {
       ...(kind === "unbound-confirmation" ? {} : { acceptedPlan: { documentId: "plan-document", revisionId: "approved-revision", revisionNumber: 2 } }),
       ...(kind === "new-comment" ? { wakeComment: { id: "later-comment", body: "Please revise it again first." } } : {}),
     });
-    expect(prompt).not.toContain("Perform that handoff now");
+    expect(prompt).not.toContain("请立即完成移交");
   });
 
   it("surfaces every coalesced wake comment in provider order", () => {
@@ -76,10 +76,10 @@ describe("buildPaperclipTaskMarkdown", () => {
     });
 
     expect(markdown).toContain(
-      "Address every comment without repeating completed work.",
+      "处理每条评论，不要重复已完成工作。",
     );
-    expect(markdown).toContain("Pending wake comments (oldest to newest):");
-    expect(markdown).not.toContain("Latest wake comment:");
+    expect(markdown).toContain("待处理唤醒评论（从最早到最新）：");
+    expect(markdown).not.toContain("最新唤醒评论：");
     expect(markdown!.indexOf("burst-two")).toBeLessThan(
       markdown!.indexOf("burst-three"),
     );
@@ -122,7 +122,7 @@ describe("buildPaperclipTaskMarkdown", () => {
     });
 
     expect(markdown).toContain(
-      'Attachments on wake comment "comment-files":',
+      '唤醒评论 "comment-files" 的附件：',
     );
     expect(markdown).toContain('"id":"attachment-image"');
     expect(markdown).toContain('"filename":"phrase.txt"');
@@ -131,9 +131,9 @@ describe("buildPaperclipTaskMarkdown", () => {
     );
     expect(markdown).toContain("PAPERCLIP_API_URL");
     expect(markdown).toContain("PAPERCLIP_API_KEY");
-    expect(markdown).toContain("never invoke `npx`");
+    expect(markdown).toContain("绝不能用 `npx`");
     expect(markdown).toContain(
-      "Do not infer file contents from filenames or metadata",
+      "不要根据文件名或元数据推测文件内容",
     );
   });
 
@@ -149,17 +149,17 @@ describe("buildPaperclipTaskMarkdown", () => {
         },
         externalChatProvider,
       });
-      expect(markdown).toContain("External chat file delivery:");
+      expect(markdown).toContain("外部聊天文件交付：");
       expect(markdown).toContain("paperclip-upload-artifact.sh --chat-comment");
-      expect(markdown).toContain("installed skill location, not the task workspace");
-      expect(markdown).toContain("Do not search for a separate provider tool connection");
-      expect(markdown).toContain("do not claim provider delivery merely because binding succeeded");
+      expect(markdown).toContain("已安装的技能目录定位助手，而不是从任务工作区定位");
+      expect(markdown).toContain("不要寻找独立的外部平台工具连接");
+      expect(markdown).toContain("不能仅因绑定成功就声称外部平台已经收到");
       expect(markdown).toContain(
-        "one helper command per file into as few tool calls as practical",
+        "每个文件一次的助手命令合并为尽量少的工具调用",
       );
-      expect(markdown).toContain("do not manually bind the same file again");
+      expect(markdown).toContain("不要再次手动绑定同一文件");
       expect(markdown).toContain(
-        "Retry or investigate only a failed or ambiguous step",
+        "只对失败或结果不明确的步骤重试或排查",
       );
     },
   );
@@ -173,7 +173,7 @@ describe("buildPaperclipTaskMarkdown", () => {
         description: null,
       },
     });
-    expect(markdown).not.toContain("External chat file delivery:");
+    expect(markdown).not.toContain("外部聊天文件交付：");
     expect(markdown).not.toContain("External chat turn efficiency:");
   });
 
@@ -202,26 +202,26 @@ describe("buildPaperclipTaskMarkdown", () => {
         }],
       });
       expect(markdown).toContain("`register_deliverable`");
-      expect(markdown).toContain("workspace-relative `contentRef`");
-      expect(markdown).toContain("do not confirm provider delivery");
-      expect(markdown).toContain("Register or reuse only the requested files");
+      expect(markdown).toContain("工作区相对路径 `contentRef`");
+      expect(markdown).toContain("并不代表外部平台已经收到");
+      expect(markdown).toContain("只登记或复用用户要求的文件");
       expect(markdown).toContain("`list_chat_attachments`");
       expect(markdown).toContain("`reuse_chat_attachment`");
       expect(markdown).toContain(
-        "never substitute an earlier file for unavailable current-turn input",
+        "绝不能用旧文件替代当前轮次不可用的输入",
       );
-      expect(markdown).toContain("workspace-relative staged attachment descriptors");
-      expect(markdown).toContain("clearly state that you could not inspect it");
-      expect(markdown).toContain("batch independent reads/inspection with the appropriate available tools");
-      expect(markdown).toContain("Compute exact sizes and SHA-256 hashes in the same preparation step");
-      expect(markdown).toContain("batch independent per-file registrations into as few tool calls as practical");
-      expect(markdown).toContain("one registration and a distinct stable idempotencyKey per file");
-      expect(markdown).toContain("wait for each receipt before the final-response protocol");
-      expect(markdown).toContain("retry only a failed or ambiguous step with its original key");
-      expect(markdown).toContain("current source/generation authorization, exact-byte reuse, or approval gates");
-      expect(markdown).toContain("skip a separate preamble and narration before each step");
-      expect(markdown).toContain("Keep useful wait, blocker, permission, and failure updates");
-      expect(markdown).toContain("do not suppress transport-managed progress");
+      expect(markdown).toContain("工作区相对暂存附件描述符");
+      expect(markdown).toContain("请明确说明无法检查");
+      expect(markdown).toContain("批量读取或检查彼此独立的输入");
+      expect(markdown).toContain("同一准备步骤中计算准确大小和 SHA-256");
+      expect(markdown).toContain("尽量用更少的工具调用批量登记各个独立文件");
+      expect(markdown).toContain("每个文件只登记一次，并使用各自稳定的 idempotencyKey");
+      expect(markdown).toContain("收到每个回执后再执行最终回复协议");
+      expect(markdown).toContain("只对失败或结果不明确的步骤使用原键重试");
+      expect(markdown).toContain("来源或生成授权、精确字节复用要求或审批门禁");
+      expect(markdown).toContain("无需在每一步前单独写开场说明和过程旁白");
+      expect(markdown).toContain("保留有用的等待、阻塞、权限、失败更新");
+      expect(markdown).toContain("不要隐藏由传输层管理的进度");
       expect(markdown).toContain('"id":"native-attachment"');
       expect(markdown).not.toContain("paperclip-upload-artifact.sh");
       expect(markdown).not.toContain("PAPERCLIP_API_KEY");
@@ -237,8 +237,8 @@ describe("buildPaperclipTaskMarkdown", () => {
       issue: { id: "other-workflow", identifier: null, title: "Other work" },
       ...mode,
     });
-    expect(markdown).not.toContain("batch independent per-file registrations");
-    expect(markdown).not.toContain("skip a separate preamble and narration before each step");
+    expect(markdown).not.toContain("批量登记各个独立文件");
+    expect(markdown).not.toContain("单独写开场说明和过程旁白");
   });
 
   it("does not imply that GitHub chat grants attachment or repository-tool access", () => {
@@ -259,18 +259,18 @@ describe("buildPaperclipTaskMarkdown", () => {
       externalChatProvider: "github",
     });
 
-    expect(markdown).toContain("GitHub chat attachment note:");
+    expect(markdown).toContain("GitHub 聊天附件说明：");
     expect(markdown).toContain(
-      "does not grant repository-tool or attachment-download authority",
+      "不会为本次运行授予代码仓库工具或附件下载权限",
     );
     expect(markdown).toContain(
-      "do not ask for another chat connection",
+      "不要要求再建立一个聊天连接",
     );
     expect(markdown).toContain(
-      "attach the file directly to this Paperclip task or paste the needed text",
+      "把文件直接附加到这个 Alice 任务，或粘贴所需文本",
     );
     expect(markdown).toContain(
-      "Never borrow browser cookies or forward credentials to an attachment URL",
+      "绝不能借用浏览器 Cookie，也不能把凭据转发给附件地址",
     );
   });
 
@@ -285,8 +285,8 @@ describe("buildPaperclipTaskMarkdown", () => {
       },
     });
 
-    expect(assignment).toContain("- Work mode: \"planning\"");
-    expect(assignment).toContain("Make the plan only. Do not write code or perform implementation work.");
+    expect(assignment).toContain("- 工作模式：\"planning\"");
+    expect(assignment).toContain("只制定计划。不要编写代码，也不要执行实施工作。");
 
     const commentWake = buildPaperclipTaskMarkdown({
       issue: {
@@ -302,7 +302,7 @@ describe("buildPaperclipTaskMarkdown", () => {
       },
     });
 
-    expect(commentWake).toContain("Update the plan only. Do not write code or perform implementation work.");
+    expect(commentWake).toContain("只更新计划。不要编写代码，也不要执行实施工作。");
 
     const acceptedConfirmation = buildPaperclipTaskMarkdown({
       issue: {
@@ -319,9 +319,9 @@ describe("buildPaperclipTaskMarkdown", () => {
     });
 
     expect(acceptedConfirmation).toContain(
-      "Implement the accepted plan on this issue when the work is small and cohesive.",
+      "如果工作量小且内容内聚，请在此任务上实施已接受的计划。",
     );
-    expect(acceptedConfirmation).not.toContain("Make the plan only.");
+    expect(acceptedConfirmation).not.toContain("只制定计划。");
   });
 
   it("adds accepted-plan continuation guidance for standard-work issues when the wake is flagged as a plan continuation", () => {
@@ -336,11 +336,11 @@ describe("buildPaperclipTaskMarkdown", () => {
       acceptedPlanContinuation: true,
     });
 
-    expect(acceptedConfirmation).toContain("Accepted plan directive:");
+    expect(acceptedConfirmation).toContain("已接受的计划指令：");
     expect(acceptedConfirmation).toContain(
-      "Implement the accepted plan on this issue when the work is small and cohesive.",
+      "如果工作量小且内容内聚，请在此任务上实施已接受的计划。",
     );
-    expect(acceptedConfirmation).not.toContain("- Work mode: \"planning\"");
+    expect(acceptedConfirmation).not.toContain("- 工作模式：\"planning\"");
   });
 
   it("adds answer-only guidance for ask-mode issues", () => {
@@ -354,11 +354,11 @@ describe("buildPaperclipTaskMarkdown", () => {
       },
     });
 
-    expect(assignment).toContain("- Work mode: \"ask\"");
-    expect(assignment).toContain("Ask mode directive:");
-    expect(assignment).toContain("Answer the question directly in the issue thread.");
-    expect(assignment).toContain("Do not write implementation code");
-    expect(assignment).toContain("do not produce an implementation plan");
+    expect(assignment).toContain("- 工作模式：\"ask\"");
+    expect(assignment).toContain("问答模式指令：");
+    expect(assignment).toContain("请直接在任务讨论中回答问题。");
+    expect(assignment).toContain("不要编写实现代码");
+    expect(assignment).toContain("不要产出实施计划");
   });
 
   it("adds dry-run containment guidance for skill-test issues", () => {
@@ -372,10 +372,10 @@ describe("buildPaperclipTaskMarkdown", () => {
       },
     });
 
-    expect(assignment).toContain("- Work mode: \"skill_test\"");
-    expect(assignment).toContain("Skill test mode directive:");
-    expect(assignment).toContain("Make no durable changes outside this issue.");
-    expect(assignment).toContain("Write your final output as issue document `output`");
+    expect(assignment).toContain("- 工作模式：\"skill_test\"");
+    expect(assignment).toContain("技能测试模式指令：");
+    expect(assignment).toContain("不要在此任务之外做任何持久化更改");
+    expect(assignment).toContain("将最终输出写入任务文档 `output`");
   });
 
   it("strips the description for the compact resume variant but keeps directives and the wake comment", () => {
@@ -394,13 +394,13 @@ describe("buildPaperclipTaskMarkdown", () => {
     };
 
     const full = buildPaperclipTaskMarkdown(input);
-    expect(full).toContain("Issue description:");
+    expect(full).toContain("任务描述：");
     expect(full).toContain("Full multi-paragraph brief that the session already received.");
 
     const compact = buildPaperclipTaskMarkdown({ ...input, includeDescription: false });
-    expect(compact).not.toContain("Issue description:");
+    expect(compact).not.toContain("任务描述：");
     expect(compact).not.toContain("Full multi-paragraph brief");
-    expect(compact).toContain("- Issue: \"PAP-3404\"");
+    expect(compact).toContain("- 任务：\"PAP-3404\"");
     expect(compact).toContain("Please also update the changelog.");
   });
 
@@ -419,9 +419,9 @@ describe("buildPaperclipTaskMarkdown", () => {
       },
     });
 
-    expect(commentWake).toContain("Apply the latest wake comment to the current task.");
-    expect(commentWake).toContain("Later direction replaces conflicting scope");
-    expect(commentWake).toContain("preserve other requirements and approval gates");
+    expect(commentWake).toContain("将最新唤醒评论应用到当前任务");
+    expect(commentWake).toContain("后续指示会替代与之冲突的范围");
+    expect(commentWake).toContain("保留其他要求和审批门禁");
     expect(commentWake).not.toContain("unless the latest comment asks you to");
     expect(commentWake).toContain("Reply with the new answer instead.");
   });
@@ -445,7 +445,7 @@ describe("buildPaperclipTaskMarkdown", () => {
       },
     });
 
-    expect(commentWake).toContain("Update the plan only. Do not write code or perform implementation work.");
+    expect(commentWake).toContain("只更新计划。不要编写代码，也不要执行实施工作。");
     expect(commentWake).not.toContain("Create child issues from the approved plan only");
   });
 });

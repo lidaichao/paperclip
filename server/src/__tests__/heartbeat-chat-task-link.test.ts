@@ -26,9 +26,9 @@ describe("external chat task link context", () => {
       for (const includeDescription of [true, false]) {
         for (const nativeRunner of [true, false]) {
           const markdown = buildPaperclipTaskMarkdown({ issue, externalChatProvider, nativeRunner, includeDescription });
-          expect(markdown).toContain("Public task URL: https://vanity.example/issues/task-123");
-          expect(markdown).toContain("use this exact URL");
-          expect(markdown).toContain("Opening it still requires Paperclip access");
+          expect(markdown).toContain("公开任务地址：https://vanity.example/issues/task-123");
+          expect(markdown).toContain("请使用这个准确地址");
+          expect(markdown).toContain("打开链接仍需具备 Alice 访问权限");
           expect(markdown).not.toContain("https://pool.example");
           expect(markdown).not.toContain("http://localhost:3100");
         }
@@ -44,9 +44,9 @@ describe("external chat task link context", () => {
       vi.stubEnv("PAPERCLIP_API_URL", "https://api.example");
       vi.stubEnv("PAPERCLIP_CHAT_WEBHOOK_PUBLIC_URL", "https://ingress.example");
       const markdown = buildPaperclipTaskMarkdown({ issue, externalChatProvider: "slack" });
-      expect(markdown).toContain("No public task URL is configured");
-      expect(markdown).toContain("do not invent a URL");
-      expect(markdown).not.toContain("Public task URL:");
+      expect(markdown).toContain("尚未配置公开任务地址");
+      expect(markdown).toContain("不要编造链接");
+      expect(markdown).not.toContain("公开任务地址：");
       expect(markdown).not.toContain("https://api.example");
       expect(markdown).not.toContain("https://ingress.example");
     },
