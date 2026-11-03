@@ -12394,6 +12394,16 @@
     "start_hiring_plan_10300197": "Yes, get started on the hiring plan!",
     "connect_value_to_value_10300198": "Connect {{v0}} to {{v1}}.",
     "environment_test_failed_before_hiring_10300199": "The environment test failed. Fix the reported checks before you hire this agent.",
-    "no_working_authentication_before_hiring_10300200": "No working authentication was found. Fix the reported checks before you hire this agent."
+    "no_working_authentication_before_hiring_10300200": "No working authentication was found. Fix the reported checks before you hire this agent.",
+    "connection_working_no_run_created_10300201": "Connection working · No run or task created",
+    "update_key_and_resend_10300202": "Update the key in your app and resend",
+    "authentication_passed_10300203": "Authentication passed",
+    "check_sending_app_key_10300204": "Check the key in your sending app",
+    "runs_on_incoming_requests_10300205": "Runs on incoming requests",
+    "manual_runs_only_10300206": "Manual runs only",
+    "scheduled_trigger_10300207": "Scheduled trigger",
+    "could_not_save_trigger_try_again_10300208": "Couldn’t save the trigger. Please try again.",
+    "could_not_save_schedule_10300209": "Couldn’t save schedule.",
+    "could_not_replace_key_10300210": "Couldn’t replace the key."
   }
 }

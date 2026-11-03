@@ -12394,6 +12394,16 @@
     "start_hiring_plan_10300197": "好的，开始制定招聘计划！",
     "connect_value_to_value_10300198": "将 {{v0}} 连接到 {{v1}}。",
     "environment_test_failed_before_hiring_10300199": "环境测试失败。请先修复报告中的检查项，再聘用此智能体。",
-    "no_working_authentication_before_hiring_10300200": "未找到可用的身份验证。请先修复报告中的检查项，再聘用此智能体。"
+    "no_working_authentication_before_hiring_10300200": "未找到可用的身份验证。请先修复报告中的检查项，再聘用此智能体。",
+    "connection_working_no_run_created_10300201": "连接正常 · 未创建运行或任务",
+    "update_key_and_resend_10300202": "请更新应用中的密钥后重新发送",
+    "authentication_passed_10300203": "身份验证已通过",
+    "check_sending_app_key_10300204": "请检查发送端应用中的密钥",
+    "runs_on_incoming_requests_10300205": "收到请求时运行",
+    "manual_runs_only_10300206": "仅手动运行",
+    "scheduled_trigger_10300207": "计划触发器",
+    "could_not_save_trigger_try_again_10300208": "无法保存触发器，请重试。",
+    "could_not_save_schedule_10300209": "无法保存计划。",
+    "could_not_replace_key_10300210": "无法替换密钥。"
   }
 }

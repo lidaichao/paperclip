@@ -44,11 +44,15 @@ export function summarizeRoutineSchedule(triggers: RoutineTrigger[]): RoutineSch
     if (webhooks.length > 0) {
       return {
         label: l10n("local.value_active_webhookvalue_21eb6198", {v0: (webhooks.length), v1: (englishPluralSuffix(webhooks.length === 1 ? "" : "s"))}),
-        detail: "Runs on incoming requests",
+        detail: l10n("local.runs_on_incoming_requests_10300205"),
         nextRunAt: null,
       };
     }
-    return { label: l10n("local.no_active_schedule_4624e546"), detail: "Manual runs only", nextRunAt: null };
+    return {
+      label: l10n("local.no_active_schedule_4624e546"),
+      detail: l10n("local.manual_runs_only_10300206"),
+      nextRunAt: null,
+    };
   }
 
   const first = schedules[0]!;
@@ -56,7 +60,7 @@ export function summarizeRoutineSchedule(triggers: RoutineTrigger[]): RoutineSch
     label: schedules.length === 1 ? l10n("local.1_active_schedule_fb3df617") : l10n("local.value_active_schedules_59317aeb", {v0: (schedules.length)}),
     detail: first.cronExpression
       ? `${first.cronExpression}${first.timezone ? ` · ${first.timezone}` : ""}`
-      : first.label ?? "Scheduled trigger",
+      : first.label ?? l10n("local.scheduled_trigger_10300207"),
     nextRunAt,
   };
 }

@@ -92,7 +92,7 @@ export function RoutineTriggers() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Couldn’t save the trigger. Please try again.",
+          : l10n("local.could_not_save_trigger_try_again_10300208"),
       );
     } finally {
       setBusy(false);
@@ -476,7 +476,7 @@ function ScheduleSettings({
               setError(
                 cause instanceof Error
                   ? cause.message
-                  : "Couldn’t save schedule.",
+                  : l10n("local.could_not_save_schedule_10300209"),
               );
             } finally {
               setBusy(false);
@@ -593,7 +593,7 @@ function WebhookSettings({
                 setError(
                   cause instanceof Error
                     ? cause.message
-                    : "Couldn’t replace the key.",
+                    : l10n("local.could_not_replace_key_10300210"),
                 );
               } finally {
                 setBusy(false);

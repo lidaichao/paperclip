@@ -16,13 +16,31 @@ function formatTime(value: string | Date): string {
 
 function summarizeEvent(event: RoutineActivityEvent): string {
   const details = event.details;
-  if (event.action === "routine.webhook_test_received") return "Connection working · No run or task created";
-  if (event.action === "routine.webhook_test_rejected") return "Update the key in your app and resend";
-  if (event.action === "routine.webhook_received") return "Authentication passed";
-  if (event.action === "routine.webhook_rejected") return "Check the key in your sending app";
+  if (event.action === "routine.webhook_test_received") {
+    return l10n("local.connection_working_no_run_created_10300201");
+  }
+  if (event.action === "routine.webhook_test_rejected") {
+    return l10n("local.update_key_and_resend_10300202");
+  }
+  if (event.action === "routine.webhook_received") {
+    return l10n("local.authentication_passed_10300203");
+  }
+  if (event.action === "routine.webhook_rejected") {
+    return l10n("local.check_sending_app_key_10300204");
+  }
   if (!details) return "";
   if (typeof details.changeSummary === "string") return details.changeSummary;
-  if (event.action === "routine.run_triggered") return `${details.source === "webhook" ? "Webhook" : details.source === "schedule" ? "Schedule" : "Manual"} · ${details.status === "issue_created" ? "Task created" : String(details.status ?? "").replaceAll("_", " ")}`;
+  if (event.action === "routine.run_triggered") {
+    const source = details.source === "webhook"
+      ? l10n("local.webhook_4814f62c")
+      : details.source === "schedule"
+        ? l10n("local.schedule_f4830a1d")
+        : l10n("local.manual_source_0d200003");
+    const status = details.status === "issue_created"
+      ? l10n("local.task_created_a3e3e968")
+      : String(details.status ?? "").replaceAll("_", " ");
+    return `${source} · ${status}`;
+  }
   return Object.entries(details).filter(([key]) => !/id$/i.test(key)).slice(0, 3)
     .map(([key, value]) => `${key.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " ").toLowerCase()}: ${formatDetailValue(value)}`)
     .join(" · ");
