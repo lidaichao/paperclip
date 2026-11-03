@@ -11777,6 +11777,15 @@
     "workspace_service_restarted_0d900011": "Workspace service restarted.",
     "workspace_service_started_0d900012": "Workspace service started.",
     "failed_to_control_workspace_commands_0d900013": "Failed to control workspace commands.",
-    "failed_to_build_workspace_update_0d900014": "Failed to build workspace update."
+    "failed_to_build_workspace_update_0d900014": "Failed to build workspace update.",
+    "select_zip_organization_package_0da00001": "Select a .zip organization package.",
+    "no_package_files_found_in_zip_0da00002": "No package files were found in the selected zip archive.",
+    "uploading_part_of_total_progress_0da00003": "Uploading part {{v0}} of {{v1}} — {{v2}} of {{v3}} uploaded.",
+    "server_no_longer_reports_import_job_0da00004": "The server no longer reports this import job — it may have restarted while the import ran.",
+    "import_status_unreadable_session_may_have_expired_0da00005": "The import status can no longer be read — your session may have expired. Reload and sign in to check on it.",
+    "import_failed_on_server_0da00006": "Import failed on the server.",
+    "part_of_total_failed_to_upload_0da00007": "Part {{v0}} of {{v1}} failed to upload.",
+    "no_source_configured_0da00008": "No source configured.",
+    "activation_failed_0da00009": "Activation failed."
   }
 }

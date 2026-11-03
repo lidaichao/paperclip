@@ -11777,6 +11777,15 @@
     "workspace_service_restarted_0d900011": "工作区服务已重启。",
     "workspace_service_started_0d900012": "工作区服务已启动。",
     "failed_to_control_workspace_commands_0d900013": "控制工作区命令失败。",
-    "failed_to_build_workspace_update_0d900014": "生成工作区更新内容失败。"
+    "failed_to_build_workspace_update_0d900014": "生成工作区更新内容失败。",
+    "select_zip_organization_package_0da00001": "请选择一个 .zip 组织包。",
+    "no_package_files_found_in_zip_0da00002": "所选压缩包中没有找到组织包文件。",
+    "uploading_part_of_total_progress_0da00003": "正在上传第 {{v0}}/{{v1}} 部分；已上传 {{v2}}/{{v3}}。",
+    "server_no_longer_reports_import_job_0da00004": "服务器已无法查询此导入任务；导入期间服务器可能发生了重启。",
+    "import_status_unreadable_session_may_have_expired_0da00005": "无法继续读取导入状态；你的会话可能已过期。请刷新页面并重新登录后查看。",
+    "import_failed_on_server_0da00006": "服务器导入失败。",
+    "part_of_total_failed_to_upload_0da00007": "第 {{v0}}/{{v1}} 部分上传失败。",
+    "no_source_configured_0da00008": "尚未配置导入来源。",
+    "activation_failed_0da00009": "启用失败。"
   }
 }

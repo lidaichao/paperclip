@@ -695,11 +695,11 @@ async function readLocalPackageZip(file: File): Promise<{
   files: Record<string, CompanyPortabilityFileEntry>;
 }> {
   if (!/\.zip$/i.test(file.name)) {
-    throw new Error("Select a .zip organization package.");
+    throw new Error(l10n("local.select_zip_organization_package_0da00001"));
   }
   const archive = await readZipArchive(await file.arrayBuffer());
   if (Object.keys(archive.files).length === 0) {
-    throw new Error("No package files were found in the selected zip archive.");
+    throw new Error(l10n("local.no_package_files_found_in_zip_0da00002"));
   }
   return {
     name: file.name,
@@ -734,7 +734,12 @@ interface ImportTransferProgress {
 
 function formatTransferProgress(progress: ImportTransferProgress): string {
   const currentPart = Math.min(progress.uploadedParts + 1, progress.totalParts);
-  return `Uploading part ${currentPart} of ${progress.totalParts} — ${formatMegabytes(progress.uploadedBytes)} of ${formatMegabytes(progress.totalBytes)} uploaded.`;
+  return l10n("local.uploading_part_of_total_progress_0da00003", {
+    v0: currentPart,
+    v1: progress.totalParts,
+    v2: formatMegabytes(progress.uploadedBytes),
+    v3: formatMegabytes(progress.totalBytes),
+  });
 }
 
 // ── Async import job flow ─────────────────────────────────────────────
@@ -793,7 +798,7 @@ async function watchImportJob(
         // refreshed company list lets the user confirm what actually landed.
         clearStoredImportJob(storageKey);
         throw new Error(
-          "The server no longer reports this import job — it may have restarted while the import ran.",
+          l10n("local.server_no_longer_reports_import_job_0da00004"),
         );
       }
       if (
@@ -808,7 +813,7 @@ async function watchImportJob(
         // 429 (rate limited) and 5xx stay transient and fall through below.
         clearStoredImportJob(storageKey);
         throw new Error(
-          "The import status can no longer be read — your session may have expired. Reload and sign in to check on it.",
+          l10n("local.import_status_unreadable_session_may_have_expired_0da00005"),
         );
       }
       // Any other poll failure is treated as transient (network blip,
@@ -831,7 +836,7 @@ async function watchImportJob(
     }
     if (job?.status === "failed") {
       clearStoredImportJob(storageKey);
-      throw new Error(job.error?.message ?? "Import failed on the server.");
+      throw new Error(job.error?.message ?? l10n("local.import_failed_on_server_0da00006"));
     }
     await waitForNextImportJobPoll();
   }
@@ -979,7 +984,10 @@ export function CompanyImport() {
           // preview/import resumes from them instead of starting over.
           throw lastError instanceof Error
             ? lastError
-            : new Error(`Part ${part.index + 1} of ${manifest.parts.length} failed to upload.`);
+            : new Error(l10n("local.part_of_total_failed_to_upload_0da00007", {
+                v0: part.index + 1,
+                v1: manifest.parts.length,
+              }));
         }
         uploadedParts += 1;
         uploadedBytes += part.byteSize;
@@ -1082,7 +1090,7 @@ export function CompanyImport() {
     mutationFn: async (_generation: number) => {
       const meta = buildImportMetaCommon();
       if (sourceMode === "local") {
-        if (!localPackage) throw new Error("No source configured.");
+        if (!localPackage) throw new Error(l10n("local.no_source_configured_0da00008"));
         if (usesChunkedTransfer(localPackage.file)) {
           // Too large for one request: upload (or resume) the chunked
           // transfer, then preview against the server-side assembled spool.
@@ -1094,7 +1102,7 @@ export function CompanyImport() {
         return companiesApi.importPreviewPackage(localPackage.file, meta);
       }
       const source = buildGithubSource();
-      if (!source) throw new Error("No source configured.");
+      if (!source) throw new Error(l10n("local.no_source_configured_0da00008"));
       return companiesApi.importPreview({ source, ...meta });
     },
     onSuccess: (result, generation) => {
@@ -1221,7 +1229,7 @@ export function CompanyImport() {
       const localFile = sourceMode === "local" ? localPackage?.file : null;
       const githubSource = sourceMode === "local" ? null : buildGithubSource();
       if (sourceMode === "local" ? !localFile : !githubSource) {
-        throw new Error("No source configured.");
+        throw new Error(l10n("local.no_source_configured_0da00008"));
       }
       const storageKey = currentImportJobStorageKey();
       let accepted: CompanyImportJobAccepted;
@@ -1562,7 +1570,7 @@ export function CompanyImport() {
         }
         nextActivated.add(item.key);
       } catch (err) {
-        nextFailures[item.key] = err instanceof Error ? err.message : "Activation failed.";
+        nextFailures[item.key] = err instanceof Error ? err.message : l10n("local.activation_failed_0da00009");
       }
     }
     setActivatedKeys(nextActivated);

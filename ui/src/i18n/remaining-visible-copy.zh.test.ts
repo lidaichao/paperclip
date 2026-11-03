@@ -280,6 +280,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.repo_url_must_be_valid_0d900006).toBe("仓库地址必须是有效地址。");
     expect(messages.workspace_service_restarted_0d900011).toBe("工作区服务已重启。");
     expect(messages.failed_to_control_workspace_commands_0d900013).toContain("工作区命令");
+    expect(messages.select_zip_organization_package_0da00001).toContain(".zip 组织包");
+    expect(messages.uploading_part_of_total_progress_0da00003).toContain("第 {{v0}}/{{v1}} 部分");
+    expect(messages.server_no_longer_reports_import_job_0da00004).toContain("服务器可能发生了重启");
+    expect(messages.import_status_unreadable_session_may_have_expired_0da00005).toContain("会话可能已过期");
+    expect(messages.activation_failed_0da00009).toBe("启用失败。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
