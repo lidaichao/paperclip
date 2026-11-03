@@ -1082,7 +1082,7 @@ describe("agent live run routes", () => {
         type: "board", userId: "operator", source: "session", companyIds: ["company-1"],
       }), url => request(url).post(`/api/agents/${routeAgentId}/wakeup`).send(retryBody));
       expect(res.status).toBe(409);
-      expect(res.body).toMatchObject({ error: expect.stringContaining("cleanup and reconciliation") });
+      expect(res.body).toMatchObject({ error: expect.stringContaining("清理与状态核对") });
       expect(mockHeartbeatService.wakeup).not.toHaveBeenCalled();
       expect(mockChatRunRetries.prepareFailedChatRunRetry).not.toHaveBeenCalled();
     });
@@ -1153,7 +1153,7 @@ describe("agent live run routes", () => {
       const res = await requestApp(await createApp(fixture.db), url =>
         request(url).post(`/api/agents/${routeAgentId}/wakeup`).send(retryBody));
       expect(res.status, JSON.stringify(res.body)).toBe(409);
-      expect(res.body.error).toContain("Conversation session changed");
+      expect(res.body.error).toContain("对话会话已变更");
       expect(mockHeartbeatService.wakeup).not.toHaveBeenCalled();
       expect(mockChatRunRetries.prepareFailedChatRunRetry).not.toHaveBeenCalled();
     });

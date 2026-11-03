@@ -5366,7 +5366,7 @@ export function agentRoutes(
       await assertCanUpdateAgent(req, existing);
       const changed = JSON.stringify(nextAiBinding) !== JSON.stringify(existing.runtimeConfig.aiConnection);
       const aiConfig = (patchData.adapterConfig ?? existing.adapterConfig) as Record<string, unknown>;
-      if (!isAiConnectionCompatible(nextAiBinding, requestedAdapterType, aiConfig.model, aiConfig.provider, aiConfig.acpxAgent)) throw unprocessable("Select an AI connection compatible with the new harness and model");
+      if (!isAiConnectionCompatible(nextAiBinding, requestedAdapterType, aiConfig.model, aiConfig.provider, aiConfig.acpxAgent)) throw unprocessable("请选择与新执行框架和模型兼容的 AI 连接");
       if (changed) await validateManagedAgentBinding(req, existing.companyId, existing.id, requestedAdapterType, aiConfig, nextAiBinding, (patchData.defaultEnvironmentId !== undefined ? patchData.defaultEnvironmentId : existing.defaultEnvironmentId) as string | null, true);
     }
     if (requestedRuntimeConfig) patchData.runtimeConfig = requestedRuntimeConfig;
@@ -5408,7 +5408,7 @@ export function agentRoutes(
       },
     });
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 
@@ -5436,7 +5436,7 @@ export function agentRoutes(
     }
     const agent = await svc.pause(id);
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 
@@ -5463,13 +5463,13 @@ export function agentRoutes(
     await assertCanResumeAgent(req, existing);
     if (existing.orgChainHealth?.status === "invalid_org_chain") {
       res.status(409).json({
-        error: existing.orgChainHealth?.repairGuidance ?? "Repair this agent's reporting chain before resuming it",
+        error: existing.orgChainHealth?.repairGuidance ?? "恢复智能体前，请先修复其汇报关系链",
       });
       return;
     }
     const agent = await svc.resume(id);
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 
@@ -5498,14 +5498,14 @@ export function agentRoutes(
     }
     if (existing.orgChainHealth?.status === "invalid_org_chain") {
       res.status(409).json({
-        error: existing.orgChainHealth?.repairGuidance ?? "Repair this agent's reporting chain before clearing its error",
+        error: existing.orgChainHealth?.repairGuidance ?? "清除智能体错误前，请先修复其汇报关系链",
       });
       return;
     }
 
     const agent = await svc.clearError(id);
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 
@@ -5529,7 +5529,7 @@ export function agentRoutes(
       return;
     }
     if (existing.status !== "pending_approval") {
-      res.status(409).json({ error: "Only pending approval agents can be approved" });
+      res.status(409).json({ error: "只能批准处于待审批状态的智能体" });
       return;
     }
 
@@ -5547,18 +5547,18 @@ export function agentRoutes(
     } else {
       const approval = await svc.activatePendingApproval(id);
       if (!approval) {
-        res.status(404).json({ error: "Agent not found" });
+        res.status(404).json({ error: "未找到智能体" });
         return;
       }
       if (!approval.activated) {
-        res.status(409).json({ error: "Only pending approval agents can be approved" });
+        res.status(409).json({ error: "只能批准处于待审批状态的智能体" });
         return;
       }
       agent = approval.agent;
     }
 
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 
@@ -5601,7 +5601,7 @@ export function agentRoutes(
       agent = await svc.terminate(id);
     }
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 
@@ -5618,7 +5618,7 @@ export function agentRoutes(
     const invalidOrgChainDescendantIds = listInvalidOrgChainDescendantIds(id, companyAgentRows);
     const cancellation = await heartbeat.cancelInvocationsForAgents(
       [id, ...invalidOrgChainDescendantIds],
-      "Cancelled because the agent was terminated or became invalid-org-chain under a terminated manager",
+      "智能体已终止，或因上级终止导致组织关系链失效，因此取消运行",
     );
 
     await logActivity(db, {
@@ -5720,13 +5720,13 @@ export function agentRoutes(
 
     const key = await svc.getKeyById(keyId);
     if (!key || key.agentId !== agent.id) {
-      res.status(404).json({ error: "Key not found" });
+      res.status(404).json({ error: "未找到密钥" });
       return;
     }
 
     const revoked = await svc.revokeKey(agent.id, keyId);
     if (!revoked) {
-      res.status(404).json({ error: "Key not found" });
+      res.status(404).json({ error: "未找到密钥" });
       return;
     }
 
@@ -5763,12 +5763,12 @@ export function agentRoutes(
     opts: WakeupRouteOpts,
   ): Promise<void> => {
     const id = req.params.id as string;
-    const agent = await getAccessibleResource(req, res, svc.getById(id), "Agent not found");
+    const agent = await getAccessibleResource(req, res, svc.getById(id), "未找到智能体");
     if (!agent) return;
 
     if (req.actor.type === "agent") {
       if (req.actor.agentId !== id) {
-        res.status(403).json({ error: "Agent can only invoke itself" });
+        res.status(403).json({ error: "智能体只能唤醒自己" });
         return;
       }
     } else {
@@ -5779,7 +5779,7 @@ export function agentRoutes(
     }
     if (agent.orgChainHealth?.status === "invalid_org_chain") {
       res.status(409).json({
-        error: agent.orgChainHealth?.repairGuidance ?? "Repair this agent's reporting chain before starting runs",
+        error: agent.orgChainHealth?.repairGuidance ?? "开始运行前，请先修复此智能体的汇报关系链",
       });
       return;
     }
@@ -5794,7 +5794,7 @@ export function agentRoutes(
     ) {
       if (req.body.source !== "assignment" || req.body.triggerDetail !== "system") {
         throw badRequest(
-          "An execution-stage wake must use assignment source and system trigger.",
+          "执行阶段唤醒必须使用任务分派来源和系统触发方式。",
         );
       }
       const payloadIssueId =
@@ -5802,11 +5802,11 @@ export function agentRoutes(
           ? req.body.payload.issueId
           : null;
       if (!payloadIssueId) {
-        throw badRequest("An execution-stage wake requires an issueId.");
+        throw badRequest("执行阶段唤醒必须提供 issueId。");
       }
       const executionIssue = await issueService(db).getById(payloadIssueId);
       if (!executionIssue || executionIssue.companyId !== agent.companyId) {
-        throw notFound("Task not found");
+        throw notFound("未找到任务");
       }
       const pendingStageWake = buildPendingExecutionStageWake(executionIssue);
       if (
@@ -5815,7 +5815,7 @@ export function agentRoutes(
         pendingStageWake.reason !== req.body.reason
       ) {
         throw conflict(
-          "The task is not waiting for this agent in the requested execution stage.",
+          "该任务在请求的执行阶段并未等待此智能体处理。",
         );
       }
       manualExecutionStageContext = {
@@ -5833,7 +5833,7 @@ export function agentRoutes(
         req.body.debug
       ) {
         throw badRequest(
-          "An exact failed-run retry cannot override its execution context.",
+          "精确重试失败运行时不能覆盖原执行上下文。",
         );
       }
       const failedRun = await heartbeat.getRun(req.body.failedRunId);
@@ -5842,13 +5842,13 @@ export function agentRoutes(
         failedRun.companyId !== agent.companyId ||
         failedRun.agentId !== agent.id
       ) {
-        throw notFound("Failed run not found");
+        throw notFound("未找到失败运行记录");
       }
       if (!["failed", "timed_out"].includes(failedRun.status)) {
-        throw conflict("Only a failed run can be retried.");
+        throw conflict("只能重试失败或超时的运行。");
       }
       if (failedRun.runtimeMode === "native" && failedRun.errorCode === "native_session_cleanup_quarantined") {
-        throw conflict("The stopped native session requires cleanup and reconciliation before a new attempt.", {
+        throw conflict("已停止的本地会话必须先完成清理与状态核对，才能再次尝试。", {
           code: "native_session_cleanup_quarantined",
         });
       }
@@ -5859,9 +5859,9 @@ export function agentRoutes(
           : null;
       if (issueId) {
         const issue = await issueService(db).getById(issueId);
-        if (!issue || issue.companyId !== agent.companyId) throw notFound("Task not found");
+        if (!issue || issue.companyId !== agent.companyId) throw notFound("未找到任务");
         if (issue.conversationAgentId && issue.conversationUserId !== req.actor.userId) {
-          throw forbidden("Only the conversation owner can retry a chat run");
+          throw forbidden("只有对话所有者才能重试对话运行");
         }
         const decision = await access.decide({
           actor: req.actor, action: "issue:comment",
@@ -5872,7 +5872,7 @@ export function agentRoutes(
           },
         });
         if (!decision.allowed) throw forbidden(decision.explanation, authorizationDeniedDetails(decision));
-        if (issue.assigneeAgentId !== agent.id) throw conflict("The task is no longer assigned to this agent.");
+        if (issue.assigneeAgentId !== agent.id) throw conflict("该任务已不再分派给此智能体。");
         if (issue.conversationAgentId) {
           // Agent Chat has no task description to replay. Recover the exact
           // request from the selected server-owned run, never caller markers.
@@ -5881,7 +5881,7 @@ export function agentRoutes(
           // the initial generation and cannot be retried after a reset.
           const generation = failedContext.conversationSessionGeneration ?? 0;
           if (!Number.isInteger(generation) || generation !== issue.conversationSessionGeneration) {
-            throw conflict("Conversation session changed; this older turn cannot be retried.");
+            throw conflict("对话会话已变更，无法重试这条较早的消息。");
           }
           retryConversationContext = { conversationSessionGeneration: generation };
           const commentIds = [...new Set([
@@ -5913,7 +5913,7 @@ export function agentRoutes(
         : null;
       if (chatBinding) {
         if (!options.chatRunRetries || !req.actor.userId) {
-          throw conflict("Chat retry authorization is unavailable.", {
+          throw conflict("当前无法验证对话重试权限。", {
             code: "chat_failed_run_retry_requires_authorized_context",
           });
         }
@@ -5948,7 +5948,7 @@ export function agentRoutes(
         failedContext.source.startsWith("chat:")
       ) {
         throw conflict(
-          "The failed chat request no longer has an authorized conversation.",
+          "失败的对话请求已不再关联有效授权的会话。",
           { code: "chat_failed_run_retry_requires_authorized_context" },
         );
       }
@@ -6049,15 +6049,15 @@ export function agentRoutes(
     // an empty body produces the original fixed-arg `heartbeat.invoke()`
     // shape exactly.
     if (req.body?.failedRunId !== undefined) {
-      throw badRequest("Use the wakeup endpoint to retry an exact failed run.");
+      throw badRequest("请使用唤醒接口精确重试失败运行。");
     }
     const id = req.params.id as string;
-    const agent = await getAccessibleResource(req, res, svc.getById(id), "Agent not found");
+    const agent = await getAccessibleResource(req, res, svc.getById(id), "未找到智能体");
     if (!agent) return;
 
     if (req.actor.type === "agent") {
       if (req.actor.agentId !== id) {
-        res.status(403).json({ error: "Agent can only invoke itself" });
+        res.status(403).json({ error: "智能体只能唤醒自己" });
         return;
       }
     } else {
@@ -6069,7 +6069,7 @@ export function agentRoutes(
     }
     if (agent.orgChainHealth?.status === "invalid_org_chain") {
       res.status(409).json({
-        error: agent.orgChainHealth?.repairGuidance ?? "Repair this agent's reporting chain before starting runs",
+        error: agent.orgChainHealth?.repairGuidance ?? "开始运行前，请先修复此智能体的汇报关系链",
       });
       return;
     }
@@ -6161,11 +6161,11 @@ export function agentRoutes(
   router.post("/agents/:id/claude-login", async (req, res) => {
     assertBoard(req);
     const id = req.params.id as string;
-    const agent = await getAccessibleResource(req, res, svc.getById(id), "Agent not found");
+    const agent = await getAccessibleResource(req, res, svc.getById(id), "未找到智能体");
     if (!agent) return;
     await assertBoardCanManageAgentsForCompany(req, agent.companyId);
     if (agent.adapterType !== "claude_local") {
-      res.status(400).json({ error: "Login is only supported for claude_local agents" });
+      res.status(400).json({ error: "仅 claude_local 智能体支持登录" });
       return;
     }
 

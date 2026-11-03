@@ -417,7 +417,7 @@ describe.sequential("agent cross-tenant route authorization", () => {
     const res = await requestApp(app, (baseUrl) => request(baseUrl).delete(`/api/agents/${agentId}/keys/${keyId}`));
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toContain("Key not found");
+    expect(res.body.error).toContain("未找到密钥");
     expect(mockAgentService.getKeyById).toHaveBeenCalledWith(keyId);
     expect(mockAgentService.revokeKey).not.toHaveBeenCalled();
   });
