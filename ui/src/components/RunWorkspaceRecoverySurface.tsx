@@ -126,7 +126,7 @@ export function RunWorkspaceRecoverySurface({ run }: { run: HeartbeatRun }) {
 
   const reissue = useMutation({
     mutationFn: async (request: RecoveryReissueRequest) => {
-      if (!issue) throw new Error("Task is not loaded yet.");
+      if (!issue) throw new Error(l10n("local.task_not_loaded_yet_0cd00021"));
       const sourceLabel = issue.identifier ?? l10n("local.the_stalled_task_701f1d79");
       const descriptionLines = [
         `Re-issued from ${sourceLabel} on an isolated git worktree after a workspace branch divergence.`,
@@ -183,7 +183,9 @@ export function RunWorkspaceRecoverySurface({ run }: { run: HeartbeatRun }) {
       outcome: "restored" | "false_positive";
       sourceIssueStatus: "todo" | "done" | "in_review";
     }) => {
-      if (!issueId || !recoveryAction) throw new Error("No recovery action to resolve.");
+      if (!issueId || !recoveryAction) {
+        throw new Error(l10n("local.no_recovery_action_to_resolve_10300024"));
+      }
       return issuesApi.resolveRecoveryAction(issueId, {
         actionId: recoveryAction.id,
         outcome: data.outcome,

@@ -12215,6 +12215,23 @@
     "decision_has_no_linked_task_10300018": "该决策没有可用于分派的关联任务。",
     "review_decision_on_task_request_10300019": "{{v0}}——请查看任务 {{v1}} 上的这项决策，给出建议，并将其重新显示到决策台。（由决策台分派）",
     "review_decision_request_10300020": "{{v0}}——请查看这项决策，给出建议，并将其重新显示到决策台。（由决策台分派）",
-    "unable_to_load_attachment_preview_10300021": "无法加载附件预览（{{v0}}）"
+    "unable_to_load_attachment_preview_10300021": "无法加载附件预览（{{v0}}）",
+    "could_not_save_trigger_draft_10300022": "无法在此浏览器中保存草稿。请保持本页打开后重试。",
+    "create_webhook_before_finishing_setup_10300023": "请先创建 Webhook，再完成设置。",
+    "no_recovery_action_to_resolve_10300024": "没有可处理的恢复操作。",
+    "no_current_session_goal_to_edit_10300025": "当前会话没有可编辑的目标。",
+    "add_objective_after_goal_command_10300026": "请在 /goal 后输入目标内容以创建目标。",
+    "image_uploads_are_unavailable_10300027": "当前无法上传图片。",
+    "run_history_load_timed_out_10300028": "运行历史加载超时，请重试。",
+    "run_history_could_not_be_loaded_10300029": "无法加载运行历史。",
+    "stop_verification_timed_out_10300030": "停止状态验证超时。",
+    "stop_requested_but_not_verified_10300031": "已请求停止，但无法确认工作是否已停止。请刷新；如果仍在运行，请再次停止。",
+    "work_is_still_stopping_10300032": "已请求停止，但工作仍在停止中。如果持续时间过长，请再次停止。",
+    "zip_only_store_and_deflate_supported_10300033": "不支持此 ZIP 压缩包：仅支持 STORE 和 DEFLATE 条目。",
+    "browser_cannot_read_compressed_zip_10300034": "不支持此 ZIP 压缩包：当前浏览器无法读取压缩条目。",
+    "zip_unsupported_local_file_header_10300035": "ZIP 压缩包无效：不支持此本地文件头。",
+    "zip_truncated_local_file_header_10300036": "ZIP 压缩包无效：本地文件头不完整。",
+    "zip_data_descriptors_not_supported_10300037": "不支持此 ZIP 压缩包：暂不支持数据描述符。",
+    "zip_truncated_file_contents_10300038": "ZIP 压缩包无效：文件内容不完整。"
   }
 }

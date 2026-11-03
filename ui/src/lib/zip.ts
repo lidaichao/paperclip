@@ -1,4 +1,5 @@
 import type { CompanyPortabilityFileEntry } from "@paperclipai/shared";
+import { l10n } from "../i18n";
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -167,10 +168,10 @@ function portableFileEntryToBytes(entry: CompanyPortabilityFileEntry): Uint8Arra
 async function inflateZipEntry(compressionMethod: number, bytes: Uint8Array) {
   if (compressionMethod === 0) return bytes;
   if (compressionMethod !== 8) {
-    throw new Error("Unsupported zip archive: only STORE and DEFLATE entries are supported.");
+    throw new Error(l10n("local.zip_only_store_and_deflate_supported_10300033"));
   }
   if (typeof DecompressionStream !== "function") {
-    throw new Error("Unsupported zip archive: this browser cannot read compressed zip entries.");
+    throw new Error(l10n("local.browser_cannot_read_compressed_zip_10300034"));
   }
   const body = new Uint8Array(bytes.byteLength);
   body.set(bytes);
@@ -190,11 +191,11 @@ export async function readZipArchive(source: ArrayBuffer | Uint8Array): Promise<
     const signature = readUint32(bytes, offset);
     if (signature === 0x02014b50 || signature === 0x06054b50) break;
     if (signature !== 0x04034b50) {
-      throw new Error("Invalid zip archive: unsupported local file header.");
+      throw new Error(l10n("local.zip_unsupported_local_file_header_10300035"));
     }
 
     if (offset + 30 > bytes.length) {
-      throw new Error("Invalid zip archive: truncated local file header.");
+      throw new Error(l10n("local.zip_truncated_local_file_header_10300036"));
     }
 
     const generalPurposeFlag = readUint16(bytes, offset + 6);
@@ -204,14 +205,14 @@ export async function readZipArchive(source: ArrayBuffer | Uint8Array): Promise<
     const extraFieldLength = readUint16(bytes, offset + 28);
 
     if ((generalPurposeFlag & 0x0008) !== 0) {
-      throw new Error("Unsupported zip archive: data descriptors are not supported.");
+      throw new Error(l10n("local.zip_data_descriptors_not_supported_10300037"));
     }
 
     const nameOffset = offset + 30;
     const bodyOffset = nameOffset + fileNameLength + extraFieldLength;
     const bodyEnd = bodyOffset + compressedSize;
     if (bodyEnd > bytes.length) {
-      throw new Error("Invalid zip archive: truncated file contents.");
+      throw new Error(l10n("local.zip_truncated_file_contents_10300038"));
     }
 
     const rawArchivePath = textDecoder.decode(bytes.slice(nameOffset, nameOffset + fileNameLength));

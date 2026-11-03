@@ -12215,6 +12215,23 @@
     "decision_has_no_linked_task_10300018": "This decision has no linked task to route from.",
     "review_decision_on_task_request_10300019": "{{v0}} — could you look at this decision on {{v1}}, prepare a recommendation, and re-surface it on the decisions desk? (routed from the desk)",
     "review_decision_request_10300020": "{{v0}} — could you look at this decision, prepare a recommendation, and re-surface it on the decisions desk? (routed from the desk)",
-    "unable_to_load_attachment_preview_10300021": "Unable to load attachment preview ({{v0}})"
+    "unable_to_load_attachment_preview_10300021": "Unable to load attachment preview ({{v0}})",
+    "could_not_save_trigger_draft_10300022": "Couldn’t save your draft in this browser. Keep this page open and try again.",
+    "create_webhook_before_finishing_setup_10300023": "Create the webhook before finishing setup.",
+    "no_recovery_action_to_resolve_10300024": "No recovery action to resolve.",
+    "no_current_session_goal_to_edit_10300025": "There is no current session goal to edit.",
+    "add_objective_after_goal_command_10300026": "Add an objective after /goal to start a goal.",
+    "image_uploads_are_unavailable_10300027": "Image uploads are unavailable.",
+    "run_history_load_timed_out_10300028": "Run history took too long to load. Retry to load it.",
+    "run_history_could_not_be_loaded_10300029": "Run history could not be loaded.",
+    "stop_verification_timed_out_10300030": "Stop verification timed out.",
+    "stop_requested_but_not_verified_10300031": "The stop was requested, but stopping could not be verified. Refresh and try Stop again if work is still running.",
+    "work_is_still_stopping_10300032": "The stop was requested, but work is still stopping. Try Stop again if it continues.",
+    "zip_only_store_and_deflate_supported_10300033": "Unsupported zip archive: only STORE and DEFLATE entries are supported.",
+    "browser_cannot_read_compressed_zip_10300034": "Unsupported zip archive: this browser cannot read compressed zip entries.",
+    "zip_unsupported_local_file_header_10300035": "Invalid zip archive: unsupported local file header.",
+    "zip_truncated_local_file_header_10300036": "Invalid zip archive: truncated local file header.",
+    "zip_data_descriptors_not_supported_10300037": "Unsupported zip archive: data descriptors are not supported.",
+    "zip_truncated_file_contents_10300038": "Invalid zip archive: truncated file contents."
   }
 }

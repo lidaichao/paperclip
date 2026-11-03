@@ -45,7 +45,7 @@ function saveDraft(key: string, draft: TriggerDraft) {
     sessionStorage.setItem(key, JSON.stringify(draft));
   } catch {
     throw new Error(
-      "Couldn’t save your draft in this browser. Keep this page open and try again.",
+      l10n("local.could_not_save_trigger_draft_10300022"),
     );
   }
 }
@@ -388,7 +388,7 @@ function TriggerSetup({
         });
       else {
         if (!createdRef.current)
-          throw new Error("Create the webhook before finishing setup.");
+          throw new Error(l10n("local.create_webhook_before_finishing_setup_10300023"));
         await routinesApi.updateTrigger(createdRef.current.id, {
           setupPending: false,
         });

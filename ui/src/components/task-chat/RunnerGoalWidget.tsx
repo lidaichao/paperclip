@@ -116,7 +116,9 @@ export function useRunnerGoalControl(issueId: string | null, agentId: string | n
 
   const edit = useCallback(async () => {
     const current = query.data ?? (await query.refetch()).data;
-    if (!current?.goal) throw new Error("There is no current session goal to edit.");
+    if (!current?.goal) {
+      throw new Error(l10n("local.no_current_session_goal_to_edit_10300025"));
+    }
     mutation.reset();
     setActionError(null);
     setExpanded(true);
@@ -127,7 +129,7 @@ export function useRunnerGoalControl(issueId: string | null, agentId: string | n
     if (command.action === "focus") {
       const current = query.data ?? (await query.refetch()).data;
       if (!current?.goal && !current?.pendingAction) {
-        throw new Error("Add an objective after /goal to start a goal.");
+        throw new Error(l10n("local.add_objective_after_goal_command_10300026"));
       }
       setExpanded(true);
       return;

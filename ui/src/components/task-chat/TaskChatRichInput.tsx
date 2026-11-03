@@ -58,7 +58,9 @@ export function TaskChatRichInput({
   }
 
   async function uploadImage(file: File): Promise<string> {
-    if (!imageUploadHandler) throw new Error("Image uploads are unavailable.");
+    if (!imageUploadHandler) {
+      throw new Error(l10n("local.image_uploads_are_unavailable_10300027"));
+    }
     uploadCountRef.current += 1;
     updateUploading(true);
     setUploadError(null);

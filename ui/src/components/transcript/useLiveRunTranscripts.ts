@@ -1,4 +1,5 @@
 import { usePageVisibility } from "../../lib/page-visibility";
+import { l10n } from "../../i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { readTranscriptRequest } from "./read-transcript-request";
 import { useQuery } from "@tanstack/react-query";
@@ -349,7 +350,12 @@ export function useLiveRunTranscripts({
           setErrorsByRun((previous) => {
             if (previous.has(run.id)) return previous;
             const next = new Map(previous);
-            next.set(run.id, error instanceof Error ? error : new Error("Run history could not be loaded"));
+            next.set(
+              run.id,
+              error instanceof Error
+                ? error
+                : new Error(l10n("local.run_history_could_not_be_loaded_10300029")),
+            );
             return next;
           });
         }

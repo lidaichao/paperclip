@@ -1,3 +1,5 @@
+import { l10n } from "../../i18n";
+
 export const TRANSCRIPT_REQUEST_TIMEOUT_MS = 15_000;
 
 /** Bound history reads, including body consumption, and release coalesced GETs
@@ -19,7 +21,7 @@ export function readTranscriptRequest<T>(request: (signal: AbortSignal) => Promi
       controller.abort();
     };
     const timer = window.setTimeout(() => {
-      finish(() => reject(new Error("Run history took too long to load. Retry to load it.")));
+      finish(() => reject(new Error(l10n("local.run_history_load_timed_out_10300028"))));
       controller.abort();
     }, TRANSCRIPT_REQUEST_TIMEOUT_MS);
     signal.addEventListener("abort", onAbort, { once: true });
