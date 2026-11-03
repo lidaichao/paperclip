@@ -205,8 +205,8 @@ export function AgentsUsingSkillDialog({
       const message = error instanceof Error ? error.message : l10n("local.failed_to_update_agent_skills_f491569a");
       toast?.pushToast({
         tone: "error",
-        title: "Update failed",
-        body: message.includes("403") ? "You don't have permission to change this agent's skills." : message,
+        title: l10n("local.update_failed_e58282fd"),
+        body: message.includes("403") ? l10n("local.no_permission_change_agent_skills_10300373") : message,
       });
     },
   });

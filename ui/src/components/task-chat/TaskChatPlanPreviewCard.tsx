@@ -68,8 +68,14 @@ function planRevision(source: TaskChatPlanPreviewSource): number | null {
   if (source.kind === "saved") {
     return source.revision ?? source.document?.latestRevisionNumber ?? null;
   }
+  const revisionLabels = new Set([
+    "revision",
+    "document revision",
+    l10n("local.revision_2e516d68").toLocaleLowerCase(),
+    l10n("local.document_revision_10300375").toLocaleLowerCase(),
+  ]);
   const detail = source.activity.details.find(({ label }) =>
-    label === "Revision" || label === "Document Revision",
+    revisionLabels.has(label.trim().toLocaleLowerCase()),
   );
   if (!detail) return null;
   const revision = Number.parseInt(detail.value, 10);

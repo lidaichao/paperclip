@@ -12566,6 +12566,10 @@
     "agent_sort_10300369": "Agent sort",
     "new_project_10300370": "New project",
     "projects_section_actions_10300371": "Projects section actions",
-    "project_sort_10300372": "Project sort"
+    "project_sort_10300372": "Project sort",
+    "no_permission_change_agent_skills_10300373": "You don't have permission to change this agent's skills.",
+    "the_project_working_tree_10300374": "the project working tree",
+    "document_revision_10300375": "Document Revision",
+    "plan_revision_value_10300376": "plan revision {{v0}}"
   }
 }

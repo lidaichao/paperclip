@@ -12566,6 +12566,10 @@
     "agent_sort_10300369": "智能体排序",
     "new_project_10300370": "新建项目",
     "projects_section_actions_10300371": "项目区域操作",
-    "project_sort_10300372": "项目排序"
+    "project_sort_10300372": "项目排序",
+    "no_permission_change_agent_skills_10300373": "你没有权限修改此智能体的技能。",
+    "the_project_working_tree_10300374": "项目工作树",
+    "document_revision_10300375": "文档修订版本",
+    "plan_revision_value_10300376": "计划修订版本 {{v0}}"
   }
 }

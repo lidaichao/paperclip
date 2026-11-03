@@ -352,7 +352,11 @@ function PlanReviewPreview({
       }}
       href="#document-plan"
       testId="plan-review-preview"
-      ariaLabel={l10n("local.open_value_afaef5c3", {v0: (target.label ?? (targetRevision == null ? "plan" : `plan revision ${targetRevision}`))})}
+      ariaLabel={l10n("local.open_value_afaef5c3", {
+        v0: target.label ?? (targetRevision == null
+          ? l10n("local.plan_fa8ed0bd")
+          : l10n("local.plan_revision_value_10300376", { v0: targetRevision })),
+      })}
     />
   );
 }
