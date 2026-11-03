@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "pagerduty",
   "name": "PagerDuty",
-  "description": "Connect PagerDuty's provider-hosted MCP server.",
+  "description": "连接 PagerDuty 官方托管的 MCP 服务器。",
   "categories": [
     "developer"
   ],
@@ -22,20 +22,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.pagerduty.com/mcp"
       },
-      "guidanceMd": "Use a customer-created PagerDuty key. A PagerDuty API token; choose the regional endpoint that hosts the account.",
+      "guidanceMd": "使用自行创建的 PagerDuty 密钥。需要 PagerDuty API 令牌，并选择账户所在区域的服务地址。",
       "riskTier": "S4",
-      "label": "US service region",
+      "label": "美国服务区域",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "PagerDuty API key",
+          "label": "PagerDuty API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your PagerDuty user API token",
+          "placeholder": "粘贴 PagerDuty 用户 API 令牌",
           "secret": true
         }
       ],
@@ -49,7 +49,7 @@
         "docs": "https://support.pagerduty.com/main/docs/pagerduty-mcp-server"
       },
       "warnings": [
-        "A PagerDuty API token; choose the regional endpoint that hosts the account."
+        "需要 PagerDuty API 令牌，并选择账户所在区域的服务地址。"
       ]
     },
     {
@@ -59,20 +59,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.eu.pagerduty.com/mcp"
       },
-      "guidanceMd": "Use a customer-created PagerDuty key. A PagerDuty API token; choose the regional endpoint that hosts the account.",
+      "guidanceMd": "使用自行创建的 PagerDuty 密钥。需要 PagerDuty API 令牌，并选择账户所在区域的服务地址。",
       "riskTier": "S4",
-      "label": "EU service region",
+      "label": "欧洲服务区域",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "PagerDuty API key",
+          "label": "PagerDuty API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your PagerDuty user API token",
+          "placeholder": "粘贴 PagerDuty 用户 API 令牌",
           "secret": true
         }
       ],
@@ -86,7 +86,7 @@
         "docs": "https://support.pagerduty.com/main/docs/pagerduty-mcp-server"
       },
       "warnings": [
-        "A PagerDuty API token; choose the regional endpoint that hosts the account."
+        "需要 PagerDuty API 令牌，并选择账户所在区域的服务地址。"
       ]
     }
   ]

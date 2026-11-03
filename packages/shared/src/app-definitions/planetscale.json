@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "planetscale",
   "name": "PlanetScale",
-  "description": "Connect PlanetScale's provider-hosted MCP server.",
+  "description": "连接 PlanetScale 官方托管的 MCP 服务器。",
   "categories": [
     "data"
   ],
@@ -24,35 +24,35 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.pscale.dev/mcp/planetscale"
       },
-      "guidanceMd": "Connect PlanetScale in the browser. A PlanetScale account; database and branch access are chosen during authorization.",
+      "guidanceMd": "在浏览器中连接 PlanetScale。需要 PlanetScale 账户；数据库和分支访问范围在授权时选择。",
       "riskTier": "S4",
-      "label": "Database access",
+      "label": "数据库访问",
       "consoleLinks": {
         "docs": "https://planetscale.com/docs/connect/mcp"
       },
       "warnings": [
-        "A PlanetScale account; database and branch access are chosen during authorization."
+        "需要 PlanetScale 账户；数据库和分支访问范围在授权时选择。"
       ],
       "tenantFields": [
         {
           "key": "project",
-          "label": "Project or database",
+          "label": "项目或数据库",
           "type": "text",
           "advanced": true,
-          "placeholder": "Optional project or database name",
-          "helperMd": "Records the intended database boundary; final access is selected during PlanetScale authorization."
+          "placeholder": "可选的项目或数据库名称",
+          "helperMd": "记录预期的数据库边界；最终访问范围在 PlanetScale 授权时选择。"
         },
         {
           "key": "branch",
-          "label": "Branch",
+          "label": "分支",
           "type": "text",
           "advanced": true,
-          "placeholder": "Optional branch name",
-          "helperMd": "Records the intended branch boundary; final access is selected during PlanetScale authorization."
+          "placeholder": "可选的分支名称",
+          "helperMd": "记录预期的分支边界；最终访问范围在 PlanetScale 授权时选择。"
         }
       ],
       "requiredResourceFilters": [
@@ -68,18 +68,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use query insights and schema recommendations without query execution tools.",
+      "whenToUse": "使用查询洞察和架构建议，不开放查询执行工具。",
       "defaults": {
         "serverUrl": "https://mcp.pscale.dev/mcp/planetscale-insights-only"
       },
-      "guidanceMd": "Connect PlanetScale in the browser. A PlanetScale account; database and branch access are chosen during authorization.",
+      "guidanceMd": "在浏览器中连接 PlanetScale。需要 PlanetScale 账户；数据库和分支访问范围在授权时选择。",
       "riskTier": "S4",
-      "label": "Insights only",
+      "label": "仅洞察",
       "consoleLinks": {
         "docs": "https://planetscale.com/docs/connect/mcp"
       },
       "warnings": [
-        "A PlanetScale account; database and branch access are chosen during authorization."
+        "需要 PlanetScale 账户；数据库和分支访问范围在授权时选择。"
       ],
       "requiredResourceFilters": [
         "organization",

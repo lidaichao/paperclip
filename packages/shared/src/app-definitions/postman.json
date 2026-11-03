@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "postman",
   "name": "Postman",
-  "description": "Connect Postman's provider-hosted MCP server.",
+  "description": "连接 Postman 官方托管的 MCP 服务器。",
   "categories": [
     "developer"
   ],
@@ -23,23 +23,23 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.postman.com/minimal"
       },
-      "guidanceMd": "Connect Postman in the browser. A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints.",
+      "guidanceMd": "在浏览器中连接 Postman。需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。",
       "riskTier": "S3",
-      "label": "US · Browser sign-in",
+      "label": "美国区域 · 浏览器登录",
       "consoleLinks": {
         "docs": "https://learning.postman.com/latest-v-12/docs/reference/postman-api/postman-mcp-server/postman-mcp-remote-server"
       },
       "warnings": [
-        "A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints."
+        "需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。"
       ],
       "capabilityProfile": {
         "key": "minimal",
-        "label": "Minimal",
-        "description": "Essential workspace, collection, and environment tools with the smallest tool catalog."
+        "label": "精简",
+        "description": "提供必要的工作区、集合和环境工具，工具目录规模最小。"
       }
     },
     {
@@ -49,23 +49,23 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.postman.com/code"
       },
-      "guidanceMd": "Connect Postman in the browser. A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints.",
+      "guidanceMd": "在浏览器中连接 Postman。需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。",
       "riskTier": "S3",
-      "label": "US · Browser sign-in",
+      "label": "美国区域 · 浏览器登录",
       "consoleLinks": {
         "docs": "https://learning.postman.com/latest-v-12/docs/reference/postman-api/postman-mcp-server/postman-mcp-remote-server"
       },
       "warnings": [
-        "A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints."
+        "需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。"
       ],
       "capabilityProfile": {
         "key": "code",
-        "label": "Code",
-        "description": "Tools for generating client code from API definitions."
+        "label": "代码生成",
+        "description": "根据 API 定义生成客户端代码的工具。"
       }
     },
     {
@@ -75,23 +75,23 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.postman.com/mcp"
       },
-      "guidanceMd": "Connect Postman in the browser. A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints.",
+      "guidanceMd": "在浏览器中连接 Postman。需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。",
       "riskTier": "S3",
-      "label": "US · Browser sign-in",
+      "label": "美国区域 · 浏览器登录",
       "consoleLinks": {
         "docs": "https://learning.postman.com/latest-v-12/docs/reference/postman-api/postman-mcp-server/postman-mcp-remote-server"
       },
       "warnings": [
-        "A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints."
+        "需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。"
       ],
       "capabilityProfile": {
         "key": "write",
-        "label": "Full",
-        "description": "All Postman API tools, including write-capable collaboration and advanced features."
+        "label": "完整",
+        "description": "提供全部 Postman API 工具，包括可写入的协作和高级功能。"
       }
     },
     {
@@ -101,17 +101,17 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.eu.postman.com/minimal"
       },
-      "guidanceMd": "Use a customer-created Postman key. A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints.",
+      "guidanceMd": "使用自行创建的 Postman 密钥。需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。",
       "riskTier": "S3",
-      "label": "EU · API key",
+      "label": "欧洲区域 · API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Postman API key",
+          "label": "Postman API 密钥",
           "type": "password",
           "required": true,
           "placeholder": "PMAK-...",
@@ -128,12 +128,12 @@
         "docs": "https://learning.postman.com/latest-v-12/docs/reference/postman-api/postman-mcp-server/postman-mcp-remote-server"
       },
       "warnings": [
-        "A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints."
+        "需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。"
       ],
       "capabilityProfile": {
         "key": "minimal",
-        "label": "Minimal",
-        "description": "Essential workspace, collection, and environment tools with the smallest tool catalog."
+        "label": "精简",
+        "description": "提供必要的工作区、集合和环境工具，工具目录规模最小。"
       }
     },
     {
@@ -143,17 +143,17 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.eu.postman.com/code"
       },
-      "guidanceMd": "Use a customer-created Postman key. A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints.",
+      "guidanceMd": "使用自行创建的 Postman 密钥。需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。",
       "riskTier": "S3",
-      "label": "EU · API key",
+      "label": "欧洲区域 · API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Postman API key",
+          "label": "Postman API 密钥",
           "type": "password",
           "required": true,
           "placeholder": "PMAK-...",
@@ -170,12 +170,12 @@
         "docs": "https://learning.postman.com/latest-v-12/docs/reference/postman-api/postman-mcp-server/postman-mcp-remote-server"
       },
       "warnings": [
-        "A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints."
+        "需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。"
       ],
       "capabilityProfile": {
         "key": "code",
-        "label": "Code",
-        "description": "Tools for generating client code from API definitions."
+        "label": "代码生成",
+        "description": "根据 API 定义生成客户端代码的工具。"
       }
     },
     {
@@ -185,17 +185,17 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.eu.postman.com/mcp"
       },
-      "guidanceMd": "Use a customer-created Postman key. A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints.",
+      "guidanceMd": "使用自行创建的 Postman 密钥。需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。",
       "riskTier": "S3",
-      "label": "EU · API key",
+      "label": "欧洲区域 · API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Postman API key",
+          "label": "Postman API 密钥",
           "type": "password",
           "required": true,
           "placeholder": "PMAK-...",
@@ -212,12 +212,12 @@
         "docs": "https://learning.postman.com/latest-v-12/docs/reference/postman-api/postman-mcp-server/postman-mcp-remote-server"
       },
       "warnings": [
-        "A Postman account; OAuth is available for US endpoints and API keys are required for EU endpoints."
+        "需要 Postman 账户；美国区域地址支持 OAuth，欧洲区域地址需要 API 密钥。"
       ],
       "capabilityProfile": {
         "key": "write",
-        "label": "Full",
-        "description": "All Postman API tools, including write-capable collaboration and advanced features."
+        "label": "完整",
+        "description": "提供全部 Postman API 工具，包括可写入的协作和高级功能。"
       }
     }
   ]

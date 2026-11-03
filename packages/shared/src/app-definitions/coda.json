@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "coda",
   "name": "Coda",
-  "description": "Connect Coda's provider-hosted MCP server.",
+  "description": "连接 Coda 官方托管的 MCP 服务器。",
   "categories": [
     "productivity"
   ],
@@ -23,19 +23,19 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://coda.io/apis/mcp"
       },
-      "guidanceMd": "Connect Coda in the browser. A Coda account; the hosted MCP service is currently beta.",
+      "guidanceMd": "在浏览器中连接 Coda。需要 Coda 账户；托管 MCP 服务目前处于测试阶段。",
       "riskTier": "S3",
-      "label": "Sign in with Coda",
+      "label": "使用 Coda 登录",
       "consoleLinks": {
         "docs": "https://help.coda.io/hc/en-us/articles/44722769665549-Security-recommendations-for-the-Coda-MCP"
       },
       "warnings": [
-        "A Coda account; the hosted MCP service is currently beta.",
-        "This provider's hosted MCP server is currently beta or preview."
+        "需要 Coda 账户；托管 MCP 服务目前处于测试阶段。",
+        "此服务商托管的 MCP 服务器目前处于测试或预览阶段。"
       ]
     },
     {
@@ -45,20 +45,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://coda.io/apis/mcp"
       },
-      "guidanceMd": "Use a customer-created Coda key. A Coda account; the hosted MCP service is currently beta.",
+      "guidanceMd": "使用自行创建的 Coda 密钥。需要 Coda 账户；托管 MCP 服务目前处于测试阶段。",
       "riskTier": "S3",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Coda API key",
+          "label": "Coda API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your Coda API token",
+          "placeholder": "粘贴 Coda API 令牌",
           "secret": true
         }
       ],
@@ -72,8 +72,8 @@
         "docs": "https://help.coda.io/hc/en-us/articles/44722769665549-Security-recommendations-for-the-Coda-MCP"
       },
       "warnings": [
-        "A Coda account; the hosted MCP service is currently beta.",
-        "This provider's hosted MCP server is currently beta or preview."
+        "需要 Coda 账户；托管 MCP 服务目前处于测试阶段。",
+        "此服务商托管的 MCP 服务器目前处于测试或预览阶段。"
       ]
     }
   ]

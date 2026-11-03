@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "youcom",
   "name": "You.com",
-  "description": "Connect You.com's provider-hosted MCP server.",
+  "description": "连接 You.com 官方托管的 MCP 服务器。",
   "categories": [
     "ai"
   ],
@@ -24,18 +24,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://api.you.com/mcp"
       },
-      "guidanceMd": "Connect You.com in the browser. A You.com account for browser sign-in, or a You.com API key from you.com/platform for higher rate limits; a keyless free profile is also available.",
+      "guidanceMd": "在浏览器中连接 You.com。可以使用 You.com 账户登录，或使用 you.com/platform 提供的 API 密钥获得更高调用限额；也可使用无需密钥的免费方案。",
       "riskTier": "S2",
-      "label": "Sign in with You.com",
+      "label": "使用 You.com 登录",
       "consoleLinks": {
         "docs": "https://you.com/docs/build-with-agents/mcp-server"
       },
       "warnings": [
-        "A You.com account for browser sign-in, or a You.com API key from you.com/platform for higher rate limits; a keyless free profile is also available."
+        "可以使用 You.com 账户登录，或使用 you.com/platform 提供的 API 密钥获得更高调用限额；也可使用无需密钥的免费方案。"
       ]
     },
     {
@@ -45,20 +45,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://api.you.com/mcp"
       },
-      "guidanceMd": "Use a customer-created You.com key. A You.com account for browser sign-in, or a You.com API key from you.com/platform for higher rate limits; a keyless free profile is also available.",
+      "guidanceMd": "使用自行创建的 You.com 密钥。可以使用 You.com 账户登录，或使用 you.com/platform 提供的 API 密钥获得更高调用限额；也可使用无需密钥的免费方案。",
       "riskTier": "S2",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "You.com API key",
+          "label": "You.com API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your You.com API key",
+          "placeholder": "粘贴 You.com API 密钥",
           "secret": true
         }
       ],
@@ -72,7 +72,7 @@
         "docs": "https://you.com/docs/build-with-agents/mcp-server"
       },
       "warnings": [
-        "A You.com account for browser sign-in, or a You.com API key from you.com/platform for higher rate limits; a keyless free profile is also available."
+        "可以使用 You.com 账户登录，或使用 you.com/platform 提供的 API 密钥获得更高调用限额；也可使用无需密钥的免费方案。"
       ]
     },
     {
@@ -82,18 +82,18 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Connect without an account for limited, rate-capped web search.",
+      "whenToUse": "无需账户即可连接，使用功能和调用频率受限的网页搜索。",
       "defaults": {
         "serverUrl": "https://api.you.com/mcp?profile=free"
       },
-      "guidanceMd": "Use the keyless free profile. You.com limits the free profile to a reduced read-only tool set.",
+      "guidanceMd": "使用无需密钥的免费方案。You.com 免费方案只开放精简的只读工具集。",
       "riskTier": "S2",
-      "label": "Use the free profile",
+      "label": "使用免费方案",
       "consoleLinks": {
         "docs": "https://you.com/docs/build-with-agents/mcp-server"
       },
       "warnings": [
-        "The free profile is keyless and exposes a reduced read-only tool set with You.com rate limits."
+        "免费方案无需密钥，只开放精简的只读工具集，并受 You.com 调用频率限制。"
       ]
     }
   ]
