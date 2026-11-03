@@ -208,25 +208,25 @@ export function buildBatchPayload(rows: DraftRow[], fields: PipelineIntakeField[
 export function plainBatchError(result: Extract<PipelineBatchIngestResult, { ok: false }>) {
   const details = result.error?.details ?? {};
   if (details.code === "required_field" && typeof details.label === "string") {
-    return `${details.label} is required.`;
+    return l10n("local.field_is_required_value_639e027e", { v0: details.label });
   }
   if (details.code === "invalid_select_value" && typeof details.label === "string") {
-    return `${details.label} needs one of the available choices.`;
+    return l10n("local.field_needs_available_choice_value_13663ff3", { v0: details.label });
   }
   if (details.code === "duplicate_batch_key") {
-    return "This item duplicates another row.";
+    return l10n("local.item_duplicates_another_row_a25dfe5f");
   }
   if (details.code === "blocker_cycle") {
-    return "This item waits on another row that also waits on it.";
+    return l10n("local.item_has_circular_row_dependency_49213091");
   }
   if (typeof result.error?.message === "string" && result.error.message.trim()) {
     return result.error.message.replace(/^Pipeline\s+/i, "");
   }
-  return "This item needs attention before it can be submitted.";
+  return l10n("local.item_needs_attention_before_submit_e42e9f2d");
 }
 
 function itemCountLabel(count: number) {
-  return `${count} ${count === 1 ? "item" : "items"}`;
+  return l10n(count === 1 ? "local.item_count_one_0540260a" : "local.item_count_many_a4099ca3", { v0: count });
 }
 
 function currentStageAutomation(stage: PipelineStage) {
@@ -340,7 +340,9 @@ function retryPrimaryActionLabel(plan: PipelineAutomationRetryPlan) {
   if (retiredOutputCount > 0 && (plan.defaultCleanup.retireDirectChildren || plan.defaultCleanup.retireDescendants)) {
     return l10n("local.retry_and_retire_value_value_bab30ef8", {v0: (formatNumber(retiredOutputCount)), v1: (retiredOutputCount === 1 ? "item" : "items")});
   }
-  return plan.scope === "previous_stage" ? "Retry previous step" : "Re-run this step";
+  return plan.scope === "previous_stage"
+    ? l10n("local.retry_previous_step_1b69b7fa")
+    : l10n("local.rerun_this_step_9291e209");
 }
 
 export function Pipelines() {
@@ -420,7 +422,7 @@ function descendantActiveWorkCount(value: { descendantActiveWorkCount?: number |
 }
 
 function formatLiveDownstream(count: number) {
-  return `${formatNumber(count)} live downstream`;
+  return l10n("local.live_downstream_count_5df1d838", { v0: formatNumber(count) });
 }
 
 function pipelineActivityTime(pipeline: PipelineListItem) {
@@ -431,11 +433,11 @@ type PipelineSortField = "name" | "activity" | "review" | "inMotion" | "openItem
 type PipelineSortDir = "asc" | "desc";
 
 const PIPELINE_SORT_OPTIONS: ReadonlyArray<readonly [PipelineSortField, string]> = [
-  ["name", "Name"],
-  ["activity", "Last activity"],
-  ["review", "Most to review"],
-  ["inMotion", "Most in motion"],
-  ["openItems", "Most open items"],
+  ["name", l10n("local.name_1fddc2d3")],
+  ["activity", l10n("local.last_activity_b147c37f")],
+  ["review", l10n("local.most_to_review_e028084b")],
+  ["inMotion", l10n("local.most_in_motion_5ac50767")],
+  ["openItems", l10n("local.most_open_items_11293102")],
 ];
 
 function comparePipelinesBySort(field: PipelineSortField, dir: PipelineSortDir) {
@@ -568,9 +570,9 @@ function formatOpenItems(count: number) {
 }
 
 function formatPipelineActivity(value: string | Date | null) {
-  if (!value) return "No activity";
+  if (!value) return l10n("local.no_activity_52e8b54c");
   const then = new Date(value).getTime();
-  if (!Number.isFinite(then)) return "No activity";
+  if (!Number.isFinite(then)) return l10n("local.no_activity_52e8b54c");
   const diffSeconds = Math.max(0, Math.round((Date.now() - then) / 1000));
   if (diffSeconds < 60) return "just now";
   const diffMinutes = Math.round(diffSeconds / 60);
@@ -990,7 +992,7 @@ function PipelinesIndex() {
         }}
         onSubmit={(data) => createPipeline.mutate(data)}
         pending={createPipeline.isPending}
-        error={createPipeline.error ? "Could not create the pipeline. Try a different name." : null}
+        error={createPipeline.error ? l10n("local.could_not_create_pipeline_try_different_name_922d7d34") : null}
       />
     </div>
   );
@@ -1001,7 +1003,7 @@ function PipelinesIndex() {
 // ---------------------------------------------------------------------------
 
 const UNASSIGNED_STAGE_ID = "__pipeline_unassigned_stage";
-const UNASSIGNED_STAGE_NAME = "Unassigned";
+const UNASSIGNED_STAGE_NAME = l10n("local.unassigned_607e87c1");
 
 type BoardCase = PipelineCase & {
   activeWork?: PipelineCaseActiveWork | null;
@@ -1815,7 +1817,9 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
                   isDragTargeted={isDragTargeted}
                   isDragBlocked={isDragBlocked}
                   onColumnEmpty={(columnStage) =>
-                    columnStage.id === UNASSIGNED_STAGE_ID ? "Unassigned items" : "Drop items here"
+                    columnStage.id === UNASSIGNED_STAGE_ID
+                      ? l10n("local.unassigned_items_e26a6106")
+                      : l10n("local.drop_items_here_76e939e3")
                   }
                 />
               );
@@ -2378,7 +2382,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
 
   const handleConversationImageUpload = useCallback(async (file: File) => {
     if (!conversationIssueId || !conversationCompanyId) {
-      throw new Error("No active conversation issue is available for image uploads.");
+      throw new Error(l10n("local.no_active_conversation_for_image_uploads_f8f78043"));
     }
     const attachment = await issuesApi.uploadAttachment(conversationCompanyId, conversationIssueId, file);
     return attachment.contentPath;
@@ -2386,7 +2390,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
 
   const handleConversationAttachImage = useCallback(async (file: File) => {
     if (!conversationIssueId || !conversationCompanyId) {
-      throw new Error("No active conversation issue is available for image attachments.");
+      throw new Error(l10n("local.no_active_conversation_for_image_attachments_ce691409"));
     }
     return issuesApi.uploadAttachment(conversationCompanyId, conversationIssueId, file);
   }, [conversationCompanyId, conversationIssueId]);
@@ -2622,7 +2626,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
   );
   const moveItemToStage = useMutation({
     mutationFn: () => {
-      if (!selectedMoveStage || !detail?.case.version) throw new Error("Missing target stage");
+      if (!selectedMoveStage || !detail?.case.version) throw new Error(l10n("local.missing_target_stage_d06d0f64"));
       return pipelinesApi.transitionCase(caseId, {
         toStageKey: selectedMoveStage.key,
         expectedVersion: detail.case.version,
@@ -2640,11 +2644,11 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
   });
   const removeItem = useMutation({
     mutationFn: () => {
-      if (!removeStage || !detail?.case.version) throw new Error("Missing removal stage");
+      if (!removeStage || !detail?.case.version) throw new Error(l10n("local.missing_removal_stage_a6e14dd8"));
       return pipelinesApi.transitionCase(caseId, {
         toStageKey: removeStage.key,
         expectedVersion: detail.case.version,
-        reason: "Removed from the item detail page.",
+        reason: l10n("local.removed_from_item_detail_page_6103e995"),
       });
     },
     onSuccess: async () => {
@@ -2676,7 +2680,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
   }, [caseId, reviewQueueItems.data]);
   const decideReview = useMutation({
     mutationFn: ({ decision }: { decision: PipelineReviewDecision }) => {
-      if (!detail?.case.version) throw new Error("Missing item version");
+      if (!detail?.case.version) throw new Error(l10n("local.missing_item_version_91b53ae8"));
       return pipelinesApi.reviewCase(caseId, {
         decision,
         reason: reviewDecisionNote.trim() || null,
@@ -3557,7 +3561,7 @@ function reviewDecisionActions(
   if (config.approveToStageKey) {
     actions.push({
       decision: "approve",
-      label: "Approve",
+      label: l10n("local.approve_4f0c20c3"),
       targetStageKey: config.approveToStageKey,
       targetStageName: stageLookup.get(config.approveToStageKey) ?? humanizePipelineItemStatus(config.approveToStageKey),
       requireReason: false,
@@ -3567,7 +3571,7 @@ function reviewDecisionActions(
   if (config.requestChangesToStageKey) {
     actions.push({
       decision: "request_changes",
-      label: "Request changes",
+      label: l10n("local.request_changes_1d5ab822"),
       targetStageKey: config.requestChangesToStageKey,
       targetStageName: stageLookup.get(config.requestChangesToStageKey) ?? humanizePipelineItemStatus(config.requestChangesToStageKey),
       requireReason: config.requireRequestChangesReason,
@@ -3577,7 +3581,7 @@ function reviewDecisionActions(
   if (config.rejectToStageKey) {
     actions.push({
       decision: "reject",
-      label: "Reject",
+      label: l10n("local.reject_0e84e1e0"),
       targetStageKey: config.rejectToStageKey,
       targetStageName: stageLookup.get(config.rejectToStageKey) ?? humanizePipelineItemStatus(config.rejectToStageKey),
       requireReason: config.requireRejectReason,
@@ -3589,11 +3593,13 @@ function reviewDecisionActions(
 
 function reviewDecisionToastTitle(decision: PipelineReviewDecision, movedToNextItem: boolean) {
   const prefix = decision === "approve"
-    ? "Item approved"
+    ? l10n("local.item_approved_b5b66876")
     : decision === "request_changes"
-      ? "Changes requested"
-      : "Item rejected";
-  return movedToNextItem ? `${prefix}; moved to the next review` : prefix;
+      ? l10n("local.changes_requested_d5dcc2c9")
+      : l10n("local.item_rejected_b37e663d");
+  return movedToNextItem
+    ? l10n("local.value_moved_to_next_review_8f9277e7", { v0: prefix })
+    : prefix;
 }
 
 function ReviewDecisionPanel({
@@ -3757,12 +3763,12 @@ function DetailSection({
 }
 
 const DELIVERABLE_OUTPUT_PATTERNS: Array<[RegExp, string]> = [
-  [/brief/i, "Brief"],
-  [/spec/i, "Spec"],
-  [/report/i, "Report"],
-  [/design/i, "Design"],
-  [/summary/i, "Summary"],
-  [/plan/i, "Plan"],
+  [/brief/i, l10n("local.brief_label_ac7cdf51")],
+  [/spec/i, l10n("local.spec_label_aad91a43")],
+  [/report/i, l10n("local.report_label_f216c48b")],
+  [/design/i, l10n("local.design_label_38ffa529")],
+  [/summary/i, l10n("local.summary_label_621f2e25")],
+  [/plan/i, l10n("local.plan_label_7c594e07")],
 ];
 
 const OUTPUT_SOURCE_ROLE_LABELS: Record<string, string> = {
@@ -3937,7 +3943,7 @@ function ItemOutputWorkProductRow({ item }: { item: PipelineCaseWorkProductOutpu
 }
 
 function ItemOutputAttachmentRow({ item }: { item: PipelineCaseAttachmentOutputItem }) {
-  const filename = item.filename ?? item.title ?? "Attachment";
+  const filename = item.filename ?? item.title ?? l10n("local.attachment_6dac8f90");
   const isImage = item.contentType?.startsWith("image/");
   return (
     <div
@@ -4019,7 +4025,7 @@ function ItemOutputsSection({
   if (documents.length > 0) {
     groups.push({
       key: "document",
-      label: "Documents",
+      label: l10n("local.documents_label_c9bd2900"),
       icon: <FileText className="h-4 w-4 text-muted-foreground" />,
       rows: documents.map((item) => <ItemOutputDocumentRow key={item.id} item={item} />),
     });
@@ -4027,7 +4033,7 @@ function ItemOutputsSection({
   if (workProducts.length > 0) {
     groups.push({
       key: "work_product",
-      label: "Work products",
+      label: l10n("local.work_products_label_c9e7b709"),
       icon: <Package className="h-4 w-4 text-muted-foreground" />,
       rows: workProducts.map((item) => <ItemOutputWorkProductRow key={item.id} item={item} />),
     });
@@ -4035,7 +4041,7 @@ function ItemOutputsSection({
   if (attachments.length > 0) {
     groups.push({
       key: "attachment",
-      label: "Attachments",
+      label: l10n("local.attachments_label_c2fdbec2"),
       icon: <Paperclip className="h-4 w-4 text-muted-foreground" />,
       rows: attachments.map((item) => <ItemOutputAttachmentRow key={item.id} item={item} />),
     });
@@ -4849,7 +4855,7 @@ export function ReviewQueue() {
   const decideRow = useMutation({
     mutationFn: async ({ row, decision, note }: { row: ReviewQueueRow; decision: "approve" | "decline" | "request_changes"; note?: string }) => {
       if (row.kind === "suggestion") {
-        if (!row.suggestionId) throw new Error("This item is not ready for a decision.");
+        if (!row.suggestionId) throw new Error(l10n("local.item_not_ready_for_decision_a0aa3204"));
         await pipelinesApi.resolveSuggestion(row.caseId, {
           suggestionId: row.suggestionId,
           resolution: decision === "approve" ? "accept" : "dismiss",
@@ -4858,7 +4864,7 @@ export function ReviewQueue() {
         });
         return;
       }
-      if (row.expectedVersion === null) throw new Error("This item is not ready for a decision.");
+      if (row.expectedVersion === null) throw new Error(l10n("local.item_not_ready_for_decision_a0aa3204"));
       await pipelinesApi.reviewCase(row.caseId, {
         decision: decision === "request_changes" ? "request_changes" : "approve",
         reason: note || null,
@@ -4899,20 +4905,20 @@ export function ReviewQueue() {
 
   const bulkApprove = useMutation({
     mutationFn: async (targetRows: ReviewQueueRow[]) => {
-      if (!selectedCompanyId) throw new Error("Select an organization first.");
+      if (!selectedCompanyId) throw new Error(l10n("local.select_an_organization_first_7f0881bf"));
       const reviewRows = targetRows.filter((row) => row.kind === "review");
       const suggestionRows = targetRows.filter((row) => row.kind === "suggestion" && row.suggestionId);
       const tasks: Promise<unknown>[] = [];
       if (reviewRows.length > 0) {
         const items = reviewRows.map((row) => {
-          if (row.expectedVersion === null) throw new Error("This item is not ready for a decision.");
+          if (row.expectedVersion === null) throw new Error(l10n("local.item_not_ready_for_decision_a0aa3204"));
           return { caseId: row.caseId, decision: "approve" as const, expectedVersion: row.expectedVersion };
         });
         tasks.push(
           pipelinesApi.bulkReviewCases(selectedCompanyId, { items }).then((response) => {
             const failures = (response.results ?? []).filter((result) => !result.ok);
             if (failures.length > 0) {
-              throw new Error("Some items could not be approved.");
+              throw new Error(l10n("local.some_items_could_not_be_approved_4c189095"));
             }
           }),
         );

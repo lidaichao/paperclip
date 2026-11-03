@@ -127,5 +127,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.choose_existing_workspace_before_saving_stage_03c49382).toContain("选择已有工作区");
     expect(messages.approved_items_move_to_8ef0703d).toBe("通过后移动到");
     expect(messages.stay_in_review_1fde448b).toBe("留在评审阶段");
+    expect(messages.item_has_circular_row_dependency_49213091).toContain("循环等待");
+    expect(messages.retry_previous_step_1b69b7fa).toBe("重试上一步");
+    expect(messages.unassigned_items_e26a6106).toBe("未分配条目");
+    expect(messages.value_moved_to_next_review_8f9277e7).toContain("下一条评审");
+    expect(messages.work_products_label_c9e7b709).toBe("工作成果");
   });
 });
