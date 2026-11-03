@@ -1073,7 +1073,7 @@ export function normalizeConnectionMethodConfig(
   const allowedKeys = new Set(fields.map((field) => field.key));
   for (const key of Object.keys(configValues ?? {})) {
     if (!allowedKeys.has(key))
-      throw badRequest(`Unknown connection setting: ${key}`);
+      throw badRequest(`未知连接设置：${key}`);
   }
 
   const values: Record<string, string | boolean> = {};
@@ -1099,7 +1099,7 @@ export function normalizeConnectionMethodConfig(
       ).join(",");
     }
     if (field.required && !value)
-      throw badRequest(`Missing connection setting: ${field.label}`);
+      throw badRequest(`缺少连接设置：${field.label}`);
     if (!value) continue;
     if (
       field.validation?.maxLength &&
@@ -1113,7 +1113,7 @@ export function normalizeConnectionMethodConfig(
       field.validation?.pattern &&
       !new RegExp(field.validation.pattern).test(value)
     ) {
-      throw badRequest(`${field.label} has an invalid value`);
+      throw badRequest(`字段“${field.label.trim()}”的值无效`);
     }
     if (
       field.type === "select" &&
@@ -1131,7 +1131,7 @@ export function normalizeConnectionMethodConfig(
         (key) => typeof values[key] === "string" && values[key].length > 0,
       )
     ) {
-      throw badRequest(`Provide at least one of: ${keys.join(", ")}`);
+      throw badRequest(`至少提供以下一项：${keys.join(", ")}`);
     }
   }
 
@@ -1143,7 +1143,7 @@ export function normalizeConnectionMethodConfig(
   }
   const endpoint = resolvedServerUrl ? new URL(resolvedServerUrl) : null;
   if (endpoint && endpoint.protocol !== "https:") {
-    throw badRequest("Connection server URL must use HTTPS");
+    throw badRequest("连接服务器 URL 必须使用 HTTPS");
   }
   const headers: Record<string, string> = {};
   for (const field of fields) {
@@ -1353,7 +1353,7 @@ function normalizeGoogleSheetsConnectionConfig(
   if (!isGoogleSheetsConnectionConfig(configValues)) return configValues;
   const allowedSpreadsheetIds = googleSheetsAllowedSpreadsheetIds(configValues);
   if (allowedSpreadsheetIds.length === 0) {
-    throw badRequest("Paste at least one Google Sheets link.");
+    throw badRequest("请粘贴至少一个 Google Sheets 链接。");
   }
   return {
     ...configValues,
@@ -2528,7 +2528,7 @@ export async function loadGitHubTokenRepositories(
       );
     const rows: unknown = await response.json();
     if (!Array.isArray(rows))
-      throw unprocessable("GitHub returned invalid repositories");
+      throw unprocessable("GitHub 返回了无效的仓库列表");
     for (const row of rows) {
       if (
         !recordValue(row) ||
@@ -2538,7 +2538,7 @@ export async function loadGitHubTokenRepositories(
           row.full_name,
         )
       ) {
-        throw unprocessable("GitHub returned invalid repository metadata");
+        throw unprocessable("GitHub 返回了无效的仓库元数据");
       }
       repositories.push({
         id: githubId(row.id)!,
@@ -2548,7 +2548,7 @@ export async function loadGitHubTokenRepositories(
     }
     if (!/;\s*rel="next"/.test(response.headers.get("link") ?? ""))
       return repositories;
-    if (!rows.length) throw unprocessable("GitHub returned invalid pagination");
+    if (!rows.length) throw unprocessable("GitHub 返回了无效的分页数据");
   }
 }
 
@@ -2605,7 +2605,7 @@ export async function loadGitHubGrantMetadata(
     }
     const value = (await response.json()) as unknown;
     if (!recordValue(value))
-      throw unprocessable("GitHub returned invalid account metadata", {
+      throw unprocessable("GitHub 返回了无效的账号元数据", {
         code: "github_bad_response",
       });
     return {
@@ -2628,7 +2628,7 @@ export async function loadGitHubGrantMetadata(
         !batch.every(recordValue) ||
         (hasNext && batch.length === 0)
       ) {
-        throw unprocessable("GitHub returned invalid access metadata", {
+        throw unprocessable("GitHub 返回了无效的访问权限元数据", {
           code: "github_bad_response",
         });
       }
@@ -2640,7 +2640,7 @@ export async function loadGitHubGrantMetadata(
   const userId = githubId(user.id);
   const login = typeof user.login === "string" ? user.login : null;
   if (!userId || !login)
-    throw unprocessable("GitHub returned invalid account metadata", {
+    throw unprocessable("GitHub 返回了无效的账号元数据", {
       code: "github_bad_response",
     });
   const installations = await list("/user/installations", "installations");
@@ -2692,7 +2692,7 @@ export async function loadGitHubGrantMetadata(
           fullName,
         )
       ) {
-        throw unprocessable("GitHub returned invalid repository metadata", {
+        throw unprocessable("GitHub 返回了无效的仓库元数据", {
           code: "github_bad_response",
         });
       }
@@ -2866,21 +2866,21 @@ function sanitizeHttpFailure(error: unknown): {
     if (code === "oauth_challenge") {
       return {
         status: "error",
-        message: "This app needs you to sign in.",
+        message: "此应用需要你登录。",
         code: "oauth_challenge",
       };
     }
     if (code === "oauth_refresh_missing") {
       return {
         status: "failed",
-        message: "OAuth credentials have expired and need to be reconnected.",
+        message: "OAuth 凭据已过期，需要重新连接。",
         code: "oauth_refresh_missing",
       };
     }
     if (code === "oauth_reauthorization_required") {
       return {
         status: "error",
-        message: "OAuth authorization expired. Reconnect this app to continue.",
+        message: "OAuth 授权已过期，请重新连接此应用后继续。",
         code: "oauth_reauthorization_required",
       };
     }
@@ -2915,14 +2915,14 @@ function sanitizeHttpFailure(error: unknown): {
     ) {
       return {
         status: "missing_secret",
-        message: "A configured credential secret could not be resolved.",
+        message: "无法解析已配置的凭据密钥。",
         code: String(code),
       };
     }
     if (error.status === 404 && /secret/i.test(error.message)) {
       return {
         status: "missing_secret",
-        message: "A configured credential secret could not be resolved.",
+        message: "无法解析已配置的凭据密钥。",
         code: "secret_missing",
       };
     }
@@ -2937,7 +2937,7 @@ function sanitizeHttpFailure(error: unknown): {
   }
   return {
     status: "error",
-    message: "Connection check failed.",
+    message: "连接检查失败。",
     code: "runtime_error",
   };
 }
@@ -3003,7 +3003,7 @@ export function toolAccessService(
       );
     } catch {
       throw unprocessable(
-        "A configured credential secret could not be resolved.",
+        "无法解析已配置的凭据密钥。",
         {
           code: "mcp_remote_missing_secret",
           connectionId: connection.id,
@@ -6934,7 +6934,7 @@ export function toolAccessService(
             })
             .where(eq(toolConnections.id, connection.id));
         }
-        throw unprocessable("This app needs you to sign in.", {
+        throw unprocessable("此应用需要你登录。", {
           code: "oauth_challenge",
           status: response.status,
           setupUrl: connectionSetupUrl(connection),
@@ -10372,7 +10372,7 @@ export function toolAccessService(
         enabled: false,
         healthStatus: "error",
         healthMessage:
-          "OAuth authorization expired. Reconnect this app to continue.",
+          "OAuth 授权已过期，请重新连接此应用后继续。",
         lastError: "oauth_reauthorization_required",
         config: nextConfig,
         transportConfig: nextConfig,
@@ -10434,7 +10434,7 @@ export function toolAccessService(
     if (grantType !== "client_credentials" && !refreshRef) {
       throw new HttpError(
         422,
-        "OAuth credentials have expired and no refresh token is available",
+        "OAuth 凭据已过期，且没有可用的刷新令牌",
         {
           code: "oauth_refresh_missing",
           setupUrl: connectionSetupUrl(connection),
@@ -11144,7 +11144,7 @@ export function toolAccessService(
         );
         if (!refreshRef) {
           throw unprocessable(
-            "OAuth credentials have expired and no refresh token is available",
+            "OAuth 凭据已过期，且没有可用的刷新令牌",
             {
               code: "oauth_refresh_missing",
               setupUrl: connectionSetupUrl(connection),
@@ -12367,7 +12367,7 @@ export function toolAccessService(
         input.configValues,
       );
       if (allowedSpreadsheetIds.length === 0) {
-        throw badRequest("Paste at least one Google Sheets link.");
+        throw badRequest("请粘贴至少一个 Google Sheets 链接。");
       }
       config.allowedSpreadsheetIds = allowedSpreadsheetIds;
       config.robotEmail = availability.robotEmail;

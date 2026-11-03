@@ -12375,7 +12375,7 @@ describeEmbeddedPostgres("tool access service", () => {
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({
       code: "oauth_refresh_missing",
-      error: "OAuth credentials have expired and need to be reconnected.",
+      error: "OAuth 凭据已过期，需要重新连接。",
       details: { setupUrl: `/apps/${connect.connectionId}/permissions`, reconnectUrl: `/apps/${connect.connectionId}/permissions` },
     });
     expect(capture).not.toHaveBeenCalled();
@@ -13804,7 +13804,7 @@ describeEmbeddedPostgres("tool access service", () => {
 
     expect(res.status).toBe(422);
     expect(res.body).toMatchObject({
-      error: "This app needs you to sign in.",
+      error: "此应用需要你登录。",
       details: expect.objectContaining({ code: "oauth_challenge" }),
     });
     await expect(db.select().from(toolApplications)).resolves.toHaveLength(0);
@@ -13914,7 +13914,7 @@ describeEmbeddedPostgres("tool access service", () => {
       expect(res.status).toBe(expectedStatus);
       if (challenge) {
         expect(res.body).toMatchObject({
-          error: "This app needs you to sign in.",
+          error: "此应用需要你登录。",
           code: "oauth_challenge",
           details: {
             code: "oauth_challenge",
@@ -17085,7 +17085,7 @@ describeEmbeddedPostgres("tool access service", () => {
         config: { templateId: "paperclip.echo-calculator-time" },
         transportConfig: { templateId: "paperclip.echo-calculator-time" },
         healthStatus: "missing_secret",
-        healthMessage: "A configured credential secret could not be resolved.",
+        healthMessage: "无法解析已配置的凭据密钥。",
       })
       .returning();
     const staleAt = new Date(generatedAt.getTime() - 10 * 60 * 1000);
@@ -17396,7 +17396,7 @@ describeEmbeddedPostgres("tool access service", () => {
 
     expect(updatedConnection).toMatchObject({
       healthStatus: "missing_secret",
-      healthMessage: "A configured credential secret could not be resolved.",
+      healthMessage: "无法解析已配置的凭据密钥。",
     });
     expect(audit).toMatchObject({
       action: "tool_connection.health_check",
@@ -18048,14 +18048,14 @@ describe("normalizeConnectionMethodConfig", () => {
         projectId: "not-a-project",
         features: "insights",
       }),
-    ).toThrow("Pin to project ID has an invalid value");
+    ).toThrow("字段“固定到项目 ID”的值无效");
     expect(() =>
       normalizeConnectionMethodConfig(apiKeyMethod, {
         projectId: "12345",
         features: "insights",
         apiKey: "must-not-be-config",
       }),
-    ).toThrow("Unknown connection setting: apiKey");
+    ).toThrow("未知连接设置：apiKey");
     expect(() =>
       normalizeConnectionMethodConfig(clickhouseMethod, {
         serviceId: "service-id\r\nX-Injected: yes",
@@ -18076,12 +18076,12 @@ describe("normalizeConnectionMethodConfig", () => {
       normalizeConnectionMethodConfig(shopifyMethod, {
         storeDomain: "evil.example.com",
       }),
-    ).toThrow("Store domain has an invalid value");
+    ).toThrow("字段“商店域名”的值无效");
     expect(() =>
       normalizeConnectionMethodConfig(shopifyMethod, {
         storeDomain: "shop.myshopify.com@example.com",
       }),
-    ).toThrow("Store domain has an invalid value");
+    ).toThrow("字段“商店域名”的值无效");
     expect(
       normalizeConnectionMethodConfig(shopifyUcpMethod, {
         storeDomain: "rcvbsa-pz.myshopify.com",

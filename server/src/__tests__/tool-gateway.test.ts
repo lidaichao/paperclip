@@ -2258,7 +2258,7 @@ rl.on("line", (line) => {
       await db.update(toolConnections).set({
         credentialPolicy: "per_user",
         healthStatus: "error",
-        healthMessage: "This app needs you to sign in.",
+        healthMessage: "此应用需要你登录。",
       }).where(eq(toolConnections.id, connection.id));
       await allowAllToolsForAgent(db, company.id, agent.id);
       const gateway = createTestToolGatewayService(db);
