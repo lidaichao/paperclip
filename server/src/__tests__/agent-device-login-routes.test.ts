@@ -789,7 +789,7 @@ describe("adapter device-login routes", () => {
     // No active session exists yet.
     const none = await request(app).get(`${loginPath(COMPANY_1)}/active`);
     expect(none.status, JSON.stringify(none.body)).toBe(404);
-    expect(none.body).toEqual({ error: "Adapter login session not found" });
+    expect(none.body).toEqual({ error: "未找到适配器登录会话" });
 
     const start = await request(app)
       .post(loginPath(COMPANY_1))

@@ -937,7 +937,7 @@ describe.sequential("agent permission routes", () => {
       }));
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("instructions path or bundle configuration");
+    expect(res.body.error).toContain("指令路径或指令包配置");
     expect(mockLogActivity).not.toHaveBeenCalled();
   }, 15_000);
 
@@ -955,7 +955,7 @@ describe.sequential("agent permission routes", () => {
       .send({ path: "/etc/passwd" }));
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("instructions path or bundle configuration");
+    expect(res.body.error).toContain("指令路径或指令包配置");
     expect(mockLogActivity).not.toHaveBeenCalled();
   });
 
@@ -983,7 +983,7 @@ describe.sequential("agent permission routes", () => {
       }));
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("instructions path or bundle configuration");
+    expect(res.body.error).toContain("指令路径或指令包配置");
     expect(mockAgentService.create).not.toHaveBeenCalled();
     expect(mockLogActivity).not.toHaveBeenCalled();
   });
