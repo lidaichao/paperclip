@@ -64,7 +64,7 @@ export function issueTreeControlRoutes(
 
   router.post("/issues/:id/tree-control/preview", validate(previewIssueTreeControlSchema), async (req, res) => {
     assertBoard(req);
-    const root = await getAccessibleResource(req, res, resolveRootIssue(req), "Root issue not found");
+    const root = await getAccessibleResource(req, res, resolveRootIssue(req), "未找到根任务");
     if (!root) return;
 
     const preview = await treeControlSvc.preview(root.companyId, root.id, req.body);
@@ -91,7 +91,7 @@ export function issueTreeControlRoutes(
 
   router.post("/issues/:id/tree-holds", validate(createIssueTreeHoldSchema), async (req, res) => {
     assertBoard(req);
-    const root = await getAccessibleResource(req, res, resolveRootIssue(req), "Root issue not found");
+    const root = await getAccessibleResource(req, res, resolveRootIssue(req), "未找到根任务");
     if (!root) return;
 
     const actor = getActorInfo(req);
@@ -136,7 +136,7 @@ export function issueTreeControlRoutes(
             // do not manufacture recovery incidents while the hold is active.
             await heartbeat.cancelRun(
               heartbeatRunId,
-              `Cancelled by a board operator's subtree ${result.hold.mode}`,
+              `由看板操作者取消：任务树操作 ${result.hold.mode}`,
               {
                 resultJson: {
                   cancelledByActorType: "user",
@@ -187,8 +187,8 @@ export function issueTreeControlRoutes(
         root.companyId,
         root.id,
         result.hold.mode === "pause"
-          ? "Cancelled because an active subtree pause hold was created"
-          : "Cancelled because a subtree cancel operation was applied",
+          ? "已创建任务树暂停控制，因此取消运行"
+          : "已应用任务树取消操作，因此取消运行",
       );
       for (const wakeup of cancelledWakeups) {
         await logActivity(db, {
@@ -244,7 +244,7 @@ export function issueTreeControlRoutes(
         });
       } catch (error) {
         await treeControlSvc.releaseHold(root.companyId, root.id, result.hold.id, {
-          reason: "Restore operation failed before subtree status updates completed",
+          reason: "恢复操作在任务树状态更新完成前失败",
           metadata: {
             cleanup: "restore_failed_before_apply",
           },
@@ -332,7 +332,7 @@ export function issueTreeControlRoutes(
   router.get("/issues/:id/tree-control/state", async (req, res) => {
     assertBoard(req);
     const issueId = req.params.id as string;
-    const issue = await getAccessibleResource(req, res, issuesSvc.getById(issueId), "Issue not found");
+    const issue = await getAccessibleResource(req, res, issuesSvc.getById(issueId), "未找到任务");
     if (!issue) return;
     const activePauseHold = await treeControlSvc.getActivePauseHoldGate(issue.companyId, issue.id);
     res.json({ activePauseHold });
@@ -340,7 +340,7 @@ export function issueTreeControlRoutes(
 
   router.get("/issues/:id/tree-holds", async (req, res) => {
     assertBoard(req);
-    const root = await getAccessibleResource(req, res, resolveRootIssue(req), "Root issue not found");
+    const root = await getAccessibleResource(req, res, resolveRootIssue(req), "未找到根任务");
     if (!root) return;
     const statusParam = typeof req.query.status === "string" ? req.query.status : null;
     const modeParam = typeof req.query.mode === "string" ? req.query.mode : null;
@@ -358,18 +358,18 @@ export function issueTreeControlRoutes(
 
   router.get("/issues/:id/tree-holds/:holdId", async (req, res) => {
     assertBoard(req);
-    const root = await getAccessibleResource(req, res, resolveRootIssue(req), "Root issue not found");
+    const root = await getAccessibleResource(req, res, resolveRootIssue(req), "未找到根任务");
     if (!root) return;
 
     const holdId = req.params.holdId as string;
     if (!isUuidLike(holdId)) {
-      res.status(400).json({ error: "Invalid hold ID" });
+      res.status(400).json({ error: "控制记录 ID 无效" });
       return;
     }
 
     const hold = await treeControlSvc.getHold(root.companyId, holdId);
     if (!hold || hold.rootIssueId !== root.id) {
-      res.status(404).json({ error: "Issue tree hold not found" });
+      res.status(404).json({ error: "未找到任务树控制记录" });
       return;
     }
     res.json(hold);
@@ -384,13 +384,13 @@ export function issueTreeControlRoutes(
         req,
         res,
         resolveRootIssue(req),
-        "Root issue not found",
+        "未找到根任务",
       );
       if (!root) return;
 
       const holdId = req.params.holdId as string;
       if (!isUuidLike(holdId)) {
-        res.status(400).json({ error: "Invalid hold ID" });
+        res.status(400).json({ error: "控制记录 ID 无效" });
         return;
       }
 
@@ -412,7 +412,7 @@ export function issueTreeControlRoutes(
             ));
           for (const task of candidates) {
             const blocked = await getExecutionBlocker(db, root.companyId, task.id);
-            if (blocked) throw conflict(`Cannot wake ${task.identifier ?? "this task"}: ${blocked.nextAction}`);
+            if (blocked) throw conflict(`无法唤醒 ${task.identifier ?? "此任务"}：${blocked.nextAction}`);
           }
         }
       }

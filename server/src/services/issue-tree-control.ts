@@ -354,7 +354,7 @@ function buildWarnings(input: {
   if (affectedIssues.length === 0) {
     warnings.push({
       code: "no_affected_issues",
-      message: "No issues in this subtree match the requested control action.",
+      message: "此任务树中没有符合当前控制操作条件的任务。",
     });
   }
 
@@ -364,7 +364,7 @@ function buildWarnings(input: {
   if ((input.mode === "pause" || input.mode === "cancel") && runningRunIssueIds.length > 0) {
     warnings.push({
       code: "running_runs_present",
-      message: "Some affected issues have running heartbeat runs.",
+      message: "部分受影响任务仍有正在运行的心跳任务。",
       issueIds: [...new Set(runningRunIssueIds)].sort(),
     });
   }
@@ -375,7 +375,7 @@ function buildWarnings(input: {
   if ((input.mode === "pause" || input.mode === "cancel") && queuedRunIssueIds.length > 0) {
     warnings.push({
       code: "queued_runs_present",
-      message: "Some affected issues have queued heartbeat runs.",
+      message: "部分受影响任务仍有排队中的心跳任务。",
       issueIds: [...new Set(queuedRunIssueIds)].sort(),
     });
   }
@@ -383,7 +383,7 @@ function buildWarnings(input: {
   if (input.mode === "resume" && affectedIssues.length === 0) {
     warnings.push({
       code: "no_active_pause_holds",
-      message: "No active pause holds were found in this subtree.",
+      message: "此任务树中没有活动的暂停控制记录。",
     });
   }
 
@@ -394,7 +394,7 @@ function buildWarnings(input: {
     if (changedIssueIds.length > 0) {
       warnings.push({
         code: "restore_conflicts_present",
-        message: "Some issues changed after subtree cancellation and will be skipped.",
+        message: "部分任务在任务树取消后已发生变化，将跳过这些任务。",
         issueIds: changedIssueIds,
       });
     }
@@ -417,7 +417,7 @@ export function issueTreeControlService(db: Db) {
       .where(and(eq(issues.id, rootIssueId), eq(issues.companyId, companyId)))
       .then((rows) => rows[0] ?? null);
     if (!root) {
-      throw notFound("Root issue not found");
+      throw notFound("未找到根任务");
     }
 
     const result: TreeIssue[] = [{ ...root, depth: 0 }];
@@ -718,7 +718,7 @@ export function issueTreeControlService(db: Db) {
       const [conversation] = await db.select({ id: issues.id }).from(issues).where(and(
         eq(issues.id, rootIssueId), eq(issues.companyId, companyId), sql`${issues.conversationAgentId} is not null`,
       ));
-      if (conversation) throw unprocessable("Stop the active reply instead of cancelling the persistent conversation");
+      if (conversation) throw unprocessable("请停止当前回复，不要取消持久对话");
     }
     const holdReleasePolicy = normalizeReleasePolicy(input.releasePolicy);
     const holdPreview = await preview(companyId, rootIssueId, {
@@ -729,7 +729,7 @@ export function issueTreeControlService(db: Db) {
     if (input.mode === "resume") {
       const issueIds = [...new Set(holdPreview.issues.map((issue) => issue.id))];
       const activePauseHolds = await activePauseHoldsForIssueIds(companyId, issueIds);
-      const releaseReason = input.reason ?? "Subtree resume applied.";
+      const releaseReason = input.reason ?? "已恢复任务树。";
 
       const { hold: resumeHold } = await db.transaction(async (tx) => {
         const [createdHold] = await tx
@@ -862,12 +862,12 @@ export function issueTreeControlService(db: Db) {
     holdId: string,
   ): Promise<TreeStatusUpdateResult> {
     const hold = await getHold(companyId, holdId);
-    if (!hold) throw notFound("Issue tree hold not found");
+    if (!hold) throw notFound("未找到任务树控制记录");
     if (hold.rootIssueId !== rootIssueId) {
-      throw unprocessable("Issue tree hold does not belong to the requested root issue");
+      throw unprocessable("任务树控制记录不属于请求的根任务");
     }
     if (hold.mode !== "cancel") {
-      throw unprocessable("Issue tree hold is not a cancel operation");
+      throw unprocessable("任务树控制记录不是取消操作");
     }
 
     const issueIds = [...new Set((hold.members ?? [])
@@ -931,12 +931,12 @@ export function issueTreeControlService(db: Db) {
     },
   ): Promise<RestoreTreeStatusResult> {
     const restoreHold = await getHold(companyId, restoreHoldId);
-    if (!restoreHold) throw notFound("Issue tree hold not found");
+    if (!restoreHold) throw notFound("未找到任务树控制记录");
     if (restoreHold.rootIssueId !== rootIssueId) {
-      throw unprocessable("Issue tree hold does not belong to the requested root issue");
+      throw unprocessable("任务树控制记录不属于请求的根任务");
     }
     if (restoreHold.mode !== "restore") {
-      throw unprocessable("Issue tree hold is not a restore operation");
+      throw unprocessable("任务树控制记录不是恢复操作");
     }
 
     const activeCancelHolds = await listHolds(companyId, rootIssueId, {
@@ -1018,7 +1018,7 @@ export function issueTreeControlService(db: Db) {
             releasedByAgentId: input.actor.agentId ?? null,
             releasedByUserId: input.actor.userId ?? (input.actor.actorType === "user" ? input.actor.actorId : null),
             releasedByRunId: input.actor.runId ?? null,
-            releaseReason: input.reason ?? "Restored by subtree restore operation",
+            releaseReason: input.reason ?? "由任务树恢复操作解除",
             releaseMetadata: {
               restoreHoldId,
               restoredIssueIds: restored.map((issue) => issue.id),
@@ -1037,7 +1037,7 @@ export function issueTreeControlService(db: Db) {
           releasedByAgentId: input.actor.agentId ?? null,
           releasedByUserId: input.actor.userId ?? (input.actor.actorType === "user" ? input.actor.actorId : null),
           releasedByRunId: input.actor.runId ?? null,
-          releaseReason: input.reason ?? "Restore operation applied",
+          releaseReason: input.reason ?? "已应用恢复操作",
           releaseMetadata: {
             restoredIssueIds: restored.map((issue) => issue.id),
             releasedCancelHoldIds,
@@ -1135,12 +1135,12 @@ export function issueTreeControlService(db: Db) {
       .from(issueTreeHolds)
       .where(and(eq(issueTreeHolds.id, holdId), eq(issueTreeHolds.companyId, companyId)))
       .then((rows) => rows[0] ?? null);
-    if (!existing) throw notFound("Issue tree hold not found");
+    if (!existing) throw notFound("未找到任务树控制记录");
     if (existing.rootIssueId !== rootIssueId) {
-      throw unprocessable("Issue tree hold does not belong to the requested root issue");
+      throw unprocessable("任务树控制记录不属于请求的根任务");
     }
     if (existing.status === "released") {
-      throw conflict("Issue tree hold is already released");
+      throw conflict("任务树控制记录已解除");
     }
 
     const [updated] = await db

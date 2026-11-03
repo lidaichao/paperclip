@@ -382,13 +382,13 @@ describe("issue tree control routes", () => {
     expect(res.status).toBe(201);
     expect(mockHeartbeatService.cancelRun).toHaveBeenCalledWith(
       "44444444-4444-4444-8444-444444444444",
-      "Cancelled by a board operator's subtree pause",
+      "由看板操作者取消：任务树操作 pause",
       { resultJson: { cancelledByActorType: "user", cancelledByUserId: "user-1" } },
     );
     expect(mockTreeControlService.cancelUnclaimedWakeupsForTree).toHaveBeenCalledWith(
       "company-2",
       "11111111-1111-4111-8111-111111111111",
-      "Cancelled because an active subtree pause hold was created",
+      "已创建任务树暂停控制，因此取消运行",
     );
     expect(mockLogActivity).toHaveBeenCalledWith(
       expect.anything(),
@@ -486,7 +486,7 @@ describe("issue tree control routes", () => {
     expect(res.status).toBe(201);
     expect(mockHeartbeatService.cancelRun).toHaveBeenCalledWith(
       "44444444-4444-4444-8444-444444444444",
-      "Cancelled by a board operator's subtree cancel",
+      "由看板操作者取消：任务树操作 cancel",
       { resultJson: { cancelledByActorType: "user", cancelledByUserId: "user-1" } },
     );
     expect(mockTreeControlService.cancelIssueStatusesForHold).toHaveBeenCalledWith(
@@ -606,7 +606,7 @@ describe("issue tree control routes", () => {
       "11111111-1111-4111-8111-111111111111",
       "66666666-6666-4666-8666-666666666666",
       expect.objectContaining({
-        reason: "Restore operation failed before subtree status updates completed",
+        reason: "恢复操作在任务树状态更新完成前失败",
         metadata: { cleanup: "restore_failed_before_apply" },
       }),
     );
