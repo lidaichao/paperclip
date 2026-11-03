@@ -30,17 +30,17 @@ export function cloudRoutes(opts: {
   router.get("/stacks", async (req, res) => {
     const context = getCloudStackContext(runtimeEnv);
     if (!context) {
-      throw notFound("Cloud stack portfolio is unavailable");
+      throw notFound("云服务实例组合不可用");
     }
     if (req.actor.source !== "cloud_tenant" || !req.actor.userId?.trim()) {
-      throw forbidden("Trusted Cloud tenant access required", {
+      throw forbidden("需要受信任的云租户访问权限", {
         code: "cloud_tenant_required",
       });
     }
 
     const tenantToken = runtimeEnv.PAPERCLIP_CLOUD_TENANT_SERVER_TOKEN?.trim();
     if (!context.cloudOrigin || !context.stackId || !tenantToken) {
-      throw new HttpError(503, "Paperclip Cloud portfolio is not configured", {
+      throw new HttpError(503, "尚未配置 Alice 云服务组合", {
         code: "cloud_portfolio_not_configured",
       });
     }
@@ -62,7 +62,7 @@ export function cloudRoutes(opts: {
     try {
       portfolioUrl = new URL(CLOUD_PORTFOLIO_PATH, context.cloudOrigin);
     } catch {
-      throw new HttpError(503, "Paperclip Cloud portfolio is not configured", {
+      throw new HttpError(503, "尚未配置 Alice 云服务组合", {
         code: "cloud_portfolio_not_configured",
       });
     }
@@ -81,9 +81,9 @@ export function cloudRoutes(opts: {
       if (!upstream.ok) {
         logger.warn(
           { status: upstream.status, stackId: context.stackId },
-          "Paperclip Cloud portfolio request failed",
+          "Alice 云服务组合请求失败",
         );
-        throw new HttpError(502, "Paperclip Cloud portfolio request failed", {
+        throw new HttpError(502, "Alice 云服务组合请求失败", {
           code: "cloud_portfolio_upstream_error",
         });
       }
@@ -92,7 +92,7 @@ export function cloudRoutes(opts: {
       try {
         payload = await upstream.json();
       } catch {
-        throw new HttpError(502, "Paperclip Cloud portfolio returned invalid JSON", {
+        throw new HttpError(502, "Alice 云服务组合返回了无效 JSON", {
           code: "cloud_portfolio_invalid_response",
         });
       }
@@ -106,9 +106,9 @@ export function cloudRoutes(opts: {
       if (error instanceof HttpError) throw error;
       logger.warn(
         { err: error, stackId: context.stackId },
-        "Paperclip Cloud portfolio request failed",
+        "Alice 云服务组合请求失败",
       );
-      throw new HttpError(502, "Paperclip Cloud portfolio request failed", {
+      throw new HttpError(502, "Alice 云服务组合请求失败", {
         code: "cloud_portfolio_upstream_error",
       });
     }
