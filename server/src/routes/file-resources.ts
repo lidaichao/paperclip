@@ -200,7 +200,7 @@ function readListQuery(query: unknown) {
       });
       const code = (refinement as { params?: { code?: string } } | undefined)?.params?.code;
       if (refinement) throw unprocessable(refinement.message, { code: code ?? "invalid_query" });
-      throw unprocessable("Workspace file list query is invalid", { code: "invalid_query" });
+      throw unprocessable("工作区文件列表查询无效", { code: "invalid_query" });
     }
     throw error;
   }
@@ -221,7 +221,7 @@ function readAvailabilityBody(body: unknown) {
     return workspaceFileAvailabilityRequestSchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      throw badRequest("Workspace file availability request is invalid", {
+      throw badRequest("工作区文件可用性请求无效", {
         code: "invalid_availability_request",
         issues: error.issues,
       });
@@ -549,7 +549,7 @@ export function fileResourceRoutes(db: Db, opts: {
     try {
       if (!hasCompanyAccess(req, issue.companyId)) {
         // Same 404 as a missing issue so cross-tenant probes can't tell them apart.
-        throw notFound("Issue not found");
+        throw notFound("未找到任务");
       }
     } catch (error) {
       await logListDeniedAttempt({
@@ -682,7 +682,7 @@ export function fileResourceRoutes(db: Db, opts: {
     try {
       if (!hasCompanyAccess(req, issue.companyId)) {
         // Same 404 as a missing issue so cross-tenant probes can't tell them apart.
-        throw notFound("Issue not found");
+        throw notFound("未找到任务");
       }
     } catch (error) {
       await logDeniedAttempt({
@@ -794,7 +794,7 @@ export function fileResourceRoutes(db: Db, opts: {
     try {
       if (!hasCompanyAccess(req, issue.companyId)) {
         // Same 404 as a missing issue so cross-tenant probes can't tell them apart.
-        throw notFound("Issue not found");
+        throw notFound("未找到任务");
       }
     } catch (error) {
       await logDeniedAttempt({
@@ -906,7 +906,7 @@ export function fileResourceRoutes(db: Db, opts: {
         throw error;
       }
 
-      if (!result) throw unprocessable("Workspace file cannot be previewed");
+      if (!result) throw unprocessable("无法预览工作区文件");
       await logActivity(db, {
         companyId: issue.companyId,
         actorType: actor.actorType,

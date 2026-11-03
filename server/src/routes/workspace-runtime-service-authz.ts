@@ -76,7 +76,7 @@ async function assertAgentCanManageRuntimeServicesForWorkspace(
   },
 ): Promise<{ runIssueId: string | null }> {
   if (req.actor.type !== "agent" || !req.actor.agentId) {
-    throw forbidden("Agent authentication required");
+    throw forbidden("需要智能体身份验证");
   }
 
   const actorAgent = await db
@@ -91,7 +91,7 @@ async function assertAgentCanManageRuntimeServicesForWorkspace(
     .then((rows) => rows[0] ?? null);
 
   if (!actorAgent || actorAgent.companyId !== input.companyId) {
-    throw forbidden("Agent key cannot access another company");
+    throw forbidden("智能体密钥不能访问其他公司");
   }
 
   const actorRun = req.actor.runId
@@ -158,7 +158,7 @@ async function assertAgentCanManageRuntimeServicesForWorkspace(
   ].filter((condition): condition is NonNullable<typeof condition> => condition !== null);
 
   if (workspaceScopeConditions.length === 0) {
-    throw forbidden("Missing permission to manage workspace runtime services");
+    throw forbidden("缺少管理工作区运行服务的权限");
   }
 
   const workspaceScopeCondition = workspaceScopeConditions.length === 1
@@ -225,7 +225,7 @@ async function assertAgentCanManageRuntimeServicesForWorkspace(
     return { runIssueId };
   }
 
-  throw forbidden("Missing permission to manage workspace runtime services");
+  throw forbidden("缺少管理工作区运行服务的权限");
 }
 
 function assertLowTrustCanManageRuntimeForActor(input: {
@@ -251,11 +251,11 @@ function assertLowTrustCanManageRuntimeForActor(input: {
       : null,
   });
   if (resolution.kind === "denied") {
-    throw forbidden(`Low-trust runtime service access denied: ${resolution.detail}`);
+    throw forbidden(`低信任运行服务访问被拒绝：${resolution.detail}`);
   }
   if (resolution.kind !== "low_trust_review") return resolution;
   if (isLowTrustRuntimeManagementAllowed(resolution)) return resolution;
-  throw forbidden("Low-trust runs cannot manage workspace runtime services unless the boundary grants runtime.manage");
+  throw forbidden("除非授权边界授予 runtime.manage 权限，否则低信任运行不能管理工作区运行服务");
 }
 
 function assertLowTrustCanManageRuntimeForIssue(input: {
@@ -297,11 +297,11 @@ function assertLowTrustCanManageRuntimeForIssue(input: {
       : null,
   });
   if (resolution.kind === "denied") {
-    throw forbidden(`Low-trust runtime service access denied: ${resolution.detail}`);
+    throw forbidden(`低信任运行服务访问被拒绝：${resolution.detail}`);
   }
   if (resolution.kind !== "low_trust_review") return;
   if (isLowTrustRuntimeManagementAllowed(resolution)) return;
-  throw forbidden("Low-trust runs cannot manage workspace runtime services unless the boundary grants runtime.manage");
+  throw forbidden("除非授权边界授予 runtime.manage 权限，否则低信任运行不能管理工作区运行服务");
 }
 
 export async function assertCanManageProjectWorkspaceRuntimeServices(
@@ -313,7 +313,7 @@ export async function assertCanManageProjectWorkspaceRuntimeServices(
   },
 ) {
   if (!hasCompanyAccess(req, input.companyId)) {
-    throw notFound("Project workspace not found");
+    throw notFound("未找到项目工作区");
   }
   assertCompanyAccess(req, input.companyId);
   if (req.actor.type === "board") return;
@@ -330,7 +330,7 @@ export async function assertCanManageExecutionWorkspaceRuntimeServices(
   },
 ): Promise<WorkspaceRuntimeControlAuthorization> {
   if (!hasCompanyAccess(req, input.companyId)) {
-    throw notFound("Execution workspace not found");
+    throw notFound("未找到执行工作区");
   }
   assertCompanyAccess(req, input.companyId);
   if (req.actor.type === "board") {

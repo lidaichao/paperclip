@@ -399,11 +399,11 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
       try {
         if (!projectWorkspace?.cwd) {
-          throw new Error("Workspace repair requires a registered base project workspace.");
+          throw new Error("修复工作区需要已登记的基础项目工作区。");
         }
         const expectedTargetInstanceId = resolveManagedWorkspaceInstanceId(workspaceCwd);
         if (!expectedTargetInstanceId) {
-          throw new Error("Workspace repair cannot resolve the registered target instance.");
+          throw new Error("修复工作区无法解析已登记的目标实例。");
         }
         repairSeedSource = resolveCanonicalWorktreeSeedSource({
           registeredBaseWorkspaceCwd: projectWorkspace.cwd,
@@ -417,7 +417,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
         const baseWorkspaceCwd = repairSeedSource.baseWorkspaceCwd;
         if (!baseWorkspaceCwd) {
-          throw new Error("Workspace repair source is not bound to a registered base project workspace.");
+          throw new Error("工作区修复源未绑定到已登记的基础项目工作区。");
         }
         const cliRunner = path.join(baseWorkspaceCwd, "cli", "node_modules", "tsx", "dist", "cli.mjs");
         const cliEntry = path.join(baseWorkspaceCwd, "cli", "src", "index.ts");
@@ -573,7 +573,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
         if (action === "run") {
           if (!workspaceCommand || workspaceCommand.kind !== "job") {
-            throw new Error("Workspace job selection is required");
+            throw new Error("必须选择工作区任务");
           }
           const availableWorkspace = await ensureWorkspaceAvailable();
           if (!availableWorkspace) {
@@ -675,7 +675,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
             });
             await reportRepairPhase("managed_stop", "succeeded");
             if (!repairSeedSource?.baseWorkspaceCwd || !repairCliArgs) {
-              throw new Error("Workspace repair source preflight did not complete.");
+              throw new Error("工作区修复源预检未完成。");
             }
             const manifestPath = path.join(workspaceCwd, ".paperclip", "seed-manifest.json");
             const sourceConfigPath = repairSeedSource.configPath;
@@ -783,7 +783,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
 
             const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
             if (!isVerifiedWorktreeSeedManifest(manifest)) {
-              throw new Error("Workspace reseed returned without a verified terminal manifest.");
+              throw new Error("工作区重新初始化后未返回已验证的终端清单。");
             }
             const expectedInstanceId = resolveManagedWorkspaceInstanceId(workspaceCwd);
             if (manifest.targetInstanceId !== expectedInstanceId) {
@@ -845,7 +845,7 @@ export function executionWorkspaceRoutes(db: Db, opts: { pluginWorkerManager?: P
                 || startedServices.some((service) => service.status !== "running" || service.healthStatus !== "healthy")
               )
             ) {
-              throw new Error("Managed restart did not produce healthy runtime services.");
+              throw new Error("托管重启后运行服务仍不健康。");
             }
             await reportRepairPhase("readiness_validation", "succeeded");
           } catch (error) {

@@ -196,7 +196,7 @@ describeEmbeddedPostgres("workspace runtime service authz helper", () => {
       projectWorkspaceId,
     })).rejects.toMatchObject({
       status: 403,
-      message: "Low-trust runs cannot manage workspace runtime services unless the boundary grants runtime.manage",
+      message: "除非授权边界授予 runtime.manage 权限，否则低信任运行不能管理工作区运行服务",
     });
   });
 
@@ -287,7 +287,7 @@ describeEmbeddedPostgres("workspace runtime service authz helper", () => {
       projectWorkspaceId,
     })).rejects.toMatchObject({
       status: 403,
-      message: "Low-trust runs cannot manage workspace runtime services unless the boundary grants runtime.manage",
+      message: "除非授权边界授予 runtime.manage 权限，否则低信任运行不能管理工作区运行服务",
     });
   });
 
@@ -387,7 +387,7 @@ describeEmbeddedPostgres("workspace runtime service authz helper", () => {
       executionWorkspaceId,
     })).rejects.toMatchObject({
       status: 403,
-      message: "Missing permission to manage workspace runtime services",
+      message: "缺少管理工作区运行服务的权限",
     });
   });
 
@@ -419,7 +419,7 @@ describeEmbeddedPostgres("workspace runtime service authz helper", () => {
       projectWorkspaceId,
     })).rejects.toMatchObject({
       status: 403,
-      message: "Missing permission to manage workspace runtime services",
+      message: "缺少管理工作区运行服务的权限",
     });
   });
 });

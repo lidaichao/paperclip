@@ -573,7 +573,7 @@ export function projectRoutes(db: Db) {
       run: async () => {
         if (action === "run") {
           if (!workspaceCommand || workspaceCommand.kind !== "job") {
-            throw new Error("Workspace job selection is required");
+            throw new Error("必须选择工作区任务");
           }
           return await runWorkspaceJobForControl({
             actor: {
