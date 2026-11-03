@@ -405,7 +405,7 @@ async function throwProviderWriteOrReservedRowRollbackError(input: {
       },
       "remote secret provider write failed and reserved secret rollback failed",
     );
-    throw new HttpError(500, "Secret create failed and Paperclip could not roll back the local secret reservation.", {
+    throw new HttpError(500, "密钥创建失败，Alice 无法回滚本地密钥预留。", {
       code: "secret_create_rollback_failed",
       provider: input.provider,
       operation: input.operation,
@@ -451,7 +451,7 @@ async function deleteLocalSecretCreateReservationOrThrow(input: {
       },
       "secret create failed and local reserved secret rollback failed",
     );
-    throw new HttpError(500, "Secret create failed and Paperclip could not roll back the local secret reservation.", {
+    throw new HttpError(500, "密钥创建失败，Alice 无法回滚本地密钥预留。", {
       code: "secret_create_rollback_failed",
       provider: input.provider,
       operation: input.operation,
@@ -468,7 +468,7 @@ function throwProviderCleanupFailedAfterCreateRollback(input: {
   operation: string;
 }): never {
   const providerConfigId = providerConfigIdentifier(input);
-  throw new HttpError(500, "Secret create failed and Paperclip could not clean up the remote provider secret.", {
+  throw new HttpError(500, "密钥创建失败，Alice 无法清理远程服务商密钥。", {
     code: "secret_create_provider_cleanup_failed",
     provider: input.provider,
     operation: input.operation,
@@ -808,7 +808,7 @@ function assertClass3StaticLeaseAllowed(input: {
   const projectionClass = input.projectionClass ?? "unclassified";
   if (projectionClass !== "class_3_static_lease") return;
   if (!input.projectionAllowlistKey?.trim()) {
-    throw unprocessable("Class-3 static lease bindings require an allowlist key", {
+    throw unprocessable("三级静态租约绑定需要白名单键", {
       code: "class_3_static_lease_allowlist_required",
       targetType: input.targetType,
       configPath: input.configPath,
@@ -820,7 +820,7 @@ function assertClass3StaticLeaseAllowed(input: {
     && entry.configPath === input.configPath
   );
   if (!allowed) {
-    throw unprocessable("Class-3 static lease binding is outside the approved allowlist", {
+    throw unprocessable("三级静态租约绑定不在批准的白名单中", {
       code: "class_3_static_lease_not_allowed",
       allowlistKey: input.projectionAllowlistKey,
       targetType: input.targetType,
@@ -877,7 +877,7 @@ function assertSecretBindingConfigPath(input: {
 }) {
   if (!input.configPath.startsWith(AGENT_ACCESS_CONFIG_PATH_PREFIX)) return;
   if (input.targetType !== "agent") {
-    throw unprocessable("API-only secret access bindings must target an agent");
+    throw unprocessable("仅限接口的密钥访问绑定必须指向智能体");
   }
   const alias = input.configPath.slice(AGENT_ACCESS_CONFIG_PATH_PREFIX.length);
   if (!ENV_KEY_RE.test(alias)) {
@@ -957,13 +957,13 @@ function assertSelectableProviderConfig(config: {
   status: string;
   companyId: string;
 }, companyId: string, provider: SecretProvider) {
-  if (config.companyId !== companyId) throw unprocessable("Provider vault must belong to same company");
-  if (config.provider !== provider) throw unprocessable("Provider vault must match the secret provider");
+  if (config.companyId !== companyId) throw unprocessable("服务商保险库必须属于同一公司");
+  if (config.provider !== provider) throw unprocessable("服务商保险库必须与密钥服务商匹配");
   if (config.status === "coming_soon") {
-    throw unprocessable("Provider vault is locked while coming soon");
+    throw unprocessable("服务商保险库尚未开放，目前已锁定");
   }
   if (config.status === "disabled") {
-    throw unprocessable("Provider vault is disabled");
+    throw unprocessable("服务商保险库已停用");
   }
 }
 
@@ -1060,7 +1060,7 @@ export function secretService(db: Db | DbTransaction) {
       throw notFound(userSecretDefinitionNotFoundMessage(input, context));
     }
     if (definition.companyId !== companyId) {
-      throw unprocessable("User secret definition must belong to same company");
+      throw unprocessable("用户密钥定义必须属于同一公司");
     }
     return definition;
   }
@@ -1086,10 +1086,10 @@ export function secretService(db: Db | DbTransaction) {
   async function getUserSecretValueById(companyId: string, ownerUserId: string, secretId: string) {
     const secret = await getById(secretId);
     if (!secret || secret.status === "deleted" || secret.scope !== "user") {
-      throw notFound("User secret value not found");
+      throw notFound("未找到用户密钥值");
     }
     if (secret.companyId !== companyId || secret.ownerUserId !== ownerUserId) {
-      throw notFound("User secret value not found");
+      throw notFound("未找到用户密钥值");
     }
     return secret;
   }
@@ -1136,7 +1136,7 @@ export function secretService(db: Db | DbTransaction) {
   ) {
     if (!context) return null;
     if (!context.configPath) {
-      throw unprocessable("Secret resolution requires a binding config path", { code: "binding_missing" });
+      throw unprocessable("解析密钥需要绑定配置路径", { code: "binding_missing" });
     }
     const binding = await getBinding({
       companyId,
@@ -1214,10 +1214,10 @@ export function secretService(db: Db | DbTransaction) {
     source: Pick<Db | DbTransaction, "select"> = db,
   ) {
     const secret = await getById(secretId, source);
-    if (!secret) throw notFound("Secret not found");
-    if (secret.status === "deleted") throw notFound("Secret not found");
-    if (secret.companyId !== companyId) throw unprocessable("Secret must belong to same company");
-    if (secret.scope !== "company") throw unprocessable("Secret references require company-scoped secrets");
+    if (!secret) throw notFound("未找到密钥");
+    if (secret.status === "deleted") throw notFound("未找到密钥");
+    if (secret.companyId !== companyId) throw unprocessable("密钥必须属于同一公司");
+    if (secret.scope !== "company") throw unprocessable("密钥引用需要公司范围的密钥");
     return secret;
   }
 
@@ -1236,7 +1236,7 @@ export function secretService(db: Db | DbTransaction) {
   ) {
     if (!providerConfigId) return null;
     const providerConfig = await getProviderConfigById(providerConfigId);
-    if (!providerConfig) throw notFound("Provider vault not found");
+    if (!providerConfig) throw notFound("未找到服务商保险库");
     assertSelectableProviderConfig(providerConfig, companyId, provider);
     return providerConfig;
   }
@@ -1272,7 +1272,7 @@ export function secretService(db: Db | DbTransaction) {
   ): Record<string, unknown> {
     const parsed = secretProviderConfigPayloadSchema.safeParse({ provider, config });
     if (!parsed.success) {
-      throw unprocessable("Invalid provider vault config", parsed.error.flatten());
+      throw unprocessable("服务商保险库配置无效", parsed.error.flatten());
     }
     return parsed.data.config;
   }
