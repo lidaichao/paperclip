@@ -309,7 +309,7 @@ describe("cost routes", () => {
       .send({ budgetMonthlyCents: 2500 });
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Agent not found");
+    expect(res.body.error).toBe("未找到智能体");
     expect(mockAgentService.update).not.toHaveBeenCalled();
   });
 

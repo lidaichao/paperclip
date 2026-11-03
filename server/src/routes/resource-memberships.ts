@@ -10,7 +10,7 @@ import { logActivity, resourceMembershipService } from "../services/index.js";
 
 function requireBoardUserId(req: Request, res: Response): string | null {
   if (req.actor.type !== "board" || !req.actor.userId) {
-    res.status(403).json({ error: "Board user access required" });
+    res.status(403).json({ error: "需要看板用户访问权限" });
     return null;
   }
   return req.actor.userId;

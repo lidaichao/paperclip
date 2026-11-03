@@ -79,7 +79,7 @@ export function costRoutes(
       resource: { type: "company", companyId },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Costs are outside this actor's authorization boundary" });
+    res.status(403).json({ error: "成本记录不在当前操作者的授权范围内" });
     return false;
   }
 
@@ -107,7 +107,7 @@ export function costRoutes(
       },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Issue costs are outside this actor's authorization boundary" });
+    res.status(403).json({ error: "任务成本不在当前操作者的授权范围内" });
     return false;
   }
 
@@ -116,7 +116,7 @@ export function costRoutes(
     assertCompanyAccess(req, companyId);
 
     if (req.actor.type === "agent" && req.actor.agentId !== req.body.agentId) {
-      res.status(403).json({ error: "Agent can only report its own costs" });
+      res.status(403).json({ error: "智能体只能上报自己的成本" });
       return;
     }
 
@@ -181,7 +181,7 @@ export function costRoutes(
 
   router.get("/issues/:id/cost-summary", async (req, res) => {
     const rawId = req.params.id as string;
-    const issue = await getAccessibleResource(req, res, resolveIssueByRef(rawId), "Issue not found");
+    const issue = await getAccessibleResource(req, res, resolveIssueByRef(rawId), "未找到任务");
     if (!issue) return;
     if (!(await assertIssueCostReadAllowed(req, res, issue))) return;
     const excludeRoot = req.query.excludeRoot === "true" || req.query.excludeRoot === "1";
@@ -278,7 +278,7 @@ export function costRoutes(
     // and any forged ids are rejected before we touch provider credentials
     const company = await companies.getById(companyId);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "未找到公司" });
       return;
     }
     const results = await fetchAllQuotaWindows();
@@ -333,7 +333,7 @@ export function costRoutes(
     assertCompanyAccess(req, companyId);
     const company = await companies.update(companyId, { budgetMonthlyCents: req.body.budgetMonthlyCents });
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "未找到公司" });
       return;
     }
 
@@ -363,14 +363,14 @@ export function costRoutes(
 
   router.patch("/agents/:agentId/budgets", validate(updateBudgetSchema), async (req, res) => {
     const agentId = req.params.agentId as string;
-    const agent = await getAccessibleResource(req, res, agents.getById(agentId), "Agent not found");
+    const agent = await getAccessibleResource(req, res, agents.getById(agentId), "未找到智能体");
     if (!agent) return;
 
     assertBoard(req);
 
     const updated = await agents.update(agentId, { budgetMonthlyCents: req.body.budgetMonthlyCents });
     if (!updated) {
-      res.status(404).json({ error: "Agent not found" });
+      res.status(404).json({ error: "未找到智能体" });
       return;
     }
 

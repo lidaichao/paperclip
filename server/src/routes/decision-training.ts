@@ -22,11 +22,11 @@ const previewSchema = z.object({
 
 function requireHumanUser(req: Request, res: Response) {
   if (req.actor.type !== "board") {
-    res.status(403).json({ error: "Decision training writes require a human user" });
+    res.status(403).json({ error: "写入决策训练数据需要人类用户身份" });
     return null;
   }
   if (!req.actor.userId) {
-    res.status(403).json({ error: "Board user context required" });
+    res.status(403).json({ error: "需要看板用户上下文" });
     return null;
   }
   return req.actor.userId;
@@ -35,7 +35,7 @@ function requireHumanUser(req: Request, res: Response) {
 function parseExampleId(req: Request, res: Response) {
   const parsed = exampleIdSchema.safeParse(req.params.id);
   if (!parsed.success) {
-    res.status(404).json({ error: "Decision training example not found" });
+    res.status(404).json({ error: "未找到决策训练示例" });
     return null;
   }
   return parsed.data;
@@ -43,7 +43,7 @@ function parseExampleId(req: Request, res: Response) {
 
 function requireExampleOwner(res: Response, userId: string, createdByUserId: string) {
   if (userId !== createdByUserId) {
-    res.status(403).json({ error: "Only the example author can change decision training examples" });
+    res.status(403).json({ error: "只有示例作者才能修改决策训练示例" });
     return false;
   }
   return true;
@@ -122,7 +122,7 @@ export function decisionTrainingRoutes(db: Db) {
       q: z.string().trim().max(500).optional(),
     }).safeParse(req.query);
     if (!parsed.success) {
-      res.status(400).json({ error: "Invalid decision training query", details: parsed.error.flatten() });
+      res.status(400).json({ error: "决策训练查询无效", details: parsed.error.flatten() });
       return;
     }
     res.json(await svc.list(companyId, {
@@ -166,7 +166,7 @@ export function decisionTrainingRoutes(db: Db) {
     if (!exampleId) return;
     const example = await svc.getById(exampleId);
     if (!example || !hasCompanyAccess(req, example.companyId)) {
-      res.status(404).json({ error: "Decision training example not found" });
+      res.status(404).json({ error: "未找到决策训练示例" });
       return;
     }
     const actor = getActorInfo(req);
@@ -189,7 +189,7 @@ export function decisionTrainingRoutes(db: Db) {
     if (!exampleId) return;
     const existing = await svc.getById(exampleId);
     if (!existing || !hasCompanyAccess(req, existing.companyId)) {
-      res.status(404).json({ error: "Decision training example not found" });
+      res.status(404).json({ error: "未找到决策训练示例" });
       return;
     }
     const userId = requireHumanUser(req, res);
@@ -198,7 +198,7 @@ export function decisionTrainingRoutes(db: Db) {
     const notesChanged = req.body.notes !== existing.notes;
     const updated = await svc.updateNotes(existing.id, userId, req.body.notes);
     if (!updated) {
-      res.status(404).json({ error: "Decision training example not found" });
+      res.status(404).json({ error: "未找到决策训练示例" });
       return;
     }
     if (notesChanged) {
@@ -223,7 +223,7 @@ export function decisionTrainingRoutes(db: Db) {
     if (!exampleId) return;
     const existing = await svc.getById(exampleId);
     if (!existing || !hasCompanyAccess(req, existing.companyId)) {
-      res.status(404).json({ error: "Decision training example not found" });
+      res.status(404).json({ error: "未找到决策训练示例" });
       return;
     }
     const userId = requireHumanUser(req, res);
@@ -231,7 +231,7 @@ export function decisionTrainingRoutes(db: Db) {
     if (!requireExampleOwner(res, userId, existing.createdByUserId)) return;
     const deleted = await svc.delete(existing.id);
     if (deleted.length === 0) {
-      res.status(404).json({ error: "Decision training example not found" });
+      res.status(404).json({ error: "未找到决策训练示例" });
       return;
     }
     const actor = getActorInfo(req);

@@ -136,7 +136,7 @@ export function decisionQueueRoutes(db: Db) {
       await assertDecisionAccess(db, req, companyId, "decision_queue:manage");
       const source = sourceParams(req);
       if (!source) {
-        res.status(400).json({ error: "Invalid attention source identity" });
+        res.status(400).json({ error: "关注事项来源身份无效" });
         return;
       }
       res.json(await svc.removeItem({
@@ -155,7 +155,7 @@ export function decisionQueueRoutes(db: Db) {
     await assertDecisionAccess(db, req, companyId, "decision_queue:read");
     const source = sourceParams(req);
     if (!source) {
-      res.status(400).json({ error: "Invalid attention source identity" });
+      res.status(400).json({ error: "关注事项来源身份无效" });
       return;
     }
     res.json(await svc.getTriage(companyId, source.sourceKind, source.sourceId, req.actor));
@@ -169,7 +169,7 @@ export function decisionQueueRoutes(db: Db) {
       await assertDecisionAccess(db, req, companyId, "decision_triage:manage");
       const source = sourceParams(req);
       if (!source) {
-        res.status(400).json({ error: "Invalid attention source identity" });
+        res.status(400).json({ error: "关注事项来源身份无效" });
         return;
       }
       res.json(await svc.updateTriage({
@@ -190,7 +190,7 @@ export function decisionQueueRoutes(db: Db) {
       await assertDecisionAccess(db, req, companyId, "decision_triage:manage");
       const source = sourceParams(req);
       if (!source) {
-        res.status(400).json({ error: "Invalid attention source identity" });
+        res.status(400).json({ error: "关注事项来源身份无效" });
         return;
       }
       res.json(await retention.setKeep({
@@ -208,7 +208,7 @@ export function decisionQueueRoutes(db: Db) {
     await assertDecisionAccess(db, req, companyId, "decision_triage:manage");
     const source = sourceParams(req);
     if (!source) {
-      res.status(400).json({ error: "Invalid attention source identity" });
+      res.status(400).json({ error: "关注事项来源身份无效" });
       return;
     }
     res.json(await retention.archive({ companyId, ...source, authActor: req.actor, actor: mutationActor(req) }));
@@ -219,7 +219,7 @@ export function decisionQueueRoutes(db: Db) {
     await assertDecisionAccess(db, req, companyId, "decision_triage:manage");
     const source = sourceParams(req);
     if (!source) {
-      res.status(400).json({ error: "Invalid attention source identity" });
+      res.status(400).json({ error: "关注事项来源身份无效" });
       return;
     }
     res.json(await retention.revive({ companyId, ...source, authActor: req.actor, actor: mutationActor(req) }));
