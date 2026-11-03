@@ -12127,6 +12127,16 @@
     "use_full_alice_origin_0fd00005": "Use the full Alice origin before the endpoint path.",
     "claude_desktop_remote_http_support_0fd00006": "Recent Claude Desktop builds support remote HTTP MCP servers.",
     "place_under_mcp_settings_0fd00007": "Place this under your MCP extension or editor MCP settings.",
-    "use_equivalent_mcp_add_command_0fd00008": "Use the equivalent remote HTTP MCP add command for your installed version."
+    "use_equivalent_mcp_add_command_0fd00008": "Use the equivalent remote HTTP MCP add command for your installed version.",
+    "personal_connection_0fe00001": "Personal",
+    "dedicated_agent_connection_0fe00002": "Dedicated agent",
+    "organization_connection_0fe00003": "Organization",
+    "organization_connection_suffix_0fe00004": " for the organization",
+    "connected_account_0fe00005": "Connected account",
+    "dedicated_account_0fe00006": "Dedicated account",
+    "one_selected_member_0fe00007": "{{v0}} selected member",
+    "selected_members_0fe00008": "{{v0}} selected members",
+    "owner_s_application_name_0fe00009": "{{v0}}’ {{v1}}",
+    "owner_application_name_0fe00010": "{{v0}}’s {{v1}}"
   }
 }

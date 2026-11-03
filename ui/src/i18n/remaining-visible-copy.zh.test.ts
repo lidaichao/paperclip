@@ -547,6 +547,16 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.claude_desktop_remote_http_support_0fd00006).toContain("远程 HTTP MCP");
     expect(messages.place_under_mcp_settings_0fd00007).toContain("MCP 设置");
     expect(messages.use_equivalent_mcp_add_command_0fd00008).toContain("添加命令");
+    expect(messages.personal_connection_0fe00001).toBe("个人");
+    expect(messages.dedicated_agent_connection_0fe00002).toBe("智能体专用");
+    expect(messages.organization_connection_0fe00003).toBe("组织");
+    expect(messages.organization_connection_suffix_0fe00004).toBe("（组织）");
+    expect(messages.connected_account_0fe00005).toBe("已连接账户");
+    expect(messages.dedicated_account_0fe00006).toBe("专用账户");
+    expect(messages.one_selected_member_0fe00007).toContain("名成员");
+    expect(messages.selected_members_0fe00008).toContain("名成员");
+    expect(messages.owner_s_application_name_0fe00009).toContain(" 的 ");
+    expect(messages.owner_application_name_0fe00010).toContain(" 的 ");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

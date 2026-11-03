@@ -12127,6 +12127,16 @@
     "use_full_alice_origin_0fd00005": "请在端点路径前补充完整的 Alice 服务地址。",
     "claude_desktop_remote_http_support_0fd00006": "较新的 Claude Desktop 版本支持远程 HTTP MCP 服务器。",
     "place_under_mcp_settings_0fd00007": "请将此配置放入 MCP 扩展或编辑器的 MCP 设置中。",
-    "use_equivalent_mcp_add_command_0fd00008": "请使用当前安装版本所支持的等效远程 HTTP MCP 添加命令。"
+    "use_equivalent_mcp_add_command_0fd00008": "请使用当前安装版本所支持的等效远程 HTTP MCP 添加命令。",
+    "personal_connection_0fe00001": "个人",
+    "dedicated_agent_connection_0fe00002": "智能体专用",
+    "organization_connection_0fe00003": "组织",
+    "organization_connection_suffix_0fe00004": "（组织）",
+    "connected_account_0fe00005": "已连接账户",
+    "dedicated_account_0fe00006": "专用账户",
+    "one_selected_member_0fe00007": "已选择 {{v0}} 名成员",
+    "selected_members_0fe00008": "已选择 {{v0}} 名成员",
+    "owner_s_application_name_0fe00009": "{{v0}} 的 {{v1}}",
+    "owner_application_name_0fe00010": "{{v0}} 的 {{v1}}"
   }
 }

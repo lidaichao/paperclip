@@ -19,13 +19,9 @@ export function connectionOwnerProfile(
 
 function ownerGivenName(label: string): string {
   const trimmed = label.trim();
-  if (!trimmed) return "Board";
+  if (!trimmed) return l10n("local.board_4816cbfd");
   const first = trimmed.split(/\s+/)[0] ?? trimmed;
-  return first.includes("@") ? first.split("@")[0] || "Board" : first;
-}
-
-function possessive(label: string): string {
-  return label.toLowerCase().endsWith("s") ? `${label}’` : `${label}’s`;
+  return first.includes("@") ? first.split("@")[0] || l10n("local.board_4816cbfd") : first;
 }
 
 /**
@@ -50,7 +46,10 @@ export function connectionDisplayNameForOwner(
   if (connectionName.trim().toLocaleLowerCase() !== applicationName.trim().toLocaleLowerCase()) {
     return connectionName;
   }
-  return `${possessive(ownerGivenName(owner.label))} ${applicationName}`;
+  const ownerName = ownerGivenName(owner.label);
+  return ownerName.toLowerCase().endsWith("s")
+    ? l10n("local.owner_s_application_name_0fe00009", { v0: ownerName, v1: applicationName })
+    : l10n("local.owner_application_name_0fe00010", { v0: ownerName, v1: applicationName });
 }
 
 export function ConnectionOwnerIdentity({ owner }: { owner: ConnectionOwnerProfile | null }) {

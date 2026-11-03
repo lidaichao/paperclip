@@ -16,17 +16,17 @@ import type {
  * card cannot drift into three different names for the same thing.
  */
 
-export type ConnectionTypeLabel = "Personal" | "Dedicated agent" | "Organization";
+export type ConnectionTypeLabel = string;
 
 /** The two connection types shown throughout the product. */
 export function connectionTypeLabel(
   credentialPolicy: ToolConnectionCredentialPolicy,
 ): ConnectionTypeLabel {
   return credentialPolicy === "per_user"
-    ? "Personal"
+    ? l10n("local.personal_connection_0fe00001")
     : credentialPolicy === "per_agent"
-      ? "Dedicated agent"
-      : "Organization";
+      ? l10n("local.dedicated_agent_connection_0fe00002")
+      : l10n("local.organization_connection_0fe00003");
 }
 
 const ORGANIZATION_NAME_SUFFIX = " for the organization";
@@ -45,15 +45,16 @@ export function connectionNameForGrantKind(name: string, grantKind: ConnectionGr
   if (grantKind !== "organization") {
     return trimmed;
   }
+  const localizedSuffix = l10n("local.organization_connection_suffix_0fe00004");
   const lowercased = trimmed.toLocaleLowerCase();
-  if (lowercased.endsWith(ORGANIZATION_NAME_SUFFIX)) {
+  if (lowercased.endsWith(ORGANIZATION_NAME_SUFFIX) || trimmed.endsWith(localizedSuffix)) {
     return trimmed;
   }
   if (lowercased.endsWith(LEGACY_ORGANIZATION_NAME_SUFFIX)) {
     const base = trimmed.slice(0, trimmed.length - LEGACY_ORGANIZATION_NAME_SUFFIX.length).trimEnd();
-    return `${base}${ORGANIZATION_NAME_SUFFIX}`;
+    return `${base}${localizedSuffix}`;
   }
-  return `${trimmed}${ORGANIZATION_NAME_SUFFIX}`;
+  return `${trimmed}${localizedSuffix}`;
 }
 
 export function connectionNameForCredentialPolicy(
@@ -62,7 +63,7 @@ export function connectionNameForCredentialPolicy(
 ): string {
   return connectionNameForGrantKind(
     name,
-    connectionTypeLabel(credentialPolicy) === "Organization" ? "organization" : "user",
+    credentialPolicy === "shared" ? "organization" : "user",
   );
 }
 
@@ -113,8 +114,8 @@ export function grantAccountLabel(
 ): string {
   const tenantName = grant?.providerTenant?.name?.trim();
   if (tenantName) return tenantName;
-  if (grant?.kind === "user") return options.subjectLabel?.trim() || "Connected account";
-  if (grant?.kind === "agent") return options.subjectLabel?.trim() || "Dedicated account";
+  if (grant?.kind === "user") return options.subjectLabel?.trim() || l10n("local.connected_account_0fe00005");
+  if (grant?.kind === "agent") return options.subjectLabel?.trim() || l10n("local.dedicated_account_0fe00006");
   return l10n("local.shared_credential_d38adc78");
 }
 
@@ -126,7 +127,9 @@ export function grantAccountLabel(
 export function audienceSummary(grant: Pick<ConnectionGrant, "members"> | null): string {
   const count = grant?.members?.length ?? 0;
   if (count === 0) return l10n("local.all_organization_members_eac0894e");
-  return l10n("local.value_selected_value_c372c5aa", {v0: (count), v1: (count === 1 ? "member" : "members")});
+  return count === 1
+    ? l10n("local.one_selected_member_0fe00007", { v0: count })
+    : l10n("local.selected_members_0fe00008", { v0: count });
 }
 
 export function audienceUserIds(grant: Pick<ConnectionGrant, "members"> | null): Set<string> {
