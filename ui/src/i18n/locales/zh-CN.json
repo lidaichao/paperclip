@@ -11902,6 +11902,9 @@
     "enter_cursor_api_key_0e900003": "请输入 Cursor API 密钥。",
     "enter_value_or_select_organization_secret_0e900004": "请输入 {{v0}}，或选择一个组织密钥。",
     "enter_hermes_api_base_url_0e900005": "请输入 Hermes API 基础地址。",
-    "enter_kimi_api_model_name_0e900006": "请输入 Kimi API 模型名称。"
+    "enter_kimi_api_model_name_0e900006": "请输入 Kimi API 模型名称。",
+    "run_test_0ea00001": "运行测试",
+    "test_again_0ea00002": "再次测试",
+    "retry_test_0ea00003": "重试测试"
   }
 }

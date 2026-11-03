@@ -347,6 +347,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.enter_value_or_select_organization_secret_0e900004).toContain("组织密钥");
     expect(messages.enter_hermes_api_base_url_0e900005).toContain("Hermes API 基础地址");
     expect(messages.enter_kimi_api_model_name_0e900006).toContain("Kimi API 模型名称");
+    expect(messages.run_test_0ea00001).toBe("运行测试");
+    expect(messages.test_again_0ea00002).toBe("再次测试");
+    expect(messages.retry_test_0ea00003).toBe("重试测试");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

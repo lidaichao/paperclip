@@ -15,27 +15,27 @@ const copy = {
   idle: {
     title: l10n("local.test_your_agent_bcf9391c"),
     description: l10n("local.check_that_your_runtime_and_model_can_respond_0325fd6d"),
-    action: "Run test",
+    action: l10n("local.run_test_0ea00001"),
   },
   running: {
     title: l10n("local.testing_connection_04dfed9c"),
     description: l10n("local.checking_the_runtime_and_waiting_for_a_model_a1c61e07"),
-    action: "Testing…",
+    action: l10n("local.testing_407b7a04"),
   },
   pass: {
     title: l10n("local.connection_successful_856dd8c8"),
     description: l10n("local.your_runtime_checks_passed_review_the_details_4edd5666"),
-    action: "Test again",
+    action: l10n("local.test_again_0ea00002"),
   },
   warn: {
     title: l10n("local.connection_needs_attention_4f1fc01d"),
     description: l10n("local.review_the_test_details_before_running_your_a_a186aaf2"),
-    action: "Test again",
+    action: l10n("local.test_again_0ea00002"),
   },
   fail: {
     title: l10n("local.couldn_t_connect_babe5b38"),
     description: l10n("local.check_your_model_and_provider_connection_then_c7c75083"),
-    action: "Retry test",
+    action: l10n("local.retry_test_0ea00003"),
   },
 } as const;
 

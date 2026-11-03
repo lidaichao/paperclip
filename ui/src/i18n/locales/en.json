@@ -11902,6 +11902,9 @@
     "enter_cursor_api_key_0e900003": "Enter a Cursor API key.",
     "enter_value_or_select_organization_secret_0e900004": "Enter {{v0}} or select an organization secret.",
     "enter_hermes_api_base_url_0e900005": "Enter the Hermes API base URL.",
-    "enter_kimi_api_model_name_0e900006": "Enter the Kimi API model name."
+    "enter_kimi_api_model_name_0e900006": "Enter the Kimi API model name.",
+    "run_test_0ea00001": "Run test",
+    "test_again_0ea00002": "Test again",
+    "retry_test_0ea00003": "Retry test"
   }
 }
