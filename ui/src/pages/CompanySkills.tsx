@@ -276,15 +276,15 @@ function sourceMeta(sourceBadge: CompanySkillSourceBadge, sourceLabel: string | 
     case "github":
       return isSkillsShManaged
         ? { icon: VercelMark, label: displayLabel ?? "skills.sh", managedLabel: "skills.sh managed" }
-        : { icon: GithubIcon, label: displayLabel ?? l10n("local.github_f911e414"), managedLabel: "GitHub managed" };
+        : { icon: GithubIcon, label: displayLabel ?? l10n("local.github_f911e414"), managedLabel: l10n("local.github_managed_709b4ea9") };
     case "url":
-      return { icon: Link2, label: displayLabel ?? l10n("local.url_e7a241de"), managedLabel: "URL managed" };
+      return { icon: Link2, label: displayLabel ?? l10n("local.url_e7a241de"), managedLabel: l10n("local.url_managed_591a0767") };
     case "local":
-      return { icon: Folder, label: displayLabel ?? l10n("local.folder_74ccd433"), managedLabel: "Folder managed" };
+      return { icon: Folder, label: displayLabel ?? l10n("local.folder_74ccd433"), managedLabel: l10n("local.folder_managed_c7147bdb") };
     case "paperclip":
-      return { icon: Paperclip, label: displayLabel ?? "Alice", managedLabel: "Alice managed" };
+      return { icon: Paperclip, label: displayLabel ?? "Alice", managedLabel: l10n("local.alice_managed_9cb2150a") };
     default:
-      return { icon: Boxes, label: displayLabel ?? l10n("local.catalog_3877d148"), managedLabel: "Catalog managed" };
+      return { icon: Boxes, label: displayLabel ?? l10n("local.catalog_3877d148"), managedLabel: l10n("local.catalog_managed_178dc83d") };
   }
 }
 
@@ -657,8 +657,12 @@ function categorySetKey(categories: string[]) {
 }
 
 function skillSettingsToastBody(skill: Pick<CompanySkillDetail, "categories" | "sharingScope">) {
-  const sharing = skill.sharingScope === "private" ? "Sharing: private" : "Sharing: organization";
-  const categories = skill.categories.length ? `Categories: ${skill.categories.join(", ")}` : "Categories: none";
+  const sharing = skill.sharingScope === "private"
+    ? l10n("local.sharing_private_51410d0c")
+    : l10n("local.sharing_organization_082c74a4");
+  const categories = skill.categories.length
+    ? l10n("local.categories_value_23ac60ab", { v0: skill.categories.join(", ") })
+    : l10n("local.categories_none_c4a310ce");
   return `${sharing} | ${categories}`;
 }
 
@@ -753,7 +757,7 @@ export function buildDiscoveryCards(
       forkedFrom: false,
       updatedAt: 0,
       sourceBadge: "catalog",
-      sourceLabel: entry.packageName ?? "Catalog",
+      sourceLabel: entry.packageName ?? l10n("local.catalog_3877d148"),
       sourceKind: entry.kind,
     });
   }
@@ -1147,7 +1151,12 @@ export function DiscoveryGrid({
     const facets = new Map<string, string>();
     for (const card of cards) {
       if (card.sourceKind) {
-        facets.set(`kind:${card.sourceKind}`, card.sourceKind === "bundled" ? "Bundled" : "Optional");
+        facets.set(
+          `kind:${card.sourceKind}`,
+          card.sourceKind === "bundled"
+            ? l10n("local.bundled_79d3a1f1")
+            : l10n("local.optional_59be7133"),
+        );
       }
       if (card.sourceBadge) {
         facets.set(`badge:${card.sourceBadge}`, sourceMeta(card.sourceBadge, null).label);
@@ -1421,11 +1430,11 @@ export function DiscoveryGrid({
                 message={
                   totalCount === 0
                     ? installedView
-                      ? "No installed skills yet. Discover a skill or create one."
-                      : "No skills are available to discover yet."
+                      ? l10n("local.no_installed_skills_discover_or_create_4525f28e")
+                      : l10n("local.no_skills_available_to_discover_73d9d366")
                     : search || activeCategory || sourceFilterActive
-                      ? "No skills match your filters."
-                      : "No skills in this view yet."
+                      ? l10n("local.no_skills_match_filters_dcb4cd82")
+                      : l10n("local.no_skills_in_view_1e88046e")
                 }
               />
               {totalCount === 0 ? (
@@ -1500,7 +1509,12 @@ function NewSkillWizard({
   const [draft, setDraft] = useState<SkillCreateDraft>(initialDraft);
   const [slugDirty, setSlugDirty] = useState(initialDraft.slug.trim().length > 0);
   const categoryDraft = draft.categories.join(", ");
-  const steps = ["Basics", "Design", "Content", "Review"];
+  const steps = [
+    l10n("local.basics_8fdd2ee8"),
+    l10n("local.design_step_553ab9ad"),
+    l10n("local.content_47bd2907"),
+    l10n("local.review_aff0766a"),
+  ];
 
   useEffect(() => {
     setStep(0);
@@ -1593,7 +1607,7 @@ function NewSkillWizard({
               size={48}
               card={{
                 key: effectiveSlug || draft.name || "new-skill",
-                name: draft.name || "New Skill",
+                name: draft.name || l10n("local.new_skill_7fe2a91d"),
                 slug: effectiveSlug || "skill",
                 iconUrl: null,
                 color: draft.color,
@@ -2095,12 +2109,12 @@ export function InstallPreviewDialog({
   let confirmLabel = l10n("local.install_skill_a6f3e89f");
   let confirmVariant: "default" | "destructive" = "default";
   if (defaultAction === "update") {
-    confirmLabel = "Install update";
+    confirmLabel = l10n("local.install_update_cada4215");
   } else if (defaultAction === "replace") {
-    confirmLabel = "Replace existing skill";
+    confirmLabel = l10n("local.replace_existing_skill_f3f73f0b");
     confirmVariant = "destructive";
   }
-  if (isPending) confirmLabel = "Installing…";
+  if (isPending) confirmLabel = l10n("local.installing_ellipsis_c4c56625");
 
   return (
     <Dialog open={open} onOpenChange={(value) => (!isPending ? onOpenChange(value) : null)}>
@@ -2731,7 +2745,7 @@ function SkillLocationCard({
   onMove?: () => void;
 }) {
   const { copied, failed, copy } = useCopyAction();
-  const canonical = folderPath && folderPath.length > 0 ? folderPath : "Unfiled";
+  const canonical = folderPath && folderPath.length > 0 ? folderPath : l10n("local.unfiled_d64dc9ae");
   return (
     <section>
       <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{l10n("local.location_15b61974")}</div>
@@ -3723,7 +3737,7 @@ function SkillPane({
   const displaySourcePath = detail.sourcePath ? middleTruncate(detail.sourcePath) : null;
   const removeBlocked = usedBy.length > 0;
   const removeDisabledReason = removeBlocked
-    ? "Detach this skill from all agents before removing it."
+    ? l10n("local.detach_skill_before_removing_67159c97")
     : null;
 
   return (
@@ -4374,7 +4388,7 @@ export function CompanySkills() {
       setSource("");
     },
     onError: (error) => {
-      reportSkillError(error, "Skill import failed", "Failed to import skill source.", "Importing skills");
+      reportSkillError(error, l10n("local.skill_import_failed_d36d8c5f"), l10n("local.failed_to_import_skill_source_fae9617f"), l10n("local.importing_skills_6ef1560f"));
     },
   });
 
@@ -4385,7 +4399,7 @@ export function CompanySkills() {
     ),
     onMutate: (projectId) => {
       setScanStatusMessage(
-        projectId ? "Refreshing project skills..." : "Scanning project workspaces for skills...",
+        projectId ? l10n("local.refreshing_project_skills_ellipsis_a0b077c1") : l10n("local.scanning_project_workspaces_skills_ellipsis_52fc399c"),
       );
     },
     onSuccess: async (result) => {
@@ -4417,7 +4431,7 @@ export function CompanySkills() {
     },
     onError: (error) => {
       setScanStatusMessage(null);
-      reportSkillError(error, "Project skill scan failed", "Failed to scan project workspaces.", "Scanning projects for skills");
+      reportSkillError(error, l10n("local.project_skill_scan_failed_70c65dad"), l10n("local.failed_to_scan_project_workspaces_428407a4"), l10n("local.scanning_projects_for_skills_e4abe0dd"));
     },
   });
 
@@ -4437,7 +4451,7 @@ export function CompanySkills() {
     onError: (error) => {
       const message = error instanceof Error ? error.message : l10n("local.failed_to_create_skill_993d12da");
       setCreateError(message);
-      reportSkillError(error, "Skill creation failed", "Failed to create skill.", "Creating a skill");
+      reportSkillError(error, l10n("local.skill_creation_failed_f0bc54d0"), l10n("local.failed_to_create_skill_2b65d279"), l10n("local.creating_a_skill_f994985c"));
     },
   });
 
@@ -4473,7 +4487,7 @@ export function CompanySkills() {
 
   const toggleStar = useMutation({
     mutationFn: () => {
-      if (!activeDetail) throw new Error("Select a skill first.");
+      if (!activeDetail) throw new Error(l10n("local.select_a_skill_first_46985161"));
       return activeDetail.starredByCurrentActor
         ? companySkillsApi.unstar(selectedCompanyId!, activeDetail.id)
         : companySkillsApi.star(selectedCompanyId!, activeDetail.id);
@@ -4538,7 +4552,7 @@ export function CompanySkills() {
       });
     },
     onError: (error) => {
-      reportSkillError(error, "Update failed", "Failed to install skill update.", "Updating this skill");
+      reportSkillError(error, l10n("local.update_failed_71da724a"), l10n("local.failed_to_install_skill_update_b110c873"), l10n("local.updating_this_skill_d1430af5"));
     },
   });
 
@@ -4696,7 +4710,7 @@ export function CompanySkills() {
         body: result.action === "created"
           ? enabledCount > 0
             ? l10n("local.value_enabled_for_value_agentvalue_f7245162", {v0: (result.skill.name), v1: (enabledCount), v2: (englishPluralSuffix(enabledCount === 1 ? "" : "s"))})
-            : `${result.skill.name} is in the library but not enabled for any agent yet. Use "Add to agent" to enable it.`
+            : l10n("local.skill_in_library_not_enabled_add_to_agent_20bb9ce4", { v0: result.skill.name })
           : result.skill.name,
       });
       if (enableFailures > 0) {
@@ -4718,7 +4732,7 @@ export function CompanySkills() {
       setInstallDialogState((current) => ({ ...current, error: message }));
       // Also surface explicit-policy / platform denials in the persistent banner
       // so the reason stays visible after the dialog closes.
-      policyDenial.capture(error, "Installing this skill");
+      policyDenial.capture(error, l10n("local.installing_this_skill_92f51d4f"));
     },
   });
   const createFolder = useMutation({
@@ -5082,7 +5096,7 @@ export function CompanySkills() {
       });
     },
     onError: (error) => {
-      reportSkillError(error, "Remove failed", "Failed to remove skill.", "Removing this skill");
+      reportSkillError(error, l10n("local.remove_failed_e9cb92e7"), l10n("local.failed_to_remove_skill_0cf4c514"), l10n("local.removing_this_skill_44069d61"));
     },
   });
 
@@ -5369,7 +5383,7 @@ export function CompanySkills() {
         result={railSkillFolderResult}
         selection={folderSelection}
         allLabel={l10n("local.all_skills_78abcbbf")}
-        itemLabelPlural="Skills"
+        itemLabelPlural={l10n("local.skills_66d0f523")}
         onSelect={setFolderSelection}
         onCreate={() => openCreateFolder()}
       />
@@ -5467,7 +5481,7 @@ export function CompanySkills() {
             setMoveDialog({
               skillIds: [card.skillId],
               title: `Move "${card.name}"`,
-              subtitle: "Choose a destination folder.",
+              subtitle: l10n("local.choose_destination_folder_3c4c523a"),
               currentFolderId: card.folderId ?? null,
             });
           } : undefined}
@@ -5570,7 +5584,7 @@ export function CompanySkills() {
           onMoveToFolder={activeDetail ? () => setMoveDialog({
             skillIds: [activeDetail.id],
             title: `Move "${activeDetail.name}"`,
-            subtitle: "Choose a destination folder.",
+            subtitle: l10n("local.choose_destination_folder_3c4c523a"),
             currentFolderId: activeDetail.folderId ?? null,
           }) : undefined}
           updateSettingsPending={updateSkillSettings.isPending}

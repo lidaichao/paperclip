@@ -115,5 +115,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.alice_retries_after_blocker_clears_e5d25a51).toContain("Alice 会自动重试");
     expect(messages.alice_no_pipeline_action_path_2c765bb2).toContain("重新运行当前阶段");
     expect(messages.rerun_stage_automation_565101d6).toBe("重新运行阶段自动化");
+    expect(messages.alice_managed_9cb2150a).toBe("由 Alice 管理");
+    expect(messages.no_installed_skills_discover_or_create_4525f28e).toContain("暂无已安装技能");
+    expect(messages.detach_skill_before_removing_67159c97).toContain("先从所有智能体中解除关联");
+    expect(messages.skill_in_library_not_enabled_add_to_agent_20bb9ce4).toContain("添加到智能体");
   });
 });
