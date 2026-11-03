@@ -607,7 +607,7 @@ function Setup({
       ? createdKimiModel
       : (createdKimiModel as { value?: string } | undefined)?.value) ||
     model ||
-    "Default";
+    l10n("local.default_21b111cb");
   const environmentLabel =
     adapterType === "cursor_cloud"
       ? "Cursor Cloud"

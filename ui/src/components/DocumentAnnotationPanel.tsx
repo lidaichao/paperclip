@@ -522,7 +522,10 @@ function resolveAuthor(
       imageUrl: profile?.image ?? null,
     };
   }
-  return { name: comment.authorType === "agent" ? "Agent" : "Board", role: comment.authorType === "agent" ? "agent" : "board" };
+  return {
+    name: comment.authorType === "agent" ? l10n("local.agent_11b39c93") : l10n("local.board_4816cbfd"),
+    role: comment.authorType === "agent" ? "agent" : "board",
+  };
 }
 
 export function truncate(value: string, limit: number) {

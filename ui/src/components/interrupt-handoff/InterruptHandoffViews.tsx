@@ -39,8 +39,10 @@ function agentIcon(agentId: string, resolvers: HandoffChipResolvers): string | n
 
 function userLabel(userId: string, resolvers: HandoffChipResolvers): string {
   const label = resolvers.resolveUserLabel?.(userId) ?? null;
-  const base = label ?? "Board";
-  return resolvers.currentUserId && resolvers.currentUserId === userId ? `${base} (you)` : base;
+  const base = label ?? l10n("local.board_4816cbfd");
+  return resolvers.currentUserId && resolvers.currentUserId === userId
+    ? `${base} (${l10n("local.you_bb0347a4")})`
+    : base;
 }
 
 const CHIP_CLASS =
