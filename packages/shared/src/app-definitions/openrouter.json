@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "openrouter",
   "name": "OpenRouter",
-  "description": "Connect OpenRouter accounts for your agents.",
+  "description": "为智能体连接 OpenRouter 账户。",
   "categories": [
     "ai"
   ],
@@ -16,7 +16,7 @@
   "methods": [
     {
       "key": "ai-api_key",
-      "label": "OpenRouter API key",
+      "label": "OpenRouter API 密钥",
       "purpose": "ai",
       "transport": "runtime_auth",
       "auth": "api_key",
@@ -31,16 +31,16 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Authenticate an agent with this account.",
-      "guidanceMd": "Use your personal account or an explicitly shared company account.",
+      "whenToUse": "使用此账户验证智能体身份。",
+      "guidanceMd": "使用个人账户，或公司明确授权共享的账户。",
       "riskTier": "S3",
       "credentialFields": [
         {
           "key": "apiKey",
-          "label": "API key",
+          "label": "API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Enter API key",
+          "placeholder": "输入 API 密钥",
           "secret": true
         }
       ],

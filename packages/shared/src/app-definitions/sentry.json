@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "sentry",
   "name": "Sentry",
-  "description": "Investigate errors, releases, and production issues.",
+  "description": "调查错误、发布版本和生产环境问题。",
   "categories": [
     "developer"
   ],
@@ -23,12 +23,12 @@
         "customer",
         "dcr"
       ],
-      "whenToUse": "Use the provider-hosted connection for the quickest setup.",
+      "whenToUse": "使用服务商托管的连接，以最快速度完成设置。",
       "defaults": {
         "serverUrl": "https://mcp.sentry.dev/mcp",
         "discoveryUrl": "https://sentry.io/.well-known/oauth-authorization-server"
       },
-      "guidanceMd": "Connect the Sentry organization and projects agents need for incident work.",
+      "guidanceMd": "连接智能体处理事故所需的 Sentry 组织和项目。",
       "riskTier": "S2",
       "requiredResourceFilters": [
         "organization",

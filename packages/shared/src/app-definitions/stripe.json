@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "stripe",
   "name": "Stripe",
-  "description": "Connect Stripe's provider-hosted MCP server.",
+  "description": "连接 Stripe 官方托管的 MCP 服务器。",
   "categories": [
     "commerce"
   ],
@@ -23,19 +23,19 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录服务商托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.stripe.com"
       },
-      "guidanceMd": "Connect Stripe in the browser. A Stripe account; the server is public preview and payment actions require explicit approval.",
+      "guidanceMd": "在浏览器中连接 Stripe。需要 Stripe 账户；服务器处于公开预览阶段，付款操作需要明确批准。",
       "riskTier": "S4",
-      "label": "Sign in with Stripe",
+      "label": "使用 Stripe 登录",
       "consoleLinks": {
         "docs": "https://docs.stripe.com/mcp"
       },
       "warnings": [
-        "A Stripe account; the server is public preview and payment actions require explicit approval.",
-        "Financial or destructive actions must be explicitly approved before execution."
+        "需要 Stripe 账户；服务器处于公开预览阶段，付款操作需要明确批准。",
+        "财务或破坏性操作必须在执行前获得明确批准。"
       ]
     },
     {
@@ -45,17 +45,17 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.stripe.com"
       },
-      "guidanceMd": "Use a customer-created Stripe key. A Stripe account; the server is public preview and payment actions require explicit approval.",
+      "guidanceMd": "使用自行创建的 Stripe 密钥。需要 Stripe 账户；服务器处于公开预览阶段，付款操作需要明确批准。",
       "riskTier": "S4",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Stripe API key",
+          "label": "Stripe API 密钥",
           "type": "password",
           "required": true,
           "placeholder": "sk_...",
@@ -72,8 +72,8 @@
         "docs": "https://docs.stripe.com/mcp"
       },
       "warnings": [
-        "A Stripe account; the server is public preview and payment actions require explicit approval.",
-        "Financial or destructive actions must be explicitly approved before execution."
+        "需要 Stripe 账户；服务器处于公开预览阶段，付款操作需要明确批准。",
+        "财务或破坏性操作必须在执行前获得明确批准。"
       ]
     }
   ]
