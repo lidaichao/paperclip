@@ -27849,10 +27849,10 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     actorUserId?: string | null,
   ) {
     const initial = await endpointRecord(endpointId);
-    if (!initial) throw notFound("Chat endpoint not found");
+    if (!initial) throw notFound("未找到聊天端点");
     if (updates.length === 0) return listResources(endpointId);
     if (initial.endpoint.provider === "imessage-photon" && initial.endpoint.botExternalId?.startsWith("photon-project:") && updates.some((entry) => entry.enabled))
-      throw unprocessable("Photon shared channels support direct messages only; groups cannot be enabled");
+      throw unprocessable("Photon 共享频道仅支持私信，无法启用群组");
     await withCredentialMutationLease(
       initial.endpoint,
       async (credentialLease) => {
@@ -27874,7 +27874,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               ),
             )
             .for("no key update");
-          if (!endpoint) throw notFound("Chat endpoint not found");
+          if (!endpoint) throw notFound("未找到聊天端点");
           const rows = await tx
             .select({
               id: chatEndpointResources.id,
@@ -27892,7 +27892,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             .orderBy(asc(chatEndpointResources.id))
             .for("no key update");
           if (rows.length !== new Set(ids).size)
-            throw unprocessable("Every resource must belong to this endpoint");
+            throw unprocessable("所有资源都必须属于此端点");
           const availabilityById = new Map(
             rows.map((row) => [row.id, row.availability]),
           );
@@ -27954,7 +27954,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
 
   async function listPrincipals(endpointId: string) {
     const record = await endpointRecord(endpointId);
-    if (!record) throw notFound("Chat endpoint not found");
+    if (!record) throw notFound("未找到聊天端点");
     const principals = await db
       .select()
       .from(chatExternalPrincipals)
@@ -28029,7 +28029,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     expiresInSeconds: number,
   ) {
     const record = await endpointRecord(endpointId);
-    if (!record) throw notFound("Chat endpoint not found");
+    if (!record) throw notFound("未找到聊天端点");
     const principal = await db
       .select()
       .from(chatExternalPrincipals)
@@ -28045,9 +28045,9 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0] ?? null);
-    if (!principal) throw notFound("External identity not found");
+    if (!principal) throw notFound("未找到外部身份");
     if (principal.isBot || principal.kind !== "user") {
-      throw unprocessable("Only a human external identity can be linked");
+      throw unprocessable("只能关联人员外部身份");
     }
     const token = randomBytes(32).toString("base64url");
     const tokenHash = createHash("sha256").update(token).digest("hex");
@@ -28068,7 +28068,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         .for("update")
         .then((rows) => rows[0] ?? null);
       if (existingLink?.status === "linked") {
-        throw conflict("This external identity is already linked", {
+        throw conflict("此外部身份已被关联", {
           code: "chat_identity_already_linked",
         });
       }
@@ -28136,9 +28136,9 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       )
       .then((rows) => rows[0] ?? null);
     if (!row || !row.link.expiresAt || row.link.expiresAt <= new Date()) {
-      throw unprocessable("This identity-link request is invalid or expired");
+      throw unprocessable("此身份关联请求无效或已过期");
     }
-    if (!["active", "verifying"].includes(row.endpoint.status)) throw unprocessable("This connection is not available");
+    if (!["active", "verifying"].includes(row.endpoint.status)) throw unprocessable("此连接不可用");
     const selfService = Boolean(await db.select({ id: chatActions.id }).from(chatActions).where(and(
       eq(chatActions.companyId, row.link.companyId), eq(chatActions.endpointId, row.link.endpointId),
       eq(chatActions.principalId, row.link.principalId), eq(chatActions.kind, "slack_connect"),
@@ -28170,7 +28170,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
 
   async function requestIdentityAccess(token: string, userId: string, requestIp: string) {
     const preview = await previewIdentityLink(token, userId);
-    if (!preview.selfService) throw forbidden("This identity link cannot request access");
+    if (!preview.selfService) throw forbidden("此身份关联无法申请访问权限");
     if (preview.canConfirm) return { status: "member" as const };
     return db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`chat-join:${preview.companyId}:${userId}`}, 0))`);
@@ -28179,9 +28179,9 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         eq(chatIdentityLinks.companyId, preview.companyId), eq(chatIdentityLinks.endpointId, preview.endpointId),
         eq(chatIdentityLinks.confirmationTokenHash, tokenHash), eq(chatIdentityLinks.status, "pending"), gt(chatIdentityLinks.expiresAt, new Date()),
       )).for("update").then((rows) => rows[0]);
-      if (!validLink) throw unprocessable("This identity-link request is invalid or expired");
+      if (!validLink) throw unprocessable("此身份关联请求无效或已过期");
       const user = await tx.select({ email: authUsers.email }).from(authUsers).where(eq(authUsers.id, userId)).then((rows) => rows[0]);
-      if (!user) throw forbidden("Sign in to request company access");
+      if (!user) throw forbidden("请先登录，再申请公司访问权限");
       const existing = await tx.select({ id: joinRequests.id }).from(joinRequests).where(and(
         eq(joinRequests.companyId, preview.companyId), eq(joinRequests.requestType, "human"), eq(joinRequests.status, "pending_approval"),
         or(eq(joinRequests.requestingUserId, userId), sql`lower(${joinRequests.requestEmailSnapshot}) = ${user.email.toLowerCase()}`),
@@ -28218,9 +28218,9 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       )
       .then((rows) => rows[0] ?? null);
     if (!link || !link.expiresAt || link.expiresAt <= new Date())
-      throw unprocessable("This identity-link request is invalid or expired");
+      throw unprocessable("此身份关联请求无效或已过期");
     const endpointRecordForLink = await endpointRecord(link.endpointId);
-    if (!endpointRecordForLink || !["active", "verifying"].includes(endpointRecordForLink.endpoint.status)) throw unprocessable("This connection is not available");
+    if (!endpointRecordForLink || !["active", "verifying"].includes(endpointRecordForLink.endpoint.status)) throw unprocessable("此连接不可用");
     const connectReceipt = endpointRecordForLink.endpoint.provider === "slack" ? await db.select({ payload: chatActions.payload }).from(chatActions).where(and(
       eq(chatActions.endpointId, link.endpointId), eq(chatActions.principalId, link.principalId), eq(chatActions.kind, "slack_connect"),
     )).orderBy(desc(chatActions.createdAt)).limit(1).then((rows) => rows[0]) : null;
@@ -28326,13 +28326,13 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             text: "Your Slack account is connected to Paperclip. Future messages use your Paperclip permissions.", settleDelivery: false },
           runtimeContext: confirmationRuntime,
         });
-        if (!effect) throw conflict("The Slack connection changed; try confirming again");
+        if (!effect) throw conflict("Slack 连接已变化，请重新确认");
         confirmationEffectId = effect.id;
       }
       return confirmedLink;
     });
     if (!confirmed) {
-      throw conflict("This identity-link request was already used or expired", {
+      throw conflict("此身份关联请求已使用或已过期", {
         code: "chat_identity_link_consumed",
       });
     }
@@ -28351,7 +28351,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         ),
       )
       .then((rows) => rows[0] ?? null);
-    if (!link) throw notFound("Identity link not found");
+    if (!link) throw notFound("未找到身份关联");
     const revoked = await db.transaction(async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`chat-identity:${link.companyId}:${principalId}`}, 0))`,
@@ -28375,12 +28375,12 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         .returning({ id: chatIdentityLinks.id })
         .then((rows) => rows[0] ?? null);
     });
-    if (!revoked) throw notFound("Identity link not found");
+    if (!revoked) throw notFound("未找到身份关联");
   }
 
   async function listConversations(endpointId: string) {
     const record = await endpointRecord(endpointId);
-    if (!record) throw notFound("Chat endpoint not found");
+    if (!record) throw notFound("未找到聊天端点");
     const conversations = await db
       .select()
       .from(chatConversations)
