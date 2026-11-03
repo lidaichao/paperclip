@@ -156,9 +156,12 @@ function SidebarAgentItem({
         ? l10n("local.invalid_org_chain_5443c0aa")
       : pauseResumeLabel;
   const showBuiltInLifecycle = builtInStatus === "needs_setup" || builtInStatus === "pending_approval";
+  const builtInLifecycleLabel = builtInStatus === "needs_setup"
+    ? l10n("local.needs_setup_b6df2441")
+    : l10n("local.pending_approval_bb33a7f4");
   const trailingLabel = [
-    showBuiltInLifecycle ? `Built-in agent ${builtInStatus.replace(/_/g, " ")}` : null,
-    hasInvalidOrgChain ? "Invalid reporting chain" : null,
+    showBuiltInLifecycle ? l10n("local.built_in_agent_status_value_10300412", { v0: builtInLifecycleLabel }) : null,
+    hasInvalidOrgChain ? l10n("local.invalid_reporting_chain_bf9c6d9d") : null,
   ].filter(Boolean).join(", ") || undefined;
 
   // C11 (DECISION-SHEET.md): the row itself is a SidebarNavItem, so agent rows

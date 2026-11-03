@@ -73,22 +73,22 @@ export function completedActivitySummary(items: Activity[]) {
         const label =
           (
             {
-              research: "Searched the web",
-              plan: "Worked on a plan",
-              delegation: "Worked with agents",
-              artifact: "Worked with artifacts",
-              context: "Managed context",
-              memory: "Checked memory",
-              model_identity: "Checked model settings",
-              review: "Worked in review mode",
-              hook: "Ran hooks",
-              safety: "Reviewed safety",
-              terminal: "Ran commands",
-              wait: "Waited",
-              provider_notice: "Received a provider update",
-              workspace_change: "Worked on files",
-              workspace_file: "Referenced files",
-              resource: "Added resources",
+              research: l10n("local.searched_the_web_7d2580ce"),
+              plan: l10n("local.worked_on_a_plan_cc9edfa1"),
+              delegation: l10n("local.worked_with_agents_8e147106"),
+              artifact: l10n("local.worked_with_artifacts_10300399"),
+              context: l10n("local.managed_context_10300400"),
+              memory: l10n("local.checked_memory_10300401"),
+              model_identity: l10n("local.checked_model_settings_10300402"),
+              review: l10n("local.worked_in_review_mode_10300403"),
+              hook: l10n("local.ran_hooks_10300404"),
+              safety: l10n("local.reviewed_safety_b9971493"),
+              terminal: l10n("local.ran_commands_80905baf"),
+              wait: l10n("local.waited_a1b56198"),
+              provider_notice: l10n("local.received_provider_update_10300405"),
+              workspace_change: l10n("local.worked_on_files_624abb5d"),
+              workspace_file: l10n("local.referenced_files_10300406"),
+              resource: l10n("local.added_resources_10300407"),
             } as Record<string, string>
           )[family] ?? l10n("local.used_tools_836c94ab");
         add(label, p.icon, order);
@@ -111,10 +111,10 @@ export function completedActivitySummary(items: Activity[]) {
   }
   if (!categories.size) {
     if (items.some((item) => item.kind === "thinking"))
-      add("Thought through the task", Brain);
+      add(l10n("local.thought_through_task_10300408"), Brain);
     else if (items.some((item) => item.kind === "marker"))
-      add("Activity stopped", CirclePause);
-    else add("Recorded usage", Gauge);
+      add(l10n("local.activity_stopped_10300409"), CirclePause);
+    else add(l10n("local.recorded_usage_10300410"), Gauge);
   }
   const values = [...categories.values()].sort((a, b) => a.order - b.order);
   const join = (parts: string[]) =>

@@ -257,11 +257,11 @@ export function SystemNotice({
   const resolvedLabel =
     label ??
     {
-      neutral: "System notice",
-      info: "System notice",
-      success: "System notice",
-      warning: "System warning",
-      danger: "System alert",
+      neutral: l10n("local.protocol_surface_system_notice_0ef00010"),
+      info: l10n("local.protocol_surface_system_notice_0ef00010"),
+      success: l10n("local.protocol_surface_system_notice_0ef00010"),
+      warning: l10n("local.system_warning_10300397"),
+      danger: l10n("local.system_alert_2b1c663e"),
     }[tone];
 
   return (

@@ -214,7 +214,7 @@ function runtimeRequestEntry(input: {
     status,
     prompt: text(request.prompt)
       ?? input.previous?.prompt
-      ?? "Runtime approval requested",
+      ?? l10n("local.manual_runner_runtime_approval_requested"),
     choices: choices.length > 0 ? choices : input.previous?.choices ?? [],
     fields: fields.length > 0 ? fields : input.previous?.fields ?? [],
     questionSet: canonicalQuestionSet(request.input)
@@ -243,7 +243,7 @@ function runResultEntry(
     kind: "run_result",
     ts,
     disposition,
-    summary: text(payload.summary) ?? "Run completed",
+    summary: text(payload.summary) ?? l10n("local.manual_runner_run_completed"),
     objectiveSatisfied: typeof completion.objectiveSatisfied === "boolean"
       ? completion.objectiveSatisfied
       : null,
@@ -545,7 +545,7 @@ function serializedNativeToolResult(item: NativeToolItemDetails): string {
   try {
     return JSON.stringify(item.result) ?? "";
   } catch {
-    return "Tool result could not be serialized";
+    return l10n("local.tool_result_could_not_be_serialized_10300411");
   }
 }
 

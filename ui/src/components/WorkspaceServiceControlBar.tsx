@@ -431,7 +431,7 @@ function MultiServiceBar({
 
   const aggregateEntry: WorkspaceServiceControlEntry = {
     key: "__all__",
-    name: "All services",
+    name: l10n("local.all_services_10300398"),
     state: anyTransitional
       ? "starting"
       : anyFailed

@@ -12590,6 +12590,22 @@
     "imported_app_10300393": "已导入的应用",
     "untitled_profile_10300394": "未命名配置",
     "unknown_app_10300395": "未知应用",
-    "unknown_routine_10300396": "未知例程"
+    "unknown_routine_10300396": "未知例程",
+    "system_warning_10300397": "系统警告",
+    "all_services_10300398": "全部服务",
+    "worked_with_artifacts_10300399": "处理了交付物",
+    "managed_context_10300400": "管理了上下文",
+    "checked_memory_10300401": "检查了记忆",
+    "checked_model_settings_10300402": "检查了模型设置",
+    "worked_in_review_mode_10300403": "使用审查模式处理了任务",
+    "ran_hooks_10300404": "运行了钩子",
+    "received_provider_update_10300405": "收到了服务商更新",
+    "referenced_files_10300406": "引用了文件",
+    "added_resources_10300407": "添加了资源",
+    "thought_through_task_10300408": "分析了任务",
+    "activity_stopped_10300409": "活动已停止",
+    "recorded_usage_10300410": "记录了用量",
+    "tool_result_could_not_be_serialized_10300411": "无法序列化工具结果",
+    "built_in_agent_status_value_10300412": "内置智能体 · {{v0}}"
   }
 }

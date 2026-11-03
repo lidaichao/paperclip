@@ -12590,6 +12590,22 @@
     "imported_app_10300393": "Imported app",
     "untitled_profile_10300394": "Untitled profile",
     "unknown_app_10300395": "Unknown app",
-    "unknown_routine_10300396": "Unknown routine"
+    "unknown_routine_10300396": "Unknown routine",
+    "system_warning_10300397": "System warning",
+    "all_services_10300398": "All services",
+    "worked_with_artifacts_10300399": "Worked with artifacts",
+    "managed_context_10300400": "Managed context",
+    "checked_memory_10300401": "Checked memory",
+    "checked_model_settings_10300402": "Checked model settings",
+    "worked_in_review_mode_10300403": "Worked in review mode",
+    "ran_hooks_10300404": "Ran hooks",
+    "received_provider_update_10300405": "Received a provider update",
+    "referenced_files_10300406": "Referenced files",
+    "added_resources_10300407": "Added resources",
+    "thought_through_task_10300408": "Thought through the task",
+    "activity_stopped_10300409": "Activity stopped",
+    "recorded_usage_10300410": "Recorded usage",
+    "tool_result_could_not_be_serialized_10300411": "Tool result could not be serialized",
+    "built_in_agent_status_value_10300412": "Built-in agent · {{v0}}"
   }
 }
