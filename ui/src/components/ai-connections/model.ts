@@ -10,18 +10,18 @@ export const AI_PROVIDERS: Record<
 > = {
   anthropic: {
     name: "Claude",
-    subscriptionName: "Claude subscription",
+    subscriptionName: l10n("local.claude_subscription_10300174"),
     logo: "/brands/claude-color.svg",
   },
   openai: {
     name: "OpenAI",
-    subscriptionName: "ChatGPT subscription",
+    subscriptionName: l10n("local.chatgpt_subscription_10300175"),
     logo: "/brands/codex-color.svg",
   },
   openrouter: { name: "OpenRouter", logo: "/brands/apps/openrouter.svg" },
   xai: {
     name: "Grok",
-    subscriptionName: "Grok subscription",
+    subscriptionName: l10n("local.grok_subscription_10300176"),
     logo: "/brands/adapters/grok.svg",
   },
 };
@@ -35,16 +35,16 @@ export interface AiConnectionRequirement {
 }
 
 export const AI_CONNECTION_STATUS: Record<AiConnectionStatus, string> = {
-  connected: "Connected",
-  needs_attention: "Needs attention",
-  expired: "Expired",
-  revoked: "Revoked",
+  connected: l10n("local.connected_22965568"),
+  needs_attention: l10n("local.needs_attention_c1ebc781"),
+  expired: l10n("local.expired_424a2551"),
+  revoked: l10n("local.revoked_f6f738d0"),
 };
 
 export function aiMethodLabel(provider: AiProvider, method: AiAuthMethod) {
   return method === "subscription"
-    ? (AI_PROVIDERS[provider].subscriptionName ?? "Subscription unavailable")
-    : "API key";
+    ? (AI_PROVIDERS[provider].subscriptionName ?? l10n("local.subscription_unavailable_10300177"))
+    : l10n("local.api_key_16f0ee47");
 }
 
 export function matchesAiRequirement(
@@ -80,7 +80,9 @@ export function aiConnectionProblem(connection?: AiConnectionSummary) {
     connection.unavailableReason ??
     (connection.status === "connected"
       ? null
-      : `${AI_CONNECTION_STATUS[connection.status]}. Reconnect this account to continue.`)
+      : l10n("local.value_reconnect_account_to_continue_10300178", {
+          v0: AI_CONNECTION_STATUS[connection.status],
+        }))
   );
 }
 

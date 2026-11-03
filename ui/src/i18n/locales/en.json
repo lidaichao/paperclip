@@ -12367,6 +12367,14 @@
     "filter_people_10300170": "Filter people",
     "click_to_edit_10300171": "Click to edit...",
     "no_financial_events_in_period_10300172": "No financial events in this period.",
-    "show_more_10300173": "Show more"
+    "show_more_10300173": "Show more",
+    "claude_subscription_10300174": "Claude subscription",
+    "chatgpt_subscription_10300175": "ChatGPT subscription",
+    "grok_subscription_10300176": "Grok subscription",
+    "subscription_unavailable_10300177": "Subscription unavailable",
+    "value_reconnect_account_to_continue_10300178": "{{v0}}. Reconnect this account to continue.",
+    "use_api_key_instead_10300179": "Use API key instead",
+    "use_subscription_instead_10300180": "Use subscription instead",
+    "name_your_organization_10300181": "Name your organization"
   }
 }

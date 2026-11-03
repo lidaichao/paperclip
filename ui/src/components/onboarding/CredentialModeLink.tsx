@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { AnimatePresence, motion } from "motion/react";
 
 import { cn } from "../../lib/utils";
@@ -18,8 +19,8 @@ import { LINK_LABEL_FADE_IN, LINK_LABEL_FADE_OUT } from "./onboarding-motion";
  */
 
 const LINK_LABEL: Record<CredentialMode, string> = {
-  subscription: "Use API key instead",
-  api: "Use subscription instead",
+  subscription: l10n("local.use_api_key_instead_10300179"),
+  api: l10n("local.use_subscription_instead_10300180"),
 };
 
 const OTHER_MODE: Record<CredentialMode, CredentialMode> = {

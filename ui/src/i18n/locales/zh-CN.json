@@ -12367,6 +12367,14 @@
     "filter_people_10300170": "筛选成员",
     "click_to_edit_10300171": "点击编辑…",
     "no_financial_events_in_period_10300172": "此期间没有财务事件。",
-    "show_more_10300173": "显示更多"
+    "show_more_10300173": "显示更多",
+    "claude_subscription_10300174": "Claude 订阅",
+    "chatgpt_subscription_10300175": "ChatGPT 订阅",
+    "grok_subscription_10300176": "Grok 订阅",
+    "subscription_unavailable_10300177": "订阅不可用",
+    "value_reconnect_account_to_continue_10300178": "{{v0}}。请重新连接此账户以继续。",
+    "use_api_key_instead_10300179": "改用 API 密钥",
+    "use_subscription_instead_10300180": "改用订阅",
+    "name_your_organization_10300181": "命名你的组织"
   }
 }

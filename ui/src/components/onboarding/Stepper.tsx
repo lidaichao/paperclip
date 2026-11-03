@@ -15,9 +15,9 @@ export const AGENT_ARC_TOTAL_STEPS = 3;
  * than no number at all. The strip's own "Step N of 3" line carries the count.
  */
 export const AGENT_ARC_STEP_LABELS = [
-  "Create your first agent",
-  "Connect a model",
-  "Review",
+  l10n("local.create_your_first_agent_88dcddea"),
+  l10n("local.connect_a_model_87bdaaf8"),
+  l10n("local.review_aff0766a"),
 ] as const;
 
 /** Wizard step numbers that make up the arc, in order. */
@@ -36,10 +36,10 @@ export const ONBOARDING_WIZARD_STEPS = [1, 3, 4, 5] as const;
 
 /** Destinations for the full walk, in the same order. */
 export const ONBOARDING_STEP_LABELS = [
-  "Name your organization",
-  "Create your first agent",
-  "Connect a model",
-  "Review",
+  l10n("local.name_your_organization_10300181"),
+  l10n("local.create_your_first_agent_88dcddea"),
+  l10n("local.connect_a_model_87bdaaf8"),
+  l10n("local.review_aff0766a"),
 ] as const;
 
 /**
