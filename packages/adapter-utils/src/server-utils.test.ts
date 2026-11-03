@@ -12,6 +12,7 @@ import {
   buildPersistentSkillSnapshot,
   buildRuntimeMountedSkillSnapshot,
   buildInvocationEnvForLogs,
+  buildChildProcessSpawnOptions,
   buildPaperclipEnv,
   buildRuntimeToolsEnv,
   DEFAULT_PAPERCLIP_AGENT_PROMPT_TEMPLATE,
@@ -567,6 +568,20 @@ describe("adapter skill snapshots", () => {
 });
 
 describe("runChildProcess", () => {
+  it("always hides child process windows", () => {
+    const options = buildChildProcessSpawnOptions({
+      cwd: process.cwd(),
+      env: {},
+      hasStdin: false,
+    });
+
+    expect(options).toMatchObject({
+      shell: false,
+      windowsHide: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  });
+
   it("does not arm a timeout when timeoutSec is 0", async () => {
     const result = await runChildProcess(
       randomUUID(),

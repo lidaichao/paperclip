@@ -1,5 +1,5 @@
 import type { ExecutionContinuationEnvelope } from "@paperclipai/shared";
-import { spawn, type ChildProcess } from "node:child_process";
+import { spawn, type ChildProcess, type SpawnOptions } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { constants as fsConstants, promises as fs, type Dirent } from "node:fs";
 import os from "node:os";
@@ -4573,6 +4573,21 @@ export async function ensureCommandResolvable(
   throw new Error(`Command not found in PATH: "${command}"`);
 }
 
+export function buildChildProcessSpawnOptions(input: {
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  hasStdin: boolean;
+}): SpawnOptions {
+  return {
+    cwd: input.cwd,
+    env: input.env,
+    detached: process.platform !== "win32",
+    shell: false,
+    windowsHide: true,
+    stdio: [input.hasStdin ? "pipe" : "ignore", "pipe", "pipe"],
+  };
+}
+
 export async function runChildProcess(
   runId: string,
   command: string,
@@ -4633,13 +4648,15 @@ export async function runChildProcess(
         for (const [key, value] of Object.entries(childEnv)) {
           if (value === undefined) delete childEnv[key];
         }
-        const child = spawn(target.command, target.args, {
-          cwd: target.cwd ?? opts.cwd,
-          env: childEnv,
-          detached: process.platform !== "win32",
-          shell: false,
-          stdio: [opts.stdin != null ? "pipe" : "ignore", "pipe", "pipe"],
-        }) as ChildProcessWithEvents;
+        const child = spawn(
+          target.command,
+          target.args,
+          buildChildProcessSpawnOptions({
+            cwd: target.cwd ?? opts.cwd,
+            env: childEnv,
+            hasStdin: opts.stdin != null,
+          }),
+        ) as ChildProcessWithEvents;
         const startedAt = new Date().toISOString();
         const processGroupId = resolveProcessGroupId(child);
 
