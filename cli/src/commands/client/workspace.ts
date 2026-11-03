@@ -25,32 +25,32 @@ interface OrgOutputOptions extends CompanyOptions {
 }
 
 export function registerWorkspaceCommands(program: Command): void {
-  const org = program.command("org").description("Organization chart operations");
-  addCompanyGet(org, "get", "Get org chart data", "org");
-  addBinaryCompanyGet(org, "svg", "Download org chart SVG", "org.svg");
-  addBinaryCompanyGet(org, "png", "Download org chart PNG", "org.png");
-  addCompanyGet(program.command("agent-config").description("Agent configuration summaries"), "list", "List agent configurations", "agent-configurations");
+  const org = program.command("org").description("组织架构图操作");
+  addCompanyGet(org, "get", "获取组织架构图数据", "org");
+  addBinaryCompanyGet(org, "svg", "下载 SVG 格式组织架构图", "org.svg");
+  addBinaryCompanyGet(org, "png", "下载 PNG 格式组织架构图", "org.png");
+  addCompanyGet(program.command("agent-config").description("智能体配置摘要"), "list", "列出智能体配置", "agent-configurations");
 
-  const workspace = program.command("workspace").description("Execution workspace operations");
-  addCompanyGet(workspace, "list", "List execution workspaces", "execution-workspaces");
-  addIdGet(workspace, "get", "Get an execution workspace", "execution-workspaces");
-  addIdGet(workspace, "close-readiness", "Check execution workspace close readiness", "execution-workspaces", "close-readiness");
-  addIdGet(workspace, "operations", "List execution workspace operations", "execution-workspaces", "workspace-operations");
-  addPatchJson(workspace, "update", "Update an execution workspace", "execution-workspaces");
-  addRuntimeAction(workspace, "runtime-service", "Control an execution workspace runtime service", "execution-workspaces", "runtime-services");
-  addRuntimeAction(workspace, "runtime-command", "Run an execution workspace runtime command", "execution-workspaces", "runtime-commands");
+  const workspace = program.command("workspace").description("执行工作区操作");
+  addCompanyGet(workspace, "list", "列出执行工作区", "execution-workspaces");
+  addIdGet(workspace, "get", "获取执行工作区", "execution-workspaces");
+  addIdGet(workspace, "close-readiness", "检查执行工作区是否可关闭", "execution-workspaces", "close-readiness");
+  addIdGet(workspace, "operations", "列出执行工作区操作", "execution-workspaces", "workspace-operations");
+  addPatchJson(workspace, "update", "更新执行工作区", "execution-workspaces");
+  addRuntimeAction(workspace, "runtime-service", "控制执行工作区运行时服务", "execution-workspaces", "runtime-services");
+  addRuntimeAction(workspace, "runtime-command", "运行执行工作区命令", "execution-workspaces", "runtime-commands");
 
-  const environment = program.command("environment").description("Environment operations");
-  addCompanyGet(environment, "list", "List environments", "environments");
-  addCompanyGet(environment, "capabilities", "Get environment capabilities", "environments/capabilities");
-  addCompanyPostJson(environment, "create", "Create an environment", "environments");
-  addIdGet(environment, "get", "Get an environment", "environments");
-  addIdGet(environment, "leases", "List environment leases", "environments", "leases");
+  const environment = program.command("environment").description("运行环境操作");
+  addCompanyGet(environment, "list", "列出运行环境", "environments");
+  addCompanyGet(environment, "capabilities", "获取运行环境能力", "environments/capabilities");
+  addCompanyPostJson(environment, "create", "创建运行环境", "environments");
+  addIdGet(environment, "get", "获取运行环境", "environments");
+  addIdGet(environment, "leases", "列出运行环境租约", "environments", "leases");
   addCommonClientOptions(
     environment
       .command("lease")
-      .description("Get an environment lease")
-      .argument("<leaseId>", "Lease ID")
+      .description("获取运行环境租约")
+      .argument("<leaseId>", "租约 ID")
       .action(async (leaseId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -61,17 +61,17 @@ export function registerWorkspaceCommands(program: Command): void {
         }
       }),
   );
-  addPatchJson(environment, "update", "Update an environment", "environments");
-  addDelete(environment, "delete", "Delete an environment", "environments");
-  addPostEmpty(environment, "probe", "Probe an environment", "environments", "probe");
-  addCompanyPostJson(environment, "probe-config", "Probe an environment config", "environments/probe-config");
+  addPatchJson(environment, "update", "更新运行环境", "environments");
+  addDelete(environment, "delete", "删除运行环境", "environments");
+  addPostEmpty(environment, "probe", "探测运行环境", "environments", "probe");
+  addCompanyPostJson(environment, "probe-config", "探测运行环境配置", "environments/probe-config");
 
-  const projectWorkspace = program.command("project-workspace").description("Project workspace operations");
+  const projectWorkspace = program.command("project-workspace").description("项目工作区操作");
   addCommonClientOptions(
     projectWorkspace
       .command("list")
-      .description("List project workspaces")
-      .argument("<projectId>", "Project ID")
+      .description("列出项目工作区")
+      .argument("<projectId>", "项目 ID")
       .action(async (projectId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -82,14 +82,14 @@ export function registerWorkspaceCommands(program: Command): void {
         }
       }),
   );
-  addProjectWorkspaceJson(projectWorkspace, "create", "Create a project workspace", "post");
-  addProjectWorkspaceJson(projectWorkspace, "update", "Update a project workspace", "patch");
+  addProjectWorkspaceJson(projectWorkspace, "create", "创建项目工作区", "post");
+  addProjectWorkspaceJson(projectWorkspace, "update", "更新项目工作区", "patch");
   addCommonClientOptions(
     projectWorkspace
       .command("delete")
-      .description("Delete a project workspace")
-      .argument("<projectId>", "Project ID")
-      .argument("<workspaceId>", "Workspace ID")
+      .description("删除项目工作区")
+      .argument("<projectId>", "项目 ID")
+      .argument("<workspaceId>", "工作区 ID")
       .action(async (projectId: string, workspaceId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -100,8 +100,8 @@ export function registerWorkspaceCommands(program: Command): void {
         }
       }),
   );
-  addProjectRuntimeAction(projectWorkspace, "runtime-service", "Control a project workspace runtime service", "runtime-services");
-  addProjectRuntimeAction(projectWorkspace, "runtime-command", "Run a project workspace runtime command", "runtime-commands");
+  addProjectRuntimeAction(projectWorkspace, "runtime-service", "控制项目工作区运行时服务", "runtime-services");
+  addProjectRuntimeAction(projectWorkspace, "runtime-command", "运行项目工作区命令", "runtime-commands");
 }
 
 function addCompanyGet(parent: Command, name: string, description: string, path: string): void {
@@ -109,7 +109,7 @@ function addCompanyGet(parent: Command, name: string, description: string, path:
     parent
       .command(name)
       .description(description)
-      .option("-C, --company-id <id>", "Company ID")
+      .option("-C, --company-id <id>", "公司 ID")
       .action(async (opts: CompanyOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -128,8 +128,8 @@ function addBinaryCompanyGet(parent: Command, name: string, description: string,
     parent
       .command(name)
       .description(description)
-      .option("-C, --company-id <id>", "Company ID")
-      .option("--out <path>", "Write output to file")
+      .option("-C, --company-id <id>", "公司 ID")
+      .option("--out <path>", "将输出写入文件")
       .action(async (opts: OrgOutputOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -137,7 +137,7 @@ function addBinaryCompanyGet(parent: Command, name: string, description: string,
             headers: ctx.api.apiKey ? { authorization: `Bearer ${ctx.api.apiKey}` } : undefined,
           });
           const bytes = Buffer.from(await response.arrayBuffer());
-          if (!response.ok) throw new Error(`API error ${response.status}: ${bytes.toString("utf8")}`);
+          if (!response.ok) throw new Error(`API 错误 ${response.status}：${bytes.toString("utf8")}`);
           if (opts.out) {
             const { writeFile } = await import("node:fs/promises");
             await writeFile(opts.out, bytes);
@@ -158,8 +158,8 @@ function addCompanyPostJson(parent: Command, name: string, description: string, 
     parent
       .command(name)
       .description(description)
-      .option("-C, --company-id <id>", "Company ID")
-      .requiredOption("--payload-json <json>", "JSON payload")
+      .option("-C, --company-id <id>", "公司 ID")
+      .requiredOption("--payload-json <json>", "JSON 数据")
       .action(async (opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -197,7 +197,7 @@ function addPatchJson(parent: Command, name: string, description: string, resour
       .command(name)
       .description(description)
       .argument("<id>", "ID")
-      .requiredOption("--payload-json <json>", "JSON payload")
+      .requiredOption("--payload-json <json>", "JSON 数据")
       .action(async (id: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -251,9 +251,9 @@ function addRuntimeAction(parent: Command, name: string, description: string, re
     parent
       .command(name)
       .description(description)
-      .argument("<id>", "Workspace ID")
-      .argument("<action>", "start, stop, restart, or run")
-      .option("--payload-json <json>", "Runtime target JSON payload", "{}")
+      .argument("<id>", "工作区 ID")
+      .argument("<action>", "可选值：start、stop、restart 或 run")
+      .option("--payload-json <json>", "运行目标 JSON 数据", "{}")
       .action(async (id: string, action: string, opts: RuntimeActionOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -271,12 +271,12 @@ function addProjectWorkspaceJson(parent: Command, name: string, description: str
     parent
       .command(name)
       .description(description)
-      .argument("<projectId>", "Project ID")
-      .argument("[workspaceId]", "Workspace ID for update")
-      .requiredOption("--payload-json <json>", "JSON payload")
+      .argument("<projectId>", "项目 ID")
+      .argument("[workspaceId]", "更新时使用的工作区 ID")
+      .requiredOption("--payload-json <json>", "JSON 数据")
       .action(async (projectId: string, workspaceId: string | undefined, opts: JsonPayloadOptions) => {
         try {
-          if (method === "patch" && !workspaceId) throw new Error("workspaceId is required for update");
+          if (method === "patch" && !workspaceId) throw new Error("更新时必须提供 workspaceId");
           const ctx = resolveCommandContext(opts);
           const path = method === "post"
             ? apiPath`/api/projects/${projectId}/workspaces`
@@ -297,10 +297,10 @@ function addProjectRuntimeAction(parent: Command, name: string, description: str
     parent
       .command(name)
       .description(description)
-      .argument("<projectId>", "Project ID")
-      .argument("<workspaceId>", "Workspace ID")
-      .argument("<action>", "start, stop, restart, or run")
-      .option("--payload-json <json>", "Runtime target JSON payload", "{}")
+      .argument("<projectId>", "项目 ID")
+      .argument("<workspaceId>", "工作区 ID")
+      .argument("<action>", "可选值：start、stop、restart 或 run")
+      .option("--payload-json <json>", "运行目标 JSON 数据", "{}")
       .action(async (projectId: string, workspaceId: string, action: string, opts: RuntimeActionOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
