@@ -6,9 +6,9 @@ const MAX_TEXT = 100_000;
 const MAX_NODES = 4096;
 const MAX_DEPTH = 32;
 const OMITTED =
-  "[Paperclip could not import an unsupported or malformed Telegram rich content block.]";
+  "[Alice 无法导入这个不受支持或格式错误的 Telegram 富内容块。]";
 const LIMIT =
-  "[Telegram rich content exceeded the supported import limit. Please resend the omitted content as text or a supported file.]";
+  "[Telegram 富内容超出支持的导入限制。请将省略内容重新以文本或受支持的文件发送。]";
 const record = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 const wrappers = new Set([
@@ -56,7 +56,7 @@ export function normalizeTelegramRichMessage(
   const visiting = new WeakSet<object>();
   const attachments: Attachment[] = [];
   const mediaFacts: unknown[] = [];
-  const limitError = new Error("Rich content limit");
+  const limitError = new Error("富内容超出限制");
   const enter = (value: unknown, depth: number) => {
     if (++nodes > MAX_NODES || depth > MAX_DEPTH) throw limitError;
     if (value && typeof value === "object") {
@@ -87,7 +87,7 @@ export function normalizeTelegramRichMessage(
     // payment/auth controls as text or a new executable capability.
     return typeof value.url === "string"
       ? labelWithTarget(label, value.url)
-      : `${label} [Interactive button; no action was performed.]`;
+      : `${label} [交互按钮；未执行任何操作。]`;
   };
   const text = (value: unknown, depth: number): string => {
     enter(value, depth);

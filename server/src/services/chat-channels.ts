@@ -19060,7 +19060,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             threadId: event.event.threadId,
             userId: event.event.user.userId,
             text: "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
-            fallbackText: "This Paperclip action is no longer available.",
+            fallbackText: "此 Alice 操作已不可用。",
             settleDelivery: false,
           } as const)
         : null;

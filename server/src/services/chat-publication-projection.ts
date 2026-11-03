@@ -243,7 +243,7 @@ function truncateByCodePoint(input: string, limit: number): string {
 export function projectSafeChatPublicationText(input: string): string {
   if (input.length > MAX_TEXT_INPUT_LENGTH) {
     throw new UnsafeChatPublicationError(
-      "External chat text exceeds its processing limit",
+      "外部聊天文本超出处理上限",
     );
   }
   let output = input.replace(/<\|[^|\r\n]{1,80}\|>/g, "");
@@ -261,10 +261,10 @@ export function projectSafeChatPublicationText(input: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  if (!output) return "Update available in Paperclip.";
+  if (!output) return "Alice 中有新的更新。";
   if (output.length > MAX_TEXT_OUTPUT_LENGTH) {
     throw new UnsafeChatPublicationError(
-      "External chat text exceeds its projected processing limit",
+      "外部聊天文本投影后超出处理上限",
     );
   }
   return output;
@@ -276,7 +276,7 @@ function projectAttachmentIds(
   if (!input?.length) return undefined;
   if (input.length > MAX_ATTACHMENTS) {
     throw new UnsafeChatPublicationError(
-      `External chat publications support at most ${MAX_ATTACHMENTS} attachments`,
+      `外部聊天消息最多支持 ${MAX_ATTACHMENTS} 个附件`,
     );
   }
 
@@ -286,7 +286,7 @@ function projectAttachmentIds(
     const normalized = id.trim().toLowerCase();
     if (!UUID_RE.test(normalized)) {
       throw new UnsafeChatPublicationError(
-        "External chat attachment ids must be UUIDs",
+        "外部聊天附件 ID 必须是 UUID",
       );
     }
     if (!seen.has(normalized)) {
@@ -302,11 +302,11 @@ function projectCard(
 ): { interactionId: string; card: SafeExternalChatCard } {
   if (!SAFE_IDENTIFIER_RE.test(input.id)) {
     throw new UnsafeChatPublicationError(
-      "External chat interaction id is invalid",
+      "外部聊天交互 ID 无效",
     );
   }
   if (!CARD_KINDS.has(input.card.kind)) {
-    throw new UnsafeChatPublicationError("External chat card kind is invalid");
+    throw new UnsafeChatPublicationError("外部聊天卡片类型无效");
   }
 
   const title = truncateByCodePoint(
@@ -319,7 +319,7 @@ function projectCard(
   const rawActions = input.card.actions ?? [];
   if (rawActions.length > MAX_CARD_ACTIONS) {
     throw new UnsafeChatPublicationError(
-      `External chat cards support at most ${MAX_CARD_ACTIONS} actions`,
+      `外部聊天卡片最多支持 ${MAX_CARD_ACTIONS} 个操作`,
     );
   }
 
@@ -332,12 +332,12 @@ function projectCard(
     if (action.type === "callback") {
       if (!SAFE_IDENTIFIER_RE.test(action.actionId)) {
         throw new UnsafeChatPublicationError(
-          "External chat action id is invalid",
+          "外部聊天操作 ID 无效",
         );
       }
       if (action.style && !CARD_ACTION_STYLES.has(action.style)) {
         throw new UnsafeChatPublicationError(
-          "External chat action style is invalid",
+          "外部聊天操作样式无效",
         );
       }
       actions.push({
@@ -351,7 +351,7 @@ function projectCard(
 
     if (action.type !== "link") {
       throw new UnsafeChatPublicationError(
-        "External chat card action type is invalid",
+        "外部聊天卡片操作类型无效",
       );
     }
 
@@ -384,12 +384,12 @@ export function projectSafeChatPublication(
     !PUBLICATION_SOURCES.has(input.source)
   ) {
     throw new UnsafeChatPublicationError(
-      "Chat publication source must be explicitly classified for external delivery",
+      "聊天发布来源必须明确标记为允许外部发送",
     );
   }
   if (input.progressState && !PROGRESS_STATES.has(input.progressState)) {
     throw new UnsafeChatPublicationError(
-      "External chat progress state is invalid",
+      "外部聊天进度状态无效",
     );
   }
   const attachmentIds = projectAttachmentIds(input.attachmentIds);

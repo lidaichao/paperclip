@@ -726,7 +726,7 @@ export function teamsFileTransferService(
         new Promise<never>((_, reject) => {
           timer = setTimeout(() => {
             controller.abort();
-            reject(new Error("Teams transfer outcome unknown"));
+            reject(new Error("Teams 文件传输结果未知"));
           }, 30_000);
         }),
       ]);

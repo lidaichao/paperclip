@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 export const TELEGRAM_EPHEMERAL_WINDOW_MS = 15_000;
 export const TELEGRAM_PRIVATE_ACTION_UNAVAILABLE =
-  "This Paperclip action is no longer available. Open the linked task or ask an operator to link this account.";
+  "此 Alice 操作已不可用。请打开关联任务，或联系管理员关联此账户。";
 
 export interface TelegramCallbackReceipt {
   version: 1;
@@ -224,13 +224,13 @@ export function hasTelegramEphemeralInput(update: unknown): boolean {
 
 function reject() {
   return Object.assign(
-    new Error("Telegram private response is no longer eligible"),
+    new Error("Telegram 私密响应已不再符合发送条件"),
     { code: "CHAT_PROVIDER_PRETRANSPORT_REJECTED" },
   );
 }
 function unknown() {
   return Object.assign(
-    new Error("Telegram private response acceptance could not be confirmed"),
+    new Error("Telegram 私密响应是否已接受无法确认"),
     { name: "NetworkError", adapter: "telegram" },
   );
 }
@@ -316,7 +316,7 @@ export async function sendTelegramCallbackNotice(
         record(body.parameters) && integer(body.parameters.retry_after, 1)
           ? Math.min(body.parameters.retry_after, 3600)
           : 1;
-      throw Object.assign(new Error("Telegram private response rate limited"), {
+      throw Object.assign(new Error("Telegram 私密响应触发速率限制"), {
         name: "RateLimitError",
         adapter: "telegram",
         status: 429,
@@ -324,13 +324,13 @@ export async function sendTelegramCallbackNotice(
       });
     }
     if (status === 401)
-      throw Object.assign(new Error("Telegram authentication rejected"), {
+      throw Object.assign(new Error("Telegram 身份验证被拒绝"), {
         name: "AuthenticationError",
         adapter: "telegram",
         status: 401,
       });
     if (status === 403)
-      throw Object.assign(new Error("Telegram destination rejected"), {
+      throw Object.assign(new Error("Telegram 目标被拒绝"), {
         name: "PermissionError",
         code: "PERMISSION_DENIED",
         adapter: "telegram",

@@ -477,7 +477,7 @@ class UploadCapability {
               : {}),
           },
           {
-            error: () => new Error("Teams upload transport rejected"),
+            error: () => new Error("Teams 上传传输被拒绝"),
             connectTimeoutMs: 10_000,
             responseTimeoutMs: 30_000,
           },
@@ -1183,7 +1183,7 @@ export function parseTeamsUploadedFileCard(
 
 function abortable<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const abort = () => reject(new Error("Teams upload deadline exceeded"));
+    const abort = () => reject(new Error("Teams 上传超时"));
     signal.addEventListener("abort", abort, { once: true });
     void operation
       .then(resolve, reject)

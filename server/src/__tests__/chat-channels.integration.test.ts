@@ -26067,7 +26067,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             method: "sendMessage",
             body: {
               chat_id: "-100123",
-              text: "This Paperclip action is no longer available. Open the linked task or ask an operator to link this account.",
+              text: "此 Alice 操作已不可用。请打开关联任务，或联系管理员关联此账户。",
               ephemeral_message_parameters: {
                 receiver_user_id: 456,
                 callback_query_id: "native-private-callback-1",
@@ -26282,7 +26282,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             method: "sendMessage",
             body: {
               chat_id: "456",
-              text: "This Paperclip action is no longer available. Open the linked task or ask an operator to link this account.",
+              text: "此 Alice 操作已不可用。请打开关联任务，或联系管理员关联此账户。",
             },
           },
         ]);
@@ -35872,7 +35872,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     );
     await vi.waitFor(() =>
       expect(channel.post).toHaveBeenCalledWith(
-        "This Paperclip action is no longer available.",
+        "此 Alice 操作已不可用。",
       ),
     );
     expect(channel.postEphemeral).toHaveBeenCalledTimes(2);
@@ -38495,7 +38495,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
                   type: "private",
                   first_name: "Telegram User",
                 },
-                text: "This Paperclip action is no longer available.",
+                text: "此 Alice 操作已不可用。",
               },
             }),
             { status: 200, headers: { "content-type": "application/json" } },
@@ -38634,7 +38634,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(notices).toHaveLength(1);
       expect(JSON.parse(notices[0]!.body)).toMatchObject({
         chat_id: "417200359",
-        text: "This Paperclip action is no longer available. Open the linked task or ask an operator to link this account.",
+        text: "此 Alice 操作已不可用。请打开关联任务，或联系管理员关联此账户。",
       });
       expect(notices[0]!.body).not.toContain(actionId);
       expect(notices[0]!.body).not.toContain(callbackData);
@@ -71052,7 +71052,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
               .select({ body: issueComments.body })
               .from(issueComments)
               .where(eq(issueComments.companyId, fixture.companyId));
-            expect(comments[0]?.body).toContain("could not import");
+            expect(comments[0]?.body).toContain("无法导入");
             expect(JSON.stringify(comments)).not.toContain(
               "PRIVATE_UNSUPPORTED_BODY",
             );

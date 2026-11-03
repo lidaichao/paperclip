@@ -116,7 +116,7 @@ describe("Telegram bounded current rich inbound projection", () => {
       ]),
     )!;
     expect(value.text).toBe(
-      "Heading\n\nPlain boldLabel [Interactive button; no action was performed.]\n\nconst x = 1;\n\nQuote\n\nAuthor\n\nNested\n\nCredit\n\nPull\n\nPull credit\n\nSummary\n\nDetails\n\n1. [x] Item\n\nTable\n\nA\tB\nC\t\n\nLocation: 10, 20\n\nMap\n\nMap credit\n\nLink (https://example.com) | Control [Interactive button; no action was performed.]\n\nx^2\n\n🙂y^2Source (https://example.org)\n\n---",
+      "Heading\n\nPlain boldLabel [交互按钮；未执行任何操作。]\n\nconst x = 1;\n\nQuote\n\nAuthor\n\nNested\n\nCredit\n\nPull\n\nPull credit\n\nSummary\n\nDetails\n\n1. [x] Item\n\nTable\n\nA\tB\nC\t\n\nLocation: 10, 20\n\nMap\n\nMap credit\n\nLink (https://example.com) | Control [交互按钮；未执行任何操作。]\n\nx^2\n\n🙂y^2Source (https://example.org)\n\n---",
     );
     expect(value.text).not.toContain("PRIVATE_CALLBACK");
   });
@@ -247,7 +247,7 @@ describe("Telegram bounded current rich inbound projection", () => {
     "reports unsupported or malformed rich input without guessing hidden fields",
     ({ blocks }) => {
       const value = normalizeTelegramRichMessage(raw(blocks))!;
-      expect(value.text).toContain("could not import");
+      expect(value.text).toContain("无法导入");
       expect(value.text).not.toContain("PRIVATE_UNKNOWN");
     },
   );
@@ -266,7 +266,7 @@ describe("Telegram bounded current rich inbound projection", () => {
         [{ type: "table", cells: [Array.from({ length: 5000 }, () => ({}))] }],
       ]) {
         const message = runtime.parseTelegramCommandMessage(raw(blocks))!;
-        expect(message.text).toContain("exceeded the supported import limit");
+        expect(message.text).toContain("超出支持的导入限制");
         expect(message.attachments).toEqual([]);
       }
       const hidden = runtime.parseTelegramCommandMessage(
