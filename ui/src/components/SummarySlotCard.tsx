@@ -200,7 +200,7 @@ export function SummarySlotCard({
       ]);
     },
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Summary generation could not be started.");
+      setActionError(error instanceof Error ? error.message : l10n("local.summary_generation_could_not_start_10300328"));
     },
   });
 

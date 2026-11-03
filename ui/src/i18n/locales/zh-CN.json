@@ -12515,6 +12515,13 @@
     "dirty_changes_quarantined_task_resumes_10300318": "未提交的修改已隔离到救援分支，并恢复了记录中的分支；任务将继续运行。",
     "recorded_branch_matches_task_resumes_10300319": "记录中的分支现已与实际分支一致；任务将继续运行。",
     "linked_body_to_conversation_10300320": "已将正文关联到对话以供评论",
-    "example_utc_datetime_10300321": "2026 年 4 月 28 日 12:17（UTC）"
+    "example_utc_datetime_10300321": "2026 年 4 月 28 日 12:17（UTC）",
+    "pages_10300322": "页面",
+    "task_documents_10300323": "任务文档",
+    "recent_workspace_files_10300324": "最近的工作区文件",
+    "recent_files_temporarily_unavailable_10300325": "暂时无法获取最近文件。",
+    "side_panel_10300326": "侧边面板",
+    "system_folded_source_resolved_10300327": "系统已将此运行折叠为源问题已解决的误报。",
+    "summary_generation_could_not_start_10300328": "无法启动摘要生成。"
   }
 }

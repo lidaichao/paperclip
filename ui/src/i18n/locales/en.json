@@ -12515,6 +12515,13 @@
     "dirty_changes_quarantined_task_resumes_10300318": "Dirty changes were quarantined onto a rescue branch and the recorded branch restored; the task will resume.",
     "recorded_branch_matches_task_resumes_10300319": "The recorded branch now matches the live branch; the task will resume.",
     "linked_body_to_conversation_10300320": "Linked body to conversation for comments",
-    "example_utc_datetime_10300321": "April 28, 2026 at 12:17 PM UTC"
+    "example_utc_datetime_10300321": "April 28, 2026 at 12:17 PM UTC",
+    "pages_10300322": "Pages",
+    "task_documents_10300323": "Task documents",
+    "recent_workspace_files_10300324": "Recent workspace files",
+    "recent_files_temporarily_unavailable_10300325": "Recent files are temporarily unavailable.",
+    "side_panel_10300326": "Side panel",
+    "system_folded_source_resolved_10300327": "System folded this run as a source-resolved false positive.",
+    "summary_generation_could_not_start_10300328": "Summary generation could not be started."
   }
 }

@@ -443,7 +443,11 @@ export function TaskSidePanel({
   useEffect(() => {
     if (activeTab) return;
     window.requestAnimationFrame(() => {
-      bodyRef.current?.querySelector<HTMLInputElement>('input[aria-label="Search tabs and resources…"]')?.focus();
+      const launcherSearchLabel = l10n("local.search_tabs_and_resources_10300222");
+      const launcherSearch = Array.from(
+        bodyRef.current?.querySelectorAll<HTMLInputElement>("input[aria-label]") ?? [],
+      ).find((input) => input.getAttribute("aria-label") === launcherSearchLabel);
+      launcherSearch?.focus();
     });
   }, [activeTab]);
 
@@ -503,7 +507,7 @@ export function TaskSidePanel({
       { id: "artifacts", label: l10n("local.artifacts_314ae71b"), icon: <Box />, alreadyOpen: controller.tabs.some((tab) => tab.id === "artifacts") },
     ];
     if (fileTabsEnabled) {
-      primary.push({ id: "files", label: "Files", icon: <FolderOpen />, shortcut: "G F", alreadyOpen: controller.tabs.some((tab) => tab.id === "files") });
+      primary.push({ id: "files", label: l10n("local.files_abc7e989"), icon: <FolderOpen />, shortcut: "G F", alreadyOpen: controller.tabs.some((tab) => tab.id === "files") });
     }
     const documentItems: SidePanelLauncherItem[] = [
       ...(planDocument ? [{
@@ -528,7 +532,7 @@ export function TaskSidePanel({
       { id: "open", label: l10n("local.open_ed077f3d"), items: primary },
     ];
     if (documentItems.length > 0) {
-      sections.push({ id: "documents", label: "Task documents", items: documentItems });
+      sections.push({ id: "documents", label: l10n("local.task_documents_10300323"), items: documentItems });
     }
     if (fileTabsEnabled) {
       const recentItems = recentFilesQuery.data?.state === "available"
@@ -542,10 +546,10 @@ export function TaskSidePanel({
         : [];
       sections.push({
         id: "recent-files",
-        label: "Recent workspace files",
+        label: l10n("local.recent_workspace_files_10300324"),
         items: recentItems,
         loading: recentFilesQuery.isLoading,
-        error: recentFilesQuery.isError ? "Recent files are temporarily unavailable." : null,
+        error: recentFilesQuery.isError ? l10n("local.recent_files_temporarily_unavailable_10300325") : null,
       });
     }
     return sections;

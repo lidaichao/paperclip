@@ -34,7 +34,7 @@ export function SidePanelFrame({
   open = true,
   maximized = false,
   resizing = false,
-  label = "Side panel",
+  label = l10n("local.side_panel_10300326"),
   headerSize = "default",
   className,
   bodyClassName,
