@@ -15749,7 +15749,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           runtimeContextForRecord(
             (await endpointRecord(endpoint.id)) ??
               (() => {
-                throw new Error("Chat endpoint is unavailable");
+                throw new Error("聊天端点不可用");
               })(),
           );
         const effect = await db.transaction((tx) =>
@@ -15769,7 +15769,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             runtimeContext: effectContext,
           }),
         );
-        if (!effect) throw new Error("Provider effect was not persisted");
+        if (!effect) throw new Error("服务商操作结果未能保存");
         if ((await processProviderEffect(effect.id, thread)) !== "processed")
           return;
         if (receiptReactionSupported) {
@@ -15845,7 +15845,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             runtimeContextForRecord(
               (await endpointRecord(endpoint.id)) ??
                 (() => {
-                  throw new Error("Chat endpoint is unavailable");
+                  throw new Error("聊天端点不可用");
                 })(),
             );
           effect = await db.transaction((tx) =>
@@ -15865,7 +15865,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               runtimeContext: effectContext,
             }),
           );
-          if (!effect) throw new Error("Provider effect was not persisted");
+          if (!effect) throw new Error("服务商操作结果未能保存");
           if ((await processProviderEffect(effect.id, thread)) !== "processed")
             return;
         }
@@ -15954,7 +15954,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             runtimeContextForRecord(
               (await endpointRecord(endpoint.id)) ??
                 (() => {
-                  throw new Error("Chat endpoint is unavailable");
+                  throw new Error("聊天端点不可用");
                 })(),
             );
           const effect = await db.transaction(async (tx) => {
@@ -15974,7 +15974,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               runtimeContext: effectContext,
             });
           });
-          if (!effect) throw new Error("Provider effect was not persisted");
+          if (!effect) throw new Error("服务商操作结果未能保存");
           if ((await processProviderEffect(effect.id, thread)) !== "processed")
             return;
         }
@@ -16074,7 +16074,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
                 .from(issues)
                 .where(eq(issues.id, conversation.issueId))
                 .then((rows) => rows[0] ?? null);
-        if (!issue) throw notFound("Bound task not found");
+        if (!issue) throw notFound("未找到已绑定任务");
           const [assignedAgentTrust] = taskEndpoint.provider === "github" ? await taskTx.select({ permissions: agents.permissions }).from(agents).where(and(eq(agents.companyId, taskEndpoint.companyId), eq(agents.id, taskEndpoint.assignedAgentId))) : [];
         if (!taskUserId || (githubAutomatic && !principalResolution.userId) || assignedAgentTrust?.permissions?.trustPreset === LOW_TRUST_REVIEW_PRESET) {
             const reviewPreset = {
@@ -16337,7 +16337,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           .where(eq(chatEndpoints.id, endpoint.id))
           .for("update")
           .then((rows) => rows[0] ?? null);
-        if (!currentEndpoint) throw notFound("Chat endpoint not found");
+        if (!currentEndpoint) throw notFound("未找到聊天端点");
         const currentResource = thread.isDM
           ? resource
           : await tx
@@ -17555,7 +17555,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       await options.discordGatewayMessageAdmissionBarrier?.();
     }
     const record = await endpointRecord(event.endpointId);
-    if (!record) throw notFound("Chat endpoint not found");
+    if (!record) throw notFound("未找到聊天端点");
     const messages = [...(event.context?.skipped ?? []), event.message];
     for (const message of messages)
       await processMessage(
@@ -17647,7 +17647,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         .where(eq(chatEndpoints.id, input.endpointId))
         .for("update")
         .then((rows) => rows[0] ?? null);
-      if (!endpoint) throw notFound("Chat endpoint not found");
+      if (!endpoint) throw notFound("未找到聊天端点");
       if (
         runtimeContext &&
         !(await runtimeCallbackEndpoint(tx, endpoint.id, runtimeContext, [
