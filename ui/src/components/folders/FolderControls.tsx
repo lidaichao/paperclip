@@ -257,7 +257,7 @@ export function FolderRail({
           ))}
           <div className="px-2 pb-1 pt-3 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
             {l10n("local.system_6725e7bb")}</div>
-          {renderVirtualRow("unfiled", "Unfiled", result?.unfiledCount ?? 0, <FolderSwatch color={null} className="mt-0.5" />)}
+          {renderVirtualRow("unfiled", l10n("local.unfiled_d64dc9ae"), result?.unfiledCount ?? 0, <FolderSwatch color={null} className="mt-0.5" />)}
         </div>
       )}
     </nav>
@@ -465,8 +465,8 @@ export function MobileFolderSheet({
               <div className="px-2 pb-0.5 pt-2 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
                 {l10n("local.organization_d764d425")}</div>
               {model.company.map((node) => renderBranch(node))}
-              {model.projects ? renderBranch(model.projects, "Projects") : null}
-              {model.bundled ? renderBranch(model.bundled, "Bundled") : null}
+              {model.projects ? renderBranch(model.projects, l10n("local.projects_04e2a972")) : null}
+              {model.bundled ? renderBranch(model.bundled, l10n("local.bundled_79d3a1f1")) : null}
             </>
           ) : (
             model.roots.map((node) => renderBranch(node, reservedRootLabel(node.folder)))

@@ -851,7 +851,7 @@ export function MoveToFolderDialog({
   const previewPath = chosen === undefined
     ? null
     : chosen === null
-      ? "Unfiled"
+      ? l10n("local.unfiled_d64dc9ae")
       : chosenFolder?.path ?? null;
 
   async function submitNewFolder() {

@@ -110,7 +110,11 @@ export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?:
   );
 
   const currentCrumb = breadcrumbs[breadcrumbs.length - 1];
-  if (isMobile && breadcrumbs[0]?.label === "Tasks" && currentCrumb.identifier) {
+  if (
+    isMobile &&
+    new Set(["Tasks", l10n("local.tasks_b3a60e61")]).has(breadcrumbs[0]?.label ?? "") &&
+    currentCrumb.identifier
+  ) {
     return (
       <div className="h-(--sz-60px) shrink-0 flex items-center border-b border-border px-4">
         {menuButton}
