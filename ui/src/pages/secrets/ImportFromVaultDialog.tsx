@@ -882,7 +882,7 @@ function SelectStep(props: SelectStepProps) {
         <EmptyState
           icon={Cloud}
           message={l10n("local.no_aws_provider_vault_configured_add_one_to_import_secrets_c02f11b1")}
-          action={onManageVaults ? "Manage vaults" : undefined}
+          action={onManageVaults ? l10n("local.manage_vaults_10300414") : undefined}
           onAction={onManageVaults}
         />
       </div>

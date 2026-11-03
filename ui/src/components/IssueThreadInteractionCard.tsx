@@ -2522,7 +2522,7 @@ function RequestConfirmationCard({
   const allowRevise = interaction.payload.allowDeclineReason !== false;
   const reasonPlaceholder =
     interaction.payload.declineReasonPlaceholder
-    ?? (interaction.payload.acceptLabel === "Approve plan"
+    ?? (new Set(["Approve plan", l10n("local.approve_plan_10300415")]).has(interaction.payload.acceptLabel ?? "")
       ? l10n("local.optional_what_revised_10200011")
       : l10n("local.optional_tell_agent_changes_10200012"));
 

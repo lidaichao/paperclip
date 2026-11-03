@@ -252,7 +252,7 @@ function stringValue(value: unknown): string | undefined {
 function scalarValue(value: unknown): string | undefined {
   if (typeof value === "string" && value.trim()) return value.trim();
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "boolean") return value ? l10n("local.yes_85a39ab3") : l10n("local.no_1ea442a1");
   return undefined;
 }
 
@@ -1131,13 +1131,19 @@ export function omitProgressRepeatedByResponseAcrossSegments(
 export function paperclipRunnerHistoryItems(
   parsed: readonly TaskChatItem[],
 ): TaskChatItem[] {
+  const turnBoundaryLabels = new Set([
+    "Turn started",
+    "Turn completed",
+    l10n("local.manual_runner_turn_started"),
+    l10n("local.manual_runner_turn_completed"),
+  ]);
   return parsed.filter((item) => {
     if (item.kind === "usage") return false;
     if (item.kind !== "marker") return true;
     if (item.variant === "session_start") return false;
     return (
       item.variant !== "turn_boundary" ||
-      (item.label !== "Turn started" && item.label !== "Turn completed")
+      !turnBoundaryLabels.has(item.label)
     );
   });
 }
@@ -2111,7 +2117,10 @@ export function deriveRunStatusLabel(entries: readonly TranscriptEntry[]): {
       return { label: l10n("local.responding_98047c1e"), selfTalk: selfTalk || undefined };
     }
     if (entry.kind === "thinking") return { label: l10n("local.thinking_a20d12c5") };
-    if (entry.kind === "system" && entry.text === "Reasoning started")
+    if (
+      entry.kind === "system" &&
+      new Set(["Reasoning started", l10n("local.reasoning_started_10300418")]).has(entry.text)
+    )
       return { label: l10n("local.thinking_a20d12c5") };
   }
   return { label: l10n("local.running_f4ccae29") };

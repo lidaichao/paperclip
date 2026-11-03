@@ -710,11 +710,11 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
       </div>
 
       <div className="grid gap-3 text-sm sm:grid-cols-3">
-        <FolderStatusMetric label={l10n("local.configured_84aebc69")} value={status?.configured ? "Yes" : "No"} ok={!!status?.configured} />
-        <FolderStatusMetric label={l10n("local.readable_bf56ee2f")} value={status?.readable ? "Yes" : "No"} ok={!!status?.readable} />
+        <FolderStatusMetric label={l10n("local.configured_84aebc69")} value={status?.configured ? l10n("local.yes_85a39ab3") : l10n("local.no_1ea442a1")} ok={!!status?.configured} />
+        <FolderStatusMetric label={l10n("local.readable_bf56ee2f")} value={status?.readable ? l10n("local.yes_85a39ab3") : l10n("local.no_1ea442a1")} ok={!!status?.readable} />
         <FolderStatusMetric
           label={l10n("local.writable_18685c64")}
-          value={access === "read" ? "Not requested" : status?.writable ? "Yes" : "No"}
+          value={access === "read" ? l10n("local.not_requested_10300413") : status?.writable ? l10n("local.yes_85a39ab3") : l10n("local.no_1ea442a1")}
           ok={access === "read" || !!status?.writable}
         />
       </div>

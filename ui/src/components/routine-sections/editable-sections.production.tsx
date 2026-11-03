@@ -567,12 +567,12 @@ export function TriggersSection() {
               <div key={`${entry.webhookUrl}-${index}`} className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Input aria-label={l10n("local.new_webhook_url_48f3ada2")} value={entry.webhookUrl} readOnly className="flex-1" />
-                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook URL", entry.webhookUrl)}>
+                  <Button variant="outline" size="sm" onClick={() => copySecretValue(l10n("local.webhook_url_84805a75"), entry.webhookUrl)}>
                     {l10n("local.url_e7a241de")}</Button>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input aria-label={l10n("local.new_webhook_secret_2c422ebf")} value={entry.webhookSecret} readOnly className="flex-1" />
-                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook secret", entry.webhookSecret)}>
+                  <Button variant="outline" size="sm" onClick={() => copySecretValue(l10n("local.webhook_secret_342da972"), entry.webhookSecret)}>
                     {l10n("local.secret_7e32a729")}</Button>
                 </div>
               </div>

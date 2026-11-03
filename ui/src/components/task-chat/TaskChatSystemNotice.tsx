@@ -65,17 +65,31 @@ export function TaskChatSystemNotice({
   const sections = mapCommentMetadataToSystemNoticeSections(item.metadata, {
     runAgentId: item.runAgentId,
   });
+  const workspaceLabels = new Set([
+    "workspace",
+    l10n("local.workspace_87bb59ba").toLocaleLowerCase(),
+  ]);
+  const workspaceReadyLabels = [
+    "workspace ready",
+    l10n("local.workspace_ready_10300416").toLocaleLowerCase(),
+  ];
   const isStructuredWorkspaceReadyNotice =
     item.presentation?.kind === "system_notice" &&
-    item.presentation.title?.trim().toLowerCase().startsWith("workspace ready") === true &&
-    sections.some((section) => section.title?.trim().toLowerCase() === "workspace");
+    workspaceReadyLabels.some((label) => item.presentation?.title?.trim().toLocaleLowerCase().startsWith(label)) &&
+    sections.some((section) => workspaceLabels.has(section.title?.trim().toLocaleLowerCase() ?? ""));
   const showBody = !isStructuredWorkspaceReadyNotice;
   const ToneIcon = TONE_ICON[tone];
   const relative = item.createdAtIso ? timeAgo(item.createdAtIso) : undefined;
+  const noLiveExecutionPathLabels = [
+    "no live execution path",
+    l10n("local.no_live_execution_path_10300417").toLocaleLowerCase(),
+  ];
   const showTryAgain =
     Boolean(onTryAgainNoLiveExecutionPath) &&
-    (item.presentation?.title?.trim() === "No live execution path" ||
-      item.text.toLowerCase().includes("no live execution path"));
+    noLiveExecutionPathLabels.some((label) =>
+      item.presentation?.title?.trim().toLocaleLowerCase() === label ||
+      item.text.toLocaleLowerCase().includes(label),
+    );
   const handleTryAgain = () => {
     void Promise.resolve()
       .then(() => onTryAgainNoLiveExecutionPath?.())

@@ -1,5 +1,6 @@
 import { TaskChatProjectCreatedCard } from "./TaskChatProjectCreatedCard";
 import { TaskChatSkillCreatedCard } from "./TaskChatSkillCreatedCard";
+import { l10n } from "../../i18n";
 import { useMemo, type ReactNode } from "react";
 import type { IssueAttachment } from "@paperclipai/shared";
 import { cn } from "@/lib/utils";
@@ -310,6 +311,12 @@ export function TaskChatThreadView({
   onOpenSkill,
 }: TaskChatThreadViewProps) {
   const streamlined = useStreamlinedTaskChatPresentation();
+  const retryableMarkerLabels = new Set([
+    "Run failed",
+    l10n("local.run_failed_97fddf2d"),
+    "Usage limit reached",
+    l10n("local.usage_limit_reached_0e17661d"),
+  ]);
   const retryableMarkerId =
     onRetryFailedRun || onTryAgainNoLiveExecutionPath
       ? [...items]
@@ -318,8 +325,7 @@ export function TaskChatThreadView({
             (item) =>
               item.kind === "marker" &&
               item.variant === "interrupted" &&
-              (item.label === "Run failed" ||
-                item.label === "Usage limit reached"),
+              retryableMarkerLabels.has(item.label),
           )?.id
       : undefined;
   // Streaming tail and header updates must not rebuild settled markdown/tool trees.

@@ -12606,6 +12606,12 @@
     "activity_stopped_10300409": "活动已停止",
     "recorded_usage_10300410": "记录了用量",
     "tool_result_could_not_be_serialized_10300411": "无法序列化工具结果",
-    "built_in_agent_status_value_10300412": "内置智能体 · {{v0}}"
+    "built_in_agent_status_value_10300412": "内置智能体 · {{v0}}",
+    "not_requested_10300413": "未请求",
+    "manage_vaults_10300414": "管理保管库",
+    "approve_plan_10300415": "批准计划",
+    "workspace_ready_10300416": "工作区已就绪",
+    "no_live_execution_path_10300417": "没有可用的实时执行路径",
+    "reasoning_started_10300418": "推理已开始"
   }
 }
