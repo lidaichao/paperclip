@@ -2424,7 +2424,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           "read_pull_request",
           { section: "metadata" },
         ),
-      ).rejects.toThrow("no longer authorized");
+      ).rejects.toThrow("已不再获得授权");
     });
     it("admits signed PR events into an ordinary assigned task and deduplicates delivery", async () => {
       const f = await reviewBotFixture();
@@ -2848,7 +2848,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           body: "Approved",
           idempotencyKey: "formal",
         }),
-      ).rejects.toThrow("disabled");
+      ).rejects.toThrow("已停用");
       const config = await f.management.configuration(
         f.endpoint.id,
         "owner-user",
@@ -2895,7 +2895,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       });
       await expect(
         service.execute(session, "submit_review", assessment),
-      ).rejects.toThrow("different pull request head");
+      ).rejects.toThrow("另一个拉取请求最新提交");
       const fixed = await service.execute(session, "submit_review", {
         ...assessment,
         reviewedCommit: head,
@@ -2948,7 +2948,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         .where(eq(chatIdentityLinks.principalId, f.principal.id));
       await expect(
         service.execute(session, "read_pull_request", { section: "metadata" }),
-      ).rejects.toThrow("no longer authorized");
+      ).rejects.toThrow("已不再获得授权");
     });
   });
 
@@ -7163,7 +7163,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       .where(eq(chatDeliveries.endpointId, endpoint.id));
     expect(filtered).toMatchObject({
       state: "filtered",
-      redactedError: "External identity must be linked to a Paperclip account",
+      redactedError: "外部身份必须关联到 Alice 账户",
       normalizedEvent: { deduplication: { duplicateCount: 1 } },
     });
 
@@ -7246,7 +7246,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       .then((rows) => rows[0]);
     expect(suspendedDelivery).toMatchObject({
       state: "filtered",
-      redactedError: "Linked Paperclip account is not currently permitted",
+      redactedError: "关联的 Alice 账户当前没有权限",
     });
   });
 
@@ -7815,7 +7815,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       healthMessage:
         "GitHub App credentials, permissions, events, or identity need attention",
       lastError: expect.stringContaining(
-        "active installation has not granted the required access for: issues",
+        "当前安装实例未授予以下必需权限：issues",
       ),
     });
     const lifecycleDelivery = await db
@@ -8224,7 +8224,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       status: "attention",
       healthMessage:
         "GitHub App credentials, permissions, events, or identity need attention",
-      lastError: expect.stringContaining("exactly one active installation"),
+      lastError: expect.stringContaining("只能有一个有效安装实例"),
     });
     await expect(service.listResources(endpoint.id)).resolves.toEqual([
       expect.objectContaining({
@@ -8247,7 +8247,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       );
     expect(failedLifecycle).toMatchObject({
       state: "retry",
-      redactedError: expect.stringContaining("exactly one active installation"),
+      redactedError: expect.stringContaining("只能有一个有效安装实例"),
     });
 
     context.setAdditionalInstallationIds([]);
@@ -8863,7 +8863,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         status: "pending",
         summary: "GitHub webhook redelivery requested",
         detail: expect.stringContaining(
-          "does not yet confirm receipt or a reply",
+          "尚未确认收到或回复",
         ),
       });
       // A coincident GUID in another endpoint's inbox is not this callback's
@@ -8936,7 +8936,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         status: "received",
         summary: "GitHub webhook received after recovery request",
         detail:
-          "Paperclip received this callback. Its normal access checks and processing still apply.",
+          "Alice 已收到此回调，仍会执行正常的访问检查和处理。",
         replayable: false,
         resolutionActions: [],
       });
@@ -9659,7 +9659,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       eventKind: "message",
       conversationId: null,
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "此目标未在 Alice 中启用",
       normalizedEvent: {
         kind: "message",
         filtering: {
@@ -9684,7 +9684,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         id: rows[0]!.id,
         status: "filtered",
         summary: "message ignored",
-        detail: "Destination is not enabled in Paperclip",
+        detail: "此目标未在 Alice 中启用",
         replayable: false,
       }),
     );
@@ -11505,7 +11505,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             providerThreadCreated: false,
           },
         }),
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "此目标未在 Alice 中启用",
         state: "filtered",
       },
     ]);
@@ -12518,9 +12518,9 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         commands: [
           {
             command: "task",
-            description: "Start or continue a Paperclip task",
+            description: "开始或继续 Alice 任务",
           },
-          { command: "status", description: "Show the active Paperclip task" },
+          { command: "status", description: "显示当前 Alice 任务" },
           {
             command: "new",
             description: "Start a new task after the current one",
@@ -17002,7 +17002,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect.objectContaining({ state: "active", sessionGeneration: 1 }),
     ]);
     expect(runtime.endpoints.get(endpoint.id)?.posts[0]?.text).toBe(
-      "Send your request to start a new Paperclip task.",
+      "发送请求以启动新的 Alice 任务。",
     );
     // Command-only acknowledgements have no run whose final reply can retire
     // a processing reaction. The subsequent task message has its own receipt.
@@ -17185,7 +17185,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       state: "filtered",
       attempts: 0,
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "此目标未在 Alice 中启用",
       normalizedEvent: {
         filtering: { contentRetained: false },
         message: { providerMessageId: "teams-setup-group-disabled" },
@@ -17602,7 +17602,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     ).resolves.toEqual([
       {
         state: "filtered",
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "此目标未在 Alice 中启用",
         normalizedEvent: expect.objectContaining({
           providerEventId: `${directThread.thread.id}:teams-direct-disabled`,
           kind: "direct_message",
@@ -18039,7 +18039,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(delivery).toMatchObject({
         state: "filtered",
         principalId: null,
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "此目标未在 Alice 中启用",
         normalizedEvent: {
           filtering: { contentRetained: false },
           message: { providerMessageId: rootMessageId },
@@ -18142,7 +18142,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(delivery).toMatchObject({
       state: "filtered",
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "此目标未在 Alice 中启用",
       normalizedEvent: {
         filtering: { contentRetained: false },
         message: { providerMessageId: messageId },
@@ -18287,8 +18287,8 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         state: "filtered",
         redactedError:
           authorizationChange === "viewer"
-            ? "Linked Paperclip account is not currently permitted"
-            : "External identity must be linked to a Paperclip account",
+            ? "关联的 Alice 账户当前没有权限"
+            : "外部身份必须关联到 Alice 账户",
         normalizedEvent: {
           filtering: { contentRetained: false },
           message: { providerMessageId: messageId },
@@ -18468,7 +18468,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(delivery).toMatchObject({
       state: "filtered",
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "此目标未在 Alice 中启用",
       normalizedEvent: {
         filtering: { contentRetained: false },
         message: { providerMessageId: messageId },
@@ -18879,7 +18879,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           if (fallback) {
             expect(
               providerRuntime.posts.some((post) =>
-                post.text.includes("Direct file delivery isn't available"),
+                post.text.includes("此 Teams 会话无法直接发送文件"),
               ),
             ).toBe(true);
             if (outcome === "too_large")
@@ -19080,24 +19080,20 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     const posts = runtime.endpoints.get(endpoint.id)?.posts ?? [];
     const channelAttachmentPost = posts.find((post) =>
-      post.text.includes(
-        "File saved on the Paperclip task: channel-report.txt.",
-      ),
+      post.text.includes("文件已保存到 Alice 任务：channel-report.txt。"),
     );
     expect(channelAttachmentPost?.text).toContain(
-      "Direct file delivery isn't available for this Teams conversation.",
+      "此 Teams 会话无法直接发送文件。",
     );
     expect(channelAttachmentPost?.text).toContain(
       `/issues/${channelConversation.issueId}`,
     );
     expect(channelAttachmentPost?.files).toBeUndefined();
     const personalAttachmentPost = posts.find((post) =>
-      post.text.includes(
-        "File saved on the Paperclip task: personal-report.txt.",
-      ),
+      post.text.includes("文件已保存到 Alice 任务：personal-report.txt。"),
     );
     expect(personalAttachmentPost?.text).toContain(
-      "Direct file delivery isn't available for this Teams conversation.",
+      "此 Teams 会话无法直接发送文件。",
     );
     expect(personalAttachmentPost?.text).toContain(
       `/issues/${personalConversation.issueId}`,
@@ -22475,7 +22471,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(deliveries[2]).toMatchObject({
       eventKind: "action",
       state: "filtered",
-      redactedError: "External chat modal submission denied by Paperclip",
+      redactedError: "外部聊天表单提交被 Alice 拒绝",
       processedAt: expect.any(Date),
     });
     expect(JSON.stringify(await service.get(endpoint.id))).not.toContain(
@@ -26655,7 +26651,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       runtime.endpoints.get(endpoint.id)?.posts.map((post) => post.text),
     ).toEqual([
       "old-generation-final",
-      "Send your request to start a new Paperclip task.",
+      "发送请求以启动新的 Alice 任务。",
     ]);
     await expect(service.listConversations(endpoint.id)).resolves.toEqual([
       expect.objectContaining({ id: oldConversation.id, state: "completed" }),
@@ -26721,7 +26717,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       runtime.endpoints.get(endpoint.id)?.posts.map((post) => post.text),
     ).toEqual([
       "old-generation-final",
-      "Send your request to start a new Paperclip task.",
+      "发送请求以启动新的 Alice 任务。",
       "new-generation-final",
     ]);
     expect(
@@ -29222,7 +29218,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     ).toMatchObject({
       progressState: "failed",
       text: expect.stringContaining(
-        "Ask a Paperclip admin to create a private identity link for this account or enable isolated guest execution, then start a new task.",
+        "请让 Alice 管理员为此账户创建私有身份关联，或启用隔离访客执行，然后新建任务。",
       ),
     });
   });
@@ -32300,7 +32296,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         expect.objectContaining({
           state: "filtered",
           attempts: 1,
-          redactedError: "External action denied by Paperclip authorization",
+          redactedError: "外部操作被 Alice 授权策略拒绝",
           normalizedEvent: {
             providerEventId: expect.stringMatching(
               /^action-denied:[a-f0-9]{64}$/,
@@ -32328,7 +32324,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       });
       expect(gatewayInteraction.reply).toHaveBeenLastCalledWith({
         content:
-          "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+          "此操作已不可用。请打开关联的 Alice 任务，或联系管理员关联此账户。",
         flags: 64,
       });
     } finally {
@@ -33501,7 +33497,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           expect(callback.reply.mock.calls[0]![0].content).toBe(
             submittedText === winnerText
               ? "Your response was received."
-              : "This response was not accepted. Open the linked Paperclip task or reopen the question to try again.",
+              : "此响应未被接受。请打开关联的 Alice 任务，或重新打开问题后再试。",
           );
         }
         expect(answered).toMatchObject({
@@ -34156,7 +34152,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(providerRuntime.posts).toHaveLength(1);
     const delivered = providerRuntime.posts[0]!;
     expect(delivered.text).toBe(
-      "Paperclip attached the complete response because it exceeds Discord’s message limit.",
+      "完整回复超过 Discord 消息长度限制，Alice 已将其作为附件发送。",
     );
     expect(delivered.text).not.toContain("...");
     expect(delivered.files).toHaveLength(1);
@@ -34310,7 +34306,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       );
     expect(definiteFailureNotices).toHaveLength(1);
     const rejectedAttachmentNotice =
-      "Paperclip could not send the response attachment. The complete response remains on its Paperclip task for an operator to retry." +
+      "Alice 无法发送回复附件。完整回复仍保存在对应 Alice 任务中，管理员可以重试。" +
       ` Open task: https://paperclip.example/issues/${conversation.issueId}`;
     expect(definiteFailureNotices[0]).toMatchObject({
       commentId: null,
@@ -34898,7 +34894,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(completed).toMatchObject({ state: "published", attempts: 2 });
     expect(providerRuntime.posts).toHaveLength(1);
     expect(providerRuntime.posts[0]?.text).toBe(
-      "Paperclip attached the complete response to preserve its Markdown formatting.",
+      "为保留 Markdown 格式，Alice 已将完整回复作为附件发送。",
     );
     const attachment = providerRuntime.posts[0]?.attachments?.[0] as {
       data: Buffer;
@@ -35818,7 +35814,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     );
     expect(channel.postEphemeral).toHaveBeenCalledWith(
       unlinkedAction.event.user.userId,
-      "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+      "此操作已不可用。请打开关联的 Alice 任务，或联系管理员关联此账户。",
       { fallbackToDM: false },
     );
     const deniedSlackActions = await db
@@ -35836,7 +35832,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         principalId: expect.any(String),
         state: "filtered",
         attempts: 1,
-        redactedError: "External action denied by Paperclip authorization",
+        redactedError: "外部操作被 Alice 授权策略拒绝",
         normalizedEvent: {
           providerEventId: expect.stringMatching(
             /^action-denied:[a-f0-9]{64}$/,
@@ -35857,7 +35853,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           kind: "delivery",
           status: "filtered",
           summary: "action ignored",
-          detail: "External action denied by Paperclip authorization",
+          detail: "外部操作被 Alice 授权策略拒绝",
           replayable: false,
         }),
       ]),
@@ -36361,7 +36357,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       ([userId, text]) =>
         userId === externalUserId &&
         text ===
-          "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+          "此操作已不可用。请打开关联的 Alice 任务，或联系管理员关联此账户。",
     ).length;
     await callbacks.onAction(actionEvent());
     expect(
@@ -36369,7 +36365,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         ([userId, text]) =>
           userId === externalUserId &&
           text ===
-            "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+            "此操作已不可用。请打开关联的 Alice 任务，或联系管理员关联此账户。",
       ),
     ).toHaveLength(staleNoticeCount);
     expect(
@@ -37209,7 +37205,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       await vi.waitFor(() =>
         expect(channel.postEphemeral).toHaveBeenCalledWith(
           modalUser.userId,
-          "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+          "此操作已不可用。请打开关联的 Alice 任务，或联系管理员关联此账户。",
           { fallbackToDM: false },
         ),
       );
@@ -37319,7 +37315,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         await vi.waitFor(() =>
           expect(channel.postEphemeral).toHaveBeenCalledWith(
             modalUser.userId,
-            "Paperclip could not open this form. Try the action again or open the linked Paperclip task.",
+            "Alice 无法打开此表单。请重试该操作，或打开关联的 Alice 任务。",
             { fallbackToDM: false },
           ),
         );
@@ -37833,7 +37829,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           expect.objectContaining({
             kind: "delivery",
             status: "filtered",
-            detail: "External chat modal submission denied by Paperclip",
+            detail: "外部聊天表单提交被 Alice 拒绝",
             replayable: false,
           }),
         ]),
@@ -38655,7 +38651,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(denials[0]).toMatchObject({
         state: "filtered",
         attempts: 1,
-        redactedError: "External action denied by Paperclip authorization",
+        redactedError: "外部操作被 Alice 授权策略拒绝",
         normalizedEvent: {
           providerEventId: expect.stringMatching(
             /^action-denied:[a-f0-9]{64}$/,
@@ -38920,7 +38916,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         principalId: principal.id,
         state: "filtered",
         attempts: 1,
-        redactedError: "External action denied by Paperclip authorization",
+        redactedError: "外部操作被 Alice 授权策略拒绝",
         normalizedEvent: {
           providerEventId: expect.stringMatching(
             /^action-denied:[a-f0-9]{64}$/,
@@ -38943,7 +38939,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           kind: "delivery",
           status: "filtered",
           summary: "action ignored",
-          detail: "External action denied by Paperclip authorization",
+          detail: "外部操作被 Alice 授权策略拒绝",
           replayable: false,
         }),
       ]),
@@ -40151,7 +40147,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             actions: [
               {
                 type: "link",
-                label: "Open in Paperclip",
+                label: "在 Alice 中打开",
                 url: `https://paperclip.example/issues/${conversation!.issueId}`,
               },
             ],
@@ -40292,7 +40288,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           card: {
             actions: [
               expect.objectContaining({
-                label: "Open in Paperclip",
+                label: "在 Alice 中打开",
                 type: "link",
               }),
             ],
@@ -40539,13 +40535,13 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       state: "published",
     });
     expect(failedPublication?.payload.text).toContain(
-      "stopped before completing this turn",
+      "在完成本轮任务前停止",
     );
     expect(
       runtime.endpoints
         .get(endpoint.id)
         ?.posts.some((post) =>
-          post.text.includes("stopped before completing this turn"),
+          post.text.includes("在完成本轮任务前停止"),
         ),
     ).toBe(true);
     await service.shutdown();
@@ -40556,12 +40552,12 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       {
         publicBaseUrl: "https://board.paperclip.example",
         expectedFallback: (issueId: string) =>
-          `File saved on the Paperclip task: report.txt. This GitHub App connection cannot upload file bytes into comments. Download it: https://board.paperclip.example/issues/${issueId}`,
+          `文件已保存到 Alice 任务：report.txt。 此 GitHub 应用连接无法将文件字节上传到评论。 下载地址：https://board.paperclip.example/issues/${issueId}`,
       },
       {
         publicBaseUrl: "http://127.0.0.1:3103",
         expectedFallback: () =>
-          "File saved on the private Paperclip task: report.txt. This GitHub App connection cannot upload file bytes into comments.",
+          "文件已保存到私有 Alice 任务：report.txt。 此 GitHub 应用连接无法将文件字节上传到评论。",
       },
     ]) {
       const fixture = await seedCompany();
@@ -40640,7 +40636,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         ),
       ).toBe(true);
       expect(
-        posts.every((post) => !post.text.includes("Shared report.txt.")),
+        posts.every((post) => !post.text.includes("已分享 report.txt。")),
       ).toBe(true);
       expect(posts.every((post) => post.files === undefined)).toBe(true);
       expect(storage.storage.getObject).not.toHaveBeenCalled();
@@ -40724,7 +40720,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     expect(failed).toMatchObject({ state: "failed" });
     const selectedAttachmentNotice =
-      "Paperclip could not send an attachment. The file remains on its Paperclip task for an operator to retry." +
+      "Alice 无法发送附件。文件仍保存在对应 Alice 任务中，管理员可以重试。" +
       ` Open task: https://paperclip.example/issues/${conversation.issueId}`;
     const publications = await db
       .select()
@@ -45133,7 +45129,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       },
       {
         threadId: channel.thread.id,
-        text: "Shared direct-selection.png.",
+        text: "已分享 direct-selection.png。",
         files: [
           expect.objectContaining({
             filename: "direct-selection.png",
@@ -45144,7 +45140,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       },
       {
         threadId: channel.thread.id,
-        text: "Shared orange-tabby.png.",
+        text: "已分享 orange-tabby.png。",
         files: [
           expect.objectContaining({
             filename: "orange-tabby.png",
@@ -45155,7 +45151,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       },
       {
         threadId: channel.thread.id,
-        text: "Shared cat-notes.pdf.",
+        text: "已分享 cat-notes.pdf。",
         files: [
           expect.objectContaining({
             filename: "cat-notes.pdf",
@@ -46192,9 +46188,20 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             .then((rows) => rows[0]!);
           let priorRegistration = registration.payload.registration;
           if (legacyCopy) {
+            const stored = priorRegistration as {
+              ownerId: string;
+              receipt: Record<string, unknown>;
+            };
             const prior = structuredClone(remoteCommands[0]!);
-            (prior.options as Array<{ description: string }>)[2]!.description =
-              "Close the current Paperclip task";
+            (prior as { description: string }).description =
+              `Paperclip session controls [pc:${stored.ownerId}]`;
+            const priorOptions = prior.options as Array<{
+              description: string;
+            }>;
+            priorOptions[0]!.description = "Show the current Paperclip task";
+            priorOptions[1]!.description =
+              "Start a new task in a DM or show new-thread guidance";
+            priorOptions[2]!.description = "Close the current Paperclip task";
             remoteCommands[0] = prior;
             const {
               id: _id,
@@ -46202,9 +46209,6 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
               version: _version,
               ...definition
             } = prior;
-            const stored = priorRegistration as {
-              receipt: Record<string, unknown>;
-            };
             priorRegistration = {
               ...stored,
               receipt: {
@@ -46460,7 +46464,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           .toHaveBeenCalledExactlyOnceWith({ flags: 64 });
         expect(command.editReply).toHaveBeenCalledExactlyOnceWith({
           content: expect.stringContaining(
-            "This command is not available here",
+            "此处无法使用该命令",
           ),
           allowedMentions: { parse: [] },
         });
@@ -46532,7 +46536,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         await f.adapter.handleGatewayInteraction(newCommand);
         expect(newCommand.editReply).toHaveBeenCalledWith(
           expect.objectContaining({
-            content: expect.stringContaining("new Discord thread"),
+            content: expect.stringContaining("新建 Discord 话题"),
           }),
         );
         expect(await f.publications()).toHaveLength(0);
@@ -46715,7 +46719,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           });
           expect(replay.editReply).toHaveBeenCalledExactlyOnceWith(
             expect.objectContaining({
-              content: expect.stringContaining("not available"),
+              content: expect.stringContaining("无法使用"),
             }),
           );
           expect(await f.actions()).toEqual(afterRevocation);
@@ -46749,7 +46753,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         await (await f.parser()).handleGatewayInteraction(changed);
         expect(changed.editReply).toHaveBeenCalledWith(
           expect.objectContaining({
-            content: expect.stringContaining("not available"),
+            content: expect.stringContaining("无法使用"),
           }),
         );
         const changedActor = f.interaction("close", {
@@ -46764,7 +46768,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         await (await f.parser()).handleGatewayInteraction(changedActor);
         expect(changedActor.editReply).toHaveBeenCalledWith(
           expect.objectContaining({
-            content: expect.stringContaining("not available"),
+            content: expect.stringContaining("无法使用"),
           }),
         );
         const unregistered = f.interaction("close", {
@@ -46773,7 +46777,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         await (await f.parser()).handleGatewayInteraction(unregistered);
         expect(unregistered.editReply).toHaveBeenCalledWith(
           expect.objectContaining({
-            content: expect.stringContaining("not available"),
+            content: expect.stringContaining("无法使用"),
           }),
         );
         expect(await f.actions()).toEqual(before);
@@ -47009,7 +47013,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           await delivery;
           expect(command.editReply).toHaveBeenCalledExactlyOnceWith(
             expect.objectContaining({
-              content: expect.stringContaining("not available"),
+              content: expect.stringContaining("无法使用"),
             }),
           );
           expect(await f.actions()).toHaveLength(0);
@@ -47854,7 +47858,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         expect(close.deferReply).toHaveBeenCalledExactlyOnceWith({ flags: 64 });
         expect(close.editReply).toHaveBeenCalledExactlyOnceWith(
           expect.objectContaining({
-            content: expect.stringContaining("could not be confirmed"),
+            content: expect.stringContaining("无法确认该命令"),
           }),
         );
         expect(JSON.stringify(close.editReply.mock.calls)).not.toContain(
@@ -47915,7 +47919,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect((await service.listPrincipals(other.id))[0]?.lastConnectAt).toBeNull();
     const notice = String((postEphemeral.mock.calls[0] as unknown[])[1]);
     const token = /token=([A-Za-z0-9_-]+)/.exec(notice)![1];
-    expect(notice).toContain("Connect your Paperclip account");
+    expect(notice).toContain("连接你的 Alice 账户");
     expect((postEphemeral.mock.calls[0] as unknown[])[2]).toEqual({ fallbackToDM: false });
     expect(await service.previewIdentityLink(token, "owner-user")).toMatchObject({ selfService: true, canConfirm: true, externalLabel: "Connect Person" });
     expect(await service.setupTestStatus(endpoint.id, "owner-user")).toEqual({ messageReceivedAt: null });
@@ -47940,7 +47944,13 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     const confirmationNotice = vi.fn(async () => ({ id: "linked-notice", threadId: "C-CONNECT" }));
     providerRuntime.thread = (id: string) => ({ ...originalThread(id), postEphemeral: confirmationNotice });
     await service.confirmIdentityLink(token, "owner-user");
-    await vi.waitFor(() => expect(confirmationNotice).toHaveBeenCalledWith("U-CONNECT", expect.stringContaining("account is connected"), { fallbackToDM: false }));
+    await vi.waitFor(() =>
+      expect(confirmationNotice).toHaveBeenCalledWith(
+        "U-CONNECT",
+        expect.stringContaining("账户已连接到 Alice"),
+        { fallbackToDM: false },
+      ),
+    );
     expect((await service.listPrincipals(endpoint.id))[0]).toMatchObject({ status: "linked", paperclipUserId: "owner-user" });
     await expect(service.test(endpoint.id)).rejects.toMatchObject({ details: { code: "chat_test_follow_up_missing" } });
     await expect(service.confirmIdentityLink(token, "owner-user")).rejects.toMatchObject({ status: 422 });
@@ -48223,7 +48233,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           kind: "action",
           status: "delivery_unknown",
           summary: "Slack slash-command task start delivery unknown",
-          detail: expect.stringContaining("will not replay it automatically"),
+          detail: expect.stringContaining("不会自动重放"),
           replayable: false,
           resolutionActions: ["retry_anyway", "cancel"],
         }),
@@ -48360,7 +48370,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           }),
         }),
         principalId: null,
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "此目标未在 Alice 中启用",
       },
     ]);
     await expect(
@@ -48943,10 +48953,10 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         principalId: null,
         redactedError:
           authorizationChange === "resource_disabled"
-            ? "Destination is not enabled in Paperclip"
+            ? "此目标未在 Alice 中启用"
             : authorizationChange === "viewer"
-              ? "Linked Paperclip account is not currently permitted"
-              : "External identity must be linked to a Paperclip account",
+              ? "关联的 Alice 账户当前没有权限"
+              : "外部身份必须关联到 Alice 账户",
         state: "filtered",
       });
       expect(JSON.stringify(delivery?.normalizedEvent)).not.toContain(
@@ -49155,7 +49165,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           filtering: { contentRetained: false },
         }),
         principalId: null,
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "此目标未在 Alice 中启用",
         state: "filtered",
       }),
     ]);
@@ -49888,7 +49898,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect.objectContaining({
         state: "filtered",
         principalId: null,
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "此目标未在 Alice 中启用",
         normalizedEvent: expect.objectContaining({
           filtering: { contentRetained: false },
         }),
@@ -50124,7 +50134,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       },
       {
         threadId: dm.thread.id,
-        text: "Send your request to start a new Paperclip task.",
+        text: "发送请求以启动新的 Alice 任务。",
       },
       {
         threadId: dm.thread.id,
@@ -50237,7 +50247,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await vi.waitFor(() => expect(postEphemeral).toHaveBeenCalledTimes(3));
     for (const call of postEphemeral.mock.calls) {
       expect(call[1]).toBe(
-        "Use status, new, and close in a direct message with this agent. In a channel, open the Paperclip task from its Slack thread.",
+        "请在与此智能体的私信中使用 status、new 和 close。在频道中，请从 Slack 话题打开 Alice 任务。",
       );
       expect(call[2]).toEqual({ fallbackToDM: false });
     }
@@ -51387,7 +51397,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           state: "filtered",
           attempts: 0,
           conversationId: null,
-          redactedError: "Destination is not enabled in Paperclip",
+          redactedError: "此目标未在 Alice 中启用",
           normalizedEvent: expect.objectContaining({
             deduplication: expect.objectContaining({ duplicateCount: 1 }),
           }),
@@ -51533,9 +51543,9 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     ).toEqual([
       expect.stringMatching(/— todo$/),
       expect.stringContaining(
-        "Open a new Telegram forum topic to start a new Paperclip task.",
+        "请新建 Telegram 论坛话题来启动新的 Alice 任务。",
       ),
-      "This chat conversation is closed. A later message here will continue the same Paperclip task.",
+      "此聊天会话已关闭。之后在这里发送消息会继续同一个 Alice 任务。",
     ]);
   });
 
@@ -51727,7 +51737,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await vi.waitFor(() =>
       expect(postEphemeral).toHaveBeenCalledWith(
         "U-COMMANDER",
-        "This channel or account is not allowed to start Paperclip work.",
+        "此频道或账户无权启动 Alice 工作。",
         { fallbackToDM: false },
       ),
     );
@@ -62132,7 +62142,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       state: "filtered",
       attempts: 0,
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "此目标未在 Alice 中启用",
       normalizedEvent: {
         filtering: { contentRetained: false },
         message: { providerMessageId: `${chatId}:10` },
@@ -62852,7 +62862,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       const [conversation] = await service.listConversations(endpoint.id);
       if (!conversation)
         throw new Error("Expected Telegram attachment failure conversation");
-      const visibleFailure = `Paperclip could not safely import the attached Telegram file. Please resend it as a supported file under ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)} or include text describing the request.`;
+      const visibleFailure = `Alice 无法安全导入附加的 Telegram 文件。请重新发送不超过 ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)} 的受支持文件，或用文字描述请求。`;
       await expect(
         db
           .select({ body: issueComments.body })
@@ -64113,7 +64123,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       await expect(context.repair()).resolves.toBe(true);
       await context.service.processPendingPublications(100);
       const taskUrl = `https://paperclip.example/issues/${context.issue.id}`;
-      const expected = `${context.result.summary}\n\n[Open this Paperclip task](${taskUrl})`;
+      const expected = `${context.result.summary}\n\n[打开此 Alice 任务](${taskUrl})`;
       expect(context.providerRuntime.posts.map((post) => post.text)).toEqual([
         expected,
       ]);
@@ -64174,7 +64184,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           .posts[0]!.text;
         expect(text).toBe(
           expected
-            ? `${context.result.summary}\n\n[Open this Paperclip task](${expected}/issues/${context.issue.id})`
+            ? `${context.result.summary}\n\n[打开此 Alice 任务](${expected}/issues/${context.issue.id})`
             : context.result.summary,
         );
         for (const secret of [
@@ -64201,7 +64211,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         undefined,
         mode === "existing_link"
           ? (issueId) =>
-              `Attach directly: [Open this Paperclip task](https://paperclip.example/issues/${issueId})`
+              `Attach directly: [打开此 Alice 任务](https://paperclip.example/issues/${issueId})`
           : undefined,
       );
       let restarted: ReturnType<typeof createService> | undefined;
@@ -64223,7 +64233,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           );
         expect(before).toMatchObject({ state: "retry", attempts: 1 });
         expect(
-          before.payload.text.match(/Open this Paperclip task/g),
+          before.payload.text.match(/打开此 Alice 任务/g),
         ).toHaveLength(1);
         const [preparation] = await db
           .select()
@@ -64499,7 +64509,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             ? []
             : [
                 mode === "complete_batch"
-                  ? `${context.result.summary}\n\n[Open this Paperclip task](https://paperclip.example/issues/${context.issue.id})`
+                  ? `${context.result.summary}\n\n[打开此 Alice 任务](https://paperclip.example/issues/${context.issue.id})`
                   : context.result.summary,
               ],
         );
@@ -64549,7 +64559,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             ),
           );
         expect(publication).toMatchObject({ state: "retry", attempts: 1 });
-        expect(publication.payload.text).toContain("Open this Paperclip task");
+        expect(publication.payload.text).toContain("打开此 Alice 任务");
         const payload = { ...publication.payload };
         if (mode === "text") payload.text += "\nChanged after preparation";
         if (mode === "progress") payload.progressState = "completed";
@@ -71469,7 +71479,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
                 .select()
                 .from(issueComments)
                 .where(eq(issueComments.companyId, fixture.companyId));
-              expect(comment!.body).toContain("could not safely import");
+              expect(comment!.body).toContain("无法安全导入");
             }
           }
         } finally {
@@ -71641,7 +71651,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
               .from(issueComments)
               .where(eq(issueComments.companyId, fixture.companyId));
             expect(comment!.body).toContain(
-              `under ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)}`,
+              `不超过 ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)}`,
             );
             expect(wakeup).not.toHaveBeenCalled();
             return;

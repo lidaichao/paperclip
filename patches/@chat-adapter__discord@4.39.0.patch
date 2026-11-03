@@ -968,7 +968,7 @@ index a42b61d58..a56ddef52 100644
 +        if (Date.now() < acknowledgementStartedAt + 2500)
 +          await interaction.reply({
 +            content:
-+              "This form could not be opened. Open the linked Paperclip task.",
++              "无法打开此表单。请打开关联的 Alice 任务。",
 +            flags: DiscordInteractionResponseFlag.Ephemeral,
 +            allowedMentions: { parse: [] },
 +          });
@@ -982,7 +982,7 @@ index a42b61d58..a56ddef52 100644
 +      ) {
 +        await interaction.reply({
 +          content:
-+            "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
++            "此操作已不可用。请打开关联的 Alice 任务，或联系管理员关联此账户。",
 +          flags: DiscordInteractionResponseFlag.Ephemeral,
 +        });
 +      }
@@ -1050,7 +1050,7 @@ index a42b61d58..a56ddef52 100644
 +        ? correction.message
 +        : response?.action === "clear"
 +          ? "Your response was received."
-+          : "This response was not accepted. Open the linked Paperclip task or reopen the question to try again.",
++          : "此响应未被接受。请打开关联的 Alice 任务，或重新打开问题后再试。",
 +      flags: DiscordInteractionResponseFlag.Ephemeral,
 +      allowedMentions: { parse: [] },
 +      ...(safeCorrection

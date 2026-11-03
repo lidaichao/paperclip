@@ -376,7 +376,7 @@ describe("Discord native modal Gateway bridge", () => {
     expect(click.reply).toHaveBeenCalledWith(
       expect.objectContaining({
         content:
-          "This form could not be opened. Open the linked Paperclip task.",
+          "无法打开此表单。请打开关联的 Alice 任务。",
         flags: 64,
       }),
     );
@@ -429,7 +429,7 @@ describe("Discord native modal Gateway bridge", () => {
       await adapter.handleGatewayInteraction(input);
       expect(input.reply).toHaveBeenCalledWith({
         content:
-          "This response was not accepted. Open the linked Paperclip task or reopen the question to try again.",
+          "此响应未被接受。请打开关联的 Alice 任务，或重新打开问题后再试。",
         flags: 64,
         allowedMentions: { parse: [] },
       });

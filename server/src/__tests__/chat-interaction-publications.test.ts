@@ -407,7 +407,7 @@ describeEmbeddedPostgres(
           expect.objectContaining({
             idempotencyKey: `interaction-resolution:${interaction.id}:${fixture.endpointIds.slack}`,
             state: "pending",
-            payload: expect.objectContaining({ text: "Answered: High." }),
+            payload: expect.objectContaining({ text: "已回答：High。" }),
           }),
         ]),
       );
@@ -466,7 +466,7 @@ describeEmbeddedPostgres(
           idempotencyKey: `interaction-resolution:${interaction.id}:${fixture.endpointIds.github}`,
           payload: expect.objectContaining({
             interactionId: interaction.id,
-            text: "Accepted.",
+            text: "已接受。",
           }),
           state: "pending",
         },
@@ -526,15 +526,15 @@ describeEmbeddedPostgres(
       expect(settlements).toHaveLength(2);
       for (const settlement of settlements) {
         expect(settlement.payload).toMatchObject({
-          text: "Answered.",
-          card: { kind: "question", body: "Answered." },
+          text: "已回答。",
+          card: { kind: "question", body: "已回答。" },
         });
         expect(settlement.payload.card?.actions ?? []).toHaveLength(0);
         expect(JSON.stringify(settlement.payload)).not.toContain(
           "private free-text label",
         );
         expect(JSON.stringify(settlement.payload)).not.toContain(
-          "Answered in Paperclip",
+          "已在 Alice 中回答",
         );
       }
     });
@@ -599,11 +599,11 @@ describeEmbeddedPostgres(
               endpointId,
               idempotencyKey: `interaction-resolution:${answeredQuestion.id}:${endpointId}`,
               payload: expect.objectContaining({
-                text: "Answered: High.",
+                text: "已回答：High。",
                 card: expect.objectContaining({
                   kind: "question",
                   title: "Which priority?",
-                  body: "Answered: High.",
+                  body: "已回答：High。",
                 }),
               }),
             }),
@@ -670,7 +670,7 @@ describeEmbeddedPostgres(
       expect(skippedSettlements).toHaveLength(2);
       expect(
         skippedSettlements.every(
-          (row) => row.payload.card?.body === "Skipped in Paperclip.",
+          (row) => row.payload.card?.body === "已在 Alice 中跳过。",
         ),
       ).toBe(true);
       expect(
@@ -716,7 +716,7 @@ describeEmbeddedPostgres(
           originals.find((row) => row.endpointId === fixture.endpointIds.slack)
             ?.payload.card?.actions,
         ).toEqual([
-          expect.objectContaining({ type: "link", label: "Open in Paperclip" }),
+          expect.objectContaining({ type: "link", label: "在 Alice 中打开" }),
         ]);
         expect(
           originals.find(
@@ -769,11 +769,11 @@ describeEmbeddedPostgres(
                 endpointId,
                 idempotencyKey: `interaction-resolution:${interaction.id}:${endpointId}`,
                 payload: expect.objectContaining({
-                  text: outcome === "accept" ? "Accepted." : "Rejected.",
+                  text: outcome === "accept" ? "已接受。" : "已拒绝。",
                   card: expect.objectContaining({
                     kind: "confirmation",
                     title: `Should we ${outcome}?`,
-                    body: outcome === "accept" ? "Accepted" : "Rejected",
+                    body: outcome === "accept" ? "已接受" : "已拒绝",
                   }),
                 }),
               }),
@@ -995,8 +995,8 @@ describeEmbeddedPostgres(
         settlements.every(
           (row) =>
             row.state === "pending" &&
-            row.payload.text === "Expired: replaced by a newer request." &&
-            row.payload.card?.body === "Expired: replaced by a newer request" &&
+            row.payload.text === "已过期：已被更新的请求取代。" &&
+            row.payload.card?.body === "已过期：已被更新的请求取代" &&
             (row.payload.card.actions ?? []).length === 0,
         ),
       ).toBe(true);
@@ -1038,9 +1038,9 @@ describeEmbeddedPostgres(
       expect(liveSettlements).toEqual([
         expect.objectContaining({
           payload: expect.objectContaining({
-            text: "Expired: superseded by a newer reply.",
+            text: "已过期：已被更新的回复取代。",
             card: expect.objectContaining({
-              body: "Expired: superseded by a newer reply",
+              body: "已过期：已被更新的回复取代",
             }),
           }),
         }),
@@ -1104,7 +1104,7 @@ describeEmbeddedPostgres(
       expect(
         historicalSettlements.every(
           (row) =>
-            row.payload.card?.body === "Expired: superseded by a newer reply" &&
+            row.payload.card?.body === "已过期：已被更新的回复取代" &&
             (row.payload.card.actions ?? []).length === 0,
         ),
       ).toBe(true);
@@ -1237,8 +1237,8 @@ describeEmbeddedPostgres(
       expect(
         closedSettlements.every(
           (row) =>
-            row.payload.text === "Expired: task is closed." &&
-            row.payload.card?.body === "Expired: task is closed" &&
+            row.payload.text === "已过期：任务已关闭。" &&
+            row.payload.card?.body === "已过期：任务已关闭" &&
             (row.payload.card.actions ?? []).length === 0,
         ),
       ).toBe(true);

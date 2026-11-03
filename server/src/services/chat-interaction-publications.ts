@@ -37,33 +37,33 @@ function terminalNativeInteractionCopy(
 ): { body: string; text: string } | null {
   if (interaction.kind === "request_confirmation") {
     if (interaction.status === "accepted")
-      return { body: "Accepted", text: "Accepted." };
+      return { body: "已接受", text: "已接受。" };
     if (interaction.status === "rejected")
-      return { body: "Rejected", text: "Rejected." };
+      return { body: "已拒绝", text: "已拒绝。" };
     if (interaction.status === "cancelled") {
       const outcome = interaction.result?.outcome;
       const body =
         outcome === "skipped"
-          ? "Skipped in Paperclip"
+          ? "已在 Alice 中跳过"
           : outcome === "withdrawn"
-            ? "Withdrawn in Paperclip"
+            ? "已在 Alice 中撤回"
             : outcome === "addressee_deleted"
-              ? "Cancelled: addressed agent was removed"
-              : "Cancelled in Paperclip";
-      return { body, text: `${body}.` };
+              ? "已取消：接收任务的智能体已被移除"
+              : "已在 Alice 中取消";
+      return { body, text: `${body}。` };
     }
     if (interaction.status === "expired") {
       const body =
         interaction.result?.outcome === "superseded_by_comment"
-          ? "Expired: superseded by a newer reply"
+          ? "已过期：已被更新的回复取代"
           : interaction.result?.outcome === "superseded_by_newer_request"
-            ? "Expired: replaced by a newer request"
+            ? "已过期：已被更新的请求取代"
             : interaction.result?.outcome === "stale_target"
-              ? "Expired: target is no longer current"
+              ? "已过期：目标已不是当前目标"
               : interaction.result?.outcome === "issue_closed"
-                ? "Expired: task is closed"
-                : "Expired in Paperclip";
-      return { body, text: `${body}.` };
+                ? "已过期：任务已关闭"
+                : "已在 Alice 中过期";
+      return { body, text: `${body}。` };
     }
     return null;
   }
@@ -81,30 +81,30 @@ function terminalNativeInteractionCopy(
             (candidate) => candidate.id === answer.optionIds[0],
           )
         : null;
-    const body = option ? `Answered: ${option.label}.` : "Answered.";
+    const body = option ? `已回答：${option.label}。` : "已回答。";
     return { body, text: body };
   }
   if (interaction.status === "cancelled") {
     const outcome = interaction.result?.outcome;
     const body =
       outcome === "skipped"
-        ? "Skipped in Paperclip."
+        ? "已在 Alice 中跳过。"
         : outcome === "withdrawn"
-          ? "Withdrawn in Paperclip."
-          : "Cancelled in Paperclip.";
+          ? "已在 Alice 中撤回。"
+          : "已在 Alice 中取消。";
     return { body, text: body };
   }
   if (interaction.status === "expired") {
     const body =
       interaction.result?.expirationReason === "superseded_by_comment"
-        ? "Expired: superseded by a newer reply"
+        ? "已过期：已被更新的回复取代"
         : interaction.result?.expirationReason ===
             "superseded_by_newer_interaction"
-          ? "Expired: replaced by a newer request"
+          ? "已过期：已被更新的请求取代"
           : interaction.result?.outcome === "issue_closed"
-            ? "Expired: task is closed"
-            : "Expired in Paperclip";
-    return { body, text: `${body}.` };
+            ? "已过期：任务已关闭"
+            : "已在 Alice 中过期";
+    return { body, text: `${body}。` };
   }
   return null;
 }
@@ -366,7 +366,7 @@ export async function enqueueIssueInteractionChatPublications(
             ? [
                 {
                   type: "link" as const,
-                  label: "Open in Paperclip",
+                  label: "在 Alice 中打开",
                   url: taskUrl,
                 },
               ]
@@ -493,7 +493,7 @@ export async function enqueueIssueInteractionChatPublications(
 /**
  * Settles every delivered question or confirmation card. Providers without a
  * native callback receive the same actionless terminal edit/follow-up as
- * providers with buttons, so an "Open in Paperclip" prompt never remains
+ * providers with buttons, so an "在 Alice 中打开" prompt never remains
  * visibly pending after the authoritative board decision.
  *
  * The terminal publication shares the provider callback idempotency key. If a

@@ -295,7 +295,7 @@ describe("Discord native question adapter-to-runtime boundary", () => {
     expect(click.deferUpdate).not.toHaveBeenCalled();
     expect(click.reply).toHaveBeenCalledWith({
       content:
-        "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+        "此操作已不可用。请打开关联的 Alice 任务，或联系管理员关联此账户。",
       flags: 64,
     });
   });
@@ -311,7 +311,7 @@ describe("Discord native question adapter-to-runtime boundary", () => {
     expect(click.deferUpdate).not.toHaveBeenCalled();
     expect(click.reply).toHaveBeenCalledWith({
       content:
-        "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+        "此操作已不可用。请打开关联的 Alice 任务，或联系管理员关联此账户。",
       flags: 64,
     });
   });
