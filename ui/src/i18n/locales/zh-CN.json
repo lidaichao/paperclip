@@ -11697,6 +11697,15 @@
     "no_runs_match_filters_0d200004": "没有符合当前筛选条件的运行记录。",
     "dismissed_in_browser_0d200005": "已在此浏览器中关闭",
     "dismissed_for_visit_0d200006": "已在本次访问中关闭",
-    "authentication_failed_0d300001": "身份验证失败"
+    "authentication_failed_0d300001": "身份验证失败",
+    "alice_cloud_invalid_sign_in_handoff_0d400001": "Alice Cloud 返回了无效的登录交接信息。",
+    "alice_cloud_could_not_authorize_connection_0d400002": "Alice Cloud 无法为你的账户授权此连接。",
+    "alice_cloud_could_not_prepare_sign_in_0d400003": "Alice Cloud 无法准备安全登录，请重试。",
+    "alice_cloud_invalid_provider_sign_in_address_0d400004": "Alice Cloud 返回了无效的服务商登录地址。",
+    "alice_could_not_start_secure_sign_in_0d400005": "Alice 无法启动安全登录，请重试。",
+    "recorded_by_alice_0d400006": "由 Alice 记录。",
+    "real_call_against_app_as_agent_0d400007": "将以 {{v1}} 的身份真实调用 {{v0}}。",
+    "waiting_for_ok_before_call_leaves_alice_0d400008": "正在等待你的确认，确认后 Alice 才会发出此调用。",
+    "no_call_action_off_for_agent_0d400009": "不会发起调用；{{v0}} 已关闭此操作。"
   }
 }

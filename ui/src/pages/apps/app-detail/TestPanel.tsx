@@ -825,9 +825,9 @@ function splitRequiredOptional(schema: JsonSchemaNode): JsonSchemaNode {
 }
 
 const GUT_CHECK: Record<ToolConnectionTestDecision, (app: string, agent: string) => string> = {
-  allowed: (app, agent) => `This runs a real call against ${app} as ${agent}.`,
-  ask_first: () => `Waiting for your OK before this call leaves Paperclip.`,
-  off: (_app, agent) => `No call will be made — this action is off for ${agent}.`,
+  allowed: (app, agent) => l10n("local.real_call_against_app_as_agent_0d400007", { v0: app, v1: agent }),
+  ask_first: () => l10n("local.waiting_for_ok_before_call_leaves_alice_0d400008"),
+  off: (_app, agent) => l10n("local.no_call_action_off_for_agent_0d400009", { v0: agent }),
 };
 
 function ActionTester({

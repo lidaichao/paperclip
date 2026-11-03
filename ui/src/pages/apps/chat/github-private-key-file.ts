@@ -1,3 +1,5 @@
+import { l10n } from "../../../i18n";
+
 export const GITHUB_PRIVATE_KEY_FILE_MAX_BYTES = 64 * 1024;
 
 export function createGitHubPrivateKeyReadGuard() {
@@ -35,7 +37,7 @@ export async function readGitHubPrivateKeyFile(
     value = await file.text();
   } catch {
     throw new Error(
-      "Paperclip couldn't read that file. Choose the .pem file again or paste the private key.",
+      l10n("local.alice_could_not_read_pem_file_0c950005"),
     );
   }
   if (!value.trim()) {

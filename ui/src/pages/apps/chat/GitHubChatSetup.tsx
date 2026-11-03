@@ -80,7 +80,7 @@ export function GitHubChatSetup() {
   const [availableStep, setAvailableStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [name, setName] = useState("Paperclip Review");
+  const [name, setName] = useState("Alice Review");
   const [existing, setExisting] = useState(reconnecting);
   const [credentials, setCredentials] = useState({
     appId: "",

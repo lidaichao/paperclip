@@ -11697,6 +11697,15 @@
     "no_runs_match_filters_0d200004": "No runs match these filters.",
     "dismissed_in_browser_0d200005": "Dismissed in this browser",
     "dismissed_for_visit_0d200006": "Dismissed for this visit",
-    "authentication_failed_0d300001": "Authentication failed"
+    "authentication_failed_0d300001": "Authentication failed",
+    "alice_cloud_invalid_sign_in_handoff_0d400001": "Alice Cloud returned an invalid sign-in handoff.",
+    "alice_cloud_could_not_authorize_connection_0d400002": "Alice Cloud could not authorize this connection for your account.",
+    "alice_cloud_could_not_prepare_sign_in_0d400003": "Alice Cloud couldn’t prepare secure sign-in. Try again.",
+    "alice_cloud_invalid_provider_sign_in_address_0d400004": "Alice Cloud returned an invalid provider sign-in address.",
+    "alice_could_not_start_secure_sign_in_0d400005": "Alice couldn’t start secure sign-in. Try again.",
+    "recorded_by_alice_0d400006": "Recorded by Alice.",
+    "real_call_against_app_as_agent_0d400007": "This runs a real call against {{v0}} as {{v1}}.",
+    "waiting_for_ok_before_call_leaves_alice_0d400008": "Waiting for your OK before this call leaves Alice.",
+    "no_call_action_off_for_agent_0d400009": "No call will be made — this action is off for {{v0}}."
   }
 }

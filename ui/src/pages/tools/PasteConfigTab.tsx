@@ -138,7 +138,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
       navigateTopLevel(target.url);
     } catch (error) {
       setOAuthPhase("error");
-      setOAuthError(error instanceof Error ? error.message : "Paperclip couldn’t start secure sign-in. Try again.");
+      setOAuthError(error instanceof Error ? error.message : l10n("local.alice_could_not_start_secure_sign_in_0d400005"));
     }
   };
 
@@ -150,7 +150,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
       setOAuthError(
         error instanceof Error
           ? error.message
-          : "Paperclip couldn’t start secure sign-in. Try again.",
+          : l10n("local.alice_could_not_start_secure_sign_in_0d400005"),
       );
     },
   });
