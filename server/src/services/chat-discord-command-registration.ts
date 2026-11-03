@@ -99,7 +99,7 @@ function freezeState(
 /** The public marker is an identifier, never a credential or standalone proof. */
 export function discordPaperclipCommandDefinition(publicOwnerId: string) {
   if (!ownerId.safeParse(publicOwnerId).success)
-    throw new Error("Invalid Discord command owner identifier");
+    throw new Error("Discord 命令所有者标识无效");
   return {
     type: 1,
     name: "paperclip",
@@ -155,7 +155,7 @@ export function createDiscordCommandRegistration(
 ): DiscordCommandRegistration {
   const parsed = scopeSchema.safeParse(scope);
   if (!parsed.success)
-    throw new Error("Invalid Discord command registration scope");
+    throw new Error("Discord 命令注册范围无效");
   return freezeState({
     schema: "paperclip.discord.command-registration.v1",
     scope: parsed.data,
@@ -423,7 +423,7 @@ export async function reconcileDiscordCommandRegistration(
     input.botToken.length > 4096 ||
     /[\r\n]/.test(input.botToken)
   ) {
-    throw new Error("Invalid Discord command registration authority");
+    throw new Error("Discord 命令注册权限无效");
   }
   // The caller may retain its options while an authorization hook is held.
   // Snapshot the validated identity, credential and HTTP function before await.
@@ -438,7 +438,7 @@ export async function reconcileDiscordCommandRegistration(
     try {
       await input.authorize(stage);
     } catch {
-      throw new Error("Discord command registration authorization denied");
+      throw new Error("Discord 命令注册授权被拒绝");
     }
   };
   const persist = async (next: DiscordCommandRegistration) => {
@@ -446,7 +446,7 @@ export async function reconcileDiscordCommandRegistration(
     try {
       await input.commit(state!, next);
     } catch {
-      throw new Error("Discord command registration persistence unproven");
+      throw new Error("Discord 命令注册尚未确认持久化");
     }
     state = next;
   };

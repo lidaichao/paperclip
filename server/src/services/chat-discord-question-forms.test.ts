@@ -229,7 +229,7 @@ describe("Discord actor-scoped correction drafts", () => {
     persistence.compareAndSet = async () => false;
     await expect(
       retainDiscordQuestionFormCorrection(persistence, scope, input, now),
-    ).rejects.toThrow("ownership changed");
+    ).rejects.toThrow("所有权已变化");
   });
 
   it("requires a matching current raw thread identity even without SDK context", () => {

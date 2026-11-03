@@ -132,7 +132,7 @@ async function discordJson<T>(
   try {
     body = await response.json();
   } catch {
-    throw new Error("Discord returned an unreadable response");
+    throw new Error("Discord 返回了无法读取的响应");
   }
   if (!response.ok) {
     const errorBody =
@@ -227,7 +227,7 @@ export async function verifyDiscordBot(input: {
     ),
   ]);
   if (!user.bot || !user.id || !user.username) {
-    throw new Error("Discord token does not identify a bot user");
+    throw new Error("Discord 令牌未识别出机器人用户");
   }
   if (application.id !== applicationId || user.id !== applicationId) {
     throw new Error(
@@ -240,7 +240,7 @@ export async function verifyDiscordBot(input: {
     );
   }
   if (guild.id !== guildId) {
-    throw new Error("Discord bot is not installed in the selected server");
+    throw new Error("所选服务器中未安装 Discord 机器人");
   }
   return {
     providerAccountId: guildId,
@@ -292,7 +292,7 @@ export async function listDiscordBotChannels(input: {
   ]);
   const memberId = member.user?.id;
   if (!memberId || guild.id !== guildId) {
-    throw new Error("Discord bot membership could not be verified");
+    throw new Error("无法验证 Discord 机器人的服务器成员身份");
   }
   const memberRoleIds = new Set(member.roles ?? []);
   const resources: ChatProviderResourceInventoryItem[] = channels

@@ -55,7 +55,7 @@ function correctionId(
   submitActionId: string,
 ) {
   if (!token(submitActionId, "pcfs:"))
-    throw new Error("Invalid Discord form token");
+    throw new Error("Discord 表单令牌无效");
   // Includes the high-entropy secret submit token, not merely public IDs. One
   // overwritable row per form+actor bounds retry storage without persisting a
   // Discord interaction token or raw callback envelope.
@@ -160,14 +160,14 @@ export async function retainDiscordQuestionFormCorrection(
     input.modal.children.length < 1 ||
     input.modal.children.length > 5
   )
-    throw new Error("Discord form correction is not current");
+    throw new Error("Discord 表单修正已不是当前版本");
   const values: Record<string, string> = {};
   const messages: string[] = [
     "Please check your answers, then select Edit answers.",
   ];
   for (const child of input.modal.children) {
     if (child.type !== "text_input" && child.type !== "select")
-      throw new Error("Unsupported Discord correction field");
+      throw new Error("不支持此 Discord 修正字段");
     const value = input.values[child.id];
     const error = input.fieldErrors[child.id];
     // Both label and error are produced by canonical form validation, never
@@ -197,7 +197,7 @@ export async function retainDiscordQuestionFormCorrection(
     expiresAt: expiresAt.toISOString(),
     values,
   };
-  if (!validDraft(draft)) throw new Error("Invalid Discord correction binding");
+  if (!validDraft(draft)) throw new Error("Discord 修正绑定无效");
   const actionId = correctionId(scope, input, input.submitActionId);
   for (let attempt = 0; attempt < MAX_CAS_ATTEMPTS; attempt++) {
     const prior = await persistence.read(scope, stateKey(actionId));
@@ -221,7 +221,7 @@ export async function retainDiscordQuestionFormCorrection(
       };
     }
   }
-  throw new Error("Discord correction draft ownership changed");
+  throw new Error("Discord 修正草稿所有权已变化");
 }
 
 export async function loadDiscordQuestionFormCorrection(

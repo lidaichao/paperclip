@@ -160,7 +160,7 @@ export async function reconcileStoredDiscordCommandRegistration(
       /[\r\n]/.test(botToken) ||
       typeof fetch !== "function"
     )
-      throw new Error("Invalid registration context");
+      throw new Error("注册上下文无效");
     const initial = await db.transaction(async (tx) => {
       await authorize(tx);
       const [priorOwner] = await tx

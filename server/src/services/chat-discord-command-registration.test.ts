@@ -234,7 +234,7 @@ describe("Discord owned native-command registration", () => {
       expect(parseDiscordCommandRegistration(invalid, scope, true)).toBeNull();
       await expect(
         reconcileDiscordCommandRegistration({ ...f.options(), state: invalid }),
-      ).rejects.toThrow("Invalid Discord command registration authority");
+      ).rejects.toThrow("Discord 命令注册权限无效");
     }
     expect(f.order).toEqual([]);
     expect(f.commit).not.toHaveBeenCalled();
@@ -419,7 +419,7 @@ describe("Discord owned native-command registration", () => {
     f.commit.mockRejectedValueOnce(new Error(secret));
     await expect(
       reconcileDiscordCommandRegistration(f.options()),
-    ).rejects.toThrow("persistence unproven");
+    ).rejects.toThrow("尚未确认持久化");
     expect(f.order).toEqual(["GET"]);
     expect(f.stored.phase).toBe("prepared");
     const persist = f.commit.getMockImplementation()!;
@@ -429,7 +429,7 @@ describe("Discord owned native-command registration", () => {
     });
     await expect(
       reconcileDiscordCommandRegistration(f.options()),
-    ).rejects.toThrow("persistence unproven");
+    ).rejects.toThrow("尚未确认持久化");
     expect(f.stored.phase).toBe("attempted");
     f.commit.mockImplementation(persist);
     f.order.length = 0;
@@ -446,7 +446,7 @@ describe("Discord owned native-command registration", () => {
     });
     await expect(
       reconcileDiscordCommandRegistration(f.options()),
-    ).rejects.toThrow("authorization denied");
+    ).rejects.toThrow("授权被拒绝");
     expect(f.order).toEqual(["GET", "persist:attempted"]);
     const g = fixture();
     g.authorize.mockImplementation(async (stage?: string) => {
@@ -454,7 +454,7 @@ describe("Discord owned native-command registration", () => {
     });
     await expect(
       reconcileDiscordCommandRegistration(g.options()),
-    ).rejects.toThrow("authorization denied");
+    ).rejects.toThrow("授权被拒绝");
     expect(g.stored.phase).toBe("attempted");
   });
 
@@ -480,7 +480,7 @@ describe("Discord owned native-command registration", () => {
     ]) {
       await expect(
         reconcileDiscordCommandRegistration({ ...f.options(), ...override }),
-      ).rejects.toThrow("Invalid Discord command registration authority");
+      ).rejects.toThrow("Discord 命令注册权限无效");
     }
     expect(f.fetch).not.toHaveBeenCalled();
   });
