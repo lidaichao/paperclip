@@ -12137,6 +12137,20 @@
     "one_selected_member_0fe00007": "{{v0}} selected member",
     "selected_members_0fe00008": "{{v0}} selected members",
     "owner_s_application_name_0fe00009": "{{v0}}’ {{v1}}",
-    "owner_application_name_0fe00010": "{{v0}}’s {{v1}}"
+    "owner_application_name_0fe00010": "{{v0}}’s {{v1}}",
+    "task_renamed_0ff00001": "Task renamed",
+    "task_rename_failed_0ff00002": "Task rename failed",
+    "unable_rename_task_0ff00003": "Unable to rename this task.",
+    "task_archived_from_inbox_0ff00004": "Task archived from inbox",
+    "task_archive_failed_0ff00005": "Task archive failed",
+    "unable_archive_task_inbox_0ff00006": "Unable to archive this task from the inbox.",
+    "restarted_from_recent_tasks_0ff00007": "Restarted from Recent Tasks.",
+    "assignee_wake_skipped_0ff00008": "The assignee wake was skipped.",
+    "task_restarted_0ff00009": "Task restarted",
+    "task_paused_by_parent_restart_root_0ff00010": "This task is paused by a parent task. Restart it from the pause root.",
+    "paused_from_recent_tasks_0ff00011": "Paused from Recent Tasks.",
+    "task_paused_0ff00012": "Task paused",
+    "task_pause_update_failed_0ff00013": "Task pause update failed",
+    "unable_pause_restart_task_0ff00014": "Unable to pause or restart this task."
   }
 }

@@ -146,11 +146,11 @@ function RecentTasksList({
       if (storageKey) updateRecentTaskSnapshots(storageKey, companyId, [updated]);
       await refreshIssueQueries(renameEntry.id);
       setRenameEntry(null);
-      toastActions?.pushToast({ title: "Task renamed", tone: "success" });
+      toastActions?.pushToast({ title: l10n("local.task_renamed_0ff00001"), tone: "success" });
     } catch (error) {
       toastActions?.pushToast({
-        title: "Task rename failed",
-        body: errorMessage(error, "Unable to rename this task."),
+        title: l10n("local.task_rename_failed_0ff00002"),
+        body: errorMessage(error, l10n("local.unable_rename_task_0ff00003")),
         tone: "error",
       });
     } finally {
@@ -166,11 +166,11 @@ function RecentTasksList({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.sidebarBadges(companyId),
       });
-      toastActions?.pushToast({ title: "Task archived from inbox", tone: "success" });
+      toastActions?.pushToast({ title: l10n("local.task_archived_from_inbox_0ff00004"), tone: "success" });
     } catch (error) {
       toastActions?.pushToast({
-        title: "Task archive failed",
-        body: errorMessage(error, "Unable to archive this task from the inbox."),
+        title: l10n("local.task_archive_failed_0ff00005"),
+        body: errorMessage(error, l10n("local.unable_archive_task_inbox_0ff00006")),
         tone: "error",
       });
     } finally {
@@ -186,7 +186,7 @@ function RecentTasksList({
         const restartIssue = await issuesApi.get(entry.id);
         setRestartWakeRetryPending(restartRetryStorageKey, entry.id, true);
         await issuesApi.releaseTreeHold(entry.id, state.activePauseHold.holdId, {
-          reason: "Restarted from Recent Tasks.",
+          reason: l10n("local.restarted_from_recent_tasks_0ff00007"),
         });
         if (restartIssue.assigneeAgentId) {
           const wakeResult = await agentsApi.wakeup(
@@ -200,13 +200,13 @@ function RecentTasksList({
             restartIssue.companyId,
           );
           if (!("id" in wakeResult)) {
-            throw new Error(wakeResult.message ?? "The assignee wake was skipped.");
+            throw new Error(wakeResult.message ?? l10n("local.assignee_wake_skipped_0ff00008"));
           }
         }
         setRestartWakeRetryPending(restartRetryStorageKey, entry.id, false);
-        toastActions?.pushToast({ title: "Task restarted", tone: "success" });
+        toastActions?.pushToast({ title: l10n("local.task_restarted_0ff00009"), tone: "success" });
       } else if (state.activePauseHold) {
-        throw new Error("This task is paused by a parent task. Restart it from the pause root.");
+        throw new Error(l10n("local.task_paused_by_parent_restart_root_0ff00010"));
       } else if (readRestartWakeRetryIssueIds(restartRetryStorageKey).has(entry.id)) {
         const restartIssue = await issuesApi.get(entry.id);
         if (restartIssue.assigneeAgentId) {
@@ -221,26 +221,26 @@ function RecentTasksList({
             restartIssue.companyId,
           );
           if (!("id" in wakeResult)) {
-            throw new Error(wakeResult.message ?? "The assignee wake was skipped.");
+            throw new Error(wakeResult.message ?? l10n("local.assignee_wake_skipped_0ff00008"));
           }
         }
         setRestartWakeRetryPending(restartRetryStorageKey, entry.id, false);
-        toastActions?.pushToast({ title: "Task restarted", tone: "success" });
+        toastActions?.pushToast({ title: l10n("local.task_restarted_0ff00009"), tone: "success" });
       } else {
         await issuesApi.createTreeHold(entry.id, {
           mode: "pause",
-          reason: "Paused from Recent Tasks.",
+          reason: l10n("local.paused_from_recent_tasks_0ff00011"),
           releasePolicy: { strategy: "manual" },
         });
-        toastActions?.pushToast({ title: "Task paused", tone: "success" });
+        toastActions?.pushToast({ title: l10n("local.task_paused_0ff00012"), tone: "success" });
       }
       await queryClient.invalidateQueries({
         queryKey: ["issues", "tree-control-state", entry.id],
       });
     } catch (error) {
       toastActions?.pushToast({
-        title: "Task pause update failed",
-        body: errorMessage(error, "Unable to pause or restart this task."),
+        title: l10n("local.task_pause_update_failed_0ff00013"),
+        body: errorMessage(error, l10n("local.unable_pause_restart_task_0ff00014")),
         tone: "error",
       });
     } finally {
