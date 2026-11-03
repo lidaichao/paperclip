@@ -702,7 +702,7 @@ describeEmbeddedPostgres("pipelineService", () => {
     expect(workComments).toHaveLength(1);
     expect(workComments[0]!.authorType).toBe("system");
     expect(workComments[0]!.body).toBe(
-      `Upstream case [draft](/PAP/pipelines/${pipeline.id}/cases/${upstream.case.id}) changed (v1→v2).`,
+      `上游条目 [draft](/PAP/pipelines/${pipeline.id}/cases/${upstream.case.id}) 已变更（v1→v2）。`,
     );
     const conversationComments = await db.select().from(issueComments).where(eq(issueComments.issueId, conversationIssue.id));
     expect(conversationComments).toHaveLength(0);

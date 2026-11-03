@@ -1517,7 +1517,7 @@ async function getPipelineOrThrow(db: PipelineDb, companyId: string, pipelineId:
     .where(and(eq(pipelines.id, pipelineId), eq(pipelines.companyId, companyId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline not found");
+  if (!row) throw notFound("未找到流水线");
   return row;
 }
 
@@ -1528,7 +1528,7 @@ async function getStageOrThrow(db: PipelineDb, pipelineId: string, stageId: stri
     .where(and(eq(pipelineStages.id, stageId), eq(pipelineStages.pipelineId, pipelineId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline stage not found");
+  if (!row) throw notFound("未找到流水线阶段");
   return row;
 }
 
@@ -1539,7 +1539,7 @@ async function getStageByKeyOrThrow(db: PipelineDb, pipelineId: string, key: str
     .where(and(eq(pipelineStages.pipelineId, pipelineId), eq(pipelineStages.key, key)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline stage not found");
+  if (!row) throw notFound("未找到流水线阶段");
   return row;
 }
 
@@ -1552,7 +1552,7 @@ async function getCaseWithStageOrThrow(db: PipelineDb, companyId: string, caseId
     .where(and(eq(pipelineCases.id, caseId), eq(pipelineCases.companyId, companyId), eq(pipelines.companyId, companyId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline case not found");
+  if (!row) throw notFound("未找到流水线条目");
   return row;
 }
 
@@ -1562,7 +1562,7 @@ async function getCaseWithStageForUpdateOrThrow(db: PipelineDb, companyId: strin
     where company_id = ${companyId} and id = ${caseId}
     for update
   `);
-  if (Array.from(locked).length === 0) throw notFound("Pipeline case not found");
+  if (Array.from(locked).length === 0) throw notFound("未找到流水线条目");
   return getCaseWithStageOrThrow(db, companyId, caseId);
 }
 
@@ -1604,7 +1604,7 @@ async function assertLeaseAvailable(
 ) {
   const current = await expireLeaseIfNeeded(db, row, { type: "system" });
   if (hasValidLease(current) && !actorOwnsLease(current, actor, leaseToken)) {
-    throw conflict("Pipeline case lease is held", { code: "lease_held", lease: leaseOwner(current) });
+    throw conflict("流水线条目租约已被占用", { code: "lease_held", lease: leaseOwner(current) });
   }
   return current;
 }
@@ -1628,7 +1628,7 @@ async function assertNoOpenBlockers(db: PipelineDb, row: typeof pipelineCases.$i
       ),
     );
   if (blockers.length > 0) {
-    throw conflict("Pipeline case is blocked", { code: "blocked", blockers });
+    throw conflict("流水线条目处于受阻状态", { code: "blocked", blockers });
   }
 }
 
@@ -1639,7 +1639,7 @@ async function getCaseOrThrow(db: PipelineDb, companyId: string, caseId: string)
     .where(and(eq(pipelineCases.id, caseId), eq(pipelineCases.companyId, companyId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Pipeline case not found");
+  if (!row) throw notFound("未找到流水线条目");
   return row;
 }
 
@@ -1649,7 +1649,7 @@ async function assertValidParentCase(
 ) {
   if (!input.parentCaseId) return null;
   if (input.caseId && input.parentCaseId === input.caseId) {
-    throw conflict("Pipeline case parent cycle detected", { code: "parent_cycle" });
+    throw conflict("检测到流水线条目父级循环", { code: "parent_cycle" });
   }
 
   const parent = await getCaseOrThrow(db, input.companyId, input.parentCaseId);
@@ -1657,16 +1657,16 @@ async function assertValidParentCase(
   let depth = 1;
   while (current.parentCaseId) {
     if (input.caseId && current.parentCaseId === input.caseId) {
-      throw conflict("Pipeline case parent cycle detected", { code: "parent_cycle" });
+      throw conflict("检测到流水线条目父级循环", { code: "parent_cycle" });
     }
     if (depth >= 32) {
-      throw unprocessable("Pipeline case parent depth exceeds 32", { code: "parent_depth_exceeded" });
+      throw unprocessable("流水线条目父级层级超过 32 层", { code: "parent_depth_exceeded" });
     }
     current = await getCaseOrThrow(db, input.companyId, current.parentCaseId);
     depth += 1;
   }
   if (depth >= 32) {
-    throw unprocessable("Pipeline case parent depth exceeds 32", { code: "parent_depth_exceeded" });
+    throw unprocessable("流水线条目父级层级超过 32 层", { code: "parent_depth_exceeded" });
   }
   return parent;
 }
@@ -1703,7 +1703,7 @@ async function computeCaseRollup(db: PipelineDb, companyId: string, caseId: stri
     select id, terminal_kind from subtree
   `);
   const items = Array.from(rows);
-  if (items.length === 0) throw notFound("Pipeline case not found");
+  if (items.length === 0) throw notFound("未找到流水线条目");
   const descendants = items.slice(1);
   const done = descendants.filter((item) => item.terminal_kind === "done").length;
   const cancelled = descendants.filter((item) => item.terminal_kind === "cancelled").length;
@@ -1807,7 +1807,7 @@ async function assertStageTransitionGates(
   if (gate.requireChildrenTerminal && options.skipChildrenTerminalGate !== true) {
     const expectedChildren = expectedChildrenFromFields(current.fields);
     if (expectedChildren !== null && expectedChildren !== current.childCount) {
-      throw conflict("Pipeline expected child count does not match created child cases", {
+      throw conflict("流水线预期子条目数量与已创建子条目不一致", {
         code: "expected_children_mismatch",
         expectedChildren,
         childCount: current.childCount,
@@ -1832,8 +1832,8 @@ async function assertStageTransitionGates(
         .then((rows) => rows[0] ?? null);
       throw conflict(
         openChild
-          ? `Pipeline child case "${openChild.title}" is still open`
-          : "Pipeline child cases are not all terminal",
+          ? `流水线子条目“${openChild.title}”仍未结束`
+          : "并非所有流水线子条目都已结束",
         {
           code: "children_not_terminal",
           childCount: current.childCount,
@@ -1857,7 +1857,7 @@ async function assertStageTransitionGates(
         : typeof payload.upstreamCaseId === "string"
           ? payload.upstreamCaseId
           : "upstream case";
-      throw conflict(`Pipeline upstream change from "${upstream}" is not acknowledged`, {
+      throw conflict(`尚未确认来自“${upstream}”的流水线上游变更`, {
         code: "unresolved_drift",
         driftEventId: first.id,
         upstreamCaseId: typeof payload.upstreamCaseId === "string" ? payload.upstreamCaseId : null,
@@ -1910,7 +1910,7 @@ async function assertLatestReviewApprovalStillCurrent(
       .then((rows) => rows[0] ?? null);
     if (!materialUpdate) return;
   }
-  throw conflict("Pipeline case changed since review approval; send it back through review before publishing", {
+  throw conflict("流水线条目在审核通过后发生变更；发布前请重新提交审核", {
     code: "review_outdated",
     reviewEventId: latestApproval.id,
     approvedVersion,
@@ -1996,7 +1996,7 @@ async function handleBlockersResolved(db: PipelineDb, companyId: string, blocker
       companyId,
       caseId: blocked.caseId,
       roles: ["work"],
-      body: `Pipeline blockers resolved for case ${blocked.caseId}. The case can be retried now that blocker ${blockerCaseId} is done.`,
+      body: `流水线条目 ${blocked.caseId} 的阻塞项已解决。阻塞条目 ${blockerCaseId} 完成后，现在可以重试此条目。`,
     });
   }
 }
@@ -2048,7 +2048,7 @@ async function notifyDependentWorkIssuesOfUpstreamContentChange(
     pipelineId: input.upstreamCase.pipelineId,
     caseId: input.upstreamCase.id,
   });
-  const body = `Upstream case [${input.upstreamCase.caseKey}](${upstreamLink}) changed (v${input.previousVersion}→v${input.version}).`;
+  const body = `上游条目 [${input.upstreamCase.caseKey}](${upstreamLink}) 已变更（v${input.previousVersion}→v${input.version}）。`;
 
   const notifiedIssueIds = new Set<string>();
   for (const { dependentCase } of dependents) {
@@ -2089,10 +2089,10 @@ async function validateBlockerSet(
 ) {
   const uniqueBlockerIds = [...new Set(input.blockedByCaseIds)];
   if (uniqueBlockerIds.length !== input.blockedByCaseIds.length) {
-    throw unprocessable("Pipeline blocker set contains duplicate cases", { code: "validation" });
+    throw unprocessable("流水线阻塞项集合包含重复条目", { code: "validation" });
   }
   if (uniqueBlockerIds.includes(input.caseId)) {
-    throw conflict("Pipeline case cannot block itself", { code: "blocker_cycle" });
+    throw conflict("流水线条目不能阻塞自身", { code: "blocker_cycle" });
   }
   if (uniqueBlockerIds.length === 0) return uniqueBlockerIds;
 
@@ -2100,14 +2100,14 @@ async function validateBlockerSet(
     .select({ id: pipelineCases.id })
     .from(pipelineCases)
     .where(and(eq(pipelineCases.companyId, input.companyId), inArray(pipelineCases.id, uniqueBlockerIds)));
-  if (rows.length !== uniqueBlockerIds.length) throw notFound("Pipeline blocker case not found");
+  if (rows.length !== uniqueBlockerIds.length) throw notFound("未找到流水线阻塞条目");
 
   const stack = [...uniqueBlockerIds];
   const seen = new Set<string>();
   while (stack.length) {
     const current = stack.pop()!;
     if (current === input.caseId) {
-      throw conflict("Pipeline blocker cycle detected", { code: "blocker_cycle" });
+      throw conflict("检测到流水线阻塞循环", { code: "blocker_cycle" });
     }
     if (seen.has(current)) continue;
     seen.add(current);
@@ -2127,7 +2127,7 @@ async function resolveBlockerCaseKeys(
 ) {
   const uniqueKeys = [...new Set(input.blockedByCaseKeys)];
   if (uniqueKeys.length !== input.blockedByCaseKeys.length) {
-    throw unprocessable("Pipeline blocker key set contains duplicate cases", { code: "validation" });
+    throw unprocessable("流水线阻塞项键集合包含重复条目", { code: "validation" });
   }
   for (const key of uniqueKeys) assertCaseKey(key);
   if (uniqueKeys.length === 0) return new Map<string, string>();
@@ -2141,7 +2141,7 @@ async function resolveBlockerCaseKeys(
       inArray(pipelineCases.caseKey, uniqueKeys),
     ));
   if (rows.length !== uniqueKeys.length) {
-    throw new HttpError(404, "Pipeline blocker case key not found", {
+    throw new HttpError(404, "未找到流水线阻塞条目键", {
       code: "blocker_case_key_not_found",
       missingCaseKeys: uniqueKeys.filter((key) => !rows.some((row) => row.caseKey === key)),
     });
@@ -2153,7 +2153,7 @@ function pipelineBatchError(error: unknown, fallbackCode = "unknown") {
   const httpError = error as { status?: number; message?: string; details?: unknown };
   return {
     status: httpError.status ?? 500,
-    message: httpError.message ?? "Unknown error",
+    message: httpError.message ?? "未知错误",
     details: httpError.details ?? { code: fallbackCode },
   };
 }
