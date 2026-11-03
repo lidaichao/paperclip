@@ -336,6 +336,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.all_paths_passing_0e700006).toBe("所有路径均通过");
     expect(messages.needs_a_run_0e700007).toBe("需要运行一次");
     expect(messages.ancestors_0e700009).toBe("上级任务");
+    expect(messages.open_preview_0e800001).toBe("打开预览");
+    expect(messages.open_on_github_0e800002).toBe("在 GitHub 中打开");
+    expect(messages.rev_value_0e800004).toContain("版本");
+    expect(messages.value_file_count_0e800007).toBe("{{v0}} 个文件");
+    expect(messages.value_files_count_0e800008).toBe("{{v0}} 个文件");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

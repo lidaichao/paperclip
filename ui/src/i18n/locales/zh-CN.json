@@ -11888,6 +11888,14 @@
     "all_paths_passing_0e700006": "所有路径均通过",
     "needs_a_run_0e700007": "需要运行一次",
     "failing_paths_0e700008": "存在失败路径",
-    "ancestors_0e700009": "上级任务"
+    "ancestors_0e700009": "上级任务",
+    "open_preview_0e800001": "打开预览",
+    "open_on_github_0e800002": "在 GitHub 中打开",
+    "open_gallery_0e800003": "打开图库",
+    "rev_value_0e800004": "版本 {{v0}}",
+    "port_value_0e800005": "端口 {{v0}}",
+    "open_service_0e800006": "打开服务",
+    "value_file_count_0e800007": "{{v0}} 个文件",
+    "value_files_count_0e800008": "{{v0}} 个文件"
   }
 }

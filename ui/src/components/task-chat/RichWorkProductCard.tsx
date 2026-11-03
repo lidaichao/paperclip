@@ -139,7 +139,7 @@ export function RichWorkProductCard({ workProduct, href, variant = "card" }: Ric
   const isVideo = isVideoLikeOutput(contentType, stringMeta(metadata, "originalFilename") ?? workProduct.title);
   let Icon: LucideIcon = File;
   let meta: Array<string | null> = [];
-  let action = "Open preview";
+  let action = l10n("local.open_preview_0e800001");
 
   switch (workProduct.type) {
     case "pull_request": {
@@ -149,40 +149,40 @@ export function RichWorkProductCard({ workProduct, href, variant = "card" }: Ric
       const base = stringMeta(metadata, "baseRef", "base", "baseBranch");
       const head = stringMeta(metadata, "headRef", "head", "headBranch", "branch");
       meta = [repository, number ? `#${number.replace(/^#/, "")}` : null, base && head ? `${base} ← ${head}` : null, urlLabel(workProduct.url)];
-      action = "Open on GitHub";
+      action = l10n("local.open_on_github_0e800002");
       break;
     }
     case "commit":
       Icon = GitCommit;
       meta = [stringMeta(metadata, "shortSha", "sha")?.slice(0, 8) ?? workProduct.externalId?.slice(0, 8) ?? null, stringMeta(metadata, "branch", "branchName"), urlLabel(workProduct.url)];
-      action = "Open on GitHub";
+      action = l10n("local.open_on_github_0e800002");
       break;
     case "branch":
       Icon = GitBranch;
       meta = [stringMeta(metadata, "repository", "repo", "repositoryName"), stringMeta(metadata, "branch", "branchName") ?? workProduct.externalId, urlLabel(workProduct.url)];
-      action = "Open on GitHub";
+      action = l10n("local.open_on_github_0e800002");
       break;
     case "artifact": {
       Icon = isImage ? Image : isVideo ? Film : File;
       const size = numberMeta(metadata, "byteSize", "size");
-      meta = [isImage ? "Image" : isVideo ? "Video" : stringMeta(metadata, "kind", "fileType") ?? "File", size === null ? null : formatBytes(size)];
-      action = isImage || isVideo ? "Open gallery" : "Download";
+      meta = [isImage ? l10n("local.image_1aa4cb0b") : isVideo ? l10n("local.video_d534be82") : stringMeta(metadata, "kind", "fileType") ?? l10n("local.file_50009ce1"), size === null ? null : formatBytes(size)];
+      action = isImage || isVideo ? l10n("local.open_gallery_0e800003") : l10n("local.download_d6eafe82");
       break;
     }
     case "document":
       Icon = FileText;
-      meta = ["Document", stringMeta(metadata, "revision", "revisionNumber") ? `rev ${stringMeta(metadata, "revision", "revisionNumber")}` : null];
-      action = "Open document";
+      meta = [l10n("local.document_d6bd8c0a"), stringMeta(metadata, "revision", "revisionNumber") ? l10n("local.rev_value_0e800004", { v0: stringMeta(metadata, "revision", "revisionNumber") ?? "" }) : null];
+      action = l10n("local.open_document_07e93c9e");
       break;
     case "preview_url":
       Icon = Globe;
       meta = [urlLabel(workProduct.url)];
-      action = "Open preview";
+      action = l10n("local.open_preview_0e800001");
       break;
     case "runtime_service":
       Icon = Server;
-      meta = [stringMeta(metadata, "service", "serviceName") ?? workProduct.provider, stringMeta(metadata, "port") ? `port ${stringMeta(metadata, "port")}` : null];
-      action = "Open service";
+      meta = [stringMeta(metadata, "service", "serviceName") ?? workProduct.provider, stringMeta(metadata, "port") ? l10n("local.port_value_0e800005", { v0: stringMeta(metadata, "port") ?? "" }) : null];
+      action = l10n("local.open_service_0e800006");
       break;
   }
 
@@ -214,7 +214,9 @@ export function RichWorkProductCard({ workProduct, href, variant = "card" }: Ric
   const changeCounts = [additions === null ? null : `+${additions}`, deletions === null ? null : `−${deletions}`]
     .filter(Boolean)
     .join(" ");
-  const fileCount = files === null ? null : `${files} ${files === 1 ? "file" : "files"}`;
+  const fileCount = files === null
+    ? null
+    : l10n(files === 1 ? "local.value_file_count_0e800007" : "local.value_files_count_0e800008", { v0: files });
   const statsLabel = [changeCounts || null, fileCount].filter(Boolean).join(" · ");
   const compact = variant === "compact";
   const mediaPath = workProduct.type === "artifact" && (isImage || isVideo)

@@ -11888,6 +11888,14 @@
     "all_paths_passing_0e700006": "All paths passing",
     "needs_a_run_0e700007": "Needs a run",
     "failing_paths_0e700008": "Failing paths",
-    "ancestors_0e700009": "Ancestors"
+    "ancestors_0e700009": "Ancestors",
+    "open_preview_0e800001": "Open preview",
+    "open_on_github_0e800002": "Open on GitHub",
+    "open_gallery_0e800003": "Open gallery",
+    "rev_value_0e800004": "rev {{v0}}",
+    "port_value_0e800005": "port {{v0}}",
+    "open_service_0e800006": "Open service",
+    "value_file_count_0e800007": "{{v0}} file",
+    "value_files_count_0e800008": "{{v0}} files"
   }
 }
