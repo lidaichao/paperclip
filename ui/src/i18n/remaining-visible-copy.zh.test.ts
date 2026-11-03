@@ -94,5 +94,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.activity_moved_to_value_dbb053ec).toBe("移至{{v0}}");
     expect(messages.activity_requested_approval_on_dfeaf6d7).toBe("请求审批：");
     expect(messages.activity_updated_organization_budget_7ccafcc6).toBe("更新了组织预算");
+    expect(messages.no_matching_secrets_create_one_to_bind_87db44e7).toBe(
+      "没有匹配的密钥。请创建密钥后在此绑定。",
+    );
+    expect(messages.no_services_configured_for_workspace_19f147cb).toBe("此工作区尚未配置服务。");
   });
 });

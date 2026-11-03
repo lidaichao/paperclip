@@ -122,7 +122,7 @@ function buildJobItem(
     key: `command:${command.id}`,
     title: command.name,
     kind: "job",
-    statusLabel: "run once",
+    statusLabel: l10n("local.run_once_lowercase_ec238e0b"),
     lifecycle: null,
     healthStatus: null,
     exposure: null,
@@ -224,13 +224,13 @@ function exposureFailureCopy(exposure: RuntimeExposureStatus | null) {
   if (exposure?.state === "failed") {
     return {
       label: l10n("local.https_unavailable_0c011e77"),
-      remediation: "Check the Tailscale broker and node HTTPS configuration.",
+      remediation: l10n("local.check_tailscale_broker_and_https_configuration_e2303332"),
     };
   }
   if (exposure?.state === "cleanup_pending") {
     return {
       label: l10n("local.https_cleanup_pending_6727ed53"),
-      remediation: "Restart the host broker before reusing this port.",
+      remediation: l10n("local.restart_host_broker_before_reusing_port_b0b24a6f"),
     };
   }
   return null;
@@ -541,8 +541,8 @@ export function WorkspaceRuntimeControls({
   items,
   isPending = false,
   pendingRequest = null,
-  serviceEmptyMessage = "No services are configured for this workspace.",
-  jobEmptyMessage = "No one-shot jobs are configured for this workspace.",
+  serviceEmptyMessage = l10n("local.no_services_configured_for_workspace_19f147cb"),
+  jobEmptyMessage = l10n("local.no_one_shot_jobs_configured_for_workspace_2a8a919e"),
   emptyMessage,
   disabledHint = null,
   onAction,

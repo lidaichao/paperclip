@@ -173,7 +173,7 @@ export function EnvironmentVariableRow({
       version: "latest",
       textValue: "",
     });
-    onToast(`Secret ${created.name} created`);
+    onToast(l10n("local.secret_value_created_058a0636", { v0: created.name }));
     setSecretPopover(null);
   }
 

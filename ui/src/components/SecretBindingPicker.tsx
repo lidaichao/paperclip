@@ -64,7 +64,7 @@ const VERSION_LATEST: SecretVersionSelector = "latest";
 function describeSecret(secret: CompanySecret): string {
   const provider = secret.provider.replaceAll("_", " ");
   if (secret.managedMode === "external_reference") {
-    return `External · ${provider}`;
+    return l10n("local.external_value_14c50b2d", { v0: provider });
   }
   return provider;
 }
@@ -87,10 +87,10 @@ function statusTone(status: CompanySecret["status"]): string {
 export function SecretBindingPicker({
   value,
   onChange,
-  label = "Secret",
-  placeholder = "Select secret",
+  label = l10n("local.secret_b9391de9"),
+  placeholder = l10n("local.select_secret_c2fe33e4"),
   allowVersionSelector = true,
-  emptyHint = "No matching secrets. Create one to bind it here.",
+  emptyHint = l10n("local.no_matching_secrets_create_one_to_bind_87db44e7"),
   className,
   disabled,
   statusFilter = ["active"],
@@ -149,7 +149,7 @@ export function SecretBindingPicker({
       setCreateError(null);
     },
     onError: (error) => {
-      setCreateError(error instanceof Error ? error.message : "Failed to create secret");
+      setCreateError(error instanceof Error ? error.message : l10n("local.failed_to_create_secret_f5f9f167"));
     },
   });
 

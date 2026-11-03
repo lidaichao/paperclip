@@ -11031,6 +11031,22 @@
     "activity_updated_organization_9a11bd84": "更新了组织",
     "activity_archived_organization_ebf8bdd1": "归档了组织",
     "activity_updated_organization_budget_7ccafcc6": "更新了组织预算",
-    "activity_approval_ebf13952": "审批"
+    "activity_approval_ebf13952": "审批",
+    "secret_value_created_058a0636": "已创建密钥 {{v0}}",
+    "up_one_folder_3e8bc5a7": "返回上一级文件夹",
+    "current_264bc85c": "当前",
+    "missing_secret_value_94bdc4b2": "缺少密钥（{{v0}}）",
+    "recently_used_c3137763": "最近使用",
+    "all_secrets_8286b9eb": "全部密钥",
+    "external_value_14c50b2d": "外部 · {{v0}}",
+    "secret_b9391de9": "密钥",
+    "select_secret_c2fe33e4": "选择密钥",
+    "no_matching_secrets_create_one_to_bind_87db44e7": "没有匹配的密钥。请创建密钥后在此绑定。",
+    "failed_to_create_secret_f5f9f167": "创建密钥失败",
+    "run_once_lowercase_ec238e0b": "运行一次",
+    "check_tailscale_broker_and_https_configuration_e2303332": "请检查 Tailscale 代理和节点的 HTTPS 配置。",
+    "restart_host_broker_before_reusing_port_b0b24a6f": "重新使用此端口前，请重启主机代理。",
+    "no_services_configured_for_workspace_19f147cb": "此工作区尚未配置服务。",
+    "no_one_shot_jobs_configured_for_workspace_2a8a919e": "此工作区尚未配置一次性作业。"
   }
 }

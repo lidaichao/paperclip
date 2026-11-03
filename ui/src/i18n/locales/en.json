@@ -11031,6 +11031,22 @@
     "activity_updated_organization_9a11bd84": "updated organization",
     "activity_archived_organization_ebf8bdd1": "archived organization",
     "activity_updated_organization_budget_7ccafcc6": "updated organization budget",
-    "activity_approval_ebf13952": "approval"
+    "activity_approval_ebf13952": "approval",
+    "secret_value_created_058a0636": "Secret {{v0}} created",
+    "up_one_folder_3e8bc5a7": "Up one folder",
+    "current_264bc85c": "Current",
+    "missing_secret_value_94bdc4b2": "Missing secret ({{v0}})",
+    "recently_used_c3137763": "Recently used",
+    "all_secrets_8286b9eb": "All secrets",
+    "external_value_14c50b2d": "External · {{v0}}",
+    "secret_b9391de9": "Secret",
+    "select_secret_c2fe33e4": "Select secret",
+    "no_matching_secrets_create_one_to_bind_87db44e7": "No matching secrets. Create one to bind it here.",
+    "failed_to_create_secret_f5f9f167": "Failed to create secret",
+    "run_once_lowercase_ec238e0b": "run once",
+    "check_tailscale_broker_and_https_configuration_e2303332": "Check the Tailscale broker and node HTTPS configuration.",
+    "restart_host_broker_before_reusing_port_b0b24a6f": "Restart the host broker before reusing this port.",
+    "no_services_configured_for_workspace_19f147cb": "No services are configured for this workspace.",
+    "no_one_shot_jobs_configured_for_workspace_2a8a919e": "No one-shot jobs are configured for this workspace."
   }
 }
