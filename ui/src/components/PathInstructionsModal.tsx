@@ -21,28 +21,28 @@ const platforms: { id: Platform; label: string; icon: typeof Apple }[] = [
 const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
   mac: {
     steps: [
-      "Open Finder and navigate to the folder.",
-      "Right-click (or Control-click) the folder.",
-      "Hold the Option (⌥) key — \"Copy\" changes to \"Copy as Pathname\".",
-      "Click \"Copy as Pathname\", then paste here.",
+      l10n("local.mac_open_finder_folder_10000001"),
+      l10n("local.mac_right_click_folder_10000002"),
+      l10n("local.mac_hold_option_copy_pathname_10000003"),
+      l10n("local.mac_copy_pathname_paste_10000004"),
     ],
-    tip: "You can also open Terminal, type cd, drag the folder into the terminal window, and press Enter. Then type pwd to see the full path.",
+    tip: l10n("local.mac_terminal_path_tip_10000005"),
   },
   windows: {
     steps: [
-      "Open File Explorer and navigate to the folder.",
-      "Click in the address bar at the top — the full path will appear.",
-      "Copy the path, then paste here.",
+      l10n("local.windows_open_explorer_folder_10000006"),
+      l10n("local.windows_click_address_bar_10000007"),
+      l10n("local.copy_path_paste_here_10000008"),
     ],
-    tip: "Alternatively, hold Shift and right-click the folder, then select \"Copy as path\".",
+    tip: l10n("local.windows_copy_as_path_tip_10000009"),
   },
   linux: {
     steps: [
-      "Open a terminal and navigate to the directory with cd.",
-      "Run pwd to print the full path.",
-      "Copy the output and paste here.",
+      l10n("local.linux_cd_directory_10000010"),
+      l10n("local.linux_run_pwd_10000011"),
+      l10n("local.copy_output_paste_here_10000012"),
     ],
-    tip: "In most file managers, Ctrl+L reveals the full path in the address bar.",
+    tip: l10n("local.linux_file_manager_path_tip_10000013"),
   },
 };
 

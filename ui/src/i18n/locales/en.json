@@ -12151,6 +12151,19 @@
     "paused_from_recent_tasks_0ff00011": "Paused from Recent Tasks.",
     "task_paused_0ff00012": "Task paused",
     "task_pause_update_failed_0ff00013": "Task pause update failed",
-    "unable_pause_restart_task_0ff00014": "Unable to pause or restart this task."
+    "unable_pause_restart_task_0ff00014": "Unable to pause or restart this task.",
+    "mac_open_finder_folder_10000001": "Open Finder and navigate to the folder.",
+    "mac_right_click_folder_10000002": "Right-click (or Control-click) the folder.",
+    "mac_hold_option_copy_pathname_10000003": "Hold the Option (⌥) key — “Copy” changes to “Copy as Pathname”.",
+    "mac_copy_pathname_paste_10000004": "Click “Copy as Pathname”, then paste here.",
+    "mac_terminal_path_tip_10000005": "You can also open Terminal, type cd, drag the folder into the terminal window, and press Enter. Then type pwd to see the full path.",
+    "windows_open_explorer_folder_10000006": "Open File Explorer and navigate to the folder.",
+    "windows_click_address_bar_10000007": "Click in the address bar at the top — the full path will appear.",
+    "copy_path_paste_here_10000008": "Copy the path, then paste here.",
+    "windows_copy_as_path_tip_10000009": "Alternatively, hold Shift and right-click the folder, then select “Copy as path”.",
+    "linux_cd_directory_10000010": "Open a terminal and navigate to the directory with cd.",
+    "linux_run_pwd_10000011": "Run pwd to print the full path.",
+    "copy_output_paste_here_10000012": "Copy the output and paste here.",
+    "linux_file_manager_path_tip_10000013": "In most file managers, Ctrl+L reveals the full path in the address bar."
   }
 }

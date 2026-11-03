@@ -12151,6 +12151,19 @@
     "paused_from_recent_tasks_0ff00011": "从最近任务中暂停。",
     "task_paused_0ff00012": "任务已暂停",
     "task_pause_update_failed_0ff00013": "更新任务暂停状态失败",
-    "unable_pause_restart_task_0ff00014": "无法暂停或重新启动此任务。"
+    "unable_pause_restart_task_0ff00014": "无法暂停或重新启动此任务。",
+    "mac_open_finder_folder_10000001": "打开“访达”并进入目标文件夹。",
+    "mac_right_click_folder_10000002": "右键单击文件夹（或按住 Control 后单击）。",
+    "mac_hold_option_copy_pathname_10000003": "按住 Option（⌥）键，“复制”会变为“将…拷贝为路径名称”。",
+    "mac_copy_pathname_paste_10000004": "点击“将…拷贝为路径名称”，然后粘贴到这里。",
+    "mac_terminal_path_tip_10000005": "也可以打开“终端”，输入 cd 后把文件夹拖入终端并按回车，再输入 pwd 查看完整路径。",
+    "windows_open_explorer_folder_10000006": "打开“文件资源管理器”并进入目标文件夹。",
+    "windows_click_address_bar_10000007": "点击顶部地址栏，完整路径就会显示出来。",
+    "copy_path_paste_here_10000008": "复制路径，然后粘贴到这里。",
+    "windows_copy_as_path_tip_10000009": "也可以按住 Shift 并右键单击文件夹，然后选择“复制文件地址”。",
+    "linux_cd_directory_10000010": "打开终端，使用 cd 进入目标目录。",
+    "linux_run_pwd_10000011": "运行 pwd 输出完整路径。",
+    "copy_output_paste_here_10000012": "复制输出内容，然后粘贴到这里。",
+    "linux_file_manager_path_tip_10000013": "在大多数文件管理器中，按 Ctrl+L 可在地址栏显示完整路径。"
   }
 }
