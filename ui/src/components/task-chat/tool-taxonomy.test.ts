@@ -50,7 +50,7 @@ describe("tool activity vocabulary", () => {
       icon: McpIcon,
       runningLabel: "Searching tasks",
       completedLabel: "Searched tasks",
-      sourceLabel: "Paperclip",
+      sourceLabel: "Alice",
       confidence: "exact",
     });
   });
