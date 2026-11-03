@@ -33,8 +33,8 @@ function externalObjectRowDisplayKey(group: IssueExternalObjectGroup): string {
   const displayKey = pill.displayKey?.trim();
   if (displayKey) return displayKey;
   if (pill.providerKey === "github") {
-    if (pill.objectType === "pull_request") return "Github PR";
-    if (pill.objectType === "issue") return "Github Issue";
+    if (pill.objectType === "pull_request") return l10n("local.github_pull_request_10300450");
+    if (pill.objectType === "issue") return l10n("local.github_issue_10300451");
   }
   return externalObjectDisplayLabel(pill.providerKey, pill.objectType);
 }

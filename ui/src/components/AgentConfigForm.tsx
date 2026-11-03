@@ -3823,7 +3823,7 @@ export function ModelDropdown({
                 <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                 <path d="M3 3v5h5" />
               </svg>
-              {detectingModel ? l10n("local.detecting_5ac197f8") : detectedModel ? (detectModelLabel?.replace(/^Detect\b/, "Re-detect") ?? l10n("local.re_detect_from_config_90c73096")) : (detectModelLabel ?? l10n("local.detect_from_config_8f702300"))}
+              {detectingModel ? l10n("local.detecting_5ac197f8") : detectedModel ? l10n("local.re_detect_from_config_90c73096") : (detectModelLabel ?? l10n("local.detect_from_config_8f702300"))}
             </button>
           )}
           {onRefreshModels && !modelSearch.trim() && (

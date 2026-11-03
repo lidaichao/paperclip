@@ -1,3 +1,5 @@
+import { l10n } from "../../i18n";
+
 /**
  * Whimsical gerunds for the live status pill when the label carries no real
  * signal ("Running"/"Working"). Two curated pools: Paperclip's analog-office
@@ -14,41 +16,41 @@
  * Board-curated round 2 (PAP-349): dropped Cataloguing / Carbon-copying /
  * Archiving, added the workshop-and-whiteboard verbs. */
 export const ANALOG_OFFICE_WORDS: readonly string[] = [
-  "Clipping",
-  "Organizing",
-  "Sorting",
-  "Synthesizing",
-  "Analyzing",
-  "Filing",
-  "Collating",
-  "Stapling",
-  "Indexing",
-  "Annotating",
-  "Drafting",
-  "Proofreading",
-  "Alphabetizing",
-  "Photocopying",
-  "Laminating",
-  "Hole-punching",
-  "Bookmarking",
-  "Highlighting",
-  "Typing",
-  "Trimming",
-  "Aligning",
-  "Combining",
-  "Whiteboarding",
-  "Diagramming",
-  "Sketching",
-  "Labeling",
-  "Sticky-noting",
+  l10n("local.clipping_10300419"),
+  l10n("local.organizing_10300420"),
+  l10n("local.sorting_10300421"),
+  l10n("local.synthesizing_10300422"),
+  l10n("local.analyzing_10300423"),
+  l10n("local.filing_10300424"),
+  l10n("local.collating_10300425"),
+  l10n("local.stapling_10300426"),
+  l10n("local.indexing_10300427"),
+  l10n("local.annotating_10300428"),
+  l10n("local.drafting_10300429"),
+  l10n("local.proofreading_10300430"),
+  l10n("local.alphabetizing_10300431"),
+  l10n("local.photocopying_10300432"),
+  l10n("local.laminating_10300433"),
+  l10n("local.hole_punching_10300434"),
+  l10n("local.bookmarking_10300435"),
+  l10n("local.highlighting_10300436"),
+  l10n("local.typing_10300437"),
+  l10n("local.trimming_10300438"),
+  l10n("local.aligning_10300439"),
+  l10n("local.combining_10300440"),
+  l10n("local.whiteboarding_10300441"),
+  l10n("local.diagramming_10300442"),
+  l10n("local.sketching_10300443"),
+  l10n("local.labeling_10300444"),
+  l10n("local.sticky_noting_10300445"),
 ];
 
 /** Claude-Code-style whimsy pool — board-curated round 2 kept only these four. */
 export const CLAUDE_CODE_WORDS: readonly string[] = [
-  "Brewing",
-  "Tinkering",
-  "Distilling",
-  "Deliberating",
+  l10n("local.brewing_10300446"),
+  l10n("local.tinkering_10300447"),
+  l10n("local.distilling_10300448"),
+  l10n("local.deliberating_10300449"),
 ];
 
 /** Interleaved so consecutive rotations alternate flavors rather than running
@@ -72,8 +74,13 @@ export const WHIMSY_ROTATE_MS = 10_000;
  * always keep their copy — whimsy never replaces signal.
  */
 export function isGenericStatusLabel(label: string | undefined | null): boolean {
-  const raw = (label ?? "").trim().toLowerCase();
-  return raw === "running" || raw === "working";
+  const raw = (label ?? "").trim().toLocaleLowerCase();
+  return new Set([
+    "running",
+    "working",
+    l10n("local.running_f4ccae29").toLocaleLowerCase(),
+    l10n("local.working_a92f0449").toLocaleLowerCase(),
+  ]).has(raw);
 }
 
 /** FNV-1a 32-bit — stable, dependency-free string hash for the seed. */
