@@ -274,7 +274,7 @@ export function toolAccessRoutes(
   }) {
     const loaded = await connectionIntents.loadIntent(input.interactionId);
     if (loaded.interaction.addresseeUserId !== input.userId) {
-      throw forbidden("OAuth callback user does not match the connection request");
+      throw forbidden("OAuth 回调用户与连接请求不匹配");
     }
     if (loaded.interaction.status !== "pending") return loaded.interaction;
     const interaction = input.outcome === "connected" && input.connectionId
@@ -516,7 +516,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
     if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
     const userId = req.actor.userId;
     if (userId && await access.hasPermission(companyId, "user", userId, permissionKey)) return;
-    throw forbidden(`Missing permission: ${permissionKey}`);
+    throw forbidden(`缺少权限：${permissionKey}`);
   }
 
   function activeToolMembership(req: Request, companyId: string) {
@@ -527,10 +527,10 @@ function connectorEnrollmentPrincipal(req: Request): string {
       ? req.actor.memberships.find((item) => item.companyId === companyId)
       : null;
     if (!membership || membership.status !== "active") {
-      throw forbidden("User does not have active company access");
+      throw forbidden("用户没有有效的组织访问权限");
     }
     if (!membership.membershipRole || membership.membershipRole === "viewer") {
-      throw forbidden("Viewer access is read-only");
+      throw forbidden("查看者权限为只读");
     }
     return membership;
   }
@@ -582,7 +582,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
       ))
       .limit(1);
     if (grant) return;
-    throw forbidden("You need access to this connection before you can install it on an agent");
+    throw forbidden("将此连接安装到智能体前，需要先取得连接访问权限");
   }
 
   /**
@@ -709,7 +709,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
         if (await access.hasPermission(companyId, "user", userId, permissionKey)) return;
       }
     }
-    throw forbidden(`Missing one of permissions: ${permissionKeys.join(", ")}`);
+    throw forbidden(`缺少以下任一权限：${permissionKeys.join(", ")}`);
   }
 
   async function assertCanTestAsAgent(req: Request, companyId: string, agentId: string, knownAgent?: { id: string; status: string }) {
@@ -720,7 +720,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
       .limit(1))[0];
     // Admin permission bypasses must not make unassignable agents testable.
     if (!agent || agent.id !== agentId || !isAgentStatusAssignableToWork(agent.status)) {
-      throw forbidden("This agent is not available for testing");
+      throw forbidden("此智能体不可用于测试");
     }
     const decision = await access.decide({
       actor: req.actor,
@@ -761,7 +761,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
 
   router.post("/agents/me/connections/:connectionId/start-authorization", validate(startConnectionAuthorizationSchema), async (req, res) => {
     if (req.actor.type !== "agent" || !req.actor.agentId || !req.actor.companyId || !req.actor.runId) {
-      res.status(401).json({ error: "Active agent run authentication required" });
+      res.status(401).json({ error: "需要活动的智能体运行身份验证" });
       return;
     }
     const result = await svc.startAuthorizationForAgent({
@@ -779,16 +779,16 @@ function connectorEnrollmentPrincipal(req: Request): string {
 
   router.post("/agents/me/connections/:connectionId/token", validate(connectionTokenRequestSchema), async (req, res) => {
     if (req.actor.type !== "agent" || !req.actor.agentId || !req.actor.companyId) {
-      res.status(401).json({ error: "Agent authentication required" });
+      res.status(401).json({ error: "需要智能体身份验证" });
       return;
     }
     if (!req.actor.runId) {
-      res.status(401).json({ error: "Agent run id required", code: "run_id_required" });
+      res.status(401).json({ error: "需要智能体运行 ID", code: "run_id_required" });
       return;
     }
     const headerRunId = req.get("X-Paperclip-Run-Id")?.trim();
     if (headerRunId && headerRunId !== req.actor.runId) {
-      res.status(403).json({ error: "Run id header does not match agent token", code: "run_id_mismatch" });
+      res.status(403).json({ error: "运行 ID 请求头与智能体令牌不匹配", code: "run_id_mismatch" });
       return;
     }
     const result = await svc.mintConnectionTokenForAgent({
@@ -955,7 +955,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
       const companyId = req.params.companyId as string;
       activeToolMembership(req, companyId);
       if (!req.actor.userId || req.actor.userId !== req.body.subjectUserId) {
-        throw forbidden("Board users may only authorize their own connection subject");
+        throw forbidden("看板用户只能授权自己的连接主体");
       }
       const existing = await svc.getConnection(req.params.connectionId as string, companyId);
       await assertToolConnectionAccess(req, existing);
@@ -976,7 +976,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
     const subjectUserId = req.body?.asCurrentUser === true ? req.actor.userId ?? null : null;
     const subjectAgentId = req.body?.asAgentId ?? null;
     if (req.body?.asCurrentUser === true && !subjectUserId) {
-      throw forbidden("Connecting an app as yourself requires a signed-in user");
+      throw forbidden("以本人身份连接应用需要已登录用户");
     }
     if (subjectUserId && existing.credentialPolicy === "per_user") {
       // Personal reconnect is consent owned by the fixed subject, not a manager
@@ -1104,7 +1104,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
     const error = typeof req.query.error === "string" ? req.query.error : null;
     const pendingState = state ? await svc.peekOAuthState(state) : null;
     if (!pendingState || !hasCompanyAccess(req, pendingState.companyId)) {
-      throw badRequest("Invalid or expired OAuth state");
+      throw badRequest("OAuth 状态无效或已过期");
     }
     const pendingConnection = await svc.getConnection(pendingState.connectionId, pendingState.companyId);
     const pendingConnectionIntent = await isConnectionIntent(pendingState.interactionId);
@@ -1218,7 +1218,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
     const error = typeof req.query.error === "string" ? req.query.error : null;
     const pendingState = state ? await svc.peekOAuthState(state) : null;
     if (!pendingState || !hasCompanyAccess(req, pendingState.companyId)) {
-      throw badRequest("Invalid or expired Vercel Connect state");
+      throw badRequest("Vercel Connect 状态无效或已过期");
     }
     const pendingConnection = await svc.getConnection(pendingState.connectionId, pendingState.companyId);
     const pendingConnectionIntent = await isConnectionIntent(pendingState.interactionId);
@@ -1317,7 +1317,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
     const iss = typeof req.query.iss === "string" ? req.query.iss : null;
     const pendingState = state ? await svc.peekOAuthState(state) : null;
     if (!pendingState || !hasCompanyAccess(req, pendingState.companyId)) {
-      throw badRequest("Invalid or expired OAuth state");
+      throw badRequest("OAuth 状态无效或已过期");
     }
     const pendingConnection = await svc.getConnection(pendingState.connectionId, pendingState.companyId);
     const pendingConnectionIntent = await isConnectionIntent(pendingState.interactionId);
@@ -1733,7 +1733,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
       activeToolMembership(req, connection.companyId);
       const { grants } = await svc.listConnectionGrants(connection.id, connection.companyId);
       const target = grants.find((grant) => grant.id === req.params.grantId);
-      if (!target) throw notFound("Connection grant not found");
+      if (!target) throw notFound("未找到连接授权");
       const isGrantCreator = Boolean(req.actor.userId && target.createdByUserId === req.actor.userId);
       if (!isGrantCreator) await assertToolConnectionConfigureAccess(req, connection);
       const memberUserIds = req.body.memberUserIds as string[];
@@ -1813,7 +1813,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
     const connection = await getAccessibleResource(req, res, svc.getConnection(req.params.connectionId as string), "Tool connection not found");
     if (!connection) return;
     const ownerUserId = req.actor.userId;
-    if (!ownerUserId) throw forbidden("A named user is required to delegate a personal grant");
+    if (!ownerUserId) throw forbidden("委派个人授权需要指定用户");
     const agentId = req.body.agentId;
     const delegation = await svc.createConnectionGrantDelegation(
       connection.id,
@@ -1839,10 +1839,10 @@ function connectorEnrollmentPrincipal(req: Request): string {
     if (!connection) return;
     const { grants } = await svc.listConnectionGrants(connection.id, connection.companyId);
     const grant = grants.find((candidate) => candidate.id === req.params.grantId);
-    if (!grant) throw notFound("Connection grant not found");
+    if (!grant) throw notFound("未找到连接授权");
     const canRevokeOwnDelegation = Boolean(req.actor.userId && grant.subjectUserId === req.actor.userId);
     if (!canRevokeOwnDelegation && !await isToolConnectionManager(req, connection.companyId)) {
-      throw forbidden("Only the personal grant owner or a connection manager can revoke a delegation");
+      throw forbidden("只有个人授权所有者或连接管理员才能撤销委派");
     }
     const delegation = await svc.revokeConnectionGrantDelegation(
       connection.id,
@@ -1867,7 +1867,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
     const connection = await getAccessibleResource(req, res, svc.getConnection(req.params.connectionId as string), "Tool connection not found");
     if (!connection) return;
     const range = req.query.range === "30d" ? "30d" : req.query.range === undefined || req.query.range === "7d" ? "7d" : null;
-    if (!range) throw badRequest("Usage range must be 7d or 30d");
+    if (!range) throw badRequest("使用情况时间范围必须是 7d 或 30d");
     res.json(await svc.getConnectionUsage(connection.id, range, connection.companyId));
   });
 
@@ -1915,14 +1915,14 @@ function connectorEnrollmentPrincipal(req: Request): string {
             .from(agents)
             .where(and(eq(agents.id, agentId), eq(agents.companyId, connection.companyId)))
             .limit(1);
-          if (!agent) throw forbidden("The target agent is not available in this company");
+          if (!agent) throw forbidden("目标智能体在此组织中不可用");
           const decision = await access.decide({
             actor: req.actor,
             action: "agent_config:update",
             resource: { type: "agent", companyId: connection.companyId, agentId: agent.id },
           });
           if (!decision.allowed) {
-            throw forbidden(`You cannot edit agent ${agent.id}, so you cannot change its connection installs`);
+            throw forbidden(`你无权编辑智能体 ${agent.id}，因此不能修改其连接安装`);
           }
         }
       }
@@ -1945,7 +1945,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   router.get("/tool-connections/:connectionId/test-agents", async (req, res) => {
     assertBoard(req);
     if (!options.toolGateway) {
-      res.status(501).json({ error: "Tool gateway service is not configured" });
+      res.status(501).json({ error: "尚未配置工具网关服务" });
       return;
     }
     const connection = await getAccessibleResource(req, res, svc.getConnection(req.params.connectionId as string), "Tool connection not found");
@@ -1986,7 +1986,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   router.get("/tool-connections/:connectionId/test-agents/:agentId/access", async (req, res) => {
     assertBoard(req);
     if (!options.toolGateway) {
-      res.status(501).json({ error: "Tool gateway service is not configured" });
+      res.status(501).json({ error: "尚未配置工具网关服务" });
       return;
     }
     const connection = await getAccessibleResource(req, res, svc.getConnection(req.params.connectionId as string), "Tool connection not found");
@@ -2005,7 +2005,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   router.post("/tool-connections/:connectionId/test-calls", validate(toolConnectionTestCallSchema), async (req, res) => {
     assertBoard(req);
     if (!options.toolGateway) {
-      res.status(501).json({ error: "Tool gateway service is not configured" });
+      res.status(501).json({ error: "尚未配置工具网关服务" });
       return;
     }
     const connection = await getAccessibleResource(req, res, svc.getConnection(req.params.connectionId as string), "Tool connection not found");
@@ -2030,7 +2030,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   router.get("/tool-connections/:connectionId/test-calls/:actionRequestId", async (req, res) => {
     assertBoard(req);
     if (!options.toolGateway) {
-      res.status(501).json({ error: "Tool gateway service is not configured" });
+      res.status(501).json({ error: "尚未配置工具网关服务" });
       return;
     }
     const connection = await getAccessibleResource(req, res, svc.getConnection(req.params.connectionId as string), "Tool connection not found");
