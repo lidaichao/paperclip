@@ -7813,7 +7813,7 @@ export function issueRoutes(
     });
     if (!companyScopeDecision.allowed) {
       res.status(403).json({
-        error: "Company search is outside this actor's authorization boundary",
+        error: "公司搜索超出当前操作者的授权范围",
       });
       return;
     }
@@ -7834,7 +7834,7 @@ export function issueRoutes(
     if (!rateLimit.allowed) {
       res.setHeader("Retry-After", String(rateLimit.retryAfterSeconds));
       res.status(429).json({
-        error: "Search rate limit exceeded",
+        error: "搜索请求过于频繁",
         retryAfterSeconds: rateLimit.retryAfterSeconds,
       });
       return;
@@ -7856,7 +7856,7 @@ export function issueRoutes(
     });
     if (!companyScopeDecision.allowed) {
       res.status(403).json({
-        error: "Company search is outside this actor's authorization boundary",
+        error: "公司搜索超出当前操作者的授权范围",
       });
       return;
     }
@@ -7885,7 +7885,7 @@ export function issueRoutes(
     if (!rateLimit.allowed) {
       res.setHeader("Retry-After", String(rateLimit.retryAfterSeconds));
       res.status(429).json({
-        error: "Search rate limit exceeded",
+        error: "搜索请求过于频繁",
         retryAfterSeconds: rateLimit.retryAfterSeconds,
       });
       return;
@@ -7900,7 +7900,7 @@ export function issueRoutes(
     assertCompanyAccess(req, companyId);
     if (isTaskBridgeKeyActor(req)) {
       res.status(403).json({
-        error: "Task bridge keys cannot use company-wide issue list APIs",
+        error: "任务桥接密钥不能调用公司范围的任务列表接口",
       });
       return;
     }
@@ -8215,7 +8215,7 @@ export function issueRoutes(
     res.setHeader("X-Paperclip-Request-Cache", coordinated.cacheStatus);
     if (!coordinated.response) {
       const body = {
-        error: "Too many concurrent issue-list requests for this actor/client",
+        error: "当前操作者或客户端的并发任务列表请求过多",
         retryAfterSeconds: coordinated.retryAfterSeconds ?? 1,
       };
       res.setHeader("Retry-After", String(body.retryAfterSeconds));
@@ -8281,7 +8281,7 @@ export function issueRoutes(
     assertCompanyAccess(req, companyId);
     if (isTaskBridgeKeyActor(req)) {
       res.status(403).json({
-        error: "Task bridge keys cannot use company-wide issue count APIs",
+        error: "任务桥接密钥不能调用公司范围的任务计数接口",
       });
       return;
     }
@@ -8427,7 +8427,7 @@ export function issueRoutes(
     if (!existing) return;
     const removed = await svc.deleteLabel(labelId);
     if (!removed) {
-      res.status(404).json({ error: "Label not found" });
+      res.status(404).json({ error: "未找到标签" });
       return;
     }
     const actor = getActorInfo(req);
@@ -8489,7 +8489,7 @@ export function issueRoutes(
         req.actor.agentId !== req.body.agentId
       ) {
         res.status(403).json({
-          error: "Agent can only control its own assigned session goal",
+          error: "智能体只能控制分派给自己的会话目标",
         });
         return;
       }
@@ -9257,7 +9257,7 @@ export function issueRoutes(
           !activeRecoveryAction ||
           (actionId && activeRecoveryAction.id !== actionId)
         ) {
-          throw notFound("Active recovery action not found");
+          throw notFound("未找到正在进行的恢复操作");
         }
         await requireRecoveryActionAuthority(
           req,
@@ -9508,7 +9508,7 @@ export function issueRoutes(
           },
           tx,
         );
-        if (!recoveryAction) throw notFound("Active recovery action not found");
+        if (!recoveryAction) throw notFound("未找到正在进行的恢复操作");
 
         return { issue, recoveryAction, chatRetry };
       });

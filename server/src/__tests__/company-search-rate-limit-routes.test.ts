@@ -57,7 +57,7 @@ describe("company search route rate limiting", () => {
 
     expect(search).toHaveBeenCalledTimes(1);
     expect(limited.body).toMatchObject({
-      error: "Search rate limit exceeded",
+      error: "搜索请求过于频繁",
       retryAfterSeconds: 60,
     });
     expect(limited.headers["retry-after"]).toBe("60");

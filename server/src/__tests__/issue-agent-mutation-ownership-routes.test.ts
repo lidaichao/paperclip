@@ -783,7 +783,7 @@ describe("agent issue mutation checkout ownership", () => {
     const res = await request(app).get(`/api/companies/${companyId}/issues`);
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Task bridge keys cannot use company-wide issue list APIs");
+    expect(res.body.error).toContain("任务桥接密钥不能调用公司范围的任务列表接口");
     expect(mockIssueService.list).not.toHaveBeenCalled();
   });
 

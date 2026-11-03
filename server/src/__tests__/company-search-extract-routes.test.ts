@@ -98,7 +98,7 @@ describe("company extract-search route", () => {
       .expect(429);
 
     expect(extract).toHaveBeenCalledTimes(1);
-    expect(limited.body).toEqual({ error: "Search rate limit exceeded", retryAfterSeconds: 60 });
+    expect(limited.body).toEqual({ error: "搜索请求过于频繁", retryAfterSeconds: 60 });
     expect(limited.headers["retry-after"]).toBe("60");
   });
 });
