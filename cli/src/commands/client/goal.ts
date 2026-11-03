@@ -39,13 +39,13 @@ interface GoalDeleteOptions extends BaseClientOptions {
 }
 
 export function registerGoalCommands(program: Command): void {
-  const goal = program.command("goal").description("Goal operations");
+  const goal = program.command("goal").description("目标操作");
 
   addCommonClientOptions(
     goal
       .command("list")
-      .description("List goals for a company")
-      .option("-C, --company-id <id>", "Company ID")
+      .description("列出公司目标")
+      .option("-C, --company-id <id>", "公司编号")
       .action(async (opts: GoalListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -78,8 +78,8 @@ export function registerGoalCommands(program: Command): void {
   addCommonClientOptions(
     goal
       .command("get")
-      .description("Get one goal")
-      .argument("<goalId>", "Goal ID")
+      .description("获取一个目标")
+      .argument("<goalId>", "目标编号")
       .action(async (goalId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -94,14 +94,14 @@ export function registerGoalCommands(program: Command): void {
   addCommonClientOptions(
     goal
       .command("create")
-      .description("Create a goal")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .requiredOption("--title <title>", "Goal title")
-      .option("--description <text>", "Goal description")
-      .option("--level <level>", "Goal level")
-      .option("--status <status>", "Goal status")
-      .option("--parent-id <id>", "Parent goal ID")
-      .option("--owner-agent-id <id>", "Owner agent ID")
+      .description("创建目标")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .requiredOption("--title <title>", "目标标题")
+      .option("--description <text>", "目标描述")
+      .option("--level <level>", "目标层级")
+      .option("--status <status>", "目标状态")
+      .option("--parent-id <id>", "父目标编号")
+      .option("--owner-agent-id <id>", "负责智能体编号")
       .action(async (opts: GoalCreateOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -125,14 +125,14 @@ export function registerGoalCommands(program: Command): void {
   addCommonClientOptions(
     goal
       .command("update")
-      .description("Update a goal")
-      .argument("<goalId>", "Goal ID")
-      .option("--title <title>", "Goal title")
-      .option("--description <text|null>", "Goal description")
-      .option("--level <level>", "Goal level")
-      .option("--status <status>", "Goal status")
-      .option("--parent-id <id|null>", "Parent goal ID")
-      .option("--owner-agent-id <id|null>", "Owner agent ID")
+      .description("更新目标")
+      .argument("<goalId>", "目标编号")
+      .option("--title <title>", "目标标题")
+      .option("--description <text|null>", "目标描述")
+      .option("--level <level>", "目标层级")
+      .option("--status <status>", "目标状态")
+      .option("--parent-id <id|null>", "父目标编号")
+      .option("--owner-agent-id <id|null>", "负责智能体编号")
       .action(async (goalId: string, opts: GoalUpdateOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -155,12 +155,12 @@ export function registerGoalCommands(program: Command): void {
   addCommonClientOptions(
     goal
       .command("delete")
-      .description("Delete a goal")
-      .argument("<goalId>", "Goal ID")
-      .option("--yes", "Confirm deletion")
+      .description("删除目标")
+      .argument("<goalId>", "目标编号")
+      .option("--yes", "确认删除")
       .action(async (goalId: string, opts: GoalDeleteOptions) => {
         try {
-          if (!opts.yes) throw new Error("Deletion requires --yes.");
+          if (!opts.yes) throw new Error("删除操作必须提供 --yes。");
           const ctx = resolveCommandContext(opts);
           const deleted = await ctx.api.delete<Goal>(apiPath`/api/goals/${goalId}`);
           printOutput(deleted, { json: ctx.json });

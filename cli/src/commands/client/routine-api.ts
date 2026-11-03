@@ -19,13 +19,13 @@ interface JsonOptions extends CompanyOptions {
 }
 
 export function registerRoutineApiCommands(program: Command): void {
-  const routine = program.command("routine").description("Routine API operations");
+  const routine = program.command("routine").description("例行任务接口操作");
   addCommonClientOptions(
     routine
       .command("list")
-      .description("List routines")
-      .option("-C, --company-id <id>", "Company ID")
-      .option("--project-id <id>", "Filter by project ID")
+      .description("列出例行任务")
+      .option("-C, --company-id <id>", "公司编号")
+      .option("--project-id <id>", "按项目编号筛选")
       .action(async (opts: CompanyOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -37,16 +37,16 @@ export function registerRoutineApiCommands(program: Command): void {
       }),
     { includeCompany: false },
   );
-  addCompanyPost(routine, "create", "Create a routine", "routines");
-  addIdGet(routine, "get", "Get a routine", "routines");
-  addIdPatch(routine, "update", "Update a routine", "routines");
-  addIdGet(routine, "revisions", "List routine revisions", "routines", "revisions");
+  addCompanyPost(routine, "create", "创建例行任务", "routines");
+  addIdGet(routine, "get", "获取例行任务", "routines");
+  addIdPatch(routine, "update", "更新例行任务", "routines");
+  addIdGet(routine, "revisions", "列出例行任务修订版本", "routines", "revisions");
   addCommonClientOptions(
     routine
       .command("revision:restore")
-      .description("Restore a routine revision")
-      .argument("<routineId>", "Routine ID")
-      .argument("<revisionId>", "Revision ID")
+      .description("恢复例行任务修订版本")
+      .argument("<routineId>", "例行任务编号")
+      .argument("<revisionId>", "修订版本编号")
       .action(async (routineId: string, revisionId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -59,9 +59,9 @@ export function registerRoutineApiCommands(program: Command): void {
   addCommonClientOptions(
     routine
       .command("runs")
-      .description("List routine runs")
-      .argument("<routineId>", "Routine ID")
-      .option("--limit <n>", "Maximum runs to return")
+      .description("列出例行任务运行记录")
+      .argument("<routineId>", "例行任务编号")
+      .option("--limit <n>", "最多返回的运行记录数")
       .action(async (routineId: string, opts: JsonOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -72,17 +72,17 @@ export function registerRoutineApiCommands(program: Command): void {
         }
       }),
   );
-  addIdPost(routine, "run", "Run a routine", "routines", "run");
-  addIdPost(routine, "trigger:create", "Create a routine trigger", "routines", "triggers");
-  addIdPatch(routine, "trigger:update", "Update a routine trigger", "routine-triggers");
-  addIdDelete(routine, "trigger:delete", "Delete a routine trigger", "routine-triggers");
-  addIdPost(routine, "trigger:rotate-secret", "Rotate a routine trigger secret", "routine-triggers", "rotate-secret");
+  addIdPost(routine, "run", "运行例行任务", "routines", "run");
+  addIdPost(routine, "trigger:create", "创建例行任务触发器", "routines", "triggers");
+  addIdPatch(routine, "trigger:update", "更新例行任务触发器", "routine-triggers");
+  addIdDelete(routine, "trigger:delete", "删除例行任务触发器", "routine-triggers");
+  addIdPost(routine, "trigger:rotate-secret", "轮换例行任务触发器密钥", "routine-triggers", "rotate-secret");
   addCommonClientOptions(
     routine
       .command("trigger:fire")
-      .description("Fire a public routine trigger")
-      .argument("<publicId>", "Public trigger ID")
-      .option("--payload-json <json>", "Public trigger payload", "{}")
+      .description("触发公开例行任务触发器")
+      .argument("<publicId>", "公开触发器编号")
+      .option("--payload-json <json>", "公开触发器数据", "{}")
       .action(async (publicId: string, opts: JsonOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -95,7 +95,7 @@ export function registerRoutineApiCommands(program: Command): void {
 }
 
 function addCompanyPost(parent: Command, name: string, description: string, path: string): void {
-  addCommonClientOptions(parent.command(name).description(description).option("-C, --company-id <id>", "Company ID").requiredOption("--payload-json <json>", "JSON payload").action(async (opts: JsonOptions) => {
+  addCommonClientOptions(parent.command(name).description(description).option("-C, --company-id <id>", "公司编号").requiredOption("--payload-json <json>", "JSON 数据").action(async (opts: JsonOptions) => {
     try {
       const ctx = resolveCommandContext(opts, { requireCompany: true });
       printOutput(await ctx.api.post(`${apiPath`/api/companies/${ctx.companyId}`}/${path}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
@@ -106,7 +106,7 @@ function addCompanyPost(parent: Command, name: string, description: string, path
 }
 
 function addIdGet(parent: Command, name: string, description: string, resource: string, suffix?: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<id>", "ID").action(async (id: string, opts: BaseClientOptions) => {
+  addCommonClientOptions(parent.command(name).description(description).argument("<id>", "编号").action(async (id: string, opts: BaseClientOptions) => {
     try {
       const ctx = resolveCommandContext(opts);
       printOutput(await ctx.api.get(`/api/${resource}/${encodeURIComponent(id)}${suffix ? `/${suffix}` : ""}`), { json: ctx.json });
@@ -117,7 +117,7 @@ function addIdGet(parent: Command, name: string, description: string, resource: 
 }
 
 function addIdPatch(parent: Command, name: string, description: string, resource: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<id>", "ID").requiredOption("--payload-json <json>", "JSON payload").action(async (id: string, opts: JsonOptions) => {
+  addCommonClientOptions(parent.command(name).description(description).argument("<id>", "编号").requiredOption("--payload-json <json>", "JSON 数据").action(async (id: string, opts: JsonOptions) => {
     try {
       const ctx = resolveCommandContext(opts);
       printOutput(await ctx.api.patch(`/api/${resource}/${encodeURIComponent(id)}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
@@ -128,7 +128,7 @@ function addIdPatch(parent: Command, name: string, description: string, resource
 }
 
 function addIdPost(parent: Command, name: string, description: string, resource: string, suffix: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<id>", "ID").option("--payload-json <json>", "JSON payload", "{}").action(async (id: string, opts: JsonOptions) => {
+  addCommonClientOptions(parent.command(name).description(description).argument("<id>", "编号").option("--payload-json <json>", "JSON 数据", "{}").action(async (id: string, opts: JsonOptions) => {
     try {
       const ctx = resolveCommandContext(opts);
       printOutput(await ctx.api.post(`/api/${resource}/${encodeURIComponent(id)}/${suffix}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
@@ -139,7 +139,7 @@ function addIdPost(parent: Command, name: string, description: string, resource:
 }
 
 function addIdDelete(parent: Command, name: string, description: string, resource: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<id>", "ID").action(async (id: string, opts: BaseClientOptions) => {
+  addCommonClientOptions(parent.command(name).description(description).argument("<id>", "编号").action(async (id: string, opts: BaseClientOptions) => {
     try {
       const ctx = resolveCommandContext(opts);
       printOutput(await ctx.api.delete(`/api/${resource}/${encodeURIComponent(id)}`), { json: ctx.json });
