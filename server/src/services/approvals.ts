@@ -38,7 +38,7 @@ export function approvalService(db: Db) {
       .from(approvals)
       .where(eq(approvals.id, id))
       .then((rows) => rows[0] ?? null);
-    if (!existing) throw notFound("Approval not found");
+    if (!existing) throw notFound("未找到审批");
     return existing;
   }
 
@@ -54,7 +54,7 @@ export function approvalService(db: Db) {
         return { approval: existing, applied: false };
       }
       throw unprocessable(
-        `Only pending or revision requested approvals can be ${targetStatus === "approved" ? "approved" : "rejected"}`,
+        `只有待审批或已请求修订的审批才能${targetStatus === "approved" ? "批准" : "拒绝"}`,
       );
     }
 
@@ -82,7 +82,7 @@ export function approvalService(db: Db) {
     }
 
     throw unprocessable(
-      `Only pending or revision requested approvals can be ${targetStatus === "approved" ? "approved" : "rejected"}`,
+        `只有待审批或已请求修订的审批才能${targetStatus === "approved" ? "批准" : "拒绝"}`,
     );
   }
 
@@ -234,7 +234,7 @@ export function approvalService(db: Db) {
     requestRevision: async (id: string, decidedByUserId: string, decisionNote?: string | null) => {
       const existing = await getExistingApproval(id);
       if (existing.status !== "pending") {
-        throw unprocessable("Only pending approvals can request revision");
+      throw unprocessable("只有待审批的审批才能请求修订");
       }
 
       const now = new Date();
@@ -255,7 +255,7 @@ export function approvalService(db: Db) {
     resubmit: async (id: string, payload?: Record<string, unknown>) => {
       const existing = await getExistingApproval(id);
       if (existing.status !== "revision_requested") {
-        throw unprocessable("Only revision requested approvals can be resubmitted");
+      throw unprocessable("只有已请求修订的审批才能重新提交");
       }
 
       const now = new Date();

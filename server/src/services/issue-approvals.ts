@@ -28,13 +28,13 @@ export function issueApprovalService(db: Db) {
 
   async function assertIssueAndApprovalSameCompany(issueId: string, approvalId: string) {
     const issue = await getIssue(issueId);
-    if (!issue) throw notFound("Issue not found");
+    if (!issue) throw notFound("未找到任务");
 
     const approval = await getApproval(approvalId);
-    if (!approval) throw notFound("Approval not found");
+    if (!approval) throw notFound("未找到审批");
 
     if (issue.companyId !== approval.companyId) {
-      throw unprocessable("Issue and approval must belong to the same company");
+      throw unprocessable("任务和审批必须属于同一公司");
     }
 
     return { issue, approval };
@@ -43,7 +43,7 @@ export function issueApprovalService(db: Db) {
   return {
     listApprovalsForIssue: async (issueId: string) => {
       const issue = await getIssue(issueId);
-      if (!issue) throw notFound("Issue not found");
+    if (!issue) throw notFound("未找到任务");
 
       const result = await db
         .select({
@@ -72,7 +72,7 @@ export function issueApprovalService(db: Db) {
 
     listIssuesForApproval: async (approvalId: string) => {
       const approval = await getApproval(approvalId);
-      if (!approval) throw notFound("Approval not found");
+    if (!approval) throw notFound("未找到审批");
 
       return db
         .select({
@@ -136,7 +136,7 @@ export function issueApprovalService(db: Db) {
       if (issueIds.length === 0) return;
 
       const approval = await getApproval(approvalId);
-      if (!approval) throw notFound("Approval not found");
+    if (!approval) throw notFound("未找到审批");
 
       const uniqueIssueIds = Array.from(new Set(issueIds));
       const rows = await db
@@ -148,12 +148,12 @@ export function issueApprovalService(db: Db) {
         .where(inArray(issues.id, uniqueIssueIds));
 
       if (rows.length !== uniqueIssueIds.length) {
-        throw notFound("One or more issues not found");
+      throw notFound("未找到一个或多个任务");
       }
 
       for (const row of rows) {
         if (row.companyId !== approval.companyId) {
-          throw unprocessable("Issue and approval must belong to the same company");
+      throw unprocessable("任务和审批必须属于同一公司");
         }
       }
 
