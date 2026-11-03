@@ -91,5 +91,8 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.skill_now_editable_in_alice_workspace_1a7f6704).toBe(
       "现在可在 Alice 工作区中编辑 {{v0}}。",
     );
+    expect(messages.activity_moved_to_value_dbb053ec).toBe("移至{{v0}}");
+    expect(messages.activity_requested_approval_on_dfeaf6d7).toBe("请求审批：");
+    expect(messages.activity_updated_organization_budget_7ccafcc6).toBe("更新了组织预算");
   });
 });

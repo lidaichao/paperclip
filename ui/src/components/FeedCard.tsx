@@ -32,7 +32,22 @@ import { Card } from "@/components/ui/card";
 type VerbContext = "pinned" | "chronological";
 
 function humanize(value: unknown): string {
-  return typeof value === "string" ? value.replace(/_/g, " ") : String(value ?? "");
+  if (typeof value !== "string") return String(value ?? "");
+  const localizedValues: Record<string, string> = {
+    backlog: l10n("local.activity_value_backlog_5e40a987"),
+    todo: l10n("local.activity_value_todo_fcbeb5e4"),
+    in_progress: l10n("local.activity_value_in_progress_c52991ca"),
+    in_review: l10n("local.activity_value_in_review_981b70be"),
+    done: l10n("local.activity_value_done_bdb81916"),
+    blocked: l10n("local.activity_value_blocked_03d788dc"),
+    cancelled: l10n("local.activity_value_cancelled_651bcc39"),
+    idle: l10n("local.activity_value_idle_1284334a"),
+    low: l10n("local.activity_value_low_705b7d33"),
+    medium: l10n("local.activity_value_medium_6a07020d"),
+    high: l10n("local.activity_value_high_280cc574"),
+    critical: l10n("local.activity_value_critical_9fa48cf0"),
+  };
+  return localizedValues[value] ?? value.replace(/_/g, " ");
 }
 
 /** One verb per action. Pinned context (Tier 0) swaps a couple of verbs to
@@ -44,86 +59,90 @@ function formatVerb(
 ): string {
   switch (action) {
     case "issue.created":
-      return "opened";
+      return l10n("local.activity_opened_6777801e");
     case "issue.updated": {
       const status = details?.status;
-      if (status === "in_review" && details?.externalConversationState === "waiting") return "moved to idle";
-      if (typeof status === "string") return `moved to ${humanize(status)}`;
+      if (status === "in_review" && details?.externalConversationState === "waiting") return l10n("local.activity_moved_to_idle_f206e7a6");
+      if (typeof status === "string") return l10n("local.activity_moved_to_value_dbb053ec", { v0: humanize(status) });
       const priority = details?.priority;
-      if (typeof priority === "string") return `set priority to ${humanize(priority)} on`;
-      return "updated";
+      if (typeof priority === "string") return l10n("local.activity_set_priority_to_value_on_47060a53", { v0: humanize(priority) });
+      return l10n("local.updated_27eb5e51");
     }
     case "issue.document_created":
-      return "wrote doc on";
+      return l10n("local.activity_wrote_document_on_0e777623");
     case "issue.document_updated":
-      return "edited doc on";
+      return l10n("local.activity_edited_document_on_2d183074");
     case "issue.document_deleted":
-      return "deleted doc from";
+      return l10n("local.activity_deleted_document_from_347825ec");
     case "issue.work_product_created":
-      return "delivered work on";
+      return l10n("local.activity_delivered_work_on_fd9e6b42");
     case "issue.work_product_updated":
-      return "updated work on";
+      return l10n("local.activity_updated_work_on_311d014b");
     case "issue.work_product_deleted":
-      return "removed work from";
+      return l10n("local.activity_removed_work_from_d7e97e8c");
     case "issue.checked_out":
-      return "picked up";
+      return l10n("local.activity_picked_up_f83fe835");
     case "issue.released":
-      return "released";
+      return l10n("local.released_d29eae13");
     case "issue.commented":
     case "issue.comment_added":
-      return "commented on";
+      return l10n("local.activity_commented_on_cabc1b9c");
     case "issue.attachment_added":
-      return "attached a file to";
+      return l10n("local.activity_attached_file_to_92f0c191");
     case "issue.attachment_removed":
-      return "removed attachment from";
+      return l10n("local.activity_removed_attachment_from_56f11c60");
     case "issue.deleted":
-      return "deleted";
+      return l10n("local.deleted_1185f37d");
 
     case "approval.created":
-      return context === "pinned" ? "needs approval on" : "requested approval on";
+      return context === "pinned"
+        ? l10n("local.activity_needs_approval_on_8c559adc")
+        : l10n("local.activity_requested_approval_on_dfeaf6d7");
     case "approval.approved":
-      return "approved";
+      return l10n("local.approved_2687f86e");
     case "approval.rejected":
-      return "rejected";
+      return l10n("local.rejected_20cd938a");
     case "approval.revision_requested":
-      return "requested changes on";
+      return l10n("local.activity_requested_changes_on_b38dfba9");
 
     case "agent.created":
-      return context === "pinned" ? "wants to hire" : "hired";
+      return context === "pinned"
+        ? l10n("local.activity_wants_to_hire_4777c942")
+        : l10n("local.activity_hired_805b0135");
     case "agent.paused":
-      return "paused";
+      return l10n("local.paused_a7a9dc5b");
     case "agent.resumed":
-      return "resumed";
+      return l10n("local.resumed_cf8ad4d9");
     case "agent.updated":
-      return "updated";
+      return l10n("local.updated_27eb5e51");
     case "agent.terminated":
-      return "terminated";
+      return l10n("local.terminated_e8c95a2a");
 
     case "heartbeat.invoked":
-      return "started a run on";
+      return l10n("local.activity_started_run_on_600047e2");
     case "heartbeat.cancelled":
-      return "cancelled a run on";
+      return l10n("local.activity_cancelled_run_on_45be003d");
 
     case "project.created":
-      return "created project";
+      return l10n("local.activity_created_project_845e6099");
     case "project.updated":
-      return "updated project";
+      return l10n("local.activity_updated_project_a24d2541");
     case "project.deleted":
-      return "deleted project";
+      return l10n("local.activity_deleted_project_220df8b9");
     case "goal.created":
-      return "created goal";
+      return l10n("local.activity_created_goal_563cdb80");
     case "goal.updated":
-      return "updated goal";
+      return l10n("local.activity_updated_goal_cfa493bd");
     case "goal.deleted":
-      return "deleted goal";
+      return l10n("local.activity_deleted_goal_555a3d64");
     case "company.created":
-      return "created organization";
+      return l10n("local.activity_created_organization_863270c8");
     case "company.updated":
-      return "updated organization";
+      return l10n("local.activity_updated_organization_9a11bd84");
     case "company.archived":
-      return "archived organization";
+      return l10n("local.activity_archived_organization_ebf8bdd1");
     case "company.budget_updated":
-      return "updated organization budget";
+      return l10n("local.activity_updated_organization_budget_7ccafcc6");
 
     default:
       return action.replace(/[._]/g, " ");
@@ -296,10 +315,10 @@ function resolveContent(
   const actorName =
     actor?.name ??
     (event.actorType === "system"
-      ? "System"
+      ? l10n("local.system_6725e7bb")
       : event.actorType === "user"
-        ? "Board"
-        : event.actorId || "Unknown");
+        ? l10n("local.board_4816cbfd")
+        : event.actorId || l10n("local.unknown_b764cdc0"));
 
   const entityTitle = entityTitleMap?.get(`${event.entityType}:${event.entityId}`) ?? null;
 
@@ -354,7 +373,7 @@ function resolveContent(
     if (approvalAgentName) {
       identifier = approvalAgentName;
     } else {
-      identifier = approvalType ? humanize(approvalType) : "approval";
+      identifier = approvalType ? humanize(approvalType) : l10n("local.activity_approval_ebf13952");
       identifierMono = false;
     }
     title = entityTitle;
