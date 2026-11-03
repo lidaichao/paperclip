@@ -271,7 +271,7 @@ describe("POST /api/companies/:companyId/assets/images", () => {
     );
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toBe("File is larger than the 10 MB limit");
+    expect(res.body.error).toBe("文件大小超过 10 MB 限制");
   });
 });
 
@@ -375,7 +375,7 @@ describe("POST /api/companies/:companyId/logo", () => {
     );
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toBe("Image is larger than the 10 MB limit");
+    expect(res.body.error).toBe("图片大小超过 10 MB 限制");
   });
 
   it("rejects unsupported image types", async () => {
@@ -389,7 +389,7 @@ describe("POST /api/companies/:companyId/logo", () => {
     );
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toBe("Unsupported image type: text/plain");
+    expect(res.body.error).toBe("不支持的图片类型：text/plain");
     expect(createAssetMock).not.toHaveBeenCalled();
   });
 
@@ -404,7 +404,7 @@ describe("POST /api/companies/:companyId/logo", () => {
     );
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toBe("SVG could not be sanitized");
+    expect(res.body.error).toBe("无法安全处理 SVG 图片");
     expect(createAssetMock).not.toHaveBeenCalled();
   });
 });

@@ -122,7 +122,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
       if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
           res.status(422).json({
-            error: `File is larger than the ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)} limit`,
+            error: `文件大小超过 ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)} 限制`,
           });
           return;
         }
@@ -134,14 +134,14 @@ export function assetRoutes(db: Db, storage: StorageService) {
 
     const file = (req as Request & { file?: { mimetype: string; buffer: Buffer; originalname: string } }).file;
     if (!file) {
-      res.status(400).json({ error: "Missing file field 'file'" });
+      res.status(400).json({ error: "缺少文件字段“file”" });
       return;
     }
 
     const parsedMeta = createAssetImageMetadataSchema.safeParse(req.body ?? {});
     if (!parsedMeta.success) {
       res.status(400).json({
-        error: `Invalid image metadata: ${ASSET_NAMESPACE_RULE}`,
+        error: `图片元数据无效：${ASSET_NAMESPACE_RULE}`,
         details: parsedMeta.error.issues,
       });
       return;
@@ -150,20 +150,20 @@ export function assetRoutes(db: Db, storage: StorageService) {
     const namespaceSuffix = parsedMeta.data.namespace ?? "general";
     const contentType = (file.mimetype || "").toLowerCase();
     if (contentType !== SVG_CONTENT_TYPE && !isAllowedContentType(contentType)) {
-      res.status(422).json({ error: `Unsupported file type: ${contentType || "unknown"}` });
+      res.status(422).json({ error: `不支持的文件类型：${contentType || "未知"}` });
       return;
     }
     let fileBody = file.buffer;
     if (contentType === SVG_CONTENT_TYPE) {
       const sanitized = sanitizeSvgBuffer(file.buffer);
       if (!sanitized || sanitized.length <= 0) {
-        res.status(422).json({ error: "SVG could not be sanitized" });
+        res.status(422).json({ error: "无法安全处理 SVG 图片" });
         return;
       }
       fileBody = sanitized;
     }
     if (fileBody.length <= 0) {
-      res.status(422).json({ error: "Image is empty" });
+      res.status(422).json({ error: "图片内容为空" });
       return;
     }
 
@@ -231,7 +231,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
       if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
           res.status(422).json({
-            error: `Image is larger than the ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)} limit`,
+            error: `图片大小超过 ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)} 限制`,
           });
           return;
         }
@@ -243,13 +243,13 @@ export function assetRoutes(db: Db, storage: StorageService) {
 
     const file = (req as Request & { file?: { mimetype: string; buffer: Buffer; originalname: string } }).file;
     if (!file) {
-      res.status(400).json({ error: "Missing file field 'file'" });
+      res.status(400).json({ error: "缺少文件字段“file”" });
       return;
     }
 
     const contentType = (file.mimetype || "").toLowerCase();
     if (!ALLOWED_COMPANY_LOGO_CONTENT_TYPES.has(contentType)) {
-      res.status(422).json({ error: `Unsupported image type: ${contentType || "unknown"}` });
+      res.status(422).json({ error: `不支持的图片类型：${contentType || "未知"}` });
       return;
     }
 
@@ -257,14 +257,14 @@ export function assetRoutes(db: Db, storage: StorageService) {
     if (contentType === SVG_CONTENT_TYPE) {
       const sanitized = sanitizeSvgBuffer(file.buffer);
       if (!sanitized || sanitized.length <= 0) {
-        res.status(422).json({ error: "SVG could not be sanitized" });
+        res.status(422).json({ error: "无法安全处理 SVG 图片" });
         return;
       }
       fileBody = sanitized;
     }
 
     if (fileBody.length <= 0) {
-      res.status(422).json({ error: "Image is empty" });
+      res.status(422).json({ error: "图片内容为空" });
       return;
     }
 
@@ -325,7 +325,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
 
   router.get("/assets/:assetId/content", async (req, res, next) => {
     const assetId = req.params.assetId as string;
-    const asset = await getAccessibleResource(req, res, svc.getById(assetId), "Asset not found");
+    const asset = await getAccessibleResource(req, res, svc.getById(assetId), "未找到资源");
     if (!asset) return;
 
     const object = await storage.getObject(asset.companyId, asset.objectKey);

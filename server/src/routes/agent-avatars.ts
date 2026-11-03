@@ -31,7 +31,7 @@ export function agentAvatarRoutes(injected?: ReturnType<typeof createAgentAvatar
     const parsed = requestSchema.safeParse({ ...req.query, version: req.params.version, palette: req.params.palette, pose: file.endsWith(".png") ? file.slice(0, -4) : file });
     if (!file.endsWith(".png") || !parsed.success || Object.keys(req.query).some(key => key !== "size" && key !== "scale")) {
       res.setHeader("Cache-Control", "no-store");
-      res.status(400).json({ error: "Unsupported avatar version, palette, pose, size, or scale" }); return;
+      res.status(400).json({ error: "不支持的头像版本、配色、姿势、尺寸或缩放比例" }); return;
     }
     const { palette, pose, size, scale } = parsed.data;
     try {
@@ -58,7 +58,7 @@ export function agentAvatarRoutes(injected?: ReturnType<typeof createAgentAvatar
       res.removeHeader("ETag");
       res.setHeader("Cache-Control", "no-store");
       res.setHeader("Retry-After", String(error instanceof AvatarAdmissionError ? error.retryAfterSeconds : 5));
-      res.status(error instanceof AvatarAdmissionError ? 429 : 503).json({ error: "Avatar temporarily unavailable" });
+      res.status(error instanceof AvatarAdmissionError ? 429 : 503).json({ error: "头像暂时不可用" });
     }
   });
   return { router, close: async () => { await service?.close(); } };
