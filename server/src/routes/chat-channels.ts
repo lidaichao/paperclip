@@ -95,11 +95,11 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
   async function assertIdentityLinkAccess(req: ExpressRequest): Promise<string> {
     assertBoard(req);
     const userId = actorUserId(req);
-    if (!userId) throw badRequest("A signed-in Paperclip user is required");
+    if (!userId) throw badRequest("需要已登录的 Alice 用户");
     // Enforce rollout here: invited nonmembers cannot read the board's
     // experimental-settings API. A private token never bypasses this gate.
     if (!(await instanceSettingsService(db).getExperimental()).enableChatConnectors) {
-      throw forbidden("Chat connectors are not enabled on this instance");
+      throw forbidden("此实例未启用聊天连接器");
     }
     return userId;
   }
@@ -123,7 +123,7 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
       ))
     )
       return;
-    throw forbidden("Missing permission: tools:manage_connections");
+    throw forbidden("缺少权限：tools:manage_connections");
   }
 
   async function assertEndpointManagementAccess(
@@ -162,7 +162,7 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
 
   const githubUser = (req: ExpressRequest) => {
     const userId = actorUserId(req);
-    if (!userId) throw badRequest("Sign in to your Paperclip account to set up this bot");
+    if (!userId) throw badRequest("请登录 Alice 账号后再设置此机器人");
     return userId;
   };
   router.get("/chat-endpoints/:endpointId/github/configuration", async (req, res) => {
@@ -257,13 +257,13 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
   router.post("/chat-endpoints/:endpointId/finish", async (req, res) => {
     if (!(await assertEndpointManagementAccess(req, res))) return;
     const userId = actorUserId(req);
-    if (!userId) throw badRequest("A signed-in Paperclip user is required");
+    if (!userId) throw badRequest("需要已登录的 Alice 用户");
     res.json(await service.finishSlackSetup(endpointId(req), userId));
   });
   router.get("/chat-endpoints/:endpointId/test-status", async (req, res) => {
     if (!(await assertEndpointAccess(req, res, service))) return;
     const userId = actorUserId(req);
-    if (!userId) throw badRequest("A signed-in Paperclip user is required");
+    if (!userId) throw badRequest("需要已登录的 Alice 用户");
     res.set("Cache-Control", "no-store");
     res.json(await service.setupTestStatus(endpointId(req), userId));
   });
@@ -340,7 +340,7 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
     const userId = await assertIdentityLinkAccess(req);
     const token = typeof req.query.token === "string" ? req.query.token : "";
     if (token.length < 32 || token.length > 4096)
-      throw badRequest("A valid identity-link token is required");
+      throw badRequest("需要有效的身份关联令牌");
     res.set("Cache-Control", "no-store");
     const invitation = await service.previewIdentityLink(token, userId).catch((error) => {
       if (error instanceof HttpError && error.status === 422) return null;
@@ -364,7 +364,7 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
     if (!(await assertEndpointAccess(req, res, service))) return;
     if (req.query.limit !== undefined || req.query.cursor !== undefined) {
       if ((req.query.limit !== undefined && (typeof req.query.limit !== "string" || !/^\d+$/.test(req.query.limit)))
-        || (req.query.cursor !== undefined && typeof req.query.cursor !== "string")) throw badRequest("Invalid activity pagination parameters");
+        || (req.query.cursor !== undefined && typeof req.query.cursor !== "string")) throw badRequest("活动记录分页参数无效");
       res.json(await service.listActivityPage(endpointId(req), req.query.limit === undefined ? 25 : Number(req.query.limit), req.query.cursor as string | undefined));
     } else {
       res.json(await service.listActivity(endpointId(req)));
@@ -401,7 +401,7 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
     async (req, res) => {
       if (!(await assertEndpointManagementAccess(req, res))) return;
       const userId = actorUserId(req);
-      if (!userId) throw badRequest("A board user is required");
+      if (!userId) throw badRequest("需要看板用户");
       await service.resolvePublication(
         endpointId(req),
         req.params.publicationId as string,
@@ -419,7 +419,7 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
     async (req, res) => {
       if (!(await assertEndpointManagementAccess(req, res))) return;
       const userId = actorUserId(req);
-      if (!userId) throw badRequest("A board user is required");
+      if (!userId) throw badRequest("需要看板用户");
       await service.resolveAction(
         endpointId(req),
         req.params.actionId as string,
@@ -448,7 +448,7 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
         return;
       }
       const userId = actorUserId(req);
-      if (!userId) throw badRequest("A board user is required");
+      if (!userId) throw badRequest("需要看板用户");
       res
         .status(201)
         .json(
@@ -493,7 +493,7 @@ export function chatChannelRoutes(db: Db, options: ChatChannelRouteOptions) {
     assertBoard(req);
     const issueId = req.params.issueId as string;
     if (issueId !== issueId.trim() || !isUuidLike(issueId)) {
-      throw badRequest("Task ID must be a UUID");
+      throw badRequest("任务 ID 必须是 UUID");
     }
     const binding = await service.getIssueBinding(issueId);
     if (binding) {
@@ -584,7 +584,7 @@ export function chatWebhookRoutes(
     }
     const provider = req.params.provider as ChatProvider;
     if (!CHAT_PROVIDERS.includes(provider) || provider === "agentmail")
-      throw badRequest("Unsupported chat provider");
+      throw badRequest("不支持的聊天提供方");
     const response = await service.handleWebhook(
       req.params.publicId as string,
       provider,

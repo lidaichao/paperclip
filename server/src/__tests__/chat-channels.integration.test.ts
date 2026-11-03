@@ -4827,7 +4827,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     for (const mutation of deniedMutations) {
       const response = await mutation.expect(403);
       expect(response.body.error).toBe(
-        "Missing permission: tools:manage_connections",
+        "缺少权限：tools:manage_connections",
       );
     }
 
