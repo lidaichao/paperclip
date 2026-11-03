@@ -11040,7 +11040,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           const originalAttachmentId =
             originalPhotonAttachments.get(relation.source);
           if (!originalAttachmentId)
-            throw new Error("Photon related attachment source is missing");
+            throw new Error("缺少 Photon 相关附件来源");
           await db
             .insert(chatActions)
             .values({
@@ -11195,7 +11195,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       runtimeContextForRecord(
         (await endpointRecord(input.endpoint.id)) ??
           (() => {
-            throw new Error("Chat endpoint is unavailable");
+            throw new Error("聊天端点不可用");
           })(),
       );
     const effect = await db.transaction(async (tx) => {
@@ -11261,7 +11261,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         );
       return staged;
     });
-    if (!effect) throw new Error("Attachment failure notice was not persisted");
+    if (!effect) throw new Error("附件失败通知未能保存");
     // Posting the safe notice is its own durable outbox operation. A provider
     // outage must not turn the already-settled, deliberately unwoken inbound
     // delivery back into a replayable attachment message.
@@ -13297,7 +13297,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           eq(chatActions.kind, "failed_run_retry"),
         ),
       );
-    if (!candidate) throw notFound("Chat retry request not found");
+    if (!candidate) throw notFound("未找到聊天重试请求");
     const now = new Date();
     if (
       shuttingDown ||
@@ -14326,7 +14326,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           String(claimed.payload.requestedByActorType),
         )
       ) {
-        throw forbidden("Invalid durable inbound chat source", {
+        throw forbidden("持久化入站聊天来源无效", {
           code: "chat_action_authorization_changed",
         });
       }
@@ -15310,7 +15310,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       if (existingMessageLink) {
         const inboundCommentId = existingMessageLink.commentId;
         if (!inboundCommentId) {
-          throw new Error("Inbound message link is missing its task comment");
+          throw new Error("入站消息链接缺少对应任务评论");
         }
         const rebound = await db
           .select({
@@ -15338,7 +15338,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             ),
           )
           .then((rows) => rows[0] ?? null);
-        if (!rebound) throw notFound("Bound task not found");
+        if (!rebound) throw notFound("未找到已绑定任务");
         if (!activeDelivery.principalId)
           throw new Error("chat_inbound_wakeup_principal_missing");
         await stageInboundWakeup(db, {
@@ -15440,7 +15440,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               .where(eq(chatEndpoints.id, endpoint.id))
               .for("update")
               .then((rows) => rows[0] ?? null);
-            if (!currentEndpoint) throw notFound("Chat endpoint not found");
+            if (!currentEndpoint) throw notFound("未找到聊天端点");
             const enabledResourceCount = await tx
               .select({ count: sql<number>`count(*)::int` })
               .from(chatEndpointResources)
