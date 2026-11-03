@@ -29,7 +29,7 @@ export async function testEnvironment(
     checks.push({
       code: "http_url_missing",
       level: "error",
-      message: "HTTP adapter requires a URL.",
+      message: "HTTP 适配器需要填写 URL。",
       hint: "Set adapterConfig.url to an absolute http(s) endpoint.",
     });
     return {
@@ -93,7 +93,7 @@ export async function testEnvironment(
         checks.push({
           code: "http_endpoint_probe_ok",
           level: "info",
-          message: "Endpoint responded to a HEAD probe.",
+          message: "端点已响应 HEAD 探测请求。",
         });
       }
     } catch (err) {

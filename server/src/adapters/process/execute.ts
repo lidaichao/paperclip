@@ -17,7 +17,7 @@ import {
 export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult> {
   const { runId, agent, config, onLog, onMeta, authToken } = ctx;
   const command = asString(config.command, "");
-  if (!command) throw new Error("Process adapter missing command");
+  if (!command) throw new Error("进程适配器缺少命令");
 
   const args = asStringArray(config.args);
   const cwd = asString(config.cwd, process.cwd());

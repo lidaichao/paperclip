@@ -5,7 +5,7 @@ import { guardedHttpAdapterFetch } from "./remote-fetch.js";
 export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult> {
   const { config, runId, agent, context } = ctx;
   const url = asString(config.url, "");
-  if (!url) throw new Error("HTTP adapter missing url");
+  if (!url) throw new Error("HTTP 适配器缺少 URL");
 
   const method = asString(config.method, "POST");
   const timeoutMs = asNumber(config.timeoutMs, 0);

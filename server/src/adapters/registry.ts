@@ -405,29 +405,29 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
     }
     if (profile.provider === "acpx") {
       try {
-        if (profile.acpxAgent !== "claude") throw new Error("Select Codex to use the native Codex runner.");
+        if (profile.acpxAgent !== "claude") throw new Error("如需使用原生 Codex 运行器，请选择 Codex。");
         const target = context.executionTarget;
         if (target?.kind === "remote") {
           const probe = await runAdapterExecutionTargetShellCommand(
             `acpx-platform-${crypto.randomUUID()}`, target, "uname -s && uname -m",
             { cwd: target.remoteCwd, env: {}, timeoutSec: 15 },
           );
-          if (probe.timedOut || probe.exitCode !== 0) throw new Error("Could not verify the remote ACPX runner platform.");
+          if (probe.timedOut || probe.exitCode !== 0) throw new Error("无法验证远程 ACPX 运行器平台。");
           const [os, arch] = probe.stdout.trim().split(/\s+/);
           if (!((os === "Linux" && arch === "x86_64") || (os === "Darwin" && ["arm64", "x86_64"].includes(arch ?? "")))) {
-            throw new Error("ACPX Claude requires Linux x64 or macOS ARM64/x64.");
+            throw new Error("ACPX Claude 需要 Linux x64 或 macOS ARM64/x64。");
           }
           return {
             adapterType: "paperclip_runner", status: "warn" as const, testedAt: new Date().toISOString(),
             checks: [{ code: "acpx_remote_runtime_unverified", level: "warn" as const,
-              message: "The remote platform is supported. Runtime package integrity and readiness must still be verified by the remote runner before launch." }],
+              message: "远程平台受支持。启动前仍需由远程运行器验证运行时软件包的完整性和就绪状态。" }],
           };
         }
         const { probeAcpxClaudeInstallation } = await import("@paperclipai/paperclip-runner/live");
         await probeAcpxClaudeInstallation(profile.model);
         return {
           adapterType: "paperclip_runner", status: "pass" as const, testedAt: new Date().toISOString(),
-          checks: [{ code: "acpx_runtime_ready", level: "info" as const, message: "ACPX Claude runtime is installed and verified. Model access is checked when Claude runs." }],
+          checks: [{ code: "acpx_runtime_ready", level: "info" as const, message: "ACPX Claude 运行时已安装并通过验证。Claude 启动时会检查模型访问权限。" }],
         };
       } catch (error) {
         return {
@@ -448,7 +448,7 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
         }, {
           code: "claude_managed_retention_notice",
           level: "warn" as const,
-          message: "Claude Managed is a stateful beta service and is not eligible for ZDR or HIPAA modes.",
+          message: "Claude 托管服务目前是有状态的测试版，不适用于零数据保留（ZDR）或 HIPAA 模式。",
         }],
       };
     }
@@ -464,7 +464,7 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
         }, {
           code: "aws_agentcore_retention_notice",
           level: "warn" as const,
-          message: "AgentCore Memory retains short-term events for 90 days; the spend ceiling is an estimate, not an AWS currency hard stop.",
+          message: "AgentCore Memory 会保留短期事件 90 天；支出上限仅为估算值，并非 AWS 货币层面的硬性停止线。",
         }],
       };
     }

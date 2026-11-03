@@ -29,7 +29,7 @@ export async function testEnvironment(
     checks.push({
       code: "process_command_missing",
       level: "error",
-      message: "Process adapter requires a command.",
+      message: "进程适配器需要填写命令。",
       hint: "Set adapterConfig.command to an executable command.",
     });
   } else {
