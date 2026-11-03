@@ -111,12 +111,12 @@ export async function assertIssueReviewVerdictActorAllowed(
   if (policy === "human_only") {
     if (input.actor.type === "user") return;
     throw forbidden(
-      "Review policy `human_only` allows only an authenticated user to approve or reject this review.",
+      "评审策略 `human_only` 仅允许已认证用户批准或拒绝此评审。",
       {
         code: "review_policy_denied",
         policy,
         allowedActor: "authenticated_user_with_issue_write_access",
-        remediation: "Have an authenticated user with issue write access submit the verdict.",
+        remediation: "请由具有任务写入权限的已认证用户提交评审结论。",
       },
     );
   }
@@ -124,24 +124,24 @@ export async function assertIssueReviewVerdictActorAllowed(
   const requester = await resolveIssueReviewRequester(db, input.issue);
   if (!requester) {
     throw forbidden(
-      "Review policy `not_creator` requires a different writer, but the review requester could not be determined.",
+      "评审策略 `not_creator` 要求由其他写入者评审，但无法确定评审请求者。",
       {
         code: "review_policy_denied",
         policy,
         allowedActor: "writer_other_than_review_requester",
-        remediation: "Move the issue out of and back into `in_review` to record a requester before another writer submits the verdict.",
+        remediation: "请先将任务移出并重新进入 `in_review` 状态以记录请求者，再由其他写入者提交评审结论。",
       },
     );
   }
   if (requester.type !== input.actor.type || requester.id !== input.actor.id) return;
 
   throw forbidden(
-    "Review policy `not_creator` requires someone other than the writer who moved the issue into `in_review` to approve or reject it.",
+    "评审策略 `not_creator` 要求由将任务移入 `in_review` 状态的写入者之外的其他人批准或拒绝。",
     {
       code: "review_policy_denied",
       policy,
       allowedActor: "writer_other_than_review_requester",
-      remediation: "Have another writer with issue write access submit the verdict.",
+      remediation: "请由另一位具有任务写入权限的写入者提交评审结论。",
     },
   );
 }

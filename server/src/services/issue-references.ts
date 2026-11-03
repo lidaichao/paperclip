@@ -190,7 +190,7 @@ export function issueReferenceService(db: Db) {
   async function syncIssue(issueId: string, dbOrTx: any = db) {
     const runSync = async (tx: any) => {
       const issue = await issueById(issueId, tx);
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
 
       await replaceSourceMentions({
         companyId: issue.companyId,
@@ -226,7 +226,7 @@ export function issueReferenceService(db: Db) {
       .from(issueComments)
       .where(eq(issueComments.id, commentId))
       .then((rows: Array<{ id: string; companyId: string; issueId: string; body: string; deletedAt: Date | null }>) => rows[0] ?? null);
-    if (!comment) throw notFound("Issue comment not found");
+    if (!comment) throw notFound("未找到任务评论");
 
     await replaceSourceMentions({
       companyId: comment.companyId,
@@ -249,7 +249,7 @@ export function issueReferenceService(db: Db) {
       .from(documentAnnotationComments)
       .where(eq(documentAnnotationComments.id, commentId))
       .then((rows: Array<{ id: string; companyId: string; issueId: string; body: string }>) => rows[0] ?? null);
-    if (!comment) throw notFound("Document annotation comment not found");
+    if (!comment) throw notFound("未找到文档批注评论");
 
     await replaceSourceMentions({
       companyId: comment.companyId,
@@ -306,7 +306,7 @@ export function issueReferenceService(db: Db) {
 
   async function syncAllForIssue(issueId: string, dbOrTx: any = db) {
     const issue = await issueById(issueId, dbOrTx);
-    if (!issue) throw notFound("Issue not found");
+    if (!issue) throw notFound("未找到任务");
 
     await syncIssue(issueId, dbOrTx);
 
@@ -344,7 +344,7 @@ export function issueReferenceService(db: Db) {
 
   async function listIssueReferenceSummary(issueId: string, dbOrTx: any = db): Promise<IssueRelatedWorkSummary> {
       const issue = await issueById(issueId, dbOrTx);
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
 
       const [outboundRows, inboundRows] = await Promise.all([
         dbOrTx
