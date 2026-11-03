@@ -15,7 +15,7 @@ export function announcementRoutes(db: Db, options: AnnouncementFeedOptions) {
   router.use("/announcements", (req, res, next) => {
     assertAuthenticated(req);
     assertBoard(req);
-    if (!req.actor.userId) throw forbidden("Board user context required");
+    if (!req.actor.userId) throw forbidden("需要看板用户上下文");
     res.setHeader("Cache-Control", "private, no-store");
     next();
   });
@@ -26,18 +26,18 @@ export function announcementRoutes(db: Db, options: AnnouncementFeedOptions) {
   });
   router.get("/announcements/:id/image", async (req, res) => {
     const id = announcementIdSchema.safeParse(req.params.id);
-    if (!id.success) throw badRequest("Invalid announcement ID");
+    if (!id.success) throw badRequest("公告 ID 无效");
     const image = await feed.image(id.data);
-    if (!image) throw notFound("Announcement image unavailable");
+    if (!image) throw notFound("公告图片不可用");
     res.setHeader("Content-Type", image.contentType);
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.send(image.bytes);
   });
   router.get("/announcements/:id/animation", async (req, res) => {
     const id = announcementIdSchema.safeParse(req.params.id);
-    if (!id.success) throw badRequest("Invalid announcement ID");
+    if (!id.success) throw badRequest("公告 ID 无效");
     const animation = await feed.animation(id.data);
-    if (!animation) throw notFound("Announcement animation unavailable");
+    if (!animation) throw notFound("公告动画不可用");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Content-Security-Policy", `sandbox; ${ANNOUNCEMENT_ANIMATION_CSP}`);
@@ -46,15 +46,15 @@ export function announcementRoutes(db: Db, options: AnnouncementFeedOptions) {
   });
   router.post("/announcements/:id/dismiss", validate(dismissAnnouncementSchema), async (req, res) => {
     const id = announcementIdSchema.safeParse(req.params.id);
-    if (!id.success) throw badRequest("Invalid announcement ID");
+    if (!id.success) throw badRequest("公告 ID 无效");
     const { companyId } = req.body;
     // This writes the caller's personal preference. Viewers may dismiss it;
     // company read membership supplies audit context, not write authority.
-    if (!hasCompanyAccess(req, companyId)) throw notFound("Company not found");
+    if (!hasCompanyAccess(req, companyId)) throw notFound("未找到公司");
     if (!await db.query.companies.findFirst({ where: eq(companies.id, companyId), columns: { id: true } })) {
-      throw notFound("Company not found");
+      throw notFound("未找到公司");
     }
-    if (!await service.dismiss(req.actor.userId!, id.data, companyId)) throw notFound("Announcement not found");
+    if (!await service.dismiss(req.actor.userId!, id.data, companyId)) throw notFound("未找到公告");
     res.status(204).end();
   });
   return router;

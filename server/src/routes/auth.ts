@@ -24,7 +24,7 @@ async function loadCurrentUserProfile(db: Db, userId: string) {
     .then((rows) => rows[0] ?? null);
 
   if (!user) {
-    throw unauthorized("Signed-in user not found");
+    throw unauthorized("未找到已登录用户");
   }
 
   return currentUserProfileSchema.parse({
@@ -40,7 +40,7 @@ export function authRoutes(db: Db) {
 
   router.get("/get-session", async (req, res) => {
     if (req.actor.type !== "board" || !req.actor.userId) {
-      throw unauthorized("Board authentication required");
+      throw unauthorized("需要看板身份验证");
     }
 
     const user = await loadCurrentUserProfile(db, req.actor.userId);
@@ -62,7 +62,7 @@ export function authRoutes(db: Db) {
 
   router.get("/profile", async (req, res) => {
     if (req.actor.type !== "board" || !req.actor.userId) {
-      throw unauthorized("Board authentication required");
+      throw unauthorized("需要看板身份验证");
     }
 
     res.json(await loadCurrentUserProfile(db, req.actor.userId));
@@ -70,7 +70,7 @@ export function authRoutes(db: Db) {
 
   router.patch("/profile", validate(updateCurrentUserProfileSchema), async (req, res) => {
     if (req.actor.type !== "board" || !req.actor.userId) {
-      throw unauthorized("Board authentication required");
+      throw unauthorized("需要看板身份验证");
     }
 
     const patch = updateCurrentUserProfileSchema.parse(req.body);
@@ -93,7 +93,7 @@ export function authRoutes(db: Db) {
       .then((rows) => rows[0] ?? null);
 
     if (!updated) {
-      throw unauthorized("Signed-in user not found");
+      throw unauthorized("未找到已登录用户");
     }
 
     res.json(currentUserProfileSchema.parse({
