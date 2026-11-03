@@ -209,33 +209,72 @@ function frameTimestamp(frame: TraceEntry) {
   return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
 }
 
+function protocolSurfaceLabel(surface: string) {
+  const labels: Record<string, string> = {
+    provider_activity: l10n("local.protocol_surface_provider_activity_0ef00001"),
+    workspace_change: l10n("local.protocol_surface_workspace_change_0ef00002"),
+    workspace_file: l10n("local.protocol_surface_workspace_file_0ef00003"),
+    tool: l10n("local.protocol_surface_tool_0ef00004"),
+    interaction: l10n("local.protocol_surface_interaction_0ef00005"),
+    runtime_request: l10n("local.protocol_surface_runtime_request_0ef00006"),
+    run_result: l10n("local.protocol_surface_run_result_0ef00007"),
+    run_terminal: l10n("local.protocol_surface_run_terminal_0ef00008"),
+    turn: l10n("local.protocol_surface_turn_0ef00009"),
+    system_notice: l10n("local.protocol_surface_system_notice_0ef00010"),
+    conversation_or_tool: l10n("local.protocol_surface_conversation_or_tool_0ef00011"),
+    run_debug: l10n("local.protocol_surface_run_debug_0ef00012"),
+    governance: l10n("local.protocol_surface_governance_0ef00013"),
+  };
+  return labels[surface] ?? surface;
+}
+
+function protocolDispositionLabel(disposition: string) {
+  const labels: Record<string, string> = {
+    hidden: l10n("local.protocol_state_hidden_0ef00014"),
+    inline: l10n("local.protocol_state_inline_0ef00015"),
+    folded: l10n("local.protocol_state_folded_0ef00016"),
+    "debug-only": l10n("local.protocol_state_debug_only_0ef00017"),
+  };
+  return labels[disposition] ?? disposition;
+}
+
+function protocolActionLabel(action: string) {
+  const labels: Record<string, string> = {
+    none: l10n("local.protocol_action_none_0ef00018"),
+    render: l10n("local.protocol_action_render_0ef00019"),
+    fold: l10n("local.protocol_action_fold_0ef00020"),
+    "operator only": l10n("local.protocol_action_operator_only_0ef00021"),
+  };
+  return labels[action] ?? action;
+}
+
 function visibilityDecision(event: HeartbeatRunEvent) {
   const registration = TASK_PROTOCOL_EVENT_SURFACE_REGISTRY[event.eventType];
   if (!registration) {
     return {
       visible: false,
-      surface: "run_debug",
+      surface: protocolSurfaceLabel("run_debug"),
       container: l10n("local.runner_inspector_02dc4408"),
-      state: "hidden",
-      action: "none",
+      state: protocolDispositionLabel("hidden"),
+      action: protocolActionLabel("none"),
       reasonCode: "presentation_surface_unregistered",
       reason: l10n("local.no_production_surface_registration_0ee00001"),
     };
   }
   return {
     visible: registration.disposition !== "debug-only",
-    surface: registration.surface,
+    surface: protocolSurfaceLabel(registration.surface),
     container:
       registration.disposition === "inline"
-        ? "primary run turn"
-        : "collapsed activity",
-    state: registration.disposition,
+        ? l10n("local.primary_run_turn_0ef00022")
+        : l10n("local.collapsed_activity_0ef00023"),
+    state: protocolDispositionLabel(registration.disposition),
     action:
       registration.disposition === "inline"
-        ? "render"
+        ? protocolActionLabel("render")
         : registration.disposition === "folded"
-          ? "fold"
-          : "operator only",
+          ? protocolActionLabel("fold")
+          : protocolActionLabel("operator only"),
     reasonCode: `presentation_${registration.disposition}`,
     reason: registration.rationale,
   };
