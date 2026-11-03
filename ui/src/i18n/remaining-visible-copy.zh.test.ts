@@ -109,5 +109,8 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.remove_slack_guidance_alice_f44800a2).toContain("不会卸载 Slack 应用");
     expect(messages.could_not_copy_number_manually_f591d033).toBe("无法复制号码，请手动选择并复制。");
     expect(messages.slash_command_label_ec8382bc).toBe("斜杠命令");
+    expect(messages.alice_could_not_connect_address_retry_25a88b1e).toBe("Alice 无法连接该地址。请检查后重试。");
+    expect(messages.alice_public_https_oauth_guidance_01eb902f).toContain("请让 Alice 管理员完成配置");
+    expect(messages.add_header_value_or_remove_row_a33a2b2a).toBe("请为“{{v0}}”填写值，或删除这一行。");
   });
 });

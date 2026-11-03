@@ -11126,6 +11126,17 @@
     "delivery_label_f5737263": "Delivery",
     "events_api_label_4bc317fb": "Events API",
     "interactivity_label_4432f21f": "Interactivity",
-    "slash_command_label_ec8382bc": "Slash command"
+    "slash_command_label_ec8382bc": "Slash command",
+    "alice_could_not_connect_address_retry_25a88b1e": "Alice couldn't connect to that address. Check it and try again.",
+    "paste_full_https_mcp_address_369247c0": "Paste the full address, starting with https:// — for example {{v0}}.",
+    "alice_public_instance_private_address_warning_7aa7d1dc": "This Alice instance is reachable from the internet, so it won't call addresses on your local network. Use the server's public address instead.",
+    "mcp_address_dns_failed_guidance_843751a0": "The address didn't resolve. Check the spelling, or confirm the server is published on the internet.",
+    "try_connecting_again_74bb14f6": "Try connecting again.",
+    "mcp_auth_challenge_manual_guidance_alice_591948f4": "The server requested authentication but did not offer a sign-in Alice can complete automatically. Add the key or headers listed in its documentation under Advanced authentication.",
+    "register_alice_provider_client_guidance_1c69998a": "Register Alice in the provider's settings, then add the client ID and secret it gives you under Advanced authentication.",
+    "alice_public_https_oauth_guidance_01eb902f": "Sign-in sends the operator back to Alice, so this instance must be reachable over HTTPS. Ask your Alice administrator to configure it.",
+    "mcp_server_unreachable_guidance_5ef945ad": "Nothing answered at that address. Confirm the server is running and the address is correct, then try again.",
+    "add_header_value_or_remove_row_a33a2b2a": "Add a value for \"{{v0}}\", or remove the row.",
+    "header_name_listed_twice_0056b23f": "\"{{v0}}\" is listed twice."
   }
 }

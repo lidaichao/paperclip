@@ -98,25 +98,25 @@ export function genericConnectGuidance(
   code: string | null | undefined,
   message: string | null | undefined,
 ): GenericConnectGuidance {
-  const fallback = message?.trim() || "Paperclip couldn't connect to that address. Check it and try again.";
+  const fallback = message?.trim() || l10n("local.alice_could_not_connect_address_retry_25a88b1e");
   switch (code) {
     case "mcp_remote_url_missing":
     case "mcp_remote_url_invalid":
       return {
         title: l10n("local.that_doesn_t_look_like_a_server_address_bfc61b7d"),
-        body: "Paste the full address, starting with https:// — for example https://mcp.example.com/mcp.",
+        body: l10n("local.paste_full_https_mcp_address_369247c0", { v0: "https://mcp.example.com/mcp" }),
         focus: "url",
       };
     case "remote_http_private_endpoint":
       return {
         title: l10n("local.that_address_is_inside_a_private_network_cf6af677"),
-        body: "This Paperclip is reachable from the internet, so it won't call addresses on your local network. Use the server's public address instead.",
+        body: l10n("local.alice_public_instance_private_address_warning_7aa7d1dc"),
         focus: "url",
       };
     case "remote_http_dns_failed":
       return {
         title: l10n("local.we_couldn_t_find_that_host_878cfbd4"),
-        body: "The address didn't resolve. Check the spelling, or confirm the server is published on the internet.",
+        body: l10n("local.mcp_address_dns_failed_guidance_843751a0"),
         focus: "url",
       };
     case "mcp_header_rejected":
@@ -128,33 +128,33 @@ export function genericConnectGuidance(
     case "tool_access_name_conflict":
       return {
         title: l10n("local.paperclip_couldn_t_name_this_connection_ab5a81c8"),
-        body: "Try connecting again.",
+        body: l10n("local.try_connecting_again_74bb14f6"),
         focus: "none",
       };
     case "oauth_challenge":
       return {
         title: l10n("local.this_server_wants_a_credential_644181a0"),
-        body: "It asked us to authenticate but didn't offer a sign-in Paperclip can complete on its own. Add the key or headers its docs list under Advanced authentication.",
+        body: l10n("local.mcp_auth_challenge_manual_guidance_alice_591948f4"),
         focus: "credentials",
       };
     case "oauth_manual_client_required":
     case "oauth_manual_client_rebinding_required":
       return {
         title: l10n("local.this_server_needs_sign_in_details_you_create_7c6f63c1"),
-        body: "Register Paperclip in the provider's settings, then add the client ID and secret it gives you under Advanced authentication.",
+        body: l10n("local.register_alice_provider_client_guidance_1c69998a"),
         focus: "credentials",
       };
     case "oauth_redirect_origin_unsupported":
     case "oauth_redirect_uri_invalid":
       return {
         title: l10n("local.this_paperclip_needs_a_public_https_address_f_64aee34f"),
-        body: "Sign-in sends the operator back to Paperclip, so this instance has to be reachable over HTTPS. Ask your Paperclip admin to configure it.",
+        body: l10n("local.alice_public_https_oauth_guidance_01eb902f"),
         focus: "deployment",
       };
     case "runtime_error":
       return {
         title: l10n("local.we_couldn_t_reach_that_server_a05e60fe"),
-        body: "Nothing answered at that address. Confirm the server is running and the address is right, then try again.",
+        body: l10n("local.mcp_server_unreachable_guidance_5ef945ad"),
         focus: "url",
       };
     default:
@@ -180,9 +180,9 @@ export function customHeaderError(rows: CustomHeaderRow[]): string | null {
     if (!nameCheck.ok) return mcpRemoteHeaderRejectionMessage(name, nameCheck.reason!);
     const valueCheck = checkMcpRemoteHeaderValue(row.value);
     if (!valueCheck.ok) return mcpRemoteHeaderRejectionMessage(name, valueCheck.reason!);
-    if (!row.value.trim()) return `Add a value for "${name}", or remove the row.`;
+    if (!row.value.trim()) return l10n("local.add_header_value_or_remove_row_a33a2b2a", { v0: name });
     const lower = name.toLowerCase();
-    if (seen.has(lower)) return `"${name}" is listed twice.`;
+    if (seen.has(lower)) return l10n("local.header_name_listed_twice_0056b23f", { v0: name });
     seen.add(lower);
   }
   return null;

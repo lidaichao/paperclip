@@ -11126,6 +11126,17 @@
     "delivery_label_f5737263": "投递",
     "events_api_label_4bc317fb": "事件接口",
     "interactivity_label_4432f21f": "交互回调",
-    "slash_command_label_ec8382bc": "斜杠命令"
+    "slash_command_label_ec8382bc": "斜杠命令",
+    "alice_could_not_connect_address_retry_25a88b1e": "Alice 无法连接该地址。请检查后重试。",
+    "paste_full_https_mcp_address_369247c0": "请粘贴以 https:// 开头的完整地址，例如 {{v0}}。",
+    "alice_public_instance_private_address_warning_7aa7d1dc": "此 Alice 实例可从互联网访问，因此不会调用你本地网络中的地址。请改用服务器的公网地址。",
+    "mcp_address_dns_failed_guidance_843751a0": "无法解析该地址。请检查拼写，或确认服务器已发布到互联网。",
+    "try_connecting_again_74bb14f6": "请重新连接。",
+    "mcp_auth_challenge_manual_guidance_alice_591948f4": "服务器要求身份验证，但未提供 Alice 可自动完成的登录方式。请在“高级身份验证”中添加其文档列出的密钥或请求头。",
+    "register_alice_provider_client_guidance_1c69998a": "请在服务提供方的设置中注册 Alice，然后在“高级身份验证”中填写得到的客户端 ID 和密钥。",
+    "alice_public_https_oauth_guidance_01eb902f": "登录后会跳回 Alice，因此此实例必须能够通过 HTTPS 访问。请让 Alice 管理员完成配置。",
+    "mcp_server_unreachable_guidance_5ef945ad": "该地址没有响应。请确认服务器正在运行且地址正确，然后重试。",
+    "add_header_value_or_remove_row_a33a2b2a": "请为“{{v0}}”填写值，或删除这一行。",
+    "header_name_listed_twice_0056b23f": "“{{v0}}”重复出现。"
   }
 }
