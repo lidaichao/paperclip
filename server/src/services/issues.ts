@@ -12681,7 +12681,7 @@ export function issueService(db: Db) {
                 payload: projectSafeChatPublication({
                   classification: "external",
                   source: "agent_comment",
-                  text: `Shared ${attachment.originalFilename ?? "a file"}.`,
+                  text: `已分享 ${attachment.originalFilename ?? "一个文件"}。`,
                   attachmentIds: [attachment.id],
                 }),
                 state: "pending",
@@ -12897,7 +12897,7 @@ export function issueService(db: Db) {
                 type: "artifact",
                 provider: "paperclip",
                 externalId: attachment.id,
-                title: asset.originalFilename ?? "Attachment",
+                title: asset.originalFilename ?? "附件",
                 status: "active",
                 reviewState: "none",
                 isPrimary: false,
@@ -12944,7 +12944,7 @@ export function issueService(db: Db) {
                 payload: projectSafeChatPublication({
                   classification: "external",
                   source: "agent_comment",
-                  text: `Shared ${asset.originalFilename ?? "a file"}.`,
+                  text: `已分享 ${asset.originalFilename ?? "一个文件"}。`,
                   attachmentIds: [attachment.id],
                 }),
                 state: "pending",
