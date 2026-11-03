@@ -202,7 +202,7 @@ export function AgentProviderConnection({
       setError(
         cause instanceof Error
           ? cause.message
-          : "Could not connect to the provider.",
+          : l10n("local.could_not_connect_provider_0e500005"),
       );
     } finally {
       if (run === epoch.current) setBusy(false);

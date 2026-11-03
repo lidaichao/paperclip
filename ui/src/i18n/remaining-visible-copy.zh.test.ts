@@ -324,6 +324,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.could_not_resume_setup_0e400001).toBe("无法继续配置");
     expect(messages.could_not_save_step_retry_0e400002).toBe("无法保存此步骤，请重试。");
     expect(messages.unable_to_update_slack_search_0e400003).toBe("无法更新 Slack 搜索设置");
+    expect(messages.could_not_resolve_environment_0e500001).toBe("无法确定运行环境。");
+    expect(messages.could_not_test_agent_0e500002).toBe("无法测试智能体。");
+    expect(messages.could_not_remove_unused_setup_credential_0e500004).toContain("密钥页面");
+    expect(messages.could_not_connect_provider_0e500005).toBe("无法连接到服务商。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

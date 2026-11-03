@@ -11859,6 +11859,11 @@
     "configuration_test_failed_0e300010": "配置测试失败。",
     "could_not_resume_setup_0e400001": "无法继续配置",
     "could_not_save_step_retry_0e400002": "无法保存此步骤，请重试。",
-    "unable_to_update_slack_search_0e400003": "无法更新 Slack 搜索设置"
+    "unable_to_update_slack_search_0e400003": "无法更新 Slack 搜索设置",
+    "could_not_resolve_environment_0e500001": "无法确定运行环境。",
+    "could_not_test_agent_0e500002": "无法测试智能体。",
+    "could_not_create_agent_0e500003": "无法创建智能体。",
+    "could_not_remove_unused_setup_credential_0e500004": "无法删除未使用的配置凭据。请在密钥页面删除后重试。",
+    "could_not_connect_provider_0e500005": "无法连接到服务商。"
   }
 }

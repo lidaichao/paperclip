@@ -256,7 +256,7 @@ function Setup({
     environmentError =
       cause instanceof Error
         ? cause.message
-        : "Could not resolve the environment.";
+        : l10n("local.could_not_resolve_environment_0e500001");
   }
   const environment = envs.data?.find((env) => env.id === environmentId);
   const sandboxProvider =
@@ -450,7 +450,7 @@ function Setup({
     } catch (cause) {
       if (run === generation.current) {
         setError(
-          cause instanceof Error ? cause.message : "Could not test the agent.",
+          cause instanceof Error ? cause.message : l10n("local.could_not_test_agent_0e500002"),
         );
         setTestState("fail");
       }
@@ -538,7 +538,7 @@ function Setup({
       ]);
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Could not create the agent.",
+        cause instanceof Error ? cause.message : l10n("local.could_not_create_agent_0e500003"),
       );
     } finally {
       if (!hired) {
@@ -547,7 +547,7 @@ function Setup({
         } catch {
           setError(
             (original) =>
-              `${original ? `${original} ` : ""}Could not remove an unused setup credential. Remove it from Secrets before retrying.`,
+              `${original ? `${original} ` : ""}${l10n("local.could_not_remove_unused_setup_credential_0e500004")}`,
           );
         }
       }

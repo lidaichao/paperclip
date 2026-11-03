@@ -11859,6 +11859,11 @@
     "configuration_test_failed_0e300010": "Configuration test failed.",
     "could_not_resume_setup_0e400001": "Could not resume setup",
     "could_not_save_step_retry_0e400002": "Could not save this step. Try again.",
-    "unable_to_update_slack_search_0e400003": "Unable to update Slack search"
+    "unable_to_update_slack_search_0e400003": "Unable to update Slack search",
+    "could_not_resolve_environment_0e500001": "Could not resolve the environment.",
+    "could_not_test_agent_0e500002": "Could not test the agent.",
+    "could_not_create_agent_0e500003": "Could not create the agent.",
+    "could_not_remove_unused_setup_credential_0e500004": "Could not remove an unused setup credential. Remove it from Secrets before retrying.",
+    "could_not_connect_provider_0e500005": "Could not connect to the provider."
   }
 }
