@@ -2712,7 +2712,7 @@ export async function loadGitHubGrantMetadata(
       ? `https://github.com/apps/${resolvedAppSlug}/installations/new`
       : "https://github.com/settings/installations";
     throw unprocessable(
-      "GitHub access is required. Install Paperclip and grant at least one repository before refreshing access.",
+      "需要 GitHub 访问权限。请安装 Alice，并至少授权一个仓库后再刷新访问权限。",
       {
         code: "github_installation_required",
         installationUrl,
@@ -4513,12 +4513,12 @@ export function toolAccessService(
         status:
           input.timeoutCount >= 3 && input.timeoutRate >= 10 ? "firing" : "ok",
         threshold:
-          "Warning at >=3 timeouts and >=10% timeout rate in 1 hour; critical at >=10 timeouts or >=25%.",
-        observed: `${input.timeoutCount} timeout(s), ${input.timeoutRate}% timeout rate.`,
+          "1 小时内超时不少于 3 次且超时率不低于 10% 时警告；超时不少于 10 次或超时率不低于 25% 时严重告警。",
+        observed: `${input.timeoutCount} 次超时，超时率 ${input.timeoutRate}%。`,
         description:
-          "Tool gateway calls are timing out or being runtime-deferred at an elevated rate.",
+          "工具网关调用的超时或运行时延迟比例升高。",
         firstResponderAction:
-          "Check upstream MCP health, Paperclip runtime capacity, and recent gateway audit failures before retrying workloads.",
+          "重试工作负载前，请检查上游 MCP 健康状态、Alice 运行时容量以及近期网关审计失败记录。",
         runbookSection,
       }),
       runtimeAlert({
@@ -12186,7 +12186,7 @@ export function toolAccessService(
       const integration = vercelConnectIntegrationStatus();
       if (!integration.enabled || !integration.configured || !vercelConnect) {
         throw unprocessable(
-          "Vercel Connect setup is not available on this Paperclip instance",
+          "此 Alice 实例尚未提供 Vercel Connect 设置",
           {
             code: "vercel_connect_unavailable",
           },
@@ -12199,13 +12199,13 @@ export function toolAccessService(
         method.auth === "none"
       ) {
         throw badRequest(
-          "Vercel Connect is available only for reviewed remote MCP app methods",
+          "Vercel Connect 仅适用于已审核的远程 MCP 应用连接方式",
         );
       }
       const reviewed = method.credentialSources?.vercelConnect;
       if (!reviewed) {
         throw unprocessable(
-          `${galleryEntry.name} has not been reviewed for Vercel Connect`,
+          `${galleryEntry.name} 尚未通过 Vercel Connect 审核`,
           {
             code: "vercel_connect_method_not_reviewed",
           },
@@ -12214,7 +12214,7 @@ export function toolAccessService(
       const expectedPrincipalMode = method.auth === "oauth" ? "user" : "app";
       if (!reviewed.principalModes.includes(expectedPrincipalMode)) {
         throw unprocessable(
-          "This connector principal mode has not been reviewed for this app",
+          "此连接器主体模式尚未通过该应用的审核",
           {
             code: "vercel_connect_principal_not_reviewed",
           },
@@ -12225,7 +12225,7 @@ export function toolAccessService(
         requestedGrantKind !== "organization"
       ) {
         throw badRequest(
-          "App-subject Vercel connectors can only back an organization identity",
+          "应用主体的 Vercel 连接器只能用于组织身份",
         );
       }
       let metadata;
@@ -12241,7 +12241,7 @@ export function toolAccessService(
         !reviewed.services.map((value) => value.toLowerCase()).includes(service)
       ) {
         throw badRequest(
-          `That Vercel connector is for ${metadata.service}, not ${galleryEntry.name}`,
+          `该 Vercel 连接器用于 ${metadata.service}，而不是 ${galleryEntry.name}`,
           {
             code: "vercel_connect_service_mismatch",
           },
@@ -12264,7 +12264,7 @@ export function toolAccessService(
           .limit(1);
         if (connectorInUse) {
           throw conflict(
-            "App-subject Vercel connectors are dedicated to one Paperclip connection. Create or attach a separate connector in Vercel.",
+            "应用主体的 Vercel 连接器只能供一个 Alice 连接使用。请在 Vercel 中新建或关联其他连接器。",
             {
               code: "vercel_connect_app_connector_in_use",
             },
@@ -12663,7 +12663,7 @@ export function toolAccessService(
         }
         if (!applicationRow) {
           throw conflict(
-            "Paperclip could not allocate a unique connection name",
+            "Alice 无法分配唯一的连接名称",
             {
               code: "tool_access_name_allocation_exhausted",
             },
@@ -13892,7 +13892,7 @@ export function toolAccessService(
       throw conflict("已归档的应用连接无法重新连接");
     if (connection.credentialSource === "vercel_connect") {
       throw conflict(
-        "Manage this connector in Vercel Connect, then run a Paperclip health check to verify it.",
+        "请在 Vercel Connect 中管理此连接器，然后运行 Alice 健康检查进行验证。",
         {
           code: "vercel_connect_managed_externally",
           manageUrl: vercelConnectIntegrationStatus().manageUrl,
@@ -14254,7 +14254,7 @@ export function toolAccessService(
       const cloudConnector = currentCloudConnector();
       if (!cloudConnector) {
         throw unprocessable(
-          `${providerName} connections through Paperclip are not available on this instance yet`,
+          `此实例尚不支持通过 Alice 连接 ${providerName}`,
           {
             code: "paperclip_cloud_connector_unavailable",
           },
@@ -14263,7 +14263,7 @@ export function toolAccessService(
       const binding = starterBinding;
       if (!binding.actorType || !binding.actorId) {
         throw forbidden(
-          `${providerName} sign-in requires an authenticated actor`,
+          `登录 ${providerName} 需要经过身份验证的操作主体`,
         );
       }
       const subjectUserId = authorizationSubjectAgentId
@@ -14926,12 +14926,12 @@ export function toolAccessService(
     }
     if (!input.claimId)
       throw badRequest(
-        `${providerName} callback is missing a claim identifier`,
+        `${providerName} 回调缺少声明标识符`,
       );
     const cloudConnector = currentCloudConnector();
     if (!cloudConnector) {
       throw unprocessable(
-        `${providerName} connections through Paperclip are not available on this instance yet`,
+        `此实例尚不支持通过 Alice 连接 ${providerName}`,
         {
           code: "paperclip_cloud_connector_unavailable",
         },
@@ -20263,7 +20263,7 @@ export function toolAccessService(
             .sort()
             .map((key) => {
               warnings.push(
-                `Header ${key} will be stored as a Paperclip secret before activation.`,
+                `请求头 ${key} 将在激活前保存为 Alice 密钥。`,
               );
               return {
                 configPath: `headers.${key}`,
@@ -20286,7 +20286,7 @@ export function toolAccessService(
         }
         if (typeof server.command === "string") {
           warnings.push(
-            "Imported stdio commands stay draft-only unless mapped to an approved Paperclip template.",
+            "导入的标准输入输出命令将保持草稿状态，除非映射到已批准的 Alice 模板。",
           );
           return {
             name,
