@@ -694,7 +694,7 @@ describe.sequential("company portability routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("does not allow replace");
+    expect(res.body.error).toContain("不允许使用覆盖式冲突策略");
     expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
   });
 
@@ -743,7 +743,7 @@ describe.sequential("company portability routes", () => {
       });
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toContain("only target the route company");
+      expect(res.body.error).toContain("只能操作当前路径中的公司");
     }
     expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
     expect(mockCompanyPortabilityService.importBundle).not.toHaveBeenCalled();
@@ -832,7 +832,7 @@ describe.sequential("company portability routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("does not allow replace");
+    expect(res.body.error).toContain("不允许使用覆盖式冲突策略");
     expect(mockCompanyPortabilityService.importBundle).not.toHaveBeenCalled();
   });
 
@@ -982,7 +982,7 @@ describe.sequential("company portability routes", () => {
     try {
       const expired = await request(app).get(accepted.body.statusUrl).set(cloudHeaders);
       expect(expired.status).toBe(404);
-      expect(expired.body.error).toBe("Import job not found");
+      expect(expired.body.error).toBe("未找到导入任务");
     } finally {
       nowSpy.mockRestore();
     }
@@ -1125,7 +1125,7 @@ describe.sequential("company portability routes", () => {
 
     const crossUser = await request(app).get(accepted.body.statusUrl).set(TEST_USER_HEADER, "board-user-b");
     expect(crossUser.status).toBe(404);
-    expect(crossUser.body.error).toBe("Import job not found");
+    expect(crossUser.body.error).toBe("未找到导入任务");
 
     const owner = await request(app).get(accepted.body.statusUrl).set(TEST_USER_HEADER, "board-user-a");
     expect(owner.status).toBe(200);
@@ -1195,7 +1195,7 @@ describe.sequential("company portability routes", () => {
       expect(different.status).toBe(409);
       expect(different.body.job).toBeUndefined();
       expect(different.body.statusUrl).toBeUndefined();
-      expect(different.body.error).toMatch(/different import is already running/i);
+      expect(different.body.error).toContain("已有另一个导入任务正在运行");
       expect(mockCompanyPortabilityService.importBundle).toHaveBeenCalledTimes(1);
     },
   );
@@ -1247,7 +1247,7 @@ describe.sequential("company portability routes", () => {
       .set(TEST_USER_HEADER, "board-user-a");
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Import job not found");
+    expect(res.body.error).toBe("未找到导入任务");
   });
 
   it.sequential("forwards pauseAutomations from CEO-safe import apply bodies to the portability service", async () => {

@@ -151,10 +151,10 @@ function parseImportMeta(metaRaw: string | undefined): Record<string, unknown> {
   try {
     parsed = JSON.parse(metaRaw);
   } catch {
-    throw badRequest("Import package metadata was not valid JSON.");
+    throw badRequest("导入包元数据不是有效的 JSON。");
   }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw badRequest("Import package metadata must be a JSON object.");
+    throw badRequest("导入包元数据必须是 JSON 对象。");
   }
   const { source: _ignoredSource, ...rest } = parsed as Record<string, unknown>;
   return rest;
@@ -168,7 +168,7 @@ function parseImportMeta(metaRaw: string | undefined): Record<string, unknown> {
 function importTransferApplyMeta(body: unknown): Record<string, unknown> {
   if (body === undefined || body === null) return {};
   if (typeof body !== "object" || Array.isArray(body)) {
-    throw badRequest("Import transfer apply body must be a JSON object.");
+    throw badRequest("应用导入传输的请求体必须是 JSON 对象。");
   }
   const { source: _ignoredSource, ...rest } = body as Record<string, unknown>;
   return rest;
@@ -220,7 +220,7 @@ async function resolveImportPayload(req: Request, res: Response): Promise<unknow
   }
 
   if (!zipBytes || zipBytes.length === 0) {
-    throw badRequest("Import package upload was empty.");
+    throw badRequest("上传的导入包为空。");
   }
   const archive = await readImportZipArchive(zipBytes);
   return {
@@ -252,7 +252,7 @@ async function readImportZipArchive(zipBytes: Buffer) {
     throw badRequest(`Import package could not be read: ${errorMessage(error)}`);
   }
   if (Object.keys(archive.files).length === 0) {
-    throw badRequest("Import package contained no files.");
+    throw badRequest("导入包中不包含任何文件。");
   }
   return archive;
 }
@@ -363,11 +363,11 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     if (req.actor.type === "board") {
       return;
     }
-    if (!req.actor.agentId) throw forbidden("Agent authentication required");
+    if (!req.actor.agentId) throw forbidden("需要智能体身份验证");
 
     const actorAgent = await agents.getById(req.actor.agentId);
     if (!actorAgent || actorAgent.companyId !== companyId) {
-      throw forbidden("Agent key cannot access another company");
+      throw forbidden("智能体密钥不能访问其他公司");
     }
     if (actorAgent.role !== "ceo") {
       throw forbidden(`Only CEO agents can manage ${capability}`);
@@ -413,7 +413,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
   // Common malformed path when companyId is empty in "/api/companies/{companyId}/issues".
   router.get("/issues", (_req, res) => {
     res.status(400).json({
-      error: "Missing companyId in path. Use /api/companies/{companyId}/issues.",
+      error: "路径中缺少 companyId。请使用 /api/companies/{companyId}/issues。",
     });
   });
 
@@ -436,7 +436,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
       resource: { type: "company", companyId },
     });
     if (!companyScopeDecision.allowed) {
-      res.status(403).json({ error: "Timeline is outside this actor's authorization boundary" });
+      res.status(403).json({ error: "时间线超出当前操作者的授权范围" });
       return;
     }
 
@@ -489,7 +489,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     }
     const company = await svc.getById(companyId);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "未找到公司" });
       return;
     }
     res.json(company);
@@ -557,12 +557,12 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
    */
   const importFloor = (_req: Request, _res: Response, next: NextFunction) => {
     if (isCloudManagedInstance()) {
-      throw forbidden("Company import is disabled on cloud-managed instances", {
+      throw forbidden("云托管实例已停用公司导入功能", {
         code: "cloud_managed",
       });
     }
     if (hidesCompanyPage(getHiddenSettings(), "company.import")) {
-      throw forbidden("Company import is hidden by the hosting operator", {
+      throw forbidden("托管运营方已隐藏公司导入功能", {
         code: SETTINGS_OPERATOR_MANAGED_ERROR_CODE,
       });
     }
@@ -591,7 +591,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     cleanupTerminalImportJobs(importJobs, importJobTerminalRetentionMs);
     const job = importJobs.get(req.params.jobId as string);
     if (!job || job.actorKey !== importJobActorKey(req)) {
-      res.status(404).json({ error: "Import job not found" });
+      res.status(404).json({ error: "未找到导入任务" });
       return;
     }
     res.json(importJobResponse(job));
@@ -716,11 +716,11 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
   async function requireImportTransferRun(req: Request) {
     const transferId = req.params.transferId as string;
     if (!isImportTransferRunId(transferId)) {
-      throw notFound("Import transfer not found");
+      throw notFound("未找到导入传输");
     }
     const run = await companyTransferRunService.getRunForActor(db, transferId, importJobActorKey(req));
     if (!run || run.direction !== "import") {
-      throw notFound("Import transfer not found");
+      throw notFound("未找到导入传输");
     }
     return run;
   }
@@ -729,7 +729,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
   function storedImportTransferManifest(run: { manifest: unknown }): ImportTransferManifest {
     const parsed = importTransferManifestSchema.safeParse(run.manifest);
     if (!parsed.success) {
-      throw conflict("Import transfer has no recorded part manifest");
+      throw conflict("导入传输没有已记录的分片清单");
     }
     return parsed.data;
   }
@@ -778,7 +778,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     }
     declared.parts.forEach((part, position) => {
       if (part.index !== position) {
-        throw unprocessable("Import transfer parts must be contiguous, ordered 0..n-1");
+        throw unprocessable("导入传输分片必须连续，并按 0..n-1 排序");
       }
       if (part.byteSize > declared.partSizeBytes) {
         throw unprocessable(`Part ${part.index} is larger than the declared partSizeBytes`);
@@ -786,7 +786,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     });
     const declaredTotal = declared.parts.reduce((sum, part) => sum + part.byteSize, 0);
     if (declaredTotal !== declared.totalBytes) {
-      throw unprocessable("Sum of part byte sizes must equal totalBytes");
+      throw unprocessable("所有分片的字节数总和必须等于 totalBytes");
     }
 
     const idempotencyKey = createHash("sha256")
@@ -848,20 +848,20 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
       assertBoard(req);
       const run = await requireImportTransferRun(req);
       if (run.status === "completed") {
-        throw conflict("Import transfer has already been applied");
+        throw conflict("导入传输已经应用");
       }
       if (run.status === "applying") {
         // An apply is assembling the spool right now; accepting writes would
         // let a retried upload race the files being read. Parts are frozen
         // until the apply settles (completed short-circuits, failed resumes).
-        throw conflict("Import transfer apply is in progress; retry after it settles");
+        throw conflict("正在应用导入传输，请等待完成后重试");
       }
       const manifest = storedImportTransferManifest(run);
       const rawIndex = req.params.partIndex as string;
       // Strict integer-in-bounds validation before the index goes anywhere
       // near a filesystem path.
       if (!/^\d{1,5}$/.test(rawIndex) || Number(rawIndex) >= manifest.parts.length) {
-        throw notFound("Import transfer part not found");
+        throw notFound("未找到导入传输分片");
       }
       const partIndex = Number(rawIndex);
       const declared = manifest.parts[partIndex]!;
@@ -894,10 +894,10 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
         // stray part is dropped and the client told to re-create.
         const current = await companyTransferRunService.getRun(db, run.id);
         if (current?.status === "applying" || current?.status === "completed") {
-          throw conflict("Import transfer apply is in progress; retry after it settles");
+          throw conflict("正在应用导入传输，请等待完成后重试");
         }
         await removeImportTransferPart(importTransferSpoolRoot, run.id, partIndex);
-        res.status(410).json({ error: "Import transfer expired — re-create it" });
+        res.status(410).json({ error: "导入传输已过期，请重新创建" });
         return;
       }
       res.json({ ok: true, index: partIndex, alreadyCompleted: false } satisfies CompanyImportTransferPartUploadResult);
@@ -947,31 +947,31 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
   ) {
     const run = await requireImportTransferRun(req);
     if (run.status === "completed") {
-      throw conflict("Import transfer has already been applied");
+      throw conflict("导入传输已经应用");
     }
     if (run.status === "applying") {
       // An apply holds the claim right now: its assembly is reading the spool
       // and its success deletes it, so neither a preview nor a second apply
       // may touch the parts until the claim settles.
-      throw conflict("Import transfer apply is in progress; retry after it settles");
+      throw conflict("正在应用导入传输，请等待完成后重试");
     }
     if (run.status === "cancelled") {
       // The abandoned-spool sweep cancelled the run and deleted its parts —
       // same contract as the part-upload route: the caller re-creates it.
-      res.status(410).json({ error: "Import transfer expired — re-create it" });
+      res.status(410).json({ error: "导入传输已过期，请重新创建" });
       return null;
     }
     const manifest = storedImportTransferManifest(run);
     const missingParts = await importTransferMissingParts(run, manifest);
     if (missingParts.length > 0) {
       res.status(409).json({
-        error: "Import transfer is missing parts",
+        error: "导入传输缺少分片",
         missingParts,
       });
       return null;
     }
     if (options.claimApply && !(await companyTransferRunService.claimApply(db, run.id))) {
-      throw conflict("Import transfer apply is already in progress");
+      throw conflict("导入传输应用已经在进行中");
     }
     try {
       const zipBytes = await assembleImportTransferZip(importTransferSpoolRoot, run.id, manifest.parts.length);
@@ -979,7 +979,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
       if (zipBytes.length !== manifest.totalBytes || zipSha256 !== manifest.zipSha256) {
         await companyTransferRunService.fail(db, run.id, "Assembled import package failed whole-file verification");
         await removeImportTransferSpool(importTransferSpoolRoot, run.id);
-        throw unprocessable("Assembled import package failed verification; upload the transfer again");
+        throw unprocessable("组装后的导入包验证失败，请重新上传传输内容");
       }
       const archive = await readImportZipArchive(zipBytes);
       return {
@@ -1007,13 +1007,13 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
       // real assembly failure.
       const current = await companyTransferRunService.getRun(db, run.id);
       if (current?.status === "completed") {
-        throw conflict("Import transfer has already been applied");
+        throw conflict("导入传输已经应用");
       }
       if (current?.status === "applying") {
-        throw conflict("Import transfer apply is in progress; retry after it settles");
+        throw conflict("正在应用导入传输，请等待完成后重试");
       }
       if (current?.status === "cancelled") {
-        res.status(410).json({ error: "Import transfer expired — re-create it" });
+        res.status(410).json({ error: "导入传输已过期，请重新创建" });
         return null;
       }
       throw error;
@@ -1141,10 +1141,10 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     await assertSameCompanyCeoAgentOrBoard(req, companyId, "company imports");
     const body = companyPortabilityPreviewSchema.parse(req.body);
     if (body.target.mode === "existing_company" && body.target.companyId !== companyId) {
-      throw forbidden("Safe import route can only target the route company");
+      throw forbidden("安全导入接口只能操作当前路径中的公司");
     }
     if (body.collisionStrategy === "replace") {
-      throw forbidden("Safe import route does not allow replace collision strategy");
+      throw forbidden("安全导入接口不允许使用覆盖式冲突策略");
     }
     const preview = await portability.previewImport(body, {
       mode: "agent_safe",
@@ -1158,10 +1158,10 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     await assertSameCompanyCeoAgentOrBoard(req, companyId, "company imports");
     const body = companyPortabilityImportSchema.parse(req.body);
     if (body.target.mode === "existing_company" && body.target.companyId !== companyId) {
-      throw forbidden("Safe import route can only target the route company");
+      throw forbidden("安全导入接口只能操作当前路径中的公司");
     }
     if (body.collisionStrategy === "replace") {
-      throw forbidden("Safe import route does not allow replace collision strategy");
+      throw forbidden("安全导入接口不允许使用覆盖式冲突策略");
     }
     const actor = getActorInfo(req);
     const result = await portability.importBundle(body, req.actor.type === "board" ? req.actor.userId : null, {
@@ -1193,7 +1193,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
   router.post("/", (req, _res, next) => {
     assertBoard(req);
     if (isCloudManagedInstance()) {
-      throw forbidden("Company creation is managed by Paperclip Cloud", {
+      throw forbidden("公司创建由 Alice 云服务管理", {
         code: "cloud_managed",
       });
     }
@@ -1201,7 +1201,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
   }, validate(createCompanySchema), async (req, res) => {
     assertBoard(req);
     if (!(req.actor.source === "local_implicit" || req.actor.isInstanceAdmin)) {
-      throw forbidden("Instance admin required");
+      throw forbidden("需要实例管理员权限");
     }
     const ownerPrincipalId = req.actor.userId ?? "local-board";
     const company = await svc.create({
@@ -1254,7 +1254,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
 
     const existingCompany = await svc.getById(companyId);
     if (!existingCompany) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "未找到公司" });
       return;
     }
 
@@ -1296,7 +1296,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
 
     const company = await svc.update(companyId, body, actor);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "未找到公司" });
       return;
     }
     if (!lifecycleEventEmittedByService) {
@@ -1322,7 +1322,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     const body = updateCompanyBrandingSchema.parse(req.body);
     const company = await svc.update(companyId, body);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "未找到公司" });
       return;
     }
     const actor = getActorInfo(req);
@@ -1347,7 +1347,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     assertBoard(req);
     const company = await svc.archive(companyId, getActorInfo(req));
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "未找到公司" });
       return;
     }
     res.json(company);
@@ -1359,7 +1359,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     assertBoard(req);
     const company = await svc.remove(companyId);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "未找到公司" });
       return;
     }
     res.json({ ok: true });
@@ -1564,14 +1564,14 @@ function importJobAcceptedResponse(job: ImportJobRecord) {
  */
 function importAlreadyRunningResponse() {
   return {
-    error: "A different import is already running for this account. Wait for it to finish before starting another.",
+    error: "此账户已有另一个导入任务正在运行，请等待其完成后再启动新任务。",
   };
 }
 
 /** 409 body for a duplicate submit: points at the job already running. */
 function importJobConflictResponse(job: ImportJobRecord) {
   return {
-    error: "An import is already running for this account",
+    error: "此账户已有导入任务正在运行",
     job: {
       id: job.id,
       status: job.status,

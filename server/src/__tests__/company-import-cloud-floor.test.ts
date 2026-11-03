@@ -163,7 +163,7 @@ describe("company import Cloud floor", () => {
     const res = await request(app).get("/api/companies/import/jobs/unknown-job");
 
     expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({ error: "Import job not found" });
+    expect(res.body).toMatchObject({ error: "未找到导入任务" });
   });
 
   it("keeps company export open on a cloud-managed instance", async () => {
@@ -200,6 +200,6 @@ describe("company import Cloud floor", () => {
     const res = await request(app).get("/api/companies/import/jobs/unknown-job");
 
     expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({ error: "Import job not found" });
+    expect(res.body).toMatchObject({ error: "未找到导入任务" });
   });
 });
