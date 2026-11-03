@@ -11786,6 +11786,21 @@
     "import_failed_on_server_0da00006": "Import failed on the server.",
     "part_of_total_failed_to_upload_0da00007": "Part {{v0}} of {{v1}} failed to upload.",
     "no_source_configured_0da00008": "No source configured.",
-    "activation_failed_0da00009": "Activation failed."
+    "activation_failed_0da00009": "Activation failed.",
+    "export_readme_org_chart_image_0db00001": "![Org Chart](images/org-chart.png)",
+    "export_readme_whats_inside_heading_0db00002": "## What's Inside",
+    "export_readme_alice_organization_package_0db00003": "This is an [Alice Agent Organization](https://paperclip.ing) package.",
+    "export_readme_agents_0db00004": "Agents",
+    "export_readme_projects_0db00005": "Projects",
+    "export_readme_skills_0db00006": "Skills",
+    "export_readme_tasks_0db00007": "Tasks",
+    "export_readme_content_count_header_0db00008": "| Content | Count |",
+    "export_readme_agents_heading_0db00009": "### Agents",
+    "export_readme_agent_table_header_0db00010": "| Agent | Role | Reports To |",
+    "export_readme_projects_heading_0db00011": "### Projects",
+    "export_readme_getting_started_heading_0db00012": "## Getting Started",
+    "export_readme_see_alice_for_more_information_0db00013": "See [Alice](https://paperclip.ing) for more information.",
+    "export_readme_exported_from_alice_on_date_0db00014": "Exported from [Alice](https://paperclip.ing) on {{v0}}",
+    "failed_to_load_export_data_0db00015": "Failed to load export data."
   }
 }

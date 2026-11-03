@@ -11786,6 +11786,21 @@
     "import_failed_on_server_0da00006": "服务器导入失败。",
     "part_of_total_failed_to_upload_0da00007": "第 {{v0}}/{{v1}} 部分上传失败。",
     "no_source_configured_0da00008": "尚未配置导入来源。",
-    "activation_failed_0da00009": "启用失败。"
+    "activation_failed_0da00009": "启用失败。",
+    "export_readme_org_chart_image_0db00001": "![组织结构图](images/org-chart.png)",
+    "export_readme_whats_inside_heading_0db00002": "## 包含内容",
+    "export_readme_alice_organization_package_0db00003": "这是一个 [Alice 智能体组织](https://paperclip.ing) 导出包。",
+    "export_readme_agents_0db00004": "智能体",
+    "export_readme_projects_0db00005": "项目",
+    "export_readme_skills_0db00006": "技能",
+    "export_readme_tasks_0db00007": "任务",
+    "export_readme_content_count_header_0db00008": "| 内容 | 数量 |",
+    "export_readme_agents_heading_0db00009": "### 智能体",
+    "export_readme_agent_table_header_0db00010": "| 智能体 | 角色 | 上级 |",
+    "export_readme_projects_heading_0db00011": "### 项目",
+    "export_readme_getting_started_heading_0db00012": "## 开始使用",
+    "export_readme_see_alice_for_more_information_0db00013": "更多信息请访问 [Alice](https://paperclip.ing)。",
+    "export_readme_exported_from_alice_on_date_0db00014": "于 {{v0}} 从 [Alice](https://paperclip.ing) 导出",
+    "failed_to_load_export_data_0db00015": "加载导出数据失败。"
   }
 }

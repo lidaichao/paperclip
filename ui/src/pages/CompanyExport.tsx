@@ -438,23 +438,23 @@ function generateReadmeFromSelection(
   }
   // Org chart image (generated during export as images/org-chart.png)
   if (agents.length > 0) {
-    lines.push("![Org Chart](images/org-chart.png)");
+    lines.push(l10n("local.export_readme_org_chart_image_0db00001"));
     lines.push("");
   }
 
-  lines.push("## What's Inside");
+  lines.push(l10n("local.export_readme_whats_inside_heading_0db00002"));
   lines.push("");
-  lines.push("This is an [Agent Company](https://paperclip.ing) package.");
+  lines.push(l10n("local.export_readme_alice_organization_package_0db00003"));
   lines.push("");
 
   const counts: Array<[string, number]> = [];
-  if (agents.length > 0) counts.push(["Agents", agents.length]);
-  if (projects.length > 0) counts.push(["Projects", projects.length]);
-  if (skills.length > 0) counts.push(["Skills", skills.length]);
-  if (tasks.length > 0) counts.push(["Tasks", tasks.length]);
+  if (agents.length > 0) counts.push([l10n("local.export_readme_agents_0db00004"), agents.length]);
+  if (projects.length > 0) counts.push([l10n("local.export_readme_projects_0db00005"), projects.length]);
+  if (skills.length > 0) counts.push([l10n("local.export_readme_skills_0db00006"), skills.length]);
+  if (tasks.length > 0) counts.push([l10n("local.export_readme_tasks_0db00007"), tasks.length]);
 
   if (counts.length > 0) {
-    lines.push("| Content | Count |");
+    lines.push(l10n("local.export_readme_content_count_header_0db00008"));
     lines.push("|---------|-------|");
     for (const [label, count] of counts) {
       lines.push(`| ${label} | ${count} |`);
@@ -463,9 +463,9 @@ function generateReadmeFromSelection(
   }
 
   if (agents.length > 0) {
-    lines.push("### Agents");
+    lines.push(l10n("local.export_readme_agents_heading_0db00009"));
     lines.push("");
-    lines.push("| Agent | Role | Reports To |");
+    lines.push(l10n("local.export_readme_agent_table_header_0db00010"));
     lines.push("|-------|------|------------|");
     for (const agent of agents) {
       const roleLabel = ROLE_LABELS[agent.role] ?? agent.role;
@@ -476,7 +476,7 @@ function generateReadmeFromSelection(
   }
 
   if (projects.length > 0) {
-    lines.push("### Projects");
+    lines.push(l10n("local.export_readme_projects_heading_0db00011"));
     lines.push("");
     for (const project of projects) {
       const desc = project.description ? ` \u2014 ${project.description}` : "";
@@ -485,16 +485,18 @@ function generateReadmeFromSelection(
     lines.push("");
   }
 
-  lines.push("## Getting Started");
+  lines.push(l10n("local.export_readme_getting_started_heading_0db00012"));
   lines.push("");
   lines.push("```bash");
   lines.push("npx paperclipai company import this-github-url-or-folder");
   lines.push("```");
   lines.push("");
-  lines.push("See [Alice](https://paperclip.ing) for more information.");
+  lines.push(l10n("local.export_readme_see_alice_for_more_information_0db00013"));
   lines.push("");
   lines.push("---");
-  lines.push(`Exported from [Alice](https://paperclip.ing) on ${new Date().toISOString().split("T")[0]}`);
+  lines.push(l10n("local.export_readme_exported_from_alice_on_date_0db00014", {
+    v0: new Date().toISOString().split("T")[0],
+  }));
   lines.push("");
 
   return lines.join("\n");
@@ -622,7 +624,7 @@ function isAbortError(error: unknown): boolean {
 }
 
 function previewErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Failed to load export data.";
+  return error instanceof Error ? error.message : l10n("local.failed_to_load_export_data_0db00015");
 }
 
 export function CompanyExport() {
@@ -915,7 +917,7 @@ export function CompanyExport() {
 
     // Regenerate README.md based on checked selection
     if (typeof exportData.files["README.md"] === "string") {
-      const companyName = exportData.manifest.company?.name ?? selectedCompany?.name ?? "Company";
+      const companyName = exportData.manifest.company?.name ?? selectedCompany?.name ?? l10n("local.company_de4743c8");
       const companyDescription = exportData.manifest.company?.description ?? null;
       filtered["README.md"] = generateReadmeFromSelection(
         exportData.manifest,

@@ -285,6 +285,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.server_no_longer_reports_import_job_0da00004).toContain("服务器可能发生了重启");
     expect(messages.import_status_unreadable_session_may_have_expired_0da00005).toContain("会话可能已过期");
     expect(messages.activation_failed_0da00009).toBe("启用失败。");
+    expect(messages.export_readme_whats_inside_heading_0db00002).toBe("## 包含内容");
+    expect(messages.export_readme_alice_organization_package_0db00003).toContain("Alice 智能体组织");
+    expect(messages.export_readme_agent_table_header_0db00010).toContain("| 智能体 | 角色 | 上级 |");
+    expect(messages.export_readme_exported_from_alice_on_date_0db00014).toContain("从 [Alice]");
+    expect(messages.failed_to_load_export_data_0db00015).toBe("加载导出数据失败。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
