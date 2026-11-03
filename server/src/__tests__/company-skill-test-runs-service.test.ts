@@ -253,7 +253,7 @@ describeEmbeddedPostgres("companySkillService skill test runs", () => {
 
     await expect(
       svc.updateTestRunTemplate(companyId, "built-in:default-test-template", { name: "Changed" }),
-    ).rejects.toThrow(/read-only/i);
+    ).rejects.toThrow(/只读/);
 
     const deleted = await svc.deleteTestRunTemplate(companyId, template.id);
     expect(deleted?.deletedAt).toBeInstanceOf(Date);
@@ -278,7 +278,7 @@ describeEmbeddedPostgres("companySkillService skill test runs", () => {
         { type: "user", userId: "local-board" },
         runDeps(first.companyId),
       ),
-    ).rejects.toThrow(/test run template not found/i);
+    ).rejects.toThrow(/未找到测试运行模板/);
 
     await expect(
       svc.createTestRun(
@@ -288,7 +288,7 @@ describeEmbeddedPostgres("companySkillService skill test runs", () => {
         { type: "user", userId: "local-board" },
         runDeps(first.companyId),
       ),
-    ).rejects.toThrow(/test run template not found/i);
+    ).rejects.toThrow(/未找到测试运行模板/);
   });
 
   it("re-run can use the viewed template body snapshot after source template edits", async () => {
@@ -346,7 +346,7 @@ describeEmbeddedPostgres("companySkillService skill test runs", () => {
     // In-flight run must be cancelled first.
     await expect(
       svc.deleteTestRun(companyId, skillId, run.id, { hideHarnessIssue: async () => null }),
-    ).rejects.toThrow(/cancel the run/i);
+    ).rejects.toThrow(/请先取消运行/);
 
     await svc.completeTestRunForIssue({ companyId, issueId: run.issueId, outcome: "succeeded" });
 

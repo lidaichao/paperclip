@@ -5633,7 +5633,7 @@ export function companySkillService(db: Db) {
 
     const slug = normalizeSkillSlug(input.slug ?? catalogSkill.slug);
     if (!slug) {
-      throw unprocessable("Catalog skill slug is invalid.");
+      throw unprocessable("目录技能标识符无效。");
     }
 
     const existingSkills = await listFull(companyId);
@@ -5688,7 +5688,7 @@ export function companySkillService(db: Db) {
       originSnapshotLocator = await materializeCatalogOriginSnapshot(companyId, catalogSkill, slug);
       const candidateAudit = await auditCatalogSkillSnapshot(companyId, catalogSkill, slug, originSnapshotLocator);
       if (candidateAudit.verdict === "fail") {
-        throw unprocessable("Catalog install is blocked by hard-stop audit findings.", {
+        throw unprocessable("目录安装被强制停止级别的审计问题阻止。", {
           updateHoldReason: "audit_hard_stop",
           audit: candidateAudit,
         });
@@ -5703,7 +5703,7 @@ export function companySkillService(db: Db) {
       throw error;
     }
     if (!materializedDir || !originSnapshotLocator) {
-      throw unprocessable("Catalog install did not materialize pinned files.");
+      throw unprocessable("目录安装未能生成固定文件。");
     }
     const markdown = await fs.readFile(path.join(originSnapshotLocator, catalogSkill.entrypoint), "utf8");
     const metadata = buildCatalogSkillMetadata(catalogSkill, existingByKey, originSnapshotLocator);
@@ -5758,12 +5758,12 @@ export function companySkillService(db: Db) {
         .returning()
         .then((rows) => rows[0] ?? null);
 
-    if (!row) throw notFound("Failed to persist company skill");
+    if (!row) throw notFound("公司技能未能保存");
     const installed = toCompanySkill(row);
     const postAudit = await auditInstalledSkillBytes(installed);
     if (postAudit.verdict === "fail") {
       await persistAuditMetadata(installed, postAudit);
-      throw unprocessable("Catalog install produced hard-stop audit findings.", {
+      throw unprocessable("目录安装产生了强制停止级别的审计问题。", {
         updateHoldReason: "audit_hard_stop",
         audit: postAudit,
       });
@@ -5788,9 +5788,9 @@ export function companySkillService(db: Db) {
       const normalizedPath = normalizePortablePath(entry.path);
       const detail = await readLoadedSkillFile(skill, normalizedPath);
       const content = detail?.content ?? (normalizedPath === "SKILL.md" ? skill.markdown : null);
-      if (content === null) throw unprocessable("Declared skill file is unavailable");
+      if (content === null) throw unprocessable("声明的技能文件不可用");
       const resolved = resolveVersionSnapshotPath(skillDir, entry.path);
-      if (!resolved) throw unprocessable("Invalid skill file path");
+      if (!resolved) throw unprocessable("技能文件路径无效");
       const targetPath = resolved.targetPath;
       await fs.mkdir(path.dirname(targetPath), { recursive: true });
       await fs.writeFile(targetPath, content, "utf8");
@@ -5799,7 +5799,7 @@ export function companySkillService(db: Db) {
 
     if (!wroteSkillFile) {
       await fs.rm(skillDir, { recursive: true, force: true });
-      throw unprocessable("Company skill could not be materialized because its stored SKILL.md copy is missing.");
+      throw unprocessable("缺少已保存的 SKILL.md 副本，无法生成公司技能。");
     }
 
     return skillDir;
@@ -5851,7 +5851,7 @@ export function companySkillService(db: Db) {
       if (resolved.normalizedPath === "SKILL.md") sawSkillFile = true;
     }
     if (!sawSkillFile) {
-      throw unprocessable("Company skill version could not be materialized because its SKILL.md snapshot is missing.");
+      throw unprocessable("缺少 SKILL.md 快照，无法生成公司技能版本。");
     }
 
     const existingFiles = await listMaterializedFiles(skillDir);
@@ -5887,7 +5887,7 @@ export function companySkillService(db: Db) {
 
     if (!wroteSkillFile) {
       await fs.rm(skillDir, { recursive: true, force: true });
-      throw unprocessable("Company skill version could not be materialized because its SKILL.md snapshot is missing.");
+      throw unprocessable("缺少 SKILL.md 快照，无法生成公司技能版本。");
     }
 
     return skillDir;
@@ -6229,7 +6229,7 @@ export function companySkillService(db: Db) {
           .values(values)
           .returning()
           .then((rows) => rows[0] ?? null);
-      if (!row) throw notFound("Failed to persist company skill");
+      if (!row) throw notFound("公司技能未能保存");
       out.push(toCompanySkill(row));
     }
     return out;
@@ -6280,7 +6280,7 @@ export function companySkillService(db: Db) {
 
   async function listTestInputs(companyId: string, skillId: string): Promise<CompanySkillTestInput[]> {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     const rows = await db
       .select()
       .from(companySkillTestInputs)
@@ -6300,7 +6300,7 @@ export function companySkillService(db: Db) {
     actor: SkillActor | null = null,
   ): Promise<CompanySkillTestInput> {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     const row = await db
       .insert(companySkillTestInputs)
       .values({
@@ -6316,7 +6316,7 @@ export function companySkillService(db: Db) {
       })
       .returning()
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Failed to persist test input");
+    if (!row) throw notFound("测试输入未能保存");
     return toCompanySkillTestInput(row);
   }
 
@@ -6390,7 +6390,7 @@ export function companySkillService(db: Db) {
       })
       .returning()
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Failed to persist test run template");
+    if (!row) throw notFound("测试运行模板未能保存");
     return toCompanySkillTestRunTemplate(row);
   }
 
@@ -6401,7 +6401,7 @@ export function companySkillService(db: Db) {
     actor: SkillActor | null = null,
   ): Promise<CompanySkillTestRunTemplate | null> {
     if (templateId === BUILT_IN_SKILL_TEST_RUN_TEMPLATE_ID) {
-      throw unprocessable("Built-in test run templates are read-only.");
+      throw unprocessable("内置测试运行模板为只读。");
     }
     if (input.body !== undefined) {
       validateSkillTestTemplatePlaceholders(input.body);
@@ -6429,7 +6429,7 @@ export function companySkillService(db: Db) {
 
   async function deleteTestRunTemplate(companyId: string, templateId: string): Promise<CompanySkillTestRunTemplate | null> {
     if (templateId === BUILT_IN_SKILL_TEST_RUN_TEMPLATE_ID) {
-      throw unprocessable("Built-in test run templates are read-only.");
+      throw unprocessable("内置测试运行模板为只读。");
     }
     const row = await db
       .update(companySkillTestRunTemplates)
@@ -6478,7 +6478,7 @@ export function companySkillService(db: Db) {
         isNull(companySkillTestRunTemplates.deletedAt),
       ))
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Test run template not found");
+    if (!row) throw notFound("未找到测试运行模板");
     return {
       templateId: row.id,
       templateName: row.name,
@@ -6493,7 +6493,7 @@ export function companySkillService(db: Db) {
   ): Promise<CompanySkillVersion> {
     const currentSnapshot = serializeVersionFileInventory(await collectVersionFileInventory(companyId, skill));
     if (currentSnapshot.length === 0) {
-      throw unprocessable("Cannot run a skill test for a skill with zero files.");
+      throw unprocessable("无法对没有文件的技能运行测试。");
     }
 
     const currentVersion = await getCurrentVersion(skill);
@@ -6582,10 +6582,10 @@ export function companySkillService(db: Db) {
     },
   ): Promise<CompanySkillTestRun> {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     const agent = await agents.getById(input.agentId);
-    if (!agent || agent.companyId !== companyId) throw notFound("Agent not found");
-    if (agent.status === "paused") throw unprocessable("Paused agents cannot run skill tests.");
+    if (!agent || agent.companyId !== companyId) throw notFound("未找到智能体");
+    if (agent.status === "paused") throw unprocessable("已暂停的智能体无法运行技能测试。");
 
     const sourceInput = input.inputId
       ? await db
@@ -6599,16 +6599,16 @@ export function companySkillService(db: Db) {
         ))
         .then((rows) => rows[0] ?? null)
       : null;
-    if (input.inputId && !sourceInput) throw notFound("Test input not found");
+    if (input.inputId && !sourceInput) throw notFound("未找到测试输入");
     const inputSnapshot = (sourceInput?.content ?? input.content ?? "").trim();
-    if (!inputSnapshot) throw unprocessable("Test input content cannot be empty.");
+    if (!inputSnapshot) throw unprocessable("测试输入内容不能为空。");
 
     // Re-run pins the viewed run's version so the new run reproduces the same
     // snapshots; a plain run auto-snapshots the live head.
     const version = input.skillVersionId
       ? await getVersion(companyId, skillId, input.skillVersionId)
       : await ensureRunSkillVersion(companyId, skill, actor);
-    if (!version) throw notFound("Skill version not found");
+    if (!version) throw notFound("未找到技能版本");
     const runId = randomUUID();
     const issueId = randomUUID();
     const outputDocumentKey = "output";
@@ -6700,7 +6700,7 @@ export function companySkillService(db: Db) {
     });
     if (!row) {
       await cleanupCreatedHarnessIssue();
-      throw notFound("Failed to persist skill test run");
+      throw notFound("技能测试运行记录未能保存");
     }
     await deps.wakeHarnessIssue(issueId, agent.id);
     return (await hydrateTestRuns(companyId, [row]))[0]!;
@@ -6712,7 +6712,7 @@ export function companySkillService(db: Db) {
     query: CompanySkillTestRunListQuery = {},
   ): Promise<CompanySkillTestRun[]> {
     const skill = await getById(companyId, skillId);
-    if (!skill) throw notFound("Skill not found");
+    if (!skill) throw notFound("未找到技能");
     const conditions = [
       eq(companySkillTestRuns.companyId, companyId),
       eq(companySkillTestRuns.skillId, skillId),
@@ -6811,7 +6811,7 @@ export function companySkillService(db: Db) {
           .where(and(eq(issueWorkProducts.companyId, companyId), eq(issueWorkProducts.issueId, row.issueId)))
           .orderBy(desc(issueWorkProducts.isPrimary), desc(issueWorkProducts.updatedAt)),
     ]);
-    if (!version) throw notFound("Skill version not found");
+    if (!version) throw notFound("未找到技能版本");
     const harnessAvailable = !harnessIssueGone && issue !== null;
     const harnessDocuments: IssueDocument[] = harnessAvailable
       ? documentRows.map((doc) => ({
@@ -6998,7 +6998,7 @@ export function companySkillService(db: Db) {
     // Only terminal runs are deletable — an in-flight run must be cancelled first
     // so we never orphan a live harness task.
     if (!["succeeded", "failed", "cancelled"].includes(existing.status)) {
-      throw unprocessable("Cancel the run before deleting it.");
+      throw unprocessable("请先取消运行，再将其删除。");
     }
     const now = new Date();
     const updated = await db.transaction(async (tx) => {
@@ -7083,7 +7083,7 @@ export function companySkillService(db: Db) {
           await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`${companyId}:${initial.slug}`}, 0))`);
           const skill = await getById(companyId, skillId, tx);
           if (!skill) return null;
-          if (skill.slug !== initial.slug) throw conflict("Skill changed during deletion. Retry the request.");
+          if (skill.slug !== initial.slug) throw conflict("删除期间技能发生变化，请重试请求。");
           await assertUnused(skill);
           try {
             await fs.rm(resolveRuntimeSkillMaterializedPath(companyId, skill), { recursive: true, force: true });
