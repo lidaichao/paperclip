@@ -11269,6 +11269,12 @@
     "attachments_label_c2fdbec2": "Attachments",
     "item_not_ready_for_decision_a0aa3204": "This item is not ready for a decision.",
     "select_an_organization_first_7f0881bf": "Select an organization first.",
-    "some_items_could_not_be_approved_4c189095": "Some items could not be approved."
+    "some_items_could_not_be_approved_4c189095": "Some items could not be approved.",
+    "team_trust_markdown_only_tip_61c372af": "Contains only Markdown and references. No executable content.",
+    "team_trust_assets_tip_1843c6f2": "Includes static assets such as images and fixtures. No executable content.",
+    "team_trust_scripts_tip_ecb5e7d1": "Includes executable scripts that were security-reviewed before bundling.",
+    "team_trust_external_sources_tip_d6aa51d4": "References external sources resolved at install time.",
+    "failed_to_load_team_install_preview_d243e628": "Failed to load the team installation preview.",
+    "skills_label_02b7848c": "skills"
   }
 }

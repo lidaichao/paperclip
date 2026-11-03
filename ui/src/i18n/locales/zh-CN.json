@@ -11269,6 +11269,12 @@
     "attachments_label_c2fdbec2": "附件",
     "item_not_ready_for_decision_a0aa3204": "此条目尚不能作出决定。",
     "select_an_organization_first_7f0881bf": "请先选择组织。",
-    "some_items_could_not_be_approved_4c189095": "部分条目无法通过。"
+    "some_items_could_not_be_approved_4c189095": "部分条目无法通过。",
+    "team_trust_markdown_only_tip_61c372af": "仅包含 Markdown 和引用，不含可执行内容。",
+    "team_trust_assets_tip_1843c6f2": "包含图片、测试数据等静态资源，不含可执行内容。",
+    "team_trust_scripts_tip_ecb5e7d1": "包含可执行脚本；这些脚本在打包前已经过安全审查。",
+    "team_trust_external_sources_tip_d6aa51d4": "引用将在安装时解析的外部来源。",
+    "failed_to_load_team_install_preview_d243e628": "无法加载团队安装预览。",
+    "skills_label_02b7848c": "项技能"
   }
 }

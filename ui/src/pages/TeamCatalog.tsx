@@ -244,25 +244,25 @@ const TRUST_META: Record<
 > = {
   markdown_only: {
     label: l10n("local.markdown_only_f6e1f702"),
-    tip: "Contains only markdown and references. No executable content.",
+    tip: l10n("local.team_trust_markdown_only_tip_61c372af"),
     tone: "text-emerald-600 dark:text-emerald-300 border-emerald-500/30",
     Icon: ShieldCheck,
   },
   assets: {
     label: l10n("local.assets_bd12731d"),
-    tip: "Includes static assets (images, fixtures). No executable content.",
+    tip: l10n("local.team_trust_assets_tip_1843c6f2"),
     tone: "text-emerald-600 dark:text-emerald-300 border-emerald-500/30",
     Icon: ShieldCheck,
   },
   scripts_executables: {
     label: l10n("local.scripts_8d0e6b4a"),
-    tip: "Includes executable scripts that were security-reviewed before bundling.",
+    tip: l10n("local.team_trust_scripts_tip_ecb5e7d1"),
     tone: "text-amber-600 dark:text-amber-300 border-amber-500/30",
     Icon: AlertTriangle,
   },
   external_sources: {
     label: l10n("local.external_sources_bff2ceca"),
-    tip: "References external sources resolved at install time.",
+    tip: l10n("local.team_trust_external_sources_tip_d6aa51d4"),
     tone: "text-amber-600 dark:text-amber-300 border-amber-500/30",
     Icon: AlertTriangle,
   },
@@ -1009,7 +1009,7 @@ export function useInstallTeamCatalogEntry({
       setPreviewError(null);
     },
     onError: (error) => {
-      setPreviewError(error instanceof Error ? error.message : "Failed to load install preview.");
+      setPreviewError(error instanceof Error ? error.message : l10n("local.failed_to_load_team_install_preview_d243e628"));
     },
   });
 
@@ -1027,7 +1027,7 @@ export function useInstallTeamCatalogEntry({
     },
     onError: (error) => {
       setPhase("error");
-      setApplyError(error instanceof Error ? error.message : "Install failed.");
+      setApplyError(error instanceof Error ? error.message : l10n("local.install_failed_33b4717b"));
     },
   });
 
@@ -1153,7 +1153,7 @@ function TeamInstallerDialog({
           selectableAdapterTypes,
         );
         if (!resolvedAdapterType) {
-          throw new Error("Enable a legacy adapter before installing this team.");
+          throw new Error(l10n("local.enable_a_legacy_adapter_to_install_this_team_6e32986e"));
         }
         overrides[slug] = {
           adapterType: resolvedAdapterType,
@@ -1167,7 +1167,7 @@ function TeamInstallerDialog({
         selectableAdapterTypes,
       );
       if (!adapterType) {
-        throw new Error("Enable a legacy adapter before installing this team.");
+        throw new Error(l10n("local.enable_a_legacy_adapter_to_install_this_team_6e32986e"));
       }
       if (adapterType !== agent.adapterType) {
         overrides[agent.slug] = { adapterType };
@@ -1190,7 +1190,7 @@ function TeamInstallerDialog({
       setPreviewError(null);
     },
     onError: (error) => {
-      setPreviewError(error instanceof Error ? error.message : "Failed to load install preview.");
+      setPreviewError(error instanceof Error ? error.message : l10n("local.failed_to_load_team_install_preview_d243e628"));
     },
   });
 
@@ -1207,7 +1207,7 @@ function TeamInstallerDialog({
     },
     onError: (error) => {
       setPhase("error");
-      setApplyError(error instanceof Error ? error.message : "Install failed.");
+      setApplyError(error instanceof Error ? error.message : l10n("local.install_failed_33b4717b"));
     },
   });
 
@@ -2141,7 +2141,7 @@ export function TeamRow({
       </div>
       <div className="flex items-center gap-1.5 text-(length:--text-micro) text-muted-foreground">
         <span>
-          {team.counts.agents}a · {team.counts.projects}p · {team.counts.routines}r · {skillCount(team)}{l10n("local.s_043a7187")}</span>
+          {team.counts.agents} {l10n("local.agents_279b44d2")} · {team.counts.projects} {l10n("local.projects_04e2a972")} · {team.counts.routines} {l10n("local.routines_61b7bb44")} · {skillCount(team)} {l10n("local.skills_label_02b7848c")}</span>
         <TrustChip level={team.trustLevel} iconOnly />
       </div>
     </button>
