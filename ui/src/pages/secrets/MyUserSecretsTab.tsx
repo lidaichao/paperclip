@@ -77,7 +77,7 @@ export function MyUserSecretsTab({ companyId }: { companyId: string }) {
         ) : entries.length === 0 && !mySecretsQuery.isPending ? (
           <EmptyState
             icon={KeyRound}
-            message="No user secrets are defined for this organization yet. An admin defines which credentials each member supplies."
+            message={l10n("local.no_user_secrets_defined_admin_defines_member_credentials_4ac24213")}
           />
         ) : (
           <ul className="space-y-2">

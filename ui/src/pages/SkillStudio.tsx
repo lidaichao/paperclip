@@ -360,7 +360,7 @@ export function SkillStudio() {
     );
   }
   if (detailQuery.isLoading) {
-    return <StudioMessage message="Loading skill…" />;
+    return <StudioMessage message={l10n("local.loading_skill_5c57e60f")} />;
   }
   if (detailQuery.isError || !detailQuery.data) {
     return <StudioMessage message={l10n("local.skill_not_found_9d0a5468")} />;
@@ -730,8 +730,8 @@ function StudioEmptyState({
         <div className="flex flex-1 items-center justify-center">
           <EmptyState
             icon={FileCode}
-            message={skillsLoading ? "Loading skills..." : "Select a skill to open Studio."}
-            action="Create a new skill"
+            message={skillsLoading ? l10n("local.loading_skills_c83e83f7") : l10n("local.select_a_skill_to_open_studio_f51e219c")}
+            action={l10n("local.create_a_new_skill_334c7dd9")}
             onAction={onCreateNew}
           />
         </div>

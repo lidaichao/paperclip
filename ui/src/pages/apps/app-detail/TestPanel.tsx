@@ -158,7 +158,7 @@ export function ActionTestDialog({
             {l10n("local.loading_agents_ae0c1414")}</div>
         ) : testAgentsQuery.isError ? (
           <TestLoadError
-            message="We couldn't load the agents available for testing."
+          message={l10n("local.could_not_load_agents_available_for_testing_cbe9847f")}
             onRetry={() => { void testAgentsQuery.refetch(); }}
           />
         ) : agents.length === 0 ? (
@@ -348,7 +348,7 @@ export function TestPanel({
   if (testAgentsQuery.isError) {
     return (
       <TestLoadError
-        message="We couldn't load the agents available for testing."
+          message={l10n("local.could_not_load_agents_available_for_testing_cbe9847f")}
         onRetry={() => { void testAgentsQuery.refetch(); }}
       />
     );

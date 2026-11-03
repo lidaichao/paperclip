@@ -147,8 +147,8 @@ export function StatusCards() {
         <EmptyState
           icon={FlaskConical}
           title={l10n("local.no_status_cards_yet_9604f34d")}
-          message="Create a card to keep a living summary of the issues you care about."
-          action={selectedCompanyId ? "New card" : undefined}
+          message={l10n("local.create_a_card_to_keep_a_living_issue_summary_202b4ed8")}
+          action={selectedCompanyId ? l10n("local.new_card_3ad4fea1") : undefined}
           onAction={() => setCreateOpen(true)}
         />
       ) : (

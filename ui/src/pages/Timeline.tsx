@@ -359,7 +359,7 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
     return (
       <>
         {!embedded && <RequestCollapsedSidebar />}
-        <EmptyState icon={GanttChartSquare} message="Select an organization to view its work timeline." />
+        <EmptyState icon={GanttChartSquare} message={l10n("local.select_an_organization_to_view_work_timeline_34a7a9f3")} />
       </>
     );
   }
@@ -492,7 +492,7 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
       {error && (
         <EmptyState
           icon={GanttChartSquare}
-          message="Couldn't load the timeline. The aggregation endpoint may be unavailable."
+          message={l10n("local.could_not_load_timeline_aggregation_endpoint_may_be_unavailable_0c3b69f2")}
         />
       )}
 
@@ -501,7 +501,7 @@ export function Timeline({ embedded = false }: { embedded?: boolean } = {}) {
           <div className="space-y-3">
             <EmptyState
               icon={GanttChartSquare}
-              message={scopedProjectId ? "No project activity in this window." : "No activity in this window."}
+              message={scopedProjectId ? l10n("local.no_project_activity_in_this_window_34f6b7e2") : l10n("local.no_activity_in_this_window_77924678")}
             />
             <div className="flex flex-wrap items-center justify-end gap-3">
               {rangeControls}

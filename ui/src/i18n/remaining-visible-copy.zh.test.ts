@@ -56,5 +56,14 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.advanced_child_settings_hidden_while_break_into_pieces_enabled_1e9928a3).toBe(
       "启用“拆分为更小条目”后，高级子条目设置会隐藏。请在自动化中配置该流程。",
     );
+    expect(messages.no_secrets_yet_create_shared_or_user_supplied_secret_700fe184).toBe(
+      "暂无密钥。你可以创建组织共享密钥或由各用户提供的密钥。",
+    );
+    expect(messages.could_not_load_timeline_aggregation_endpoint_may_be_unavailable_0c3b69f2).toBe(
+      "无法加载时间线，汇总接口可能不可用。",
+    );
+    expect(messages.user_profile_not_found_for_this_organization_1117e51f).toBe(
+      "此组织中未找到该用户资料。",
+    );
   });
 });

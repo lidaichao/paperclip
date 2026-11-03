@@ -919,9 +919,9 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
       {list.length === 0 ? (
         <EmptyState
           icon={Layers}
-          message="No access profiles yet"
+          message={l10n("local.no_access_profiles_yet_e6c2cd2c")}
           description={l10n("local.create_a_profile_to_group_tool_selectors_then_61e7d384")}
-          action="New profile"
+          action={l10n("local.new_profile_fcf4f3f4")}
           onAction={() => setCreateOpen(true)}
         />
       ) : (

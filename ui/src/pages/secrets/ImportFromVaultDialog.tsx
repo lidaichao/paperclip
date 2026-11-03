@@ -875,7 +875,7 @@ function SelectStep(props: SelectStepProps) {
       <div className="flex min-h-0 flex-1 items-center justify-center p-6" data-testid="select-empty-vaults">
         <EmptyState
           icon={Cloud}
-          message="No AWS provider vault configured. Add one to import secrets."
+          message={l10n("local.no_aws_provider_vault_configured_add_one_to_import_secrets_c02f11b1")}
           action={onManageVaults ? "Manage vaults" : undefined}
           onAction={onManageVaults}
         />
@@ -1168,7 +1168,7 @@ function EmptyCandidates({ query }: { query: string }) {
   return (
     <EmptyState
       icon={Database}
-      message="No secrets visible to this vault."
+          message={l10n("local.no_secrets_visible_to_this_vault_b0971a44")}
     />
   );
 }
@@ -1187,7 +1187,7 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
       <div className="flex min-h-0 flex-1 items-center justify-center p-6">
         <EmptyState
           icon={Info}
-          message="No secrets selected. Go back to pick remote secrets to import."
+          message={l10n("local.no_secrets_selected_go_back_to_pick_remote_secrets_0fa3fd56")}
         />
       </div>
     );

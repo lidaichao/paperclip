@@ -242,7 +242,7 @@ export function UserProfile() {
   );
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={UserRound} message="Select an organization to view user profiles." />;
+    return <EmptyState icon={UserRound} message={l10n("local.select_an_organization_to_view_user_profiles_867cc51a")} />;
   }
 
   if (isLoading) {
@@ -250,7 +250,7 @@ export function UserProfile() {
   }
 
   if (error || !data) {
-    return <EmptyState icon={AlertCircle} message="User profile not found for this organization." />;
+    return <EmptyState icon={AlertCircle} message={l10n("local.user_profile_not_found_for_this_organization_1117e51f")} />;
   }
 
   const allTimeTokens = allTime ? totalTokens(allTime) : 0;

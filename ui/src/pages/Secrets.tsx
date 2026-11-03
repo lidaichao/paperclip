@@ -1964,8 +1964,8 @@ export function Secrets() {
               !(showFolderView && folderPath) ? (
               <EmptyState
                 icon={KeyRound}
-                message="No secrets yet. Create a shared organization secret or one that each user supplies."
-                action="New secret"
+                message={l10n("local.no_secrets_yet_create_shared_or_user_supplied_secret_700fe184")}
+                action={l10n("local.new_secret_1088a1c0")}
                 onAction={openCreateSecret}
               />
             ) : (
@@ -1996,14 +1996,14 @@ export function Secrets() {
                   ) : showFolderView && folderPath && activeSecretFilterCount === 0 ? (
                     <EmptyState
                       icon={FolderOpen}
-                      message="No secrets in this folder yet."
-                      action="New secret here"
+                      message={l10n("local.no_secrets_in_this_folder_yet_4c77048b")}
+                      action={l10n("local.new_secret_here_935cce8b")}
                       onAction={openCreateSecret}
                     />
                   ) : (
                     <EmptyState
                       icon={Search}
-                      message={searching ? "No secrets match your search." : "No secrets match your filters."}
+                      message={searching ? l10n("local.no_secrets_match_your_search_507f0a33") : l10n("local.no_secrets_match_your_filters_1cb3a384")}
                     />
                   )
                 ) : (

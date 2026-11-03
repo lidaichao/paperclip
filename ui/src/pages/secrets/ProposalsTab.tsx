@@ -184,7 +184,7 @@ export function ProposalsTab({
       <EmptyState
         icon={Inbox}
         title={l10n("local.no_pending_proposals_1722fa30")}
-        message="When an agent proposes a secret or an access binding, it shows up here for review."
+        message={l10n("local.agent_secret_or_access_proposals_appear_here_for_review_3d15974f")}
       />
     );
   }
