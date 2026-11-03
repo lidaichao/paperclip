@@ -14,7 +14,7 @@ export const USER_SECRET_ACCENT_BORDER = "border-violet-500/30";
 export const USER_SECRET_ACCENT_BG = "bg-violet-500/10";
 
 /** Small pill used to mark user-scoped rows and headers. */
-export function UserSecretChip({ className, label = "User secret" }: { className?: string; label?: string }) {
+export function UserSecretChip({ className, label = l10n("local.user_secret_62c03b86") }: { className?: string; label?: string }) {
   return (
     <Badge variant="outline"
       className={cn(

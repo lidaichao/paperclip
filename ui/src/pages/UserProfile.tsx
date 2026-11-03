@@ -218,7 +218,7 @@ export function UserProfile() {
       (data?.topAgents ?? []).map((row) => ({
         key: row.agentId ?? "unknown",
         label: row.agentName ?? (row.agentId ? row.agentId.slice(0, 8) : l10n("local.unknown_b23a6a84")),
-        sublabel: "Task-linked usage",
+        sublabel: l10n("local.task_linked_usage_10300238"),
         costCents: row.costCents,
         inputTokens: row.inputTokens,
         cachedInputTokens: row.cachedInputTokens,
@@ -350,8 +350,8 @@ export function UserProfile() {
       </div>
 
       <div className="grid gap-10 xl:grid-cols-2">
-        <UsageList title={l10n("local.agent_attribution_6329b1f9")} empty="No issue-linked token usage yet." rows={agentUsageRows} />
-        <UsageList title={l10n("local.provider_mix_4aad1bb3")} empty="No provider usage attributed yet." rows={providerUsageRows} />
+        <UsageList title={l10n("local.agent_attribution_6329b1f9")} empty={l10n("local.no_issue_linked_token_usage_10300239")} rows={agentUsageRows} />
+        <UsageList title={l10n("local.provider_mix_4aad1bb3")} empty={l10n("local.no_provider_usage_attributed_10300240")} rows={providerUsageRows} />
       </div>
     </div>
   );

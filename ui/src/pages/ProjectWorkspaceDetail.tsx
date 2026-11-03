@@ -140,14 +140,14 @@ function parseRuntimeConfigJson(value: string) {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {
         ok: false as const,
-        error: "Workspace commands JSON must be a JSON object.",
+        error: l10n("local.workspace_commands_json_must_be_object_0d900002"),
       };
     }
     return { ok: true as const, value: parsed as Record<string, unknown> };
   } catch (error) {
     return {
       ok: false as const,
-      error: error instanceof Error ? error.message : "Invalid JSON.",
+      error: error instanceof Error ? error.message : l10n("local.invalid_json_0d900003"),
     };
   }
 }
@@ -378,17 +378,17 @@ export function ProjectWorkspaceDetail() {
       setErrorMessage(null);
       setRuntimeActionMessage(
         request.action === "run"
-          ? "Workspace job completed."
+          ? l10n("local.workspace_job_completed_0d900009")
           : request.action === "stop"
-            ? "Workspace service stopped. Task execution is not paused."
+            ? l10n("local.workspace_service_stopped_execution_continues_10300235")
             : request.action === "restart"
-              ? "Workspace service restarted. Task execution is not paused."
-              : "Workspace service started.",
+              ? l10n("local.workspace_service_restarted_execution_continues_10300236")
+              : l10n("local.workspace_service_started_0d900012"),
       );
     },
     onError: (error) => {
       setRuntimeActionMessage(null);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to control workspace commands.");
+      setErrorMessage(error instanceof Error ? error.message : l10n("local.failed_to_control_workspace_commands_0d900013"));
     },
   });
 

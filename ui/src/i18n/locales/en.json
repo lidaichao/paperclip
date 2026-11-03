@@ -12425,6 +12425,15 @@
     "select_organization_to_view_tasks_10300228": "Select an organization to view tasks.",
     "select_company_to_view_tasks_10300229": "Select a company to view tasks.",
     "select_organization_to_view_your_tasks_10300230": "Select an organization to view your tasks.",
-    "select_company_to_view_your_tasks_10300231": "Select a company to view your tasks."
+    "select_company_to_view_your_tasks_10300231": "Select a company to view your tasks.",
+    "failed_to_update_profile_10300232": "Failed to update profile.",
+    "failed_to_upload_avatar_10300233": "Failed to upload avatar.",
+    "failed_to_remove_avatar_10300234": "Failed to remove avatar.",
+    "workspace_service_stopped_execution_continues_10300235": "Workspace service stopped. Task execution is not paused.",
+    "workspace_service_restarted_execution_continues_10300236": "Workspace service restarted. Task execution is not paused.",
+    "set_your_user_secrets_10300237": "Set your user secrets",
+    "task_linked_usage_10300238": "Task-linked usage",
+    "no_issue_linked_token_usage_10300239": "No issue-linked token usage yet.",
+    "no_provider_usage_attributed_10300240": "No provider usage attributed yet."
   }
 }

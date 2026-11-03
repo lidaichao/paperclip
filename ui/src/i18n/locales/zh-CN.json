@@ -12425,6 +12425,15 @@
     "select_organization_to_view_tasks_10300228": "请选择一个组织以查看任务。",
     "select_company_to_view_tasks_10300229": "请选择一个公司以查看任务。",
     "select_organization_to_view_your_tasks_10300230": "请选择一个组织以查看你的任务。",
-    "select_company_to_view_your_tasks_10300231": "请选择一个公司以查看你的任务。"
+    "select_company_to_view_your_tasks_10300231": "请选择一个公司以查看你的任务。",
+    "failed_to_update_profile_10300232": "更新个人资料失败。",
+    "failed_to_upload_avatar_10300233": "上传头像失败。",
+    "failed_to_remove_avatar_10300234": "移除头像失败。",
+    "workspace_service_stopped_execution_continues_10300235": "工作区服务已停止，但任务执行未暂停。",
+    "workspace_service_restarted_execution_continues_10300236": "工作区服务已重启，任务执行未暂停。",
+    "set_your_user_secrets_10300237": "设置你的个人密钥",
+    "task_linked_usage_10300238": "任务关联用量",
+    "no_issue_linked_token_usage_10300239": "暂无与任务关联的令牌用量。",
+    "no_provider_usage_attributed_10300240": "暂无已归属的模型提供商用量。"
   }
 }

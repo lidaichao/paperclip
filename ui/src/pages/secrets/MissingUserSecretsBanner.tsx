@@ -21,7 +21,7 @@ import { SetMyUserSecretDialog } from "./SetMyUserSecretDialog";
 export function MissingUserSecretsBanner({
   companyId,
   definitionKeys,
-  title = "Set your user secrets",
+  title = l10n("local.set_your_user_secrets_10300237"),
   secretsPath,
   className,
 }: {
