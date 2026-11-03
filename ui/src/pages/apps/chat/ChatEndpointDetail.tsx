@@ -58,7 +58,13 @@ const tabs = ["settings", "access", "reviews", "conversations", "activity"] as c
 type ChatTab = (typeof tabs)[number];
 const tabItems = tabs.map((value) => ({
   value,
-  label: value[0].toUpperCase() + value.slice(1),
+  label: {
+    settings: l10n("local.settings_tab_44b57896"),
+    access: l10n("local.access_tab_e0394fc5"),
+    reviews: l10n("local.reviews_tab_258c6af3"),
+    conversations: l10n("local.conversations_tab_bf405f67"),
+    activity: l10n("local.activity_tab_c34682f9"),
+  }[value],
 }));
 const providerNames: Record<ChatProvider, string> = {
   agentmail: "AgentMail",
@@ -74,40 +80,33 @@ const providerLifecycleGuidance: Record<
   ChatProvider,
   { reconnect: string; remove: string }
 > = {
-  agentmail: { reconnect: "Reconnect the same email inbox.", remove: "Disconnect email and retain task history." },
+  agentmail: {
+    reconnect: l10n("local.reconnect_same_email_inbox_87e4b5de"),
+    remove: l10n("local.disconnect_email_retain_history_c9f75e2f"),
+  },
   slack: {
-    reconnect:
-      "Reconnect verifies or replaces credentials for this same Slack app. It does not reinstall the app or change its workspace or channel membership.",
-    remove:
-      "Paperclip archives the endpoint, stops new ingress, and retires its saved Slack credentials. It does not uninstall the Slack app: the app remains installed, and its bot remains in channels, until you remove them in Slack.",
+    reconnect: l10n("local.reconnect_slack_guidance_99b0d0d7"),
+    remove: l10n("local.remove_slack_guidance_alice_f44800a2"),
   },
   github: {
-    reconnect:
-      "Reconnect verifies this same App and installation, then updates its webhook URL, secret, and secure delivery settings. It does not reinstall the App or change repository access.",
-    remove:
-      "Paperclip archives the endpoint, stops new ingress, and retires its saved App key and webhook secret. It does not uninstall the GitHub App: the App, its installations, and its webhook settings remain until you remove or update them on GitHub.",
+    reconnect: l10n("local.reconnect_github_guidance_ee48678d"),
+    remove: l10n("local.remove_github_guidance_alice_67602e1c"),
   },
   discord: {
-    reconnect:
-      "Reconnect verifies this same Discord application and server installation. It does not add or remove the bot from the server.",
-    remove:
-      "Paperclip archives the endpoint, stops its Paperclip Gateway connection, and retires its saved bot token. It does not uninstall the bot: the bot remains in the Discord server, and the application remains in the Developer Portal, until you remove them there.",
+    reconnect: l10n("local.reconnect_discord_guidance_80845431"),
+    remove: l10n("local.remove_discord_guidance_alice_337f1db7"),
   },
   "microsoft-teams": {
-    reconnect:
-      "Reconnect verifies this same Microsoft app, tenant, and bot identity. It does not upload or reinstall the Teams app.",
-    remove:
-      "Paperclip archives the endpoint, stops new ingress, and retires its saved client secret. It does not uninstall the Teams app: the Entra app registration, Azure Bot, custom Teams app, and Teams installations remain until you remove them in Microsoft.",
+    reconnect: l10n("local.reconnect_teams_guidance_ed7151f9"),
+    remove: l10n("local.remove_teams_guidance_alice_bea0f9d9"),
   },
   "imessage-photon": {
-    reconnect: "Reconnect verifies the same Photon project and line allocation, then recovers eligible missed messages.",
-    remove: "Disconnect archives this channel and removes its saved secret. Your Photon project, number, subscription, and Messages history remain in Photon.",
+    reconnect: l10n("local.reconnect_photon_guidance_03801495"),
+    remove: l10n("local.remove_photon_guidance_064dcfbc"),
   },
   telegram: {
-    reconnect:
-      "Reconnect verifies this same BotFather bot and automatically refreshes its Paperclip webhook and command menu.",
-    remove:
-      "Paperclip archives the endpoint and queues durable removal of its Telegram webhook and command menu. After Telegram confirms that cleanup, Paperclip retires the saved token. The BotFather bot and its chat memberships remain until you remove them in Telegram.",
+    reconnect: l10n("local.reconnect_telegram_guidance_alice_cbd3cc26"),
+    remove: l10n("local.remove_telegram_guidance_alice_b98909d2"),
   },
 };
 
@@ -195,7 +194,9 @@ export function isIndividuallyToggleableResource(
 }
 
 function activityDetailLabel(item: ChatActivityItem): string {
-  return replayableFailureStates.has(item.status) ? "Reason" : "Details";
+  return replayableFailureStates.has(item.status)
+    ? l10n("local.reason_label_a4147cb1")
+    : l10n("local.details_label_84f3d305");
 }
 
 export function connectionHealthPresentation(
@@ -203,12 +204,12 @@ export function connectionHealthPresentation(
 ) {
   // Health events outlive pause/removal. They are history, not lifecycle state.
   const lifecycleMessages = {
-    draft: "Connection setup is incomplete.",
-    verifying: "Connection verification is in progress.",
-    paused: "Connection is paused. Resume it to receive new messages.",
-    attention: "Connection needs attention.",
-    revoked: "Connection access is revoked. Reconnect to verify access.",
-    archived: "Connection has been removed from Paperclip.",
+    draft: l10n("local.connection_setup_incomplete_f6b15edc"),
+    verifying: l10n("local.connection_verification_in_progress_224f32a2"),
+    paused: l10n("local.connection_paused_resume_messages_0e97fa90"),
+    attention: l10n("local.connection_needs_attention_0366245c"),
+    revoked: l10n("local.connection_access_revoked_reconnect_a35ca167"),
+    archived: l10n("local.connection_removed_from_alice_2b93f280"),
   };
   const lifecycleMessage =
     endpoint.status === "active" ? null : lifecycleMessages[endpoint.status];
@@ -217,8 +218,8 @@ export function connectionHealthPresentation(
     previousHealth: lifecycleMessage ? (endpoint.healthMessage ?? null) : null,
     error: endpoint.lastError ?? null,
     errorLabel: ["active", "attention", "revoked"].includes(endpoint.status)
-      ? "Reason"
-      : "Last reported error",
+      ? l10n("local.reason_label_a4147cb1")
+      : l10n("local.last_reported_error_label_3d539410"),
   };
 }
 
@@ -296,8 +297,8 @@ export function ChatEndpointDetail() {
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
               <span>{endpoint.botExternalId}</span>
               <Button variant="ghost" size="sm" aria-label={l10n("local.copy_dedicated_number_0a559caf")} onClick={async () => {
-                try { await copyTextToClipboard(endpoint.botExternalId!); setCopyStatus("Number copied"); }
-                catch { setCopyStatus("Could not copy the number. Select and copy it manually."); }
+                try { await copyTextToClipboard(endpoint.botExternalId!); setCopyStatus(l10n("local.number_copied_7a068bb3")); }
+                catch { setCopyStatus(l10n("local.could_not_copy_number_manually_f591d033")); }
               }}><Copy className="size-4" />{l10n("local.copy_number_f35c40de")}</Button>
               <span role="status" className="text-muted-foreground">{copyStatus}</span>
             </div>
@@ -792,7 +793,11 @@ function Activity({
         queryKey: queryKeys.chatEndpoints.activity(endpointId),
       });
       pushToast({
-        title: l10n("local.value_queued_for_replay_5eb4f5e1", {v0: (item.kind === "publication" ? "Publication" : "Delivery")}),
+        title: l10n("local.value_queued_for_replay_5eb4f5e1", {
+          v0: item.kind === "publication"
+            ? l10n("local.publication_label_fcc127a9")
+            : l10n("local.delivery_label_f5737263"),
+        }),
         tone: "success",
       });
     },
@@ -895,9 +900,9 @@ function Activity({
   const lifecycleAction = lifecycle.variables;
   const callbackSurfaceRows = endpoint.setup?.callbackSurfaces
     ? ([
-        ["Events API", endpoint.setup.callbackSurfaces.events],
-        ["Interactivity", endpoint.setup.callbackSurfaces.interactivity],
-        ["Slash command", endpoint.setup.callbackSurfaces.slashCommands],
+        [l10n("local.events_api_label_4bc317fb"), endpoint.setup.callbackSurfaces.events],
+        [l10n("local.interactivity_label_4432f21f"), endpoint.setup.callbackSurfaces.interactivity],
+        [l10n("local.slash_command_label_ec8382bc"), endpoint.setup.callbackSurfaces.slashCommands],
       ] as const)
     : [];
   return (
