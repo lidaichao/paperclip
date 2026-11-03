@@ -20,7 +20,7 @@ export const CONNECTION_INTENT_AGENT_GUIDANCE = [
 ].join("\n");
 
 export const CONNECTIONS_SEARCH_TOOL_DESCRIPTION = [
-  "Search Paperclip's catalog services and authorized configured custom connections and report this run's agent-relative access state.",
+  "搜索 Alice 的目录服务和已获授权的自定义连接，并报告本次运行中智能体可用的访问状态。",
   "Use it when work requires a known external service and usable access is uncertain; do not use it for arbitrary MCP URLs or unrelated work.",
   "If the user already asked to connect the service, search and request it through the connection tools instead of asking a generic confirmation question.",
 ].join(" ");

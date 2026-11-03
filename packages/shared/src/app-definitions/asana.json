@@ -27,7 +27,7 @@
       "defaults": {
         "serverUrl": "https://mcp.asana.com/v2/mcp"
       },
-      "guidanceMd": "Connect Asana in the browser. Create an Asana MCP OAuth app and register Paperclip's callback URI; DCR is not supported.",
+      "guidanceMd": "请在浏览器中连接 Asana。创建 Asana MCP OAuth 应用并登记 Alice 的回调地址；不支持 DCR。",
       "riskTier": "S3",
       "label": "Use your own OAuth app",
       "consoleLinks": {
@@ -35,7 +35,7 @@
         "docs": "https://developers.asana.com/docs/integrating-with-asanas-mcp-server"
       },
       "warnings": [
-        "Create an Asana MCP OAuth app and register Paperclip's callback URI; DCR is not supported."
+        "创建 Asana MCP OAuth 应用并登记 Alice 的回调地址；不支持 DCR。"
       ]
     }
   ]
