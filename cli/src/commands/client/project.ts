@@ -48,13 +48,13 @@ interface ProjectDeleteOptions extends BaseClientOptions {
 }
 
 export function registerProjectCommands(program: Command): void {
-  const project = program.command("project").description("Project operations");
+  const project = program.command("project").description("项目操作");
 
   addCommonClientOptions(
     project
       .command("list")
-      .description("List projects for a company")
-      .option("-C, --company-id <id>", "Company ID")
+      .description("列出公司项目")
+      .option("-C, --company-id <id>", "公司编号")
       .action(async (opts: ProjectListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -87,9 +87,9 @@ export function registerProjectCommands(program: Command): void {
   addCommonClientOptions(
     project
       .command("get")
-      .description("Get one project by ID or shortname")
-      .argument("<project>", "Project ID or shortname")
-      .option("-C, --company-id <id>", "Company ID for shortname lookup")
+      .description("按编号或短名称获取项目")
+      .argument("<project>", "项目编号或短名称")
+      .option("-C, --company-id <id>", "短名称查询使用的公司编号")
       .action(async (projectRef: string, opts: ProjectListOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -106,18 +106,18 @@ export function registerProjectCommands(program: Command): void {
   addCommonClientOptions(
     project
       .command("create")
-      .description("Create a project")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .requiredOption("--name <name>", "Project name")
-      .option("--description <text>", "Project description")
-      .option("--status <status>", "Project status")
-      .option("--goal-id <id>", "Deprecated single goal ID")
-      .option("--goal-ids <csv>", "Comma-separated goal IDs")
-      .option("--lead-agent-id <id>", "Lead agent ID")
-      .option("--target-date <date>", "Target date")
-      .option("--color <value>", "Project color")
-      .option("--env-json <json>", "Project env binding JSON")
-      .option("--execution-workspace-policy-json <json>", "Execution workspace policy JSON")
+      .description("创建项目")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .requiredOption("--name <name>", "项目名称")
+      .option("--description <text>", "项目描述")
+      .option("--status <status>", "项目状态")
+      .option("--goal-id <id>", "已弃用的单个目标编号")
+      .option("--goal-ids <csv>", "用逗号分隔的目标编号")
+      .option("--lead-agent-id <id>", "负责人智能体编号")
+      .option("--target-date <date>", "目标日期")
+      .option("--color <value>", "项目颜色")
+      .option("--env-json <json>", "项目环境绑定 JSON")
+      .option("--execution-workspace-policy-json <json>", "执行工作区策略 JSON")
       .action(async (opts: ProjectCreateOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -145,20 +145,20 @@ export function registerProjectCommands(program: Command): void {
   addCommonClientOptions(
     project
       .command("update")
-      .description("Update a project")
-      .argument("<project>", "Project ID or shortname")
-      .option("-C, --company-id <id>", "Company ID for shortname lookup")
-      .option("--name <name>", "Project name")
-      .option("--description <text|null>", "Project description")
-      .option("--status <status>", "Project status")
-      .option("--goal-id <id|null>", "Deprecated single goal ID")
-      .option("--goal-ids <csv>", "Comma-separated goal IDs")
-      .option("--lead-agent-id <id|null>", "Lead agent ID")
-      .option("--target-date <date|null>", "Target date")
-      .option("--color <value|null>", "Project color")
-      .option("--env-json <json|null>", "Project env binding JSON")
-      .option("--execution-workspace-policy-json <json|null>", "Execution workspace policy JSON")
-      .option("--archived-at <iso8601|null>", "Archive timestamp or null")
+      .description("更新项目")
+      .argument("<project>", "项目编号或短名称")
+      .option("-C, --company-id <id>", "短名称查询使用的公司编号")
+      .option("--name <name>", "项目名称")
+      .option("--description <text|null>", "项目描述")
+      .option("--status <status>", "项目状态")
+      .option("--goal-id <id|null>", "已弃用的单个目标编号")
+      .option("--goal-ids <csv>", "用逗号分隔的目标编号")
+      .option("--lead-agent-id <id|null>", "负责人智能体编号")
+      .option("--target-date <date|null>", "目标日期")
+      .option("--color <value|null>", "项目颜色")
+      .option("--env-json <json|null>", "项目环境绑定 JSON")
+      .option("--execution-workspace-policy-json <json|null>", "执行工作区策略 JSON")
+      .option("--archived-at <iso8601|null>", "归档时间戳或 null")
       .action(async (projectRef: string, opts: ProjectUpdateOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -188,13 +188,13 @@ export function registerProjectCommands(program: Command): void {
   addCommonClientOptions(
     project
       .command("delete")
-      .description("Delete a project")
-      .argument("<project>", "Project ID or shortname")
-      .option("-C, --company-id <id>", "Company ID for shortname lookup")
-      .option("--yes", "Confirm deletion")
+      .description("删除项目")
+      .argument("<project>", "项目编号或短名称")
+      .option("-C, --company-id <id>", "短名称查询使用的公司编号")
+      .option("--yes", "确认删除")
       .action(async (projectRef: string, opts: ProjectDeleteOptions) => {
         try {
-          if (!opts.yes) throw new Error("Deletion requires --yes.");
+          if (!opts.yes) throw new Error("删除操作必须提供 --yes。");
           const ctx = resolveCommandContext(opts);
           const query = ctx.companyId ? `?${new URLSearchParams({ companyId: ctx.companyId }).toString()}` : "";
           const deleted = await ctx.api.delete<Project>(`${apiPath`/api/projects/${projectRef}`}${query}`);
@@ -223,6 +223,6 @@ function parseOptionalJson(value: string | undefined): unknown {
   try {
     return JSON.parse(value);
   } catch (err) {
-    throw new Error(`Invalid JSON: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(`JSON 无效：${err instanceof Error ? err.message : String(err)}`);
   }
 }
