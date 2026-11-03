@@ -12500,6 +12500,19 @@
     "not_tracked_10300303": "未跟踪",
     "failed_to_update_general_settings_10300304": "更新常规设置失败。",
     "runs_in_your_workspace_10300305": "在你的工作区中运行",
-    "connects_over_the_web_10300306": "通过网络连接"
+    "connects_over_the_web_10300306": "通过网络连接",
+    "concurrent_local_ssh_cloud_serialized_10300307": "本地及 SSH 运行器支持并行运行；云环境中的运行将依次执行。",
+    "sandbox_serialized_local_concurrent_10300308": "沙盒运行会在共享项目工作区中依次执行；本地及 SSH 文件夹支持并行运行。",
+    "runs_never_wait_concurrent_edits_10300309": "运行无需等待工作区，但可能发生并发编辑。",
+    "archive_project_named_10300310": "归档“{{v0}}”？",
+    "unarchive_project_named_10300311": "取消归档“{{v0}}”？",
+    "archive_project_action_10300312": "归档项目",
+    "unarchive_project_action_10300313": "取消归档项目",
+    "clear_local_folder_from_workspace_10300314": "清除此工作区的本地文件夹？",
+    "delete_workspace_local_folder_10300315": "删除此工作区的本地文件夹？",
+    "reports_to_na_ceo_10300316": "汇报对象：无（CEO）",
+    "reports_to_ellipsis_10300317": "选择汇报对象…",
+    "dirty_changes_quarantined_task_resumes_10300318": "未提交的修改已隔离到救援分支，并恢复了记录中的分支；任务将继续运行。",
+    "recorded_branch_matches_task_resumes_10300319": "记录中的分支现已与实际分支一致；任务将继续运行。"
   }
 }

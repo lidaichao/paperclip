@@ -12500,6 +12500,19 @@
     "not_tracked_10300303": "Not tracked",
     "failed_to_update_general_settings_10300304": "Failed to update general settings.",
     "runs_in_your_workspace_10300305": "Runs in your workspace",
-    "connects_over_the_web_10300306": "Connects over the web"
+    "connects_over_the_web_10300306": "Connects over the web",
+    "concurrent_local_ssh_cloud_serialized_10300307": "Concurrent runs on local/SSH runners; runs take turns in cloud environments.",
+    "sandbox_serialized_local_concurrent_10300308": "Sandbox runs take turns in the shared project workspace. Local/SSH folders allow concurrent runs.",
+    "runs_never_wait_concurrent_edits_10300309": "Runs never wait for the workspace; concurrent edits are possible.",
+    "archive_project_named_10300310": "Archive “{{v0}}”?",
+    "unarchive_project_named_10300311": "Unarchive “{{v0}}”?",
+    "archive_project_action_10300312": "Archive project",
+    "unarchive_project_action_10300313": "Unarchive project",
+    "clear_local_folder_from_workspace_10300314": "Clear local folder from this workspace?",
+    "delete_workspace_local_folder_10300315": "Delete this workspace local folder?",
+    "reports_to_na_ceo_10300316": "Reports to: N/A (CEO)",
+    "reports_to_ellipsis_10300317": "Reports to...",
+    "dirty_changes_quarantined_task_resumes_10300318": "Dirty changes were quarantined onto a rescue branch and the recorded branch restored; the task will resume.",
+    "recorded_branch_matches_task_resumes_10300319": "The recorded branch now matches the live branch; the task will resume."
   }
 }

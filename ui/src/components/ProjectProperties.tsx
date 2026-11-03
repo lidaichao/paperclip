@@ -60,17 +60,17 @@ const SHARED_WORKSPACE_CONCURRENCY_OPTIONS: {
   {
     value: "auto",
     label: l10n("local.auto_02862497"),
-    help: "Concurrent runs on local/SSH runners; runs take turns in cloud environments.",
+    help: l10n("local.concurrent_local_ssh_cloud_serialized_10300307"),
   },
   {
     value: "serialize",
     label: l10n("local.serialize_be3403d5"),
-    help: "Sandbox runs take turns in the shared project workspace. Local/SSH folders allow concurrent runs.",
+    help: l10n("local.sandbox_serialized_local_concurrent_10300308"),
   },
   {
     value: "allow",
     label: l10n("local.allow_e213c161"),
-    help: "Runs never wait for the workspace; concurrent edits are possible.",
+    help: l10n("local.runs_never_wait_concurrent_edits_10300309"),
   },
 ];
 
@@ -146,7 +146,6 @@ function ArchiveDangerZone({
 }) {
   const [confirming, setConfirming] = useState(false);
   const isArchive = !project.archivedAt;
-  const action = isArchive ? "Archive" : "Unarchive";
 
   return (
     <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
@@ -163,7 +162,9 @@ function ArchiveDangerZone({
       ) : confirming ? (
         <div className="flex items-center gap-2">
           <span className="text-sm text-destructive font-medium">
-            {action} &ldquo;{project.name}&rdquo;?
+            {isArchive
+              ? l10n("local.archive_project_named_10300310", { v0: project.name })
+              : l10n("local.unarchive_project_named_10300311", { v0: project.name })}
           </span>
           <Button
             size="sm"
@@ -188,9 +189,9 @@ function ArchiveDangerZone({
           onClick={() => setConfirming(true)}
         >
           {isArchive ? (
-            <><Archive className="h-3 w-3 mr-1" />{action} {l10n("local.project_244210e4")}</>
+            <><Archive className="h-3 w-3 mr-1" />{l10n("local.archive_project_action_10300312")}</>
           ) : (
-            <><ArchiveRestore className="h-3 w-3 mr-1" />{action} {l10n("local.project_244210e4")}</>
+            <><ArchiveRestore className="h-3 w-3 mr-1" />{l10n("local.unarchive_project_action_10300313")}</>
           )}
         </Button>
       )}
@@ -405,8 +406,8 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
   const clearLocalWorkspace = () => {
     const confirmed = window.confirm(
       codebase.repoUrl
-        ? "Clear local folder from this workspace?"
-        : "Delete this workspace local folder?",
+        ? l10n("local.clear_local_folder_from_workspace_10300314")
+        : l10n("local.delete_workspace_local_folder_10300315"),
     );
     if (!confirmed) return;
     persistCodebase({ cwd: null });

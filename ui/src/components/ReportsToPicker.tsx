@@ -17,8 +17,8 @@ export function ReportsToPicker({
   onChange,
   disabled = false,
   excludeAgentIds = [],
-  disabledEmptyLabel = "Reports to: N/A (CEO)",
-  chooseLabel = "Reports to...",
+  disabledEmptyLabel = l10n("local.reports_to_na_ceo_10300316"),
+  chooseLabel = l10n("local.reports_to_ellipsis_10300317"),
 }: {
   agents: Agent[];
   value: string | null;

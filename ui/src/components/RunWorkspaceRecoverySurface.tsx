@@ -105,12 +105,12 @@ export function RunWorkspaceRecoverySurface({ run }: { run: HeartbeatRun }) {
         variables.mode === "quarantine_restore"
           ? {
               title: l10n("local.workspace_repaired_22f46fd2"),
-              body: "Dirty changes were quarantined onto a rescue branch and the recorded branch restored; the task will resume.",
+              body: l10n("local.dirty_changes_quarantined_task_resumes_10300318"),
               tone: "success",
             }
           : {
               title: l10n("local.workspace_branch_reconciled_a01d3ef7"),
-              body: "The recorded branch now matches the live branch; the task will resume.",
+              body: l10n("local.recorded_branch_matches_task_resumes_10300319"),
               tone: "success",
             },
       );

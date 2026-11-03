@@ -12,7 +12,9 @@ import { Copy, ExternalLink, FolderOpen, GitBranch, Loader2, Play, Square } from
 import { Badge } from "@/components/ui/badge";
 
 function workspaceKindLabel(kind: ProjectWorkspaceSummary["kind"]) {
-  return kind === "execution_workspace" ? "Execution workspace" : "Project workspace";
+  return kind === "execution_workspace"
+    ? l10n("local.execution_workspace_d31c92b6")
+    : l10n("local.project_workspace_ce016e7f");
 }
 
 function truncatePath(path: string) {
