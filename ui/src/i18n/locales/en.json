@@ -11826,6 +11826,16 @@
     "failed_to_restore_document_revision_0df00005": "Failed to restore document revision",
     "document_locking_not_available_0df00006": "Document locking is not available",
     "failed_to_update_document_lock_0df00007": "Failed to update document lock",
-    "failed_to_save_document_0df00008": "Failed to save document"
+    "failed_to_save_document_0df00008": "Failed to save document",
+    "failed_to_launch_first_task_0e000001": "Failed to launch first task",
+    "could_not_store_api_key_with_detail_0e000002": "Could not store the API key: {{v0}}",
+    "could_not_store_api_key_0e000003": "Could not store the API key.",
+    "adapter_environment_test_failed_0e000004": "Adapter environment test failed",
+    "failed_to_create_organization_0e000005": "Failed to create organization",
+    "failed_to_load_opencode_models_0e000006": "Failed to load OpenCode models.",
+    "no_opencode_models_discovered_0e000007": "No OpenCode models discovered. Run `opencode models` and authenticate providers.",
+    "configured_opencode_model_unavailable_0e000008": "Configured OpenCode model is unavailable: {{v0}}",
+    "failed_to_create_agent_0e000009": "Failed to create agent",
+    "failed_to_unset_anthropic_api_key_0e000010": "Failed to unset ANTHROPIC_API_KEY and retry."
   }
 }

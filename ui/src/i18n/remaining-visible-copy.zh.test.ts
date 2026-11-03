@@ -304,6 +304,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.failed_to_restore_document_revision_0df00005).toBe("恢复文档版本失败");
     expect(messages.failed_to_update_document_lock_0df00007).toBe("更新文档锁定状态失败");
     expect(messages.failed_to_save_document_0df00008).toBe("保存文档失败");
+    expect(messages.failed_to_launch_first_task_0e000001).toBe("启动首个任务失败");
+    expect(messages.could_not_store_api_key_0e000003).toBe("无法保存接口密钥。");
+    expect(messages.failed_to_create_organization_0e000005).toBe("创建组织失败");
+    expect(messages.no_opencode_models_discovered_0e000007).toContain("opencode models");
+    expect(messages.failed_to_create_agent_0e000009).toBe("创建智能体失败");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

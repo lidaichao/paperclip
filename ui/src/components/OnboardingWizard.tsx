@@ -1224,7 +1224,11 @@ function OnboardingWizardInner({
   */
   const connectCollapsed =
     connectPhase !== "idle" && connectPhase !== "unwindRow" && sourceSelected;
-  const connectProgress = adapterEnvLoading ? "Testing connection…" : loading ? "Connecting…" : null;
+  const connectProgress = adapterEnvLoading
+    ? `${l10n("local.testing_connection_04dfed9c")}…`
+    : loading
+      ? l10n("local.connecting_72021eb7")
+      : null;
   const hasSavedSubscription = Boolean(savedSubscription || savedKeys.storedLogin.data ||
     (credentialMode !== "api" && managedBindingForStep()));
   const connectHasCard = credentialMode === "api" || connectStepNeedsLogin || connectStepHasNoSandbox || Boolean(connectProgress);
@@ -1766,7 +1770,7 @@ function OnboardingWizardInner({
       // dashboard) so they land on the conversation the agent will start in.
       navigate(prefix ? `/${prefix}/issues/${issueRef}` : `/issues/${issueRef}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to launch first task");
+      setError(err instanceof Error ? err.message : l10n("local.failed_to_launch_first_task_0e000001"));
     } finally {
       setLoading(false);
     }
@@ -1809,8 +1813,8 @@ function OnboardingWizardInner({
     } catch (err) {
       setError(
         err instanceof Error
-          ? `Could not store the API key: ${err.message}`
-          : "Could not store the API key.",
+          ? l10n("local.could_not_store_api_key_with_detail_0e000002", { v0: err.message })
+          : l10n("local.could_not_store_api_key_0e000003"),
       );
       return false;
     }
@@ -1963,7 +1967,7 @@ function OnboardingWizardInner({
     } catch (err) {
       if (!isCurrent()) return null;
       setAdapterEnvError(
-        err instanceof Error ? err.message : "Adapter environment test failed"
+        err instanceof Error ? err.message : l10n("local.adapter_environment_test_failed_0e000004")
       );
       return null;
     } finally {
@@ -2005,7 +2009,7 @@ function OnboardingWizardInner({
       setSelectedCompanyId(company.id);
       setStep(3);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create organization");
+      setError(err instanceof Error ? err.message : l10n("local.failed_to_create_organization_0e000005"));
     } finally {
       creatingCompanyRef.current = false;
       setLoading(false);
@@ -2051,7 +2055,7 @@ function OnboardingWizardInner({
           setError(
             adapterModelsError instanceof Error
               ? adapterModelsError.message
-              : "Failed to load OpenCode models."
+              : l10n("local.failed_to_load_opencode_models_0e000006")
           );
           return;
         }
@@ -2065,8 +2069,8 @@ function OnboardingWizardInner({
         if (!discoveredModels.some((entry) => entry.id === selectedModelId)) {
           setError(
             discoveredModels.length === 0
-              ? "No OpenCode models discovered. Run `opencode models` and authenticate providers."
-              : `Configured OpenCode model is unavailable: ${selectedModelId}`
+              ? l10n("local.no_opencode_models_discovered_0e000007")
+              : l10n("local.configured_opencode_model_unavailable_0e000008", { v0: selectedModelId })
           );
           return;
         }
@@ -2234,7 +2238,7 @@ function OnboardingWizardInner({
       setStep(5);
     } catch (err) {
       if (!isCurrent()) return;
-      setError(err instanceof Error ? err.message : "Failed to create agent");
+      setError(err instanceof Error ? err.message : l10n("local.failed_to_create_agent_0e000009"));
     } finally {
       if (hiringAgentRef.current === attempt) hiringAgentRef.current = null;
       if (isCurrent()) setLoading(false);
@@ -2290,7 +2294,7 @@ function OnboardingWizardInner({
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to unset ANTHROPIC_API_KEY and retry."
+          : l10n("local.failed_to_unset_anthropic_api_key_0e000010")
       );
     } finally {
       setUnsetAnthropicLoading(false);

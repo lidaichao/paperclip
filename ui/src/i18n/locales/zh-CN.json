@@ -11826,6 +11826,16 @@
     "failed_to_restore_document_revision_0df00005": "恢复文档版本失败",
     "document_locking_not_available_0df00006": "当前无法锁定文档",
     "failed_to_update_document_lock_0df00007": "更新文档锁定状态失败",
-    "failed_to_save_document_0df00008": "保存文档失败"
+    "failed_to_save_document_0df00008": "保存文档失败",
+    "failed_to_launch_first_task_0e000001": "启动首个任务失败",
+    "could_not_store_api_key_with_detail_0e000002": "无法保存接口密钥：{{v0}}",
+    "could_not_store_api_key_0e000003": "无法保存接口密钥。",
+    "adapter_environment_test_failed_0e000004": "适配器环境测试失败",
+    "failed_to_create_organization_0e000005": "创建组织失败",
+    "failed_to_load_opencode_models_0e000006": "加载 OpenCode 模型失败。",
+    "no_opencode_models_discovered_0e000007": "未发现 OpenCode 模型。请运行 `opencode models` 并完成服务商身份验证。",
+    "configured_opencode_model_unavailable_0e000008": "配置的 OpenCode 模型不可用：{{v0}}",
+    "failed_to_create_agent_0e000009": "创建智能体失败",
+    "failed_to_unset_anthropic_api_key_0e000010": "清除 ANTHROPIC_API_KEY 后重试失败。"
   }
 }
