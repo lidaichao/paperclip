@@ -12203,6 +12203,18 @@
     "blocked_by_task_10300006": "blocked by {{v0}}",
     "your_first_agent_10300007": "Your first agent",
     "choose_saved_api_key_or_enter_new_10300008": "Choose a saved API key or enter a new one",
-    "move_named_value_10300009": "Move “{{v0}}”"
+    "move_named_value_10300009": "Move “{{v0}}”",
+    "sign_in_attempt_expired_10300010": "This sign-in attempt expired. Start sign-in again.",
+    "choose_company_before_connecting_10300011": "Choose an organization before connecting.",
+    "prepare_local_sign_in_before_connecting_10300012": "Prepare local sign-in before connecting.",
+    "saved_channel_delivery_identity_unreadable_10300013": "Saved channel delivery identity could not be read. Check Activity before starting another send.",
+    "expires_in_minutes_10300014": "Expires in {{v0}}m",
+    "expires_in_days_10300015": "Expires in {{v0}}d",
+    "set_decision_time_10300016": "set when to decide",
+    "add_to_queue_10300017": "add to queue",
+    "decision_has_no_linked_task_10300018": "This decision has no linked task to route from.",
+    "review_decision_on_task_request_10300019": "{{v0}} — could you look at this decision on {{v1}}, prepare a recommendation, and re-surface it on the decisions desk? (routed from the desk)",
+    "review_decision_request_10300020": "{{v0}} — could you look at this decision, prepare a recommendation, and re-surface it on the decisions desk? (routed from the desk)",
+    "unable_to_load_attachment_preview_10300021": "Unable to load attachment preview ({{v0}})"
   }
 }

@@ -53,13 +53,26 @@ function toQueueKey(title: string): string {
 function expiryLabel(expiresAt: string): { text: string; overdue: boolean } {
   const diff = new Date(expiresAt).getTime() - Date.now();
   if (!Number.isFinite(diff)) return { text: "", overdue: false };
-  if (diff <= 0) return { text: "Expired", overdue: true };
+  if (diff <= 0) return { text: l10n("local.expired_424a2551"), overdue: true };
   const mins = Math.round(diff / 60000);
-  if (mins < 60) return { text: `Expires in ${mins}m`, overdue: false };
+  if (mins < 60) {
+    return {
+      text: l10n("local.expires_in_minutes_10300014", { v0: mins }),
+      overdue: false,
+    };
+  }
   const hrs = Math.round(mins / 60);
-  if (hrs < 24) return { text: `Expires in ${hrs}h`, overdue: false };
+  if (hrs < 24) {
+    return {
+      text: l10n("local.expires_in_valueh_a0f26414", { v0: hrs }),
+      overdue: false,
+    };
+  }
   const days = Math.round(hrs / 24);
-  return { text: `Expires in ${days}d`, overdue: false };
+  return {
+    text: l10n("local.expires_in_days_10300015", { v0: days }),
+    overdue: false,
+  };
 }
 
 interface DecisionTriageStripProps {
@@ -104,38 +117,43 @@ export function DecisionTriageStrip({ item, companyId, agents }: DecisionTriageS
     mutationFn: (decideBy: string | null) =>
       decisionQueuesApi.updateTriage(companyId, sourceKind, sourceId, { decideBy }),
     onSuccess: invalidate,
-    onError: onError("set when to decide"),
+    onError: onError(l10n("local.set_decision_time_10300016")),
   });
   const setSnooze = useMutation({
     mutationFn: (snoozedUntil: string | null) =>
       decisionQueuesApi.updateTriage(companyId, sourceKind, sourceId, { snoozedUntil }),
     onSuccess: invalidate,
-    onError: onError("snooze"),
+    onError: onError(l10n("local.snooze_52102940")),
   });
   const addToQueue = useMutation({
     mutationFn: (key: string) => decisionQueuesApi.addItem(companyId, key, sourceKind, sourceId),
     onSuccess: invalidate,
-    onError: onError("add to queue"),
+    onError: onError(l10n("local.add_to_queue_10300017")),
   });
   const removeFromQueue = useMutation({
     mutationFn: (key: string) => decisionQueuesApi.removeItem(companyId, key, sourceKind, sourceId),
     onSuccess: invalidate,
-    onError: onError("remove from queue"),
+    onError: onError(l10n("local.remove_from_this_queue_e8cd13b5")),
   });
   const routeToAgent = useMutation({
     mutationFn: (agent: Agent) => {
-      if (!relatedIssueId) throw new Error("This decision has no linked task to route from.");
+      if (!relatedIssueId) {
+        throw new Error(l10n("local.decision_has_no_linked_task_10300018"));
+      }
       const mention = `[@${agent.name}](${buildAgentMentionHref(agent.id)})`;
-      const body =
-        `${mention} — could you look at this decision${taskRef ? ` on ${taskRef.identifier}` : ""}, `
-        + `prepare a recommendation, and re-surface it on the decisions desk? (routed from the desk)`;
+      const body = taskRef
+        ? l10n("local.review_decision_on_task_request_10300019", {
+            v0: mention,
+            v1: taskRef.identifier,
+          })
+        : l10n("local.review_decision_request_10300020", { v0: mention });
       return issuesApi.addComment(relatedIssueId, body);
     },
     onSuccess: (_result, agent) => {
       invalidate();
       pushToast({ title: l10n("local.asked_value_for_a_recommendation_3a5b438c", {v0: (agent.name)}), tone: "success" });
     },
-    onError: onError("ask that agent for a recommendation"),
+    onError: onError(l10n("local.ask_agent_for_recommendation_100f1352")),
   });
 
   const pending = setDecideBy.isPending || setSnooze.isPending || addToQueue.isPending || removeFromQueue.isPending;

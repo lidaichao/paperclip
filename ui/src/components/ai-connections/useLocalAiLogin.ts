@@ -55,7 +55,11 @@ export function useLocalAiLogin(companyId: string | null, intent: AiConnectionLo
         });
         if (cancelled) return;
         setStatus(next.status);
-        setError(next.status === "expired" ? "This sign-in attempt expired. Start sign-in again." : null);
+        setError(
+          next.status === "expired"
+            ? l10n("local.sign_in_attempt_expired_10300010")
+            : null,
+        );
         // Stop polling a verified account. Focus still rechecks after a terminal
         // visit; awaiting terminal login never requires repeated Connect clicks.
         if (next.status === "sign_in_required") timer = setTimeout(() => void check(), 5000);
@@ -85,8 +89,12 @@ export function useLocalAiLogin(companyId: string | null, intent: AiConnectionLo
     error,
     retry: () => { restartRequested.current = true; cancelCurrent(); setGeneration((value) => value + 1); },
     connect: (input = intent) => {
-      if (!companyId) throw new Error("Choose a company before connecting.");
-      if (isolated && !attempt) throw new Error("Prepare local sign-in before connecting.");
+      if (!companyId) {
+        throw new Error(l10n("local.choose_company_before_connecting_10300011"));
+      }
+      if (isolated && !attempt) {
+        throw new Error(l10n("local.prepare_local_sign_in_before_connecting_10300012"));
+      }
       return aiConnectionsApi.connectLocal(companyId, { ...input, ...(attempt ? { localSessionId: attempt.sessionId } : {}) });
     },
   };

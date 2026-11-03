@@ -40,7 +40,11 @@ async function fetchAttachmentText(attachment: IssueAttachment) {
     headers: { Accept: "text/markdown,text/plain;q=0.9,*/*;q=0.1" },
   });
   if (!response.ok) {
-    throw new Error(`Unable to load attachment preview (${response.status})`);
+    throw new Error(
+      l10n("local.unable_to_load_attachment_preview_10300021", {
+        v0: response.status,
+      }),
+    );
   }
   return response.text();
 }

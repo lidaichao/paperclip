@@ -12203,6 +12203,18 @@
     "blocked_by_task_10300006": "受 {{v0}} 阻塞",
     "your_first_agent_10300007": "你的第一个智能体",
     "choose_saved_api_key_or_enter_new_10300008": "选择已保存的 API 密钥，或输入新密钥",
-    "move_named_value_10300009": "移动“{{v0}}”"
+    "move_named_value_10300009": "移动“{{v0}}”",
+    "sign_in_attempt_expired_10300010": "本次登录已过期，请重新开始登录。",
+    "choose_company_before_connecting_10300011": "请先选择组织，再建立连接。",
+    "prepare_local_sign_in_before_connecting_10300012": "请先准备本地登录，再建立连接。",
+    "saved_channel_delivery_identity_unreadable_10300013": "无法读取已保存的频道发送标识。请先检查活动记录，再开始新的发送。",
+    "expires_in_minutes_10300014": "{{v0}} 分钟后到期",
+    "expires_in_days_10300015": "{{v0}} 天后到期",
+    "set_decision_time_10300016": "设置决策时间",
+    "add_to_queue_10300017": "加入队列",
+    "decision_has_no_linked_task_10300018": "该决策没有可用于分派的关联任务。",
+    "review_decision_on_task_request_10300019": "{{v0}}——请查看任务 {{v1}} 上的这项决策，给出建议，并将其重新显示到决策台。（由决策台分派）",
+    "review_decision_request_10300020": "{{v0}}——请查看这项决策，给出建议，并将其重新显示到决策台。（由决策台分派）",
+    "unable_to_load_attachment_preview_10300021": "无法加载附件预览（{{v0}}）"
   }
 }
