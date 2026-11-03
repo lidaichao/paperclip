@@ -2965,7 +2965,7 @@ export function secretService(db: Db | DbTransaction) {
 
   async function getRemoteImportProviderConfig(companyId: string, providerConfigId: string) {
     const providerConfig = await getProviderConfigById(providerConfigId);
-    if (!providerConfig) throw notFound("Provider vault not found");
+    if (!providerConfig) throw notFound("未找到服务商保险库");
     const provider = providerConfig.provider as SecretProvider;
     assertSelectableProviderConfig(providerConfig, companyId, provider);
     return { providerConfig, provider, runtimeConfig: toProviderVaultRuntimeConfig(providerConfig) };
@@ -2986,25 +2986,25 @@ export function secretService(db: Db | DbTransaction) {
   ) {
     const definition = await resolveUserSecretDefinition(companyId, input);
     if (definition.status !== "active") {
-      throw unprocessable("User secret definition is not active");
+      throw unprocessable("用户密钥定义未处于活动状态");
     }
     const existing = await getUserSecretValue({
       companyId,
       ownerUserId,
       definitionId: definition.id,
     });
-    if (existing) throw conflict("User secret value already exists");
+    if (existing) throw conflict("用户密钥值已存在");
 
     const providerId = definition.provider as SecretProvider;
     const managedMode = definition.managedMode as "paperclip_managed" | "external_reference";
     if (managedMode === "external_reference" && !input.externalRef?.trim()) {
-      throw unprocessable("External reference user secrets require externalRef");
+      throw unprocessable("外部引用用户密钥需要 externalRef");
     }
     if (managedMode === "paperclip_managed" && input.externalRef?.trim()) {
-      throw unprocessable("Managed user secrets cannot override externalRef");
+      throw unprocessable("托管用户密钥不能覆盖 externalRef");
     }
     if (managedMode === "paperclip_managed" && !input.value?.trim()) {
-      throw unprocessable("Managed user secrets require value");
+      throw unprocessable("托管用户密钥需要提供值");
     }
 
     const providerConfigId =
@@ -3050,7 +3050,7 @@ export function secretService(db: Db | DbTransaction) {
         .then((rows) => rows[0]);
     } catch (error) {
       if (isUniqueConstraintViolation(error, USER_SECRET_VALUE_UNIQUE_CONSTRAINT)) {
-        throw conflict("User secret value already exists");
+        throw conflict("用户密钥值已存在");
       }
       throw error;
     }
@@ -3108,7 +3108,7 @@ export function secretService(db: Db | DbTransaction) {
           .where(eq(companySecrets.id, reservedSecret.id))
           .returning()
           .then((rows) => rows[0]);
-        if (!secret) throw notFound("User secret value not found");
+        if (!secret) throw notFound("未找到用户密钥值");
         return secret;
       });
     } catch (error) {
@@ -3265,9 +3265,9 @@ export function secretService(db: Db | DbTransaction) {
     actor?: { userId?: string | null; agentId?: string | null },
   ): Promise<ClaudeOAuthUserSecretResult> {
     const sessionId = input.sessionId?.trim();
-    if (!sessionId) throw unprocessable("A Claude login session id is required");
+    if (!sessionId) throw unprocessable("必须提供 Claude 登录会话 ID");
     const value = input.value?.trim();
-    if (!value) throw unprocessable("A Claude login token value is required");
+    if (!value) throw unprocessable("必须提供 Claude 登录令牌值");
 
     const definition = await ensureClaudeOAuthUserSecretDefinitionInternal(companyId, actor);
 
@@ -3305,12 +3305,12 @@ export function secretService(db: Db | DbTransaction) {
 
     // confirmed_rotation.
     if (!input.expectedSecretId || input.expectedLatestVersion == null) {
-      throw unprocessable("A confirmed rotation requires expectedSecretId and expectedLatestVersion");
+      throw unprocessable("确认轮换时需要 expectedSecretId 和 expectedLatestVersion");
     }
     // The owner-scoped lookup fails closed for a cross-owner or cross-company id.
     const current = await getUserSecretValueById(companyId, ownerUserId, input.expectedSecretId);
     if (current.userSecretDefinitionId !== definition.id) {
-      throw notFound("User secret value not found");
+      throw notFound("未找到用户密钥值");
     }
     if (current.latestVersion !== input.expectedLatestVersion) {
       throw conflict(CLAUDE_OAUTH_STALE_CONFIRMATION);
@@ -3483,7 +3483,7 @@ export function secretService(db: Db | DbTransaction) {
         pageSize: input.pageSize,
       });
       if (!parsed.success) {
-        throw unprocessable("Invalid provider vault discovery config", parsed.error.flatten());
+        throw unprocessable("服务商保险库发现配置无效", parsed.error.flatten());
       }
       const providerId = parsed.data.provider as SecretProvider;
       const provider = getSecretProvider(providerId);
@@ -3535,10 +3535,10 @@ export function secretService(db: Db | DbTransaction) {
       actor?: { userId?: string | null; agentId?: string | null },
     ) => {
       const parsed = createSecretProviderConfigSchema.safeParse(input);
-      if (!parsed.success) throw unprocessable("Invalid provider vault config", parsed.error.flatten());
+      if (!parsed.success) throw unprocessable("服务商保险库配置无效", parsed.error.flatten());
       const status = input.status ?? defaultProviderConfigStatus(input.provider);
       if ((status === "coming_soon" || status === "disabled") && input.isDefault) {
-        throw unprocessable("Only ready or warning provider vaults can be default");
+        throw unprocessable("只有就绪或警告状态的服务商保险库可以设为默认");
       }
       const normalizedConfig = validateProviderConfigPayload(input.provider, input.config ?? {});
       return db.transaction(async (tx) => {
@@ -3581,14 +3581,14 @@ export function secretService(db: Db | DbTransaction) {
       const existing = await getProviderConfigById(id);
       if (!existing) return null;
       const parsed = updateSecretProviderConfigSchema.safeParse(patch);
-      if (!parsed.success) throw unprocessable("Invalid provider vault config", parsed.error.flatten());
+      if (!parsed.success) throw unprocessable("服务商保险库配置无效", parsed.error.flatten());
       const provider = existing.provider as SecretProvider;
       const status = patch.status ?? (existing.status as SecretProviderConfigStatus);
       if (COMING_SOON_SECRET_PROVIDERS.has(provider) && status !== "coming_soon" && status !== "disabled") {
         throw unprocessable(`${provider} provider vaults are locked while coming soon`);
       }
       if ((status === "coming_soon" || status === "disabled") && patch.isDefault) {
-        throw unprocessable("Only ready or warning provider vaults can be default");
+        throw unprocessable("只有就绪或警告状态的服务商保险库可以设为默认");
       }
       const normalizedConfig =
         patch.config === undefined
@@ -3647,7 +3647,7 @@ export function secretService(db: Db | DbTransaction) {
       const existing = await getProviderConfigById(id);
       if (!existing) return null;
       if (existing.status === "coming_soon" || existing.status === "disabled") {
-        throw unprocessable("Only ready or warning provider vaults can be default");
+        throw unprocessable("只有就绪或警告状态的服务商保险库可以设为默认");
       }
       return db.transaction(async (tx) => {
         const current = await tx
@@ -3657,7 +3657,7 @@ export function secretService(db: Db | DbTransaction) {
           .then((rows) => rows[0] ?? null);
         if (!current) return null;
         if (current.status === "coming_soon" || current.status === "disabled") {
-          throw unprocessable("Only ready or warning provider vaults can be default");
+          throw unprocessable("只有就绪或警告状态的服务商保险库可以设为默认");
         }
         await tx
           .update(companySecretProviderConfigs)
@@ -3675,7 +3675,7 @@ export function secretService(db: Db | DbTransaction) {
           ))
           .returning()
           .then((rows) => rows[0] ?? null);
-        if (!updated) throw unprocessable("Only ready or warning provider vaults can be default");
+        if (!updated) throw unprocessable("只有就绪或警告状态的服务商保险库可以设为默认");
         return updated;
       });
     },
@@ -4158,11 +4158,11 @@ export function secretService(db: Db | DbTransaction) {
       }
       if (definition.status !== "active") {
         if (optionalBinding) return null;
-        throw unprocessable("User secret definition is not active");
+        throw unprocessable("用户密钥定义未处于活动状态");
       }
       if (!responsibleUserId?.trim()) {
         if (optionalBinding) return null;
-        throw unprocessable("Responsible user is required for user secret resolution", {
+        throw unprocessable("解析用户密钥需要指定责任人", {
           code: "responsible_user_missing",
         });
       }
@@ -4203,7 +4203,7 @@ export function secretService(db: Db | DbTransaction) {
       });
       if (!secret) {
         if (optionalBinding) return null;
-        throw unprocessable("User secret value is not configured", {
+        throw unprocessable("尚未配置用户密钥值", {
           code: "user_secret_missing",
           definitionId: definition.id,
           responsibleUserId,
@@ -4444,7 +4444,7 @@ export function secretService(db: Db | DbTransaction) {
             });
           }
           if (!prepared) {
-            throw unprocessable("Provider rejected this external reference");
+            throw unprocessable("服务商拒绝了此外部引用");
           }
           const preparedSecret = prepared;
           const secret = await db.transaction(async (tx) => {
@@ -4593,7 +4593,7 @@ export function secretService(db: Db | DbTransaction) {
       actor?: { userId?: string | null; agentId?: string | null },
     ) => {
       const preCheckSecret = await getById(secretId);
-      if (!preCheckSecret) throw notFound("Secret not found");
+      if (!preCheckSecret) throw notFound("未找到密钥");
       return withAccountHomeSecretMutationLock(undefined, preCheckSecret.companyId, async () => {
         // Same reasoning as `create:` above: check the new value's directory
         // inside the same lock the write commits under, so a rotate queued
@@ -4631,7 +4631,7 @@ export function secretService(db: Db | DbTransaction) {
       },
     ) => {
       const preCheckSecret = await getById(secretId);
-      if (!preCheckSecret) throw notFound("Secret not found");
+      if (!preCheckSecret) throw notFound("未找到密钥");
       return withAccountHomeSecretMutationLock(undefined, preCheckSecret.companyId, () =>
         updateUnlocked(secretId, patch),
       );

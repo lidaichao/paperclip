@@ -1993,7 +1993,7 @@ describeEmbeddedPostgres("secretService", () => {
     if (rejected?.status === "rejected") {
       expect(rejected.reason).toMatchObject({
         status: 409,
-        message: "User secret value already exists",
+        message: "用户密钥值已存在",
       });
     }
 
@@ -2720,7 +2720,7 @@ describeEmbeddedPostgres("secretService", () => {
 
     await svc.disableProviderConfig(vault.id);
     await expect(svc.setDefaultProviderConfig(vault.id)).rejects.toThrow(
-      /ready or warning/i,
+      /就绪或警告状态/,
     );
   });
 
