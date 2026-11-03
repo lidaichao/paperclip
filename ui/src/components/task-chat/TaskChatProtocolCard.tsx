@@ -732,7 +732,7 @@ function RuntimeRequestCard({
       setError(
         cause instanceof Error
           ? cause.message
-          : "The runtime request could not be resolved.",
+          : l10n("local.runtime_request_could_not_be_resolved_10300354"),
       );
     }
   };

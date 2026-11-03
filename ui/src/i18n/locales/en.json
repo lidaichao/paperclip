@@ -12545,6 +12545,27 @@
     "usage_limited_10300348": "usage limited",
     "budget_limited_10300349": "budget limited",
     "new_session_10300350": "New session",
-    "earlier_messages_files_available_10300351": "Earlier messages and files are still available."
+    "earlier_messages_files_available_10300351": "Earlier messages and files are still available.",
+    "answers_could_not_be_submitted_10300352": "The answers could not be submitted.",
+    "questions_could_not_be_cancelled_10300353": "The questions could not be cancelled.",
+    "runtime_request_could_not_be_resolved_10300354": "The runtime request could not be resolved.",
+    "moved_queued_message_to_position_10300355": "Moved queued message to position {{v0}} of {{v1}}.",
+    "queue_changed_latest_order_restored_10300356": "The queue changed in another session. Its latest order has been restored.",
+    "could_not_reorder_previous_order_restored_10300357": "Couldn’t reorder. Previous order restored.",
+    "steering_queued_message_10300358": "Steering queued message.",
+    "sending_queued_messages_10300359": "Sending queued messages.",
+    "discarding_queued_message_10300360": "Discarding queued message.",
+    "message_steered_into_active_turn_10300361": "Message steered into the active turn.",
+    "queued_message_discarded_10300362": "Queued message discarded.",
+    "too_late_to_discard_message_sending_10300363": "Too late to discard: this message is already being sent.",
+    "could_not_steer_message_still_queued_10300364": "Couldn’t steer. Message is still queued.",
+    "could_not_interrupt_message_still_queued_10300365": "Couldn’t interrupt. Message is still queued.",
+    "queue_changed_review_and_retry_10300366": "The queue changed in another session. Review it and try again.",
+    "could_not_discard_message_still_queued_10300367": "Couldn’t discard. Message is still queued.",
+    "agents_section_actions_10300368": "Agents section actions",
+    "agent_sort_10300369": "Agent sort",
+    "new_project_10300370": "New project",
+    "projects_section_actions_10300371": "Projects section actions",
+    "project_sort_10300372": "Project sort"
   }
 }

@@ -402,7 +402,7 @@ export function QuestionForm({
         message:
           cause instanceof Error
             ? cause.message
-            : "The answers could not be submitted.",
+            : l10n("local.answers_could_not_be_submitted_10300352"),
       });
     } finally {
       setWorking(null);
@@ -421,7 +421,7 @@ export function QuestionForm({
         message:
           cause instanceof Error
             ? cause.message
-            : "The questions could not be cancelled.",
+            : l10n("local.questions_could_not_be_cancelled_10300353"),
       });
     } finally {
       setWorking(null);

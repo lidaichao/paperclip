@@ -277,7 +277,7 @@ export function TaskChatQueuedMessages({
     setReordering(true);
     setVisibleError(null);
     setAnnouncement(
-      `Moved queued message to position ${to + 1} of ${next.length}.`,
+      l10n("local.moved_queued_message_to_position_10300355", { v0: to + 1, v1: next.length }),
     );
     try {
       await onReorder(orderedIds, queue.revision);
@@ -286,8 +286,8 @@ export function TaskChatQueuedMessages({
       setAnnouncement("");
       setVisibleError(
         queueActionErrorCode(error) === "queued_comment_revision_conflict"
-          ? "The queue changed in another session. Its latest order has been restored."
-          : "Couldn’t reorder. Previous order restored.",
+          ? l10n("local.queue_changed_latest_order_restored_10300356")
+          : l10n("local.could_not_reorder_previous_order_restored_10300357"),
       );
     } finally {
       setReordering(false);
@@ -312,10 +312,10 @@ export function TaskChatQueuedMessages({
     setVisibleError(null);
     setAnnouncement(
       action === "steer"
-        ? "Steering queued message."
+        ? l10n("local.steering_queued_message_10300358")
         : action === "interrupt"
-          ? "Sending queued messages."
-          : "Discarding queued message.",
+          ? l10n("local.sending_queued_messages_10300359")
+          : l10n("local.discarding_queued_message_10300360"),
     );
     if (action === "steer") {
       setEntries((current) =>
@@ -333,10 +333,10 @@ export function TaskChatQueuedMessages({
       }
       setAnnouncement(
         action === "steer"
-          ? "Message steered into the active turn."
+          ? l10n("local.message_steered_into_active_turn_10300361")
           : action === "interrupt"
-            ? "Queued messages will be sent when the previous run has stopped."
-            : "Queued message discarded.",
+            ? l10n("local.queued_messages_will_be_sent_when_the_previou_828f40f7")
+            : l10n("local.queued_message_discarded_10300362"),
       );
     } catch (error) {
       if (action === "steer") setEntries(previous);
@@ -344,14 +344,14 @@ export function TaskChatQueuedMessages({
       const code = queueActionErrorCode(error);
       setVisibleError(
         code === "queued_comment_already_dispatching"
-          ? "Too late to discard: this message is already being sent."
+          ? l10n("local.too_late_to_discard_message_sending_10300363")
           : action === "steer"
-            ? "Couldn’t steer. Message is still queued."
+            ? l10n("local.could_not_steer_message_still_queued_10300364")
             : action === "interrupt"
-              ? "Couldn’t interrupt. Message is still queued."
+              ? l10n("local.could_not_interrupt_message_still_queued_10300365")
               : code === "queued_comment_revision_conflict"
-                ? "The queue changed in another session. Review it and try again."
-                : "Couldn’t discard. Message is still queued.",
+                ? l10n("local.queue_changed_review_and_retry_10300366")
+                : l10n("local.could_not_discard_message_still_queued_10300367"),
       );
     } finally {
       setPending(null);

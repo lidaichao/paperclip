@@ -438,7 +438,7 @@ const PROVIDER_ACTIVITY_PRESENTATIONS = {
   "provider.notice.recorded": {
     schema: "paperclip.provider.notice.v1",
     idKey: "noticeId",
-    name: "Provider notice",
+    name: l10n("local.manual_runner_provider_notice"),
     summaryKeys: ["summary"],
   },
 } as const;
@@ -812,8 +812,8 @@ export function nativeRunEventsToTranscript(events: readonly HeartbeatRunEvent[]
         family: "provider_notice",
         eventType: event.eventType,
         status: payload.severity === "error" ? "failed" : "informational",
-        title: "Provider notice",
-        summary: text(payload.summary)?.trim() || text(payload.message)?.trim() || "Provider notice",
+        title: l10n("local.manual_runner_provider_notice"),
+        summary: text(payload.summary)?.trim() || text(payload.message)?.trim() || l10n("local.manual_runner_provider_notice"),
         payload,
       });
       continue;

@@ -12545,6 +12545,27 @@
     "usage_limited_10300348": "用量受限",
     "budget_limited_10300349": "预算受限",
     "new_session_10300350": "新会话",
-    "earlier_messages_files_available_10300351": "之前的消息和文件仍然可用。"
+    "earlier_messages_files_available_10300351": "之前的消息和文件仍然可用。",
+    "answers_could_not_be_submitted_10300352": "无法提交回答。",
+    "questions_could_not_be_cancelled_10300353": "无法取消问题。",
+    "runtime_request_could_not_be_resolved_10300354": "无法处理运行时请求。",
+    "moved_queued_message_to_position_10300355": "已将排队消息移至第 {{v0}} 位，共 {{v1}} 位。",
+    "queue_changed_latest_order_restored_10300356": "队列已在另一会话中发生变化，已恢复最新顺序。",
+    "could_not_reorder_previous_order_restored_10300357": "无法重新排序，已恢复原顺序。",
+    "steering_queued_message_10300358": "正在将排队消息引导到当前轮次。",
+    "sending_queued_messages_10300359": "正在发送排队消息。",
+    "discarding_queued_message_10300360": "正在丢弃排队消息。",
+    "message_steered_into_active_turn_10300361": "消息已引导到当前轮次。",
+    "queued_message_discarded_10300362": "已丢弃排队消息。",
+    "too_late_to_discard_message_sending_10300363": "无法丢弃：此消息已经开始发送。",
+    "could_not_steer_message_still_queued_10300364": "无法引导消息，消息仍在队列中。",
+    "could_not_interrupt_message_still_queued_10300365": "无法中断，消息仍在队列中。",
+    "queue_changed_review_and_retry_10300366": "队列已在另一会话中发生变化，请检查后重试。",
+    "could_not_discard_message_still_queued_10300367": "无法丢弃，消息仍在队列中。",
+    "agents_section_actions_10300368": "智能体区域操作",
+    "agent_sort_10300369": "智能体排序",
+    "new_project_10300370": "新建项目",
+    "projects_section_actions_10300371": "项目区域操作",
+    "project_sort_10300372": "项目排序"
   }
 }

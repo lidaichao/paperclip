@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import {
   useEffect,
   useMemo,
@@ -130,7 +131,7 @@ export function SidePanelTabs({
   onReorderTabs,
   onAddTab,
   addControl,
-  addLabel = "Open a new tab",
+  addLabel = l10n("local.open_a_new_tab_2b75279f"),
   appearance = "default",
   className,
 }: SidePanelTabsProps) {

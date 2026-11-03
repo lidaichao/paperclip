@@ -635,17 +635,17 @@ export function SidebarAgents({ streamlined = false }: { streamlined?: boolean }
       label={l10n("local.agents_279b44d2")}
       collapsible={{ open, onOpenChange: setOpen }}
       headerAction={{
-        ariaLabel: "New agent",
+        ariaLabel: l10n("local.new_agent_98a23e6d"),
         icon: Plus,
         onClick: openNewAgent,
       }}
       menu={{
-        ariaLabel: "Agents section actions",
+        ariaLabel: l10n("local.agents_section_actions_10300368"),
         actions: [
           { type: "item", label: l10n("local.browse_agents_9c6a7d96"), icon: Users, href: "/agents/all" },
           { type: "separator" },
         ],
-        radioLabel: "Agent sort",
+        radioLabel: l10n("local.agent_sort_10300369"),
         radioChoices: AGENT_SORT_CHOICES,
         radioValue: sortMode,
         onRadioValueChange: persistSortMode,

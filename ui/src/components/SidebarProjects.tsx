@@ -413,17 +413,17 @@ export function SidebarProjects() {
       label={l10n("local.projects_04e2a972")}
       collapsible={{ open, onOpenChange: setOpen }}
       headerAction={{
-        ariaLabel: "New project",
+        ariaLabel: l10n("local.new_project_10300370"),
         icon: Plus,
         onClick: openNewProject,
       }}
       menu={{
-        ariaLabel: "Projects section actions",
+        ariaLabel: l10n("local.projects_section_actions_10300371"),
         actions: [
           { type: "item", label: l10n("local.browse_projects_8eac1d4a"), icon: FolderOpen, href: "/projects" },
           { type: "separator" },
         ],
-        radioLabel: "Project sort",
+        radioLabel: l10n("local.project_sort_10300372"),
         radioChoices: PROJECT_SORT_CHOICES,
         radioValue: sortMode,
         onRadioValueChange: persistSortMode,
