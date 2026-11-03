@@ -43,7 +43,7 @@ export function emailRoutes(db: Db, service: EmailChannelService) {
         "tools:manage_connections",
       ))
     )
-      throw forbidden("Missing permission: tools:manage_connections");
+      throw forbidden("缺少权限：tools:manage_connections");
   }
   router.post(
     "/companies/:companyId/email/connections",
@@ -191,7 +191,7 @@ export function emailRoutes(db: Db, service: EmailChannelService) {
     assertCompanyAccess(req, companyId);
     const issueId = req.params.issueId as string;
     if (issueId !== issueId.trim() || !isUuidLike(issueId)) {
-      throw badRequest("Task ID must be a UUID");
+      throw badRequest("任务 ID 必须是 UUID");
     }
     await service.authorizeRead(
       companyId,
@@ -207,7 +207,7 @@ export function emailRoutes(db: Db, service: EmailChannelService) {
       req.actor.type === "agent" &&
       thread.endpoint.assignedAgentId !== req.actor.agentId
     )
-      throw notFound("Email task not found");
+      throw notFound("未找到邮件任务");
     res.json(thread);
   });
   router.get(
@@ -225,7 +225,7 @@ export function emailRoutes(db: Db, service: EmailChannelService) {
         req.actor.type === "agent" &&
         thread?.endpoint.assignedAgentId !== req.actor.agentId
       )
-        throw notFound("Email delivery not found");
+        throw notFound("未找到邮件投递记录");
       res.json(delivery);
     },
   );
@@ -238,7 +238,7 @@ export function emailWebhookRoutes(service: EmailChannelService) {
     for (const key of ["svix-id", "svix-timestamp", "svix-signature"])
       if (typeof req.headers[key] === "string") headers[key] = req.headers[key];
     if (!Buffer.isBuffer(req.body))
-      throw forbidden("Raw webhook body required");
+      throw forbidden("需要原始 Webhook 请求体");
     await service.webhook(req.params.publicId, req.body, headers);
     res.sendStatus(204);
   });

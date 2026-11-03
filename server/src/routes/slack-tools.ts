@@ -22,22 +22,22 @@ export function slackToolRoutes(db: Db, publicBaseUrl?: string) {
         !(await instanceSettingsService(db).getExperimental())
           .enableChatConnectors
       )
-        throw forbidden("Chat connectors are disabled");
+        throw forbidden("聊天连接器已停用");
       next();
     },
   );
   function user(req: Request) {
     assertBoard(req);
     if (!req.actor.userId)
-      throw forbidden("Sign in before connecting Slack search");
+      throw forbidden("请先登录，再连接 Slack 搜索");
     return req.actor.userId;
   }
   router.param("endpointId", (_req, _res, next, id) => {
-    if (!isUuidLike(id)) throw badRequest("Invalid Slack endpoint");
+    if (!isUuidLike(id)) throw badRequest("Slack 端点无效");
     next();
   });
   router.param("companyId", (_req, _res, next, id) => {
-    if (!isUuidLike(id)) throw badRequest("Invalid company");
+    if (!isUuidLike(id)) throw badRequest("公司无效");
     next();
   });
   router.get("/slack/search/callback", async (req, res) => {
@@ -46,7 +46,7 @@ export function slackToolRoutes(db: Db, publicBaseUrl?: string) {
       typeof req.query.state !== "string" ||
       typeof req.query.code !== "string"
     )
-      throw badRequest("Slack authorization was cancelled or incomplete");
+      throw badRequest("Slack 授权已取消或尚未完成");
     const result = await oauth.complete(
       req.query.state,
       req.query.code,
@@ -108,7 +108,7 @@ export function slackToolRoutes(db: Db, publicBaseUrl?: string) {
         "tools:manage_connections",
       ))
     )
-      throw forbidden("Missing permission: tools:manage_connections");
+      throw forbidden("缺少权限：tools:manage_connections");
     res.json(
       await oauth.configure(
         companyId,
@@ -143,12 +143,12 @@ export function slackToolRoutes(db: Db, publicBaseUrl?: string) {
       const issueId = String(req.params.issueId);
       assertCompanyAccess(req, companyId);
       if (!isUuidLike(companyId) || !isUuidLike(issueId))
-        throw badRequest("Invalid task binding");
+        throw badRequest("任务绑定无效");
       if (req.actor.type !== "agent" || !req.actor.agentId || !req.actor.runId)
-        throw forbidden("Slack tools require an authenticated agent run");
+        throw forbidden("Slack 工具需要已通过身份验证的智能体运行");
       const call = slackToolCallSchema.parse(req.body);
       if (!call.tool.startsWith("slack_"))
-        throw forbidden("Expected a Slack tool");
+        throw forbidden("需要 Slack 工具");
       res.set("Cache-Control", "no-store").json(
         await executeConnectorTool(
           db,
