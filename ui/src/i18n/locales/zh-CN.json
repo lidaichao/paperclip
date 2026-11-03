@@ -10857,6 +10857,22 @@
     "preview_request_cancelled_export_settings_unchanged_8f5a49ea": "预览请求已取消，导出设置未更改。",
     "no_export_preview_is_loaded_5d583b0a": "尚未加载导出预览。",
     "load_preview_96c2218f": "加载预览",
-    "select_an_organization_to_import_into_c205165c": "请选择要导入的组织。"
+    "select_an_organization_to_import_into_c205165c": "请选择要导入的组织。",
+    "select_a_catalog_skill_to_inspect_83904cd7": "请选择要查看的目录技能。",
+    "skill_not_found_9d0a5468": "未找到技能。",
+    "select_a_skill_to_inspect_its_files_72f5348b": "请选择技能以查看其文件。",
+    "select_a_company_to_manage_skills_adb9c741": "请选择公司以管理技能。",
+    "select_an_organization_to_manage_skills_46f99eb4": "请选择组织以管理技能。",
+    "fork_source_skill_not_found_41982d82": "未找到分支来源技能。",
+    "catalog_skill_not_found_f858bf31": "未找到目录技能。",
+    "select_an_organization_to_open_skill_studio_68d916fc": "请选择组织以打开技能工作室。",
+    "loading_fork_source_4af321de": "正在加载分支来源…",
+    "this_skill_has_no_files_yet_d6c060a1": "此技能暂无文件。",
+    "no_test_runs_yet_pick_an_agent_and_run_a16187a9": "暂无测试运行记录。请选择智能体并开始运行。",
+    "no_versions_yet_save_changes_to_create_the_first_9d251aaa": "暂无版本。保存修改后将创建第一个版本。",
+    "this_organization_has_no_projects_yet_762e2c96": "此组织暂无项目。",
+    "select_an_organization_to_browse_team_catalog_1f79077e": "请选择组织以浏览团队目录。",
+    "no_team_catalog_configured_23ebee3c": "尚未配置团队目录。",
+    "no_teams_match_this_filter_86e30a3c": "没有符合当前筛选条件的团队。"
   }
 }

@@ -10857,6 +10857,22 @@
     "preview_request_cancelled_export_settings_unchanged_8f5a49ea": "The preview request was cancelled. Your export settings are unchanged.",
     "no_export_preview_is_loaded_5d583b0a": "No export preview is loaded.",
     "load_preview_96c2218f": "Load preview",
-    "select_an_organization_to_import_into_c205165c": "Select an organization to import into."
+    "select_an_organization_to_import_into_c205165c": "Select an organization to import into.",
+    "select_a_catalog_skill_to_inspect_83904cd7": "Select a catalog skill to inspect.",
+    "skill_not_found_9d0a5468": "Skill not found.",
+    "select_a_skill_to_inspect_its_files_72f5348b": "Select a skill to inspect its files.",
+    "select_a_company_to_manage_skills_adb9c741": "Select a company to manage skills.",
+    "select_an_organization_to_manage_skills_46f99eb4": "Select an organization to manage skills.",
+    "fork_source_skill_not_found_41982d82": "Fork source skill not found.",
+    "catalog_skill_not_found_f858bf31": "Catalog skill not found.",
+    "select_an_organization_to_open_skill_studio_68d916fc": "Select an organization to open Skill Studio.",
+    "loading_fork_source_4af321de": "Loading fork source...",
+    "this_skill_has_no_files_yet_d6c060a1": "This skill has no files yet.",
+    "no_test_runs_yet_pick_an_agent_and_run_a16187a9": "No test runs yet. Pick an agent and Run.",
+    "no_versions_yet_save_changes_to_create_the_first_9d251aaa": "No versions yet. Save changes to create the first.",
+    "this_organization_has_no_projects_yet_762e2c96": "This organization has no projects yet.",
+    "select_an_organization_to_browse_team_catalog_1f79077e": "Select an organization to browse the team catalog.",
+    "no_team_catalog_configured_23ebee3c": "No team catalog configured.",
+    "no_teams_match_this_filter_86e30a3c": "No teams match this filter."
   }
 }

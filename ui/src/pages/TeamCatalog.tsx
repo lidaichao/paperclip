@@ -2357,7 +2357,7 @@ export function TeamCatalog() {
   if (!selectedCompanyId) {
     return (
       <div className="p-8">
-        <EmptyState icon={Users2} message="Select an organization to browse the team catalog." />
+        <EmptyState icon={Users2} message={l10n("local.select_an_organization_to_browse_team_catalog_1f79077e")} />
       </div>
     );
   }
@@ -2472,12 +2472,12 @@ export function TeamCatalog() {
                 <RotateCcw className="h-3.5 w-3.5" /> {l10n("local.retry_942087cc")}</Button>
             </div>
           ) : teams.length === 0 ? (
-            <EmptyState icon={Users2} message="No team catalog configured." />
+            <EmptyState icon={Users2} message={l10n("local.no_team_catalog_configured_23ebee3c")} />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={Search}
-              message="No teams match this filter."
-              action="Reset filters"
+              message={l10n("local.no_teams_match_this_filter_86e30a3c")}
+              action={l10n("local.reset_filters_10afa984")}
               onAction={() => setSearchParams(new URLSearchParams())}
             />
           ) : (

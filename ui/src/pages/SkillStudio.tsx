@@ -331,7 +331,7 @@ export function SkillStudio() {
   }, [skill?.id]);
 
   if (!companyId) {
-    return <StudioMessage message="Select an organization to open Skill Studio." />;
+    return <StudioMessage message={l10n("local.select_an_organization_to_open_skill_studio_68d916fc")} />;
   }
   if (isCreateMode) {
     return (
@@ -363,7 +363,7 @@ export function SkillStudio() {
     return <StudioMessage message="Loading skill…" />;
   }
   if (detailQuery.isError || !detailQuery.data) {
-    return <StudioMessage message="Skill not found." />;
+    return <StudioMessage message={l10n("local.skill_not_found_9d0a5468")} />;
   }
 
   return (
@@ -489,7 +489,7 @@ function StudioNewSkillPanel({
   });
 
   if (forkFromSkillId && forkLoading) {
-    return <StudioMessage message="Loading fork source..." />;
+    return <StudioMessage message={l10n("local.loading_fork_source_4af321de")} />;
   }
 
   const previewCard: DiscoveryCard = {
@@ -1409,7 +1409,7 @@ function SkillPane({
           />
         }
       >
-        <EmptyState icon={FileCode} message="This skill has no files yet." />
+        <EmptyState icon={FileCode} message={l10n("local.this_skill_has_no_files_yet_d6c060a1")} />
         <SkillPathDialog
           mode={createDialog}
           open={createDialog !== null}
@@ -2550,7 +2550,7 @@ function RunsPane({
           {runsQuery.isLoading ? (
             <div className="text-xs text-muted-foreground">{l10n("local.loading_runs_8438ea39")}</div>
           ) : runs.length === 0 ? (
-            <EmptyState icon={FlaskConical} message="No test runs yet. Pick an agent and Run." />
+            <EmptyState icon={FlaskConical} message={l10n("local.no_test_runs_yet_pick_an_agent_and_run_a16187a9")} />
           ) : (
             <div className="space-y-1 rounded-md border border-border p-1">
               {runs.map((run) => (
@@ -3443,7 +3443,7 @@ function VersionHistorySheet({
           {versionsQuery.isLoading ? (
             <div className="text-xs text-muted-foreground">{l10n("local.loading_versions_9780e2c9")}</div>
           ) : versions.length === 0 ? (
-            <EmptyState icon={History} message="No versions yet. Save changes to create the first." />
+            <EmptyState icon={History} message={l10n("local.no_versions_yet_save_changes_to_create_the_first_9d251aaa")} />
           ) : (
             <div className="space-y-1 rounded-md border border-border p-1">
               {versions.map((v) => (

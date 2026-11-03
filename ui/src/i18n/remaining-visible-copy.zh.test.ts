@@ -46,5 +46,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.preview_request_cancelled_export_settings_unchanged_8f5a49ea).toBe(
       "预览请求已取消，导出设置未更改。",
     );
+    expect(messages.skill_not_found_9d0a5468).toBe("未找到技能。");
+    expect(messages.no_test_runs_yet_pick_an_agent_and_run_a16187a9).toBe(
+      "暂无测试运行记录。请选择智能体并开始运行。",
+    );
+    expect(messages.no_team_catalog_configured_23ebee3c).toBe("尚未配置团队目录。");
   });
 });

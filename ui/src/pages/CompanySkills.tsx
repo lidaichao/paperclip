@@ -1883,7 +1883,7 @@ function CatalogDetailPane({
   loadingPrimaryAction: boolean;
 }) {
   if (!skill) {
-    return <EmptyState icon={Boxes} message="Select a catalog skill to inspect." />;
+    return <EmptyState icon={Boxes} message={l10n("local.select_a_catalog_skill_to_inspect_83904cd7")} />;
   }
 
   const installedHash = installedSkill?.originHash ?? null;
@@ -2962,7 +2962,7 @@ export function SkillDetailPage({
   }, [isDirty]);
 
   if (!detail) {
-    return loading ? <PageSkeleton variant="detail" /> : <EmptyState icon={Boxes} message="Skill not found." />;
+    return loading ? <PageSkeleton variant="detail" /> : <EmptyState icon={Boxes} message={l10n("local.skill_not_found_9d0a5468")} />;
   }
 
   const skill = detail;
@@ -3709,7 +3709,7 @@ function SkillPane({
     return (
       <EmptyState
         icon={Boxes}
-        message="Select a skill to inspect its files."
+        message={l10n("local.select_a_skill_to_inspect_its_files_72f5348b")}
       />
     );
   }
@@ -5123,7 +5123,7 @@ export function CompanySkills() {
   );
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Boxes} message="Select an organization to manage skills." />;
+    return <EmptyState icon={Boxes} message={l10n("local.select_an_organization_to_manage_skills_46f99eb4")} />;
   }
 
   function handleAddSkillSource() {
@@ -5403,7 +5403,7 @@ export function CompanySkills() {
               {studioForkFromId && studioForkDetailQuery.isLoading ? (
                 <PageSkeleton variant="detail" />
               ) : studioForkFromId && !studioForkDetailQuery.data ? (
-                <EmptyState icon={Boxes} message="Fork source skill not found." />
+                <EmptyState icon={Boxes} message={l10n("local.fork_source_skill_not_found_41982d82")} />
               ) : (
                 <NewSkillWizard
                   initialDraft={studioDraft}
@@ -5593,7 +5593,7 @@ export function CompanySkills() {
           {catalogListQuery.isLoading || catalogDetailQuery.isLoading ? (
             <PageSkeleton variant="detail" />
           ) : !selectedCatalogSkill ? (
-            <EmptyState icon={Boxes} message="Catalog skill not found." />
+            <EmptyState icon={Boxes} message={l10n("local.catalog_skill_not_found_f858bf31")} />
           ) : (
             <div className="grid gap-0 xl:grid-cols-(--gtc-30)">
               <aside className="border-b border-border px-3 py-4 xl:border-b-0 xl:border-r">
@@ -5638,7 +5638,7 @@ export function CompanySkills() {
           {skillsQuery.isLoading ? (
             <PageSkeleton variant="detail" />
           ) : (
-            <EmptyState icon={Boxes} message="Skill not found." />
+            <EmptyState icon={Boxes} message={l10n("local.skill_not_found_9d0a5468")} />
           )}
         </div>
       )}
