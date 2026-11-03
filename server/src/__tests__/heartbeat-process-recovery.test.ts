@@ -5976,8 +5976,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
     expect(comments[0]?.authorType).toBe("system");
-    expect(comments[0]?.body).toContain("This task is waiting on");
-    expect(comments[0]?.body).toContain("continue automatically");
+    expect(comments[0]?.body).toContain("此任务正在等待");
+    expect(comments[0]?.body).toContain("完成后会自动继续");
     expect(comments[0]?.body).toContain(`${issuePrefix}-10`);
     expect(comments[0]?.body).toContain(`${issuePrefix}-11`);
     expect(comments[0]?.body).not.toContain(`${issuePrefix}-12`);
@@ -5988,7 +5988,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     expect(comments[0]?.presentation).toMatchObject({
       kind: "system_notice",
       tone: "warning",
-      title: "Recovery: waiting on dependencies — moved to blocked",
+      title: "恢复：等待依赖任务，已移至受阻状态",
       density: "compact",
     });
     expect(comments[0]?.metadata).toMatchObject({
@@ -5998,7 +5998,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
           rows: expect.arrayContaining([
             expect.objectContaining({
               type: "key_value",
-              label: "Cause",
+              label: "原因",
               value: "continuation_waiting_on_review",
             }),
           ]),
@@ -6103,8 +6103,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
     expect(comments[0]?.authorType).toBe("system");
-    expect(comments[0]?.body).toContain("This task is waiting on");
-    expect(comments[0]?.body).toContain("continue automatically");
+    expect(comments[0]?.body).toContain("此任务正在等待");
+    expect(comments[0]?.body).toContain("完成后会自动继续");
     // The blocker's real identifier is linked — not the "another open issue" fallback.
     expect(comments[0]?.body).toContain(`${issuePrefix}-20`);
     expect(comments[0]?.body).not.toContain("another open issue");
@@ -10537,19 +10537,19 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
     expect(comments[0]?.body).toContain(
-      "stopped automatic stranded-work recovery",
+      "已停止自动恢复",
     );
     expect(comments[0]?.body).toContain(
-      "recovery issues do not create nested `stranded_issue_recovery` issues",
+      "恢复任务不会创建嵌套的 `stranded_issue_recovery` 任务",
     );
     expect(comments[0]?.body).toContain(
-      `Recovery issue: [${recoveryIssues[0]?.identifier}]`,
+      `恢复任务：[${recoveryIssues[0]?.identifier}]`,
     );
-    expect(comments[0]?.body).toContain("Next action:");
+    expect(comments[0]?.body).toContain("下一步：");
     expect(comments[0]?.presentation).toMatchObject({
       kind: "system_notice",
       tone: "warning",
-      title: "Recovery: recovery attempt failed — remains blocked",
+      title: "恢复：恢复尝试失败，任务仍处于受阻状态",
       density: "compact",
     });
     expect(comments[0]?.metadata).toMatchObject({ version: 1 });
@@ -10642,7 +10642,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .select()
       .from(issueComments)
       .where(eq(issueComments.issueId, blockerIssueId));
-    expect(comments[0]?.body).toContain("Assigned Orphan Blocker");
+    expect(comments[0]?.body).toContain("已分配无负责人阻塞任务");
     expect(comments[0]?.body).toContain(
       `[${issuePrefix}-2](/${issuePrefix}/issues/${issuePrefix}-2)`,
     );
@@ -11247,7 +11247,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .from(issueComments)
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
-    expect(comments[0]?.body).toContain("non-retryable failure");
+    expect(comments[0]?.body).toContain("不可重试故障");
     expect(comments[0]?.body).toContain("`budget_blocked`");
 
     const followupRuns = await db
@@ -13159,13 +13159,13 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(1);
     expect(comments[0]?.body).toContain(
-      "stopped automatic stranded-work recovery",
+      "已停止自动恢复",
     );
     expect(comments[0]?.body).toContain(
-      "Latest retry failure details were withheld from the issue thread",
+      "已隐藏最新重试失败的详细信息",
     );
     expect(comments[0]?.body).toContain(
-      "recovery issues do not create nested `stranded_issue_recovery` issues",
+      "恢复任务不会创建嵌套的 `stranded_issue_recovery` 任务",
     );
     await expect(
       sourceBlockerIssueIds(companyId, sourceIssueId),

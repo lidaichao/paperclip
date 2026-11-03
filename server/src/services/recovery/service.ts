@@ -441,7 +441,7 @@ function summarizeRunFailureForIssueComment(run: LatestIssueRun) {
   if (!run) return null;
 
   if (readNonEmptyString(run.error) || readNonEmptyString(run.errorCode)) {
-    return " Latest retry failure details were withheld from the issue thread; inspect the linked run for evidence.";
+    return " 已隐藏最新重试失败的详细信息；请检查关联运行获取证据。";
   }
   return null;
 }
@@ -2141,12 +2141,12 @@ export function recoveryService(
       await issuesSvc.addComment(
         candidate.id,
         [
-          "## Assigned Orphan Blocker",
+          "## 已分配无负责人阻塞任务",
           "",
-          `Paperclip found this issue is blocking ${blockingLinks} but had no assignee, so no heartbeat could pick it up.`,
+          `Alice 发现此任务正在阻塞 ${blockingLinks}，但没有负责人，因此没有心跳可接手处理。`,
           "",
-          "- Assigned it back to the agent that created the blocker.",
-          "- Next action: resolve this blocker or reassign it to the right owner.",
+          "- 已重新分配给创建该阻塞项的智能体。",
+          "- 下一步：解决此阻塞项，或将其改派给合适的负责人。",
         ].join("\n"),
         {},
       );
@@ -2677,19 +2677,19 @@ export function recoveryService(
     const failureSummary = summarizeRunFailureForIssueComment(input.latestRun);
 
     return [
-      "Paperclip stopped automatic stranded-work recovery for this recovery issue.",
+      "Alice 已停止自动恢复此恢复任务的停滞工作。",
       "",
-      `- Recovery issue: ${issueUiLink({ identifier: input.issue.identifier, id: input.issue.id }, input.prefix)}`,
-      `- Previous status: \`${input.previousStatus}\``,
-      `- Latest run: ${runLink}`,
-      `- Latest run status: \`${input.latestRun?.status ?? "unknown"}\``,
-      `- Retry reason: \`${retryReason}\``,
+      `- 恢复任务：${issueUiLink({ identifier: input.issue.identifier, id: input.issue.id }, input.prefix)}`,
+      `- 先前状态：\`${input.previousStatus}\``,
+      `- 最新运行：${runLink}`,
+      `- 最新运行状态：\`${input.latestRun?.status ?? "unknown"}\``,
+      `- 重试原因：\`${retryReason}\``,
       failureSummary
-        ? `- Failure: ${failureSummary.trim()}`
-        : "- Failure: none recorded",
-      "- Guard: recovery issues do not create nested `stranded_issue_recovery` issues.",
+        ? `- 失败信息：${failureSummary.trim()}`
+        : "- 失败信息：未记录",
+      "- 保护规则：恢复任务不会创建嵌套的 `stranded_issue_recovery` 任务。",
       "",
-      "Next action: the current recovery owner should inspect the failed run evidence, restore a live execution path or record the manual resolution, then move this recovery issue out of `blocked`.",
+      "下一步：当前恢复负责人应检查失败运行的证据，恢复可用的执行路径或记录人工解决结果，然后将此恢复任务移出 `blocked` 状态。",
     ].join("\n");
   }
 
@@ -2716,30 +2716,30 @@ export function recoveryService(
       {
         authorType: "system",
         presentation: compactRecoveryPresentation(
-          "Recovery: recovery attempt failed — remains blocked",
+          "恢复：恢复尝试失败，任务仍处于受阻状态",
         ),
         metadata: {
           version: 1,
           sourceRunId: input.latestRun?.id ?? null,
           sections: [
             {
-              title: "Recovery",
+              title: "恢复",
               rows: [
                 {
                   type: "key_value",
-                  label: "Cause",
+                  label: "原因",
                   value: "recovery_issue_failed",
                 },
                 {
                   type: "key_value",
-                  label: "Previous status",
+                  label: "先前状态",
                   value: input.previousStatus,
                 },
                 ...(input.latestRun
                   ? [
                       {
                         type: "run_link" as const,
-                        label: "Latest run",
+                        label: "最新运行",
                         runId: input.latestRun.id,
                         title: input.latestRun.status,
                       },
@@ -2894,35 +2894,34 @@ export function recoveryService(
     ]);
     await issuesSvc.addComment(
       issue.id,
-      `This task is waiting on ${waitingOn} to finish. ` +
-        "It will continue automatically when that work is done — there's nothing you need to do. " +
-        "(It was paused because the latest run reported it was waiting for review/approval; " +
-        "Paperclip turned that into a normal dependency wait instead of flagging it as stuck.)",
+      `此任务正在等待 ${waitingOn} 完成。` +
+        "相关工作完成后会自动继续，无需操作。" +
+        "（最新运行报告正在等待评审或批准，因此 Alice 已将其转换为正常的依赖等待，而不是标记为停滞。）",
       {},
       {
         authorType: "system",
         presentation: compactRecoveryPresentation(
-          "Recovery: waiting on dependencies — moved to blocked",
+          "恢复：等待依赖任务，已移至受阻状态",
         ),
         metadata: {
           version: 1,
           sections: [
             {
-              title: "Recovery",
+              title: "恢复",
               rows: [
                 {
                   type: "key_value",
-                  label: "Cause",
+                  label: "原因",
                   value: "continuation_waiting_on_review",
                 },
                 {
                   type: "key_value",
-                  label: "Previous status",
+                  label: "先前状态",
                   value: issue.status,
                 },
                 {
                   type: "key_value",
-                  label: "Blocking issues",
+                  label: "阻塞任务",
                   value: blockedByIssueIds.join(", ").slice(0, 2000),
                 },
               ],
@@ -3539,20 +3538,20 @@ export function recoveryService(
     await issuesSvc.addComment(
       input.issue.id,
       [
-        "Paperclip exhausted the bounded original-owner disposition repair without a durable source-state change.",
+        "Alice 已用尽限定次数的原负责人任务去向修复，但来源任务状态仍未发生持久变更。",
         "",
-        `- Attempts: ${input.attemptCount}/${DISPOSITION_REPAIR_MAX_ATTEMPTS}`,
-        `- Terminal reason: \`${input.terminalReason}\``,
-        "- Recovery owner: board",
-        "- Source ownership: unchanged; reassignment requires an explicit decision or a policy-defined serious failure.",
+        `- 尝试次数：${input.attemptCount}/${DISPOSITION_REPAIR_MAX_ATTEMPTS}`,
+        `- 终止原因：\`${input.terminalReason}\``,
+        "- 恢复负责人：管理员",
+        "- 来源任务归属：保持不变；改派需要明确决定或符合策略定义的严重故障。",
         "",
-        "Next action: repair the liveness disposition or request an explicit source-owner decision.",
+        "下一步：修复任务存活状态的去向，或请求来源任务负责人作出明确决定。",
       ].join("\n"),
       {},
       {
         authorType: "system",
         presentation: compactRecoveryPresentation(
-          "Recovery: disposition repair escalated — source owner preserved",
+          "恢复：任务去向修复已升级，保留来源任务负责人",
         ),
         metadata: recoveryNoticeMetadata({
           cause: "deliberate_wait_without_target",
@@ -4307,8 +4306,8 @@ export function recoveryService(
             previousStatus: issue.status as StrandedPreviousStatus,
             latestRun,
             comment:
-              "Paperclip cannot safely continue automatic recovery because the original assignee is not invokable. " +
-              "The source assignment is unchanged and the board must choose the next action.",
+              "Alice 无法安全地继续自动恢复，因为原负责人当前无法调用。" +
+              "来源任务的负责人保持不变，需要由管理员选择下一步操作。",
           });
           if (updated) {
             result.escalated += 1;
@@ -4442,8 +4441,8 @@ export function recoveryService(
                 ? EXECUTION_REVIEW_PARTICIPANT_RECOVERY_REASON
                 : undefined,
             comment:
-              "Paperclip cannot safely continue automatic recovery because the original recovery target is over budget. " +
-              "The source assignment is unchanged and the board must choose the next action.",
+              "Alice 无法安全地继续自动恢复，因为原恢复目标已超出预算。" +
+              "来源任务的负责人保持不变，需要由管理员选择下一步操作。",
           });
           if (updated) {
             result.escalated += 1;
@@ -4554,8 +4553,8 @@ export function recoveryService(
             latestRun,
             recoveryCause: "configuration_incomplete",
             comment:
-              "Paperclip classified the latest adapter failure as `configuration_incomplete`. " +
-              "Moving the issue to `blocked` with the configuration fix recorded instead of creating a recovery takeover.",
+              "Alice 已将最新适配器故障归类为 `configuration_incomplete`。" +
+              "任务已移至 `blocked`，并记录配置修复要求，不再创建接管恢复任务。",
           });
           if (updated) {
             latestRun = await persistAdapterFailureRecoveryClassification(
@@ -4669,9 +4668,9 @@ export function recoveryService(
               previousStatus: issue.status as StrandedPreviousStatus,
               latestRun: latestPostResolutionRun,
               comment:
-                `Paperclip stopped requeueing accepted interaction \`${acceptedContinuationInteraction.id}\` after ` +
-                `${consecutive} consecutive continuation wakes were cancelled while waiting on review. ` +
-                "Moving the issue to `blocked` so the missing execution path is visible for intervention.",
+                `Alice 已停止重新排队已接受的交互 \`${acceptedContinuationInteraction.id}\`，因为在等待评审期间连续 ` +
+                `${consecutive} 次继续唤醒均被取消。` +
+                "任务已移至 `blocked`，以便明确显示缺失的执行路径并进行人工干预。",
             });
             if (updated) {
               result.escalated += 1;
@@ -4782,9 +4781,8 @@ export function recoveryService(
             latestRun: participantLatestRun,
             recoveryCause: "configuration_incomplete",
             comment:
-              "Paperclip classified the active review participant's latest adapter failure as " +
-              "`configuration_incomplete`. Moving the issue to `blocked` with the configuration fix " +
-              "recorded instead of repeatedly requeueing the reviewer.",
+              "Alice 已将当前评审参与者的最新适配器故障归类为 `configuration_incomplete`。" +
+              "任务已移至 `blocked` 并记录配置修复要求，不再重复排队该评审者。",
           });
           if (updated) {
             latestRun = await persistAdapterFailureRecoveryClassification(
@@ -5116,10 +5114,10 @@ export function recoveryService(
             latestRun,
             notice: {
               body:
-                "Paperclip detected a non-retryable failure on this issue's continuation run " +
-                `(\`${classification.errorCode}\`). Skipping automatic retries and moving it to \`blocked\` ` +
-                "so it is visible for intervention.",
-              title: "Continuation failed",
+                "Alice 检测到此任务的继续运行发生不可重试故障" +
+                `（\`${classification.errorCode}\`）。已跳过自动重试并将任务移至 \`blocked\`，` +
+                "以便进行人工干预。",
+              title: "继续运行失败",
               tone: "danger",
             },
           });
