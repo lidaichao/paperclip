@@ -239,7 +239,7 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
       : rawParam as string | undefined;
 
     if (!rawFilePath || rawFilePath.length === 0) {
-      res.status(400).json({ error: "File path is required" });
+      res.status(400).json({ error: "需要文件路径" });
       return;
     }
 
@@ -261,21 +261,21 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
     }
 
     if (!plugin) {
-      res.status(404).json({ error: "Plugin not found" });
+      res.status(404).json({ error: "未找到插件" });
       return;
     }
 
     // Step 2: Verify the plugin is ready and has UI declared
     if (plugin.status !== "ready") {
       res.status(403).json({
-        error: `Plugin UI is not available (status: ${plugin.status})`,
+        error: `插件界面不可用（状态：${plugin.status}）`,
       });
       return;
     }
 
     const manifest = plugin.manifestJson;
     if (!manifest?.entrypoints?.ui) {
-      res.status(404).json({ error: "Plugin does not declare a UI bundle" });
+      res.status(404).json({ error: "插件未声明界面资源包" });
       return;
     }
 
@@ -321,7 +321,7 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
           try {
             decodedPath = decodeURIComponent(rawFilePath);
           } catch {
-            res.status(400).json({ error: "Invalid file path" });
+            res.status(400).json({ error: "文件路径无效" });
             return;
           }
           if (
@@ -329,7 +329,7 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
             decodedPath.startsWith("//") ||
             decodedPath.startsWith("\\\\")
           ) {
-            res.status(400).json({ error: "Invalid file path" });
+            res.status(400).json({ error: "文件路径无效" });
             return;
           }
 
@@ -372,7 +372,7 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
               const upstream = await fetch(targetUrl.href, { signal: controller.signal });
               if (!upstream.ok) {
                 res.status(upstream.status).json({
-                  error: `Dev server returned ${upstream.status}`,
+                  error: `开发服务器返回状态 ${upstream.status}`,
                 });
                 return;
               }
@@ -417,7 +417,7 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
         { pluginId: plugin.id, pluginKey: plugin.pluginKey, packageName: plugin.packageName },
         "plugin-ui-static: UI directory not found on disk",
       );
-      res.status(404).json({ error: "Plugin UI directory not found" });
+      res.status(404).json({ error: "未找到插件界面目录" });
       return;
     }
 
@@ -429,7 +429,7 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
     try {
       fileStat = fs.statSync(resolvedFilePath);
     } catch {
-      res.status(404).json({ error: "File not found" });
+      res.status(404).json({ error: "未找到文件" });
       return;
     }
 
@@ -441,18 +441,18 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
       realFilePath = fs.realpathSync(resolvedFilePath);
       realUiDir = fs.realpathSync(uiDir);
     } catch {
-      res.status(404).json({ error: "File not found" });
+      res.status(404).json({ error: "未找到文件" });
       return;
     }
 
     const relative = path.relative(realUiDir, realFilePath);
     if (relative.startsWith("..") || path.isAbsolute(relative)) {
-      res.status(403).json({ error: "Access denied" });
+      res.status(403).json({ error: "拒绝访问" });
       return;
     }
 
     if (!fileStat.isFile()) {
-      res.status(404).json({ error: "File not found" });
+      res.status(404).json({ error: "未找到文件" });
       return;
     }
 
@@ -500,7 +500,7 @@ export function pluginUiStaticRoutes(db: Db, options: PluginUiStaticRouteOptions
         );
         // Only send error if headers haven't been sent yet
         if (!res.headersSent) {
-          res.status(500).json({ error: "Failed to serve file" });
+          res.status(500).json({ error: "提供文件失败" });
         }
       }
     });

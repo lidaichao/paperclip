@@ -130,7 +130,7 @@ describe("plugin UI static route", () => {
       .query({ companyId: companyB });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toMatch(/does not have access/i);
+    expect(res.body.error).toContain("无权访问此公司");
     expect(mockRegistry.getConfig).not.toHaveBeenCalled();
   });
 
