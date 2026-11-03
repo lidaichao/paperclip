@@ -20,9 +20,9 @@ export const FINISH_SUCCESSFUL_RUN_HANDOFF_REASON = "finish_successful_run_hando
 export const SUCCESSFUL_RUN_MISSING_STATE_REASON = "successful_run_missing_state";
 export const DEFAULT_MAX_SUCCESSFUL_RUN_HANDOFF_ATTEMPTS = 1;
 export const SUCCESSFUL_RUN_HANDOFF_REQUIRED_NOTICE_BODY =
-  "Paperclip needs a disposition before this issue can continue.";
+  "Alice 需要先记录任务去向，才能继续处理此任务。";
 export const SUCCESSFUL_RUN_HANDOFF_EXHAUSTED_NOTICE_BODY =
-  "Paperclip could not resolve this issue's missing disposition automatically. The source assignment is unchanged and a board decision is required.";
+  "Alice 无法自动解决此任务缺少去向的问题。来源任务的负责人保持不变，需要由管理员作出决定。";
 export const LEGACY_SUCCESSFUL_RUN_HANDOFF_NOTICE_PREFIXES = [
   "## This issue still needs a next step",
   "## Successful run missing issue disposition",
@@ -163,32 +163,32 @@ export function buildSuccessfulRunHandoffRequiredNotice(input: {
     body: SUCCESSFUL_RUN_HANDOFF_REQUIRED_NOTICE_BODY,
     presentation: systemNoticePresentation({
       tone: "warning",
-      title: "Missing issue disposition",
+      title: "缺少任务去向",
     }),
     metadata: {
       version: 1,
       sourceRunId: input.run.id,
       sections: [
         {
-          title: "Required action",
+          title: "必需操作",
           rows: [
-            issueLinkRow("Source issue", input.issue),
-            agentLinkRow("Assignee", input.agent),
-            keyValueRow("Missing disposition", "clear_next_step"),
+            issueLinkRow("来源任务", input.issue),
+            agentLinkRow("负责人", input.agent),
+            keyValueRow("缺少去向", "clear_next_step"),
             keyValueRow(
-              "Valid dispositions",
-              "done, cancelled, in_review with an owner, blocked with blockers, delegated follow-up, or explicit continuation",
+              "有效去向",
+              "完成、取消、有负责人的待审核、包含阻塞项的受阻、已委派后续工作或明确继续执行",
             ),
           ],
         },
         {
-          title: "Run evidence",
+          title: "运行证据",
           rows: [
-            runLinkRow("Successful run", input.run),
-            keyValueRow("Run status", input.run.status),
-            keyValueRow("Normalized cause", SUCCESSFUL_RUN_MISSING_STATE_REASON),
-            keyValueRow("Detected progress", input.detectedProgressSummary),
-            keyValueRow("Automatic retry", "one corrective handoff wake queued"),
+            runLinkRow("成功运行", input.run),
+            keyValueRow("运行状态", input.run.status),
+            keyValueRow("归一化原因", SUCCESSFUL_RUN_MISSING_STATE_REASON),
+            keyValueRow("检测到的进展", input.detectedProgressSummary),
+            keyValueRow("自动重试", "已排队一次纠正性交接唤醒"),
           ],
         },
       ],
@@ -212,35 +212,35 @@ export function buildSuccessfulRunHandoffExhaustedNotice(input: {
     body: SUCCESSFUL_RUN_HANDOFF_EXHAUSTED_NOTICE_BODY,
     presentation: systemNoticePresentation({
       tone: "danger",
-      title: "Missing disposition recovery blocked",
+      title: "任务去向恢复受阻",
     }),
     metadata: {
       version: 1,
       sourceRunId: input.sourceRun?.id ?? null,
       sections: [
         {
-          title: "Recovery",
+          title: "恢复",
           rows: [
-            issueLinkRow("Source issue", input.issue),
+            issueLinkRow("来源任务", input.issue),
             input.recoveryActionId
-              ? keyValueRow("Recovery action", input.recoveryActionId)
-              : issueLinkRow("Recovery issue", input.recoveryIssue),
+              ? keyValueRow("恢复操作", input.recoveryActionId)
+              : issueLinkRow("恢复任务", input.recoveryIssue),
             input.recoveryOwner
-              ? agentLinkRow("Recovery owner", input.recoveryOwner)
-              : keyValueRow("Recovery owner", "Board decision required"),
-            agentLinkRow("Source assignee", input.sourceAssignee),
-            keyValueRow("Suggested action", "inspect the evidence, then retry the original owner, explicitly reassign, or record a valid issue disposition"),
+              ? agentLinkRow("恢复负责人", input.recoveryOwner)
+              : keyValueRow("恢复负责人", "需要管理员决定"),
+            agentLinkRow("来源任务负责人", input.sourceAssignee),
+            keyValueRow("建议操作", "检查证据后，重试原负责人、明确改派，或记录有效的任务去向"),
           ],
         },
         {
-          title: "Run evidence",
+          title: "运行证据",
           rows: [
-            runLinkRow("Source run", input.sourceRun),
-            runLinkRow("Corrective handoff run", input.correctiveRun),
-            keyValueRow("Latest issue status", input.latestIssueStatus),
-            keyValueRow("Latest handoff run status", input.latestHandoffRunStatus),
-            keyValueRow("Normalized cause", SUCCESSFUL_RUN_MISSING_STATE_REASON),
-            keyValueRow("Missing disposition", input.missingDisposition),
+            runLinkRow("来源运行", input.sourceRun),
+            runLinkRow("纠正性交接运行", input.correctiveRun),
+            keyValueRow("最新任务状态", input.latestIssueStatus),
+            keyValueRow("最新交接运行状态", input.latestHandoffRunStatus),
+            keyValueRow("归一化原因", SUCCESSFUL_RUN_MISSING_STATE_REASON),
+            keyValueRow("缺少去向", input.missingDisposition),
           ],
         },
       ],
@@ -430,7 +430,7 @@ export function buildSuccessfulRunHandoffInstruction(input: {
       : []),
     "",
     "## What happened",
-    "Your last run on this issue ended successfully, but the issue is still `in_progress` and has no valid disposition — Paperclip cannot tell whether the work is finished, blocked, or unfinished.",
+    "Your last run on this issue ended successfully, but the issue is still `in_progress` and has no valid disposition — Alice cannot tell whether the work is finished, blocked, or unfinished.",
     ...(report
       ? [
           "",
@@ -449,7 +449,7 @@ export function buildSuccessfulRunHandoffInstruction(input: {
       : []),
     "",
     "## Your options",
-    "Choose **exactly one** outcome and perform the matching Paperclip action:",
+    "Choose **exactly one** outcome and perform the matching Alice action:",
     "",
     "**Is the issue finished?**",
     "1. Mark it `done` (scope complete) or `cancelled` (intentionally stopped).",
