@@ -97,7 +97,7 @@ export function RoutineTriggerCard({
             {trigger.kind === "schedule" && trigger.nextRunAt
               ? l10n("local.next_value_bcd63c93", {v0: (new Date(trigger.nextRunAt).toLocaleString())})
               : trigger.kind === "webhook"
-                ? "Webhook"
+                ? l10n("local.webhook_4814f62c")
                 : l10n("local.api_c8e5998f")}
           </span>
         </div>

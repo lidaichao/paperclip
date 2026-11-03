@@ -138,5 +138,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.team_trust_external_sources_tip_d6aa51d4).toContain("安装时解析");
     expect(messages.failed_to_load_team_install_preview_d243e628).toBe("无法加载团队安装预览。");
     expect(messages.skills_label_02b7848c).toBe("项技能");
+    expect(messages.webhook_4814f62c).toBe("回调通知");
+    expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
+    expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
+    expect(messages.webhook_url_84805a75).toBe("回调通知地址");
+    expect(Object.values(messages).filter((value) => /webhook/i.test(value))).toEqual([]);
   });
 });

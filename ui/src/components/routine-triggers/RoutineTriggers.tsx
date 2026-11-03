@@ -163,7 +163,7 @@ export function RoutineTriggers() {
               ? l10n("local.schedule_f4830a1d")
               : trigger.kind === "api"
                 ? l10n("local.api_trigger_ef556ef2")
-                : "Webhook"}{" "}
+                : l10n("local.webhook_4814f62c")}{" "}
             {l10n("local.removed_432c93eb")}</span>
           <Button
             variant="ghost"
@@ -225,7 +225,7 @@ export function RoutineTriggers() {
                   ? l10n("local.api_trigger_ef556ef2")
                   : trigger.signingMode === "github_hmac"
                     ? l10n("local.github_webhook_62487aeb")
-                    : "Webhook"
+                    : l10n("local.webhook_4814f62c")
             }
             summary={
               trigger.setupPending
