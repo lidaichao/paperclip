@@ -847,7 +847,7 @@ export function AgentDetail() {
       builtInAgentsApi.reset(resolvedCompanyId!, builtInState!.definition.key, [kind]),
     onSuccess: invalidateBuiltIn,
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to update bundle resource");
+      setActionError(error instanceof Error ? error.message : l10n("local.failed_to_update_bundle_resource_0f400001"));
     },
   });
   const runBuiltInRoutine = useMutation({
@@ -855,7 +855,7 @@ export function AgentDetail() {
       builtInAgentsApi.runRoutine(resolvedCompanyId!, builtInState!.definition.key, routineKey),
     onSuccess: invalidateBuiltIn,
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to run built-in routine");
+      setActionError(error instanceof Error ? error.message : l10n("local.failed_to_run_built_in_routine_0f400002"));
     },
   });
   const enableBuiltInSchedule = useMutation({
@@ -863,7 +863,7 @@ export function AgentDetail() {
       builtInAgentsApi.enableRoutineSchedule(resolvedCompanyId!, builtInState!.definition.key, routineKey),
     onSuccess: invalidateBuiltIn,
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to enable routine schedule");
+      setActionError(error instanceof Error ? error.message : l10n("local.failed_to_enable_routine_schedule_0f400003"));
     },
   });
   const disableBuiltInSchedule = useMutation({
@@ -871,7 +871,7 @@ export function AgentDetail() {
       builtInAgentsApi.disableRoutineSchedule(resolvedCompanyId!, builtInState!.definition.key, routineKey),
     onSuccess: invalidateBuiltIn,
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to disable routine schedule");
+      setActionError(error instanceof Error ? error.message : l10n("local.failed_to_disable_routine_schedule_0f400004"));
     },
   });
   const builtInRoutineActionPending =
@@ -998,7 +998,7 @@ export function AgentDetail() {
   // which is surfaced via the pending-approval banner below.
   const agentAction = useMutation({
     mutationFn: async (action: "approve") => {
-      if (!agentLookupRef) return Promise.reject(new Error("No agent reference"));
+      if (!agentLookupRef) return Promise.reject(new Error(l10n("local.no_agent_reference_0f400005")));
       if (action === "approve") {
         return agentsApi.approve(agentLookupRef, resolvedCompanyId ?? undefined);
       }
@@ -1017,7 +1017,7 @@ export function AgentDetail() {
       }
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Action failed");
+      setActionError(err instanceof Error ? err.message : l10n("local.action_failed_6e1704d8"));
     },
   });
 
@@ -1062,7 +1062,7 @@ export function AgentDetail() {
       }
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to update permissions");
+      setActionError(err instanceof Error ? err.message : l10n("local.failed_to_update_permissions_0f400006"));
     },
   });
 
@@ -1077,13 +1077,13 @@ export function AgentDetail() {
       crumbs.push({ label: agentName, href: `/agents/${canonicalAgentRef}/dashboard` });
       if (urlRunId) {
         crumbs.push({ label: "Runs", href: `/agents/${canonicalAgentRef}/runs` });
-        crumbs.push({ label: `Run ${urlRunId.slice(0, 8)}` });
+        crumbs.push({ label: l10n("local.run_value_0f400007", { v0: urlRunId.slice(0, 8) }) });
       } else if (activeView === "instructions") {
-        crumbs.push({ label: "Instructions" });
+        crumbs.push({ label: l10n("local.instructions_934652dc") });
       } else if (activeView === "configuration") {
-        crumbs.push({ label: "Configuration" });
+        crumbs.push({ label: l10n("local.configuration_b332c349") });
       } else if (activeView === "secrets") {
-        crumbs.push({ label: "Secrets" });
+        crumbs.push({ label: l10n("local.secrets_d8707d41") });
       // } else if (activeView === "skills") { // TODO: bring back later
       //   crumbs.push({ label: "Skills" });
       } else if (activeView === "tools") {
@@ -1093,7 +1093,7 @@ export function AgentDetail() {
       } else if (activeView === "budget") {
         crumbs.push({ label: "Budget" });
       } else {
-        crumbs.push({ label: "Dashboard" });
+        crumbs.push({ label: l10n("local.dashboard_67b69646") });
       }
     }
     setBreadcrumbs(crumbs);
@@ -1313,7 +1313,7 @@ export function AgentDetail() {
             runLabel={l10n("local.run_heartbeat_2ff5f14d")}
             actionsDisabled={agentAction.isPending}
             workActionsDisabled={hasInvalidOrgChain}
-            workActionsDisabledReason="Repair this agent's reporting chain before assigning tasks or starting runs"
+            workActionsDisabledReason={l10n("local.repair_reporting_chain_before_work_0f400008")}
             hasPendingNavigationChanges={configDirty}
             onBeforeNavigate={prepareAgentNavigation}
             onActionError={setActionError}
@@ -2425,7 +2425,7 @@ export function PromptsTab({
 
   const uploadMarkdownImage = useMutation({
     mutationFn: async ({ file, namespace }: { file: File; namespace: string }) => {
-      if (!selectedCompanyId) throw new Error("Select a company to upload images");
+      if (!selectedCompanyId) throw new Error(l10n("local.select_company_to_upload_images_0f400009"));
       return assetsApi.uploadImage(selectedCompanyId, file, namespace);
     },
   });
@@ -3268,7 +3268,7 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
         payload: resumePayload,
       }, run.companyId);
       if (!("id" in result)) {
-        throw new Error(result.message ?? "Resume request was skipped.");
+        throw new Error(result.message ?? l10n("local.resume_request_skipped_0f400010"));
       }
       return result;
     },
@@ -3897,7 +3897,7 @@ export function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType
             setLogLoading(false);
             return;
           }
-          setLogError(err instanceof Error ? err.message : "Failed to load run log");
+          setLogError(err instanceof Error ? err.message : l10n("local.failed_to_load_run_log_0f400011"));
         }
       } finally {
         if (!cancelled) setLogLoading(false);
@@ -3921,7 +3921,7 @@ export function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType
       setLogOffset(next);
       setHasMoreLog(result.nextOffset !== undefined);
     } catch (err) {
-      setLogError(err instanceof Error ? err.message : "Failed to load more run log");
+      setLogError(err instanceof Error ? err.message : l10n("local.failed_to_load_more_run_log_0f400012"));
     } finally {
       setLoadingMoreLog(false);
     }
@@ -4348,7 +4348,7 @@ function KeysTab({ agentId, companyId }: { agentId: string; companyId?: string }
   });
 
   const createKey = useMutation({
-    mutationFn: () => agentsApi.createKey(agentId, newKeyName.trim() || "Default", companyId),
+    mutationFn: () => agentsApi.createKey(agentId, newKeyName.trim() || l10n("local.default_21b111cb"), companyId),
     onSuccess: (data) => {
       setNewToken(data.token);
       setTokenVisible(true);

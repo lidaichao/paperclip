@@ -429,6 +429,18 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.release_0f300001).toBe("版本");
     expect(messages.released_date_0f300002).toBe("发布于 {{v0}}");
     expect(messages.my_claude_subscription_0f300003).toBe("我的 Claude 订阅");
+    expect(messages.failed_to_update_bundle_resource_0f400001).toContain("更新内置资源失败");
+    expect(messages.failed_to_run_built_in_routine_0f400002).toContain("内置例行任务");
+    expect(messages.failed_to_enable_routine_schedule_0f400003).toContain("启用例行任务计划失败");
+    expect(messages.failed_to_disable_routine_schedule_0f400004).toContain("停用例行任务计划失败");
+    expect(messages.no_agent_reference_0f400005).toContain("智能体引用");
+    expect(messages.failed_to_update_permissions_0f400006).toBe("更新权限失败");
+    expect(messages.run_value_0f400007).toBe("运行 {{v0}}");
+    expect(messages.repair_reporting_chain_before_work_0f400008).toContain("汇报关系");
+    expect(messages.select_company_to_upload_images_0f400009).toContain("上传图片");
+    expect(messages.resume_request_skipped_0f400010).toContain("已跳过");
+    expect(messages.failed_to_load_run_log_0f400011).toBe("加载运行日志失败");
+    expect(messages.failed_to_load_more_run_log_0f400012).toBe("加载更多运行日志失败");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

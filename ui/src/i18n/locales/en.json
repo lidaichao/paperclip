@@ -12001,6 +12001,18 @@
     "provide_api_key_to_connect_0f200010": "Provide your {{v0}} API key to connect",
     "release_0f300001": "Release",
     "released_date_0f300002": "released {{v0}}",
-    "my_claude_subscription_0f300003": "My Claude subscription"
+    "my_claude_subscription_0f300003": "My Claude subscription",
+    "failed_to_update_bundle_resource_0f400001": "Failed to update bundle resource",
+    "failed_to_run_built_in_routine_0f400002": "Failed to run built-in routine",
+    "failed_to_enable_routine_schedule_0f400003": "Failed to enable routine schedule",
+    "failed_to_disable_routine_schedule_0f400004": "Failed to disable routine schedule",
+    "no_agent_reference_0f400005": "No agent reference",
+    "failed_to_update_permissions_0f400006": "Failed to update permissions",
+    "run_value_0f400007": "Run {{v0}}",
+    "repair_reporting_chain_before_work_0f400008": "Repair this agent's reporting chain before assigning tasks or starting runs",
+    "select_company_to_upload_images_0f400009": "Select a company to upload images",
+    "resume_request_skipped_0f400010": "Resume request was skipped.",
+    "failed_to_load_run_log_0f400011": "Failed to load run log",
+    "failed_to_load_more_run_log_0f400012": "Failed to load more run log"
   }
 }

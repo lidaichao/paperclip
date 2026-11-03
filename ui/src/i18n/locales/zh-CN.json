@@ -12001,6 +12001,18 @@
     "provide_api_key_to_connect_0f200010": "请提供 {{v0}} API 密钥以建立连接",
     "release_0f300001": "版本",
     "released_date_0f300002": "发布于 {{v0}}",
-    "my_claude_subscription_0f300003": "我的 Claude 订阅"
+    "my_claude_subscription_0f300003": "我的 Claude 订阅",
+    "failed_to_update_bundle_resource_0f400001": "更新内置资源失败",
+    "failed_to_run_built_in_routine_0f400002": "运行内置例行任务失败",
+    "failed_to_enable_routine_schedule_0f400003": "启用例行任务计划失败",
+    "failed_to_disable_routine_schedule_0f400004": "停用例行任务计划失败",
+    "no_agent_reference_0f400005": "缺少智能体引用",
+    "failed_to_update_permissions_0f400006": "更新权限失败",
+    "run_value_0f400007": "运行 {{v0}}",
+    "repair_reporting_chain_before_work_0f400008": "请先修复此智能体的汇报关系，再分配任务或启动运行",
+    "select_company_to_upload_images_0f400009": "请选择要上传图片的组织",
+    "resume_request_skipped_0f400010": "恢复请求已跳过。",
+    "failed_to_load_run_log_0f400011": "加载运行日志失败",
+    "failed_to_load_more_run_log_0f400012": "加载更多运行日志失败"
   }
 }
