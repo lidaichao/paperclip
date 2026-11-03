@@ -658,13 +658,13 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
       setMessage({
         type: nextStatus.healthy ? "success" : "error",
         text: nextStatus.healthy
-          ? "Local folder saved."
-          : "Local folder saved, but validation still needs attention.",
+          ? l10n("local.local_folder_saved_0e300001")
+          : l10n("local.local_folder_saved_validation_needs_attention_0e300002"),
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.plugins.localFolders(pluginId, companyId) });
     },
     onError: (err: Error) => {
-      setMessage({ type: "error", text: err.message || "Failed to save local folder." });
+      setMessage({ type: "error", text: err.message || l10n("local.failed_to_save_local_folder_0e300003") });
     },
   });
 
@@ -674,11 +674,11 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
 
   const handleSave = useCallback(() => {
     if (!trimmedPath) {
-      setMessage({ type: "error", text: "Local folder path is required." });
+      setMessage({ type: "error", text: l10n("local.local_folder_path_required_0e300004") });
       return;
     }
     if (!isLikelyAbsolutePath(trimmedPath)) {
-      setMessage({ type: "error", text: "Local folder must be a full absolute path." });
+      setMessage({ type: "error", text: l10n("local.local_folder_must_be_absolute_path_0e300005") });
       return;
     }
     setMessage(null);
@@ -970,11 +970,11 @@ function PluginConfigForm({ pluginId, companyId, schema, initialValues, isLoadin
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: (configJson: Record<string, unknown>) => {
-      if (!companyId) throw new Error("Select an organization before saving plugin configuration.");
+      if (!companyId) throw new Error(l10n("local.select_organization_before_saving_plugin_config_0e300006"));
       return pluginsApi.saveConfig(pluginId, companyId, configJson);
     },
     onSuccess: () => {
-      setSaveMessage({ type: "success", text: "Configuration saved." });
+      setSaveMessage({ type: "success", text: l10n("local.configuration_saved_6b5b3c69") });
       setTestResult(null);
       if (companyId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.plugins.config(pluginId, companyId) });
@@ -983,25 +983,25 @@ function PluginConfigForm({ pluginId, companyId, schema, initialValues, isLoadin
       setTimeout(() => setSaveMessage(null), 3000);
     },
     onError: (err: Error) => {
-      setSaveMessage({ type: "error", text: err.message || "Failed to save configuration." });
+      setSaveMessage({ type: "error", text: err.message || l10n("local.failed_to_save_configuration_0e300007") });
     },
   });
 
   // Test configuration mutation
   const testMutation = useMutation({
     mutationFn: (configJson: Record<string, unknown>) => {
-      if (!companyId) throw new Error("Select an organization before testing plugin configuration.");
+      if (!companyId) throw new Error(l10n("local.select_organization_before_testing_plugin_config_0e300008"));
       return pluginsApi.testConfig(pluginId, companyId, configJson);
     },
     onSuccess: (result) => {
       if (result.valid) {
-        setTestResult({ type: "success", text: "Configuration test passed." });
+        setTestResult({ type: "success", text: l10n("local.configuration_test_passed_0e300009") });
       } else {
-        setTestResult({ type: "error", text: result.message || "Configuration test failed." });
+        setTestResult({ type: "error", text: result.message || l10n("local.configuration_test_failed_0e300010") });
       }
     },
     onError: (err: Error) => {
-      setTestResult({ type: "error", text: err.message || "Configuration test failed." });
+      setTestResult({ type: "error", text: err.message || l10n("local.configuration_test_failed_0e300010") });
     },
   });
 

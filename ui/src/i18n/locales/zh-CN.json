@@ -11846,6 +11846,16 @@
     "retry_already_running_0e200002": "重试已在运行",
     "no_scheduled_retry_0e200003": "没有待执行的计划重试",
     "could_not_retry_now_0e200004": "目前无法重试",
-    "missing_issue_id_0e200005": "缺少任务编号"
+    "missing_issue_id_0e200005": "缺少任务编号",
+    "local_folder_saved_0e300001": "本地文件夹已保存。",
+    "local_folder_saved_validation_needs_attention_0e300002": "本地文件夹已保存，但仍需处理校验问题。",
+    "failed_to_save_local_folder_0e300003": "保存本地文件夹失败。",
+    "local_folder_path_required_0e300004": "必须填写本地文件夹路径。",
+    "local_folder_must_be_absolute_path_0e300005": "本地文件夹必须使用完整绝对路径。",
+    "select_organization_before_saving_plugin_config_0e300006": "保存插件配置前，请先选择组织。",
+    "failed_to_save_configuration_0e300007": "保存配置失败。",
+    "select_organization_before_testing_plugin_config_0e300008": "测试插件配置前，请先选择组织。",
+    "configuration_test_passed_0e300009": "配置测试通过。",
+    "configuration_test_failed_0e300010": "配置测试失败。"
   }
 }

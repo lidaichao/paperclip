@@ -317,6 +317,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.retry_already_running_0e200002).toBe("重试已在运行");
     expect(messages.no_scheduled_retry_0e200003).toBe("没有待执行的计划重试");
     expect(messages.missing_issue_id_0e200005).toBe("缺少任务编号");
+    expect(messages.local_folder_saved_0e300001).toBe("本地文件夹已保存。");
+    expect(messages.local_folder_path_required_0e300004).toBe("必须填写本地文件夹路径。");
+    expect(messages.failed_to_save_configuration_0e300007).toBe("保存配置失败。");
+    expect(messages.configuration_test_passed_0e300009).toBe("配置测试通过。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

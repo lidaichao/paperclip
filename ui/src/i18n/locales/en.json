@@ -11846,6 +11846,16 @@
     "retry_already_running_0e200002": "Retry already running",
     "no_scheduled_retry_0e200003": "No scheduled retry",
     "could_not_retry_now_0e200004": "Couldn't retry now",
-    "missing_issue_id_0e200005": "Missing issue id"
+    "missing_issue_id_0e200005": "Missing issue id",
+    "local_folder_saved_0e300001": "Local folder saved.",
+    "local_folder_saved_validation_needs_attention_0e300002": "Local folder saved, but validation still needs attention.",
+    "failed_to_save_local_folder_0e300003": "Failed to save local folder.",
+    "local_folder_path_required_0e300004": "Local folder path is required.",
+    "local_folder_must_be_absolute_path_0e300005": "Local folder must be a full absolute path.",
+    "select_organization_before_saving_plugin_config_0e300006": "Select an organization before saving plugin configuration.",
+    "failed_to_save_configuration_0e300007": "Failed to save configuration.",
+    "select_organization_before_testing_plugin_config_0e300008": "Select an organization before testing plugin configuration.",
+    "configuration_test_passed_0e300009": "Configuration test passed.",
+    "configuration_test_failed_0e300010": "Configuration test failed."
   }
 }

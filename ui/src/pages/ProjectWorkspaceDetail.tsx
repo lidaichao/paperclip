@@ -355,7 +355,7 @@ export function ProjectWorkspaceDetail() {
       setErrorMessage(null);
     },
     onError: (error) => {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to save workspace.");
+      setErrorMessage(error instanceof Error ? error.message : l10n("local.failed_to_save_workspace_08f774be"));
     },
   });
 
@@ -366,7 +366,7 @@ export function ProjectWorkspaceDetail() {
       setErrorMessage(null);
     },
     onError: (error) => {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to update workspace.");
+      setErrorMessage(error instanceof Error ? error.message : l10n("local.failed_to_update_workspace_def40bab"));
     },
   });
 
