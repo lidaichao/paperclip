@@ -483,7 +483,7 @@ describeEmbeddedPostgres("resource membership routes", () => {
       .send({ starred: true });
 
     expect(response.status).toBe(404);
-    expect(response.body.error).toBe("Document not found");
+    expect(response.body.error).toBe("未找到文档");
     await expect(db.select().from(documentMemberships)).resolves.toHaveLength(0);
   });
 });

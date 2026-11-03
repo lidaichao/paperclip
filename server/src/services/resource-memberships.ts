@@ -446,7 +446,7 @@ export function resourceMembershipService(db: Db, options: ResourceMembershipSer
       const document = await db.query.documents.findFirst({
         where: eq(documents.id, input.documentId),
       });
-      if (!document || document.companyId !== input.companyId) throw notFound("Document not found");
+      if (!document || document.companyId !== input.companyId) throw notFound("未找到文档");
 
       const decision = await assertMutationAllowed({
         actor: input.actor,

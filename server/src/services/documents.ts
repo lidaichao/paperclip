@@ -596,7 +596,7 @@ export function documentService(db: Db) {
           .where(and(eq(issueDocuments.issueId, input.issueId), eq(issueDocuments.key, key)))
           .then((rows) => rows[0] ?? null);
 
-        if (!existing) throw notFound("Document not found");
+        if (!existing) throw notFound("未找到文档");
         if (existing.lockedAt) {
           throw conflict("Document is locked", {
             key: existing.key,
@@ -696,7 +696,7 @@ export function documentService(db: Db) {
           .where(and(eq(issueDocuments.issueId, input.issueId), eq(issueDocuments.key, key)))
           .then((rows) => rows[0] ?? null);
 
-        if (!existing) throw notFound("Document not found");
+        if (!existing) throw notFound("未找到文档");
         if (existing.lockedAt) {
           return {
             changed: false as const,
@@ -743,7 +743,7 @@ export function documentService(db: Db) {
           .where(and(eq(issueDocuments.issueId, issueId), eq(issueDocuments.key, key)))
           .then((rows) => rows[0] ?? null);
 
-        if (!existing) throw notFound("Document not found");
+        if (!existing) throw notFound("未找到文档");
         if (!existing.lockedAt) {
           return {
             changed: false as const,

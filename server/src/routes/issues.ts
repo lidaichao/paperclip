@@ -9783,7 +9783,7 @@ export function issueRoutes(
     );
     if (!keyParsed.success) {
       res.status(400).json({
-        error: "Invalid document key",
+        error: "文档键无效",
         details: keyParsed.error.issues,
       });
       return;
@@ -9793,7 +9793,7 @@ export function issueRoutes(
       keyParsed.data,
     );
     if (!doc) {
-      res.status(404).json({ error: "Document not found" });
+      res.status(404).json({ error: "未找到文档" });
       return;
     }
     if (!shouldIncludeDocumentAnnotations(req)) {
@@ -9829,7 +9829,7 @@ export function issueRoutes(
     );
     if (!keyParsed.success) {
       res.status(400).json({
-        error: "Invalid document key",
+        error: "文档键无效",
         details: keyParsed.error.issues,
       });
       return;
@@ -9874,7 +9874,7 @@ export function issueRoutes(
       );
       if (!keyParsed.success) {
         res.status(400).json({
-          error: "Invalid document key",
+          error: "文档键无效",
           details: keyParsed.error.issues,
         });
         return;
@@ -9954,7 +9954,7 @@ export function issueRoutes(
       );
       if (!keyParsed.success) {
         res.status(400).json({
-          error: "Invalid document key",
+          error: "文档键无效",
           details: keyParsed.error.issues,
         });
         return;
@@ -9965,7 +9965,7 @@ export function issueRoutes(
         req.params.threadId as string,
       );
       if (!thread) {
-        res.status(404).json({ error: "Annotation thread not found" });
+        res.status(404).json({ error: "未找到批注线程" });
         return;
       }
       res.json(thread);
@@ -9992,7 +9992,7 @@ export function issueRoutes(
       );
       if (!keyParsed.success) {
         res.status(400).json({
-          error: "Invalid document key",
+          error: "文档键无效",
           details: keyParsed.error.issues,
         });
         return;
@@ -10070,7 +10070,7 @@ export function issueRoutes(
       );
       if (!keyParsed.success) {
         res.status(400).json({
-          error: "Invalid document key",
+          error: "文档键无效",
           details: keyParsed.error.issues,
         });
         return;
@@ -10132,7 +10132,7 @@ export function issueRoutes(
       );
       if (!keyParsed.success) {
         res.status(400).json({
-          error: "Invalid document key",
+          error: "文档键无效",
           details: keyParsed.error.issues,
         });
         return;
@@ -10288,7 +10288,7 @@ export function issueRoutes(
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
-      res.status(403).json({ error: "Board authentication required" });
+      res.status(403).json({ error: "需要控制台身份验证" });
       return;
     }
     const keyParsed = issueDocumentKeySchema.safeParse(
@@ -10298,7 +10298,7 @@ export function issueRoutes(
     );
     if (!keyParsed.success) {
       res.status(400).json({
-        error: "Invalid document key",
+        error: "文档键无效",
         details: keyParsed.error.issues,
       });
       return;
@@ -10345,7 +10345,7 @@ export function issueRoutes(
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
-      res.status(403).json({ error: "Board authentication required" });
+      res.status(403).json({ error: "需要控制台身份验证" });
       return;
     }
     const keyParsed = issueDocumentKeySchema.safeParse(
@@ -10355,7 +10355,7 @@ export function issueRoutes(
     );
     if (!keyParsed.success) {
       res.status(400).json({
-        error: "Invalid document key",
+        error: "文档键无效",
         details: keyParsed.error.issues,
       });
       return;
@@ -10406,7 +10406,7 @@ export function issueRoutes(
     );
     if (!keyParsed.success) {
       res.status(400).json({
-        error: "Invalid document key",
+        error: "文档键无效",
         details: keyParsed.error.issues,
       });
       return;
@@ -10443,7 +10443,7 @@ export function issueRoutes(
       );
       if (!keyParsed.success) {
         res.status(400).json({
-          error: "Invalid document key",
+          error: "文档键无效",
           details: keyParsed.error.issues,
         });
         return;
@@ -10581,7 +10581,7 @@ export function issueRoutes(
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
-      res.status(403).json({ error: "Board authentication required" });
+      res.status(403).json({ error: "需要控制台身份验证" });
       return;
     }
     const keyParsed = issueDocumentKeySchema.safeParse(
@@ -10591,7 +10591,7 @@ export function issueRoutes(
     );
     if (!keyParsed.success) {
       res.status(400).json({
-        error: "Invalid document key",
+        error: "文档键无效",
         details: keyParsed.error.issues,
       });
       return;
@@ -10603,7 +10603,7 @@ export function issueRoutes(
       keyParsed.data,
     );
     if (!removed) {
-      res.status(404).json({ error: "Document not found" });
+      res.status(404).json({ error: "未找到文档" });
       return;
     }
     await issueReferencesSvc.deleteDocumentSource(removed.id);
@@ -11255,7 +11255,7 @@ export function issueRoutes(
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
-      res.status(403).json({ error: "Board authentication required" });
+      res.status(403).json({ error: "需要控制台身份验证" });
       return;
     }
     if (!req.actor.userId) {
@@ -11294,7 +11294,7 @@ export function issueRoutes(
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
-      res.status(403).json({ error: "Board authentication required" });
+      res.status(403).json({ error: "需要控制台身份验证" });
       return;
     }
     if (!req.actor.userId) {

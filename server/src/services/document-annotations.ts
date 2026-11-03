@@ -288,7 +288,7 @@ export function documentAnnotationService(db: Db) {
       options: { status?: "open" | "resolved" | "all"; includeComments?: boolean } = {},
     ) => {
       const doc = await getIssueDocument(issueId, key);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       const conditions = [
         eq(documentAnnotationThreads.issueId, issueId),
         eq(documentAnnotationThreads.documentId, doc.documentId),
@@ -321,7 +321,7 @@ export function documentAnnotationService(db: Db) {
       options: { status?: "open" | "resolved" | "all"; includeComments?: boolean } = {},
     ) => {
       const doc = await getRoutineDocument(routineId, key);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       const conditions = [
         eq(documentAnnotationThreads.companyId, doc.companyId),
         eq(documentAnnotationThreads.routineId, routineId),
@@ -355,7 +355,7 @@ export function documentAnnotationService(db: Db) {
       options: { status?: "open" | "resolved" | "all"; includeComments?: boolean } = {},
     ) => {
       const doc = await getCaseDocument(caseId, key);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       const conditions = [
         eq(documentAnnotationThreads.companyId, doc.companyId),
         eq(documentAnnotationThreads.caseId, caseId),
@@ -422,7 +422,7 @@ export function documentAnnotationService(db: Db) {
         for update of ${documents}
       `);
       const doc = await getIssueDocument(issueId, key, tx);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       if (
         input.baseRevisionId !== doc.latestRevisionId
         || input.baseRevisionNumber !== doc.latestRevisionNumber
@@ -509,7 +509,7 @@ export function documentAnnotationService(db: Db) {
         for update of ${documents}
       `);
       const doc = await getRoutineDocument(routineId, key, tx);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       if (
         input.baseRevisionId !== doc.latestRevisionId
         || input.baseRevisionNumber !== doc.latestRevisionNumber
@@ -597,7 +597,7 @@ export function documentAnnotationService(db: Db) {
         for update of ${documents}
       `);
       const doc = await getCaseDocument(caseId, key, tx);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       if (
         input.baseRevisionId !== doc.latestRevisionId
         || input.baseRevisionNumber !== doc.latestRevisionNumber
@@ -716,7 +716,7 @@ export function documentAnnotationService(db: Db) {
       actor: ActorInput,
     ) => db.transaction(async (tx) => {
       const doc = await getRoutineDocument(routineId, key, tx);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       const thread = await getThreadForRoutine(routineId, key, threadId, doc.companyId, doc.documentId, tx);
       if (!thread) throw notFound("Annotation thread not found");
       const now = new Date();
@@ -753,7 +753,7 @@ export function documentAnnotationService(db: Db) {
       actor: ActorInput,
     ) => db.transaction(async (tx) => {
       const doc = await getCaseDocument(caseId, key, tx);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       const thread = await getThreadForCase(caseId, key, threadId, doc.companyId, doc.documentId, tx);
       if (!thread) throw notFound("Annotation thread not found");
       const now = new Date();
@@ -890,7 +890,7 @@ export function documentAnnotationService(db: Db) {
       actor: ActorInput,
     ) => db.transaction(async (tx) => {
       const doc = await getRoutineDocument(routineId, key, tx);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       const thread = await getThreadForRoutine(routineId, key, threadId, doc.companyId, doc.documentId, tx);
       if (!thread) throw notFound("Annotation thread not found");
       if (!input.status || input.status === thread.status) return thread;
@@ -926,7 +926,7 @@ export function documentAnnotationService(db: Db) {
       actor: ActorInput,
     ) => db.transaction(async (tx) => {
       const doc = await getCaseDocument(caseId, key, tx);
-      if (!doc) throw notFound("Document not found");
+      if (!doc) throw notFound("未找到文档");
       const thread = await getThreadForCase(caseId, key, threadId, doc.companyId, doc.documentId, tx);
       if (!thread) throw notFound("Annotation thread not found");
       if (!input.status || input.status === thread.status) return thread;
