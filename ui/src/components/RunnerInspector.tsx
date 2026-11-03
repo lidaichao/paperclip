@@ -248,6 +248,38 @@ function protocolActionLabel(action: string) {
   return labels[action] ?? action;
 }
 
+function protocolRationaleLabel(rationale: string) {
+  const labels: Record<string, string> = {
+    "Provider-neutral semantic activity is readable in the task turn.": l10n("local.protocol_reason_provider_activity_0f000001"),
+    "In-progress workspace changes update one diff card.": l10n("local.protocol_reason_workspace_progress_0f000002"),
+    "The runner-verified final diff replaces the in-progress revision.": l10n("local.protocol_reason_workspace_final_0f000003"),
+    "Verified references open a bounded preview and the production file viewer.": l10n("local.protocol_reason_verified_reference_0f000004"),
+    "Semantic operations reuse the production tool row.": l10n("local.protocol_reason_semantic_input_0f000005"),
+    "Semantic operation outcomes update the matching tool row.": l10n("local.protocol_reason_semantic_result_0f000006"),
+    "Recovered semantic operation outcomes update the matching tool row without duplicating it.": l10n("local.protocol_reason_semantic_recovered_0f000007"),
+    "MCP inputs reuse the production tool row.": l10n("local.protocol_reason_mcp_input_0f000008"),
+    "MCP outcomes update the matching tool row.": l10n("local.protocol_reason_mcp_result_0f000009"),
+    "Action requests materialize as authoritative issue-thread interactions.": l10n("local.protocol_reason_action_request_0f000010"),
+    "Action resolution is shown on the authoritative interaction card.": l10n("local.protocol_reason_action_resolution_0f000011"),
+    "Pending provider runtime requests remain visible and actionable when a resolver is available.": l10n("local.protocol_reason_runtime_pending_0f000012"),
+    "Resolution updates the existing request card.": l10n("local.protocol_reason_runtime_resolved_0f000013"),
+    "Expiry updates the existing request card.": l10n("local.protocol_reason_runtime_expired_0f000014"),
+    "Cancellation updates the existing request card.": l10n("local.protocol_reason_runtime_cancelled_0f000015"),
+    "The control-plane interaction record is canonical and owns rendering.": l10n("local.protocol_reason_interaction_canonical_0f000016"),
+    "Structured completion, evidence, verification, blockers, and artifacts remain inspectable.": l10n("local.protocol_reason_result_proposed_0f000017"),
+    "Acceptance updates the existing result without duplicating it.": l10n("local.protocol_reason_result_accepted_0f000018"),
+    "Rejected results remain part of run governance rather than a second completion card.": l10n("local.protocol_reason_result_rejected_0f000019"),
+    "Terminal outcome and stop reason remain visible.": l10n("local.protocol_reason_terminal_0f000020"),
+    "Routine lifecycle transitions are summarized by the run turn and composer state.": l10n("local.protocol_reason_lifecycle_0f000021"),
+    "Actionable failure text is folded into the run or system notice.": l10n("local.protocol_reason_failure_0f000022"),
+    "Item payloads normalize into messages, reasoning, tools, diffs, or usage.": l10n("local.protocol_reason_item_0f000023"),
+    "Sandbox telemetry is available in run details, not the primary task thread.": l10n("local.protocol_reason_sandbox_0f000024"),
+    "MCP application transport lifecycle remains in run details unless it produces an actionable failure.": l10n("local.protocol_reason_mcp_lifecycle_0f000025"),
+    "Authoritative task status, attention, and interaction records own this state.": l10n("local.protocol_reason_governance_0f000026"),
+  };
+  return labels[rationale] ?? rationale;
+}
+
 function visibilityDecision(event: HeartbeatRunEvent) {
   const registration = TASK_PROTOCOL_EVENT_SURFACE_REGISTRY[event.eventType];
   if (!registration) {
@@ -276,7 +308,7 @@ function visibilityDecision(event: HeartbeatRunEvent) {
           ? protocolActionLabel("fold")
           : protocolActionLabel("operator only"),
     reasonCode: `presentation_${registration.disposition}`,
-    reason: registration.rationale,
+    reason: protocolRationaleLabel(registration.rationale),
   };
 }
 
