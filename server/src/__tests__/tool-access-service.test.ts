@@ -2671,7 +2671,7 @@ describeEmbeddedPostgres("tool access service", () => {
       credentialValues: { "credentials.apiKey": "rest-regression-secret" },
     }, { actorType: "user", actorId: "board" })).rejects.toMatchObject({
       status: 422,
-      message: "This app does not have an available connection method",
+      message: "此应用没有可用的连接方式",
     });
 
     expect(await db.select().from(toolConnections)

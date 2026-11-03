@@ -740,11 +740,11 @@ const APPROVED_STDIO_TEMPLATES: Record<
   }
 > = {
   "paperclip.echo-calculator-time": {
-    name: "Paperclip Echo / Calculator / Time fixture",
+    name: "Alice 回显 / 计算器 / 时间测试模板",
     tools: [
       {
         name: "echo",
-        description: "Return the provided message.",
+        description: "原样返回提供的消息。",
         inputSchema: {
           type: "object",
           properties: { message: { type: "string" } },
@@ -754,7 +754,7 @@ const APPROVED_STDIO_TEMPLATES: Record<
       },
       {
         name: "add",
-        description: "Add two numbers.",
+        description: "将两个数字相加。",
         inputSchema: {
           type: "object",
           properties: { a: { type: "number" }, b: { type: "number" } },
@@ -764,13 +764,13 @@ const APPROVED_STDIO_TEMPLATES: Record<
       },
       {
         name: "now",
-        description: "Return the current server time.",
+        description: "返回服务器当前时间。",
         inputSchema: { type: "object", properties: {} },
         annotations: { readOnlyHint: true },
       },
       {
         name: "fail_with_code",
-        description: "Deterministically fail with a requested status code.",
+        description: "按请求的状态码确定性返回失败。",
         inputSchema: {
           type: "object",
           properties: { code: { type: "number" } },
@@ -781,36 +781,36 @@ const APPROVED_STDIO_TEMPLATES: Record<
     ],
   },
   "paperclip.synthetic-todo-kv": {
-    name: "Paperclip Synthetic Todo / KV fixture",
+    name: "Alice 模拟待办 / 键值测试模板",
     tools: [
       {
         name: "list_items",
-        description: "List synthetic todo items.",
+        description: "列出模拟待办事项。",
         annotations: { readOnlyHint: true },
       },
       {
         name: "create_item",
-        description: "Create a synthetic todo item.",
+        description: "创建模拟待办事项。",
         annotations: { readOnlyHint: false },
       },
       {
         name: "mark_done",
-        description: "Mark a synthetic todo item done.",
+        description: "将模拟待办事项标记为完成。",
         annotations: { readOnlyHint: false },
       },
       {
         name: "delete_item",
-        description: "Delete a synthetic todo item.",
+        description: "删除模拟待办事项。",
         annotations: { destructiveHint: true },
       },
       {
         name: "get_value",
-        description: "Read a synthetic KV value.",
+        description: "读取模拟键值。",
         annotations: { readOnlyHint: true },
       },
       {
         name: "set_value",
-        description: "Write a synthetic KV value.",
+        description: "写入模拟键值。",
         annotations: { readOnlyHint: false },
       },
     ],
@@ -828,26 +828,26 @@ const APPROVED_STDIO_TEMPLATES: Record<
       {
         name: "list_spreadsheets",
         description:
-          "List the Google Sheets spreadsheets configured in this connection allowlist.",
+          "列出此连接允许列表中配置的 Google Sheets 表格。",
         inputSchema: { type: "object", properties: {} },
         annotations: { readOnlyHint: true },
       },
       {
         name: "get_spreadsheet_info",
         description:
-          "Get spreadsheet metadata and sheet tab information for an allowlisted spreadsheet.",
+          "获取允许列表中表格的元数据和工作表标签页信息。",
         inputSchema: GOOGLE_SHEETS_SPREADSHEET_SCHEMA,
         annotations: { readOnlyHint: true },
       },
       {
         name: "read_values",
-        description: "Read cell values from an allowlisted spreadsheet range.",
+        description: "读取允许列表中表格范围的单元格值。",
         inputSchema: GOOGLE_SHEETS_RANGE_SCHEMA,
         annotations: { readOnlyHint: true },
       },
       {
         name: "search_rows",
-        description: "Search rows in an allowlisted spreadsheet range.",
+        description: "搜索允许列表中表格范围内的行。",
         inputSchema: {
           type: "object",
           properties: {
@@ -868,19 +868,19 @@ const APPROVED_STDIO_TEMPLATES: Record<
       },
       {
         name: "append_rows",
-        description: "Append rows to an allowlisted spreadsheet range.",
+        description: "向允许列表中的表格范围追加行。",
         inputSchema: GOOGLE_SHEETS_WRITE_VALUES_SCHEMA,
         annotations: { readOnlyHint: false },
       },
       {
         name: "update_values",
-        description: "Update values in an allowlisted spreadsheet range.",
+        description: "更新允许列表中表格范围的值。",
         inputSchema: GOOGLE_SHEETS_WRITE_VALUES_SCHEMA,
         annotations: { readOnlyHint: false },
       },
       {
         name: "add_sheet_tab",
-        description: "Add a sheet tab to an allowlisted spreadsheet.",
+        description: "向允许列表中的表格新增工作表标签页。",
         inputSchema: {
           type: "object",
           properties: {
@@ -895,13 +895,13 @@ const APPROVED_STDIO_TEMPLATES: Record<
       },
       {
         name: "clear_values",
-        description: "Clear values in an allowlisted spreadsheet range.",
+        description: "清除允许列表中表格范围的值。",
         inputSchema: GOOGLE_SHEETS_RANGE_SCHEMA,
         annotations: { destructiveHint: true },
       },
       {
         name: "delete_rows",
-        description: "Delete rows from an allowlisted spreadsheet tab.",
+        description: "删除允许列表中工作表标签页内的行。",
         inputSchema: {
           type: "object",
           properties: {
@@ -941,19 +941,19 @@ type ToolExampleDefinition = {
 const TOOL_EXAMPLES: ToolExampleDefinition[] = [
   {
     id: "safe-read-only-todo-kv",
-    title: "Safe read-only Todo / KV fixture",
+    title: "安全只读待办 / 键值测试模板",
     description:
-      "Installs a deterministic local MCP fixture and grants only its read-only catalog entries.",
+      "安装确定性的本地 MCP 测试模板，并仅授权目录中的只读工具。",
     applicationKey: "paperclip.examples.safe-read-only-todo-kv",
-    applicationName: "Paperclip example: Safe read-only Todo / KV",
+    applicationName: "Alice 示例：安全只读待办 / 键值",
     applicationDescription:
-      "Deterministic MCP fixture for first-run tool governance checks.",
-    connectionName: "Paperclip example: Safe read-only Todo / KV",
+      "用于首次工具治理检查的确定性 MCP 测试模板。",
+    connectionName: "Alice 示例：安全只读待办 / 键值",
     templateId: "paperclip.synthetic-todo-kv",
     profileKey: "paperclip.examples.safe-read-only-todo-kv.profile",
-    profileName: "Example safe read-only tools",
+    profileName: "示例安全只读工具",
     profileDescription:
-      "Allows only the read-only tools from the Paperclip Todo / KV example fixture.",
+      "仅允许使用 Alice 待办 / 键值示例测试模板中的只读工具。",
   },
 ];
 
@@ -973,7 +973,7 @@ export function googleSheetsRobotEmailFromEnv(
   if (!inlineOrPath && !explicitPath) {
     return {
       available: false,
-      reason: "Google Sheets is not available on this instance yet.",
+      reason: "此实例尚未提供 Google Sheets。",
     };
   }
 
@@ -990,12 +990,12 @@ export function googleSheetsRobotEmailFromEnv(
   } catch {
     return {
       available: false,
-      reason: "Google Sheets is not available on this instance yet.",
+      reason: "此实例尚未提供 Google Sheets。",
     };
   }
   return {
     available: false,
-    reason: "Google Sheets is not available on this instance yet.",
+    reason: "此实例尚未提供 Google Sheets。",
   };
 }
 
@@ -1020,7 +1020,7 @@ function connectionMethodFor(app: AppDefinition, methodKey?: string | null) {
     : getAvailableConnectionMethod({ ...app, methods: toolMethods }, null);
   if (!method)
     throw unprocessable(
-      "This app does not have an available connection method",
+      "此应用没有可用的连接方式",
     );
   return method;
 }

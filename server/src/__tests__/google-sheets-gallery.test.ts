@@ -36,7 +36,7 @@ describe("Google Sheets app gallery availability", () => {
   it("fails closed when no robot email is configured", () => {
     expect(googleSheetsRobotEmailFromEnv({})).toMatchObject({
       available: false,
-      reason: "Google Sheets is not available on this instance yet.",
+      reason: "此实例尚未提供 Google Sheets。",
     });
   });
 });
