@@ -388,11 +388,11 @@ describe("IssueChatThread system notice routing", () => {
 
     const status = container.querySelector('[role="status"]');
     expect(status).not.toBeNull();
-    expect(status?.textContent).toContain("Paperclip");
+    expect(status?.textContent).toContain("Alice");
     expect(status?.textContent).not.toContain("You");
   });
 
-  it("falls back to Paperclip in the system notice header when run agent is unknown to agentMap", () => {
+  it("falls back to Alice in the system notice header when run agent is unknown to agentMap", () => {
     const comment: IssueChatComment = {
       id: "comment-system-unknown-agent",
       companyId: "company-1",
@@ -418,7 +418,7 @@ describe("IssueChatThread system notice routing", () => {
     const status = container.querySelector('[role="status"]');
     const sourceLink = status?.querySelector('a[href^="/agents/"]') as HTMLAnchorElement | null;
     expect(sourceLink?.getAttribute("href")).toBe("/agents/agent-unknown/runs/run-xyz");
-    expect(sourceLink?.textContent).toBe("Paperclip");
+    expect(sourceLink?.textContent).toBe("Alice");
   });
 
   it("routes agent-authored comments to the notice renderer when presentation requests system_notice", () => {

@@ -11905,6 +11905,13 @@
     "enter_kimi_api_model_name_0e900006": "请输入 Kimi API 模型名称。",
     "run_test_0ea00001": "运行测试",
     "test_again_0ea00002": "再次测试",
-    "retry_test_0ea00003": "重试测试"
+    "retry_test_0ea00003": "重试测试",
+    "unable_to_copy_text_0eb00001": "无法复制文本",
+    "unable_to_copy_message_0eb00002": "无法复制消息",
+    "unable_to_copy_system_notice_0eb00003": "无法复制系统通知",
+    "unable_to_copy_system_notice_link_0eb00004": "无法复制系统通知链接",
+    "upload_did_not_return_file_url_0eb00005": "上传后未返回文件地址",
+    "file_type_cannot_be_attached_0eb00006": "此处不支持附加该类型的文件",
+    "review_unavailable_0eb00007": "会话复核暂不可用"
   }
 }

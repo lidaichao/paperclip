@@ -1561,11 +1561,11 @@ function CopyablePreBlock({
             })
             .catch((error) => {
               toastActions?.pushToast({
-                title: "Copy failed",
+                title: l10n("local.copy_failed_5b50e7a6"),
                 body:
                   error instanceof Error
                     ? error.message
-                    : "Unable to copy text",
+                    : l10n("local.unable_to_copy_text_0eb00001"),
                 tone: "error",
               });
             });
@@ -2197,11 +2197,11 @@ function IssueChatUserMessage({
                   })
                   .catch((error) => {
                     toastActions?.pushToast({
-                      title: "Copy failed",
+                      title: l10n("local.copy_failed_5b50e7a6"),
                       body:
                         error instanceof Error
                           ? error.message
-                          : "Unable to copy message",
+                          : l10n("local.unable_to_copy_message_0eb00002"),
                       tone: "error",
                     });
                   });
@@ -2291,8 +2291,8 @@ function IssueChatAssistantMessage({
     onVote,
     agentMap,
     onStopRun,
-    stopRunLabel = "Stop run",
-    stoppingRunLabel = "Stopping...",
+    stopRunLabel = l10n("local.stop_run_b7ec68a2"),
+    stoppingRunLabel = l10n("local.stopping_bbe85741"),
     stopRunVariant = "stop",
     runFinalizationActions = [],
     userLabelMap,
@@ -2427,11 +2427,11 @@ function IssueChatAssistantMessage({
             })
             .catch((error) => {
               toastActions?.pushToast({
-                title: "Copy failed",
+                title: l10n("local.copy_failed_5b50e7a6"),
                 body:
                   error instanceof Error
                     ? error.message
-                    : "Unable to copy message",
+                    : l10n("local.unable_to_copy_message_0eb00002"),
                 tone: "error",
               });
             });
@@ -2481,11 +2481,11 @@ function IssueChatAssistantMessage({
             onClick={() => {
               void copyTextToClipboard(copyText).catch((error) => {
                 toastActions?.pushToast({
-                  title: "Copy failed",
+                  title: l10n("local.copy_failed_5b50e7a6"),
                   body:
                     error instanceof Error
                       ? error.message
-                      : "Unable to copy message",
+                      : l10n("local.unable_to_copy_message_0eb00002"),
                   tone: "error",
                 });
               });
@@ -3538,11 +3538,11 @@ function SystemNoticeCommentContent({
       })
       .catch((error) => {
         toastActions?.pushToast({
-          title: "Copy failed",
+          title: l10n("local.copy_failed_5b50e7a6"),
           body:
             error instanceof Error
               ? error.message
-              : "Unable to copy system notice",
+              : l10n("local.unable_to_copy_system_notice_0eb00003"),
           tone: "error",
         });
       });
@@ -3558,11 +3558,11 @@ function SystemNoticeCommentContent({
       })
       .catch((error) => {
         toastActions?.pushToast({
-          title: "Copy failed",
+          title: l10n("local.copy_failed_5b50e7a6"),
           body:
             error instanceof Error
               ? error.message
-              : "Unable to copy system notice link",
+              : l10n("local.unable_to_copy_system_notice_link_0eb00004"),
           tone: "error",
         });
       });
@@ -5045,7 +5045,7 @@ const IssueChatComposer = forwardRef<
       } else if (onAttachImage) {
         const attachment = await onAttachImage(file);
         if (!attachment?.contentPath)
-          throw new Error("Upload did not return a file URL");
+          throw new Error(l10n("local.upload_did_not_return_file_url_0eb00005"));
         if (
           !composerAttachmentsRef.current.some(
             (item) => item.id === attachmentId,
@@ -5077,7 +5077,7 @@ const IssueChatComposer = forwardRef<
               ? {
                   ...item,
                   status: "error",
-                  error: "This file type cannot be attached here",
+                  error: l10n("local.file_type_cannot_be_attached_0eb00006"),
                 }
               : item,
           ),
@@ -5090,7 +5090,7 @@ const IssueChatComposer = forwardRef<
             ? {
                 ...item,
                 status: "error",
-                error: err instanceof Error ? err.message : "Upload failed",
+                error: err instanceof Error ? err.message : l10n("local.upload_failed_6efc5d27"),
               }
             : item,
         ),
@@ -5322,7 +5322,7 @@ const IssueChatComposer = forwardRef<
               setReviewError(false);
               try {
                 if (!onReviewConversation)
-                  throw new Error("Review unavailable");
+                  throw new Error(l10n("local.review_unavailable_0eb00007"));
                 await onReviewConversation();
                 if (mountedTaskKey.current !== draftKey) return;
                 const reviewed = { ...uncertainSubmission, reviewed: true };
@@ -5376,7 +5376,7 @@ const IssueChatComposer = forwardRef<
           canAcceptFiles
             ? async (file) => {
                 const url = await attachFile(file, false);
-                if (!url) throw new Error("Upload did not return a file URL");
+                if (!url) throw new Error(l10n("local.upload_did_not_return_file_url_0eb00005"));
                 return url;
               }
             : undefined

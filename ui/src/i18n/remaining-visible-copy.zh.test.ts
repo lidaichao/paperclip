@@ -350,6 +350,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.run_test_0ea00001).toBe("运行测试");
     expect(messages.test_again_0ea00002).toBe("再次测试");
     expect(messages.retry_test_0ea00003).toBe("重试测试");
+    expect(messages.unable_to_copy_text_0eb00001).toBe("无法复制文本");
+    expect(messages.unable_to_copy_message_0eb00002).toBe("无法复制消息");
+    expect(messages.unable_to_copy_system_notice_0eb00003).toBe("无法复制系统通知");
+    expect(messages.unable_to_copy_system_notice_link_0eb00004).toBe("无法复制系统通知链接");
+    expect(messages.upload_did_not_return_file_url_0eb00005).toContain("文件地址");
+    expect(messages.file_type_cannot_be_attached_0eb00006).toContain("不支持附加");
+    expect(messages.review_unavailable_0eb00007).toBe("会话复核暂不可用");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
