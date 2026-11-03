@@ -116,7 +116,7 @@ describe("skills CLI helpers", () => {
       skill({ id: "skill-b", key: "paperclip/b", slug: "same", name: "B" }),
     ];
 
-    expect(() => resolveCompanySkillReference(rows, "same")).toThrow(/Ambiguous skill slug/);
+    expect(() => resolveCompanySkillReference(rows, "same")).toThrow(/技能标识“same”不唯一/);
   });
 });
 
@@ -249,9 +249,9 @@ describe("skills CLI commands", () => {
       expect.objectContaining({ method: "GET" }),
     );
     const rendered = logSpy.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
-    expect(rendered).toContain("id");
+    expect(rendered).toContain("编号");
     expect(rendered).toContain("paperclipai:bundled:software-development:github-pr-workflow");
-    expect(rendered).toContain("roles");
+    expect(rendered).toContain("适用角色");
   });
 
   it("searches catalog skills as JSON", async () => {
