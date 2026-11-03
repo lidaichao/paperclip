@@ -11732,6 +11732,23 @@
     "value_bytes_0d600014": "{{v0}} 字节",
     "unnamed_connection_0d600015": "未命名连接",
     "value_added_count_allowed_items_in_value_0d600016": "{{v0}} 在 {{v2}} 中新增了 {{v1}} 个允许的条目",
-    "value_removed_count_allowed_items_in_value_0d600017": "{{v0}} 从 {{v2}} 中移除了 {{v1}} 个允许的条目"
+    "value_removed_count_allowed_items_in_value_0d600017": "{{v0}} 从 {{v2}} 中移除了 {{v1}} 个允许的条目",
+    "value_and_value_0d700001": "{{v0}}和{{v1}}",
+    "list_and_value_0d700002": "{{v0}}和{{v1}}",
+    "list_separator_0d700003": "、",
+    "alice_will_create_one_value_per_item_in_value_to_value_0d700004": "Alice 会为 {{v1}} → {{v2}} 中的每个条目创建一个{{v0}}",
+    "carry_over_value_0d700005": "继承{{v0}}",
+    "move_this_case_to_value_0d700006": "将此案例移至{{v0}}",
+    "clause_separator_0d700007": "，",
+    "then_wait_every_value_finished_before_moving_to_value_0d700008": "，然后等待所有{{v0}}完成，再将此案例移至{{v1}}",
+    "value_sentence_0d700009": "{{v0}}。",
+    "creates_one_value_per_returned_item_in_value_to_value_0d700010": "在 {{v1}} → {{v2}} 中，为智能体返回的每个条目创建一个{{v0}}。",
+    "destination_pipeline_0d700011": "目标流水线",
+    "entry_step_0d700012": "入口步骤",
+    "links_every_value_to_case_for_progress_rollup_0d700013": "将每个{{v0}}关联到此案例，以便在此汇总进度。",
+    "carries_over_value_from_case_to_each_value_0d700014": "把此案例的{{v0}}继承到每个{{v1}}。",
+    "moves_case_to_value_when_pieces_created_0d700015": "拆分项创建完成后，立即将此案例移至{{v0}}。",
+    "waits_every_value_finished_then_moves_case_to_value_0d700016": "等待所有{{v0}}完成，再将此案例移至{{v1}}。",
+    "empty_list_skips_case_to_value_0d700017": "如果智能体返回空列表，此案例将直接跳转到{{v0}}。"
   }
 }

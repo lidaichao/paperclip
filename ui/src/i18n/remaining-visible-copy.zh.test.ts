@@ -266,6 +266,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.held_for_approval_before_running_0d600010).toContain("获得批准");
     expect(messages.value_bytes_0d600014).toBe("{{v0}} 字节");
     expect(messages.value_added_count_allowed_items_in_value_0d600016).toContain("允许的条目");
+    expect(messages.alice_will_create_one_value_per_item_in_value_to_value_0d700004).toContain("Alice 会");
+    expect(messages.then_wait_every_value_finished_before_moving_to_value_0d700008).toContain("等待所有");
+    expect(messages.links_every_value_to_case_for_progress_rollup_0d700013).toContain("汇总进度");
+    expect(messages.empty_list_skips_case_to_value_0d700017).toContain("空列表");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

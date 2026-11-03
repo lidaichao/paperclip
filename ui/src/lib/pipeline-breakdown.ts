@@ -1,4 +1,5 @@
 import type { PipelineStage } from "../api/pipelines";
+import { l10n } from "../i18n";
 
 /**
  * UI-side reader + copy helpers for the "Break into pieces" stage primitive.
@@ -125,8 +126,11 @@ export function joinWithAnd(items: string[]): string {
   const list = items.filter((item) => item.trim().length > 0);
   if (list.length === 0) return "";
   if (list.length === 1) return list[0]!;
-  if (list.length === 2) return `${list[0]} and ${list[1]}`;
-  return `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
+  if (list.length === 2) return l10n("local.value_and_value_0d700001", { v0: list[0], v1: list[1] });
+  return l10n("local.list_and_value_0d700002", {
+    v0: list.slice(0, -1).join(l10n("local.list_separator_0d700003")),
+    v1: list[list.length - 1],
+  });
 }
 
 export interface BreakdownCopyNames {
@@ -151,23 +155,30 @@ export function breakdownSummarySentence(
   }
   const noun = config.pieceNoun;
   const parts: string[] = [
-    `Paperclip will create one ${noun} per item in ${names.targetPipelineName} → ${names.entryStageName}`,
+    l10n("local.alice_will_create_one_value_per_item_in_value_to_value_0d700004", {
+      v0: noun,
+      v1: names.targetPipelineName,
+      v2: names.entryStageName,
+    }),
   ];
   if (names.inheritedFieldLabels.length > 0) {
-    parts.push(`carry over ${joinWithAnd(names.inheritedFieldLabels)}`);
+    parts.push(l10n("local.carry_over_value_0d700005", { v0: joinWithAnd(names.inheritedFieldLabels) }));
   }
   if (names.advanceToName) {
-    parts.push(`move this case to ${names.advanceToName}`);
+    parts.push(l10n("local.move_this_case_to_value_0d700006", { v0: names.advanceToName }));
   }
-  let sentence = parts.join(", ");
+  let sentence = parts.join(l10n("local.clause_separator_0d700007"));
   if (config.waitForPieces && names.whenFinishedName) {
-    sentence += `, then wait until every ${noun} is finished before moving it to ${names.whenFinishedName}`;
+    sentence += l10n("local.then_wait_every_value_finished_before_moving_to_value_0d700008", {
+      v0: noun,
+      v1: names.whenFinishedName,
+    });
   }
-  return `${sentence}.`;
+  return l10n("local.value_sentence_0d700009", { v0: sentence });
 }
 
 /**
- * The read-only "Paperclip handles this" mechanics bullets, composed from the
+ * The read-only "Alice handles this" mechanics bullets, composed from the
  * config. Bullets 5 and 6 only appear when the wait gate is on.
  */
 export function breakdownMechanicsBullets(
@@ -176,18 +187,28 @@ export function breakdownMechanicsBullets(
 ): string[] {
   const noun = config.pieceNoun;
   const bullets: string[] = [
-    `Creates one ${noun} per item the agent returns, in ${names.targetPipelineName || "the destination pipeline"} → ${names.entryStageName || "its entry step"}.`,
-    `Links every ${noun} to this case so progress rolls up here.`,
+    l10n("local.creates_one_value_per_returned_item_in_value_to_value_0d700010", {
+      v0: noun,
+      v1: names.targetPipelineName || l10n("local.destination_pipeline_0d700011"),
+      v2: names.entryStageName || l10n("local.entry_step_0d700012"),
+    }),
+    l10n("local.links_every_value_to_case_for_progress_rollup_0d700013", { v0: noun }),
   ];
   if (names.inheritedFieldLabels.length > 0) {
-    bullets.push(`Carries over ${joinWithAnd(names.inheritedFieldLabels)} from this case onto each ${noun}.`);
+    bullets.push(l10n("local.carries_over_value_from_case_to_each_value_0d700014", {
+      v0: joinWithAnd(names.inheritedFieldLabels),
+      v1: noun,
+    }));
   }
   if (names.advanceToName) {
-    bullets.push(`Moves this case to ${names.advanceToName} as soon as the pieces are created.`);
+    bullets.push(l10n("local.moves_case_to_value_when_pieces_created_0d700015", { v0: names.advanceToName }));
   }
   if (config.waitForPieces && names.whenFinishedName) {
-    bullets.push(`Waits until every ${noun} is finished, then moves this case to ${names.whenFinishedName}.`);
-    bullets.push(`If the agent returns an empty list, this case skips ahead to ${names.whenFinishedName}.`);
+    bullets.push(l10n("local.waits_every_value_finished_then_moves_case_to_value_0d700016", {
+      v0: noun,
+      v1: names.whenFinishedName,
+    }));
+    bullets.push(l10n("local.empty_list_skips_case_to_value_0d700017", { v0: names.whenFinishedName }));
   }
   return bullets;
 }
