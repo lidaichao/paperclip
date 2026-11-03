@@ -1653,7 +1653,7 @@ describeEmbeddedPostgres("pipelineService", () => {
       .select()
       .from(pipelineAutomationExecutions)
       .where(eq(pipelineAutomationExecutions.id, badExecution!.id));
-    expect(execution!.error).toContain("same company");
+    expect(execution!.error).toContain("同一公司");
     const events = await svc.listCaseEvents(company.id, created.case.id);
     expect(events.filter((event) => event.type === "automation_failed")).toHaveLength(1);
   });

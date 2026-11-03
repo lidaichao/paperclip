@@ -2246,9 +2246,9 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       .where(eq(routines.id, routineId))
       .limit(1)
       .then((rows) => rows[0] ?? null);
-    if (!routine) throw notFound("Routine not found");
+    if (!routine) throw notFound("未找到例程");
     if (routine.companyId !== companyId) {
-      throw unprocessable("Pipeline automation routine must belong to the same company", { code: "validation" });
+      throw unprocessable("流水线自动化例程必须属于同一公司", { code: "validation" });
     }
     return routine;
   }
@@ -2283,7 +2283,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         principalId: "unassigned",
         permissionKey: PIPELINE_WRITE_PERMISSION,
         reason: "missing_assignee",
-        explanation: "Pipeline automation has no routine assignee to authorize target-pipeline writes.",
+        explanation: "流水线自动化例程没有负责人，无法授权写入目标流水线。",
       });
     }
     const decision = await authorization.decide({
@@ -2344,31 +2344,31 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       options: field.options,
     }));
     return [
-      "### Breakdown Mechanics",
+      "### 拆解机制",
       "",
-      `When the work should be split into ${input.config.pieceNoun}s, call POST /api/cases/${input.caseId}/breakdown.`,
+      `需要把工作拆分为多个 ${input.config.pieceNoun} 时，请调用 POST /api/cases/${input.caseId}/breakdown。`,
       "",
-      "Send this JSON body:",
+      "发送以下 JSON 请求体：",
       "",
       "```json",
       JSON.stringify({
         items: [
           {
             key: "stable-piece-key",
-            title: `${input.config.pieceNoun} title`,
-            summary: `${input.config.pieceNoun} summary`,
-            fields: Object.fromEntries(schema.map((field) => [field.key, field.required ? "<required>" : "<optional>"])),
+            title: `${input.config.pieceNoun} 标题`,
+            summary: `${input.config.pieceNoun} 摘要`,
+            fields: Object.fromEntries(schema.map((field) => [field.key, field.required ? "<必填>" : "<选填>"])),
           },
         ],
       }, null, 2),
       "```",
       "",
-      `Paperclip creates each ${input.config.pieceNoun} in "${targetPipeline.name}" at "${targetStage.name}", sets parentCaseId and requestKey, and copies inherited fields automatically.`,
-      input.config.advanceTo ? `After the call succeeds, Paperclip moves this item to "${input.config.advanceTo}".` : null,
+      `Alice 会在“${targetPipeline.name}”流水线的“${targetStage.name}”阶段创建每个 ${input.config.pieceNoun}，设置 parentCaseId 和 requestKey，并自动复制继承字段。`,
+      input.config.advanceTo ? `调用成功后，Alice 会把此条目移动到“${input.config.advanceTo}”。` : null,
       "",
-      "Target item fields:",
+      "目标条目字段：",
       "",
-      ...schema.map((field) => `- ${field.key}: ${field.label}; type ${field.type}; ${field.required ? "required" : "optional"}${field.options.length ? `; choices ${field.options.join(", ")}` : ""}`),
+      ...schema.map((field) => `- ${field.key}：${field.label}；类型 ${field.type}；${field.required ? "必填" : "选填"}${field.options.length ? `；选项 ${field.options.join("、")}` : ""}`),
     ].filter((line): line is string => line !== null).join("\n");
   }
 
@@ -2419,7 +2419,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
     const currentStageConfig = readBreakdownConfig(stageConfig(detail.stage));
     const config = currentStageConfig ?? await latestCompletedBreakdownConfig(db, input.companyId, input.caseId);
     if (!config) {
-      throw unprocessable("This pipeline stage is not configured for breakdown", { code: "breakdown_not_configured" });
+      throw unprocessable("当前流水线阶段未配置拆解", { code: "breakdown_not_configured" });
     }
     const { targetPipeline, targetStage } = await loadBreakdownTarget(db, input.companyId, config);
     return { targetPipeline, targetStage, config };
@@ -2571,15 +2571,15 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
     });
     const blockers: PipelineRetryPlanInternal["blockers"] = [];
     if (detail.case.terminalKind || detail.case.retiredAt) {
-      blockers.push({ kind: "target_case_terminal", message: "Pipeline item is terminal or retired." });
+      blockers.push({ kind: "target_case_terminal", message: "流水线条目已结束或已停用。" });
     }
     if (detail.pipeline.archivedAt) {
-      blockers.push({ kind: "target_pipeline_archived", message: "Pipeline is archived." });
+      blockers.push({ kind: "target_pipeline_archived", message: "流水线已归档。" });
     }
     if (input.scope === "current_stage" && requestedTargetStageId) {
       blockers.push({
         kind: "target_stage_not_eligible",
-        message: "targetStageId can only be used with previous_stage retry scope.",
+        message: "targetStageId 只能用于 previous_stage 重试范围。",
         details: { targetStageId: requestedTargetStageId },
       });
     }
@@ -2587,27 +2587,27 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       blockers.push(requestedTargetStageId
         ? {
           kind: "target_stage_not_eligible",
-          message: "Selected retry target is not an eligible upstream automated stage for this item.",
+          message: "所选重试目标不是此条目可用的上游自动化阶段。",
           details: {
             targetStageId: requestedTargetStageId,
             availableTargetStageIds: availableTargetStages.map((stage) => stage.id),
           },
         }
-        : { kind: "previous_stage_not_found", message: "No previous automated stage was found for this item." });
+        : { kind: "previous_stage_not_found", message: "未找到此条目的上一个自动化阶段。" });
     } else if (!automation || !routine) {
-      blockers.push({ kind: "automation_not_configured", message: "Target stage does not have compatible automation configured." });
+      blockers.push({ kind: "automation_not_configured", message: "目标阶段未配置兼容的自动化。" });
     }
     if (effects.unresolvedBlockerCaseIds.length > 0) {
       blockers.push({
         kind: "unresolved_blockers",
-        message: "Pipeline item has unresolved blockers.",
+        message: "流水线条目仍有未解决的阻塞项。",
         caseIds: effects.unresolvedBlockerCaseIds,
       });
     }
     if (effects.activeWorkIssueIds.length > 0) {
       blockers.push({
         kind: "active_descendants",
-        message: "Retry effects include active linked work that must be resolved first.",
+        message: "重试会影响仍在执行的关联工作，必须先处理这些工作。",
         issueIds: effects.activeWorkIssueIds,
       });
     }
@@ -2619,7 +2619,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           if (targetPipeline.archivedAt) {
             blockers.push({
               kind: "target_pipeline_archived",
-              message: "Automation target pipeline is archived.",
+              message: "自动化目标流水线已归档。",
               details: { pipelineId: targetPipeline.id },
             });
           }
@@ -2788,7 +2788,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         dbOrTx,
         routine ?? previousRoutine,
         input.actor,
-        "Updated pipeline automation",
+        "已更新流水线自动化",
       );
       return {
         ...configWithVariables,
@@ -2827,7 +2827,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       dbOrTx,
       created!,
       input.actor,
-      "Created pipeline automation",
+      "已创建流水线自动化",
     );
     return {
       ...configWithVariables,
@@ -2935,7 +2935,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       .where(eq(pipelineAutomationExecutions.id, executionId))
       .limit(1)
       .then((rows) => rows[0] ?? null);
-    if (!execution) throw notFound("Pipeline automation execution not found");
+    if (!execution) throw notFound("未找到流水线自动化执行记录");
     if (execution.status === "succeeded" && execution.executionIssueId) {
       return { status: "succeeded", execution };
     }
@@ -3019,8 +3019,8 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           : null;
         throw new Error(
           failureReason
-            ? `Routine run ${run.id} failed: ${failureReason}`
-            : `Routine run ${run.id} did not create or coalesce an execution issue`,
+            ? `例程运行 ${run.id} 失败：${failureReason}`
+            : `例程运行 ${run.id} 未创建或合并执行任务`,
         );
       }
       const [updated] = await db
