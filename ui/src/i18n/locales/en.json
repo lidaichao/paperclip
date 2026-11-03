@@ -11682,6 +11682,12 @@
     "child_agent_0cf00021": "Child agent",
     "unavailable_source_0cf00022": "Unavailable source",
     "waiting_for_result_ellipsis_0cf00023": "Waiting for result...",
-    "no_transcript_yet_0cf00024": "No transcript yet."
+    "no_transcript_yet_0cf00024": "No transcript yet.",
+    "hire_agent_0d000001": "Hire Agent",
+    "ceo_strategy_0d000002": "CEO Strategy",
+    "budget_override_0d000003": "Budget Override",
+    "board_approval_0d000004": "Board Approval",
+    "revision_request_failed_0d000005": "Revision request failed",
+    "resubmit_failed_0d000006": "Resubmit failed"
   }
 }

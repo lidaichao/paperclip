@@ -11682,6 +11682,12 @@
     "child_agent_0cf00021": "子智能体",
     "unavailable_source_0cf00022": "来源不可用",
     "waiting_for_result_ellipsis_0cf00023": "正在等待结果……",
-    "no_transcript_yet_0cf00024": "暂无运行记录。"
+    "no_transcript_yet_0cf00024": "暂无运行记录。",
+    "hire_agent_0d000001": "聘用智能体",
+    "ceo_strategy_0d000002": "CEO 策略",
+    "budget_override_0d000003": "预算例外",
+    "board_approval_0d000004": "管理方审批",
+    "revision_request_failed_0d000005": "请求修改失败",
+    "resubmit_failed_0d000006": "重新提交失败"
   }
 }

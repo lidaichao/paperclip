@@ -4,10 +4,10 @@ import { MarkdownBody } from "./MarkdownBody";
 import { formatCents } from "../lib/utils";
 
 export const typeLabel: Record<string, string> = {
-  hire_agent: "Hire Agent",
-  approve_ceo_strategy: "CEO Strategy",
-  budget_override_required: "Budget Override",
-  request_board_approval: "Board Approval",
+  hire_agent: l10n("local.hire_agent_0d000001"),
+  approve_ceo_strategy: l10n("local.ceo_strategy_0d000002"),
+  budget_override_required: l10n("local.budget_override_0d000003"),
+  request_board_approval: l10n("local.board_approval_0d000004"),
 };
 
 function firstNonEmptyString(...values: unknown[]): string | null {

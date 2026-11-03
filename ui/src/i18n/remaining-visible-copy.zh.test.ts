@@ -242,6 +242,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.runtime_request_type_0cf00015).toBe("运行时{{v0}}请求");
     expect(messages.model_value_session_value_0cf00020).toContain("会话 {{v1}}");
     expect(messages.no_transcript_yet_0cf00024).toBe("暂无运行记录。");
+    expect(messages.hire_agent_0d000001).toBe("聘用智能体");
+    expect(messages.board_approval_0d000004).toBe("管理方审批");
+    expect(messages.revision_request_failed_0d000005).toBe("请求修改失败");
+    expect(messages.resubmit_failed_0d000006).toBe("重新提交失败");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
