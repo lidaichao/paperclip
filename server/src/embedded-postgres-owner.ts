@@ -7,6 +7,6 @@ export function embeddedPostgresOwnerPort(contents: string, dataDir: string, exp
   const port = Number(portText);
   if (Number(pid) !== expectedPid || !directory || resolve(directory) !== resolve(dataDir) ||
       !Number.isSafeInteger(port) || port < 1 || port > 65535)
-    throw new Error("The running embedded PostgreSQL identity does not match this instance. Startup stopped before connecting.");
+    throw new Error("正在运行的内嵌 PostgreSQL 身份与当前实例不匹配。已在连接数据库前停止启动。");
   return port;
 }

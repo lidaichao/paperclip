@@ -82,7 +82,7 @@ export function resolveManagedProjectWorkspaceDir(input: {
   const companyId = input.companyId.trim();
   const projectId = input.projectId.trim();
   if (!companyId || !projectId) {
-    throw new Error("Managed project workspace path requires companyId and projectId.");
+    throw new Error("托管项目工作区路径需要 companyId 和 projectId。");
   }
   return path.resolve(
     resolvePaperclipInstanceRoot(),

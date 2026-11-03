@@ -501,7 +501,7 @@ describe("custom image terminal websocket bridge", () => {
     sendTerminalAuth(ws, minted.token);
     await expect(errorPromise).resolves.toMatchObject({
       type: "error",
-      message: "SSH terminal connection failed.",
+      message: "SSH 终端连接失败。",
     });
     await closePromise;
     expect(sessionStore.get({ id: minted.session.id, token: minted.token })).toBeNull();
@@ -530,7 +530,7 @@ describe("custom image terminal websocket bridge", () => {
     fakeShell.emitSshError(new Error("provider secret should not leak"));
     await expect(errorPromise).resolves.toMatchObject({
       type: "error",
-      message: "SSH terminal connection failed.",
+      message: "SSH 终端连接失败。",
     });
     await closePromise;
     expect(sessionStore.get({ id: minted.session.id, token: minted.token })).toBeNull();

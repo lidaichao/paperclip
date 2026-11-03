@@ -261,7 +261,7 @@ export function issueWorkspaceHandoffTicket(input: {
 }): { ticket: string; payload: WorkspaceHandoffTicketPayload } {
   const origin = normalizeWorkspaceHandoffOrigin(input.origin);
   if (!origin) {
-    throw new Error("Workspace login handoff needs an absolute http(s) target origin");
+    throw new Error("工作区登录移交需要绝对的 http(s) 目标来源地址");
   }
   const issuedAtMs = (input.now ?? new Date()).getTime();
   const issuedAt = Math.floor(issuedAtMs / 1000);
@@ -289,7 +289,7 @@ export function issueWorkspaceHandoffTicket(input: {
 /** Absolute exchange URL for a minted ticket. */
 export function buildWorkspaceHandoffExchangeUrl(input: { origin: string; ticket: string }): string {
   const origin = normalizeWorkspaceHandoffOrigin(input.origin);
-  if (!origin) throw new Error("Workspace login handoff needs an absolute http(s) target origin");
+  if (!origin) throw new Error("工作区登录移交需要绝对的 http(s) 目标来源地址");
   const url = new URL(`/api/auth${WORKSPACE_HANDOFF_EXCHANGE_PATH}`, origin);
   url.searchParams.set(WORKSPACE_HANDOFF_TICKET_QUERY_PARAM, input.ticket);
   return url.toString();

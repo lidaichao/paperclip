@@ -299,7 +299,7 @@ function handleClientFrame(
     return;
   }
 
-  sendJson(socket, { type: "error", message: "Unsupported terminal frame." });
+  sendJson(socket, { type: "error", message: "不支持的终端数据帧。" });
 }
 
 async function validateTerminalUpgrade(input: {
@@ -603,7 +603,7 @@ export function setupEnvironmentCustomImageTerminalWebSocketServer(
               setupSessionId: context.setupSessionId,
               terminalSessionId: context.terminalSession.id,
             }, "custom image terminal ssh stream failed");
-            sendJson(socket, { type: "error", message: "SSH terminal connection failed." });
+            sendJson(socket, { type: "error", message: "SSH 终端连接失败。" });
             closeClient(socket, 1011, "ssh error");
             cleanup("ssh_error");
           });
@@ -619,14 +619,14 @@ export function setupEnvironmentCustomImageTerminalWebSocketServer(
             setupSessionId: context.setupSessionId,
             terminalSessionId: context.terminalSession.id,
           }, "custom image terminal ssh connection failed");
-          sendJson(socket, { type: "error", message: "SSH terminal connection failed." });
+          sendJson(socket, { type: "error", message: "SSH 终端连接失败。" });
           closeClient(socket, 1011, "ssh error");
           cleanup("ssh_connect_error");
         });
     };
 
     authTimer = setTimeout(() => {
-      sendJson(socket, { type: "error", message: "Terminal authentication timed out." });
+      sendJson(socket, { type: "error", message: "终端身份验证超时。" });
       closeClient(socket, 1008, "terminal auth timeout");
       cleanup("auth_timeout");
     }, TERMINAL_AUTH_TIMEOUT_MS);
@@ -641,7 +641,7 @@ export function setupEnvironmentCustomImageTerminalWebSocketServer(
 
         const token = readAuthTokenFrame(data);
         if (!token) {
-          sendJson(socket, { type: "error", message: "Terminal authentication is required." });
+          sendJson(socket, { type: "error", message: "需要完成终端身份验证。" });
           closeClient(socket, 1008, "terminal auth required");
           cleanup("auth_frame_invalid");
           return;

@@ -185,7 +185,7 @@ export function workspaceLoginHandoffPlugin(deps: {
             );
             if (result.reason === "not_configured" || result.reason === "session_failed") {
               throw ctx.error(result.reason === "not_configured" ? "SERVICE_UNAVAILABLE" : "INTERNAL_SERVER_ERROR", {
-                message: "Workspace login handoff is unavailable",
+                message: "工作区登录移交当前不可用",
                 code: result.reason,
               });
             }
