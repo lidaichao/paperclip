@@ -532,7 +532,7 @@ export function accessService(db: Db) {
           )
           .then((rows) => rows.length);
         if (activeOwnerCount <= 1) {
-          throw conflict("Cannot remove the last active owner");
+        throw conflict("不能移除最后一位启用中的所有者");
         }
       }
 
@@ -607,7 +607,7 @@ export function accessService(db: Db) {
       )
       .then((rows) => rows.length);
     if (activeOwnerCount <= 1) {
-      throw conflict("Cannot remove the last active owner");
+        throw conflict("不能移除最后一位启用中的所有者");
     }
   }
 
@@ -618,7 +618,7 @@ export function accessService(db: Db) {
   ) {
     if (!input?.assigneeAgentId && !input?.assigneeUserId) return;
     if (input.assigneeAgentId && input.assigneeUserId) {
-      throw conflict("Choose either an agent or user reassignment target");
+      throw conflict("请选择智能体或用户作为重新分配目标，不能同时选择两者");
     }
     if (input.assigneeUserId) {
       const membership = await tx
@@ -634,7 +634,7 @@ export function accessService(db: Db) {
         )
         .then((rows) => rows[0] ?? null);
       if (!membership) {
-        throw conflict("Replacement user must be an active company member");
+        throw conflict("接替用户必须是启用中的公司成员");
       }
       return;
     }
@@ -662,13 +662,13 @@ export function accessService(db: Db) {
         .then((rows) => rows[0] ?? null);
       if (!existing) return null;
       if (existing.principalType !== "user") {
-        throw conflict("Only human company members can be archived");
+      throw conflict("只能归档公司中的人类成员");
       }
       if (existing.status === "archived") {
         return { member: existing, reassignedIssueCount: 0 };
       }
       if (input.reassignment?.assigneeUserId === existing.principalId) {
-        throw conflict("Replacement user cannot be the archived member");
+        throw conflict("接替用户不能是正在归档的成员");
       }
 
       await assertCanRemoveActiveOwner(
@@ -788,14 +788,14 @@ export function accessService(db: Db) {
       const existingByCompany = new Map(existing.map((row) => [row.companyId, row]));
       const toArchive = existing.filter((row) => !target.has(row.companyId) && row.status !== "archived");
       if (toArchive.length > 0 && options.actorUserId && options.actorUserId === userId) {
-        throw conflict("You cannot remove yourself");
+        throw conflict("你不能移除自己");
       }
       if (toArchive.length > 0 && (await isInstanceAdmin(userId))) {
         throw conflict("不能从公司访问权限中移除实例管理员");
       }
       const protectedArchives = toArchive.filter((row) => row.membershipRole === "owner" || row.membershipRole === "admin");
       if (protectedArchives.length > 0) {
-        throw conflict("Owners and admins cannot be removed from company access");
+        throw conflict("不能从公司访问权限中移除所有者和管理员");
       }
       const activeOwnerArchives = toArchive.filter(
         (row) => row.status === "active" && row.membershipRole === "owner",
@@ -816,7 +816,7 @@ export function accessService(db: Db) {
           const remainingOwners =
             activeOwnerRows.filter((owner) => owner.companyId === row.companyId).length - 1;
           if (remainingOwners <= 0) {
-            throw conflict("Cannot remove the last active owner");
+        throw conflict("不能移除最后一位启用中的所有者");
           }
         }
       }
@@ -1099,7 +1099,7 @@ export function accessService(db: Db) {
           )
           .then((rows) => rows.length);
         if (activeOwnerCount <= 1) {
-          throw conflict("Cannot remove the last active owner");
+        throw conflict("不能移除最后一位启用中的所有者");
         }
       }
 

@@ -123,7 +123,7 @@ describeEmbeddedPostgres("access routes permissions upgrade compatibility", () =
       .send({ membershipRole: "admin" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toContain("You cannot remove yourself");
+    expect(res.body.error).toContain("不能移除自己");
 
     const unchanged = await db
       .select()

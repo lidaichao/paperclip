@@ -99,7 +99,7 @@ describeEmbeddedPostgres("access service", () => {
         { membershipRole: "admin", grants: [] },
         "admin-user",
       ),
-    ).rejects.toThrow("Cannot remove the last active owner");
+    ).rejects.toThrow("不能移除最后一位启用中的所有者");
 
     const unchanged = await db
       .select()
@@ -115,7 +115,7 @@ describeEmbeddedPostgres("access service", () => {
 
     await expect(
       access.updateMember(company.id, owner.id, { status: "suspended" }),
-    ).rejects.toThrow("Cannot remove the last active owner");
+    ).rejects.toThrow("不能移除最后一位启用中的所有者");
 
     const unchanged = await db
       .select()
@@ -207,7 +207,7 @@ describeEmbeddedPostgres("access service", () => {
 
     await expect(
       access.setUserCompanyAccess(owner.principalId, [], { actorUserId: owner.principalId }),
-    ).rejects.toThrow("You cannot remove yourself");
+    ).rejects.toThrow("你不能移除自己");
 
     const admin = await db
       .insert(companyMemberships)
@@ -223,7 +223,7 @@ describeEmbeddedPostgres("access service", () => {
 
     await expect(
       access.setUserCompanyAccess(admin.principalId, [], { actorUserId: owner.principalId }),
-    ).rejects.toThrow("Owners and admins cannot be removed from company access");
+    ).rejects.toThrow("不能从公司访问权限中移除所有者和管理员");
 
     const operator = await db
       .insert(companyMemberships)
