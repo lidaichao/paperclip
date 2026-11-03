@@ -1120,6 +1120,8 @@
   "local.assignment_removed_65635b6d": "Assignment removed",
   "local.assignments_are_active_now_ae99b4e1": "Assignments are active now.",
   "local.assistant_ui_thread_8fdcdb84": "assistant-ui thread",
+  "local.attribution_value_value_4c154a45": "{{v0}}: {{v1}}",
+  "local.attribution_value_value_via_value_0f635164": "{{v0}}: {{v1}} · via {{v2}}",
   "local.at_b1d6b91b": "at",
   "local.at_minute_5f2ed72d": "at minute",
   "local.at_run_start_paperclip_uses_the_personal_gith_562d694f": "At run start, Paperclip uses the personal GitHub connection of the person responsible for the task.",

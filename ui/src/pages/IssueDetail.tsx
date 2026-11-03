@@ -698,18 +698,27 @@ function attributionInitials(name: string): string {
 
 function AttributionAvatar({
   label,
+  kind,
   actor,
   via,
 }: {
-  label: "Assignee" | "Originating";
+  label: string;
+  kind: "assignee" | "originating";
   actor: AttributionActor;
   via?: string | null;
 }) {
-  const displayLabel = label === "Assignee" ? "负责人" : "发起人";
+  const displayLabel = label;
   const accessibleLabel = via
-    ? `${displayLabel}：${actor.name} · 通过 ${via}`
-    : `${displayLabel}：${actor.name}`;
-  const testIdLabel = label.toLowerCase();
+    ? l10n("local.attribution_value_value_via_value_0f635164", {
+        v0: displayLabel,
+        v1: actor.name,
+        v2: via,
+      })
+    : l10n("local.attribution_value_value_4c154a45", {
+        v0: displayLabel,
+        v1: actor.name,
+      });
+  const testIdLabel = kind;
 
   return (
     <Tooltip>
@@ -823,11 +832,16 @@ function IssueAttributionByline({
         data-testid="issue-attribution-avatar-stack"
       >
         {assignee ? (
-          <AttributionAvatar label="Assignee" actor={assignee} />
+          <AttributionAvatar
+            label={l10n("local.assignee_5e20d20e")}
+            kind="assignee"
+            actor={assignee}
+          />
         ) : null}
         {originator ? (
           <AttributionAvatar
-            label="Originating"
+            label={l10n("local.originating_28d9df90")}
+            kind="originating"
             actor={originator}
             via={originatorVia}
           />
