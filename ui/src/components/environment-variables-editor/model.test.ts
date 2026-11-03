@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CompanySecret, UserSecretDefinition } from "@paperclipai/shared";
+import { l10n } from "../../i18n";
 import {
   computeDuplicateNames,
   computeRowHealth,
@@ -163,17 +164,22 @@ describe("validateName", () => {
 
   it("flags invalid charset", () => {
     expect(validateName("1BAD", new Set(), reserved)?.level).toBe("error");
-    expect(validateName("has-dash", new Set(), reserved)?.message).toMatch(/letters, digits/);
+    expect(validateName("has-dash", new Set(), reserved)?.message).toBe(
+      l10n("local.invalid_env_name_letters_digits_0c920009"),
+    );
   });
 
   it("flags duplicates as errors", () => {
-    expect(validateName("DUP", new Set(["DUP"]), reserved)).toEqual({ level: "error", message: "Duplicate name" });
+    expect(validateName("DUP", new Set(["DUP"]), reserved)).toEqual({
+      level: "error",
+      message: l10n("local.duplicate_name_0c920010"),
+    });
   });
 
   it("flags reserved prefixes as warnings", () => {
     const issue = validateName("PAPERCLIP_HOME", new Set(), reserved);
     expect(issue?.level).toBe("warn");
-    expect(issue?.message).toMatch(/Reserved prefix/);
+    expect(issue?.message).toBe(l10n("local.reserved_prefix_automatic_override_0c920011"));
   });
 
   it("charset error takes precedence over reserved prefix", () => {

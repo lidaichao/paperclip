@@ -11303,6 +11303,21 @@
     "executor_copy_agent_address_0c910116": "Open Integrations and copy the address under ‘Connect an agent’.",
     "executor_paste_sign_in_0c910117": "Paste it here and sign in when prompted.",
     "executor_workspace_address_reachable_alice_0c910118": "Use the hosted workspace address or a self-hosted HTTP endpoint reachable from Alice. The server’s endpoint policy also applies.",
-    "executor_keep_options_user_key_0c910119": "Keep any options in the copied address. If using an API key, use a user key; workspace and organization keys cannot open an MCP session."
+    "executor_keep_options_user_key_0c910119": "Keep any options in the copied address. If using an API key, use a user key; workspace and organization keys cannot open an MCP session.",
+    "no_agents_set_up_add_first_0c920001": "No agents are set up yet. Add an agent to get started.",
+    "all_agents_paused_resume_sidebar_0c920002": "All agents are paused. Resume agents from the sidebar to see activity.",
+    "agents_running_activity_soon_0c920003": "Your agents are running — activity will appear here shortly.",
+    "invite_address_selected_copy_manually_0c920004": "The invite address is selected. Copy it manually from the field.",
+    "copy_invite_address_manually_below_0c920005": "Copy the invite address manually from the field below.",
+    "secret_name_lowercase_digits_0c920006": "Use lowercase letters, digits, and _.",
+    "secret_name_already_exists_0c920007": "A secret with this name already exists.",
+    "value_is_required_0c920008": "Value is required.",
+    "invalid_env_name_letters_digits_0c920009": "Invalid name — use letters, digits, and _.",
+    "duplicate_name_0c920010": "Duplicate name",
+    "reserved_prefix_automatic_override_0c920011": "Reserved prefix — provided automatically and may be overridden.",
+    "secret_missing_runs_fail_rebind_0c920012": "This secret no longer exists — runs will fail until you rebind.",
+    "secret_disabled_runs_fail_0c920013": "Runs will fail until the secret is re-enabled or rebound.",
+    "user_secret_missing_runs_fail_0c920014": "This user secret definition no longer exists — runs will fail until you rebind.",
+    "user_secret_disabled_runs_fail_0c920015": "Runs will fail until this user secret definition is re-enabled or rebound."
   }
 }

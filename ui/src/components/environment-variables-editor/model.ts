@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import type { CompanySecret, EnvBinding, SecretVersionSelector, UserSecretDefinition } from "@paperclipai/shared";
 
 export type RowSource = "text" | "secret" | "user_secret";
@@ -181,14 +182,14 @@ export function validateName(
   const trimmed = name.trim();
   if (!trimmed) return null;
   if (!ENV_NAME_RE.test(trimmed)) {
-    return { level: "error", message: "Invalid name — use letters, digits and _" };
+    return { level: "error", message: l10n("local.invalid_env_name_letters_digits_0c920009") };
   }
   if (duplicateNames.has(trimmed)) {
-    return { level: "error", message: "Duplicate name" };
+    return { level: "error", message: l10n("local.duplicate_name_0c920010") };
   }
   for (const prefix of reservedPrefixes) {
     if (prefix && trimmed.startsWith(prefix)) {
-      return { level: "warn", message: "Reserved prefix — provided automatically and may be overridden" };
+      return { level: "warn", message: l10n("local.reserved_prefix_automatic_override_0c920011") };
     }
   }
   return null;
@@ -248,14 +249,14 @@ export function computeRowHealth(row: EnvRow, secrets: readonly CompanySecret[])
     return {
       level: "error",
       kind: "missing",
-      message: "This secret no longer exists — runs will fail until you rebind.",
+      message: l10n("local.secret_missing_runs_fail_rebind_0c920012"),
     };
   }
   if (secret.status !== "active") {
     return {
       level: "warn",
       kind: "disabled",
-      message: "Runs will fail until re-enabled or rebound.",
+      message: l10n("local.secret_disabled_runs_fail_0c920013"),
     };
   }
   return null;
@@ -272,14 +273,14 @@ export function computeUserSecretRowHealth(
     return {
       level: "error",
       kind: "missing",
-      message: "This user secret definition no longer exists — runs will fail until you rebind.",
+      message: l10n("local.user_secret_missing_runs_fail_0c920014"),
     };
   }
   if (definition.status !== "active") {
     return {
       level: "warn",
       kind: "disabled",
-      message: "Runs will fail until this user secret definition is re-enabled or rebound.",
+      message: l10n("local.user_secret_disabled_runs_fail_0c920015"),
     };
   }
   return null;

@@ -11303,6 +11303,21 @@
     "executor_copy_agent_address_0c910116": "打开“集成”，复制“连接智能体”下方的地址。",
     "executor_paste_sign_in_0c910117": "在此粘贴地址，并在提示时登录。",
     "executor_workspace_address_reachable_alice_0c910118": "请使用托管工作区地址，或 Alice 可以访问的自托管 HTTP 接口；服务器的接口策略同样适用。",
-    "executor_keep_options_user_key_0c910119": "请保留复制地址中的所有参数。使用 API 密钥时必须使用用户密钥；工作区密钥和组织密钥无法建立 MCP 会话。"
+    "executor_keep_options_user_key_0c910119": "请保留复制地址中的所有参数。使用 API 密钥时必须使用用户密钥；工作区密钥和组织密钥无法建立 MCP 会话。",
+    "no_agents_set_up_add_first_0c920001": "尚未设置智能体。请先添加一个智能体。",
+    "all_agents_paused_resume_sidebar_0c920002": "所有智能体均已暂停。请从侧边栏恢复智能体以查看动态。",
+    "agents_running_activity_soon_0c920003": "智能体正在运行，相关动态很快会显示在这里。",
+    "invite_address_selected_copy_manually_0c920004": "邀请地址已选中，请从输入框中手动复制。",
+    "copy_invite_address_manually_below_0c920005": "请从下方输入框中手动复制邀请地址。",
+    "secret_name_lowercase_digits_0c920006": "请使用小写字母、数字和下划线。",
+    "secret_name_already_exists_0c920007": "已存在同名密钥。",
+    "value_is_required_0c920008": "必须填写值。",
+    "invalid_env_name_letters_digits_0c920009": "名称无效，请使用字母、数字和下划线。",
+    "duplicate_name_0c920010": "名称重复",
+    "reserved_prefix_automatic_override_0c920011": "该前缀为保留前缀，系统会自动提供，但可能被覆盖。",
+    "secret_missing_runs_fail_rebind_0c920012": "此密钥已不存在；重新绑定前，运行会失败。",
+    "secret_disabled_runs_fail_0c920013": "重新启用或绑定密钥前，运行会失败。",
+    "user_secret_missing_runs_fail_0c920014": "此用户密钥定义已不存在；重新绑定前，运行会失败。",
+    "user_secret_disabled_runs_fail_0c920015": "重新启用或绑定此用户密钥定义前，运行会失败。"
   }
 }

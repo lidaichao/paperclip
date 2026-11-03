@@ -590,19 +590,19 @@ export function ActivityFeed({ className }: ActivityFeedProps) {
     if (!agents) return null;
     if (agents.length === 0) {
       return {
-        text: "No agents set up yet. Add an agent to get started.",
+        text: l10n("local.no_agents_set_up_add_first_0c920001"),
         showPulse: false,
       };
     }
     const allPaused = agents.every((a) => a.status === "paused");
     if (allPaused) {
       return {
-        text: "All agents are paused. Resume agents from the sidebar to see activity.",
+        text: l10n("local.all_agents_paused_resume_sidebar_0c920002"),
         showPulse: false,
       };
     }
     return {
-      text: "Your agents are running — activity will appear here shortly.",
+      text: l10n("local.agents_running_activity_soon_0c920003"),
       showPulse: true,
     };
   }, [agents]);

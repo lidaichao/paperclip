@@ -85,7 +85,11 @@ export function InvitesSection() {
   }
 
   async function copyInviteUrl(url: string) {
-    return copyText(url, "The invite URL is selected. Copy it manually from the field.", selectLatestInviteUrl);
+    return copyText(
+      url,
+      l10n("local.invite_address_selected_copy_manually_0c920004"),
+      selectLatestInviteUrl,
+    );
   }
 
   const inviteHistoryQueryKey = queryKeys.access.invites(selectedCompanyId ?? "", "all", INVITE_HISTORY_PAGE_SIZE);
@@ -118,7 +122,10 @@ export function InvitesSection() {
     onSuccess: async (invite) => {
       setLatestInviteUrl(invite.inviteUrl);
       setLatestInviteCopied(false);
-      const copied = await copyText(invite.inviteUrl, "Copy the invite URL manually from the field below.");
+      const copied = await copyText(
+        invite.inviteUrl,
+        l10n("local.copy_invite_address_manually_below_0c920005"),
+      );
 
       await queryClient.invalidateQueries({ queryKey: inviteHistoryQueryKey });
       pushToast({

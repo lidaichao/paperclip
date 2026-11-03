@@ -45,14 +45,14 @@ export function SecretPopoverForm({
 
   const trimmedName = name.trim();
   const nameError = (() => {
-    if (!trimmedName) return touched ? "Name is required" : null;
-    if (!SECRET_NAME_RE.test(trimmedName)) return "Use lowercase letters, digits and _";
+    if (!trimmedName) return touched ? l10n("local.name_is_required_40d2de1a") : null;
+    if (!SECRET_NAME_RE.test(trimmedName)) return l10n("local.secret_name_lowercase_digits_0c920006");
     if (existingSecretNames?.some((existing) => existing.toLowerCase() === trimmedName)) {
-      return "A secret with this name already exists";
+      return l10n("local.secret_name_already_exists_0c920007");
     }
     return null;
   })();
-  const valueError = value.length === 0 ? (touched ? "Value is required" : null) : null;
+  const valueError = value.length === 0 ? (touched ? l10n("local.value_is_required_0c920008") : null) : null;
   const canSubmit = !submitting && trimmedName.length > 0 && value.length > 0 && !nameError;
 
   async function handleSubmit() {
@@ -63,7 +63,7 @@ export function SecretPopoverForm({
     try {
       await onSubmit(trimmedName, value);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to create secret");
+      setError(submitError instanceof Error ? submitError.message : l10n("local.failed_to_create_secret_f5f9f167"));
       setSubmitting(false);
     }
   }

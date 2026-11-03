@@ -149,6 +149,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.arcade_copy_gateway_address_0c910109).toContain("MCP 网关地址");
     expect(messages.composio_prefilled_external_session_0c910113).toContain("高级身份验证");
     expect(messages.executor_workspace_address_reachable_alice_0c910118).toContain("Alice 可以访问");
+    expect(messages.no_agents_set_up_add_first_0c920001).toContain("添加一个智能体");
+    expect(messages.all_agents_paused_resume_sidebar_0c920002).toContain("所有智能体均已暂停");
+    expect(messages.agents_running_activity_soon_0c920003).toContain("智能体正在运行");
+    expect(messages.invite_address_selected_copy_manually_0c920004).toContain("邀请地址已选中");
+    expect(messages.secret_name_lowercase_digits_0c920006).toContain("小写字母、数字和下划线");
+    expect(messages.secret_missing_runs_fail_rebind_0c920012).toContain("运行会失败");
+    expect(messages.user_secret_disabled_runs_fail_0c920015).toContain("用户密钥定义");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

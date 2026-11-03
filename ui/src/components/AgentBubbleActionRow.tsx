@@ -155,7 +155,7 @@ export function AgentBubbleActionRow({
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() => {
-              void copyWithToast(copyText, "Message copied");
+              void copyWithToast(copyText, l10n("local.message_copied_ed112278"));
             }}
           >
             <Copy className="mr-2 h-3.5 w-3.5" />
