@@ -1837,7 +1837,7 @@ function SecretProposalResolution({
   resolvedByLabel: string | null;
 }) {
   const result = interaction.result?.secretProposal ?? null;
-  const who = resolvedByLabel ?? "the board";
+  const who = resolvedByLabel ?? l10n("local.the_board_10300452");
   const when = interaction.resolvedAt
     ? formatDateTime(interaction.resolvedAt)
     : result?.updatedAt
@@ -2434,7 +2434,9 @@ function RequestConnectionAuthorizationCard({
               {l10n("local.connected_by_9952ce52")}{" "}
               <span className="font-medium text-foreground">
                 {/* "You" is display-cased for a badge; this is mid-sentence. */}
-                {(resolvedByLabel ?? addresseeLabel) === "You" ? l10n("local.you_bb0347a4") : resolvedByLabel ?? addresseeLabel}
+                {new Set(["You", l10n("local.you_08b04193")]).has(resolvedByLabel ?? addresseeLabel)
+                  ? l10n("local.you_bb0347a4")
+                  : resolvedByLabel ?? addresseeLabel}
               </span>
               {resolvedByAgent ? <ResolvedByAgentChip /> : null}
               {interaction.resolvedAt ? (" " + l10n("local.on_value_dc137047", {v0: (formatDateTime(interaction.resolvedAt))})) : ""}
@@ -3589,7 +3591,7 @@ export function IssueThreadInteractionCard({
   const connectionAuthorizationStyles = connectionAuthorization && connectionAuthorizationState
     ? connectionAuthorizationStatusClasses(connectionAuthorizationState, {
         providerName: connectionAuthorization.providerName,
-        addresseeLabel: addresseeLabel ?? "the addressed person",
+        addresseeLabel: addresseeLabel ?? l10n("local.the_addressed_person_2d03804d"),
       })
     : null;
   const activeStyles =

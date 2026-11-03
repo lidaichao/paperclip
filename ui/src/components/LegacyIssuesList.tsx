@@ -2121,7 +2121,7 @@ export function IssuesList({
                               </span>
                             ) : null}
                             {issueBadge ? (
-                              issueBadge === "Paused" ? (
+                              issueBadge === "Paused" || issueBadge === l10n("local.paused_e159b061") ? (
                                 <Badge variant="ghost"
                                   className={cn("ml-1.5 px-1.5 text-(length:--text-nano)", statusBadge.paused)}
                                   aria-label={l10n("local.paused_e159b061")}
