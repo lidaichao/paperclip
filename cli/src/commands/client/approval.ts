@@ -44,14 +44,14 @@ interface ApprovalCommentOptions extends BaseClientOptions {
 }
 
 export function registerApprovalCommands(program: Command): void {
-  const approval = program.command("approval").description("Approval operations");
+  const approval = program.command("approval").description("审批操作");
 
   addCommonClientOptions(
     approval
       .command("list")
-      .description("List approvals for a company")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .option("--status <status>", "Status filter")
+      .description("列出公司审批")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .option("--status <status>", "状态筛选")
       .action(async (opts: ApprovalListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -94,8 +94,8 @@ export function registerApprovalCommands(program: Command): void {
   addCommonClientOptions(
     approval
       .command("get")
-      .description("Get one approval")
-      .argument("<approvalId>", "Approval ID")
+      .description("获取一个审批")
+      .argument("<approvalId>", "审批编号")
       .action(async (approvalId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -110,12 +110,12 @@ export function registerApprovalCommands(program: Command): void {
   addCommonClientOptions(
     approval
       .command("create")
-      .description("Create an approval request")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .requiredOption("--type <type>", "Approval type (hire_agent|approve_ceo_strategy)")
-      .requiredOption("--payload <json>", "Approval payload as JSON object")
-      .option("--requested-by-agent-id <id>", "Requesting agent ID")
-      .option("--issue-ids <csv>", "Comma-separated linked issue IDs")
+      .description("创建审批请求")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .requiredOption("--type <type>", "审批类型（hire_agent|approve_ceo_strategy）")
+      .requiredOption("--payload <json>", "JSON 对象形式的审批数据")
+      .option("--requested-by-agent-id <id>", "发起请求的智能体编号")
+      .option("--issue-ids <csv>", "用逗号分隔的关联任务编号")
       .action(async (opts: ApprovalCreateOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -138,10 +138,10 @@ export function registerApprovalCommands(program: Command): void {
   addCommonClientOptions(
     approval
       .command("approve")
-      .description("Approve an approval request")
-      .argument("<approvalId>", "Approval ID")
-      .option("--decision-note <text>", "Decision note")
-      .option("--decided-by-user-id <id>", "Decision actor user ID")
+      .description("批准审批请求")
+      .argument("<approvalId>", "审批编号")
+      .option("--decision-note <text>", "决策说明")
+      .option("--decided-by-user-id <id>", "决策用户编号")
       .action(async (approvalId: string, opts: ApprovalDecisionOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -160,10 +160,10 @@ export function registerApprovalCommands(program: Command): void {
   addCommonClientOptions(
     approval
       .command("reject")
-      .description("Reject an approval request")
-      .argument("<approvalId>", "Approval ID")
-      .option("--decision-note <text>", "Decision note")
-      .option("--decided-by-user-id <id>", "Decision actor user ID")
+      .description("拒绝审批请求")
+      .argument("<approvalId>", "审批编号")
+      .option("--decision-note <text>", "决策说明")
+      .option("--decided-by-user-id <id>", "决策用户编号")
       .action(async (approvalId: string, opts: ApprovalDecisionOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -182,10 +182,10 @@ export function registerApprovalCommands(program: Command): void {
   addCommonClientOptions(
     approval
       .command("request-revision")
-      .description("Request revision for an approval")
-      .argument("<approvalId>", "Approval ID")
-      .option("--decision-note <text>", "Decision note")
-      .option("--decided-by-user-id <id>", "Decision actor user ID")
+      .description("请求修改审批")
+      .argument("<approvalId>", "审批编号")
+      .option("--decision-note <text>", "决策说明")
+      .option("--decided-by-user-id <id>", "决策用户编号")
       .action(async (approvalId: string, opts: ApprovalDecisionOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -204,9 +204,9 @@ export function registerApprovalCommands(program: Command): void {
   addCommonClientOptions(
     approval
       .command("resubmit")
-      .description("Resubmit an approval (optionally with new payload)")
-      .argument("<approvalId>", "Approval ID")
-      .option("--payload <json>", "Payload JSON object")
+      .description("重新提交审批（可提供新数据）")
+      .argument("<approvalId>", "审批编号")
+      .option("--payload <json>", "JSON 数据对象")
       .action(async (approvalId: string, opts: ApprovalResubmitOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -224,9 +224,9 @@ export function registerApprovalCommands(program: Command): void {
   addCommonClientOptions(
     approval
       .command("comment")
-      .description("Add comment to an approval")
-      .argument("<approvalId>", "Approval ID")
-      .requiredOption("--body <text>", "Comment body")
+      .description("为审批添加评论")
+      .argument("<approvalId>", "审批编号")
+      .requiredOption("--body <text>", "评论正文")
       .action(async (approvalId: string, opts: ApprovalCommentOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -251,10 +251,10 @@ function parseJsonObject(value: string, name: string): Record<string, unknown> {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-      throw new Error(`${name} must be a JSON object`);
+      throw new Error(`${name} 必须是 JSON 对象`);
     }
     return parsed as Record<string, unknown>;
   } catch (err) {
-    throw new Error(`Invalid ${name} JSON: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(`${name} JSON 无效：${err instanceof Error ? err.message : String(err)}`);
   }
 }

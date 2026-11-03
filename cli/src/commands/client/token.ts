@@ -59,23 +59,23 @@ interface BoardKeyRow {
 }
 
 export function registerTokenCommands(program: Command): void {
-  const token = program.command("token").description("Manage Paperclip API tokens");
-  const agent = token.command("agent").description("Manage agent API keys");
+  const token = program.command("token").description("管理 Alice 接口令牌");
+  const agent = token.command("agent").description("管理智能体接口密钥");
 
   addCommonClientOptions(
     agent
       .command("create")
-      .description("Create an agent API key")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .requiredOption("--agent <agent>", "Agent ID, shortname, or unambiguous name")
-      .option("--name <name>", "API key label", "cli-agent")
+      .description("创建智能体接口密钥")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .requiredOption("--agent <agent>", "智能体编号、短名称或无歧义名称")
+      .option("--name <name>", "接口密钥标签", "cli-agent")
       .action(async (opts: AgentTokenOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const agentRow = await resolveAgent(ctx.api, ctx.companyId ?? "", opts.agent ?? "");
           const payload = createAgentKeySchema.parse({ name: opts.name });
           const key = await ctx.api.post<CreatedAgentKey>(apiPath`/api/agents/${agentRow.id}/keys`, payload);
-          if (!key) throw new Error("Failed to create agent API key");
+          if (!key) throw new Error("创建智能体接口密钥失败");
           printOutput(
             {
               agentId: agentRow.id,
@@ -95,9 +95,9 @@ export function registerTokenCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("list")
-      .description("List agent API keys")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .requiredOption("--agent <agent>", "Agent ID, shortname, or unambiguous name")
+      .description("列出智能体接口密钥")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .requiredOption("--agent <agent>", "智能体编号、短名称或无歧义名称")
       .action(async (opts: AgentTokenOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -121,10 +121,10 @@ export function registerTokenCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("revoke")
-      .description("Revoke an agent API key")
-      .argument("<keyId>", "Agent API key ID")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .requiredOption("--agent <agent>", "Agent ID, shortname, or unambiguous name")
+      .description("撤销智能体接口密钥")
+      .argument("<keyId>", "智能体接口密钥编号")
+      .requiredOption("-C, --company-id <id>", "公司编号")
+      .requiredOption("--agent <agent>", "智能体编号、短名称或无歧义名称")
       .action(async (keyId: string, opts: AgentTokenOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -138,17 +138,17 @@ export function registerTokenCommands(program: Command): void {
     { includeCompany: false },
   );
 
-  const board = token.command("board").description("Manage board API keys");
+  const board = token.command("board").description("管理看板接口密钥");
 
   addCommonClientOptions(
     board
       .command("create")
-      .description("Create a named board API key")
-      .option("-C, --company-id <id>", "Company ID used for audit context")
-      .option("--name <name>", "API key label", "cli-board")
-      .option("--expires-at <iso8601>", "Expiration timestamp")
-      .option("--ttl-days <days>", "Expiration in days from now")
-      .option("--never-expires", "Create a non-expiring key")
+      .description("创建具名看板接口密钥")
+      .option("-C, --company-id <id>", "审计上下文使用的公司编号")
+      .option("--name <name>", "接口密钥标签", "cli-board")
+      .option("--expires-at <iso8601>", "过期时间戳")
+      .option("--ttl-days <days>", "从当前时间起计算的有效天数")
+      .option("--never-expires", "创建永不过期的密钥")
       .action(async (opts: BoardTokenOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -159,7 +159,7 @@ export function registerTokenCommands(program: Command): void {
             expiresAt,
           });
           const key = await ctx.api.post<CreatedBoardKey>("/api/board-api-keys", payload);
-          if (!key) throw new Error("Failed to create board API key");
+          if (!key) throw new Error("创建看板接口密钥失败");
           printOutput({ key }, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -171,7 +171,7 @@ export function registerTokenCommands(program: Command): void {
   addCommonClientOptions(
     board
       .command("list")
-      .description("List board API keys for the current board user")
+      .description("列出当前看板用户的接口密钥")
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -200,8 +200,8 @@ export function registerTokenCommands(program: Command): void {
   addCommonClientOptions(
     board
       .command("revoke")
-      .description("Revoke a board API key")
-      .argument("<keyId>", "Board API key ID")
+      .description("撤销看板接口密钥")
+      .argument("<keyId>", "看板接口密钥编号")
       .action(async (keyId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -216,15 +216,15 @@ export function registerTokenCommands(program: Command): void {
 
 async function resolveAgent(api: { get<T>(path: string): Promise<T | null> }, companyId: string, agentRef: string): Promise<Agent> {
   const trimmed = agentRef.trim();
-  if (!trimmed) throw new Error("Agent reference is required");
+  if (!trimmed) throw new Error("必须提供智能体引用");
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trimmed)) {
     const agent = await api.get<Agent>(apiPath`/api/agents/${trimmed}`);
-    if (!agent || agent.companyId !== companyId) throw new Error(`Agent not found: ${agentRef}`);
+    if (!agent || agent.companyId !== companyId) throw new Error(`未找到智能体：${agentRef}`);
     return agent;
   }
   const query = new URLSearchParams({ companyId });
   const agent = await api.get<Agent>(`${apiPath`/api/agents/${trimmed}`}?${query.toString()}`);
-  if (!agent || agent.companyId !== companyId) throw new Error(`Agent not found: ${agentRef}`);
+  if (!agent || agent.companyId !== companyId) throw new Error(`未找到智能体：${agentRef}`);
   return agent;
 }
 
@@ -232,12 +232,12 @@ function resolveBoardKeyExpiresAt(opts: BoardTokenOptions): Date | null | undefi
   if (opts.neverExpires) return null;
   if (opts.expiresAt?.trim()) {
     const date = new Date(opts.expiresAt.trim());
-    if (!Number.isFinite(date.getTime())) throw new Error(`Invalid --expires-at value: ${opts.expiresAt}`);
+    if (!Number.isFinite(date.getTime())) throw new Error(`--expires-at 值无效：${opts.expiresAt}`);
     return date;
   }
   if (opts.ttlDays?.trim()) {
     const days = Number(opts.ttlDays);
-    if (!Number.isFinite(days) || days <= 0) throw new Error(`Invalid --ttl-days value: ${opts.ttlDays}`);
+    if (!Number.isFinite(days) || days <= 0) throw new Error(`--ttl-days 值无效：${opts.ttlDays}`);
     return new Date(Date.now() + Math.floor(days * 24 * 60 * 60 * 1000));
   }
   return undefined;
