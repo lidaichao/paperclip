@@ -227,7 +227,7 @@ class PipelinePermissionPreflightError extends HttpError {
       input.principalId,
       input.permissionKey,
     ].join(":");
-    super(403, "Pipeline automation assignee lacks pipelines:write on the target pipeline", {
+    super(403, "流水线自动化负责人缺少目标流水线的 pipelines:write 权限", {
       code: "pipeline_permission_preflight_failed",
       fingerprint,
       caseId: input.caseId,
@@ -318,7 +318,7 @@ export async function ensurePipelineCaseBodyDocumentFromSummary(
     title: PIPELINE_CASE_BODY_DOCUMENT_TITLE,
     format: "markdown",
     body,
-    changeSummary: "Created from pipeline item body",
+    changeSummary: "根据流水线条目正文创建",
     createdByAgentId: actorFields.agentId,
     createdByUserId: actorFields.userId,
     createdByRunId: actorFields.runId,
@@ -463,7 +463,7 @@ export async function resolvePipelineCaseConversationSource(
     .where(and(eq(pipelineCases.companyId, companyId), eq(pipelineCases.id, caseId)))
     .limit(1)
     .then((rows) => rows[0] ?? null);
-  if (!caseRow) throw notFound("Pipeline case not found");
+  if (!caseRow) throw notFound("未找到流水线条目");
 
   const conversationLink = await resolveLatestCaseIssueLink(db, {
     companyId,
@@ -540,7 +540,7 @@ export async function resolvePipelineCaseConversationSource(
 function normalizeStageKind(kind: PipelineStageKind | string): CanonicalPipelineStageKind {
   if (kind === "open") return "working";
   if (kind === "working" || kind === "review" || kind === "done" || kind === "cancelled") return kind;
-  throw unprocessable("Pipeline stage kind must be working, review, done, or cancelled", { code: "validation" });
+  throw unprocessable("流水线阶段类型必须是 working、review、done 或 cancelled", { code: "validation" });
 }
 
 function withDefaultWorkingChildrenGateConfig(
@@ -600,7 +600,7 @@ function activityActorPatch(actor: PipelineActor) {
 
 function assertActorProvenance(actor: PipelineActor) {
   if (actor.type === "agent" && !actor.runId) {
-    throw unprocessable("Agent pipeline mutations require a run id", { code: "run_id_required" });
+    throw unprocessable("智能体修改流水线需要运行 ID", { code: "run_id_required" });
   }
 }
 
@@ -705,31 +705,31 @@ function readBreakdownCarryOverPolicy(raw: NonNullable<PipelineStageConfig["brea
   const policy = raw.carryOverPolicy;
   if (policy !== undefined && policy !== null) {
     if (!policy || typeof policy !== "object" || Array.isArray(policy)) {
-      throw unprocessable("Breakdown carryOverPolicy must be an object", { code: "validation" });
+      throw unprocessable("拆解的 carryOverPolicy 必须是对象", { code: "validation" });
     }
     const record = policy as Record<string, unknown>;
     const version = record.version ?? 1;
     if (version !== 1) {
-      throw unprocessable("Breakdown carryOverPolicy version is unsupported", {
+      throw unprocessable("不支持此拆解 carryOverPolicy 版本", {
         code: "validation",
         version,
       });
     }
     const mode = record.mode ?? "all_except";
     if (mode !== "all_except" && mode !== "only") {
-      throw unprocessable("Breakdown carryOverPolicy mode must be all_except or only", { code: "validation" });
+      throw unprocessable("拆解 carryOverPolicy 的 mode 必须是 all_except 或 only", { code: "validation" });
     }
     return {
       version: 1,
       mode,
-      includeFields: readStringList(record.includeFields, "Breakdown carryOverPolicy includeFields"),
-      excludeFields: readStringList(record.excludeFields, "Breakdown carryOverPolicy excludeFields"),
+      includeFields: readStringList(record.includeFields, "拆解 carryOverPolicy 的 includeFields"),
+      excludeFields: readStringList(record.excludeFields, "拆解 carryOverPolicy 的 excludeFields"),
     };
   }
   return {
     version: 1,
     mode: "only",
-    includeFields: readStringList(raw.inheritFields, "Breakdown inheritFields"),
+    includeFields: readStringList(raw.inheritFields, "拆解的 inheritFields"),
     excludeFields: [],
   };
 }
@@ -757,8 +757,8 @@ function readBreakdownConfig(config?: PipelineStageConfig | null): PipelineBreak
   const targetStageKey = typeof raw.targetStageKey === "string" && raw.targetStageKey.trim()
     ? raw.targetStageKey.trim()
     : null;
-  if (!targetPipelineId) throw unprocessable("Breakdown targetPipelineId is required", { code: "validation" });
-  if (!targetStageKey) throw unprocessable("Breakdown targetStageKey is required", { code: "validation" });
+  if (!targetPipelineId) throw unprocessable("拆解需要 targetPipelineId", { code: "validation" });
+  if (!targetStageKey) throw unprocessable("拆解需要 targetStageKey", { code: "validation" });
   const pieceNoun = typeof raw.pieceNoun === "string" && raw.pieceNoun.trim()
     ? raw.pieceNoun.trim()
     : "piece";
@@ -767,7 +767,7 @@ function readBreakdownConfig(config?: PipelineStageConfig | null): PipelineBreak
     : raw.waitForPieces === true;
   const whenFinishedMoveTo = readOptionalStageKey(
     raw.whenFinishedMoveTo ?? config?.autoAdvanceOnChildrenTerminal,
-    "Breakdown whenFinishedMoveTo",
+    "拆解的 whenFinishedMoveTo",
   );
   const carryOverPolicy = readBreakdownCarryOverPolicy(raw);
   return {
@@ -776,7 +776,7 @@ function readBreakdownConfig(config?: PipelineStageConfig | null): PipelineBreak
     pieceNoun,
     carryOverPolicy,
     inheritFields: carryOverPolicy.mode === "only" ? carryOverPolicy.includeFields : [],
-    advanceTo: readOptionalStageKey(raw.advanceTo, "Breakdown advanceTo"),
+    advanceTo: readOptionalStageKey(raw.advanceTo, "拆解的 advanceTo"),
     waitForPieces,
     whenFinishedMoveTo,
   };
@@ -951,21 +951,21 @@ function normalizeStageConfig(kind: PipelineStageKind | string, config?: Pipelin
   const next = rest as PipelineStageConfig;
 
   if (next.disabled !== undefined && typeof next.disabled !== "boolean") {
-    throw unprocessable("Stage disabled must be boolean", { code: "validation" });
+    throw unprocessable("阶段的 disabled 必须是布尔值", { code: "validation" });
   }
 
   if (next.requireApproval !== undefined && typeof next.requireApproval !== "boolean") {
-    throw unprocessable("Stage requireApproval must be boolean", { code: "validation" });
+    throw unprocessable("阶段的 requireApproval 必须是布尔值", { code: "validation" });
   }
   if (next.requireChildrenTerminal !== undefined && typeof next.requireChildrenTerminal !== "boolean") {
-    throw unprocessable("Stage requireChildrenTerminal must be boolean", { code: "validation" });
+    throw unprocessable("阶段的 requireChildrenTerminal 必须是布尔值", { code: "validation" });
   }
   if (next.requireNoUnresolvedDrift !== undefined && typeof next.requireNoUnresolvedDrift !== "boolean") {
-    throw unprocessable("Stage requireNoUnresolvedDrift must be boolean", { code: "validation" });
+    throw unprocessable("阶段的 requireNoUnresolvedDrift 必须是布尔值", { code: "validation" });
   }
   if (next.breakdown !== undefined) {
     if (!next.breakdown || typeof next.breakdown !== "object" || Array.isArray(next.breakdown)) {
-      throw unprocessable("Stage breakdown must be an object", { code: "validation" });
+      throw unprocessable("阶段的 breakdown 必须是对象", { code: "validation" });
     }
     const breakdown = readBreakdownConfig(next);
     next.breakdown = {
@@ -982,7 +982,7 @@ function normalizeStageConfig(kind: PipelineStageKind | string, config?: Pipelin
   }
 
   if (reviewerKind !== undefined && reviewerKind !== "human" && reviewerKind !== "any") {
-    throw unprocessable("Review stage reviewerKind must be human or any", { code: "validation" });
+    throw unprocessable("审核阶段的 reviewerKind 必须是 human 或 any", { code: "validation" });
   }
 
   const legacyRequiresApproval = reviewerKind === "human" ? true : reviewerKind === "any" ? false : undefined;
@@ -994,22 +994,22 @@ function normalizeStageConfig(kind: PipelineStageKind | string, config?: Pipelin
   if (kind !== "review") return next;
 
   if (typeof next.approveToStageKey !== "string" || next.approveToStageKey.trim().length === 0) {
-    throw unprocessable("Review stages require approveToStageKey", { code: "validation" });
+    throw unprocessable("审核阶段需要 approveToStageKey", { code: "validation" });
   }
   if (typeof next.rejectToStageKey !== "string" || next.rejectToStageKey.trim().length === 0) {
-    throw unprocessable("Review stages require rejectToStageKey", { code: "validation" });
+    throw unprocessable("审核阶段需要 rejectToStageKey", { code: "validation" });
   }
   if (
     next.requestChangesToStageKey !== undefined &&
     (typeof next.requestChangesToStageKey !== "string" || next.requestChangesToStageKey.trim().length === 0)
   ) {
-    throw unprocessable("Review stage requestChangesToStageKey must be a non-empty string", { code: "validation" });
+    throw unprocessable("审核阶段的 requestChangesToStageKey 必须是非空字符串", { code: "validation" });
   }
   if (next.requireRejectReason !== undefined && typeof next.requireRejectReason !== "boolean") {
-    throw unprocessable("Review stage requireRejectReason must be boolean", { code: "validation" });
+    throw unprocessable("审核阶段的 requireRejectReason 必须是布尔值", { code: "validation" });
   }
   if (next.requireRequestChangesReason !== undefined && typeof next.requireRequestChangesReason !== "boolean") {
-    throw unprocessable("Review stage requireRequestChangesReason must be boolean", { code: "validation" });
+    throw unprocessable("审核阶段的 requireRequestChangesReason 必须是布尔值", { code: "validation" });
   }
   return {
     ...next,
@@ -1037,15 +1037,15 @@ function normalizeStageApprover(
   requireApproval: boolean,
 ): NonNullable<PipelineStageConfig["approver"]> {
   if (approver !== undefined && (typeof approver !== "object" || approver === null || Array.isArray(approver))) {
-    throw unprocessable("Stage approver must be an object", { code: "validation" });
+    throw unprocessable("阶段的 approver 必须是对象", { code: "validation" });
   }
   const kind = approver?.kind ?? "any_human";
   if (kind !== "any_human" && kind !== "user" && kind !== "agent") {
-    throw unprocessable("Stage approver kind must be any_human, user, or agent", { code: "validation" });
+    throw unprocessable("阶段 approver 的 kind 必须是 any_human、user 或 agent", { code: "validation" });
   }
   const id = typeof approver?.id === "string" ? approver.id.trim() : approver?.id;
   if ((kind === "user" || kind === "agent") && (typeof id !== "string" || id.length === 0)) {
-    throw unprocessable("Specific stage approvers require an id", { code: "validation" });
+    throw unprocessable("指定阶段审批人时需要 ID", { code: "validation" });
   }
   if (kind === "any_human") {
     return { kind };
@@ -1059,7 +1059,7 @@ function normalizeStageApprover(
 function assertStageEnabled(stage: typeof pipelineStages.$inferSelect, action: string) {
   const config = normalizeStageConfig(stage.kind, stageConfig(stage));
   if (config.disabled !== true) return;
-  throw unprocessable("Pipeline stage is disabled", {
+  throw unprocessable("流水线阶段已禁用", {
     code: "stage_disabled",
     action,
     stageId: stage.id,
@@ -1073,17 +1073,17 @@ function assertActorCanApproveStageExit(stage: typeof pipelineStages.$inferSelec
   const approver = config.approver ?? { kind: "any_human" };
   if (approver.kind === "any_human") {
     if (actor.type === "user") return;
-    throw new HttpError(403, "Stage approval requires a human approver", { code: "review_required" });
+    throw new HttpError(403, "阶段审批需要人工审批人", { code: "review_required" });
   }
   if (approver.kind === "user") {
     if (actor.type === "user" && actor.userId === approver.id) return;
-    throw new HttpError(403, "Stage approval requires the configured user approver", {
+    throw new HttpError(403, "阶段审批需要已配置的用户审批人", {
       code: "review_required",
       approver,
     });
   }
   if (actor.type === "agent" && actor.agentId === approver.id) return;
-  throw new HttpError(403, "Stage approval requires the configured agent approver", {
+  throw new HttpError(403, "阶段审批需要已配置的智能体审批人", {
     code: "review_required",
     approver,
   });
@@ -1096,13 +1096,13 @@ function assertReviewTargetsInSet(
 ) {
   if (kind !== "review") return;
   if (!stageKeys.has(config.approveToStageKey!)) {
-    throw unprocessable("Review approveToStageKey references an unknown stage", { code: "validation" });
+    throw unprocessable("审核阶段的 approveToStageKey 引用了未知阶段", { code: "validation" });
   }
   if (!stageKeys.has(config.rejectToStageKey!)) {
-    throw unprocessable("Review rejectToStageKey references an unknown stage", { code: "validation" });
+    throw unprocessable("审核阶段的 rejectToStageKey 引用了未知阶段", { code: "validation" });
   }
   if (config.requestChangesToStageKey !== undefined && !stageKeys.has(config.requestChangesToStageKey)) {
-    throw unprocessable("Review requestChangesToStageKey references an unknown stage", { code: "validation" });
+    throw unprocessable("审核阶段的 requestChangesToStageKey 引用了未知阶段", { code: "validation" });
   }
 }
 
@@ -1110,7 +1110,7 @@ function targetStageKeyForReviewDecision(config: PipelineStageConfig, decision: 
   if (decision === "approve") return config.approveToStageKey!;
   if (decision === "reject") return config.rejectToStageKey!;
   if (!config.requestChangesToStageKey) {
-    throw unprocessable("Review stage does not configure requestChangesToStageKey", { code: "validation" });
+    throw unprocessable("审核阶段未配置 requestChangesToStageKey", { code: "validation" });
   }
   return config.requestChangesToStageKey;
 }
