@@ -38,20 +38,20 @@ export const REUSE_CHAT_ATTACHMENT_TOOL_NAME = "reuse_chat_attachment";
 export const LIST_CHAT_ATTACHMENTS_TOOL_DEFINITION = Object.freeze({
   name: LIST_CHAT_ATTACHMENTS_TOOL_NAME,
   description:
-    "List metadata for files already received or delivered in this same external-chat conversation. Call with {} for the latest page (default 20), or set limit to an integer from 1 through 50. Page through nextCursor to find older files, or filter by an exact sourceCommentId when known. File bytes and private storage locations are never returned.",
+    "列出同一外部聊天对话中已经接收或交付的文件元数据。使用 {} 获取最新一页（默认 20 条），或将 limit 设为 1 至 50 的整数。通过 nextCursor 翻页查找更早文件；已知准确 sourceCommentId 时也可据此筛选。工具绝不会返回文件字节或私有存储位置。",
   inputSchema: {
     type: "object",
     properties: {
       sourceCommentId: {
         type: ["string", "null"],
         description:
-          "Optional exact sourceCommentId returned by this tool on an earlier page.",
+          "可选：此工具在之前页面返回的准确 sourceCommentId。",
       },
       limit: { type: "integer", minimum: 1, maximum: 50, default: 20 },
       cursor: {
         type: ["string", "null"],
         maxLength: 1024,
-        description: "Opaque nextCursor from the immediately preceding page.",
+        description: "上一页返回的不透明 nextCursor。",
       },
     },
     required: [],
@@ -69,7 +69,7 @@ export const LIST_CHAT_ATTACHMENTS_TOOL_DEFINITION = Object.freeze({
 export const REUSE_CHAT_ATTACHMENT_TOOL_DEFINITION = Object.freeze({
   name: REUSE_CHAT_ATTACHMENT_TOOL_NAME,
   description:
-    "Prepare one exact file previously received or delivered in this same external-chat conversation for the current response. All four arguments are required: copy sourceCommentId and attachmentId from list_chat_attachments, provide a nonempty title, and choose a nonempty idempotencyKey of at most 200 characters once for this reuse; send that same key unchanged on every retry. This queues a verified copy for final publication; it does not confirm provider delivery.",
+    "为当前回复准备同一外部聊天对话中先前接收或交付过的一个准确文件。四个参数都必填：从 list_chat_attachments 复制 sourceCommentId 和 attachmentId，提供非空 title，并为本次复用选择一个不超过 200 个字符的非空 idempotencyKey；每次重试都原样使用同一个键。该操作会排队一个经过验证的副本用于最终发布，但不代表外部平台已经收到。",
   inputSchema: {
     type: "object",
     properties: {
