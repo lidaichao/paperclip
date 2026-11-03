@@ -632,7 +632,7 @@ describe("AgentMail durable email pipeline", () => {
     });
     await expect(
       f.service.queueSend(randomUUID(), input, { userId: "email-board" }),
-    ).rejects.toThrow("Email inbox not found");
+    ).rejects.toThrow("未找到邮件收件箱");
     await expect(
       f.service.admit(await f.service.getEndpoint(f.endpointId), {
         event_type: "message.received",
@@ -928,7 +928,7 @@ describe("AgentMail durable email pipeline", () => {
     const chat = chatChannelService(db, { heartbeat: { wakeup: f.wakeup } });
     await expect(
       chat.publishComment(f.endpointId, conversation.id, comment.id),
-    ).rejects.toThrow(/explicit email/);
+    ).rejects.toThrow(/明确的邮件发送操作/);
     await chat.shutdown();
     await db
       .update(agents)

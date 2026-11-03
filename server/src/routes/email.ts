@@ -30,7 +30,7 @@ export function emailRoutes(db: Db, service: EmailChannelService) {
   async function manager(req: Request, companyId: string) {
     assertBoard(req);
     if (!hasCompanyAccess(req, companyId))
-      throw notFound("Email inbox not found");
+      throw notFound("未找到邮件收件箱");
     assertCompanyAccess(req, companyId);
     if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin)
       return;

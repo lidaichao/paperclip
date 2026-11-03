@@ -135,7 +135,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
   }
   async function requireEnabled() {
     if (!(await enabled()))
-      throw forbidden("Enable experimental chat connections first");
+      throw forbidden("请先启用实验性聊天连接");
   }
   async function getEndpoint(id: string) {
     const [row] = await db
@@ -144,7 +144,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
       .where(
         and(eq(chatEndpoints.id, id), eq(chatEndpoints.provider, "agentmail")),
       );
-    if (!row) throw notFound("Email inbox not found");
+    if (!row) throw notFound("未找到邮件收件箱");
     return row;
   }
   async function getConfig(id: string) {
@@ -152,7 +152,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
       .select()
       .from(emailEndpoints)
       .where(eq(emailEndpoints.endpointId, id));
-    if (!row) throw notFound("Email inbox configuration not found");
+    if (!row) throw notFound("未找到邮件收件箱配置");
     return row;
   }
   async function summary(endpoint: Endpoint): Promise<EmailEndpointSummary> {
@@ -351,7 +351,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
             ),
           );
         if (lost || !held || stopped)
-          throw conflict("Email worker lease expired");
+          throw conflict("邮件工作进程租约已过期");
       };
       await fence();
       const result = await work(fence);
@@ -384,13 +384,13 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
       !connection?.enabled ||
       connection.status !== "active"
     )
-      throw conflict("This email inbox is not active");
+      throw conflict("此邮件收件箱未处于活动状态");
     const runtimeSecretId = connection.credentialSecretRefs.find((ref) => ref.configPath === "credentials.apiKey")?.secretId;
     const [runtimeSecret] = runtimeSecretId ? await db.select({ id: companySecrets.id }).from(companySecrets).where(and(
       eq(companySecrets.id, runtimeSecretId), eq(companySecrets.companyId, endpoint.companyId),
       eq(companySecrets.status, "active"), isNull(companySecrets.deletedAt),
     )) : [];
-    if (!runtimeSecret) throw conflict("This email inbox credential is unavailable");
+    if (!runtimeSecret) throw conflict("此邮件收件箱凭据不可用");
     const sourceId = connection.config.credentialConnectionId;
     if (typeof sourceId === "string")
       await emailConnectionService(db, fetchImpl).assertAgentAccess(
@@ -423,12 +423,12 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
       .select()
       .from(agents)
       .where(and(eq(agents.companyId, companyId), eq(agents.id, agentId)));
-    if (!agent) throw notFound("Assigned agent not found");
+    if (!agent) throw notFound("未找到已分配的智能体");
     if (agent.permissions.trustPreset !== "low_trust_review") return {};
     const boundary = (agent.permissions as Partial<AgentPermissions>)
       .authorizationPolicy?.trustBoundary;
     if (boundary?.companyId && boundary.companyId !== companyId)
-      throw forbidden("Low-trust boundary belongs to another company");
+      throw forbidden("低信任边界属于其他公司");
     if (boundary?.rootIssueId) {
       const [root] = await db
         .select()
@@ -476,7 +476,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
       .where(
         and(eq(issues.companyId, endpoint.companyId), eq(issues.id, issueId)),
       );
-    if (!task) throw notFound("Task not found");
+    if (!task) throw notFound("未找到任务");
     if (actor.userId) {
       const [connection] = await db
         .select()
@@ -512,12 +512,12 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
           ),
         );
       if (!membership || (membership.membershipRole === "viewer" && !admin))
-        throw forbidden("Board user no longer has company write access");
+        throw forbidden("工作台用户已失去公司写入权限");
     }
     if (!actor.userId && !actor.agentId)
-      throw forbidden("An authenticated actor is required");
+      throw forbidden("需要已验证身份的操作方");
     if (task.status === "cancelled")
-      throw forbidden("Cancelled tasks cannot send email");
+      throw forbidden("已取消的任务不能发送邮件");
     if (actor.agentId) {
       if (
         actor.agentId !== endpoint.assignedAgentId ||
@@ -542,9 +542,9 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
         (agent.budgetMonthlyCents > 0 &&
           agent.spentMonthlyCents >= agent.budgetMonthlyCents)
       )
-        throw forbidden("Agent is not available to send email");
+        throw forbidden("智能体当前无法发送邮件");
       if (!actor.runId)
-        throw forbidden("An active task run is required to send email");
+        throw forbidden("发送邮件需要活动中的任务运行记录");
       const [run] = await db
         .select()
         .from(heartbeatRuns)
@@ -573,7 +573,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
         )
         .limit(1);
       if (restrictedSource || task.workMode !== "standard")
-        throw forbidden("Email sends require normal task execution authority");
+        throw forbidden("发送邮件需要正常的任务执行权限");
       if (
         !run ||
         runTask !== task.id ||
@@ -581,7 +581,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
           (run.status !== "running" ||
             (task.executionRunId !== run.id && task.checkoutRunId !== run.id)))
       )
-        throw forbidden("Email action does not belong to this task run");
+        throw forbidden("邮件操作不属于此任务运行记录");
     }
     return task;
   }
@@ -631,7 +631,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
         ),
       );
     if (!agent || ["terminated", "pending_approval"].includes(agent.status))
-      throw badRequest("Select an available company agent");
+      throw badRequest("请选择可用的公司智能体");
     await inboundPlacement(companyId, agent.id);
     if (agent.permissions.trustPreset === "low_trust_review") {
       const settings = instanceSettingsService(db);
@@ -676,7 +676,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
         endpoint.provider !== "agentmail" ||
         endpoint.assignedAgentId !== input.assignedAgentId)
     )
-      throw conflict("Setup request already belongs to another inbox");
+      throw conflict("配置请求已属于其他收件箱");
     if (!endpoint) {
       const applicationId = input.applicationId ?? randomUUID();
       const connectionId = randomUUID();
@@ -696,7 +696,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
             (app.applicationKey !== "agentmail" &&
               app.metadata.sourceTemplateKey !== "agentmail")
           )
-            throw notFound("AgentMail application not found");
+            throw notFound("未找到 AgentMail 应用");
         } else
           await tx.insert(toolApplications).values({
             id: applicationId,
@@ -765,13 +765,13 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
       endpoint = await getEndpoint(input.idempotencyKey);
     }
     if (endpoint.status === "archived")
-      throw conflict("This inbox was disconnected; create a new connection");
+      throw conflict("此收件箱已断开，请新建连接");
     if (
       input.inboxId &&
       endpoint.botExternalId &&
       input.inboxId !== endpoint.botExternalId
     )
-      throw conflict("Reconnect cannot change the inbox identity");
+      throw conflict("重新连接时不能更改收件箱身份");
     if (endpoint.status === "active") return summary(endpoint);
     const result = await withLease(endpoint, async () => {
       let controlKey = input.apiKey;
@@ -799,7 +799,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
           actor,
         );
       } else if (controlKey) await vault(endpoint, "controlKey", controlKey);
-      if (!controlKey) throw badRequest("AgentMail API key required");
+      if (!controlKey) throw badRequest("必须提供 AgentMail API 密钥");
       const api = agentmailApi(controlKey, fetchImpl);
       const scope = await api.whoami();
       const inboxId = endpoint.botExternalId ?? input.inboxId ?? scope.inbox_id;
@@ -956,7 +956,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
           eq(chatEndpoints.publicId, publicId),
         ),
       );
-    if (!endpoint) throw notFound("Email inbox not found");
+    if (!endpoint) throw notFound("未找到邮件收件箱");
     if ((await getConfig(endpoint.id)).receiveMode !== "webhook")
       throw forbidden("Webhook receiving is not enabled");
     let value: unknown;
@@ -1455,7 +1455,7 @@ export function emailChannelService(db: Db, options: EmailChannelOptions) {
     await requireEnabled();
     const endpoint = await getEndpoint(input.endpointId);
     if (endpoint.companyId !== companyId)
-      throw notFound("Email inbox not found");
+      throw notFound("未找到邮件收件箱");
     await active(endpoint);
     let [conversation] = input.conversationId
       ? await db
