@@ -11715,6 +11715,23 @@
     "checking_organization_access_retry_0d500006": "正在检查你的组织访问权限，请稍后重试。",
     "account_already_belongs_to_organization_0d500007": "此账户已属于该组织。",
     "failed_to_accept_invite_0d500008": "接受邀请失败",
-    "grant_or_complete_access_to_value_0d500009": "授予或补全你对 {{v0}} 的访问权限"
+    "grant_or_complete_access_to_value_0d500009": "授予或补全你对 {{v0}} 的访问权限",
+    "this_app_0d600001": "此应用",
+    "one_new_action_needs_review_in_value_0d600002": "{{v0}} 中有 1 项新操作需要审核",
+    "count_new_actions_need_review_in_value_0d600003": "{{v1}} 中有 {{v0}} 项新操作需要审核",
+    "connection_change_recorded_in_activity_history_0d600004": "此连接变更已记录在应用活动历史中。",
+    "permitted_connections_not_installed_tools_not_added_0d600005": "允许使用的连接尚未安装，因此本次运行没有加载其工具。",
+    "allowed_by_your_rules_0d600006": "你的规则允许了此操作。",
+    "blocked_too_many_runs_in_short_window_0d600007": "此操作短时间内运行次数过多，已被阻止。",
+    "blocked_to_protect_sensitive_value_0d600008": "为防止敏感信息外泄，此操作已被阻止。",
+    "blocked_by_a_rule_0d600009": "此操作已被规则阻止。",
+    "held_for_approval_before_running_0d600010": "此操作需要获得批准后才能运行。",
+    "waiting_app_not_ready_0d600011": "正在等待；所需应用尚未就绪。",
+    "app_was_allowed_but_returned_error_0d600012": "应用获准执行此操作，但返回了错误。",
+    "an_action_0d600013": "某项操作",
+    "value_bytes_0d600014": "{{v0}} 字节",
+    "unnamed_connection_0d600015": "未命名连接",
+    "value_added_count_allowed_items_in_value_0d600016": "{{v0}} 在 {{v2}} 中新增了 {{v1}} 个允许的条目",
+    "value_removed_count_allowed_items_in_value_0d600017": "{{v0}} 从 {{v2}} 中移除了 {{v1}} 个允许的条目"
   }
 }

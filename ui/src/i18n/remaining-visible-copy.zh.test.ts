@@ -259,6 +259,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.credentials_did_not_match_alice_account_0d500002).toContain("Alice 账户");
     expect(messages.invite_not_found_0d500005).toBe("未找到邀请");
     expect(messages.failed_to_accept_invite_0d500008).toBe("接受邀请失败");
+    expect(messages.connection_change_recorded_in_activity_history_0d600004).toContain("活动历史");
+    expect(messages.one_new_action_needs_review_in_value_0d600002).toContain("需要审核");
+    expect(messages.permitted_connections_not_installed_tools_not_added_0d600005).toContain("尚未安装");
+    expect(messages.blocked_to_protect_sensitive_value_0d600008).toContain("敏感信息");
+    expect(messages.held_for_approval_before_running_0d600010).toContain("获得批准");
+    expect(messages.value_bytes_0d600014).toBe("{{v0}} 字节");
+    expect(messages.value_added_count_allowed_items_in_value_0d600016).toContain("允许的条目");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

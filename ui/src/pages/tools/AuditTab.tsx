@@ -90,8 +90,8 @@ function formattedArguments(details: Record<string, unknown> | null): string | u
 
 function lifecycleSummary(event: ToolGatewayActivityEvent): string | null {
   if (!event.lifecycleType) return null;
-  const who = event.actorDisplayName ?? event.agentDisplayName ?? "Someone";
-  const app = event.appDisplayName ?? event.connectionDisplayName ?? "this app";
+  const who = event.actorDisplayName ?? event.agentDisplayName ?? l10n("local.someone_864c855e");
+  const app = event.appDisplayName ?? event.connectionDisplayName ?? l10n("local.this_app_0d600001");
   const count = detailNumber(event.details, "count") ?? 0;
   const added = detailNumber(event.details, "added") ?? 0;
   const removed = detailNumber(event.details, "removed") ?? 0;
@@ -107,11 +107,13 @@ function lifecycleSummary(event: ToolGatewayActivityEvent): string | null {
     case "disconnected":
       return l10n("local.value_disconnected_value_e9e1100d", {v0: (who), v1: (app)});
     case "allowlist_changed":
-      if (added > 0 && removed === 0) return l10n("local.value_added_value_allowed_value_in_value_2283b0f7", {v0: (who), v1: (added), v2: (added === 1 ? "item" : "items"), v3: (app)});
-      if (removed > 0 && added === 0) return l10n("local.value_removed_value_allowed_value_in_value_a7d11a3a", {v0: (who), v1: (removed), v2: (removed === 1 ? "item" : "items"), v3: (app)});
+      if (added > 0 && removed === 0) return l10n("local.value_added_count_allowed_items_in_value_0d600016", { v0: who, v1: added, v2: app });
+      if (removed > 0 && added === 0) return l10n("local.value_removed_count_allowed_items_in_value_0d600017", { v0: who, v1: removed, v2: app });
       return l10n("local.value_updated_the_allowlist_for_value_989cd241", {v0: (who), v1: (app)});
     case "actions_quarantined":
-      return l10n("local.value_new_value_review_in_value_b77450f7", {v0: (count), v1: (count === 1 ? "action needs" : "actions need"), v2: (app)});
+      return count === 1
+        ? l10n("local.one_new_action_needs_review_in_value_0d600002", { v0: app })
+        : l10n("local.count_new_actions_need_review_in_value_0d600003", { v0: count, v1: app });
     default:
       return l10n("local.value_updated_value_1e8c0c4e", {v0: (who), v1: (app)});
   }
@@ -119,24 +121,24 @@ function lifecycleSummary(event: ToolGatewayActivityEvent): string | null {
 
 /** Plain-words "why" for the row expander, keyed off the reason code. */
 function plainReason(event: ToolGatewayActivityEvent): string {
-  if (event.lifecycleType) return "This connection change was recorded in the app's activity history.";
+  if (event.lifecycleType) return l10n("local.connection_change_recorded_in_activity_history_0d600004");
   const code = detailString(event.details, "reasonCode");
   if (code === "permitted_connections_not_installed") {
-    return "Permitted connections were not installed, so their tools were not added to this run.";
+    return l10n("local.permitted_connections_not_installed_tools_not_added_0d600005");
   }
   switch (event.normalizedOutcome) {
     case "allowed":
-      return "Allowed by your rules.";
+      return l10n("local.allowed_by_your_rules_0d600006");
     case "blocked":
-      if (code === "rate_limited") return "Blocked because it ran too many times in a short window.";
-      if (code?.includes("secret")) return "Blocked to keep a sensitive value from leaving.";
-      return "Blocked by a rule.";
+      if (code === "rate_limited") return l10n("local.blocked_too_many_runs_in_short_window_0d600007");
+      if (code?.includes("secret")) return l10n("local.blocked_to_protect_sensitive_value_0d600008");
+      return l10n("local.blocked_by_a_rule_0d600009");
     case "asked_first":
-      return "Held for someone to approve before it could run.";
+      return l10n("local.held_for_approval_before_running_0d600010");
     case "waiting":
-      return "Waiting — the app it needs wasn't ready yet.";
+      return l10n("local.waiting_app_not_ready_0d600011");
     case "failed":
-      return "The app was allowed to run it, but returned an error.";
+      return l10n("local.app_was_allowed_but_returned_error_0d600012");
     default:
       return l10n("local.recorded_by_alice_0d400006");
   }
@@ -167,8 +169,8 @@ function ActivityRow({
   const [open, setOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const who = event.agentDisplayName ?? "An agent";
-  const action = event.toolDisplayName ?? "an action";
+  const who = event.agentDisplayName ?? l10n("local.an_agent_ea6a0363");
+  const action = event.toolDisplayName ?? l10n("local.an_action_0d600013");
   const app = event.appDisplayName ?? event.connectionDisplayName ?? event.applicationDisplayName ?? null;
   const lifecycle = lifecycleSummary(event);
   const rawTool = detailString(event.details, "tool") ?? detailString(event.details, "toolName");
@@ -281,17 +283,17 @@ function ActivityRow({
                 {requestMethod && endpoint ? <DetailFact label={l10n("local.http_request_f1ee1152")} value={`${requestMethod} ${endpoint}`} mono /> : null}
                 {mcpMethod ? <DetailFact label={l10n("local.mcp_method_e810a950")} value={mcpMethod} mono /> : null}
                 {requestId ? <DetailFact label={l10n("local.request_id_d561f528")} value={requestId} mono /> : null}
-                {request ? <DetailFact label={l10n("local.dispatched_a43dccad")} value={request.dispatched === true ? "Yes" : "No"} /> : null}
+                {request ? <DetailFact label={l10n("local.dispatched_a43dccad")} value={request.dispatched === true ? l10n("local.yes_85a39ab3") : l10n("local.no_1ea442a1")} /> : null}
                 {httpStatus !== undefined ? <DetailFact label={l10n("local.http_status_0f7cf91f")} value={String(httpStatus)} mono /> : null}
                 {contentType ? <DetailFact label={l10n("local.content_type_6f51cb04")} value={contentType} mono /> : null}
-                {responseBytes !== undefined ? <DetailFact label={l10n("local.response_size_3bbd79b4")} value={`${responseBytes} bytes`} /> : null}
+                {responseBytes !== undefined ? <DetailFact label={l10n("local.response_size_3bbd79b4")} value={l10n("local.value_bytes_0d600014", { v0: responseBytes })} /> : null}
                 {upstreamRequestId ? <DetailFact label={l10n("local.upstream_id_56ca20b2")} value={upstreamRequestId} mono /> : null}
                 {isRuntimeMcpDeliveryDiagnostic ? (
                   <>
                     <DetailFact label={l10n("local.delivered_mcp_servers_e8f93a3e")} value="0" mono />
                     {permittedNotInstalledConnections.map((connection) => {
                       const connectionId = detailString(connection, "id");
-                      const connectionName = detailString(connection, "name") ?? "Unnamed connection";
+                      const connectionName = detailString(connection, "name") ?? l10n("local.unnamed_connection_0d600015");
                       return connectionId ? (
                         <div key={connectionId} className="flex gap-2">
                           <span className="shrink-0 text-muted-foreground">{l10n("local.not_installed_d177cdc0")}</span>
@@ -412,7 +414,7 @@ export function AuditTab({ companyId }: { companyId: string }) {
           </SelectContent>
         </Select>
         <AgentSelect
-          agents={[{ id: ALL, name: "All agents" }, ...(agents.data ?? [])]}
+          agents={[{ id: ALL, name: l10n("local.all_agents_54c32d3e") }, ...(agents.data ?? [])]}
           value={agent}
           onChange={setAgent}
           triggerClassName="w-40"

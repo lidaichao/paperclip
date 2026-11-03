@@ -11715,6 +11715,23 @@
     "checking_organization_access_retry_0d500006": "Checking your organization access. Try again in a moment.",
     "account_already_belongs_to_organization_0d500007": "This account already belongs to the organization.",
     "failed_to_accept_invite_0d500008": "Failed to accept invite",
-    "grant_or_complete_access_to_value_0d500009": "grant or complete your access to {{v0}}"
+    "grant_or_complete_access_to_value_0d500009": "grant or complete your access to {{v0}}",
+    "this_app_0d600001": "this app",
+    "one_new_action_needs_review_in_value_0d600002": "1 new action needs review in {{v0}}",
+    "count_new_actions_need_review_in_value_0d600003": "{{v0}} new actions need review in {{v1}}",
+    "connection_change_recorded_in_activity_history_0d600004": "This connection change was recorded in the app's activity history.",
+    "permitted_connections_not_installed_tools_not_added_0d600005": "Permitted connections were not installed, so their tools were not added to this run.",
+    "allowed_by_your_rules_0d600006": "Allowed by your rules.",
+    "blocked_too_many_runs_in_short_window_0d600007": "Blocked because it ran too many times in a short window.",
+    "blocked_to_protect_sensitive_value_0d600008": "Blocked to keep a sensitive value from leaving.",
+    "blocked_by_a_rule_0d600009": "Blocked by a rule.",
+    "held_for_approval_before_running_0d600010": "Held for someone to approve before it could run.",
+    "waiting_app_not_ready_0d600011": "Waiting — the app it needs wasn't ready yet.",
+    "app_was_allowed_but_returned_error_0d600012": "The app was allowed to run it, but returned an error.",
+    "an_action_0d600013": "an action",
+    "value_bytes_0d600014": "{{v0}} bytes",
+    "unnamed_connection_0d600015": "Unnamed connection",
+    "value_added_count_allowed_items_in_value_0d600016": "{{v0}} added {{v1}} allowed items in {{v2}}",
+    "value_removed_count_allowed_items_in_value_0d600017": "{{v0}} removed {{v1}} allowed items in {{v2}}"
   }
 }
