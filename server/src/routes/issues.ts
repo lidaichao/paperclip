@@ -15052,7 +15052,7 @@ export function issueRoutes(
         req.actor.type === "agent" &&
         req.actor.agentId !== req.body.agentId
       ) {
-        res.status(403).json({ error: "Agent can only checkout as itself" });
+        res.status(403).json({ error: "智能体只能以自身身份签出任务" });
         return;
       }
 
@@ -15118,7 +15118,7 @@ export function issueRoutes(
       } catch (error) {
         if (isUniqueViolation(error, "issues_open_routine_execution_uq")) {
           res.status(409).json({
-            error: "Another execution for this routine is already in progress",
+            error: "此例行任务已有另一个执行正在进行",
           });
           return;
         }
@@ -15217,7 +15217,7 @@ export function issueRoutes(
 
   router.post("/issues/:id/admin/force-release", async (req, res) => {
     if (req.actor.type !== "board") {
-      res.status(403).json({ error: "Board access required" });
+      res.status(403).json({ error: "需要看板访问权限" });
       return;
     }
     if (!req.actor.userId) {
@@ -15432,9 +15432,9 @@ export function issueRoutes(
       const decision = await decideIssueAccess(req, issue, "issue:comment");
       if (!decision.allowed) throw forbidden(decision.explanation, authorizationDeniedDetails(decision));
       if (issue.conversationAgentId) {
-        if (!(await instanceSettings.getExperimental()).enableAgentChat) throw notFound("Agent Chat is disabled");
+        if (!(await instanceSettings.getExperimental()).enableAgentChat) throw notFound("智能体对话功能已停用");
         if (req.actor.userId !== issue.conversationUserId) {
-          throw forbidden("Only the conversation owner can interrupt a chat to send queued messages");
+          throw forbidden("只有对话所有者才能打断对话并发送排队消息");
         }
       }
       const actor = getActorInfo(req);
@@ -15448,14 +15448,14 @@ export function issueRoutes(
         if ((locked.queue.protocol !== "legacy" && !freshResponse) || locked.state !== "deferred" ||
             !locked.queue.entries.length ||
             (locked.activeRun && locked.activeRun.agentId !== locked.wake.agentId)) {
-          throw conflict("This queue does not support interruption");
+          throw conflict("此队列不支持打断");
         }
         if (locked.activeRun && locked.activeRun.status !== "running" &&
             !["succeeded", "failed", "timed_out", "interrupted", "cancelled"].includes(locked.activeRun.status)) {
-          throw conflict("The previous run has not stopped");
+          throw conflict("上一次执行尚未停止");
         }
         if (locked.activeRun?.status === "running" && locked.activeRun.id !== req.body.targetRunId) {
-          throw conflict("The queued message targets a stale run", { code: "queued_comment_stale_target" });
+          throw conflict("排队消息指向已失效的执行", { code: "queued_comment_stale_target" });
         }
         // The click is durable fresh user intent, including when the message
         // predates a failed run's stop. Keep its content and original attribution.
@@ -15506,7 +15506,7 @@ export function issueRoutes(
         "Issue not found",
       );
       if (!issue) return;
-      if (issue.conversationAgentId) throw conflict("Conversation messages are processed in order at turn boundaries");
+      if (issue.conversationAgentId) throw conflict("对话消息会在轮次边界按顺序处理");
       const decision = await decideIssueAccess(req, issue, "issue:comment");
       if (!decision.allowed) throw forbidden(decision.explanation, authorizationDeniedDetails(decision));
       const actor = getActorInfo(req);
@@ -15608,7 +15608,7 @@ export function issueRoutes(
             targetRunId: req.body.targetRunId,
           });
           if (!locked.activeRun) {
-            throw conflict("The queued message targets a stale run", {
+            throw conflict("排队消息指向已失效的执行", {
               code: "queued_comment_stale_target",
             });
           }
@@ -15640,7 +15640,7 @@ export function issueRoutes(
             revision: req.body.revision,
           });
           if (locked.queue.protocol !== "paperclip_runner_v1") {
-            throw conflict("This runner does not support same-turn steering", {
+            throw conflict("此运行器不支持在同一轮次中调整指令", {
               code: "steering_unsupported",
             });
           }
@@ -15648,13 +15648,13 @@ export function issueRoutes(
             (candidate) => candidate.comment.id === commentId,
           );
           if (!entry) {
-            throw conflict("The queued message is no longer pending", {
+            throw conflict("排队消息已不再处于等待状态", {
               code: "queued_comment_not_pending",
             });
           }
 
           if (entry.source?.requiresFreshSession) {
-            throw conflict("This approval needs a fresh turn. Interrupt or wait for the current turn to finish.", {
+            throw conflict("此审批需要开启新轮次。请打断当前轮次，或等待当前轮次结束。", {
               code: "queued_response_requires_fresh_session",
             });
           }
@@ -16026,7 +16026,7 @@ export function issueRoutes(
         current.payload.toolAction
       ) {
         if (!opts.approveToolActionRequest)
-          throw unprocessable("Tool review resolution is unavailable");
+          throw unprocessable("当前无法处理工具审查结果");
         await opts.approveToolActionRequest({
           companyId: issue.companyId,
           issueId: issue.id,
@@ -16136,7 +16136,7 @@ export function issueRoutes(
               proposal.originIssueId !== issue.id ||
               proposal.interactionId !== interaction.id
             ) {
-              throw notFound("Secret proposal not found");
+              throw notFound("未找到密钥提案");
             }
             await secretProposals.approve(issue.companyId, proposal.id, {
               resolvedByUserId,
@@ -16342,7 +16342,7 @@ export function issueRoutes(
         current.payload.toolAction
       ) {
         if (!opts.declineToolActionRequest)
-          throw unprocessable("Tool review resolution is unavailable");
+          throw unprocessable("当前无法处理工具审查结果");
         await opts.declineToolActionRequest({
           companyId: issue.companyId,
           issueId: issue.id,
