@@ -93,15 +93,15 @@ export function humanizePipelineItemStatus(status: string | null | undefined) {
 export function formatFieldValue(value: unknown): string {
   if (Array.isArray(value)) {
     const formatted = value.map(formatFieldValue).filter(Boolean);
-    return formatted.length ? formatted.join(", ") : "None";
+    return formatted.length ? formatted.join(", ") : l10n("local.none_140bedbf");
   }
-  if (value == null || value === "") return "None";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value == null || value === "") return l10n("local.none_140bedbf");
+  if (typeof value === "boolean") return value ? l10n("local.yes_85a39ab3") : l10n("local.no_1ea442a1");
   if (typeof value === "number") return String(value);
   if (typeof value === "string") return value;
   const record = readRecord(value);
   if (record) {
-    return readString(record.label) ?? readString(record.name) ?? readString(record.title) ?? "Added details";
+    return readString(record.label) ?? readString(record.name) ?? readString(record.title) ?? l10n("local.added_details_0c980001");
   }
   return String(value);
 }
@@ -122,7 +122,7 @@ const LONG_FIELD_CHARACTER_THRESHOLD = 180;
 
 export function isLongPipelineItemField(field: Pick<PipelineItemDisplayField, "value">) {
   const value = field.value.trim();
-  if (!value || value === "None") return false;
+  if (!value || value === l10n("local.none_140bedbf")) return false;
   return value.includes("\n") || value.length >= LONG_FIELD_CHARACTER_THRESHOLD;
 }
 
@@ -236,7 +236,7 @@ export function getPendingTransitionBannerState(item: Pick<PipelineCase, "pendin
     visible: true as const,
     suggestionId: suggestion?.id ?? null,
     toStageKey,
-    stageName: stageNameFromLookup(stages, toStageKey) ?? "the next stage",
+    stageName: stageNameFromLookup(stages, toStageKey) ?? l10n("local.the_next_stage_0c980002"),
     rationale: suggestion?.rationale ?? null,
   };
 }
@@ -250,7 +250,7 @@ export function itemHasChangedNotice(item: Pick<PipelineCase, "fields"> & {
   if (item.thisChanged || fields.thisChanged || fields.upstreamChanged || fields.upstreamDrift) {
     return {
       title: l10n("local.this_changed_56ec3b71"),
-      body: "Upstream work changed after this item was created. Review the latest details before continuing.",
+      body: l10n("local.upstream_work_changed_review_latest_0c980003"),
     };
   }
   return null;
@@ -274,7 +274,7 @@ export function changedNoticeFromEvents(events: PipelineCaseEvent[]) {
   if (!eventsHaveUnacknowledgedDrift(events)) return null;
   return {
     title: l10n("local.this_changed_56ec3b71"),
-    body: "Upstream work changed after this item was created. Review the latest details before continuing.",
+    body: l10n("local.upstream_work_changed_review_latest_0c980003"),
   };
 }
 
@@ -291,15 +291,15 @@ function readDecision(payload: Record<string, unknown>) {
 
 function actorName(event: PipelineCaseEvent) {
   if (event.actorAgent?.name) return event.actorAgent.name;
-  if (event.actorType === "user") return "Board";
-  if (event.actorType === "system") return "Paperclip";
+  if (event.actorType === "user") return l10n("local.board_4816cbfd");
+  if (event.actorType === "system") return "Alice";
   return null;
 }
 
 function movementReason(payload: Record<string, unknown>) {
   const reason = readString(payload.reason);
   if (!reason) return null;
-  if (reason === "children_terminal") return "all child items done";
+  if (reason === "children_terminal") return l10n("local.all_child_items_done_0c980004");
   return reason;
 }
 
@@ -324,67 +324,77 @@ function humanizeReason(reason: string) {
 export function formatPipelineItemEvent(event: PipelineCaseEvent, stages?: StageLookup) {
   const kind = event.type.startsWith("case.") ? event.type.slice("case.".length) : event.type;
   const payload = event.payload ?? {};
-  if (kind === "ingested") return "Item added.";
+  if (kind === "ingested") return l10n("local.pipeline_item_added_0c980005");
   if (kind === "updated") {
-    if (payload.action === "stage_automation_rerun_requested") return "Stage automation re-run requested.";
-    return "Item details updated.";
+    if (payload.action === "stage_automation_rerun_requested") return l10n("local.stage_automation_rerun_requested_0c980006");
+    return l10n("local.pipeline_item_details_updated_0c980007");
   }
   if (kind === "transitioned") {
     const from = stageName(event, stages, "from");
     const to = stageName(event, stages, "to");
-    const movement = from && to ? `Moved from ${from} to ${to}` : to ? `Moved to ${to}` : "Moved to another stage";
+    const movement = from && to
+      ? l10n("local.moved_from_stage_to_stage_0c980008", { v0: from, v1: to })
+      : to
+        ? l10n("local.moved_to_stage_0c980009", { v0: to })
+        : l10n("local.moved_to_another_stage_0c980010");
     const reason = movementReason(payload);
     const transitionClass = movementClass(event, payload);
     if (transitionClass === "automatic") {
-      return `${movement} — automatic${reason ? ` (${reason})` : ""}.`;
+      return reason
+        ? l10n("local.pipeline_movement_automatic_reason_0c980011", { v0: movement, v1: reason })
+        : l10n("local.pipeline_movement_automatic_0c980012", { v0: movement });
     }
     const actor = actorName(event);
-    if (reason && actor) return `${movement} — ${actor}: '${reason}'.`;
-    if (reason) return `${movement} — '${reason}'.`;
-    if (actor && event.actorType !== "system") return `${movement} — ${actor}.`;
-    return `${movement}.`;
+    if (reason && actor) return l10n("local.pipeline_movement_actor_reason_0c980013", { v0: movement, v1: actor, v2: reason });
+    if (reason) return l10n("local.pipeline_movement_reason_0c980014", { v0: movement, v1: reason });
+    if (actor && event.actorType !== "system") return l10n("local.pipeline_movement_actor_0c980015", { v0: movement, v1: actor });
+    return l10n("local.pipeline_movement_plain_0c980016", { v0: movement });
   }
   if (kind === "suggested" || kind === "transition_suggested") {
     const suggestion = readRecord(payload.suggestion);
     const toStageKey = readString(suggestion?.toStageKey) ?? readString(payload.toStageKey);
-    const to = stageNameFromLookup(stages, toStageKey) ?? "the next stage";
-    return `Suggested moving to ${to}.`;
+    const to = stageNameFromLookup(stages, toStageKey) ?? l10n("local.the_next_stage_0c980002");
+    return l10n("local.suggested_moving_to_stage_0c980017", { v0: to });
   }
   if (kind === "suggestion_resolved") {
     const decision = readDecision(payload);
-    if (decision === "accept") return "Suggestion approved.";
-    if (decision === "dismiss") return "Suggestion dismissed.";
-    return "Suggestion resolved.";
+    if (decision === "accept") return l10n("local.suggestion_approved_0c980018");
+    if (decision === "dismiss") return l10n("local.suggestion_dismissed_0c980019");
+    return l10n("local.suggestion_resolved_0c980020");
   }
   if (kind === "reviewed" || kind === "review_decided") {
     const decision = readDecision(payload);
-    if (decision === "request_changes") return "Review requested changes.";
-    if (decision === "drop" || decision === "reject") return "Review removed this item.";
-    if (decision === "approve") return "Review approved this item.";
-    return "Review completed.";
+    if (decision === "request_changes") return l10n("local.review_requested_changes_0c980021");
+    if (decision === "drop" || decision === "reject") return l10n("local.review_removed_item_0c980022");
+    if (decision === "approve") return l10n("local.review_approved_item_0c980023");
+    return l10n("local.review_completed_0c980024");
   }
-  if (kind === "conversation_opened") return "Conversation started.";
-  if (kind === "issue_linked") return "Linked to work.";
-  if (kind === "issue_unlinked") return "Work link removed.";
-  if (kind === "blockers_set") return "Waiting items updated.";
-  if (kind === "blockers_resolved") return "Waiting items cleared.";
-  if (kind === "children_terminal") return "Built-from items completed.";
+  if (kind === "conversation_opened") return l10n("local.conversation_started_0c980025");
+  if (kind === "issue_linked") return l10n("local.linked_to_work_0c980026");
+  if (kind === "issue_unlinked") return l10n("local.work_link_removed_0c980027");
+  if (kind === "blockers_set") return l10n("local.waiting_items_updated_0c980028");
+  if (kind === "blockers_resolved") return l10n("local.waiting_items_cleared_0c980029");
+  if (kind === "children_terminal") return l10n("local.built_from_items_completed_0c980030");
   if (kind === "upstream_drift") {
     const upstreamCaseKey = readString(payload.upstreamCaseKey);
-    if (upstreamCaseKey) return `Upstream change detected from ${upstreamCaseKey}.`;
-    return "Upstream change detected.";
+    if (upstreamCaseKey) return l10n("local.upstream_change_detected_from_0c980031", { v0: upstreamCaseKey });
+    return l10n("local.upstream_change_detected_0c980032");
   }
-  if (kind === "drift_acknowledged") return "Upstream change acknowledged.";
+  if (kind === "drift_acknowledged") return l10n("local.upstream_change_acknowledged_0c980033");
   if (kind === "automation_executed") {
-    const routineName = event.automation?.routine?.title ?? "the automation";
+    const routineName = event.automation?.routine?.title ?? l10n("local.the_automation_0c980034");
     const issueLabel = automationIssueLabel(event);
-    return `Automation completed — ran ${routineName}${issueLabel ? ` -> ${issueLabel}` : ""}.`;
+    return issueLabel
+      ? l10n("local.automation_completed_with_issue_0c980035", { v0: routineName, v1: issueLabel })
+      : l10n("local.automation_completed_0c980036", { v0: routineName });
   }
   if (kind === "automation_failed") {
     const reason = readString(payload.error);
-    return `Automation needs attention${reason ? ` — ${humanizeReason(reason)}` : ""}.`;
+    return reason
+      ? l10n("local.automation_needs_attention_reason_0c980037", { v0: humanizeReason(reason) })
+      : l10n("local.automation_needs_attention_0c980038");
   }
-  if (kind === "claimed") return "Work started.";
-  if (kind === "lease_released" || kind === "lease_expired") return "Work handoff cleared.";
-  return "Activity recorded.";
+  if (kind === "claimed") return l10n("local.work_started_0c980039");
+  if (kind === "lease_released" || kind === "lease_expired") return l10n("local.work_handoff_cleared_0c980040");
+  return l10n("local.activity_recorded_0c980041");
 }

@@ -190,6 +190,14 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.gmail_gallery_copy_0c970014).toContain("创建草稿");
     expect(messages.google_workspace_search_gallery_copy_0c970021).toContain("Google 工作区");
     expect(messages.generic_app_gallery_copy_0c970027).toBe("授权智能体访问此应用。");
+    expect(messages.upstream_work_changed_review_latest_0c980003).toContain("上游工作已发生变化");
+    expect(messages.pipeline_item_added_0c980005).toBe("已添加条目。");
+    expect(messages.moved_from_stage_to_stage_0c980008).toContain("已从“{{v0}}”移动到“{{v1}}”");
+    expect(messages.pipeline_movement_automatic_reason_0c980011).toContain("自动执行");
+    expect(messages.review_requested_changes_0c980021).toBe("评审要求修改。");
+    expect(messages.upstream_change_acknowledged_0c980033).toBe("已确认上游变更。");
+    expect(messages.automation_needs_attention_reason_0c980037).toContain("需要处理");
+    expect(messages.work_handoff_cleared_0c980040).toBe("工作交接已清除。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
