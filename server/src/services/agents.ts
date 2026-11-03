@@ -264,25 +264,25 @@ function diffConfigSnapshot(
 }
 
 function configPatchFromSnapshot(snapshot: unknown): Partial<typeof agents.$inferInsert> {
-  if (!isPlainRecord(snapshot)) throw unprocessable("Invalid revision snapshot");
+  if (!isPlainRecord(snapshot)) throw unprocessable("修订版本快照无效");
 
   if (typeof snapshot.name !== "string" || snapshot.name.length === 0) {
-    throw unprocessable("Invalid revision snapshot: name");
+    throw unprocessable("修订版本快照的 name 无效");
   }
   if (typeof snapshot.role !== "string" || snapshot.role.length === 0) {
-    throw unprocessable("Invalid revision snapshot: role");
+    throw unprocessable("修订版本快照的 role 无效");
   }
   if (typeof snapshot.adapterType !== "string" || snapshot.adapterType.length === 0) {
-    throw unprocessable("Invalid revision snapshot: adapterType");
+    throw unprocessable("修订版本快照的 adapterType 无效");
   }
   if (typeof snapshot.budgetMonthlyCents !== "number" || !Number.isFinite(snapshot.budgetMonthlyCents)) {
-    throw unprocessable("Invalid revision snapshot: budgetMonthlyCents");
+    throw unprocessable("修订版本快照的 budgetMonthlyCents 无效");
   }
   const runtimeConfig = agentRuntimeConfigSchema.safeParse(
     isPlainRecord(snapshot.runtimeConfig) ? snapshot.runtimeConfig : {},
   );
   if (!runtimeConfig.success) {
-    throw unprocessable("Invalid revision snapshot: runtimeConfig");
+    throw unprocessable("修订版本快照的 runtimeConfig 无效");
   }
 
   return {
@@ -447,26 +447,26 @@ export function agentService(db: Db) {
 
   async function requireGetById(id: string) {
     const agent = await getById(id);
-    if (!agent) throw notFound("Agent not found");
+    if (!agent) throw notFound("未找到智能体");
     return agent;
   }
 
   async function ensureManager(companyId: string, managerId: string) {
     const manager = await getById(managerId);
-    if (!manager) throw notFound("Manager not found");
+    if (!manager) throw notFound("未找到上级智能体");
     if (manager.companyId !== companyId) {
-      throw unprocessable("Manager must belong to same company");
+      throw unprocessable("上级智能体必须属于同一公司");
     }
     return manager;
   }
 
   async function assertNoCycle(agentId: string, reportsTo: string | null | undefined) {
     if (!reportsTo) return;
-    if (reportsTo === agentId) throw unprocessable("Agent cannot report to itself");
+    if (reportsTo === agentId) throw unprocessable("智能体不能向自己汇报");
 
     let cursor: string | null = reportsTo;
     while (cursor) {
-      if (cursor === agentId) throw unprocessable("Reporting relationship would create cycle");
+      if (cursor === agentId) throw unprocessable("汇报关系会形成循环");
       const next = await getById(cursor);
       cursor = next?.reportsTo ?? null;
     }
@@ -690,7 +690,7 @@ export function agentService(db: Db) {
     const beforeMarker = readBuiltInAgentMarker(beforeMetadata);
     const afterMarker = readBuiltInAgentMarker(afterMetadata);
     if (builtInAgentMarkersEqual(beforeMarker, afterMarker)) return;
-    throw conflict("Built-in agent marker is managed by Paperclip and cannot be edited directly", {
+    throw conflict("内置智能体标记由 Alice 管理，不能直接编辑", {
       code: "built_in_agent_marker_readonly",
       key: beforeMarker?.key ?? afterMarker?.key ?? null,
     });
@@ -705,7 +705,7 @@ export function agentService(db: Db) {
     if (!existing) return null;
 
     if (existing.status === "terminated" && data.status && data.status !== "terminated") {
-      throw conflict("Terminated agents cannot be resumed");
+      throw conflict("已终止的智能体不能恢复运行");
     }
     if (
       existing.status === "pending_approval" &&
@@ -713,12 +713,12 @@ export function agentService(db: Db) {
       data.status !== "pending_approval" &&
       data.status !== "terminated"
     ) {
-      throw conflict("Pending approval agents cannot be activated directly");
+      throw conflict("等待审批的智能体不能直接激活");
     }
     if (existing.status === "pending_approval" && !options?.allowPendingApprovalConfigUpdate) {
       const changedFields = changedPendingApprovalConfigFields(existing as typeof agents.$inferSelect, data);
       if (changedFields.length > 0) {
-        throw conflict("Pending approval agent configuration cannot be changed before board approval", {
+        throw conflict("等待审批的智能体配置在看板批准前不能更改", {
           code: "pending_approval_agent_config_frozen",
           agentId: id,
           fields: changedFields,
@@ -828,7 +828,7 @@ export function agentService(db: Db) {
 
       const normalizedUpdated = await agentService(txDb).getById(updated.id);
       if (!normalizedUpdated) {
-        throw notFound("Agent not found");
+        throw notFound("未找到智能体");
       }
 
       if (shouldRecordRevision && beforeConfig) {
@@ -940,7 +940,7 @@ export function agentService(db: Db) {
         await syncAgentSecretBindings(created, txDb);
         const normalizedCreated = await agentService(txDb).getById(created.id);
         if (!normalizedCreated) {
-          throw notFound("Agent not found");
+          throw notFound("未找到智能体");
         }
         return normalizedCreated;
       });
@@ -951,7 +951,7 @@ export function agentService(db: Db) {
     pause: async (id: string, reason: "manual" | "budget" | "system" = "manual") => {
       const existing = await getById(id);
       if (!existing) return null;
-      if (existing.status === "terminated") throw conflict("Cannot pause terminated agent");
+      if (existing.status === "terminated") throw conflict("不能暂停已终止的智能体");
 
       const updated = await db
         .update(agents)
@@ -971,9 +971,9 @@ export function agentService(db: Db) {
     resume: async (id: string) => {
       const existing = await getById(id);
       if (!existing) return null;
-      if (existing.status === "terminated") throw conflict("Cannot resume terminated agent");
+      if (existing.status === "terminated") throw conflict("不能恢复已终止的智能体");
       if (existing.status === "pending_approval") {
-        throw conflict("Pending approval agents cannot be resumed");
+        throw conflict("等待审批的智能体不能恢复运行");
       }
 
       const updated = await db
@@ -994,12 +994,12 @@ export function agentService(db: Db) {
     clearError: async (id: string) => {
       const existing = await getById(id);
       if (!existing) return null;
-      if (existing.status === "terminated") throw conflict("Cannot clear error on terminated agent");
+      if (existing.status === "terminated") throw conflict("不能清除已终止智能体的错误");
       if (existing.status === "pending_approval") {
-        throw conflict("Pending approval agents cannot have errors cleared");
+        throw conflict("不能清除等待审批智能体的错误");
       }
       if (existing.status !== "error") {
-        throw conflict("Only agents in error status can have their error cleared");
+        throw conflict("只有处于错误状态的智能体才能清除错误");
       }
 
       const updated = await db
@@ -1016,7 +1016,7 @@ export function agentService(db: Db) {
         .then((rows) => rows[0] ?? null);
 
       if (!updated) {
-        throw conflict("Only agents in error status can have their error cleared");
+        throw conflict("只有处于错误状态的智能体才能清除错误");
       }
       return getById(updated.id);
     },
@@ -1049,7 +1049,7 @@ export function agentService(db: Db) {
       if (!existing) return null;
       const builtInMarker = readBuiltInAgentMarker(existing.metadata);
       if (builtInMarker) {
-        throw conflict("Built-in agents cannot be deleted; pause them instead", {
+        throw conflict("不能删除内置智能体；请改为暂停运行", {
           code: "built_in_agent_undeletable",
           key: builtInMarker.key,
           featureKeys: builtInMarker.featureKeys,
@@ -1152,7 +1152,7 @@ export function agentService(db: Db) {
         await syncAgentSecretBindings(updated, txDb, existing.adapterConfig);
         const agent = await agentService(txDb).getById(updated.id);
         if (!agent) {
-          throw notFound("Agent not found");
+          throw notFound("未找到智能体");
         }
         return agent;
       });
@@ -1169,7 +1169,7 @@ export function agentService(db: Db) {
       const existing = await getById(id);
       if (!existing) return null;
       if (existing.status === "pending_approval") {
-        throw conflict("Pending approval agent permissions cannot be changed before board approval", {
+        throw conflict("等待审批的智能体权限在看板批准前不能更改", {
           code: "pending_approval_agent_config_frozen",
           agentId: id,
           fields: ["permissions"],
@@ -1215,7 +1215,7 @@ export function agentService(db: Db) {
         .then((rows) => rows[0] ?? null);
       if (!revision) return null;
       if (containsRedactedMarker(revision.afterConfig)) {
-        throw unprocessable("Cannot roll back a revision that contains redacted secret values");
+        throw unprocessable("不能回滚包含已遮盖密钥值的修订版本");
       }
 
       const patch = configPatchFromSnapshot(revision.afterConfig);
@@ -1236,12 +1236,12 @@ export function agentService(db: Db) {
       options?: { responsibleUserId?: string | null },
     ) => {
       const existing = await getById(id);
-      if (!existing) throw notFound("Agent not found");
+      if (!existing) throw notFound("未找到智能体");
       if (existing.status === "pending_approval") {
-        throw conflict("Cannot create keys for pending approval agents");
+        throw conflict("不能为等待审批的智能体创建密钥");
       }
       if (existing.status === "terminated") {
-        throw conflict("Cannot create keys for terminated agents");
+        throw conflict("不能为已终止的智能体创建密钥");
       }
 
       const token = createToken();

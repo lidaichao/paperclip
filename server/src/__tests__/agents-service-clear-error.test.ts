@@ -205,7 +205,7 @@ describeEmbeddedPostgres("agent service clearError", () => {
 
     await expect(agentService(db).clearError(agentId)).rejects.toMatchObject({
       status: 409,
-      message: "Only agents in error status can have their error cleared",
+      message: "只有处于错误状态的智能体才能清除错误",
     });
   });
 
@@ -249,11 +249,11 @@ describeEmbeddedPostgres("agent service clearError", () => {
 
     await expect(agentService(db).clearError(terminatedAgentId)).rejects.toMatchObject({
       status: 409,
-      message: "Cannot clear error on terminated agent",
+      message: "不能清除已终止智能体的错误",
     });
     await expect(agentService(db).clearError(pendingAgentId)).rejects.toMatchObject({
       status: 409,
-      message: "Pending approval agents cannot have errors cleared",
+      message: "不能清除等待审批智能体的错误",
     });
   });
 });
