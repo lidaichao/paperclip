@@ -3072,7 +3072,7 @@ export function toolAccessService(
     }
     return new HttpError(
       502,
-      "Vercel Connect could not complete the credential request.",
+      "Vercel Connect 无法完成凭据请求。",
       {
         code: "vercel_connect_request_failed",
       },
@@ -3086,7 +3086,7 @@ export function toolAccessService(
       connection.credentialSource !== "vercel_connect" ||
       !connection.externalCredential
     ) {
-      throw unprocessable("This connection does not use Vercel Connect", {
+      throw unprocessable("此连接未使用 Vercel Connect", {
         code: "vercel_connect_not_configured",
       });
     }
@@ -3207,7 +3207,7 @@ export function toolAccessService(
       )
       .limit(1);
     if (!organization) {
-      throw conflict("This Vercel Connect identity has not been authorized", {
+      throw conflict("此 Vercel Connect 身份尚未授权", {
         code: "vercel_connect_authorization_required",
       });
     }
@@ -3840,7 +3840,7 @@ export function toolAccessService(
       );
     }
     if (!ACTIVE_BROKER_RUN_STATUSES.has(run.status)) {
-      throw forbidden("Agent run is not active");
+      throw forbidden("智能体运行未处于活动状态");
     }
     const snapshot = asRecord(run.contextSnapshot);
     const paperclipIssue = asRecord(snapshot.paperclipIssue);
@@ -4263,7 +4263,7 @@ export function toolAccessService(
         "/v1/tokens/exchange",
         pagesApiBase.endsWith("/") ? pagesApiBase : `${pagesApiBase}/`,
       ).toString();
-    throw unprocessable("Connection token exchange URL is not configured", {
+    throw unprocessable("尚未配置连接令牌交换地址", {
       code: "exchange_url_missing",
     });
   }
@@ -4850,7 +4850,7 @@ export function toolAccessService(
         ),
       )
       .limit(1);
-    if (!row) throw notFound("Runtime slot not found");
+    if (!row) throw notFound("未找到运行时槽位");
     return toRuntimeSlot(row);
   }
 
@@ -4916,7 +4916,7 @@ export function toolAccessService(
           eq(toolApplications.companyId, companyId),
         ),
       );
-    if (!row) throw notFound("Tool application not found");
+    if (!row) throw notFound("未找到工具应用");
     return row;
   }
 
@@ -4939,7 +4939,7 @@ export function toolAccessService(
       .select({ id: plugins.id })
       .from(plugins)
       .where(eq(plugins.id, pluginId));
-    if (!row) throw unprocessable("Tool application plugin was not found");
+    if (!row) throw unprocessable("未找到工具应用插件");
   }
 
   async function assertSecretRefs(
@@ -5423,19 +5423,19 @@ export function toolAccessService(
     input: CreateToolProfileEntryForProfile,
   ) {
     if (input.selectorType === "application" && !input.applicationId) {
-      throw badRequest("Application profile entries require applicationId");
+      throw badRequest("应用配置项必须提供 applicationId");
     }
     if (input.selectorType === "connection" && !input.connectionId) {
-      throw badRequest("Connection profile entries require connectionId");
+      throw badRequest("连接配置项必须提供 connectionId");
     }
     if (input.selectorType === "catalog_entry" && !input.catalogEntryId) {
-      throw badRequest("Catalog-entry profile entries require catalogEntryId");
+      throw badRequest("目录项配置必须提供 catalogEntryId");
     }
     if (input.selectorType === "tool_name" && !input.toolName) {
-      throw badRequest("Tool-name profile entries require toolName");
+      throw badRequest("工具名称配置项必须提供 toolName");
     }
     if (input.selectorType === "risk_level" && !input.riskLevel) {
-      throw badRequest("Risk-level profile entries require riskLevel");
+      throw badRequest("风险等级配置项必须提供 riskLevel");
     }
     if (input.applicationId)
       await assertApplication(companyId, input.applicationId);
@@ -5456,7 +5456,7 @@ export function toolAccessService(
       ? and(identifier, eq(toolConnections.companyId, companyId))
       : identifier;
     const [row] = await db.select().from(toolConnections).where(where);
-    if (!row) throw notFound("Tool connection not found");
+    if (!row) throw notFound("未找到工具连接");
     return row;
   }
 
@@ -5531,7 +5531,7 @@ export function toolAccessService(
         )
       : eq(toolProfiles.id, profileId);
     const [row] = await db.select().from(toolProfiles).where(where);
-    if (!row) throw notFound("Tool profile not found");
+    if (!row) throw notFound("未找到工具配置");
     return row;
   }
 
@@ -5670,7 +5670,7 @@ export function toolAccessService(
     const profile = await getProfileRow(profileId);
     const review = await listProfileNewTools(profile.id, profile.companyId);
     if (review.tools.length === 0)
-      throw badRequest("No new tools are pending review for this profile");
+      throw badRequest("此配置中没有等待审核的新工具");
 
     const decisionIds = input.decisions.map(
       (decision) => decision.catalogEntryId,
@@ -6159,7 +6159,7 @@ export function toolAccessService(
         if (grant.externalCredential?.subjectType !== "user") continue;
         attempted += 1;
         try {
-          if (!vercelConnect) throw new Error("Vercel Connect unavailable");
+          if (!vercelConnect) throw new Error("Vercel Connect 不可用");
           await vercelConnect.revoke(request);
           revoked += 1;
         } catch {
@@ -6389,7 +6389,7 @@ export function toolAccessService(
         .set({ status: "archived", enabled: false, updatedAt: now })
         .where(eq(toolConnections.id, connection.id))
         .returning();
-      if (!updatedConnection) throw notFound("Tool connection not found");
+      if (!updatedConnection) throw notFound("未找到工具连接");
 
       const remainingConnections = await tx
         .select({ id: toolConnections.id })
@@ -6550,7 +6550,7 @@ export function toolAccessService(
         .limit(1);
       if (personal) {
         if (personal.status !== "active") {
-          throw unprocessable("OAuth authorization must be reconnected", {
+          throw unprocessable("必须重新连接 OAuth 授权", {
             code: "oauth_reauthorization_required",
             setupUrl: connectionSetupUrl(connection),
             reconnectUrl: connectionReconnectUrl(connection),
@@ -6965,7 +6965,7 @@ export function toolAccessService(
     }
     if (!isRailwayConnection(connection)) return descriptors;
     if (descriptors.some((tool) => normalizeRailwayToolName(tool.name).startsWith(RAILWAY_TOOL_PREFIX))) {
-      throw unprocessable("Railway advertised a reserved Paperclip action name. Refresh is blocked pending review.", { code: "railway_tool_name_collision" });
+      throw unprocessable("Railway 提供了 Alice 保留的操作名称。审核完成前无法刷新。", { code: "railway_tool_name_collision" });
     }
     let apiStatus = "available";
     let apiMessage = "Direct Railway service, log, and deployment tools are available.";
@@ -7020,7 +7020,7 @@ export function toolAccessService(
       (candidate) => candidate.configPath === configPath,
     );
     if (!ref) {
-      throw unprocessable("Reconnect AgentMail to restore its API key", {
+      throw unprocessable("请重新连接 AgentMail 以恢复其 API 密钥", {
         code: "missing_secret",
       });
     }
@@ -7051,7 +7051,7 @@ export function toolAccessService(
     actor?: ActorInfo,
   ): Promise<McpToolDescriptor[]> {
     assertSupportedConnection(connection);
-    if (connection.connectionPurpose === "ai") throw unprocessable("AI connections provide runtime authentication, not tool actions");
+    if (connection.connectionPurpose === "ai") throw unprocessable("AI 连接仅提供运行时身份验证，不提供工具操作");
     if (isAgentMailConnection(connection)) {
       await validateAgentMailConnection(connection);
       return [];
@@ -7196,7 +7196,7 @@ export function toolAccessService(
               ? [actorGrant]
               : activeGrants;
         if (grantsToCheck.length === 0)
-          throw unprocessable("GitHub authorization must be connected", {
+          throw unprocessable("必须连接 GitHub 授权", {
             code: "oauth_reauthorization_required",
           });
         for (const grant of grantsToCheck)
@@ -7296,7 +7296,7 @@ export function toolAccessService(
     } = {},
   ): Promise<ToolCatalogRefreshResult> {
     const connection = await getConnectionRow(connectionId);
-    if (connection.connectionPurpose === "ai") throw unprocessable("AI connections do not have a tool catalog");
+    if (connection.connectionPurpose === "ai") throw unprocessable("AI 连接没有工具目录");
     const refreshedAt = now();
     let descriptors: McpToolDescriptor[];
     try {

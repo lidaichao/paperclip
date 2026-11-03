@@ -2091,7 +2091,7 @@ describeEmbeddedPostgres("tool access service", () => {
       .send({ scope: "pages:publish:ns/dotta" });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("Agent run is not active");
+    expect(res.body.error).toBe("智能体运行未处于活动状态");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
