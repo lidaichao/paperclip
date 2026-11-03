@@ -1341,18 +1341,18 @@ function explainGitWorktreeBranchIncoherence(input: {
 }) {
   const actualBranch = formatBranchForMessage(input.actualBranchName);
   if (!input.expectedHeadSha || !input.actualHeadSha) {
-    return `Paperclip could not determine branch ancestry because the recorded branch "${input.expectedBranchName}" or checked-out branch "${actualBranch}" is missing a resolvable HEAD commit.`;
+    return `Alice 无法确定分支祖先关系，因为记录分支“${input.expectedBranchName}”或当前检出分支“${actualBranch}”缺少可解析的 HEAD 提交。`;
   }
   if (input.sameHead) {
-    return `The recorded branch "${input.expectedBranchName}" and checked-out branch "${actualBranch}" resolve to the same commit, so the mismatch is branch metadata rather than commit divergence.`;
+    return `记录分支“${input.expectedBranchName}”与当前检出分支“${actualBranch}”指向同一提交，因此不一致来自分支元数据，而不是提交分叉。`;
   }
   if (input.ancestryVerdict === "ancestor") {
-    return `The recorded branch "${input.expectedBranchName}" is an ancestor of the checked-out branch "${actualBranch}", so the checked-out branch is forward of the recorded branch.`;
+    return `记录分支“${input.expectedBranchName}”是当前检出分支“${actualBranch}”的祖先，因此当前检出分支位于记录分支之后。`;
   }
   if (input.ancestryVerdict === "diverged") {
-    return `The recorded branch "${input.expectedBranchName}" is not an ancestor of the checked-out branch "${actualBranch}", so Paperclip cannot prove a forward-only reconciliation.`;
+    return `记录分支“${input.expectedBranchName}”不是当前检出分支“${actualBranch}”的祖先，因此 Alice 无法证明此次协调仅向前推进。`;
   }
-  return `Paperclip could not determine whether the checked-out branch "${actualBranch}" is forward of the recorded branch "${input.expectedBranchName}".`;
+  return `Alice 无法确定当前检出分支“${actualBranch}”是否位于记录分支“${input.expectedBranchName}”之后。`;
 }
 
 async function inspectGitWorktreeBranchIncoherence(input: {
@@ -1788,7 +1788,7 @@ async function quarantineDirtyWorktreeBranchIncoherence(input: {
       args: [
         "commit",
         "-m",
-        "Paperclip dirty workspace rescue",
+        "Alice 脏工作区救援",
         "-m",
         [
           `Source-Issue: ${input.evidence.sourceIdentifier ?? input.evidence.sourceIssueId ?? "unknown"}`,
@@ -2179,11 +2179,11 @@ export async function ensureGitWorktreeBranchCoherent(input: {
       recordedBranchMissingButAdoptable)
   ) {
     const reason = evidence.provenance.expectedBranchExists
-      ? "Automatic forward reconciliation: recorded branch is an ancestor of the checked-out branch."
-      : "Automatic forward reconciliation: the recorded branch no longer exists, so Paperclip adopted the clean checked-out branch.";
+      ? "自动向前协调：记录分支是当前检出分支的祖先。"
+      : "自动向前协调：记录分支已不存在，因此 Alice 采用了干净的当前检出分支。";
     if (input.executionWorkspaceId && input.persistForwardReconcile !== false) {
       if (!input.db) {
-        evidence.safeRepair.reason = "forward reconciliation requires database access to update the execution workspace record";
+        evidence.safeRepair.reason = "向前协调需要数据库访问权限才能更新执行工作区记录";
         throw branchIncoherenceValidationFailure(evidence);
       }
       try {
@@ -2238,13 +2238,13 @@ export async function ensureGitWorktreeBranchCoherent(input: {
         return { branchName: result.inspection.toBranch, reconciledForward: true, warnings: [] };
       } catch (error) {
         evidence.safeRepair.reason =
-          `forward reconciliation failed: ${error instanceof Error ? error.message : String(error)}`;
+          `向前协调失败：${error instanceof Error ? error.message : String(error)}`;
         throw branchIncoherenceValidationFailure(evidence);
       }
     }
 
     if (!input.db) {
-      evidence.safeRepair.reason = "forward reconciliation adoption requires database access to audit after workspace realization";
+      evidence.safeRepair.reason = "采用向前协调需要数据库访问权限，才能在工作区创建后进行审计";
       throw branchIncoherenceValidationFailure(evidence);
     }
     return {
@@ -2266,7 +2266,7 @@ export async function ensureGitWorktreeBranchCoherent(input: {
 
   evidence.safeRepair.attempted = true;
   const warningPrefix =
-    `Execution workspace branch metadata was self-healed from "${expectedBranchName}" to "${formatBranchForMessage(currentBranch)}" at ${input.worktreePath}.`;
+    `执行工作区已在 ${input.worktreePath} 将分支元数据从“${expectedBranchName}”自动修复为“${formatBranchForMessage(currentBranch)}”。`;
   if (
     currentBranch &&
     evidence.provenance.actualBranchExists === true &&
@@ -2274,12 +2274,12 @@ export async function ensureGitWorktreeBranchCoherent(input: {
     !evidence.provenance.sameHead
   ) {
     evidence.safeRepair.succeeded = true;
-    evidence.safeRepair.reason = "clean worktree adopted the checked-out branch because it is forward of the recorded branch";
+    evidence.safeRepair.reason = "干净工作树采用了当前检出分支，因为该分支位于记录分支之后";
     return {
       branchName: currentBranch,
       reconciledForward: false,
       warnings: [
-        `${warningPrefix} The checked-out branch contains the recorded branch plus newer commits, so Paperclip adopted it for subsequent runs.`,
+        `${warningPrefix} 当前检出分支包含记录分支及更新提交，因此 Alice 已在后续运行中采用该分支。`,
       ],
     };
   }
@@ -2306,12 +2306,12 @@ export async function ensureGitWorktreeBranchCoherent(input: {
           sourceIssueId: evidence.sourceIssueId,
           executionWorkspaceId: evidence.executionWorkspaceId,
         },
-        successMessage: `Reattached detached git worktree HEAD at ${input.worktreePath} to ${expectedBranchName}\n`,
+        successMessage: `已将 ${input.worktreePath} 中分离的 Git 工作树 HEAD 重新附加到 ${expectedBranchName}\n`,
         failureLabel: `git checkout -B ${expectedBranchName} ${formatShortSha(evidence.provenance.actualHeadSha)}`,
       });
     } catch (error) {
       evidence.safeRepair.succeeded = false;
-      evidence.safeRepair.reason = `safe detached HEAD reattachment failed: ${error instanceof Error ? error.message : String(error)}`;
+      evidence.safeRepair.reason = `安全重新附加分离 HEAD 失败：${error instanceof Error ? error.message : String(error)}`;
       throw branchIncoherenceValidationFailure(evidence);
     }
 
@@ -2319,17 +2319,17 @@ export async function ensureGitWorktreeBranchCoherent(input: {
       .catch(() => null);
     if (repairedBranch !== expectedBranchName) {
       evidence.safeRepair.succeeded = false;
-      evidence.safeRepair.reason = `reattach completed but HEAD is ${formatBranchForMessage(repairedBranch)}`;
+      evidence.safeRepair.reason = `重新附加已完成，但 HEAD 为 ${formatBranchForMessage(repairedBranch)}`;
       throw branchIncoherenceValidationFailure(evidence);
     }
 
     evidence.safeRepair.succeeded = true;
-    evidence.safeRepair.reason = "clean detached worktree HEAD was reattached to the recorded branch";
+    evidence.safeRepair.reason = "已将干净的分离工作树 HEAD 重新附加到记录分支";
     return {
       branchName: expectedBranchName,
       reconciledForward: false,
       warnings: [
-        `${warningPrefix} The detached HEAD contained the recorded branch plus newer commits, so Paperclip moved the recorded branch to that HEAD.`,
+        `${warningPrefix} 分离的 HEAD 包含记录分支及更新提交，因此 Alice 已将记录分支移动到该 HEAD。`,
       ],
     };
   }
@@ -2349,12 +2349,12 @@ export async function ensureGitWorktreeBranchCoherent(input: {
         sourceIssueId: evidence.sourceIssueId,
         executionWorkspaceId: evidence.executionWorkspaceId,
       },
-      successMessage: `Repaired clean git worktree branch mismatch at ${input.worktreePath}: checked out ${expectedBranchName}\n`,
+      successMessage: `已修复 ${input.worktreePath} 中干净 Git 工作树的分支不一致：已检出 ${expectedBranchName}\n`,
       failureLabel: `git checkout ${expectedBranchName}`,
     });
   } catch (error) {
     evidence.safeRepair.succeeded = false;
-    evidence.safeRepair.reason = `safe checkout failed: ${error instanceof Error ? error.message : String(error)}`;
+    evidence.safeRepair.reason = `安全检出失败：${error instanceof Error ? error.message : String(error)}`;
     throw branchIncoherenceValidationFailure(evidence);
   }
 
@@ -2362,17 +2362,17 @@ export async function ensureGitWorktreeBranchCoherent(input: {
     .catch(() => null);
   if (repairedBranch !== expectedBranchName) {
     evidence.safeRepair.succeeded = false;
-    evidence.safeRepair.reason = `checkout completed but HEAD is ${formatBranchForMessage(repairedBranch)}`;
+    evidence.safeRepair.reason = `检出已完成，但 HEAD 为 ${formatBranchForMessage(repairedBranch)}`;
     throw branchIncoherenceValidationFailure(evidence);
   }
 
   evidence.safeRepair.succeeded = true;
-  evidence.safeRepair.reason = "clean worktree checked out the recorded branch";
+  evidence.safeRepair.reason = "干净工作树已检出记录分支";
   return {
     branchName: expectedBranchName,
     reconciledForward: false,
     warnings: [
-      `Execution workspace branch metadata was self-healed by checking out recorded branch "${expectedBranchName}" at ${input.worktreePath}.`,
+      `执行工作区已通过在 ${input.worktreePath} 检出记录分支“${expectedBranchName}”自动修复分支元数据。`,
     ],
   };
 }
@@ -8611,7 +8611,7 @@ export async function restartDesiredRuntimeServicesOnStartup(db: Db) {
     try {
       const refs = await startRuntimeServicesForWorkspaceControl({
         db,
-        actor: { id: null, name: "Paperclip", companyId: row.companyId },
+        actor: { id: null, name: "Alice", companyId: row.companyId },
         issue: null,
         workspace: {
           baseCwd: row.cwd,
@@ -8660,7 +8660,7 @@ export async function restartDesiredRuntimeServicesOnStartup(db: Db) {
     try {
       const refs = await startRuntimeServicesForWorkspaceControl({
         db,
-        actor: { id: null, name: "Paperclip", companyId: row.companyId },
+        actor: { id: null, name: "Alice", companyId: row.companyId },
         issue: row.sourceIssueId
           ? {
               id: row.sourceIssueId,

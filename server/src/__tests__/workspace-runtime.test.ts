@@ -2844,7 +2844,7 @@ describe("realizeExecutionWorkspace", () => {
 
     expect(restored?.branchName).toBe(branchName);
     expect(restored?.warnings).toEqual(expect.arrayContaining([
-      expect.stringContaining("moved the recorded branch to that HEAD"),
+      expect.stringContaining("已将记录分支移动到该 HEAD"),
     ]));
     await expect(readGit(worktreePath, ["branch", "--show-current"])).resolves.toBe(branchName);
     await expect(readGit(worktreePath, ["rev-parse", "HEAD"])).resolves.toBe(detachedHead);
@@ -3049,7 +3049,7 @@ describe("realizeExecutionWorkspace", () => {
 
     expect(restored?.branchName).toBe(actualBranch);
     expect(restored?.warnings).toEqual(expect.arrayContaining([
-      expect.stringContaining("adopted it for subsequent runs"),
+      expect.stringContaining("已在后续运行中采用该分支"),
     ]));
     await expect(readGit(initial.cwd, ["branch", "--show-current"])).resolves.toBe(actualBranch);
   }, 15_000);
@@ -3129,7 +3129,7 @@ describe("realizeExecutionWorkspace", () => {
             actualBranchExists: true,
             sameHead: false,
             ancestryVerdict: "diverged",
-            plainLanguageReason: expect.stringContaining("cannot prove a forward-only reconciliation"),
+            plainLanguageReason: expect.stringContaining("无法证明此次协调仅向前推进"),
           }),
         }),
       },
@@ -3206,12 +3206,12 @@ describe("realizeExecutionWorkspace", () => {
             expectedHeadSha: null,
             sameHead: false,
             ancestryVerdict: "unknown",
-            plainLanguageReason: expect.stringContaining("missing a resolvable HEAD commit"),
+            plainLanguageReason: expect.stringContaining("缺少可解析的 HEAD 提交"),
           }),
           safeRepair: expect.objectContaining({
             attempted: false,
             succeeded: false,
-            reason: "forward reconciliation adoption requires database access to audit after workspace realization",
+            reason: "采用向前协调需要数据库访问权限，才能在工作区创建后进行审计",
           }),
         }),
       },
