@@ -156,6 +156,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.secret_name_lowercase_digits_0c920006).toContain("小写字母、数字和下划线");
     expect(messages.secret_missing_runs_fail_rebind_0c920012).toContain("运行会失败");
     expect(messages.user_secret_disabled_runs_fail_0c920015).toContain("用户密钥定义");
+    expect(messages.file_viewer_sensitive_body_0c930002).toContain("敏感数据");
+    expect(messages.file_viewer_outside_body_0c930003).toContain("任务工作区内");
+    expect(messages.file_viewer_cleaned_body_0c930004).toContain("隔离工作树已清理");
+    expect(messages.file_viewer_unsupported_body_0c930006).toContain("文本、图片或视频预览");
+    expect(messages.unable_to_load_file_content_0c930009).toBe("无法加载文件内容。");
+    expect(messages.file_contents_unavailable_0c930010).toBe("文件内容不可用。");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

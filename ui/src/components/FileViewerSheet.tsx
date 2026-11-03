@@ -78,7 +78,7 @@ function normalizeError(error: unknown): FileViewerErrorShape {
   if (error instanceof Error) {
     return { status: 0, code: "", message: error.message };
   }
-  return { status: 0, code: "", message: "Something went wrong." };
+  return { status: 0, code: "", message: l10n("local.file_viewer_generic_error_0c930001") };
 }
 
 function formatBytes(size: number | null | undefined): string | null {
@@ -123,48 +123,48 @@ export function describeDenial(code: string, fallback: string): { title: string;
     return {
       icon: <Lock aria-hidden="true" className="h-6 w-6 text-amber-500" />,
       title: l10n("local.viewer_blocked_for_this_file_2d9ad26c"),
-      body: "This file is not available through the viewer because it may contain sensitive data.",
+      body: l10n("local.file_viewer_sensitive_body_0c930002"),
     };
   }
   if (lower.includes("outside") || lower.includes("traversal")) {
     return {
       icon: <Ban aria-hidden="true" className="h-6 w-6 text-red-500" />,
       title: l10n("local.path_is_outside_the_workspace_aa3ce277"),
-      body: "The viewer can only open files that live under the issue's workspace.",
+      body: l10n("local.file_viewer_outside_body_0c930003"),
     };
   }
   if (lower.includes("archive") || lower.includes("cleaned")) {
     return {
       icon: <FolderOpen aria-hidden="true" className="h-6 w-6 text-muted-foreground" />,
       title: l10n("local.workspace_is_no_longer_available_cb2826c6"),
-      body: "The isolated worktree for this issue has been cleaned up, so files cannot be previewed.",
+      body: l10n("local.file_viewer_cleaned_body_0c930004"),
     };
   }
   if (lower.includes("remote")) {
     return {
       icon: <AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />,
       title: l10n("local.remote_workspace_preview_not_supported_118565fc"),
-      body: "This workspace is hosted remotely and is not available for inline preview yet.",
+      body: l10n("local.this_workspace_is_hosted_remotely_inline_prev_328ae25d"),
     };
   }
   if (lower.includes("too_large") || lower.includes("size")) {
     return {
       icon: <AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />,
       title: l10n("local.file_is_too_large_to_preview_af94fcfb"),
-      body: "This file exceeds the supported preview size.",
+      body: l10n("local.file_viewer_too_large_body_0c930005"),
     };
   }
   if (lower.includes("binary") || lower.includes("unsupported")) {
     return {
       icon: <AlertTriangle aria-hidden="true" className="h-6 w-6 text-amber-500" />,
       title: l10n("local.preview_not_supported_for_this_file_type_c55ca586"),
-      body: "This file does not have a text, image, or video preview available.",
+      body: l10n("local.file_viewer_unsupported_body_0c930006"),
     };
   }
   return {
     icon: <Ban aria-hidden="true" className="h-6 w-6 text-red-500" />,
     title: l10n("local.can_t_preview_this_file_31b952ec"),
-    body: fallback || "The viewer was unable to load this file.",
+    body: fallback || l10n("local.file_viewer_failed_body_0c930007"),
   };
 }
 
@@ -554,14 +554,14 @@ export function FileViewerSheet({
   useEffect(() => {
     if (resolveQuery.isError) {
       const normalized = normalizeError(resolveQuery.error);
-      setAnnouncement(normalized.message || "Unable to load file.");
+      setAnnouncement(normalized.message || l10n("local.unable_to_load_file_0c930008"));
     }
   }, [resolveQuery.isError, resolveQuery.error]);
 
   useEffect(() => {
     if (contentQuery.isError) {
       const normalized = normalizeError(contentQuery.error);
-      setAnnouncement(normalized.message || "Unable to load file content.");
+      setAnnouncement(normalized.message || l10n("local.unable_to_load_file_content_0c930009"));
     }
   }, [contentQuery.isError, contentQuery.error]);
 
@@ -643,7 +643,7 @@ export function FileViewerSheet({
       await copyTextToClipboard(value);
       showCopyFeedback(field, message);
     } catch {
-      showCopyFeedback(null, "Copy failed");
+      showCopyFeedback(null, l10n("local.copy_failed_5b50e7a6"));
     } finally {
       setCopyingField((current) => (current === field ? null : current));
     }
@@ -658,7 +658,7 @@ export function FileViewerSheet({
         content = result.data;
       }
       if (!content) {
-        showCopyFeedback(null, "File contents unavailable");
+        showCopyFeedback(null, l10n("local.file_contents_unavailable_0c930010"));
         return;
       }
       const message = content.content.encoding === "base64" ? l10n("local.copied_file_data_62c309f4") : l10n("local.copied_contents_6604ead1");
@@ -668,7 +668,7 @@ export function FileViewerSheet({
 
   const handleCopyLink = useCallback(() => {
     if (typeof window === "undefined") return;
-    void copyToClipboard(window.location.href, "link", "Copied link");
+    void copyToClipboard(window.location.href, "link", l10n("local.copied_link_93354054"));
   }, [copyToClipboard]);
 
   const handleRetry = useCallback(() => {

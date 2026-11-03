@@ -11318,6 +11318,16 @@
     "secret_missing_runs_fail_rebind_0c920012": "This secret no longer exists — runs will fail until you rebind.",
     "secret_disabled_runs_fail_0c920013": "Runs will fail until the secret is re-enabled or rebound.",
     "user_secret_missing_runs_fail_0c920014": "This user secret definition no longer exists — runs will fail until you rebind.",
-    "user_secret_disabled_runs_fail_0c920015": "Runs will fail until this user secret definition is re-enabled or rebound."
+    "user_secret_disabled_runs_fail_0c920015": "Runs will fail until this user secret definition is re-enabled or rebound.",
+    "file_viewer_generic_error_0c930001": "Something went wrong.",
+    "file_viewer_sensitive_body_0c930002": "This file is not available through the viewer because it may contain sensitive data.",
+    "file_viewer_outside_body_0c930003": "The viewer can only open files that live under the task workspace.",
+    "file_viewer_cleaned_body_0c930004": "The isolated worktree for this task has been cleaned up, so files cannot be previewed.",
+    "file_viewer_too_large_body_0c930005": "This file exceeds the supported preview size.",
+    "file_viewer_unsupported_body_0c930006": "This file does not have a text, image, or video preview available.",
+    "file_viewer_failed_body_0c930007": "The viewer was unable to load this file.",
+    "unable_to_load_file_0c930008": "Unable to load file.",
+    "unable_to_load_file_content_0c930009": "Unable to load file content.",
+    "file_contents_unavailable_0c930010": "File contents unavailable."
   }
 }
