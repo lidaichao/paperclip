@@ -12164,6 +12164,23 @@
     "linux_cd_directory_10000010": "打开终端，使用 cd 进入目标目录。",
     "linux_run_pwd_10000011": "运行 pwd 输出完整路径。",
     "copy_output_paste_here_10000012": "复制输出内容，然后粘贴到这里。",
-    "linux_file_manager_path_tip_10000013": "在大多数文件管理器中，按 Ctrl+L 可在地址栏显示完整路径。"
+    "linux_file_manager_path_tip_10000013": "在大多数文件管理器中，按 Ctrl+L 可在地址栏显示完整路径。",
+    "field_required_10100001": "此字段为必填项",
+    "invalid_secret_reference_10100002": "密钥引用无效",
+    "enter_valid_json_object_10100003": "请输入有效的 JSON 对象",
+    "minimum_characters_10100004": "至少需要 {{v0}} 个字符",
+    "maximum_characters_10100005": "最多允许 {{v0}} 个字符",
+    "must_match_pattern_10100006": "必须符合格式：{{v0}}",
+    "must_be_valid_number_10100007": "必须是有效数字",
+    "must_be_at_least_value_10100008": "不得小于 {{v0}}",
+    "must_be_at_most_value_10100009": "不得大于 {{v0}}",
+    "must_be_greater_than_10100010": "必须大于 {{v0}}",
+    "must_be_less_than_10100011": "必须小于 {{v0}}",
+    "must_be_whole_number_10100012": "必须是整数",
+    "must_be_multiple_of_10100013": "必须是 {{v0}} 的倍数",
+    "minimum_items_10100014": "至少需要 {{v0}} 项",
+    "maximum_items_10100015": "最多允许 {{v0}} 项",
+    "advanced_options_10100016": "高级选项",
+    "more_options_10100017": "更多选项"
   }
 }

@@ -12164,6 +12164,23 @@
     "linux_cd_directory_10000010": "Open a terminal and navigate to the directory with cd.",
     "linux_run_pwd_10000011": "Run pwd to print the full path.",
     "copy_output_paste_here_10000012": "Copy the output and paste here.",
-    "linux_file_manager_path_tip_10000013": "In most file managers, Ctrl+L reveals the full path in the address bar."
+    "linux_file_manager_path_tip_10000013": "In most file managers, Ctrl+L reveals the full path in the address bar.",
+    "field_required_10100001": "This field is required",
+    "invalid_secret_reference_10100002": "Invalid secret reference",
+    "enter_valid_json_object_10100003": "Enter a valid JSON object",
+    "minimum_characters_10100004": "Must be at least {{v0}} characters",
+    "maximum_characters_10100005": "Must be at most {{v0}} characters",
+    "must_match_pattern_10100006": "Must match pattern: {{v0}}",
+    "must_be_valid_number_10100007": "Must be a valid number",
+    "must_be_at_least_value_10100008": "Must be at least {{v0}}",
+    "must_be_at_most_value_10100009": "Must be at most {{v0}}",
+    "must_be_greater_than_10100010": "Must be greater than {{v0}}",
+    "must_be_less_than_10100011": "Must be less than {{v0}}",
+    "must_be_whole_number_10100012": "Must be a whole number",
+    "must_be_multiple_of_10100013": "Must be a multiple of {{v0}}",
+    "minimum_items_10100014": "Must have at least {{v0}} items",
+    "maximum_items_10100015": "Must have at most {{v0}} items",
+    "advanced_options_10100016": "Advanced options",
+    "more_options_10100017": "More options"
   }
 }
