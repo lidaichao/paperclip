@@ -137,7 +137,7 @@ export function activityRoutes(db: Db) {
     assertBoard(req);
     assertCompanyAccess(req, companyId);
     if (await hasAgentAuditPermission(req, companyId)) return;
-    throw forbidden("Missing permission: audit:view_agent_actions");
+    throw forbidden("缺少权限：audit:view_agent_actions");
   }
 
   function hasAttributionFilters(query: z.infer<typeof agentActionAuditQuerySchema>) {
@@ -179,7 +179,7 @@ export function activityRoutes(db: Db) {
       resource: { type: "company", companyId },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Activity is outside this actor's authorization boundary" });
+    res.status(403).json({ error: "活动记录不在当前操作者的授权范围内" });
     return false;
   }
 
@@ -207,7 +207,7 @@ export function activityRoutes(db: Db) {
       },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Issue activity is outside this actor's authorization boundary" });
+    res.status(403).json({ error: "任务活动记录不在当前操作者的授权范围内" });
     return false;
   }
 
@@ -239,7 +239,7 @@ export function activityRoutes(db: Db) {
     const companyId = req.params.companyId as string;
     const parsedActorScope = agentActionAuditActorScopeSchema.safeParse(req.query.actorScope ?? "agents");
     if (!parsedActorScope.success) {
-      throw badRequest("Invalid agent action audit query", parsedActorScope.error.issues);
+      throw badRequest("智能体操作审计查询无效", parsedActorScope.error.issues);
     }
     if (parsedActorScope.data === "agents") {
       // Keep the legacy authorization-before-validation behavior for callers
@@ -252,7 +252,7 @@ export function activityRoutes(db: Db) {
 
     const parsedQuery = agentActionAuditQuerySchema.safeParse(req.query);
     if (!parsedQuery.success) {
-      throw badRequest("Invalid agent action audit query", parsedQuery.error.issues);
+      throw badRequest("智能体操作审计查询无效", parsedQuery.error.issues);
     }
     if (parsedQuery.data.actorScope === "agents") {
       const result = await agentAudit.list({ companyId, ...parsedQuery.data });
@@ -262,7 +262,7 @@ export function activityRoutes(db: Db) {
 
     const canViewAttribution = await hasAgentAuditPermission(req, companyId);
     if (!canViewAttribution && hasAttributionFilters(parsedQuery.data)) {
-      throw forbidden("Audit filters require permission: audit:view_agent_actions");
+      throw forbidden("使用审计筛选条件需要权限：audit:view_agent_actions");
     }
     const result = await agentAudit.list({ companyId, ...parsedQuery.data });
     res.json({
@@ -276,7 +276,7 @@ export function activityRoutes(db: Db) {
     await assertAgentAuditPermission(req, companyId);
     const parsedQuery = agentActionAuditQuerySchema.safeParse(req.query);
     if (!parsedQuery.success) {
-      throw badRequest("Invalid agent action audit query", parsedQuery.error.issues);
+      throw badRequest("智能体操作审计查询无效", parsedQuery.error.issues);
     }
     // Drive our own pagination for the export; a client-supplied cursor/limit
     // would silently truncate the export, so ignore them.
@@ -340,7 +340,7 @@ export function activityRoutes(db: Db) {
 
   router.get("/issues/:id/activity", async (req, res) => {
     const rawId = req.params.id as string;
-    const issue = await getAccessibleResource(req, res, resolveIssueByRef(rawId), "Issue not found");
+    const issue = await getAccessibleResource(req, res, resolveIssueByRef(rawId), "未找到任务");
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
     const result = await svc.forIssue(issue.id);
@@ -349,7 +349,7 @@ export function activityRoutes(db: Db) {
 
   router.get("/issues/:id/runs", async (req, res) => {
     const rawId = req.params.id as string;
-    const issue = await getAccessibleResource(req, res, resolveIssueByRef(rawId), "Issue not found");
+    const issue = await getAccessibleResource(req, res, resolveIssueByRef(rawId), "未找到任务");
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
     const result = await svc.runsForIssue(issue.companyId, issue.id);

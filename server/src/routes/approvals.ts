@@ -168,7 +168,7 @@ export function approvalRoutes(
       resource: { type: "company", companyId },
     });
     if (decision.allowed) return true;
-    res.status(403).json({ error: "Approvals are outside this actor's authorization boundary" });
+    res.status(403).json({ error: "审批不在当前操作者的授权范围内" });
     return false;
   }
 
@@ -213,7 +213,7 @@ export function approvalRoutes(
 
   router.get("/approvals/:id", async (req, res) => {
     const id = req.params.id as string;
-    const approval = await getAccessibleResource(req, res, svc.getById(id), "Approval not found");
+    const approval = await getAccessibleResource(req, res, svc.getById(id), "未找到审批");
     if (!approval) return;
     if (!(await assertApprovalAccessAllowed(req, res, approval.companyId))) return;
     res.json(redactApprovalPayload(approval));
@@ -276,7 +276,7 @@ export function approvalRoutes(
 
   router.get("/approvals/:id/issues", async (req, res) => {
     const id = req.params.id as string;
-    const approval = await getAccessibleResource(req, res, svc.getById(id), "Approval not found");
+    const approval = await getAccessibleResource(req, res, svc.getById(id), "未找到审批");
     if (!approval) return;
     if (!(await assertApprovalAccessAllowed(req, res, approval.companyId))) return;
     const issues = await issueApprovalsSvc.listIssuesForApproval(id);
@@ -287,7 +287,7 @@ export function approvalRoutes(
     assertBoard(req);
     const id = req.params.id as string;
     if (!(await requireApprovalAccess(req, id))) {
-      res.status(404).json({ error: "Approval not found" });
+      res.status(404).json({ error: "未找到审批" });
       return;
     }
     const decidedByUserId = req.actor.userId ?? "board";
@@ -403,7 +403,7 @@ export function approvalRoutes(
     assertBoard(req);
     const id = req.params.id as string;
     if (!(await requireApprovalAccess(req, id))) {
-      res.status(404).json({ error: "Approval not found" });
+      res.status(404).json({ error: "未找到审批" });
       return;
     }
     const decidedByUserId = req.actor.userId ?? "board";
@@ -441,7 +441,7 @@ export function approvalRoutes(
       assertBoard(req);
       const id = req.params.id as string;
       if (!(await requireApprovalAccess(req, id))) {
-        res.status(404).json({ error: "Approval not found" });
+        res.status(404).json({ error: "未找到审批" });
         return;
       }
       const decidedByUserId = req.actor.userId ?? "board";
@@ -463,12 +463,12 @@ export function approvalRoutes(
 
   router.post("/approvals/:id/resubmit", validate(resubmitApprovalSchema), async (req, res) => {
     const id = req.params.id as string;
-    const existing = await getAccessibleResource(req, res, svc.getById(id), "Approval not found");
+    const existing = await getAccessibleResource(req, res, svc.getById(id), "未找到审批");
     if (!existing) return;
     if (!(await assertApprovalMutationAllowedByRunContext(req, res, existing.companyId))) return;
 
     if (req.actor.type === "agent" && req.actor.agentId !== existing.requestedByAgentId) {
-      res.status(403).json({ error: "Only requesting agent can resubmit this approval" });
+      res.status(403).json({ error: "只有发起审批的智能体才能重新提交" });
       return;
     }
 
@@ -498,7 +498,7 @@ export function approvalRoutes(
 
   router.get("/approvals/:id/comments", async (req, res) => {
     const id = req.params.id as string;
-    const approval = await getAccessibleResource(req, res, svc.getById(id), "Approval not found");
+    const approval = await getAccessibleResource(req, res, svc.getById(id), "未找到审批");
     if (!approval) return;
     const comments = await svc.listComments(id);
     res.json(comments);
@@ -506,7 +506,7 @@ export function approvalRoutes(
 
   router.post("/approvals/:id/comments", validate(addApprovalCommentSchema), async (req, res) => {
     const id = req.params.id as string;
-    const approval = await getAccessibleResource(req, res, svc.getById(id), "Approval not found");
+    const approval = await getAccessibleResource(req, res, svc.getById(id), "未找到审批");
     if (!approval) return;
     if (!(await assertApprovalMutationAllowedByRunContext(req, res, approval.companyId))) return;
     const actor = getActorInfo(req);

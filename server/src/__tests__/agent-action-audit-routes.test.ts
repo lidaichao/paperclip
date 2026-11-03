@@ -304,13 +304,13 @@ describePostgres("agent action audit routes", () => {
       type: "board", userId: "local-board", companyIds: [company.id], source: "local_implicit", isInstanceAdmin: false,
     })).get(`/api/companies/${company.id}/audit/agent-actions?limit=invalid`);
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Invalid agent action audit query");
+    expect(response.body.error).toBe("智能体操作审计查询无效");
 
     const scopeResponse = await request(await createApp(db, {
       type: "board", userId: "local-board", companyIds: [company.id], source: "local_implicit", isInstanceAdmin: false,
     })).get(`/api/companies/${company.id}/audit/agent-actions?actorScope=unknown`);
     expect(scopeResponse.status).toBe(400);
-    expect(scopeResponse.body.error).toBe("Invalid agent action audit query");
+    expect(scopeResponse.body.error).toBe("智能体操作审计查询无效");
 
     const cursorResponse = await request(await createApp(db, {
       type: "board", userId: "local-board", companyIds: [company.id], source: "local_implicit", isInstanceAdmin: false,

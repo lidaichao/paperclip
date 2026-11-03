@@ -211,7 +211,7 @@ describe("approval routes idempotent retries", () => {
       .send({});
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Approval not found");
+    expect(res.body.error).toBe("未找到审批");
     expect(mockApprovalService.approve).not.toHaveBeenCalled();
   });
 
@@ -229,7 +229,7 @@ describe("approval routes idempotent retries", () => {
       .send({ decisionNote: "Need changes" });
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Approval not found");
+    expect(res.body.error).toBe("未找到审批");
     expect(mockApprovalService.requestRevision).not.toHaveBeenCalled();
   });
 
