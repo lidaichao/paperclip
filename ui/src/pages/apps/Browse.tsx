@@ -173,14 +173,14 @@ function connectionState(connection: ToolConnection): ConnectionState {
     return {
       kind: "draft",
       label: l10n("local.setup_incomplete_167fc0f3"),
-      message: "Finish setup before agents can use this account.",
+      message: l10n("local.finish_setup_before_agents_use_account_0fb00001"),
     };
   }
   if (connection.enabled === false || connection.status === "disabled") {
     return {
       kind: "paused",
       label: l10n("local.paused_e159b061"),
-      message: "Agents can’t use this account right now.",
+      message: l10n("local.agents_cannot_use_account_now_0fb00002"),
     };
   }
   if ((connection.connectionPurpose === "ai" && (connection.healthStatus !== "ok" || aiSubscriptionNeedsIsolatedLogin(connection.config))) || isToolConnectionAttentionHealth(connection.healthStatus)) {
@@ -191,8 +191,8 @@ function connectionState(connection: ToolConnection): ConnectionState {
         connection.healthMessage ??
         connection.lastError ??
         (connection.authKind === "oauth"
-          ? "Sign in again to restore access."
-          : "Replace the credential to restore access."),
+          ? l10n("local.sign_in_again_restore_access_0fb00003")
+          : l10n("local.replace_credential_restore_access_0fb00004")),
     };
   }
   return { kind: "connected", label: l10n("local.connected_22965568"), message: null };

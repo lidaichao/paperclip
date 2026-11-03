@@ -532,6 +532,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.ignored_file_paths_0fa00013).toBe("忽略的文件路径");
     expect(messages.ignored_paths_help_0fa00014).toContain("手动和自动分析");
     expect(messages.lookup_failed_0fa00015).toBe("查询失败");
+    expect(messages.finish_setup_before_agents_use_account_0fb00001).toContain("完成设置");
+    expect(messages.agents_cannot_use_account_now_0fb00002).toContain("无法使用");
+    expect(messages.sign_in_again_restore_access_0fb00003).toContain("重新登录");
+    expect(messages.replace_credential_restore_access_0fb00004).toContain("替换凭据");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

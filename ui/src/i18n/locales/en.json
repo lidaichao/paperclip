@@ -12112,6 +12112,10 @@
     "excluded_labels_help_0fa00012": "Any listed label prevents automatic review.",
     "ignored_file_paths_0fa00013": "Ignored file paths",
     "ignored_paths_help_0fa00014": "Excluded from manual and automatic analysis. Supports * and **.",
-    "lookup_failed_0fa00015": "Lookup failed"
+    "lookup_failed_0fa00015": "Lookup failed",
+    "finish_setup_before_agents_use_account_0fb00001": "Finish setup before agents can use this account.",
+    "agents_cannot_use_account_now_0fb00002": "Agents can’t use this account right now.",
+    "sign_in_again_restore_access_0fb00003": "Sign in again to restore access.",
+    "replace_credential_restore_access_0fb00004": "Replace the credential to restore access."
   }
 }
