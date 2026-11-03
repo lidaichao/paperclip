@@ -199,7 +199,7 @@ export function validateGitHubReviewAssessment(
   }
   const assessment = parsed.data;
   if (assessment.reviewedCommit !== headSha.toLowerCase())
-    throw conflict("The assessment is for a different pull request head.");
+    throw conflict("此评估对应的是另一个拉取请求最新提交。");
   for (const path of [
     ...assessment.coverage.reviewedPaths,
     ...assessment.findings.map((f) => f.path),
@@ -220,7 +220,7 @@ export function validateGitHubReviewAssessment(
       (f) => !policy.findingCategories.includes(f.category),
     )
   )
-    throw badRequest("The assessment contains an unknown finding category.");
+    throw badRequest("评估中包含未知的问题类别。");
   return assessment;
 }
 

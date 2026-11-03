@@ -147,7 +147,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
       (!publishing && run.status !== "running") ||
       (publishing && !["running", "succeeded"].includes(run.status))
     )
-      throw forbidden("This task run is no longer authorized");
+      throw forbidden("此任务运行已不再获得授权");
     const commentId = run.contextSnapshot?.wakeCommentId;
     const [source] =
       typeof commentId === "string"
@@ -207,7 +207,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
       source.delivery.principalId,
     );
     if (!access?.allowed)
-      throw forbidden("The initiating GitHub person is no longer authorized");
+      throw forbidden("发起操作的 GitHub 用户已不再获得授权");
     const automatic = source.delivery.normalizedEvent.githubAutomatic as
       { context: GitHubReviewEventContext } | undefined;
     if (
@@ -215,7 +215,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
       !(await githubAutomaticAdmission(db, source.endpoint, automatic.context))
         ?.allowed
     )
-      throw forbidden("Automatic review authority is no longer available");
+      throw forbidden("自动审阅权限已不可用");
     const repositoryId = String(
       source.resource.metadata?.providerRepositoryId ?? "",
     );
@@ -232,7 +232,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
         source.conversation.externalThreadId,
       );
     if (!match || match[1]!.toLowerCase() !== repository.toLowerCase())
-      throw forbidden("Invalid task repository binding");
+      throw forbidden("任务仓库绑定无效");
     const [agent] = await db
       .select()
       .from(agents)
@@ -252,7 +252,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
         ),
       );
     if (!agent || !issue || issue.assigneeAgentId !== agent.id)
-      throw forbidden("The assigned agent changed");
+      throw forbidden("负责人智能体已变化");
     const [project] = issue.projectId
       ? await db
           .select()
@@ -275,7 +275,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
       },
     });
     if (trust.kind === "denied")
-      throw forbidden("The agent's trust policy is incomplete");
+      throw forbidden("智能体的信任策略不完整");
     // The caller's task/run binding is fixed; never export credentials. Review
     // submissions are governed output, not authority to mutate other tasks.
     if (
@@ -663,7 +663,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
         parsed.path.includes("\\") ||
         githubReviewPathIsExcluded(parsed.path, source.policy)
       )
-        throw forbidden("This path is excluded from the review");
+        throw forbidden("此路径已从审阅范围中排除");
       const result = await api.request<Record<string, unknown>>(
         `/contents/${parsed.path.split("/").map(encodeURIComponent).join("/")}?ref=${parsed.revision === "head" ? pull.head.sha : pull.base.sha}`,
       );
@@ -816,7 +816,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
     if (name === "formal_review") {
       const parsed = formalSchema.parse(input);
       if (parsed.reviewedCommit !== pull.head.sha)
-        throw conflict("The PR head changed. Review the new commits first.");
+        throw conflict("拉取请求的最新提交已变化，请先审阅新提交。");
       assertFormalPermission(source.policy, parsed.event);
       const [assessed] = await db
         .select()
@@ -831,7 +831,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
           ),
         );
       if (!assessed?.assessment?.complete)
-        throw conflict("Submit a complete assessment before a formal review");
+        throw conflict("正式审阅前请提交完整评估");
       const actionId = await stage(
         source,
         "formal_review",
@@ -844,7 +844,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
       await processPublication(actionId);
       return receipt(actionId);
     }
-    throw notFound("Unknown GitHub bot tool");
+    throw notFound("未知的 GitHub 机器人工具");
   }
   function assertFormalPermission(
     policy: GitHubReviewPolicy,
@@ -853,7 +853,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
     if (
       !(event === "APPROVE" ? policy.allowApprove : policy.allowRequestChanges)
     )
-      throw forbidden(`Formal ${event} reviews are disabled for this bot`);
+      throw forbidden(`此机器人已停用正式 ${event} 审阅`);
   }
   async function assertPublicationAuthority(
     source: Awaited<ReturnType<typeof scope>>,
@@ -884,7 +884,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
         tool.connectionId === source.endpoint.connectionId &&
         tool.upstreamToolName === toolName,
     );
-    if (!tool) throw forbidden("The bot tool is no longer available");
+    if (!tool) throw forbidden("机器人工具已不可用");
     const decision = await toolAccessPolicyService(db).decide({
       companyId: source.endpoint.companyId,
       actor: {
@@ -994,7 +994,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
         if (!fresh || ["processed", "cancelled"].includes(fresh.status)) return;
         const session = action.payload.session as Session;
         if (!session || session.companyId !== action.companyId)
-          throw forbidden("Invalid GitHub publication binding");
+          throw forbidden("GitHub 发布绑定无效");
         try {
           const source = await scope(session, true);
           if (
@@ -1002,7 +1002,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
             source.conversation.id !== action.conversationId ||
             source.delivery.id !== action.deliveryId
           )
-            throw forbidden("GitHub publication context changed");
+            throw forbidden("GitHub 发布上下文已变化");
           await assertPublicationAuthority(source, action);
           const api = await client(source, lease.fetch);
           const publicationMarker = marker(
@@ -1121,7 +1121,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
               )
               .limit(1);
             if (!review?.assessment)
-              throw conflict("Review assessment is unavailable");
+              throw conflict("审阅评估不可用");
             await currentHead(review.headSha);
             const assessment = validateGitHubReviewAssessment(
               review.assessment,
@@ -1171,7 +1171,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
               );
               const currentSummarySource = await currentHead(review.headSha);
               if (!currentSummarySource.policy.publishSummary)
-                throw forbidden("Summary publication is disabled");
+                throw forbidden("摘要发布已停用");
               summaryReceipt = await api.request(
                 previous
                   ? `/issues/comments/${previous.id}`
@@ -1218,7 +1218,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
                     currentFindingSource.policy,
                   )
                 )
-                  throw forbidden("Finding path is now excluded");
+                  throw forbidden("问题所在路径现已被排除");
                 const posted =
                   prior ??
                   (await api.request<{ id: number; html_url: string }>(
@@ -1323,7 +1323,7 @@ export function githubChatReviewService(db: Db, fetchImpl = fetch) {
               checkUrl: postedCheck.html_url,
               summaryUrl: summaryReceipt?.html_url ?? null,
             };
-          } else throw forbidden("Unknown GitHub publication");
+          } else throw forbidden("未知的 GitHub 发布");
           await lease.commit(async (tx) => {
             await tx
               .update(chatActions)
