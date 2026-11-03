@@ -66,18 +66,18 @@ type InboxScopeFilters = {
 };
 
 const INBOX_CATEGORY_OPTIONS: ReadonlyArray<[InboxCategoryFilter, string]> = [
-  ["everything", "All categories"],
-  ["issues_i_touched", "My recent tasks"],
-  ["join_requests", "Join requests"],
-  ["approvals", "Approvals"],
-  ["failed_runs", "Failed runs"],
-  ["alerts", "Alerts"],
+  ["everything", l10n("local.all_categories_9d5097a8")],
+  ["issues_i_touched", l10n("local.my_recent_tasks_0b598c2c")],
+  ["join_requests", l10n("local.join_requests_a1321fc2")],
+  ["approvals", l10n("local.approvals_2bfc3471")],
+  ["failed_runs", l10n("local.failed_runs_24afc952")],
+  ["alerts", l10n("local.alerts_f62e9267")],
 ];
 
 const INBOX_APPROVAL_STATUS_OPTIONS: ReadonlyArray<[InboxApprovalFilter, string]> = [
-  ["all", "All approval statuses"],
-  ["actionable", "Needs action"],
-  ["resolved", "Resolved"],
+  ["all", l10n("local.all_approval_statuses_eadb0e28")],
+  ["actionable", l10n("local.needs_action_e382d466")],
+  ["resolved", l10n("local.resolved_5be3c2c8")],
 ];
 
 const SEARCHABLE_FILTER_THRESHOLD = 6;

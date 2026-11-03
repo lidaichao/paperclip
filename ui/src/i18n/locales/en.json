@@ -12336,6 +12336,10 @@
     "project_value_10300139": "Project {{v0}}",
     "root_issue_value_10300140": "Root issue {{v0}}",
     "no_boundary_selected_10300141": "No boundary selected",
-    "value_boundaries_10300142": "{{v0}} boundaries"
+    "value_boundaries_10300142": "{{v0}} boundaries",
+    "automatic_continuation_value_10300143": "Automatic continuation {{v0}}",
+    "automatic_retry_value_10300144": "Automatic retry {{v0}}",
+    "previous_sub_task_10300145": "Previous sub-task",
+    "next_sub_task_10300146": "Next sub-task"
   }
 }

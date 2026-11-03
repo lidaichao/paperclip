@@ -48,7 +48,9 @@ function SiblingLink({
 }) {
   const issuePathId = issue.identifier ?? issue.id;
   const label = direction === "previous" ? l10n("local.previous_a57b08a4") : l10n("local.next_1ff57a29");
-  const ariaDirection = direction === "previous" ? "Previous sub-task" : "Next sub-task";
+  const ariaDirection = direction === "previous"
+    ? l10n("local.previous_sub_task_10300145")
+    : l10n("local.next_sub_task_10300146");
   const identifier = issue.identifier ?? issue.id.slice(0, 8);
   const Icon = direction === "previous" ? ChevronLeft : ChevronRight;
 

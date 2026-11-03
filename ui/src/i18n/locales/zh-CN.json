@@ -12336,6 +12336,10 @@
     "project_value_10300139": "项目 {{v0}}",
     "root_issue_value_10300140": "根任务 {{v0}}",
     "no_boundary_selected_10300141": "未选择边界",
-    "value_boundaries_10300142": "{{v0}} 个边界"
+    "value_boundaries_10300142": "{{v0}} 个边界",
+    "automatic_continuation_value_10300143": "自动续接：{{v0}}",
+    "automatic_retry_value_10300144": "自动重试：{{v0}}",
+    "previous_sub_task_10300145": "上一个子任务",
+    "next_sub_task_10300146": "下一个子任务"
   }
 }

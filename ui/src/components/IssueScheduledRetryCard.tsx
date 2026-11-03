@@ -58,20 +58,21 @@ export function IssueScheduledRetryCard({
       : null;
 
   const badgeLabel = continuation ? l10n("local.continuation_scheduled_b51d6ab8") : l10n("local.retry_scheduled_5b6d7aa6");
-  const titleAction = continuation ? "Automatic continuation" : "Automatic retry";
   let titleSuffix: string;
   if (relative === "now") {
     titleSuffix = displayMonitorRelative("due now");
   } else if (relative) {
     titleSuffix = displayMonitorRelative(relative);
   } else {
-    titleSuffix = "pending schedule";
+    titleSuffix = l10n("local.pending_schedule_0ec00003");
   }
-  const title = `${titleAction} ${titleSuffix}`;
+  const title = continuation
+    ? l10n("local.automatic_continuation_value_10300143", { v0: titleSuffix })
+    : l10n("local.automatic_retry_value_10300144", { v0: titleSuffix });
 
   const helperIdle = continuation
-    ? "Pulls continuation forward immediately"
-    : "Pulls retry forward immediately";
+    ? l10n("local.pulls_continuation_forward_immediately_0e8e38b5")
+    : l10n("local.pulls_retry_forward_immediately_4730094a");
   const isError = retryNow.isError || retryNow.lastError !== null;
   const isSuccessTransient = retryNow.isSuccess
     && (retryNow.data?.outcome === "promoted" || retryNow.data?.outcome === "already_promoted");
