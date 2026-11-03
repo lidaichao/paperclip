@@ -10403,6 +10403,16 @@
     "manual_not_ready": "Not ready",
     "manual_setup_required": "Setup required",
     "manual_planned": "planned",
-    "manual_custom_connector_description": "A custom connector configured for this organization."
+    "manual_custom_connector_description": "A custom connector configured for this organization.",
+    "manual_environment_lease_acquired": "acquired an environment lease for",
+    "manual_environment_lease_released": "released an environment lease for",
+    "manual_provider_trace_capture_requested": "requested provider trace capture for",
+    "manual_provider_trace_metadata_listed": "listed provider trace metadata for",
+    "manual_provider_trace_redacted_viewed": "viewed a redacted provider trace for",
+    "manual_provider_trace_diffs_reprojected": "reprojected workspace diffs for",
+    "manual_provider_trace_frame_revealed": "revealed a provider trace frame for",
+    "manual_provider_trace_downloaded": "downloaded a provider trace for",
+    "manual_provider_trace_deleted": "deleted a provider trace for",
+    "manual_provider_trace_expired": "expired a provider trace for"
   }
 }

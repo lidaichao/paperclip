@@ -161,4 +161,15 @@ describe("activity formatting", () => {
       "Run finished without a next step - recovery escalated",
     );
   });
+
+  it("humanizes environment leases and provider trace events", () => {
+    expect(formatActivityVerb("environment.lease_acquired"))
+      .toBe("acquired an environment lease for");
+    expect(formatActivityVerb("environment.lease_released"))
+      .toBe("released an environment lease for");
+    expect(formatActivityVerb("provider_trace.metadata_listed"))
+      .toBe("listed provider trace metadata for");
+    expect(formatActivityVerb("provider_trace.redacted_viewed"))
+      .toBe("viewed a redacted provider trace for");
+  });
 });

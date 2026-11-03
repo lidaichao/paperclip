@@ -121,6 +121,16 @@ const ACTIVITY_ROW_VERBS: Record<string, string> = {
   "tool_connection.grant_revoked": l10n("local.revoked_credentials_from_52423f02"),
   "tool_connection.grant_delegated": l10n("local.delegated_credentials_for_a8fc31d4"),
   "tool_connection.grant_delegation_revoked": l10n("local.revoked_credential_delegation_for_75ee3ee2"),
+  "environment.lease_acquired": l10n("local.manual_environment_lease_acquired"),
+  "environment.lease_released": l10n("local.manual_environment_lease_released"),
+  "provider_trace.capture_requested": l10n("local.manual_provider_trace_capture_requested"),
+  "provider_trace.metadata_listed": l10n("local.manual_provider_trace_metadata_listed"),
+  "provider_trace.redacted_viewed": l10n("local.manual_provider_trace_redacted_viewed"),
+  "provider_trace.workspace_diffs_reprojected": l10n("local.manual_provider_trace_diffs_reprojected"),
+  "provider_trace.frame_revealed": l10n("local.manual_provider_trace_frame_revealed"),
+  "provider_trace.downloaded": l10n("local.manual_provider_trace_downloaded"),
+  "provider_trace.deleted": l10n("local.manual_provider_trace_deleted"),
+  "provider_trace.expired": l10n("local.manual_provider_trace_expired"),
 };
 
 const ISSUE_ACTIVITY_LABELS: Record<string, string> = {
@@ -276,7 +286,7 @@ function formatUserLabel(userId: string | null | undefined, options: ActivityFor
 function formatParticipantLabel(participant: ActivityParticipant, options: ActivityFormatOptions): string {
   if (participant.type === "agent") {
     const agentId = participant.agentId ?? "";
-    return options.agentMap?.get(agentId)?.name ?? "agent";
+    return options.agentMap?.get(agentId)?.name ?? l10n("local.agent_d4f0bc5a");
   }
   return formatUserLabel(participant.userId, options);
 }
@@ -350,7 +360,7 @@ function formatAssigneeName(details: ActivityDetails, options: ActivityFormatOpt
   const agentId = details.assigneeAgentId;
   const userId = details.assigneeUserId;
   if (typeof agentId === "string" && agentId) {
-    return options.agentMap?.get(agentId)?.name ?? "agent";
+    return options.agentMap?.get(agentId)?.name ?? l10n("local.agent_d4f0bc5a");
   }
   if (typeof userId === "string" && userId) {
     return formatUserLabel(userId, options);

@@ -10403,6 +10403,16 @@
     "manual_not_ready": "未就绪",
     "manual_setup_required": "需要设置",
     "manual_planned": "已规划",
-    "manual_custom_connector_description": "为当前组织配置的自定义连接器。"
+    "manual_custom_connector_description": "为当前组织配置的自定义连接器。",
+    "manual_environment_lease_acquired": "获取了运行环境租约：",
+    "manual_environment_lease_released": "释放了运行环境租约：",
+    "manual_provider_trace_capture_requested": "请求捕获供应商追踪：",
+    "manual_provider_trace_metadata_listed": "查看了供应商追踪元数据：",
+    "manual_provider_trace_redacted_viewed": "查看了脱敏的供应商追踪：",
+    "manual_provider_trace_diffs_reprojected": "重新生成了工作区差异：",
+    "manual_provider_trace_frame_revealed": "查看了供应商追踪原始帧：",
+    "manual_provider_trace_downloaded": "下载了供应商追踪：",
+    "manual_provider_trace_deleted": "删除了供应商追踪：",
+    "manual_provider_trace_expired": "供应商追踪已过期："
   }
 }

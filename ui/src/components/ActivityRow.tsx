@@ -8,6 +8,7 @@ import { cn } from "../lib/utils";
 import { formatActivityVerb } from "../lib/activity-format";
 import { deriveProjectUrlKey, type ActivityEvent, type Agent } from "@paperclipai/shared";
 import type { CompanyUserProfile } from "../lib/company-members";
+import { l10n } from "../i18n";
 
 function entityLink(entityType: string, entityId: string, name?: string | null): string | null {
   switch (entityType) {
@@ -50,7 +51,11 @@ export function ActivityRow({ event, agentMap, userProfileMap, entityNameMap, en
 
   const actor = event.actorType === "agent" ? agentMap.get(event.actorId) : null;
   const userProfile = event.actorType === "user" ? userProfileMap?.get(event.actorId) : null;
-  const actorName = actor?.name ?? (event.actorType === "system" ? "System" : userProfile?.label ?? (event.actorType === "user" ? "Board" : event.actorId || "Unknown"));
+  const actorName = actor?.name ?? (event.actorType === "system"
+    ? l10n("local.system_6725e7bb")
+    : userProfile?.label ?? (event.actorType === "user"
+      ? l10n("local.board_4816cbfd")
+      : event.actorId || l10n("local.unknown_b764cdc0")));
   const actorAvatarUrl = userProfile?.image ?? null;
 
   const inner = (

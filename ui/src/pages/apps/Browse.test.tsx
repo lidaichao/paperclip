@@ -503,7 +503,7 @@ describe("Connectors landing page", () => {
     await act(() => remove!.click());
     await flushReact();
     expect(chatSetupMock).not.toHaveBeenCalled();
-    expect(document.body.textContent).toContain("Existing Paperclip tasks and conversation history remain available.");
+    expect(document.body.textContent).toContain("Existing Alice tasks and conversation history remain available.");
     chatListMock.mockResolvedValue([]);
     await act(() => Array.from(document.querySelectorAll("button")).find((button) => button.textContent?.trim() === "Remove connection")!.click());
     await flushReact();

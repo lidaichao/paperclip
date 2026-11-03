@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { localizedCatalogSkillDescription, localizedSkillSourceLabel } from "../lib/skill-catalog-display";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useMemo, useRef, useState, type SVGProps } from "react";
@@ -264,25 +265,26 @@ function buildTree(entries: CompanySkillFileInventoryEntry[]) {
 }
 
 function sourceMeta(sourceBadge: CompanySkillSourceBadge, sourceLabel: string | null) {
-  const normalizedLabel = sourceLabel?.toLowerCase() ?? "";
+  const displayLabel = localizedSkillSourceLabel(sourceLabel);
+  const normalizedLabel = displayLabel?.toLowerCase() ?? "";
   const isSkillsShManaged =
     normalizedLabel.includes("skills.sh") || normalizedLabel.includes("vercel-labs/skills");
 
   switch (sourceBadge) {
     case "skills_sh":
-      return { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: "skills.sh managed" };
+      return { icon: VercelMark, label: displayLabel ?? "skills.sh", managedLabel: "skills.sh managed" };
     case "github":
       return isSkillsShManaged
-        ? { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: "skills.sh managed" }
-        : { icon: GithubIcon, label: sourceLabel ?? l10n("local.github_f911e414"), managedLabel: "GitHub managed" };
+        ? { icon: VercelMark, label: displayLabel ?? "skills.sh", managedLabel: "skills.sh managed" }
+        : { icon: GithubIcon, label: displayLabel ?? l10n("local.github_f911e414"), managedLabel: "GitHub managed" };
     case "url":
-      return { icon: Link2, label: sourceLabel ?? l10n("local.url_e7a241de"), managedLabel: "URL managed" };
+      return { icon: Link2, label: displayLabel ?? l10n("local.url_e7a241de"), managedLabel: "URL managed" };
     case "local":
-      return { icon: Folder, label: sourceLabel ?? l10n("local.folder_74ccd433"), managedLabel: "Folder managed" };
+      return { icon: Folder, label: displayLabel ?? l10n("local.folder_74ccd433"), managedLabel: "Folder managed" };
     case "paperclip":
-      return { icon: Paperclip, label: sourceLabel ?? "Paperclip", managedLabel: "Paperclip managed" };
+      return { icon: Paperclip, label: displayLabel ?? "Alice", managedLabel: "Alice managed" };
     default:
-      return { icon: Boxes, label: sourceLabel ?? l10n("local.catalog_3877d148"), managedLabel: "Catalog managed" };
+      return { icon: Boxes, label: displayLabel ?? l10n("local.catalog_3877d148"), managedLabel: "Catalog managed" };
   }
 }
 
@@ -701,10 +703,15 @@ export function buildDiscoveryCards(
       catalogRef: catalogMatch ? catalogMatch.id : null,
       name: skill.name,
       slug: skill.slug,
-      author: skill.authorName ?? skill.sourceLabel ?? "you",
+      author: localizedSkillSourceLabel(skill.authorName ?? skill.sourceLabel) ?? "you",
       version: discoveryVersionLabel(skill, required),
       tagline: skill.tagline ?? null,
-      description: skill.description ?? null,
+      description: localizedCatalogSkillDescription(
+        skill.key,
+        skill.name,
+        skill.description,
+        skill.catalogKind ?? catalogMatch?.kind ?? null,
+      ),
       categories: uniqueCategories([...(skill.categories ?? []), catalogMatch?.category]),
       iconUrl: skill.iconUrl,
       color: skill.color,
@@ -731,10 +738,10 @@ export function buildDiscoveryCards(
       catalogRef: entry.id,
       name: entry.name,
       slug: entry.slug,
-      author: entry.packageName ?? "Paperclip",
+      author: localizedSkillSourceLabel(entry.packageName ?? "Alice") ?? "Alice",
       version: discoveryVersionLabel({ packageVersion: entry.packageVersion ?? null, sourceRef: null }, required),
       tagline: null,
-      description: entry.description,
+      description: localizedCatalogSkillDescription(entry.key, entry.name, entry.description, entry.kind),
       categories: uniqueCategories([entry.category, ...(entry.tags ?? [])]),
       iconUrl: null,
       color: null,
@@ -1929,7 +1936,9 @@ function CatalogDetailPane({
               <Boxes className={cn("h-5 w-5 shrink-0 text-muted-foreground", skill.kind === "optional" && "opacity-70")} aria-hidden="true" />
               {skill.name}
             </h1>
-            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{skill.description}</p>
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+              {localizedCatalogSkillDescription(skill.key, skill.name, skill.description, skill.kind)}
+            </p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 uppercase tracking-wide">{skill.kind}</span>
               <span>·</span>
@@ -3727,7 +3736,14 @@ function SkillPane({
               {detail.name}
             </h1>
             {detail.description && (
-              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{detail.description}</p>
+              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+                {localizedCatalogSkillDescription(
+                  detail.key,
+                  detail.name,
+                  detail.description,
+                  readonlyMetadataKind(detail.metadata),
+                )}
+              </p>
             )}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
