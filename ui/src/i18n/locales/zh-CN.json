@@ -12513,6 +12513,8 @@
     "reports_to_na_ceo_10300316": "汇报对象：无（CEO）",
     "reports_to_ellipsis_10300317": "选择汇报对象…",
     "dirty_changes_quarantined_task_resumes_10300318": "未提交的修改已隔离到救援分支，并恢复了记录中的分支；任务将继续运行。",
-    "recorded_branch_matches_task_resumes_10300319": "记录中的分支现已与实际分支一致；任务将继续运行。"
+    "recorded_branch_matches_task_resumes_10300319": "记录中的分支现已与实际分支一致；任务将继续运行。",
+    "linked_body_to_conversation_10300320": "已将正文关联到对话以供评论",
+    "example_utc_datetime_10300321": "2026 年 4 月 28 日 12:17（UTC）"
   }
 }

@@ -171,7 +171,7 @@ function getRevisionActor(
       imageUrl: profile?.image ?? null,
     };
   }
-  return { kind: "system", name: "System" };
+  return { kind: "system", name: l10n("local.system_6725e7bb") };
 }
 
 function documentHasUnsavedChanges(doc: IssueDocument, draft: DraftState | null) {

@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { l10n } from "../../i18n";
 
 import { cn } from "../../lib/utils";
 import {
@@ -30,7 +31,7 @@ export type ModelSource = {
 };
 
 const CREDENTIAL_TAG_LABEL: Record<CredentialMode, string> = {
-  subscription: "Subscription",
+  subscription: l10n("local.subscription_4999c6c6"),
   api: "API",
 };
 

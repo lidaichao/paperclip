@@ -27,7 +27,9 @@ export function RoutineTriggerCard({
   const editorId = useId();
   return (
     <section
-      aria-label={l10n("local.value_trigger_c6061860", {v0: (kind === "schedule" ? "Schedule" : kind === "api" ? "API" : "Webhook")})}
+      aria-label={l10n("local.value_trigger_c6061860", {
+        v0: kind === "schedule" ? l10n("local.schedule_f4830a1d") : kind === "api" ? "API" : "Webhook",
+      })}
       className="rounded-md border border-border"
     >
       <div className="flex flex-wrap items-center gap-3 p-4">

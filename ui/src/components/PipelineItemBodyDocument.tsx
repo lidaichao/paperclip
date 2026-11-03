@@ -62,7 +62,7 @@ function getPipelineRevisionActor(
     };
   }
 
-  return { kind: "system", name: "System" };
+  return { kind: "system", name: l10n("local.system_6725e7bb") };
 }
 
 function isNotFound(error: unknown) {
@@ -260,7 +260,7 @@ export function PipelineItemBodyDocument({
           await saveMutation.mutateAsync({
             body: latestBody,
             baseRevisionId: doc.latestRevisionId,
-            changeSummary: "Linked body to conversation for comments",
+            changeSummary: l10n("local.linked_body_to_conversation_10300320"),
           });
         }
         setPanelOpen(true);

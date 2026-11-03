@@ -261,7 +261,7 @@ const BUILTIN_VARIABLE_DOCS: BuiltinVariableDoc[] = [
   },
   {
     name: "timestamp",
-    example: "April 28, 2026 at 12:17 PM UTC",
+    example: l10n("local.example_utc_datetime_10300321"),
     description: l10n("local.human_readable_date_and_time_utc_at_the_time_43844b71"),
   },
 ];
