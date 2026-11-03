@@ -42,7 +42,7 @@ function ensurePrivateDirectory(directoryPath: string): void {
   fs.mkdirSync(directoryPath, { recursive: true, mode: 0o700 });
   const stat = fs.lstatSync(directoryPath);
   if (!stat.isDirectory() || stat.isSymbolicLink()) {
-    throw new Error(`Refusing to use non-directory install-store path ${directoryPath}.`);
+    throw new Error(`拒绝使用非目录的安装存储路径：${directoryPath}。`);
   }
   fs.chmodSync(directoryPath, 0o700);
 }
@@ -50,7 +50,7 @@ function ensurePrivateDirectory(directoryPath: string): void {
 function assertOwnedByCurrentUser(stat: fs.Stats, targetPath: string): void {
   const getuid = process.getuid;
   if (typeof getuid === "function" && stat.uid !== getuid()) {
-    throw new Error(`Refusing to modify path not owned by the current user: ${targetPath}.`);
+    throw new Error(`拒绝修改不属于当前用户的路径：${targetPath}。`);
   }
 }
 
@@ -92,11 +92,11 @@ export function initializeInstallStore(paths = resolveInstallStorePaths()): void
   try {
     const markerStat = fs.lstatSync(paths.markerPath);
     if (!markerStat.isFile() || markerStat.isSymbolicLink() || markerStat.nlink > 1) {
-      throw new Error(`Refusing to use unsafe install-store marker ${paths.markerPath}.`);
+      throw new Error(`拒绝使用不安全的安装存储标记：${paths.markerPath}。`);
     }
     assertOwnedByCurrentUser(markerStat, paths.markerPath);
     if (fs.readFileSync(paths.markerPath, "utf8") !== MANAGED_STORE_MARKER) {
-      throw new Error(`Refusing to use unrecognized install store ${paths.cliRoot}.`);
+      throw new Error(`拒绝使用无法识别的安装存储：${paths.cliRoot}。`);
     }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -116,7 +116,7 @@ export function initializeInstallStore(paths = resolveInstallStorePaths()): void
 export function assertManagedInstallStore(paths = resolveInstallStorePaths()): InstallManifest {
   const cliStat = fs.lstatSync(paths.cliRoot);
   if (!cliStat.isDirectory() || cliStat.isSymbolicLink()) {
-    throw new Error(`Refusing to remove unsafe install-store path ${paths.cliRoot}.`);
+    throw new Error(`拒绝删除不安全的安装存储路径：${paths.cliRoot}。`);
   }
   assertOwnedByCurrentUser(cliStat, paths.cliRoot);
   let markerStat: fs.Stats;
@@ -124,22 +124,22 @@ export function assertManagedInstallStore(paths = resolveInstallStorePaths()): I
     markerStat = fs.lstatSync(paths.markerPath);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new Error(`Refusing to remove unverified install store ${paths.cliRoot}.`);
+      throw new Error(`拒绝删除未经验证的安装存储：${paths.cliRoot}。`);
     }
     throw error;
   }
   if (!markerStat.isFile() || markerStat.isSymbolicLink() || markerStat.nlink > 1) {
-    throw new Error(`Refusing to remove unverified install store ${paths.cliRoot}.`);
+    throw new Error(`拒绝删除未经验证的安装存储：${paths.cliRoot}。`);
   }
   assertOwnedByCurrentUser(markerStat, paths.markerPath);
   if (fs.readFileSync(paths.markerPath, "utf8") !== MANAGED_STORE_MARKER) {
-    throw new Error(`Refusing to remove unverified install store ${paths.cliRoot}.`);
+    throw new Error(`拒绝删除未经验证的安装存储：${paths.cliRoot}。`);
   }
   const manifest = readInstallManifest(paths);
-  if (!manifest) throw new Error(`Refusing to remove install store without a manifest at ${paths.cliRoot}.`);
+  if (!manifest) throw new Error(`拒绝删除缺少清单的安装存储：${paths.cliRoot}。`);
   const relativePayload = path.relative(paths.installsRoot, path.resolve(manifest.payloadPath));
   if (!relativePayload || relativePayload.startsWith("..") || path.isAbsolute(relativePayload)) {
-    throw new Error(`Refusing to remove install store with an invalid manifest at ${paths.cliRoot}.`);
+    throw new Error(`拒绝删除清单无效的安装存储：${paths.cliRoot}。`);
   }
   return manifest;
 }
@@ -179,8 +179,8 @@ export async function withInstallStoreLock<T>(
       }
       const ownerLabel = Number.isInteger(ownerPid) && ownerPid > 0 ? ` (pid ${ownerPid})` : "";
       throw new Error(
-        `Another managed install is already running${ownerLabel}. ` +
-        `If no install process is active, remove the stale lock at ${paths.lockPath} and retry.`,
+        `另一个托管安装正在运行${ownerLabel}。` +
+        `如果当前没有安装进程，请删除过期锁文件 ${paths.lockPath} 后重试。`,
       );
     } finally {
       fs.rmSync(temporaryPath, { force: true });
@@ -207,7 +207,7 @@ export function payloadPathFor(
   identifier: string,
 ): string {
   if (!/^[A-Za-z0-9._-]+$/.test(identifier)) {
-    throw new Error(`Invalid install payload identifier '${identifier}'.`);
+    throw new Error(`安装载荷标识“${identifier}”无效。`);
   }
   return path.join(paths.installsRoot, source, identifier);
 }
@@ -221,12 +221,12 @@ export function readInstallManifest(paths = resolveInstallStorePaths()): Install
       !Array.isArray(value.previous) ||
       typeof value.payloadPath !== "string"
     ) {
-      throw new Error("unsupported manifest shape");
+      throw new Error("不支持的清单格式");
     }
     return value;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw new Error(`Could not read managed install manifest at ${paths.manifestPath}: ${String(error)}`);
+    throw new Error(`无法读取托管安装清单 ${paths.manifestPath}：${String(error)}`);
   }
 }
 
@@ -247,16 +247,16 @@ export function writeInstallManifestAtomic(
 function assertPayloadPath(payloadPath: string, paths: InstallStorePaths): void {
   const relative = path.relative(paths.installsRoot, path.resolve(payloadPath));
   if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
-    throw new Error(`Refusing to activate payload outside ${paths.installsRoot}.`);
+    throw new Error(`拒绝激活 ${paths.installsRoot} 之外的载荷。`);
   }
   const stat = fs.lstatSync(payloadPath);
   if (!stat.isDirectory() || stat.isSymbolicLink()) {
-    throw new Error(`Refusing to activate non-directory payload ${payloadPath}.`);
+    throw new Error(`拒绝激活非目录载荷：${payloadPath}。`);
   }
   const installsRealPath = fs.realpathSync(paths.installsRoot);
   const payloadRealPath = fs.realpathSync(payloadPath);
   if (!payloadRealPath.startsWith(`${installsRealPath}${path.sep}`)) {
-    throw new Error(`Refusing to activate payload that resolves outside ${paths.installsRoot}.`);
+    throw new Error(`拒绝激活解析后位于 ${paths.installsRoot} 之外的载荷。`);
   }
 }
 
@@ -270,7 +270,7 @@ export function flipCurrentAtomic(
   try {
     const currentStat = fs.lstatSync(paths.currentPath);
     if (!currentStat.isSymbolicLink()) {
-      throw new Error(`Refusing to replace non-symlink ${paths.currentPath}.`);
+      throw new Error(`拒绝替换非符号链接：${paths.currentPath}。`);
     }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -334,7 +334,7 @@ export function pruneInstallPayloads(
     if (!fs.existsSync(sourceRoot)) continue;
     const sourceStat = fs.lstatSync(sourceRoot);
     if (!sourceStat.isDirectory() || sourceStat.isSymbolicLink()) {
-      throw new Error(`Refusing to prune unsafe install-store path ${sourceRoot}.`);
+      throw new Error(`拒绝清理不安全的安装存储路径：${sourceRoot}。`);
     }
     for (const entry of fs.readdirSync(sourceRoot)) {
       if (entry.startsWith(".")) continue;
@@ -354,20 +354,20 @@ export function assertManagedShimWritable(paths = resolveInstallStorePaths()): v
     if (!fs.existsSync(directoryPath)) continue;
     const directoryStat = fs.lstatSync(directoryPath);
     if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) {
-      throw new Error(`Refusing to use unsafe shim directory ${directoryPath}.`);
+      throw new Error(`拒绝使用不安全的命令垫片目录：${directoryPath}。`);
     }
     assertOwnedByCurrentUser(directoryStat, directoryPath);
   }
   try {
     const stat = fs.lstatSync(paths.shimPath);
     if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw new Error(`Refusing to replace non-regular shim ${paths.shimPath}.`);
+      throw new Error(`拒绝替换非普通文件的命令垫片：${paths.shimPath}。`);
     }
     assertOwnedByCurrentUser(stat, paths.shimPath);
-    if (stat.nlink > 1) throw new Error(`Refusing to replace multiply linked shim ${paths.shimPath}.`);
+    if (stat.nlink > 1) throw new Error(`拒绝替换具有多个硬链接的命令垫片：${paths.shimPath}。`);
     const existing = fs.readFileSync(paths.shimPath, "utf8");
     if (!isManagedShimContents(existing)) {
-      throw new Error(`Refusing to replace existing non-managed command ${paths.shimPath}.`);
+      throw new Error(`拒绝替换现有的非托管命令：${paths.shimPath}。`);
     }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -431,7 +431,7 @@ export function addManagedPathBlock(rcPath: string): boolean {
   try {
     const stat = fs.lstatSync(rcPath);
     if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw new Error(`Refusing to modify non-regular shell rc file ${rcPath}.`);
+      throw new Error(`拒绝修改非普通文件的终端配置文件：${rcPath}。`);
     }
     assertOwnedByCurrentUser(stat, rcPath);
     mode = stat.mode & 0o777;
@@ -452,7 +452,7 @@ export function removeManagedPathBlock(rcPath: string): boolean {
   try {
     const stat = fs.lstatSync(rcPath);
     if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw new Error(`Refusing to modify non-regular shell rc file ${rcPath}.`);
+      throw new Error(`拒绝修改非普通文件的终端配置文件：${rcPath}。`);
     }
     assertOwnedByCurrentUser(stat, rcPath);
     mode = stat.mode & 0o777;

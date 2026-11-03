@@ -151,7 +151,7 @@ describe("managed install store", () => {
 
     expect(removeManagedShim(paths)).toBe(false);
     expect(fs.existsSync(paths.shimPath)).toBe(true);
-    expect(() => writeManagedShim(paths)).toThrow("non-managed command");
+    expect(() => writeManagedShim(paths)).toThrow("非托管命令");
   });
 
   it("serializes install-store mutations with an exclusive lock", async () => {
@@ -197,11 +197,11 @@ describe("managed install store", () => {
     fs.symlinkSync(outside, path.join(paths.installsRoot, "npm"), "dir");
     const escapedPayload = path.join(paths.installsRoot, "npm", "1.2.3");
     fs.mkdirSync(path.join(outside, "1.2.3"));
-    expect(() => flipCurrentAtomic(escapedPayload, paths)).toThrow("resolves outside");
+    expect(() => flipCurrentAtomic(escapedPayload, paths)).toThrow("解析后位于");
 
     fs.mkdirSync(path.dirname(paths.shimPath), { recursive: true });
     fs.writeFileSync(paths.shimPath, "#!/bin/sh\necho other-command\n");
-    expect(() => writeManagedShim(paths)).toThrow("non-managed command");
+    expect(() => writeManagedShim(paths)).toThrow("非托管命令");
   });
 
   it("refuses symlinked rc files, unsafe shim parents, and multiply linked shims", () => {
@@ -210,8 +210,8 @@ describe("managed install store", () => {
     const rcPath = path.join(root, "home", ".bashrc");
     fs.mkdirSync(path.dirname(rcPath), { recursive: true });
     fs.symlinkSync(outsideRc, rcPath);
-    expect(() => addManagedPathBlock(rcPath)).toThrow("non-regular shell rc file");
-    expect(() => removeManagedPathBlock(rcPath)).toThrow("non-regular shell rc file");
+    expect(() => addManagedPathBlock(rcPath)).toThrow("终端配置文件");
+    expect(() => removeManagedPathBlock(rcPath)).toThrow("终端配置文件");
     expect(fs.readFileSync(outsideRc, "utf8")).toBe("keep\n");
 
     fs.rmSync(rcPath);
@@ -219,12 +219,12 @@ describe("managed install store", () => {
     const outsideBin = path.join(root, "outside-bin");
     fs.mkdirSync(outsideBin);
     fs.symlinkSync(outsideBin, localDir, "dir");
-    expect(() => writeManagedShim(paths)).toThrow("unsafe shim directory");
+    expect(() => writeManagedShim(paths)).toThrow("不安全的命令垫片目录");
 
     fs.rmSync(localDir);
     fs.mkdirSync(path.dirname(paths.shimPath), { recursive: true });
     fs.writeFileSync(paths.shimPath, `# ${MANAGED_SHIM_MARKER}\n`);
     fs.linkSync(paths.shimPath, path.join(root, "linked-shim"));
-    expect(() => writeManagedShim(paths)).toThrow("multiply linked shim");
+    expect(() => writeManagedShim(paths)).toThrow("多个硬链接的命令垫片");
   });
 });

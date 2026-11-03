@@ -324,7 +324,7 @@ describe("managed install commands", () => {
     fs.symlinkSync(outside, paths.installsRoot, "dir");
     const runCommand = vi.fn(async () => ({ stdout: JSON.stringify("2026.720.0"), stderr: "" }));
 
-    await expect(installCommand({}, { runCommand })).rejects.toThrow("non-directory install-store path");
+    await expect(installCommand({}, { runCommand })).rejects.toThrow("非目录的安装存储路径");
     expect(runCommand).toHaveBeenCalledTimes(1);
     expect(fs.readdirSync(outside)).toEqual([]);
   });
@@ -335,7 +335,7 @@ describe("managed install commands", () => {
     fs.mkdirSync(paths.cliRoot, { recursive: true });
     fs.writeFileSync(unrelatedFile, "keep");
 
-    await expect(uninstallCommand()).rejects.toThrow("unverified install store");
+    await expect(uninstallCommand()).rejects.toThrow("未经验证的安装存储");
     expect(fs.readFileSync(unrelatedFile, "utf8")).toBe("keep");
   });
 
