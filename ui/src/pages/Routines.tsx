@@ -187,8 +187,8 @@ export function buildRoutineGroups(
         const positionCompare = leftPosition - rightPosition;
         if (positionCompare !== 0) return positionCompare;
 
-        const labelCompare = (leftFolder?.name ?? "Unknown folder").localeCompare(
-          rightFolder?.name ?? "Unknown folder",
+        const labelCompare = (leftFolder?.name ?? l10n("local.unknown_folder_29223804")).localeCompare(
+          rightFolder?.name ?? l10n("local.unknown_folder_29223804"),
           undefined,
           { sensitivity: "base" },
         );
@@ -652,7 +652,7 @@ export function Routines() {
     [liveRuns, routineExecutionIssues],
   );
   const recentRunsIssueLinkState = useMemo(
-    () => createIssueDetailLocationState("Recent Runs", "/routines?tab=runs", "issues"),
+    () => createIssueDetailLocationState(l10n("local.recent_runs_53972e86"), "/routines?tab=runs", "issues"),
     [],
   );
   const updateIssue = useMutation({
@@ -890,10 +890,10 @@ export function Routines() {
                 <PopoverContent align="end" className="w-44 p-0">
                   <div className="p-2 space-y-0.5">
                     {([
-                      ["updated", "Updated"],
-                      ["created", "Created"],
-                      ["lastRun", "Last run"],
-                      ["title", "Title"],
+                      ["updated", l10n("local.updated_3a5ecca1")],
+                      ["created", l10n("local.created_d70b9e24")],
+                      ["lastRun", l10n("local.last_run_512a4821")],
+                      ["title", l10n("local.title_7e8cd205")],
                     ] as const).map(([field, label]) => (
                       <button
                         key={field}

@@ -612,8 +612,10 @@ export function RoutineDetail() {
       setSecretMessage({
         title:
           response.secretMaterials.length === 1
-            ? "Webhook trigger restored"
-            : `${response.secretMaterials.length} webhook triggers restored`,
+            ? l10n("local.webhook_trigger_restored_10300380")
+            : l10n("local.webhook_triggers_restored_value_10300381", {
+                v0: response.secretMaterials.length,
+              }),
         entries: response.secretMaterials.map((recreated) => ({
           webhookUrl: recreated.webhookUrl,
           webhookSecret: recreated.webhookSecret,

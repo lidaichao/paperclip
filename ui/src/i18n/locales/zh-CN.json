@@ -12572,6 +12572,9 @@
     "document_revision_10300375": "文档修订版本",
     "plan_revision_value_10300376": "计划修订版本 {{v0}}",
     "agent_posted_on_behalf_tooltip_10300377": "{{v0}} 代表 {{v1}} 发布了这条评论。{{v0}} 并未被分配到此任务；其在此处的写入权限来自 {{v1}}，且不会超出该权限范围。",
-    "this_agent_10300378": "此智能体"
+    "this_agent_10300378": "此智能体",
+    "all_scopes_10300379": "所有范围",
+    "webhook_trigger_restored_10300380": "Webhook 触发器已恢复",
+    "webhook_triggers_restored_value_10300381": "已恢复 {{v0}} 个 Webhook 触发器"
   }
 }
