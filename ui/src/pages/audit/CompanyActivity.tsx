@@ -68,7 +68,7 @@ export function CompanyActivity() {
   if (streamlinedUiEnabled) return <AuditHub section="activity" />;
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={History} message="Select an organization to view activity." />;
+    return <EmptyState icon={History} message={l10n("local.select_an_organization_to_view_activity_f23fd4aa")} />;
   }
 
   return (

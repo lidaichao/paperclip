@@ -214,7 +214,7 @@ function ImportPreviewPane({
 }) {
   if (!selectedFile || content === null) {
     return (
-      <EmptyState icon={Package} message="Select a file to preview its contents." />
+      <EmptyState icon={Package} message={l10n("local.select_a_file_to_preview_its_contents_8d784005")} />
     );
   }
 
@@ -1825,7 +1825,7 @@ export function CompanyImport() {
   }
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Download} message="Select an organization to import into." />;
+    return <EmptyState icon={Download} message={l10n("local.select_an_organization_to_import_into_c205165c")} />;
   }
 
   return (

@@ -80,7 +80,7 @@ export function ActivitySection({ isLoading = false, error }: { isLoading?: bool
   if (error) return <p role="alert" className="text-sm text-destructive">{error.message}</p>;
 
   if (events.length === 0) {
-    return <EmptyState icon={ActivityIcon} message="No activity yet." />;
+    return <EmptyState icon={ActivityIcon} message={l10n("local.no_activity_yet_a288d2d0")} />;
   }
 
   return (

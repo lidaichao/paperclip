@@ -353,7 +353,7 @@ export function PipelineItemBodyDocument({
   } else if (!hasDocument) {
     // Truly empty (A).
     bodyContent = (
-      <EmptyState icon={FileText} message="No body yet. Capture the item's details here." action="Add the item body" onAction={beginEdit} />
+      <EmptyState icon={FileText} message={l10n("local.no_body_yet_capture_item_details_here_40541d7a")} action={l10n("local.add_the_item_body_30e761c2")} onAction={beginEdit} />
     );
   } else if (annotationsLinked && bodyIssueDocument) {
     bodyContent = (

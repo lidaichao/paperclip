@@ -10837,6 +10837,26 @@
     "select_a_company_to_view_costs_1ce76e3d": "请选择公司以查看成本。",
     "select_an_organization_to_view_costs_d0be9cff": "请选择组织以查看成本。",
     "select_an_organization_to_view_routines_20c9ecf9": "请选择组织以查看例行任务。",
-    "no_active_routines_use_create_routine_to_define_first_workflow_0257c2e4": "暂无启用的例行任务。请创建第一个周期工作流。"
+    "no_active_routines_use_create_routine_to_define_first_workflow_0257c2e4": "暂无启用的例行任务。请创建第一个周期工作流。",
+    "no_body_yet_capture_item_details_here_40541d7a": "暂无内容。请在此补充条目详情。",
+    "add_the_item_body_30e761c2": "添加条目内容",
+    "no_triggers_yet_b13d6e9f": "暂无触发器。",
+    "add_a_trigger_159578fb": "添加触发器",
+    "no_variables_yet_add_placeholder_to_create_one_3f201eba": "暂无变量。请在标题或指令中添加 {{placeholder}} 以创建变量。",
+    "no_edits_yet_158d1155": "暂无编辑记录",
+    "secrets_available_only_to_step_automation_0c79bb8b": "密钥仅供步骤自动化使用。请先选择执行此步骤的智能体，再添加所需密钥。",
+    "set_up_automation_52bc1f1d": "设置自动化",
+    "select_an_organization_to_view_audit_1546e467": "请选择组织以查看审计记录。",
+    "no_routine_runs_yet_5e2a9a68": "暂无例行任务运行记录。",
+    "select_a_company_to_view_activity_644c5c33": "请选择公司以查看动态。",
+    "select_an_organization_to_view_activity_f23fd4aa": "请选择组织以查看动态。",
+    "no_routine_activity_yet_e20be8d5": "暂无例行任务动态。",
+    "no_cases_match_these_filters_11d88bda": "没有符合当前筛选条件的案例。",
+    "select_a_file_to_preview_its_contents_8d784005": "请选择文件以预览其内容。",
+    "select_an_organization_to_export_36fbdd30": "请选择要导出的组织。",
+    "preview_request_cancelled_export_settings_unchanged_8f5a49ea": "预览请求已取消，导出设置未更改。",
+    "no_export_preview_is_loaded_5d583b0a": "尚未加载导出预览。",
+    "load_preview_96c2218f": "加载预览",
+    "select_an_organization_to_import_into_c205165c": "请选择要导入的组织。"
   }
 }

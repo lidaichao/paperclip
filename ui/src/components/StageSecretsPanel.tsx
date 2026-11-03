@@ -55,8 +55,8 @@ export function StageSecretsPanel({
     return (
       <EmptyState
         icon={KeyRound}
-        message="Secrets are available only to step automation. Pick an agent to run this step, then add the secrets it needs."
-        action="Set up automation"
+        message={l10n("local.secrets_available_only_to_step_automation_0c79bb8b")}
+        action={l10n("local.set_up_automation_52bc1f1d")}
         onAction={onSetupAutomation}
       />
     );

@@ -75,7 +75,7 @@ function RoutineScopedRuns({
   }
 
   if (runs.length === 0) {
-    return <EmptyState icon={Activity} message="No routine runs yet." />;
+    return <EmptyState icon={Activity} message={l10n("local.no_routine_runs_yet_5e2a9a68")} />;
   }
 
   return (

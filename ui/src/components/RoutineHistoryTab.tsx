@@ -241,7 +241,7 @@ export function RoutineHistoryTab({
           <div className="space-y-2">
             <EmptyState
               icon={HistoryIcon}
-              message="No edits yet"
+              message={l10n("local.no_edits_yet_158d1155")}
             />
             <p className="text-center text-xs text-muted-foreground">
               {l10n("local.revision_1_is_the_only_history_this_routine_h_44654bed")}</p>

@@ -10837,6 +10837,26 @@
     "select_a_company_to_view_costs_1ce76e3d": "Select a company to view costs.",
     "select_an_organization_to_view_costs_d0be9cff": "Select an organization to view costs.",
     "select_an_organization_to_view_routines_20c9ecf9": "Select an organization to view routines.",
-    "no_active_routines_use_create_routine_to_define_first_workflow_0257c2e4": "No active routines. Use Create routine to define the first recurring workflow."
+    "no_active_routines_use_create_routine_to_define_first_workflow_0257c2e4": "No active routines. Use Create routine to define the first recurring workflow.",
+    "no_body_yet_capture_item_details_here_40541d7a": "No body yet. Capture the item's details here.",
+    "add_the_item_body_30e761c2": "Add the item body",
+    "no_triggers_yet_b13d6e9f": "No triggers yet.",
+    "add_a_trigger_159578fb": "Add a trigger",
+    "no_variables_yet_add_placeholder_to_create_one_3f201eba": "No variables yet. Add a {{placeholder}} in the title or instructions to create one.",
+    "no_edits_yet_158d1155": "No edits yet",
+    "secrets_available_only_to_step_automation_0c79bb8b": "Secrets are available only to step automation. Pick an agent to run this step, then add the secrets it needs.",
+    "set_up_automation_52bc1f1d": "Set up automation",
+    "select_an_organization_to_view_audit_1546e467": "Select an organization to view Audit.",
+    "no_routine_runs_yet_5e2a9a68": "No routine runs yet.",
+    "select_a_company_to_view_activity_644c5c33": "Select a company to view activity.",
+    "select_an_organization_to_view_activity_f23fd4aa": "Select an organization to view activity.",
+    "no_routine_activity_yet_e20be8d5": "No routine activity yet.",
+    "no_cases_match_these_filters_11d88bda": "No cases match these filters.",
+    "select_a_file_to_preview_its_contents_8d784005": "Select a file to preview its contents.",
+    "select_an_organization_to_export_36fbdd30": "Select an organization to export.",
+    "preview_request_cancelled_export_settings_unchanged_8f5a49ea": "The preview request was cancelled. Your export settings are unchanged.",
+    "no_export_preview_is_loaded_5d583b0a": "No export preview is loaded.",
+    "load_preview_96c2218f": "Load preview",
+    "select_an_organization_to_import_into_c205165c": "Select an organization to import into."
   }
 }

@@ -585,8 +585,8 @@ export function TriggersSection() {
       {routine.triggers.length === 0 ? (
         <EmptyState
           icon={Clock3}
-          message="No triggers yet."
-          action="Add a trigger"
+          message={l10n("local.no_triggers_yet_b13d6e9f")}
+          action={l10n("local.add_a_trigger_159578fb")}
           onAction={() => setAddOpen(true)}
         />
       ) : (
@@ -631,8 +631,8 @@ export function VariablesSection() {
       ) : (
         <EmptyState
           icon={Braces}
-          message="No variables yet. Add a {{placeholder}} in the title or instructions to create one."
-          action="Edit instructions"
+          message={l10n("local.no_variables_yet_add_placeholder_to_create_one_3f201eba")}
+          action={l10n("local.edit_instructions_23e27511")}
           onAction={() => navigateToSection("overview")}
         />
       )}

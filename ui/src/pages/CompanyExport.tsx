@@ -540,7 +540,7 @@ function ExportPreviewPane({
 }) {
   if (!selectedFile || content === null) {
     return (
-      <EmptyState icon={Package} message="Select a file to preview its contents." />
+      <EmptyState icon={Package} message={l10n("local.select_a_file_to_preview_its_contents_8d784005")} />
     );
   }
 
@@ -1024,7 +1024,7 @@ export function CompanyExport() {
   }
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Package} message="Select an organization to export." />;
+    return <EmptyState icon={Package} message={l10n("local.select_an_organization_to_export_36fbdd30")} />;
   }
 
   if (exportPreviewMutation.isPending && !exportData) {
@@ -1036,8 +1036,8 @@ export function CompanyExport() {
       <EmptyState
         icon={Package}
         title={l10n("local.export_preview_cancelled_323b073a")}
-        message="The preview request was cancelled. Your export settings are unchanged."
-        action="Retry preview"
+        message={l10n("local.preview_request_cancelled_export_settings_unchanged_8f5a49ea")}
+        action={l10n("local.retry_preview_ceba3527")}
         onAction={startPreviewRequest}
         hideActionIcon
       />
@@ -1051,7 +1051,7 @@ export function CompanyExport() {
         title={l10n("local.export_preview_failed_8b47150b")}
         message={previewErrorMessage(exportPreviewMutation.error)}
         description={l10n("local.retry_the_preview_you_do_not_need_to_reload_t_734ae75d")}
-        action="Retry preview"
+        action={l10n("local.retry_preview_ceba3527")}
         onAction={startPreviewRequest}
         hideActionIcon
       />
@@ -1063,8 +1063,8 @@ export function CompanyExport() {
       <EmptyState
         icon={Package}
         title={l10n("local.export_preview_unavailable_0bcf70b3")}
-        message="No export preview is loaded."
-        action="Load preview"
+        message={l10n("local.no_export_preview_is_loaded_5d583b0a")}
+        action={l10n("local.load_preview_96c2218f")}
         onAction={startPreviewRequest}
         hideActionIcon
       />

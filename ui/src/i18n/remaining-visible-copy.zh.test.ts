@@ -39,5 +39,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.no_active_routines_use_create_routine_to_define_first_workflow_0257c2e4).toBe(
       "暂无启用的例行任务。请创建第一个周期工作流。",
     );
+    expect(messages.no_variables_yet_add_placeholder_to_create_one_3f201eba).toBe(
+      "暂无变量。请在标题或指令中添加 {{placeholder}} 以创建变量。",
+    );
+    expect(messages.select_an_organization_to_view_audit_1546e467).toBe("请选择组织以查看审计记录。");
+    expect(messages.preview_request_cancelled_export_settings_unchanged_8f5a49ea).toBe(
+      "预览请求已取消，导出设置未更改。",
+    );
   });
 });
