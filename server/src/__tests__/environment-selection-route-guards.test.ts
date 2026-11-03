@@ -313,7 +313,7 @@ describe.sequential("execution environment route guards", () => {
       });
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toContain('Environment driver "unsupported_driver" is not allowed here');
+    expect(res.body.error).toContain('此处不允许使用环境驱动“unsupported_driver”');
     expect(mockIssueService.create).not.toHaveBeenCalled();
   });
 
@@ -336,7 +336,7 @@ describe.sequential("execution environment route guards", () => {
       });
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toContain('Environment sandbox provider "fake" is not allowed here');
+    expect(res.body.error).toContain('此处不允许使用环境沙箱提供方“fake”');
     expect(mockIssueService.create).not.toHaveBeenCalled();
   });
 

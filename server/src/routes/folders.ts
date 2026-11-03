@@ -19,7 +19,7 @@ export function folderRoutes(db: Db) {
 
   function parseKind(value: unknown) {
     const result = folderKindSchema.safeParse(value);
-    if (!result.success) throw badRequest("Folder kind query parameter is required");
+    if (!result.success) throw badRequest("需要文件夹类型查询参数");
     return result.data;
   }
 
@@ -56,7 +56,7 @@ export function folderRoutes(db: Db) {
       const companyId = req.params.companyId as string;
       assertCompanyAccess(req, companyId);
       if (req.actor.type !== "board" || !req.actor.userId) {
-        throw forbidden("A signed-in board user is required to create a personal skill folder");
+        throw forbidden("创建个人技能文件夹需要已登录的看板用户");
       }
       const folder = await svc.ensureMyFolder(companyId, req.actor.userId, req.actor.userName ?? null, req.body.slug);
       const actor = getActorInfo(req);
@@ -82,7 +82,7 @@ export function folderRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const updated = await svc.update(companyId, folderId, req.body);
     if (!updated) {
-      res.status(404).json({ error: "Folder not found" });
+      res.status(404).json({ error: "未找到文件夹" });
       return;
     }
     const actor = getActorInfo(req);
@@ -127,7 +127,7 @@ export function folderRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const updated = await svc.moveFolder(companyId, folderId, req.body);
     if (!updated) {
-      res.status(404).json({ error: "Folder not found" });
+      res.status(404).json({ error: "未找到文件夹" });
       return;
     }
     const actor = getActorInfo(req);
@@ -152,7 +152,7 @@ export function folderRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const deleted = await svc.deleteFolder(companyId, folderId);
     if (!deleted) {
-      res.status(404).json({ error: "Folder not found" });
+      res.status(404).json({ error: "未找到文件夹" });
       return;
     }
     const actor = getActorInfo(req);

@@ -448,7 +448,7 @@ describe("instance settings routes", () => {
       .send({ defaultEnvironmentId: "11111111-1111-4111-8111-111111111111" });
 
     expect(res.status).toBe(422);
-    expect(res.body.error).toContain("Environment not found");
+    expect(res.body.error).toContain("未找到环境");
     expect(mockInstanceSettingsService.update).not.toHaveBeenCalled();
   });
 

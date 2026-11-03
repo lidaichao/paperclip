@@ -20,7 +20,7 @@ export function attentionRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     assertBoard(req);
     if (!req.actor.userId) {
-      res.status(403).json({ error: "Board user context required" });
+      res.status(403).json({ error: "需要看板用户上下文" });
       return;
     }
 

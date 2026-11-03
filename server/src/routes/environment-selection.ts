@@ -19,14 +19,14 @@ export async function assertEnvironmentSelectionForCompany(
   if (environmentId === undefined || environmentId === null) return;
   const environment = await environmentsSvc.getById(environmentId);
   if (!environment) {
-    throw unprocessable("Environment not found.");
+    throw unprocessable("未找到环境。");
   }
   if (environment.status === "archived") {
-    throw unprocessable("Environment is archived.");
+    throw unprocessable("环境已归档。");
   }
   if (options?.allowedDrivers && !options.allowedDrivers.includes(environment.driver)) {
     throw unprocessable(
-      `Environment driver "${environment.driver}" is not allowed here. Allowed drivers: ${options.allowedDrivers.join(", ")}`,
+      `此处不允许使用环境驱动“${environment.driver}”。允许的驱动：${options.allowedDrivers.join("、")}`,
     );
   }
   if (environment.driver === "sandbox") {
@@ -36,7 +36,7 @@ export async function assertEnvironmentSelectionForCompany(
     const provider = typeof config.provider === "string" ? config.provider : "";
     if (provider === "fake") {
       throw unprocessable(
-        `Environment sandbox provider "${provider}" is not allowed here. The built-in fake provider is probe-only and cannot execute runs.`,
+        `此处不允许使用环境沙箱提供方“${provider}”。内置模拟提供方仅供探测，不能执行运行任务。`,
       );
     }
     if (
@@ -45,7 +45,7 @@ export async function assertEnvironmentSelectionForCompany(
       && !options.allowedSandboxProviders.includes(provider)
     ) {
       throw unprocessable(
-        `Environment sandbox provider "${provider || "unknown"}" is not allowed here. Allowed providers: ${options.allowedSandboxProviders.join(", ")}`,
+        `此处不允许使用环境沙箱提供方“${provider || "未知"}”。允许的提供方：${options.allowedSandboxProviders.join("、")}`,
       );
     }
   }
