@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "miro",
   "name": "Miro",
-  "description": "Connect Miro's provider-hosted MCP server.",
+  "description": "连接 Miro 官方托管的 MCP 服务器。",
   "categories": [
     "productivity"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.miro.com/"
       },
-      "guidanceMd": "Connect Miro in the browser. A Miro account; enterprise administrators may restrict third-party MCP clients.",
+      "guidanceMd": "在浏览器中连接 Miro。需要 Miro 账户；企业管理员可能会限制第三方 MCP 客户端。",
       "riskTier": "S3",
-      "label": "Sign in with Miro",
+      "label": "使用 Miro 登录",
       "consoleLinks": {
         "docs": "https://help.miro.com/hc/en-us/articles/31625301583890-How-to-enable-Miro-s-MCP-Server-user-guide"
       },
       "warnings": [
-        "A Miro account; enterprise administrators may restrict third-party MCP clients."
+        "需要 Miro 账户；企业管理员可能会限制第三方 MCP 客户端。"
       ]
     }
   ]

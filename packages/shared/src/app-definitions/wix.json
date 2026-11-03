@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "wix",
   "name": "Wix",
-  "description": "Connect Wix's provider-hosted MCP server.",
+  "description": "连接 Wix 官方托管的 MCP 服务器。",
   "categories": [
     "content"
   ],
@@ -24,18 +24,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.wix.com/mcp"
       },
-      "guidanceMd": "Connect Wix in the browser. A Wix account with access to the relevant sites.",
+      "guidanceMd": "在浏览器中连接 Wix。需要一个有权访问相关站点的 Wix 账户。",
       "riskTier": "S3",
-      "label": "Sign in with Wix",
+      "label": "使用 Wix 登录",
       "consoleLinks": {
         "docs": "https://www.wix.com/studio/developers/mcp-server"
       },
       "warnings": [
-        "A Wix account with access to the relevant sites."
+        "需要一个有权访问相关站点的 Wix 账户。"
       ]
     }
   ]

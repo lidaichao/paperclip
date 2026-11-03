@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "ticktick",
   "name": "TickTick",
-  "description": "Connect TickTick's provider-hosted MCP server.",
+  "description": "连接 TickTick 官方托管的 MCP 服务器。",
   "categories": [
     "productivity"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.ticktick.com"
       },
-      "guidanceMd": "Connect TickTick in the browser. A TickTick account with MCP access.",
+      "guidanceMd": "在浏览器中连接 TickTick。需要具备 MCP 访问权限的 TickTick 账户。",
       "riskTier": "S3",
-      "label": "Sign in with TickTick",
+      "label": "使用 TickTick 登录",
       "consoleLinks": {
         "docs": "https://help.ticktick.com/articles/7438129581631995904"
       },
       "warnings": [
-        "A TickTick account with MCP access."
+        "需要具备 MCP 访问权限的 TickTick 账户。"
       ]
     }
   ]

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "cloudinary",
   "name": "Cloudinary",
-  "description": "Connect Cloudinary's provider-hosted MCP server.",
+  "description": "连接 Cloudinary 官方托管的 MCP 服务器。",
   "categories": [
     "content"
   ],
@@ -24,18 +24,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://asset-management.mcp.cloudinary.com/mcp"
       },
-      "guidanceMd": "Connect Cloudinary in the browser. A Cloudinary account; authorization is limited by the signed-in user's roles.",
+      "guidanceMd": "在浏览器中连接 Cloudinary。需要 Cloudinary 账户；授权范围受当前登录用户的角色限制。",
       "riskTier": "S3",
-      "label": "Sign in with Cloudinary",
+      "label": "使用 Cloudinary 登录",
       "consoleLinks": {
         "docs": "https://cloudinary.com/documentation/cloudinary_llm_mcp"
       },
       "warnings": [
-        "A Cloudinary account; authorization is limited by the signed-in user's roles."
+        "需要 Cloudinary 账户；授权范围受当前登录用户的角色限制。"
       ]
     }
   ]

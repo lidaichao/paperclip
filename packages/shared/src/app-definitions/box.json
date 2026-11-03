@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "box",
   "name": "Box",
-  "description": "Connect Box's provider-hosted MCP server.",
+  "description": "连接 Box 官方托管的 MCP 服务器。",
   "categories": [
     "content"
   ],
@@ -23,19 +23,19 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Register an OAuth app with Box, then enter its client ID and secret.",
+      "whenToUse": "在 Box 中注册 OAuth 应用，然后输入客户端 ID 和密钥。",
       "defaults": {
         "serverUrl": "https://mcp.box.com"
       },
-      "guidanceMd": "Connect Box in the browser. A Box administrator creates the OAuth integration and enables AI access.",
+      "guidanceMd": "在浏览器中连接 Box。需要由 Box 管理员创建 OAuth 集成并启用 AI 访问权限。",
       "riskTier": "S3",
-      "label": "Use your own OAuth app",
+      "label": "使用自己的 OAuth 应用",
       "consoleLinks": {
         "register": "https://support.box.com/hc/en-us/articles/43847256139923-Managing-Box-MCP-Servers",
         "docs": "https://support.box.com/hc/en-us/articles/43847256139923-Managing-Box-MCP-Servers"
       },
       "warnings": [
-        "A Box administrator creates the OAuth integration and enables AI access."
+        "需要由 Box 管理员创建 OAuth 集成并启用 AI 访问权限。"
       ]
     }
   ]

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "todoist",
   "name": "Todoist",
-  "description": "Connect Todoist's provider-hosted MCP server.",
+  "description": "连接 Todoist 官方托管的 MCP 服务器。",
   "categories": [
     "productivity"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://ai.todoist.net/mcp"
       },
-      "guidanceMd": "Connect Todoist in the browser. A Todoist account.",
+      "guidanceMd": "在浏览器中连接 Todoist。需要 Todoist 账户。",
       "riskTier": "S3",
-      "label": "Sign in with Todoist",
+      "label": "使用 Todoist 登录",
       "consoleLinks": {
         "docs": "https://developer.todoist.com/"
       },
       "warnings": [
-        "A Todoist account."
+        "需要 Todoist 账户。"
       ]
     }
   ]

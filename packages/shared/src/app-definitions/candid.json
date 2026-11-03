@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "candid",
   "name": "Candid",
-  "description": "Connect Candid's provider-hosted MCP server.",
+  "description": "连接 Candid 官方托管的 MCP 服务器。",
   "categories": [
     "data"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.candid.org/mcp"
       },
-      "guidanceMd": "Connect Candid in the browser. A Candid account with access to the MCP connector.",
+      "guidanceMd": "在浏览器中连接 Candid。需要一个有权访问 MCP 连接器的 Candid 账户。",
       "riskTier": "S2",
-      "label": "Sign in with Candid",
+      "label": "使用 Candid 登录",
       "consoleLinks": {
         "docs": "https://learning.candid.org/getting-started-with-the-candid-mcp-connector/375441"
       },
       "warnings": [
-        "A Candid account with access to the MCP connector."
+        "需要一个有权访问 MCP 连接器的 Candid 账户。"
       ]
     }
   ]

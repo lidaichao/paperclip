@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "webflow",
   "name": "Webflow",
-  "description": "Connect Webflow's provider-hosted MCP server.",
+  "description": "连接 Webflow 官方托管的 MCP 服务器。",
   "categories": [
     "content"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.webflow.com/mcp"
       },
-      "guidanceMd": "Connect Webflow in the browser. A Webflow account; workspace and site roles constrain accessible sites.",
+      "guidanceMd": "在浏览器中连接 Webflow。需要 Webflow 账户；工作区和站点角色会限制可访问的站点。",
       "riskTier": "S3",
-      "label": "Sign in with Webflow",
+      "label": "使用 Webflow 登录",
       "consoleLinks": {
         "docs": "https://developers.webflow.com/mcp/reference/getting-started"
       },
       "warnings": [
-        "A Webflow account; workspace and site roles constrain accessible sites."
+        "需要 Webflow 账户；工作区和站点角色会限制可访问的站点。"
       ]
     }
   ]

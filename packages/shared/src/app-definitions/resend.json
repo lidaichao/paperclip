@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "resend",
   "name": "Resend",
-  "description": "Connect Resend's provider-hosted MCP server.",
+  "description": "连接 Resend 官方托管的 MCP 服务器。",
   "categories": [
     "communication"
   ],
@@ -24,18 +24,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.resend.com/mcp"
       },
-      "guidanceMd": "Connect Resend in the browser. A Resend account with access to the relevant domains.",
+      "guidanceMd": "在浏览器中连接 Resend。需要一个有权访问相关域名的 Resend 账户。",
       "riskTier": "S3",
-      "label": "Sign in with Resend",
+      "label": "使用 Resend 登录",
       "consoleLinks": {
         "docs": "https://resend.com/changelog/remote-mcp-server"
       },
       "warnings": [
-        "A Resend account with access to the relevant domains."
+        "需要一个有权访问相关域名的 Resend 账户。"
       ]
     }
   ]

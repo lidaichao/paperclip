@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "xero",
   "name": "Xero",
-  "description": "Connect Xero's provider-hosted MCP server.",
+  "description": "连接 Xero 官方托管的 MCP 服务器。",
   "categories": [
     "commerce"
   ],
@@ -23,7 +23,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Register an OAuth app with Xero, then enter its client ID and secret.",
+      "whenToUse": "在 Xero 中注册 OAuth 应用，然后输入客户端 ID 和密钥。",
       "defaults": {
         "serverUrl": "https://mcp.xero.com/mcp",
         "scopesHint": [
@@ -38,15 +38,15 @@
           "accounting.reports.profitandloss.read"
         ]
       },
-      "guidanceMd": "Connect Xero in the browser. Create a Xero OAuth app and confirm the applicable AI and data-use terms before connecting.",
+      "guidanceMd": "在浏览器中连接 Xero。连接前请创建 Xero OAuth 应用，并确认适用的 AI 及数据使用条款。",
       "riskTier": "S4",
-      "label": "Use your own OAuth app",
+      "label": "使用自己的 OAuth 应用",
       "consoleLinks": {
         "register": "https://developer.xero.com/ai",
         "docs": "https://developer.xero.com/ai"
       },
       "warnings": [
-        "Create a Xero OAuth app and confirm the applicable AI and data-use terms before connecting."
+        "连接前请创建 Xero OAuth 应用，并确认适用的 AI 及数据使用条款。"
       ]
     }
   ]

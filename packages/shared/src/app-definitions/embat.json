@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "embat",
   "name": "Embat",
-  "description": "Connect Embat's provider-hosted MCP server.",
+  "description": "连接 Embat 官方托管的 MCP 服务器。",
   "categories": [
     "commerce"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://tellme.embat.io/mcp"
       },
-      "guidanceMd": "Connect Embat in the browser. An Embat account; pilot the connection because provider setup documentation is sparse.",
+      "guidanceMd": "在浏览器中连接 Embat。需要 Embat 账户；由于服务提供商的配置文档较少，请先小范围试用该连接。",
       "riskTier": "S4",
-      "label": "Sign in with Embat",
+      "label": "使用 Embat 登录",
       "consoleLinks": {
         "docs": "https://tellme.embat.io/.well-known/oauth-protected-resource/mcp"
       },
       "warnings": [
-        "An Embat account; pilot the connection because provider setup documentation is sparse."
+        "需要 Embat 账户；由于服务提供商的配置文档较少，请先小范围试用该连接。"
       ]
     }
   ]

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "beehiiv",
   "name": "beehiiv",
-  "description": "Connect beehiiv's provider-hosted MCP server.",
+  "description": "连接 beehiiv 官方托管的 MCP 服务器。",
   "categories": [
     "content"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.beehiiv.com/mcp"
       },
-      "guidanceMd": "Connect beehiiv in the browser. A beehiiv account; the subscription plan controls available write capabilities.",
+      "guidanceMd": "在浏览器中连接 beehiiv。需要 beehiiv 账户；可用的写入能力取决于订阅方案。",
       "riskTier": "S3",
-      "label": "Sign in with beehiiv",
+      "label": "使用 beehiiv 登录",
       "consoleLinks": {
         "docs": "https://www.beehiiv.com/features/mcp/getting-started"
       },
       "warnings": [
-        "A beehiiv account; the subscription plan controls available write capabilities."
+        "需要 beehiiv 账户；可用的写入能力取决于订阅方案。"
       ]
     }
   ]

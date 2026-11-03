@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "airtable",
   "name": "Airtable",
-  "description": "Connect Airtable's provider-hosted MCP server.",
+  "description": "连接 Airtable 官方托管的 MCP 服务器。",
   "categories": [
     "data"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.airtable.com/mcp"
       },
-      "guidanceMd": "Connect Airtable in the browser. An Airtable account; enterprise administrators may need to allowlist the client.",
+      "guidanceMd": "在浏览器中连接 Airtable。需要 Airtable 账户；企业管理员可能需要将该客户端加入允许列表。",
       "riskTier": "S3",
-      "label": "Sign in with Airtable",
+      "label": "使用 Airtable 登录",
       "consoleLinks": {
         "docs": "https://support.airtable.com/articles/9897799762-using-the-airtable-mcp-server"
       },
       "warnings": [
-        "An Airtable account; enterprise administrators may need to allowlist the client."
+        "需要 Airtable 账户；企业管理员可能需要将该客户端加入允许列表。"
       ]
     }
   ]

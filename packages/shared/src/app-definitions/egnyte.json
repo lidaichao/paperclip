@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "egnyte",
   "name": "Egnyte",
-  "description": "Connect Egnyte's provider-hosted MCP server.",
+  "description": "连接 Egnyte 官方托管的 MCP 服务器。",
   "categories": [
     "content"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp-server.egnyte.com/mcp"
       },
-      "guidanceMd": "Connect Egnyte in the browser. An eligible Egnyte plan and administrator approval for external LLM access.",
+      "guidanceMd": "在浏览器中连接 Egnyte。需要符合条件的 Egnyte 方案，并由管理员批准外部大模型访问。",
       "riskTier": "S3",
-      "label": "Sign in with Egnyte",
+      "label": "使用 Egnyte 登录",
       "consoleLinks": {
         "docs": "https://developers.egnyte.com/docs/Remote_MCP_Server"
       },
       "warnings": [
-        "An eligible Egnyte plan and administrator approval for external LLM access."
+        "需要符合条件的 Egnyte 方案，并由管理员批准外部大模型访问。"
       ]
     }
   ]

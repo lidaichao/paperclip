@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "make",
   "name": "Make",
-  "description": "Connect Make's provider-hosted MCP server.",
+  "description": "连接 Make 官方托管的 MCP 服务器。",
   "categories": [
     "productivity"
   ],
@@ -24,18 +24,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.make.com"
       },
-      "guidanceMd": "Connect Make in the browser. A Make account and access to the scenarios exposed to MCP.",
+      "guidanceMd": "在浏览器中连接 Make。需要 Make 账户，并有权访问已向 MCP 开放的场景。",
       "riskTier": "S3",
-      "label": "Sign in with Make",
+      "label": "使用 Make 登录",
       "consoleLinks": {
         "docs": "https://developers.make.com/mcp-server"
       },
       "warnings": [
-        "A Make account and access to the scenarios exposed to MCP."
+        "需要 Make 账户，并有权访问已向 MCP 开放的场景。"
       ]
     }
   ]
