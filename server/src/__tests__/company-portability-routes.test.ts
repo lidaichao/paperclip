@@ -375,7 +375,7 @@ describe.sequential("company portability routes", () => {
       .send(exportRequest);
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
     expect(mockCompanyPortabilityService.previewExport).not.toHaveBeenCalled();
   });
 
@@ -393,7 +393,7 @@ describe.sequential("company portability routes", () => {
       .send({ agents: [123] });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
     expect(mockCompanyPortabilityService.previewExport).not.toHaveBeenCalled();
   });
 
@@ -410,7 +410,7 @@ describe.sequential("company portability routes", () => {
       const res = await request(app).post(path).send(exportRequest);
 
       expect(res.status).toBe(403);
-      expect(res.body.error).toContain("Only CEO agents");
+      expect(res.body.error).toContain("只有 CEO 智能体");
     }
     expect(mockCompanyPortabilityService.exportBundle).not.toHaveBeenCalled();
   });
@@ -855,7 +855,7 @@ describe.sequential("company portability routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
     expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
   });
 
@@ -873,7 +873,7 @@ describe.sequential("company portability routes", () => {
       .send({ target: { mode: "existing_company", companyId: "not-a-uuid" } });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
     expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
   });
 
@@ -896,7 +896,7 @@ describe.sequential("company portability routes", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
     expect(mockCompanyPortabilityService.importBundle).not.toHaveBeenCalled();
   });
 

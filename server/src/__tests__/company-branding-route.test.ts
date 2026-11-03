@@ -120,7 +120,7 @@ describe("PATCH /api/companies/:companyId/branding", () => {
       .send({ logoAssetId: "11111111-1111-4111-8111-111111111111" });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
     expect(mockCompanyService.update).not.toHaveBeenCalled();
   });
 
@@ -143,7 +143,7 @@ describe("PATCH /api/companies/:companyId/branding", () => {
       .send({ status: "archived" });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
     expect(mockCompanyService.update).not.toHaveBeenCalled();
   });
 
@@ -278,7 +278,7 @@ describe("PATCH /api/companies/:companyId", () => {
       .send({ status: "archived" });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("只有 CEO 智能体");
     expect(mockCompanyService.getById).not.toHaveBeenCalled();
     expect(mockCompanyService.update).not.toHaveBeenCalled();
   });

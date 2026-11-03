@@ -197,7 +197,7 @@ async function resolveImportPayload(req: Request, res: Response): Promise<unknow
       if (error instanceof multer.MulterError) {
         if (error.code === "LIMIT_FILE_SIZE") {
           throw unprocessable(
-            `Import package exceeds the ${Math.floor(PORTABLE_ZIP_UPLOAD_LIMIT_BYTES / (1024 * 1024))} MB upload limit`,
+            `导入包超过 ${Math.floor(PORTABLE_ZIP_UPLOAD_LIMIT_BYTES / (1024 * 1024))} MB 上传限制`,
           );
         }
         throw badRequest(error.message);
@@ -212,7 +212,7 @@ async function resolveImportPayload(req: Request, res: Response): Promise<unknow
     try {
       await runMiddleware(rawZipBodyParser, req, res);
     } catch (error) {
-      throw badRequest(error instanceof Error ? error.message : "Invalid zip upload");
+      throw badRequest(error instanceof Error ? error.message : "ZIP 上传无效");
     }
     zipBytes = Buffer.isBuffer(req.body) ? req.body : undefined;
     const metaQuery = req.query.meta;
@@ -249,7 +249,7 @@ async function readImportZipArchive(zipBytes: Buffer) {
       ),
     });
   } catch (error) {
-    throw badRequest(`Import package could not be read: ${errorMessage(error)}`);
+    throw badRequest(`无法读取导入包：${errorMessage(error)}`);
   }
   if (Object.keys(archive.files).length === 0) {
     throw badRequest("导入包中不包含任何文件。");
@@ -303,7 +303,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     if (typeof value !== "string" || value.trim().length === 0) return undefined;
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) {
-      throw badRequest(`Invalid ${field} query value`);
+      throw badRequest(`查询参数 ${field} 的值无效`);
     }
     return parsed;
   }
@@ -312,7 +312,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     if (value === undefined || value === null || value === "") return undefined;
     const parsed = typeof value === "string" ? Number(value) : NaN;
     if (!Number.isFinite(parsed)) {
-      throw badRequest(`Invalid ${field} query value`);
+      throw badRequest(`查询参数 ${field} 的值无效`);
     }
     return Math.floor(parsed);
   }
@@ -370,7 +370,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
       throw forbidden("智能体密钥不能访问其他公司");
     }
     if (actorAgent.role !== "ceo") {
-      throw forbidden(`Only CEO agents can manage ${capability}`);
+      throw forbidden(`只有 CEO 智能体可以管理 ${capability}`);
     }
   }
 
@@ -378,7 +378,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     assertBoard(req);
     const scope = req.query.scope;
     if (scope !== undefined && scope !== "accessible") {
-      throw badRequest("scope must be a single accessible value when provided");
+      throw badRequest("如提供 scope，则必须是一个可访问的单一值");
     }
     const result = await svc.list();
     // Navigation needs the same membership scope as company detail routes.
@@ -768,12 +768,12 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
     const declared = importTransferManifestSchema.parse(req.body);
     if (declared.totalBytes > PORTABLE_ZIP_UPLOAD_LIMIT_BYTES) {
       throw unprocessable(
-        `Import package exceeds the ${Math.floor(PORTABLE_ZIP_UPLOAD_LIMIT_BYTES / (1024 * 1024))} MB upload limit`,
+        `导入包超过 ${Math.floor(PORTABLE_ZIP_UPLOAD_LIMIT_BYTES / (1024 * 1024))} MB 上传限制`,
       );
     }
     if (declared.partSizeBytes > IMPORT_TRANSFER_PART_SIZE_LIMIT_BYTES) {
       throw unprocessable(
-        `Import transfer parts may be at most ${Math.floor(IMPORT_TRANSFER_PART_SIZE_LIMIT_BYTES / (1024 * 1024))} MB`,
+        `导入传输分片最大为 ${Math.floor(IMPORT_TRANSFER_PART_SIZE_LIMIT_BYTES / (1024 * 1024))} MB`,
       );
     }
     declared.parts.forEach((part, position) => {
@@ -781,7 +781,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
         throw unprocessable("导入传输分片必须连续，并按 0..n-1 排序");
       }
       if (part.byteSize > declared.partSizeBytes) {
-        throw unprocessable(`Part ${part.index} is larger than the declared partSizeBytes`);
+        throw unprocessable(`分片 ${part.index} 大于声明的 partSizeBytes`);
       }
     });
     const declaredTotal = declared.parts.reduce((sum, part) => sum + part.byteSize, 0);
@@ -876,12 +876,12 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
       const bytes = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
       if (bytes.length !== declared.byteSize) {
         throw unprocessable(
-          `Part ${partIndex} upload is ${bytes.length} bytes but was declared as ${declared.byteSize} bytes`,
+          `分片 ${partIndex} 实际上传 ${bytes.length} 字节，但声明为 ${declared.byteSize} 字节`,
         );
       }
       const digest = createHash("sha256").update(bytes).digest("hex");
       if (digest !== declared.sha256) {
-        throw unprocessable(`Part ${partIndex} content does not match its declared sha256`);
+        throw unprocessable(`分片 ${partIndex} 的内容与声明的 sha256 不匹配`);
       }
       await writeImportTransferPart(importTransferSpoolRoot, run.id, partIndex, bytes);
       const recorded = await companyTransferRunService.completePart(db, run.id, partName);
