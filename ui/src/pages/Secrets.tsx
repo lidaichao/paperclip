@@ -346,7 +346,9 @@ function normalizeUserSecretKeyForPreview(input: string) {
 
 
 function modeLabel(managedMode: SecretManagedMode) {
-  return managedMode === "paperclip_managed" ? "Paperclip-managed" : "Linked external";
+  return managedMode === "paperclip_managed"
+    ? l10n("local.alice_managed_secret_mode_e8dc78bb")
+    : l10n("local.linked_external_secret_mode_6623c739");
 }
 
 function modeDescription(managedMode: SecretManagedMode, canWriteExternalValue = false) {
@@ -354,12 +356,18 @@ function modeDescription(managedMode: SecretManagedMode, canWriteExternalValue =
     return l10n("local.paperclip_owns_create_and_rotation_writes_for_8f5f834e");
   }
   return canWriteExternalValue
-    ? "Paperclip resolves this provider reference and can write new values to it via Update value."
-    : "Paperclip resolves this provider reference but does not rotate the provider value.";
+    ? l10n("local.alice_resolves_reference_can_update_value_888e9f81")
+    : l10n("local.alice_resolves_reference_no_rotation_75de39e9");
 }
 
 function statusLabel(status: SecretStatus) {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  const labels: Record<SecretStatus, string> = {
+    active: l10n("local.active_92340695"),
+    disabled: l10n("local.disabled_75081b59"),
+    archived: l10n("local.archived_bdb86505"),
+    deleted: l10n("local.deleted_b48ff39c"),
+  };
+  return labels[status];
 }
 
 function statusDotTone(status: SecretStatus) {
@@ -404,8 +412,8 @@ function providerIndicatorLabel(
   const custody = modeLabel(secret.managedMode);
   return [
     `${custody} · ${provider}`,
-    vault ? `Vault: ${vault}` : null,
-    secret.externalRef ? `Reference: ${secret.externalRef}` : null,
+    vault ? l10n("local.vault_value_70c4a0b6", { v0: vault }) : null,
+    secret.externalRef ? l10n("local.reference_value_c25822cb", { v0: secret.externalRef }) : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -472,12 +480,12 @@ export function getCreateProviderBlockReason(
   health: SecretProviderHealthResponse | null,
   providerConfig?: CompanySecretProviderConfig | null,
 ) {
-  if (!provider) return "Select a provider.";
+  if (!provider) return l10n("local.select_a_provider_d8c4a405");
   if (mode === "managed" && provider.supportsManagedValues === false) {
-    return `${provider.label} does not support Paperclip-managed secret values.`;
+    return l10n("local.provider_no_alice_managed_secret_values_554c9214", { v0: provider.label });
   }
   if (mode === "external" && provider.supportsExternalReferences === false) {
-    return `${provider.label} does not support linked external references.`;
+    return l10n("local.provider_no_linked_external_references_c023480b", { v0: provider.label });
   }
   const selectedProviderConfigBlockReason = providerConfig?.provider === provider.id
     ? getProviderConfigBlockReason(providerConfig)
@@ -489,14 +497,17 @@ export function getCreateProviderBlockReason(
     if (selectedProviderConfigBlockReason) return selectedProviderConfigBlockReason;
     const healthEntry = healthEntryForProvider(health, provider.id);
     const deploymentMessage = l10n("local.deployment_default_value_is_not_configured_7916c38d", {v0: (provider.label)});
-    const nextStep = " Select a ready provider vault or configure the deployment default.";
+    const nextStep = l10n("local.select_ready_vault_or_configure_default_4fc96134");
     return healthEntry?.message
-      ? `${deploymentMessage}${nextStep} ${healthEntry.message}`
-      : `${deploymentMessage}${nextStep}`;
+      ? `${deploymentMessage} ${nextStep} ${healthEntry.message}`
+      : `${deploymentMessage} ${nextStep}`;
   }
   const healthEntry = healthEntryForProvider(health, provider.id);
   if (healthEntry?.status === "error") {
-    return `${provider.label} health check failed: ${healthEntry.message}`;
+    return l10n("local.provider_health_check_failed_value_0a6c63c5", {
+      v0: provider.label,
+      v1: healthEntry.message,
+    });
   }
   return null;
 }
@@ -512,7 +523,7 @@ function providerHealthText(
     providerConfig?.provider === provider.id &&
     !getProviderConfigBlockReason(providerConfig)
   ) {
-    return `Using selected provider vault. Deployment default ${provider.label} is not configured.`;
+    return l10n("local.using_selected_vault_default_not_configured_fde70e60", { v0: provider.label });
   }
   const entry = healthEntryForProvider(health, provider.id);
   if (!entry) return null;
@@ -529,10 +540,10 @@ export function getProviderConfigBlockReason(
   config: CompanySecretProviderConfig | null | undefined,
 ) {
   if (!config) return null;
-  if (config.status === "disabled") return "This provider vault is disabled.";
-  if (config.status === "coming_soon") return "This provider vault is saved as draft metadata only.";
+  if (config.status === "disabled") return l10n("local.provider_vault_disabled_7baa5d89");
+  if (config.status === "coming_soon") return l10n("local.provider_vault_draft_metadata_only_baf6b415");
   if (config.healthStatus === "error") {
-    return config.healthMessage ?? "This provider vault health check failed.";
+    return config.healthMessage ?? l10n("local.provider_vault_health_check_failed_9595b213");
   }
   return null;
 }
@@ -590,7 +601,7 @@ export function findCreateProviderReplacement({
 
 function providerVaultLabel(configs: CompanySecretProviderConfig[], id: string | null | undefined) {
   if (!id) return l10n("local.deployment_default_d9bdc394");
-  return configs.find((config) => config.id === id)?.displayName ?? "Unknown vault";
+  return configs.find((config) => config.id === id)?.displayName ?? l10n("local.unknown_vault_992086e2");
 }
 
 function buildProviderVaultConfig(form: ProviderVaultForm): Record<string, unknown> {
@@ -1154,7 +1165,7 @@ export function Secrets() {
 
   const rotateMutation = useMutation({
     mutationFn: () => {
-      if (!selectedSecret) throw new Error("Select a secret first");
+      if (!selectedSecret) throw new Error(l10n("local.select_a_secret_first_3a90b2f3"));
       if (selectedSecret.managedMode === "external_reference" && rotateMode === "reference") {
         return secretsApi.rotate(selectedSecret.id, {
           externalRef: rotateExternalRef.trim() || selectedSecret.externalRef || undefined,
@@ -1176,7 +1187,7 @@ export function Secrets() {
       invalidateAll([updated.id]);
     },
     onError: (error) => {
-      setRotateError(error instanceof Error ? error.message : "Rotate failed");
+      setRotateError(error instanceof Error ? error.message : l10n("local.rotate_failed_5630fae3"));
     },
   });
 
@@ -1471,8 +1482,8 @@ export function Secrets() {
 
   function rotateActionLabel(secret: CompanySecret) {
     return secret.managedMode === "external_reference" && !secretSupportsExternalValueWrite(secret)
-      ? "Update reference"
-      : "Update value";
+      ? l10n("local.update_reference_02840f45")
+      : l10n("local.update_value_f2c38b78");
   }
 
   function openRotateSecret(secret: CompanySecret) {
@@ -1726,10 +1737,11 @@ export function Secrets() {
   }
 
   function renderSecretsBreadcrumb() {
-    const currentName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : "All secrets";
+    const allSecretsLabel = l10n("local.all_secrets_0b38e3da");
+    const currentName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : allSecretsLabel;
     const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : l10n("local.all_secrets_0b38e3da");
     const fullTrail: { name: string; path: string }[] = [
-      { name: "All secrets", path: "" },
+      { name: allSecretsLabel, path: "" },
       ...breadcrumbs,
     ];
     // Middle-truncate deep paths: root · … · last two.
@@ -1777,7 +1789,7 @@ export function Secrets() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Link>
-              {parentLabel !== "All secrets" ? (
+              {parentLabel !== allSecretsLabel ? (
                 <span className="shrink-0 text-muted-foreground">{parentLabel} /</span>
               ) : null}
               <span aria-current="page" className="truncate font-medium text-foreground">
@@ -2033,11 +2045,11 @@ export function Secrets() {
                       const updatedTooltip =
                         row.kind === "company"
                           ? [
-                              `Updated: ${formatRelative(row.secret.updatedAt)}`,
-                              `Last rotated: ${formatRelative(row.secret.lastRotatedAt)}`,
-                              `Last resolved: ${formatRelative(row.secret.lastResolvedAt)}`,
+                              l10n("local.updated_value_85e9fe2b", { v0: formatRelative(row.secret.updatedAt) }),
+                              l10n("local.last_rotated_value_86b64bbf", { v0: formatRelative(row.secret.lastRotatedAt) }),
+                              l10n("local.last_resolved_value_8c72f5f8", { v0: formatRelative(row.secret.lastResolvedAt) }),
                             ].join("\n")
-                          : `Updated: ${formatRelative(row.definition.updatedAt)}\nLast resolved: user values resolve per member`;
+                          : `${l10n("local.updated_value_85e9fe2b", { v0: formatRelative(row.definition.updatedAt) })}\n${l10n("local.last_resolved_user_values_per_member_855bce82")}`;
                       return (
                         <div
                           key={row.id}
@@ -4372,7 +4384,7 @@ function AgentAccessSection({
       const adapterConfig = { ...((detail.adapterConfig ?? {}) as Record<string, unknown>) };
       const env = { ...((adapterConfig.env ?? {}) as Record<string, unknown>) };
       if (env[key] !== undefined) {
-        throw new Error(`${detail.name} already has an env var named ${key}.`);
+        throw new Error(l10n("local.agent_already_has_env_var_80820d80", { v0: detail.name, v1: key }));
       }
       env[key] =
         reference.kind === "company"

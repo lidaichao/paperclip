@@ -510,7 +510,7 @@ describe("Secrets page layout", () => {
     });
   });
 
-  it("warns that removing a provider vault only removes Paperclip config", async () => {
+  it("warns that removing a provider vault only removes Alice config", async () => {
     mockSecretsApi.removeProviderConfig.mockResolvedValueOnce(providerConfigs[1]);
     const root = createRoot(container);
     const queryClient = new QueryClient({
@@ -548,12 +548,12 @@ describe("Secrets page layout", () => {
     await flushReact();
 
     expect(document.body.textContent).toContain("Remove provider vault");
-    expect(document.body.textContent).toContain("from Paperclip only");
+    expect(document.body.textContent).toContain("from Alice only");
     expect(document.body.textContent).toContain("does not delete");
     expect(document.body.textContent).toContain("AWS Secrets Manager");
 
     const confirmButton = [...document.querySelectorAll("button")].find(
-      (button) => button.textContent?.includes("Remove from Paperclip"),
+      (button) => button.textContent?.includes("Remove from Alice"),
     ) as HTMLButtonElement | undefined;
     await act(async () => {
       confirmButton?.click();
