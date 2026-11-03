@@ -11818,6 +11818,14 @@
     "paste_authorization_code_here_0dd00002": "在此粘贴授权码",
     "waiting_for_your_ok_0dd00003": "等待你的确认",
     "no_secret_definition_selected_0de00001": "尚未选择密钥定义",
-    "failed_to_save_secret_value_0de00002": "保存密钥值失败"
+    "failed_to_save_secret_value_0de00002": "保存密钥值失败",
+    "issue_documents_require_issue_or_subject_0df00001": "任务文档需要关联任务或主题",
+    "document_deletion_not_available_0df00002": "当前无法删除文档",
+    "failed_to_delete_document_0df00003": "删除文档失败",
+    "document_revision_restore_not_available_0df00004": "当前无法恢复文档版本",
+    "failed_to_restore_document_revision_0df00005": "恢复文档版本失败",
+    "document_locking_not_available_0df00006": "当前无法锁定文档",
+    "failed_to_update_document_lock_0df00007": "更新文档锁定状态失败",
+    "failed_to_save_document_0df00008": "保存文档失败"
   }
 }

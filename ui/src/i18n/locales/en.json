@@ -11818,6 +11818,14 @@
     "paste_authorization_code_here_0dd00002": "Paste authorization code here",
     "waiting_for_your_ok_0dd00003": "Waiting for your OK",
     "no_secret_definition_selected_0de00001": "No secret definition selected",
-    "failed_to_save_secret_value_0de00002": "Failed to save secret value"
+    "failed_to_save_secret_value_0de00002": "Failed to save secret value",
+    "issue_documents_require_issue_or_subject_0df00001": "Issue documents require either an issue or a subject",
+    "document_deletion_not_available_0df00002": "Document deletion is not available",
+    "failed_to_delete_document_0df00003": "Failed to delete document",
+    "document_revision_restore_not_available_0df00004": "Document revision restore is not available",
+    "failed_to_restore_document_revision_0df00005": "Failed to restore document revision",
+    "document_locking_not_available_0df00006": "Document locking is not available",
+    "failed_to_update_document_lock_0df00007": "Failed to update document lock",
+    "failed_to_save_document_0df00008": "Failed to save document"
   }
 }

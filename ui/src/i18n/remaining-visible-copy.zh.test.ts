@@ -300,6 +300,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.waiting_for_your_ok_0dd00003).toBe("等待你的确认");
     expect(messages.no_secret_definition_selected_0de00001).toBe("尚未选择密钥定义");
     expect(messages.failed_to_save_secret_value_0de00002).toBe("保存密钥值失败");
+    expect(messages.document_deletion_not_available_0df00002).toBe("当前无法删除文档");
+    expect(messages.failed_to_restore_document_revision_0df00005).toBe("恢复文档版本失败");
+    expect(messages.failed_to_update_document_lock_0df00007).toBe("更新文档锁定状态失败");
+    expect(messages.failed_to_save_document_0df00008).toBe("保存文档失败");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

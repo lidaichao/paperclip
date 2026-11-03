@@ -294,7 +294,7 @@ export function IssueDocumentsSection({
   const location = useLocation();
   const documentSubject = useMemo(() => {
     if (subject) return subject;
-    if (!issue) throw new Error("IssueDocumentsSection requires either issue or subject");
+    if (!issue) throw new Error(l10n("local.issue_documents_require_issue_or_subject_0df00001"));
     return makeIssueDocumentSubject(issue);
   }, [issue, subject]);
   const annotationTargetForKey = useCallback((documentKey: string) => {
@@ -389,14 +389,14 @@ export function IssueDocumentsSection({
   const deleteDocument = useMutation({
     mutationFn: (key: string) => documentSubject.deleteDocument
       ? documentSubject.deleteDocument(key)
-      : Promise.reject(new Error("Document deletion is not available")),
+      : Promise.reject(new Error(l10n("local.document_deletion_not_available_0df00002"))),
     onSuccess: () => {
       setError(null);
       setConfirmDeleteKey(null);
       invalidateIssueDocuments();
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to delete document");
+      setError(err instanceof Error ? err.message : l10n("local.failed_to_delete_document_0df00003"));
     },
   });
 
@@ -404,7 +404,7 @@ export function IssueDocumentsSection({
     mutationFn: ({ key, revisionId }: { key: string; revisionId: string }) =>
       documentSubject.restoreDocumentRevision
         ? documentSubject.restoreDocumentRevision(key, revisionId)
-        : Promise.reject(new Error("Document revision restore is not available")),
+        : Promise.reject(new Error(l10n("local.document_revision_restore_not_available_0df00004"))),
     onSuccess: (document, variables) => {
       syncDocumentCaches(document);
       setSelectedRevisionIds((current) => ({ ...current, [variables.key]: null }));
@@ -415,7 +415,7 @@ export function IssueDocumentsSection({
       invalidateIssueDocuments();
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to restore document revision");
+      setError(err instanceof Error ? err.message : l10n("local.failed_to_restore_document_revision_0df00005"));
     },
   });
 
@@ -423,7 +423,7 @@ export function IssueDocumentsSection({
     mutationFn: ({ key, locked }: { key: string; locked: boolean }) =>
       documentSubject.setDocumentLock
         ? documentSubject.setDocumentLock(key, locked)
-        : Promise.reject(new Error("Document locking is not available")),
+        : Promise.reject(new Error(l10n("local.document_locking_not_available_0df00006"))),
     onSuccess: (document) => {
       syncDocumentCaches(document);
       setDraft((current) => current?.key === document.key ? null : current);
@@ -433,7 +433,7 @@ export function IssueDocumentsSection({
       invalidateIssueDocuments();
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to update document lock");
+      setError(err instanceof Error ? err.message : l10n("local.failed_to_update_document_lock_0df00007"));
     },
   });
 
@@ -641,7 +641,7 @@ export function IssueDocumentsSection({
           return false;
         }
       }
-      setError(err instanceof Error ? err.message : "Failed to save document");
+      setError(err instanceof Error ? err.message : l10n("local.failed_to_save_document_0df00008"));
       return false;
     }
   }, [documentConflict, documentSubject, invalidateIssueDocuments, resetAutosaveState, runSave, sortedDocuments, syncDocumentCaches, upsertDocument]);
