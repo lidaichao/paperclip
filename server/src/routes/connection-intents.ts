@@ -25,7 +25,7 @@ function bearer(req: Request) {
 
 function runtimeClaims(req: Request) {
   const claims = verifyRuntimeToolsToken(bearer(req));
-  if (!claims) throw unauthorized("Runtime tools token is missing, invalid, or expired");
+  if (!claims) throw unauthorized("运行时工具令牌缺失、无效或已过期");
   return claims;
 }
 
@@ -47,10 +47,10 @@ export function runtimeConnectionIntentRoutes(db: Db) {
   router.post("/runtime-tools/github/credentials", async (req, res) => {
     // This capability is never accepted as board/session authentication.
     // Node fetch sends Sec-Fetch-Mode too; browsers additionally send Origin or Sec-Fetch-Site.
-    if (req.headers.origin || req.headers.cookie || req.headers["sec-fetch-site"]) throw forbidden("GitHub credentials require runtime authentication");
+    if (req.headers.origin || req.headers.cookie || req.headers["sec-fetch-site"]) throw forbidden("GitHub 凭据需要运行时身份验证");
     const claims = verifyRuntimeToolsToken(typeof req.headers["x-paperclip-github-capability"] === "string"
       ? req.headers["x-paperclip-github-capability"] : bearer(req), "github_credentials");
-    if (!claims) throw unauthorized("Invalid GitHub runtime capability");
+    if (!claims) throw unauthorized("GitHub 运行时能力无效");
     res.setHeader("Cache-Control", "no-store");
     res.json(await resolveGitHubOperationCredentials(db, {
       companyId: claims.company_id, agentId: claims.sub, runId: claims.run_id,
@@ -116,14 +116,14 @@ export function runtimeConnectionIntentRoutes(db: Db) {
       res.status(404).json({
         jsonrpc: "2.0",
         id,
-        error: { code: -32601, message: `Unknown tool: ${name || "missing"}` },
+        error: { code: -32601, message: `未知工具：${name || "缺失"}` },
       });
       return;
     }
     res.status(404).json({
       jsonrpc: "2.0",
       id,
-      error: { code: -32601, message: `Unknown method: ${request.method ?? "missing"}` },
+      error: { code: -32601, message: `未知方法：${request.method ?? "缺失"}` },
     });
   });
 
@@ -166,7 +166,7 @@ export function connectionIntentBoardRoutes(db: Db, heartbeat: Heartbeat) {
     assertCompanyAccess(req, loaded.issue.companyId);
     const userId = req.actor.userId ?? "local-board";
     if (loaded.interaction.addresseeUserId !== userId) {
-      throw forbidden("Only the addressed user can act on this connection request");
+      throw forbidden("只有指定用户才能处理此连接请求");
     }
     return { loaded, userId };
   }
@@ -190,7 +190,7 @@ export function connectionIntentBoardRoutes(db: Db, heartbeat: Heartbeat) {
     const { userId } = await addressedIntent(req);
     const phase = req.body?.phase;
     if (phase !== "requested" && phase !== "authorizing" && phase !== "needs_retry") {
-      res.status(422).json({ error: "phase must be requested, authorizing, or needs_retry" });
+      res.status(422).json({ error: "phase 必须是 requested、authorizing 或 needs_retry" });
       return;
     }
     res.json(await service.updatePhase(req.params.interactionId as string, phase, userId, {

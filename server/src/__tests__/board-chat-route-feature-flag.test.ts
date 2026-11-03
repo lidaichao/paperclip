@@ -47,7 +47,7 @@ describe("POST /api/board/chat/stream feature flag guard (PAP-137)", () => {
 
     expect(res.status).toBe(403);
     expect(res.body).toEqual({
-      error: "Conference Room Chat is not enabled",
+      error: "会议室对话尚未启用",
       code: "FEATURE_DISABLED",
     });
     // The guard must fire before anything is persisted.
@@ -77,7 +77,7 @@ describe("POST /api/board/chat/stream feature flag guard (PAP-137)", () => {
     const res = await request(app).post("/api/board/chat/stream").send({});
 
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: "companyId and message are required" });
+    expect(res.body).toEqual({ error: "companyId 和 message 为必填项" });
   });
 });
 

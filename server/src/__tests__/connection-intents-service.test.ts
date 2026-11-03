@@ -243,7 +243,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     });
 
     await expect(service.complete(first.interactionId!, connection!.id, "someone-else"))
-      .rejects.toThrow("Only the addressed user");
+      .rejects.toThrow("只有指定用户");
     expect(await db.select().from(connectionGrantDelegations)).toHaveLength(0);
     expect(await db.select().from(issueThreadInteractions).where(
       eq(issueThreadInteractions.id, first.interactionId!),
@@ -345,7 +345,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     await expect(service.complete(first.interactionId!, connection!.id, claims.responsible_user_id)).resolves.toMatchObject({ status: "accepted" });
     expect(await db.select().from(connectionIntentDeliveries).where(eq(connectionIntentDeliveries.interactionId, first.interactionId!))).toHaveLength(1);
     await expect(service.request(claims, "unknown-service"))
-      .rejects.toThrow("was not found");
+      .rejects.toThrow("未找到");
     expect((await service.search(claims, "github")).results).toEqual([
       expect.objectContaining({ service: "github", state: "available" }),
     ]);
@@ -364,7 +364,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
         methods: [
           expect.objectContaining({
             key: "mcp-key",
-            label: "Personal access token (advanced)",
+            label: "个人访问令牌（高级）",
             auth: "api_key",
           }),
         ],
@@ -375,7 +375,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     );
 
     await expect(service.request(claims, "discord")).rejects.toThrow(
-      "is not available",
+      "不可用",
     );
 
     const request = await service.request(claims, "github");
@@ -383,7 +383,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     expect(setup.service.methods).toEqual([
       expect.objectContaining({
         key: "mcp-key",
-        label: "Personal access token (advanced)",
+        label: "个人访问令牌（高级）",
         auth: "api_key",
       }),
     ]);
@@ -597,7 +597,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
       expect(outcome.value).toBeNull();
       expect(outcome.error).toMatchObject({
         status: 403,
-        message: expect.stringContaining("no longer authorized"),
+        message: expect.stringContaining("已不再拥有组织写入权限"),
       });
       await expectNoOAuthCompletionWrites();
     } finally {
@@ -617,14 +617,14 @@ describeEmbeddedPostgres("connectionIntentService", () => {
         claims.responsible_user_id,
       ));
       await expect(service.search(claims, "notion"))
-        .rejects.toThrow("no longer authorized for company write access");
+        .rejects.toThrow("已不再拥有组织写入权限");
 
       await db.update(companyMemberships).set({ membershipRole: "member", status: "inactive" }).where(eq(
         companyMemberships.principalId,
         claims.responsible_user_id,
       ));
       await expect(service.request(claims, "notion"))
-        .rejects.toThrow("no longer authorized for company write access");
+        .rejects.toThrow("已不再拥有组织写入权限");
     } finally {
       await db.update(companyMemberships).set({ membershipRole: "member", status: "active" }).where(eq(
         companyMemberships.principalId,
@@ -646,16 +646,16 @@ describeEmbeddedPostgres("connectionIntentService", () => {
         pending.interactionId!,
         "authorizing",
         claims.responsible_user_id,
-      )).rejects.toThrow("no longer authorized for company write access");
+      )).rejects.toThrow("已不再拥有组织写入权限");
       await expect(service.decline(
         pending.interactionId!,
         claims.responsible_user_id,
-      )).rejects.toThrow("no longer authorized for company write access");
+      )).rejects.toThrow("已不再拥有组织写入权限");
       await expect(service.complete(
         pending.interactionId!,
         randomUUID(),
         claims.responsible_user_id,
-      )).rejects.toThrow("no longer authorized for company write access");
+      )).rejects.toThrow("已不再拥有组织写入权限");
     } finally {
       await db.update(companyMemberships).set({ membershipRole: "member", status: "active" }).where(eq(
         companyMemberships.principalId,
@@ -675,7 +675,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     expect(result).toMatchObject({ results: expect.arrayContaining([expect.objectContaining({ service: "github", state: "available" })]) });
     const request = await authority.execute({ tool: "connection_request", callId: "request", arguments: { service: "github" } });
     expect(request).toMatchObject({ state: "needs_user_action", interactionId: expect.any(String) });
-    await expect(authority.execute({ tool: "connection_request", callId: "bad", arguments: { service: "connection:https://private.invalid" } })).rejects.toThrow("not found");
+    await expect(authority.execute({ tool: "connection_request", callId: "bad", arguments: { service: "connection:https://private.invalid" } })).rejects.toThrow("未找到");
   });
 
   it("preserves an authorizing card through comments and later runs", async () => {
@@ -697,7 +697,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     const [connection] = await db.insert(toolConnections).values({ companyId: claims.company_id, applicationId: application!.id, uid: randomUUID(), name: "Archive fixture", transport: "mcp_remote", authKind: "none", enabled: true, status: "active", healthStatus: "ok" }).returning();
     const id = `connection:${connection!.id}`;
     const service = connectionIntentService(db);
-    await expect(service.request(claims, id)).rejects.toThrow("not found");
+    await expect(service.request(claims, id)).rejects.toThrow("未找到");
     await db.insert(connectionGrants).values({ companyId: claims.company_id, connectionId: connection!.id, kind: "user", subjectUserId: claims.responsible_user_id, status: "active" });
     await db.insert(toolCatalogEntries).values({ companyId: claims.company_id, connectionId: connection!.id, toolName: "archive_read", name: "Archive read", description: "Read the unique heliotrope launch decision", versionHash: "fixture-v1", status: "active", entryKind: "tool" });
     expect((await service.search(claims, "heliotrope")).results).toEqual([expect.objectContaining({ service: id, source: "configured", state: "needs_user_action" })]);
@@ -788,10 +788,10 @@ describeEmbeddedPostgres("connectionIntentService", () => {
   it("rejects cross-company claims and tokens after the run ends", async () => {
     const service = connectionIntentService(db);
     await expect(service.search({ ...claims, company_id: randomUUID() }, "notion"))
-      .rejects.toThrow("does not match its heartbeat run");
+      .rejects.toThrow("与其心跳运行不匹配");
     await db.update(heartbeatRuns).set({ status: "succeeded" }).where(eq(heartbeatRuns.id, runId));
     await expect(service.search(claims, "notion"))
-      .rejects.toThrow("no longer active");
+      .rejects.toThrow("已失效");
   });
   it("keeps runtime authentication separate from obsolete Anthropic tool requests", async () => {
     const companyId = claims.company_id;
@@ -810,7 +810,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     const service = connectionIntentService(db);
     await expect(service.request(aiClaims, "anthropic")).rejects.toMatchObject({
       status: 422,
-      message: "Connection service anthropic is not available",
+      message: "连接服务 anthropic 不可用",
     });
     // Preserve an intent created before the obsolete REST method was removed.
     // It must neither alias the AI request nor accept an AI account as tools.
@@ -837,7 +837,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     expect((await service.setupOptions(aiRequest.interactionId!)).aiConnection).toEqual(binding);
     expect((await service.setupOptions(aiRequest.interactionId!)).aiRepair?.connection).toMatchObject({ id: connection!.id, method: "api_key" });
     expect((await service.setupOptions(toolRequest.id)).existingConnections).toEqual([]);
-    await expect(service.complete(toolRequest.id, connection!.id, claims.responsible_user_id!)).rejects.toThrow("cannot satisfy");
+    await expect(service.complete(toolRequest.id, connection!.id, claims.responsible_user_id!)).rejects.toThrow("不能满足");
     await expect(service.complete(aiRequest.interactionId!, connection!.id, claims.responsible_user_id!)).resolves.toMatchObject({ status: "accepted" });
     expect((await service.request(aiClaims, "anthropic", { purpose: "ai" })).state).toBe("ready");
     await expect(service.request(aiClaims, "anthropic")).rejects.toMatchObject({ status: 422 });

@@ -99,7 +99,7 @@ export function connectionIntentService(db: Db) {
       || !membership.membershipRole
       || membership.membershipRole === "viewer"
     ) {
-      throw forbidden("Addressed user is no longer authorized for company write access");
+      throw forbidden("指定用户已不再拥有组织写入权限");
     }
   }
 
@@ -129,7 +129,7 @@ export function connectionIntentService(db: Db) {
       || !membership.membershipRole
       || membership.membershipRole === "viewer"
     ) {
-      throw forbidden("Addressed user is no longer authorized for company write access");
+      throw forbidden("指定用户已不再拥有组织写入权限");
     }
   }
 
@@ -152,16 +152,16 @@ export function connectionIntentService(db: Db) {
       || run.companyId !== claims.company_id
       || run.agentId !== claims.sub
       || (!run.activeIdentityContextId && run.responsibleUserId !== claims.responsible_user_id)
-    ) throw forbidden("Runtime tool token does not match its heartbeat run");
-    if (run.status !== "running") throw forbidden("Runtime tool token is no longer active");
+    ) throw forbidden("运行时工具令牌与其心跳运行不匹配");
+    if (run.status !== "running") throw forbidden("运行时工具令牌已失效");
     if (run.activeIdentityContextId) {
       const current = await captureRunIdentity(db, { companyId: run.companyId, agentId: run.agentId, runId: run.id });
       run = { ...run, responsibleUserId: current.run.responsibleUserId };
     }
-    if (!run.responsibleUserId) throw forbidden("This task needs a responsible user to connect a service");
+    if (!run.responsibleUserId) throw forbidden("此任务需要指定负责人后才能连接服务");
     const snapshot = record(run.contextSnapshot);
     const issueId = text(snapshot?.issueId) ?? text(snapshot?.taskId);
-    if (!issueId) throw unprocessable("Connection requests require a task-bound heartbeat run");
+    if (!issueId) throw unprocessable("连接请求需要绑定到任务的心跳运行");
     const [issue, agent, responsibleMembership] = await Promise.all([
       db.select({
         id: issues.id,
@@ -182,18 +182,18 @@ export function connectionIntentService(db: Db) {
         eq(companyMemberships.principalId, run.responsibleUserId!),
       )).then((rows) => rows[0] ?? null),
     ]);
-    if (!issue || !agent) throw notFound("Runtime task or agent was not found");
+    if (!issue || !agent) throw notFound("未找到运行时任务或智能体");
     if (
       !responsibleMembership
       || responsibleMembership.status !== "active"
       || !responsibleMembership.membershipRole
       || responsibleMembership.membershipRole === "viewer"
     ) {
-      throw forbidden("Responsible user is no longer authorized for company write access");
+      throw forbidden("负责人已不再拥有组织写入权限");
     }
-    if (issue.assigneeAgentId !== agent.id) throw conflict("The requesting agent no longer owns this task");
+    if (issue.assigneeAgentId !== agent.id) throw conflict("发起请求的智能体已不再负责此任务");
     if (issue.status === "done" || issue.status === "cancelled") {
-      throw conflict("Connection requests cannot be created on a closed task");
+      throw conflict("已关闭的任务不能创建连接请求");
     }
     return { run, issue, agent };
   }
@@ -305,7 +305,7 @@ export function connectionIntentService(db: Db) {
   async function resolveService(service: string, companyId: string, userId: string, agentId: string, purpose?: "ai") {
     if (!service.startsWith("connection:")) {
       const app = getAppStoreDefinition(service);
-      if (!app) throw notFound("Connection service was not found");
+      if (!app) throw notFound("未找到连接服务");
       const methods = purpose === "ai" ? getAvailableConnectionMethods(app).filter(method => method.transport === "runtime_auth") : availableToolConnectionMethods(app);
       return { ...app, available: app.availability?.available !== false,
         searchCapabilities: methods.map((method) =>
@@ -316,21 +316,21 @@ export function connectionIntentService(db: Db) {
     }
     const id = service.slice("connection:".length);
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-      throw notFound("Configured connection was not found");
+      throw notFound("未找到已配置的连接");
     }
     const connection = await access.getConnection(id, companyId);
-    if (connection.connectionPurpose === "ai" && purpose !== "ai") throw notFound("AI authentication is not a tool connection");
+    if (connection.connectionPurpose === "ai" && purpose !== "ai") throw notFound("AI 身份验证不是工具连接");
     const { grants } = await access.listConnectionGrants(id, companyId);
     if (connection.status === "archived" || !grants.some((grant) => grant.status === "active" && (
       grant.kind === "organization" || (grant.kind === "user" && grant.subjectUserId === userId)
       || (grant.kind === "agent" && grant.subjectAgentId === agentId)
-    ))) throw notFound("Configured connection was not found");
+    ))) throw notFound("未找到已配置的连接");
     const application = await access.getApplication(connection.applicationId, companyId);
     return {
       slug: service, name: connection.name, description: application.description, searchCapabilities: "",
       branding: { logoUrl: undefined, darkLogoUrl: undefined },
       available: connection.enabled,
-      methods: [{ key: "configured", label: "Use configured connection", auth:
+      methods: [{ key: "configured", label: "使用已配置的连接", auth:
         connection.authKind === "oauth" ? "oauth" as const : connection.authKind === "none" ? "none" as const : "api_key" as const }],
       source: "configured" as const,
     };
@@ -375,9 +375,9 @@ export function connectionIntentService(db: Db) {
         methods: app.methods, source: app.source,
         state: ready ? "ready" : denied ? "unavailable" : !app.available || !app.methods.length ? "unavailable"
           : matching.length ? "needs_user_action" : "available",
-        reason: ready ? "Connection is installed and usable by this agent" : denied ? "An administrator has not permitted executable tools for this agent; reconnecting cannot grant that permission" : !app.available ? "Connection is disabled or unavailable"
-          : matching.some((connection) => isToolConnectionAttentionHealth(connection.healthStatus)) ? "Connection needs attention"
-          : matching.length ? "Review identity and access for this agent" : "Connect this service to continue",
+        reason: ready ? "连接已安装，此智能体可以使用" : denied ? "管理员尚未允许此智能体执行工具；重新连接也无法授予该权限" : !app.available ? "连接已停用或不可用"
+          : matching.some((connection) => isToolConnectionAttentionHealth(connection.healthStatus)) ? "连接需要处理"
+          : matching.length ? "请检查此智能体的身份与访问权限" : "请先连接此服务",
         connectionId: ready?.id ?? null,
       }});
     }
@@ -392,7 +392,7 @@ export function connectionIntentService(db: Db) {
     const context = await loadRunContext(claims);
     const app = await resolveService(serviceSlug, context.run.companyId, context.run.responsibleUserId!, context.agent.id, options.purpose);
     if (!app.available || app.methods.length === 0) {
-      throw unprocessable(`Connection service ${serviceSlug} is not available`);
+      throw unprocessable(`连接服务 ${serviceSlug} 不可用`);
     }
     const ready = await usableConnectionForAgent({
       companyId: context.run.companyId,
@@ -412,13 +412,13 @@ export function connectionIntentService(db: Db) {
       };
     }
     if (options.purpose !== "ai" && await administrativeDenial(context.run.companyId, context.agent.id, app.slug, await connectionInventory(context.run.companyId))) {
-      throw forbidden("This agent has no permitted actions for this service. Ask an administrator to review tool permissions; reconnecting will not remove a denial.");
+      throw forbidden("此智能体没有该服务的可用操作。请让管理员检查工具权限；重新连接无法解除拒绝状态。");
     }
     const outcomeId = context.run.contextSnapshot?.interactionId;
     if (typeof outcomeId === "string") {
       const [outcome] = await db.select().from(issueThreadInteractions).where(and(eq(issueThreadInteractions.id, outcomeId), eq(issueThreadInteractions.companyId, context.run.companyId), eq(issueThreadInteractions.issueId, context.issue.id)));
       if (outcome?.kind === "connection_intent" && outcome.status === "rejected" && connectionIntentPayloadSchema.parse(outcome.payload).serviceSlug === app.slug && connectionIntentPayloadSchema.parse(outcome.payload).purpose === options.purpose) {
-        throw conflict("The user declined this connection. Pursue alternatives; do not request it again in this continuation.");
+        throw conflict("用户已拒绝此连接。请改用其他方案，不要在本次执行中重复请求。");
       }
     }
     const interaction = await interactions.createConnectionIntent(
@@ -441,7 +441,7 @@ export function connectionIntentService(db: Db) {
         idempotencyKey: `connection-intent:${context.run.id}:${context.run.responsibleUserId}:${app.slug}${options.purpose ? ":ai" : ""}`,
       },
     );
-    if (interaction.status !== "pending") throw conflict("This connection request has already been resolved. Follow its recorded outcome.");
+    if (interaction.status !== "pending") throw conflict("此连接请求已处理，请遵循已记录的结果。");
     await logActivity(db, {
       companyId: context.run.companyId, actorType: "agent", actorId: context.agent.id,
       agentId: context.agent.id, runId: context.run.id,
@@ -454,7 +454,7 @@ export function connectionIntentService(db: Db) {
       state: "needs_user_action",
       connectionId: null,
       interactionId: interaction.id,
-      instruction: `A connection card was sent to the responsible user. Finish independent work, then yield and wait for continuation. Do not repeat this request.`,
+      instruction: `连接卡片已发送给负责人。请先完成不依赖连接的工作，然后结束本次执行并等待继续，不要重复发起请求。`,
     };
   }
 
@@ -465,7 +465,7 @@ export function connectionIntentService(db: Db) {
       .innerJoin(issues, eq(issueThreadInteractions.issueId, issues.id))
       .where(eq(issueThreadInteractions.id, interactionId))
       .then((rows) => rows[0] ?? null);
-    if (!row || row.interaction.kind !== "connection_intent") throw notFound("Connection intent not found");
+    if (!row || row.interaction.kind !== "connection_intent") throw notFound("未找到连接请求");
     const interaction = await interactions.getForIssue(row.issue, interactionId) as ConnectionIntentInteraction;
     return { ...row, interaction };
   }
@@ -475,7 +475,7 @@ export function connectionIntentService(db: Db) {
     const payload = connectionIntentPayloadSchema.parse(loaded.interaction.payload);
     const app = await resolveService(payload.serviceSlug, loaded.issue.companyId, loaded.interaction.addresseeUserId!, payload.requestingAgentId, payload.purpose);
     const managed = payload.purpose === "ai" ? await managedAgent(loaded.issue.companyId, payload.requestingAgentId, app.slug) : null;
-    if (payload.purpose === "ai" && !managed) throw conflict("The agent’s AI configuration changed. Start a new execution.");
+    if (payload.purpose === "ai" && !managed) throw conflict("智能体的 AI 配置已变化，请开始新的执行。");
     const inventory = await connectionInventory(loaded.issue.companyId);
     const usableAiConnection = managed ? await usableConnectionForAgent({
       companyId: loaded.issue.companyId, agentId: payload.requestingAgentId,
@@ -545,9 +545,9 @@ export function connectionIntentService(db: Db) {
     const loaded = await loadIntent(interactionId);
     if (loaded.interaction.status !== "pending") {
       if (loaded.interaction.status === "accepted" && loaded.interaction.result?.connectionId === connectionId && loaded.interaction.addresseeUserId === userId) return loaded.interaction;
-      throw conflict("Connection intent is already resolved");
+      throw conflict("连接请求已处理");
     }
-    if (loaded.interaction.addresseeUserId !== userId) throw forbidden("Only the addressed user can connect this service");
+    if (loaded.interaction.addresseeUserId !== userId) throw forbidden("只有指定用户才能连接此服务");
     await assertCurrentUserWriteAccess(
       loaded.issue.companyId,
       userId,
@@ -556,7 +556,7 @@ export function connectionIntentService(db: Db) {
     const payload = connectionIntentPayloadSchema.parse(loaded.interaction.payload);
     return db.transaction(async (tx) => {
       const [task] = await tx.select().from(issues).where(and(eq(issues.id, loaded.issue.id), eq(issues.companyId, loaded.issue.companyId))).for("update");
-      if (!task || task.assigneeAgentId !== payload.requestingAgentId || ["done", "cancelled"].includes(task.status)) throw conflict("Connection request no longer belongs to an active task");
+      if (!task || task.assigneeAgentId !== payload.requestingAgentId || ["done", "cancelled"].includes(task.status)) throw conflict("连接请求已不再属于活动任务");
       // Membership downgrade/removal takes the same row lock. Whichever side
       // commits first is authoritative: a completed revocation makes this
       // revalidation fail, while completion holds authority through OAuth
@@ -580,26 +580,26 @@ export function connectionIntentService(db: Db) {
         selectedConnection,
         new Map([[selectedApplication.id, selectedApplication]]),
       ) !== payload.serviceSlug) {
-        throw notFound("Connection does not match this intent");
+        throw notFound("连接与此请求不匹配");
       }
       if (selectedConnection.status !== "active" || !selectedConnection.enabled || isToolConnectionAttentionHealth(selectedConnection.healthStatus)) {
-        throw conflict("Finish and test this connection before using it for the task");
+        throw conflict("请先完成并测试此连接，再用于任务");
       }
 
-      if (payload.purpose === "ai" && selectedConnection.connectionPurpose !== "ai") throw conflict("Select an AI account for this authentication request");
+      if (payload.purpose === "ai" && selectedConnection.connectionPurpose !== "ai") throw conflict("请为此身份验证请求选择 AI 账号");
       if (selectedConnection.connectionPurpose === "ai") {
-        if (payload.purpose !== "ai") throw conflict("AI authentication cannot satisfy a tool connection request");
+        if (payload.purpose !== "ai") throw conflict("AI 身份验证不能满足工具连接请求");
         const managed = await managedAgent(loaded.issue.companyId, payload.requestingAgentId, payload.serviceSlug);
-        if (!managed) throw conflict("Configure the agent’s AI connection before using this account");
+        if (!managed) throw conflict("使用此账号前，请先配置智能体的 AI 连接");
         const service = aiConnectionService(txDb);
         if (managed.binding.mode === "responsible_user") {
           const selected = await service.select({ companyId: loaded.issue.companyId, agentId: payload.requestingAgentId, userId, adapterType: managed.agent.adapterType, model: managed.agent.adapterConfig.model, runnerProvider: managed.agent.adapterConfig.provider, acpxAgent: managed.agent.adapterConfig.acpxAgent, binding: managed.binding, allowUninstalledPersonal: true });
-          if (selected.connection.id !== selectedConnection.id) throw conflict("Choose this account as your personal default in Connections first");
+          if (selected.connection.id !== selectedConnection.id) throw conflict("请先在“连接”中将此账号设为个人默认账号");
           const installs = await txAccess.listConnectionInstalls(selectedConnection.id, loaded.issue.companyId);
           await txAccess.putConnectionInstalls(selectedConnection.id, { installs: [...installs, { targetType: "agent", targetId: payload.requestingAgentId }] }, { actorType: "user", actorId: userId });
         }
         const selected = await service.select({ companyId: loaded.issue.companyId, agentId: payload.requestingAgentId, userId, adapterType: managed.agent.adapterType, model: managed.agent.adapterConfig.model, runnerProvider: managed.agent.adapterConfig.provider, acpxAgent: managed.agent.adapterConfig.acpxAgent, binding: managed.binding });
-        if (selected.connection.id !== selectedConnection.id) throw conflict("This is not the account selected for the agent");
+        if (selected.connection.id !== selectedConnection.id) throw conflict("这不是为该智能体选择的账号");
         return txInteractions.resolveConnectionIntent(loaded.issue, interactionId, { version: 1, outcome: "connected", connectionId: selected.connection.id }, { userId });
       }
 
@@ -638,10 +638,10 @@ export function connectionIntentService(db: Db) {
       );
       const dedicatedGrant = grants.find((grant) => grant.kind === "agent" && grant.status === "active" && grant.subjectAgentId === payload.requestingAgentId);
       if (!personalGrant && !organizationGrant && !dedicatedGrant) {
-        throw conflict("This connection has no usable identity grant");
+        throw conflict("此连接没有可用的身份授权");
       }
       if (!personalGrant && !dedicatedGrant && !options.canManageOrganizationGrant) {
-        throw forbidden("Sharing a company connection requires connection-management authority");
+        throw forbidden("共享组织连接需要连接管理权限");
       }
 
       if (personalGrant) {
@@ -667,13 +667,13 @@ export function connectionIntentService(db: Db) {
       });
 
       const effective = await txAccess.getEffectiveProfilesForAgent(loaded.issue.companyId, payload.requestingAgentId);
-      if (!effective.allowedTools.some((tool) => tool.connectionId === selectedConnection.id)) throw conflict("This connection has no permitted tools. Review its action permissions before continuing.");
+      if (!effective.allowedTools.some((tool) => tool.connectionId === selectedConnection.id)) throw conflict("此连接没有可用工具。继续前请检查其操作权限。");
 
       const runtimeConnection = await connectionIntentService(txDb).usableConnectionForAgent({
         companyId: loaded.issue.companyId, agentId: payload.requestingAgentId,
         responsibleUserId: userId, serviceSlug: payload.serviceSlug,
       });
-      if (runtimeConnection?.id !== selectedConnection.id) throw conflict("This identity is not the connection this agent can execute. Resolve conflicting identities before continuing.");
+      if (runtimeConnection?.id !== selectedConnection.id) throw conflict("此身份不是该智能体可以执行的连接。继续前请解决身份冲突。");
 
       return txInteractions.resolveConnectionIntent(
         loaded.issue,
@@ -691,7 +691,7 @@ export function connectionIntentService(db: Db) {
     options: { bypassCurrentMembershipCheck?: boolean } = {},
   ) {
     const loaded = await loadIntent(interactionId);
-    if (loaded.interaction.addresseeUserId !== userId) throw forbidden("Only the addressed user can decline this request");
+    if (loaded.interaction.addresseeUserId !== userId) throw forbidden("只有指定用户才能拒绝此请求");
     await assertCurrentUserWriteAccess(
       loaded.issue.companyId,
       userId,
@@ -721,7 +721,7 @@ export function connectionIntentService(db: Db) {
       options: { bypassCurrentMembershipCheck?: boolean } = {},
     ) => {
       const loaded = await loadIntent(interactionId);
-      if (loaded.interaction.addresseeUserId !== userId) throw forbidden("Only the addressed user can update this request");
+      if (loaded.interaction.addresseeUserId !== userId) throw forbidden("只有指定用户才能更新此请求");
       await assertCurrentUserWriteAccess(
         loaded.issue.companyId,
         userId,
