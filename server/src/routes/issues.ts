@@ -16878,7 +16878,7 @@ export function issueRoutes(
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
     const comment = await svc.getComment(commentId);
     if (!comment || comment.issueId !== id) {
-      res.status(404).json({ error: "Comment not found" });
+      res.status(404).json({ error: "未找到评论" });
       return;
     }
     res.json(
@@ -16900,7 +16900,7 @@ export function issueRoutes(
 
     const comment = await svc.getComment(commentId);
     if (!comment || comment.issueId !== id) {
-      res.status(404).json({ error: "Comment not found" });
+      res.status(404).json({ error: "未找到评论" });
       return;
     }
 
@@ -16954,7 +16954,7 @@ export function issueRoutes(
     if (deleteMode === "cancel" || pendingQueueWake || isLegacyQueuedComment) {
       if (!actorOwnsComment) {
         res.status(403).json({
-          error: "Only the comment author can cancel queued comments",
+          error: "只有评论作者才能取消排队中的评论",
         });
         return;
       }
@@ -17015,7 +17015,7 @@ export function issueRoutes(
     if (!actorOwnsComment) {
       res
         .status(403)
-        .json({ error: "Only the comment author can delete comments" });
+        .json({ error: "只有评论作者才能删除评论" });
       return;
     }
 
@@ -17077,7 +17077,7 @@ export function issueRoutes(
       },
     );
     if (!deleted) {
-      res.status(404).json({ error: "Comment not found" });
+      res.status(404).json({ error: "未找到评论" });
       return;
     }
 
@@ -17121,7 +17121,7 @@ export function issueRoutes(
     if (req.actor.type !== "board") {
       res
         .status(403)
-        .json({ error: "Only board users can view feedback votes" });
+        .json({ error: "只有看板用户才能查看反馈投票" });
       return;
     }
 
@@ -17144,7 +17144,7 @@ export function issueRoutes(
     if (req.actor.type !== "board") {
       res
         .status(403)
-        .json({ error: "Only board users can view feedback traces" });
+        .json({ error: "只有看板用户才能查看反馈记录" });
       return;
     }
 
@@ -17183,7 +17183,7 @@ export function issueRoutes(
     if (req.actor.type !== "board") {
       res
         .status(403)
-        .json({ error: "Only board users can view feedback traces" });
+        .json({ error: "只有看板用户才能查看反馈记录" });
       return;
     }
     const includePayload =
@@ -17191,7 +17191,7 @@ export function issueRoutes(
       req.query.includePayload === undefined;
     const trace = await feedback.getFeedbackTraceById(traceId, includePayload);
     if (!trace || !actorCanAccessCompany(req, trace.companyId)) {
-      res.status(404).json({ error: "Feedback trace not found" });
+      res.status(404).json({ error: "未找到反馈记录" });
       return;
     }
     res.json(trace);
@@ -17202,12 +17202,12 @@ export function issueRoutes(
     if (req.actor.type !== "board") {
       res
         .status(403)
-        .json({ error: "Only board users can view feedback trace bundles" });
+        .json({ error: "只有看板用户才能查看反馈记录包" });
       return;
     }
     const bundle = await feedback.getFeedbackTraceBundle(traceId);
     if (!bundle || !actorCanAccessCompany(req, bundle.companyId)) {
-      res.status(404).json({ error: "Feedback trace not found" });
+      res.status(404).json({ error: "未找到反馈记录" });
       return;
     }
     res.json(bundle);
@@ -17218,11 +17218,11 @@ export function issueRoutes(
     router[method]("/companies/:companyId/chats/:agentRef", async (req, res) => {
       const companyId = req.params.companyId as string;
       assertCompanyAccess(req, companyId);
-      if (req.actor.type !== "board" || !req.actor.userId) throw forbidden("Board user access required");
-      if (!(await instanceSettings.getExperimental()).enableAgentChat) throw notFound("Agent Chat is disabled");
+      if (req.actor.type !== "board" || !req.actor.userId) throw forbidden("需要看板用户访问权限");
+      if (!(await instanceSettings.getExperimental()).enableAgentChat) throw notFound("智能体对话功能已停用");
       const resolved = await agentsSvc.resolveByReference(companyId, req.params.agentRef as string);
-      if (resolved.ambiguous) throw conflict("Agent reference is ambiguous");
-      if (!resolved.agent) throw notFound("Agent not found");
+      if (resolved.ambiguous) throw conflict("智能体引用存在歧义");
+      if (!resolved.agent) throw notFound("未找到智能体");
       const agent = resolved.agent;
       const existing = await svc.getConversation(companyId, agent.id, req.actor.userId);
       if (existing && !(await assertIssueReadAllowed(req, res, existing))) return;
@@ -17252,10 +17252,10 @@ export function issueRoutes(
       );
       if (!issue) return;
       if (issue.conversationAgentId && req.actor.type === "board") {
-        if (!(await instanceSettings.getExperimental()).enableAgentChat) throw notFound("Agent Chat is disabled");
-        if (!req.actor.userId) throw forbidden("Board user access required");
-        if (req.actor.userId !== issue.conversationUserId) throw forbidden("Only the conversation owner can send messages or start a new session");
-        if (!req.body.clientRequestId) throw unprocessable("Chat messages require a clientRequestId for safe retries");
+        if (!(await instanceSettings.getExperimental()).enableAgentChat) throw notFound("智能体对话功能已停用");
+        if (!req.actor.userId) throw forbidden("需要看板用户访问权限");
+        if (req.actor.userId !== issue.conversationUserId) throw forbidden("只有对话所有者才能发送消息或开始新会话");
+        if (!req.body.clientRequestId) throw unprocessable("对话消息必须提供 clientRequestId，才能安全重试");
         if (!(await assertAgentIssueCommentAllowed(req, res, issue))) return;
         if (req.body.body.trim() !== "/new" && !(await assertBoardCommentNotPaused(req, res, issue))) return;
         const actor = getActorInfo(req);
@@ -17427,7 +17427,7 @@ export function issueRoutes(
       ) {
         res
           .status(409)
-          .json({ error: "Issue follow-up blocked by unresolved blockers" });
+          .json({ error: "任务仍有未解决的阻塞项，无法跟进" });
         return;
       }
       if (

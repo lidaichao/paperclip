@@ -362,7 +362,7 @@ describe.sequential("issue comment cancel routes", () => {
       .delete("/api/issues/11111111-1111-4111-8111-111111111111/comments/comment-1?mode=cancel");
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("Only the comment author can cancel queued comments");
+    expect(res.body.error).toBe("只有评论作者才能取消排队中的评论");
     expect(mockIssueService.removeComment).not.toHaveBeenCalled();
   });
 
@@ -480,7 +480,7 @@ describe.sequential("issue comment cancel routes", () => {
       .delete("/api/issues/11111111-1111-4111-8111-111111111111/comments/comment-1");
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("Only the comment author can delete comments");
+    expect(res.body.error).toBe("只有评论作者才能删除评论");
     expect(mockIssueService.removeComment).not.toHaveBeenCalled();
     expect(mockIssueService.tombstoneComment).not.toHaveBeenCalled();
   });
