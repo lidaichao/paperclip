@@ -18324,12 +18324,12 @@ export function toolAccessService(
       const knownHosts = input.action === "enable" ? validateRailwayKnownHosts(input.knownHosts) : "";
       const setup = await db.transaction(async (tx) => {
         const [connection] = await tx.select().from(toolConnections).where(and(eq(toolConnections.id, connectionId), eq(toolConnections.companyId, companyId))).for("update");
-        if (!connection || !isRailwayConnection(connection) || (connection.status !== "active" && input.action !== "remove")) throw unprocessable("Connect Railway before configuring container access.");
+        if (!connection || !isRailwayConnection(connection) || (connection.status !== "active" && input.action !== "remove")) throw unprocessable("请先连接 Railway，再配置容器访问权限。");
         const [grant] = await tx.select().from(connectionGrants).where(and(eq(connectionGrants.id, input.grantId), eq(connectionGrants.connectionId, connectionId), eq(connectionGrants.companyId, companyId))).for("update");
-        if (!grant || (grant.status !== "active" && input.action !== "remove")) throw unprocessable("Select an active Railway authorization.");
-        if (grant.kind === "user" && (actor.actorType !== "user" || actor.actorId !== grant.subjectUserId)) throw forbidden("Only this authorization's owner can configure its SSH key.");
+        if (!grant || (grant.status !== "active" && input.action !== "remove")) throw unprocessable("请选择有效的 Railway 授权。");
+        if (grant.kind === "user" && (actor.actorType !== "user" || actor.actorId !== grant.subjectUserId)) throw forbidden("只有此授权的所有者才能配置其 SSH 密钥。");
         const existing = asRecord(connection.config.railwaySsh);
-        if (existing.grantId && existing.grantId !== grant.id) throw conflict("Remove the existing container key before choosing another authorization.");
+        if (existing.grantId && existing.grantId !== grant.id) throw conflict("选择其他授权前，请先移除现有容器密钥。");
         const currentRef = grant.credentialSecretRefs.find((ref) => ref.configPath === RAILWAY_SSH_SECRET_PATH);
         let next: RailwaySshSetup | null = null;
         let refs = grant.credentialSecretRefs;
@@ -18343,7 +18343,7 @@ export function toolAccessService(
           refs = [...refs.filter((ref) => ref.configPath !== RAILWAY_SSH_SECRET_PATH), ref];
           next = { grantId: grant.id, publicKey: key.publicKey, knownHosts: "", enabled: false };
         } else {
-          if (!currentRef || typeof existing.publicKey !== "string") throw unprocessable("Generate and register a container key first.");
+          if (!currentRef || typeof existing.publicKey !== "string") throw unprocessable("请先生成并注册容器密钥。");
           next = { grantId: grant.id, publicKey: existing.publicKey, knownHosts, enabled: true };
         }
         await tx.update(connectionGrants).set({ credentialSecretRefs: refs, updatedAt: now() }).where(and(eq(connectionGrants.id, grant.id), eq(connectionGrants.companyId, companyId)));
@@ -19055,7 +19055,7 @@ export function toolAccessService(
         .delete(toolProfiles)
         .where(eq(toolProfiles.id, existing.id))
         .returning();
-      if (!deleted) throw notFound("Tool profile not found");
+      if (!deleted) throw notFound("未找到工具配置");
       return {
         profile: toProfile(deleted),
         summary: details.summary,
@@ -19097,7 +19097,7 @@ export function toolAccessService(
         .select()
         .from(toolProfileEntries)
         .where(eq(toolProfileEntries.id, entryId));
-      if (!row) throw notFound("Tool profile entry not found");
+      if (!row) throw notFound("未找到工具配置项");
       return toProfileEntry(row);
     },
 
@@ -19109,7 +19109,7 @@ export function toolAccessService(
         .select()
         .from(toolProfileEntries)
         .where(eq(toolProfileEntries.id, entryId));
-      if (!existing) throw notFound("Tool profile entry not found");
+      if (!existing) throw notFound("未找到工具配置项");
       const next: CreateToolProfileEntryForProfile = {
         selectorType: input.selectorType ?? existing.selectorType,
         effect: input.effect ?? existing.effect,
@@ -19148,7 +19148,7 @@ export function toolAccessService(
         .delete(toolProfileEntries)
         .where(eq(toolProfileEntries.id, entryId))
         .returning();
-      if (!row) throw notFound("Tool profile entry not found");
+      if (!row) throw notFound("未找到工具配置项");
       await db
         .update(toolProfiles)
         .set({ updatedAt: new Date() })
@@ -19414,7 +19414,7 @@ export function toolAccessService(
         input.connectionId,
         input.companyId,
       );
-      if (connection.connectionPurpose === "ai") throw unprocessable("AI credentials are available only through the runtime resolver");
+      if (connection.connectionPurpose === "ai") throw unprocessable("AI 凭据只能通过运行时解析器使用");
       const application = await getConnectionApplication(connection);
       const brokerEnabled = connectionTokenBrokerEnabled(connection);
       const path = brokerEnabled
@@ -20145,7 +20145,7 @@ export function toolAccessService(
           ),
         )
         .limit(1);
-      if (!run) throw notFound("Run not found");
+      if (!run) throw notFound("未找到运行记录");
 
       const invocationRows = await db
         .select()
@@ -20370,7 +20370,7 @@ export function toolAccessService(
           message,
         )
       ) {
-        throw conflict("A tool access record with that name already exists", {
+        throw conflict("已存在同名的工具访问记录", {
           code: "tool_access_name_conflict",
         });
       }

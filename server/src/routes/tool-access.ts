@@ -2208,7 +2208,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
 
   router.get("/tool-profiles/:profileId/new-tools", async (req, res) => {
     assertBoard(req);
-    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "Tool profile not found");
+    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "未找到工具配置");
     if (!existing) return;
     res.json(await svc.listProfileNewTools(existing.id, existing.companyId));
   });
@@ -2241,7 +2241,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   });
 
   router.patch("/tool-profiles/:profileId", validate(updateToolProfileWithEntriesSchema), async (req, res) => {
-    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "Tool profile not found");
+    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "未找到工具配置");
     if (!existing) return;
     assertToolAppMutationAccess(req, existing.companyId);
     try {
@@ -2262,7 +2262,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   });
 
   router.post("/tool-profiles/:profileId/duplicate", validate(duplicateToolProfileSchema), async (req, res) => {
-    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "Tool profile not found");
+    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "未找到工具配置");
     if (!existing) return;
     assertToolAppMutationAccess(req, existing.companyId);
     try {
@@ -2288,7 +2288,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   });
 
   router.delete("/tool-profiles/:profileId", validate(deleteToolProfileSchema), async (req, res) => {
-    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "Tool profile not found");
+    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "未找到工具配置");
     if (!existing) return;
     assertToolAppMutationAccess(req, existing.companyId);
     const result = await svc.deleteProfile(existing.id, req.body);
@@ -2310,7 +2310,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   });
 
   router.post("/tool-profiles/:profileId/new-tools/review", validate(reviewToolProfileNewToolsSchema), async (req, res) => {
-    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "Tool profile not found");
+    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "未找到工具配置");
     if (!existing) return;
     assertToolAppMutationAccess(req, existing.companyId);
     const result = await svc.reviewProfileNewTools(existing.id, req.body, getActorInfo(req));
@@ -2331,7 +2331,7 @@ function connectorEnrollmentPrincipal(req: Request): string {
   });
 
   router.post("/tool-profiles/:profileId/entries", validate(createToolProfileEntryForProfileSchema), async (req, res) => {
-    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "Tool profile not found");
+    const existing = await getAccessibleResource(req, res, svc.getProfile(req.params.profileId as string), "未找到工具配置");
     if (!existing) return;
     assertToolAppMutationAccess(req, existing.companyId);
     const entry = await svc.addProfileEntry(existing.id, req.body);
