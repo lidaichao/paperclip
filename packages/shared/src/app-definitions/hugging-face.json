@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "hugging-face",
   "name": "Hugging Face",
-  "description": "Connect Hugging Face's provider-hosted MCP server.",
+  "description": "连接 Hugging Face 官方托管的 MCP 服务器。",
   "categories": [
     "ai"
   ],
@@ -23,21 +23,21 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://huggingface.co/mcp?login&gradio=none",
         "scopesHint": [
           "read-mcp"
         ]
       },
-      "guidanceMd": "Connect Hugging Face in the browser. A Hugging Face account.",
+      "guidanceMd": "在浏览器中连接 Hugging Face。需要 Hugging Face 账户。",
       "riskTier": "S2",
-      "label": "Sign in with Hugging Face",
+      "label": "使用 Hugging Face 登录",
       "consoleLinks": {
         "docs": "https://huggingface.co/docs/hub/agents-mcp"
       },
       "warnings": [
-        "A Hugging Face account."
+        "需要 Hugging Face 账户。"
       ]
     }
   ]

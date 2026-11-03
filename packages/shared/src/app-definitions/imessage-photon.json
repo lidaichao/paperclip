@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "imessage-photon",
   "name": "iMessage Photon",
-  "description": "Message a Paperclip agent from Apple Messages using Photon Cloud. Pro supports DMs; dedicated lines also support groups.",
+  "description": "通过 Photon Cloud 在 Apple 信息中与 Alice 智能体沟通。Pro 版支持私聊，专用线路还支持群聊。",
   "categories": [
     "communication"
   ],
@@ -16,7 +16,7 @@
   "methods": [
     {
       "key": "chat-agent",
-      "label": "Chat with an agent",
+      "label": "与智能体聊天",
       "purpose": "channel",
       "provider": "imessage-photon",
       "transport": "chat_sdk",
@@ -24,18 +24,18 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Let people in iMessage Photon start and continue work with one Paperclip agent.",
+      "whenToUse": "让用户通过 iMessage Photon 向一个 Alice 智能体发起工作并继续沟通。",
       "credentialFields": [
         {
           "key": "projectSecret",
-          "label": "Project secret",
+          "label": "项目密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Photon project secret",
+          "placeholder": "Photon 项目密钥",
           "secret": true
         }
       ],
-      "guidanceMd": "Connect a Photon Cloud project. Pro shared lines support DMs after sender enrollment in Photon and identity linking in Paperclip. Dedicated lines also support individually enabled groups.",
+      "guidanceMd": "连接 Photon Cloud 项目。发送者在 Photon 中登记并在 Alice 中关联身份后，Pro 共享线路支持私聊；专用线路还支持单独启用的群聊。",
       "consoleLinks": {
         "register": "https://photon.codes/",
         "docs": "https://photon.codes/docs/spectrum-ts/providers/imessage/connection-and-routing"

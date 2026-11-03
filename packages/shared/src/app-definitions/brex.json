@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "brex",
   "name": "Brex",
-  "description": "Connect Brex's provider-hosted MCP server.",
+  "description": "连接 Brex 官方托管的 MCP 服务器。",
   "categories": [
     "commerce"
   ],
@@ -24,19 +24,19 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://api.brex.com/mcp"
       },
-      "guidanceMd": "Connect Brex in the browser. Brex early access and an administrator enabling the integration; financial actions require explicit approval.",
+      "guidanceMd": "在浏览器中连接 Brex。需要获得 Brex 抢先体验资格并由管理员启用集成；财务操作必须获得明确批准。",
       "riskTier": "S4",
-      "label": "Sign in with Brex",
+      "label": "使用 Brex 登录",
       "consoleLinks": {
         "docs": "https://www.brex.com/support/using-brex-in-ai-apps"
       },
       "warnings": [
-        "Brex early access and an administrator enabling the integration; financial actions require explicit approval.",
-        "Financial or destructive actions must be explicitly approved before execution."
+        "需要获得 Brex 抢先体验资格并由管理员启用集成；财务操作必须获得明确批准。",
+        "财务或破坏性操作必须在执行前获得明确批准。"
       ]
     }
   ]

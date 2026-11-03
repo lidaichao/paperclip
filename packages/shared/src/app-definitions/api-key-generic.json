@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "slug": "api-key-generic",
-  "name": "API key app",
-  "description": "Connect an API using a key from your provider.",
+  "name": "API 密钥应用",
+  "description": "使用服务提供商提供的密钥连接 API。",
   "categories": [
     "other"
   ],
@@ -19,17 +19,17 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use credentials from your provider account.",
+      "whenToUse": "使用服务提供商账户中的凭据。",
       "defaults": {},
-      "guidanceMd": "Create a restricted API key and paste it here.",
+      "guidanceMd": "创建一个权限受限的 API 密钥并粘贴到此处。",
       "riskTier": "S3",
       "credentialFields": [
         {
           "key": "apiKey",
-          "label": "API key",
+          "label": "API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste the API key",
+          "placeholder": "粘贴 API 密钥",
           "secret": true
         }
       ],

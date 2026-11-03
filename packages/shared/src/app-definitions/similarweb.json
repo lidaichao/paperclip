@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "similarweb",
   "name": "Similarweb",
-  "description": "Connect Similarweb's provider-hosted MCP server.",
+  "description": "连接 Similarweb 官方托管的 MCP 服务器。",
   "categories": [
     "analytics"
   ],
@@ -23,20 +23,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用客户自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.similarweb.com"
       },
-      "guidanceMd": "Use a customer-created Similarweb key. A Similarweb subscription with API access and an API key.",
+      "guidanceMd": "使用客户自行创建的 Similarweb 密钥。需要具备 API 访问权限的 Similarweb 订阅及 API 密钥。",
       "riskTier": "S2",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Similarweb API key",
+          "label": "Similarweb API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your Similarweb API key",
+          "placeholder": "粘贴你的 Similarweb API 密钥",
           "secret": true
         }
       ],
@@ -50,7 +50,7 @@
         "docs": "https://developers.similarweb.com/docs/similarweb-mcp"
       },
       "warnings": [
-        "A Similarweb subscription with API access and an API key."
+        "需要具备 API 访问权限的 Similarweb 订阅及 API 密钥。"
       ]
     }
   ]
