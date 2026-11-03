@@ -275,6 +275,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.failed_to_update_experimental_settings_0d800006).toContain("实验性设置");
     expect(messages.turning_off_agent_chat_preserves_conversations_0d800007).toContain("无法发送新消息");
     expect(messages.status_cards_require_summaries_0d800013).toContain("依赖摘要");
+    expect(messages.workspace_commands_json_must_be_object_0d900002).toContain("JSON 对象");
+    expect(messages.port_assigned_to_multiple_services_0d900005).toContain("多个服务");
+    expect(messages.repo_url_must_be_valid_0d900006).toBe("仓库地址必须是有效地址。");
+    expect(messages.workspace_service_restarted_0d900011).toBe("工作区服务已重启。");
+    expect(messages.failed_to_control_workspace_commands_0d900013).toContain("工作区命令");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

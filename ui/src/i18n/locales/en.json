@@ -11763,6 +11763,20 @@
     "enabling_status_cards_also_enables_summaries_0d800011": "Enabling Status Cards also enables Summaries.",
     "turning_off_streamlined_ui_restores_legacy_shell_0d800012": "Turning this off restores the legacy shell and navigation. Task and page data are unchanged.",
     "status_cards_require_summaries_0d800013": "Status Cards requires Summaries. Disabling Summaries also disables Status Cards.",
-    "switching_takes_effect_immediately_no_task_data_affected_0d800014": "Switching takes effect immediately. No task data is affected."
+    "switching_takes_effect_immediately_no_task_data_affected_0d800014": "Switching takes effect immediately. No task data is affected.",
+    "never_0d900001": "Never",
+    "workspace_commands_json_must_be_object_0d900002": "Workspace commands JSON must be a JSON object.",
+    "invalid_json_0d900003": "Invalid JSON.",
+    "service_number_0d900004": "Service {{v0}}",
+    "port_assigned_to_multiple_services_0d900005": "Port {{v0}} is assigned to multiple services: {{v1}}.",
+    "repo_url_must_be_valid_0d900006": "Repo URL must be a valid URL.",
+    "value_has_invalid_fixed_port_0d900007": "{{v0}} has an invalid fixed port.",
+    "failed_to_save_execution_workspace_0d900008": "Failed to save execution workspace.",
+    "workspace_job_completed_0d900009": "Workspace job completed.",
+    "workspace_service_stopped_0d900010": "Workspace service stopped.",
+    "workspace_service_restarted_0d900011": "Workspace service restarted.",
+    "workspace_service_started_0d900012": "Workspace service started.",
+    "failed_to_control_workspace_commands_0d900013": "Failed to control workspace commands.",
+    "failed_to_build_workspace_update_0d900014": "Failed to build workspace update."
   }
 }

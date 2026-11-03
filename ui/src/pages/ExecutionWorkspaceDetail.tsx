@@ -150,7 +150,7 @@ function formatJson(value: Record<string, unknown> | null | undefined) {
 }
 
 function formatOptionalDateTime(value: Date | string | null | undefined) {
-  return value ? formatDateTime(value) : "Never";
+  return value ? formatDateTime(value) : l10n("local.never_0d900001");
 }
 
 function normalizeText(value: string) {
@@ -167,14 +167,14 @@ function parseWorkspaceRuntimeJson(value: string) {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {
         ok: false as const,
-        error: "Workspace commands JSON must be a JSON object.",
+        error: l10n("local.workspace_commands_json_must_be_object_0d900002"),
       };
     }
     return { ok: true as const, value: parsed as Record<string, unknown> };
   } catch (error) {
     return {
       ok: false as const,
-      error: error instanceof Error ? error.message : "Invalid JSON.",
+      error: error instanceof Error ? error.message : l10n("local.invalid_json_0d900003"),
     };
   }
 }
@@ -205,7 +205,9 @@ export function readConfiguredRuntimeServicePorts(runtimeConfig: Record<string, 
       entries.push({
         collection,
         index,
-        name: typeof config.name === "string" && config.name.trim() ? config.name : `Service ${index + 1}`,
+        name: typeof config.name === "string" && config.name.trim()
+          ? config.name
+          : l10n("local.service_number_0d900004", { v0: index + 1 }),
         port: typeof portValue === "number" ? portValue : null,
         invalidPort: (typeof portConfig === "number" || hasObjectPortValue)
           && (typeof portValue !== "number" || !Number.isInteger(portValue) || portValue < 1 || portValue > 65535),
@@ -261,9 +263,10 @@ export function getConfiguredRuntimeServicePortWarnings(services: ConfiguredRunt
 
   return Array.from(servicesByPort.entries())
     .filter(([, servicesForPort]) => servicesForPort.length > 1)
-    .map(([port, servicesForPort]) =>
-      `Port ${port} is assigned to multiple services: ${servicesForPort.map((service) => service.name).join(", ")}.`,
-    );
+    .map(([port, servicesForPort]) => l10n("local.port_assigned_to_multiple_services_0d900005", {
+      v0: port,
+      v1: servicesForPort.map((service) => service.name).join(l10n("local.list_separator_0d700003")),
+    }));
 }
 
 function formStateFromWorkspace(workspace: ExecutionWorkspace): WorkspaceFormState {
@@ -330,7 +333,7 @@ function validateForm(form: WorkspaceFormState) {
     try {
       new URL(repoUrl);
     } catch {
-      return "Repo URL must be a valid URL.";
+      return l10n("local.repo_url_must_be_valid_0d900006");
     }
   }
 
@@ -340,7 +343,7 @@ function validateForm(form: WorkspaceFormState) {
       return runtimeJson.error;
     }
     const invalidPort = readConfiguredRuntimeServicePorts(runtimeJson.value).find((service) => service.invalidPort);
-    if (invalidPort) return `${invalidPort.name} has an invalid fixed port.`;
+    if (invalidPort) return l10n("local.value_has_invalid_fixed_port_0d900007", { v0: invalidPort.name });
   }
 
   return null;
@@ -927,7 +930,7 @@ export function ExecutionWorkspaceDetail() {
       setErrorMessage(null);
     },
     onError: (error) => {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to save execution workspace.");
+      setErrorMessage(error instanceof Error ? error.message : l10n("local.failed_to_save_execution_workspace_0d900008"));
     },
   });
   const workspaceOperationsQuery = useQuery({
@@ -958,17 +961,17 @@ export function ExecutionWorkspaceDetail() {
       setRuntimeActionErrorMessage(null);
       setRuntimeActionMessage(
         request.action === "run"
-          ? "Workspace job completed."
+          ? l10n("local.workspace_job_completed_0d900009")
           : request.action === "stop"
-            ? "Workspace service stopped."
+            ? l10n("local.workspace_service_stopped_0d900010")
             : request.action === "restart"
-              ? "Workspace service restarted."
-              : "Workspace service started.",
+              ? l10n("local.workspace_service_restarted_0d900011")
+              : l10n("local.workspace_service_started_0d900012"),
       );
     },
     onError: (error) => {
       setRuntimeActionMessage(null);
-      setRuntimeActionErrorMessage(error instanceof Error ? error.message : "Failed to control workspace commands.");
+      setRuntimeActionErrorMessage(error instanceof Error ? error.message : l10n("local.failed_to_control_workspace_commands_0d900013"));
     },
     onSettled: (_result, _error, request) => {
       setPendingRuntimeActions((current) => current.filter((pendingRequest) => pendingRequest !== request));
@@ -1035,7 +1038,7 @@ export function ExecutionWorkspaceDetail() {
     try {
       patch = buildWorkspacePatch(initialState, form);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to build workspace update.");
+      setErrorMessage(error instanceof Error ? error.message : l10n("local.failed_to_build_workspace_update_0d900014"));
       return;
     }
 

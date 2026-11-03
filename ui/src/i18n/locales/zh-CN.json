@@ -11763,6 +11763,20 @@
     "enabling_status_cards_also_enables_summaries_0d800011": "启用状态卡片时也会启用摘要。",
     "turning_off_streamlined_ui_restores_legacy_shell_0d800012": "关闭后将恢复旧版界面框架和导航，任务与页面数据不会改变。",
     "status_cards_require_summaries_0d800013": "状态卡片依赖摘要；禁用摘要时也会禁用状态卡片。",
-    "switching_takes_effect_immediately_no_task_data_affected_0d800014": "切换后立即生效，不会影响任务数据。"
+    "switching_takes_effect_immediately_no_task_data_affected_0d800014": "切换后立即生效，不会影响任务数据。",
+    "never_0d900001": "从未",
+    "workspace_commands_json_must_be_object_0d900002": "工作区命令配置必须是一个 JSON 对象。",
+    "invalid_json_0d900003": "JSON 格式无效。",
+    "service_number_0d900004": "服务 {{v0}}",
+    "port_assigned_to_multiple_services_0d900005": "端口 {{v0}} 被分配给了多个服务：{{v1}}。",
+    "repo_url_must_be_valid_0d900006": "仓库地址必须是有效地址。",
+    "value_has_invalid_fixed_port_0d900007": "{{v0}} 的固定端口无效。",
+    "failed_to_save_execution_workspace_0d900008": "保存执行工作区失败。",
+    "workspace_job_completed_0d900009": "工作区作业已完成。",
+    "workspace_service_stopped_0d900010": "工作区服务已停止。",
+    "workspace_service_restarted_0d900011": "工作区服务已重启。",
+    "workspace_service_started_0d900012": "工作区服务已启动。",
+    "failed_to_control_workspace_commands_0d900013": "控制工作区命令失败。",
+    "failed_to_build_workspace_update_0d900014": "生成工作区更新内容失败。"
   }
 }
