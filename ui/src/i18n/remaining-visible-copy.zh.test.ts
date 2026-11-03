@@ -332,6 +332,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.monthly_on_day_at_time_0e600006).toContain("每月");
     expect(messages.valid_cron_0e600011).toBe("Cron 表达式有效。");
     expect(messages.no_runs_0e600014).toBe("无运行记录");
+    expect(messages.local_changes_present_details_0e700004).toContain("本地更改");
+    expect(messages.all_paths_passing_0e700006).toBe("所有路径均通过");
+    expect(messages.needs_a_run_0e700007).toBe("需要运行一次");
+    expect(messages.ancestors_0e700009).toBe("上级任务");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

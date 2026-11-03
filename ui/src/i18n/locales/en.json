@@ -11879,6 +11879,15 @@
     "valid_cron_no_upcoming_fires_0e600012": "Valid cron, but no upcoming fires were found.",
     "value_active_0e600013": "{{v0}} active",
     "no_runs_0e600014": "No runs",
-    "value_bound_0e600015": "{{v0}} bound"
+    "value_bound_0e600015": "{{v0}} bound",
+    "staged_0e700001": "staged",
+    "unstaged_0e700002": "unstaged",
+    "untracked_0e700003": "untracked",
+    "local_changes_present_details_0e700004": "Local changes present ({{v0}})",
+    "local_changes_present_0e700005": "Local changes present",
+    "all_paths_passing_0e700006": "All paths passing",
+    "needs_a_run_0e700007": "Needs a run",
+    "failing_paths_0e700008": "Failing paths",
+    "ancestors_0e700009": "Ancestors"
   }
 }

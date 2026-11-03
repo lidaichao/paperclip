@@ -17,10 +17,10 @@ const HEALTH_DOT: Record<SmokeHealth, string> = {
 };
 
 const HEALTH_LABEL: Record<SmokeHealth, string> = {
-  green: "All paths passing",
-  amber: "Needs a run",
-  red: "Failing paths",
-  unknown: "No runs yet",
+  green: l10n("local.all_paths_passing_0e700006"),
+  amber: l10n("local.needs_a_run_0e700007"),
+  red: l10n("local.failing_paths_0e700008"),
+  unknown: l10n("local.no_runs_yet_306b45db"),
 };
 
 function formatTime(value: string | Date | null | undefined): string {

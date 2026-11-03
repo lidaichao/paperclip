@@ -55,7 +55,7 @@ export function TaskDetailTasksPanel({ ancestors = [], subtasks, createdTasks, p
       ? projects.find((candidate) => candidate.id === item.projectId) ?? item.project
       : null;
     const group = groups.get(key) ?? {
-      name: project?.name ?? (item.projectId ? "Project" : "No project"),
+      name: project?.name ?? (item.projectId ? l10n("local.project_98595978") : l10n("local.no_project_f34c2be0")),
       path: item.projectId ? `/projects/${projectRouteRef(project ?? { id: item.projectId })}/issues` : undefined,
       tasks: [],
     };
@@ -65,7 +65,7 @@ export function TaskDetailTasksPanel({ ancestors = [], subtasks, createdTasks, p
   return (
     <section className="flex flex-col gap-6" aria-label={l10n("local.related_tasks_c5ded36c")}>
       {ancestors.length > 0 && (
-        <TaskGroup name="Ancestors">
+        <TaskGroup name={l10n("local.ancestors_0e700009")}>
           <RelationNavigationList
             items={[...ancestors].reverse()}
             emptyMessage=""
@@ -75,7 +75,7 @@ export function TaskDetailTasksPanel({ ancestors = [], subtasks, createdTasks, p
         </TaskGroup>
       )}
       {sortedSubtasks.length > 0 && (
-        <TaskGroup name="Subtasks">
+        <TaskGroup name={l10n("local.subtasks_7eff0a19")}>
           <TaskDetailSubtasksPanel items={sortedSubtasks} issueLinkState={issueLinkState} />
         </TaskGroup>
       )}

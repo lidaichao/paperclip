@@ -11879,6 +11879,15 @@
     "valid_cron_no_upcoming_fires_0e600012": "Cron 表达式有效，但未找到后续触发时间。",
     "value_active_0e600013": "{{v0}} 个已启用",
     "no_runs_0e600014": "无运行记录",
-    "value_bound_0e600015": "已绑定 {{v0}} 个"
+    "value_bound_0e600015": "已绑定 {{v0}} 个",
+    "staged_0e700001": "已暂存",
+    "unstaged_0e700002": "未暂存",
+    "untracked_0e700003": "未跟踪",
+    "local_changes_present_details_0e700004": "存在本地更改（{{v0}}）",
+    "local_changes_present_0e700005": "存在本地更改",
+    "all_paths_passing_0e700006": "所有路径均通过",
+    "needs_a_run_0e700007": "需要运行一次",
+    "failing_paths_0e700008": "存在失败路径",
+    "ancestors_0e700009": "上级任务"
   }
 }

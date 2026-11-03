@@ -259,9 +259,9 @@ function CollapsedFeedGroup({
     ? agentMap.get(group.latestEvent.actorId)
     : null;
   const actorName = actor?.name
-    ?? (group.latestEvent.actorType === "system" ? "System"
-      : group.latestEvent.actorType === "user" ? "Board"
-      : "Unknown");
+    ?? (group.latestEvent.actorType === "system" ? l10n("local.system_6725e7bb")
+      : group.latestEvent.actorType === "user" ? l10n("local.board_4816cbfd")
+      : l10n("local.unknown_b764cdc0"));
   const entityName = entityNameMap.get(`${group.entityType}:${group.entityId}`);
 
   return (

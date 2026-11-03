@@ -6,9 +6,9 @@ import { instanceSettingsApi } from "@/api/instanceSettings";
 import { queryKeys } from "@/lib/queryKeys";
 
 function formatTimestamp(value: string | null | undefined): string {
-  if (!value) return "Unavailable";
+  if (!value) return l10n("local.unavailable_ca184496");
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unavailable";
+  if (Number.isNaN(date.getTime())) return l10n("local.unavailable_ca184496");
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
@@ -38,14 +38,16 @@ function localChangesLabel(health: HealthStatus | undefined): string {
   if (!localChanges.hasLocalChanges) return l10n("local.clean_checkout_f208aaf4");
 
   const parts = [
-    [localChanges.stagedFileCount, "staged"],
-    [localChanges.unstagedFileCount, "unstaged"],
-    [localChanges.untrackedFileCount, "untracked"],
+    [localChanges.stagedFileCount, l10n("local.staged_0e700001")],
+    [localChanges.unstagedFileCount, l10n("local.unstaged_0e700002")],
+    [localChanges.untrackedFileCount, l10n("local.untracked_0e700003")],
   ]
     .filter(([count]) => Number(count) > 0)
     .map(([count, label]) => `${count} ${label}`);
 
-  return parts.length > 0 ? `Local changes present (${parts.join(", ")})` : "Local changes present";
+  return parts.length > 0
+    ? l10n("local.local_changes_present_details_0e700004", { v0: parts.join(", ") })
+    : l10n("local.local_changes_present_0e700005");
 }
 
 function ServerInfoRow({
@@ -112,14 +114,14 @@ export function SidebarServerInfo() {
       ? l10n("local.loading_47d2a515")
       : formatTimestamp(restartedAt);
   const commit = healthUnavailable
-    ? "Health unavailable"
+    ? l10n("local.health_unavailable_ea4edd2b")
     : isWaitingForHealth
-      ? "Loading..."
+      ? l10n("local.loading_47d2a515")
       : commitLabel(health);
   const localChanges = healthUnavailable
-    ? "Health unavailable"
+    ? l10n("local.health_unavailable_ea4edd2b")
     : isWaitingForHealth
-      ? "Loading..."
+      ? l10n("local.loading_47d2a515")
       : localChangesLabel(health);
 
   return (
