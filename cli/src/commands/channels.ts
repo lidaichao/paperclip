@@ -23,26 +23,26 @@ export const RELEASE_CHANNELS: readonly ChannelDescriptor[] = [
   {
     channel: "stable",
     distTag: "latest",
-    cadence: "manual, soaked in beta for 3+ days",
-    audience: "the recommended release for almost everyone",
+    cadence: "手动发布，已在 beta 通道验证至少 3 天",
+    audience: "适合绝大多数用户的推荐版本",
   },
   {
     channel: "beta",
     distTag: "beta",
-    cadence: "manual promotion behind an approval gate",
-    audience: "release candidates: what stable becomes a few days later",
+    cadence: "通过审批门禁后手动晋级",
+    audience: "候选版本：通常会在数天后成为 stable",
   },
   {
     channel: "nightly",
     distTag: "nightly",
-    cadence: "once a night, smoke-gated",
-    audience: "yesterday's merges, tested as a unit",
+    cadence: "每晚一次，通过冒烟测试门禁",
+    audience: "将前一天合并的更改作为整体进行测试",
   },
   {
     channel: "canary",
     distTag: "canary",
-    cadence: "every merge to master",
-    audience: "the bleeding edge",
+    cadence: "每次合并到 master 后发布",
+    audience: "最新但风险最高的版本",
   },
 ];
 
@@ -98,10 +98,10 @@ export async function channelsCommand(
     return;
   }
 
-  console.log(pc.bold("Paperclip release channels"));
+  console.log(pc.bold("Alice 发布通道"));
   console.log("");
   for (const entry of state) {
-    const version = entry.version ?? pc.yellow("unavailable");
+    const version = entry.version ?? pc.yellow("不可用");
     console.log(`  ${pc.bold(entry.channel.padEnd(8))} ${version}`);
     console.log(`  ${" ".repeat(8)} ${pc.dim(`${entry.cadence} — ${entry.audience}`)}`);
     console.log(`  ${" ".repeat(8)} ${pc.dim(`npx paperclipai@${entry.distTag} onboard`)}`);
@@ -110,10 +110,10 @@ export async function channelsCommand(
 
   if (currentChannel === "unknown") {
     console.log(
-      `This install reports version ${pc.bold(packageVersion)}, which does not map to a published channel (source checkouts report the repository placeholder).`,
+      `当前安装报告的版本为 ${pc.bold(packageVersion)}，无法映射到已发布通道（源码检出会报告仓库占位版本）。`,
     );
   } else {
-    console.log(`This install is version ${pc.bold(packageVersion)} on the ${pc.bold(currentChannel)} channel.`);
+    console.log(`当前安装版本为 ${pc.bold(packageVersion)}，位于 ${pc.bold(currentChannel)} 通道。`);
   }
-  console.log(`Docker images use the same names: ghcr.io/paperclipai/paperclip:{latest,beta,nightly,canary}`);
+  console.log(`Docker 镜像使用相同标签：ghcr.io/paperclipai/paperclip:{latest,beta,nightly,canary}`);
 }

@@ -87,7 +87,7 @@ describe("db:restore preflight", () => {
       backup: backupFile,
       expectedSha256: sha256(gzipSync("select 1;\n")),
       secretsKeyFile: path.join(root, "missing.key"),
-    })).rejects.toThrow(/supplied together/);
+    })).rejects.toThrow(/必须同时提供/);
   });
 
   it("restores an authenticated company backup into an empty isolated PostgreSQL database", async () => {

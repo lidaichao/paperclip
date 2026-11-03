@@ -37,7 +37,7 @@ function resolveConnectionString(configPath?: string): { value: string; source: 
 function normalizeRetentionDays(value: number | undefined, fallback: number): number {
   const candidate = value ?? fallback;
   if (!Number.isInteger(candidate) || candidate < 1) {
-    throw new Error(`Invalid retention days '${String(candidate)}'. Use a positive integer.`);
+    throw new Error(`备份保留天数“${String(candidate)}”无效，请使用正整数。`);
   }
   return candidate;
 }
@@ -50,7 +50,7 @@ export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
   const interactiveOutput = !opts.json;
   if (interactiveOutput) {
     printPaperclipCliBanner();
-    p.intro(pc.bgCyan(pc.black(" paperclip db:backup ")));
+    p.intro(pc.bgCyan(pc.black(" Alice 数据库备份 ")));
   }
 
   const configPath = resolveConfigPath(opts.config);
@@ -66,14 +66,14 @@ export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
   const filenamePrefix = opts.filenamePrefix?.trim() || "paperclip";
 
   if (interactiveOutput) {
-    p.log.message(pc.dim(`Config: ${configPath}`));
-    p.log.message(pc.dim(`Connection source: ${connection.source}`));
-    p.log.message(pc.dim(`Backup dir: ${backupDir}`));
-    p.log.message(pc.dim(`Retention: ${retentionDays} day(s)`));
+    p.log.message(pc.dim(`配置：${configPath}`));
+    p.log.message(pc.dim(`连接来源：${connection.source}`));
+    p.log.message(pc.dim(`备份目录：${backupDir}`));
+    p.log.message(pc.dim(`保留时间：${retentionDays} 天`));
   }
 
   const spinner = interactiveOutput ? p.spinner() : null;
-  spinner?.start("Creating database backup...");
+  spinner?.start("正在创建数据库备份……");
   try {
     const result = await runDatabaseBackup({
       connectionString: connection.value,
@@ -81,7 +81,7 @@ export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
       retention: { dailyDays: retentionDays, weeklyWeeks: 4, monthlyMonths: 1 },
       filenamePrefix,
     });
-    spinner?.stop(`Backup saved: ${formatDatabaseBackupResult(result)}`);
+    spinner?.stop(`备份已保存：${formatDatabaseBackupResult(result)}`);
 
     if (opts.json) {
       console.log(
@@ -99,9 +99,9 @@ export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
         ),
       );
     }
-    if (interactiveOutput) p.outro(pc.green("Backup completed."));
+    if (interactiveOutput) p.outro(pc.green("备份完成。"));
   } catch (err) {
-    spinner?.stop(pc.red("Backup failed."));
+    spinner?.stop(pc.red("备份失败。"));
     throw err;
   }
 }

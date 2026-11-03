@@ -52,7 +52,7 @@ async function verifyReadableBackup(filename: string) {
 
 function requireSha256(value: string, label: string) {
   const normalized = value.trim().toLowerCase();
-  if (!/^[0-9a-f]{64}$/.test(normalized)) throw new Error(`${label} must be a 64-character SHA-256 digest.`);
+  if (!/^[0-9a-f]{64}$/.test(normalized)) throw new Error(`${label} 必须是 64 个字符的 SHA-256 摘要。`);
   return normalized;
 }
 
@@ -61,24 +61,24 @@ export async function inspectDatabaseRestoreInputs(opts: Pick<
   "backup" | "expectedSha256" | "secretsKeyFile" | "expectedSecretsKeySha256"
 >) {
   const backupFile = path.resolve(expandHomePrefix(opts.backup.trim()));
-  if (!existsSync(backupFile) || !statSync(backupFile).isFile()) throw new Error("Backup file does not exist.");
+  if (!existsSync(backupFile) || !statSync(backupFile).isFile()) throw new Error("备份文件不存在。");
   const expectedSha256 = requireSha256(opts.expectedSha256, "--expected-sha256");
   const actualSha256 = await sha256File(backupFile);
-  if (actualSha256 !== expectedSha256) throw new Error("Backup SHA-256 does not match the approved manifest.");
+  if (actualSha256 !== expectedSha256) throw new Error("备份文件的 SHA-256 与已批准清单不一致。");
   await verifyReadableBackup(backupFile);
 
   let secretsKey: { path: string; sha256: string } | null = null;
   if (opts.secretsKeyFile || opts.expectedSecretsKeySha256) {
     if (!opts.secretsKeyFile || !opts.expectedSecretsKeySha256) {
-      throw new Error("--secrets-key-file and --expected-secrets-key-sha256 must be supplied together.");
+      throw new Error("必须同时提供 --secrets-key-file 和 --expected-secrets-key-sha256。");
     }
     const keyFile = path.resolve(expandHomePrefix(opts.secretsKeyFile.trim()));
     if (!existsSync(keyFile) || !statSync(keyFile).isFile() || statSync(keyFile).size === 0) {
-      throw new Error("Secrets master-key file is missing or empty.");
+      throw new Error("密钥主密钥文件缺失或为空。");
     }
     const expectedKeySha256 = requireSha256(opts.expectedSecretsKeySha256, "--expected-secrets-key-sha256");
     const actualKeySha256 = await sha256File(keyFile);
-    if (actualKeySha256 !== expectedKeySha256) throw new Error("Secrets master-key SHA-256 does not match the approved manifest.");
+    if (actualKeySha256 !== expectedKeySha256) throw new Error("密钥主密钥文件的 SHA-256 与已批准清单不一致。");
     secretsKey = { path: keyFile, sha256: actualKeySha256 };
   }
   return { backupFile, backupSizeBytes: statSync(backupFile).size, backupSha256: actualSha256, secretsKey };
@@ -88,7 +88,7 @@ export async function dbRestoreCommand(opts: DbRestoreOptions): Promise<void> {
   const interactiveOutput = !opts.json;
   if (interactiveOutput) {
     printPaperclipCliBanner();
-    p.intro(pc.bgCyan(pc.black(" paperclip db:restore ")));
+    p.intro(pc.bgCyan(pc.black(" Alice 数据库恢复 ")));
   }
   const inspected = await inspectDatabaseRestoreInputs(opts);
   const connectionString = resolveConnectionString(opts.config);
@@ -100,20 +100,20 @@ export async function dbRestoreCommand(opts: DbRestoreOptions): Promise<void> {
       where table_schema not in ('pg_catalog', 'information_schema')
         and not (table_schema = 'drizzle' and table_name = '__drizzle_migrations')
     `);
-    if (Number(count) !== 0) throw new Error("Restore target is not empty; refusing to overwrite it.");
+    if (Number(count) !== 0) throw new Error("恢复目标不为空，拒绝覆盖。");
 
     if (!opts.apply) {
       const result = { mode: "dry-run", targetEmpty: true, ...inspected };
       if (opts.json) console.log(JSON.stringify(result, null, 2));
-      if (interactiveOutput) p.outro(pc.green("Restore preflight passed; no data was written."));
+      if (interactiveOutput) p.outro(pc.green("恢复预检通过，未写入任何数据。"));
       return;
     }
-    if (!opts.yes) throw new Error("--apply requires --yes after the approved outage window begins.");
+    if (!opts.yes) throw new Error("批准的停机窗口开始后，--apply 必须同时使用 --yes。");
     await runDatabaseRestore({ connectionString, backupFile: inspected.backupFile });
     const migrationBefore = await inspectMigrations(connectionString);
     if (migrationBefore.status === "needsMigrations") await applyPendingMigrations(connectionString);
     const migrationAfter = await inspectMigrations(connectionString);
-    if (migrationAfter.status !== "upToDate") throw new Error("Restored database migration journal is not current.");
+    if (migrationAfter.status !== "upToDate") throw new Error("恢复后的数据库迁移记录不是最新状态。");
 
     let expectedCompanyPresent: boolean | null = null;
     if (opts.expectedCompanyId) {
@@ -121,7 +121,7 @@ export async function dbRestoreCommand(opts: DbRestoreOptions): Promise<void> {
         select exists(select 1 from companies where id = ${opts.expectedCompanyId}) as present
       `);
       expectedCompanyPresent = Boolean(rows[0]?.present);
-      if (!expectedCompanyPresent) throw new Error("Expected company is absent after restore.");
+      if (!expectedCompanyPresent) throw new Error("恢复后未找到预期公司。");
     }
     const [workflow] = await database.execute<{ records: number; events: number }>(sql`
       select
@@ -138,7 +138,7 @@ export async function dbRestoreCommand(opts: DbRestoreOptions): Promise<void> {
       ...inspected,
     };
     if (opts.json) console.log(JSON.stringify(result, null, 2));
-    if (interactiveOutput) p.outro(pc.green("Restore applied and verified."));
+    if (interactiveOutput) p.outro(pc.green("恢复已执行并验证。"));
   } finally {
     await closeRegisteredClients(connectionString);
   }
