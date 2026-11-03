@@ -115,7 +115,7 @@ describe("teams CLI commands", () => {
       expect.objectContaining({ method: "GET" }),
     );
     const rendered = logSpy.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
-    expect(rendered).toContain("id");
+    expect(rendered).toContain("编号");
     expect(rendered).toContain("paperclipai:bundled:software-development:product-engineering");
   });
 
@@ -189,7 +189,7 @@ describe("teams CLI commands", () => {
       expect.objectContaining({ method: "GET" }),
     );
     const rendered = logSpy.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
-    expect(rendered).toContain("installedStatus");
+    expect(rendered).toContain("安装状态");
     expect(rendered).toContain("out_of_date");
     expect(rendered).toContain("not_installed");
   });
@@ -426,7 +426,7 @@ describe("teams CLI commands", () => {
       type: "request_board_approval",
       issueIds: ["11111111-1111-4111-8111-111111111111"],
       payload: {
-        title: "Approve catalog team install: product-engineering",
+        title: "批准安装目录团队：product-engineering",
         installAttempt: {
           companyId: "company-1",
           catalogRef: "product-engineering",
