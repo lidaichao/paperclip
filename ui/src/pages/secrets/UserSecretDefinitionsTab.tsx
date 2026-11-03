@@ -131,7 +131,7 @@ export function UserSecretDefinitionsTab({ companyId }: { companyId: string }) {
       setDialogOpen(false);
     },
     onError: (err) =>
-      setError(err instanceof ApiError || err instanceof Error ? err.message : "Failed to save"),
+      setError(err instanceof ApiError || err instanceof Error ? err.message : l10n("local.failed_to_save_2c079972")),
   });
 
   const remove = useMutation({

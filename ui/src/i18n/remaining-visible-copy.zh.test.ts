@@ -298,6 +298,8 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.authorization_code_0dd00001).toBe("授权码");
     expect(messages.paste_authorization_code_here_0dd00002).toBe("在此粘贴授权码");
     expect(messages.waiting_for_your_ok_0dd00003).toBe("等待你的确认");
+    expect(messages.no_secret_definition_selected_0de00001).toBe("尚未选择密钥定义");
+    expect(messages.failed_to_save_secret_value_0de00002).toBe("保存密钥值失败");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

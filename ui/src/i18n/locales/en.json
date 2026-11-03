@@ -11816,6 +11816,8 @@
     "assistant_0dc00012": "Assistant",
     "authorization_code_0dd00001": "Authorization code",
     "paste_authorization_code_here_0dd00002": "Paste authorization code here",
-    "waiting_for_your_ok_0dd00003": "Waiting for your OK"
+    "waiting_for_your_ok_0dd00003": "Waiting for your OK",
+    "no_secret_definition_selected_0de00001": "No secret definition selected",
+    "failed_to_save_secret_value_0de00002": "Failed to save secret value"
   }
 }

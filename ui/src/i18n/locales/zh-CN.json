@@ -11816,6 +11816,8 @@
     "assistant_0dc00012": "助理",
     "authorization_code_0dd00001": "授权码",
     "paste_authorization_code_here_0dd00002": "在此粘贴授权码",
-    "waiting_for_your_ok_0dd00003": "等待你的确认"
+    "waiting_for_your_ok_0dd00003": "等待你的确认",
+    "no_secret_definition_selected_0de00001": "尚未选择密钥定义",
+    "failed_to_save_secret_value_0de00002": "保存密钥值失败"
   }
 }
