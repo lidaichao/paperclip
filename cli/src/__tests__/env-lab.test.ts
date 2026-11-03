@@ -263,7 +263,7 @@ describe("env-lab doctor cleanup hint instance", () => {
 
     await envLabDoctorCommand({ instance: undefined });
 
-    const cleanup = messages.find((message) => message.startsWith("Cleanup:"));
+    const cleanup = messages.find((message) => message.startsWith("清理命令："));
     expect(cleanup).toBeDefined();
     expect(cleanup).toContain("env-lab down");
     expect(cleanup).toContain("--instance");
@@ -278,7 +278,7 @@ describe("env-lab doctor cleanup hint instance", () => {
 
     await envLabDoctorCommand({ instance: "explicit-instance" });
 
-    const cleanup = messages.find((message) => message.startsWith("Cleanup:"));
+    const cleanup = messages.find((message) => message.startsWith("清理命令："));
     expect(cleanup).toBeDefined();
     expect(cleanup).toContain("--instance");
     expect(cleanup).toContain("explicit-instance");

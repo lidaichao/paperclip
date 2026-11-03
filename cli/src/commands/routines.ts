@@ -114,7 +114,7 @@ async function ensureEmbeddedPostgres(dataDir: string, preferredPort: number): P
     EmbeddedPostgres = mod.default as EmbeddedPostgresCtor;
   } catch {
     throw new Error(
-      "Embedded PostgreSQL support requires dependency `embedded-postgres`. Reinstall dependencies and try again.",
+      "内置 PostgreSQL 支持需要依赖 `embedded-postgres`，请重新安装依赖后重试。",
     );
   }
   await prepareEmbeddedPostgresNativeRuntime();
@@ -147,7 +147,7 @@ async function ensureEmbeddedPostgres(dataDir: string, preferredPort: number): P
       await instance.initialise();
     } catch (error) {
       throw formatEmbeddedPostgresError(error, {
-        fallbackMessage: `Failed to initialize embedded PostgreSQL cluster in ${dataDir} on port ${port}`,
+        fallbackMessage: `无法在 ${dataDir} 初始化端口为 ${port} 的内置 PostgreSQL 集群`,
         recentLogs: logBuffer.getRecentLogs(),
       });
     }
@@ -161,7 +161,7 @@ async function ensureEmbeddedPostgres(dataDir: string, preferredPort: number): P
     await instance.start();
   } catch (error) {
     throw formatEmbeddedPostgresError(error, {
-      fallbackMessage: `Failed to start embedded PostgreSQL on port ${port}`,
+      fallbackMessage: `无法启动端口为 ${port} 的内置 PostgreSQL`,
       recentLogs: logBuffer.getRecentLogs(),
     });
   }
@@ -185,7 +185,7 @@ async function openConfiguredDb(configPath: string): Promise<{
 }> {
   const config = readConfig(configPath);
   if (!config) {
-    throw new Error(`Config not found at ${configPath}.`);
+    throw new Error(`未在 ${configPath} 找到配置。`);
   }
 
   let embeddedHandle: EmbeddedPostgresHandle | null = null;
@@ -213,7 +213,7 @@ async function openConfiguredDb(configPath: string): Promise<{
 
     const connectionString = nonEmpty(config.database.connectionString);
     if (!connectionString) {
-      throw new Error(`Config at ${configPath} does not define a database connection string.`);
+      throw new Error(`${configPath} 中的配置未定义数据库连接字符串。`);
     }
 
     await applyPendingMigrations(connectionString);
@@ -242,12 +242,12 @@ export async function disableAllRoutinesInConfig(
     ?? nonEmpty(process.env.PAPERCLIP_COMPANY_ID)
     ?? null;
   if (!companyId) {
-    throw new Error("Company ID is required. Pass --company-id or set PAPERCLIP_COMPANY_ID.");
+    throw new Error("必须提供公司编号。请传入 --company-id 或设置 PAPERCLIP_COMPANY_ID。");
   }
 
   const config = readConfig(configPath);
   if (!config) {
-    throw new Error(`Config not found at ${configPath}.`);
+    throw new Error(`未在 ${configPath} 找到配置。`);
   }
 
   let embeddedHandle: EmbeddedPostgresHandle | null = null;
@@ -266,7 +266,7 @@ export async function disableAllRoutinesInConfig(
     } else {
       const connectionString = nonEmpty(config.database.connectionString);
       if (!connectionString) {
-        throw new Error(`Config at ${configPath} does not define a database connection string.`);
+        throw new Error(`${configPath} 中的配置未定义数据库连接字符串。`);
       }
       await applyPendingMigrations(connectionString);
       db = createDb(connectionString) as ClosableDb;
@@ -322,26 +322,26 @@ export async function disableAllRoutinesCommand(options: RoutinesDisableAllOptio
   }
 
   if (result.totalRoutines === 0) {
-    console.log(pc.dim(`No routines found for company ${result.companyId}.`));
+    console.log(pc.dim(`公司 ${result.companyId} 没有例行任务。`));
     return;
   }
 
   console.log(
-    `Paused ${result.pausedCount} routine(s) for company ${result.companyId} ` +
-      `(${result.alreadyPausedCount} already paused, ${result.archivedCount} archived).`,
+    `已暂停公司 ${result.companyId} 的 ${result.pausedCount} 个例行任务` +
+      `（${result.alreadyPausedCount} 个原已暂停，${result.archivedCount} 个已归档）。`,
   );
 }
 
 export function registerRoutineCommands(program: Command): void {
-  const routinesCommand = program.command("routines").description("Local routine maintenance commands");
+  const routinesCommand = program.command("routines").description("本地例行任务维护命令");
 
   routinesCommand
     .command("disable-all")
-    .description("Pause all non-archived routines in the configured local instance for one company")
-    .option("-c, --config <path>", "Path to config file")
-    .option("-d, --data-dir <path>", "Paperclip data directory root (isolates state from ~/.paperclip)")
-    .option("-C, --company-id <id>", "Company ID")
-    .option("--json", "Output raw JSON")
+    .description("暂停本地实例中指定公司的所有未归档例行任务")
+    .option("-c, --config <path>", "配置文件路径")
+    .option("-d, --data-dir <path>", "Alice 数据目录根路径（与 ~/.paperclip 状态隔离）")
+    .option("-C, --company-id <id>", "公司编号")
+    .option("--json", "输出原始 JSON")
     .action(async (opts: RoutinesDisableAllOptions) => {
       try {
         await disableAllRoutinesCommand(opts);
