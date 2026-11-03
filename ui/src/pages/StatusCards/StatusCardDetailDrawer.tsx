@@ -127,9 +127,9 @@ export function StatusCardDetailDrawer({
     },
     onSuccess: async () => {
       await invalidateCard();
-      setActionNote("Refresh queued — the Summarizer is updating this card.");
+      setActionNote(l10n("local.refresh_queued_summarizer_updating_card_10300246"));
     },
-    onError: (err) => setActionError(err instanceof Error ? err.message : "Could not refresh the card."),
+    onError: (err) => setActionError(err instanceof Error ? err.message : l10n("local.could_not_refresh_status_card_10300242")),
   });
 
   const recompileMutation = useMutation({
@@ -140,9 +140,9 @@ export function StatusCardDetailDrawer({
     },
     onSuccess: async () => {
       await invalidateCard();
-      setActionNote("Run queued — the Summarizer is updating this card.");
+      setActionNote(l10n("local.run_queued_summarizer_updating_card_10300247"));
     },
-    onError: (err) => setActionError(err instanceof Error ? err.message : "Could not run the card."),
+    onError: (err) => setActionError(err instanceof Error ? err.message : l10n("local.could_not_run_status_card_10300243")),
   });
 
   const saveSettingsMutation = useMutation({
@@ -169,7 +169,7 @@ export function StatusCardDetailDrawer({
         queryClient.invalidateQueries({ queryKey: queryKeys.statusCards.detail(card.id) }),
       ]);
     },
-    onError: (err) => setActionError(err instanceof Error ? err.message : "Could not save settings."),
+    onError: (err) => setActionError(err instanceof Error ? err.message : l10n("local.could_not_save_status_card_settings_10300248")),
   });
 
   if (!card) return null;

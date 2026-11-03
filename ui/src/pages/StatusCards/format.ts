@@ -4,8 +4,8 @@ import type { StatusCardRefreshPolicy, StatusCardUpdate } from "@paperclipai/sha
 /** "1.1k tok" / "940 tok" — compact token count for footers and chips. */
 export function formatTokens(tokens: number | null | undefined): string | null {
   if (tokens === null || tokens === undefined) return null;
-  if (tokens < 1000) return `${tokens} tok`;
-  return `${(tokens / 1000).toFixed(1)}k tok`;
+  if (tokens < 1000) return l10n("local.value_tokens_compact_10300249", { v0: tokens });
+  return l10n("local.value_tokens_compact_10300249", { v0: `${(tokens / 1000).toFixed(1)}k` });
 }
 
 /**
@@ -99,8 +99,8 @@ export function estimateStatusCardCost(policy: StatusCardRefreshPolicy): StatusC
     const cost = `${formatCents(EST_FULL_CENTS)} · ${formatTokens(EST_FULL_TOKENS)}`;
     return {
       cost,
-      primary: `~1 rebuild per refresh ≈ ${cost}`,
-      note: "Manual cards only cost tokens when you press Refresh.",
+      primary: l10n("local.one_rebuild_per_refresh_cost_10300250", { v0: cost }),
+      note: l10n("local.manual_cards_cost_only_on_refresh_10300251"),
     };
   }
 
@@ -110,11 +110,11 @@ export function estimateStatusCardCost(policy: StatusCardRefreshPolicy): StatusC
   if (policy.mode === "interval") {
     const interval = policy.intervalMinutes ?? 15;
     maxPerDay = Math.floor(windowMinutes / interval);
-    cadence = `every ${interval} min`;
+    cadence = l10n("local.every_value_minutes_10300252", { v0: interval });
   } else {
     const perHour = policy.maxUpdatesPerHour ?? 6;
     maxPerDay = Math.round((windowMinutes / 60) * perHour);
-    cadence = `up to ${perHour}/hour`;
+    cadence = l10n("local.up_to_value_per_hour_10300253", { v0: perHour });
   }
 
   const cap = policy.dailyTokenCap ?? null;
@@ -124,22 +124,26 @@ export function estimateStatusCardCost(policy: StatusCardRefreshPolicy): StatusC
 
   const tokens = effective * EST_INCREMENTAL_TOKENS;
   const cents = effective * EST_INCREMENTAL_CENTS;
-  const withinHours = policy.activeHours ? " during active hours" : "";
+  const withinHours = policy.activeHours ? l10n("local.during_active_hours_suffix_10300254") : "";
   const cost = `${formatCents(cents)} · ${formatTokens(tokens)}`;
 
   return {
     cost,
-    primary: `Up to ~${effective} updates/day (${cadence}${withinHours}) ≈ ${cost}`,
+    primary: l10n("local.up_to_updates_per_day_cost_10300255", {
+      v0: effective,
+      v1: `${cadence}${withinHours}`,
+      v2: cost,
+    }),
     note: cappedByTokenCap
-      ? `Capped by your ${formatTokens(cap!)} daily token cap — the card pauses when it's hit.`
-      : "Only runs when something changed; a cheap no-op check otherwise.",
+      ? l10n("local.capped_by_daily_token_limit_10300256", { v0: formatTokens(cap!) })
+      : l10n("local.only_runs_when_something_changed_10300257"),
   };
 }
 
 /** "0.4k in / 0.2k out" — the per-update token split shown in history rows. */
 export function formatTokenSplit(inputTokens: number, outputTokens: number): string {
   const fmt = (n: number) => (n < 1000 ? `${n}` : `${(n / 1000).toFixed(1)}k`);
-  return `${fmt(inputTokens)} in / ${fmt(outputTokens)} out`;
+  return l10n("local.token_input_output_split_10300258", { v0: fmt(inputTokens), v1: fmt(outputTokens) });
 }
 
 /** Human label for an update's kind. */

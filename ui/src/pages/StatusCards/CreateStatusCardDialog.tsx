@@ -68,7 +68,7 @@ export function CreateStatusCardDialog({
       ]);
       close();
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Could not create the card."),
+    onError: (err) => setError(err instanceof Error ? err.message : l10n("local.could_not_create_status_card_10300241")),
   });
 
   return (

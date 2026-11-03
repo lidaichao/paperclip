@@ -12434,6 +12434,24 @@
     "set_your_user_secrets_10300237": "Set your user secrets",
     "task_linked_usage_10300238": "Task-linked usage",
     "no_issue_linked_token_usage_10300239": "No issue-linked token usage yet.",
-    "no_provider_usage_attributed_10300240": "No provider usage attributed yet."
+    "no_provider_usage_attributed_10300240": "No provider usage attributed yet.",
+    "could_not_create_status_card_10300241": "Could not create the card.",
+    "could_not_refresh_status_card_10300242": "Could not refresh the card.",
+    "could_not_run_status_card_10300243": "Could not run the card.",
+    "could_not_archive_status_card_10300244": "Could not archive the card.",
+    "could_not_restore_status_card_10300245": "Could not restore the card.",
+    "refresh_queued_summarizer_updating_card_10300246": "Refresh queued — the Summarizer is updating this card.",
+    "run_queued_summarizer_updating_card_10300247": "Run queued — the Summarizer is updating this card.",
+    "could_not_save_status_card_settings_10300248": "Could not save settings.",
+    "value_tokens_compact_10300249": "{{v0}} tok",
+    "one_rebuild_per_refresh_cost_10300250": "~1 rebuild per refresh ≈ {{v0}}",
+    "manual_cards_cost_only_on_refresh_10300251": "Manual cards only cost tokens when you press Refresh.",
+    "every_value_minutes_10300252": "every {{v0}} min",
+    "up_to_value_per_hour_10300253": "up to {{v0}}/hour",
+    "during_active_hours_suffix_10300254": " during active hours",
+    "up_to_updates_per_day_cost_10300255": "Up to ~{{v0}} updates/day ({{v1}}) ≈ {{v2}}",
+    "capped_by_daily_token_limit_10300256": "Capped by your {{v0}} daily token cap — the card pauses when it's hit.",
+    "only_runs_when_something_changed_10300257": "Only runs when something changed; a cheap no-op check otherwise.",
+    "token_input_output_split_10300258": "{{v0}} in / {{v1}} out"
   }
 }

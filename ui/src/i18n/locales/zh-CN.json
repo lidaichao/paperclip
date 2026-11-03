@@ -12434,6 +12434,24 @@
     "set_your_user_secrets_10300237": "设置你的个人密钥",
     "task_linked_usage_10300238": "任务关联用量",
     "no_issue_linked_token_usage_10300239": "暂无与任务关联的令牌用量。",
-    "no_provider_usage_attributed_10300240": "暂无已归属的模型提供商用量。"
+    "no_provider_usage_attributed_10300240": "暂无已归属的模型提供商用量。",
+    "could_not_create_status_card_10300241": "无法创建状态卡片。",
+    "could_not_refresh_status_card_10300242": "无法刷新状态卡片。",
+    "could_not_run_status_card_10300243": "无法运行状态卡片。",
+    "could_not_archive_status_card_10300244": "无法归档状态卡片。",
+    "could_not_restore_status_card_10300245": "无法恢复状态卡片。",
+    "refresh_queued_summarizer_updating_card_10300246": "刷新已进入队列，摘要智能体正在更新此卡片。",
+    "run_queued_summarizer_updating_card_10300247": "运行已进入队列，摘要智能体正在更新此卡片。",
+    "could_not_save_status_card_settings_10300248": "无法保存设置。",
+    "value_tokens_compact_10300249": "{{v0}} 令牌",
+    "one_rebuild_per_refresh_cost_10300250": "每次刷新约重建 1 次 ≈ {{v0}}",
+    "manual_cards_cost_only_on_refresh_10300251": "手动卡片仅在你点击刷新时消耗令牌。",
+    "every_value_minutes_10300252": "每 {{v0}} 分钟",
+    "up_to_value_per_hour_10300253": "每小时最多 {{v0}} 次",
+    "during_active_hours_suffix_10300254": "（仅活跃时段）",
+    "up_to_updates_per_day_cost_10300255": "每天最多约 {{v0}} 次更新（{{v1}}）≈ {{v2}}",
+    "capped_by_daily_token_limit_10300256": "受每日 {{v0}} 上限限制；达到上限后卡片将暂停。",
+    "only_runs_when_something_changed_10300257": "仅在内容发生变化时运行；否则只执行低成本检查。",
+    "token_input_output_split_10300258": "输入 {{v0}} / 输出 {{v1}}"
   }
 }
