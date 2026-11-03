@@ -298,14 +298,14 @@ export function Dashboard() {
       return (
         <EmptyState
           icon={LayoutDashboard}
-          message="Welcome to Paperclip. Set up your first organization and agent to get started."
-          action="Get Started"
+          message={l10n("local.welcome_to_alice_set_up_your_first_organization_and_agent_6b1221c5")}
+          action={l10n("local.get_started_61e8d44a")}
           onAction={openOnboarding}
         />
       );
     }
     return (
-      <EmptyState icon={LayoutDashboard} message="Create or select an organization to view the dashboard." />
+      <EmptyState icon={LayoutDashboard} message={l10n("local.create_or_select_an_organization_to_view_the_dashboard_3a79069e")} />
     );
   }
 

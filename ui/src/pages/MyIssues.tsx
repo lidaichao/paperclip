@@ -54,7 +54,7 @@ export function MyIssues() {
       {error && <p className="text-sm text-destructive">{error.message}</p>}
 
       {myIssues.length === 0 && (
-        <EmptyState icon={ListTodo} message="No tasks assigned to you." />
+        <EmptyState icon={ListTodo} message={l10n("local.no_tasks_assigned_to_you_d625b004")} />
       )}
 
       {myIssues.length > 0 && (

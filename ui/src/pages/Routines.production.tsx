@@ -797,7 +797,7 @@ export function Routines() {
   }
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Repeat} message="Select a company to view routines." />;
+    return <EmptyState icon={Repeat} message={l10n("local.select_a_company_to_view_routines_b9a1c8b1")} />;
   }
 
   if (isLoading) {
@@ -1279,7 +1279,7 @@ export function Routines() {
             <div className="py-12">
               <EmptyState
                 icon={Repeat}
-                message="No active routines. Use Create routine to define the first recurring workflow."
+                message={l10n("local.no_active_routines_use_create_routine_to_define_first_workflow_0257c2e4")}
               />
             </div>
           ) : sortedRoutines.length === 0 ? (

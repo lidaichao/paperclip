@@ -790,7 +790,7 @@ export function Routines() {
   }
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Repeat} message="Select an organization to view routines." />;
+    return <EmptyState icon={Repeat} message={l10n("local.select_an_organization_to_view_routines_20c9ecf9")} />;
   }
 
   if (streamlinedUiEnabled && legacyRunsRequested) {

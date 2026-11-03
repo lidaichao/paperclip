@@ -530,7 +530,7 @@ export function Costs() {
   }), [budgetPolicies]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={DollarSign} message="Select a company to view costs." />;
+    return <EmptyState icon={DollarSign} message={l10n("local.select_a_company_to_view_costs_1ce76e3d")} />;
   }
 
   const showCustomPrompt = preset === "custom" && !customReady;

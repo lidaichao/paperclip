@@ -466,7 +466,7 @@ export function OrgChart({ orgTree: providedOrgTree, agents: providedAgents, emb
   }, [pan, zoom]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Network} message="Select an organization to view the org chart." />;
+    return <EmptyState icon={Network} message={l10n("local.select_an_organization_to_view_the_org_chart_e1f0721f")} />;
   }
 
   if (providedOrgTree === undefined && isLoading) {
@@ -474,7 +474,7 @@ export function OrgChart({ orgTree: providedOrgTree, agents: providedAgents, emb
   }
 
   if (orgTree && orgTree.length === 0) {
-    return <EmptyState icon={Network} message="No organizational hierarchy defined." />;
+    return <EmptyState icon={Network} message={l10n("local.no_organizational_hierarchy_defined_7ac98865")} />;
   }
 
   return (

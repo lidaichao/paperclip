@@ -1563,13 +1563,13 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title={l10n("local.log_viewer_b26528cf")}>
         <div className="bg-neutral-950 rounded-lg p-3 font-mono text-xs max-h-80 overflow-y-auto">
-          <div className="text-foreground">[12:00:01] INFO  Agent started successfully</div>
-          <div className="text-foreground">[12:00:02] INFO  Processing task PAP-001</div>
-          <div className="text-yellow-400">[12:00:05] WARN  Rate limit approaching (80%)</div>
-          <div className="text-foreground">[12:00:08] INFO  Task PAP-001 completed</div>
-          <div className="text-red-400">[12:00:12] ERROR Connection timeout to upstream service</div>
-          <div className="text-blue-300">[12:00:12] SYS   Retrying connection in 5s...</div>
-          <div className="text-foreground">[12:00:17] INFO  Reconnected successfully</div>
+          <div className="text-foreground">{l10n("local._12_00_01_info_agent_started_successfully_3b0f8d84")}</div>
+          <div className="text-foreground">{l10n("local._12_00_02_info_processing_task_pap_001_cfbefff2")}</div>
+          <div className="text-yellow-400">{l10n("local._12_00_05_warn_rate_limit_approaching_80_9d4a7c6e")}</div>
+          <div className="text-foreground">{l10n("local._12_00_08_info_task_pap_001_completed_f403504d")}</div>
+          <div className="text-red-400">{l10n("local._12_00_12_error_connection_timeout_to_upstrea_65dcd74c")}</div>
+          <div className="text-blue-300">{l10n("local._12_00_12_sys_retrying_connection_in_5s_8244aca8")}</div>
+          <div className="text-foreground">{l10n("local._12_00_17_info_reconnected_successfully_ed2eba0b")}</div>
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 animate-pulse" />
@@ -1600,7 +1600,7 @@ export function DesignGuide() {
             <span className="text-xs text-muted-foreground">{l10n("local.responsible_bc110a6d")}</span>
             <div className="flex items-center gap-1.5">
               <Avatar size="sm"><AvatarFallback>A</AvatarFallback></Avatar>
-              <span className="text-xs">Agent Alpha</span>
+              <span className="text-xs">{l10n("local.agent_alpha_d47b013c")}</span>
             </div>
           </div>
           <div className="flex items-center justify-between py-1.5">

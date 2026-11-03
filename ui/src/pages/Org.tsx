@@ -100,7 +100,7 @@ export function Org() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={GitBranch} message="Select an organization to view org chart." />;
+    return <EmptyState icon={GitBranch} message={l10n("local.select_an_organization_to_view_org_chart_54b585c0")} />;
   }
 
   if (isLoading) {
@@ -114,7 +114,7 @@ export function Org() {
       {data && data.length === 0 && (
         <EmptyState
           icon={GitBranch}
-          message="No agents in the organization. Create agents to build your org chart."
+          message={l10n("local.no_agents_in_the_organization_create_agents_to_build_org_chart_52afc2b1")}
         />
       )}
 

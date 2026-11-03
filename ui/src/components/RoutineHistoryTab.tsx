@@ -1,4 +1,4 @@
-import { l10n } from "../i18n";
+import { i18n, l10n } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { History as HistoryIcon, RotateCcw, Search } from "lucide-react";
@@ -362,7 +362,7 @@ function ConflictBanner({
 }) {
   const labels = dirtyFields.length > 0
     ? dirtyFields.map((field) => field.label)
-    : ["the routine"];
+    : [l10n("local.routine_fde55b36")];
   const fieldsText = formatDirtyFieldList(labels);
   return (
     <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
@@ -981,10 +981,8 @@ function formatVariableDefault(variable: RoutineVariable): string {
 }
 
 function formatDirtyFieldList(labels: string[]): string {
-  if (labels.length === 0) return "the routine";
-  if (labels.length === 1) return labels[0];
-  if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
-  return `${labels.slice(0, -1).join(", ")}, and ${labels[labels.length - 1]}`;
+  if (labels.length === 0) return l10n("local.routine_fde55b36");
+  return new Intl.ListFormat(i18n.language, { style: "long", type: "conjunction" }).format(labels);
 }
 
 function collectWebhookTriggerDifferences(

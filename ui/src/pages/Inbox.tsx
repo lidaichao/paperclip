@@ -2324,7 +2324,7 @@ function StreamlinedInbox() {
   }, [selectedIndex]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={InboxIcon} message="Select an organization to view inbox." />;
+    return <EmptyState icon={InboxIcon} message={l10n("local.select_an_organization_to_view_inbox_9d0112ac")} />;
   }
 
   const hasRunFailures = failedRuns.length > 0;

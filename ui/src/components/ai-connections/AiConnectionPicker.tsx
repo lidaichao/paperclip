@@ -107,7 +107,7 @@ export function AiConnectionPicker({
             disabled={readOnly}
             selectedId={value?.mode === "responsible_user" ? "responsible_user" : value?.connectionId}
             choices={[
-              { id: "responsible_user", name: "Responsible user’s connection", description: <>
+              { id: "responsible_user", name: l10n("local.responsible_user_s_connection_08b7643a"), description: <>
                 <span className="block">{l10n("local.for_you_112b0bab")}{" "}{personalDefault?.name ?? l10n("local.not_connected_0303e182")}</span>
                 <span className="block">{l10n("local.other_users_tasks_use_their_own_08d053ff")}{" "}{AI_PROVIDERS[requirement.provider].name} {l10n("local.connection_1b33ea86")}</span>
               </> },

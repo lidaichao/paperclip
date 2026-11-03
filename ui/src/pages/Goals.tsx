@@ -28,7 +28,7 @@ export function Goals() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Target} message="Select an organization to view goals." />;
+    return <EmptyState icon={Target} message={l10n("local.select_an_organization_to_view_goals_6bec1c04")} />;
   }
 
   if (isLoading) {
@@ -42,8 +42,8 @@ export function Goals() {
       {goals && goals.length === 0 && (
         <EmptyState
           icon={Target}
-          message="No goals yet."
-          action="Add Goal"
+          message={l10n("local.no_goals_yet_4e80ec12")}
+          action={l10n("local.add_goal_47431aac")}
           onAction={() => openNewGoal()}
         />
       )}

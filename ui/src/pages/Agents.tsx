@@ -334,7 +334,7 @@ export function Agents({ initialView = "list" }: { initialView?: AgentsView } = 
   }, [builtInAgentsEnabled, instanceSettings, navigate, requestedTab, selectedCompanyId]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Bot} message="Select an organization to view agents." />;
+    return <EmptyState icon={Bot} message={l10n("local.select_an_organization_to_view_agents_c42e154f")} />;
   }
 
   if (isLoading) {
@@ -533,8 +533,8 @@ export function Agents({ initialView = "list" }: { initialView?: AgentsView } = 
       {agents && agents.length === 0 && (
         <EmptyState
           icon={Bot}
-          message="Create your first agent to get started."
-          action="New Agent"
+          message={l10n("local.create_your_first_agent_to_get_started_6f93ced4")}
+          action={l10n("local.new_agent_c548aab1")}
           onAction={openNewAgent}
         />
       )}
