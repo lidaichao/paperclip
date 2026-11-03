@@ -1246,17 +1246,17 @@ describe("agent issue mutation checkout ownership", () => {
           provider: "test",
           title: "Artifact",
         }),
-      "Status-only recovery runs cannot update issue documents",
+      "仅恢复状态的运行不能更新任务文档",
     ],
     [
       "work product update",
       (app: express.Express) => request(app).patch("/api/work-products/product-1").send({ title: "Blocked" }),
-      "Status-only recovery runs cannot update issue documents",
+      "仅恢复状态的运行不能更新任务文档",
     ],
     [
       "work product delete",
       (app: express.Express) => request(app).delete("/api/work-products/product-1"),
-      "Status-only recovery runs cannot update issue documents",
+      "仅恢复状态的运行不能更新任务文档",
     ],
     [
       "low-trust promotion",
@@ -1267,7 +1267,7 @@ describe("agent issue mutation checkout ownership", () => {
           title: "Promoted artifact",
           summary: "Sanitized output",
         }),
-      "Status-only recovery runs cannot update issue documents",
+      "仅恢复状态的运行不能更新任务文档",
     ],
     [
       "attachment upload",
@@ -1275,12 +1275,12 @@ describe("agent issue mutation checkout ownership", () => {
         request(app)
           .post(`/api/companies/${companyId}/issues/${issueId}/attachments`)
           .attach("file", Buffer.from("report"), { filename: "report.txt", contentType: "text/plain" }),
-      "Status-only recovery runs cannot update issue documents",
+      "仅恢复状态的运行不能更新任务文档",
     ],
     [
       "attachment delete",
       (app: express.Express) => request(app).delete("/api/attachments/attachment-1"),
-      "Status-only recovery runs cannot update issue documents",
+      "仅恢复状态的运行不能更新任务文档",
     ],
     [
       "issue approval link",
@@ -1288,13 +1288,13 @@ describe("agent issue mutation checkout ownership", () => {
         request(app).post(`/api/issues/${issueId}/approvals`).send({
           approvalId: "88888888-8888-4888-8888-888888888888",
         }),
-      "Status-only recovery runs cannot create or modify approvals",
+      "仅恢复状态的运行不能创建或修改审批",
     ],
     [
       "issue approval unlink",
       (app: express.Express) =>
         request(app).delete(`/api/issues/${issueId}/approvals/88888888-8888-4888-8888-888888888888`),
-      "Status-only recovery runs cannot create or modify approvals",
+      "仅恢复状态的运行不能创建或修改审批",
     ],
   ])("blocks status-only recovery runs from %s", async (_name, sendRequest, expectedError) => {
     const app = await createApp(
@@ -1659,9 +1659,9 @@ describe("agent issue mutation checkout ownership", () => {
   });
 
   it.each([
-    ["done", "todo", 403, "Agent cannot request follow-up for another agent's issue"],
+    ["done", "todo", 403, "智能体不能请求跟进分派给其他智能体的任务"],
     ["cancelled", "todo", 409, "Cancelled issues must be restored through the dedicated restore flow"],
-    ["blocked", "done", 403, "Agent cannot request follow-up for another agent's issue"],
+    ["blocked", "done", 403, "智能体不能请求跟进分派给其他智能体的任务"],
   ])(
     "rejects peer agent direct status transitions from %s to %s",
     async (status, nextStatus, expectedStatus, expectedError) => {
@@ -1760,7 +1760,7 @@ describe("agent issue mutation checkout ownership", () => {
     const res = await request(await createApp(peerActor())).patch(`/api/issues/${issueId}`).send({ status: "todo" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toBe("Agent cannot resolve another owner's recovery action");
+    expect(res.body.error).toBe("智能体不能处理其他所有者的恢复操作");
     expect(mockIssueService.update).not.toHaveBeenCalled();
   });
 
@@ -1782,7 +1782,7 @@ describe("agent issue mutation checkout ownership", () => {
       });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toBe("Agent cannot resolve another owner's recovery action");
+    expect(res.body.error).toBe("智能体不能处理其他所有者的恢复操作");
     expect(mockIssueRecoveryActionService.resolveActiveForIssue).not.toHaveBeenCalled();
   });
 

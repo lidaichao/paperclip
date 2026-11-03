@@ -191,7 +191,7 @@ export function approvalRoutes(
     if (!isStatusOnlyRecoveryContext(run.contextSnapshot)) return true;
 
     res.status(403).json({
-      error: "Status-only recovery runs cannot create or modify approvals",
+      error: "仅恢复状态的运行不能创建或修改审批",
       details: {
         companyId,
         runId: run.id,

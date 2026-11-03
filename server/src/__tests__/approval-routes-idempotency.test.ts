@@ -382,7 +382,7 @@ describe("approval routes idempotent retries", () => {
       });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toContain("Status-only recovery runs cannot create or modify approvals");
+    expect(res.body.error).toContain("仅恢复状态的运行不能创建或修改审批");
     expect(mockApprovalService.create).not.toHaveBeenCalled();
     expect(mockIssueApprovalService.linkManyForApproval).not.toHaveBeenCalled();
   });
@@ -409,7 +409,7 @@ describe("approval routes idempotent retries", () => {
       .send({ payload: { title: "Retry" } });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toContain("Status-only recovery runs cannot create or modify approvals");
+    expect(res.body.error).toContain("仅恢复状态的运行不能创建或修改审批");
     expect(mockApprovalService.resubmit).not.toHaveBeenCalled();
   });
 
@@ -435,7 +435,7 @@ describe("approval routes idempotent retries", () => {
       .send({ body: "please approve" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toContain("Status-only recovery runs cannot create or modify approvals");
+    expect(res.body.error).toContain("仅恢复状态的运行不能创建或修改审批");
     expect(mockApprovalService.addComment).not.toHaveBeenCalled();
   });
 });

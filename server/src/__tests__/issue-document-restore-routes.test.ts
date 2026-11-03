@@ -378,7 +378,7 @@ describe("issue document revision routes", () => {
       .send({});
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Status-only recovery runs cannot update issue documents");
+    expect(res.body.error).toContain("仅恢复状态的运行不能更新任务文档");
     expect(mockDocumentsService.restoreIssueDocumentRevision).not.toHaveBeenCalled();
   });
 

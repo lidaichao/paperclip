@@ -6268,7 +6268,7 @@ export function issueRoutes(
 
     const sourceIssue = await svc.getById(scope.watchedIssueId);
     if (!sourceIssue || sourceIssue.companyId !== companyId) {
-      res.status(404).json({ error: "Watched source issue not found" });
+      res.status(404).json({ error: "未找到被监控的源任务" });
       return false;
     }
     const watchdogIssue = scope.watchdogIssueId
@@ -6385,7 +6385,7 @@ export function issueRoutes(
 
     res.status(403).json({
       error:
-        "Status-only recovery runs cannot update issue documents, plans, or deliverable artifacts",
+        "仅恢复状态的运行不能更新任务文档、计划或交付产物",
       details: {
         issueId: issue.id,
         runId: run.id,
@@ -6406,7 +6406,7 @@ export function issueRoutes(
     if (!isStatusOnlyRecoveryContext(run.contextSnapshot)) return true;
 
     res.status(403).json({
-      error: "Status-only recovery runs cannot create or modify approvals",
+      error: "仅恢复状态的运行不能创建或修改审批",
       details: {
         issueId: issue.id,
         runId: run.id,
@@ -6518,7 +6518,7 @@ export function issueRoutes(
     const hold = await treeControlSvc.getActivePauseHoldGate(issue.companyId, issue.id);
     if (!hold) return true;
     res.status(409).json({
-      error: "Task is paused. Resume it before sending a message.",
+      error: "任务已暂停，请先恢复任务再发送消息。",
       details: { issueId: issue.id, holdId: hold.holdId, rootIssueId: hold.rootIssueId },
     });
     return false;
@@ -6552,7 +6552,7 @@ export function issueRoutes(
 
     if (!isExplicitResumeCapableStatus(issue.status)) {
       res.status(409).json({
-        error: "Issue is not resumable through comment follow-up intent",
+        error: "无法通过评论跟进意图恢复此任务",
         details: { issueId: issue.id, status: issue.status },
       });
       return false;
@@ -6564,7 +6564,7 @@ export function issueRoutes(
     );
     if (activePauseHold) {
       res.status(409).json({
-        error: "Issue follow-up blocked by active subtree pause hold",
+        error: "任务子树仍处于暂停状态，无法跟进",
         details: {
           issueId: issue.id,
           holdId: activePauseHold.holdId,
@@ -6579,7 +6579,7 @@ export function issueRoutes(
       const readiness = await svc.getDependencyReadiness(issue.id);
       if (readiness.unresolvedBlockerCount > 0) {
         res.status(409).json({
-          error: "Issue follow-up blocked by unresolved blockers",
+          error: "任务仍有未解决的阻塞项，无法跟进",
           details: {
             issueId: issue.id,
             unresolvedBlockerIssueIds: readiness.unresolvedBlockerIssueIds,
@@ -6593,12 +6593,12 @@ export function issueRoutes(
 
     const actorAgentId = req.actor.agentId;
     if (!actorAgentId) {
-      res.status(403).json({ error: "Agent authentication required" });
+      res.status(403).json({ error: "需要智能体身份验证" });
       return false;
     }
     if (!issue.assigneeAgentId) {
       res.status(409).json({
-        error: "Issue follow-up requires an assigned agent",
+        error: "任务必须先分派智能体才能继续跟进",
         details: { issueId: issue.id, actorAgentId },
       });
       return false;
@@ -6621,7 +6621,7 @@ export function issueRoutes(
     if (isDefaultOpenIssueWriteDecision(boundaryDecision)) return true;
 
     res.status(403).json({
-      error: "Agent cannot request follow-up for another agent's issue",
+      error: "智能体不能请求跟进分派给其他智能体的任务",
       details: {
         issueId: issue.id,
         assigneeAgentId: issue.assigneeAgentId,
@@ -6644,7 +6644,7 @@ export function issueRoutes(
 
     const actorAgentId = req.actor.agentId;
     if (!actorAgentId) {
-      throw forbidden("Agent authentication required");
+      throw forbidden("需要智能体身份验证");
     }
     if (issue.assigneeAgentId === actorAgentId) return true;
     if (
@@ -6669,7 +6669,7 @@ export function issueRoutes(
       return true;
     }
 
-    throw forbidden("Agent cannot resolve another owner's recovery action", {
+    throw forbidden("智能体不能处理其他所有者的恢复操作", {
       issueId: issue.id,
       recoveryActionId: activeRecoveryAction.id,
       actorAgentId,
@@ -6708,7 +6708,7 @@ export function issueRoutes(
   ) {
     if (req.actor.type !== "agent") return;
     const actorAgentId = req.actor.agentId;
-    if (!actorAgentId) throw forbidden("Agent authentication required");
+    if (!actorAgentId) throw forbidden("需要智能体身份验证");
 
     const isSourceOwner = issue.assigneeAgentId === actorAgentId;
     const isExecutionParticipant =
@@ -7083,12 +7083,12 @@ export function issueRoutes(
     revision: string;
   }) {
     if (input.queue.queueId !== input.queueId) {
-      throw conflict("The queued message targets a stale queue", {
+      throw conflict("排队消息指向已失效的队列", {
         code: "queued_comment_stale_queue",
       });
     }
     if (input.queue.revision !== input.revision) {
-      throw conflict("The queued messages changed in another session", {
+      throw conflict("排队消息已在其他会话中发生变更", {
         code: "queued_comment_revision_conflict",
       });
     }
@@ -7139,7 +7139,7 @@ export function issueRoutes(
       readObject(wake.payload).issueId !== input.issue.id ||
       (queuedCommentIdsFromWakePayload(wake.payload).length === 0 && !queuedInteractionId(wake.payload))
     ) {
-      throw conflict("The queued message is no longer pending", {
+      throw conflict("排队消息已不再处于待处理状态", {
         code: "queued_comment_not_pending",
       });
     }
@@ -7164,7 +7164,7 @@ export function issueRoutes(
         .limit(1)
         .then((rows) => rows[0] ?? null);
       if (!queueRun || queueRun.status !== "queued") {
-        throw conflict("The queued message is already being dispatched", {
+        throw conflict("排队消息正在发送中", {
           code: "queued_comment_already_dispatching",
         });
       }
@@ -7174,11 +7174,11 @@ export function issueRoutes(
       wake.status === "running" ||
       (wake.runId && (wake.status === "succeeded" || wake.status === "failed"))
     ) {
-      throw conflict("The queued message is already being dispatched", {
+      throw conflict("排队消息正在发送中", {
         code: "queued_comment_already_dispatching",
       });
     } else {
-      throw conflict("The queued message is no longer pending", {
+      throw conflict("排队消息已不再处于待处理状态", {
         code: "queued_comment_not_pending",
       });
     }
@@ -7209,7 +7209,7 @@ export function issueRoutes(
         (runContext.issueId !== input.issue.id &&
           runContext.taskId !== input.issue.id)
       ) {
-        throw conflict("The queued message targets a stale run", {
+        throw conflict("排队消息指向已失效的运行", {
           code: "queued_comment_stale_target",
         });
       }
@@ -7304,10 +7304,10 @@ export function issueRoutes(
       throw notFound("Agent not found");
     }
     if (resolved.agent.status === "pending_approval") {
-      throw conflict("Cannot assign work to pending approval agents");
+      throw conflict("不能将任务分派给待审批的智能体");
     }
     if (resolved.agent.status === "terminated") {
-      throw conflict("Cannot assign work to terminated agents");
+      throw conflict("不能将任务分派给已终止的智能体");
     }
     // Agents must not route work to a paused peer/manager: the assignment is
     // accepted silently, nothing will ever run it, and the issue becomes an

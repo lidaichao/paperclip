@@ -277,7 +277,7 @@ describe("issue update comment wakeups", () => {
       ? await request(app).post(`/api/issues/${existing.id}/comments`).send({ body: "go", reopen: true, interrupt: true })
       : await request(app).patch(`/api/issues/${existing.id}`).send({ comment: "go", assigneeAgentId: ASSIGNEE_AGENT_ID, status: "todo" });
     expect(res.status).toBe(409);
-    expect(res.body.error).toBe("Task is paused. Resume it before sending a message.");
+    expect(res.body.error).toBe("任务已暂停，请先恢复任务再发送消息。");
     expect(res.body.details.rootIssueId).toBe("parent-1");
     expect(mockPauseGate).toHaveBeenCalledWith(existing.companyId, existing.id);
     expect(mockIssueService.addComment).not.toHaveBeenCalled();

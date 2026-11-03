@@ -2683,7 +2683,7 @@ describe.sequential("issue comment reopen routes", () => {
 
     expect(res.status).toBe(409);
     expect(res.body.error).toBe(
-      "Issue follow-up blocked by active subtree pause hold",
+      "任务子树仍处于暂停状态，无法跟进",
     );
     expect(mockIssueService.update).not.toHaveBeenCalled();
     expect(mockIssueService.addComment).not.toHaveBeenCalled();
