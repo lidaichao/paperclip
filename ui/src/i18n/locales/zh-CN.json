@@ -11856,6 +11856,9 @@
     "failed_to_save_configuration_0e300007": "保存配置失败。",
     "select_organization_before_testing_plugin_config_0e300008": "测试插件配置前，请先选择组织。",
     "configuration_test_passed_0e300009": "配置测试通过。",
-    "configuration_test_failed_0e300010": "配置测试失败。"
+    "configuration_test_failed_0e300010": "配置测试失败。",
+    "could_not_resume_setup_0e400001": "无法继续配置",
+    "could_not_save_step_retry_0e400002": "无法保存此步骤，请重试。",
+    "unable_to_update_slack_search_0e400003": "无法更新 Slack 搜索设置"
   }
 }

@@ -11856,6 +11856,9 @@
     "failed_to_save_configuration_0e300007": "Failed to save configuration.",
     "select_organization_before_testing_plugin_config_0e300008": "Select an organization before testing plugin configuration.",
     "configuration_test_passed_0e300009": "Configuration test passed.",
-    "configuration_test_failed_0e300010": "Configuration test failed."
+    "configuration_test_failed_0e300010": "Configuration test failed.",
+    "could_not_resume_setup_0e400001": "Could not resume setup",
+    "could_not_save_step_retry_0e400002": "Could not save this step. Try again.",
+    "unable_to_update_slack_search_0e400003": "Unable to update Slack search"
   }
 }

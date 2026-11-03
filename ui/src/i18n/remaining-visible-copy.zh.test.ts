@@ -321,6 +321,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.local_folder_path_required_0e300004).toBe("必须填写本地文件夹路径。");
     expect(messages.failed_to_save_configuration_0e300007).toBe("保存配置失败。");
     expect(messages.configuration_test_passed_0e300009).toBe("配置测试通过。");
+    expect(messages.could_not_resume_setup_0e400001).toBe("无法继续配置");
+    expect(messages.could_not_save_step_retry_0e400002).toBe("无法保存此步骤，请重试。");
+    expect(messages.unable_to_update_slack_search_0e400003).toBe("无法更新 Slack 搜索设置");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

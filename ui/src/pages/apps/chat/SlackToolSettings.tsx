@@ -121,7 +121,7 @@ export function SlackSearchView({
       await action();
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Unable to update Slack search",
+        e instanceof Error ? e.message : l10n("local.unable_to_update_slack_search_0e400003"),
       );
     } finally {
       setPending(false);

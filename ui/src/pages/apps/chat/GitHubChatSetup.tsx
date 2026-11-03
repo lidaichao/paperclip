@@ -157,7 +157,7 @@ export function GitHubChatSetup() {
         })
         .catch((error) =>
           setError(
-            error instanceof Error ? error.message : "Could not resume setup",
+            error instanceof Error ? error.message : l10n("local.could_not_resume_setup_0e400001"),
           ),
         );
     }
@@ -171,7 +171,7 @@ export function GitHubChatSetup() {
       setError(
         error instanceof Error
           ? error.message
-          : "Could not save this step. Try again.",
+          : l10n("local.could_not_save_step_retry_0e400002"),
       );
     } finally {
       setBusy(false);
