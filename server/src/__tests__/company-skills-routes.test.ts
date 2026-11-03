@@ -900,7 +900,7 @@ describe("company skill mutation permissions", () => {
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
     expect(res.body).toEqual({
-      error: "Skill action denied by company policy",
+      error: "公司策略拒绝了此技能操作",
       code: "skill_policy_denied",
       reason: "explicit_rule",
       remediation: "Contact a company administrator to change the skill policy.",
@@ -1001,7 +1001,7 @@ describe("company skill mutation permissions", () => {
       .send({ source: "vercel-labs/agent-browser" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toBe("Skill action denied by company policy");
+    expect(res.body.error).toBe("公司策略拒绝了此技能操作");
     expect(mockCompanySkillPolicyService.evaluate).toHaveBeenCalledWith(expect.objectContaining({
       companyId: "company-1",
       action: "skills.import",
@@ -1113,7 +1113,7 @@ describe("company skill mutation permissions", () => {
       .send({ source: "npx skills add Vercel-Labs/Agent-Browser --skill agent-browser -g" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toBe("Skill action denied by company policy");
+    expect(res.body.error).toBe("公司策略拒绝了此技能操作");
     expect(mockCompanySkillPolicyService.evaluate).toHaveBeenCalledWith(expect.objectContaining({
       companyId: "company-1",
       action: "skills.import",
@@ -1163,7 +1163,7 @@ describe("company skill mutation permissions", () => {
       .send({ source });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toBe("Skill action denied by company policy");
+    expect(res.body.error).toBe("公司策略拒绝了此技能操作");
     expect(mockCompanySkillPolicyService.evaluate).toHaveBeenCalledWith(expect.objectContaining({
       companyId: "company-1",
       action: "skills.import",

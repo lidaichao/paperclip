@@ -127,7 +127,7 @@ export function companySkillRoutes(db: Db) {
     if (parsed === undefined) return undefined;
     if (parsed === "true") return true;
     if (parsed === "false") return false;
-    throw badRequest("Boolean query parameters must be true or false");
+    throw badRequest("布尔查询参数必须是 true 或 false");
   }
 
   function queryStringArray(value: unknown): string[] {
@@ -206,7 +206,7 @@ export function companySkillRoutes(db: Db) {
       throw unauthorized("Authentication required");
     }
     if (req.actor.type === "agent" && req.actor.companyId !== companyId) {
-      throw forbidden("Agent key cannot access another company", { code: "skill_company_boundary_denied" });
+      throw forbidden("智能体密钥不能访问其他公司", { code: "skill_company_boundary_denied" });
     }
     assertCompanyAccess(req, companyId);
     const platformDecision = await access.decide({
@@ -236,7 +236,7 @@ export function companySkillRoutes(db: Db) {
       resource: resolvedResource,
     });
     if (!policyDecision.allowed) {
-      throw forbidden("Skill action denied by company policy", toSkillPolicyDenialResponse(policyDecision));
+      throw forbidden("公司策略拒绝了此技能操作", toSkillPolicyDenialResponse(policyDecision));
     }
   }
 
@@ -347,7 +347,7 @@ export function companySkillRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const result = await svc.detail(companyId, skillId, skillActor(req));
     if (!result) {
-      res.status(404).json({ error: "Skill not found" });
+      res.status(404).json({ error: "未找到技能" });
       return;
     }
     res.json(result);
@@ -359,7 +359,7 @@ export function companySkillRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const result = await svc.forkPrecheck(companyId, skillId, skillActor(req));
     if (!result) {
-      res.status(404).json({ error: "Skill not found" });
+      res.status(404).json({ error: "未找到技能" });
       return;
     }
     res.json(result);
@@ -379,7 +379,7 @@ export function companySkillRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const result = await svc.getVersion(companyId, skillId, versionId);
     if (!result) {
-      res.status(404).json({ error: "Skill version not found" });
+      res.status(404).json({ error: "未找到技能版本" });
       return;
     }
     res.json(result);
@@ -427,7 +427,7 @@ export function companySkillRoutes(db: Db) {
       await assertCanMutateCompanySkills(req, companyId, "skills.edit", () => skillPolicyResource({ companyId, skillId }));
       const result = await svc.updateTestInput(companyId, skillId, inputId, req.body);
       if (!result) {
-        res.status(404).json({ error: "Test input not found" });
+        res.status(404).json({ error: "未找到测试输入" });
         return;
       }
       const actor = getActorInfo(req);
@@ -454,7 +454,7 @@ export function companySkillRoutes(db: Db) {
     await assertCanMutateCompanySkills(req, companyId, "skills.edit", () => skillPolicyResource({ companyId, skillId }));
     const result = await svc.deleteTestInput(companyId, skillId, inputId);
     if (!result) {
-      res.status(404).json({ error: "Test input not found" });
+      res.status(404).json({ error: "未找到测试输入" });
       return;
     }
     const actor = getActorInfo(req);
@@ -512,7 +512,7 @@ export function companySkillRoutes(db: Db) {
       await assertCanMutateCompanySkills(req, companyId, "skills.edit");
       const result = await svc.updateTestRunTemplate(companyId, templateId, req.body, skillActor(req));
       if (!result) {
-        res.status(404).json({ error: "Test run template not found" });
+        res.status(404).json({ error: "未找到测试运行模板" });
         return;
       }
       const actor = getActorInfo(req);
@@ -538,7 +538,7 @@ export function companySkillRoutes(db: Db) {
     await assertCanMutateCompanySkills(req, companyId, "skills.edit");
     const result = await svc.deleteTestRunTemplate(companyId, templateId);
     if (!result) {
-      res.status(404).json({ error: "Test run template not found" });
+      res.status(404).json({ error: "未找到测试运行模板" });
       return;
     }
     const actor = getActorInfo(req);
@@ -574,7 +574,7 @@ export function companySkillRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const result = await svc.getTestRunDetail(companyId, skillId, runId);
     if (!result) {
-      res.status(404).json({ error: "Test run not found" });
+      res.status(404).json({ error: "未找到测试运行" });
       return;
     }
     res.json(result);
@@ -699,7 +699,7 @@ export function companySkillRoutes(db: Db) {
       },
     });
     if (!result) {
-      res.status(404).json({ error: "Test run not found" });
+      res.status(404).json({ error: "未找到测试运行" });
       return;
     }
     await logActivity(db, {
@@ -737,7 +737,7 @@ export function companySkillRoutes(db: Db) {
       },
     });
     if (!result) {
-      res.status(404).json({ error: "Test run not found" });
+      res.status(404).json({ error: "未找到测试运行" });
       return;
     }
     await logActivity(db, {
@@ -991,7 +991,7 @@ export function companySkillRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const result = await svc.updateStatus(companyId, skillId);
     if (!result) {
-      res.status(404).json({ error: "Skill not found" });
+      res.status(404).json({ error: "未找到技能" });
       return;
     }
     res.json(result);
@@ -1004,7 +1004,7 @@ export function companySkillRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
     const result = await svc.readFile(companyId, skillId, relativePath);
     if (!result) {
-      res.status(404).json({ error: "Skill not found" });
+      res.status(404).json({ error: "未找到技能" });
       return;
     }
     res.json(result);
@@ -1048,9 +1048,9 @@ export function companySkillRoutes(db: Db) {
         ));
         const service = companySkillService(tx as unknown as Db);
         if (prior) {
-          if (prior.details?.fingerprint !== fingerprint) throw conflict("Skill idempotency key was used with different inputs");
+          if (prior.details?.fingerprint !== fingerprint) throw conflict("技能幂等键已被用于不同的输入");
           const skill = await service.getById(companyId, prior.entityId);
-          if (!skill) throw conflict("Previously created skill is no longer available");
+          if (!skill) throw conflict("先前创建的技能已不可用");
           return { skill, publication: null, duplicate: true };
         }
         const skill = await service.createLocalSkill(companyId, input, skillActor(req));
@@ -1292,7 +1292,7 @@ export function companySkillRoutes(db: Db) {
     await assertCanMutateCompanySkills(req, companyId, "skills.remove", () => skillPolicyResource({ companyId, skillId }));
     const result = await svc.deleteSkill(companyId, skillId);
     if (!result) {
-      res.status(404).json({ error: "Skill not found" });
+      res.status(404).json({ error: "未找到技能" });
       return;
     }
 
@@ -1324,7 +1324,7 @@ export function companySkillRoutes(db: Db) {
       await assertCanMutateCompanySkills(req, companyId, "skills.test", () => skillPolicyResource({ companyId, skillId }));
       const result = await svc.auditSkill(companyId, skillId);
       if (!result) {
-        res.status(404).json({ error: "Skill not found" });
+        res.status(404).json({ error: "未找到技能" });
         return;
       }
 
@@ -1362,7 +1362,7 @@ export function companySkillRoutes(db: Db) {
       const before = await svc.getById(companyId, skillId);
       const result = await svc.installUpdate(companyId, skillId, req.body);
       if (!result) {
-        res.status(404).json({ error: "Skill not found" });
+        res.status(404).json({ error: "未找到技能" });
         return;
       }
 
@@ -1403,7 +1403,7 @@ export function companySkillRoutes(db: Db) {
       const before = await svc.getById(companyId, skillId);
       const result = await svc.resetSkill(companyId, skillId, req.body);
       if (!result) {
-        res.status(404).json({ error: "Skill not found" });
+        res.status(404).json({ error: "未找到技能" });
         return;
       }
 
