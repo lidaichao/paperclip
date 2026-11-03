@@ -11392,6 +11392,18 @@
     "reply_beneath_post_0c950057": "在帖子下回复一次。",
     "open_channel_invite_bot_0c950058": "打开频道，并在需要时邀请 {{v0}}。",
     "mention_bot_in_new_channel_message_0c950059": "在新的频道消息中提及 {{v0}}。",
-    "reply_in_agent_thread_0c950060": "在 {{v0}} 的讨论串中回复一次。"
+    "reply_in_agent_thread_0c950060": "在 {{v0}} 的讨论串中回复一次。",
+    "empty_agent_slot_0c960001": "空智能体槽位",
+    "agent_configured_offline_0c960002": "智能体已配置，当前离线",
+    "agent_online_0c960003": "智能体在线",
+    "my_provider_subscription_0c960004": "我的 {{v0}} 订阅",
+    "my_provider_api_0c960005": "我的 {{v0}} API",
+    "select_organization_to_upload_images_0c960006": "请选择组织后再上传图片",
+    "select_organization_to_detect_model_0c960007": "请选择组织后再检测模型",
+    "select_organization_to_test_environment_0c960008": "请选择组织后再测试适配器环境",
+    "run_heartbeat_every_0c960009": "心跳运行间隔",
+    "sign_in_to_provider_0c960010": "登录 {{v0}}",
+    "sign_in_to_environment_0c960011": "登录运行环境",
+    "another_sign_in_attempt_active_0c960012": "另一个登录流程正在进行。请先在原账户设置中完成或取消该流程，再开始新的登录。"
   }
 }

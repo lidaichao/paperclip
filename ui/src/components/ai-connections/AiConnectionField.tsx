@@ -120,7 +120,7 @@ export function AiConnectionField({
           </DialogHeader>
           <p className="text-sm">
             {pendingAdoption?.mode === "responsible_user"
-              ? l10n("local.responsible_user_s_default_for_you_value_othe_a3decdf9", {v0: (accounts.data?.connections.find((account) => account.isDefault && account.provider === provider)?.name ?? "Not connected")})
+              ? l10n("local.responsible_user_s_default_for_you_value_othe_a3decdf9", {v0: (accounts.data?.connections.find((account) => account.isDefault && account.provider === provider)?.name ?? l10n("local.not_connected_0303e182"))})
               : accounts.data?.connections.find(
                   (account) => account.id === pendingAdoption?.connectionId,
                 )?.name}
@@ -152,7 +152,21 @@ export function AiConnectionField({
             companyId={companyId}
             provider={provider}
             initialMethod={method}
-            name={`My ${provider === "anthropic" ? "Claude" : provider === "openai" ? "OpenAI" : provider === "xai" ? "Grok" : "OpenRouter"} ${method === "subscription" ? "subscription" : "API"}`}
+            name={l10n(
+              method === "subscription"
+                ? "local.my_provider_subscription_0c960004"
+                : "local.my_provider_api_0c960005",
+              {
+                v0:
+                  provider === "anthropic"
+                    ? "Claude"
+                    : provider === "openai"
+                      ? "OpenAI"
+                      : provider === "xai"
+                        ? "Grok"
+                        : "OpenRouter",
+              },
+            )}
             ownership="personal"
             agentIds={agentId ? [agentId] : []}
             allAgents={false}

@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import * as React from "react";
 
+import { l10n } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 /**
@@ -45,11 +46,11 @@ const SIZE_PRESETS: Record<AgentCapsuleSizePreset, { width: number; height: numb
   lg: { width: 46, height: 116 },
 };
 
-const STATE_ARIA: Record<AgentCapsuleState, string> = {
-  slot: "empty agent slot",
-  configured: "agent configured, offline",
-  online: "agent online",
-};
+function stateAriaLabel(state: AgentCapsuleState): string {
+  if (state === "slot") return l10n("local.empty_agent_slot_0c960001");
+  if (state === "configured") return l10n("local.agent_configured_offline_0c960002");
+  return l10n("local.agent_online_0c960003");
+}
 
 export interface AgentCapsuleProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "color"> {
@@ -105,7 +106,7 @@ export function AgentCapsule({
   return (
     <div
       role="img"
-      aria-label={ariaLabel ?? STATE_ARIA[state]}
+      aria-label={ariaLabel ?? stateAriaLabel(state)}
       data-state={state}
       data-gradient={idx}
       data-glow={glow}

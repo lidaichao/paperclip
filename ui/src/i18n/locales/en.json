@@ -11392,6 +11392,18 @@
     "reply_beneath_post_0c950057": "Reply once beneath the post.",
     "open_channel_invite_bot_0c950058": "Open a channel and invite {{v0}} if needed.",
     "mention_bot_in_new_channel_message_0c950059": "Mention {{v0}} in a new channel message.",
-    "reply_in_agent_thread_0c950060": "Reply once in {{v0}}'s thread."
+    "reply_in_agent_thread_0c950060": "Reply once in {{v0}}'s thread.",
+    "empty_agent_slot_0c960001": "empty agent slot",
+    "agent_configured_offline_0c960002": "agent configured, offline",
+    "agent_online_0c960003": "agent online",
+    "my_provider_subscription_0c960004": "My {{v0}} subscription",
+    "my_provider_api_0c960005": "My {{v0}} API",
+    "select_organization_to_upload_images_0c960006": "Select an organization to upload images",
+    "select_organization_to_detect_model_0c960007": "Select an organization to detect the model",
+    "select_organization_to_test_environment_0c960008": "Select an organization to test the adapter environment",
+    "run_heartbeat_every_0c960009": "Run heartbeat every",
+    "sign_in_to_provider_0c960010": "Sign in to {{v0}}",
+    "sign_in_to_environment_0c960011": "Sign in to the environment",
+    "another_sign_in_attempt_active_0c960012": "Another sign-in attempt is active. Finish or cancel it in its original account setup before starting this one."
   }
 }

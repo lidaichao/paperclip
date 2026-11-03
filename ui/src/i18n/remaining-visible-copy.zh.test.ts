@@ -176,6 +176,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.open_installed_bot_text_channel_0c950046).toBe("打开已安装机器人的文字频道。");
     expect(messages.open_installed_issue_or_pull_request_0c950052).toContain("议题或拉取请求");
     expect(messages.reply_in_agent_thread_0c950060).toContain("讨论串");
+    expect(messages.empty_agent_slot_0c960001).toBe("空智能体槽位");
+    expect(messages.agent_configured_offline_0c960002).toContain("当前离线");
+    expect(messages.my_provider_subscription_0c960004).toBe("我的 {{v0}} 订阅");
+    expect(messages.select_organization_to_test_environment_0c960008).toContain("测试适配器环境");
+    expect(messages.run_heartbeat_every_0c960009).toBe("心跳运行间隔");
+    expect(messages.sign_in_to_environment_0c960011).toBe("登录运行环境");
+    expect(messages.another_sign_in_attempt_active_0c960012).toContain("另一个登录流程正在进行");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
