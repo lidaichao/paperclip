@@ -426,6 +426,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.pick_adapter_for_coach_0f200008).toContain("适配器");
     expect(messages.account_owner_0f200009).toBe("账户所有者");
     expect(messages.provide_api_key_to_connect_0f200010).toContain("API 密钥");
+    expect(messages.release_0f300001).toBe("版本");
+    expect(messages.released_date_0f300002).toBe("发布于 {{v0}}");
+    expect(messages.my_claude_subscription_0f300003).toBe("我的 Claude 订阅");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

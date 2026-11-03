@@ -11998,6 +11998,9 @@
     "decision_requires_detail_view_0f200007": "This decision must be completed from its detail view.",
     "pick_adapter_for_coach_0f200008": "Pick an adapter this coach can run on.",
     "account_owner_0f200009": "Account owner",
-    "provide_api_key_to_connect_0f200010": "Provide your {{v0}} API key to connect"
+    "provide_api_key_to_connect_0f200010": "Provide your {{v0}} API key to connect",
+    "release_0f300001": "Release",
+    "released_date_0f300002": "released {{v0}}",
+    "my_claude_subscription_0f300003": "My Claude subscription"
   }
 }

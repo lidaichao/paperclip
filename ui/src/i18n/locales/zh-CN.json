@@ -11998,6 +11998,9 @@
     "decision_requires_detail_view_0f200007": "此决策必须在详情页中完成。",
     "pick_adapter_for_coach_0f200008": "请选择一个可供此内置成员运行的适配器。",
     "account_owner_0f200009": "账户所有者",
-    "provide_api_key_to_connect_0f200010": "请提供 {{v0}} API 密钥以建立连接"
+    "provide_api_key_to_connect_0f200010": "请提供 {{v0}} API 密钥以建立连接",
+    "release_0f300001": "版本",
+    "released_date_0f300002": "发布于 {{v0}}",
+    "my_claude_subscription_0f300003": "我的 Claude 订阅"
   }
 }

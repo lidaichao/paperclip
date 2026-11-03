@@ -33,19 +33,19 @@ export function formatReleaseDate(value: CompanySkillVersion["releasedAt"]): str
 
 /** Release display name, e.g. `V7 — Roster champion` (no date). */
 export function releaseName(release: CompanySkillVersion): string {
-  return release.releaseName ?? release.label ?? release.releaseId ?? "Release";
+  return release.releaseName ?? release.label ?? release.releaseId ?? l10n("local.release_0f300001");
 }
 
 /** Full option label, e.g. `V7 — Roster champion · released 2026-07-21`. */
 export function releaseOptionLabel(release: CompanySkillVersion): string {
   const name = releaseName(release);
   const date = formatReleaseDate(release.releasedAt);
-  return date ? `${name} · released ${date}` : name;
+  return date ? `${name} · ${l10n("local.released_date_0f300002", { v0: date })}` : name;
 }
 
 /** Compact badge label for a pinned release, e.g. `V7`. */
 export function releaseShortLabel(release: CompanySkillVersion): string {
-  const name = release.releaseName ?? release.label ?? release.releaseId ?? "Release";
+  const name = release.releaseName ?? release.label ?? release.releaseId ?? l10n("local.release_0f300001");
   return name.split(" — ")[0]!.trim();
 }
 

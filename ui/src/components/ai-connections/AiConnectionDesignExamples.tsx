@@ -18,10 +18,10 @@ const account: AiConnectionSummary = {
   method: "subscription",
   id: "example",
   grantId: "example-grant",
-  name: "My Claude subscription",
+  name: l10n("local.my_claude_subscription_0f300003"),
   ownership: "personal",
   ownerUserId: "example-user",
-  ownerName: "You",
+  ownerName: l10n("local.you_08b04193"),
   status: "connected",
   isDefault: true,
 };

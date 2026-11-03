@@ -129,7 +129,7 @@ export function AgentSkillRow({
           checked={checked}
           disabled={disabled}
           onCheckedChange={(next) => onCheckedChange?.(next)}
-          aria-label={`${checked ? "Disable" : "Enable"} ${data.name}`}
+          aria-label={`${checked ? l10n("local.disable_b7e3e4aa") : l10n("local.enable_5342e09f")} ${data.name}`}
         />
       );
       if (disabled && disabledReason) {
