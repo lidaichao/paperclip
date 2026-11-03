@@ -3130,7 +3130,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
     const { case: existing, stage } = await getCaseWithStageOrThrow(tx, input.companyId, input.caseId);
     const current = await assertLeaseAvailable(tx, existing, input.actor, input.leaseToken);
     if (input.expectedVersion !== undefined && current.version !== input.expectedVersion) {
-      throw conflict("Pipeline case version conflict", conflictDetailsForCase(current, stage));
+      throw conflict("流水线条目版本冲突", conflictDetailsForCase(current, stage));
     }
     if (input.parentCaseId !== undefined) {
       await assertValidParentCase(tx, {
@@ -3167,7 +3167,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       .returning();
     if (!updated) {
       const latest = await getCaseWithStageOrThrow(tx, input.companyId, input.caseId);
-      throw conflict("Pipeline case version conflict", conflictDetailsForCase(latest.case, latest.stage));
+      throw conflict("流水线条目版本冲突", conflictDetailsForCase(latest.case, latest.stage));
     }
 
     const event = materialChanged || visibleMetadataChanged || parentCaseChanged
@@ -3232,13 +3232,13 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
     },
   ) {
     if (input.transitionClass === "auto" && input.actor.type !== "system") {
-      throw unprocessable("Pipeline auto autonomy is not enabled", { code: "autonomy_not_enabled" });
+      throw unprocessable("流水线未启用自动自治", { code: "autonomy_not_enabled" });
     }
     const { case: existing, stage: fromStage, pipeline } = await getCaseWithStageForUpdateOrThrow(tx, input.companyId, input.caseId);
-    if (pipeline.archivedAt) throw unprocessable("Pipeline is archived", { code: "pipeline_archived" });
+    if (pipeline.archivedAt) throw unprocessable("流水线已归档", { code: "pipeline_archived" });
     const current = await assertLeaseAvailable(tx, existing, input.actor, input.leaseToken);
     if (current.version !== input.expectedVersion) {
-      throw conflict("Pipeline case version conflict", conflictDetailsForCase(current, fromStage));
+      throw conflict("流水线条目版本冲突", conflictDetailsForCase(current, fromStage));
     }
 
     const toStage = input.toStageId
@@ -3254,7 +3254,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
     }
     const toConfig = stageConfig(toStage);
     if (toConfig.autonomy === "auto") {
-      throw unprocessable("Pipeline auto autonomy is not enabled", { code: "autonomy_not_enabled" });
+      throw unprocessable("流水线未启用自动自治", { code: "autonomy_not_enabled" });
     }
     let forcedTransition = false;
     if (pipeline.enforceTransitions && fromStage.id !== toStage.id) {
@@ -3273,7 +3273,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       if (!allowed) {
         const reason = input.reason?.trim() ?? "";
         if (input.force !== true || reason.length === 0) {
-          throw conflict("Pipeline transition is not allowed", { code: "transition_not_allowed" });
+          throw conflict("不允许此流水线阶段流转", { code: "transition_not_allowed" });
         }
         forcedTransition = true;
       }
@@ -3300,7 +3300,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       .returning();
     if (!updated) {
       const latest = await getCaseWithStageOrThrow(tx, input.companyId, input.caseId);
-      throw conflict("Pipeline case version conflict", conflictDetailsForCase(latest.case, latest.stage));
+      throw conflict("流水线条目版本冲突", conflictDetailsForCase(latest.case, latest.stage));
     }
 
     const event = await writeCaseEvent(tx, {
@@ -3442,7 +3442,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         companyId,
         caseId: ancestor.case.id,
         roles: ["origin", "conversation"],
-        body: `All child cases for pipeline case "${ancestor.case.title}" are terminal. Rollup: ${rollup.done} done, ${rollup.cancelled} cancelled, ${rollup.open} open.`,
+        body: `流水线条目“${ancestor.case.title}”的所有子条目均已结束。汇总：${rollup.done} 个已完成，${rollup.cancelled} 个已取消，${rollup.open} 个未结束。`,
       });
 
       const toStageKey = gate.autoAdvanceOnChildrenTerminal;
@@ -3541,7 +3541,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         }
 
         if (!insertedStages.some((stage) => stage.kind === "done") || !insertedStages.some((stage) => stage.kind === "cancelled")) {
-          throw unprocessable("Pipeline must include at least one done stage and one cancelled stage", { code: "validation" });
+          throw unprocessable("流水线必须至少包含一个完成阶段和一个取消阶段", { code: "validation" });
         }
 
         if (!input.stages?.length) {
@@ -3687,7 +3687,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           })
           .where(and(eq(pipelineStages.id, input.stageId), eq(pipelineStages.pipelineId, input.pipelineId)))
           .returning();
-        if (!updated) throw notFound("Pipeline stage not found");
+        if (!updated) throw notFound("未找到流水线阶段");
         if (nextRoutineId) {
           await stampPipelineAutomationRoutine(tx, {
             companyId: input.companyId,
@@ -3721,7 +3721,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       const stage = await getStageOrThrow(db, input.pipelineId, input.stageId);
       const routineId = stageAutomationRoutineIdFromConfig(stageConfig(stage));
       if (!routineId) {
-        throw unprocessable("Pipeline stage does not have automation configured", {
+        throw unprocessable("流水线阶段未配置自动化", {
           code: "stage_automation_required",
         });
       }
@@ -3741,15 +3741,15 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           .from(routines)
           .where(and(eq(routines.id, routineId), eq(routines.companyId, input.companyId)))
           .then((rows) => rows[0] ?? null);
-        if (!locked) throw notFound("Pipeline stage automation routine not found");
+        if (!locked) throw notFound("未找到流水线阶段自动化例程");
         if (!locked.assigneeAgentId) {
-          throw unprocessable("Pipeline stage automation must have an assignee before env can be saved", {
+          throw unprocessable("保存环境变量前，流水线阶段自动化必须设置负责人", {
             code: "stage_automation_assignee_required",
             routineId,
           });
         }
         if (input.baseRoutineRevisionId && input.baseRoutineRevisionId !== locked.latestRevisionId) {
-          throw conflict("Stage automation routine was updated by someone else", {
+          throw conflict("阶段自动化例程已被其他人更新", {
             currentRoutineRevisionId: locked.latestRevisionId,
           });
         }
@@ -3764,12 +3764,12 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           })
           .where(and(eq(routines.id, locked.id), eq(routines.companyId, input.companyId)))
           .returning();
-        if (!routineWithEnv) throw notFound("Pipeline stage automation routine not found");
+        if (!routineWithEnv) throw notFound("未找到流水线阶段自动化例程");
         const routineWithRevision = await appendPipelineAutomationRoutineRevision(
           txDb,
           routineWithEnv,
           input.actor,
-          "Updated pipeline stage secrets",
+          "已更新流水线阶段密钥",
         );
         await secretsSvc.syncEnvBindingsForTarget(
           input.companyId,
@@ -3822,7 +3822,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           .from(pipelineCases)
           .where(and(eq(pipelineCases.pipelineId, input.pipelineId), eq(pipelineCases.stageId, stage.id)));
         if (casesInStage.length > 0 && !targetStage) {
-          throw unprocessable("Cannot delete a stage that holds cases without moveCasesToStageId", { code: "stage_has_cases" });
+          throw unprocessable("阶段仍包含条目；必须提供 moveCasesToStageId 才能删除", { code: "stage_has_cases" });
         }
         if (targetStage) {
           const movedCases = await tx
@@ -3925,7 +3925,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       const automationLedgers: Array<typeof pipelineAutomationExecutions.$inferSelect> = [];
       const result = await db.transaction(async (tx) => {
         const pipeline = await getPipelineOrThrow(tx, input.companyId, input.pipelineId);
-        if (pipeline.archivedAt) throw unprocessable("Pipeline is archived", { code: "pipeline_archived" });
+        if (pipeline.archivedAt) throw unprocessable("流水线已归档", { code: "pipeline_archived" });
         const requestKey = input.requestKey?.trim() || null;
         const parentCase = await assertValidParentCase(tx, { companyId: input.companyId, parentCaseId: input.parentCaseId ?? null });
         if (requestKey && !input.parentCaseId) {
@@ -3970,7 +3970,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
             .orderBy(asc(pipelineStages.position), asc(pipelineStages.createdAt))
             .limit(1)
             .then((rows) => rows[0] ?? null);
-        if (!stage) throw unprocessable("Pipeline has no stages", { code: "validation" });
+        if (!stage) throw unprocessable("流水线没有任何阶段", { code: "validation" });
         assertStageEnabled(stage, "ingest");
         validateAddFormFieldsForStage(stage, input.fields ?? {});
 
@@ -4018,7 +4018,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
             .where(and(eq(pipelineCases.pipelineId, input.pipelineId), eq(pipelineCases.caseKey, caseKey)))
             .limit(1)
             .then((rows) => rows[0] ?? null);
-          if (!existing) throw conflict("Pipeline case ingest conflict", { code: "ingest_conflict" });
+          if (!existing) throw conflict("流水线条目导入冲突", { code: "ingest_conflict" });
           return { case: existing, created: false };
         }
 
@@ -4099,7 +4099,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       actor: PipelineActor;
     }) {
       if (input.items.length > MAX_BATCH_INGEST) {
-        throw unprocessable("Batch ingest supports at most 200 items", { code: "validation" });
+        throw unprocessable("批量导入最多支持 200 个条目", { code: "validation" });
       }
       type BatchIngestResult =
         | Awaited<ReturnType<typeof service.ingestCase>> & { ok: true }
@@ -4189,12 +4189,12 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
             error: cyclicKeys.length === missingKeys.length
               ? {
                 status: 409,
-                message: "Pipeline blocker cycle detected",
+                message: "检测到流水线阻塞循环",
                 details: { code: "blocker_cycle", blockedByCaseKeys: missingKeys },
               }
               : {
                 status: 404,
-                message: "Pipeline blocker case key not found",
+                message: "未找到流水线阻塞条目键",
                 details: {
                   code: "blocker_case_key_not_found",
                   missingCaseKeys: missingKeys.filter((blockedByCaseKey) => !cyclicKeys.includes(blockedByCaseKey)),
@@ -4208,7 +4208,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       return results.map((result, index) => result ?? {
         ok: false as const,
         caseKey: input.items[index]?.caseKey ?? null,
-        error: { status: 500, message: "Unknown error", details: { code: "unknown" } },
+        error: { status: 500, message: "未知错误", details: { code: "unknown" } },
       });
     },
 
@@ -4224,13 +4224,13 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       actor: PipelineActor;
     }) {
       if (input.items.length > MAX_BATCH_INGEST) {
-        throw unprocessable("Breakdown supports at most 200 items", { code: "validation" });
+        throw unprocessable("拆解最多支持 200 个条目", { code: "validation" });
       }
       const detail = await getCaseWithStageOrThrow(db, input.companyId, input.caseId);
       const currentStageConfig = readBreakdownConfig(stageConfig(detail.stage));
       const config = currentStageConfig ?? await latestCompletedBreakdownConfig(db, input.companyId, input.caseId);
       if (!config) {
-        throw unprocessable("This pipeline stage is not configured for breakdown", { code: "breakdown_not_configured" });
+        throw unprocessable("当前流水线阶段未配置拆解", { code: "breakdown_not_configured" });
       }
       const replayingCompletedBreakdown = currentStageConfig === null;
       const { targetPipeline, targetStage } = await loadBreakdownTarget(db, input.companyId, config);
@@ -4239,9 +4239,9 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       const inheritedFields = await inheritedBreakdownFields(db, input.companyId, detail.case, config);
       const items = input.items.map((item) => {
         const key = item.key.trim();
-        if (!key) throw unprocessable("Breakdown item key is required", { code: "validation" });
-        if (key.length > 200) throw unprocessable("Breakdown item key must be at most 200 characters", { code: "validation" });
-        if (seenKeys.has(key)) throw unprocessable("Breakdown item keys must be unique", { code: "duplicate_breakdown_key", itemKey: key });
+        if (!key) throw unprocessable("拆解条目必须设置键", { code: "validation" });
+        if (key.length > 200) throw unprocessable("拆解条目键最多 200 个字符", { code: "validation" });
+        if (seenKeys.has(key)) throw unprocessable("拆解条目键必须唯一", { code: "duplicate_breakdown_key", itemKey: key });
         seenKeys.add(key);
         const fields = { ...inheritedFields, ...(item.fields ?? {}) };
         assertJsonSize(fields, "fields");
@@ -4265,7 +4265,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       const failed = results.find((result) => !result.ok);
       if (failed && !failed.ok) {
         const status = typeof failed.error.status === "number" ? failed.error.status : 422;
-        const message = typeof failed.error.message === "string" ? failed.error.message : "Breakdown item failed";
+        const message = typeof failed.error.message === "string" ? failed.error.message : "拆解条目失败";
         throw new HttpError(status, message, failed.error.details);
       }
 
@@ -4345,7 +4345,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       return db.transaction(async (tx) => {
         const { case: current, stage } = await getCaseWithStageForUpdateOrThrow(tx, input.companyId, input.caseId);
         if (input.expectedVersion !== undefined && current.version !== input.expectedVersion) {
-          throw conflict("Pipeline case version conflict", conflictDetailsForCase(current, stage));
+          throw conflict("流水线条目版本冲突", conflictDetailsForCase(current, stage));
         }
         const unresolvedDrift = await listUnresolvedDriftEvents(tx, {
           companyId: input.companyId,
@@ -4380,7 +4380,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         const { case: existing } = await getCaseWithStageOrThrow(tx, input.companyId, input.caseId);
         const current = await expireLeaseIfNeeded(tx, existing, { type: "system" });
         if (hasValidLease(current) && !actorOwnsLease(current, input.actor, null)) {
-          throw conflict("Pipeline case lease is held", { code: "lease_held", lease: leaseOwner(current) });
+          throw conflict("流水线条目租约已被占用", { code: "lease_held", lease: leaseOwner(current) });
         }
         const leaseMs = Math.min(Math.max(input.leaseMs ?? DEFAULT_LEASE_MS, 1_000), MAX_LEASE_MS);
         const token = randomUUID();
@@ -4419,7 +4419,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         const { case: existing } = await getCaseWithStageOrThrow(tx, input.companyId, input.caseId);
         const current = await expireLeaseIfNeeded(tx, existing, { type: "system" });
         if (!input.force && hasValidLease(current) && !actorOwnsLease(current, input.actor, input.leaseToken)) {
-          throw conflict("Pipeline case lease is held", { code: "lease_held", lease: leaseOwner(current) });
+          throw conflict("流水线条目租约已被占用", { code: "lease_held", lease: leaseOwner(current) });
         }
         const [updated] = await tx
           .update(pipelineCases)
@@ -4488,7 +4488,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         .orderBy(sql`case when ${pipelineAutomationExecutions.status} = 'failed' then 0 else 1 end`, asc(pipelineAutomationExecutions.createdAt))
         .limit(1)
         .then((rows) => rows[0] ?? null);
-      if (!execution) throw notFound("Pipeline automation execution not found");
+      if (!execution) throw notFound("未找到流水线自动化执行记录");
       return executeAutomationLedger(execution.id, input.actor);
     },
 
@@ -4518,7 +4518,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       const result = await db.transaction(async (tx) => {
         const detail = await getCaseWithStageForUpdateOrThrow(tx, input.companyId, input.caseId);
         if (detail.case.version !== input.expectedVersion) {
-          throw conflict("Pipeline case version conflict", {
+          throw conflict("流水线条目版本冲突", {
             code: "version_conflict",
             expectedVersion: input.expectedVersion,
             actualVersion: detail.case.version,
@@ -4531,7 +4531,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           targetStageId: input.targetStageId,
         });
         if (!plan.allowed || !plan.targetStageRow || !plan.automationId || !plan.automationRoutineId) {
-          throw unprocessable("Pipeline automation retry is not currently allowed", {
+          throw unprocessable("当前不允许重试流水线自动化", {
             code: "automation_retry_not_allowed",
             blockers: plan.blockers,
           });
@@ -4561,7 +4561,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           generation: plan.generation,
         });
         if (!ledger) {
-          throw unprocessable("Target stage does not have entry automation configured", {
+          throw unprocessable("目标阶段未配置进入阶段时的自动化", {
             code: "automation_not_configured",
           });
         }
@@ -4750,7 +4750,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         const detail = await getCaseWithStageForUpdateOrThrow(tx, input.companyId, input.caseId);
         const automation = stageAutomation(detail.stage);
         if (!automation) {
-          throw unprocessable("Current stage does not have entry automation configured", {
+          throw unprocessable("当前阶段未配置进入阶段时的自动化", {
             code: "automation_not_configured",
           });
         }
@@ -4775,7 +4775,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           eventId: event.id,
         });
         if (!nextLedger) {
-          throw unprocessable("Current stage does not have entry automation configured", {
+          throw unprocessable("当前阶段未配置进入阶段时的自动化", {
             code: "automation_not_configured",
           });
         }
@@ -4840,7 +4840,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
         const { case: existing } = await getCaseWithStageOrThrow(tx, input.companyId, input.caseId);
         const suggestion = existing.pendingSuggestion;
         if (!suggestion || suggestion.id !== input.suggestionId) {
-          throw conflict("Pipeline suggestion is not pending", { code: "suggestion_not_pending" });
+          throw conflict("流水线建议不处于待处理状态", { code: "suggestion_not_pending" });
         }
         if (input.decision === "dismiss") {
           const [updated] = await tx
@@ -4918,7 +4918,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
       const result = await db.transaction(async (tx) => {
         const detail = await getCaseWithStageOrThrow(tx, input.companyId, input.caseId);
         if (detail.stage.kind !== "review") {
-          throw unprocessable("Pipeline case is not in a review stage", { code: "validation" });
+          throw unprocessable("流水线条目不在审核阶段", { code: "validation" });
         }
         const config = reviewConfigForStage(detail.stage);
         assertActorCanApproveStageExit(detail.stage, input.actor);
@@ -4926,7 +4926,7 @@ export function pipelineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeu
           (input.decision === "request_changes" && config.requireRequestChangesReason !== false) ||
           (input.decision === "reject" && config.requireRejectReason !== false);
         if (reasonRequired && !input.reason?.trim()) {
-          throw unprocessable("Review decision reason is required", { code: "validation" });
+          throw unprocessable("必须填写审核决定原因", { code: "validation" });
         }
         const toStageKey = targetStageKeyForReviewDecision(config, input.decision);
         const suggestionId = detail.case.pendingSuggestion?.id ?? null;

@@ -1055,7 +1055,7 @@ describeEmbeddedPostgres("pipelineService", () => {
     const comments = await db.select().from(issueComments).where(eq(issueComments.issueId, linkedIssue!.id));
     expect(comments).toHaveLength(1);
     expect(comments[0]!.authorType).toBe("system");
-    expect(comments[0]!.body).toContain("All child cases");
+    expect(comments[0]!.body).toContain("所有子条目均已结束");
   });
 
   it("auto-advances a parent when all descendants are terminal", async () => {
