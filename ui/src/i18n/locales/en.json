@@ -11646,6 +11646,18 @@
     "dirty_changes_quarantined_task_resume_0cd00026": "Dirty changes were quarantined onto a rescue branch and the recorded branch restored; the task will resume.",
     "recorded_branch_matches_task_resume_0cd00027": "The recorded branch now matches the live branch; the task will resume.",
     "agent_chat_disabled_in_experimental_0cd00028": "Agent Chat is disabled in Experimental settings.",
-    "couldnt_check_task_paused_refresh_0cd00029": "Couldn’t check whether this task is paused. Refresh to try again."
+    "couldnt_check_task_paused_refresh_0cd00029": "Couldn’t check whether this task is paused. Refresh to try again.",
+    "run_exited_with_error_0ce00001": "Run exited with an error.",
+    "failed_to_approve_0ce00002": "Failed to approve",
+    "failed_to_reject_0ce00003": "Failed to reject",
+    "failed_to_archive_task_0ce00004": "Failed to archive task",
+    "failed_to_undo_inbox_archive_0ce00005": "Failed to undo inbox archive",
+    "live_runs_only_filter_0ce00006": "Live runs only — tasks currently connected to an agent run.",
+    "active_statuses_filter_0ce00007": "Active statuses — open tasks, whether or not an agent is running.",
+    "no_inbox_items_match_search_0ce00008": "No inbox items match your search.",
+    "inbox_zero_0ce00009": "Inbox zero.",
+    "no_new_inbox_items_0ce00010": "No new inbox items.",
+    "no_recent_inbox_items_0ce00011": "No recent inbox items.",
+    "no_inbox_items_match_filters_0ce00012": "No inbox items match these filters."
   }
 }

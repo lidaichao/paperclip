@@ -11646,6 +11646,18 @@
     "dirty_changes_quarantined_task_resume_0cd00026": "未提交的改动已隔离到救援分支，并恢复了已记录分支；任务将继续执行。",
     "recorded_branch_matches_task_resume_0cd00027": "已记录分支现已与当前分支一致；任务将继续执行。",
     "agent_chat_disabled_in_experimental_0cd00028": "实验功能设置中已关闭智能体对话。",
-    "couldnt_check_task_paused_refresh_0cd00029": "无法确认此任务是否已暂停，请刷新后重试。"
+    "couldnt_check_task_paused_refresh_0cd00029": "无法确认此任务是否已暂停，请刷新后重试。",
+    "run_exited_with_error_0ce00001": "运行已出错退出。",
+    "failed_to_approve_0ce00002": "批准失败",
+    "failed_to_reject_0ce00003": "拒绝失败",
+    "failed_to_archive_task_0ce00004": "归档任务失败",
+    "failed_to_undo_inbox_archive_0ce00005": "撤销收件箱归档失败",
+    "live_runs_only_filter_0ce00006": "仅显示实时运行——当前已连接到智能体运行的任务。",
+    "active_statuses_filter_0ce00007": "仅显示活动状态——所有未关闭任务，无论智能体是否正在运行。",
+    "no_inbox_items_match_search_0ce00008": "没有符合搜索条件的收件箱条目。",
+    "inbox_zero_0ce00009": "收件箱已清空。",
+    "no_new_inbox_items_0ce00010": "暂无新收件箱条目。",
+    "no_recent_inbox_items_0ce00011": "暂无最近的收件箱条目。",
+    "no_inbox_items_match_filters_0ce00012": "没有符合当前筛选条件的收件箱条目。"
   }
 }

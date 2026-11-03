@@ -233,6 +233,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.pause_released_tasks_failed_0cd00014).toContain("{{v0}} 个任务");
     expect(messages.reissue_isolated_title_0cd00025).toBe("隔离环境重新派发：{{v0}}");
     expect(messages.agent_chat_disabled_in_experimental_0cd00028).toContain("智能体对话");
+    expect(messages.run_exited_with_error_0ce00001).toContain("出错退出");
+    expect(messages.live_runs_only_filter_0ce00006).toContain("实时运行");
+    expect(messages.inbox_zero_0ce00009).toBe("收件箱已清空。");
+    expect(messages.no_inbox_items_match_filters_0ce00012).toContain("筛选条件");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

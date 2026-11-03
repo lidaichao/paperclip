@@ -221,7 +221,9 @@ function firstNonEmptyLine(value: string | null | undefined): string | null {
 }
 
 function runFailureMessage(run: HeartbeatRun): string {
-  return firstNonEmptyLine(run.error) ?? firstNonEmptyLine(run.stderrExcerpt) ?? "Run exited with an error.";
+  return firstNonEmptyLine(run.error)
+    ?? firstNonEmptyLine(run.stderrExcerpt)
+    ?? l10n("local.run_exited_with_error_0ce00001");
 }
 
 function approvalStatusLabel(status: Approval["status"]): string {
@@ -727,7 +729,7 @@ export function Inbox() {
   const issueLinkState = useMemo(
     () =>
       createIssueDetailLocationState(
-        "Inbox",
+        l10n("local.inbox_94835ea2"),
         `${location.pathname}${location.search}${location.hash}`,
         "inbox",
       ),
@@ -1028,7 +1030,9 @@ export function Inbox() {
     if (currentUserId) {
       options.set(`user:${currentUserId}`, {
         id: `user:${currentUserId}`,
-        label: currentUserId === "local-board" ? "Board" : "Me",
+        label: currentUserId === "local-board"
+          ? l10n("local.board_4816cbfd")
+          : l10n("local.me_d30af076"),
         kind: "user",
         searchText: currentUserId === "local-board" ? "board me human local-board" : `me board human ${currentUserId}`,
       });
@@ -1616,7 +1620,9 @@ export function Inbox() {
       navigate(`/approvals/${id}?resolved=approved`);
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to approve");
+      setActionError(
+        err instanceof Error ? err.message : l10n("local.failed_to_approve_0ce00002"),
+      );
     },
   });
 
@@ -1627,7 +1633,9 @@ export function Inbox() {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(selectedCompanyId!) });
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to reject");
+      setActionError(
+        err instanceof Error ? err.message : l10n("local.failed_to_reject_0ce00003"),
+      );
     },
   });
 
@@ -1642,7 +1650,11 @@ export function Inbox() {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to approve join request");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : l10n("local.failed_to_approve_join_request_3b65e5b7"),
+      );
     },
   });
 
@@ -1655,7 +1667,11 @@ export function Inbox() {
       queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(selectedCompanyId!) });
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to reject join request");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : l10n("local.failed_to_reject_join_request_4d68f6e1"),
+      );
     },
   });
 
@@ -1756,7 +1772,11 @@ export function Inbox() {
       return { companyId: selectedCompanyId, previousData };
     },
     onError: (err, id, context) => {
-      setActionError(err instanceof Error ? err.message : "Failed to archive task");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : l10n("local.failed_to_archive_task_0ce00004"),
+      );
       if (context?.companyId) clearLocalInboxArchive(context.companyId, id);
       setArchivingIssueIds((prev) => {
         const next = new Set(prev);
@@ -1797,7 +1817,11 @@ export function Inbox() {
       return { companyId: selectedCompanyId };
     },
     onError: (err, id, context) => {
-      setActionError(err instanceof Error ? err.message : "Failed to undo inbox archive");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : l10n("local.failed_to_undo_inbox_archive_0ce00005"),
+      );
       if (context?.companyId) {
         beginLocalInboxArchive(context.companyId, id);
         boundLocalInboxArchive(context.companyId, id);
@@ -2465,11 +2489,13 @@ export function Inbox() {
                 <PopoverContent align="end" className="w-40 p-2">
                   <div className="space-y-0.5">
                     {([
-                      ["none", "None"],
-                      ["type", "Type"],
-                      ["assignee", "Responsible"],
-                      ["project", "Project"],
-                      ...(isolatedWorkspacesEnabled ? ([["workspace", "Workspace"]] as const) : []),
+                      ["none", l10n("local.none_140bedbf")],
+                      ["type", l10n("local.type_1303c06b")],
+                      ["assignee", l10n("local.responsible_bc110a6d")],
+                      ["project", l10n("local.project_244210e4")],
+                      ...(isolatedWorkspacesEnabled
+                        ? ([["workspace", l10n("local.workspace_21a3230e")]] as const)
+                        : []),
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}
@@ -2605,14 +2631,14 @@ export function Inbox() {
           icon={searchQuery.trim() ? Search : InboxIcon}
           message={
             searchQuery.trim()
-              ? "No inbox items match your search."
+              ? l10n("local.no_inbox_items_match_search_0ce00008")
               : tab === "mine"
-              ? "Inbox zero."
+              ? l10n("local.inbox_zero_0ce00009")
               : tab === "unread"
-              ? "No new inbox items."
+              ? l10n("local.no_new_inbox_items_0ce00010")
               : tab === "recent"
-                ? "No recent inbox items."
-                : "No inbox items match these filters."
+                ? l10n("local.no_recent_inbox_items_0ce00011")
+                : l10n("local.no_inbox_items_match_filters_0ce00012")
           }
         />
       )}
