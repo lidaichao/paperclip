@@ -11083,6 +11083,14 @@
     "trigger_added_value_b08a772c": "Trigger added ({{v0}})",
     "trigger_value_aa9d76d0": "Trigger {{v0}}",
     "enabled_lowercase_5ff6cead": "enabled",
-    "disabled_lowercase_e31ca9bf": "disabled"
+    "disabled_lowercase_e31ca9bf": "disabled",
+    "enabled_skills_materialized_alice_bundle_b3af24c0": "Enabled skills are materialized into the stable Alice-managed prompt bundle on the agent's next run.",
+    "kept_in_workspace_531a390d": "Kept in workspace",
+    "applied_on_next_run_ddcedb38": "Applied on next run",
+    "tracked_only_0b95239c": "Tracked only",
+    "alice_cannot_manage_custom_acp_skills_5e0be10b": "Alice cannot manage skills for custom ACP commands yet.",
+    "alice_cannot_manage_openclaw_skills_b98627a5": "Alice cannot manage OpenClaw skills here. Visit your OpenClaw instance to manage this agent's skills.",
+    "alice_cannot_manage_adapter_skills_e812f5a6": "Alice cannot manage skills for this adapter yet. Manage them in the adapter directly.",
+    "alice_runner_cannot_attach_legacy_skill_1d4c9229": "Alice Runner uses native semantic coordination and cannot attach the legacy Paperclip operational skill."
   }
 }

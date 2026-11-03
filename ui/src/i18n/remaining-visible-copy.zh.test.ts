@@ -102,5 +102,8 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.environment_secret_key_faa91bf7).toBe("环境变量 {{v0}} 的密钥");
     expect(messages.environment_keys_changed_many_7278f62e).toBe("修改 {{v0}} 个环境变量");
     expect(messages.trigger_removed_value_b5ed4db8).toBe("移除触发器（{{v0}}）");
+    expect(messages.enabled_skills_materialized_alice_bundle_b3af24c0).toContain("由 Alice 管理");
+    expect(messages.applied_on_next_run_ddcedb38).toBe("下次运行时应用");
+    expect(messages.alice_cannot_manage_openclaw_skills_b98627a5).toContain("请前往你的 OpenClaw 实例");
   });
 });

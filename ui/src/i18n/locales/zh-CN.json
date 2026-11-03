@@ -11083,6 +11083,14 @@
     "trigger_added_value_b08a772c": "新增触发器（{{v0}}）",
     "trigger_value_aa9d76d0": "触发器 {{v0}}",
     "enabled_lowercase_5ff6cead": "已启用",
-    "disabled_lowercase_e31ca9bf": "已禁用"
+    "disabled_lowercase_e31ca9bf": "已禁用",
+    "enabled_skills_materialized_alice_bundle_b3af24c0": "已启用技能将在智能体下次运行时写入由 Alice 管理的稳定提示词包。",
+    "kept_in_workspace_531a390d": "保留在工作区",
+    "applied_on_next_run_ddcedb38": "下次运行时应用",
+    "tracked_only_0b95239c": "仅跟踪记录",
+    "alice_cannot_manage_custom_acp_skills_5e0be10b": "Alice 暂不支持管理自定义 ACP 命令的技能。",
+    "alice_cannot_manage_openclaw_skills_b98627a5": "Alice 无法在此管理 OpenClaw 技能。请前往你的 OpenClaw 实例管理此智能体的技能。",
+    "alice_cannot_manage_adapter_skills_e812f5a6": "Alice 暂不支持管理此适配器的技能。请直接在适配器中管理。",
+    "alice_runner_cannot_attach_legacy_skill_1d4c9229": "Alice Runner 使用原生语义协作机制，无法附加旧版 Paperclip 操作技能。"
   }
 }
