@@ -5,10 +5,10 @@ import { parseHostnameCsv } from "../config/hostnames.js";
 import { buildCustomServerConfig, buildPresetServerConfig, inferConfiguredBind } from "../config/server-bind.js";
 
 const TAILNET_BIND_WARNING =
-  "No Tailscale address was detected during setup. The saved config will stay on loopback until Tailscale is available or PAPERCLIP_TAILNET_BIND_HOST is set.";
+  "设置时未检测到 Tailscale 地址。Alice 将继续使用本机回环地址，直到 Tailscale 可用或已设置 PAPERCLIP_TAILNET_BIND_HOST。";
 
 function cancelled(): never {
-  p.cancel("Setup cancelled.");
+  p.cancel("已取消设置。");
   process.exit(0);
 }
 
@@ -21,27 +21,27 @@ export async function promptServer(opts?: {
   const currentBind = inferConfiguredBind(currentServer);
 
   const bindSelection = await p.select({
-    message: "Reachability",
+    message: "访问范围",
     options: [
       {
         value: "loopback" as const,
-        label: "Trusted local",
-        hint: "Recommended for first run: localhost only, no login friction",
+        label: "受信任的本机访问",
+        hint: "首次运行推荐：仅限本机，无需登录",
       },
       {
         value: "lan" as const,
-        label: "Private network",
-        hint: "Broad private bind for LAN, VPN, or legacy --tailscale-auth style access",
+        label: "私有网络",
+        hint: "适用于局域网、VPN 或旧版 --tailscale-auth 访问方式",
       },
       {
         value: "tailnet" as const,
         label: "Tailnet",
-        hint: "Private authenticated access using the machine's detected Tailscale address",
+        hint: "使用本机检测到的 Tailscale 地址进行私有认证访问",
       },
       {
         value: "custom" as const,
-        label: "Custom",
-        hint: "Choose exact auth mode, exposure, and host manually",
+        label: "自定义",
+        hint: "手动选择认证模式、开放范围和主机",
       },
     ],
     initialValue: currentBind,
@@ -52,7 +52,7 @@ export async function promptServer(opts?: {
 
   const portDefault = String(currentServer?.port ?? 3100);
   const portStr = await p.text({
-    message: "Server port",
+    message: "服务器端口",
     defaultValue: portDefault,
     placeholder: "3100",
     validate: (val) => {
@@ -61,7 +61,7 @@ export async function promptServer(opts?: {
       // that will actually be submitted — the typed input, or the default.
       const n = Number(val || portDefault);
       if (isNaN(n) || n < 1 || n > 65535 || !Number.isInteger(n)) {
-        return "Must be an integer between 1 and 65535";
+        return "必须填写 1 到 65535 之间的整数";
       }
     },
   });
@@ -80,7 +80,7 @@ export async function promptServer(opts?: {
 
   if (bind === "lan" || bind === "tailnet") {
     const allowedHostnamesInput = await p.text({
-      message: "Allowed private hostnames (comma-separated, optional)",
+      message: "允许的私有主机名（用逗号分隔，可选）",
       defaultValue: (currentServer?.allowedHostnames ?? []).join(", "),
       placeholder:
         bind === "tailnet"
@@ -91,7 +91,7 @@ export async function promptServer(opts?: {
           parseHostnameCsv(val ?? "");
           return;
         } catch (err) {
-          return err instanceof Error ? err.message : "Invalid hostname list";
+          return err instanceof Error ? err.message : "主机名列表无效";
         }
       },
     });
@@ -110,17 +110,17 @@ export async function promptServer(opts?: {
   }
 
   const deploymentModeSelection = await p.select({
-    message: "Auth mode",
+    message: "认证模式",
     options: [
       {
         value: "local_trusted",
-        label: "Local trusted",
-        hint: "No login required; only safe with loopback-only or similarly trusted access",
+        label: "受信任的本机模式",
+        hint: "无需登录；仅限回环地址或同等可信的访问环境",
       },
       {
         value: "authenticated",
-        label: "Authenticated",
-        hint: "Login required; supports both private-network and public deployments",
+        label: "登录认证",
+        hint: "需要登录；支持私有网络和公网部署",
       },
     ],
     initialValue: currentServer?.deploymentMode ?? "authenticated",
@@ -132,17 +132,17 @@ export async function promptServer(opts?: {
   let exposure: ServerConfig["exposure"] = "private";
   if (deploymentMode === "authenticated") {
     const exposureSelection = await p.select({
-      message: "Exposure profile",
+      message: "开放范围",
       options: [
         {
           value: "private",
-          label: "Private network",
-          hint: "Private access only, with automatic URL handling",
+          label: "私有网络",
+          hint: "仅允许私有访问，并自动处理网址",
         },
         {
           value: "public",
-          label: "Public internet",
-          hint: "Internet-facing deployment with explicit public URL requirements",
+          label: "公网",
+          hint: "面向互联网部署，必须明确配置公网网址",
         },
       ],
       initialValue: currentServer?.exposure ?? "private",
@@ -156,14 +156,14 @@ export async function promptServer(opts?: {
     currentServer?.host ??
     (deploymentMode === "local_trusted" ? "127.0.0.1" : "0.0.0.0");
   const host = await p.text({
-    message: "Bind host",
+    message: "绑定主机",
     defaultValue: defaultHost,
     placeholder: defaultHost,
     validate: (val) => {
       const candidate = (val || defaultHost).trim();
-      if (!candidate) return "Host is required";
+      if (!candidate) return "必须填写主机";
       if (deploymentMode === "local_trusted" && !isLoopbackHost(candidate)) {
-        return "Local trusted mode requires a loopback host such as 127.0.0.1";
+        return "受信任的本机模式必须使用 127.0.0.1 等回环地址";
       }
     },
   });
@@ -173,7 +173,7 @@ export async function promptServer(opts?: {
   let allowedHostnames: string[] = [];
   if (deploymentMode === "authenticated" && exposure === "private") {
     const allowedHostnamesInput = await p.text({
-      message: "Allowed private hostnames (comma-separated, optional)",
+      message: "允许的私有主机名（用逗号分隔，可选）",
       defaultValue: (currentServer?.allowedHostnames ?? []).join(", "),
       placeholder: "dotta-macbook-pro, your-host.tailnet.ts.net",
       validate: (val) => {
@@ -181,7 +181,7 @@ export async function promptServer(opts?: {
           parseHostnameCsv(val ?? "");
           return;
         } catch (err) {
-          return err instanceof Error ? err.message : "Invalid hostname list";
+          return err instanceof Error ? err.message : "主机名列表无效";
         }
       },
     });
@@ -194,20 +194,20 @@ export async function promptServer(opts?: {
   if (deploymentMode === "authenticated" && exposure === "public") {
     const publicBaseUrlDefault = currentAuth?.publicBaseUrl ?? "";
     const urlInput = await p.text({
-      message: "Public base URL",
+      message: "公网基础网址",
       defaultValue: publicBaseUrlDefault,
-      placeholder: "https://paperclip.example.com",
+      placeholder: "https://alice.example.com",
       validate: (val) => {
         const candidate = (val || publicBaseUrlDefault).trim();
-        if (!candidate) return "Public base URL is required for public exposure";
+        if (!candidate) return "公网部署必须填写公网基础网址";
         try {
           const url = new URL(candidate);
           if (url.protocol !== "http:" && url.protocol !== "https:") {
-            return "URL must start with http:// or https://";
+            return "网址必须以 http:// 或 https:// 开头";
           }
           return;
         } catch {
-          return "Enter a valid URL";
+          return "请输入有效网址";
         }
       },
     });

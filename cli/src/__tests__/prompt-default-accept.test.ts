@@ -103,7 +103,7 @@ describe("promptDatabase accepts defaults", () => {
     queueSelects(["embedded-postgres"]);
     await promptDatabase();
 
-    const port = validatorFor("Embedded PostgreSQL port");
+    const port = validatorFor("内置 PostgreSQL 端口");
     expect(port("")).toBeUndefined();
     expect(port(undefined)).toBeUndefined();
     expect(port("54329")).toBeUndefined();
@@ -111,19 +111,19 @@ describe("promptDatabase accepts defaults", () => {
     expect(port("70000")).toBeTruthy();
     expect(port("abc")).toBeTruthy();
 
-    const interval = validatorFor("Backup interval (minutes)");
+    const interval = validatorFor("备份间隔（分钟）");
     expect(interval("")).toBeUndefined();
     expect(interval("60")).toBeUndefined();
     expect(interval("0")).toBeTruthy();
     expect(interval("999999")).toBeTruthy();
 
-    const retention = validatorFor("Backup retention (days)");
+    const retention = validatorFor("备份保留时间（天）");
     expect(retention("")).toBeUndefined();
     expect(retention("30")).toBeUndefined();
     expect(retention("0")).toBeTruthy();
     expect(retention("99999")).toBeTruthy();
 
-    const backupDir = validatorFor("Backup directory");
+    const backupDir = validatorFor("备份目录");
     expect(backupDir("")).toBeUndefined();
     expect(backupDir("   ")).toBeTruthy();
   });
@@ -139,9 +139,9 @@ describe("promptDatabase accepts defaults", () => {
   it("still requires a connection string when no saved default exists", async () => {
     queueSelects(["postgres"]);
 
-    await expect(promptDatabase()).rejects.toThrow(/Connection string is required/);
+    await expect(promptDatabase()).rejects.toThrow(/必须填写连接字符串/);
 
-    const connection = validatorFor("PostgreSQL connection string");
+    const connection = validatorFor("PostgreSQL 连接字符串");
     expect(connection("postgres://user:pass@localhost:5432/paperclip")).toBeUndefined();
     expect(connection("mysql://nope")).toBeTruthy();
   });
@@ -155,7 +155,7 @@ describe("promptServer accepts defaults", () => {
 
     expect(server.port).toBe(3100);
 
-    const port = validatorFor("Server port");
+    const port = validatorFor("服务器端口");
     expect(port("")).toBeUndefined();
     expect(port("8443")).toBeUndefined();
     expect(port("0")).toBeTruthy();
@@ -181,7 +181,7 @@ describe("promptServer accepts defaults", () => {
   it("still rejects accepting a non-loopback saved host in local_trusted mode", async () => {
     queueSelects(["custom", "local_trusted"]);
 
-    await expect(promptServer({ currentServer: { host: "0.0.0.0" } })).rejects.toThrow(/loopback/);
+    await expect(promptServer({ currentServer: { host: "0.0.0.0" } })).rejects.toThrow(/回环地址/);
   });
 
   it("accepts the saved public base URL default when reconfiguring a public deployment", async () => {
@@ -198,9 +198,9 @@ describe("promptServer accepts defaults", () => {
   it("still requires a public base URL when no saved default exists", async () => {
     queueSelects(["custom", "authenticated", "public"]);
 
-    await expect(promptServer()).rejects.toThrow(/Public base URL is required/);
+    await expect(promptServer()).rejects.toThrow(/公网部署必须填写公网基础网址/);
 
-    const url = validatorFor("Public base URL");
+    const url = validatorFor("公网基础网址");
     expect(url("https://paperclip.example.com")).toBeUndefined();
     expect(url("ftp://paperclip.example.com")).toBeTruthy();
     expect(url("not a url")).toBeTruthy();
@@ -216,7 +216,7 @@ describe("promptStorage accepts defaults", () => {
     expect(storage.provider).toBe("local_disk");
     expect(storage.localDisk.baseDir).toBeTruthy();
 
-    const baseDir = validatorFor("Local storage base directory");
+    const baseDir = validatorFor("本地存储根目录");
     expect(baseDir("")).toBeUndefined();
     expect(baseDir("   ")).toBeTruthy();
   });
@@ -229,8 +229,8 @@ describe("promptStorage accepts defaults", () => {
     expect(storage.s3.bucket).toBe("paperclip");
     expect(storage.s3.region).toBe("us-east-1");
 
-    expect(validatorFor("S3 bucket")("   ")).toBeTruthy();
-    expect(validatorFor("S3 region")("   ")).toBeTruthy();
+    expect(validatorFor("S3 存储桶")("   ")).toBeTruthy();
+    expect(validatorFor("S3 区域")("   ")).toBeTruthy();
   });
 });
 
@@ -243,7 +243,7 @@ describe("promptSecrets accepts defaults", () => {
     expect(secrets.provider).toBe("local_encrypted");
     expect(secrets.localEncrypted.keyFilePath).toBeTruthy();
 
-    const keyPath = validatorFor("Local encrypted key file path");
+    const keyPath = validatorFor("本地加密密钥文件路径");
     expect(keyPath("")).toBeUndefined();
     expect(keyPath("   ")).toBeTruthy();
   });
@@ -259,7 +259,7 @@ describe("invalid saved or derived defaults are still validated", () => {
 
     await expect(
       promptServer({ currentServer: { port: 70000 as never } }),
-    ).rejects.toThrow(/integer between 1 and 65535/);
+    ).rejects.toThrow(/1 到 65535 之间的整数/);
   });
 
   it("rejects accepting a non-integer saved embedded PostgreSQL port", async () => {
@@ -267,7 +267,7 @@ describe("invalid saved or derived defaults are still validated", () => {
 
     await expect(
       promptDatabase({ ...dbFixture, mode: "embedded-postgres", embeddedPostgresPort: 12.5 as never }),
-    ).rejects.toThrow(/Port must be an integer/);
+    ).rejects.toThrow(/端口必须是/);
   });
 
   it("rejects accepting an invalid saved public base URL", async () => {
@@ -278,7 +278,7 @@ describe("invalid saved or derived defaults are still validated", () => {
         currentServer: { host: "0.0.0.0", port: 8443 },
         currentAuth: { publicBaseUrl: "not a url" },
       }),
-    ).rejects.toThrow(/valid URL/);
+    ).rejects.toThrow(/有效网址/);
   });
 
   it("rejects accepting a whitespace-only saved S3 bucket", async () => {
@@ -290,6 +290,6 @@ describe("invalid saved or derived defaults are still validated", () => {
         localDisk: { baseDir: "" },
         s3: { bucket: "   ", region: "us-east-1", endpoint: "", forcePathStyle: false },
       } as never),
-    ).rejects.toThrow(/Bucket is required/);
+    ).rejects.toThrow(/必须填写存储桶/);
   });
 });

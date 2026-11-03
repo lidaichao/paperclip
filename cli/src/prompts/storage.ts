@@ -26,42 +26,42 @@ export async function promptStorage(current?: StorageConfig): Promise<StorageCon
   const base = current ?? defaultStorageConfig();
 
   const provider = await p.select({
-    message: "Storage provider",
+    message: "存储服务商",
     options: [
       {
         value: "local_disk" as const,
-        label: "Local disk (recommended)",
-        hint: "best for single-user local deployments",
+        label: "本地磁盘（推荐）",
+        hint: "适合单用户本地部署",
       },
       {
         value: "s3" as const,
-        label: "S3 compatible",
-        hint: "for cloud/object storage backends",
+        label: "S3 兼容存储",
+        hint: "适合云端或对象存储后端",
       },
     ],
     initialValue: base.provider,
   });
 
   if (p.isCancel(provider)) {
-    p.cancel("Setup cancelled.");
+    p.cancel("已取消设置。");
     process.exit(0);
   }
 
   if (provider === "local_disk") {
     const baseDirDefault = base.localDisk.baseDir || defaultStorageBaseDir();
     const baseDir = await p.text({
-      message: "Local storage base directory",
+      message: "本地存储根目录",
       defaultValue: baseDirDefault,
       placeholder: defaultStorageBaseDir(),
       validate: (value) => {
         // Clack validates the raw input before applying defaultValue —
         // validate the value that will actually be submitted.
-        if ((value || baseDirDefault).trim().length === 0) return "Storage base directory is required";
+        if ((value || baseDirDefault).trim().length === 0) return "必须填写存储根目录";
       },
     });
 
     if (p.isCancel(baseDir)) {
-      p.cancel("Setup cancelled.");
+      p.cancel("已取消设置。");
       process.exit(0);
     }
 
@@ -77,62 +77,62 @@ export async function promptStorage(current?: StorageConfig): Promise<StorageCon
   const bucketDefault = base.s3.bucket || "paperclip";
   const regionDefault = base.s3.region || "us-east-1";
   const bucket = await p.text({
-    message: "S3 bucket",
+    message: "S3 存储桶",
     defaultValue: bucketDefault,
     placeholder: "paperclip",
     validate: (value) => {
-      if ((value || bucketDefault).trim().length === 0) return "Bucket is required";
+      if ((value || bucketDefault).trim().length === 0) return "必须填写存储桶";
     },
   });
 
   if (p.isCancel(bucket)) {
-    p.cancel("Setup cancelled.");
+    p.cancel("已取消设置。");
     process.exit(0);
   }
 
   const region = await p.text({
-    message: "S3 region",
+    message: "S3 区域",
     defaultValue: regionDefault,
     placeholder: "us-east-1",
     validate: (value) => {
-      if ((value || regionDefault).trim().length === 0) return "Region is required";
+      if ((value || regionDefault).trim().length === 0) return "必须填写区域";
     },
   });
 
   if (p.isCancel(region)) {
-    p.cancel("Setup cancelled.");
+    p.cancel("已取消设置。");
     process.exit(0);
   }
 
   const endpoint = await p.text({
-    message: "S3 endpoint (optional for compatible backends)",
+    message: "S3 端点（兼容后端可选）",
     defaultValue: base.s3.endpoint ?? "",
     placeholder: "https://s3.amazonaws.com",
   });
 
   if (p.isCancel(endpoint)) {
-    p.cancel("Setup cancelled.");
+    p.cancel("已取消设置。");
     process.exit(0);
   }
 
   const prefix = await p.text({
-    message: "Object key prefix (optional)",
+    message: "对象键前缀（可选）",
     defaultValue: base.s3.prefix ?? "",
     placeholder: "paperclip/",
   });
 
   if (p.isCancel(prefix)) {
-    p.cancel("Setup cancelled.");
+    p.cancel("已取消设置。");
     process.exit(0);
   }
 
   const forcePathStyle = await p.confirm({
-    message: "Use S3 path-style URLs?",
+    message: "是否使用 S3 路径样式网址？",
     initialValue: base.s3.forcePathStyle ?? false,
   });
 
   if (p.isCancel(forcePathStyle)) {
-    p.cancel("Setup cancelled.");
+    p.cancel("已取消设置。");
     process.exit(0);
   }
 
