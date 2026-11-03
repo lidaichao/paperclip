@@ -35,7 +35,7 @@ export function AnnouncementWell({ health }: { health?: HealthStatus }) {
     enabled: Boolean(userId && !loading && selectedCompanyId && !onboardingOpen),
     onSaveFailure: (savedLocally) => toastActions?.pushToast({
       title: savedLocally ? "Dismissed in this browser" : "Dismissed for this visit",
-      body: "Couldn’t save across devices. We’ll retry when you reconnect or return.",
+      body: l10n("local.could_not_save_across_devices_retry_when_reconnected_a7620309"),
       tone: "info", dedupeKey: "announcement-dismissal-sync",
     }),
   });

@@ -567,7 +567,7 @@ function decisionLabel(action: CompactDecisionAction): string {
 function compactDecisionSuccessLabel(sourceKind: AttentionItem["sourceKind"], action: CompactDecisionAction): string {
   if (sourceKind === "approval") return l10n("local.approval_value_01ef63d3", {v0: (decisionLabel(action))});
   if (sourceKind === "join_request") return l10n("local.join_request_value_57a093b5", {v0: (decisionLabel(action))});
-  return action === "accept" ? "Confirmation accepted" : "Confirmation declined";
+  return action === "accept" ? l10n("local.confirmation_accepted_53726dcf") : l10n("local.confirmation_declined_6a5a6f37");
 }
 
 function decisionVerbVariant(verb: AttentionItem["decisionVerbs"][number]): "default" | "outline" | "destructive" {

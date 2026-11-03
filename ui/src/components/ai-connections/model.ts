@@ -1,4 +1,5 @@
 /** Redacted presentation contracts shared with the production API. */
+import { l10n } from "../../i18n";
 import type { AiProvider, AiAuthMethod, AiManagedConnectionSummary, AiConnectionBinding } from "@paperclipai/shared";
 export type { AiProvider, AiAuthMethod, AiConnectionBinding } from "@paperclipai/shared";
 export type AiConnectionStatus = AiManagedConnectionSummary["status"];
@@ -74,7 +75,7 @@ export function personalAiDefault(
 
 export function aiConnectionProblem(connection?: AiConnectionSummary) {
   if (!connection)
-    return "No connection selected. Connect an account to continue.";
+    return l10n("local.no_connection_selected_connect_account_to_continue_c2c2eb6b");
   return (
     connection.unavailableReason ??
     (connection.status === "connected"
@@ -94,7 +95,7 @@ export function bindingProblem(
     binding.provider !== requirement.provider ||
     (binding.mode !== "responsible_user" && requirement.method !== undefined && binding.method !== requirement.method)
   )
-    return "Choose a connection compatible with this provider and sign-in method.";
+    return l10n("local.choose_compatible_connection_for_provider_and_sign_in_method_a2fd18d8");
   if (binding.mode === "responsible_user")
     return aiConnectionProblem(
       personalAiDefault(connections, requirement, userId),
@@ -107,14 +108,14 @@ export function bindingProblem(
       matchesAiRequirement(item, requirement),
   );
   if (!connection)
-    return "This connection is no longer available for this agent. Choose another connection.";
+    return l10n("local.connection_no_longer_available_for_agent_choose_another_b9ac7c07");
   if (binding.mode === "shared" && connection.ownership !== "shared")
-    return "Choose a company-shared connection.";
+    return l10n("local.choose_a_company_shared_connection_bfe61f25");
   if (
     binding.mode === "delegated" &&
     (connection.ownership !== "personal" ||
       connection.ownerUserId !== userId)
   )
-    return "This credential is not shared with you. Choose a connection you can use.";
+    return l10n("local.credential_not_shared_with_you_choose_usable_connection_94f86232");
   return aiConnectionProblem(connection);
 }

@@ -10909,6 +10909,24 @@
     "no_activity_in_this_window_77924678": "No activity in this window.",
     "no_access_profiles_yet_e6c2cd2c": "No access profiles yet",
     "select_an_organization_to_view_user_profiles_867cc51a": "Select an organization to view user profiles.",
-    "user_profile_not_found_for_this_organization_1117e51f": "User profile not found for this organization."
+    "user_profile_not_found_for_this_organization_1117e51f": "User profile not found for this organization.",
+    "failed_to_start_traced_run_c07085dc": "Failed to start traced run",
+    "failed_to_reset_session_14eb93f7": "Failed to reset session",
+    "failed_to_refresh_adapter_models_d6cd5e90": "Failed to refresh adapter models.",
+    "could_not_start_login_7aab1749": "Could not start the login.",
+    "could_not_cancel_login_ddae69af": "Could not cancel the login.",
+    "could_not_check_active_login_2cd7a91d": "Could not check for an active login.",
+    "could_not_submit_browser_code_ea04e180": "Could not submit the browser code.",
+    "could_not_revoke_this_account_retry_2ae49b62": "Could not revoke this account. Retry.",
+    "could_not_resolve_sign_in_environment_4bd37f81": "Could not resolve the sign-in environment.",
+    "no_connection_selected_connect_account_to_continue_c2c2eb6b": "No connection selected. Connect an account to continue.",
+    "choose_compatible_connection_for_provider_and_sign_in_method_a2fd18d8": "Choose a connection compatible with this provider and sign-in method.",
+    "connection_no_longer_available_for_agent_choose_another_b9ac7c07": "This connection is no longer available for this agent. Choose another connection.",
+    "choose_a_company_shared_connection_bfe61f25": "Choose a company-shared connection.",
+    "credential_not_shared_with_you_choose_usable_connection_94f86232": "This credential is not shared with you. Choose a connection you can use.",
+    "could_not_check_local_sign_in_92fbc1ab": "Could not check local sign-in.",
+    "could_not_save_across_devices_retry_when_reconnected_a7620309": "Couldn’t save across devices. We’ll retry when you reconnect or return.",
+    "confirmation_accepted_53726dcf": "Confirmation accepted",
+    "confirmation_declined_6a5a6f37": "Confirmation declined"
   }
 }

@@ -10909,6 +10909,24 @@
     "no_activity_in_this_window_77924678": "此时间范围内暂无动态。",
     "no_access_profiles_yet_e6c2cd2c": "暂无访问配置",
     "select_an_organization_to_view_user_profiles_867cc51a": "请选择组织以查看用户资料。",
-    "user_profile_not_found_for_this_organization_1117e51f": "此组织中未找到该用户资料。"
+    "user_profile_not_found_for_this_organization_1117e51f": "此组织中未找到该用户资料。",
+    "failed_to_start_traced_run_c07085dc": "启动跟踪运行失败",
+    "failed_to_reset_session_14eb93f7": "重置会话失败",
+    "failed_to_refresh_adapter_models_d6cd5e90": "刷新适配器模型失败。",
+    "could_not_start_login_7aab1749": "无法启动登录。",
+    "could_not_cancel_login_ddae69af": "无法取消登录。",
+    "could_not_check_active_login_2cd7a91d": "无法检查当前登录状态。",
+    "could_not_submit_browser_code_ea04e180": "无法提交浏览器验证码。",
+    "could_not_revoke_this_account_retry_2ae49b62": "无法撤销此账户，请重试。",
+    "could_not_resolve_sign_in_environment_4bd37f81": "无法确定登录环境。",
+    "no_connection_selected_connect_account_to_continue_c2c2eb6b": "尚未选择连接。请连接账户后继续。",
+    "choose_compatible_connection_for_provider_and_sign_in_method_a2fd18d8": "请选择与当前提供商和登录方式兼容的连接。",
+    "connection_no_longer_available_for_agent_choose_another_b9ac7c07": "此连接已无法供该智能体使用，请选择其他连接。",
+    "choose_a_company_shared_connection_bfe61f25": "请选择公司共享连接。",
+    "credential_not_shared_with_you_choose_usable_connection_94f86232": "此凭据未与你共享，请选择你有权使用的连接。",
+    "could_not_check_local_sign_in_92fbc1ab": "无法检查本地登录状态。",
+    "could_not_save_across_devices_retry_when_reconnected_a7620309": "无法跨设备保存。重新连接或返回后将自动重试。",
+    "confirmation_accepted_53726dcf": "已接受确认",
+    "confirmation_declined_6a5a6f37": "已拒绝确认"
   }
 }

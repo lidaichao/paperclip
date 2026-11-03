@@ -292,7 +292,7 @@ export function AgentActionButtons({
       }
     },
     onError: (err) => {
-      reportError(err instanceof Error ? err.message : "Action failed");
+      reportError(err instanceof Error ? err.message : l10n("local.action_failed_6e1704d8"));
     },
   });
 
@@ -310,7 +310,7 @@ export function AgentActionButtons({
       }
     },
     onError: (err) => {
-      reportError(err instanceof Error ? err.message : "Failed to start traced run");
+      reportError(err instanceof Error ? err.message : l10n("local.failed_to_start_traced_run_c07085dc"));
     },
   });
 
@@ -364,7 +364,7 @@ export function AgentActionButtons({
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.taskSessions(agent.id) });
     },
     onError: (err) => {
-      reportError(err instanceof Error ? err.message : "Failed to reset session");
+      reportError(err instanceof Error ? err.message : l10n("local.failed_to_reset_session_14eb93f7"));
     },
   });
 

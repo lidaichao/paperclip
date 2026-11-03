@@ -65,5 +65,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.user_profile_not_found_for_this_organization_1117e51f).toBe(
       "此组织中未找到该用户资料。",
     );
+    expect(messages.failed_to_refresh_adapter_models_d6cd5e90).toBe("刷新适配器模型失败。");
+    expect(messages.no_connection_selected_connect_account_to_continue_c2c2eb6b).toBe(
+      "尚未选择连接。请连接账户后继续。",
+    );
+    expect(messages.could_not_save_across_devices_retry_when_reconnected_a7620309).toBe(
+      "无法跨设备保存。重新连接或返回后将自动重试。",
+    );
   });
 });
