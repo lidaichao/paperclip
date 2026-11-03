@@ -341,39 +341,39 @@ const OAUTH_PROVIDER_ERROR_PATTERN = /^[a-z0-9_-]+$/;
  * out of provider text.
  */
 const OAUTH_PROVIDER_ERROR_MESSAGES: Record<string, string> = {
-  access_denied: "The authorization server denied the request.",
+  access_denied: "授权服务器拒绝了请求。",
   account_selection_required:
-    "The authorization server needs an account to be selected. Try connecting again.",
+    "授权服务器要求选择账户。请重新连接。",
   consent_required:
-    "The authorization server needs consent to be granted. Try connecting again.",
+    "授权服务器要求授予访问许可。请重新连接。",
   interaction_required:
-    "The authorization server needs to be signed in to interactively. Try connecting again.",
-  invalid_client: "The authorization server rejected Paperclip's OAuth client.",
+    "授权服务器要求进行交互式登录。请重新连接。",
+  invalid_client: "授权服务器拒绝了 Alice 的 OAuth 客户端。",
   invalid_client_metadata:
-    "The authorization server rejected Paperclip's client registration details.",
+    "授权服务器拒绝了 Alice 的客户端注册信息。",
   invalid_grant:
-    "The authorization server rejected the authorization code or refresh token.",
+    "授权服务器拒绝了授权码或刷新令牌。",
   invalid_redirect_uri:
-    "The authorization server rejected Paperclip's callback URL.",
+    "授权服务器拒绝了 Alice 的回调 URL。",
   invalid_request:
-    "The authorization server rejected the request as malformed.",
-  invalid_scope: "The authorization server rejected the requested permissions.",
+    "授权服务器拒绝了格式错误的请求。",
+  invalid_scope: "授权服务器拒绝了请求的权限。",
   invalid_software_statement:
-    "The authorization server rejected Paperclip's client registration details.",
+    "授权服务器拒绝了 Alice 的客户端注册信息。",
   login_required:
-    "The authorization server needs to be signed in to. Try connecting again.",
+    "授权服务器要求登录。请重新连接。",
   server_error:
-    "The authorization server reported an internal error. Try again shortly.",
+    "授权服务器报告了内部错误。请稍后重试。",
   temporarily_unavailable:
-    "The authorization server is temporarily unavailable. Try again shortly.",
+    "授权服务器暂时不可用。请稍后重试。",
   unapproved_software_statement:
-    "The authorization server rejected Paperclip's client registration details.",
+    "授权服务器拒绝了 Alice 的客户端注册信息。",
   unauthorized_client:
-    "The authorization server refused to authorize Paperclip's OAuth client.",
+    "授权服务器拒绝授权 Alice 的 OAuth 客户端。",
   unsupported_grant_type:
-    "The authorization server does not support the grant Paperclip uses.",
+    "授权服务器不支持 Alice 使用的授权类型。",
   unsupported_response_type:
-    "The authorization server does not support the sign-in flow Paperclip uses.",
+    "授权服务器不支持 Alice 使用的登录流程。",
 };
 
 /**
@@ -474,7 +474,7 @@ export function oauthClientIdMetadataDocument(input: {
 }): Record<string, unknown> {
   return {
     client_id: input.clientId,
-    client_name: `Paperclip (${new URL(input.redirectUri).host})`,
+    client_name: `Alice (${new URL(input.redirectUri).host})`,
     client_uri: new URL("/", input.clientId).toString(),
     redirect_uris: [input.redirectUri],
     grant_types: ["authorization_code", "refresh_token"],
@@ -2516,7 +2516,7 @@ export async function loadGitHubTokenRepositories(
         headers: {
           ...headers,
           accept: "application/vnd.github+json",
-          "user-agent": "Paperclip",
+          "user-agent": "Alice",
           "x-github-api-version": "2022-11-28",
         },
         signal: AbortSignal.timeout(15_000),
@@ -2587,7 +2587,7 @@ export async function loadGitHubGrantMetadata(
       headers: {
         accept: "application/vnd.github+json",
         authorization: `Bearer ${accessToken}`,
-        "user-agent": "Paperclip",
+        "user-agent": "Alice",
         "x-github-api-version": "2022-11-28",
       },
       signal: AbortSignal.timeout(15_000),
@@ -9494,7 +9494,7 @@ export function toolAccessService(
 
     const host = new URL(input.redirectUri).host;
     const requestedMetadata = {
-      client_name: `Paperclip (${host})`,
+      client_name: `Alice (${host})`,
       redirect_uris: [input.redirectUri],
       grant_types: [
         "authorization_code",

@@ -1627,7 +1627,7 @@ describeEmbeddedPostgres("generic remote MCP connections", () => {
     // Paperclip's own copy for `invalid_grant`, not a syllable of the provider's.
     expect(thrown).toMatchObject({
       status: 502,
-      message: "The authorization server rejected the authorization code or refresh token.",
+      message: "授权服务器拒绝了授权码或刷新令牌。",
       details: { code: "oauth_token_exchange_failed", providerError: "invalid_grant", status: 400 },
     });
 
@@ -1693,7 +1693,7 @@ describeEmbeddedPostgres("generic remote MCP connections", () => {
 
     expect(thrown).toMatchObject({
       status: 502,
-      message: "The authorization server rejected Paperclip's callback URL.",
+      message: "授权服务器拒绝了 Alice 的回调 URL。",
       details: {
         code: "oauth_dynamic_client_registration_failed",
         providerError: "invalid_redirect_uri",
@@ -1740,7 +1740,7 @@ describeEmbeddedPostgres("generic remote MCP connections", () => {
 
     expect(res.status).toBe(400);
     expect(res.body).toMatchObject({
-      error: "The authorization server denied the request.",
+      error: "授权服务器拒绝了请求。",
       code: "oauth_authorization_denied",
       details: { code: "oauth_authorization_denied", providerError: "access_denied" },
     });
