@@ -10969,6 +10969,24 @@
     "webhook_tailscale_serve_warning_fd5ba028": "Tailscale Serve is private to your tailnet, even with HTTPS. Apps outside your tailnet need Tailscale Funnel or another public HTTPS address. If Funnel is already enabled for this URL, you can continue.",
     "webhook_http_warning_0e2cd559": "This URL uses HTTP. Many apps require HTTPS, and HTTP does not encrypt webhook credentials or payloads.",
     "webhook_invalid_url_warning_60aef7d4": "This is not a valid HTTP or HTTPS URL. Your sending app needs a complete address it can reach.",
-    "new_in_alice_7a1d321b": "New in Alice"
+    "new_in_alice_7a1d321b": "New in Alice",
+    "seconds_ago_b3d432c2": "{{v0}}s ago",
+    "request_failed_status_191b7e44": "Request failed: {{v0}}",
+    "name_is_required_40d2de1a": "Name is required.",
+    "name_max_160_characters_bcaedc5b": "Name must be 160 characters or fewer.",
+    "key_is_required_29924a9e": "Key is required.",
+    "key_lowercase_characters_only_b4e9c31b": "Key may only contain lowercase letters, numbers, dot, underscore, or hyphen.",
+    "key_max_120_characters_5b0dddf7": "Key must be 120 characters or fewer.",
+    "description_max_500_characters_893f0836": "Description must be 500 characters or fewer.",
+    "alice_secret_name_already_used_095a719e": "An Alice secret already uses this name.",
+    "alice_secret_key_already_used_67a70891": "An Alice secret already uses this key.",
+    "batch_row_name_already_used_f118e2e5": "Another row in this batch already uses this name.",
+    "batch_row_key_already_used_f22f5022": "Another row in this batch already uses this key.",
+    "no_secrets_imported_from_value_5ba9a0b7": "No secrets were imported from {{v0}}.",
+    "import_completed_with_errors_36d12ba6": "Import completed with errors",
+    "import_result_counts_50271350": "{{v0}} created · {{v1}} skipped · {{v2}} failed",
+    "could_not_load_more_results_f578c766": "Could not load more results",
+    "skill_now_editable_in_alice_workspace_1a7f6704": "{{v0}} is now editable in the Alice workspace.",
+    "skill_creation_failed_10bdad71": "Skill creation failed"
   }
 }

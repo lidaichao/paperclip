@@ -474,16 +474,18 @@ function StudioNewSkillPanel({
       await queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(companyId) });
       toast?.pushToast({
         tone: "success",
-        title: skill.forkedFromSkillId ? "Skill fork created" : "Skill created",
-        body: `${skill.name} is now editable in the Paperclip workspace.`,
+        title: skill.forkedFromSkillId
+          ? l10n("local.skill_fork_created_7806f0fc")
+          : l10n("local.skill_created_b25ab5d5"),
+        body: l10n("local.skill_now_editable_in_alice_workspace_1a7f6704", { v0: skill.name }),
       });
       navigate(skillStudioRoute(skill.id));
     },
     onError: (error) => {
       toast?.pushToast({
         tone: "error",
-        title: "Skill creation failed",
-        body: error instanceof Error ? error.message : "Failed to create skill.",
+        title: l10n("local.skill_creation_failed_10bdad71"),
+        body: error instanceof Error ? error.message : l10n("local.failed_to_create_skill_993d12da"),
       });
     },
   });

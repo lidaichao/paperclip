@@ -188,19 +188,19 @@ function formatRelativeShort(value: string | null | undefined): string {
   const diff = Date.now() - date.getTime();
   if (diff < 0) return date.toLocaleDateString();
   const seconds = Math.floor(diff / 1000);
-  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 60) return l10n("local.seconds_ago_b3d432c2", { v0: seconds });
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return l10n("local.minutes_ago_16c1d660", { v0: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 48) return `${hours}h ago`;
+  if (hours < 48) return l10n("local.hours_ago_60a4dedb", { v0: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return l10n("local.days_ago_fa78e0aa", { v0: days });
   return date.toLocaleDateString();
 }
 
 function readableErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
-    return error.message || `Request failed: ${error.status}`;
+    return error.message || l10n("local.request_failed_status_191b7e44", { v0: error.status });
   }
   if (error instanceof Error) return error.message;
   return l10n("local.unexpected_error_d24c41ae");
@@ -268,34 +268,34 @@ function validateDraftRow(
   existing: CompanySecret[],
   otherDrafts: DraftSelection[],
 ): string | null {
-  if (!draft.name.trim()) return "Name is required.";
-  if (draft.name.length > 160) return "Name must be 160 characters or fewer.";
-  if (!draft.key.trim()) return "Key is required.";
+  if (!draft.name.trim()) return l10n("local.name_is_required_40d2de1a");
+  if (draft.name.length > 160) return l10n("local.name_max_160_characters_bcaedc5b");
+  if (!draft.key.trim()) return l10n("local.key_is_required_29924a9e");
   if (!KEY_PATTERN.test(draft.key)) {
-    return "Key may only contain lowercase letters, numbers, dot, underscore, or hyphen.";
+    return l10n("local.key_lowercase_characters_only_b4e9c31b");
   }
-  if (draft.key.length > 120) return "Key must be 120 characters or fewer.";
-  if (draft.description.length > 500) return "Description must be 500 characters or fewer.";
+  if (draft.key.length > 120) return l10n("local.key_max_120_characters_5b0dddf7");
+  if (draft.description.length > 500) return l10n("local.description_max_500_characters_893f0836");
 
   const lowerName = draft.name.trim().toLowerCase();
   const lowerKey = draft.key.trim().toLowerCase();
 
   for (const existingSecret of existing) {
     if (existingSecret.name.trim().toLowerCase() === lowerName) {
-      return "A Paperclip secret already uses this name.";
+      return l10n("local.alice_secret_name_already_used_095a719e");
     }
     if (existingSecret.key.trim().toLowerCase() === lowerKey) {
-      return "A Paperclip secret already uses this key.";
+      return l10n("local.alice_secret_key_already_used_67a70891");
     }
   }
 
   for (const other of otherDrafts) {
     if (other === draft) continue;
     if (other.name.trim().toLowerCase() === lowerName) {
-      return "Another row in this batch already uses this name.";
+      return l10n("local.batch_row_name_already_used_f118e2e5");
     }
     if (other.key.trim().toLowerCase() === lowerKey) {
-      return "Another row in this batch already uses this key.";
+      return l10n("local.batch_row_key_already_used_f22f5022");
     }
   }
 
@@ -475,21 +475,27 @@ export function ImportFromVaultDialog({
         awsVaults.find((vault) => vault.id === vaultId)?.displayName ?? "AWS";
       if (result.errorCount === draftList.length && result.errorCount > 0) {
         toast.pushToast({
-          title: "Import failed",
-          body: `No secrets were imported from ${vaultName}.`,
+          title: l10n("local.import_failed_0a26f41a"),
+          body: l10n("local.no_secrets_imported_from_value_5ba9a0b7", { v0: vaultName }),
           tone: "error",
         });
       } else {
         toast.pushToast({
-          title: result.errorCount > 0 ? "Import completed with errors" : "Import complete",
-          body: `${result.importedCount} created · ${result.skippedCount} skipped · ${result.errorCount} failed`,
+          title: result.errorCount > 0
+            ? l10n("local.import_completed_with_errors_36d12ba6")
+            : l10n("local.import_complete_a9c747fe"),
+          body: l10n("local.import_result_counts_50271350", {
+            v0: result.importedCount,
+            v1: result.skippedCount,
+            v2: result.errorCount,
+          }),
           tone: result.errorCount > 0 ? "warn" : "success",
         });
       }
     },
     onError: (error) => {
       toast.pushToast({
-        title: "Import failed",
+        title: l10n("local.import_failed_0a26f41a"),
         body: readableErrorMessage(error),
         tone: "error",
       });
@@ -550,7 +556,7 @@ export function ImportFromVaultDialog({
       })
       .catch((error) => {
         toast.pushToast({
-          title: "Could not load more results",
+          title: l10n("local.could_not_load_more_results_f578c766"),
           body: readableErrorMessage(error),
           tone: "error",
         });

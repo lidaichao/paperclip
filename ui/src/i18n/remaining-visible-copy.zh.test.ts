@@ -84,5 +84,12 @@ describe("remaining visible Chinese copy", () => {
       "GitHub 等服务无法通过该地址访问你电脑上的 Alice",
     );
     expect(messages.new_in_alice_7a1d321b).toBe("Alice 新功能");
+    expect(messages.alice_secret_name_already_used_095a719e).toBe("已有 Alice 密钥使用此名称。");
+    expect(messages.import_result_counts_50271350).toBe(
+      "已创建 {{v0}} 项 · 已跳过 {{v1}} 项 · 失败 {{v2}} 项",
+    );
+    expect(messages.skill_now_editable_in_alice_workspace_1a7f6704).toBe(
+      "现在可在 Alice 工作区中编辑 {{v0}}。",
+    );
   });
 });
