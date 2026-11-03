@@ -33,8 +33,8 @@ function Command({
 }
 
 function CommandDialog({
-  title = "Command Palette",
-  description = "Search for a command to run...",
+  title = l10n("local.command_palette_899911d2"),
+  description = l10n("local.search_for_a_command_to_run_f853a59e"),
   children,
   className,
   showCloseButton = true,

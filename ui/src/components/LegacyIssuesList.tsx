@@ -1912,7 +1912,7 @@ export function IssuesList({
       {!isLoading && !externalObjectFilterLoading && filtered.length === 0 && viewState.viewMode === "list" && (
         <EmptyState
           icon={CircleDot}
-          message="No tasks match the current filters or search."
+          message={l10n("local.no_tasks_match_the_current_filters_or_search_4cd6074e")}
           action={createActionLabel}
           onAction={() => openCreateIssueDialog()}
         />
