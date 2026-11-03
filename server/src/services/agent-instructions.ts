@@ -114,7 +114,7 @@ function isMarkdown(relativePath: string) {
 function normalizeRelativeFilePath(candidatePath: string): string {
   const normalized = path.posix.normalize(candidatePath.replaceAll("\\", "/")).replace(/^\/+/, "");
   if (!normalized || normalized === "." || normalized === ".." || normalized.startsWith("../")) {
-    throw unprocessable("Instructions file path must stay within the bundle root");
+    throw unprocessable("指令文件路径必须位于指令包根目录内");
   }
   return normalized;
 }
@@ -125,7 +125,7 @@ function resolvePathWithinRoot(rootPath: string, relativePath: string): string {
   const absolutePath = path.resolve(absoluteRoot, normalizedRelativePath);
   const relativeToRoot = path.relative(absoluteRoot, absolutePath);
   if (relativeToRoot === ".." || relativeToRoot.startsWith(`..${path.sep}`)) {
-    throw unprocessable("Instructions file path must stay within the bundle root");
+    throw unprocessable("指令文件路径必须位于指令包根目录内");
   }
   return absolutePath;
 }
@@ -146,7 +146,7 @@ function resolveLegacyInstructionsPath(candidatePath: string, config: Record<str
   const cwd = asString(config.cwd);
   if (!cwd || !path.isAbsolute(cwd)) {
     throw unprocessable(
-      "Legacy relative instructionsFilePath requires adapterConfig.cwd to be set to an absolute path",
+      "旧版相对 instructionsFilePath 要求将 adapterConfig.cwd 设置为绝对路径",
     );
   }
   return path.resolve(cwd, candidatePath);
@@ -186,7 +186,7 @@ async function listFilesRecursive(
       );
       if (entry.isSymbolicLink()) {
         if (options?.rejectSymlinks) {
-          throw unprocessable(`Instructions bundle may not contain symlinks: ${relativePath}`);
+    throw unprocessable(`指令包不能包含符号链接：${relativePath}`);
         }
         continue;
       }
@@ -493,7 +493,7 @@ export function agentInstructionsService() {
     const state = await recoverManagedBundleState(agent, deriveBundleState(agent));
     if (relativePath === LEGACY_PROMPT_TEMPLATE_PATH) {
       const content = asString(state.config[PROMPT_KEY]);
-      if (content === null) throw notFound("Instructions file not found");
+    if (content === null) throw notFound("未找到指令文件");
       return {
         path: LEGACY_PROMPT_TEMPLATE_PATH,
         size: content.length,
@@ -506,13 +506,13 @@ export function agentInstructionsService() {
         content,
       };
     }
-    if (!state.rootPath) throw notFound("Agent instructions bundle is not configured");
+    if (!state.rootPath) throw notFound("尚未配置智能体指令包");
     const absolutePath = resolvePathWithinRoot(state.rootPath, relativePath);
     const [content, stat] = await Promise.all([
       fs.readFile(absolutePath, "utf8").catch(() => null),
       fs.stat(absolutePath).catch(() => null),
     ]);
-    if (content === null || !stat?.isFile()) throw notFound("Instructions file not found");
+    if (content === null || !stat?.isFile()) throw notFound("未找到指令文件");
     const normalizedPath = normalizeRelativeFilePath(relativePath);
     return {
       path: normalizedPath,
@@ -586,11 +586,11 @@ export function agentInstructionsService() {
     } else {
       const rootPath = asString(input.rootPath) ?? state.rootPath;
       if (!rootPath) {
-        throw unprocessable("External instructions bundles require an absolute rootPath");
+      throw unprocessable("外部指令包要求 rootPath 使用绝对路径");
       }
       const resolvedRoot = resolveHomeAwarePath(rootPath);
       if (!path.isAbsolute(resolvedRoot)) {
-        throw unprocessable("External instructions bundles require an absolute rootPath");
+      throw unprocessable("外部指令包要求 rootPath 使用绝对路径");
       }
       nextRootPath = resolvedRoot;
     }
@@ -661,12 +661,12 @@ export function agentInstructionsService() {
     const derived = deriveBundleState(agent);
     const state = await recoverManagedBundleState(agent, derived);
     if (relativePath === LEGACY_PROMPT_TEMPLATE_PATH) {
-      throw unprocessable("Cannot delete the legacy promptTemplate pseudo-file");
+      throw unprocessable("不能删除旧版 promptTemplate 伪文件");
     }
-    if (!state.rootPath) throw notFound("Agent instructions bundle is not configured");
+    if (!state.rootPath) throw notFound("尚未配置智能体指令包");
     const normalizedPath = normalizeRelativeFilePath(relativePath);
     if (normalizedPath === state.entryFile) {
-      throw unprocessable("Cannot delete the bundle entry file");
+      throw unprocessable("不能删除指令包入口文件");
     }
     const absolutePath = resolvePathWithinRoot(state.rootPath, normalizedPath);
     await fs.rm(absolutePath, { force: true });

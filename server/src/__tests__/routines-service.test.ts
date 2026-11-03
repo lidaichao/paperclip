@@ -1105,7 +1105,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
       svc.restoreRevision(routine.id, revision1Id, { userId: "board-user" }),
     ).rejects.toMatchObject({
       status: 409,
-      message: "Cannot assign routines to terminated agents",
+      message: "不能将例行任务分配给已终止的智能体",
       details: {
         code: "agent_not_assignable",
         reason: "assignee_terminated",

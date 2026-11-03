@@ -52,7 +52,7 @@ export function agentActionAuditService(db: Db) {
   return {
     list: async (filters: AgentActionAuditFilters) => {
       const cursor = decodeCursor(filters.cursor);
-      if (filters.cursor && !cursor) throw badRequest("Invalid audit cursor");
+    if (filters.cursor && !cursor) throw badRequest("审计游标无效");
       const effectiveResponsibleUserId = sql<string | null>`coalesce(${activityLog.responsibleUserId}, ${heartbeatRuns.responsibleUserId})`;
       const conditions = [eq(activityLog.companyId, filters.companyId)];
       // Preserve the historical agent-audit query unless the caller opts into

@@ -182,7 +182,7 @@ describe("agent instructions service", () => {
       files: { "AGENTS.md": "Read sibling.md\n" },
     });
     await expect(svc.exportFiles(agent, { rejectSymlinks: true }))
-      .rejects.toThrow("Instructions bundle may not contain symlinks: sibling.md");
+      .rejects.toThrow("指令包不能包含符号链接：sibling.md");
   });
 
   it("recovers a managed bundle from disk when bundle config metadata is missing", async () => {

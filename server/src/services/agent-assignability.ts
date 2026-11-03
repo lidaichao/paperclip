@@ -25,22 +25,22 @@ type AgentAssignmentConflictReason =
 function assignmentMessage(kind: AgentAssignmentKind, reason: AgentAssignmentConflictReason) {
   if (reason === "pending_approval") {
     return kind === "routine"
-      ? "Cannot assign routines to pending approval agents"
-      : "Cannot assign work to pending approval agents";
+      ? "不能将例行任务分配给待审批的智能体"
+      : "不能将工作分配给待审批的智能体";
   }
   if (reason === "assignee_terminated") {
     return kind === "routine"
-      ? "Cannot assign routines to terminated agents"
-      : "Cannot assign work to terminated agents";
+      ? "不能将例行任务分配给已终止的智能体"
+      : "不能将工作分配给已终止的智能体";
   }
   if (reason === "assignee_unknown_status") {
     return kind === "routine"
-      ? "Cannot assign routines to agents with an unsupported lifecycle status"
-      : "Cannot assign work to agents with an unsupported lifecycle status";
+      ? "不能将例行任务分配给生命周期状态不受支持的智能体"
+      : "不能将工作分配给生命周期状态不受支持的智能体";
   }
   return kind === "routine"
-    ? "Cannot assign routines to agents with an invalid org chain"
-    : "Cannot assign work to agents with an invalid org chain";
+    ? "不能将例行任务分配给组织链无效的智能体"
+    : "不能将工作分配给组织链无效的智能体";
 }
 
 function conflictDetails(input: {
@@ -110,9 +110,9 @@ export async function assertAssignableAgent(
   if (!agentId) return;
   const kind = options.kind ?? "work";
   const assignee = await getAgent(db, agentId);
-  if (!assignee) throw notFound("Assignee agent not found");
+  if (!assignee) throw notFound("未找到被分配的智能体");
   if (assignee.companyId !== companyId) {
-    throw unprocessable("Assignee must belong to same company");
+    throw unprocessable("被分配的智能体必须属于同一公司");
   }
 
   const companyAgents = await listCompanyAgents(db, companyId);

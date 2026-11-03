@@ -324,7 +324,7 @@ describe("agent instructions bundle routes", () => {
     for (const perform of requests) {
       const res = await perform();
       expect(res.status, JSON.stringify(res.body)).toBe(403);
-      expect(res.body.error).toContain("Instance admin");
+      expect(res.body.error).toContain("实例管理员");
     }
     expect(mockAgentInstructionsService.getBundle).not.toHaveBeenCalled();
     expect(mockAgentInstructionsService.readFile).not.toHaveBeenCalled();
@@ -436,7 +436,7 @@ describe("agent instructions bundle routes", () => {
       });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toContain("Instance admin");
+    expect(res.body.error).toContain("实例管理员");
     expect(mockAgentService.update).not.toHaveBeenCalled();
   });
 
@@ -474,13 +474,13 @@ describe("agent instructions bundle routes", () => {
       .post("/api/companies/company-1/agent-hires")
       .send(body);
     expect(hireRes.status, JSON.stringify(hireRes.body)).toBe(403);
-    expect(hireRes.body.error).toContain("Instance admin");
+    expect(hireRes.body.error).toContain("实例管理员");
 
     const createRes = await request(app)
       .post("/api/companies/company-1/agents")
       .send(body);
     expect(createRes.status, JSON.stringify(createRes.body)).toBe(403);
-    expect(createRes.body.error).toContain("Instance admin");
+    expect(createRes.body.error).toContain("实例管理员");
     expect(mockAgentService.create).not.toHaveBeenCalled();
   });
 

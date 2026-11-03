@@ -152,7 +152,7 @@ export async function prepareConversationTurn(
       context.conversationSessionGeneration !== generation
     ) {
       throw new Error(
-        "Conversation session changed; this older turn cannot resume",
+        "会话已发生变化；无法恢复此较早的对话轮次",
       );
     }
     // The boundary lives on the command comment. A crash/retry reuses it instead of resetting twice.

@@ -395,7 +395,7 @@ const support = await getEmbeddedPostgresTestSupport();
               .where(eq(heartbeatRuns.id, oldRun.id))
           )[0]!,
         ),
-      ).rejects.toThrow(/older turn/);
+      ).rejects.toThrow(/较早的对话轮次/);
       expect(await applyRunnerGoalPrpEvent(db, { companyId, agentId, issueId: issue.id, adapterType: "process" }, {
         eventType: "session.capabilities.updated", sourceRunId: oldRun.id, sourceSeq: 500, payload: {},
       })).toBeNull();

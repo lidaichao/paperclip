@@ -316,7 +316,7 @@ describePostgres("agent action audit routes", () => {
       type: "board", userId: "local-board", companyIds: [company.id], source: "local_implicit", isInstanceAdmin: false,
     })).get(`/api/companies/${company.id}/audit/agent-actions?cursor=invalid`);
     expect(cursorResponse.status).toBe(400);
-    expect(cursorResponse.body.error).toBe("Invalid audit cursor");
+    expect(cursorResponse.body.error).toBe("审计游标无效");
 
     const nonUuidCursor = Buffer.from(JSON.stringify({
       createdAt: "2026-07-17T00:00:00.000000Z",
@@ -326,7 +326,7 @@ describePostgres("agent action audit routes", () => {
       type: "board", userId: "local-board", companyIds: [company.id], source: "local_implicit", isInstanceAdmin: false,
     })).get(`/api/companies/${company.id}/audit/agent-actions?cursor=${encodeURIComponent(nonUuidCursor)}`);
     expect(nonUuidCursorResponse.status).toBe(400);
-    expect(nonUuidCursorResponse.body.error).toBe("Invalid audit cursor");
+    expect(nonUuidCursorResponse.body.error).toBe("审计游标无效");
   });
 
   it("preserves sub-millisecond cursor precision across pages", async () => {
