@@ -12116,6 +12116,9 @@
     "finish_setup_before_agents_use_account_0fb00001": "请先完成设置，智能体才能使用此账户。",
     "agents_cannot_use_account_now_0fb00002": "智能体目前无法使用此账户。",
     "sign_in_again_restore_access_0fb00003": "请重新登录以恢复访问。",
-    "replace_credential_restore_access_0fb00004": "请替换凭据以恢复访问。"
+    "replace_credential_restore_access_0fb00004": "请替换凭据以恢复访问。",
+    "local_board_0fc00001": "本地控制台",
+    "signed_in_account_0fc00002": "当前登录账户",
+    "email_address_0fc00003": "邮箱地址"
   }
 }

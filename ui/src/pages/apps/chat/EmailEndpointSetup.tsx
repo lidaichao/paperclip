@@ -177,8 +177,16 @@ export function EmailEndpointSetup() {
     addressMode === "existing" ? inboxId : `${username}@${domain}`;
   const labels =
     step < 3
-      ? ["Access", "API key", "Connected"]
-      : ["Agent", "Email address", "Review"];
+      ? [
+          l10n("local.access_9f7a15b8"),
+          l10n("local.api_key_7c72921f"),
+          l10n("local.connected_22965568"),
+        ]
+      : [
+          l10n("local.agent_11b39c93"),
+          l10n("local.email_address_0fc00003"),
+          l10n("local.review_f1a8469e"),
+        ];
   const current = step < 3 ? step : Math.min(step - 3, 2);
   const error = connect.error ?? setup.error ?? inspected.error ?? agents.error;
   const trustNotice = chosen && (

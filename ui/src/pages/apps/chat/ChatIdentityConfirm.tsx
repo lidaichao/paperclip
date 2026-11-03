@@ -66,11 +66,11 @@ export function ChatIdentityConfirm() {
     );
   }
   const identity = preview.data;
-  const paperclipAccount = local ? "Local Board" :
+  const paperclipAccount = local ? l10n("local.local_board_0fc00001") :
     session.data?.user.name?.trim() ||
     session.data?.user.email?.trim() ||
     session.data?.user.id ||
-    "the signed-in account";
+    l10n("local.signed_in_account_0fc00002");
   if (confirmed) {
     return (
       <main className="mx-auto max-w-lg space-y-5 px-6 py-12">

@@ -536,6 +536,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.agents_cannot_use_account_now_0fb00002).toContain("无法使用");
     expect(messages.sign_in_again_restore_access_0fb00003).toContain("重新登录");
     expect(messages.replace_credential_restore_access_0fb00004).toContain("替换凭据");
+    expect(messages.local_board_0fc00001).toBe("本地控制台");
+    expect(messages.signed_in_account_0fc00002).toBe("当前登录账户");
+    expect(messages.email_address_0fc00003).toBe("邮箱地址");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
