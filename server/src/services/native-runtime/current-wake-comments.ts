@@ -54,7 +54,7 @@ type CurrentWakeAttachmentOmission = {
 export const READ_CURRENT_WAKE_COMMENTS_TOOL_DEFINITION = Object.freeze({
   name: READ_CURRENT_WAKE_COMMENTS_TOOL_NAME,
   description:
-    "Read only the complete, server-bound comments accepted for this external-chat turn. Start without a cursor, then pass each returned nextCursor until complete is true before answering.",
+    "只读取本次外部聊天轮次中由服务器绑定并接受的完整评论。首次调用不传 cursor；之后依次传入每页返回的 nextCursor，直到 complete 为 true，再作答。",
   inputSchema: {
     type: "object",
     properties: {
@@ -62,7 +62,7 @@ export const READ_CURRENT_WAKE_COMMENTS_TOOL_DEFINITION = Object.freeze({
         type: ["string", "null"],
         maxLength: MAX_CURSOR_CHARS,
         description:
-          "Opaque cursor returned by the immediately preceding page. Omit for the first page.",
+          "上一页返回的不透明游标。第一页请省略。",
       },
     },
     required: [],
@@ -219,12 +219,22 @@ function attachmentImportNotice(
   omission: CurrentWakeAttachmentOmission | undefined,
 ) {
   if (!omission) return null;
+  const reasonLabels: Record<string, string> = {
+    attachment_limit: "超过附件数量上限",
+    declared_too_large: "声明的文件大小超限",
+    download_unavailable: "无法下载",
+    downloaded_too_large: "下载后的文件大小超限",
+    empty_download: "下载内容为空",
+    processing_failed: "处理失败",
+    storage_unavailable: "存储不可用",
+    unsupported_type: "不支持的文件类型",
+  };
   const entries = Object.entries(omission.reasons);
   const omitted = entries.reduce((total, [, count]) => total + count, 0);
   const reasons = entries
-    .map(([reason, count]) => `${reason.replaceAll("_", " ")}: ${count}`)
-    .join(", ");
-  return `Paperclip could not import every attachment from this exact external message: ${omitted} attachment${omitted === 1 ? " was" : "s were"} omitted (${reasons}). Treat omitted attachments as unavailable; do not infer their contents or substitute an older workspace file.`;
+    .map(([reason, count]) => `${reasonLabels[reason] ?? "其他原因"}：${count}`)
+    .join("，");
+  return `Alice 无法导入这条外部消息中的所有附件：已省略 ${omitted} 个附件（${reasons}）。请将这些附件视为不可用；不要推测其内容，也不要用工作区中的旧文件替代。`;
 }
 
 function bindingDigest(input: {

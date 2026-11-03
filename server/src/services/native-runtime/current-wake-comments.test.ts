@@ -302,7 +302,7 @@ describeEmbeddedPostgres("current external-chat wake comment reader", () => {
     const page = await readCurrentWakeComments(db, binding, {});
     expect(page.complete).toBe(true);
     expect(page.comments[0]?.attachmentImportNotice).toBe(
-      "Paperclip could not import every attachment from this exact external message: 2 attachments were omitted (unsupported type: 1, processing failed: 1). Treat omitted attachments as unavailable; do not infer their contents or substitute an older workspace file.",
+      "Alice 无法导入这条外部消息中的所有附件：已省略 2 个附件（不支持的文件类型：1，处理失败：1）。请将这些附件视为不可用；不要推测其内容，也不要用工作区中的旧文件替代。",
     );
     expect(JSON.stringify(page)).not.toContain("credential_token");
     expect(
@@ -328,7 +328,7 @@ describeEmbeddedPostgres("current external-chat wake comment reader", () => {
         nativeRunner: true,
       }),
     ).toContain(
-      "Treat omitted attachments as unavailable; do not infer their contents or substitute an older workspace file.",
+      "请将这些附件视为不可用；不要推测其内容，也不要用工作区中的旧文件替代。",
     );
     await expect(assertCurrentWakeCommentsRead(db, seeded)).resolves.toBe(
       undefined,
