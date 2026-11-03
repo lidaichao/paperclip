@@ -2108,7 +2108,7 @@ describeEmbeddedPostgres(
         JSON.stringify(rejectedPromotion.body),
       ).toBe(404);
       expect(rejectedPromotion.body.error).toBe(
-        "Low-trust source artifact not found",
+        "未找到低信任源产物",
       );
 
       const promotion = await request(app)
@@ -2178,7 +2178,7 @@ describeEmbeddedPostgres(
         JSON.stringify(duplicatePromotion.body),
       ).toBe(422);
       expect(duplicatePromotion.body.error).toBe(
-        "Source artifact is not quarantined low-trust output",
+        "源产物不是已隔离的低信任输出",
       );
 
       const productsForSource = await db

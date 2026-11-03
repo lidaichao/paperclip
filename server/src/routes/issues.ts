@@ -10767,7 +10767,7 @@ export function issueRoutes(
             createInput,
           );
       if (!product) {
-        res.status(422).json({ error: "Invalid work product payload" });
+        res.status(422).json({ error: "交付产物内容无效" });
         return;
       }
       await logActivity(db, {
@@ -10917,7 +10917,7 @@ export function issueRoutes(
         workProduct.issueId !== issue.id ||
         workProduct.companyId !== issue.companyId
       ) {
-        res.status(404).json({ error: "Work product not found" });
+        res.status(404).json({ error: "未找到交付产物" });
         return;
       }
       const actor = getActorInfo(req);
@@ -10951,7 +10951,7 @@ export function issueRoutes(
       const actor = getActorInfo(req);
       if (await sourceTrustForActorWrite(issue, actor)) {
         res.status(403).json({
-          error: "Low-trust actors cannot promote quarantined output",
+          error: "低信任级别的操作者不能提升隔离输出",
         });
         return;
       }
@@ -10961,12 +10961,12 @@ export function issueRoutes(
         artifactId: req.body.sourceArtifactId,
       });
       if (!sourceTrust) {
-        res.status(404).json({ error: "Low-trust source artifact not found" });
+        res.status(404).json({ error: "未找到低信任源产物" });
         return;
       }
       if (!isLowTrustQuarantined(sourceTrust)) {
         res.status(422).json({
-          error: "Source artifact is not quarantined low-trust output",
+          error: "源产物不是已隔离的低信任输出",
         });
         return;
       }
@@ -11066,7 +11066,7 @@ export function issueRoutes(
       });
       if (!product) {
         res.status(422).json({
-          error: "Source artifact is not quarantined low-trust output",
+          error: "源产物不是已隔离的低信任输出",
         });
         return;
       }
@@ -11112,7 +11112,7 @@ export function issueRoutes(
         req,
         res,
         workProductsSvc.getById(id),
-        "Work product not found",
+        "未找到交付产物",
       );
       if (!existing) return;
       const issue = await svc.getById(existing.issueId);
@@ -11149,7 +11149,7 @@ export function issueRoutes(
         } else if (!requiresPaperclipAttachmentMetadata(existing)) {
           res
             .status(422)
-            .json({ error: "Attachment-backed artifact metadata is required" });
+            .json({ error: "必须提供附件型产物的元数据" });
           return;
         }
       }
@@ -11159,7 +11159,7 @@ export function issueRoutes(
         ...(sourceTrust ? { sourceTrust } : {}),
       });
       if (!product) {
-        res.status(404).json({ error: "Work product not found" });
+        res.status(404).json({ error: "未找到交付产物" });
         return;
       }
       await logActivity(db, {
@@ -11207,7 +11207,7 @@ export function issueRoutes(
       req,
       res,
       workProductsSvc.getById(id),
-      "Work product not found",
+      "未找到交付产物",
     );
     if (!existing) return;
     const issue = await svc.getById(existing.issueId);
@@ -11220,7 +11220,7 @@ export function issueRoutes(
       return;
     const removed = await workProductsSvc.remove(id);
     if (!removed) {
-      res.status(404).json({ error: "Work product not found" });
+      res.status(404).json({ error: "未找到交付产物" });
       return;
     }
     const actor = getActorInfo(req);
@@ -11259,7 +11259,7 @@ export function issueRoutes(
       return;
     }
     if (!req.actor.userId) {
-      res.status(403).json({ error: "Board user context required" });
+      res.status(403).json({ error: "需要控制台用户上下文" });
       return;
     }
     const readState = await svc.markRead(
@@ -11298,7 +11298,7 @@ export function issueRoutes(
       return;
     }
     if (!req.actor.userId) {
-      res.status(403).json({ error: "Board user context required" });
+      res.status(403).json({ error: "需要控制台用户上下文" });
       return;
     }
     const removed = await svc.markUnread(
@@ -11328,7 +11328,7 @@ export function issueRoutes(
   ) {
     if (req.actor.type === "board") {
       if (!req.actor.userId)
-        throw forbidden("Board user context required", {
+        throw forbidden("需要控制台用户上下文", {
           code: "inbox_target_user_unresolved",
         });
       return {
@@ -11347,7 +11347,7 @@ export function issueRoutes(
     const responsibleUserId = req.actor.onBehalfOfUserId?.trim() || null;
     const userId = explicitUserId ?? responsibleUserId;
     if (!userId) {
-      throw forbidden("Inbox target user could not be resolved", {
+      throw forbidden("无法确定收件箱目标用户", {
         code: "inbox_target_user_unresolved",
       });
     }
@@ -15221,7 +15221,7 @@ export function issueRoutes(
       return;
     }
     if (!req.actor.userId) {
-      throw forbidden("Board user context required");
+      throw forbidden("需要控制台用户上下文");
     }
 
     const id = req.params.id as string;
@@ -15364,7 +15364,7 @@ export function issueRoutes(
     validate(editQueuedCommentSchema),
     async (req, res) => {
       assertBoard(req);
-      if (!req.actor.userId) throw forbidden("Board user context required");
+      if (!req.actor.userId) throw forbidden("需要控制台用户上下文");
       const id = req.params.id as string;
       const commentId = req.params.commentId as string;
       const issue = await getAccessibleResource(
@@ -15396,7 +15396,7 @@ export function issueRoutes(
     validate(reorderQueuedCommentsSchema),
     async (req, res) => {
       assertBoard(req);
-      if (!req.actor.userId) throw forbidden("Board user context required");
+      if (!req.actor.userId) throw forbidden("需要控制台用户上下文");
       const id = req.params.id as string;
       const issue = await getAccessibleResource(
         req,
@@ -15426,7 +15426,7 @@ export function issueRoutes(
     validate(queuedCommentInterruptTargetSchema),
     async (req, res) => {
       assertBoard(req);
-      if (!req.actor.userId) throw forbidden("Board user context required");
+      if (!req.actor.userId) throw forbidden("需要控制台用户上下文");
       const issue = await getAccessibleResource(req, res, svc.getById(req.params.id as string), "Issue not found");
       if (!issue) return;
       const decision = await decideIssueAccess(req, issue, "issue:comment");
@@ -15496,7 +15496,7 @@ export function issueRoutes(
     validate(queuedCommentSteeringTargetSchema),
     async (req, res) => {
       assertBoard(req);
-      if (!req.actor.userId) throw forbidden("Board user context required");
+      if (!req.actor.userId) throw forbidden("需要控制台用户上下文");
       const id = req.params.id as string;
       const commentId = req.params.commentId as string;
       const issue = await getAccessibleResource(
@@ -15767,7 +15767,7 @@ export function issueRoutes(
     validate(queuedCommentMutationTargetSchema),
     async (req, res) => {
       assertBoard(req);
-      if (!req.actor.userId) throw forbidden("Board user context required");
+      if (!req.actor.userId) throw forbidden("需要控制台用户上下文");
       const id = req.params.id as string;
       const commentId = req.params.commentId as string;
       const issue = await getAccessibleResource(
