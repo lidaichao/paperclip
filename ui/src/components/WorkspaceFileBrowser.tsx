@@ -82,27 +82,27 @@ export function describeUnavailable(reason: string): { title: string; body: stri
     return {
       icon: <Cloud aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
       title: l10n("local.remote_workspace_preview_not_supported_118565fc"),
-      body: "This workspace is hosted remotely and is not available for inline preview yet.",
+      body: l10n("local.remote_workspace_inline_preview_unavailable_10300329"),
     };
   }
   if (lower.includes("no_workspace") || lower.includes("no_local")) {
     return {
       icon: <FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
       title: l10n("local.no_workspace_yet_133e716a"),
-      body: "This issue does not have a workspace to browse. Files appear here once a run creates one.",
+      body: l10n("local.issue_has_no_workspace_to_browse_10300330"),
     };
   }
   if (lower.includes("archiv") || lower.includes("cleaned") || lower.includes("unavailable")) {
     return {
       icon: <FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
       title: l10n("local.workspace_is_no_longer_available_cb2826c6"),
-      body: "The isolated worktree for this issue has been cleaned up, so files cannot be previewed.",
+      body: l10n("local.isolated_worktree_cleaned_no_preview_10300331"),
     };
   }
   return {
     icon: <AlertTriangle aria-hidden="true" className="h-5 w-5 text-amber-500" />,
     title: l10n("local.workspace_unavailable_f29d3f31"),
-    body: "These workspace files can't be browsed right now.",
+    body: l10n("local.workspace_files_cannot_be_browsed_10300332"),
   };
 }
 
@@ -836,11 +836,13 @@ export function WorkspaceFileBrowser({
   ]);
 
   const announcement = useMemo(() => {
-    if (listQuery.isFetching) return "Loading workspace files…";
-    if (listQuery.isError) return "Unable to load workspace files.";
+    if (listQuery.isFetching) return l10n("local.loading_workspace_files_10300333");
+    if (listQuery.isError) return l10n("local.unable_to_load_workspace_files_10300334");
     if (data?.state === "unavailable") return describeUnavailable(data.unavailableReason ?? "").title;
-    if (items.length === 0) return "No matching files.";
-    return `${items.length} item${items.length === 1 ? "" : "s"} found.`;
+    if (items.length === 0) return l10n("local.no_matching_files_10300335");
+    return items.length === 1
+      ? l10n("local.one_item_found_10300336")
+      : l10n("local.value_items_found_10300337", { v0: items.length });
   }, [data, items.length, listQuery.isError, listQuery.isFetching]);
 
   function openTypedPath() {

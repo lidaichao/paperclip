@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { HeartbeatRunEvent } from "@paperclipai/shared";
 import type { TranscriptEntry } from "@/adapters";
@@ -103,7 +104,7 @@ export function useNativeRunTranscripts(runs: readonly NativeRunTranscriptSource
           if (previous.has(run.id)) return previous;
           const next = new Map(previous);
           next.set(run.id, {
-            message: error instanceof Error ? error.message : "Native run activity could not be loaded",
+            message: error instanceof Error ? error.message : l10n("local.native_run_activity_could_not_load_10300344"),
             failedAt: new Date().toISOString(),
           });
           return next;

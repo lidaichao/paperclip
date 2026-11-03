@@ -1,3 +1,4 @@
+import { l10n } from "../../i18n";
 /**
  * Live adapter: normalize the existing IssueChatComment stream (including
  * optimistic echoes) into the redesign's TaskChatItem[] model. This is the
@@ -70,8 +71,8 @@ export function commentsToTaskChatItems(
   for (const comment of comments) {
     if (comment.deletedAt) continue;
     if (comment.conversationSessionGeneration != null) {
-      items.push({ id: comment.id, kind: "marker", variant: "session_start", label: "New session",
-        detail: "Earlier messages and files are still available.", createdAtIso: new Date(comment.createdAt).toISOString() });
+      items.push({ id: comment.id, kind: "marker", variant: "session_start", label: l10n("local.new_session_10300350"),
+        detail: l10n("local.earlier_messages_files_available_10300351"), createdAtIso: new Date(comment.createdAt).toISOString() });
       continue;
     }
     const kind = authorKind(comment);
@@ -80,7 +81,7 @@ export function commentsToTaskChatItems(
     let onBehalfOfUserName: string | undefined;
     if (kind === "agent") {
       const agentId = effectiveAgentId(comment);
-      authorName = (agentId && ctx.agentMap?.get(agentId)?.name) || "Agent";
+      authorName = (agentId && ctx.agentMap?.get(agentId)?.name) || l10n("local.agent_11b39c93");
       agentIcon = agentId ? ctx.agentMap?.get(agentId)?.icon : undefined;
       onBehalfOfUserName = resolveCommentAttribution({
         authorAgentId: agentId,

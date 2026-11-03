@@ -112,11 +112,13 @@ export function ForkSkillDialog({
       const switched = result.reassignments.length;
       toast?.pushToast({
         tone: "success",
-        title: "Editing a copy",
+        title: l10n("local.editing_a_copy_10300338"),
         body:
           switched > 0
-            ? `Created a copy of ${skill.name} and switched ${switched} ${switched === 1 ? "agent" : "agents"} to it.`
-            : `Created a copy of ${skill.name}. It's now editable.`,
+            ? switched === 1
+              ? l10n("local.created_copy_switched_one_agent_10300339", { v0: skill.name })
+              : l10n("local.created_copy_switched_agents_10300340", { v0: skill.name, v1: switched })
+            : l10n("local.created_copy_now_editable_10300341", { v0: skill.name }),
       });
       onOpenChange(false);
       navigate(skillStudioRoute(result.skill.id));
@@ -124,8 +126,8 @@ export function ForkSkillDialog({
     onError: (error) => {
       toast?.pushToast({
         tone: "error",
-        title: "Couldn't create a copy",
-        body: error instanceof Error ? error.message : "The fork request failed.",
+        title: l10n("local.could_not_create_copy_10300342"),
+        body: error instanceof Error ? error.message : l10n("local.fork_request_failed_10300343"),
       });
     },
   });
@@ -133,7 +135,10 @@ export function ForkSkillDialog({
   const busy = forkMutation.isPending;
   const forkLabel =
     reassign && agentCount > 0
-      ? l10n("local.create_copy_switch_value_value_09b3ef9c", {v0: (agentCount), v1: (agentCount === 1 ? "agent" : "agents")})
+      ? l10n("local.create_copy_switch_value_value_09b3ef9c", {
+          v0: agentCount,
+          v1: agentCount === 1 ? l10n("local.agent_d4f0bc5a") : l10n("local.agents_8c70b25c"),
+        })
       : l10n("local.create_copy_982a7984");
 
   const openExisting = () => {

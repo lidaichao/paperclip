@@ -51,18 +51,19 @@ export function ProviderTraceStatusBadge({
                     ? l10n("local.trace_off_56a98a22")
                     : null;
   if (!label) return null;
+  const traceOff = !expired && status == null && !requested && showOff;
   const warning =
     status === "incomplete" ||
     status === "truncated" ||
     status === "expired" ||
     status === "deleted" ||
     expired;
-  const Icon = label === "Trace off" ? CircleOff : Bug;
+  const Icon = traceOff ? CircleOff : Bug;
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-(length:--text-micro) font-medium",
-        label === "Trace off" || label === "Trace deleted" || label === "Trace expired"
+        traceOff || status === "deleted" || status === "expired" || expired
           ? "border-border bg-background text-muted-foreground"
           : warning
             ? "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"

@@ -6,6 +6,7 @@ import type {
   RunnerGoalAction,
   RunnerGoalActionRequest,
   RunnerGoalProjection,
+  RunnerGoalStatus,
 } from "@paperclipai/shared";
 import { issuesApi } from "@/api/issues";
 import { useCompanyLiveEvent } from "@/context/LiveUpdatesProvider";
@@ -25,6 +26,18 @@ const PENDING_LABELS: Record<string, string> = {
   clearing: l10n("local.clearing_06648760"),
   continuing: l10n("local.continuing_in_a_new_run_59261d0a"),
 };
+
+function runnerGoalStatusLabel(status: RunnerGoalStatus): string {
+  switch (status) {
+    case "active": return l10n("local.active_96879611");
+    case "paused": return l10n("local.paused_a7a9dc5b");
+    case "blocked": return l10n("local.blocked_6973dddd");
+    case "limited": return l10n("local.limited_10300347");
+    case "usage_limited": return l10n("local.usage_limited_10300348");
+    case "budget_limited": return l10n("local.budget_limited_10300349");
+    case "complete": return l10n("local.complete_eebbf645");
+  }
+}
 
 function requestId() {
   return typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -96,7 +109,7 @@ export function useRunnerGoalControl(issueId: string | null, agentId: string | n
     setActionError(null);
     try {
       const current = query.data ?? (await query.refetch()).data;
-      if (!current?.agentId) throw new Error(current?.capability.reason ?? "Select an agent to use /goal.");
+      if (!current?.agentId) throw new Error(current?.capability.reason ?? l10n("local.select_agent_to_use_goal_10300345"));
       if (current.capability.availability !== "available") {
         throw new Error(current.capability.reason ?? "Session goals are unsupported by this agent.");
       }
@@ -109,7 +122,7 @@ export function useRunnerGoalControl(issueId: string | null, agentId: string | n
         ...(action === "replace" ? { confirmReplace } : {}),
       });
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : "The goal action could not be applied.");
+      setActionError(error instanceof Error ? error.message : l10n("local.goal_action_could_not_be_applied_10300346"));
       throw error;
     }
   }, [mutation, query]);
@@ -194,7 +207,7 @@ export function RunnerGoalWidget({ control }: { control: RunnerGoalControl }) {
   const mutationError = control.actionError ?? (control.mutation?.error instanceof Error
     ? control.mutation.error.message
     : control.mutation?.error
-      ? "The goal action could not be applied."
+      ? l10n("local.goal_action_could_not_be_applied_10300346")
       : null);
   // Expansion controls the objective's detail, not whether an empty card exists.
   // In particular, a cleared goal must disappear even after it was expanded.
@@ -213,7 +226,7 @@ export function RunnerGoalWidget({ control }: { control: RunnerGoalControl }) {
             <span className="text-xs font-semibold">{l10n("local.session_goal_b6c1676d")}</span>
             {goal ? (
               <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium capitalize" role="status">
-                {goal.status.replaceAll("_", " ")}
+                {runnerGoalStatusLabel(goal.status)}
               </span>
             ) : null}
             {goal?.workingNow ? (
