@@ -108,7 +108,7 @@ describe("update command", () => {
     const manifest = { channel: "pinned", version: "1.2.3" } as InstallManifest;
     expect(resolveUpdateRequest(manifest, {})).toEqual({ spec: "1.2.3", channel: "pinned", explicit: false });
     expect(resolveUpdateRequest(manifest, { latest: true })).toEqual({ spec: "latest", channel: "latest", explicit: true });
-    expect(() => resolveUpdateRequest(manifest, { latest: true, canary: true })).toThrow("only one");
+    expect(() => resolveUpdateRequest(manifest, { latest: true, canary: true })).toThrow("只能选择一个");
   });
 
   it("re-resolves a moving git branch and activates the new SHA payload", async () => {
@@ -153,14 +153,14 @@ describe("update command", () => {
     const payload = payloadPathFor(paths, "npm", "2.0.0"); const entrypoint = createPayload(payload, "2.0.0"); flipCurrentAtomic(payload, paths);
     writeInstallManifestAtomic({ schemaVersion: 1, ...record(payload, "2.0.0"), previous: [] }, paths);
     const runCommand = vi.fn(async () => ({ stdout: '"1.0.0"\n', stderr: "" }));
-    await expect(updateCommand({ version: "1.0.0", dryRun: true }, { paths, executablePath: entrypoint, runCommand, confirm: async () => false })).rejects.toThrow("Downgrade cancelled");
+    await expect(updateCommand({ version: "1.0.0", dryRun: true }, { paths, executablePath: entrypoint, runCommand, confirm: async () => false })).rejects.toThrow("降级已取消");
   });
 
   it("requires explicit confirmation before a global npm downgrade", async () => {
     const paths = resolveInstallStorePaths();
     const executable = path.join(root, "lib", "node_modules", "paperclipai", "dist", "index.js");
     const runCommand = vi.fn(async () => ({ stdout: '"0.2.0"\n', stderr: "" }));
-    await expect(updateCommand({ version: "0.2.0" }, { paths, executablePath: executable, runCommand, confirm: async () => false })).rejects.toThrow("Downgrade cancelled");
+    await expect(updateCommand({ version: "0.2.0" }, { paths, executablePath: executable, runCommand, confirm: async () => false })).rejects.toThrow("降级已取消");
     expect(runCommand).toHaveBeenCalledTimes(1);
   });
 

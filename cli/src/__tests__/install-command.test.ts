@@ -79,14 +79,14 @@ describe("managed install commands", () => {
   it("supports fork overrides and classifies SHA refs as pinned", () => {
     expect(resolveGitInstallRequest({ ref: "feature/test", repo: "HenkDz/paperclip" })).toEqual({ repo: "HenkDz/paperclip", ref: "feature/test", pinned: false });
     expect(resolveGitInstallRequest({ ref: "abcdef1" })).toEqual({ repo: "paperclipai/paperclip", ref: "abcdef1", pinned: true });
-    expect(() => resolveGitInstallRequest({ repo: "HenkDz/paperclip" })).toThrow("requires --ref");
+    expect(() => resolveGitInstallRequest({ repo: "HenkDz/paperclip" })).toThrow("必须同时指定 --ref");
   });
 
   it("requires explicit non-interactive consent before resolving git refs", async () => {
     const runCommand = vi.fn();
 
     await expect(installCommand({ ref: "master", repo: "HenkDz/paperclip" }, { runCommand }))
-      .rejects.toThrow("Re-run with --yes");
+      .rejects.toThrow("使用 --yes 重新运行");
 
     expect(runCommand).not.toHaveBeenCalled();
   });
@@ -283,7 +283,7 @@ describe("managed install commands", () => {
       })),
       platform: "linux",
       userHomeDir: process.env.HOME!,
-    })).rejects.toThrow("other instance services are installed");
+    })).rejects.toThrow("仍有其他实例服务已安装");
 
     expect(fs.existsSync(paths.cliRoot)).toBe(false);
     expect(fs.existsSync(otherUnitPath)).toBe(true);
@@ -310,7 +310,7 @@ describe("managed install commands", () => {
       })),
       platform: "linux",
       userHomeDir: process.env.HOME!,
-    })).rejects.toThrow("Cannot verify or remove the background service");
+    })).rejects.toThrow("无法验证或移除后台服务");
 
     expect(fs.existsSync(paths.shimPath)).toBe(true);
     expect(fs.existsSync(unitPath)).toBe(true);
