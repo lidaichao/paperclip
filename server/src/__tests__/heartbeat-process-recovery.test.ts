@@ -5078,7 +5078,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       errorCode: "workspace_validation_failed",
     });
     expect(failedRun?.error).toContain(
-      "linked to a project workspace but has no project id",
+      "已关联项目工作区，但没有项目编号",
     );
     // The adapter process never started, so no agent could post an issue
     // comment. The comment policy is not_applicable and no missing-comment

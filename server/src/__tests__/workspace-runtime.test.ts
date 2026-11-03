@@ -1242,7 +1242,7 @@ describe("realizeExecutionWorkspace", () => {
           companyId: "company-1",
         },
       }),
-    ).rejects.toThrow(/not a reusable git worktree \(path is not registered in `git worktree list`\)\./);
+    ).rejects.toThrow(/not a reusable git worktree \(该路径未登记在 `git worktree list` 中\)\./);
   });
 
   it("reuses the current linked worktree instead of nesting another worktree inside it", async () => {

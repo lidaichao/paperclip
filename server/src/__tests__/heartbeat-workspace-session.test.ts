@@ -261,7 +261,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         },
       }),
       "missing_project_id",
-      "linked to a project workspace but has no project id",
+      "已关联项目工作区，但没有项目编号",
     );
   });
 
@@ -276,7 +276,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         },
       }),
       "persisted_cwd_mismatch",
-      'resolved adapter cwd "/tmp/agent-fallback"',
+      '解析到的适配器工作目录为 "/tmp/agent-fallback"',
     );
   });
 
@@ -286,7 +286,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         persistedExecutionWorkspace: null,
       }),
       "missing_persisted_execution_workspace",
-      "requires a project execution workspace",
+      "需要项目执行工作区",
     );
   });
 
@@ -301,7 +301,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         },
       }),
       "missing_effective_cwd",
-      "no adapter cwd was resolved",
+      "未解析到适配器工作目录",
     );
   });
 
@@ -316,7 +316,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         },
       }),
       "project_workspace_mismatch",
-      'expected project workspace "workspace-1"',
+      '需要项目工作区 "workspace-1"',
     );
   });
 
@@ -331,7 +331,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         },
       }),
       "persisted_workspace_missing_project_workspace_id",
-      "has no project workspace id",
+      "没有项目工作区编号",
     );
   });
 
@@ -351,7 +351,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         },
       }),
       "fallback_agent_home_cwd",
-      "would launch from agent fallback cwd",
+      "将从智能体回退目录",
     );
   });
 
@@ -373,7 +373,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         },
       }),
       "git_worktree_provider_ref_mismatch",
-      'expected git worktree "/tmp/worktree-expected"',
+      '需要 Git 工作树 "/tmp/worktree-expected"',
     );
   });
 
@@ -414,7 +414,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
           },
         }),
         "git_worktree_branch_mismatch",
-        `expected git worktree branch "${recordedBranch}"`,
+        `需要 "${worktreePath}" 上的 Git 工作树分支 "${recordedBranch}"`,
       );
     } finally {
       await fs.rm(repoRoot, { recursive: true, force: true });
@@ -440,7 +440,7 @@ describe("assertGitSensitiveAdapterWorkspaceValid", () => {
         },
       }),
       "missing_git_metadata",
-      "has no .git metadata",
+      "没有 .git 元数据",
     );
   });
 
@@ -486,7 +486,7 @@ describe("assertGitWorktreeBaseWorkspaceReady", () => {
       },
     })).rejects.toMatchObject({
       code: "workspace_validation_failed",
-      message: expect.stringContaining("needs a project / project workspace or a reusable execution workspace"),
+      message: expect.stringContaining("需要关联项目／项目工作区或可复用执行工作区"),
       resultJson: {
         workspaceValidation: expect.objectContaining({
           reason: "git_worktree_base_agent_home",
@@ -552,7 +552,7 @@ describe("assertGitWorktreeBaseWorkspaceReady", () => {
         },
       })).rejects.toMatchObject({
         code: "workspace_validation_failed",
-        message: expect.stringContaining("is not a git checkout"),
+        message: expect.stringContaining("不是 Git 检出目录"),
         resultJson: {
           workspaceValidation: expect.objectContaining({
             reason: "git_worktree_base_not_git_checkout",
@@ -599,7 +599,7 @@ describe("assertGitWorktreeBaseWorkspaceReady", () => {
         },
       })).rejects.toMatchObject({
         code: "workspace_validation_failed",
-        message: expect.stringContaining("could not be prepared: Failed to prepare managed checkout"),
+        message: expect.stringContaining("无法准备项目工作区检出: Failed to prepare managed checkout"),
         resultJson: {
           workspaceValidation: expect.objectContaining({
             reason: "git_worktree_base_materialization_failed",
@@ -642,7 +642,7 @@ describe("assertGitWorktreeBaseWorkspaceReady", () => {
         anchor: { baseCwdFallback: true },
       })).rejects.toMatchObject({
         code: "workspace_validation_failed",
-        message: expect.stringContaining("is not a git checkout"),
+        message: expect.stringContaining("不是 Git 检出目录"),
         resultJson: {
           workspaceValidation: expect.objectContaining({
             reason: "git_worktree_base_not_git_checkout",
@@ -677,7 +677,7 @@ describe("assertGitWorktreeBaseWorkspaceReady", () => {
         anchor: { baseCwdFallback: true, materializationFailures: [] },
       })).rejects.toMatchObject({
         code: "workspace_validation_failed",
-        message: expect.stringContaining("configured project workspace path is not available"),
+        message: expect.stringContaining("已配置的项目工作区路径不可用"),
         resultJson: {
           workspaceValidation: expect.objectContaining({
             reason: "git_worktree_base_fallback_not_project_workspace",
@@ -943,7 +943,7 @@ describe("assertPushCapabilityCheckoutValid", () => {
         cwd,
       })).rejects.toMatchObject({
         code: "workspace_validation_failed",
-        message: expect.stringContaining("has no configured push remote"),
+        message: expect.stringContaining("未配置可推送的远程仓库"),
         resultJson: {
           workspaceValidation: expect.objectContaining({
             reason: "missing_git_push_remote",

@@ -2962,7 +2962,7 @@ export async function assertGitWorktreeBaseWorkspaceReady(input: {
 
   const issueLabel = input.issue.identifier ?? input.issue.id;
   const remediation =
-    "This task needs a project / project workspace or a reusable execution workspace before it can run.";
+    "此任务需要关联项目／项目工作区或可复用执行工作区，才能运行。";
   const fail = (
     reason: string,
     message: string,
@@ -2992,7 +2992,7 @@ export async function assertGitWorktreeBaseWorkspaceReady(input: {
   if (input.base.source === "agent_home") {
     fail(
       "git_worktree_base_agent_home",
-      `Issue ${issueLabel} requested ${input.requestedExecutionWorkspaceMode} with git_worktree, but no project or reusable execution workspace was resolved; refusing to create a git worktree from agent fallback cwd "${input.base.baseCwd}". ${remediation}`,
+      `任务 ${issueLabel} 请求使用 git_worktree 的 ${input.requestedExecutionWorkspaceMode}，但未解析到项目或可复用执行工作区；拒绝从智能体回退目录 "${input.base.baseCwd}" 创建 Git 工作树。${remediation}`,
     );
   }
 
@@ -3007,7 +3007,7 @@ export async function assertGitWorktreeBaseWorkspaceReady(input: {
     const failureDetail = `: ${materializationFailures[0].error.replace(/\s+/g, " ")}`;
     fail(
       "git_worktree_base_materialization_failed",
-      `Issue ${issueLabel} requested ${input.requestedExecutionWorkspaceMode} with git_worktree, but the project workspace checkout could not be prepared${failureDetail}. Repair the project workspace repository URL, clone access, or configured local cwd, then retry.`,
+      `任务 ${issueLabel} 请求使用 git_worktree 的 ${input.requestedExecutionWorkspaceMode}，但无法准备项目工作区检出${failureDetail}。请修复项目工作区仓库地址、克隆权限或已配置的本地目录，然后重试。`,
       { baseCwdFallback: true, materializationFailures },
     );
   }
@@ -3015,7 +3015,7 @@ export async function assertGitWorktreeBaseWorkspaceReady(input: {
   if (!(await isGitCheckout(input.base.baseCwd))) {
     fail(
       "git_worktree_base_not_git_checkout",
-      `Issue ${issueLabel} requested ${input.requestedExecutionWorkspaceMode} with git_worktree, but base workspace "${input.base.baseCwd}" is not a git checkout. ${remediation}`,
+      `任务 ${issueLabel} 请求使用 git_worktree 的 ${input.requestedExecutionWorkspaceMode}，但基础工作区 "${input.base.baseCwd}" 不是 Git 检出目录。${remediation}`,
     );
   }
 
@@ -3026,7 +3026,7 @@ export async function assertGitWorktreeBaseWorkspaceReady(input: {
   if (input.anchor?.baseCwdFallback) {
     fail(
       "git_worktree_base_fallback_not_project_workspace",
-      `Issue ${issueLabel} requested ${input.requestedExecutionWorkspaceMode} with git_worktree, but the configured project workspace path is not available and the fallback cwd "${input.base.baseCwd}" is not the project workspace checkout. Make the configured project workspace path available on this host, or repair the project workspace configuration, then retry.`,
+      `任务 ${issueLabel} 请求使用 git_worktree 的 ${input.requestedExecutionWorkspaceMode}，但已配置的项目工作区路径不可用，且回退目录 "${input.base.baseCwd}" 不是项目工作区检出目录。请让此主机能够访问已配置的项目工作区路径，或修复项目工作区配置，然后重试。`,
       { baseCwdFallback: true, materializationFailures },
     );
   }
@@ -3045,7 +3045,7 @@ export async function assertPushCapabilityCheckoutValid(input: {
   if (!cwd) return;
   if (await hasGitPushRemote(cwd)) return;
   throw new WorkspaceValidationFailure(
-    `Issue ${input.issue.identifier ?? input.issue.id} requested the GitHub PR workflow, but checkout "${cwd}" has no configured push remote. Bind the run to a writable repo checkout before dispatching the agent.`,
+    `任务 ${input.issue.identifier ?? input.issue.id} 请求使用 GitHub PR 工作流，但检出目录 "${cwd}" 未配置可推送的远程仓库。派发智能体前，请将本次运行绑定到可写的仓库检出目录。`,
     {
       workspaceValidation: {
         reason: "missing_git_push_remote",
@@ -3164,7 +3164,7 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
   if (issue.projectWorkspaceId && !issue.projectId) {
     fail(
       "missing_project_id",
-      `Issue ${issue.identifier ?? issue.id} is linked to a project workspace but has no project id; refusing to launch ${input.adapterType} from fallback cwd.`,
+      `任务 ${issue.identifier ?? issue.id} 已关联项目工作区，但没有项目编号；拒绝从回退目录启动 ${input.adapterType}。`,
     );
   }
 
@@ -3174,14 +3174,14 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
   if (workspaceExpectation && !input.persistedExecutionWorkspace) {
     fail(
       "missing_persisted_execution_workspace",
-      `Issue ${issue.identifier ?? issue.id} requires a project execution workspace, but none was persisted before adapter launch.`,
+      `任务 ${issue.identifier ?? issue.id} 需要项目执行工作区，但适配器启动前没有持久化任何工作区。`,
     );
   }
 
   if (workspaceExpectation && !effectiveCwd) {
     fail(
       "missing_effective_cwd",
-      `Issue ${issue.identifier ?? issue.id} expected a project workspace, but no adapter cwd was resolved before launch.`,
+      `任务 ${issue.identifier ?? issue.id} 需要项目工作区，但启动前未解析到适配器工作目录。`,
     );
   }
 
@@ -3193,7 +3193,7 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
   ) {
     fail(
       "persisted_cwd_mismatch",
-      `Issue ${issue.identifier ?? issue.id} resolved adapter cwd "${effectiveCwd}" but persisted execution workspace cwd is "${persistedCwd}".`,
+      `任务 ${issue.identifier ?? issue.id} 解析到的适配器工作目录为 "${effectiveCwd}"，但持久化执行工作区目录为 "${persistedCwd}"。`,
     );
   }
 
@@ -3206,7 +3206,7 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
   ) {
     fail(
       "persisted_workspace_missing_project_workspace_id",
-      `Issue ${issue.identifier ?? issue.id} expected project workspace "${expectedProjectWorkspaceId}" but persisted execution workspace has no project workspace id.`,
+      `任务 ${issue.identifier ?? issue.id} 需要项目工作区 "${expectedProjectWorkspaceId}"，但持久化执行工作区没有项目工作区编号。`,
     );
   }
 
@@ -3218,7 +3218,7 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
   ) {
     fail(
       "project_workspace_mismatch",
-      `Issue ${issue.identifier ?? issue.id} expected project workspace "${expectedProjectWorkspaceId}" but persisted execution workspace points at "${input.persistedExecutionWorkspace.projectWorkspaceId}".`,
+      `任务 ${issue.identifier ?? issue.id} 需要项目工作区 "${expectedProjectWorkspaceId}"，但持久化执行工作区指向 "${input.persistedExecutionWorkspace.projectWorkspaceId}"。`,
     );
   }
 
@@ -3229,7 +3229,7 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
   ) {
     fail(
       "fallback_agent_home_cwd",
-      `Issue ${issue.identifier ?? issue.id} expected a project workspace, but ${input.adapterType} would launch from agent fallback cwd "${effectiveCwd}".`,
+      `任务 ${issue.identifier ?? issue.id} 需要项目工作区，但 ${input.adapterType} 将从智能体回退目录 "${effectiveCwd}" 启动。`,
     );
   }
 
@@ -3244,7 +3244,7 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
   ) {
     fail(
       "git_worktree_provider_ref_mismatch",
-      `Issue ${issue.identifier ?? issue.id} expected git worktree "${input.persistedExecutionWorkspace.providerRef}" but adapter cwd resolved to "${effectiveCwd}".`,
+      `任务 ${issue.identifier ?? issue.id} 需要 Git 工作树 "${input.persistedExecutionWorkspace.providerRef}"，但适配器工作目录解析为 "${effectiveCwd}"。`,
     );
   }
 
@@ -3255,7 +3255,7 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
   ) {
     fail(
       "missing_git_metadata",
-      `Issue ${issue.identifier ?? issue.id} expected a git workspace for ${input.adapterType}, but "${effectiveCwd}" has no .git metadata.`,
+      `任务 ${issue.identifier ?? issue.id} 需要供 ${input.adapterType} 使用的 Git 工作区，但 "${effectiveCwd}" 没有 .git 元数据。`,
     );
   }
 
@@ -3274,7 +3274,7 @@ export async function assertGitSensitiveAdapterWorkspaceValid(input: {
     if (!inspection.valid) {
       fail(
         "git_worktree_branch_mismatch",
-        `Issue ${issue.identifier ?? issue.id} expected git worktree branch "${expectedManagedBranchName}" at "${effectiveCwd}", but ${inspection.reason ?? "the checked-out branch could not be verified"}.`,
+        `任务 ${issue.identifier ?? issue.id} 需要 "${effectiveCwd}" 上的 Git 工作树分支 "${expectedManagedBranchName}"，但${inspection.reason ?? "无法验证已检出分支"}。`,
         {
           managedGitWorktreeBranch:
             formatManagedGitWorktreeBranchInspection(inspection),

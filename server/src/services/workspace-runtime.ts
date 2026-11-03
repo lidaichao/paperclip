@@ -2764,7 +2764,7 @@ export async function inspectManagedGitWorktreeBranch(input: {
     return {
       ...base,
       valid: false,
-      reason: `worktree path "${worktreePath}" does not exist`,
+      reason: `Git 工作树路径 "${worktreePath}" 不存在`,
       reasonCode: "missing_worktree",
       repoRoot: input.repoRoot ? path.resolve(input.repoRoot) : null,
     };
@@ -2777,7 +2777,7 @@ export async function inspectManagedGitWorktreeBranch(input: {
     return {
       ...base,
       valid: false,
-      reason: "path is not a git checkout",
+      reason: "该路径不是 Git 检出目录",
       reasonCode: "not_a_git_checkout",
       repoRoot: null,
     };
@@ -2788,7 +2788,7 @@ export async function inspectManagedGitWorktreeBranch(input: {
     return {
       ...base,
       valid: false,
-      reason: "path is not registered in `git worktree list`",
+      reason: "该路径未登记在 `git worktree list` 中",
       reasonCode: "not_registered",
       repoRoot,
     };
@@ -2799,7 +2799,7 @@ export async function inspectManagedGitWorktreeBranch(input: {
     return {
       ...base,
       valid: false,
-      reason: "git resolves this path to a different repository root",
+      reason: "Git 将此路径解析到另一个仓库根目录",
       reasonCode: "wrong_repository_root",
       repoRoot,
     };
@@ -2813,7 +2813,7 @@ export async function inspectManagedGitWorktreeBranch(input: {
     return {
       ...base,
       valid: false,
-      reason: `worktree HEAD is on "${actualBranchName ?? "<detached>"}" instead of "${expectedBranchName}"`,
+      reason: `Git 工作树 HEAD 位于 "${actualBranchName ?? "<游离状态>"}"，而不是 "${expectedBranchName}"`,
       reasonCode: "branch_mismatch",
       repoRoot,
       actualBranchName,
@@ -2852,7 +2852,7 @@ async function validateLinkedGitWorktree(input: {
     ? { valid: true }
     : {
         valid: false,
-        reason: inspection.reason ?? "unknown git worktree mismatch",
+        reason: inspection.reason ?? "未知的 Git 工作树不匹配",
         reasonCode: inspection.reasonCode ?? "not_a_git_checkout",
         actualBranchName: inspection.actualBranchName,
       };
