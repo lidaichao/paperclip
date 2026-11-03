@@ -78,7 +78,7 @@ export function builtInAgentRoutes(db: Db) {
   async function assertBuiltInAgentsEnabled() {
     const experimental = await settings.getExperimental();
     if (experimental.enableBuiltInAgents !== true) {
-      throw notFound("Built-in agents are not enabled");
+      throw notFound("未启用内置智能体");
     }
   }
 
@@ -96,12 +96,12 @@ export function builtInAgentRoutes(db: Db) {
   async function assertCanControlBuiltInRoutine(req: Request, companyId: string) {
     assertCompanyAccess(req, companyId);
     if (req.actor.type !== "board") {
-      throw forbidden("Only board operators can control built-in routines.");
+      throw forbidden("只有看板操作员可以控制内置例行任务。");
     }
     if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
     const allowed = await access.canUser(companyId, req.actor.userId, "tasks:assign");
     if (!allowed) {
-      throw forbidden("Missing permission: tasks:assign");
+      throw forbidden("缺少权限：tasks:assign");
     }
   }
 

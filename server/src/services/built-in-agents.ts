@@ -555,61 +555,61 @@ export function validateBuiltInAgentDefinitions(definitions: BuiltInAgentDefinit
   const seenKeys = new Set<string>();
   for (const definition of definitions) {
     if (!BUILT_IN_AGENT_KEY_PATTERN.test(definition.key)) {
-      throw new Error(`Invalid built-in agent key: ${definition.key}`);
+      throw new Error(`内置智能体键无效：${definition.key}`);
     }
     if (seenKeys.has(definition.key)) {
-      throw new Error(`Duplicate built-in agent key: ${definition.key}`);
+      throw new Error(`内置智能体键重复：${definition.key}`);
     }
     seenKeys.add(definition.key);
     if (!definition.displayName.trim()) {
-      throw new Error(`Built-in agent ${definition.key} requires a displayName`);
+      throw new Error(`内置智能体 ${definition.key} 必须提供 displayName`);
     }
     if (!definition.shortPurpose.trim()) {
-      throw new Error(`Built-in agent ${definition.key} requires a shortPurpose`);
+      throw new Error(`内置智能体 ${definition.key} 必须提供 shortPurpose`);
     }
     if (!definition.defaultInstructions.trim()) {
-      throw new Error(`Built-in agent ${definition.key} requires defaultInstructions`);
+      throw new Error(`内置智能体 ${definition.key} 必须提供 defaultInstructions`);
     }
     if (!definition.defaultRole.trim()) {
-      throw new Error(`Built-in agent ${definition.key} requires a defaultRole`);
+      throw new Error(`内置智能体 ${definition.key} 必须提供 defaultRole`);
     }
     if (uniqueNonEmptyStrings(definition.featureKeys).length !== definition.featureKeys.length) {
-      throw new Error(`Built-in agent ${definition.key} featureKeys must be unique non-empty strings`);
+      throw new Error(`内置智能体 ${definition.key} 的 featureKeys 必须是唯一的非空字符串`);
     }
     if (definition.featureKeys.length === 0) {
-      throw new Error(`Built-in agent ${definition.key} requires at least one featureKey`);
+      throw new Error(`内置智能体 ${definition.key} 至少需要一个 featureKey`);
     }
     if (
       definition.allowedAdapterTypes
       && uniqueNonEmptyStrings(definition.allowedAdapterTypes).length !== definition.allowedAdapterTypes.length
     ) {
-      throw new Error(`Built-in agent ${definition.key} allowedAdapterTypes must be unique non-empty strings`);
+      throw new Error(`内置智能体 ${definition.key} 的 allowedAdapterTypes 必须是唯一的非空字符串`);
     }
     if (
       definition.defaultAdapterType
       && definition.allowedAdapterTypes
       && !definition.allowedAdapterTypes.includes(definition.defaultAdapterType)
     ) {
-      throw new Error(`Built-in agent ${definition.key} defaultAdapterType must be allowed`);
+      throw new Error(`内置智能体 ${definition.key} 的 defaultAdapterType 必须在允许列表中`);
     }
     if (
       definition.defaultBudgetMonthlyCents !== undefined
       && (!Number.isInteger(definition.defaultBudgetMonthlyCents) || definition.defaultBudgetMonthlyCents < 0)
     ) {
-      throw new Error(`Built-in agent ${definition.key} defaultBudgetMonthlyCents must be a non-negative integer`);
+      throw new Error(`内置智能体 ${definition.key} 的 defaultBudgetMonthlyCents 必须是非负整数`);
     }
     if (definition.bundle) {
       if (!definition.bundle.stockVersion.trim()) {
-        throw new Error(`Built-in agent ${definition.key} bundle requires a stockVersion`);
+        throw new Error(`内置智能体 ${definition.key} 的资源包必须提供 stockVersion`);
       }
       if (!definition.bundle.instructions.files[definition.bundle.instructions.entryFile]) {
-        throw new Error(`Built-in agent ${definition.key} bundle instructions require the entry file`);
+        throw new Error(`内置智能体 ${definition.key} 的资源包说明必须包含入口文件`);
       }
       if (!definition.bundle.skill.files[`${definition.bundle.skill.slug}/SKILL.md`]) {
-        throw new Error(`Built-in agent ${definition.key} bundle skill requires SKILL.md`);
+        throw new Error(`内置智能体 ${definition.key} 的资源包技能必须包含 SKILL.md`);
       }
       if (!definition.bundle.routine.description.trim()) {
-        throw new Error(`Built-in agent ${definition.key} bundle routine requires a description`);
+        throw new Error(`内置智能体 ${definition.key} 的资源包例行任务必须提供描述`);
       }
     }
   }
@@ -652,7 +652,7 @@ export function getBuiltInAgentDefinition(key: string) {
 
 export function requireBuiltInAgentDefinition(key: string) {
   const definition = getBuiltInAgentDefinition(key);
-  if (!definition) throw notFound(`Built-in agent definition not found: ${key}`);
+  if (!definition) throw notFound(`未找到内置智能体定义：${key}`);
   return definition;
 }
 
@@ -686,7 +686,7 @@ function selectPreferredAdapterType(
 
 function assertAdapterAllowed(definition: BuiltInAgentDefinition, adapterType: string) {
   if (definition.allowedAdapterTypes && !definition.allowedAdapterTypes.includes(adapterType)) {
-    throw unprocessable(`Adapter type ${adapterType} is not allowed for built-in agent ${definition.key}`, {
+    throw unprocessable(`适配器类型 ${adapterType} 不允许用于内置智能体 ${definition.key}`, {
       code: "built_in_agent_adapter_not_allowed",
       key: definition.key,
       allowedAdapterTypes: definition.allowedAdapterTypes,
@@ -750,7 +750,7 @@ async function assertKnownBuiltInAgentModel(
   const models = await listAdapterModels(adapterType);
   if (models.length === 0 || models.some((candidate) => candidate.id === model)) return;
 
-  throw unprocessable(`Model "${model}" is not available for adapter ${adapterType}.`, {
+  throw unprocessable(`模型“${model}”不适用于适配器 ${adapterType}。`, {
     code: "built_in_agent_model_unknown",
     key: definition.key,
     adapterType,
@@ -1003,7 +1003,7 @@ export function builtInAgentService(db: Db) {
       allowBuiltInAgentMetadata: true,
       recordRevision: { source: `built-in-bundle:${mode}:instructions` },
     });
-    if (!updated) throw notFound("Built-in agent not found");
+    if (!updated) throw notFound("未找到内置智能体");
     await upsertManagedResourceBinding({
       companyId: agent.companyId,
       bundleKey: definition.key,
@@ -1055,7 +1055,7 @@ export function builtInAgentService(db: Db) {
     const imported = results.find((result) => result.skill.key === definition.bundle!.skill.canonicalKey)?.skill
       ?? results[0]?.skill
       ?? await skillSvc.getByKey(companyId, definition.bundle!.skill.canonicalKey);
-    if (!imported) throw notFound("Built-in bundled skill was not imported");
+    if (!imported) throw notFound("未导入内置资源包技能");
     return imported;
   }
 
@@ -1070,7 +1070,7 @@ export function builtInAgentService(db: Db) {
       allowBuiltInAgentMetadata: true,
       recordRevision: { source: "built-in-bundle:skill-sync" },
     });
-    if (!updated) throw notFound("Built-in agent not found");
+    if (!updated) throw notFound("未找到内置智能体");
     return updated as Agent;
   }
 
@@ -1264,13 +1264,13 @@ export function builtInAgentService(db: Db) {
   async function requireBundleRoutine(companyId: string, key: string, routineKey: string) {
     const definition = requireBuiltInAgentDefinition(key);
     if (!definition.bundle || definition.bundle.routine.routineKey !== routineKey) {
-      throw notFound("Built-in routine not found");
+      throw notFound("未找到内置例行任务");
     }
     await ensureCompany(companyId);
     const agent = await findSingleAgent(companyId, definition);
-    if (!agent) throw notFound("Built-in agent is not provisioned");
+    if (!agent) throw notFound("尚未配置内置智能体");
     const current = await getRoutineByBinding(companyId, definition);
-    if (!current.routine) throw notFound("Built-in routine not found");
+    if (!current.routine) throw notFound("未找到内置例行任务");
     const schedule = current.triggers.find((trigger) => trigger.kind === "schedule") ?? null;
     return { definition, agent, routine: current.routine, triggers: current.triggers, schedule };
   }
@@ -1278,7 +1278,7 @@ export function builtInAgentService(db: Db) {
   async function ensureBuiltInAgentAssignable(agent: Agent) {
     if (agent.status !== "paused") return agent;
     const resumed = await agentSvc.resume(agent.id);
-    if (!resumed) throw notFound("Built-in agent not found");
+    if (!resumed) throw notFound("未找到内置智能体");
     return resumed as Agent;
   }
 
@@ -1306,7 +1306,7 @@ export function builtInAgentService(db: Db) {
         catchUpPolicy: routine.catchUpPolicy,
         variables: routine.variables,
       }, actor);
-    if (!nextRoutine) throw notFound("Built-in routine not found");
+    if (!nextRoutine) throw notFound("未找到内置例行任务");
     await db
       .update(routines)
       .set({
@@ -1489,12 +1489,12 @@ export function builtInAgentService(db: Db) {
       ? await materializeInstructions(agent, definition, mode)
       : byKind.get("instructions")!;
     const refreshedAgent = await agentSvc.getById(agent.id) as Agent | null;
-    if (!refreshedAgent) throw notFound("Built-in agent not found");
+    if (!refreshedAgent) throw notFound("未找到内置智能体");
     const skill = selected.has("skill")
       ? await materializeSkill(refreshedAgent, definition, mode)
       : byKind.get("skill")!;
     const refreshedAfterSkill = await agentSvc.getById(agent.id) as Agent | null;
-    if (!refreshedAfterSkill) throw notFound("Built-in agent not found");
+    if (!refreshedAfterSkill) throw notFound("未找到内置智能体");
     const routine = selected.has("routine")
       ? await materializeRoutine(refreshedAfterSkill, definition, mode)
       : byKind.get("routine")!;
@@ -1510,7 +1510,7 @@ export function builtInAgentService(db: Db) {
       .from(companies)
       .where(eq(companies.id, companyId))
       .then((rows) => rows[0] ?? null);
-    if (!company) throw notFound("Company not found");
+    if (!company) throw notFound("未找到公司");
     return company;
   }
 
@@ -1643,7 +1643,7 @@ export function builtInAgentService(db: Db) {
         allowBuiltInAgentMetadata: true,
         recordRevision: { source: "built-in-agent:ensure" },
       });
-      if (!updated) throw notFound("Built-in agent not found");
+      if (!updated) throw notFound("未找到内置智能体");
       if (existingPendingApproval) {
         return state(definition, updated as Agent);
       }
@@ -1717,7 +1717,7 @@ export function builtInAgentService(db: Db) {
     if (existing) {
       if (existing.status === "pending_approval") {
         if (hasProvisionSetupInput(input)) {
-          throw conflict("Built-in agent setup is already pending board approval.", {
+          throw conflict("内置智能体配置已在等待看板审批。", {
             code: "built_in_agent_pending_approval",
             key: definition.key,
             agentId: existing.id,
@@ -1747,7 +1747,7 @@ export function builtInAgentService(db: Db) {
       // Changing the adapter of an already-configured (`ready`/`paused`)
       // built-in agent is a genuine reconfiguration and stays gated.
       if (providesAdapterSetup) {
-        throw conflict("Built-in agent adapter changes require board approval before they can be applied.", {
+        throw conflict("内置智能体适配器变更必须先通过看板审批才能应用。", {
           code: "built_in_agent_reconfiguration_requires_approval",
           key: definition.key,
           agentId: existing.id,
@@ -1842,7 +1842,7 @@ export function builtInAgentService(db: Db) {
       allowBuiltInAgentMetadata: true,
       recordRevision: { source: "built-in-agent:reconcile-defaults" },
     });
-    if (!updated) throw notFound("Built-in agent not found");
+    if (!updated) throw notFound("未找到内置智能体");
     await ensureBuiltInAgentDefaultGrants(updated as Agent, definition);
     return state(definition, updated as Agent);
   }
@@ -1874,7 +1874,7 @@ export function builtInAgentService(db: Db) {
     actor: { agentId?: string | null; userId?: string | null; runId?: string | null } = {},
   ) {
     const { definition, agent, routine, schedule } = await requireBundleRoutine(companyId, key, routineKey);
-    if (!schedule) throw notFound("Built-in routine schedule not found");
+    if (!schedule) throw notFound("未找到内置例行任务计划");
     if (enabled) {
       await ensureBuiltInAgentAssignable(agent);
       await routineSvc.update(routine.id, { status: "active" }, actor);

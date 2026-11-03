@@ -26,7 +26,7 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
 
   async function assertStatusCardsEnabled() {
     const experimental = await settings.getExperimental();
-    if (experimental.enableStatusCards !== true) throw notFound("Status cards are not enabled");
+    if (experimental.enableStatusCards !== true) throw notFound("未启用状态卡");
   }
 
   async function assertCanMutate(req: Request, companyId: string) {
@@ -50,7 +50,7 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
   async function assertCanManageCard(req: Request, card: { companyId: string; createdByAgentId: string | null }) {
     await assertCanMutate(req, card.companyId);
     if (req.actor.type === "agent" && card.createdByAgentId !== req.actor.agentId) {
-      throw forbidden("Agents can only manage status cards they authored");
+      throw forbidden("智能体只能管理自己创建的状态卡");
     }
   }
 
@@ -61,7 +61,7 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
       interestPrompt.length > STATUS_CARD_AGENT_MAX_INTEREST_PROMPT_LENGTH
     ) {
       throw unprocessable(
-        `Agent-authored status card prompts cannot exceed ${STATUS_CARD_AGENT_MAX_INTEREST_PROMPT_LENGTH} characters`,
+        `智能体创建的状态卡提示词不能超过 ${STATUS_CARD_AGENT_MAX_INTEREST_PROMPT_LENGTH} 个字符`,
       );
     }
   }
@@ -169,14 +169,14 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
 
   router.get("/status-cards/:id", async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
     res.json(await service.hydrate(card));
   });
 
   router.patch("/status-cards/:id", validate(patchStatusCardSchema), async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
     await assertCanManageCard(req, card);
     assertAgentPromptLimit(req, req.body.interestPrompt);
@@ -198,7 +198,7 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
 
   router.delete("/status-cards/:id", async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
     await assertCanManageCard(req, card);
     await service.remove(card.id);
@@ -208,21 +208,21 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
 
   router.get("/status-cards/:id/updates", async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
     res.json(await service.listUpdates(card.id));
   });
 
   router.get("/status-cards/:id/summary-revisions", async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
     res.json(await service.listSummaryRevisions(card));
   });
 
   router.post("/status-cards/:id/recompile", async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
     await assertCanManageCard(req, card);
     const result = await enqueueCompile(req, card.id);
@@ -235,7 +235,7 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
 
   router.post("/status-cards/:id/refresh", validate(refreshStatusCardSchema), async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
     await assertCanManageCard(req, card);
     const result = await enqueueRefresh(req, card.id, req.body.full);
@@ -250,7 +250,7 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
 
   router.get("/status-cards/:id/dry-run", async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
     const decision = await access.decide({
       actor: req.actor,
@@ -258,7 +258,7 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
       resource: { type: "company", companyId: card.companyId },
     });
     if (!decision.allowed) {
-      throw forbidden("Status-card dry-run is outside this actor's low-trust authorization boundary", authorizationDeniedDetails(decision));
+      throw forbidden("状态卡试运行超出当前执行者的低信任授权边界", authorizationDeniedDetails(decision));
     }
     res.json({
       cardId: card.id,
@@ -270,9 +270,9 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
 
   router.put("/status-cards/:id/query", validate(writeStatusCardQuerySchema), async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
-    if (!hasCompanyAccess(req, card.companyId)) throw notFound("Status card not found");
+    if (!hasCompanyAccess(req, card.companyId)) throw notFound("未找到状态卡");
     assertCompanyAccess(req, card.companyId);
     const actor = getActorInfo(req);
     const updated = await service.writeQuery(card.id, req.body, {
@@ -289,9 +289,9 @@ export function statusCardRoutes(db: Db, opts: { heartbeat?: IssueAssignmentWake
 
   router.put("/status-cards/:id/summary", validate(writeStatusCardSummarySchema), async (req, res) => {
     await assertStatusCardsEnabled();
-    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "Status card not found");
+    const card = await getAccessibleResource(req, res, service.getById(req.params.id as string), "未找到状态卡");
     if (!card) return;
-    if (!hasCompanyAccess(req, card.companyId)) throw notFound("Status card not found");
+    if (!hasCompanyAccess(req, card.companyId)) throw notFound("未找到状态卡");
     assertCompanyAccess(req, card.companyId);
     const actor = getActorInfo(req);
     const result = await service.writeSummary(card.id, req.body, {

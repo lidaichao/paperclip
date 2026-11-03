@@ -33,7 +33,7 @@ export function summarySlotRoutes(db: Db) {
   async function assertSummariesEnabled() {
     const experimental = await settings.getExperimental();
     if (experimental.enableSummaries !== true) {
-      throw notFound("Summaries are not enabled");
+      throw notFound("未启用摘要功能");
     }
   }
 
@@ -41,12 +41,12 @@ export function summarySlotRoutes(db: Db) {
   async function assertCanGenerateSummary(req: Request, companyId: string) {
     assertCompanyAccess(req, companyId);
     if (req.actor.type !== "board") {
-      throw forbidden("Only board operators can generate summaries.");
+      throw forbidden("只有看板操作员可以生成摘要。");
     }
     if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
     const allowed = await access.canUser(companyId, req.actor.userId, "tasks:assign");
     if (!allowed) {
-      throw forbidden("Missing permission: tasks:assign");
+      throw forbidden("缺少权限：tasks:assign");
     }
   }
 
@@ -166,7 +166,7 @@ export function summarySlotRoutes(db: Db) {
       assertCompanyAccess(req, companyId);
       await assertSummariesEnabled();
       if (req.actor.type !== "agent") {
-        throw forbidden("Only the Summarizer built-in agent may write summaries");
+        throw forbidden("只有“摘要器”内置智能体可以写入摘要");
       }
       const actor = getActorInfo(req);
       const result = await svc.write(

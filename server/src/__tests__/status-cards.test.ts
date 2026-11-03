@@ -136,7 +136,7 @@ describeEmbeddedPostgres("status card routes", () => {
     const company = await seedCompany();
     const response = await request(createApp(db, localBoardActor())).get(`/api/companies/${company.id}/status-cards`);
     expect(response.status).toBe(404);
-    expect(response.body.error).toContain("not enabled");
+    expect(response.body.error).toContain("未启用状态卡");
   });
 
   it("rolls back a new card when compile wakeup fails", async () => {

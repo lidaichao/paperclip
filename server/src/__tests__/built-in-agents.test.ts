@@ -193,7 +193,7 @@ describeEmbeddedPostgres("built-in agents", () => {
         defaultInstructions: "Do work",
         defaultRole: "general",
       },
-    ])).toThrow("Duplicate built-in agent key");
+    ])).toThrow("内置智能体键重复");
     expect(() => validateBuiltInAgentDefinitions([
       {
         key: "Bad Key",
@@ -203,7 +203,7 @@ describeEmbeddedPostgres("built-in agents", () => {
         defaultInstructions: "Bad",
         defaultRole: "general",
       },
-    ])).toThrow("Invalid built-in agent key");
+    ])).toThrow("内置智能体键无效");
     expect(() => validateBuiltInAgentDefinitions([
       {
         key: "bad-default",
@@ -215,7 +215,7 @@ describeEmbeddedPostgres("built-in agents", () => {
         allowedAdapterTypes: ["codex_local"],
         defaultAdapterType: "claude_local",
       },
-    ])).toThrow("defaultAdapterType must be allowed");
+    ])).toThrow("defaultAdapterType 必须在允许列表中");
   });
 
   it("lazily provisions one agent per company/key and updates the same row on setup", async () => {
@@ -383,7 +383,7 @@ describeEmbeddedPostgres("built-in agents", () => {
     expect(seeded.status).toBe("needs_setup");
 
     // Configuring the adapter for the first time must apply directly instead of
-    // throwing "adapter changes require board approval".
+    // 抛出“适配器变更必须先通过看板审批”。
     const result = await builtIns.provision(companyId, "briefs", {
       adapterType: "codex_local",
       adapterConfig: { model: "gpt-5.4" },

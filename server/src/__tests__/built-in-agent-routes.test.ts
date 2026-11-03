@@ -162,7 +162,7 @@ describe("built-in agent routes", () => {
     const res = await request(app).get(`/api/companies/${companyId}/built-in-agents`);
 
     expect(res.status, JSON.stringify(res.body)).toBe(404);
-    expect(res.body.error).toContain("Built-in agents are not enabled");
+    expect(res.body.error).toContain("未启用内置智能体");
     expect(mockBuiltInAgentService.list).not.toHaveBeenCalled();
   });
 
@@ -351,7 +351,7 @@ describe("built-in agent routes", () => {
       .send({});
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error).toContain("Only board operators can control built-in routines.");
+    expect(res.body.error).toContain("只有看板操作员可以控制内置例行任务。");
     expect(mockAccessService.canUser).not.toHaveBeenCalled();
     expect(mockBuiltInAgentService.runRoutine).not.toHaveBeenCalled();
   });
