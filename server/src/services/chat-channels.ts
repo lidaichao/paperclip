@@ -35188,7 +35188,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       ? {
           kind: "delivery_unknown" as const,
           reason:
-            "Provider accepted the publication, but Paperclip could not confirm its durable result",
+            "服务商已接受发布，但 Alice 无法确认其持久化结果",
         }
       : error instanceof NativeChatReviewPresentationContentionError
         ? { kind: "retry" as const, retryAfterMs: 250, reason: error.message }
@@ -36968,7 +36968,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             !current ||
             current.expiresAt.getTime() <= checkedAt.getTime()
           ) {
-            throw new Error("Publication attempt lease is no longer owned");
+            throw new Error("发布尝试租约已不再属于当前执行方");
           }
           await tx
             .update(chatEndpointLeases)
@@ -37105,7 +37105,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       try {
         const recordForLease = await endpointRecord(publication.endpointId);
         if (!recordForLease)
-          throw new Error("Chat publication binding is unavailable");
+          throw new Error("聊天发布绑定不可用");
         const currentPublicationRuntimeContext =
           runtimeContextForRecord(recordForLease);
         publicationRuntimeContext = currentPublicationRuntimeContext;
@@ -37122,7 +37122,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             .then((result) => result[0] ?? null),
         ]);
         if (!endpoint || !conversation)
-          throw new Error("Chat publication binding is unavailable");
+          throw new Error("聊天发布绑定不可用");
         const providerVisibleCompletion =
           conversation.state === "completed" &&
           !isExplicitOperatorPublication(publication) &&
@@ -37447,7 +37447,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
                 // It settled this exact publication; never fabricate a provider
                 // receipt, complete its task, or enqueue a retry from this path.
                 if (!telegramDraft)
-                  throw new Error("Unexpected Telegram draft stop result");
+                  throw new Error("Telegram 草稿停止结果异常");
                 const stopped = await db
                   .select({ id: chatActions.id })
                   .from(chatActions)
@@ -38076,13 +38076,13 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
 
   async function storeGitHubApp(endpointId: string, userId: string, credentials: Record<string, string>) {
     const initial = await endpointRecord(endpointId);
-    if (!initial || initial.endpoint.provider !== "github") throw notFound("GitHub bot not found");
+    if (!initial || initial.endpoint.provider !== "github") throw notFound("未找到 GitHub 机器人");
     await withCredentialMutationLease(initial.endpoint, async credentialLease => {
       const record = await endpointRecord(endpointId);
-      if (!record || ["archived", "active", "paused"].includes(record.endpoint.status)) throw conflict("Use the reconnect flow for an existing active bot");
+      if (!record || ["archived", "active", "paused"].includes(record.endpoint.status)) throw conflict("已有活动机器人时，请使用重新连接流程");
       const normalized = await normalizedCredentials(record.endpoint, credentials);
       const identity = await verifyCredentials("github", normalized);
-      if (record.endpoint.botExternalId && !nativeBotIdentityMatches("github", record.endpoint, identity)) throw conflict("This App belongs to a different bot. Create a new connection instead.");
+      if (record.endpoint.botExternalId && !nativeBotIdentityMatches("github", record.endpoint, identity)) throw conflict("此应用属于其他机器人，请新建连接。");
       await assertNativeBotIdentityAvailable(record.endpoint, identity);
       // Claim the globally unique App identity before writing credentials.
       // A losing concurrent registration must never persist usable secrets.
@@ -38091,7 +38091,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           await db.transaction(async tx => {
             await credentialLease.assertOwned(tx);
             const claimed = await tx.update(chatEndpoints).set({ status: "attention", botExternalId: identity.botExternalId, botUsername: identity.botUsername, providerAccountId: identity.providerAccountId, providerAccountLabel: identity.providerAccountLabel, healthMessage: "Complete GitHub App setup", updatedAt: new Date() }).where(and(eq(chatEndpoints.id, endpointId), isNull(chatEndpoints.botExternalId))).returning({ id: chatEndpoints.id });
-            if (claimed.length !== 1) throw conflict("The bot changed during registration");
+            if (claimed.length !== 1) throw conflict("注册期间机器人发生变化");
           });
         } catch (error) {
           if (isNativeBotIdentityUniqueViolation(error)) throw nativeBotIdentityConflict("github");
@@ -38100,7 +38100,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       }
       await persistCredentials(record.endpoint, normalized, credentialLease, userId);
       const slug = identity.botUsername?.replace(/\[bot\]$/, "");
-      if (!slug || !/^[a-z0-9-]+$/.test(slug)) throw unprocessable("GitHub did not identify this App");
+      if (!slug || !/^[a-z0-9-]+$/.test(slug)) throw unprocessable("GitHub 未能识别此应用");
       await db.transaction(async tx => {
         await credentialLease.assertOwned(tx);
         await tx.update(chatEndpoints).set({
@@ -38135,10 +38135,10 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
 
   async function refreshGitHubRepositories(endpointId: string, userId: string) {
     const initial = await endpointRecord(endpointId);
-    if (!initial || initial.endpoint.provider !== "github") throw notFound("GitHub bot not found");
+    if (!initial || initial.endpoint.provider !== "github") throw notFound("未找到 GitHub 机器人");
     await withCredentialMutationLease(initial.endpoint, async lease => {
       const record = await endpointRecord(endpointId);
-      if (!record) throw notFound("GitHub bot not found");
+      if (!record) throw notFound("未找到 GitHub 机器人");
       const credentials = await resolveCredentials(record.endpoint);
       const prepared = await prepareProviderInventory(record.endpoint, credentials);
       if (prepared.credentials.installationId !== credentials.installationId) await persistCredentials(record.endpoint, prepared.credentials, lease, userId);
@@ -38151,11 +38151,11 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
 
   const unregisterSlackTaskAuthority = registerSlackTaskAuthority(db, async (binding) => {
     if (!(await instanceSettingsService(db).getExperimental()).enableChatConnectors)
-      throw forbidden("Chat connectors are disabled");
+      throw forbidden("聊天连接器已停用");
     const identity = await slackRunOrigin(db, binding);
     const run = identity.run;
     if ((run.contextSnapshot?.issueId ?? run.contextSnapshot?.taskId) !== binding.issueId || !run.responsibleUserId)
-      throw forbidden("Slack tools require the bound task and an accepted linked user");
+      throw forbidden("Slack 工具需要已绑定任务和已接受的关联用户");
     const resolved = await db.transaction(async (tx) => {
       const [action] = await tx.select().from(chatActions).where(and(
         eq(chatActions.companyId, binding.companyId),
@@ -38167,7 +38167,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           : eq(chatActions.id, run.wakeupRequestId ?? "00000000-0000-0000-0000-000000000000"),
       )).limit(1);
       if (!action || action.payload.requestedByActorType !== "user" || action.payload.requestedByActorId !== run.responsibleUserId)
-        throw forbidden("Slack tools require a verified linked Slack request");
+        throw forbidden("Slack 工具需要已验证的 Slack 关联请求");
       // This standalone resolver does not own the scheduler's issue lock. Use
       // the ingress lock order (endpoint, then issue) so a normal webhook or
       // endpoint update cannot turn tool setup into a NOWAIT failure. The
@@ -38177,7 +38177,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         eq(chatEndpoints.id, action.endpointId),
       )).for("no key update");
       const source = await authorizeInboundWakeup(tx, action);
-      if (source.endpoint.provider !== "slack") throw forbidden("This is not a Slack task");
+      if (source.endpoint.provider !== "slack") throw forbidden("这不是 Slack 任务");
       const [principal] = await tx.select().from(chatExternalPrincipals).where(and(
         eq(chatExternalPrincipals.companyId, binding.companyId),
         eq(chatExternalPrincipals.id, action.principalId!),
@@ -38185,11 +38185,11 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         eq(chatExternalPrincipals.providerAccountId, source.endpoint.providerAccountId!),
         eq(chatExternalPrincipals.isBot, false),
       ));
-      if (!principal) throw forbidden("Slack sender is no longer available");
+      if (!principal) throw forbidden("Slack 发送方已不可用");
       return { ...source, principalId: principal.id, slackUserId: principal.externalId };
     });
     const credentials = await resolveCredentials(resolved.endpoint);
-    if (!credentials.botToken) throw forbidden("Slack bot credential is unavailable");
+    if (!credentials.botToken) throw forbidden("Slack 机器人凭据不可用");
     return {
       endpoint: resolved.endpoint, conversation: resolved.conversation,
       principalId: resolved.principalId, slackUserId: resolved.slackUserId,
@@ -38209,7 +38209,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
   return {
     saveGitHubSetupProgress: async (endpointId: string, stage: NonNullable<ChatEndpointSetupState["github"]>["stage"]) => {
       const record = await endpointRecord(endpointId);
-      if (!record || record.endpoint.provider !== "github") throw notFound("GitHub bot not found");
+      if (!record || record.endpoint.provider !== "github") throw notFound("未找到 GitHub 机器人");
       await db.update(chatEndpoints).set({ setup: sql`jsonb_set(${chatEndpoints.setup}, '{github}', coalesce(${chatEndpoints.setup}->'github', '{}'::jsonb) || ${JSON.stringify({ stage })}::jsonb)`, updatedAt: new Date() }).where(eq(chatEndpoints.id, endpointId));
       return get(endpointId);
     },
