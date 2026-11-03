@@ -12013,6 +12013,15 @@
     "select_company_to_upload_images_0f400009": "请选择要上传图片的组织",
     "resume_request_skipped_0f400010": "恢复请求已跳过。",
     "failed_to_load_run_log_0f400011": "加载运行日志失败",
-    "failed_to_load_more_run_log_0f400012": "加载更多运行日志失败"
+    "failed_to_load_more_run_log_0f400012": "加载更多运行日志失败",
+    "posthog_sign_in_0f500001": "PostHog 登录",
+    "personal_api_key_0f500002": "个人 API 密钥",
+    "connection_method_0f500003": "连接方式",
+    "project_pin_0f500004": "指定项目",
+    "use_active_project_0f500005": "使用当前项目",
+    "read_only_mode_0f500006": "只读模式",
+    "feature_groups_0f500007": "功能组",
+    "individual_tools_0f500008": "单独工具",
+    "response_mode_0f500009": "响应模式"
   }
 }

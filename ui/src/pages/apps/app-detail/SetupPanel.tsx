@@ -109,16 +109,16 @@ function PostHogConfigurationSection({ connection }: { connection: ToolConnectio
   const config = raw && typeof raw === "object" && !Array.isArray(raw)
     ? raw as Record<string, unknown>
     : {};
-  const method = connection.config?.connectionMethodKey === "mcp-oauth" ? "PostHog sign-in" : "Personal API key";
-  const features = typeof config.features === "string" ? config.features : "None";
-  const tools = typeof config.tools === "string" && config.tools ? config.tools : "None";
+  const method = connection.config?.connectionMethodKey === "mcp-oauth" ? l10n("local.posthog_sign_in_0f500001") : l10n("local.personal_api_key_0f500002");
+  const features = typeof config.features === "string" ? config.features : l10n("local.none_dc937b59");
+  const tools = typeof config.tools === "string" && config.tools ? config.tools : l10n("local.none_dc937b59");
   const rows = [
-    ["Connection method", method],
-    ["Project pin", typeof config.projectId === "string" ? config.projectId : "Use active project"],
-    ["Read-only mode", config.readOnly === true ? "On" : "Off"],
-    ["Feature groups", features],
-    ["Individual tools", tools],
-    ["Response mode", typeof config.mode === "string" ? config.mode : "tools"],
+    [l10n("local.connection_method_0f500003"), method],
+    [l10n("local.project_pin_0f500004"), typeof config.projectId === "string" ? config.projectId : l10n("local.use_active_project_0f500005")],
+    [l10n("local.read_only_mode_0f500006"), config.readOnly === true ? l10n("local.on_13001175") : l10n("local.off_ca7981b4")],
+    [l10n("local.feature_groups_0f500007"), features],
+    [l10n("local.individual_tools_0f500008"), tools],
+    [l10n("local.response_mode_0f500009"), typeof config.mode === "string" ? config.mode : l10n("local.tools_f9d35d43")],
   ];
   return (
     <section>

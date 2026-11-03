@@ -441,6 +441,15 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.resume_request_skipped_0f400010).toContain("已跳过");
     expect(messages.failed_to_load_run_log_0f400011).toBe("加载运行日志失败");
     expect(messages.failed_to_load_more_run_log_0f400012).toBe("加载更多运行日志失败");
+    expect(messages.posthog_sign_in_0f500001).toBe("PostHog 登录");
+    expect(messages.personal_api_key_0f500002).toBe("个人 API 密钥");
+    expect(messages.connection_method_0f500003).toBe("连接方式");
+    expect(messages.project_pin_0f500004).toBe("指定项目");
+    expect(messages.use_active_project_0f500005).toBe("使用当前项目");
+    expect(messages.read_only_mode_0f500006).toBe("只读模式");
+    expect(messages.feature_groups_0f500007).toBe("功能组");
+    expect(messages.individual_tools_0f500008).toBe("单独工具");
+    expect(messages.response_mode_0f500009).toBe("响应模式");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
