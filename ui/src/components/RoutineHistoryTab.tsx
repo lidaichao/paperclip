@@ -955,12 +955,12 @@ function getActorLabel(revision: RoutineRevision): string {
 }
 
 function resolveAgentName(agentId: string | null, lookup: AgentLookup) {
-  if (!agentId) return "Unassigned";
+  if (!agentId) return l10n("local.unassigned_agent_5b7331b5");
   return lookup.get(agentId)?.name ?? agentId;
 }
 
 function resolveProjectName(projectId: string | null, lookup: ProjectLookup) {
-  if (!projectId) return "No project";
+  if (!projectId) return l10n("local.no_project_value_a29285e7");
   return lookup.get(projectId)?.name ?? projectId;
 }
 
@@ -969,7 +969,9 @@ function summarizeTriggerSnapshot(trigger: RoutineRevisionSnapshotTriggerV1): st
     return [trigger.cronExpression, trigger.timezone].filter(Boolean).join(" · ");
   }
   if (trigger.kind === "webhook") {
-    const replay = trigger.replayWindowSec != null ? `replay ${trigger.replayWindowSec}s` : "";
+    const replay = trigger.replayWindowSec != null
+      ? l10n("local.replay_seconds_value_06302e43", { v0: trigger.replayWindowSec })
+      : "";
     return [trigger.signingMode, replay].filter(Boolean).join(" · ");
   }
   return "API";
@@ -1022,26 +1024,26 @@ function computeFieldChanges(
       changes.push({ field: label, oldValue: transform(oldVal), newValue: transform(newVal) });
     }
   };
-  compareScalar("title", "Title", oldRoutine.title, newRoutine.title);
-  compareScalar("priority", "Priority", oldRoutine.priority, newRoutine.priority);
+  compareScalar("title", l10n("local.title_field_8532ef48"), oldRoutine.title, newRoutine.title);
+  compareScalar("priority", l10n("local.priority_field_c74ad407"), oldRoutine.priority, newRoutine.priority);
   compareScalar(
     "assigneeAgentId",
-    "Default agent",
+    l10n("local.default_agent_field_4863dadf"),
     resolveAgentName(oldRoutine.assigneeAgentId, agents),
     resolveAgentName(newRoutine.assigneeAgentId, agents),
   );
   compareScalar(
     "projectId",
-    "Project",
+    l10n("local.project_field_3b6fd840"),
     resolveProjectName(oldRoutine.projectId, projects),
     resolveProjectName(newRoutine.projectId, projects),
   );
-  compareScalar("concurrencyPolicy", "Concurrency", oldRoutine.concurrencyPolicy, newRoutine.concurrencyPolicy);
-  compareScalar("catchUpPolicy", "Catch-up", oldRoutine.catchUpPolicy, newRoutine.catchUpPolicy);
-  compareScalar("status", "Status", oldRoutine.status, newRoutine.status);
+  compareScalar("concurrencyPolicy", l10n("local.concurrency_field_6e86ca3f"), oldRoutine.concurrencyPolicy, newRoutine.concurrencyPolicy);
+  compareScalar("catchUpPolicy", l10n("local.catch_up_field_c87c1af1"), oldRoutine.catchUpPolicy, newRoutine.catchUpPolicy);
+  compareScalar("status", l10n("local.status_field_f3529690"), oldRoutine.status, newRoutine.status);
   if (JSON.stringify(oldRoutine.variables) !== JSON.stringify(newRoutine.variables)) {
     changes.push({
-      field: "Variables",
+      field: l10n("local.variables_field_3b21ca99"),
       oldValue: summarizeVariables(oldRoutine.variables),
       newValue: summarizeVariables(newRoutine.variables),
     });
@@ -1073,21 +1075,21 @@ function asSecretRef(binding: EnvBinding): EnvSecretRefBinding | null {
 }
 
 function formatVersionSelector(version: SecretVersionSelector | undefined): string {
-  if (version == null || version === "latest") return "latest";
+  if (version == null || version === "latest") return l10n("local.latest_lowercase_bf4d07b4");
   return `v${version}`;
 }
 
 function describeSecretRef(ref: EnvSecretRefBinding, secrets: SecretLookup): string {
   const secret = secrets.get(ref.secretId);
-  const name = secret?.name ?? "<missing-secret>";
+  const name = secret?.name ?? l10n("local.missing_secret_placeholder_ad5747ae");
   return `${name} ${formatVersionSelector(ref.version)}`;
 }
 
 function describeEnvBinding(binding: EnvBinding | undefined, secrets: SecretLookup): string {
   if (binding === undefined) return "—";
   const ref = asSecretRef(binding);
-  if (ref) return `secret_ref → ${describeSecretRef(ref, secrets)}`;
-  return "plain (set)";
+  if (ref) return l10n("local.secret_reference_value_d271a9e2", { v0: describeSecretRef(ref, secrets) });
+  return l10n("local.plain_value_set_c967d9c9");
 }
 
 function summarizeEnv(env: RoutineEnvConfig | null): string {
@@ -1096,7 +1098,10 @@ function summarizeEnv(env: RoutineEnvConfig | null): string {
   const secretCount = entries.filter(([, binding]) => envBindingKind(binding) === "secret_ref").length;
   const keyLabel = entries.length === 1 ? l10n("local.key_2c70e12b") : l10n("local.keys_48a53f07");
   if (secretCount === 0) return `${entries.length} ${keyLabel}`;
-  return `${entries.length} ${keyLabel} (${secretCount} secret ${secretCount === 1 ? "ref" : "refs"})`;
+  const secretLabel = secretCount === 1
+    ? l10n("local.secret_reference_count_one_a33db4d1", { v0: secretCount })
+    : l10n("local.secret_reference_count_many_5d68f1ce", { v0: secretCount });
+  return `${entries.length} ${keyLabel} (${secretLabel})`;
 }
 
 type EnvDiffCounts = {
@@ -1136,9 +1141,15 @@ function summarizeEnvDiffCounts(
 
 function formatEnvDiffCounts(counts: EnvDiffCounts): string {
   const parts: string[] = [];
-  if (counts.added > 0) parts.push(`${counts.added} ${counts.added === 1 ? "key" : "keys"} added`);
-  if (counts.removed > 0) parts.push(`${counts.removed} ${counts.removed === 1 ? "key" : "keys"} removed`);
-  if (counts.changed > 0) parts.push(`${counts.changed} ${counts.changed === 1 ? "key" : "keys"} changed`);
+  if (counts.added > 0) parts.push(l10n(counts.added === 1
+    ? "local.environment_key_added_one_a81b079e"
+    : "local.environment_keys_added_many_34e9107c", { v0: counts.added }));
+  if (counts.removed > 0) parts.push(l10n(counts.removed === 1
+    ? "local.environment_key_removed_one_065d9e23"
+    : "local.environment_keys_removed_many_1cff7b84", { v0: counts.removed }));
+  if (counts.changed > 0) parts.push(l10n(counts.changed === 1
+    ? "local.environment_key_changed_one_20a526d8"
+    : "local.environment_keys_changed_many_7278f62e", { v0: counts.changed }));
   return parts.join(", ");
 }
 
@@ -1159,7 +1170,7 @@ function compareEnv(
     const inNew = key in newRec;
     if (inNew && !inOld) {
       changes.push({
-        field: `Env added (${key})`,
+        field: l10n("local.environment_added_key_0176851c", { v0: key }),
         oldValue: "—",
         newValue: describeEnvBinding(newBinding, secrets),
       });
@@ -1167,7 +1178,7 @@ function compareEnv(
     }
     if (!inNew && inOld) {
       changes.push({
-        field: `Env removed (${key})`,
+        field: l10n("local.environment_removed_key_cc97484f", { v0: key }),
         oldValue: describeEnvBinding(oldBinding, secrets),
         newValue: "—",
       });
@@ -1178,7 +1189,7 @@ function compareEnv(
     const newKind = envBindingKind(newBinding);
     if (oldKind !== newKind) {
       changes.push({
-        field: `Env ${key} binding kind`,
+        field: l10n("local.environment_binding_kind_key_4605aa7f", { v0: key }),
         oldValue: describeEnvBinding(oldBinding, secrets),
         newValue: describeEnvBinding(newBinding, secrets),
       });
@@ -1189,29 +1200,29 @@ function compareEnv(
       const newRef = asSecretRef(newBinding)!;
       if (oldRef.secretId !== newRef.secretId) {
         changes.push({
-          field: `Env ${key} secret`,
+          field: l10n("local.environment_secret_key_faa91bf7", { v0: key }),
           oldValue: describeEnvBinding(oldBinding, secrets),
           newValue: describeEnvBinding(newBinding, secrets),
         });
         continue;
       }
       changes.push({
-        field: `Env ${key} version`,
+        field: l10n("local.environment_version_key_e2f99de8", { v0: key }),
         oldValue: describeSecretRef(oldRef, secrets),
         newValue: describeSecretRef(newRef, secrets),
       });
       continue;
     }
     changes.push({
-      field: `Env ${key} value`,
-      oldValue: "plain (set)",
-      newValue: "plain (changed)",
+      field: l10n("local.environment_value_key_e6acf5e4", { v0: key }),
+      oldValue: l10n("local.plain_value_set_c967d9c9"),
+      newValue: l10n("local.plain_value_changed_49595815"),
     });
   }
 }
 
 function summarizeVariables(variables: RoutineVariable[]): string {
-  if (variables.length === 0) return "(none)";
+  if (variables.length === 0) return l10n("local.none_parenthesized_91546b68");
   return variables
     .map((variable) => `${variable.name}=${formatVariableDefault(variable)}`)
     .join(", ");
@@ -1231,13 +1242,13 @@ function compareTriggers(
   for (const [, pair] of byId) {
     if (pair.old && !pair.next) {
       changes.push({
-        field: `Trigger removed (${pair.old.label ?? pair.old.kind})`,
+        field: l10n("local.trigger_removed_value_b5ed4db8", { v0: pair.old.label ?? pair.old.kind }),
         oldValue: summarizeTriggerSnapshot(pair.old),
         newValue: null,
       });
     } else if (!pair.old && pair.next) {
       changes.push({
-        field: `Trigger added (${pair.next.label ?? pair.next.kind})`,
+        field: l10n("local.trigger_added_value_b08a772c", { v0: pair.next.label ?? pair.next.kind }),
         oldValue: null,
         newValue: summarizeTriggerSnapshot(pair.next),
       });
@@ -1246,9 +1257,9 @@ function compareTriggers(
       const newSummary = summarizeTriggerSnapshot(pair.next);
       if (oldSummary !== newSummary || pair.old.enabled !== pair.next.enabled) {
         changes.push({
-          field: `Trigger ${pair.next.label ?? pair.next.kind}`,
-          oldValue: `${oldSummary} (${pair.old.enabled ? "enabled" : "disabled"})`,
-          newValue: `${newSummary} (${pair.next.enabled ? "enabled" : "disabled"})`,
+          field: l10n("local.trigger_value_aa9d76d0", { v0: pair.next.label ?? pair.next.kind }),
+          oldValue: `${oldSummary} (${pair.old.enabled ? l10n("local.enabled_lowercase_5ff6cead") : l10n("local.disabled_lowercase_e31ca9bf")})`,
+          newValue: `${newSummary} (${pair.next.enabled ? l10n("local.enabled_lowercase_5ff6cead") : l10n("local.disabled_lowercase_e31ca9bf")})`,
         });
       }
     }

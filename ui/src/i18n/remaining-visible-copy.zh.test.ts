@@ -98,5 +98,9 @@ describe("remaining visible Chinese copy", () => {
       "没有匹配的密钥。请创建密钥后在此绑定。",
     );
     expect(messages.no_services_configured_for_workspace_19f147cb).toBe("此工作区尚未配置服务。");
+    expect(messages.default_agent_field_4863dadf).toBe("默认智能体");
+    expect(messages.environment_secret_key_faa91bf7).toBe("环境变量 {{v0}} 的密钥");
+    expect(messages.environment_keys_changed_many_7278f62e).toBe("修改 {{v0}} 个环境变量");
+    expect(messages.trigger_removed_value_b5ed4db8).toBe("移除触发器（{{v0}}）");
   });
 });
