@@ -424,26 +424,26 @@ function durableInputLabel(
   interaction: TaskChatInteractionItem["interaction"],
 ): string {
   if (interaction.kind === "ask_user_questions")
-    return interaction.title ?? "Questions";
+    return interaction.title ?? l10n("local.questions_9a72221a");
   if (interaction.kind === "suggest_tasks")
-    return interaction.title ?? "Suggested tasks";
+    return interaction.title ?? l10n("local.suggested_tasks_5addd6ff");
   if (interaction.kind === "request_checkbox_confirmation")
-    return interaction.title ?? "Choose options";
+    return interaction.title ?? l10n("local.choose_options_0cb00001");
   if (interaction.kind === "request_item_verdicts")
-    return interaction.title ?? "Review items";
+    return interaction.title ?? l10n("local.review_items_0cb00002");
   if (interaction.kind === "connection_intent")
-    return interaction.title ?? "Connect service";
+    return interaction.title ?? l10n("local.connect_service_0cb00003");
   if (
     interaction.payload.target?.type === "issue_document" &&
     interaction.payload.target.key === "plan"
   ) {
-    return interaction.title ?? "Review plan";
+    return interaction.title ?? l10n("local.review_plan_71146ca6");
   }
   if (interaction.payload.toolAction)
-    return interaction.title ?? "Approve tool action";
+    return interaction.title ?? l10n("local.approve_tool_action_0cb00004");
   if (interaction.payload.secretProposal)
-    return interaction.title ?? "Review secret proposal";
-  return interaction.title ?? "Confirmation";
+    return interaction.title ?? l10n("local.review_secret_proposal_0cb00005");
+  return interaction.title ?? l10n("local.confirmation_d7430705");
 }
 
 /**
@@ -497,7 +497,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
     showComposer = true,
     composerPause,
     composerDisabledReason,
-    emptyMessage = "No messages yet.",
+    emptyMessage = l10n("local.no_messages_yet_0cb00006"),
     companyId,
     linkedRuns,
     liveRuns,
@@ -600,7 +600,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
       assigneeUserId: string | null;
     }) => {
       if (!issueId)
-        throw new Error("The task is not available for reassignment.");
+        throw new Error(l10n("local.task_not_available_for_reassignment_0cb00007"));
       await issuesApi.update(issueId, {
         ...reassignment,
         deferWakeForGoal: true,
@@ -648,14 +648,14 @@ export function TaskChatThread(props: TaskChatThreadProps) {
   const saveQueuedEdit = useCallback(
     async (commentId: string, body: string) => {
       if (!queuedEdit || queuedEdit.commentId !== commentId) {
-        throw new Error("This queued message is no longer editable.");
+        throw new Error(l10n("local.queued_message_no_longer_editable_0cb00008"));
       }
       if (queuedEdit.stale) {
         await onAdd(body);
         return;
       }
       if (!onEditQueuedComment)
-        throw new Error("This queued message is no longer editable.");
+        throw new Error(l10n("local.queued_message_no_longer_editable_0cb00008"));
       try {
         await onEditQueuedComment(commentId, body, queuedEdit.revision);
       } catch (error) {
@@ -1238,7 +1238,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
           surface: "resource",
           resourceKind: "document",
           title: documentDisplayTitle(document),
-          subtitle: `Document · rev ${document.latestRevisionNumber}`,
+          subtitle: l10n("local.document_revision_0cb00009", { v0: document.latestRevisionNumber }),
           href: buildDocumentAnnotationHash({
             documentKey: document.key,
             threadId: null,
@@ -1289,7 +1289,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
           kind: "protocol",
           surface: "resource",
           resourceKind: "attachment",
-          title: attachment.originalFilename ?? "Agent attachment",
+          title: attachment.originalFilename ?? l10n("local.agent_attachment_0cb00010"),
           subtitle: `${attachment.contentType} · ${formatResourceBytes(attachment.byteSize)}`,
           href: safeResourceHref(attachment.openPath ?? attachment.contentPath),
           timestamp: new Date(attachment.createdAt).toISOString(),
@@ -1482,8 +1482,8 @@ export function TaskChatThread(props: TaskChatThreadProps) {
             id,
             item: {
               id, kind: "marker", variant: "interrupted", tone: "neutral",
-              label: "Waiting to resume",
-              detail: "The previous execution needs to be checked before work can continue. See the task’s execution hold for the next action. Individual checks remain in the run history.",
+              label: l10n("local.waiting_to_resume_0cb00011"),
+              detail: l10n("local.previous_execution_check_before_continue_0cb00012"),
             },
           });
         }
@@ -1664,7 +1664,9 @@ export function TaskChatThread(props: TaskChatThreadProps) {
             id,
             kind: "marker",
             variant: "interrupted",
-            label: source.status === "cancelled" ? (meta?.startedAt ? "Stopped" : "Couldn't start") : "Run failed",
+            label: source.status === "cancelled"
+              ? (meta?.startedAt ? l10n("local.stopped_1a4f630a") : l10n("local.could_not_start_0cb00013"))
+              : l10n("local.run_failed_97fddf2d"),
             runId: source.status === "cancelled" ? undefined : source.id,
             tone: source.status === "cancelled" ? "neutral" : "error",
             detail,
@@ -1732,8 +1734,8 @@ export function TaskChatThread(props: TaskChatThreadProps) {
               id,
               kind: "marker",
               variant: "turn_boundary",
-              label: source.status === "cancelled" ? "Stopped" : "Run completed",
-              detail: source.status === "cancelled" ? "This turn was cancelled before it returned a response." : "The runner returned no user-facing response.",
+              label: source.status === "cancelled" ? l10n("local.stopped_1a4f630a") : l10n("local.manual_runner_run_completed"),
+              detail: source.status === "cancelled" ? l10n("local.turn_cancelled_before_response_0cb00014") : l10n("local.runner_returned_no_user_response_0cb00015"),
             },
           });
         }
@@ -1764,8 +1766,8 @@ export function TaskChatThread(props: TaskChatThreadProps) {
             id,
             kind: "marker",
             variant: "turn_boundary",
-            label: "Run completed",
-            detail: "The runner returned no user-facing response.",
+            label: l10n("local.manual_runner_run_completed"),
+            detail: l10n("local.runner_returned_no_user_response_0cb00015"),
           },
         });
       }
@@ -2286,14 +2288,14 @@ export function TaskChatThread(props: TaskChatThreadProps) {
         interaction.kind === "ask_user_questions" && interaction.sourceRunId === item.runId &&
         interaction.payload.runtimeRequestId === item.requestId);
       if (projected?.kind === "ask_user_questions") {
-        if (projected.status !== "pending") throw new Error("This question has already been answered or closed.");
+        if (projected.status !== "pending") throw new Error(l10n("local.question_already_answered_or_closed_0cb00016"));
         if (decision.action === "cancel") {
-          if (!onCancelInteraction) throw new Error("Cancelling this question is unavailable.");
+          if (!onCancelInteraction) throw new Error(l10n("local.cancelling_question_unavailable_0cb00017"));
           await onCancelInteraction(projected);
           return;
         }
         if (decision.action !== "submit" || !("response" in decision) || !projected.payload.questionSet || !onSubmitInteractionAnswers) {
-          throw new Error("Submit the answer through the saved question card.");
+          throw new Error(l10n("local.submit_answer_through_saved_question_card_0cb00018"));
         }
         const response = decision.response;
         await onSubmitInteractionAnswers(projected, projected.payload.questionSet.questions.map(question => {
@@ -2306,7 +2308,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
       }
       if (!item.turnId || !item.requestKind) {
         throw new Error(
-          "This runtime request is missing the provider turn identity needed to resolve it.",
+          l10n("local.runtime_request_missing_provider_identity_0cb00019"),
         );
       }
       let resolution: RuntimeRequestResolution;
@@ -2328,7 +2330,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
         resolution = { action: "submit", content: decision.values };
       } else {
         throw new Error(
-          "This runtime permission does not accept submitted form data.",
+          l10n("local.runtime_permission_rejects_form_data_0cb00020"),
         );
       }
       await heartbeatsApi.resolveRuntimeRequest({
@@ -2359,8 +2361,8 @@ export function TaskChatThread(props: TaskChatThreadProps) {
         label:
           pendingRuntimeRequest.questionSet?.title ??
           (pendingRuntimeRequest.requestType === "permission"
-            ? "Runtime permission"
-            : "Runtime input"),
+            ? l10n("local.runtime_permission_b2e85aec")
+            : l10n("local.runtime_input_b73049f7")),
       });
     }
     const durable = (interactions ?? [])
@@ -2435,7 +2437,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
         await handleRuntimeRequestDecision(input.item, { action: "cancel" });
       } else {
         if (!onSkipInteraction)
-          throw new Error("Skipping this interaction is unavailable.");
+          throw new Error(l10n("local.skipping_interaction_unavailable_0cb00021"));
         await onSkipInteraction(input.interaction);
       }
       setTakeoverMode("normal");
@@ -3006,7 +3008,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                       onEdit={beginQueuedEdit}
                       onReorder={async (orderedCommentIds, revision) => {
                         if (!onReorderQueuedComments)
-                          throw new Error("Queue reordering is unavailable.");
+                          throw new Error(l10n("local.queue_reordering_unavailable_0cb00022"));
                         await onReorderQueuedComments(
                           orderedCommentIds,
                           revision,
@@ -3014,7 +3016,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                       }}
                       onSteer={async (commentId, revision) => {
                         if (!onSteerQueuedComment)
-                          throw new Error("Steering is unavailable.");
+                          throw new Error(l10n("local.steering_unavailable_0cb00023"));
                         await onSteerQueuedComment(commentId, revision);
                       }}
                       onInterrupt={
@@ -3029,12 +3031,12 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                       onDiscard={async (commentId, revision) => {
                         if (commentId.startsWith("optimistic-")) {
                           if (!onCancelQueued)
-                            throw new Error("Discard is unavailable.");
+                            throw new Error(l10n("local.discard_unavailable_0cb00024"));
                           onCancelQueued(commentId);
                           return;
                         }
                         if (!onDiscardQueuedComment)
-                          throw new Error("Discard is unavailable.");
+                          throw new Error(l10n("local.discard_unavailable_0cb00024"));
                         await onDiscardQueuedComment(commentId, revision);
                         if (queuedEdit?.commentId === commentId)
                           setQueuedEdit(null);

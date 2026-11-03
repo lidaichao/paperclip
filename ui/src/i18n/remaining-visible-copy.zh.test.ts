@@ -215,6 +215,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.finish_setup_in_alice_enable_webhook_0ca00028).toContain("在 Alice 中完成设置");
     expect(messages.schedule_every_weekday_at_0ca00032).toBe("每周{{v0}} {{v1}}");
     expect(messages.choose_trigger_0ca00035).toBe("选择触发方式");
+    expect(messages.choose_options_0cb00001).toBe("选择选项");
+    expect(messages.no_messages_yet_0cb00006).toBe("暂无消息。");
+    expect(messages.document_revision_0cb00009).toContain("修订版 {{v0}}");
+    expect(messages.waiting_to_resume_0cb00011).toBe("等待恢复");
+    expect(messages.runner_returned_no_user_response_0cb00015).toContain("面向用户的回复");
+    expect(messages.runtime_request_missing_provider_identity_0cb00019).toContain("服务商轮次标识");
+    expect(messages.queue_reordering_unavailable_0cb00022).toContain("调整队列顺序");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
