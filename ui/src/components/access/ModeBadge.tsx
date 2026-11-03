@@ -14,7 +14,11 @@ export function ModeBadge({
   const label =
     deploymentMode === "local_trusted"
       ? l10n("local.local_trusted_dd3af0b2")
-      : l10n("local.authenticated_value_cbc0649f", {v0: (deploymentExposure ?? "private")});
+      : l10n("local.authenticated_value_cbc0649f", {
+        v0: deploymentExposure === "public"
+          ? l10n("local.manual_public")
+          : l10n("local.manual_private"),
+      });
 
   return <Badge variant="outline">{label}</Badge>;
 }

@@ -10413,6 +10413,10 @@
     "manual_provider_trace_frame_revealed": "查看了供应商追踪原始帧：",
     "manual_provider_trace_downloaded": "下载了供应商追踪：",
     "manual_provider_trace_deleted": "删除了供应商追踪：",
-    "manual_provider_trace_expired": "供应商追踪已过期："
+    "manual_provider_trace_expired": "供应商追踪已过期：",
+    "manual_private": "私有",
+    "manual_public": "公开",
+    "manual_log_display": "日志显示",
+    "manual_data_sharing": "数据共享"
   }
 }

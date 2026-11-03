@@ -10413,6 +10413,10 @@
     "manual_provider_trace_frame_revealed": "revealed a provider trace frame for",
     "manual_provider_trace_downloaded": "downloaded a provider trace for",
     "manual_provider_trace_deleted": "deleted a provider trace for",
-    "manual_provider_trace_expired": "expired a provider trace for"
+    "manual_provider_trace_expired": "expired a provider trace for",
+    "manual_private": "private",
+    "manual_public": "public",
+    "manual_log_display": "log display",
+    "manual_data_sharing": "data sharing"
   }
 }

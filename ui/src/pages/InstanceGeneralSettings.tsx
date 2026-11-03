@@ -88,14 +88,16 @@ export function InstanceGeneralSettings({ embedded = false }: { embedded?: boole
   const showFeedbackDataSharing = !hiddenSettings.has("instance.general.feedbackDataSharingPreference");
   const showSignOut = !hiddenSettings.has("instance.general.signOut");
   const visibleTopics = [
-    ...(showCensorUsernameInLogs ? ["log display"] : []),
-    ...(showKeyboardShortcuts ? ["keyboard shortcuts"] : []),
-    ...(showBackupRetention ? ["backup retention"] : []),
-    ...(showFeedbackDataSharing ? ["data sharing"] : []),
+    ...(showCensorUsernameInLogs ? [l10n("local.manual_log_display")] : []),
+    ...(showKeyboardShortcuts ? [l10n("local.keyboard_shortcuts_e9bef0b0")] : []),
+    ...(showBackupRetention ? [l10n("local.backup_retention_2bb27bab")] : []),
+    ...(showFeedbackDataSharing ? [l10n("local.manual_data_sharing")] : []),
   ];
   const topicSummary = visibleTopics.length > 2
     ? l10n("local.value_and_value_c1167de3", {v0: (visibleTopics.slice(0, -1).join(", ")), v1: (visibleTopics[visibleTopics.length - 1])})
-    : visibleTopics.join(" and ");
+    : visibleTopics.length === 2
+      ? l10n("local.value_and_value_c1167de3", { v0: visibleTopics[0], v1: visibleTopics[1] })
+      : visibleTopics[0] ?? "";
   const visibleActionError = signOutMutation.error instanceof Error
     ? signOutMutation.error.message
     : signOutMutation.error
