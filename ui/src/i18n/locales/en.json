@@ -11706,6 +11706,15 @@
     "recorded_by_alice_0d400006": "Recorded by Alice.",
     "real_call_against_app_as_agent_0d400007": "This runs a real call against {{v0}} as {{v1}}.",
     "waiting_for_ok_before_call_leaves_alice_0d400008": "Waiting for your OK before this call leaves Alice.",
-    "no_call_action_off_for_agent_0d400009": "No call will be made — this action is off for {{v0}}."
+    "no_call_action_off_for_agent_0d400009": "No call will be made — this action is off for {{v0}}.",
+    "account_exists_sign_in_to_continue_invite_0d500001": "An account already exists for {{v0}}. Sign in below to continue with this invite.",
+    "credentials_did_not_match_alice_account_0d500002": "That email and password did not match an existing Alice account. Check both fields, or create an account first if you are new here.",
+    "account_may_exist_try_signing_in_0d500003": "An account may already exist for {{v0}}. Try signing in instead.",
+    "this_alice_organization_0d500004": "this Alice organization",
+    "invite_not_found_0d500005": "Invite not found",
+    "checking_organization_access_retry_0d500006": "Checking your organization access. Try again in a moment.",
+    "account_already_belongs_to_organization_0d500007": "This account already belongs to the organization.",
+    "failed_to_accept_invite_0d500008": "Failed to accept invite",
+    "grant_or_complete_access_to_value_0d500009": "grant or complete your access to {{v0}}"
   }
 }

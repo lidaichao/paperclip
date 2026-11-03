@@ -256,6 +256,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.alice_could_not_start_secure_sign_in_0d400005).toContain("安全登录");
     expect(messages.recorded_by_alice_0d400006).toBe("由 Alice 记录。");
     expect(messages.waiting_for_ok_before_call_leaves_alice_0d400008).toContain("等待你的确认");
+    expect(messages.credentials_did_not_match_alice_account_0d500002).toContain("Alice 账户");
+    expect(messages.invite_not_found_0d500005).toBe("未找到邀请");
+    expect(messages.failed_to_accept_invite_0d500008).toBe("接受邀请失败");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

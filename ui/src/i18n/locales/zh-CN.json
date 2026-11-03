@@ -11706,6 +11706,15 @@
     "recorded_by_alice_0d400006": "由 Alice 记录。",
     "real_call_against_app_as_agent_0d400007": "将以 {{v1}} 的身份真实调用 {{v0}}。",
     "waiting_for_ok_before_call_leaves_alice_0d400008": "正在等待你的确认，确认后 Alice 才会发出此调用。",
-    "no_call_action_off_for_agent_0d400009": "不会发起调用；{{v0}} 已关闭此操作。"
+    "no_call_action_off_for_agent_0d400009": "不会发起调用；{{v0}} 已关闭此操作。",
+    "account_exists_sign_in_to_continue_invite_0d500001": "{{v0}} 已有关联账户。请在下方登录以继续接受邀请。",
+    "credentials_did_not_match_alice_account_0d500002": "邮箱或密码与现有 Alice 账户不匹配。请检查两项内容；如果你是新用户，请先创建账户。",
+    "account_may_exist_try_signing_in_0d500003": "{{v0}} 可能已有账户，请改为尝试登录。",
+    "this_alice_organization_0d500004": "此 Alice 组织",
+    "invite_not_found_0d500005": "未找到邀请",
+    "checking_organization_access_retry_0d500006": "正在检查你的组织访问权限，请稍后重试。",
+    "account_already_belongs_to_organization_0d500007": "此账户已属于该组织。",
+    "failed_to_accept_invite_0d500008": "接受邀请失败",
+    "grant_or_complete_access_to_value_0d500009": "授予或补全你对 {{v0}} 的访问权限"
   }
 }

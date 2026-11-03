@@ -79,36 +79,34 @@ function mapInviteAuthFeedback(
   if (code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
     return {
       tone: "info",
-      message: `An account already exists for ${emailLabel}. Sign in below to continue with this invite.`,
+      message: l10n("local.account_exists_sign_in_to_continue_invite_0d500001", { v0: emailLabel }),
     };
   }
 
   if (code === "INVALID_EMAIL_OR_PASSWORD") {
     return {
       tone: "error",
-      message:
-        "That email and password did not match an existing Paperclip account. Check both fields, or create an account first if you are new here.",
+      message: l10n("local.credentials_did_not_match_alice_account_0d500002"),
     };
   }
 
   if (authMode === "sign_in" && message === "Request failed: 401") {
     return {
       tone: "error",
-      message:
-        "That email and password did not match an existing Paperclip account. Check both fields, or create an account first if you are new here.",
+      message: l10n("local.credentials_did_not_match_alice_account_0d500002"),
     };
   }
 
   if (authMode === "sign_up" && message === "Request failed: 422") {
     return {
       tone: "info",
-      message: `An account may already exist for ${emailLabel}. Try signing in instead.`,
+      message: l10n("local.account_may_exist_try_signing_in_0d500003", { v0: emailLabel }),
     };
   }
 
   return {
     tone: "error",
-    message: message ?? "Authentication failed",
+    message: message ?? l10n("local.authentication_failed_0d300001"),
   };
 }
 
@@ -292,7 +290,7 @@ export function InviteLandingPage() {
     Boolean(invite?.companyId) &&
     companyList.some((company) => company.id === invite?.companyId);
   const companyName = invite?.companyName?.trim() || null;
-  const companyDisplayName = companyName || "this Paperclip company";
+  const companyDisplayName = companyName || l10n("local.this_alice_organization_0d500004");
   const companyLogoUrl = invite?.companyLogoUrl?.trim() || null;
   const invitedByUserName = invite?.invitedByUserName?.trim() || null;
   const inviteMessage = invite?.inviteMessage?.trim() || null;
@@ -328,12 +326,12 @@ export function InviteLandingPage() {
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      if (!invite) throw new Error("Invite not found");
+      if (!invite) throw new Error(l10n("local.invite_not_found_0d500005"));
       if (isCheckingExistingMembership) {
-        throw new Error("Checking your organization access. Try again in a moment.");
+        throw new Error(l10n("local.checking_organization_access_retry_0d500006"));
       }
       if (isCurrentMember) {
-        throw new Error("This account already belongs to the organization.");
+        throw new Error(l10n("local.account_already_belongs_to_organization_0d500007"));
       }
       if (invite.inviteType === "bootstrap_ceo" || invite.allowedJoinTypes !== "agent") {
         return accessApi.acceptInvite(token, { requestType: "human" });
@@ -359,7 +357,7 @@ export function InviteLandingPage() {
       }
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to accept invite");
+      setError(err instanceof Error ? err.message : l10n("local.failed_to_accept_invite_0d500008"));
     },
   });
 
@@ -426,11 +424,11 @@ export function InviteLandingPage() {
   });
 
   const joinButtonLabel = useMemo(() => {
-    if (!invite) return "Continue";
-    if (isCurrentMember) return "Open organization";
-    if (invite.inviteType === "bootstrap_ceo") return "Accept invite";
-    if (showsAgentForm) return "Submit request";
-    return sessionQuery.data ? "Accept invite" : "Continue";
+    if (!invite) return l10n("local.continue_31fbef16");
+    if (isCurrentMember) return l10n("local.open_organization_dashboard_51cddc9a");
+    if (invite.inviteType === "bootstrap_ceo") return l10n("local.accept_invite_5e3f840e");
+    if (showsAgentForm) return l10n("local.submit_request_917e144e");
+    return sessionQuery.data ? l10n("local.accept_invite_5e3f840e") : l10n("local.continue_31fbef16");
   }, [invite, isCurrentMember, sessionQuery.data, showsAgentForm]);
 
   if (!token) {
@@ -709,7 +707,7 @@ export function InviteLandingPage() {
                     event.preventDefault();
                     if (authMutation.isPending) return;
                     if (!authCanSubmit) {
-                      setAuthFeedback({ tone: "error", message: "Please fill in all required fields." });
+                      setAuthFeedback({ tone: "error", message: l10n("local.please_fill_in_all_required_fields_d1641a4d") });
                       return;
                     }
                     authMutation.mutate();
@@ -824,7 +822,9 @@ export function InviteLandingPage() {
                       ? l10n("local.granting_your_access_to_value_6e0550b8", {v0: (companyDisplayName)})
                       : isCurrentMember
                       ? l10n("local.this_account_already_belongs_to_value_45928c87", {v0: (companyDisplayName)})
-                      : l10n("local.this_will_value_5dbc41d3", {v0: (invite.inviteType === "bootstrap_ceo" ? "finish setting up Paperclip" : `grant or complete your access to ${companyDisplayName}`)})}
+                      : l10n("local.this_will_value_5dbc41d3", {v0: (invite.inviteType === "bootstrap_ceo"
+                        ? l10n("local.finish_setting_up_this_paperclip_fd728e25")
+                        : l10n("local.grant_or_complete_access_to_value_0d500009", { v0: companyDisplayName }))})}
                   </p>
                 </div>
                 {error ? <p className="text-xs text-red-400">{error}</p> : null}
