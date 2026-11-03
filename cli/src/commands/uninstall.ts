@@ -46,7 +46,7 @@ export async function uninstallCommand(
   const detection = await detect({ instanceId, platform });
   const otherDefinitions = otherServiceDefinitions(platform, userHomeDir, instanceId);
   if (otherDefinitions.length > 0) {
-    throw new Error(`Cannot remove the shared managed CLI while other instance services are installed: ${otherDefinitions.join(", ")}. Uninstall those services first.`);
+    throw new Error(`仍有其他实例服务已安装，无法移除共享的托管命令行工具：${otherDefinitions.join(", ")}。请先卸载这些服务。`);
   }
   if (!detection.supported && platform === "linux") {
     const definitionPath = path.join(
@@ -58,7 +58,7 @@ export async function uninstallCommand(
     );
     if (fs.existsSync(definitionPath)) {
       throw new Error(
-        `Cannot verify or remove the background service: ${detection.reason}. Retry when the service manager is available.`,
+        `无法验证或移除后台服务：${detection.reason}。请在服务管理器可用后重试。`,
       );
     }
   }
@@ -83,8 +83,8 @@ export async function uninstallCommand(
   }, paths, { initialize: !hadStore });
 
   if (!shimRemoved) {
-    console.log(pc.yellow(`Left ${paths.shimPath} unchanged because it is not a Paperclip-managed shim.`));
+    console.log(pc.yellow(`未修改 ${paths.shimPath}，因为它不是 Alice 管理的命令入口。`));
   }
-  console.log(pc.green("Removed the managed Paperclip CLI install."));
-  console.log(pc.dim(`User data was left untouched under ${paths.paperclipHome}.`));
+  console.log(pc.green("已移除托管的 Alice 命令行安装。"));
+  console.log(pc.dim(`${paths.paperclipHome} 中的用户数据已原样保留。`));
 }
