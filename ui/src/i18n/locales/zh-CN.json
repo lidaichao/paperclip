@@ -11801,6 +11801,18 @@
     "export_readme_getting_started_heading_0db00012": "## 开始使用",
     "export_readme_see_alice_for_more_information_0db00013": "更多信息请访问 [Alice](https://paperclip.ing)。",
     "export_readme_exported_from_alice_on_date_0db00014": "于 {{v0}} 从 [Alice](https://paperclip.ing) 导出",
-    "failed_to_load_export_data_0db00015": "加载导出数据失败。"
+    "failed_to_load_export_data_0db00015": "加载导出数据失败。",
+    "connecting_0dc00001": "正在连接……",
+    "board_chat_stream_not_available_0dc00002": "管理方对话流暂不可用",
+    "thinking_0dc00003": "正在思考……",
+    "board_assistant_could_not_respond_0dc00004": "管理方助理未能回复，请重试。",
+    "board_assistant_unavailable_retry_0dc00005": "管理方助理暂时不可用，请稍后重试。",
+    "board_welcome_with_mission_0dc00006": "欢迎来到 **{{v0}}**！我是{{v1}}，你的团队负责人。我已阅读你在向导中提供的信息；我们的使命是“{{v2}}”。\n\n现在我可以帮你整理几类内容。请选择下面的一项，我会结合你提供的全部信息起草。",
+    "board_welcome_without_mission_0dc00007": "欢迎来到 **{{v0}}**！我是{{v1}}，你的团队负责人。我已阅读你在向导中提供的信息。\n\n现在我可以帮你整理几类内容。请选择下面的一项，我会结合你提供的全部信息起草。",
+    "draft_one_page_organization_brief_prompt_0dc00008": "为 {{v0}} 起草一页组织简介，包含使命、团队成员和首批优先事项。",
+    "create_hiring_plan_prompt_0dc00009": "为 {{v0}} 制定招聘计划，按优先级列出下一批岗位，并简要说明每个岗位的理由。",
+    "outline_first_30_days_prompt_0dc00010": "规划前 30 天工作，按周拆分优先事项，并明确每项工作的负责人。",
+    "write_intro_pitch_prompt_0dc00011": "为 {{v0}} 撰写一段简短介绍，可用于投资人、客户或招聘场景。",
+    "assistant_0dc00012": "助理"
   }
 }

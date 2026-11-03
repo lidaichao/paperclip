@@ -11801,6 +11801,18 @@
     "export_readme_getting_started_heading_0db00012": "## Getting Started",
     "export_readme_see_alice_for_more_information_0db00013": "See [Alice](https://paperclip.ing) for more information.",
     "export_readme_exported_from_alice_on_date_0db00014": "Exported from [Alice](https://paperclip.ing) on {{v0}}",
-    "failed_to_load_export_data_0db00015": "Failed to load export data."
+    "failed_to_load_export_data_0db00015": "Failed to load export data.",
+    "connecting_0dc00001": "Connecting...",
+    "board_chat_stream_not_available_0dc00002": "Board chat stream not available",
+    "thinking_0dc00003": "Thinking...",
+    "board_assistant_could_not_respond_0dc00004": "The board assistant couldn't respond. Please try again.",
+    "board_assistant_unavailable_retry_0dc00005": "The board assistant is unavailable right now. Please try again in a moment.",
+    "board_welcome_with_mission_0dc00006": "Welcome to **{{v0}}**! I'm {{v1}}, your team lead. I've read through what you shared in the wizard — your mission is \"{{v2}}\".\n\nHere are a few things I can help you put on paper right now. Pick one below and I'll draft it for you using everything you told us.",
+    "board_welcome_without_mission_0dc00007": "Welcome to **{{v0}}**! I'm {{v1}}, your team lead. I've read through what you shared in the wizard.\n\nHere are a few things I can help you put on paper right now. Pick one below and I'll draft it for you using everything you told us.",
+    "draft_one_page_organization_brief_prompt_0dc00008": "Draft a one-page Organization Brief for {{v0}} — include our mission, team roster, and first priorities.",
+    "create_hiring_plan_prompt_0dc00009": "Create a hiring plan for {{v0}}. List the next roles to hire, in priority order, with a short rationale for each.",
+    "outline_first_30_days_prompt_0dc00010": "Outline our first 30 days. Break it into weekly priorities with who owns what.",
+    "write_intro_pitch_prompt_0dc00011": "Write a short intro pitch for {{v0}} that I could reuse for investors, customers, or recruits.",
+    "assistant_0dc00012": "Assistant"
   }
 }

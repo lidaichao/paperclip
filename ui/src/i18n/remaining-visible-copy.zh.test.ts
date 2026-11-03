@@ -290,6 +290,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.export_readme_agent_table_header_0db00010).toContain("| 智能体 | 角色 | 上级 |");
     expect(messages.export_readme_exported_from_alice_on_date_0db00014).toContain("从 [Alice]");
     expect(messages.failed_to_load_export_data_0db00015).toBe("加载导出数据失败。");
+    expect(messages.connecting_0dc00001).toBe("正在连接……");
+    expect(messages.board_assistant_unavailable_retry_0dc00005).toContain("稍后重试");
+    expect(messages.board_welcome_with_mission_0dc00006).toContain("团队负责人");
+    expect(messages.create_hiring_plan_prompt_0dc00009).toContain("招聘计划");
+    expect(messages.assistant_0dc00012).toBe("助理");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");

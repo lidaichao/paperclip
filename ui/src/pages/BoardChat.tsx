@@ -543,7 +543,7 @@ export function BoardChat() {
       setInput("");
       setStreamingText("");
       setErrorText("");
-      setStatusText("Connecting...");
+      setStatusText(l10n("local.connecting_0dc00001"));
 
       try {
         const controller = new AbortController();
@@ -561,10 +561,10 @@ export function BoardChat() {
         clearTimeout(fetchTimeout);
 
         if (!res.ok || !res.body) {
-          throw new Error("Board chat stream not available");
+          throw new Error(l10n("local.board_chat_stream_not_available_0dc00002"));
         }
 
-        setStatusText("Thinking...");
+        setStatusText(l10n("local.thinking_0dc00003"));
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -594,7 +594,7 @@ export function BoardChat() {
               } else if (event.type === "error") {
                 setErrorText(
                   event.message ||
-                    "The board assistant couldn't respond. Please try again.",
+                    l10n("local.board_assistant_could_not_respond_0dc00004"),
                 );
                 setStatusText("");
               } else if (event.type === "done") {
@@ -622,7 +622,7 @@ export function BoardChat() {
         console.error("Board chat error:", err);
         setStatusText("");
         setErrorText(
-          "The board assistant is unavailable right now. Please try again in a moment.",
+          l10n("local.board_assistant_unavailable_retry_0dc00005"),
         );
       } finally {
         setSending(false);
@@ -730,12 +730,16 @@ export function BoardChat() {
               {welcomeRevealed && ceoAgent && selectedCompany && (() => {
                 const ceoName = ceoAgent.name;
                 const companyName = selectedCompany.name;
-                const missionLine = missionText
-                  ? ` — your mission is "${missionText}".`
-                  : ".";
-                const welcomeBody =
-                  `Welcome to **${companyName}**! I'm ${ceoName}, your team lead. I've read through what you shared in the wizard${missionLine}\n\n` +
-                  `Here are a few things I can help you put on paper right now. Pick one below and I'll draft it for you using everything you told us.`;
+                const welcomeBody = missionText
+                  ? l10n("local.board_welcome_with_mission_0dc00006", {
+                      v0: companyName,
+                      v1: ceoName,
+                      v2: missionText,
+                    })
+                  : l10n("local.board_welcome_without_mission_0dc00007", {
+                      v0: companyName,
+                      v1: ceoName,
+                    });
 
                 const userHasReplied = sortedComments.some(
                   (c) => !c.authorAgentId && c.authorUserId !== "board-concierge",
@@ -744,19 +748,19 @@ export function BoardChat() {
                 const chips: Array<{ label: string; prompt: string }> = [
                   {
                     label: l10n("local.draft_an_organization_brief_bbb3dce9"),
-                    prompt: `Draft a one-page Organization Brief for ${companyName} — include our mission, team roster, and first priorities.`,
+                    prompt: l10n("local.draft_one_page_organization_brief_prompt_0dc00008", { v0: companyName }),
                   },
                   {
                     label: l10n("local.create_a_hiring_plan_41789331"),
-                    prompt: `Create a hiring plan for ${companyName}. List the next roles to hire, in priority order, with a short rationale for each.`,
+                    prompt: l10n("local.create_hiring_plan_prompt_0dc00009", { v0: companyName }),
                   },
                   {
                     label: l10n("local.outline_our_first_30_days_a2f66ddc"),
-                    prompt: `Outline our first 30 days. Break it into weekly priorities with who owns what.`,
+                    prompt: l10n("local.outline_first_30_days_prompt_0dc00010"),
                   },
                   {
                     label: l10n("local.write_an_intro_pitch_10326cca"),
-                    prompt: `Write a short intro pitch for ${companyName} that I could reuse for investors, customers, or recruits.`,
+                    prompt: l10n("local.write_intro_pitch_prompt_0dc00011", { v0: companyName }),
                   },
                 ];
 
@@ -816,7 +820,7 @@ export function BoardChat() {
                 const agent = comment.authorAgentId
                   ? agentMap.get(comment.authorAgentId) ?? null
                   : ceoAgent ?? null;
-                const agentName = agent?.name ?? "Assistant";
+                const agentName = agent?.name ?? l10n("local.assistant_0dc00012");
                 const agentIconValue = agent?.icon ?? null;
                 return (
                   <div key={comment.id} className="flex flex-col items-start">
