@@ -32,9 +32,9 @@ export function toolCapability(tool: ToolCatalogEntry): ToolCapability {
 }
 
 export const CAPABILITY_LABEL: Record<ToolCapability, string> = {
-  read: "Read-only",
-  write: "Makes changes",
-  destructive: "Destructive",
+  read: l10n("local.read_only_72bb9089"),
+  write: l10n("local.makes_changes_f85b6093"),
+  destructive: l10n("local.destructive_c3e58a73"),
 };
 
 // --- App grouping ----------------------------------------------------------
@@ -369,11 +369,11 @@ export interface TemplateDef {
 }
 
 export const TEMPLATES: TemplateDef[] = [
-  { key: "read_only", title: "Read-only", description: "See and fetch, but never change anything." },
-  { key: "everyday", title: "Everyday work", description: "Read and make routine changes — no destructive tools." },
-  { key: "full_access", title: "Full access", description: "Everything every connected app offers." },
-  { key: "scratch", title: "Start from scratch", description: "An empty profile you build up tool by tool." },
-  { key: "copy", title: "Copy an existing profile", description: "Start from a profile you already have." },
+  { key: "read_only", title: l10n("local.read_only_72bb9089"), description: l10n("local.see_and_fetch_never_change_10300259") },
+  { key: "everyday", title: l10n("local.everyday_work_10300260"), description: l10n("local.routine_changes_no_destructive_tools_10300261") },
+  { key: "full_access", title: l10n("local.full_access_10300262"), description: l10n("local.every_connected_app_tool_10300263") },
+  { key: "scratch", title: l10n("local.start_from_scratch_10300264"), description: l10n("local.empty_profile_build_tool_by_tool_10300265") },
+  { key: "copy", title: l10n("local.copy_existing_profile_10300266"), description: l10n("local.start_from_profile_you_have_10300267") },
 ];
 
 function capabilityPredicate(key: TemplateKey): (tool: ToolCatalogEntry) => boolean {

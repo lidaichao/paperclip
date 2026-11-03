@@ -545,8 +545,8 @@ function NewToolsSetting({
   onChange: (value: ToolProfileDefaultAction) => void;
 }) {
   const options: Array<{ value: ToolProfileDefaultAction; title: string; body: string }> = [
-    { value: "deny", title: l10n("local.stay_blocked_until_reviewed_816eabb2"), body: "New tools do not become available automatically." },
-    { value: "allow", title: l10n("local.allowed_automatically_7fed1ac8"), body: "New tools from selected apps become available right away." },
+    { value: "deny", title: l10n("local.stay_blocked_until_reviewed_816eabb2"), body: l10n("local.new_tools_not_available_automatically_10300278") },
+    { value: "allow", title: l10n("local.allowed_automatically_7fed1ac8"), body: l10n("local.new_tools_available_right_away_10300279") },
   ];
   return (
     <div className="grid gap-2 sm:grid-cols-2">
@@ -784,9 +784,9 @@ function capabilityLabel(tool: ToolCatalogEntry): string {
 }
 
 function capabilityText(tool: ToolProfileNewToolReviewItem): string {
-  if (tool.riskLevel === "destructive") return "Destructive";
-  if (tool.riskLevel === "write") return "Write";
-  if (tool.riskLevel === "read") return "Read";
+  if (tool.riskLevel === "destructive") return l10n("local.destructive_c3e58a73");
+  if (tool.riskLevel === "write") return l10n("local.write_3f00927a");
+  if (tool.riskLevel === "read") return l10n("local.read_9b9a8d05");
   return tool.capability;
 }
 

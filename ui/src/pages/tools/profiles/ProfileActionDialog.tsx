@@ -36,22 +36,32 @@ export function ProfileActionDialog({
   const copy = {
     archive: {
       title: l10n("local.archive_profile_2962d868"),
-      body: `This profile stops applying to ${profile.summary.appliesToAgentCount} ${profile.summary.appliesToAgentCount === 1 ? "agent" : "agents"}. You can restore it later.`,
-      confirm: "Archive",
+      body: l10n(
+        profile.summary.appliesToAgentCount === 1
+          ? "local.profile_stops_applying_one_agent_10300285"
+          : "local.profile_stops_applying_restore_later_10300274",
+        { v0: profile.summary.appliesToAgentCount },
+      ),
+      confirm: l10n("local.archive_66f4804e"),
       action: onArchive,
     },
     restore: {
       title: l10n("local.restore_profile_ec01a812"),
-      body: "This profile will be active again and can be assigned to agents.",
-      confirm: "Restore",
+      body: l10n("local.profile_active_again_assignable_10300275"),
+      confirm: l10n("local.restore_a76e13b9"),
       action: onRestore,
     },
     delete: {
       title: l10n("local.delete_profile_47311af4"),
       body: defaultDeleteBlocked
-        ? "This profile is the organization default. Reassign the organization default to another profile before deleting it."
-        : `This permanently deletes the profile and removes ${profile.summary.assignmentCount} ${profile.summary.assignmentCount === 1 ? "assignment" : "assignments"}.`,
-      confirm: "Delete",
+        ? l10n("local.default_profile_reassign_before_delete_10300276")
+        : l10n(
+          profile.summary.assignmentCount === 1
+            ? "local.delete_profile_removes_one_assignment_10300286"
+            : "local.delete_profile_removes_assignments_10300277",
+          { v0: profile.summary.assignmentCount },
+        ),
+      confirm: l10n("local.delete_e2d0a549"),
       action: onDelete,
     },
   }[kind];
