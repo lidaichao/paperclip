@@ -293,7 +293,7 @@ const support = await getEmbeddedPostgresTestSupport();
           .update(toolConnections)
           .set({
             healthStatus: "error",
-            healthMessage: "GitHub access changed during refresh. Try again.",
+            healthMessage: "刷新期间 GitHub 访问权限发生变化，请重试。",
           })
           .where(eq(toolConnections.id, broken.connectionId));
         await db

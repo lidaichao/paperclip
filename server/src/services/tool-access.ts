@@ -10329,7 +10329,7 @@ export function toolAccessService(
       }
 
       if (Date.now() >= waitDeadline) {
-        throw conflict("OAuth credential refresh is already in progress", {
+        throw conflict("OAuth 凭据正在刷新，请勿重复操作", {
           code: "oauth_refresh_in_progress",
           retryable: true,
         });
@@ -10694,7 +10694,7 @@ export function toolAccessService(
         ),
       )
       .limit(1);
-    if (!grant) throw notFound("Connection authorization not found");
+    if (!grant) throw notFound("未找到连接授权");
     return grant;
   }
 
@@ -10721,7 +10721,7 @@ export function toolAccessService(
         ),
       )
       .limit(1);
-    if (!secret) throw notFound("OAuth credential secret not found");
+    if (!secret) throw notFound("未找到 OAuth 凭据密钥");
     const consumerContext = {
       consumerType: "tool_connection" as const,
       consumerId: connection.id,
@@ -10749,7 +10749,7 @@ export function toolAccessService(
       secret.ownerUserId !== grant.subjectUserId ||
       !secret.userSecretDefinitionId
     ) {
-      throw unprocessable("Personal authorization has an invalid credential", {
+      throw unprocessable("个人授权的凭据无效", {
         code: "grant_credential_invalid",
         connectionId: connection.id,
         grantId: grant.id,
@@ -10767,7 +10767,7 @@ export function toolAccessService(
       consumerContext,
     );
     if (!resolved)
-      throw unprocessable("Personal OAuth credential is not configured", {
+      throw unprocessable("尚未配置个人 OAuth 凭据", {
         code: "user_secret_missing",
         connectionId: connection.id,
         grantId: grant.id,
@@ -10832,7 +10832,7 @@ export function toolAccessService(
         grantId: grant.id,
       });
       if (latest.status !== "active") {
-        throw unprocessable("OAuth authorization must be reconnected", {
+        throw unprocessable("必须重新连接 OAuth 授权", {
           code: "oauth_reauthorization_required",
           setupUrl: connectionSetupUrl(connection),
           reconnectUrl: connectionReconnectUrl(connection),
@@ -10905,7 +10905,7 @@ export function toolAccessService(
         );
       }
       if (Date.now() >= waitDeadline) {
-        throw conflict("OAuth credential refresh is already in progress", {
+        throw conflict("OAuth 凭据正在刷新，请勿重复操作", {
           code: "oauth_refresh_in_progress",
           retryable: true,
         });
@@ -11001,7 +11001,7 @@ export function toolAccessService(
               !accessRef ||
               !refreshRef
             ) {
-              throw unprocessable("Managed authorization must be reconnected", {
+              throw unprocessable("必须重新连接托管授权", {
                 code: "oauth_reauthorization_required",
                 setupUrl: connectionSetupUrl(connection),
                 reconnectUrl: connectionReconnectUrl(connection),
@@ -11567,7 +11567,7 @@ export function toolAccessService(
         (ref) => ref.configPath === "oauth.access_token",
       );
       if (!accessRef)
-        throw unprocessable("GitHub authorization must be reconnected", {
+        throw unprocessable("必须重新连接 GitHub 授权", {
           code: "oauth_reauthorization_required",
         });
       return (
@@ -11641,7 +11641,7 @@ export function toolAccessService(
         .for("update")
         .limit(1);
       if (!currentGrant || currentGrant.status === "revoked")
-        throw notFound("GitHub authorization not found");
+        throw notFound("未找到 GitHub 授权");
       const previousGitHub = currentGrant.providerTenant?.github;
       const initialGitHub = grant.providerTenant?.github;
       // No lock is held during provider requests. Reject a snapshot if another
@@ -11652,7 +11652,7 @@ export function toolAccessService(
         previousGitHub?.lastAccessRefreshAt !==
           initialGitHub?.lastAccessRefreshAt
       ) {
-        throw conflict("GitHub access changed during refresh. Try again.", {
+        throw conflict("刷新期间 GitHub 访问权限发生变化，请重试。", {
           code: "github_access_changed",
         });
       }
@@ -11681,7 +11681,7 @@ export function toolAccessService(
           ),
         )
         .returning();
-      if (!updated) throw notFound("GitHub authorization not found");
+      if (!updated) throw notFound("未找到 GitHub 授权");
       return { updated, previousGitHub };
     });
 
@@ -11821,7 +11821,7 @@ export function toolAccessService(
   async function assertMcpAggregatorSetupEnabled(provider: unknown, method: unknown) {
     if (isRemoteMcpConnectorMethod(provider, method)
       && !(await instanceSettingsService(db).getExperimental()).enableMcpAggregators) {
-      throw forbidden("Enable MCP aggregators in Settings → Experimental to set up this connection", {
+      throw forbidden("请在“设置 → 实验性功能”中启用 MCP 聚合器后再配置此连接", {
         code: "mcp_aggregators_disabled",
       });
     }
@@ -11836,7 +11836,7 @@ export function toolAccessService(
       ? getConnectableAppDefinition(input.galleryKey)
       : null;
     if (input.galleryKey && !definition)
-      throw notFound("Tool app gallery entry not found");
+      throw notFound("未找到工具应用库条目");
 
     const galleryEntry = definition ? await appForConnectionSetup(definition) : null;
 
@@ -11855,10 +11855,10 @@ export function toolAccessService(
             eq(toolConnections.companyId, companyId),
           ),
         );
-      if (!connection) throw notFound("Incomplete app connection not found");
+      if (!connection) throw notFound("未找到未完成的应用连接");
       assertSupportedConnection(connection);
       if (input.resumeConnectionId && connection.status !== "draft") {
-        throw conflict("Only an incomplete app connection can resume setup", {
+        throw conflict("只有未完成的应用连接才能继续配置", {
           code: "connection_setup_not_incomplete",
         });
       }
@@ -11866,7 +11866,7 @@ export function toolAccessService(
         input.applicationId &&
         input.applicationId !== connection.applicationId
       ) {
-        throw badRequest("The app and draft connection do not match");
+        throw badRequest("应用与连接草稿不匹配");
       }
       const [application] = await db
         .select()
@@ -11877,7 +11877,7 @@ export function toolAccessService(
             eq(toolApplications.companyId, companyId),
           ),
         );
-      if (!application) throw notFound("App not found");
+      if (!application) throw notFound("未找到应用");
       const source =
         asRecord(connection.config).sourceTemplateKey ??
         asRecord(connection.transportConfig).sourceTemplateKey ??
@@ -11890,7 +11890,7 @@ export function toolAccessService(
             typeof source === "string" &&
             getConnectableAppDefinition(source)))
       ) {
-        throw badRequest("Reconnect must preserve the configured provider");
+        throw badRequest("重新连接时必须保留已配置的服务提供商");
       }
       requestedResumeConnection = connection;
       existingApplication = application;
@@ -11904,7 +11904,7 @@ export function toolAccessService(
             eq(toolApplications.companyId, companyId),
           ),
         );
-      if (!row) throw notFound("App not found");
+      if (!row) throw notFound("未找到应用");
       existingApplication = row;
     } else {
       // Removal and interrupted setup intentionally retain their
@@ -11960,7 +11960,7 @@ export function toolAccessService(
         ? "local"
         : input.connectionMethodKey;
     if (!galleryEntry && input.connectionMethodKey)
-      throw badRequest("Connection method selection requires a gallery app");
+      throw badRequest("选择连接方式需要使用应用库中的应用");
     if (
       galleryEntry &&
       getAvailableConnectionMethods(galleryEntry).filter(
@@ -11969,7 +11969,7 @@ export function toolAccessService(
       ).length > 1 &&
       !inferredMethodKey
     ) {
-      throw badRequest("Choose a connection method for this app");
+      throw badRequest("请选择此应用的连接方式");
     }
     const method = galleryEntry
       ? connectionMethodFor(galleryEntry, inferredMethodKey)

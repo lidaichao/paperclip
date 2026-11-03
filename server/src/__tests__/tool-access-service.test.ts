@@ -7480,7 +7480,7 @@ describeEmbeddedPostgres("tool access service", () => {
           }
           await expect(
             service.checkHealth(connected.connectionId, actor),
-          ).rejects.toThrow("GitHub access changed during refresh. Try again.");
+          ).rejects.toThrow("刷新期间 GitHub 访问权限发生变化，请重试。");
           const [latest] = await db
             .select()
             .from(connectionGrants)
