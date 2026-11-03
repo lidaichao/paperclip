@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "fireflies",
   "name": "Fireflies",
-  "description": "Search meeting transcripts, read summaries and action items, and connect meeting-ready routines.",
+  "description": "搜索会议转写、读取摘要和行动项，并连接会议就绪后的自动流程。",
   "categories": [
     "productivity"
   ],
@@ -23,7 +23,7 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://api.fireflies.ai/mcp",
         "scopesHint": [
@@ -31,14 +31,14 @@
           "profile"
         ]
       },
-      "guidanceMd": "Sign in to Fireflies to use meeting transcripts, summaries, and action items. Configure optional summary-ready webhooks separately in a routine's Triggers tab.",
+      "guidanceMd": "登录 Fireflies 以使用会议转写、摘要和行动项。可在自动流程的“触发器”页签中单独配置摘要就绪后的可选 Webhook。",
       "riskTier": "S3",
-      "label": "Sign in with Fireflies",
+      "label": "使用 Fireflies 登录",
       "consoleLinks": {
         "docs": "https://docs.fireflies.ai/getting-started/mcp-configuration"
       },
       "warnings": [
-        "A Fireflies account with access to the meetings you want to use. API keys are available in Settings → Developer Settings."
+        "需要一个有权访问目标会议的 Fireflies 账户。API 密钥可在“设置 → 开发者设置”中获取。"
       ]
     },
     {
@@ -48,20 +48,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use your Fireflies API key instead of browser sign-in.",
+      "whenToUse": "使用 Fireflies API 密钥代替浏览器登录。",
       "defaults": {
         "serverUrl": "https://api.fireflies.ai/mcp"
       },
-      "guidanceMd": "Open Fireflies Settings → Developer Settings, copy your API key, and paste it below. This key accesses your meeting data; routine webhooks use a separate signing secret.",
+      "guidanceMd": "打开 Fireflies 的“设置 → 开发者设置”，复制 API 密钥并粘贴到下方。该密钥可访问你的会议数据；自动流程 Webhook 使用独立的签名密钥。",
       "riskTier": "S3",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Fireflies API key",
+          "label": "Fireflies API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your Fireflies API key",
+          "placeholder": "粘贴你的 Fireflies API 密钥",
           "secret": true
         }
       ],
@@ -75,7 +75,7 @@
         "docs": "https://docs.fireflies.ai/getting-started/mcp-configuration"
       },
       "warnings": [
-        "A Fireflies account with access to the meetings you want to use. API keys are available in Settings → Developer Settings."
+        "需要一个有权访问目标会议的 Fireflies 账户。API 密钥可在“设置 → 开发者设置”中获取。"
       ]
     }
   ]

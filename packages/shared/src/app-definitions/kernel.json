@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "kernel",
   "name": "Kernel",
-  "description": "Connect Kernel's provider-hosted MCP server.",
+  "description": "连接 Kernel 官方托管的 MCP 服务器。",
   "categories": [
     "developer"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.onkernel.com/mcp"
       },
-      "guidanceMd": "Connect Kernel in the browser. A Kernel account with either browser authorization or an API key.",
+      "guidanceMd": "在浏览器中连接 Kernel。需要可通过浏览器授权或 API 密钥访问的 Kernel 账户。",
       "riskTier": "S3",
-      "label": "Sign in with Kernel",
+      "label": "使用 Kernel 登录",
       "consoleLinks": {
         "docs": "https://www.kernel.sh/docs/reference/mcp-server/"
       },
       "warnings": [
-        "A Kernel account with either browser authorization or an API key."
+        "需要可通过浏览器授权或 API 密钥访问的 Kernel 账户。"
       ]
     },
     {
@@ -44,20 +44,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用客户自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.onkernel.com/mcp"
       },
-      "guidanceMd": "Use a customer-created Kernel key. A Kernel account with either browser authorization or an API key.",
+      "guidanceMd": "使用客户自行创建的 Kernel 密钥。需要可通过浏览器授权或 API 密钥访问的 Kernel 账户。",
       "riskTier": "S3",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Kernel API key",
+          "label": "Kernel API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your Kernel API key",
+          "placeholder": "粘贴你的 Kernel API 密钥",
           "secret": true
         }
       ],
@@ -71,7 +71,7 @@
         "docs": "https://www.kernel.sh/docs/reference/mcp-server/"
       },
       "warnings": [
-        "A Kernel account with either browser authorization or an API key."
+        "需要可通过浏览器授权或 API 密钥访问的 Kernel 账户。"
       ]
     }
   ]

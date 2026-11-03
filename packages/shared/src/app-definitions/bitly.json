@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "bitly",
   "name": "Bitly",
-  "description": "Connect Bitly's provider-hosted MCP server.",
+  "description": "连接 Bitly 官方托管的 MCP 服务器。",
   "categories": [
     "analytics"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://api-ssl.bitly.com/v4/mcp"
       },
-      "guidanceMd": "Connect Bitly in the browser. A Bitly account with either browser authorization or an API token.",
+      "guidanceMd": "在浏览器中连接 Bitly。需要可通过浏览器授权或 API 令牌访问的 Bitly 账户。",
       "riskTier": "S2",
-      "label": "Sign in with Bitly",
+      "label": "使用 Bitly 登录",
       "consoleLinks": {
         "docs": "https://dev.bitly.com/bitly-mcp/overview/quickstart/"
       },
       "warnings": [
-        "A Bitly account with either browser authorization or an API token."
+        "需要可通过浏览器授权或 API 令牌访问的 Bitly 账户。"
       ]
     },
     {
@@ -44,20 +44,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用客户自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://api-ssl.bitly.com/v4/mcp"
       },
-      "guidanceMd": "Use a customer-created Bitly key. A Bitly account with either browser authorization or an API token.",
+      "guidanceMd": "使用客户自行创建的 Bitly 密钥。需要可通过浏览器授权或 API 令牌访问的 Bitly 账户。",
       "riskTier": "S2",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Bitly API key",
+          "label": "Bitly API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your Bitly API token",
+          "placeholder": "粘贴你的 Bitly API 令牌",
           "secret": true
         }
       ],
@@ -71,7 +71,7 @@
         "docs": "https://dev.bitly.com/bitly-mcp/overview/quickstart/"
       },
       "warnings": [
-        "A Bitly account with either browser authorization or an API token."
+        "需要可通过浏览器授权或 API 令牌访问的 Bitly 账户。"
       ]
     }
   ]

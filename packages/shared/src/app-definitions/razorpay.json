@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "razorpay",
   "name": "Razorpay",
-  "description": "Connect Razorpay's provider-hosted MCP server.",
+  "description": "连接 Razorpay 官方托管的 MCP 服务器。",
   "categories": [
     "commerce"
   ],
@@ -24,19 +24,19 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.razorpay.com/mcp"
       },
-      "guidanceMd": "Connect Razorpay in the browser. A Razorpay account; financial or destructive actions always require explicit approval.",
+      "guidanceMd": "在浏览器中连接 Razorpay。需要 Razorpay 账户；任何财务或破坏性操作都必须获得明确批准。",
       "riskTier": "S4",
-      "label": "Sign in with Razorpay",
+      "label": "使用 Razorpay 登录",
       "consoleLinks": {
         "docs": "https://razorpay.com/docs/mcp-server/oauth/"
       },
       "warnings": [
-        "A Razorpay account; financial or destructive actions always require explicit approval.",
-        "Financial or destructive actions must be explicitly approved before execution."
+        "需要 Razorpay 账户；任何财务或破坏性操作都必须获得明确批准。",
+        "财务或破坏性操作必须在执行前获得明确批准。"
       ]
     },
     {
@@ -46,20 +46,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用客户自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.razorpay.com/mcp"
       },
-      "guidanceMd": "Use a customer-created Razorpay key. A Razorpay account; financial or destructive actions always require explicit approval.",
+      "guidanceMd": "使用客户自行创建的 Razorpay 密钥。需要 Razorpay 账户；任何财务或破坏性操作都必须获得明确批准。",
       "riskTier": "S4",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Razorpay API key",
+          "label": "Razorpay API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste the base64-encoded key ID and secret",
+          "placeholder": "粘贴经过 Base64 编码的密钥 ID 和密钥内容",
           "secret": true
         }
       ],
@@ -73,8 +73,8 @@
         "docs": "https://razorpay.com/docs/mcp-server/oauth/"
       },
       "warnings": [
-        "A Razorpay account; financial or destructive actions always require explicit approval.",
-        "Financial or destructive actions must be explicitly approved before execution."
+        "需要 Razorpay 账户；任何财务或破坏性操作都必须获得明确批准。",
+        "财务或破坏性操作必须在执行前获得明确批准。"
       ]
     }
   ]

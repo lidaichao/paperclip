@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "cloudflare",
   "name": "Cloudflare",
-  "description": "Connect Cloudflare's provider-hosted MCP server.",
+  "description": "连接 Cloudflare 官方托管的 MCP 服务器。",
   "categories": [
     "developer"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://mcp.cloudflare.com/mcp"
       },
-      "guidanceMd": "Connect Cloudflare in the browser. A Cloudflare account with access to the resources being connected.",
+      "guidanceMd": "在浏览器中连接 Cloudflare。需要一个有权访问待连接资源的 Cloudflare 账户。",
       "riskTier": "S3",
-      "label": "Sign in with Cloudflare",
+      "label": "使用 Cloudflare 登录",
       "consoleLinks": {
         "docs": "https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/"
       },
       "warnings": [
-        "A Cloudflare account with access to the resources being connected."
+        "需要一个有权访问待连接资源的 Cloudflare 账户。"
       ]
     },
     {
@@ -44,20 +44,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用客户自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://mcp.cloudflare.com/mcp"
       },
-      "guidanceMd": "Use a customer-created Cloudflare key. A Cloudflare account with access to the resources being connected.",
+      "guidanceMd": "使用客户自行创建的 Cloudflare 密钥。需要一个有权访问待连接资源的 Cloudflare 账户。",
       "riskTier": "S3",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "Cloudflare API key",
+          "label": "Cloudflare API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your Cloudflare API token",
+          "placeholder": "粘贴你的 Cloudflare API 令牌",
           "secret": true
         }
       ],
@@ -71,7 +71,7 @@
         "docs": "https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/"
       },
       "warnings": [
-        "A Cloudflare account with access to the resources being connected."
+        "需要一个有权访问待连接资源的 Cloudflare 账户。"
       ]
     }
   ]
