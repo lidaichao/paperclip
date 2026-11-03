@@ -1139,7 +1139,7 @@ function formatInteractionActorLabel(args: {
     return (
       userLabelMap?.get(userId) ??
       formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ??
-      "Board"
+      l10n("local.board_4816cbfd")
     );
   }
   return l10n("local.system_6725e7bb");
@@ -1161,7 +1161,7 @@ export function resolveIssueChatHumanAuthor(args: {
   const resolvedAuthorName =
     profile?.label?.trim() ||
     authorName?.trim() ||
-    (authorUserId === "local-board" ? "Board" : isCurrentUser ? "You" : "User");
+    (authorUserId === "local-board" ? l10n("local.board_4816cbfd") : isCurrentUser ? l10n("local.you_08b04193") : l10n("local.user_b512d97e"));
 
   return {
     isCurrentUser,
@@ -1180,8 +1180,8 @@ function toolCountSummary(toolParts: ToolCallMessagePart[]): string | null {
   }
   const parts: string[] = [];
   if (commands > 0)
-    parts.push(`ran ${commands} command${commands === 1 ? "" : "s"}`);
-  if (other > 0) parts.push(`called ${other} tool${other === 1 ? "" : "s"}`);
+    parts.push(l10n(commands === 1 ? "local.ran_one_command_0f100001" : "local.ran_commands_0f100002", { v0: commands }));
+  if (other > 0) parts.push(l10n(other === 1 ? "local.called_one_tool_0f100003" : "local.called_tools_0f100004", { v0: other }));
   return parts.join(", ");
 }
 
@@ -1261,15 +1261,15 @@ function IssueChatChainOfThought({
   let headerVerb: string;
   let headerSuffix: string | null = null;
   if (isActive) {
-    headerVerb = "Working";
-    if (liveElapsed) headerSuffix = `for ${liveElapsed}`;
+    headerVerb = l10n("local.working_a92f0449");
+    if (liveElapsed) headerSuffix = l10n("local.for_value_0f100005", { v0: liveElapsed });
   } else if (segmentTiming) {
     const durationMs = segmentTiming.endMs - segmentTiming.startMs;
     const durationText = formatDurationWords(durationMs);
-    headerVerb = "Worked";
-    if (durationText) headerSuffix = `for ${durationText}`;
+    headerVerb = l10n("local.worked_e7f93aad");
+    if (durationText) headerSuffix = l10n("local.for_value_0f100005", { v0: durationText });
   } else {
-    headerVerb = "Worked";
+    headerVerb = l10n("local.worked_e7f93aad");
   }
 
   const toolSummary = toolCountSummary(toolParts);
@@ -1820,9 +1820,9 @@ function IssueChatProviderActivity({
               return (
                 <div key={String(child.childId ?? index)}>
                   <span className="font-medium">
-                    {String(child.role ?? "Child agent")}
+                    {String(child.role ?? l10n("local.child_agent_0cf00021"))}
                   </span>{" "}
-                  · {String(child.status ?? "unknown")}
+                  · {String(child.status ?? l10n("local.unknown_b23a6a84"))}
                   {child.summary ? ` — ${String(child.summary)}` : ""}
                 </div>
               );
@@ -1849,7 +1849,7 @@ function IssueChatProviderActivity({
                       {String(source.title ?? href)}
                     </a>
                   ) : (
-                    <span>{String(source.title ?? "Unavailable source")}</span>
+                    <span>{String(source.title ?? l10n("local.unavailable_source_0cf00022"))}</span>
                   )}{" "}
                   <span className="text-muted-foreground">
                     {l10n("local._provider_reported_1d001256")}</span>
@@ -2306,7 +2306,7 @@ function IssueChatAssistantMessage({
       ? custom.authorName
       : typeof custom.runAgentName === "string"
         ? custom.runAgentName
-        : "Agent";
+        : l10n("local.agent_11b39c93");
   const authorAgentId =
     typeof custom.authorAgentId === "string" ? custom.authorAgentId : null;
   const runId = typeof custom.runId === "string" ? custom.runId : null;
@@ -4494,7 +4494,7 @@ function IssueChatDeletedComment({
   const anchorId =
     typeof custom.anchorId === "string" ? custom.anchorId : undefined;
   const authorName =
-    typeof custom.authorName === "string" ? custom.authorName : "Comment";
+    typeof custom.authorName === "string" ? custom.authorName : l10n("local.comment_44f5e3fb");
   const deletedDate = new Date(deletedAt);
   const deletedDateLabel = Number.isNaN(deletedDate.getTime())
     ? ""

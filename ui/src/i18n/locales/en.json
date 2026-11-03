@@ -11983,6 +11983,11 @@
     "protocol_reason_item_0f000023": "Item payloads normalize into messages, reasoning, tools, diffs, or usage.",
     "protocol_reason_sandbox_0f000024": "Sandbox telemetry is available in run details, not the primary task thread.",
     "protocol_reason_mcp_lifecycle_0f000025": "MCP application transport lifecycle remains in run details unless it produces an actionable failure.",
-    "protocol_reason_governance_0f000026": "Authoritative task status, attention, and interaction records own this state."
+    "protocol_reason_governance_0f000026": "Authoritative task status, attention, and interaction records own this state.",
+    "ran_one_command_0f100001": "ran {{v0}} command",
+    "ran_commands_0f100002": "ran {{v0}} commands",
+    "called_one_tool_0f100003": "called {{v0}} tool",
+    "called_tools_0f100004": "called {{v0}} tools",
+    "for_value_0f100005": "for {{v0}}"
   }
 }

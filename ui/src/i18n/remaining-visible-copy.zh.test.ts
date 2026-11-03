@@ -411,6 +411,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.protocol_reason_sandbox_0f000024).toContain("沙箱遥测");
     expect(messages.protocol_reason_mcp_lifecycle_0f000025).toContain("MCP 应用");
     expect(messages.protocol_reason_governance_0f000026).toContain("任务状态");
+    expect(messages.ran_one_command_0f100001).toContain("{{v0}} 条命令");
+    expect(messages.ran_commands_0f100002).toContain("{{v0}} 条命令");
+    expect(messages.called_one_tool_0f100003).toContain("{{v0}} 个工具");
+    expect(messages.called_tools_0f100004).toContain("{{v0}} 个工具");
+    expect(messages.for_value_0f100005).toBe("耗时 {{v0}}");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
