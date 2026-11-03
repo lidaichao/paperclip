@@ -307,7 +307,7 @@ export function userProfileRoutes(db: Db) {
     assertCompanyAccess(req, companyId);
 
     const row = await resolveCompanyUser(db, companyId, userSlug);
-    if (!row) throw notFound("User not found");
+    if (!row) throw notFound("未找到用户");
     const canonicalSlug = userSlugCandidates(row)[0] ?? row.principalId;
     const userId = row.userId ?? row.principalId;
 

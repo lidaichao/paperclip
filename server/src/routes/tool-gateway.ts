@@ -331,7 +331,7 @@ export function toolGatewayRoutes(db: Db, toolGateway: ToolGatewayService) {
     assertCompanyAccess(req, companyId);
     if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
     if (req.actor.userId && await access.canUser(companyId, req.actor.userId, permissionKey)) return;
-    throw forbidden(`Missing permission: ${permissionKey}`);
+    throw forbidden(`缺少权限：${permissionKey}`);
   }
 
   function assertBoardMutationAccess(req: import("express").Request, companyId: string) {
@@ -342,10 +342,10 @@ export function toolGatewayRoutes(db: Db, toolGateway: ToolGatewayService) {
       ? req.actor.memberships.find((item) => item.companyId === companyId)
       : null;
     if (!membership || membership.status !== "active") {
-      throw forbidden("User does not have active company access");
+      throw forbidden("用户没有有效的公司访问权限");
     }
     if (!membership.membershipRole || membership.membershipRole === "viewer") {
-      throw forbidden("Viewer access is read-only");
+      throw forbidden("访客权限为只读");
     }
   }
 
@@ -509,7 +509,7 @@ export function toolGatewayRoutes(db: Db, toolGateway: ToolGatewayService) {
       }
       assertCompanyAccess(req, companyId);
       if (req.actor.type === "agent" && !req.actor.agentId) {
-        throw forbidden("Agent authentication required");
+        throw forbidden("需要智能体身份验证");
       }
 
       const revoked = await toolGateway.revokeSession({

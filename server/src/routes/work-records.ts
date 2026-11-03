@@ -58,8 +58,8 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
   function assertCompanyReadAccess(req: Parameters<typeof getActorInfo>[0], companyId: string) {
     assertAuthenticated(req);
     if (hasCompanyAccess(req, companyId)) return;
-    if (req.actor.type === "agent") throw forbidden("Agent key cannot access another company");
-    throw forbidden("User does not have access to this company");
+    if (req.actor.type === "agent") throw forbidden("智能体密钥不能访问其他公司");
+    throw forbidden("用户没有此公司的访问权限");
   }
 
   function isReadOnlyViewer(req: Parameters<typeof getActorInfo>[0], companyId: string) {
@@ -306,7 +306,7 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
         eq(agentWakeupRequests.idempotencyKey, idempotencyKey),
       )).then((rows) => rows[0] ?? null);
       if (!wakeup) {
-        throw new Error("CEO wakeup was not accepted");
+        throw new Error("CEO 唤醒请求未被接受");
       }
       return {
         wakeupRequestId: wakeup.id,
@@ -460,7 +460,7 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       const projectId = req.params.projectId as string;
       assertCompanyAccess(req, companyId);
       if (req.actor.type !== "board" || isReadOnlyViewer(req, companyId)) {
-        throw forbidden("Board operator access is required to recover a dead-lettered workflow event");
+        throw forbidden("恢复进入死信队列的工作流事件需要看板操作员权限");
       }
       const actor = getActorInfo(req);
       const recovered = await packages.recoverOutboxEvent(

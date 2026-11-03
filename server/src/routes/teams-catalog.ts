@@ -40,18 +40,18 @@ export function teamsCatalogRoutes(db: Db) {
       if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return;
       const allowed = await access.canUser(companyId, req.actor.userId, "agents:create");
       if (!allowed) {
-        throw forbidden("Missing permission: agents:create");
+        throw forbidden("缺少权限：agents:create");
       }
       return;
     }
 
     if (!req.actor.agentId) {
-      throw forbidden("Agent authentication required");
+      throw forbidden("需要智能体身份验证");
     }
 
     const actorAgent = await agents.getById(req.actor.agentId);
     if (!actorAgent || actorAgent.companyId !== companyId) {
-      throw forbidden("Agent key cannot access another company");
+      throw forbidden("智能体密钥不能访问其他公司");
     }
 
     const allowedByGrant = await access.hasPermission(companyId, "agent", actorAgent.id, "agents:create");
@@ -59,7 +59,7 @@ export function teamsCatalogRoutes(db: Db) {
       return;
     }
 
-    throw forbidden("Missing permission: can create agents");
+    throw forbidden("缺少创建智能体的权限");
   }
 
   router.get("/teams/catalog", async (req, res) => {

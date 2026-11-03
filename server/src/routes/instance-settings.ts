@@ -84,12 +84,12 @@ function publishActivitiesBestEffort(publications: ActivityPublication[], action
 
 function assertCanManageInstanceSettings(req: Request) {
   if (req.actor.type !== "board") {
-    throw forbidden("Board access required");
+    throw forbidden("需要看板访问权限");
   }
   if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) {
     return;
   }
-  throw forbidden("Instance admin access required");
+  throw forbidden("需要实例管理员权限");
 }
 
 // A task-drain start or stop reads the live drain state, writes an audit
