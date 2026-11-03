@@ -365,7 +365,10 @@ function formatInviteState(state: "active" | "accepted" | "expired" | "revoked")
 }
 
 function formatInviteAudience(invite: Awaited<ReturnType<typeof accessApi.listInvites>>["invites"][number]) {
-  if (invite.allowedJoinTypes === "agent") return "Agent";
-  if (invite.allowedJoinTypes === "both") return invite.humanRole ? `Human or agent · ${invite.humanRole}` : "Human or agent";
-  return invite.humanRole ?? "Human";
+  if (invite.allowedJoinTypes === "agent") return l10n("local.agent_11b39c93");
+  if (invite.allowedJoinTypes === "both") {
+    const audience = l10n("local.human_or_agent_a9d069a5");
+    return invite.humanRole ? `${audience} · ${invite.humanRole}` : audience;
+  }
+  return invite.humanRole ?? l10n("local.human_9ffa865f");
 }

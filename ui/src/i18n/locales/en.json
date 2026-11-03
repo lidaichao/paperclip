@@ -10417,6 +10417,21 @@
     "manual_private": "private",
     "manual_public": "public",
     "manual_log_display": "log display",
-    "manual_data_sharing": "data sharing"
+    "manual_data_sharing": "data sharing",
+    "use_claude_code_or_codex_with_the_acp_engine_7bf50c28": "Use Claude Code or Codex with the ACP engine",
+    "invite_external_agents_from_the_add_agent_mod_6ff49461": "Invite external agents from the add-agent modal",
+    "human_or_agent_a9d069a5": "Human or agent",
+    "tokens_billed_dollars_33c64f3d": "tokens + billed dollars",
+    "provider_biller_model_37cf774d": "provider, biller, model",
+    "subscription_and_overage_aware_2b6bf80a": "subscription and overage aware",
+    "top_ups_refunds_fees_fc5050bd": "top-ups, refunds, fees",
+    "bedrock_provisioned_or_training_charges_7c08dd79": "Bedrock provisioned or training charges",
+    "credit_expiries_and_adjustments_517f4aa5": "credit expiries and adjustments",
+    "provider_quota_windows_80fa300d": "provider quota windows",
+    "biller_credit_systems_6fb1de2b": "biller credit systems",
+    "errors_surfaced_directly_a2bdfca2": "errors surfaced directly",
+    "resets_value_510f656e": "Resets {{v0}}",
+    "model_value_is_not_available_for_value_choose_6a597ff7": "Model “{{v0}}” is not available for {{v1}}. Choose a known model.",
+    "failed_to_configure_the_built_in_agent_bfb41581": "Failed to configure the built-in agent."
   }
 }

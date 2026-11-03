@@ -66,7 +66,7 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
     description: l10n("local.retired_standalone_acpx_adapter_b063be3d"),
     icon: Bot,
     comingSoon: true,
-    disabledLabel: "Use Claude Code or Codex with the ACP engine",
+    disabledLabel: l10n("local.use_claude_code_or_codex_with_the_acp_engine_7bf50c28"),
     hideFromVisualSelection: true,
   },
   claude_local: {
@@ -138,7 +138,7 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
     description: l10n("local.external_gateway_adapter_73f25264"),
     icon: Bot,
     comingSoon: true,
-    disabledLabel: "Invite external agents from the add-agent modal",
+    disabledLabel: l10n("local.invite_external_agents_from_the_add_agent_mod_6ff49461"),
     hideFromVisualSelection: true,
   },
   process: {

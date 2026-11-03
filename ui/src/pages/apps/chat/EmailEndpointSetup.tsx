@@ -724,7 +724,9 @@ export function EmailEndpointSettings({
       <h1 className="text-xl font-bold">{inbox.address}</h1>
       <p className="text-sm text-muted-foreground">
         {inbox.status} ·{" "}
-        {inbox.receiveMode === "websocket" ? l10n("local.live_connection_2f4eeda9") : "Webhook"}
+        {inbox.receiveMode === "websocket"
+          ? l10n("local.live_connection_2f4eeda9")
+          : l10n("local.webhook_4814f62c")}
       </p>
       <p className="text-sm text-muted-foreground">
         {l10n("local.last_mail_check_e9ef725e")}{" "}{inbox.lastSyncAt ? new Date(inbox.lastSyncAt).toLocaleString() : l10n("local.not_checked_yet_881d23f6")}
@@ -773,7 +775,7 @@ export function EmailEndpointSettings({
           }
         >
           <option value="websocket">{l10n("local.live_connection_2f4eeda9")}</option>
-          <option value="webhook">Webhook</option>
+          <option value="webhook">{l10n("local.webhook_4814f62c")}</option>
         </select>
         <Button
           variant="outline"

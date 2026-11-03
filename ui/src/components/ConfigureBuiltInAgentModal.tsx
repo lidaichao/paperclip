@@ -112,7 +112,10 @@ export function ConfigureBuiltInAgentModal({
     models.some((candidate) => candidate.id === normalizedModel);
   const modelError = modelKnown
     ? null
-    : `Model “${normalizedModel}” is not available for ${adapterType}. Choose a known model.`;
+    : l10n("local.model_value_is_not_available_for_value_choose_6a597ff7", {
+        v0: normalizedModel,
+        v1: adapterType,
+      });
   const budgetMonthlyCents = parseBudgetMonthlyCents(budgetDollars);
   const budgetValid = !budgetDollars.trim() || budgetMonthlyCents !== undefined;
   const canSubmit =
@@ -144,7 +147,11 @@ export function ConfigureBuiltInAgentModal({
       onOpenChange(false);
     },
     onError: (err) => {
-      setError(err instanceof ApiError ? err.message : "Failed to configure the built-in agent.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : l10n("local.failed_to_configure_the_built_in_agent_bfb41581"),
+      );
     },
   });
 

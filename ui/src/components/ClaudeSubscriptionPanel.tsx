@@ -32,7 +32,7 @@ function detailText(window: QuotaWindow): string | null {
       minute: "2-digit",
       timeZoneName: "short",
     });
-    return `Resets ${formatted}`;
+    return l10n("local.resets_value_510f656e", { v0: formatted });
   }
   return null;
 }

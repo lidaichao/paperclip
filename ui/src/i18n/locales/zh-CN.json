@@ -10010,7 +10010,7 @@
     "we_humanized_the_field_names_from_the_config_af267d34": "我们已将配置字段名转换为更易读的名称。这些在工作区运行的工具会保持草稿状态，直到管理员将它们映射到获准模板。",
     "we_ll_check_for_your_message_automatically_th_e7c6f966": "我们会自动检查您的消息。该测试是可选的。",
     "we_ll_read_it_and_show_what_we_found_before_a_e36240cd": "我们会先读取并展示识别结果，再进行保存。",
-    "webhook_4814f62c": "Webhook",
+    "webhook_4814f62c": "回调通知",
     "webhook_authentication_failed_912bfefc": "Webhook 身份验证失败\n收到",
     "webhook_event_received_acc54100": "Webhook 事件",
     "webhook_key_replaced_404458cb": "Webhook 密钥已替换",
@@ -10417,6 +10417,21 @@
     "manual_private": "私有",
     "manual_public": "公开",
     "manual_log_display": "日志显示",
-    "manual_data_sharing": "数据共享"
+    "manual_data_sharing": "数据共享",
+    "use_claude_code_or_codex_with_the_acp_engine_7bf50c28": "请使用采用 ACP 引擎的 Claude Code 或 Codex",
+    "invite_external_agents_from_the_add_agent_mod_6ff49461": "请在“添加智能体”窗口中邀请外部智能体",
+    "human_or_agent_a9d069a5": "人员或智能体",
+    "tokens_billed_dollars_33c64f3d": "令牌用量与计费金额",
+    "provider_biller_model_37cf774d": "供应商、计费方与模型",
+    "subscription_and_overage_aware_2b6bf80a": "识别订阅额度与超额费用",
+    "top_ups_refunds_fees_fc5050bd": "充值、退款与费用",
+    "bedrock_provisioned_or_training_charges_7c08dd79": "Bedrock 预置容量或训练费用",
+    "credit_expiries_and_adjustments_517f4aa5": "额度到期与调整",
+    "provider_quota_windows_80fa300d": "供应商额度周期",
+    "biller_credit_systems_6fb1de2b": "计费方额度体系",
+    "errors_surfaced_directly_a2bdfca2": "直接展示异常信息",
+    "resets_value_510f656e": "{{v0}} 重置",
+    "model_value_is_not_available_for_value_choose_6a597ff7": "{{v1}} 不支持模型“{{v0}}”，请选择可用模型。",
+    "failed_to_configure_the_built_in_agent_bfb41581": "配置内置智能体失败。"
   }
 }

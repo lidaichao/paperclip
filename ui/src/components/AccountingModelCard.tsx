@@ -7,21 +7,33 @@ const SURFACES = [
     title: l10n("local.inference_ledger_41faba7c"),
     description: l10n("local.request_scoped_usage_and_billed_runs_from_cos_80135fc7"),
     icon: Database,
-    points: ["tokens + billed dollars", "provider, biller, model", "subscription and overage aware"],
+    points: [
+      l10n("local.tokens_billed_dollars_33c64f3d"),
+      l10n("local.provider_biller_model_37cf774d"),
+      l10n("local.subscription_and_overage_aware_2b6bf80a"),
+    ],
     tone: "from-sky-500/12 via-sky-500/6 to-transparent",
   },
   {
     title: l10n("local.finance_ledger_46bfab69"),
     description: l10n("local.account_level_charges_that_are_not_one_prompt_5f1e31b2"),
     icon: ReceiptText,
-    points: ["top-ups, refunds, fees", "Bedrock provisioned or training charges", "credit expiries and adjustments"],
+    points: [
+      l10n("local.top_ups_refunds_fees_fc5050bd"),
+      l10n("local.bedrock_provisioned_or_training_charges_7c08dd79"),
+      l10n("local.credit_expiries_and_adjustments_517f4aa5"),
+    ],
     tone: "from-amber-500/14 via-amber-500/6 to-transparent",
   },
   {
     title: l10n("local.live_quotas_d7cd0a58"),
     description: l10n("local.provider_or_biller_windows_that_can_stop_traf_c4f5142f"),
     icon: Gauge,
-    points: ["provider quota windows", "biller credit systems", "errors surfaced directly"],
+    points: [
+      l10n("local.provider_quota_windows_80fa300d"),
+      l10n("local.biller_credit_systems_6fb1de2b"),
+      l10n("local.errors_surfaced_directly_a2bdfca2"),
+    ],
     tone: "from-emerald-500/14 via-emerald-500/6 to-transparent",
   },
 ] as const;
