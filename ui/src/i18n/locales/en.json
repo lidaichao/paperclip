@@ -12080,6 +12080,23 @@
     "one_member_can_use_identity_0f800011": "{{v0}} member can use this identity",
     "members_can_use_identity_0f800012": "{{v0}} members can use this identity",
     "couldnt_save_audience_0f800013": "We couldn't save that audience.",
-    "shell_git_not_constrained_ask_first_0f800014": "Shell Git and gh use this account for the run and are not constrained by per-tool Ask-first controls."
+    "shell_git_not_constrained_ask_first_0f800014": "Shell Git and gh use this account for the run and are not constrained by per-tool Ask-first controls.",
+    "choose_agent_0f900001": "Choose agent",
+    "connect_github_app_0f900002": "Connect GitHub App",
+    "install_github_app_0f900003": "Install GitHub App",
+    "select_repositories_0f900004": "Select repositories",
+    "verify_connection_tools_0f900005": "Verify connection & tools",
+    "connect_your_account_0f900006": "Connect your account",
+    "configure_behavior_0f900007": "Configure behavior",
+    "try_it_0f900008": "Try it",
+    "reconnect_app_0f900009": "Reconnect App",
+    "continue_to_installation_0f900010": "Continue to installation",
+    "connect_app_0f900011": "Connect App",
+    "prepare_registration_0f900012": "Prepare registration",
+    "installed_the_app_0f900013": "I’ve installed the App",
+    "save_repositories_0f900014": "Save repositories",
+    "confirm_this_is_my_account_0f900015": "Confirm this is my account",
+    "save_behavior_0f900016": "Save behavior",
+    "verify_response_finish_0f900017": "Verify response and finish"
   }
 }

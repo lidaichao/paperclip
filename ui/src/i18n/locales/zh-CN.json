@@ -12080,6 +12080,23 @@
     "one_member_can_use_identity_0f800011": "{{v0}} 名成员可以使用此身份",
     "members_can_use_identity_0f800012": "{{v0}} 名成员可以使用此身份",
     "couldnt_save_audience_0f800013": "无法保存适用成员范围。",
-    "shell_git_not_constrained_ask_first_0f800014": "命令行 Git 和 gh 在运行时使用此账户，不受单项工具“运行前询问”设置约束。"
+    "shell_git_not_constrained_ask_first_0f800014": "命令行 Git 和 gh 在运行时使用此账户，不受单项工具“运行前询问”设置约束。",
+    "choose_agent_0f900001": "选择智能体",
+    "connect_github_app_0f900002": "连接 GitHub 应用",
+    "install_github_app_0f900003": "安装 GitHub 应用",
+    "select_repositories_0f900004": "选择代码库",
+    "verify_connection_tools_0f900005": "验证连接和工具",
+    "connect_your_account_0f900006": "连接你的账户",
+    "configure_behavior_0f900007": "配置行为",
+    "try_it_0f900008": "试运行",
+    "reconnect_app_0f900009": "重新连接应用",
+    "continue_to_installation_0f900010": "继续安装",
+    "connect_app_0f900011": "连接应用",
+    "prepare_registration_0f900012": "准备注册",
+    "installed_the_app_0f900013": "我已安装应用",
+    "save_repositories_0f900014": "保存代码库",
+    "confirm_this_is_my_account_0f900015": "确认这是我的账户",
+    "save_behavior_0f900016": "保存行为设置",
+    "verify_response_finish_0f900017": "验证响应并完成"
   }
 }

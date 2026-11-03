@@ -46,14 +46,14 @@ import {
 } from "./GitHubBotConfiguration";
 
 const steps = [
-  "Choose agent",
-  "Connect GitHub App",
-  "Install GitHub App",
-  "Select repositories",
-  "Verify connection & tools",
-  "Connect your account",
-  "Configure behavior",
-  "Try it",
+  l10n("local.choose_agent_0f900001"),
+  l10n("local.connect_github_app_0f900002"),
+  l10n("local.install_github_app_0f900003"),
+  l10n("local.select_repositories_0f900004"),
+  l10n("local.verify_connection_tools_0f900005"),
+  l10n("local.connect_your_account_0f900006"),
+  l10n("local.configure_behavior_0f900007"),
+  l10n("local.try_it_0f900008"),
 ];
 const stages: NonNullable<ChatEndpointSetupState["github"]>["stage"][] = [
   "connect",
@@ -228,7 +228,7 @@ export function GitHubChatSetup() {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 sm:px-6">
       <SetupWizardNavigation
-        labels={identityOnly ? ["Connect your account"] : steps}
+        labels={identityOnly ? [l10n("local.connect_your_account_0f900006")] : steps}
         step={identityOnly ? 0 : step}
         availableStep={identityOnly ? 0 : availableStep}
         onSelect={identityOnly ? () => {} : setStep}
@@ -279,7 +279,7 @@ export function GitHubChatSetup() {
           )}
           <GitHubAgentTrustWarning agent={selectedAgent} />
           {footer(
-            "Continue",
+            l10n("local.continue_8b155f1e"),
             async () => {
               const bot =
                 endpoint ??
@@ -441,12 +441,12 @@ export function GitHubChatSetup() {
           </details>
           {footer(
             reconnecting
-              ? "Reconnect App"
+              ? l10n("local.reconnect_app_0f900009")
               : endpoint.setup?.github?.appSlug
-                ? "Continue to installation"
+                ? l10n("local.continue_to_installation_0f900010")
                 : existing
-                  ? "Connect App"
-                  : "Prepare registration",
+                  ? l10n("local.connect_app_0f900011")
+                  : l10n("local.prepare_registration_0f900012"),
             async () => {
               if (reconnecting) {
                 const saved = await chatEndpointsApi.setup(endpoint.id, {
@@ -512,7 +512,7 @@ export function GitHubChatSetup() {
               </a>
             </Button>
           )}
-          {footer("I’ve installed the App", async () => {
+          {footer(l10n("local.installed_the_app_0f900013"), async () => {
             setResources(await githubChatApi.refreshRepositories(endpoint.id));
             await go(3);
           })}
@@ -585,7 +585,7 @@ export function GitHubChatSetup() {
             ))}
           </div>
           {footer(
-            "Save repositories",
+            l10n("local.save_repositories_0f900014"),
             async () => {
               await chatEndpointsApi.updateResources(
                 endpoint.id,
@@ -666,7 +666,7 @@ export function GitHubChatSetup() {
             ))}
           </div>
           <GitHubAgentTrustWarning agent={selectedAgent} />
-          {footer("Continue", () => go(5), !verification?.ready)}
+          {footer(l10n("local.continue_8b155f1e"), () => go(5), !verification?.ready)}
         </>
       )}
       {step === 5 && endpoint && (
@@ -734,7 +734,7 @@ export function GitHubChatSetup() {
             </div>
           )}
           {footer(
-            "Confirm this is my account",
+            l10n("local.confirm_this_is_my_account_0f900015"),
             async () => {
               await githubChatApi.identity(
                 endpoint.id,
@@ -767,7 +767,7 @@ export function GitHubChatSetup() {
               })
             }
           />
-          {footer("Save behavior", async () => {
+          {footer(l10n("local.save_behavior_0f900016"), async () => {
             await saveConfiguration();
             await go(7);
           })}
@@ -806,7 +806,7 @@ export function GitHubChatSetup() {
           >
             {l10n("local.open_underlying_tasks_29b288a5")}</Link>
           {footer(
-            "Verify response and finish",
+            l10n("local.verify_response_finish_0f900017"),
             async () => {
               await chatEndpointsApi.test(endpoint.id);
               navigate(`/apps/chat/${endpoint.id}/settings`);
