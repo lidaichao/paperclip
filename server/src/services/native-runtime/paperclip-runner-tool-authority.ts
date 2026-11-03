@@ -159,12 +159,12 @@ export class PaperclipRunnerToolAuthority {
           .map((tool) => ({ name: tool.operationId, description: tool.description, inputSchema: tool.inputSchema })),
         {
           name: "resolve_review",
-          description: "Record your decision on the one completion review assigned to this run. Inspect the submitted work first. Accept only if it meets the request; otherwise reject with specific changes. This does not change task ownership. After recording the decision, report your review complete with paperclip_finish. Do not redo the worker's task or wait for your own parent task to become runnable.",
+          description: "记录你对本次运行唯一一项完成评审的决定。请先检查已提交工作；只有符合请求时才接受，否则应拒绝并说明具体修改内容。此操作不会改变任务负责人。记录决定后，使用 paperclip_finish 报告评审完成。不要重做执行者的任务，也不要等待自己的父任务变为可运行。",
           inputSchema: {
             type: "object", additionalProperties: false,
             properties: {
               decision: { type: "string", enum: ["accept", "reject"] },
-              reason: { type: "string", description: "Required when rejecting: the specific changes the worker must make." },
+              reason: { type: "string", description: "拒绝时必填：执行者必须完成的具体修改。" },
             },
             required: ["decision"],
           },
@@ -189,7 +189,7 @@ export class PaperclipRunnerToolAuthority {
         name: descriptor.operationId,
         description:
           descriptor.operationId === "register_deliverable"
-            ? "Prepare one verified workspace file for Paperclip's final task or external-chat response. This records the attachment, work product, and explicit same-run selection; it does not confirm provider delivery."
+            ? "为 Alice 的任务最终回复或外部聊天回复准备一份经过验证的工作区文件。此操作会记录附件、工作产物以及同一次运行中的明确选择，但不代表外部平台已经收到。"
             : descriptor.description,
         inputSchema:
           descriptor.operationId === "register_deliverable"
@@ -200,7 +200,7 @@ export class PaperclipRunnerToolAuthority {
                   filename: {
                     ...(descriptor.inputSchema.properties?.filename ?? {}),
                     description:
-                      "Basename for the prepared attachment. Directory components are rejected.",
+                      "准备后附件的文件名。拒绝包含目录部分。",
                   },
                   byteSize: {
                     ...(descriptor.inputSchema.properties?.byteSize ?? {}),
@@ -210,7 +210,7 @@ export class PaperclipRunnerToolAuthority {
                   contentRef: {
                     ...(descriptor.inputSchema.properties?.contentRef ?? {}),
                     description:
-                      "Workspace-relative source path. Absolute paths, URLs, traversal, and symlinks are rejected.",
+                      "工作区相对源路径。拒绝绝对路径、网址、目录穿越和符号链接。",
                   },
                 },
               }
