@@ -595,7 +595,7 @@ describe("transcriptToTaskChatItems protocol surfaces", () => {
     expect(providerActivityPresentation(item)).toMatchObject({
       runningLabel: "Searching tasks",
       completedLabel: "Searched tasks",
-      detail: "Searching the task index · Paperclip · search_tasks",
+      detail: "Searching the task index · Alice · search_tasks",
     });
   });
 
@@ -990,7 +990,7 @@ describe("buildActivityPhases provider summaries", () => {
       providerTool("block", "paperclip_block", "edit", "paperclip"),
     ];
     expect(buildActivityPhases(items, false)[0]?.summary).toBe(
-      "Searched available tools 6 times, read from Paperclip 3 times, used Paperclip 3 times",
+      "Searched available tools 6 times, read from Alice 3 times, used Alice 3 times",
     );
   });
 });

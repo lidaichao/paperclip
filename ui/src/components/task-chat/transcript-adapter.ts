@@ -196,7 +196,7 @@ export function summarizeToolInput(input: unknown): string | undefined {
  */
 export function toolDisplayName(name: string | undefined | null): string {
   const raw = (name ?? "").trim();
-  return isGenericToolName(raw) ? "Unnamed tool" : humanizeToolName(raw);
+  return isGenericToolName(raw) ? l10n("local.unnamed_tool_4e0f07e3") : humanizeToolName(raw);
 }
 
 /** "Thought for Ns" once a coalesced thinking group spans ≥1s. */
@@ -211,8 +211,11 @@ function thoughtDurationLabel(
   const secs = Math.round((end - start) / 1000);
   if (secs < 1) return undefined;
   return secs < 60
-    ? `Thought for ${secs}s`
-    : `Thought for ${Math.floor(secs / 60)}m ${secs % 60}s`;
+    ? l10n("local.thought_for_seconds_0c990001", { v0: secs })
+    : l10n("local.thought_for_minutes_seconds_0c990002", {
+        v0: Math.floor(secs / 60),
+        v1: secs % 60,
+      });
 }
 
 /** Append token deltas onto the open logical line while preserving real newlines. */
@@ -806,7 +809,7 @@ export function transcriptToTaskChatItems(
           items.push({
             id: `${runId}:diff:${i}`,
             kind: "tool",
-            name: "Edit",
+            name: l10n("local.edit_464c4ffd"),
             status: "completed",
             diff: {
               added: line.kind === "add" ? 1 : 0,
@@ -982,10 +985,10 @@ export function transcriptToTaskChatItems(
           kind: "usage",
           ...(entry.subtype === "paperclip_runner_session_usage"
             ? {
-                label: "Provider session total",
+                label: l10n("local.provider_session_total_0c990003"),
                 detail:
                   entry.text ||
-                  "This cumulative usage can include earlier runs in the resumed provider session.",
+                  l10n("local.provider_session_usage_may_include_earlier_runs_0c990004"),
               }
             : {}),
           usage: {
@@ -1024,8 +1027,8 @@ export function transcriptToTaskChatItems(
       ) {
         item.status = "interrupted";
         item.detail = item.detail
-          ? `${item.detail}\nInterrupted before the provider reported completion.`
-          : "Interrupted before the provider reported completion.";
+          ? `${item.detail}\n${l10n("local.interrupted_before_provider_completion_0c990005")}`
+          : l10n("local.interrupted_before_provider_completion_0c990005");
       } else if (
         item.kind === "protocol" &&
         item.surface === "provider_activity" &&
@@ -1033,8 +1036,8 @@ export function transcriptToTaskChatItems(
       ) {
         item.status = "interrupted";
         item.summary = item.summary
-          ? `${item.summary} · Interrupted before completion.`
-          : "Interrupted before completion.";
+          ? `${item.summary} · ${l10n("local.interrupted_before_completion_0c990006")}`
+          : l10n("local.interrupted_before_completion_0c990006");
       } else if (
         item.kind === "protocol" &&
         item.surface === "runtime_request" &&
@@ -1459,13 +1462,13 @@ function phaseSummary(
     if (count)
       phrases.push({ text: count === 1 ? singular : plural(count), count });
   };
-  add("read", "Read a file", (count) => `Read ${count} files`);
-  add("edit", "Edited a file", (count) => `Edited ${count} files`);
-  add("terminal", "Ran a command", (count) => `Ran ${count} commands`);
+  add("read", l10n("local.manual_tool_read_file_completed"), (count) => l10n("local.read_count_files_0c990007", { v0: count }));
+  add("edit", l10n("local.manual_tool_edit_file_completed"), (count) => l10n("local.edited_count_files_0c990008", { v0: count }));
+  add("terminal", l10n("local.manual_tool_run_command_completed"), (count) => l10n("local.ran_count_commands_0c990009", { v0: count }));
   const searched = (counts.get("grep") ?? 0) + (counts.get("search") ?? 0);
   if (searched)
     phrases.push({
-      text: searched === 1 ? "Searched once" : `Searched ${searched} times`,
+      text: searched === 1 ? l10n("local.searched_once_0c990010") : l10n("local.searched_count_times_0c990011", { v0: searched }),
       count: searched,
     });
   const known = new Set(["read", "edit", "terminal", "grep", "search"]);
@@ -1476,7 +1479,7 @@ function phaseSummary(
     ) + generic;
   if (other)
     phrases.push({
-      text: other === 1 ? "Used a tool" : `Used ${other} tools`,
+      text: other === 1 ? l10n("local.used_a_tool_0c990012") : l10n("local.used_count_tools_0c990013", { v0: other }),
       count: other,
     });
   const providerCount = (family: TaskChatProviderActivityItem["family"]) =>
@@ -1490,58 +1493,58 @@ function phaseSummary(
     if (count)
       phrases.push({ text: count === 1 ? singular : plural(count), count });
   };
-  addProvider("plan", "Updated the plan", (count) => `Updated ${count} plans`);
+  addProvider("plan", l10n("local.updated_the_plan_0c990014"), (count) => l10n("local.updated_count_plans_0c990015", { v0: count }));
   addProvider(
     "research",
-    "Searched once",
-    (count) => `Searched ${count} times`,
+    l10n("local.searched_once_0c990010"),
+    (count) => l10n("local.searched_count_times_0c990011", { v0: count }),
   );
   addProvider(
     "delegation",
-    "Used a subagent",
-    (count) => `Used ${count} subagents`,
+    l10n("local.used_a_subagent_0c990016"),
+    (count) => l10n("local.used_count_subagents_0c990017", { v0: count }),
   );
   addProvider(
     "model_identity",
-    "Updated the model",
-    (count) => `Updated the model ${count} times`,
+    l10n("local.updated_the_model_0c990018"),
+    (count) => l10n("local.updated_model_count_times_0c990019", { v0: count }),
   );
   addProvider(
     "context",
-    "Compacted context",
-    (count) => `Compacted context ${count} times`,
+    l10n("local.compacted_context_0c990020"),
+    (count) => l10n("local.compacted_context_count_times_0c990021", { v0: count }),
   );
   addProvider(
     "artifact",
-    "Handled an artifact",
-    (count) => `Handled ${count} artifacts`,
+    l10n("local.handled_an_artifact_0c990022"),
+    (count) => l10n("local.handled_count_artifacts_0c990023", { v0: count }),
   );
   addProvider(
     "review",
-    "Changed review mode",
-    (count) => `Changed review mode ${count} times`,
+    l10n("local.changed_review_mode_0c990024"),
+    (count) => l10n("local.changed_review_mode_count_times_0c990025", { v0: count }),
   );
-  addProvider("hook", "Ran a hook", (count) => `Ran ${count} hooks`);
+  addProvider("hook", l10n("local.ran_a_hook_0c990026"), (count) => l10n("local.ran_count_hooks_0c990027", { v0: count }));
   addProvider(
     "memory",
-    "Referenced memory",
-    (count) => `Referenced memory ${count} times`,
+    l10n("local.referenced_memory_0c990028"),
+    (count) => l10n("local.referenced_memory_count_times_0c990029", { v0: count }),
   );
   addProvider(
     "safety",
-    "Ran a safety review",
-    (count) => `Ran ${count} safety reviews`,
+    l10n("local.ran_a_safety_review_0c990030"),
+    (count) => l10n("local.ran_count_safety_reviews_0c990031", { v0: count }),
   );
   addProvider(
     "terminal",
-    "Sent terminal input",
-    (count) => `Sent terminal input ${count} times`,
+    l10n("local.sent_terminal_input_0c990032"),
+    (count) => l10n("local.sent_terminal_input_count_times_0c990033", { v0: count }),
   );
-  addProvider("wait", "Waited", (count) => `Waited ${count} times`);
+  addProvider("wait", l10n("local.waited_0c990034"), (count) => l10n("local.waited_count_times_0c990035", { v0: count }));
   addProvider(
     "provider_notice",
-    "Received a provider notice",
-    (count) => `Received ${count} provider notices`,
+    l10n("local.received_provider_notice_0c990036"),
+    (count) => l10n("local.received_count_provider_notices_0c990037", { v0: count }),
   );
   // A canonical tool-execution row can be the only tool representation for a
   // provider. Avoid double-counting when the adapter also produced native
@@ -1555,41 +1558,41 @@ function phaseSummary(
       let text: string;
       switch (key) {
         case "command":
-          text = count === 1 ? "Ran a command" : `Ran ${count} commands`;
+          text = count === 1 ? l10n("local.manual_tool_run_command_completed") : l10n("local.ran_count_commands_0c990009", { v0: count });
           break;
         case "read":
-          text = count === 1 ? "Read a file" : `Read ${count} files`;
+          text = count === 1 ? l10n("local.manual_tool_read_file_completed") : l10n("local.read_count_files_0c990007", { v0: count });
           break;
         case "search":
-          text = count === 1 ? "Searched once" : `Searched ${count} times`;
+          text = count === 1 ? l10n("local.searched_once_0c990010") : l10n("local.searched_count_times_0c990011", { v0: count });
           break;
         case "file_change":
-          text = count === 1 ? "Edited a file" : `Edited ${count} files`;
+          text = count === 1 ? l10n("local.manual_tool_edit_file_completed") : l10n("local.edited_count_files_0c990008", { v0: count });
           break;
         case "delegation":
-          text = count === 1 ? "Used a subagent" : `Used ${count} subagents`;
+          text = count === 1 ? l10n("local.used_a_subagent_0c990016") : l10n("local.used_count_subagents_0c990017", { v0: count });
           break;
         case "wait":
-          text = count === 1 ? "Waited" : `Waited ${count} times`;
+          text = count === 1 ? l10n("local.waited_0c990034") : l10n("local.waited_count_times_0c990035", { v0: count });
           break;
         case "tool_search":
           text =
             count === 1
-              ? "Searched available tools"
-              : `Searched available tools ${count} times`;
+              ? l10n("local.searched_available_tools_0c990038")
+              : l10n("local.searched_available_tools_count_times_0c990039", { v0: count });
           break;
         case "paperclip_read":
           text =
             count === 1
-              ? "Read from Paperclip"
-              : `Read from Paperclip ${count} times`;
+              ? l10n("local.read_from_alice_0c990040")
+              : l10n("local.read_from_alice_count_times_0c990041", { v0: count });
           break;
         case "task_operation":
           text =
-            count === 1 ? "Used Paperclip" : `Used Paperclip ${count} times`;
+            count === 1 ? l10n("local.used_alice_0c990042") : l10n("local.used_alice_count_times_0c990043", { v0: count });
           break;
         default:
-          text = count === 1 ? "Used a tool" : `Used ${count} tools`;
+          text = count === 1 ? l10n("local.used_a_tool_0c990012") : l10n("local.used_count_tools_0c990013", { v0: count });
       }
       phrases.push({
         text,
@@ -1601,8 +1604,8 @@ function phaseSummary(
     phrases.push({
       text:
         workspaceFiles === 1
-          ? "Changed a file"
-          : `Changed ${workspaceFiles} files`,
+          ? l10n("local.changed_a_file_0c990044")
+          : l10n("local.changed_count_files_0c990045", { v0: workspaceFiles }),
       count: workspaceFiles,
     });
   if (phrases.length > 0) {
@@ -1616,21 +1619,23 @@ function phaseSummary(
           ? phrase.text
           : phrase.text.charAt(0).toLowerCase() + phrase.text.slice(1),
       )
-      .join(", ");
-    return `${summary}${hidden > 0 ? `, +${hidden} more` : ""}`;
+      .join(l10n("local.activity_summary_separator_0c990046"));
+    return hidden > 0
+      ? l10n("local.activity_summary_more_0c990047", { v0: summary, v1: hidden })
+      : summary;
   }
   const protocolCount = items.filter((item) => item.kind === "protocol").length;
   if (protocolCount > 0)
     return protocolCount === 1
-      ? "Runner activity"
-      : `${protocolCount} runner updates`;
+      ? l10n("local.runner_activity_4da41ca2")
+      : l10n("local.runner_count_updates_0c990048", { v0: protocolCount });
   if (items.some((item) => item.kind === "thinking")) return l10n("local.reasoning_d8211e24");
   const interrupted = items.find(
     (item) => item.kind === "marker" && item.variant === "interrupted",
   );
   return interrupted?.kind === "marker"
     ? interrupted.label
-    : "No tool activity";
+    : l10n("local.no_tool_activity_0c990049");
 }
 
 /**

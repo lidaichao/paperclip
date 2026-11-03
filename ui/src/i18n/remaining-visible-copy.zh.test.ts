@@ -198,6 +198,15 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.upstream_change_acknowledged_0c980033).toBe("已确认上游变更。");
     expect(messages.automation_needs_attention_reason_0c980037).toContain("需要处理");
     expect(messages.work_handoff_cleared_0c980040).toBe("工作交接已清除。");
+    expect(messages.thought_for_seconds_0c990001).toBe("思考了 {{v0}} 秒");
+    expect(messages.provider_session_total_0c990003).toBe("服务商会话总用量");
+    expect(messages.interrupted_before_provider_completion_0c990005).toContain("运行已中断");
+    expect(messages.ran_count_commands_0c990009).toBe("已运行 {{v0}} 条命令");
+    expect(messages.used_count_subagents_0c990017).toContain("子智能体");
+    expect(messages.read_from_alice_0c990040).toBe("已从 Alice 读取信息");
+    expect(messages.activity_summary_more_0c990047).toContain("另有 {{v1}} 项");
+    expect(messages.no_tool_activity_0c990049).toBe("没有工具活动");
+    expect(messages.runner_activity_4da41ca2).toBe("运行器活动");
     expect(messages.webhook_4814f62c).toBe("回调通知");
     expect(messages.github_webhook_62487aeb).toBe("GitHub 回调通知");
     expect(messages.http_webhook_676845ee).toBe("HTTP 回调通知");
