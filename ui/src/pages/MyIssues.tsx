@@ -34,8 +34,8 @@ export function MyIssues() {
       <EmptyState
         icon={ListTodo}
         message={streamlinedUiEnabled
-          ? "Select an organization to view your tasks."
-          : "Select a company to view your tasks."}
+          ? l10n("local.select_organization_to_view_your_tasks_10300230")
+          : l10n("local.select_company_to_view_your_tasks_10300231")}
       />
     );
   }

@@ -12419,6 +12419,12 @@
     "search_tabs_and_resources_10300222": "搜索标签页和资源",
     "no_matching_tabs_or_resources_10300223": "没有匹配的标签页或资源。",
     "tools_access_requires_admin_10300224": "你无权查看此内容。“工具与访问”需要董事会成员或管理员权限。",
-    "tools_access_not_available_yet_10300225": "此服务器暂不支持“工具与访问”，请在下次部署后刷新重试。"
+    "tools_access_not_available_yet_10300225": "此服务器暂不支持“工具与访问”，请在下次部署后刷新重试。",
+    "message_ellipsis_10300226": "输入消息…",
+    "collection_controls_10300227": "列表控制",
+    "select_organization_to_view_tasks_10300228": "请选择一个组织以查看任务。",
+    "select_company_to_view_tasks_10300229": "请选择一个公司以查看任务。",
+    "select_organization_to_view_your_tasks_10300230": "请选择一个组织以查看你的任务。",
+    "select_company_to_view_your_tasks_10300231": "请选择一个公司以查看你的任务。"
   }
 }

@@ -12419,6 +12419,12 @@
     "search_tabs_and_resources_10300222": "Search tabs and resources…",
     "no_matching_tabs_or_resources_10300223": "No matching tabs or resources.",
     "tools_access_requires_admin_10300224": "You do not have permission to view this. Tools & Access requires board/admin access.",
-    "tools_access_not_available_yet_10300225": "Tools & Access isn't available on this server yet — try refreshing after the next deployment."
+    "tools_access_not_available_yet_10300225": "Tools & Access isn't available on this server yet — try refreshing after the next deployment.",
+    "message_ellipsis_10300226": "Message…",
+    "collection_controls_10300227": "Collection controls",
+    "select_organization_to_view_tasks_10300228": "Select an organization to view tasks.",
+    "select_company_to_view_tasks_10300229": "Select a company to view tasks.",
+    "select_organization_to_view_your_tasks_10300230": "Select an organization to view your tasks.",
+    "select_company_to_view_your_tasks_10300231": "Select a company to view your tasks."
   }
 }

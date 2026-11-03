@@ -203,8 +203,8 @@ export function Issues() {
       <EmptyState
         icon={CircleDot}
         message={streamlinedUiEnabled
-          ? "Select an organization to view tasks."
-          : "Select a company to view tasks."}
+          ? l10n("local.select_organization_to_view_tasks_10300228")
+          : l10n("local.select_company_to_view_tasks_10300229")}
       />
     );
   }
