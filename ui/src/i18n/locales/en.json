@@ -12300,6 +12300,21 @@
     "last_recorded_phase_10300103": "Last recorded phase: {{v0}}.",
     "workspace_clone_failed_readiness_contract_10300104": "The workspace is serving, but its clone did not pass the readiness contract.",
     "alice_is_confirming_clone_10300105": "Alice is still confirming the clone.",
-    "bounded_repair_replaces_isolated_database_10300106": "One bounded repair replaces the isolated database."
+    "bounded_repair_replaces_isolated_database_10300106": "One bounded repair replaces the isolated database.",
+    "blocker_type_10300107": "Blocker type",
+    "most_urgent_10300108": "Most urgent",
+    "most_recent_10300109": "Most recent",
+    "longest_stopped_10300110": "Longest stopped",
+    "next_continuation_at_10300111": "Next continuation {{v0}}",
+    "next_retry_at_10300112": "Next retry {{v0}}",
+    "next_continuation_pending_schedule_10300113": "Next continuation pending schedule",
+    "next_retry_pending_schedule_10300114": "Next retry pending schedule",
+    "continuation_exhausted_10300115": "Continuation exhausted",
+    "retry_exhausted_10300116": "Retry exhausted",
+    "automatic_retries_exhausted_10300117": "Automatic retries exhausted",
+    "manual_intervention_required_10300118": "Manual intervention required",
+    "value_manual_intervention_required_10300119": "{{v0}} Manual intervention required.",
+    "continued_run_10300120": "Continued run",
+    "retried_run_10300121": "Retried run"
   }
 }

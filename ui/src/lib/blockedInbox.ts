@@ -76,7 +76,7 @@ export function blockedReasonVariant(reason: IssueBlockedInboxReason): BlockedRe
 }
 
 export function blockedReasonLabel(reason: IssueBlockedInboxReason): string {
-  return REASON_LABELS[reason] ?? "Stopped";
+  return REASON_LABELS[reason] ?? l10n("local.stopped_1a4f630a");
 }
 
 export function blockedVariantLabel(variant: BlockedReasonVariant): string {
@@ -111,14 +111,14 @@ export type BlockedInboxGroupBy = "blocker_type" | "none";
 export type BlockedInboxSort = "urgency" | "most_recent" | "longest_stopped";
 
 export const BLOCKED_GROUP_OPTIONS: readonly [BlockedInboxGroupBy, string][] = [
-  ["blocker_type", "Blocker type"],
-  ["none", "None"],
+  ["blocker_type", l10n("local.blocker_type_10300107")],
+  ["none", l10n("local.none_dc937b59")],
 ];
 
 export const BLOCKED_SORT_OPTIONS: readonly [BlockedInboxSort, string][] = [
-  ["urgency", "Most urgent"],
-  ["most_recent", "Most recent"],
-  ["longest_stopped", "Longest stopped"],
+  ["urgency", l10n("local.most_urgent_10300108")],
+  ["most_recent", l10n("local.most_recent_10300109")],
+  ["longest_stopped", l10n("local.longest_stopped_10300110")],
 ];
 
 export interface BlockedInboxGroup {

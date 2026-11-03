@@ -12300,6 +12300,21 @@
     "last_recorded_phase_10300103": "最后记录的阶段：{{v0}}。",
     "workspace_clone_failed_readiness_contract_10300104": "工作区正在提供服务，但其克隆未通过就绪校验。",
     "alice_is_confirming_clone_10300105": "Alice 仍在确认克隆状态。",
-    "bounded_repair_replaces_isolated_database_10300106": "一次受限修复将替换隔离数据库。"
+    "bounded_repair_replaces_isolated_database_10300106": "一次受限修复将替换隔离数据库。",
+    "blocker_type_10300107": "阻塞类型",
+    "most_urgent_10300108": "最紧急",
+    "most_recent_10300109": "最近发生",
+    "longest_stopped_10300110": "停止最久",
+    "next_continuation_at_10300111": "下次续接：{{v0}}",
+    "next_retry_at_10300112": "下次重试：{{v0}}",
+    "next_continuation_pending_schedule_10300113": "下次续接等待排期",
+    "next_retry_pending_schedule_10300114": "下次重试等待排期",
+    "continuation_exhausted_10300115": "续接次数已耗尽",
+    "retry_exhausted_10300116": "重试次数已耗尽",
+    "automatic_retries_exhausted_10300117": "自动重试次数已耗尽",
+    "manual_intervention_required_10300118": "需要人工处理",
+    "value_manual_intervention_required_10300119": "{{v0}} 需要人工处理。",
+    "continued_run_10300120": "已续接运行",
+    "retried_run_10300121": "已重试运行"
   }
 }

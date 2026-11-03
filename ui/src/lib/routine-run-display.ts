@@ -55,7 +55,7 @@ export function runRowSubtitle(
   variables: readonly RoutineVariable[] | null | undefined,
 ): string {
   if (run.status === "failed") {
-    return run.failureReason?.trim() || "Run failed";
+    return run.failureReason?.trim() || l10n("local.run_failed_97fddf2d");
   }
   if (run.status === "skipped") {
     const reason = run.failureReason?.trim();
