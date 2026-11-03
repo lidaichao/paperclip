@@ -11137,6 +11137,13 @@
     "alice_public_https_oauth_guidance_01eb902f": "Sign-in sends the operator back to Alice, so this instance must be reachable over HTTPS. Ask your Alice administrator to configure it.",
     "mcp_server_unreachable_guidance_5ef945ad": "Nothing answered at that address. Confirm the server is running and the address is correct, then try again.",
     "add_header_value_or_remove_row_a33a2b2a": "Add a value for \"{{v0}}\", or remove the row.",
-    "header_name_listed_twice_0056b23f": "\"{{v0}}\" is listed twice."
+    "header_name_listed_twice_0056b23f": "\"{{v0}}\" is listed twice.",
+    "alice_retries_after_blocker_clears_e5d25a51": "Alice retries automatically once the blocker clears — you don't need to move the item by hand.",
+    "alice_no_pipeline_action_path_2c765bb2": "Alice can't see anything to work on next here — no automation, retry, blocker, or review. Re-run the stage to nudge it, or use the ⋯ menu to move it by hand.",
+    "grant_access_then_alice_retries_a6d102fd": "Grant the access above to the configured responsible, then Alice retries automatically.",
+    "retry_now_67ea7e03": "Retry now",
+    "rerun_stage_automation_565101d6": "Re-run stage automation",
+    "expected_piece_still_missing_one_4fe7bd16": "{{v0}} expected piece is still missing.",
+    "expected_pieces_still_missing_many_19408575": "{{v0}} expected pieces are still missing."
   }
 }

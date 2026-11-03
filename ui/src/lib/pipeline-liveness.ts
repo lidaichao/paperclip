@@ -41,7 +41,7 @@ export interface LivenessBannerView {
 }
 
 const AUTO_RETRY_NOTE =
-  "Paperclip retries automatically once the blocker clears — you don't need to move the item by hand.";
+  l10n("local.alice_retries_after_blocker_clears_e5d25a51");
 
 /**
  * Prosumer-voice body for the `no_action_path` "stuck" banner. The server's
@@ -50,8 +50,7 @@ const AUTO_RETRY_NOTE =
  * the PAP-11245 voice rule forbids, so we translate it here. See PAP-11259.
  */
 const NO_ACTION_PATH_BODY =
-  "Paperclip can't see anything to work on next here — no automation, retry, blocker, or review. " +
-  "Re-run the stage to nudge it, or use the ⋯ menu to move it by hand.";
+  l10n("local.alice_no_pipeline_action_path_2c765bb2");
 
 /**
  * The `pipelines:write` permission key is the only permission the Phase 2
@@ -145,8 +144,7 @@ export function derivePipelineLivenessBanner(
         showRetry: false,
         retryKind: null,
         retryLabel: "",
-        helperNote:
-          "Grant the access above to the configured responsible, then Paperclip retries automatically.",
+        helperNote: l10n("local.grant_access_then_alice_retries_a6d102fd"),
       };
 
     case "automation_failed": {
@@ -165,7 +163,7 @@ export function derivePipelineLivenessBanner(
         permissionKey: null,
         showRetry: true,
         retryKind: automationId ? "automation" : "stage",
-        retryLabel: "Retry now",
+        retryLabel: l10n("local.retry_now_67ea7e03"),
         helperNote: recovered ? AUTO_RETRY_NOTE : null,
       };
     }
@@ -181,7 +179,7 @@ export function derivePipelineLivenessBanner(
         permissionKey: null,
         showRetry: true,
         retryKind: "stage",
-        retryLabel: "Re-run stage automation",
+        retryLabel: l10n("local.rerun_stage_automation_565101d6"),
         helperNote: null,
       };
 
@@ -196,7 +194,7 @@ export function derivePipelineLivenessBanner(
         permissionKey: null,
         showRetry: true,
         retryKind: "stage",
-        retryLabel: "Re-run stage automation",
+        retryLabel: l10n("local.rerun_stage_automation_565101d6"),
         helperNote: null,
       };
 
@@ -211,7 +209,7 @@ export function derivePipelineLivenessBanner(
         permissionKey: null,
         showRetry: true,
         retryKind: "stage",
-        retryLabel: "Re-run stage automation",
+        retryLabel: l10n("local.rerun_stage_automation_565101d6"),
         helperNote: null,
       };
 
@@ -223,7 +221,9 @@ export function derivePipelineLivenessBanner(
 function missingPiecesBody(liveness: PipelineCaseLiveness): string {
   const missing = liveness.breakdown?.missingRequestKeys?.length ?? 0;
   if (missing > 0) {
-    return `${liveness.message} ${missing} expected ${missing === 1 ? "piece is" : "pieces are"} still missing.`;
+    return `${liveness.message} ${l10n(missing === 1
+      ? "local.expected_piece_still_missing_one_4fe7bd16"
+      : "local.expected_pieces_still_missing_many_19408575", { v0: missing })}`;
   }
   return liveness.message;
 }

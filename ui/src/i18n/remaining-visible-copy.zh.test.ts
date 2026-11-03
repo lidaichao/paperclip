@@ -112,5 +112,8 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.alice_could_not_connect_address_retry_25a88b1e).toBe("Alice 无法连接该地址。请检查后重试。");
     expect(messages.alice_public_https_oauth_guidance_01eb902f).toContain("请让 Alice 管理员完成配置");
     expect(messages.add_header_value_or_remove_row_a33a2b2a).toBe("请为“{{v0}}”填写值，或删除这一行。");
+    expect(messages.alice_retries_after_blocker_clears_e5d25a51).toContain("Alice 会自动重试");
+    expect(messages.alice_no_pipeline_action_path_2c765bb2).toContain("重新运行当前阶段");
+    expect(messages.rerun_stage_automation_565101d6).toBe("重新运行阶段自动化");
   });
 });

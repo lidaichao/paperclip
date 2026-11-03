@@ -11137,6 +11137,13 @@
     "alice_public_https_oauth_guidance_01eb902f": "登录后会跳回 Alice，因此此实例必须能够通过 HTTPS 访问。请让 Alice 管理员完成配置。",
     "mcp_server_unreachable_guidance_5ef945ad": "该地址没有响应。请确认服务器正在运行且地址正确，然后重试。",
     "add_header_value_or_remove_row_a33a2b2a": "请为“{{v0}}”填写值，或删除这一行。",
-    "header_name_listed_twice_0056b23f": "“{{v0}}”重复出现。"
+    "header_name_listed_twice_0056b23f": "“{{v0}}”重复出现。",
+    "alice_retries_after_blocker_clears_e5d25a51": "阻塞解除后，Alice 会自动重试，无需手动移动此条目。",
+    "alice_no_pipeline_action_path_2c765bb2": "Alice 暂时找不到下一步可执行内容：没有自动化、重试、阻塞项或评审。请重新运行当前阶段，或通过“⋯”菜单手动移动。",
+    "grant_access_then_alice_retries_a6d102fd": "请向已配置的负责人授予上述权限，随后 Alice 会自动重试。",
+    "retry_now_67ea7e03": "立即重试",
+    "rerun_stage_automation_565101d6": "重新运行阶段自动化",
+    "expected_piece_still_missing_one_4fe7bd16": "仍缺少 {{v0}} 个预期部分。",
+    "expected_pieces_still_missing_many_19408575": "仍缺少 {{v0}} 个预期部分。"
   }
 }
