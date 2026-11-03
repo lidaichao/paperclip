@@ -56,7 +56,7 @@ export const defaultCommandRunner: CommandRunner = async (command, args, options
 
 function escapeSystemd(value: string): string {
   if (/\r|\n/.test(value)) {
-    throw new Error("Systemd service values must not contain line breaks");
+    throw new Error("Systemd 服务值不能包含换行符");
   }
   return value
     .replaceAll("\\", "\\\\")
@@ -180,13 +180,13 @@ async function writeIfChanged(filePath: string, contents: string): Promise<boole
   const directoryPath = path.dirname(filePath);
   await fs.mkdir(directoryPath, { recursive: true, mode: 0o700 });
   const directoryStat = await fs.lstat(directoryPath);
-  if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) throw new Error(`Refusing to write service definition through unsafe directory ${directoryPath}.`);
+  if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) throw new Error(`拒绝通过不安全的目录写入服务定义：${directoryPath}。`);
   const currentUid = process.getuid?.();
-  if (currentUid !== undefined && directoryStat.uid !== currentUid) throw new Error(`Refusing to write service definition in directory not owned by the current user: ${directoryPath}.`);
+  if (currentUid !== undefined && directoryStat.uid !== currentUid) throw new Error(`拒绝在不属于当前用户的目录中写入服务定义：${directoryPath}。`);
   try {
     const stat = await fs.lstat(filePath);
-    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink > 1) throw new Error(`Refusing to replace unsafe service definition ${filePath}.`);
-    if (currentUid !== undefined && stat.uid !== currentUid) throw new Error(`Refusing to replace service definition not owned by the current user: ${filePath}.`);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink > 1) throw new Error(`拒绝替换不安全的服务定义：${filePath}。`);
+    if (currentUid !== undefined && stat.uid !== currentUid) throw new Error(`拒绝替换不属于当前用户的服务定义：${filePath}。`);
     if (await fs.readFile(filePath, "utf8") === contents) return false;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -350,12 +350,12 @@ export async function detectServiceManager(input: { instanceId?: string; platfor
   const platform = input.platform ?? process.platform;
   const runner = input.runner ?? defaultCommandRunner;
   if (platform === "darwin") return { supported: true, manager: new LaunchdServiceManager(instanceId, runner) };
-  if (platform !== "linux") return { supported: false, reason: `Service management is not supported on ${platform}. Use paperclipai run instead.` };
+  if (platform !== "linux") return { supported: false, reason: `${platform} 暂不支持服务管理，请改用 paperclipai run。` };
   try {
     await runner("systemctl", ["--user", "show-environment"]);
     return { supported: true, manager: new SystemdServiceManager(instanceId, runner) };
   } catch {
-    return { supported: false, reason: "No usable systemd user manager was detected (common in containers and WSL1). Use paperclipai run instead." };
+    return { supported: false, reason: "未检测到可用的 systemd 用户管理器（容器和 WSL1 中较常见），请改用 paperclipai run。" };
   }
 }
 
@@ -364,5 +364,5 @@ export async function assertForegroundRunAllowed(instanceId: string, force = fal
   const detection = await detector({ instanceId });
   if (!detection.supported) return;
   const status = await detection.manager.status();
-  if (status.active) throw new Error(`Paperclip instance '${instanceId}' is already running as ${status.serviceName}. Use 'paperclipai service status --instance ${instanceId}' or pass --force to bypass this safety check.`);
+  if (status.active) throw new Error(`Alice 实例“${instanceId}”已作为 ${status.serviceName} 运行。请使用“paperclipai service status --instance ${instanceId}”查看状态，或传入 --force 跳过此安全检查。`);
 }

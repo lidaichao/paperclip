@@ -53,7 +53,7 @@ describe("service definition generation", () => {
     ["shimPath", { instanceId: "team-a", shimPath: "/home/alice/bin/paperclipai\r\nExecStartPre=/tmp/attack", homeDir: "/home/alice/.paperclip" }],
     ["homeDir", { instanceId: "team-a", shimPath: "/home/alice/.local/bin/paperclipai", homeDir: "/home/alice/.paperclip\nEnvironment=ATTACK=1" }],
   ])("rejects line breaks in the systemd %s", (_field, input) => {
-    expect(() => renderSystemdUnit(input)).toThrow("Systemd service values must not contain line breaks");
+    expect(() => renderSystemdUnit(input)).toThrow("Systemd 服务值不能包含换行符");
   });
 
   it("generates a launchd agent with keepalive and instance logs", () => {
@@ -192,7 +192,7 @@ describe("single-writer guard", () => {
   const detector = async () => ({ supported: true as const, manager: activeManager });
 
   it("refuses a second foreground writer", async () => {
-    await expect(assertForegroundRunAllowed("default", false, detector)).rejects.toThrow("already running");
+    await expect(assertForegroundRunAllowed("default", false, detector)).rejects.toThrow("已作为");
   });
 
   it("allows an explicit force override", async () => {
@@ -209,7 +209,7 @@ describe("single-writer guard", () => {
     const manager = new SystemdServiceManager("default", async () => ({ stdout: "", stderr: "" }), path.join(userHome, ".paperclip"), path.join(userHome, ".local/bin/paperclipai"), userHome);
     await fs.mkdir(path.dirname(manager.definitionPath), { recursive: true });
     const target = path.join(userHome, "target.service"); await fs.writeFile(target, "preserve\n"); await fs.symlink(target, manager.definitionPath);
-    await expect(manager.install({ startNow: false, startOnLogin: false })).rejects.toThrow("unsafe service definition");
+    await expect(manager.install({ startNow: false, startOnLogin: false })).rejects.toThrow("不安全的服务定义");
     expect(await fs.readFile(target, "utf8")).toBe("preserve\n");
   });
 
