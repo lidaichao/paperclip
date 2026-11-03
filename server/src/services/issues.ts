@@ -12150,10 +12150,10 @@ export function issueService(db: Db) {
         .where(eq(issues.id, issueId))
         .then((rows: Array<{ companyId: string; conversationAgentId: string | null }>) => rows[0] ?? null);
 
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
 
       if (issue.conversationAgentId && actor.userId && !(await instanceSettingsService(dbOrTx).getExperimental()).enableAgentChat) {
-        throw unprocessable("Agent Chat is disabled in Experimental settings");
+        throw unprocessable("实验性设置中未启用智能体聊天");
       }
       const currentUserRedactionOptions = {
         // Keep every read on the caller's transaction connection. Re-entering
@@ -12167,16 +12167,16 @@ export function issueService(db: Db) {
         const [existing] = await dbOrTx.select().from(issueComments).where(and(eq(issueComments.issueId, issueId),
           eq(issueComments.authorUserId, actor.userId), eq(issueComments.clientRequestId, options.clientRequestId)));
         if (existing) {
-          if (existing.body !== redactedBody) throw conflict("Message request ID was already used for different content");
+          if (existing.body !== redactedBody) throw conflict("此消息请求 ID 已被其他内容使用");
           return existing;
         }
       }
       if (issue.conversationAgentId && actor.runId) {
         const [run] = await dbOrTx.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, actor.runId));
         const [current] = await dbOrTx.select().from(issues).where(eq(issues.id, issueId));
-        if (run?.status === "cancelled") throw conflict("This conversation turn was cancelled; it cannot post a reply");
+        if (run?.status === "cancelled") throw conflict("此轮会话已取消，无法发布回复");
         if (run?.contextSnapshot?.conversationSessionGeneration !== current.conversationSessionGeneration) {
-          throw conflict("Conversation session changed; this reply belongs to an earlier session");
+          throw conflict("会话已变更，此回复属于较早的会话");
         }
       }
       const authorType = issueCommentAuthorTypeSchema.parse(
@@ -12225,7 +12225,7 @@ export function issueService(db: Db) {
             )))
         ) {
           throw conflict(
-            "This chat response is no longer authorized for external presentation",
+            "此聊天回复已无权对外展示",
             { code: "chat_review_response_presentation_denied" },
           );
         }
@@ -12240,7 +12240,7 @@ export function issueService(db: Db) {
       if (actor.agentId && attachmentIds.length > 0) {
         if (!createdByRunId) {
           throw unprocessable(
-            "Agent comment attachments require the current registered run",
+            "智能体评论附件必须使用当前已登记的运行",
           );
         }
         // Routes commonly supply an existing transaction for attachment
@@ -12259,7 +12259,7 @@ export function issueService(db: Db) {
             ),
           )
           .for("update");
-        if (!lockedIssue) throw notFound("Issue not found");
+        if (!lockedIssue) throw notFound("未找到任务");
         const [lockedRun] = await dbOrTx
           .select({ id: heartbeatRuns.id })
           .from(heartbeatRuns)
@@ -12273,7 +12273,7 @@ export function issueService(db: Db) {
           .for("update");
         if (!lockedRun) {
           throw unprocessable(
-            "Agent comment attachments require the current registered run",
+            "智能体评论附件必须使用当前已登记的运行",
           );
         }
       }
@@ -12399,7 +12399,7 @@ export function issueService(db: Db) {
           })
           .returning();
       }
-      if (!comment) throw new Error("Failed to create issue comment");
+      if (!comment) throw new Error("创建任务评论失败");
 
       const boundAttachments: Array<{
         id: string;
@@ -12441,7 +12441,7 @@ export function issueService(db: Db) {
         );
         if (attachmentById.size !== attachmentIds.length) {
           throw unprocessable(
-            "Comment attachments must belong to the same task and company",
+            "评论附件必须属于同一任务和公司",
           );
         }
         if (
@@ -12452,7 +12452,7 @@ export function issueService(db: Db) {
           )
         ) {
           throw conflict(
-            "Comment attachments are already bound to another comment",
+            "评论附件已绑定到其他评论",
             {
               code: "issue_comment_attachments_already_bound",
               companyId: issue.companyId,
@@ -12476,7 +12476,7 @@ export function issueService(db: Db) {
             )
           ) {
             throw unprocessable(
-              "Agent comment attachments must originate from the same agent and current run",
+              "智能体评论附件必须来自同一智能体和当前运行",
               { code: "issue_attachment_run_origin_mismatch" },
             );
           }
@@ -12502,7 +12502,7 @@ export function issueService(db: Db) {
             }
             if (selectedIds.size > MAX_CHAT_PRESENTATION_ATTACHMENTS) {
               throw unprocessable(
-                `An agent run can select at most ${MAX_CHAT_PRESENTATION_ATTACHMENTS} attachments for one chat response`,
+                `每次智能体运行最多可为一条聊天回复选择 ${MAX_CHAT_PRESENTATION_ATTACHMENTS} 个附件`,
                 {
                   code: "chat_attachment_selection_limit_exceeded",
                   limit: MAX_CHAT_PRESENTATION_ATTACHMENTS,
@@ -12532,7 +12532,7 @@ export function issueService(db: Db) {
           : [];
         if (attached.length !== unboundAttachmentIds.length) {
           throw conflict(
-            "Comment attachments changed before they could be bound",
+            "评论附件在绑定前已发生变化",
           );
         }
         for (const attachmentId of attachmentIds) {
@@ -12585,7 +12585,7 @@ export function issueService(db: Db) {
         }
         if (boundAttachments.length > MAX_CHAT_PRESENTATION_ATTACHMENTS) {
           throw unprocessable(
-            `An agent run can select at most ${MAX_CHAT_PRESENTATION_ATTACHMENTS} attachments for one chat response`,
+            `每次智能体运行最多可为一条聊天回复选择 ${MAX_CHAT_PRESENTATION_ATTACHMENTS} 个附件`,
             {
               code: "chat_attachment_selection_limit_exceeded",
               limit: MAX_CHAT_PRESENTATION_ATTACHMENTS,
@@ -12750,7 +12750,7 @@ export function issueService(db: Db) {
         .from(issues)
         .where(eq(issues.id, input.issueId))
         .then((rows) => rows[0] ?? null);
-      if (!issue) throw notFound("Issue not found");
+      if (!issue) throw notFound("未找到任务");
 
       return db.transaction(async (tx) => {
         if (input.createdByAgentId && input.issueCommentId) {
@@ -12764,7 +12764,7 @@ export function issueService(db: Db) {
               ),
             )
             .for("update");
-          if (!lockedIssue) throw notFound("Issue not found");
+          if (!lockedIssue) throw notFound("未找到任务");
         }
         const registeredRun =
           input.createdByRunId && isUuidLike(input.createdByRunId)
@@ -12809,7 +12809,7 @@ export function issueService(db: Db) {
               .then((rows) => rows[0] ?? null)
           : null;
         if (input.issueCommentId && !parentComment) {
-          throw notFound("Issue comment not found");
+          throw notFound("未找到任务评论");
         }
         if (
           parentComment &&
@@ -12817,7 +12817,7 @@ export function issueService(db: Db) {
             parentComment.issueId !== issue.id)
         ) {
           throw unprocessable(
-            "Attachment comment must belong to same issue and company",
+            "附件评论必须属于同一任务和公司",
           );
         }
         if (input.createdByAgentId && parentComment) {
@@ -12828,7 +12828,7 @@ export function issueService(db: Db) {
             parentComment.createdByRunId !== registeredRunId
           ) {
             throw unprocessable(
-              "Agent attachment comments must belong to the same agent and current run",
+              "智能体附件评论必须属于同一智能体和当前运行",
               { code: "issue_attachment_parent_run_mismatch" },
             );
           }
@@ -12852,7 +12852,7 @@ export function issueService(db: Db) {
               });
             if (alreadySelected.length >= MAX_CHAT_PRESENTATION_ATTACHMENTS) {
               throw unprocessable(
-                `An agent run can select at most ${MAX_CHAT_PRESENTATION_ATTACHMENTS} attachments for one chat response`,
+                `每次智能体运行最多可为一条聊天回复选择 ${MAX_CHAT_PRESENTATION_ATTACHMENTS} 个附件`,
                 {
                   code: "chat_attachment_selection_limit_exceeded",
                   limit: MAX_CHAT_PRESENTATION_ATTACHMENTS,

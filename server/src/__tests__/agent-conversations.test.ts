@@ -162,10 +162,10 @@ const support = await getEmbeddedPostgresTestSupport();
       ).toBe(user);
       await expect(
         issueService(db).update(results[0].id, { status: "done" }),
-      ).rejects.toThrow(/conversation/i);
+      ).rejects.toThrow(/会话/);
       await expect(
         issueService(db).update(results[0].id, { assigneeAgentId: null }),
-      ).rejects.toThrow(/conversation/i);
+      ).rejects.toThrow(/会话/);
     });
     it("resolves through authenticated company routes, keeps opens read-only, and derives ownership", async () => {
       const appFor = (userId?: string, allowed = true) => {
@@ -315,7 +315,7 @@ const support = await getEmbeddedPostgresTestSupport();
           { userId: "local-board" },
           { clientRequestId },
         ),
-      ).rejects.toThrow(/different content/);
+      ).rejects.toThrow(/其他内容/);
     });
     it("resets only this task, keeps history, and fences stale replies and retries", async () => {
       const issue = await create();
@@ -384,7 +384,7 @@ const support = await getEmbeddedPostgresTestSupport();
           agentId,
           runId: oldRun.id,
         }),
-      ).rejects.toThrow(/earlier session/);
+      ).rejects.toThrow(/较早的会话/);
       await expect(
         prepareConversationTurn(
           db,
@@ -806,7 +806,7 @@ const support = await getEmbeddedPostgresTestSupport();
         else process.env.PAPERCLIP_AGENT_JWT_SECRET = previousSecret;
       }
       await expect(issueService(db).addComment(chat.id, "Late old reply", { agentId, runId: run.id }))
-        .rejects.toThrow(/cancelled/);
+        .rejects.toThrow(/已取消/);
       expect(await applyRunnerGoalPrpEvent(db, { companyId, agentId, issueId: chat.id, adapterType: "process" }, {
         eventType: "session.capabilities.updated", sourceRunId: run.id, sourceSeq: 500, payload: {},
       })).toBeNull();
@@ -923,7 +923,7 @@ const support = await getEmbeddedPostgresTestSupport();
         issueService(db).addComment(issue.id, "/new", {
           userId: "local-board",
         }),
-      ).rejects.toThrow(/disabled/);
+      ).rejects.toThrow(/未启用/);
       expect(
         isWaitingConversation(
           (await db.select().from(issues).where(eq(issues.id, issue.id)))[0],
