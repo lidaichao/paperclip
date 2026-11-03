@@ -692,7 +692,7 @@ describe.sequential("issue comment reopen routes", () => {
       .send({ assigneeAgentId: "missing-codex" });
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Agent not found");
+    expect(res.body.error).toBe("未找到智能体");
     expect(mockIssueService.update).not.toHaveBeenCalled();
   });
   it("reopens closed issues via the PATCH comment path", async () => {

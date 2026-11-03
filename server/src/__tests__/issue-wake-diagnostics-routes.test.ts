@@ -447,7 +447,7 @@ describeEmbeddedPostgres("issue wake diagnostics route", () => {
 
     // Uniform 404 so cross-tenant ids are indistinguishable from missing ones.
     expect(res.status, JSON.stringify(res.body)).toBe(404);
-    expect(res.body.error).toBe("Issue not found");
+    expect(res.body.error).toBe("未找到任务");
   });
 
   it("projects activity records and wake failures without raw blobs", async () => {

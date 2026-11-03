@@ -7117,7 +7117,7 @@ export function issueRoutes(
         ),
       )
       .for("update");
-    if (!currentIssue) throw notFound("Issue not found");
+    if (!currentIssue) throw notFound("未找到任务");
     input.issue = currentIssue;
     const wake = await input.tx
       .select()
@@ -7301,7 +7301,7 @@ export function issueRoutes(
       );
     }
     if (!resolved.agent) {
-      throw notFound("Agent not found");
+      throw notFound("未找到智能体");
     }
     if (resolved.agent.status === "pending_approval") {
       throw conflict("不能将任务分派给待审批的智能体");
@@ -8452,7 +8452,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -8466,7 +8466,7 @@ export function issueRoutes(
       requestedAgentId,
     );
     if (!goal) {
-      res.status(404).json({ error: "Issue not found" });
+      res.status(404).json({ error: "未找到任务" });
       return;
     }
     res.json(goal);
@@ -8481,7 +8481,7 @@ export function issueRoutes(
         req,
         res,
         getIssueById(req, id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (
@@ -8535,7 +8535,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -8713,7 +8713,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -8753,7 +8753,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -8807,7 +8807,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -8863,7 +8863,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -8970,7 +8970,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -8988,7 +8988,7 @@ export function issueRoutes(
         req,
         res,
         getIssueById(req, id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9047,7 +9047,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9096,7 +9096,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9120,7 +9120,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!existing) return;
       if (!(await assertIssueReadAllowed(req, res, existing))) return;
@@ -9187,7 +9187,7 @@ export function issueRoutes(
           )
           .for("update")
           .then((rows) => rows[0] ?? null);
-        if (!lockedIssue) throw notFound("Issue not found");
+        if (!lockedIssue) throw notFound("未找到任务");
 
         let activeRecoveryAction = await recoveryActionsSvc.getActiveForIssue(
           lockedIssue.companyId,
@@ -9483,7 +9483,7 @@ export function issueRoutes(
                   tx,
                   postCommitActivityPublications,
                 );
-          if (!updatedIssue) throw notFound("Issue not found");
+          if (!updatedIssue) throw notFound("未找到任务");
           issue = updatedIssue;
         }
 
@@ -9636,7 +9636,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9652,7 +9652,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9666,7 +9666,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9721,7 +9721,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -9756,7 +9756,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9772,7 +9772,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9818,7 +9818,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9858,7 +9858,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (
@@ -9943,7 +9943,7 @@ export function issueRoutes(
         req,
         res,
         getIssueById(req, id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -9981,7 +9981,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -10059,7 +10059,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -10117,7 +10117,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -10284,7 +10284,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
@@ -10341,7 +10341,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
@@ -10395,7 +10395,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -10428,7 +10428,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -10577,7 +10577,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
@@ -10687,7 +10687,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -10903,7 +10903,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -10939,7 +10939,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -11117,7 +11117,7 @@ export function issueRoutes(
       if (!existing) return;
       const issue = await svc.getById(existing.issueId);
       if (!issue) {
-        res.status(404).json({ error: "Issue not found" });
+        res.status(404).json({ error: "未找到任务" });
         return;
       }
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -11212,7 +11212,7 @@ export function issueRoutes(
     if (!existing) return;
     const issue = await svc.getById(existing.issueId);
     if (!issue) {
-      res.status(404).json({ error: "Issue not found" });
+      res.status(404).json({ error: "未找到任务" });
       return;
     }
     if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -11251,7 +11251,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
@@ -11290,7 +11290,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
@@ -11395,7 +11395,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const target = await resolveInboxArchiveTarget(req, issue);
@@ -11441,7 +11441,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const target = await resolveInboxArchiveTarget(req, issue);
@@ -11477,7 +11477,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (
@@ -11498,7 +11498,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -11538,7 +11538,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -12298,7 +12298,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, sourceIssueId),
-      "Issue not found",
+      "未找到任务",
     );
     if (!sourceIssue) return;
     const decompositions = await svc.listAcceptedPlanDecompositions(
@@ -12316,7 +12316,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(sourceIssueId),
-        "Issue not found",
+        "未找到任务",
       );
       if (!sourceIssue) return;
       if (!(await assertAgentIssueMutationAllowed(req, res, sourceIssue)))
@@ -12565,7 +12565,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     await assertCanManageIssueMonitor(
@@ -12594,7 +12594,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
 
@@ -12635,7 +12635,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       assertBoard(req);
@@ -12769,7 +12769,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!existing) return;
       assertNoAgentHostWorkspaceCommandMutation(
@@ -13766,7 +13766,7 @@ export function issueRoutes(
         throw err;
       }
       if (!issue) {
-        res.status(404).json({ error: "Issue not found" });
+        res.status(404).json({ error: "未找到任务" });
         return;
       }
       for (const publication of postCommitActivityPublications)
@@ -14982,7 +14982,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!existing) return;
     if (!(await assertAgentIssueMutationAllowed(req, res, existing))) return;
@@ -14990,7 +14990,7 @@ export function issueRoutes(
 
     const issue = await svc.remove(id);
     if (!issue) {
-      res.status(404).json({ error: "Issue not found" });
+      res.status(404).json({ error: "未找到任务" });
       return;
     }
 
@@ -15031,7 +15031,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
 
@@ -15182,7 +15182,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!existing) return;
     if (!(await assertAgentIssueMutationAllowed(req, res, existing))) return;
@@ -15195,7 +15195,7 @@ export function issueRoutes(
       actorRunId,
     );
     if (!released) {
-      res.status(404).json({ error: "Issue not found" });
+      res.status(404).json({ error: "未找到任务" });
       return;
     }
 
@@ -15229,14 +15229,14 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!existing) return;
 
     const clearAssignee = req.query.clearAssignee === "true";
     const result = await svc.adminForceRelease(id, { clearAssignee });
     if (!result) {
-      res.status(404).json({ error: "Issue not found" });
+      res.status(404).json({ error: "未找到任务" });
       return;
     }
 
@@ -15269,7 +15269,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -15344,7 +15344,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -15371,7 +15371,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const actor = getActorInfo(req);
@@ -15402,7 +15402,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const actor = getActorInfo(req);
@@ -15427,7 +15427,7 @@ export function issueRoutes(
     async (req, res) => {
       assertBoard(req);
       if (!req.actor.userId) throw forbidden("需要控制台用户上下文");
-      const issue = await getAccessibleResource(req, res, svc.getById(req.params.id as string), "Issue not found");
+      const issue = await getAccessibleResource(req, res, svc.getById(req.params.id as string), "未找到任务");
       if (!issue) return;
       const decision = await decideIssueAccess(req, issue, "issue:comment");
       if (!decision.allowed) throw forbidden(decision.explanation, authorizationDeniedDetails(decision));
@@ -15503,7 +15503,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (issue.conversationAgentId) throw conflict("对话消息会在轮次边界按顺序处理");
@@ -15774,7 +15774,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const actor = getActorInfo(req);
@@ -15805,7 +15805,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -15823,7 +15823,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (req.actor.type === "agent") {
@@ -15990,7 +15990,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const authorizedResolution =
@@ -16317,7 +16317,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const authorizedResolution =
@@ -16427,7 +16427,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const authorizedResolution =
@@ -16512,7 +16512,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       const authorizedResolution =
@@ -16606,7 +16606,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
 
@@ -16713,7 +16713,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (req.actor.type === "agent") {
@@ -16771,7 +16771,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (req.actor.type === "agent") {
@@ -16872,7 +16872,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -16893,7 +16893,7 @@ export function issueRoutes(
       req,
       res,
       svc.getById(id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -17115,7 +17115,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
@@ -17138,7 +17138,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, id),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (req.actor.type !== "board") {
@@ -17248,7 +17248,7 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (issue.conversationAgentId && req.actor.type === "board") {
@@ -17509,7 +17509,7 @@ export function issueRoutes(
           : null;
         const reopenedIssue = await svc.update(id, { status: "todo" });
         if (!reopenedIssue) {
-          res.status(404).json({ error: "Issue not found" });
+          res.status(404).json({ error: "未找到任务" });
           return;
         }
         reopened = isClosed || (isBlocked && !hasUnresolvedFirstClassBlockers);
@@ -17721,7 +17721,7 @@ export function issueRoutes(
           });
         } catch (err) {
           if (err instanceof AutoApprovalIssueMissingError) {
-            res.status(404).json({ error: "Issue not found" });
+            res.status(404).json({ error: "未找到任务" });
             return;
           }
           throw err;
@@ -18319,13 +18319,13 @@ export function issueRoutes(
         req,
         res,
         svc.getById(id),
-        "Issue not found",
+        "未找到任务",
       );
       if (!issue) return;
       if (req.actor.type !== "board") {
         res
           .status(403)
-          .json({ error: "Only board users can vote on AI feedback" });
+          .json({ error: "只有看板用户才能对 AI 反馈投票" });
         return;
       }
 
@@ -18428,7 +18428,7 @@ export function issueRoutes(
       req,
       res,
       getIssueById(req, issueId),
-      "Issue not found",
+      "未找到任务",
     );
     if (!issue) return;
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -18444,18 +18444,18 @@ export function issueRoutes(
       assertCompanyAccess(req, companyId);
       const issue = await svc.getById(issueId);
       if (!issue) {
-        res.status(404).json({ error: "Issue not found" });
+        res.status(404).json({ error: "未找到任务" });
         return;
       }
       if (issue.companyId !== companyId) {
-        res.status(422).json({ error: "Issue does not belong to company" });
+        res.status(422).json({ error: "任务不属于当前公司" });
         return;
       }
       if (issue.conversationAgentId && req.actor.type === "board" && !(await instanceSettings.getExperimental()).enableAgentChat) {
-        throw notFound("Agent Chat is disabled");
+        throw notFound("智能体对话功能已停用");
       }
       if (issue.conversationAgentId && req.actor.type === "board" && req.actor.userId !== issue.conversationUserId) {
-        throw forbidden("Only the conversation owner can upload attachments");
+        throw forbidden("只有对话所有者才能上传附件");
       }
       if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
       if (
@@ -18485,7 +18485,7 @@ export function issueRoutes(
         }
       ).file;
       if (!file) {
-        res.status(400).json({ error: "Missing file field 'file'" });
+        res.status(400).json({ error: "缺少文件字段 'file'" });
         return;
       }
       const contentType = normalizeUploadAttachmentContentType({
@@ -18493,7 +18493,7 @@ export function issueRoutes(
         originalFilename: file.originalname,
       });
       if (file.buffer.length <= 0) {
-        res.status(422).json({ error: "Attachment is empty" });
+        res.status(422).json({ error: "附件为空" });
         return;
       }
 
@@ -18502,7 +18502,7 @@ export function issueRoutes(
       );
       if (!parsedMeta.success) {
         res.status(400).json({
-          error: "Invalid attachment metadata",
+          error: "附件元数据无效",
           details: parsedMeta.error.issues,
         });
         return;
@@ -18603,12 +18603,12 @@ export function issueRoutes(
       req,
       res,
       svc.getAttachmentById(attachmentId),
-      "Attachment not found",
+      "未找到附件",
     );
     if (!attachment) return;
     const issue = await svc.getById(attachment.issueId);
     if (!issue) {
-      res.status(404).json({ error: "Issue not found" });
+      res.status(404).json({ error: "未找到任务" });
       return;
     }
     if (!(await assertIssueReadAllowed(req, res, issue))) return;
@@ -18697,12 +18697,12 @@ export function issueRoutes(
       req,
       res,
       svc.getAttachmentById(attachmentId),
-      "Attachment not found",
+      "未找到附件",
     );
     if (!attachment) return;
     const issue = await svc.getById(attachment.issueId);
     if (!issue) {
-      res.status(404).json({ error: "Issue not found" });
+      res.status(404).json({ error: "未找到任务" });
       return;
     }
     if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
@@ -18720,7 +18720,7 @@ export function issueRoutes(
 
     const removed = await svc.removeAttachment(attachmentId);
     if (!removed) {
-      res.status(404).json({ error: "Attachment not found" });
+      res.status(404).json({ error: "未找到附件" });
       return;
     }
 

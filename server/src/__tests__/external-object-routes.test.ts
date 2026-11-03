@@ -205,7 +205,7 @@ describe("external object routes", () => {
 
     // Uniform 404 so cross-tenant ids are indistinguishable from missing ones.
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Issue not found");
+    expect(res.body.error).toBe("未找到任务");
     expect(mockExternalObjectsService.getIssueSummary).not.toHaveBeenCalled();
   });
 

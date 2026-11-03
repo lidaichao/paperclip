@@ -286,7 +286,7 @@ describeEmbeddedPostgres("permissions upgrade visibility and route boundaries", 
     // Cross-tenant reads return 404 (not 403) so the response is
     // indistinguishable from a nonexistent issue — no existence oracle.
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Issue not found");
+    expect(res.body.error).toBe("未找到任务");
   });
 
   it("allows same-company route assignment after upgrade but keeps private target assignment grant constrained", async () => {

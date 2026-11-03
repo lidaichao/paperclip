@@ -346,7 +346,7 @@ describeEmbeddedPostgres("issue blocker diagnostics route", () => {
 
     // Uniform 404 so cross-tenant ids are indistinguishable from missing ones.
     expect(res.status, JSON.stringify(res.body)).toBe(404);
-    expect(res.body.error).toBe("Issue not found");
+    expect(res.body.error).toBe("未找到任务");
   });
 
   it("caps blocker output and withholds readiness when truncated", async () => {

@@ -640,7 +640,7 @@ describeEmbeddedPostgres("issue watchdog routes", () => {
       .send({ agentId: otherAgentId });
     // Uniform 404 so cross-tenant ids are indistinguishable from missing ones.
     expect(foreignIssue.status, JSON.stringify(foreignIssue.body)).toBe(404);
-    expect(foreignIssue.body.error).toBe("Issue not found");
+    expect(foreignIssue.body.error).toBe("未找到任务");
 
     const foreignAgent = await request(app)
       .put(`/api/issues/${issueId}/watchdog`)

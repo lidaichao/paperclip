@@ -709,7 +709,7 @@ describe("issue attachment routes", () => {
     // Cross-tenant reads return 404 (not 403) so the status code cannot be
     // used as an existence oracle for other tenants' attachment ids.
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Attachment not found");
+    expect(res.body.error).toBe("未找到附件");
     expect(storage.getObject).not.toHaveBeenCalled();
   });
 
