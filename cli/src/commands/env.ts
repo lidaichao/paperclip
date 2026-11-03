@@ -37,22 +37,22 @@ function defaultStorageBaseDir(): string {
 }
 
 export async function envCommand(opts: { config?: string }): Promise<void> {
-  p.intro(pc.bgCyan(pc.black(" paperclip env ")));
+  p.intro(pc.bgCyan(pc.black(" Alice 环境变量 ")));
 
   const configPath = resolveConfigPath(opts.config);
   let config: PaperclipConfig | null = null;
   let configReadError: string | null = null;
 
   if (configExists(opts.config)) {
-    p.log.message(pc.dim(`Config file: ${configPath}`));
+    p.log.message(pc.dim(`配置文件：${configPath}`));
     try {
       config = readConfig(opts.config);
     } catch (err) {
       configReadError = err instanceof Error ? err.message : String(err);
-      p.log.message(pc.yellow(`Could not parse config: ${configReadError}`));
+      p.log.message(pc.yellow(`无法解析配置：${configReadError}`));
     }
   } else {
-    p.log.message(pc.dim(`Config file missing: ${configPath}`));
+    p.log.message(pc.dim(`配置文件不存在：${configPath}`));
   }
 
   const rows = collectDeploymentEnvRows(config, configPath);
@@ -67,13 +67,13 @@ export async function envCommand(opts: { config?: string }): Promise<void> {
 
     p.log.message(pc.bold(title));
     for (const entry of entries) {
-      const status = entry.source === "missing" ? pc.red("missing") : entry.source === "default" ? pc.yellow("default") : pc.green("set");
+      const status = entry.source === "missing" ? pc.red("缺失") : entry.source === "default" ? pc.yellow("默认") : pc.green("已设置");
       const sourceNote = {
-        env: "environment",
-        config: "config",
-        file: "file",
-        default: "default",
-        missing: "missing",
+        env: "环境变量",
+        config: "配置",
+        file: "文件",
+        default: "默认",
+        missing: "缺失",
       }[entry.source];
       p.log.message(
         `${pc.cyan(entry.key)} ${status.padEnd(7)} ${pc.dim(`[${sourceNote}] ${entry.note}`)}${entry.source === "missing" ? "" : ` ${pc.dim("=>")} ${pc.white(quoteShellValue(entry.value))}`}`,
@@ -81,32 +81,32 @@ export async function envCommand(opts: { config?: string }): Promise<void> {
     }
   };
 
-  formatSection("Required environment variables", requiredRows);
-  formatSection("Optional environment variables", optionalRows);
+  formatSection("必需环境变量", requiredRows);
+  formatSection("可选环境变量", optionalRows);
 
-  const exportRows = rows.map((row) => (row.source === "missing" ? { ...row, value: "<set-this-value>" } : row));
+  const exportRows = rows.map((row) => (row.source === "missing" ? { ...row, value: "<请设置此值>" } : row));
   const uniqueRows = uniqueByKey(exportRows);
   const exportBlock = uniqueRows.map((row) => `export ${row.key}=${quoteShellValue(row.value)}`).join("\n");
 
   if (configReadError) {
-    p.log.error(`Could not load config cleanly: ${configReadError}`);
+    p.log.error(`无法完整加载配置：${configReadError}`);
   }
 
   p.note(
-    exportBlock || "No values detected. Set required variables manually.",
-    "Deployment export block",
+    exportBlock || "未检测到值，请手动设置必需变量。",
+    "部署导出内容",
   );
 
   if (missingRequired.length > 0) {
     p.log.message(
       pc.yellow(
-        `Missing required values: ${missingRequired.map((row) => row.key).join(", ")}. Set these before deployment.`,
+        `缺少必需值：${missingRequired.map((row) => row.key).join(", ")}。请在部署前设置。`,
       ),
     );
   } else {
-    p.log.message(pc.green("All required deployment variables are present."));
+    p.log.message(pc.green("部署所需变量均已设置。"));
   }
-  p.outro("Done");
+  p.outro("完成");
 }
 
 function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: string): EnvVarRow[] {
@@ -191,10 +191,10 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
       required: true,
       note:
         jwtSource === "missing"
-          ? "Generate during onboard or set manually (required for local adapter authentication)"
+          ? "在初始设置时生成或手动设置（本地适配器认证必需）"
           : jwtSource === "env"
-            ? "Set in process environment"
-            : `Set in ${agentJwtEnvFile}`,
+            ? "已在进程环境中设置"
+            : `已在 ${agentJwtEnvFile} 中设置`,
     },
     {
       key: "DATABASE_URL",
@@ -203,8 +203,8 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
       required: true,
       note:
         databaseMode === "postgres"
-          ? "Configured for postgres mode (required)"
-          : "Required for live deployment with managed PostgreSQL",
+          ? "PostgreSQL 模式已配置（必需）"
+          : "使用托管 PostgreSQL 正式部署时必需",
     },
     {
       key: "PORT",
@@ -213,14 +213,14 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
         (config?.server?.port !== undefined ? String(config.server.port) : "3100"),
       source: process.env.PORT ? "env" : config?.server?.port !== undefined ? "config" : "default",
       required: false,
-      note: "HTTP listen port",
+      note: "HTTP 监听端口",
     },
     {
       key: "PAPERCLIP_PUBLIC_URL",
       value: publicUrl,
       source: publicUrlSource,
       required: false,
-      note: "Canonical public URL for auth/callback/invite origin wiring",
+      note: "认证、回调和邀请来源所使用的标准公网网址",
     },
     {
       key: "BETTER_AUTH_TRUSTED_ORIGINS",
@@ -231,42 +231,42 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "default"
           : "missing",
       required: false,
-      note: "Comma-separated auth origin allowlist (auto-derived from PAPERCLIP_PUBLIC_URL when possible)",
+      note: "用逗号分隔的认证来源允许列表（可从 PAPERCLIP_PUBLIC_URL 自动推导）",
     },
     {
       key: "PAPERCLIP_AGENT_JWT_TTL_SECONDS",
       value: process.env.PAPERCLIP_AGENT_JWT_TTL_SECONDS ?? DEFAULT_AGENT_JWT_TTL_SECONDS,
       source: process.env.PAPERCLIP_AGENT_JWT_TTL_SECONDS ? "env" : "default",
       required: false,
-      note: "JWT lifetime in seconds",
+      note: "JWT 有效期（秒）",
     },
     {
       key: "PAPERCLIP_AGENT_JWT_ISSUER",
       value: process.env.PAPERCLIP_AGENT_JWT_ISSUER ?? DEFAULT_AGENT_JWT_ISSUER,
       source: process.env.PAPERCLIP_AGENT_JWT_ISSUER ? "env" : "default",
       required: false,
-      note: "JWT issuer",
+      note: "JWT 签发方",
     },
     {
       key: "PAPERCLIP_AGENT_JWT_AUDIENCE",
       value: process.env.PAPERCLIP_AGENT_JWT_AUDIENCE ?? DEFAULT_AGENT_JWT_AUDIENCE,
       source: process.env.PAPERCLIP_AGENT_JWT_AUDIENCE ? "env" : "default",
       required: false,
-      note: "JWT audience",
+      note: "JWT 接收方",
     },
     {
       key: "HEARTBEAT_SCHEDULER_INTERVAL_MS",
       value: heartbeatInterval,
       source: process.env.HEARTBEAT_SCHEDULER_INTERVAL_MS ? "env" : "default",
       required: false,
-      note: "Heartbeat worker interval in ms",
+      note: "心跳工作器间隔（毫秒）",
     },
     {
       key: "HEARTBEAT_SCHEDULER_ENABLED",
       value: heartbeatEnabled,
       source: process.env.HEARTBEAT_SCHEDULER_ENABLED ? "env" : "default",
       required: false,
-      note: "Set to `false` to disable timer scheduling",
+      note: "设为 `false` 可禁用定时调度",
     },
     {
       key: "PAPERCLIP_SECRETS_PROVIDER",
@@ -277,7 +277,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "Default provider for new secrets",
+      note: "新密钥的默认服务商",
     },
     {
       key: "PAPERCLIP_SECRETS_STRICT_MODE",
@@ -288,7 +288,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "Require secret refs for sensitive env keys",
+      note: "敏感环境变量必须使用密钥引用",
     },
     {
       key: "PAPERCLIP_SECRETS_MASTER_KEY_FILE",
@@ -299,7 +299,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "Path to local encrypted secrets key file",
+      note: "本地加密密钥文件路径",
     },
     {
       key: "PAPERCLIP_STORAGE_PROVIDER",
@@ -310,7 +310,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "Storage provider (local_disk or s3)",
+      note: "存储服务商（local_disk 或 s3）",
     },
     {
       key: "PAPERCLIP_STORAGE_LOCAL_DIR",
@@ -321,7 +321,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "Local storage base directory for local_disk provider",
+      note: "local_disk 服务商的本地存储根目录",
     },
     {
       key: "PAPERCLIP_STORAGE_S3_BUCKET",
@@ -332,7 +332,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "S3 bucket name for s3 provider",
+      note: "s3 服务商的 S3 存储桶名称",
     },
     {
       key: "PAPERCLIP_STORAGE_S3_REGION",
@@ -343,7 +343,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "S3 region for s3 provider",
+      note: "s3 服务商的 S3 区域",
     },
     {
       key: "PAPERCLIP_STORAGE_S3_ENDPOINT",
@@ -354,7 +354,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "Optional custom endpoint for S3-compatible providers",
+      note: "S3 兼容服务商的自定义端点（可选）",
     },
     {
       key: "PAPERCLIP_STORAGE_S3_PREFIX",
@@ -365,7 +365,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "Optional object key prefix",
+      note: "对象键前缀（可选）",
     },
     {
       key: "PAPERCLIP_STORAGE_S3_FORCE_PATH_STYLE",
@@ -376,7 +376,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
           ? "config"
           : "default",
       required: false,
-      note: "Set true for path-style access on compatible providers",
+      note: "兼容服务商使用路径样式访问时设为 true",
     },
   ];
 
@@ -387,7 +387,7 @@ function collectDeploymentEnvRows(config: PaperclipConfig | null, configPath: st
       value: process.env.PAPERCLIP_CONFIG ?? configPath,
       source: process.env.PAPERCLIP_CONFIG ? "env" : "default",
       required: false,
-      note: "Optional path override for config file",
+      note: "覆盖配置文件路径（可选）",
     });
   }
 

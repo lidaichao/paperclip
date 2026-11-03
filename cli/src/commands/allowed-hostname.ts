@@ -8,7 +8,7 @@ export async function addAllowedHostname(host: string, opts: { config?: string }
   const config = readConfig(opts.config);
 
   if (!config) {
-    p.log.error(`No config found at ${configPath}. Run ${pc.cyan("paperclip onboard")} first.`);
+    p.log.error(`未在 ${configPath} 找到配置，请先运行 ${pc.cyan("paperclip onboard")}。`);
     return;
   }
 
@@ -23,17 +23,17 @@ export async function addAllowedHostname(host: string, opts: { config?: string }
   writeConfig(config, opts.config);
 
   if (existed) {
-    p.log.info(`Hostname ${pc.cyan(normalized)} is already allowed.`);
+    p.log.info(`主机名 ${pc.cyan(normalized)} 已在允许列表中。`);
   } else {
-    p.log.success(`Added allowed hostname: ${pc.cyan(normalized)}`);
+    p.log.success(`已添加允许的主机名：${pc.cyan(normalized)}`);
     p.log.message(
-      pc.dim("Restart the Paperclip server for this change to take effect."),
+      pc.dim("请重启 Alice 服务器以使更改生效。"),
     );
   }
 
   if (!(config.server.deploymentMode === "authenticated" && config.server.exposure === "private")) {
     p.log.message(
-      pc.dim("Note: allowed hostnames are enforced only in authenticated/private mode."),
+      pc.dim("注意：允许的主机名仅在认证/私有模式下生效。"),
     );
   }
 }

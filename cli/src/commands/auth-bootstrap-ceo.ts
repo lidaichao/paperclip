@@ -62,19 +62,19 @@ export async function bootstrapCeoInvite(opts: {
   loadPaperclipEnvFile(configPath);
   const config = readConfig(configPath);
   if (!config) {
-    p.log.error(`No config found at ${configPath}. Run ${pc.cyan("paperclip onboard")} first.`);
+    p.log.error(`未在 ${configPath} 找到配置，请先运行 ${pc.cyan("paperclip onboard")}。`);
     return;
   }
 
   if (config.server.deploymentMode !== "authenticated") {
-    p.log.info("Deployment mode is local_trusted. Bootstrap CEO invite is only required for authenticated mode.");
+    p.log.info("当前部署模式为 local_trusted，只有认证模式才需要初始管理员邀请。");
     return;
   }
 
   const dbUrl = resolveDbUrl(configPath, opts.dbUrl);
   if (!dbUrl) {
     p.log.error(
-      "Could not resolve database connection for bootstrap.",
+      "无法解析初始设置所需的数据库连接。",
     );
     return;
   }
@@ -93,7 +93,7 @@ export async function bootstrapCeoInvite(opts: {
       .then((rows) => rows.length);
 
     if (existingAdminCount > 0 && !opts.force) {
-      p.log.info("Instance already has an admin user. Use --force to generate a new bootstrap invite.");
+      p.log.info("实例已有管理员用户。使用 --force 可生成新的初始邀请。");
       return;
     }
 
@@ -126,12 +126,12 @@ export async function bootstrapCeoInvite(opts: {
 
     const baseUrl = resolveBaseUrl(configPath, opts.baseUrl);
     const inviteUrl = `${baseUrl}/invite/${token}`;
-    p.log.success("Created bootstrap CEO invite.");
-    p.log.message(`Invite URL: ${pc.cyan(inviteUrl)}`);
-    p.log.message(`Expires: ${pc.dim(created.expiresAt.toISOString())}`);
+    p.log.success("已创建初始管理员邀请。");
+    p.log.message(`邀请网址：${pc.cyan(inviteUrl)}`);
+    p.log.message(`过期时间：${pc.dim(created.expiresAt.toISOString())}`);
   } catch (err) {
-    p.log.error(`Could not create bootstrap invite: ${err instanceof Error ? err.message : String(err)}`);
-    p.log.info("If using embedded-postgres, start the Paperclip server and run this command again.");
+    p.log.error(`无法创建初始邀请：${err instanceof Error ? err.message : String(err)}`);
+    p.log.info("如果使用 embedded-postgres，请启动 Alice 服务器后重新运行此命令。");
   } finally {
     await closableDb.$client?.end?.({ timeout: 5 }).catch(() => undefined);
   }
