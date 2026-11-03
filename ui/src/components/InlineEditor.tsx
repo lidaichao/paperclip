@@ -61,7 +61,7 @@ export function InlineEditor({
   onSave,
   as: Tag = "span",
   className,
-  placeholder = "Click to edit...",
+  placeholder = l10n("local.click_to_edit_10300171"),
   multiline = false,
   nullable = false,
   imageUploadHandler,

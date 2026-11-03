@@ -12348,6 +12348,25 @@
     "document_key_format_hint_10300151": "请使用小写字母、数字、- 或 _，并以字母或数字开头。",
     "sensitive_characters_hidden_10300152": "敏感内容——已隐藏 {{v0}} 个字符。点击眼睛图标可显示。",
     "file_line_and_column_10300153": "（第 {{v0}} 行，第 {{v1}} 列）",
-    "file_line_10300154": "（第 {{v0}} 行）"
+    "file_line_10300154": "（第 {{v0}} 行）",
+    "built_in_agent_configuration_required_10300155": "{{v0}} 由内置智能体生成。请配置该智能体的模型以启用此功能。",
+    "set_up_value_10300156": "设置 {{v0}}",
+    "built_in_agent_pending_board_approval_10300157": "看板批准聘用此内置智能体后，即可使用 {{v0}}。",
+    "fields_changed_10300158": "字段已更改",
+    "status_changed_10300159": "状态已更改",
+    "issue_linked_10300160": "任务已关联",
+    "issue_unlinked_10300161": "任务已取消关联",
+    "document_revised_10300162": "文档已修订",
+    "child_linked_10300163": "子项已关联",
+    "attachment_added_10300164": "已添加附件",
+    "label_added_10300165": "已添加标签",
+    "label_removed_10300166": "已移除标签",
+    "connect_provider_10300167": "连接服务商",
+    "no_managed_routines_10300168": "暂无托管例行任务。",
+    "no_members_yet_10300169": "暂无成员。",
+    "filter_people_10300170": "筛选成员",
+    "click_to_edit_10300171": "点击编辑…",
+    "no_financial_events_in_period_10300172": "此期间没有财务事件。",
+    "show_more_10300173": "显示更多"
   }
 }

@@ -45,9 +45,9 @@ export function MemberMultiSelect({
   triggerFullWidth = true,
   triggerClassName,
   contentAlign = "start",
-  emptyMessage = "No members yet.",
+  emptyMessage = l10n("local.no_members_yet_10300169"),
   showSelectionPreview = true,
-  filterPlaceholder = "Filter people",
+  filterPlaceholder = l10n("local.filter_people_10300170"),
   onOpenChange,
 }: {
   members: MemberMultiSelectOption[];

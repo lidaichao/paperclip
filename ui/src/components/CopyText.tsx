@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { copyTextToClipboard } from "@/lib/clipboard";
@@ -21,7 +22,7 @@ export function CopyText({
   className,
   ariaLabel,
   title,
-  copiedLabel = "Copied!",
+  copiedLabel = l10n("local.copied_ea61bc15"),
 }: CopyTextProps) {
   const [visible, setVisible] = useState(false);
   const [label, setLabel] = useState(copiedLabel);
@@ -35,7 +36,7 @@ export function CopyText({
       await copyTextToClipboard(text);
       setLabel(copiedLabel);
     } catch {
-      setLabel("Copy failed");
+      setLabel(l10n("local.copy_failed_5b50e7a6"));
     }
     clearTimeout(timerRef.current);
     setVisible(true);

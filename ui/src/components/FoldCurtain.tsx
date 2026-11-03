@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import {
   useEffect,
   useLayoutEffect,
@@ -62,8 +63,8 @@ export function FoldCurtain({
   children,
   collapsedHeight: explicitCollapsedHeight,
   activationBuffer = 120,
-  moreLabel = "Show more",
-  lessLabel = "Show less",
+  moreLabel = l10n("local.show_more_10300173"),
+  lessLabel = l10n("local.show_less_94ea9b1d"),
   className,
   contentClassName,
   toggleClassName,

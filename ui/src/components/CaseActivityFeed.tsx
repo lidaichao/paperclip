@@ -17,22 +17,22 @@ import {
 import { cn, relativeTime } from "@/lib/utils";
 
 const EVENT_LABEL: Record<CaseEventKind, string> = {
-  created: "created",
-  updated: "updated",
-  fields_changed: "fields changed",
-  status_changed: "status changed",
-  issue_linked: "issue linked",
-  issue_unlinked: "issue unlinked",
-  document_revised: "document revised",
-  child_linked: "child linked",
-  attachment_added: "attachment added",
-  label_added: "label added",
-  label_removed: "label removed",
+  created: l10n("local.created_406effb1"),
+  updated: l10n("local.updated_27eb5e51"),
+  fields_changed: l10n("local.fields_changed_10300158"),
+  status_changed: l10n("local.status_changed_10300159"),
+  issue_linked: l10n("local.issue_linked_10300160"),
+  issue_unlinked: l10n("local.issue_unlinked_10300161"),
+  document_revised: l10n("local.document_revised_10300162"),
+  child_linked: l10n("local.child_linked_10300163"),
+  attachment_added: l10n("local.attachment_added_10300164"),
+  label_added: l10n("local.label_added_10300165"),
+  label_removed: l10n("local.label_removed_10300166"),
 };
 
 /** Human label for the actor, preferring the resolved agent name. */
 function actorLabel(event: CaseEvent): string {
-  if (event.actorType === "agent") return event.actorAgentName ?? "Agent";
+  if (event.actorType === "agent") return event.actorAgentName ?? l10n("local.agent_11b39c93");
   if (event.actorType === "user") return l10n("local.user_b512d97e");
   return l10n("local.system_6725e7bb");
 }
@@ -43,7 +43,9 @@ function ActorIcon({ event }: { event: CaseEvent }) {
 }
 
 function issueRelationLabel(event: CaseEvent): string {
-  return event.kind === "issue_linked" || event.kind === "issue_unlinked" ? "issue" : "via";
+  return event.kind === "issue_linked" || event.kind === "issue_unlinked"
+    ? l10n("local.issue_4a502846")
+    : l10n("local.via_4d327af4");
 }
 
 /** One event with actor + run→issue attribution (P4 §1). */
