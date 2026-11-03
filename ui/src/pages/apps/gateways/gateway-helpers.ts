@@ -39,10 +39,10 @@ export function tokenStatus(
 }
 
 export const TOKEN_STATUS_LABEL: Record<TokenStatus, string> = {
-  active: "Active",
-  expiring: "Expiring",
-  expired: "Expired",
-  revoked: "Revoked",
+  active: l10n("local.active_92340695"),
+  expiring: l10n("local.expiring_10300302"),
+  expired: l10n("local.expired_424a2551"),
+  revoked: l10n("local.revoked_f6f738d0"),
 };
 
 /** Count of tokens that can currently authenticate (not revoked, not expired). */

@@ -12495,6 +12495,11 @@
     "skill_already_imported_10300298": "该技能已导入",
     "skill_could_not_be_added_10300299": "无法添加该技能",
     "selected_folder_no_valid_skill_md_10300300": "所选文件夹中没有有效的 SKILL.md 文件。",
-    "could_not_inspect_skill_10300301": "无法检查技能"
+    "could_not_inspect_skill_10300301": "无法检查技能",
+    "expiring_10300302": "即将过期",
+    "not_tracked_10300303": "未跟踪",
+    "failed_to_update_general_settings_10300304": "更新常规设置失败。",
+    "runs_in_your_workspace_10300305": "在你的工作区中运行",
+    "connects_over_the_web_10300306": "通过网络连接"
   }
 }

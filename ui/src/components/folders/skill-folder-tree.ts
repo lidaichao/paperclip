@@ -187,10 +187,10 @@ export function skillFolderPathDisplayFallback(folderPath: string | null | undef
 
   const root = segments[0]?.toLowerCase();
   const labels = segments.map(humanizeFolderPathSegment);
-  if (root === "my") labels[0] = "My Skills";
-  else if (root === "projects") labels[0] = "Projects";
-  else if (root === "bundled") labels[0] = "Bundled";
-  else labels.unshift("Organization");
+  if (root === "my") labels[0] = l10n("local.my_skills_ea424d66");
+  else if (root === "projects") labels[0] = l10n("local.projects_04e2a972");
+  else if (root === "bundled") labels[0] = l10n("local.bundled_79d3a1f1");
+  else labels.unshift(l10n("local.organization_d764d425"));
   return labels.join(" / ");
 }
 

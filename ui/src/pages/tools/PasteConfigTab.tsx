@@ -44,9 +44,15 @@ function humanizeKey(raw: string): string {
 
 function draftSummary(draft: McpJsonImportDraft): string {
   const keyCount = draft.credentialFields.length || draft.credentialRefs.length;
-  const where = draft.transport === "local_stdio" ? "Runs in your workspace" : "Connects over the web";
+  const where = draft.transport === "local_stdio"
+    ? l10n("local.runs_in_your_workspace_10300305")
+    : l10n("local.connects_over_the_web_10300306");
   if (keyCount === 0) return l10n("local.value_no_keys_needed_baadd997", {v0: (where)});
-  return l10n("local.value_needs_value_value_f523706a", {v0: (where), v1: (keyCount), v2: (keyCount === 1 ? "key" : "keys")});
+  return l10n("local.value_needs_value_value_f523706a", {
+    v0: where,
+    v1: keyCount,
+    v2: keyCount === 1 ? l10n("local.key_2c70e12b") : l10n("local.keys_48a53f07"),
+  });
 }
 
 /**

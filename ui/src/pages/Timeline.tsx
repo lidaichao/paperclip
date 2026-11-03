@@ -280,7 +280,7 @@ function TimelineSummaryStats({
     { label: l10n("local.run_time_40349abb"), value: formatDuration(0, summary.activeMs), icon: Clock3 },
     {
       label: l10n("local.tokens_used_d2252f5a"),
-      value: summary.totalTokens > 0 ? formatCompactInteger(summary.totalTokens) : "Not tracked",
+      value: summary.totalTokens > 0 ? formatCompactInteger(summary.totalTokens) : l10n("local.not_tracked_10300303"),
       icon: Coins,
     },
   ];

@@ -12495,6 +12495,11 @@
     "skill_already_imported_10300298": "Skill already imported",
     "skill_could_not_be_added_10300299": "Skill could not be added",
     "selected_folder_no_valid_skill_md_10300300": "The selected folder does not contain a valid SKILL.md file.",
-    "could_not_inspect_skill_10300301": "Could not inspect skill"
+    "could_not_inspect_skill_10300301": "Could not inspect skill",
+    "expiring_10300302": "Expiring",
+    "not_tracked_10300303": "Not tracked",
+    "failed_to_update_general_settings_10300304": "Failed to update general settings.",
+    "runs_in_your_workspace_10300305": "Runs in your workspace",
+    "connects_over_the_web_10300306": "Connects over the web"
   }
 }
