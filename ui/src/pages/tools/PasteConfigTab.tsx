@@ -158,7 +158,9 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
   const connectMutation = useMutation({
     mutationFn: (draft: McpJsonImportDraft) => {
       const url = draftConnectUrl(draft);
-      if (!url) throw new Error("Only remote HTTP drafts can be checked and activated from pasted config.");
+      if (!url) {
+        throw new Error(l10n("local.only_remote_http_drafts_can_be_activated_10300045"));
+      }
       return toolsApi.connectApp(companyId, {
         link: url,
         name: connectionNames[draft.name]?.trim() || draft.name,

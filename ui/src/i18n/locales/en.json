@@ -12232,6 +12232,13 @@
     "zip_unsupported_local_file_header_10300035": "Invalid zip archive: unsupported local file header.",
     "zip_truncated_local_file_header_10300036": "Invalid zip archive: truncated local file header.",
     "zip_data_descriptors_not_supported_10300037": "Unsupported zip archive: data descriptors are not supported.",
-    "zip_truncated_file_contents_10300038": "Invalid zip archive: truncated file contents."
+    "zip_truncated_file_contents_10300038": "Invalid zip archive: truncated file contents.",
+    "enter_header_name_and_value_10300039": "Enter both a name and value for each header.",
+    "no_selection_to_anchor_to_10300040": "No selection to anchor to.",
+    "document_has_no_revision_yet_10300041": "Document has no revision yet.",
+    "select_organization_before_profile_avatar_10300042": "Select an organization before uploading a profile avatar.",
+    "no_user_selected_10300043": "No user selected.",
+    "no_project_selected_10300044": "No project selected.",
+    "only_remote_http_drafts_can_be_activated_10300045": "Only remote HTTP drafts can be checked and activated from pasted config."
   }
 }

@@ -80,7 +80,9 @@ export function InstanceAccess() {
 
   const setAdminMutation = useMutation({
     mutationFn: async (makeAdmin: boolean) => {
-      if (!selectedUserId) throw new Error("No user selected");
+      if (!selectedUserId) {
+        throw new Error(l10n("local.no_user_selected_10300043"));
+      }
       if (makeAdmin) return accessApi.promoteInstanceAdmin(selectedUserId);
       return accessApi.demoteInstanceAdmin(selectedUserId);
     },

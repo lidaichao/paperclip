@@ -12232,6 +12232,13 @@
     "zip_unsupported_local_file_header_10300035": "ZIP 压缩包无效：不支持此本地文件头。",
     "zip_truncated_local_file_header_10300036": "ZIP 压缩包无效：本地文件头不完整。",
     "zip_data_descriptors_not_supported_10300037": "不支持此 ZIP 压缩包：暂不支持数据描述符。",
-    "zip_truncated_file_contents_10300038": "ZIP 压缩包无效：文件内容不完整。"
+    "zip_truncated_file_contents_10300038": "ZIP 压缩包无效：文件内容不完整。",
+    "enter_header_name_and_value_10300039": "请为每个请求头填写名称和值。",
+    "no_selection_to_anchor_to_10300040": "没有可用于定位批注的选区。",
+    "document_has_no_revision_yet_10300041": "文档尚无修订版本。",
+    "select_organization_before_profile_avatar_10300042": "上传个人头像前，请先选择组织。",
+    "no_user_selected_10300043": "尚未选择用户。",
+    "no_project_selected_10300044": "尚未选择项目。",
+    "only_remote_http_drafts_can_be_activated_10300045": "只有远程 HTTP 草稿可以通过粘贴的配置进行检查和启用。"
   }
 }

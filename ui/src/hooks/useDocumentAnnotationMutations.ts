@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { l10n } from "../i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DocumentAnnotationComment, DocumentAnnotationThreadStatus, DocumentAnnotationThreadWithComments } from "@paperclipai/shared";
 import { authApi } from "@/api/auth";
@@ -43,8 +44,12 @@ export function useDocumentAnnotationMutations(options: MutationOptions) {
 
   const createThread = useMutation({
     mutationFn: async (body: string) => {
-      if (!options.pendingAnchor) throw new Error("No selection to anchor to.");
-      if (!options.baseRevisionId) throw new Error("Document has no revision yet.");
+      if (!options.pendingAnchor) {
+        throw new Error(l10n("local.no_selection_to_anchor_to_10300040"));
+      }
+      if (!options.baseRevisionId) {
+        throw new Error(l10n("local.document_has_no_revision_yet_10300041"));
+      }
       return documentAnnotationsApi.createForTarget(options.target, {
         baseRevisionId: options.baseRevisionId,
         baseRevisionNumber: options.baseRevisionNumber,

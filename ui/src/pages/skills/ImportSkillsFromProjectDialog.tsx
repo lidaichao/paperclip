@@ -347,7 +347,9 @@ export function ImportSkillsFromProjectDialog({
 
   const importMutation = useMutation({
     mutationFn: () => {
-      if (!selectedProject) throw new Error("No project selected.");
+      if (!selectedProject) {
+        throw new Error(l10n("local.no_project_selected_10300044"));
+      }
       const selectionInput = Array.from(selection.values());
       return companySkillsApi.scanProjects(companyId, {
         projectIds: [selectedProject.id],

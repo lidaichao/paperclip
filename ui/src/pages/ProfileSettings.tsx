@@ -88,7 +88,7 @@ export function ProfileSettings() {
   const uploadAvatarMutation = useMutation({
     mutationFn: async (file: File) => {
       if (!selectedCompanyId) {
-        throw new Error("Select an organization before uploading a profile avatar.");
+        throw new Error(l10n("local.select_organization_before_profile_avatar_10300042"));
       }
 
       const asset = await assetsApi.uploadImage(

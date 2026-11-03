@@ -109,7 +109,9 @@ export function RemoteMcpProductionSetup({ providerId, connection, host = "page"
       if (state.auth === "headers" || state.auth === "bearer") {
         for (const header of state.headers) {
           if (!header.name.trim() && !header.value) continue;
-          if (!header.name.trim() || !header.value) throw new Error("Enter both a name and value for each header.");
+          if (!header.name.trim() || !header.value) {
+            throw new Error(l10n("local.enter_header_name_and_value_10300039"));
+          }
           credentials[`headers.${header.name.trim()}`] = header.value;
         }
       }
