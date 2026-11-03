@@ -12328,7 +12328,7 @@ export function toolAccessService(
       const connectorProfile = method.connectorProfile;
       const profile = managedConnectorProfile(connectorProfile);
       if (!profile)
-        throw badRequest("This app has an invalid managed connector profile");
+        throw badRequest("此应用的托管连接器配置无效");
       config.oauth = {
         strategy: method.oauthStrategy,
         provider: profile.provider,
@@ -12817,7 +12817,7 @@ export function toolAccessService(
               })
               .returning();
             if (!changedGrant)
-              throw new Error("Failed to create personal connection grant");
+              throw new Error("无法创建个人连接授权");
           }
           if (revivedConnectionPrevious) {
             revivedGrantMutation = {
@@ -13043,7 +13043,7 @@ export function toolAccessService(
           // audit/rollback ownership in this attempt.
           const existingGrant = await vaultGrantForConnection(connectionRow, actor);
           if (existingGrant?.kind !== "user" || existingGrant.subjectUserId !== personalIdentityUserId) {
-            throw conflict("The personal credential changed during setup. Please try again.");
+            throw conflict("配置期间个人凭据发生变化，请重试。");
           }
         }
         // A successful public probe establishes this identity, like OAuth
@@ -13414,12 +13414,12 @@ export function toolAccessService(
   ): Promise<FinishToolAppResult> {
     const connection = await getConnectionRow(connectionId, companyId);
     if (connection.status === "archived")
-      throw conflict("Archived app connections cannot be finished");
+      throw conflict("已归档的应用连接无法完成配置");
     if (connection.config.mcpPreserveAccess === true && isRemoteMcpConnectorMethod(connection.config.sourceTemplateKey, connection.config.connectionMethodKey)) {
       const [profile] = await db.select().from(toolProfiles).where(and(
         eq(toolProfiles.companyId, companyId), eq(toolProfiles.profileKey, `app:${connection.id}`),
       )).limit(1);
-      if (!profile) throw conflict("The saved connection permissions could not be found");
+      if (!profile) throw conflict("未找到已保存的连接权限");
       const config = { ...connection.config };
       delete config.mcpPreserveAccess;
       const updated = await db.transaction(async (tx) => {
@@ -13456,7 +13456,7 @@ export function toolAccessService(
       input.askFirstCatalogEntryIds,
     );
     if (enabledRows.some((entry) => entry.status === "disabled" && !(entry.quarantineReason === "mcp_tool_removed" && isRemoteMcpConnectorMethod(connection.config.sourceTemplateKey, connection.config.connectionMethodKey)))) {
-      throw badRequest("Disabled actions cannot be enabled");
+      throw badRequest("无法启用已停用的操作");
     }
     if (reviewedIds.length > 0) {
       await assertCatalogEntriesForConnection(
@@ -13889,7 +13889,7 @@ export function toolAccessService(
     assertSupportedConnection(connection);
     await assertMcpAggregatorSetupEnabled(connection.config.sourceTemplateKey, connection.config.connectionMethodKey);
     if (connection.status === "archived")
-      throw conflict("Archived app connections cannot be reconnected");
+      throw conflict("已归档的应用连接无法重新连接");
     if (connection.credentialSource === "vercel_connect") {
       throw conflict(
         "Manage this connector in Vercel Connect, then run a Paperclip health check to verify it.",
@@ -13928,7 +13928,7 @@ export function toolAccessService(
         (input.credentialValues[field.configPath]?.trim().length ?? 0) > 0,
     );
     if (providedFields.length === 0)
-      throw badRequest("Paste a new key to reconnect this app");
+      throw badRequest("请粘贴新密钥以重新连接此应用");
 
     const personalIdentity = await fixedPersonalIdentityForReconnect(
       connection,
@@ -14065,7 +14065,7 @@ export function toolAccessService(
     assertSupportedConnection(connection);
     await assertMcpAggregatorSetupEnabled(connection.config.sourceTemplateKey, connection.config.connectionMethodKey);
     if (connection.status === "archived")
-      throw conflict("Archived app connections cannot start sign in");
+      throw conflict("已归档的应用连接无法开始登录");
     const sourceTemplateKey =
       typeof connection.config.sourceTemplateKey === "string"
         ? connection.config.sourceTemplateKey
@@ -14249,7 +14249,7 @@ export function toolAccessService(
       const connectorProfile = galleryMethod.connectorProfile;
       const managedProfile = managedConnectorProfile(connectorProfile);
       if (!managedProfile)
-        throw badRequest("This app has an invalid managed connector profile");
+        throw badRequest("此应用的托管连接器配置无效");
       const providerName = galleryEntry?.name ?? "Google Workspace";
       const cloudConnector = currentCloudConnector();
       if (!cloudConnector) {
@@ -14372,7 +14372,7 @@ export function toolAccessService(
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     const binding = starterBinding;
     if (!binding.actorType || !binding.actorId) {
-      throw forbidden("OAuth sign-in requires an authenticated board session");
+      throw forbidden("OAuth 登录需要经过身份验证的工作台会话");
     }
     await db.insert(toolOauthStates).values({
       state,
@@ -14636,9 +14636,9 @@ export function toolAccessService(
       .where(eq(toolOauthStates.state, state))
       .limit(1);
     if (!stateRow)
-      throw badRequest("OAuth state was not found or has already been used");
+      throw badRequest("未找到 OAuth 状态，或该状态已被使用");
     if (stateRow.expiresAt.getTime() <= Date.now())
-      throw badRequest("OAuth state has expired");
+      throw badRequest("OAuth 状态已过期");
     if (stateRow.subjectUserId) {
       if (
         actor?.actorType !== "user" ||
@@ -14669,7 +14669,7 @@ export function toolAccessService(
       .where(eq(toolOauthStates.state, state))
       .returning();
     if (!consumed)
-      throw badRequest("OAuth state was not found or has already been used");
+      throw badRequest("未找到 OAuth 状态，或该状态已被使用");
     return consumed;
   }
 
@@ -14950,7 +14950,7 @@ export function toolAccessService(
     }
     const connectorProfile = method.connectorProfile;
     const profile = managedConnectorProfile(connectorProfile);
-    if (!profile) throw badRequest("Managed connector profile is invalid");
+    if (!profile) throw badRequest("托管连接器配置无效");
     const connectorSubject = subjectAgentId
       ? `agent:${subjectAgentId}`
       : subjectUserId!;

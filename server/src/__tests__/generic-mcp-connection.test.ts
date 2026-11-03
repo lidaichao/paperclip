@@ -1822,7 +1822,7 @@ describeEmbeddedPostgres("generic remote MCP connections", () => {
       actor: { actorType: "user", actorId: "board-user" },
     })).rejects.toMatchObject({
       status: 400,
-      message: "OAuth state was not found or has already been used",
+      message: "未找到 OAuth 状态，或该状态已被使用",
     });
   });
 
@@ -1850,7 +1850,7 @@ describeEmbeddedPostgres("generic remote MCP connections", () => {
         .rejects.toMatchObject({ status: 400, details: { code: "oauth_authorization_denied" } });
 
       await expect(service.completeOAuthCallback({ state, code, iss: ISSUER, redirectUri: REDIRECT_URI, actor }))
-        .rejects.toMatchObject({ status: 400, message: "OAuth state was not found or has already been used" });
+        .rejects.toMatchObject({ status: 400, message: "未找到 OAuth 状态，或该状态已被使用" });
 
       expect(fixture.requestsTo("/token")).toHaveLength(0);
       const [connection] = await db.select().from(toolConnections).where(eq(toolConnections.id, connected.connectionId));
@@ -2009,7 +2009,7 @@ describeEmbeddedPostgres("generic remote MCP connections", () => {
       const rejection = settled.find((entry) => entry.status === "rejected") as PromiseRejectedResult;
       expect(rejection.reason).toMatchObject({
         status: 400,
-        message: "OAuth state was not found or has already been used",
+        message: "未找到 OAuth 状态，或该状态已被使用",
       });
     });
   });

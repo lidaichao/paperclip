@@ -2505,7 +2505,7 @@ describeEmbeddedPostgres("tool access service", () => {
       ),
     ).rejects.toMatchObject({
       status: 400,
-      message: "Disabled actions cannot be enabled",
+      message: "无法启用已停用的操作",
     });
 
     await service.finishGalleryAppConnection(
@@ -15401,7 +15401,7 @@ describeEmbeddedPostgres("tool access service", () => {
         { actorType: "user", actorId: "board" },
       ),
     ).rejects.toMatchObject({
-      message: expect.stringContaining("Paste a new key"),
+      message: expect.stringContaining("请粘贴新密钥"),
     });
 
     const result = await service.reconnectGalleryApp(
