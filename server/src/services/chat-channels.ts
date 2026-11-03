@@ -6927,7 +6927,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     actorUserId?: string | null,
   ) {
     const initial = await endpointRecord(endpointId);
-    if (!initial) throw notFound("Chat endpoint not found");
+    if (!initial) throw notFound("未找到聊天端点");
     if (initial.endpoint.provider !== "github") {
       throw unprocessable(
         "Setup secret generation is only available for GitHub",
@@ -6942,7 +6942,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         // after ownership so each successful rotation starts from its immediate
         // predecessor instead of replacing the credential set from a stale read.
         const record = await endpointRecord(endpointId);
-        if (!record) throw notFound("Chat endpoint not found");
+        if (!record) throw notFound("未找到聊天端点");
         const endpoint = record.endpoint;
         if (
           ![
@@ -7014,7 +7014,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
                 .where(eq(chatEndpoints.id, endpoint.id))
                 .for("update")
                 .then((rows) => rows[0] ?? null);
-              if (!current) throw notFound("Chat endpoint not found");
+              if (!current) throw notFound("未找到聊天端点");
               await tx
                 .update(chatEndpoints)
                 .set({
@@ -7061,7 +7061,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
                 .where(eq(chatEndpoints.id, endpoint.id))
                 .for("update")
                 .then((rows) => rows[0] ?? null);
-              if (!current) throw notFound("Chat endpoint not found");
+              if (!current) throw notFound("未找到聊天端点");
               await tx
                 .update(chatEndpoints)
                 .set({
@@ -7693,7 +7693,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           endpoint.providerAccountId !== scope.guildId ||
           runtimeGeneration(endpoint.setup) !== fence.generation
         )
-          throw conflict("Discord command registration authority changed");
+          throw conflict("Discord 命令注册权限已变化");
         const connection = await tx
           .select()
           .from(toolConnections)
@@ -7711,7 +7711,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           credentialFingerprint(connection.credentialSecretRefs) !==
             fence.credentialFingerprint
         )
-          throw conflict("Discord command registration authority changed");
+          throw conflict("Discord 命令注册权限已变化");
         await lease.assertOwned(tx);
       };
       const setCapability = async (tx: DbTransaction, registered: boolean) => {
@@ -7725,7 +7725,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             ),
           )
           .then((rows) => rows[0]);
-        if (!current) throw notFound("Chat endpoint not found");
+        if (!current) throw notFound("未找到聊天端点");
         if (
           current.capabilities.slashCommands === registered &&
           current.capabilities.ephemeralMessages === registered
@@ -7768,7 +7768,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         credentials.applicationId !== scope.applicationId ||
         credentials.guildId !== scope.guildId
       )
-        throw conflict("Discord command registration identity changed");
+        throw conflict("Discord 命令注册身份已变化");
       const result = await reconcileStoredDiscordCommandRegistration(db, {
         scope,
         runtimeFence: {
@@ -7815,13 +7815,13 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
   ): Promise<ChatSdkEndpointRuntime> {
     for (;;) {
       const record = await endpointRecord(endpoint.id);
-      if (!record) throw notFound("Chat endpoint not found");
+      if (!record) throw notFound("未找到聊天端点");
       if (
         record.endpoint.status === "archived" ||
         record.endpoint.status === "paused" ||
         record.endpoint.status === "draft"
       ) {
-        throw conflict("Chat endpoint runtime is not available in this state", {
+        throw conflict("当前状态下聊天端点运行时不可用", {
           code: "chat_endpoint_runtime_unavailable",
         });
       }
@@ -7945,25 +7945,25 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             callbacks: {
               onMessage: (event) => handleSdkMessage(event, context),
               onPhotonAssertOwned: async (activeThreadId) => {
-                if (!(await runtimeCallbackRecord(endpoint.id, context, ["verifying", "active", "attention"]))) throw new Error("Photon receiver ownership changed");
+                if (!(await runtimeCallbackRecord(endpoint.id, context, ["verifying", "active", "attention"]))) throw new Error("Photon 接收器所有权已变化");
                 if (activeThreadId) {
                   const working = await db.select({ id: heartbeatRuns.id }).from(chatConversations).innerJoin(heartbeatRuns, and(
                     eq(heartbeatRuns.companyId, chatConversations.companyId), eq(heartbeatRuns.agentId, record.endpoint.assignedAgentId),
                     eq(sql<string>`${heartbeatRuns.contextSnapshot}->>'issueId'`, sql<string>`${chatConversations.issueId}::text`), inArray(heartbeatRuns.status, ["queued", "running"]),
                   )).where(and(eq(chatConversations.companyId, record.endpoint.companyId), eq(chatConversations.endpointId, endpoint.id), eq(chatConversations.externalThreadId, activeThreadId), inArray(chatConversations.state, ["active", "waiting"]))).limit(1);
-                  if (!working.length) throw new Error("Photon conversation has no active agent work");
+                  if (!working.length) throw new Error("Photon 会话中没有正在执行的智能体工作");
                 }
                 await db.transaction(async (tx) => {
                   const current = await runtimeCallbackEndpoint(tx, endpoint.id, context, ["attention"]);
                   if (!current) return;
                   const connection = await tx.select().from(toolConnections).where(eq(toolConnections.id, current.connectionId)).then((rows) => rows[0]);
-                  if (!connection?.enabled) throw new Error("Photon endpoint requires operator recovery");
+                  if (!connection?.enabled) throw new Error("Photon 端点需要操作员恢复");
                   await tx.update(chatEndpoints).set({ status: current.setup.step === "complete" ? "active" : "verifying", healthMessage: "Photon receiver connected", lastError: null, updatedAt: new Date() }).where(eq(chatEndpoints.id, endpoint.id));
                 });
               },
               onPhotonCheckpoint: (sequence) => db.transaction(async (tx) => {
-                if (!(await runtimeCallbackEndpoint(tx, endpoint.id, context, ["verifying", "active"]))) throw new Error("Photon receiver is no longer current");
-                if ((await renewDiscordGatewayOwnershipForMessageAdmission(tx, endpoint.id, context)).kind !== "owned") throw new Error("Photon receiver lease was replaced");
+                if (!(await runtimeCallbackEndpoint(tx, endpoint.id, context, ["verifying", "active"]))) throw new Error("Photon 接收器已不是当前接收器");
+                if ((await renewDiscordGatewayOwnershipForMessageAdmission(tx, endpoint.id, context)).kind !== "owned") throw new Error("Photon 接收器租约已被替换");
                 await writePhotonCheckpoint(new PhotonState({ companyId: record.endpoint.companyId, endpointId: endpoint.id }, createChatSdkStatePersistence(tx as unknown as Db)), credentials.lineId, sequence);
               }),
               onPhotonEvent: (event) => handlePhotonEvent(endpoint.id, event, context),
@@ -8723,7 +8723,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
                 )
                 .returning({ id: chatActions.id });
               if (!claimed.length)
-                throw forbidden("Photon prompt has already been resolved");
+                throw forbidden("Photon 提示已处理");
               await logActivity(tx as unknown as Db, {
                 companyId: endpoint.companyId,
                 actorType: "user",
@@ -8840,7 +8840,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
               )
               .returning({ id: chatActions.id });
             if (!claimed.length)
-              throw forbidden("Photon prompt has already been resolved");
+              throw forbidden("Photon 提示已处理");
             await logActivity(tx as unknown as Db, {
               companyId: endpoint.companyId,
               actorType: "user",
@@ -8917,10 +8917,10 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       "attention",
     ]);
     if (!record)
-      throw new Error("Photon receiver no longer owns this endpoint");
+      throw new Error("Photon 接收器已不再拥有此端点");
     const adapter = context.endpointRuntime!.getProviderAdapter();
     if (!(adapter instanceof PhotonChatAdapter))
-      throw new Error("Photon adapter unavailable");
+      throw new Error("Photon 适配器不可用");
     if (adapter.authentication.identity.allocation === "shared" && event.type === "group.changed") return;
     if (
       event.type === "group.changed" &&
@@ -8940,7 +8940,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             "active",
           ]))
         )
-          throw new Error("Photon receiver is no longer current");
+          throw new Error("Photon 接收器已不是当前接收器");
         if (
           (
             await renewDiscordGatewayOwnershipForMessageAdmission(
@@ -8950,7 +8950,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             )
           ).kind !== "owned"
         )
-          throw new Error("Photon receiver lease was replaced");
+          throw new Error("Photon 接收器租约已被替换");
         // Removal can be the first retained event after activation. Preserve a
         // tombstone even when the group has never been discovered locally.
         await tx
@@ -9010,14 +9010,14 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           "active",
         ]))
       )
-        throw new Error("Photon receiver is no longer current");
+        throw new Error("Photon 接收器已不是当前接收器");
       const ownership = await renewDiscordGatewayOwnershipForMessageAdmission(
         tx,
         endpointId,
         context,
       );
       if (ownership.kind !== "owned")
-        throw new Error("Photon receiver lease was replaced");
+        throw new Error("Photon 接收器租约已被替换");
       const existing = await tx
         .select()
         .from(chatEndpointResources)
@@ -9103,9 +9103,9 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     actorUserId?: string | null,
   ) {
     const record = await endpointRecord(endpointId);
-    if (!record) throw notFound("Chat endpoint not found");
-    if (record.endpoint.provider === "agentmail") throw badRequest("Use the email inbox API for AgentMail");
-    if (input.photon && record.endpoint.provider !== "imessage-photon") throw badRequest("Photon configuration is only valid for iMessage Photon");
+    if (!record) throw notFound("未找到聊天端点");
+    if (record.endpoint.provider === "agentmail") throw badRequest("请使用 AgentMail 的邮件收件箱接口");
+    if (input.photon && record.endpoint.provider !== "imessage-photon") throw badRequest("Photon 配置仅适用于 iMessage Photon");
     const suppliedCredentialKeys = Object.keys(input.credentials ?? {});
     if (suppliedCredentialKeys.length > 0) {
       const credentialAction =
@@ -9147,11 +9147,11 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     actorUserId?: string | null,
   ) {
     const record = await endpointRecord(endpointId);
-    if (!record) throw notFound("Chat endpoint not found");
+    if (!record) throw notFound("未找到聊天端点");
     const endpoint = record.endpoint;
     if (input.action === "pause") {
       if (endpoint.status !== "active") {
-        throw conflict("Only an active chat connection can be paused", {
+        throw conflict("只有活动中的聊天连接才能暂停", {
           code: "chat_endpoint_not_active",
         });
       }
@@ -9165,7 +9165,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           .for("update")
           .then((rows) => rows[0] ?? null);
         if (!current || current.status !== "active") {
-          throw conflict("Only an active chat connection can be paused", {
+          throw conflict("只有活动中的聊天连接才能暂停", {
             code: "chat_endpoint_not_active",
           });
         }
@@ -9224,7 +9224,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         );
       }
       let credentials = await resolveCredentials(endpoint).catch(() => {
-        throw conflict("Reconnect the provider credentials before resuming", {
+        throw conflict("请重新连接服务商凭据后再恢复", {
           code: "chat_endpoint_credentials_missing",
         });
       });
@@ -9431,7 +9431,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           }
           return get(endpoint.id);
         }
-        throw conflict("This chat connection has already been removed", {
+        throw conflict("此聊天连接已被移除", {
           code: "chat_endpoint_already_removed",
         });
       }
@@ -9444,7 +9444,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           .for("update")
           .then((rows) => rows[0] ?? null);
         if (!current || current.status === "archived") {
-          throw conflict("This chat connection has already been removed", {
+          throw conflict("此聊天连接已被移除", {
             code: "chat_endpoint_already_removed",
           });
         }
@@ -9513,7 +9513,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       input.action !== "reconnect" &&
       input.action !== "verify"
     ) {
-      throw unprocessable("Unsupported chat endpoint setup action");
+      throw unprocessable("不支持此聊天端点配置操作");
     }
     if (!getWebhookPublicBaseUrl() && endpoint.provider !== "discord" && endpoint.provider !== "imessage-photon") {
       throw unprocessable(
@@ -9548,7 +9548,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         );
       }
       if (!endpoint.setup.webhookVerifiedAt) {
-        throw conflict("Slack has not verified the Paperclip Request URL yet", {
+        throw conflict("Slack 尚未验证 Alice 请求地址", {
           code: "chat_webhook_not_verified",
         });
       }
@@ -9630,7 +9630,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     if (endpoint.provider === "imessage-photon") {
       const configuration = photonChannelConfigurationSchema.parse(input.photon ?? (credentials.allocation === "shared" ? { allocation: "shared", projectId: credentials.projectId } : { projectId: credentials.projectId, lineId: credentials.lineId }));
       const lineId = configuration.allocation === "shared" ? photonSharedScope(configuration.projectId) : configuration.lineId;
-      if (endpoint.botExternalId && (configuration.projectId !== endpoint.providerAccountId || credentials.lineId && lineId !== credentials.lineId)) throw conflict("A different Photon identity requires a new channel");
+      if (endpoint.botExternalId && (configuration.projectId !== endpoint.providerAccountId || credentials.lineId && lineId !== credentials.lineId)) throw conflict("使用其他 Photon 身份需要新建频道");
       credentials = { ...credentials, ...configuration, lineId };
     }
     const identity = await verifyCredentials(endpoint.provider, credentials);
@@ -9698,7 +9698,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           return rows;
         });
         if (claimed.length !== 1) {
-          throw conflict("This chat connection changed during setup", {
+          throw conflict("配置期间此聊天连接发生变化", {
             code: "chat_endpoint_setup_changed",
           });
         }
@@ -9744,7 +9744,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
           .where(eq(chatEndpoints.id, endpoint.id))
           .for("update")
           .then((rows) => rows[0] ?? null);
-        if (!current) throw notFound("Chat endpoint not found");
+        if (!current) throw notFound("未找到聊天端点");
         await tx
           .update(chatEndpoints)
           .set({
@@ -9802,7 +9802,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     }
     try {
       const next = await endpointRecord(endpoint.id);
-      if (!next) throw notFound("Chat endpoint not found");
+      if (!next) throw notFound("未找到聊天端点");
       await invalidateRuntime(endpoint.id);
       if (endpoint.provider === "github" && input.action === "reconnect") {
         // The immutable App and its installation were verified above. Repair
@@ -9980,7 +9980,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
 
   async function setupTestStatus(endpointId: string, userId: string) {
     const record = await endpointRecord(endpointId);
-    if (!record) throw notFound("Chat endpoint not found");
+    if (!record) throw notFound("未找到聊天端点");
     const startedAt = record.endpoint.setup.testStartedAt;
     if (!startedAt) return { messageReceivedAt: null };
     const links = await db.select({ principalId: chatIdentityLinks.principalId }).from(chatIdentityLinks).where(and(
@@ -10006,7 +10006,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
 
   async function test(endpointId: string, finishOptions?: { optionalSlackTestForUser: string }) {
     const initial = await endpointRecord(endpointId);
-    if (!initial) throw notFound("Chat endpoint not found");
+    if (!initial) throw notFound("未找到聊天端点");
     return withCredentialMutationLease(
       initial.endpoint,
       async (credentialLease) => {
@@ -10015,16 +10015,16 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         // one exact provider runtime, never a setup snapshot that a concurrent
         // reconnect has already superseded.
         const record = await endpointRecord(endpointId);
-        if (!record) throw notFound("Chat endpoint not found");
+        if (!record) throw notFound("未找到聊天端点");
         const endpoint = record.endpoint;
         if (endpoint.status !== "verifying" || endpoint.setup.step !== "test") {
-          throw conflict("This connection is not waiting for a setup test", {
+          throw conflict("此连接当前不在等待配置测试", {
             code: "chat_endpoint_not_testing",
           });
         }
         if (endpoint.provider === "github" && endpoint.setup.github) {
           const verified = await githubChatManagementService(db, fetchImpl).verification(endpoint.id);
-          if (!verified.ready) throw conflict("Finish verifying the App, repositories, and assigned agent's tools before activating this bot", { checks: verified.checks });
+          if (!verified.ready) throw conflict("激活此机器人前，请完成应用、仓库和已分配智能体工具的验证", { checks: verified.checks });
         }
         const testStartedAtValue = endpoint.setup.testStartedAt;
         const testStartedAt = testStartedAtValue
@@ -10033,10 +10033,10 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         const optionalSlackTest = Boolean(finishOptions?.optionalSlackTestForUser);
         if (optionalSlackTest) {
           if (!["slack", "github"].includes(endpoint.provider) || !endpoint.setup.webhookVerifiedAt || !endpoint.providerAccountId) {
-            throw conflict("Verify the connection before finishing setup");
+            throw conflict("完成配置前请先验证连接");
           }
           const linked = await findAuthorizedIdentityLink(endpoint, finishOptions!.optionalSlackTestForUser);
-          if (!linked) throw forbidden("Connect your account before finishing setup");
+          if (!linked) throw forbidden("完成配置前请先连接你的账号");
         }
         if (!optionalSlackTest) {
           if (
@@ -10173,7 +10173,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             const linked = await tx.select({ principalId: chatIdentityLinks.principalId }).from(chatIdentityLinks).where(and(
               eq(chatIdentityLinks.endpointId, endpoint.id), eq(chatIdentityLinks.paperclipUserId, finishOptions!.optionalSlackTestForUser), eq(chatIdentityLinks.status, "linked"),
             )).limit(1).then((rows) => rows[0]);
-            if (!linked || !(await lockCurrentPrincipalAuthorization(tx, endpoint, linked.principalId)).allowed) throw forbidden("Your connected account is no longer authorized");
+            if (!linked || !(await lockCurrentPrincipalAuthorization(tx, endpoint, linked.principalId)).allowed) throw forbidden("你连接的账号已失去授权");
           }
           const [activated] = await tx
             .update(chatEndpoints)
@@ -10200,7 +10200,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             )
             .returning({ id: chatEndpoints.id });
           if (!activated) {
-            throw conflict("This setup test was superseded by a reconnect", {
+            throw conflict("此配置测试已被重新连接取代", {
               code: "chat_endpoint_test_superseded",
             });
           }
@@ -10448,7 +10448,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
     // actual-reply qualification. Other providers retain their active-only gate.
     if (!endpoint || (endpoint.status !== "active" &&
       (endpoint.provider !== "imessage-photon" || endpoint.setup.step !== "test"))) {
-      throw forbidden("This chat action is no longer authorized", {
+      throw forbidden("此聊天操作已失去授权", {
         code: "chat_action_authorization_changed",
       });
     }
@@ -10466,7 +10466,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       .for("update")
       .then((rows) => rows[0] ?? null);
     if (!conversation) {
-      throw forbidden("This chat action is no longer authorized", {
+      throw forbidden("此聊天操作已失去授权", {
         code: "chat_action_authorization_changed",
       });
     }
@@ -10500,7 +10500,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
       !authorization.allowed ||
       authorization.userId !== input.expectedUserId
     ) {
-      throw forbidden("This chat action is no longer authorized", {
+      throw forbidden("此聊天操作已失去授权", {
         code: "chat_action_authorization_changed",
       });
     }
