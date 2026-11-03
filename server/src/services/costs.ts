@@ -60,9 +60,9 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .where(eq(agents.id, data.agentId))
         .then((rows) => rows[0] ?? null);
 
-      if (!agent) throw notFound("Agent not found");
+    if (!agent) throw notFound("未找到智能体");
       if (agent.companyId !== companyId) {
-        throw unprocessable("Agent does not belong to company");
+      throw unprocessable("智能体不属于此公司");
       }
 
       const event = await db
@@ -110,7 +110,7 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .where(eq(companies.id, companyId))
         .then((rows) => rows[0] ?? null);
 
-      if (!company) throw notFound("Company not found");
+    if (!company) throw notFound("未找到公司");
 
       const conditions: ReturnType<typeof eq>[] = [eq(costEvents.companyId, companyId)];
       if (range?.from) conditions.push(gte(costEvents.occurredAt, range.from));

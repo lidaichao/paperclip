@@ -263,7 +263,7 @@ describe("budgetService", () => {
         { action: "raise_budget_and_resume", amount: 140 },
         "board-user",
       ),
-    ).rejects.toThrow("New budget must exceed current observed spend");
+    ).rejects.toThrow("新预算必须高于当前已发生支出");
   });
 
   it("syncs company monthly budget when raising and resuming a company incident", async () => {
@@ -598,7 +598,7 @@ describeEmbeddedPostgres("budgetService release gate enforcement", () => {
         { action: "raise_budget_and_resume", amount: 125 },
         "board-user",
       ),
-    ).rejects.toThrow("New budget must exceed current observed spend");
+    ).rejects.toThrow("新预算必须高于当前已发生支出");
 
     expect(await service.getInvocationBlock(companyId, agentId, { projectId })).toEqual({
       scopeType: "project",

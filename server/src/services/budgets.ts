@@ -92,7 +92,7 @@ async function resolveScopeRecord(db: Db, scopeType: BudgetScopeType, scopeId: s
       .from(companies)
       .where(eq(companies.id, scopeId))
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Company not found");
+    if (!row) throw notFound("未找到公司");
     return {
       companyId: row.companyId,
       name: row.name,
@@ -112,7 +112,7 @@ async function resolveScopeRecord(db: Db, scopeType: BudgetScopeType, scopeId: s
       .from(agents)
       .where(eq(agents.id, scopeId))
       .then((rows) => rows[0] ?? null);
-    if (!row) throw notFound("Agent not found");
+    if (!row) throw notFound("未找到智能体");
     return {
       companyId: row.companyId,
       name: row.name,
@@ -131,7 +131,7 @@ async function resolveScopeRecord(db: Db, scopeType: BudgetScopeType, scopeId: s
     .from(projects)
     .where(eq(projects.id, scopeId))
     .then((rows) => rows[0] ?? null);
-  if (!row) throw notFound("Project not found");
+    if (!row) throw notFound("未找到项目");
   return {
     companyId: row.companyId,
     name: row.name,
@@ -302,7 +302,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
       .from(budgetPolicies)
       .where(eq(budgetPolicies.id, policyId))
       .then((rows) => rows[0] ?? null);
-    if (!policy) throw notFound("Budget policy not found");
+    if (!policy) throw notFound("未找到预算策略");
     return policy;
   }
 
@@ -512,7 +512,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
     ): Promise<BudgetPolicySummary> => {
       const scope = await resolveScopeRecord(db, input.scopeType, input.scopeId);
       if (scope.companyId !== companyId) {
-        throw unprocessable("Budget scope does not belong to company");
+      throw unprocessable("预算范围不属于此公司");
       }
 
       const metric = input.metric ?? "billed_cents";
@@ -730,7 +730,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
         .from(agents)
         .where(eq(agents.id, agentId))
         .then((rows) => rows[0] ?? null);
-      if (!agent || agent.companyId !== companyId) throw notFound("Agent not found");
+    if (!agent || agent.companyId !== companyId) throw notFound("未找到智能体");
 
       const company = await db
         .select({
@@ -741,7 +741,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
         .from(companies)
         .where(eq(companies.id, companyId))
         .then((rows) => rows[0] ?? null);
-      if (!company) throw notFound("Company not found");
+    if (!company) throw notFound("未找到公司");
       if (company.status === "paused") {
         return {
           scopeType: "company" as const,
@@ -874,15 +874,15 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
         .from(budgetIncidents)
         .where(eq(budgetIncidents.id, incidentId))
         .then((rows) => rows[0] ?? null);
-      if (!incident) throw notFound("Budget incident not found");
-      if (incident.companyId !== companyId) throw notFound("Budget incident not found");
+    if (!incident) throw notFound("未找到预算事件");
+    if (incident.companyId !== companyId) throw notFound("未找到预算事件");
 
       const policy = await getPolicyRow(incident.policyId);
       if (input.action === "raise_budget_and_resume") {
         const nextAmount = Math.max(0, Math.floor(input.amount ?? 0));
         const currentObserved = await computeObservedAmount(db, policy);
         if (nextAmount <= currentObserved) {
-          throw unprocessable("New budget must exceed current observed spend");
+      throw unprocessable("新预算必须高于当前已发生支出");
         }
 
         const now = new Date();
