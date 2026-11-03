@@ -169,17 +169,17 @@ interface TreeHoldListOptions extends BaseClientOptions {
 }
 
 export function registerIssueCommands(program: Command): void {
-  const issue = program.command("issue").description("Issue operations");
+  const issue = program.command("issue").description("任务卡操作");
 
   addCommonClientOptions(
     issue
       .command("list")
-      .description("List issues for a company")
-      .option("-C, --company-id <id>", "Company ID")
-      .option("--status <csv>", "Comma-separated statuses")
-      .option("--assignee-agent-id <id>", "Filter by assignee agent ID")
-      .option("--project-id <id>", "Filter by project ID")
-      .option("--match <text>", "Local text match on identifier/title/description")
+      .description("列出公司的任务卡")
+      .option("-C, --company-id <id>", "公司 ID")
+      .option("--status <csv>", "以逗号分隔的状态")
+      .option("--assignee-agent-id <id>", "按负责人智能体 ID 筛选")
+      .option("--project-id <id>", "按项目 ID 筛选")
+      .option("--match <text>", "在编号、标题和描述中进行本地文本匹配")
       .action(async (opts: IssueBaseOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -206,13 +206,13 @@ export function registerIssueCommands(program: Command): void {
           for (const item of filtered) {
             console.log(
               formatInlineRecord({
-                identifier: item.identifier,
-                id: item.id,
-                status: item.status,
-                priority: item.priority,
-                assigneeAgentId: item.assigneeAgentId,
-                title: item.title,
-                projectId: item.projectId,
+                编号: item.identifier,
+                ID: item.id,
+                状态: item.status,
+                优先级: item.priority,
+                负责人智能体ID: item.assigneeAgentId,
+                标题: item.title,
+                项目ID: item.projectId,
               }),
             );
           }
@@ -226,8 +226,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("get")
-      .description("Get an issue by UUID or identifier (e.g. PC-12)")
-      .argument("<idOrIdentifier>", "Issue ID or identifier")
+      .description("通过 UUID 或编号获取任务卡（例如 PC-12）")
+      .argument("<idOrIdentifier>", "任务卡 ID 或编号")
       .action(async (idOrIdentifier: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -242,12 +242,12 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("delete")
-      .description("Delete an issue")
-      .argument("<issueId>", "Issue ID")
-      .option("--yes", "Confirm deletion")
+      .description("删除任务卡")
+      .argument("<issueId>", "任务卡 ID")
+      .option("--yes", "确认删除")
       .action(async (issueId: string, opts: IssueDeleteOptions) => {
         try {
-          if (!opts.yes) throw new Error("Refusing to delete without --yes");
+          if (!opts.yes) throw new Error("未使用 --yes，拒绝删除。");
           const ctx = resolveCommandContext(opts);
           const deleted = await ctx.api.delete<Issue>(apiPath`/api/issues/${issueId}`);
           printOutput(deleted, { json: ctx.json });
@@ -260,8 +260,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("heartbeat-context")
-      .description("Get heartbeat context for an issue")
-      .argument("<issueId>", "Issue ID")
+      .description("获取任务卡的心跳上下文")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -276,18 +276,18 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("create")
-      .description("Create an issue")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .requiredOption("--title <title>", "Issue title")
-      .option("--description <text>", "Issue description")
-      .option("--status <status>", "Issue status")
-      .option("--priority <priority>", "Issue priority")
-      .option("--assignee-agent-id <id>", "Assignee agent ID")
-      .option("--project-id <id>", "Project ID")
-      .option("--goal-id <id>", "Goal ID")
-      .option("--parent-id <id>", "Parent issue ID")
-      .option("--request-depth <n>", "Request depth integer")
-      .option("--billing-code <code>", "Billing code")
+      .description("创建任务卡")
+      .requiredOption("-C, --company-id <id>", "公司 ID")
+      .requiredOption("--title <title>", "任务卡标题")
+      .option("--description <text>", "任务卡描述")
+      .option("--status <status>", "任务卡状态")
+      .option("--priority <priority>", "任务卡优先级")
+      .option("--assignee-agent-id <id>", "负责人智能体 ID")
+      .option("--project-id <id>", "项目 ID")
+      .option("--goal-id <id>", "目标 ID")
+      .option("--parent-id <id>", "父任务卡 ID")
+      .option("--request-depth <n>", "请求深度整数")
+      .option("--billing-code <code>", "计费代码")
       .action(async (opts: IssueCreateOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -316,20 +316,20 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("update")
-      .description("Update an issue")
-      .argument("<issueId>", "Issue ID")
-      .option("--title <title>", "Issue title")
-      .option("--description <text>", "Issue description")
-      .option("--status <status>", "Issue status")
-      .option("--priority <priority>", "Issue priority")
-      .option("--assignee-agent-id <id>", "Assignee agent ID")
-      .option("--project-id <id>", "Project ID")
-      .option("--goal-id <id>", "Goal ID")
-      .option("--parent-id <id>", "Parent issue ID")
-      .option("--request-depth <n>", "Request depth integer")
-      .option("--billing-code <code>", "Billing code")
-      .option("--comment <text>", "Optional comment to add with update")
-      .option("--hidden-at <iso8601|null>", "Set hiddenAt timestamp or literal 'null'")
+      .description("更新任务卡")
+      .argument("<issueId>", "任务卡 ID")
+      .option("--title <title>", "任务卡标题")
+      .option("--description <text>", "任务卡描述")
+      .option("--status <status>", "任务卡状态")
+      .option("--priority <priority>", "任务卡优先级")
+      .option("--assignee-agent-id <id>", "负责人智能体 ID")
+      .option("--project-id <id>", "项目 ID")
+      .option("--goal-id <id>", "目标 ID")
+      .option("--parent-id <id>", "父任务卡 ID")
+      .option("--request-depth <n>", "请求深度整数")
+      .option("--billing-code <code>", "计费代码")
+      .option("--comment <text>", "更新时附加的可选评论")
+      .option("--hidden-at <iso8601|null>", "设置 hiddenAt 时间戳或字面值 null")
       .action(async (issueId: string, opts: IssueUpdateOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -359,15 +359,15 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("comment")
-      .description("Add comment to issue")
-      .argument("<issueId>", "Issue ID")
-      .requiredOption("--body <text>", "Comment body")
+      .description("为任务卡添加评论")
+      .argument("<issueId>", "任务卡 ID")
+      .requiredOption("--body <text>", "评论正文")
       .option(
         "--attachment-id <id...>",
-        "Bind uploaded issue attachments to this comment",
+        "将已上传的任务卡附件绑定到此评论",
       )
-      .option("--reopen", "Reopen if issue is done/cancelled")
-      .option("--resume", "Request explicit follow-up and wake the assignee when resumable")
+      .option("--reopen", "任务卡已完成或已取消时重新打开")
+      .option("--resume", "明确请求继续处理，并在可恢复时唤醒负责人")
       .action(async (issueId: string, opts: IssueCommentOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -388,11 +388,11 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("comments")
-      .description("List issue comments")
-      .argument("<issueId>", "Issue ID")
-      .option("--after-comment-id <id>", "Only return comments after this comment ID")
-      .option("--order <order>", "asc or desc")
-      .option("--limit <n>", "Maximum comments to return")
+      .description("列出任务卡评论")
+      .argument("<issueId>", "任务卡 ID")
+      .option("--after-comment-id <id>", "仅返回此评论 ID 之后的评论")
+      .option("--order <order>", "asc 升序或 desc 降序")
+      .option("--limit <n>", "最多返回的评论数")
       .action(async (issueId: string, opts: IssueCommentListOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -414,9 +414,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("comment:get")
-      .description("Get one issue comment")
-      .argument("<issueId>", "Issue ID")
-      .argument("<commentId>", "Comment ID")
+      .description("获取一条任务卡评论")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<commentId>", "评论 ID")
       .action(async (issueId: string, commentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -431,9 +431,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("comment:delete")
-      .description("Delete or cancel one issue comment")
-      .argument("<issueId>", "Issue ID")
-      .argument("<commentId>", "Comment ID")
+      .description("删除或取消一条任务卡评论")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<commentId>", "评论 ID")
       .action(async (issueId: string, commentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -448,8 +448,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("approvals")
-      .description("List approvals linked to an issue")
-      .argument("<issueId>", "Issue ID")
+      .description("列出任务卡关联的审批")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -464,9 +464,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("approval:link")
-      .description("Link an approval to an issue")
-      .argument("<issueId>", "Issue ID")
-      .argument("<approvalId>", "Approval ID")
+      .description("将审批关联到任务卡")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<approvalId>", "审批 ID")
       .action(async (issueId: string, approvalId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -482,9 +482,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("approval:unlink")
-      .description("Unlink an approval from an issue")
-      .argument("<issueId>", "Issue ID")
-      .argument("<approvalId>", "Approval ID")
+      .description("解除任务卡与审批的关联")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<approvalId>", "审批 ID")
       .action(async (issueId: string, approvalId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -496,16 +496,16 @@ export function registerIssueCommands(program: Command): void {
       }),
   );
 
-  addIssuePostDeleteMarkerCommand(issue, "read", "Mark an issue as read", "post", "/read");
-  addIssuePostDeleteMarkerCommand(issue, "unread", "Mark an issue as unread", "delete", "/read");
-  addIssuePostDeleteMarkerCommand(issue, "archive", "Archive an issue from the inbox", "post", "/inbox-archive");
-  addIssuePostDeleteMarkerCommand(issue, "unarchive", "Unarchive an issue from the inbox", "delete", "/inbox-archive");
+  addIssuePostDeleteMarkerCommand(issue, "read", "将任务卡标记为已读", "post", "/read");
+  addIssuePostDeleteMarkerCommand(issue, "unread", "将任务卡标记为未读", "delete", "/read");
+  addIssuePostDeleteMarkerCommand(issue, "archive", "从收件箱归档任务卡", "post", "/inbox-archive");
+  addIssuePostDeleteMarkerCommand(issue, "unarchive", "恢复收件箱中的任务卡", "delete", "/inbox-archive");
 
   addCommonClientOptions(
     issue
       .command("recovery-actions")
-      .description("List active recovery actions for an issue")
-      .argument("<issueId>", "Issue ID")
+      .description("列出任务卡的有效恢复操作")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -520,12 +520,12 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("recovery:resolve")
-      .description("Resolve an issue recovery action")
-      .argument("<issueId>", "Issue ID")
-      .requiredOption("--outcome <outcome>", "restored, false_positive, blocked, or cancelled")
-      .requiredOption("--source-issue-status <status>", "todo, done, or in_review for restored outcomes; blocked is only valid for blocked outcomes")
-      .option("--action-id <id>", "Specific recovery action ID")
-      .option("--resolution-note <text>", "Resolution note")
+      .description("处理任务卡恢复操作")
+      .argument("<issueId>", "任务卡 ID")
+      .requiredOption("--outcome <outcome>", "结果：restored、false_positive、blocked 或 cancelled")
+      .requiredOption("--source-issue-status <status>", "恢复结果可使用 todo、done 或 in_review；blocked 仅适用于受阻结果")
+      .option("--action-id <id>", "指定恢复操作 ID")
+      .option("--resolution-note <text>", "处理说明")
       .action(async (issueId: string, opts: IssueRecoveryResolveOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -546,9 +546,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("child:create")
-      .description("Create a child issue from a JSON payload")
-      .argument("<issueId>", "Parent issue ID")
-      .requiredOption("--payload-json <json>", "CreateChildIssue JSON payload")
+      .description("通过 JSON 数据创建子任务卡")
+      .argument("<issueId>", "父任务卡 ID")
+      .requiredOption("--payload-json <json>", "CreateChildIssue JSON 数据")
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -564,8 +564,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("force-release")
-      .description("Force-release an issue from an agent checkout")
-      .argument("<issueId>", "Issue ID")
+      .description("强制解除智能体对任务卡的签出")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -580,8 +580,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("work-products")
-      .description("List issue work products")
-      .argument("<issueId>", "Issue ID")
+      .description("列出任务卡工作成果")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -596,9 +596,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("work-product:create")
-      .description("Create an issue work product from JSON")
-      .argument("<issueId>", "Issue ID")
-      .requiredOption("--payload-json <json>", "CreateIssueWorkProduct JSON payload")
+      .description("通过 JSON 创建任务卡工作成果")
+      .argument("<issueId>", "任务卡 ID")
+      .requiredOption("--payload-json <json>", "CreateIssueWorkProduct JSON 数据")
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -614,9 +614,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("work-product:update")
-      .description("Update a work product from JSON")
-      .argument("<workProductId>", "Work product ID")
-      .requiredOption("--payload-json <json>", "UpdateIssueWorkProduct JSON payload")
+      .description("通过 JSON 更新工作成果")
+      .argument("<workProductId>", "工作成果 ID")
+      .requiredOption("--payload-json <json>", "UpdateIssueWorkProduct JSON 数据")
       .action(async (workProductId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -632,8 +632,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("work-product:delete")
-      .description("Delete a work product")
-      .argument("<workProductId>", "Work product ID")
+      .description("删除工作成果")
+      .argument("<workProductId>", "工作成果 ID")
       .action(async (workProductId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -648,9 +648,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("documents")
-      .description("List issue documents")
-      .argument("<issueId>", "Issue ID")
-      .option("--include-system", "Include system documents")
+      .description("列出任务卡文档")
+      .argument("<issueId>", "任务卡 ID")
+      .option("--include-system", "包含系统文档")
       .action(async (issueId: string, opts: BaseClientOptions & { includeSystem?: boolean }) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -666,9 +666,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("document:get")
-      .description("Get an issue document")
-      .argument("<issueId>", "Issue ID")
-      .argument("<key>", "Document key")
+      .description("获取任务卡文档")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<key>", "文档键名")
       .action(async (issueId: string, key: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -683,15 +683,15 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("document:put")
-      .description("Create or update an issue document")
-      .argument("<issueId>", "Issue ID")
-      .argument("<key>", "Document key")
-      .option("--title <title>", "Document title")
-      .option("--format <format>", "Document format", "markdown")
-      .option("--body <markdown>", "Document body")
-      .option("--body-file <path>", "Read document body from a file")
-      .option("--change-summary <text>", "Change summary")
-      .option("--base-revision-id <id>", "Expected base revision ID")
+      .description("创建或更新任务卡文档")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<key>", "文档键名")
+      .option("--title <title>", "文档标题")
+      .option("--format <format>", "文档格式", "markdown")
+      .option("--body <markdown>", "文档正文")
+      .option("--body-file <path>", "从文件读取文档正文")
+      .option("--change-summary <text>", "变更摘要")
+      .option("--base-revision-id <id>", "预期的基础修订版本 ID")
       .action(async (issueId: string, key: string, opts: IssueDocumentPutOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -714,8 +714,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("interactions")
-      .description("List issue thread interactions")
-      .argument("<issueId>", "Issue ID")
+      .description("列出任务卡对话交互")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -730,9 +730,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("interaction:create")
-      .description("Create an issue thread interaction from JSON")
-      .argument("<issueId>", "Issue ID")
-      .requiredOption("--payload-json <json>", "CreateIssueThreadInteraction JSON payload")
+      .description("通过 JSON 创建任务卡对话交互")
+      .argument("<issueId>", "任务卡 ID")
+      .requiredOption("--payload-json <json>", "CreateIssueThreadInteraction JSON 数据")
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -748,11 +748,11 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("interaction:accept")
-      .description("Accept an issue thread interaction")
-      .argument("<issueId>", "Issue ID")
-      .argument("<interactionId>", "Interaction ID")
-      .option("--selected-client-keys <csv>", "Client keys to accept")
-      .option("--selected-option-ids <csv>", "Checkbox option IDs to accept")
+      .description("接受任务卡对话交互")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<interactionId>", "交互 ID")
+      .option("--selected-client-keys <csv>", "要接受的客户端键名")
+      .option("--selected-option-ids <csv>", "要接受的复选项 ID")
       .action(async (issueId: string, interactionId: string, opts: InteractionAcceptOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -769,16 +769,16 @@ export function registerIssueCommands(program: Command): void {
   );
 
   for (const [name, action, schema, description] of [
-    ["interaction:reject", "reject", rejectIssueThreadInteractionSchema, "Reject an issue thread interaction"],
-    ["interaction:cancel", "cancel", cancelIssueThreadInteractionSchema, "Cancel an issue thread interaction"],
+    ["interaction:reject", "reject", rejectIssueThreadInteractionSchema, "拒绝任务卡对话交互"],
+    ["interaction:cancel", "cancel", cancelIssueThreadInteractionSchema, "取消任务卡对话交互"],
   ] as const) {
     addCommonClientOptions(
       issue
         .command(name)
         .description(description)
-        .argument("<issueId>", "Issue ID")
-        .argument("<interactionId>", "Interaction ID")
-        .option("--reason <text>", "Reason")
+        .argument("<issueId>", "任务卡 ID")
+        .argument("<interactionId>", "交互 ID")
+        .option("--reason <text>", "原因")
         .action(async (issueId: string, interactionId: string, opts: InteractionReasonOptions) => {
           try {
             const ctx = resolveCommandContext(opts);
@@ -795,11 +795,11 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("interaction:respond")
-      .description("Respond to an issue question interaction")
-      .argument("<issueId>", "Issue ID")
-      .argument("<interactionId>", "Interaction ID")
-      .requiredOption("--answers-json <json>", "Answers array JSON")
-      .option("--summary-markdown <markdown>", "Optional response summary")
+      .description("回复任务卡问题交互")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<interactionId>", "交互 ID")
+      .requiredOption("--answers-json <json>", "答案数组 JSON")
+      .option("--summary-markdown <markdown>", "可选回复摘要")
       .action(async (issueId: string, interactionId: string, opts: InteractionRespondOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -818,8 +818,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("tree-state")
-      .description("Get issue tree control state")
-      .argument("<issueId>", "Root issue ID")
+      .description("获取任务树控制状态")
+      .argument("<issueId>", "根任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -834,9 +834,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("tree-preview")
-      .description("Preview issue tree control changes")
-      .argument("<issueId>", "Root issue ID")
-      .requiredOption("--payload-json <json>", "PreviewIssueTreeControl JSON payload")
+      .description("预览任务树控制变更")
+      .argument("<issueId>", "根任务卡 ID")
+      .requiredOption("--payload-json <json>", "PreviewIssueTreeControl JSON 数据")
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -852,11 +852,11 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("tree-holds")
-      .description("List issue tree holds")
-      .argument("<issueId>", "Root issue ID")
-      .option("--status <status>", "active or released")
-      .option("--mode <mode>", "pause, resume, cancel, or restore")
-      .option("--include-members", "Include hold members")
+      .description("列出任务树暂停记录")
+      .argument("<issueId>", "根任务卡 ID")
+      .option("--status <status>", "状态：active 或 released")
+      .option("--mode <mode>", "模式：pause、resume、cancel 或 restore")
+      .option("--include-members", "包含暂停成员")
       .action(async (issueId: string, opts: TreeHoldListOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -876,9 +876,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("tree-hold:create")
-      .description("Create an issue tree hold from JSON")
-      .argument("<issueId>", "Root issue ID")
-      .requiredOption("--payload-json <json>", "CreateIssueTreeHold JSON payload")
+      .description("通过 JSON 创建任务树暂停记录")
+      .argument("<issueId>", "根任务卡 ID")
+      .requiredOption("--payload-json <json>", "CreateIssueTreeHold JSON 数据")
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -894,9 +894,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("tree-hold:get")
-      .description("Get an issue tree hold")
-      .argument("<issueId>", "Root issue ID")
-      .argument("<holdId>", "Hold ID")
+      .description("获取任务树暂停记录")
+      .argument("<issueId>", "根任务卡 ID")
+      .argument("<holdId>", "暂停记录 ID")
       .action(async (issueId: string, holdId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -911,10 +911,10 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("tree-hold:release")
-      .description("Release an issue tree hold")
-      .argument("<issueId>", "Root issue ID")
-      .argument("<holdId>", "Hold ID")
-      .option("--payload-json <json>", "ReleaseIssueTreeHold JSON payload", "{}")
+      .description("解除任务树暂停")
+      .argument("<issueId>", "根任务卡 ID")
+      .argument("<holdId>", "暂停记录 ID")
+      .option("--payload-json <json>", "ReleaseIssueTreeHold JSON 数据", "{}")
       .action(async (issueId: string, holdId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -930,8 +930,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("attachments")
-      .description("List issue attachments")
-      .argument("<issueId>", "Issue ID")
+      .description("列出任务卡附件")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -946,11 +946,11 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("attachment:upload")
-      .description("Upload an issue attachment")
-      .argument("<issueId>", "Issue ID")
-      .option("-C, --company-id <id>", "Company ID")
-      .requiredOption("--file <path>", "File to upload")
-      .option("--comment-id <id>", "Attach to an issue comment")
+      .description("上传任务卡附件")
+      .argument("<issueId>", "任务卡 ID")
+      .option("-C, --company-id <id>", "公司 ID")
+      .requiredOption("--file <path>", "要上传的文件")
+      .option("--comment-id <id>", "关联到任务卡评论")
       .action(async (issueId: string, opts: IssueAttachmentUploadOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -972,9 +972,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("attachment:download")
-      .description("Download an attachment")
-      .argument("<attachmentId>", "Attachment ID")
-      .option("--out <path>", "Output file path; prints to stdout when omitted")
+      .description("下载附件")
+      .argument("<attachmentId>", "附件 ID")
+      .option("--out <path>", "输出文件路径；省略时输出到标准输出")
       .action(async (attachmentId: string, opts: IssueAttachmentDownloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -982,7 +982,7 @@ export function registerIssueCommands(program: Command): void {
           if (opts.out) {
             await writeFile(opts.out, bytes);
             if (ctx.json) printOutput({ out: opts.out, bytes: bytes.byteLength }, { json: true });
-            else console.log(`Wrote ${bytes.byteLength} byte(s) to ${opts.out}`);
+            else console.log(`已将 ${bytes.byteLength} 字节写入 ${opts.out}`);
             return;
           }
           process.stdout.write(bytes);
@@ -995,8 +995,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("attachment:delete")
-      .description("Delete an attachment")
-      .argument("<attachmentId>", "Attachment ID")
+      .description("删除附件")
+      .argument("<attachmentId>", "附件 ID")
       .action(async (attachmentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1011,8 +1011,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("label:list")
-      .description("List issue labels in a company")
-      .option("-C, --company-id <id>", "Company ID")
+      .description("列出公司的任务卡标签")
+      .option("-C, --company-id <id>", "公司 ID")
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -1028,10 +1028,10 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("label:create")
-      .description("Create an issue label")
-      .option("-C, --company-id <id>", "Company ID")
-      .requiredOption("--name <name>", "Label name")
-      .requiredOption("--color <hex>", "Label color, e.g. #4f46e5")
+      .description("创建任务卡标签")
+      .option("-C, --company-id <id>", "公司 ID")
+      .requiredOption("--name <name>", "标签名称")
+      .requiredOption("--color <hex>", "标签颜色，例如 #4f46e5")
       .action(async (opts: IssueLabelCreateOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -1048,8 +1048,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("label:delete")
-      .description("Delete an issue label")
-      .argument("<labelId>", "Label ID")
+      .description("删除任务卡标签")
+      .argument("<labelId>", "标签 ID")
       .action(async (labelId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1064,8 +1064,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("feedback:votes")
-      .description("List feedback votes for an issue")
-      .argument("<issueId>", "Issue ID")
+      .description("列出任务卡反馈投票")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1080,9 +1080,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("feedback:vote")
-      .description("Create or update a feedback vote")
-      .argument("<issueId>", "Issue ID")
-      .requiredOption("--payload-json <json>", "UpsertIssueFeedbackVote JSON payload")
+      .description("创建或更新反馈投票")
+      .argument("<issueId>", "任务卡 ID")
+      .requiredOption("--payload-json <json>", "UpsertIssueFeedbackVote JSON 数据")
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1096,16 +1096,16 @@ export function registerIssueCommands(program: Command): void {
   );
 
   for (const [name, pathSuffix, description] of [
-    ["document:delete", "", "Delete an issue document"],
-    ["document:lock", "/lock", "Lock an issue document"],
-    ["document:unlock", "/unlock", "Unlock an issue document"],
+    ["document:delete", "", "删除任务卡文档"],
+    ["document:lock", "/lock", "锁定任务卡文档"],
+    ["document:unlock", "/unlock", "解锁任务卡文档"],
   ] as const) {
     addCommonClientOptions(
       issue
         .command(name)
         .description(description)
-        .argument("<issueId>", "Issue ID")
-        .argument("<key>", "Document key")
+        .argument("<issueId>", "任务卡 ID")
+        .argument("<key>", "文档键名")
         .action(async (issueId: string, key: string, opts: BaseClientOptions) => {
           try {
             const ctx = resolveCommandContext(opts);
@@ -1122,9 +1122,9 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("document:revisions")
-      .description("List issue document revisions")
-      .argument("<issueId>", "Issue ID")
-      .argument("<key>", "Document key")
+      .description("列出任务卡文档修订版本")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<key>", "文档键名")
       .action(async (issueId: string, key: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1139,10 +1139,10 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("document:restore")
-      .description("Restore an issue document revision")
-      .argument("<issueId>", "Issue ID")
-      .argument("<key>", "Document key")
-      .argument("<revisionId>", "Revision ID")
+      .description("恢复任务卡文档修订版本")
+      .argument("<issueId>", "任务卡 ID")
+      .argument("<key>", "文档键名")
+      .argument("<revisionId>", "修订版本 ID")
       .action(async (issueId: string, key: string, revisionId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1161,15 +1161,15 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("feedback:list")
-      .description("List feedback traces for an issue")
-      .argument("<issueId>", "Issue ID")
-      .option("--target-type <type>", "Filter by target type")
-      .option("--vote <vote>", "Filter by vote value")
-      .option("--status <status>", "Filter by trace status")
-      .option("--from <iso8601>", "Only include traces created at or after this timestamp")
-      .option("--to <iso8601>", "Only include traces created at or before this timestamp")
-      .option("--shared-only", "Only include traces eligible for sharing/export")
-      .option("--include-payload", "Include stored payload snapshots in the response")
+      .description("列出任务卡反馈追踪记录")
+      .argument("<issueId>", "任务卡 ID")
+      .option("--target-type <type>", "按目标类型筛选")
+      .option("--vote <vote>", "按投票值筛选")
+      .option("--status <status>", "按追踪状态筛选")
+      .option("--from <iso8601>", "仅包含此时间戳及之后创建的记录")
+      .option("--to <iso8601>", "仅包含此时间戳及之前创建的记录")
+      .option("--shared-only", "仅包含可共享或导出的记录")
+      .option("--include-payload", "在响应中包含已存储的数据快照")
       .action(async (issueId: string, opts: IssueFeedbackOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1200,8 +1200,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("runs")
-      .description("List heartbeat runs associated with an issue")
-      .argument("<issueId>", "Issue ID or identifier")
+      .description("列出任务卡关联的心跳运行记录")
+      .argument("<issueId>", "任务卡 ID 或编号")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1216,8 +1216,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("live-runs")
-      .description("List queued and running heartbeat runs associated with an issue")
-      .argument("<issueId>", "Issue ID or identifier")
+      .description("列出任务卡关联的排队中或运行中的心跳")
+      .argument("<issueId>", "任务卡 ID 或编号")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1232,8 +1232,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("active-run")
-      .description("Show the active heartbeat run associated with an issue")
-      .argument("<issueId>", "Issue ID or identifier")
+      .description("显示任务卡关联的有效心跳运行记录")
+      .argument("<issueId>", "任务卡 ID 或编号")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1248,17 +1248,17 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("feedback:export")
-      .description("Export feedback traces for an issue")
-      .argument("<issueId>", "Issue ID")
-      .option("--target-type <type>", "Filter by target type")
-      .option("--vote <vote>", "Filter by vote value")
-      .option("--status <status>", "Filter by trace status")
-      .option("--from <iso8601>", "Only include traces created at or after this timestamp")
-      .option("--to <iso8601>", "Only include traces created at or before this timestamp")
-      .option("--shared-only", "Only include traces eligible for sharing/export")
-      .option("--include-payload", "Include stored payload snapshots in the export")
-      .option("--out <path>", "Write export to a file path instead of stdout")
-      .option("--format <format>", "Export format: json or ndjson", "ndjson")
+      .description("导出任务卡反馈追踪记录")
+      .argument("<issueId>", "任务卡 ID")
+      .option("--target-type <type>", "按目标类型筛选")
+      .option("--vote <vote>", "按投票值筛选")
+      .option("--status <status>", "按追踪状态筛选")
+      .option("--from <iso8601>", "仅包含此时间戳及之后创建的记录")
+      .option("--to <iso8601>", "仅包含此时间戳及之前创建的记录")
+      .option("--shared-only", "仅包含可共享或导出的记录")
+      .option("--include-payload", "在导出中包含已存储的数据快照")
+      .option("--out <path>", "写入文件路径，而不是标准输出")
+      .option("--format <format>", "导出格式：json 或 ndjson", "ndjson")
       .action(async (issueId: string, opts: IssueFeedbackOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1275,7 +1275,7 @@ export function registerIssueCommands(program: Command): void {
                 );
                 return;
               }
-              console.log(`Wrote ${traces.length} feedback trace(s) to ${opts.out}`);
+              console.log(`已将 ${traces.length} 条反馈追踪记录写入 ${opts.out}`);
             return;
           }
           process.stdout.write(`${serialized}${serialized.endsWith("\n") ? "" : "\n"}`);
@@ -1288,12 +1288,12 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("checkout")
-      .description("Checkout issue for an agent")
-      .argument("<issueId>", "Issue ID")
-      .requiredOption("--agent-id <id>", "Agent ID")
+      .description("将任务卡签出给智能体")
+      .argument("<issueId>", "任务卡 ID")
+      .requiredOption("--agent-id <id>", "智能体 ID")
       .option(
         "--expected-statuses <csv>",
-        "Expected current statuses",
+        "预期的当前状态",
         "todo,backlog,blocked",
       )
       .action(async (issueId: string, opts: IssueCheckoutOptions) => {
@@ -1314,8 +1314,8 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("release")
-      .description("Release issue back to todo and clear assignee")
-      .argument("<issueId>", "Issue ID")
+      .description("将任务卡释放回待办并清除负责人")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1344,7 +1344,7 @@ function addIssuePostDeleteMarkerCommand(
     issue
       .command(name)
       .description(description)
-      .argument("<issueId>", "Issue ID")
+      .argument("<issueId>", "任务卡 ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -1367,7 +1367,7 @@ function parseOptionalInt(value: string | undefined): number | undefined {
   if (value === undefined) return undefined;
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed)) {
-    throw new Error(`Invalid integer value: ${value}`);
+    throw new Error(`无效的整数值：${value}`);
   }
   return parsed;
 }
@@ -1441,8 +1441,8 @@ async function parseFetchResponse(response: Response): Promise<unknown> {
     const message =
       typeof parsed === "object" && parsed !== null && "error" in parsed && typeof parsed.error === "string"
         ? parsed.error
-        : `Request failed with status ${response.status}`;
-    throw new Error(`API error ${response.status}: ${message}`);
+        : `请求失败，状态码 ${response.status}`;
+    throw new Error(`API 错误 ${response.status}：${message}`);
   }
   return parsed;
 }
