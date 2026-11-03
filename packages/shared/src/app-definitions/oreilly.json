@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "oreilly",
   "name": "O'Reilly",
-  "description": "Connect O'Reilly's provider-hosted MCP server.",
+  "description": "连接 O'Reilly 官方托管的 MCP 服务器。",
   "categories": [
     "content"
   ],
@@ -23,18 +23,18 @@
       "ownershipModes": [
         "dcr"
       ],
-      "whenToUse": "Use browser sign-in for the provider-hosted MCP server.",
+      "whenToUse": "通过浏览器登录官方托管的 MCP 服务器。",
       "defaults": {
         "serverUrl": "https://api.oreilly.com/api/content-discovery/v1/mcp/"
       },
-      "guidanceMd": "Connect O'Reilly in the browser. An O'Reilly Learning subscription with MCP or API access.",
+      "guidanceMd": "在浏览器中连接 O'Reilly。需要具备 MCP 或 API 访问权限的 O'Reilly Learning 订阅。",
       "riskTier": "S2",
-      "label": "Sign in with O'Reilly",
+      "label": "使用 O'Reilly 登录",
       "consoleLinks": {
         "docs": "https://learning.oreilly.com/apidocs/mcp/content/"
       },
       "warnings": [
-        "An O'Reilly Learning subscription with MCP or API access."
+        "需要具备 MCP 或 API 访问权限的 O'Reilly Learning 订阅。"
       ]
     },
     {
@@ -44,20 +44,20 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Use a restricted customer-owned key when browser sign-in is not suitable.",
+      "whenToUse": "不适合通过浏览器登录时，使用客户自有的受限密钥。",
       "defaults": {
         "serverUrl": "https://api.oreilly.com/api/content-discovery/v1/mcp/"
       },
-      "guidanceMd": "Use a customer-created O'Reilly key. An O'Reilly Learning subscription with MCP or API access.",
+      "guidanceMd": "使用客户自行创建的 O'Reilly 密钥。需要具备 MCP 或 API 访问权限的 O'Reilly Learning 订阅。",
       "riskTier": "S2",
-      "label": "Use an API key",
+      "label": "使用 API 密钥",
       "credentialFields": [
         {
           "key": "authorization",
-          "label": "O'Reilly API key",
+          "label": "O'Reilly API 密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste your O'Reilly API token",
+          "placeholder": "粘贴你的 O'Reilly API 令牌",
           "secret": true
         }
       ],
@@ -71,7 +71,7 @@
         "docs": "https://learning.oreilly.com/apidocs/mcp/content/"
       },
       "warnings": [
-        "An O'Reilly Learning subscription with MCP or API access."
+        "需要具备 MCP 或 API 访问权限的 O'Reilly Learning 订阅。"
       ]
     }
   ]

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "railway",
   "name": "Railway",
-  "description": "Inspect services and logs, deploy applications, and run commands in your Railway containers.",
+  "description": "检查服务和日志、部署应用，并在 Railway 容器中运行命令。",
   "categories": [
     "developer"
   ],
@@ -23,7 +23,7 @@
         "dcr",
         "customer"
       ],
-      "whenToUse": "Authorize your Railway account in the browser.",
+      "whenToUse": "在浏览器中授权你的 Railway 账户。",
       "defaults": {
         "serverUrl": "https://mcp.railway.com",
         "scopesHint": [
@@ -35,19 +35,19 @@
           "prompt": "consent"
         }
       },
-      "guidanceMd": "Sign in to Railway and select the workspaces your agents may use. Paperclip adds direct service, deployment, and bounded log tools when Railway accepts the connection for API access. Container commands require the separate SSH setup on the connection. Project tokens are not supported by Railway's hosted connection.",
+      "guidanceMd": "登录 Railway，并选择智能体可使用的工作区。Railway 接受 API 访问连接后，Alice 会添加直接操作服务、部署和受限日志的工具。容器命令需要在连接中单独配置 SSH。Railway 托管连接不支持项目令牌。",
       "riskTier": "S4",
-      "label": "Connect Railway",
+      "label": "连接 Railway",
       "consoleLinks": {
         "docs": "https://docs.railway.com/ai/mcp-server",
         "register": "https://docs.railway.com/integrations/oauth/creating-an-app",
         "settings": "https://railway.com/account"
       },
       "warnings": [
-        "Railway enforces the workspaces selected at consent. Selected actions start Allowed; choose Ask first for operations you want to approve.",
-        "Logs and container commands can expose application data and secrets. Grant access only to agents trusted with the selected services.",
-        "The general Railway agent and committing staged changes are unavailable because their internal changes cannot be individually reviewed in Paperclip.",
-        "Live Railway qualification is pending. If Railway rejects API access, reconnect with the required permissions; Paperclip never falls back to another credential."
+        "Railway 会强制限制在授权时选择的工作区。所选操作默认设为“允许”；对需要你批准的操作请选择“先询问”。",
+        "日志和容器命令可能暴露应用数据及密钥。仅向可信且确实需要使用所选服务的智能体授予访问权限。",
+        "通用 Railway 智能体和提交暂存更改功能不可用，因为 Alice 无法逐项审查其内部变更。",
+        "Railway 在线资格验证仍待完成。如果 Railway 拒绝 API 访问，请使用所需权限重新连接；Alice 不会改用其他凭据。"
       ],
       "requiredResourceFilters": [
         "workspace",

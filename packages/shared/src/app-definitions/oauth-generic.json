@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "slug": "oauth-generic",
-  "name": "OAuth app",
-  "description": "Connect a provider using your own OAuth client.",
+  "name": "OAuth 应用",
+  "description": "使用你自己的 OAuth 客户端连接服务提供商。",
   "categories": [
     "other"
   ],
@@ -20,25 +20,25 @@
         "customer",
         "dcr"
       ],
-      "whenToUse": "Use credentials from your provider account.",
+      "whenToUse": "使用服务提供商账户中的凭据。",
       "defaults": {},
-      "guidanceMd": "Register an OAuth client with the provider and add Paperclip's redirect URI.",
+      "guidanceMd": "在服务提供商处注册 OAuth 客户端，并添加 Alice 的重定向 URI。",
       "riskTier": "S3",
       "credentialFields": [
         {
           "key": "clientId",
-          "label": "Client ID",
+          "label": "客户端 ID",
           "type": "text",
           "required": true,
-          "placeholder": "Paste the client ID",
+          "placeholder": "粘贴客户端 ID",
           "secret": false
         },
         {
           "key": "clientSecret",
-          "label": "Client secret",
+          "label": "客户端密钥",
           "type": "password",
           "required": true,
-          "placeholder": "Paste the client secret",
+          "placeholder": "粘贴客户端密钥",
           "secret": true
         }
       ]

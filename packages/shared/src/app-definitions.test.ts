@@ -1016,6 +1016,6 @@ describe("Railway provider", () => {
     for (const url of ["https://mcp.railway.com/path", "https://mcp.railway.com.evil.test", "http://mcp.railway.com"]) expect(getAppDefinitionForUrl(url)?.slug).not.toBe("railway");
     expect(app.methods).toHaveLength(1);
     expect(app.methods[0]).toMatchObject({ key: "mcp-oauth", auth: "oauth", transport: "mcp_remote", ownershipModes: ["dcr", "customer"], riskTier: "S4", defaults: { serverUrl: "https://mcp.railway.com", scopesHint: ["openid", "offline_access", "workspace:member"], oauthAuthorizationParams: { prompt: "consent" } } });
-    expect(JSON.stringify(app.methods)).toContain("Live Railway qualification is pending");
+    expect(JSON.stringify(app.methods)).toContain("Railway 在线资格验证仍待完成");
   });
 });
