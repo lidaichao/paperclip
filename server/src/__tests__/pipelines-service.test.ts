@@ -1326,7 +1326,7 @@ describeEmbeddedPostgres("pipelineService", () => {
     expect(linksAfterTransition[0]!.role).toBe("automation");
 
     const [issue] = await db.select().from(issues).where(eq(issues.id, ledgers[0]!.executionIssueId!));
-    expect(issue!.description).toContain("Pipeline Case Context");
+    expect(issue!.description).toContain("流水线条目上下文");
     expect(issue!.description).toContain("untrustedContent");
 
     const triggerEvent = await db.insert(pipelineCaseEvents).values({
@@ -1574,7 +1574,7 @@ describeEmbeddedPostgres("pipelineService", () => {
       .select({ title: issues.title })
       .from(issues)
       .where(eq(issues.id, executionIssueId!));
-    expect(issue!.title).toBe("Content / In progress: Pulpit opinion piece");
+    expect(issue!.title).toBe("Content / 进行中: Pulpit opinion piece");
   });
 
   it("rejects cross-company stage automation routines at save and execution", async () => {
