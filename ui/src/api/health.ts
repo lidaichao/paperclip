@@ -1,4 +1,5 @@
 import type { ServerInfoSnapshot } from "@paperclipai/shared";
+import { l10n } from "@/i18n";
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
 import { createApiError, fetchWithLocalizedNetworkError } from "./client";
 
@@ -56,7 +57,11 @@ export const healthApi = {
       const payload = await res.json().catch(() => null) as { error?: string } | null;
       const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, payload);
       if (recovery) return recovery;
-      throw createApiError(payload?.error ?? `Failed to load health (${res.status})`, res.status, payload);
+      throw createApiError(
+        payload?.error ?? `${l10n("local.health_check_failed_ce5ed1e6")} (${res.status})`,
+        res.status,
+        payload,
+      );
     }
     return res.json();
   },
@@ -70,7 +75,11 @@ export const healthApi = {
       const payload = await res.json().catch(() => null) as { error?: string } | null;
       const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, payload);
       if (recovery) return recovery;
-      throw createApiError(payload?.error ?? `Failed to request restart (${res.status})`, res.status, payload);
+      throw createApiError(
+        payload?.error ?? `${l10n("local.failed_to_request_restart_9f76b99d")} (${res.status})`,
+        res.status,
+        payload,
+      );
     }
   },
 };

@@ -136,6 +136,7 @@ describe("Chinese UI with the real locale catalog", () => {
     expect(l10n(key, { v0: "s", v1: "es" })).toBe("复制 s es");
     expect(displayText(path)).toBe(path);
     expect(enumLabel("in_progress")).toBe("进行中");
+    expect(enumLabel("in_review")).toBe("审查中");
   });
 
   it("removes explicitly marked English plural suffixes only from Chinese presentation", async () => {

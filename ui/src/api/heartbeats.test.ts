@@ -99,4 +99,16 @@ describe("heartbeatsApi.downloadProviderTrace", () => {
       status: 503,
     });
   });
+
+  it("uses a Chinese fallback when a trace download has no error body", async () => {
+    await i18n.changeLanguage("zh-CN");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(null, { status: 503 }),
+    ));
+
+    await expect(heartbeatsApi.downloadProviderTrace("run-1")).rejects.toMatchObject({
+      rawMessage: "请求失败（状态码 503）。",
+      status: 503,
+    });
+  });
 });

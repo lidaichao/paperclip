@@ -210,7 +210,7 @@ export const AgentRunCard = memo(function AgentRunCard({
                   status={taskStatus}
                   size="md"
                   className="self-center"
-                  title={issue ? l10n("local.task_value_e26d4011", {v0: (taskStatus.replace(/_/g, " "))}) : undefined}
+                  title={issue ? l10n("local.task_value_e26d4011", { v0: enumLabel(taskStatus, "lower") }) : undefined}
                 />
                 <span className="truncate">{taskTitle}</span>
               </span>

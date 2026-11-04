@@ -53,7 +53,7 @@ function issueRelationLabel(event: CaseEvent): string {
 export function CaseEventRow({ event, compact = false }: { event: CaseEvent; compact?: boolean }) {
   const detail =
     event.kind === "status_changed" && event.payload
-      ? `${(event.payload.previousStatus as string) ?? "?"} → ${(event.payload.status as string) ?? "?"}`
+      ? `${typeof event.payload.previousStatus === "string" ? enumLabel(event.payload.previousStatus, "lower") : "?"} → ${typeof event.payload.status === "string" ? enumLabel(event.payload.status, "lower") : "?"}`
       : "";
   return (
     <div className={cn("flex items-start gap-2 text-xs", compact ? "py-1.5" : "py-2")}>

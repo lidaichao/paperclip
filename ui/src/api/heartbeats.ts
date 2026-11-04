@@ -7,6 +7,7 @@ import type {
   ProviderTraceFrame,
   ProviderTraceMetadata,
 } from "@paperclipai/shared";
+import { l10n } from "@/i18n";
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
 import { api, createApiError, fetchWithLocalizedNetworkError, type RequestOptions } from "./client";
 
@@ -183,7 +184,7 @@ export const heartbeatsApi = {
       const recovery = tenantSessionRecovery.recoverIfNeeded(response.status, body);
       if (recovery) return recovery;
       throw createApiError(
-        body?.error ?? `Trace download failed: ${response.status}`,
+        body?.error ?? l10n("local.api_request_failed_10301181", { v0: response.status }),
         response.status,
         body,
       );

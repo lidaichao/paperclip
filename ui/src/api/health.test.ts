@@ -52,4 +52,20 @@ describe("healthApi", () => {
       status: 503,
     });
   });
+
+  it("uses Chinese fallback messages when the server returns no error body", async () => {
+    await i18n.changeLanguage("zh-CN");
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 503 })));
+
+    await expect(healthApi.get()).rejects.toMatchObject({
+      rawMessage: "健康检查失败 (503)",
+      status: 503,
+    });
+    await expect(healthApi.requestDevServerRestart()).rejects.toMatchObject({
+      rawMessage: "请求重启失败。 (503)",
+      status: 503,
+    });
+  });
 });

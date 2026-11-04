@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { HeartbeatRun, RoutineRunSummary } from "@paperclipai/shared";
@@ -72,7 +73,7 @@ function readableSource(source: string) {
     case "interrupted":
       return l10n("local.interrupted_132d124d");
     default:
-      return source.replaceAll("_", " ");
+      return enumLabel(source, "lower");
   }
 }
 

@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
@@ -442,7 +443,7 @@ export function EnvironmentVariableRow({
                       {(userSecretDefinitions ?? []).map((definition) => (
                         <option key={definition.id} value={definition.key}>
                           {definition.name}
-                          {definition.status !== "active" ? ` (${definition.status})` : ""}
+                          {definition.status !== "active" ? ` (${enumLabel(definition.status, "lower")})` : ""}
                         </option>
                       ))}
                     </select>

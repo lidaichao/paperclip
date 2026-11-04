@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useCallback, useMemo, useState } from "react";
 import { CornerUpLeft, Folder, KeyRound, Plus } from "lucide-react";
 import type { CompanySecret, SecretStatus } from "@paperclipai/shared";
@@ -26,7 +27,7 @@ function statusBadge(status: SecretStatus | undefined) {
   if (!status || status === "active") return null;
   return (
     <Badge variant="outline" className="ml-auto text-(length:--text-nano) font-normal text-muted-foreground">
-      {status}
+      {enumLabel(status, "lower")}
     </Badge>
   );
 }
@@ -280,7 +281,7 @@ export function SecretPicker({
           <span className="flex w-full min-w-0 items-center gap-1.5" title={option.title}>
             <KeyRound className={cn("size-3.5 shrink-0", nonActive ? "text-amber-600" : "text-muted-foreground")} />
             <span className="min-w-0 flex-1 truncate">{option.label}</span>
-            {nonActive ? <span className="text-amber-600">({option.status})</span> : null}
+            {nonActive ? <span className="text-amber-600">({enumLabel(option.status!, "lower")})</span> : null}
           </span>
         );
       }}

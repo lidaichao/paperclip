@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { getPageVisibility, usePageVisibility } from "../lib/page-visibility";
 import {
   createContext,
@@ -884,29 +885,32 @@ function describeIssueUpdate(
   if (!details) return null;
   const changes: string[] = [];
   if (typeof details.status === "string")
-    changes.push(`status -> ${details.status.replace(/_/g, " ")}`);
+    changes.push(l10n("local.activity_changed_status_to_10300579", { v0: enumLabel(details.status, "lower") }));
   if (typeof details.priority === "string")
-    changes.push(`priority -> ${details.priority}`);
+    changes.push(l10n("local.activity_changed_priority_to_10300581", { v0: enumLabel(details.priority, "lower") }));
   if (
     typeof details.assigneeAgentId === "string" ||
     typeof details.assigneeUserId === "string"
   ) {
-    changes.push("reassigned");
+    changes.push(l10n("local.reassign_4591c339"));
   } else if (
     details.assigneeAgentId === null ||
     details.assigneeUserId === null
   ) {
-    changes.push("unassigned");
+    changes.push(l10n("local.unassigned_607e87c1"));
   }
   if (details.reopened === true) {
     const from = readString(details.reopenedFrom);
     changes.push(
-      from ? `reopened from ${from.replace(/_/g, " ")}` : "reopened",
+      from
+        ? l10n("local.reopened_from_value_67edf584", { v0: enumLabel(from, "lower") })
+        : l10n("local.reopened_d050aeb8"),
     );
   }
-  if (typeof details.title === "string") changes.push("title changed");
+  if (typeof details.title === "string")
+    changes.push(`${l10n("local.updated_27eb5e51")} ${l10n("local.title_7e8cd205")}`);
   if (typeof details.description === "string")
-    changes.push("description changed");
+    changes.push(`${l10n("local.updated_27eb5e51")} ${l10n("local.description_526e0087")}`);
   if (changes.length > 0) return changes.join(", ");
   return null;
 }
@@ -988,7 +992,7 @@ function buildActivityToast(
   const reopenedFrom = readString(details?.reopenedFrom);
   const reopenedLabel = reopened
     ? reopenedFrom
-      ? l10n("local.reopened_from_value_67edf584", {v0: (reopenedFrom.replace(/_/g, " "))})
+      ? l10n("local.reopened_from_value_67edf584", { v0: enumLabel(reopenedFrom, "lower") })
       : l10n("local.reopened_d050aeb8")
     : null;
   const title = reopened
