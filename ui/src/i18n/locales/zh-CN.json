@@ -12940,6 +12940,27 @@
     "submitting_state_10300743": "提交中状态",
     "settled_review_10300744": "完成后的审阅",
     "empty_thread_10300745": "空对话",
-    "workspace_closed_chat_disabled_10300746": "当前工作区已关闭。在重新打开任务前，无法发送新的聊天回复。"
+    "workspace_closed_chat_disabled_10300746": "当前工作区已关闭。在重新打开任务前，无法发送新的聊天回复。",
+    "alice_board_ui_10300747": "Alice 管理界面",
+    "ship_issue_page_as_real_chat_10300748": "将任务页面做成真正的聊天。保留活动动态，但让智能体流程更像自然对话。",
+    "swapped_comment_stack_for_assistant_thread_10300749": "我已用新的智能体聊天线程替换旧评论堆栈，并保留现有任务变更逻辑。",
+    "make_dedicated_chat_review_page_10300750": "能否再做一个专用审阅页，并排展示所有聊天状态？",
+    "reviewing_issue_thread_for_transcript_noise_10300751": "正在检查任务线程，确认对话中是否仍混入转录噪声。",
+    "found_run_projection_path_10300752": "已找到决定运行完成后是否保留转录输出的投影路径。",
+    "kept_completed_run_context_attached_10300753": "已将完成运行的上下文保留在聊天时间线中，使推理保持折叠而不会消失。",
+    "reshaping_issue_page_as_conversation_10300754": "我正在重塑任务页面，让线程像对话而不是运行日志。",
+    "need_remove_internal_scrollbox_10300755": "需要先移除内部滚动框，否则页面仍像嵌套控制台。",
+    "loaded_chat_surface_found_viewport_constraint_10300756": "已加载当前聊天界面，并发现 max-h 视口限制。",
+    "remove_scroll_pane_10300757": "移除滚动区域",
+    "updated_layout_classes_page_scrolling_10300758": "已更新布局样式，并将“跳到最新”改为页面级滚动。",
+    "vite_warmup_rebuilding_route_chunks_10300759": "Vite 预热：正在重新构建路由代码块",
+    "let_me_know_thread_layout_locked_10300760": "线程布局确定后请告诉我。",
+    "looks_good_ship_when_ready_10300761": "看起来不错——准备好后就发布吧。",
+    "tighten_spacing_keep_composer_grounded_10300762": "已经接近了。请收紧间距，并让编辑器稳定地贴合聊天界面。",
+    "adjusted_treatment_product_conversation_10300763": "已调整呈现方式，使其更像产品对话。",
+    "removed_count_from_heading_10300764": "- 已从标题中移除计数",
+    "let_page_own_scrolling_10300765": "- 由页面统一负责滚动",
+    "added_dedicated_chat_review_page_10300766": "- 已新增专用的 `/tests/ux/chat` 审阅页",
+    "want_empty_and_blocked_composer_states_10300767": "很好。合并前我还想查看空状态和编辑器受阻状态。"
   }
 }

@@ -8,6 +8,7 @@ import type {
   IssueChatTranscriptEntry,
 } from "../lib/issue-chat-messages";
 import type { IssueTimelineEvent } from "../lib/issue-timeline-events";
+import { l10n } from "../i18n";
 
 function createAgent(
   id: string,
@@ -85,7 +86,7 @@ export const issueChatUxMentions: MentionOption[] = [
   },
   {
     id: "mention-project-1",
-    name: "Paperclip Board UI",
+    name: l10n("local.alice_board_ui_10300747"),
     kind: "project",
     projectId: "project-1",
     projectColor: "#0f766e",
@@ -105,7 +106,7 @@ export const issueChatUxReassignOptions: InlineEntityOption[] = [
   },
   {
     id: "user:user-1",
-    label: "Board",
+    label: l10n("local.board_859169b3"),
     searchText: "board user",
   },
 ];
@@ -113,7 +114,7 @@ export const issueChatUxReassignOptions: InlineEntityOption[] = [
 export const issueChatUxLiveComments: IssueChatComment[] = [
   createComment({
     id: "comment-live-user",
-    body: "Ship the issue page as a real chat. Keep the activity feed, but make the assistant flow feel conversational.",
+    body: l10n("local.ship_issue_page_as_real_chat_10300748"),
     createdAt: new Date("2026-04-06T11:55:00.000Z"),
     updatedAt: new Date("2026-04-06T11:55:00.000Z"),
   }),
@@ -121,7 +122,7 @@ export const issueChatUxLiveComments: IssueChatComment[] = [
     id: "comment-live-agent",
     authorAgentId: primaryAgent.id,
     authorUserId: null,
-    body: "I swapped the old comment stack for the new assistant-ui thread and kept the existing issue mutations intact.",
+    body: l10n("local.swapped_comment_stack_for_assistant_thread_10300749"),
     createdAt: new Date("2026-04-06T12:01:00.000Z"),
     updatedAt: new Date("2026-04-06T12:01:00.000Z"),
     runId: "run-history-1",
@@ -129,7 +130,7 @@ export const issueChatUxLiveComments: IssueChatComment[] = [
   }),
   createComment({
     id: "comment-live-queued",
-    body: "Can you also make a dedicated review page that shows every chat state side by side?",
+    body: l10n("local.make_dedicated_chat_review_page_10300750"),
     createdAt: new Date("2026-04-06T12:05:30.000Z"),
     updatedAt: new Date("2026-04-06T12:05:30.000Z"),
     clientId: "client-queued-1",
@@ -204,7 +205,7 @@ export const issueChatUxTranscriptsByRunId = new Map<string, readonly IssueChatT
       {
         kind: "thinking",
         ts: "2026-04-06T11:58:03.000Z",
-        text: "Reviewing the issue thread to see where transcript noise still leaks into the conversation.",
+        text: l10n("local.reviewing_issue_thread_for_transcript_noise_10300751"),
       },
       {
         kind: "tool_call",
@@ -217,13 +218,13 @@ export const issueChatUxTranscriptsByRunId = new Map<string, readonly IssueChatT
         kind: "tool_result",
         ts: "2026-04-06T11:58:11.000Z",
         toolUseId: "tool-history-1",
-        content: "Found the run projection path that decides whether transcript output survives after completion.",
+        content: l10n("local.found_run_projection_path_10300752"),
         isError: false,
       },
       {
         kind: "assistant",
         ts: "2026-04-06T11:59:24.000Z",
-        text: "Kept the completed run context attached to the chat timeline so the reasoning can stay folded instead of disappearing.",
+        text: l10n("local.kept_completed_run_context_attached_10300753"),
       },
     ],
   ],
@@ -233,12 +234,12 @@ export const issueChatUxTranscriptsByRunId = new Map<string, readonly IssueChatT
       {
         kind: "assistant",
         ts: "2026-04-06T12:04:02.000Z",
-        text: "I am reshaping the issue page so the thread reads like a conversation instead of a run log.",
+        text: l10n("local.reshaping_issue_page_as_conversation_10300754"),
       },
       {
         kind: "thinking",
         ts: "2026-04-06T12:04:05.000Z",
-        text: "Need to remove the internal scrollbox first, otherwise the page still feels like a nested console.",
+        text: l10n("local.need_remove_internal_scrollbox_10300755"),
       },
       {
         kind: "tool_call",
@@ -251,7 +252,7 @@ export const issueChatUxTranscriptsByRunId = new Map<string, readonly IssueChatT
         kind: "tool_result",
         ts: "2026-04-06T12:04:11.000Z",
         toolUseId: "tool-read-1",
-        content: "Loaded the current chat surface and found the max-h viewport constraint.",
+        content: l10n("local.loaded_chat_surface_found_viewport_constraint_10300756"),
         isError: false,
       },
       {
@@ -259,19 +260,22 @@ export const issueChatUxTranscriptsByRunId = new Map<string, readonly IssueChatT
         ts: "2026-04-06T12:04:14.000Z",
         name: "apply_patch",
         toolUseId: "tool-edit-1",
-        input: { file: "ui/src/components/IssueChatThread.tsx", action: "remove scroll pane" },
+        input: {
+          file: "ui/src/components/IssueChatThread.tsx",
+          action: l10n("local.remove_scroll_pane_10300757"),
+        },
       },
       {
         kind: "tool_result",
         ts: "2026-04-06T12:04:22.000Z",
         toolUseId: "tool-edit-1",
-        content: "Updated layout classes and swapped Jump to latest to page-level scrolling.",
+        content: l10n("local.updated_layout_classes_page_scrolling_10300758"),
         isError: false,
       },
       {
         kind: "stderr",
         ts: "2026-04-06T12:04:24.000Z",
-        text: "vite warm-up: rebuilding route chunks",
+        text: l10n("local.vite_warmup_rebuilding_route_chunks_10300759"),
       },
     ],
   ],
@@ -280,13 +284,13 @@ export const issueChatUxTranscriptsByRunId = new Map<string, readonly IssueChatT
 export const issueChatUxSubmittingComments: IssueChatComment[] = [
   createComment({
     id: "comment-submitting-user-settled",
-    body: "Let me know once the thread layout is locked down.",
+    body: l10n("local.let_me_know_thread_layout_locked_10300760"),
     createdAt: new Date("2026-04-06T12:40:00.000Z"),
     updatedAt: new Date("2026-04-06T12:40:00.000Z"),
   }),
   createComment({
     id: "comment-submitting-pending",
-    body: "Looks good — go ahead and ship it when you're ready.",
+    body: l10n("local.looks_good_ship_when_ready_10300761"),
     createdAt: new Date("2026-04-06T12:42:00.000Z"),
     updatedAt: new Date("2026-04-06T12:42:00.000Z"),
     clientId: "client-pending-1",
@@ -297,7 +301,7 @@ export const issueChatUxSubmittingComments: IssueChatComment[] = [
 export const issueChatUxReviewComments: IssueChatComment[] = [
   createComment({
     id: "comment-review-user",
-    body: "This looks close. Tighten the spacing and keep the composer grounded to the chat surface.",
+    body: l10n("local.tighten_spacing_keep_composer_grounded_10300762"),
     createdAt: new Date("2026-04-06T12:28:00.000Z"),
     updatedAt: new Date("2026-04-06T12:28:00.000Z"),
   }),
@@ -306,11 +310,11 @@ export const issueChatUxReviewComments: IssueChatComment[] = [
     authorAgentId: reviewAgent.id,
     authorUserId: null,
     body: [
-      "Adjusted the treatment to feel more like a product conversation.",
+      l10n("local.adjusted_treatment_product_conversation_10300763"),
       "",
-      "- Removed the count from the heading",
-      "- Let the page own scrolling",
-      "- Added a dedicated `/tests/ux/chat` review page",
+      l10n("local.removed_count_from_heading_10300764"),
+      l10n("local.let_page_own_scrolling_10300765"),
+      l10n("local.added_dedicated_chat_review_page_10300766"),
     ].join("\n"),
     createdAt: new Date("2026-04-06T12:34:00.000Z"),
     updatedAt: new Date("2026-04-06T12:34:00.000Z"),
@@ -319,7 +323,7 @@ export const issueChatUxReviewComments: IssueChatComment[] = [
   }),
   createComment({
     id: "comment-review-user-followup",
-    body: "Perfect. I also want to see an empty state and a blocked composer state before we merge.",
+    body: l10n("local.want_empty_and_blocked_composer_states_10300767"),
     createdAt: new Date("2026-04-06T12:36:00.000Z"),
     updatedAt: new Date("2026-04-06T12:36:00.000Z"),
   }),

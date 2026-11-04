@@ -12940,6 +12940,27 @@
     "submitting_state_10300743": "Submitting state",
     "settled_review_10300744": "Settled review",
     "empty_thread_10300745": "Empty thread",
-    "workspace_closed_chat_disabled_10300746": "This workspace is closed, so new chat replies are disabled until the issue is reopened."
+    "workspace_closed_chat_disabled_10300746": "This workspace is closed, so new chat replies are disabled until the issue is reopened.",
+    "alice_board_ui_10300747": "Alice Board UI",
+    "ship_issue_page_as_real_chat_10300748": "Ship the issue page as a real chat. Keep the activity feed, but make the assistant flow feel conversational.",
+    "swapped_comment_stack_for_assistant_thread_10300749": "I swapped the old comment stack for the new assistant-ui thread and kept the existing issue mutations intact.",
+    "make_dedicated_chat_review_page_10300750": "Can you also make a dedicated review page that shows every chat state side by side?",
+    "reviewing_issue_thread_for_transcript_noise_10300751": "Reviewing the issue thread to see where transcript noise still leaks into the conversation.",
+    "found_run_projection_path_10300752": "Found the run projection path that decides whether transcript output survives after completion.",
+    "kept_completed_run_context_attached_10300753": "Kept the completed run context attached to the chat timeline so the reasoning can stay folded instead of disappearing.",
+    "reshaping_issue_page_as_conversation_10300754": "I am reshaping the issue page so the thread reads like a conversation instead of a run log.",
+    "need_remove_internal_scrollbox_10300755": "Need to remove the internal scrollbox first, otherwise the page still feels like a nested console.",
+    "loaded_chat_surface_found_viewport_constraint_10300756": "Loaded the current chat surface and found the max-h viewport constraint.",
+    "remove_scroll_pane_10300757": "remove scroll pane",
+    "updated_layout_classes_page_scrolling_10300758": "Updated layout classes and swapped Jump to latest to page-level scrolling.",
+    "vite_warmup_rebuilding_route_chunks_10300759": "vite warm-up: rebuilding route chunks",
+    "let_me_know_thread_layout_locked_10300760": "Let me know once the thread layout is locked down.",
+    "looks_good_ship_when_ready_10300761": "Looks good — go ahead and ship it when you're ready.",
+    "tighten_spacing_keep_composer_grounded_10300762": "This looks close. Tighten the spacing and keep the composer grounded to the chat surface.",
+    "adjusted_treatment_product_conversation_10300763": "Adjusted the treatment to feel more like a product conversation.",
+    "removed_count_from_heading_10300764": "- Removed the count from the heading",
+    "let_page_own_scrolling_10300765": "- Let the page own scrolling",
+    "added_dedicated_chat_review_page_10300766": "- Added a dedicated `/tests/ux/chat` review page",
+    "want_empty_and_blocked_composer_states_10300767": "Perfect. I also want to see an empty state and a blocked composer state before we merge."
   }
 }
