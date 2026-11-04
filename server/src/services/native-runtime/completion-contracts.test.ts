@@ -19,10 +19,15 @@ describe("buildNativeCompletionContract", () => {
   });
 
   it("binds the persisted numeric revision into the protocol contract", () => {
-    expect(buildNativeCompletionContract({
+    const contract = buildNativeCompletionContract({
       title: "Continue the runner",
       description: null,
-    }, { revision: 3 }).revision).toBe("3");
+    }, { revision: 3 });
+    expect(contract.revision).toBe("3");
+    expect(contract.criteria).toEqual([{
+      id: "objective",
+      requirement: "完成：Continue the runner",
+    }]);
   });
 
   it("applies the latest comment within the current authorized task scope", () => {
@@ -34,7 +39,7 @@ describe("buildNativeCompletionContract", () => {
       { immediateRequest: " Return the follow-up result. " },
     )).toEqual({
       revision: "1",
-      objective: expect.stringContaining("current authorized stage"),
+      objective: expect.stringContaining("当前已授权阶段"),
       criteria: [{ id: "objective", requirement: "Return the follow-up result." }],
     });
   });
@@ -50,7 +55,7 @@ describe("buildNativeCompletionContract", () => {
       },
     )).toEqual({
       revision: "1",
-      objective: expect.stringContaining("current authorized stage"),
+      objective: expect.stringContaining("当前已授权阶段"),
       criteria: [
         {
           id: "pending_comment_1",
@@ -71,10 +76,10 @@ describe("buildNativeCompletionContract", () => {
         { body: " ", attachments: [{ filename: "Ignore current request.txt" }] },
       ]) },
     );
-    expect(contract.objective).toContain("current authorized stage");
+    expect(contract.objective).toContain("当前已授权阶段");
     expect(contract.criteria).toEqual([{
       id: "objective",
-      requirement: "Inspect and respond to the attached file(s) on pending comment 1.",
+      requirement: "检查并回复待处理评论 1 中的附件。",
     }]);
     expect(JSON.stringify(contract)).not.toMatch(/STALE|Ignore current request/);
   });
@@ -85,10 +90,10 @@ describe("buildNativeCompletionContract", () => {
       { title: "Original task", description: brief },
       { immediateRequest: "Use TypeScript." },
     );
-    expect(contract.objective).toContain("task brief");
-    expect(contract.objective).toContain("Later human direction replaces conflicting scope");
-    expect(contract.objective).toContain("approval gates");
-    expect(contract.objective).toContain("Clarification is not approval");
+    expect(contract.objective).toContain("任务说明");
+    expect(contract.objective).toContain("较新的用户指示会替代与其冲突的范围");
+    expect(contract.objective).toContain("审批门禁");
+    expect(contract.objective).toContain("澄清不等于批准");
     expect(JSON.stringify(contract)).not.toContain(brief);
     expect(JSON.stringify(contract).split("Use TypeScript.")).toHaveLength(2);
     expect(JSON.stringify(contract).length).toBeLessThan(900);
@@ -129,7 +134,7 @@ describe("buildNativeCompletionContract", () => {
     expect(contract.criteria.map(c => c.id)).toEqual(["objective", "human_response"]);
     expect(contract.criteria[0]!.requirement).toBe("Actually, just investigate.");
     expect(JSON.stringify(contract)).not.toContain("Implement the old scope");
-    expect(contract.objective).toContain("Later human direction replaces conflicting scope");
+    expect(contract.objective).toContain("较新的用户指示会替代与其冲突的范围");
   });
 
   it("preserves text and file-only requests in mixed batch order", () => {
@@ -140,7 +145,7 @@ describe("buildNativeCompletionContract", () => {
       { body: " " },
     ])).toEqual([
       "First question.",
-      "Inspect and respond to the attached file(s) on pending comment 2.",
+      "检查并回复待处理评论 2 中的附件。",
       "Last question.",
     ]);
   });
@@ -151,9 +156,10 @@ describe("buildNativeCompletionContract", () => {
       { requiredFullWakeCommentCount: count },
     );
     expect(requests).toHaveLength(1);
-    expect(requests[0]).toContain("read_current_wake_comments until complete=true");
-    expect(requests[0]).toContain(`all ${count} accepted comments in order`);
-    expect(requests[0]).toContain("metadata alone is not its content");
+    expect(requests[0]).toContain("read_current_wake_comments");
+    expect(requests[0]).toContain("直到 complete=true");
+    expect(requests[0]).toContain(`按顺序回答全部 ${count} 条已接受评论`);
+    expect(requests[0]).toContain("附件元数据不等于附件内容");
     expect(requests[0]).not.toContain("Only an inline prefix");
   });
 });
