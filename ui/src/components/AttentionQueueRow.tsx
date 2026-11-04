@@ -424,6 +424,23 @@ function EyebrowSeparator() {
 
 type CompactDecisionAction = "accept" | "approve" | "reject" | "request_revision";
 
+function compactDecisionActionLabel(
+  verb: AttentionItem["decisionVerbs"][number],
+  action: CompactDecisionAction,
+): string {
+  switch (verb.label.trim().toLowerCase()) {
+    case "accept": return l10n("local.accept_10301065");
+    case "approve": return l10n("local.approve_6007acbe");
+    case "approve plan": return l10n("local.approve_plan_10300415");
+    case "reject": return l10n("local.reject_ab604a36");
+    case "request changes":
+    case "request revision":
+      return l10n("local.request_changes_cb5d9f98");
+    default:
+      return verb.label || (action === "reject" ? l10n("local.reject_ab604a36") : l10n("local.accept_10301065"));
+  }
+}
+
 function compactDecisionAction(item: AttentionItem, verbId: string): CompactDecisionAction | null {
   if (item.sourceKind === "approval" && (verbId === "approve" || verbId === "reject" || verbId === "request_revision")) {
     return verbId;
@@ -465,7 +482,9 @@ function collectCompactActions(item: AttentionItem): CompactAction[] {
     .slice(0, 3)
     .flatMap((verb) => {
       const action = compactDecisionAction(item, verb.id);
-      return action ? [{ action, label: verb.label, id: verb.id, description: verb.description ?? "" }] : [];
+      return action
+        ? [{ action, label: compactDecisionActionLabel(verb, action), id: verb.id, description: verb.description ?? "" }]
+        : [];
     })
     .sort((a, b) => VERB_ORDER[decisionVerbVariant(a)] - VERB_ORDER[decisionVerbVariant(b)]);
 }
@@ -571,6 +590,11 @@ function compactDecisionSuccessLabel(sourceKind: AttentionItem["sourceKind"], ac
 }
 
 function decisionVerbVariant(verb: AttentionItem["decisionVerbs"][number]): "default" | "outline" | "destructive" {
+  if (
+    verb.id === "reject"
+    && [l10n("local.reject_ab604a36"), l10n("local.decline_a2d285b3")].includes(verb.label.trim())
+  ) return "destructive";
+  if (verb.id === "accept" || verb.id === "approve") return "default";
   const text = `${verb.label} ${verb.description ?? ""}`.toLowerCase();
   if (/\b(reject|decline|deny|delete|remove)\b/.test(text)) return "destructive";
   if (/\b(accept|approve|confirm|apply)\b/.test(text)) return "default";
