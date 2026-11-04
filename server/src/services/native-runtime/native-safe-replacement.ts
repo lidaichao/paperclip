@@ -362,7 +362,7 @@ export async function reconcileSafeNativeReplacements(
           await appendHeartbeatRunEvent(tx as unknown as Db, {
             companyId: run.companyId, runId: run.id, agentId: run.agentId,
             eventType: "native.stopped_text_turn_verified", stream: "system", level: "info",
-            message: "The previous runner and provider stopped. The interrupted turn had no external actions; any completion bookkeeping has a verified receipt.",
+            message: "上一个运行器和提供方已停止。中断的轮次没有外部操作；所有完成状态记录均有经验证的回执。",
             payload: stoppedSession.evidence,
           });
         }
@@ -429,7 +429,7 @@ export async function reconcileSafeNativeReplacements(
               ...(stoppedSession ? { stoppedTextTurn: stoppedSession.evidence } : {}),
               successorRunId,
               nextAction:
-                "Continue in the linked fresh provider session after the retry delay.",
+                "延迟重试后，在已关联的新提供方会话中继续执行。",
             },
             nextAttemptAt: dueAt,
             updatedAt: now,
@@ -446,7 +446,7 @@ export async function reconcileSafeNativeReplacements(
             .digest("hex"),
           status: "resolved",
           outcome: "handed_back",
-          resolutionNote: `Safe continuation is scheduled in run ${successorRunId}.`,
+          resolutionNote: `已在运行 ${successorRunId} 中安排安全续办。`,
         });
         // A previous sweep can have resolved the UI bookkeeping while retaining
         // an effective no-replay hold. Retire only this exact failure's hold in
@@ -462,8 +462,8 @@ export async function reconcileSafeNativeReplacements(
           await tx.update(issueRecoveryActions).set({
             status: "resolved", outcome: "handed_back", resolvedAt: now, updatedAt: now,
             wakePolicy: null, monitorPolicy: null,
-            nextAction: `Safe continuation is scheduled in run ${successorRunId}.`,
-            resolutionNote: "Verified process termination and action receipts allow a fresh session to continue.",
+            nextAction: `已在运行 ${successorRunId} 中安排安全续办。`,
+            resolutionNote: "已验证进程终止和操作回执，可以在新会话中继续。",
             evidence: { ...hold.evidence, verifiedReplacement: { successorRunId, recordedAt: now.toISOString() },
               ...(hold.evidence.automaticRecovery ? { automaticRecovery: {
                 ...record(hold.evidence.automaticRecovery), replay: "verified_safe_replacement", successorRunId,
@@ -495,7 +495,7 @@ export async function reconcileSafeNativeReplacements(
       if (options.failpoint) throw error;
       logger.warn(
         { runId: run.id },
-        "Native replacement remains pending; another sweep will retry its durable decision",
+        "原生替代仍在等待处理；下一轮扫描将重试其持久决定",
       );
     }
   }
