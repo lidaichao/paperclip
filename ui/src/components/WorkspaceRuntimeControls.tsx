@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type {
   WorkspaceCommandDefinition,
   RuntimeExposureStatus,
@@ -487,8 +488,8 @@ function CommandSection({
                   <div className="space-y-1">
                     <div className="text-sm font-medium">{item.title}</div>
                     <div className="text-xs text-muted-foreground">
-                      {item.kind} · {item.statusLabel}
-                      {item.lifecycle ? ` · ${item.lifecycle}` : ""}
+                      {enumLabel(item.kind, "lower")} · {enumLabel(item.statusLabel, "lower")}
+                      {item.lifecycle ? ` · ${enumLabel(item.lifecycle, "lower")}` : ""}
                     </div>
                   </div>
                   <CommandActionButtons
@@ -523,7 +524,7 @@ function CommandSection({
                           ? "border-destructive/30 bg-destructive/10 text-destructive"
                           : "border-border text-muted-foreground",
                     )}>
-                      {item.healthStatus}
+                      {enumLabel(item.healthStatus, "lower")}
                     </Badge>
                   </div>
                 ) : null}

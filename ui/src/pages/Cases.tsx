@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpDown, Check, ChevronDown, Columns3, Filter, Layers, ListTree, Search, SearchX } from "lucide-react";
@@ -886,7 +887,7 @@ export function Cases() {
       let key: string;
       if (viewState.groupBy === "type") key = c.caseType;
       else if (viewState.groupBy === "status") {
-        key = STATUS_FILTER_OPTIONS.find((option) => option.value === c.status)?.label ?? c.status;
+        key = STATUS_FILTER_OPTIONS.find((option) => option.value === c.status)?.label ?? enumLabel(c.status, "lower");
       } else {
         key = c.projectId
           ? projectName.get(c.projectId) ?? l10n("local.unknown_project_ed51cfef")
@@ -1030,7 +1031,7 @@ export function Cases() {
       value: viewState.statusFilters.length === CASE_STATUSES.length
         ? l10n("local.all_a52ace42")
         : viewState.statusFilters
-          .map((status) => STATUS_FILTER_OPTIONS.find((option) => option.value === status)?.label ?? status)
+          .map((status) => STATUS_FILTER_OPTIONS.find((option) => option.value === status)?.label ?? enumLabel(status, "lower"))
           .join(", "),
     });
   }

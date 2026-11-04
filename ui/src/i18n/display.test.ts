@@ -21,6 +21,9 @@ describe("enumLabel", () => {
     expect(enumLabel("file_info_unknown")).toBe("文件信息状态未知");
     expect(enumLabel("preview_url")).toBe("预览链接");
     expect(enumLabel("needs_board_review")).toBe("需要管理层审核");
+    expect(enumLabel("job")).toBe("作业");
+    expect(enumLabel("ephemeral")).toBe("临时");
+    expect(enumLabel("cleanup_failed")).toBe("清理失败");
   });
 
   it("keeps English labels readable", async () => {

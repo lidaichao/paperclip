@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { Profiler, useEffect, useLayoutEffect, useMemo, useRef, useState, type ProfilerOnRenderCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,7 +114,7 @@ export function IssueChatLongThreadPerf() {
             <Badge variant="outline" className="font-mono text-(length:--text-micro)">
               {fixture.issue.identifier}
             </Badge>
-            <Badge variant="secondary">{fixture.issue.status.replace(/_/g, " ")}</Badge>
+            <Badge variant="secondary">{enumLabel(fixture.issue.status, "lower")}</Badge>
             <Badge variant="outline">{fixture.issue.projectName}</Badge>
           </div>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">{fixture.issue.title}</h1>

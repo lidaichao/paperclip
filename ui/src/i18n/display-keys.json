@@ -10448,5 +10448,9 @@
   "preview url": "local.enum_work_product_preview_url_10301495",
   "runtime service": "local.enum_work_product_runtime_service_10301496",
   "commit": "local.enum_work_product_commit_10301497",
-  "needs board review": "local.enum_status_needs_board_review_10301498"
+  "needs board review": "local.enum_status_needs_board_review_10301498",
+  "job": "local.enum_runtime_job_10301499",
+  "shared": "local.enum_runtime_shared_10301500",
+  "ephemeral": "local.enum_runtime_ephemeral_10301501",
+  "cleanup failed": "local.enum_status_cleanup_failed_10301502"
 }

@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentCharacter } from "../components/AgentCharacter";
 import { characterStateForAgent } from "@paperclipai/shared";
 import { mergeRunLogChunks, readChunkSeq } from "../lib/run-log-chunks";
@@ -584,7 +585,7 @@ function WorkspaceOperationStatusBadge({ status }: { status: WorkspaceOperation[
         workspaceOperationStatusTone(status),
       )}
     >
-      {status.replace("_", " ")}
+      {enumLabel(status, "lower")}
     </Badge>
   );
 }

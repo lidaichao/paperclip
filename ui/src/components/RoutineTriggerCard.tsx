@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useEffect, useState } from "react";
 import { Clock3, RefreshCw, Save, Trash2, Webhook, Zap } from "lucide-react";
 import type { RoutineTrigger } from "@paperclipai/shared";
@@ -71,7 +72,7 @@ export function RoutineTriggerCard({
 
   return (
     <form
-      aria-label={l10n("local.trigger_value_559bb04e", {v0: (trigger.label ?? trigger.kind)})}
+      aria-label={l10n("local.trigger_value_559bb04e", {v0: (trigger.label ?? enumLabel(trigger.kind, "lower"))})}
       className="space-y-4 rounded-lg border border-border p-4"
       onSubmit={(event) => event.preventDefault()}
     >
@@ -79,7 +80,7 @@ export function RoutineTriggerCard({
         <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-2 text-sm font-medium">
             <KindIcon className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{trigger.label ?? trigger.kind}</span>
+            <span className="truncate">{trigger.label ?? enumLabel(trigger.kind, "lower")}</span>
           </div>
           {humanCron ? (
             <p id={`cron-readable-${trigger.id}`} className="text-xs text-muted-foreground">

@@ -1,4 +1,5 @@
 import { i18n, l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { History as HistoryIcon, RotateCcw, Search } from "lucide-react";
@@ -627,9 +628,9 @@ function RevisionPreview({
             {triggers.map((trigger) => (
               <li key={trigger.id} className="py-2 flex flex-wrap items-center gap-2 text-sm">
                 <Badge variant="outline" className="border-border text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-                  {trigger.kind}
+                  {enumLabel(trigger.kind, "lower")}
                 </Badge>
-                <span className="font-medium">{trigger.label ?? trigger.kind}</span>
+                <span className="font-medium">{trigger.label ?? enumLabel(trigger.kind, "lower")}</span>
                 <span className="text-xs text-muted-foreground">
                   {summarizeTriggerSnapshot(trigger)}
                 </span>
@@ -1242,13 +1243,13 @@ function compareTriggers(
   for (const [, pair] of byId) {
     if (pair.old && !pair.next) {
       changes.push({
-        field: l10n("local.trigger_removed_value_b5ed4db8", { v0: pair.old.label ?? pair.old.kind }),
+        field: l10n("local.trigger_removed_value_b5ed4db8", { v0: pair.old.label ?? enumLabel(pair.old.kind, "lower") }),
         oldValue: summarizeTriggerSnapshot(pair.old),
         newValue: null,
       });
     } else if (!pair.old && pair.next) {
       changes.push({
-        field: l10n("local.trigger_added_value_b08a772c", { v0: pair.next.label ?? pair.next.kind }),
+        field: l10n("local.trigger_added_value_b08a772c", { v0: pair.next.label ?? enumLabel(pair.next.kind, "lower") }),
         oldValue: null,
         newValue: summarizeTriggerSnapshot(pair.next),
       });
@@ -1257,7 +1258,7 @@ function compareTriggers(
       const newSummary = summarizeTriggerSnapshot(pair.next);
       if (oldSummary !== newSummary || pair.old.enabled !== pair.next.enabled) {
         changes.push({
-          field: l10n("local.trigger_value_aa9d76d0", { v0: pair.next.label ?? pair.next.kind }),
+          field: l10n("local.trigger_value_aa9d76d0", { v0: pair.next.label ?? enumLabel(pair.next.kind, "lower") }),
           oldValue: `${oldSummary} (${pair.old.enabled ? l10n("local.enabled_lowercase_5ff6cead") : l10n("local.disabled_lowercase_e31ca9bf")})`,
           newValue: `${newSummary} (${pair.next.enabled ? l10n("local.enabled_lowercase_5ff6cead") : l10n("local.disabled_lowercase_e31ca9bf")})`,
         });
