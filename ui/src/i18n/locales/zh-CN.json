@@ -13596,6 +13596,14 @@
     "stopped_label_10301401": "已停止",
     "stopped_just_now_10301402": "刚刚停止",
     "stopped_duration_10301403": "已停止 {{v0}}",
-    "open_item_count_10301404": "{{v0}} 个未关闭条目"
+    "open_item_count_10301404": "{{v0}} 个未关闭条目",
+    "under_one_minute_10301405": "不足 1 分钟",
+    "new_issue_matched_query_10301406": "新任务符合查询条件",
+    "issue_left_query_10301407": "任务已不再符合查询条件",
+    "issue_assignee_changed_10301408": "负责人已变更",
+    "issue_human_comment_added_10301409": "新增人工评论",
+    "issue_updated_10301410": "任务已更新",
+    "issue_changed_10301411": "任务已变更",
+    "this_member_10301412": "该成员"
   }
 }

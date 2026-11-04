@@ -600,7 +600,14 @@ function ChangeRow({ change }: { change: StatusCardUpdate["changes"][number] }) 
 }
 
 function describeChangeKind(changeKind: string): string {
-  if (changeKind === "entered_query" || changeKind === "new") return "new issue matched the query";
-  if (changeKind === "left_query") return "left the query";
-  return changeKind.replace(/_/g, " ");
+  if (changeKind === "entered_query" || changeKind === "new" || changeKind === "add") {
+    return l10n("local.new_issue_matched_query_10301406");
+  }
+  if (changeKind === "left_query" || changeKind === "removed") {
+    return l10n("local.issue_left_query_10301407");
+  }
+  if (changeKind === "assignee") return l10n("local.issue_assignee_changed_10301408");
+  if (changeKind === "human_comment") return l10n("local.issue_human_comment_added_10301409");
+  if (changeKind === "updated") return l10n("local.issue_updated_10301410");
+  return l10n("local.issue_changed_10301411");
 }

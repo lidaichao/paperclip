@@ -623,7 +623,7 @@ export function CompanyAccessLegacyRoute() {
 }
 
 function memberDisplayName(member: CompanyMember | null) {
-  if (!member) return "this member";
+  if (!member) return l10n("local.this_member_10301412");
   return member.user?.name?.trim() || member.user?.email || member.principalId;
 }
 

@@ -1014,6 +1014,14 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.stopped_just_now_10301402).toBe("刚刚停止");
     expect(messages.stopped_duration_10301403).toContain("已停止");
     expect(messages.open_item_count_10301404).toContain("未关闭条目");
+    expect(messages.under_one_minute_10301405).toBe("不足 1 分钟");
+    expect(messages.new_issue_matched_query_10301406).toContain("符合查询条件");
+    expect(messages.issue_left_query_10301407).toContain("不再符合查询条件");
+    expect(messages.issue_assignee_changed_10301408).toContain("负责人已变更");
+    expect(messages.issue_human_comment_added_10301409).toContain("人工评论");
+    expect(messages.issue_updated_10301410).toBe("任务已更新");
+    expect(messages.issue_changed_10301411).toBe("任务已变更");
+    expect(messages.this_member_10301412).toBe("该成员");
     expect(Object.values(messages).filter((value) => /\bURL\b/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /Application ID|Client ID|Client Secret|Tenant ID|Signing Secret|Alice Runner|Runner Inspector/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /请求 地址|此 地址|实例 地址|回调 地址|网关 地址/.test(value))).toEqual([]);

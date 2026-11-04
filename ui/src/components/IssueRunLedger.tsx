@@ -393,13 +393,22 @@ function compactAgentName(
 function formatSilenceAge(ms: number | null | undefined) {
   if (!ms || ms <= 0) return null;
   const totalMinutes = Math.floor(ms / 60_000);
-  if (totalMinutes < 1) return "under 1 minute";
-  if (totalMinutes < 60)
-    return `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
+  if (totalMinutes < 1) return l10n("local.under_one_minute_10301405");
+  if (totalMinutes < 60) {
+    return totalMinutes === 1
+      ? l10n("local.one_minute_10300522")
+      : l10n("local.count_minutes_10300523", { v0: totalMinutes });
+  }
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  if (minutes === 0) return `${hours} hour${hours === 1 ? "" : "s"}`;
-  return `${hours}h ${minutes}m`;
+  const hoursLabel = hours === 1
+    ? l10n("local.one_hour_10300524")
+    : l10n("local.count_hours_10300525", { v0: hours });
+  if (minutes === 0) return hoursLabel;
+  return l10n("local.hours_minutes_value_10300526", {
+    v0: hoursLabel,
+    v1: l10n("local.count_minutes_10300523", { v0: minutes }),
+  });
 }
 
 function canBoardRecordWatchdogDecision(

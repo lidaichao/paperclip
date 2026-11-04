@@ -13596,6 +13596,14 @@
     "stopped_label_10301401": "stopped",
     "stopped_just_now_10301402": "stopped just now",
     "stopped_duration_10301403": "stopped {{v0}}",
-    "open_item_count_10301404": "{{v0}} open"
+    "open_item_count_10301404": "{{v0}} open",
+    "under_one_minute_10301405": "under 1 minute",
+    "new_issue_matched_query_10301406": "new issue matched the query",
+    "issue_left_query_10301407": "left the query",
+    "issue_assignee_changed_10301408": "assignee changed",
+    "issue_human_comment_added_10301409": "new human comment",
+    "issue_updated_10301410": "issue updated",
+    "issue_changed_10301411": "issue changed",
+    "this_member_10301412": "this member"
   }
 }
