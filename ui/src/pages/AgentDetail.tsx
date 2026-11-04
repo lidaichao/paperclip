@@ -29,6 +29,7 @@ import { useToastActions } from "../context/ToastContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { queryKeys } from "../lib/queryKeys";
 import { copyTextToClipboard } from "../lib/clipboard";
+import { localizeRuntimeMessage } from "../lib/runtime-message-localization";
 import { AgentSkillsTab } from "./agent-skills/AgentSkillsTab";
 import { AgentConfigForm } from "../components/AgentConfigForm";
 import { getAdapterDisplay } from "../adapters/adapter-display-registry";
@@ -3285,7 +3286,11 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
         payload: resumePayload,
       }, run.companyId);
       if (!("id" in result)) {
-        throw new Error(result.message ?? l10n("local.resume_request_skipped_0f400010"));
+        throw new Error(
+          result.message
+            ? localizeRuntimeMessage(result.message)
+            : l10n("local.resume_request_skipped_0f400010"),
+        );
       }
       return result;
     },
@@ -3331,7 +3336,11 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
         debug: { providerTrace: "raw" },
       }, run.companyId);
       if (!("id" in result)) {
-        throw new Error(result.message ?? l10n("local.trace_rerun_skipped_10301264"));
+        throw new Error(
+          result.message
+            ? localizeRuntimeMessage(result.message)
+            : l10n("local.trace_rerun_skipped_10301264"),
+        );
       }
       return result;
     },

@@ -27,6 +27,7 @@ import { queryKeys } from "../lib/queryKeys";
 import { keepPreviousDataForSameQueryTail } from "../lib/query-placeholder-data";
 import { describeRunRetryState } from "../lib/runRetryState";
 import { readSourceResolvedWatchdogFold } from "../lib/source-resolved-watchdog-fold";
+import { localizeRuntimeMessage } from "../lib/runtime-message-localization";
 import { SourceResolvedFoldBadge } from "./SourceResolvedFoldBadge";
 import { ResponsibleUserDenialNotice } from "./ResponsibleUserDenialNotice";
 import { RunnerInspector } from "./RunnerInspector";
@@ -549,7 +550,11 @@ export function IssueRunLedger({
         companyId,
       );
       if (!("id" in result))
-        throw new Error(result.message ?? l10n("local.trace_rerun_skipped_10301264"));
+        throw new Error(
+          result.message
+            ? localizeRuntimeMessage(result.message)
+            : l10n("local.trace_rerun_skipped_10301264"),
+        );
       return result;
     },
     onSuccess: () => {

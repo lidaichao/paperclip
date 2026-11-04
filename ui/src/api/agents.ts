@@ -32,6 +32,7 @@ import type {
 } from "@paperclipai/shared";
 import { isUuidLike, normalizeAgentUrlKey } from "@paperclipai/shared";
 import { ApiError, api } from "./client";
+import { localizeRuntimeMessage } from "../lib/runtime-message-localization";
 
 export interface AgentKey {
   id: string;
@@ -278,7 +279,11 @@ export const agentsApi = {
       }
       return { runId: result.runId, issueId: result.issueId };
     }
-    throw new Error(result.message ?? l10n("local.retry_was_skipped_10300701"));
+    throw new Error(
+      result.message
+        ? localizeRuntimeMessage(result.message)
+        : l10n("local.retry_was_skipped_10300701"),
+    );
   },
   loginWithClaude: (id: string, companyId?: string) =>
     api.post<ClaudeLoginResult>(agentPath(id, companyId, "/claude-login"), {}),
