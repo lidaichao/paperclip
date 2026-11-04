@@ -6,6 +6,7 @@ import type {
   IssueChatTranscriptEntry,
 } from "../lib/issue-chat-messages";
 import type { IssueTimelineEvent } from "../lib/issue-timeline-events";
+import { l10n } from "../i18n";
 
 export const LONG_THREAD_COMMENT_COUNT = 469;
 export const LONG_THREAD_MARKDOWN_COMMENT_COUNT = 150;
@@ -56,18 +57,18 @@ export const issueChatLongThreadAgentMap = new Map<string, Agent>([
 
 function markdownBody(index: number) {
   return [
-    `## Baseline note ${index}`,
+    `## ${l10n("local.baseline_note_10300827", { number: index })}`,
     "",
-    `This assistant update captures a deterministic markdown-heavy row for long-thread rendering. It references [PAP-${2600 + index}](/PAP/issues/PAP-${2600 + index}) and includes enough structure to exercise markdown parsing.`,
+    l10n("local.long_thread_markdown_row_10300828", { identifier: `PAP-${2600 + index}` }),
     "",
-    "- Parsed checklist item one with inline `code`",
-    "- Parsed checklist item two with **bold** and _italic_ text",
-    "- Parsed checklist item three with a link to [Paperclip](/PAP/dashboard)",
+    `- ${l10n("local.parsed_checklist_inline_code_10300829")}`,
+    `- ${l10n("local.parsed_checklist_rich_text_10300830")}`,
+    `- ${l10n("local.parsed_checklist_alice_link_10300831")}`,
     "",
-    "| Metric | Value |",
+    `| ${l10n("local.metric_10300832")} | ${l10n("local.value_10300833")} |`,
     "| --- | ---: |",
-    `| Fixture row | ${index} |`,
-    `| Synthetic tokens | ${1200 + index} |`,
+    `| ${l10n("local.fixture_row_10300834")} | ${index} |`,
+    `| ${l10n("local.synthetic_tokens_10300835")} | ${1200 + index} |`,
     "",
     "```ts",
     `const fixtureRow${index} = { markdown: true, deterministic: true };`,
@@ -76,11 +77,11 @@ function markdownBody(index: number) {
 }
 
 function plainUserBody(index: number) {
-  return `Board checkpoint ${index}: keep the issue-detail page responsive while the thread is full of historical comments.`;
+  return l10n("local.board_checkpoint_long_thread_10300836", { number: index });
 }
 
 function plainAssistantBody(index: number) {
-  return `Processed checkpoint ${index}. The current direct-render path should keep this row mounted with the rest of the thread.`;
+  return l10n("local.processed_checkpoint_long_thread_10300837", { number: index });
 }
 
 function createComment(index: number): IssueChatComment {
@@ -163,7 +164,7 @@ export const issueChatLongThreadTranscriptsByRunId = new Map<string, readonly Is
       {
         kind: "thinking",
         ts: atMinute(index * 72 + 13).toISOString(),
-        text: `Inspecting long-thread segment ${index + 1}.`,
+        text: l10n("local.inspecting_long_thread_segment_10300838", { number: index + 1 }),
       },
       {
         kind: "tool_call",
@@ -176,13 +177,13 @@ export const issueChatLongThreadTranscriptsByRunId = new Map<string, readonly Is
         kind: "tool_result",
         ts: atMinute(index * 72 + 15).toISOString(),
         toolUseId: `long-thread-tool-${index + 1}`,
-        content: "Confirmed the direct-render fixture keeps the full message subtree mounted.",
+        content: l10n("local.confirmed_direct_render_fixture_10300839"),
         isError: run.status !== "succeeded",
       },
       {
         kind: "assistant",
         ts: atMinute(index * 72 + 16).toISOString(),
-        text: `Run ${index + 1} produced a compact transcript row for adjacent run context.`,
+        text: l10n("local.run_produced_compact_transcript_10300840", { number: index + 1 }),
       },
     ],
   ]),
@@ -191,27 +192,27 @@ export const issueChatLongThreadTranscriptsByRunId = new Map<string, readonly Is
 export const issueChatLongThreadFixtureContext = {
   issue: {
     identifier: "PAP-PERF",
-    title: "Long-thread rendering baseline fixture",
+    title: l10n("local.long_thread_rendering_fixture_10300841"),
     status: "in_progress",
     priority: "medium",
-    projectName: "Paperclip App",
+    projectName: "Alice",
   },
   documents: [
-    "Implementation Plan",
-    "Profiler Notes",
-    "Release Checklist",
-    "QA Readout",
+    l10n("local.implementation_plan_10300842"),
+    l10n("local.profiler_notes_10300843"),
+    l10n("local.release_checklist_10300844"),
+    l10n("local.qa_readout_10300845"),
   ],
   subIssues: [
-    "Phase 1: Add long-thread perf fixture and baseline",
-    "Phase 2: Isolate issue-thread row rendering and Markdown work",
-    "Phase 3: Apply virtualization and guard scroll behavior",
-    "Phase 4: Verify production issue profile improvement",
+    l10n("local.long_thread_phase_one_10300846"),
+    l10n("local.long_thread_phase_two_10300847"),
+    l10n("local.long_thread_phase_three_10300848"),
+    l10n("local.long_thread_phase_four_10300849"),
   ],
   sidebarStats: [
-    ["Comments", String(LONG_THREAD_COMMENT_COUNT)],
-    ["Markdown bodies", String(LONG_THREAD_MARKDOWN_COMMENT_COUNT)],
-    ["Timeline events", String(LONG_THREAD_EVENT_COUNT)],
-    ["Linked runs", String(LONG_THREAD_LINKED_RUN_COUNT)],
+    [l10n("local.comments_10300850"), String(LONG_THREAD_COMMENT_COUNT)],
+    [l10n("local.markdown_bodies_10300851"), String(LONG_THREAD_MARKDOWN_COMMENT_COUNT)],
+    [l10n("local.timeline_events_10300852"), String(LONG_THREAD_EVENT_COUNT)],
+    [l10n("local.linked_runs_10300853"), String(LONG_THREAD_LINKED_RUN_COUNT)],
   ],
 } as const;
