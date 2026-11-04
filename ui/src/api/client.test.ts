@@ -3,6 +3,7 @@ import {
   createTenantSessionRecoveryCoordinator,
   tenantSessionRecovery,
 } from "@/lib/tenant-session-recovery";
+import { i18n } from "../i18n";
 import { __inflightGetCount, api, ApiError, detachInflightGet } from "./client";
 
 interface Deferred<T> {
@@ -36,9 +37,10 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
 });
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  await i18n.changeLanguage("en");
 });
 
 describe("tenant-session recovery", () => {
@@ -99,6 +101,16 @@ describe("network error localization", () => {
       status: 0,
       message: "Could not reach the server. Check your connection and try again.",
       rawMessage: "Failed to fetch",
+    });
+  });
+
+  it("uses a Chinese fallback when an API response has no error body", async () => {
+    await i18n.changeLanguage("zh-CN");
+    fetchMock.mockResolvedValue(errorResponse(null, 503));
+
+    await expect(api.get("/empty-error")).rejects.toMatchObject({
+      status: 503,
+      rawMessage: "请求失败（状态码 503）。",
     });
   });
 });
