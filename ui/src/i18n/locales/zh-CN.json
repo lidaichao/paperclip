@@ -13431,6 +13431,25 @@
     "replacement_dependencies_blocked_10301236": "已取消替换运行：派发前任务依赖重新进入受阻状态。",
     "subscription_retry_lock_changed_10301237": "订阅重试已被阻止：任务执行锁已变化。",
     "connection_open_workspace_10301238": "Alice 将打开 {{v0}}，你可以选择工作区并批准访问。",
-    "connection_creating_secure_10301239": "Alice 正在创建安全的 {{v0}} 连接。"
+    "connection_creating_secure_10301239": "Alice 正在创建安全的 {{v0}} 连接。",
+    "recovery_missing_disposition_10301240": "缺少处理结论",
+    "recovery_wait_without_target_10301241": "等待对象缺失",
+    "recovery_stranded_task_10301242": "任务停滞",
+    "recovery_workspace_validation_10301243": "工作区验证",
+    "recovery_configuration_validation_10301244": "配置验证",
+    "recovery_active_watchdog_10301245": "运行监控",
+    "recovery_task_needs_next_step_10301246": "任务需要后续处理",
+    "recovery_finished_without_next_step_10301247": "本次任务运行已经结束，但尚未选择后续处理。请选择重试任务、标记完成或提交审核。",
+    "recovery_wait_has_no_target_10301248": "任务上次运行因等待而停止，但当前没有可等待的审核人、阻塞项、监控或审批。Alice 正在修复后续流程；任务仍由原负责人持有。",
+    "recovery_retry_still_stranded_10301249": "Alice 已重试任务的上次运行，但仍没有排队中的运行、审核人、阻塞项或后续负责人。请选择重试任务、标记完成或提交审核，让任务继续推进。",
+    "recovery_workspace_could_not_validate_10301250": "Alice 已停止本次运行，因为无法验证任务的 Git 工作区。",
+    "recovery_required_bindings_missing_10301251": "Alice 在派发运行前将其停止，因为缺少必需的密钥或环境变量绑定。",
+    "recovery_active_run_silent_10301252": "当前运行长时间没有响应。恢复机制正在观察，不会中断该运行。",
+    "recovery_no_clear_next_step_10301253": "Alice 无法为这个未关闭任务找到明确的后续步骤。请选择继续工作、提交审核、标记完成或记录阻塞原因。",
+    "recovery_retry_due_did_not_run_10301254": "任务的自动重试已到期但没有执行，目前没有任何流程在继续推进。请手动重试或记录后续步骤；任务仍由原负责人持有。",
+    "recovery_owner_attempts_exhausted_10301255": "任务上次运行因等待而停止，但没有任何对象在等待它。原负责人已用完所有自动修复次数，需要人工决定后续步骤；任务仍由原负责人持有。",
+    "recovery_retrying_original_owner_10301256": "任务上次运行因等待而停止，但没有任何对象在等待它。Alice 正在重试原负责人，以记录明确的后续步骤；任务仍由原负责人持有，目前无需操作。",
+    "recovery_owner_repairing_path_10301257": "原负责人未能在重试次数内记录后续步骤。恢复负责人现在只修复后续流程；任务本身仍属于原负责人。",
+    "recovery_board_must_choose_10301258": "自动恢复次数已用完，管理委员会必须选择后续步骤；任务本身仍属于原负责人。"
   }
 }

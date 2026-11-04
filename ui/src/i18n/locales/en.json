@@ -13431,6 +13431,25 @@
     "replacement_dependencies_blocked_10301236": "The replacement was cancelled because task dependencies became blocked before dispatch.",
     "subscription_retry_lock_changed_10301237": "The subscription retry was suppressed because the task execution lock changed.",
     "connection_open_workspace_10301238": "Alice will open {{v0}} so you can choose a workspace and approve access.",
-    "connection_creating_secure_10301239": "Alice is creating a secure {{v0}} connection."
+    "connection_creating_secure_10301239": "Alice is creating a secure {{v0}} connection.",
+    "recovery_missing_disposition_10301240": "Missing Disposition",
+    "recovery_wait_without_target_10301241": "Wait Without A Target",
+    "recovery_stranded_task_10301242": "Stranded Task",
+    "recovery_workspace_validation_10301243": "Workspace Validation",
+    "recovery_configuration_validation_10301244": "Configuration Validation",
+    "recovery_active_watchdog_10301245": "Active Watchdog",
+    "recovery_task_needs_next_step_10301246": "Task Needs Next Step",
+    "recovery_finished_without_next_step_10301247": "This task's run finished, but no next step was chosen. Choose what happens next — try the task again, mark it done, or send it for review.",
+    "recovery_wait_has_no_target_10301248": "This task's last run stopped to wait, but there is no reviewer, blocker, monitor, or approval to wait for. Alice is repairing the next step; the task stays with its owner.",
+    "recovery_retry_still_stranded_10301249": "Alice retried this task's last run, but there is still no queued run, reviewer, blocker, or other next owner. To get it moving, choose what happens next — try the task again, mark it done, or send it for review.",
+    "recovery_workspace_could_not_validate_10301250": "Alice stopped this run because the task's Git workspace could not be validated.",
+    "recovery_required_bindings_missing_10301251": "Alice stopped before dispatching this run because required secret or environment bindings are missing.",
+    "recovery_active_run_silent_10301252": "The active run has been silent. Recovery is observing without interrupting it.",
+    "recovery_no_clear_next_step_10301253": "Alice could not find a clear next step for this open task. Choose whether to continue work, send it for review, mark it done, or record what is blocking it.",
+    "recovery_retry_due_did_not_run_10301254": "This task's automatic retry came due and did not run, so nothing is moving it forward right now. Someone must retry it or record the next step. The task stays with its original owner.",
+    "recovery_owner_attempts_exhausted_10301255": "This task's last run stopped to wait, but nothing was waiting for it. The original owner has used every automatic repair attempt, so the next step needs a decision. The task stays with its owner.",
+    "recovery_retrying_original_owner_10301256": "This task's last run stopped to wait, but nothing was waiting for it. Alice is retrying the original owner to record a real next step. The task stays with its owner, and no action is needed yet.",
+    "recovery_owner_repairing_path_10301257": "The original owner could not record a next step within its retry budget. A recovery owner is now repairing the path only — the task itself still belongs to its original owner.",
+    "recovery_board_must_choose_10301258": "Automatic recovery is exhausted, so the board must choose the next step. The task itself still belongs to its original owner."
   }
 }

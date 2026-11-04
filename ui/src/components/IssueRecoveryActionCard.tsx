@@ -131,30 +131,23 @@ export interface IssueRecoveryActionCardProps {
 }
 
 const KIND_LABEL: Record<IssueRecoveryActionKind, string> = {
-  missing_disposition: "Missing Disposition",
-  deliberate_wait_without_target: "Wait Without A Target",
-  stranded_assigned_issue: "Stranded Task",
-  workspace_validation: "Workspace Validation",
-  configuration_validation: "Configuration Validation",
-  active_run_watchdog: "Active Watchdog",
-  issue_graph_liveness: "Task Needs Next Step",
+  missing_disposition: l10n("local.recovery_missing_disposition_10301240"),
+  deliberate_wait_without_target: l10n("local.recovery_wait_without_target_10301241"),
+  stranded_assigned_issue: l10n("local.recovery_stranded_task_10301242"),
+  workspace_validation: l10n("local.recovery_workspace_validation_10301243"),
+  configuration_validation: l10n("local.recovery_configuration_validation_10301244"),
+  active_run_watchdog: l10n("local.recovery_active_watchdog_10301245"),
+  issue_graph_liveness: l10n("local.recovery_task_needs_next_step_10301246"),
 };
 
 const KIND_HEADLINE: Record<IssueRecoveryActionKind, string> = {
-  missing_disposition:
-    "This task's run finished, but no next step was chosen. Choose what happens next — try the task again, mark it done, or send it for review.",
-  deliberate_wait_without_target:
-    "This task's last run stopped to wait, but there is no reviewer, blocker, monitor, or approval to wait for. Paperclip is repairing the next step; the task stays with its owner.",
-  stranded_assigned_issue:
-    "Paperclip retried this task's last run, but there is still no queued run, reviewer, blocker, or other next owner. To get it moving, choose what happens next — try the task again, mark it done, or send it for review.",
-  workspace_validation:
-    "Paperclip stopped this run because the task's git workspace could not be validated.",
-  configuration_validation:
-    "Paperclip stopped before dispatching this run because required secret/env bindings are missing.",
-  active_run_watchdog:
-    "The active run has been silent. Recovery is observing without interrupting it.",
-  issue_graph_liveness:
-    "Paperclip could not find a clear next step for this open task. Choose whether to continue work, send it for review, mark it done, or record what is blocking it.",
+  missing_disposition: l10n("local.recovery_finished_without_next_step_10301247"),
+  deliberate_wait_without_target: l10n("local.recovery_wait_has_no_target_10301248"),
+  stranded_assigned_issue: l10n("local.recovery_retry_still_stranded_10301249"),
+  workspace_validation: l10n("local.recovery_workspace_could_not_validate_10301250"),
+  configuration_validation: l10n("local.recovery_required_bindings_missing_10301251"),
+  active_run_watchdog: l10n("local.recovery_active_run_silent_10301252"),
+  issue_graph_liveness: l10n("local.recovery_no_clear_next_step_10301253"),
 };
 
 /** Shared shell for the retry-timing pill so every timing state reads as the same control. */
@@ -894,17 +887,17 @@ function lineageHeadline(lineage: RecoveryRetryLineage): string {
   // An attempt that came due and never ran leaves nobody working on this task, even though
   // attempts remain on paper. Say so before any lane wording that ends in "no action needed".
   if (lineage.retryExpired) {
-    return "This task's automatic retry came due and did not run, so nothing is moving it forward right now. Someone must retry it or record the next step. The task stays with its original owner.";
+    return l10n("local.recovery_retry_due_did_not_run_10301254");
   }
   if (lineage.lane === "source_owner") {
     return lineage.exhausted
-      ? "This task's last run stopped to wait, but nothing was waiting for it. The original owner has used every automatic repair attempt, so the next step needs a decision. The task stays with its owner."
-      : "This task's last run stopped to wait, but nothing was waiting for it. Paperclip is retrying the original owner to record a real next step. The task stays with its owner, and no action is needed yet.";
+      ? l10n("local.recovery_owner_attempts_exhausted_10301255")
+      : l10n("local.recovery_retrying_original_owner_10301256");
   }
   if (lineage.lane === "recovery_owner") {
-    return "The original owner could not record a next step within its retry budget. A recovery owner is now repairing the path only — the task itself still belongs to its original owner.";
+    return l10n("local.recovery_owner_repairing_path_10301257");
   }
-  return "Automatic recovery is exhausted, so the board must choose the next step. The task itself still belongs to its original owner.";
+  return l10n("local.recovery_board_must_choose_10301258");
 }
 
 /** Spent/remaining attempts as pips. The readable count lives beside it in text. */
