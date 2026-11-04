@@ -12870,6 +12870,11 @@
     "versions_behind_latest_10300673": "{{v0}} versions behind latest",
     "tool_name_10300674": "Tool: {{v0}}",
     "args_block_10300675": "Args:\n{{v0}}",
-    "result_block_10300676": "Result:\n{{v0}}"
+    "result_block_10300676": "Result:\n{{v0}}",
+    "reissued_from_isolated_worktree_10300677": "Re-issued from {{v0}} on an isolated git worktree after a workspace branch divergence.",
+    "base_ref_live_branch_10300678": "- Base ref (live branch): `{{v0}}`",
+    "recorded_branch_10300679": "- Recorded branch: `{{v0}}`",
+    "reissue_isolated_title_10300680": "Re-issue (isolated): {{v0}}",
+    "field_number_10300681": "field {{v0}}"
   }
 }

@@ -864,6 +864,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.tool_name_10300674).toContain("工具");
     expect(messages.args_block_10300675).toContain("参数");
     expect(messages.result_block_10300676).toContain("结果");
+    expect(messages.reissued_from_isolated_worktree_10300677).toContain("独立 Git 工作树");
+    expect(messages.base_ref_live_branch_10300678).toContain("基准引用");
+    expect(messages.recorded_branch_10300679).toContain("已记录分支");
+    expect(messages.reissue_isolated_title_10300680).toContain("独立工作区");
+    expect(messages.field_number_10300681).toContain("字段");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

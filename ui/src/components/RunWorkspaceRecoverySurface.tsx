@@ -129,17 +129,17 @@ export function RunWorkspaceRecoverySurface({ run }: { run: HeartbeatRun }) {
       if (!issue) throw new Error(l10n("local.task_not_loaded_yet_0cd00021"));
       const sourceLabel = issue.identifier ?? l10n("local.the_stalled_task_701f1d79");
       const descriptionLines = [
-        `Re-issued from ${sourceLabel} on an isolated git worktree after a workspace branch divergence.`,
+        l10n("local.reissued_from_isolated_worktree_10300677", { v0: sourceLabel }),
         "",
-        `- Base ref (live branch): \`${request.baseRef}\``,
-        ...(request.expectedBranch ? [`- Recorded branch: \`${request.expectedBranch}\``] : []),
+        l10n("local.base_ref_live_branch_10300678", { v0: request.baseRef }),
+        ...(request.expectedBranch ? [l10n("local.recorded_branch_10300679", { v0: request.expectedBranch })] : []),
         "",
         "---",
         "",
         issue.description ?? "",
       ];
       return issuesApi.create(issue.companyId, {
-        title: `Re-issue (isolated): ${issue.title ?? sourceLabel}`,
+        title: l10n("local.reissue_isolated_title_10300680", { v0: issue.title ?? sourceLabel }),
         description: descriptionLines.join("\n"),
         priority: issue.priority,
         projectId: issue.projectId ?? null,

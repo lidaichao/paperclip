@@ -10289,5 +10289,10 @@
   "{{v0}} versions behind latest": "local.versions_behind_latest_10300673",
   "tool: {{v0}}": "local.tool_name_10300674",
   "args:\n{{v0}}": "local.args_block_10300675",
-  "result:\n{{v0}}": "local.result_block_10300676"
+  "result:\n{{v0}}": "local.result_block_10300676",
+  "re-issued from {{v0}} on an isolated git worktree after a workspace branch divergence.": "local.reissued_from_isolated_worktree_10300677",
+  "- base ref (live branch): `{{v0}}`": "local.base_ref_live_branch_10300678",
+  "- recorded branch: `{{v0}}`": "local.recorded_branch_10300679",
+  "re-issue (isolated): {{v0}}": "local.reissue_isolated_title_10300680",
+  "field {{v0}}": "local.field_number_10300681"
 }

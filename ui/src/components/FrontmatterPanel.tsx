@@ -599,7 +599,7 @@ function MetadataRows({
             className="h-8 flex-1 font-mono text-xs"
           />
           <Input
-            aria-label={l10n("local.value_for_value_d6f50c19", {v0: (row.key || `field ${index + 1}`)})}
+            aria-label={l10n("local.value_for_value_d6f50c19", {v0: (row.key || l10n("local.field_number_10300681", { v0: index + 1 }))})}
             value={row.text}
             readOnly={readOnly}
             placeholder={l10n("local.value_cd42404d")}
@@ -611,7 +611,7 @@ function MetadataRows({
               variant="ghost"
               size="icon"
               className="h-8 w-8 shrink-0"
-              aria-label={l10n("local.remove_value_86790c6d", {v0: (row.key || `field ${index + 1}`)})}
+              aria-label={l10n("local.remove_value_86790c6d", {v0: (row.key || l10n("local.field_number_10300681", { v0: index + 1 }))})}
               onClick={() => remove(index)}
             >
               <Trash2 className="h-3.5 w-3.5" />

@@ -12870,6 +12870,11 @@
     "versions_behind_latest_10300673": "落后最新版本 {{v0}} 个版本",
     "tool_name_10300674": "工具：{{v0}}",
     "args_block_10300675": "参数：\n{{v0}}",
-    "result_block_10300676": "结果：\n{{v0}}"
+    "result_block_10300676": "结果：\n{{v0}}",
+    "reissued_from_isolated_worktree_10300677": "因工作区分支分叉，已从 {{v0}} 在独立 Git 工作树中重新创建。",
+    "base_ref_live_branch_10300678": "- 基准引用（当前分支）：`{{v0}}`",
+    "recorded_branch_10300679": "- 已记录分支：`{{v0}}`",
+    "reissue_isolated_title_10300680": "重新创建（独立工作区）：{{v0}}",
+    "field_number_10300681": "字段 {{v0}}"
   }
 }
