@@ -3,7 +3,7 @@ import {
   createTenantSessionRecoveryCoordinator,
   tenantSessionRecovery,
 } from "@/lib/tenant-session-recovery";
-import { __inflightGetCount, api, detachInflightGet } from "./client";
+import { __inflightGetCount, api, ApiError, detachInflightGet } from "./client";
 
 interface Deferred<T> {
   promise: Promise<T>;
@@ -74,6 +74,18 @@ describe("tenant-session recovery", () => {
       status: 401,
       message: "Your sign-in is no longer valid. Sign in again.",
     });
+  });
+
+  it("keeps the raw server diagnostic when the visible message is localized", async () => {
+    fetchMock.mockResolvedValue(errorResponse({ error: "Document is locked" }, 409));
+
+    const error = await api.post("/locked-document", {}).catch((value: unknown) => value);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({
+      status: 409,
+      rawMessage: "Document is locked",
+    });
+    expect((error as ApiError).message).not.toBe((error as ApiError).rawMessage);
   });
 });
 

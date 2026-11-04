@@ -7,12 +7,14 @@ const BASE = "/api";
 export class ApiError extends Error {
   status: number;
   body: unknown;
+  rawMessage: string;
 
-  constructor(message: string, status: number, body: unknown) {
+  constructor(message: string, status: number, body: unknown, rawMessage = message) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.body = body;
+    this.rawMessage = rawMessage;
   }
 }
 
@@ -65,6 +67,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       localizeApiErrorMessage(rawMessage, res.status),
       res.status,
       errorBody,
+      rawMessage,
     );
   }
   if (res.status === 204) return undefined as T;
