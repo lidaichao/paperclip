@@ -596,14 +596,12 @@ const sheetsToolActionBase: RequestConfirmationToolActionPayload = {
   actionRequestId: "aaaaaaa1-1111-4111-8111-1111111111a1",
   invocationId: "bbbbbbb2-2222-4222-8222-2222222222b2",
   toolName: "google_sheets.append_row",
-  toolDisplayName: "Append row to spreadsheet",
+  toolDisplayName: l10n("local.append_row_to_spreadsheet_10300927"),
   connectionId: "ccccccc3-3333-4333-8333-3333333333c3",
   applicationId: "ddddddd4-4444-4444-8444-4444444444d4",
   appDisplayName: "Google Sheets",
   risk: "write" as const,
-  previewMarkdown:
-    "Add **1 row** to the **Q3 Growth Leads** sheet:\n\n"
-    + "| Column | Value |\n| --- | --- |\n| Name | Priya Anand |\n| Company | Northwind |\n| Stage | Qualified |\n| Owner | growth-bot |",
+  previewMarkdown: l10n("local.add_growth_lead_row_preview_10300928"),
   argumentsSummaryJson: JSON.stringify(
     {
       spreadsheetId: "1AbC…xyz",
@@ -631,9 +629,9 @@ function createToolActionConfirmationInteraction(
     createdByAgentId: "agent-codex",
     payload: {
       version: 1,
-      prompt: "Approve running this tool call?",
-      acceptLabel: "Approve & run",
-      rejectLabel: "Decline",
+      prompt: l10n("local.approve_running_tool_call_10300929"),
+      acceptLabel: l10n("local.approve_and_run_10300930"),
+      rejectLabel: l10n("local.decline_10300918"),
       ...payload,
       toolAction: { ...sheetsToolActionBase, ...toolActionOverrides },
     },
@@ -651,11 +649,9 @@ export const pendingToolActionDestructiveInteraction = createToolActionConfirmat
     actionRequestId: "aaaaaaa5-5555-4555-8555-5555555555a5",
     invocationId: "bbbbbbb6-6666-4666-8666-6666666666b6",
     toolName: "google_sheets.delete_rows",
-    toolDisplayName: "Delete rows from spreadsheet",
+    toolDisplayName: l10n("local.delete_rows_from_spreadsheet_10300931"),
     risk: "destructive",
-    previewMarkdown:
-      "**Permanently delete 12 rows** (rows 30–41) from the **Q3 Growth Leads** sheet. "
-      + "This cannot be undone.",
+    previewMarkdown: l10n("local.permanently_delete_growth_rows_10300932"),
     argumentsSummaryJson: JSON.stringify(
       { spreadsheetId: "1AbC…xyz", range: "Leads!A30:D41", rowCount: 12 },
       null,
@@ -695,7 +691,7 @@ export const executedToolActionInteraction = createToolActionConfirmationInterac
     toolAction: {
       version: 1,
       status: "executed",
-      resultSummary: "Row 42 added to “Q3 Growth Leads”.",
+      resultSummary: l10n("local.growth_lead_row_added_10300933"),
       resultHref: "https://docs.google.com/spreadsheets/d/1AbCxyz/edit#gid=0&range=A42",
       updatedAt: "2026-04-20T15:02:12.000Z",
     },
@@ -715,9 +711,7 @@ export const failedToolActionInteraction = createToolActionConfirmationInteracti
       version: 1,
       status: "failed",
       errorCode: "insufficient_permission",
-      errorMessage:
-        "The caller does not have permission to edit this spreadsheet (Google API 403). "
-        + "Ask the sheet owner to grant edit access to the connected account.",
+      errorMessage: l10n("local.spreadsheet_edit_permission_error_10300934"),
       updatedAt: "2026-04-20T15:02:09.000Z",
     },
   },
@@ -732,7 +726,7 @@ export const declinedToolActionInteraction = createToolActionConfirmationInterac
   result: {
     version: 1,
     outcome: "rejected",
-    reason: "We don't add leads to this sheet manually — use the CRM sync instead.",
+    reason: l10n("local.use_crm_sync_instead_10300935"),
   },
 });
 
@@ -764,12 +758,11 @@ export const expiredToolActionInteraction = createToolActionConfirmationInteract
 const secretProposalBase: RequestConfirmationSecretProposalPayload = {
   version: 1,
   proposalId: "eeeeeee5-5555-4555-8555-5555555555e5",
-  sourceSecretLabel: "OpenAI API key",
+  sourceSecretLabel: l10n("local.openai_api_key_10300936"),
   configPath: "access.evals_openai_api_key",
   targetAgentId: "ffffffff-6666-4666-8666-6666666666f6",
-  targetAgentName: "EvalsEngineer",
-  justification:
-    "The evaluation runner needs the existing credential under its canonical config name.",
+  targetAgentName: l10n("local.evaluation_engineer_10300937"),
+  justification: l10n("local.evaluation_runner_needs_credential_10300938"),
   expiresAt: expiresInMinutes(14 * 24 * 60),
 };
 
@@ -782,16 +775,16 @@ function createSecretProposalConfirmationInteraction(
   return createRequestConfirmationInteraction({
     id: "interaction-secret-proposal-default",
     title: undefined,
-    summary: "Review a proposed alias for an existing secret binding.",
+    summary: l10n("local.review_secret_binding_alias_10300939"),
     createdByAgentId: "agent-codex",
     resolverPolicy: "human_only",
     requestedResolverPolicy: "human_only",
     effectiveResolverPolicy: "human_only",
     payload: {
       version: 1,
-      prompt: "Approve this secret binding?",
-      acceptLabel: "Approve & bind",
-      rejectLabel: "Reject",
+      prompt: l10n("local.approve_secret_binding_10300940"),
+      acceptLabel: l10n("local.approve_and_bind_10300941"),
+      rejectLabel: l10n("local.reject_10300902"),
       allowDeclineReason: true,
       ...payload,
       secretProposal: { ...secretProposalBase, ...secretProposalOverrides },
@@ -817,8 +810,8 @@ function createConnectionAuthorizationInteraction(
   const { payload, ...rest } = overrides;
   return createRequestConfirmationInteraction({
     id: "interaction-connection-authorization-default",
-    title: "Connect your Gmail to continue",
-    summary: "Outreach Agent needs your Gmail identity for work running as you.",
+    title: l10n("local.connect_gmail_to_continue_10300942"),
+    summary: l10n("local.outreach_agent_needs_gmail_10300943"),
     createdByAgentId: "agent-codex",
     addresseeUserId: issueThreadInteractionFixtureMeta.currentUserId,
     resolverPolicy: "human_only",
@@ -826,20 +819,20 @@ function createConnectionAuthorizationInteraction(
     effectiveResolverPolicy: "human_only",
     payload: {
       version: 1,
-      prompt: "Connect your Gmail to continue",
-      acceptLabel: "Connect Gmail",
-      rejectLabel: "Not now",
+      prompt: l10n("local.connect_gmail_to_continue_10300942"),
+      acceptLabel: l10n("local.connect_gmail_10300944"),
+      rejectLabel: l10n("local.not_now_10300945"),
       ...payload,
       connectionAuthorization: {
         version: 1,
         providerName: "Gmail",
         connectionName: null,
-        requestingAgentName: "Outreach Agent",
+        requestingAgentName: l10n("local.outreach_agent_10300946"),
       },
       target: {
         type: "custom",
         key: "connection:gmail-abc:user:user-dotta",
-        label: "Connect Gmail",
+        label: l10n("local.connect_gmail_10300944"),
         href: "https://accounts.google.com/o/oauth2/v2/auth?client_id=paperclip",
       },
     },
@@ -868,8 +861,8 @@ function createConnectionIntentInteraction(
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "connection_intent",
-    title: "Connect Notion",
-    summary: "Researcher needs this connection to continue.",
+    title: l10n("local.connect_notion_10300947"),
+    summary: l10n("local.researcher_needs_connection_10300948"),
     status: "pending",
     continuationPolicy: "wake_assignee",
     createdByAgentId: "11111111-1111-4111-8111-111111111111",
@@ -886,7 +879,7 @@ function createConnectionIntentInteraction(
       serviceName: "Notion",
       serviceLogoUrl: null,
       requestingAgentId: "11111111-1111-4111-8111-111111111111",
-      requestingAgentName: "Researcher",
+      requestingAgentName: l10n("local.researcher_10300949"),
       phase: "requested",
     },
     result: null,
@@ -912,7 +905,7 @@ export const retryConnectionIntentInteraction = createConnectionIntentInteractio
     serviceName: "Notion",
     serviceLogoUrl: null,
     requestingAgentId: "11111111-1111-4111-8111-111111111111",
-    requestingAgentName: "Researcher",
+    requestingAgentName: l10n("local.researcher_10300949"),
     phase: "needs_retry",
   },
 });
@@ -924,7 +917,7 @@ export const authorizingConnectionIntentInteraction = createConnectionIntentInte
     serviceName: "Notion",
     serviceLogoUrl: null,
     requestingAgentId: "11111111-1111-4111-8111-111111111111",
-    requestingAgentName: "Researcher",
+    requestingAgentName: l10n("local.researcher_10300949"),
     phase: "authorizing",
   },
 });
@@ -942,7 +935,7 @@ export const connectedConnectionIntentInteraction = createConnectionIntentIntera
 export const declinedConnectionIntentInteraction = createConnectionIntentInteraction({
   id: "interaction-connection-intent-declined",
   status: "rejected",
-  result: { version: 1, outcome: "declined", reason: "Not right now" },
+  result: { version: 1, outcome: "declined", reason: l10n("local.not_right_now_10300950") },
   resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
   resolvedAt: new Date("2026-04-20T15:12:00.000Z"),
 });
@@ -1003,7 +996,7 @@ export const rejectedSecretProposalInteraction = createSecretProposalConfirmatio
   result: {
     version: 1,
     outcome: "rejected",
-    reason: "Use the project-scoped credential instead.",
+    reason: l10n("local.use_project_scoped_credential_10300951"),
     secretProposal: {
       version: 1,
       status: "rejected",
