@@ -68,7 +68,7 @@ export function issueActivityTimestamp(issue: Issue): string {
 }
 
 export function issueActivityText(issue: Issue): string {
-  return `Updated ${issueActivityTimestamp(issue)}`;
+  return l10n("local.updated_value_c3a9751b", { v0: issueActivityTimestamp(issue) });
 }
 
 function issueTrailingGridTemplate(columns: InboxIssueColumn[]): string {

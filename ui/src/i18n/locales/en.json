@@ -12867,6 +12867,9 @@
     "one_thing_to_fix_10300670": "{{v0}} thing to fix",
     "things_to_fix_10300671": "{{v0}} things to fix",
     "one_version_behind_latest_10300672": "{{v0}} version behind latest",
-    "versions_behind_latest_10300673": "{{v0}} versions behind latest"
+    "versions_behind_latest_10300673": "{{v0}} versions behind latest",
+    "tool_name_10300674": "Tool: {{v0}}",
+    "args_block_10300675": "Args:\n{{v0}}",
+    "result_block_10300676": "Result:\n{{v0}}"
   }
 }

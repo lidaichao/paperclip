@@ -12867,6 +12867,9 @@
     "one_thing_to_fix_10300670": "有 {{v0}} 个问题需要修复",
     "things_to_fix_10300671": "有 {{v0}} 个问题需要修复",
     "one_version_behind_latest_10300672": "落后最新版本 {{v0}} 个版本",
-    "versions_behind_latest_10300673": "落后最新版本 {{v0}} 个版本"
+    "versions_behind_latest_10300673": "落后最新版本 {{v0}} 个版本",
+    "tool_name_10300674": "工具：{{v0}}",
+    "args_block_10300675": "参数：\n{{v0}}",
+    "result_block_10300676": "结果：\n{{v0}}"
   }
 }

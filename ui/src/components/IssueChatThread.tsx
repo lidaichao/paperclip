@@ -443,7 +443,7 @@ function IssueChatLiveRunStatusLine({
   if (!active) return null;
 
   const primary = currentToolName
-    ? `Using ${currentToolName}`
+    ? l10n("local.using_value_f090144c", { v0: currentToolName })
     : lastAssistantSnippet
       ? lastAssistantSnippet
       : currentStatusMessage;
@@ -850,10 +850,10 @@ function fallbackTextParts(message: ThreadMessage) {
       continue;
     }
     if (part.type === "tool-call") {
-      const lines = [`Tool: ${part.toolName}`];
-      if (part.argsText?.trim()) lines.push(`Args:\n${part.argsText}`);
+      const lines = [l10n("local.tool_name_10300674", { v0: part.toolName })];
+      if (part.argsText?.trim()) lines.push(l10n("local.args_block_10300675", { v0: part.argsText }));
       if (typeof part.result === "string" && part.result.trim())
-        lines.push(`Result:\n${part.result}`);
+        lines.push(l10n("local.result_block_10300676", { v0: part.result }));
       contentLines.push(lines.join("\n\n"));
     }
   }
