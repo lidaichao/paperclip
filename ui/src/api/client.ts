@@ -57,11 +57,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   applyObservabilityHeaders(headers);
 
-  const res = await fetch(`${BASE}${path}`, {
-    headers,
-    credentials: "include",
-    ...init,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      headers,
+      credentials: "include",
+      ...init,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    throw createApiError(rawMessage, 0, null);
+  }
   if (!res.ok) {
     const errorBody = await res.json().catch(() => null);
     const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, errorBody);

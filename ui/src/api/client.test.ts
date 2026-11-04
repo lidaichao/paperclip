@@ -89,6 +89,20 @@ describe("tenant-session recovery", () => {
   });
 });
 
+describe("network error localization", () => {
+  it("converts a browser fetch failure into a localized ApiError", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    const error = await api.get("/offline").catch((value: unknown) => value);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({
+      status: 0,
+      message: "Could not reach the server. Check your connection and try again.",
+      rawMessage: "Failed to fetch",
+    });
+  });
+});
+
 describe("in-tab GET coalescing", () => {
   it("shares one underlying fetch for identical in-flight GETs", async () => {
     const d = deferred<Response>();

@@ -13642,6 +13642,7 @@
     "retry_could_not_start_review_task_10301447": "This retry could not start. Open the task to review its current access and recovery state.",
     "no_environment_selected_10301448": "No environment selected",
     "select_organization_to_create_environment_10301449": "Select an organization to create an environment",
-    "select_organization_to_test_environment_10301450": "Select an organization to test the environment"
+    "select_organization_to_test_environment_10301450": "Select an organization to test the environment",
+    "api_network_request_failed_10301451": "Could not reach the server. Check your connection and try again."
   }
 }

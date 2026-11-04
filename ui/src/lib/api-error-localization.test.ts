@@ -39,6 +39,11 @@ describe("API error localization", () => {
     expect(localizeApiErrorMessage("Request failed: 429", 429)).toBe("请求过于频繁，请稍后重试。");
   });
 
+  it("localizes browser network failures", async () => {
+    await i18n.changeLanguage("zh-CN");
+    expect(localizeApiErrorMessage("Failed to fetch", 0)).toBe("无法连接服务器，请检查网络后重试。");
+  });
+
   it("localizes resource-specific 404 messages without leaking server English", async () => {
     await i18n.changeLanguage("zh-CN");
     expect(localizeApiErrorMessage("Sandbox with ID sandbox-7 not found", 404)).toBe("请求的资源不存在。");

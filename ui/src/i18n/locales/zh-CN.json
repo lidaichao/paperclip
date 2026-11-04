@@ -13642,6 +13642,7 @@
     "retry_could_not_start_review_task_10301447": "无法启动此次重试。请打开任务，检查当前访问权限和恢复状态。",
     "no_environment_selected_10301448": "未选择环境",
     "select_organization_to_create_environment_10301449": "请选择组织后再创建环境",
-    "select_organization_to_test_environment_10301450": "请选择组织后再测试环境"
+    "select_organization_to_test_environment_10301450": "请选择组织后再测试环境",
+    "api_network_request_failed_10301451": "无法连接服务器，请检查网络后重试。"
   }
 }

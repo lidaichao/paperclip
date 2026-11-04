@@ -34,6 +34,7 @@ const DOMAIN_ERROR_KEYS: Record<string, string> = {
 };
 
 function statusFallback(status: number): string {
+  if (status === 0) return l10n("local.api_network_request_failed_10301451");
   if (status === 401) return l10n("local.api_authentication_required_10301174");
   if (status === 403) return l10n("local.api_permission_denied_10301175");
   if (status === 404) return l10n("local.api_resource_not_found_10301176");
