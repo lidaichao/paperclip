@@ -13001,6 +13001,9 @@
     "actionable_denial_copy_plan_10300806": "3 · Actionable denial copy (plan §6)",
     "pages_10300807": "Pages",
     "tool_write_requires_human_approval_10300808": "This tool can write to your workspace, so a human signs off before the agent posts.",
-    "deploy_v2_is_live_10300809": "Deploy v2 is live 🎉"
+    "deploy_v2_is_live_10300809": "Deploy v2 is live 🎉",
+    "full_transcript_10300810": "Full transcript",
+    "live_stream_10300811": "Live stream",
+    "dense_card_10300812": "Dense card"
   }
 }

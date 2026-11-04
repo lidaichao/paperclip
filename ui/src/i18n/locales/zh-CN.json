@@ -13001,6 +13001,9 @@
     "actionable_denial_copy_plan_10300806": "3 · 可执行的拒绝提示（方案 §6）",
     "pages_10300807": "页面",
     "tool_write_requires_human_approval_10300808": "此工具可以写入工作区，因此智能体发送前需要人工批准。",
-    "deploy_v2_is_live_10300809": "v2 版本已上线 🎉"
+    "deploy_v2_is_live_10300809": "v2 版本已上线 🎉",
+    "full_transcript_10300810": "完整转录",
+    "live_stream_10300811": "实时流",
+    "dense_card_10300812": "紧凑卡片"
   }
 }
