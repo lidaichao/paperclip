@@ -31,6 +31,11 @@ describe("API error localization", () => {
     expect(localizeApiErrorMessage("Request failed: 429", 429)).toBe("请求过于频繁，请稍后重试。");
   });
 
+  it("localizes resource-specific 404 messages without leaking server English", async () => {
+    await i18n.changeLanguage("zh-CN");
+    expect(localizeApiErrorMessage("Sandbox with ID sandbox-7 not found", 404)).toBe("请求的资源不存在。");
+  });
+
   it("preserves a specific diagnostic that has no safe translation", async () => {
     await i18n.changeLanguage("zh-CN");
     const diagnostic = "Repository URL must include an owner and name: acme";

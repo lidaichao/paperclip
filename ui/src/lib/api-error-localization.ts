@@ -47,6 +47,9 @@ export function localizeApiErrorMessage(message: string, status: number): string
   if (/[^\u0000-\u007f]/.test(normalized)) return normalized;
   if (AUTH_ERRORS.has(normalized)) return l10n("local.api_authentication_required_10301174");
   if (normalized === "Forbidden") return l10n("local.api_permission_denied_10301175");
+  if (status === 404 && /\bnot found\.?$/i.test(normalized)) {
+    return l10n("local.api_resource_not_found_10301176");
+  }
   if (NOT_FOUND_ERRORS.has(normalized)) return l10n("local.api_resource_not_found_10301176");
   if (normalized === "Validation error") return l10n("local.api_validation_failed_10301178");
   if (normalized === "Internal server error") return l10n("local.api_server_error_10301180");
