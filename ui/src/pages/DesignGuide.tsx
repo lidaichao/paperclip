@@ -1111,7 +1111,7 @@ export function DesignGuide() {
             <CommandInput placeholder={l10n("local.type_a_command_or_search_14d048ec")} />
             <CommandList>
               <CommandEmpty>{l10n("local.no_results_found_7ecdbfee")}</CommandEmpty>
-              <CommandGroup heading="Pages">
+              <CommandGroup heading={l10n("local.pages_10300807")}>
                 <CommandItem>
                   <LayoutDashboard className="h-4 w-4" />
                   {l10n("local.dashboard_67b69646")}</CommandItem>
@@ -1120,7 +1120,7 @@ export function DesignGuide() {
                   {l10n("local.issues_666067dd")}</CommandItem>
               </CommandGroup>
               <CommandSeparator />
-              <CommandGroup heading="Actions">
+              <CommandGroup heading={l10n("local.actions_ff8059dc")}>
                 <CommandItem>
                   <CommandIcon className="h-4 w-4" />
                   {l10n("local.open_command_palette_c022b19a")}</CommandItem>
@@ -1993,8 +1993,12 @@ export function DesignGuide() {
                 catalogSha256: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
                 payloadSha256: "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
               }}
-              input={{ channel: "#launch", text: "Deploy v2 is live 🎉", unfurl_links: false }}
-              reason="This tool can write to your workspace, so a human signs off before the agent posts."
+              input={{
+                channel: "#launch",
+                text: l10n("local.deploy_v2_is_live_10300809"),
+                unfurl_links: false,
+              }}
+              reason={l10n("local.tool_write_requires_human_approval_10300808")}
               policyNumber={7}
               expiresInLabel={l10n("local.expires_in_23h_51m_88e51d2f")}
             />
@@ -2011,8 +2015,12 @@ export function DesignGuide() {
                 previousCatalogSha256: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
                 payloadSha256: "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
               }}
-              input={{ channel: "#launch", text: "Deploy v2 is live 🎉", unfurl_links: false }}
-              reason="This tool can write to your workspace, so a human signs off before the agent posts."
+              input={{
+                channel: "#launch",
+                text: l10n("local.deploy_v2_is_live_10300809"),
+                unfurl_links: false,
+              }}
+              reason={l10n("local.tool_write_requires_human_approval_10300808")}
               policyNumber={7}
               expiresInLabel={l10n("local.expires_in_18h_02m_e165b7a2")}
             />
@@ -2035,8 +2043,8 @@ export function DesignGuide() {
                 catalogSha256: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
                 payloadSha256: "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
               }}
-              input={{ channel: "#launch", text: "Deploy v2 is live 🎉" }}
-              reason="This tool can write to your workspace, so a human signs off before the agent posts."
+              input={{ channel: "#launch", text: l10n("local.deploy_v2_is_live_10300809") }}
+              reason={l10n("local.tool_write_requires_human_approval_10300808")}
               policyNumber={7}
               expiresInLabel={l10n("local.expires_in_23h_51m_88e51d2f")}
             />

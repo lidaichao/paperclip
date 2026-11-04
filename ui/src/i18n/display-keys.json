@@ -10417,5 +10417,8 @@
   "changed the status from todo to in progress": "local.changed_status_todo_to_in_progress_10300803",
   "old brief…": "local.old_brief_10300804",
   "new brief…": "local.new_brief_10300805",
-  "3 · actionable denial copy (plan §6)": "local.actionable_denial_copy_plan_10300806"
+  "3 · actionable denial copy (plan §6)": "local.actionable_denial_copy_plan_10300806",
+  "pages": "local.pages_10300807",
+  "this tool can write to your workspace, so a human signs off before the agent posts.": "local.tool_write_requires_human_approval_10300808",
+  "deploy v2 is live 🎉": "local.deploy_v2_is_live_10300809"
 }

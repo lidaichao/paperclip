@@ -993,6 +993,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.old_brief_10300804).toContain("旧需求说明");
     expect(messages.new_brief_10300805).toContain("新需求说明");
     expect(messages.actionable_denial_copy_plan_10300806).toContain("可执行的拒绝提示");
+    expect(messages.pages_10300807).toBe("页面");
+    expect(messages.tool_write_requires_human_approval_10300808).toContain("人工批准");
+    expect(messages.deploy_v2_is_live_10300809).toContain("已上线");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

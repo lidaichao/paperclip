@@ -12998,6 +12998,9 @@
     "changed_status_todo_to_in_progress_10300803": "changed the status from todo to in progress",
     "old_brief_10300804": "Old brief…",
     "new_brief_10300805": "New brief…",
-    "actionable_denial_copy_plan_10300806": "3 · Actionable denial copy (plan §6)"
+    "actionable_denial_copy_plan_10300806": "3 · Actionable denial copy (plan §6)",
+    "pages_10300807": "Pages",
+    "tool_write_requires_human_approval_10300808": "This tool can write to your workspace, so a human signs off before the agent posts.",
+    "deploy_v2_is_live_10300809": "Deploy v2 is live 🎉"
   }
 }
