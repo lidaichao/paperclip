@@ -163,7 +163,7 @@ function boundedPositiveInteger(
   ) {
     throw new PaperclipRunnerProviderProfileError(
       code,
-      `${label} must be an integer between 1 and ${maximum}.`,
+      `${label} 必须是 1 到 ${maximum} 之间的整数。`,
     );
   }
   return value;
@@ -183,12 +183,12 @@ function assertPermissionMode(
     if (provider === "codex") {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_codex_permission_mode_unqualified",
-        "Paperclip Runner currently supports Codex only with codexPermissionMode set to never. Update the agent configuration before starting a new native run.",
+        "Alice 运行器目前仅支持将 Codex 的 codexPermissionMode 设置为 never。开始新的原生运行前，请更新智能体配置。",
       );
     }
     throw new PaperclipRunnerProviderProfileError(
       "runner_permission_mode_invalid",
-      `${capability.configKey} is not supported by ${provider}.`,
+      `${provider} 不支持 ${capability.configKey}。`,
     );
   }
 }
@@ -227,7 +227,7 @@ export function assertManagedProfileRecoveryBinding(input: {
   ) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_claude_managed_recovery_identity_mismatch",
-      "The persisted Claude Managed identity no longer matches its qualified profile.",
+      "已保存的 Claude Managed 身份已不再与其认证配置匹配。",
     );
   }
   const rawBinding = asRecord(asRecord(input.adapterConfig).env).ANTHROPIC_API_KEY;
@@ -235,7 +235,7 @@ export function assertManagedProfileRecoveryBinding(input: {
   if (boundSecretId !== stored.apiKeySecretId) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_claude_managed_recovery_secret_mismatch",
-      "The persisted Claude Managed run is not bound to its profile's current API-key secret.",
+      "已保存的 Claude Managed 运行未绑定到该配置当前的 API 密钥。",
     );
   }
 }
@@ -290,7 +290,7 @@ export function assertAgentCoreProfileRecoveryBinding(input: {
   ) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_aws_agentcore_recovery_identity_mismatch",
-      "The persisted AWS AgentCore identity no longer matches its qualified profile.",
+      "已保存的 AWS AgentCore 身份已不再与其认证配置匹配。",
     );
   }
 }
@@ -309,7 +309,7 @@ export function resolvePaperclipRunnerProviderProfile(
   if (!isPaperclipRunnerProvider(candidate)) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_provider_unsupported",
-      "Paperclip Runner provider must be Codex, OpenCode, Claude Managed, AWS AgentCore, or ACPX.",
+      "Alice 运行器的提供方必须是 Codex、OpenCode、Claude Managed、AWS AgentCore 或 ACPX。",
     );
   }
 
@@ -327,7 +327,7 @@ export function resolvePaperclipRunnerProviderProfile(
     if (!model || !model.includes("/") || model.endsWith("/")) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_opencode_model_invalid",
-        "Paperclip Runner OpenCode requires model in provider/model form.",
+        "Alice 运行器的 OpenCode 模型必须使用 provider/model 格式。",
       );
     }
     return {
@@ -342,19 +342,19 @@ export function resolvePaperclipRunnerProviderProfile(
     if (!managedProfileId) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_profile_required",
-        "Paperclip Runner Claude Managed requires a company managed-agent profile.",
+        "Alice 运行器的 Claude Managed 需要公司级托管智能体配置。",
       );
     }
     if (config.managedAgentsRetentionAcknowledged !== true) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_retention_required",
-        "Paperclip Runner Claude Managed requires acknowledgement of stateful beta retention.",
+        "Alice 运行器的 Claude Managed 需要确认有状态测试版的数据保留规则。",
       );
     }
     if (model !== null && model !== CLAUDE_MANAGED_QUALIFIED_MODEL) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_model_unqualified",
-        `The Claude Managed profile requires exact model ${CLAUDE_MANAGED_QUALIFIED_MODEL}.`,
+        `Claude Managed 配置要求使用指定模型 ${CLAUDE_MANAGED_QUALIFIED_MODEL}。`,
       );
     }
     return {
@@ -365,7 +365,7 @@ export function resolvePaperclipRunnerProviderProfile(
       maxSessionListCostUsd: positiveNumberOrNull(
         config.maxSessionListCostUsd,
         "paperclip_runner_claude_managed_spend_cap_invalid",
-        "Paperclip Runner Claude Managed requires a positive session spend ceiling when overridden.",
+        "覆盖会话支出上限时，Alice 运行器的 Claude Managed 要求该值大于 0。",
       ),
     };
   }
@@ -375,19 +375,19 @@ export function resolvePaperclipRunnerProviderProfile(
     if (!agentCoreProfileId) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_profile_required",
-        "Paperclip Runner AWS AgentCore requires a company remote-agent profile.",
+        "Alice 运行器的 AWS AgentCore 需要公司级远程智能体配置。",
       );
     }
     if (config.agentCoreRetentionAcknowledged !== true) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_retention_required",
-        "Paperclip Runner AWS AgentCore requires acknowledgement of 90-day Memory retention.",
+        "Alice 运行器的 AWS AgentCore 需要确认记忆数据保留 90 天。",
       );
     }
     if (model !== null && model !== AGENTCORE_QUALIFIED_MODEL) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_model_unqualified",
-        `The AWS AgentCore profile requires exact model ${AGENTCORE_QUALIFIED_MODEL}.`,
+        `AWS AgentCore 配置要求使用指定模型 ${AGENTCORE_QUALIFIED_MODEL}。`,
       );
     }
     return {
@@ -398,7 +398,7 @@ export function resolvePaperclipRunnerProviderProfile(
       maxEstimatedSessionCostUsd: positiveNumberOrNull(
         config.maxEstimatedSessionCostUsd,
         "paperclip_runner_aws_agentcore_spend_cap_invalid",
-        "Paperclip Runner AWS AgentCore requires a positive estimated session spend ceiling when overridden.",
+        "覆盖预计会话支出上限时，Alice 运行器的 AWS AgentCore 要求该值大于 0。",
       ),
     };
   }
@@ -407,14 +407,14 @@ export function resolvePaperclipRunnerProviderProfile(
   if (acpxAgent !== "claude" && acpxAgent !== "codex") {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_acpx_agent_unavailable",
-      "Paperclip Runner ACPX requires the qualified Claude or Codex agent profile; Pi is not available.",
+      "Alice 运行器的 ACPX 需要已认证的 Claude 或 Codex 智能体配置；Pi 暂不可用。",
     );
   }
   const qualifiedModel = QUALIFIED_ACPX_RUNNER_MODELS[acpxAgent];
   if (acpxAgent === "codex" && model !== qualifiedModel) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_acpx_model_unqualified",
-      `Paperclip Runner ACPX ${acpxAgent} requires exact model ${qualifiedModel}.`,
+      `Alice 运行器的 ACPX ${acpxAgent} 要求使用指定模型 ${qualifiedModel}。`,
     );
   }
   return {
@@ -455,7 +455,7 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
   if (profile.backend !== input.backend) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_provider_changed",
-      "Paperclip Runner provider changed after this run selected its native backend.",
+      "本次运行选择原生后端后，Alice 运行器的提供方发生了变化。",
     );
   }
   if (profile.provider === "opencode") {
@@ -490,13 +490,13 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
     ) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_profile_mismatch",
-        "The qualified Claude Managed profile does not match the adapter selection.",
+        "已认证的 Claude Managed 配置与适配器选择不匹配。",
       );
     }
     if (stored.betaVersion !== CLAUDE_MANAGED_BETA_VERSION) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_beta_unqualified",
-        "The Claude Managed profile beta version is not qualified.",
+        "Claude Managed 配置的测试版版本未通过认证。",
       );
     }
     const model = profile.model ?? optionalString(stored.defaultModel);
@@ -505,19 +505,19 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
     if (!model) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_model_invalid",
-        "The Claude Managed profile requires a model.",
+        "Claude Managed 配置必须指定模型。",
       );
     }
     if (model !== CLAUDE_MANAGED_QUALIFIED_MODEL) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_model_unqualified",
-        `The Claude Managed profile requires exact model ${CLAUDE_MANAGED_QUALIFIED_MODEL}.`,
+        `Claude Managed 配置要求使用指定模型 ${CLAUDE_MANAGED_QUALIFIED_MODEL}。`,
       );
     }
     if (!Number.isFinite(maxSessionListCostUsd) || maxSessionListCostUsd <= 0) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_spend_cap_invalid",
-        "The Claude Managed profile requires a positive session spend ceiling.",
+        "Claude Managed 配置要求会话支出上限大于 0。",
       );
     }
     return {
@@ -544,7 +544,7 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
     ) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_profile_mismatch",
-        "The qualified AWS AgentCore profile does not match the adapter selection.",
+        "已认证的 AWS AgentCore 配置与适配器选择不匹配。",
       );
     }
     const remote = asRecord(stored.configuration);
@@ -553,7 +553,7 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
       if (!value) {
         throw new PaperclipRunnerProviderProfileError(
           "paperclip_runner_aws_agentcore_profile_invalid",
-          `The qualified AWS AgentCore profile is missing ${key}.`,
+          `已认证的 AWS AgentCore 配置缺少 ${key}。`,
         );
       }
       return value;
@@ -561,26 +561,26 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
     if (remote.eventExpiryDays !== 90) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_retention_unqualified",
-        "The qualified AWS AgentCore profile must retain Memory events for exactly 90 days.",
+        "已认证的 AWS AgentCore 配置必须将记忆事件保留整整 90 天。",
       );
     }
     const maxEstimatedSessionCostUsd = profile.maxEstimatedSessionCostUsd
       ?? positiveNumberOrNull(
         remote.defaultMaxEstimatedSessionCostUsd,
         "paperclip_runner_aws_agentcore_spend_cap_invalid",
-        "The AWS AgentCore profile requires a positive estimated session spend ceiling.",
+        "AWS AgentCore 配置要求预计会话支出上限大于 0。",
       );
     if (maxEstimatedSessionCostUsd === null) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_spend_cap_invalid",
-        "The AWS AgentCore profile requires a positive estimated session spend ceiling.",
+        "AWS AgentCore 配置要求预计会话支出上限大于 0。",
       );
     }
     const model = profile.model ?? required("defaultModel");
     if (model !== AGENTCORE_QUALIFIED_MODEL) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_model_unqualified",
-        `The AWS AgentCore profile requires exact model ${AGENTCORE_QUALIFIED_MODEL}.`,
+        `AWS AgentCore 配置要求使用指定模型 ${AGENTCORE_QUALIFIED_MODEL}。`,
       );
     }
     return {

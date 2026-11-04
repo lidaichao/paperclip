@@ -26,7 +26,7 @@ describe("Paperclip Runner native provider configuration", () => {
           codexPermissionMode: "on-request",
         },
       }),
-    ).toThrow("codexPermissionMode set to never");
+    ).toThrow("codexPermissionMode 设置为 never");
   });
 
   it("requires persisted Claude recovery to use the qualified identity and current profile secret", () => {
@@ -62,14 +62,14 @@ describe("Paperclip Runner native provider configuration", () => {
       },
       snapshot,
       stored,
-    })).toThrow("current API-key secret");
+    })).toThrow("当前的 API 密钥");
     expect(() => assertManagedProfileRecoveryBinding({
       adapterConfig: {
         env: { ANTHROPIC_API_KEY: { secretId: stored.apiKeySecretId } },
       },
       snapshot: { ...snapshot, agentVersion: "8" },
       stored,
-    })).toThrow("no longer matches");
+    })).toThrow("已不再与其认证配置匹配");
   });
 
   it("requires persisted AgentCore recovery to use the same qualified identity", () => {
@@ -102,11 +102,11 @@ describe("Paperclip Runner native provider configuration", () => {
     expect(() => assertAgentCoreProfileRecoveryBinding({
       snapshot: { ...snapshot, harnessVersion: "4" },
       stored,
-    })).toThrow("no longer matches");
+    })).toThrow("已不再与其认证配置匹配");
     expect(() => assertAgentCoreProfileRecoveryBinding({
       snapshot,
       stored: { ...stored, id: "00000000-0000-4000-8000-000000000099" },
-    })).toThrow("no longer matches");
+    })).toThrow("已不再与其认证配置匹配");
   });
 
 
@@ -284,7 +284,7 @@ describe("Paperclip Runner native provider configuration", () => {
           defaultMaxEstimatedSessionCostUsd: 1.25,
         },
       },
-    })).toThrow("must be an integer between");
+    })).toThrow("必须是 1 到");
   });
 
   it("rejects managed providers without retention acknowledgement or a matching stored profile", () => {
@@ -294,7 +294,7 @@ describe("Paperclip Runner native provider configuration", () => {
         provider: "claude_managed",
         managedProfileId: "managed-primary",
       },
-    })).toThrow("requires acknowledgement");
+    })).toThrow("需要确认");
 
     expect(() => resolvePaperclipRunnerNativeProviderInput({
       backend: "aws_agentcore_harness_api",
@@ -303,7 +303,7 @@ describe("Paperclip Runner native provider configuration", () => {
         agentCoreProfileId: "agentcore-primary",
         agentCoreRetentionAcknowledged: true,
       },
-    })).toThrow("does not match the adapter selection");
+    })).toThrow("与适配器选择不匹配");
   });
 
   it("rejects managed provider model overrides outside the runner allowlist", () => {
@@ -325,7 +325,7 @@ describe("Paperclip Runner native provider configuration", () => {
         defaultModel: "claude-sonnet-5",
         defaultMaxListCostCents: 100,
       },
-    })).toThrow("requires exact model claude-sonnet-5");
+    })).toThrow("要求使用指定模型 claude-sonnet-5");
 
     expect(() => resolvePaperclipRunnerNativeProviderInput({
       backend: "aws_agentcore_harness_api",
@@ -358,7 +358,7 @@ describe("Paperclip Runner native provider configuration", () => {
           defaultMaxEstimatedSessionCostUsd: 1.25,
         },
       },
-    })).toThrow("requires exact model global.anthropic.claude-sonnet-4-6");
+    })).toThrow("要求使用指定模型 global.anthropic.claude-sonnet-4-6");
   });
 
   it("fails closed when the persisted backend and current provider disagree", () => {
@@ -367,7 +367,7 @@ describe("Paperclip Runner native provider configuration", () => {
         backend: "opencode_server",
         adapterConfig: { provider: "codex" },
       }),
-    ).toThrow("provider changed after this run selected its native backend");
+    ).toThrow("选择原生后端后，Alice 运行器的提供方发生了变化");
   });
 
   it("rejects Pi before a native descriptor is persisted", () => {
@@ -376,6 +376,6 @@ describe("Paperclip Runner native provider configuration", () => {
         backend: "acpx_runtime",
         adapterConfig: { provider: "acpx", acpxAgent: "pi", model: "pi-model" },
       }),
-    ).toThrow("Pi is not available");
+    ).toThrow("Pi 暂不可用");
   });
 });
