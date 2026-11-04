@@ -12672,6 +12672,13 @@
     "count_suggested_tasks_value_10300475": "{{v0}} 个建议任务",
     "one_item_10300476": "1 个条目",
     "count_items_value_10300477": "{{v0}} 个条目",
-    "budget_used_value_10300478": "已使用预算的 {{v0}}%（${{v1}} / ${{v2}}）"
+    "budget_used_value_10300478": "已使用预算的 {{v0}}%（${{v1}} / ${{v2}}）",
+    "updated_within_value_10300479": "更新时间不超过 {{v0}}",
+    "status_filter_value_10300480": "状态：{{v0}}",
+    "priority_filter_value_10300481": "优先级：{{v0}}",
+    "assignee_filter_value_10300482": "负责人：{{v0}}",
+    "project_filter_value_10300483": "项目：{{v0}}",
+    "label_filter_value_10300484": "标签：{{v0}}",
+    "updated_window_10300485": "更新时间范围"
   }
 }

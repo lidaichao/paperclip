@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import {
   COMPANY_SEARCH_SORTS,
   type CompanySearchSort,
@@ -29,7 +30,7 @@ export const UPDATED_WITHIN_LABELS: Record<string, string> = {
 };
 
 export function updatedWithinLabel(value: string): string {
-  return UPDATED_WITHIN_LABELS[value] ?? `Updated ≤ ${value}`;
+  return UPDATED_WITHIN_LABELS[value] ?? l10n("local.updated_within_value_10300479", { v0: value });
 }
 
 const SORT_SET = new Set<string>(COMPANY_SEARCH_SORTS);
@@ -106,17 +107,17 @@ export interface FilterChip {
 }
 
 function humanize(value: string): string {
-  return value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  return enumLabel(value);
 }
 
 function assigneeChipLabel(filters: SearchFilters, lookups: FilterChipLookups): string {
   if (filters.assigneeAgentId === null) return l10n("local.unassigned_14d33bd0");
   if (typeof filters.assigneeAgentId === "string") {
-    return lookups.agentName(filters.assigneeAgentId) ?? "Agent";
+    return lookups.agentName(filters.assigneeAgentId) ?? l10n("local.agent_d4f0bc5a");
   }
   if (filters.assigneeUserId) {
     if (filters.assigneeUserId === lookups.currentUserId) return l10n("local.me_d30af076");
-    return lookups.userName(filters.assigneeUserId) ?? "User";
+    return lookups.userName(filters.assigneeUserId) ?? l10n("local.user_b512d97e");
   }
   return l10n("local.assignee_5e20d20e");
 }
@@ -127,7 +128,7 @@ export function buildFilterChips(filters: SearchFilters, lookups: FilterChipLook
   for (const status of filters.status ?? []) {
     chips.push({
       id: `status:${status}`,
-      label: `Status: ${humanize(status)}`,
+      label: l10n("local.status_filter_value_10300480", { v0: humanize(status) }),
       remove: (current) => {
         const next = { ...current };
         const remaining = (current.status ?? []).filter((value) => value !== status);
@@ -145,7 +146,7 @@ export function buildFilterChips(filters: SearchFilters, lookups: FilterChipLook
   for (const priority of filters.priority ?? []) {
     chips.push({
       id: `priority:${priority}`,
-      label: `Priority: ${humanize(priority)}`,
+      label: l10n("local.priority_filter_value_10300481", { v0: humanize(priority) }),
       remove: (current) => {
         const next = { ...current };
         const remaining = (current.priority ?? []).filter((value) => value !== priority);
@@ -158,7 +159,7 @@ export function buildFilterChips(filters: SearchFilters, lookups: FilterChipLook
   if (filters.assigneeAgentId !== undefined || filters.assigneeUserId) {
     chips.push({
       id: "assignee",
-      label: `Assignee: ${assigneeChipLabel(filters, lookups)}`,
+      label: l10n("local.assignee_filter_value_10300482", { v0: assigneeChipLabel(filters, lookups) }),
       remove: (current) => {
         const next = { ...current };
         delete next.assigneeAgentId;
@@ -170,7 +171,7 @@ export function buildFilterChips(filters: SearchFilters, lookups: FilterChipLook
   if (filters.projectId) {
     chips.push({
       id: "project",
-      label: `Project: ${lookups.projectName(filters.projectId) ?? "Project"}`,
+      label: l10n("local.project_filter_value_10300483", { v0: lookups.projectName(filters.projectId) ?? l10n("local.project_98595978") }),
       remove: (current) => {
         const next = { ...current };
         delete next.projectId;
@@ -181,7 +182,7 @@ export function buildFilterChips(filters: SearchFilters, lookups: FilterChipLook
   if (filters.labelId) {
     chips.push({
       id: "label",
-      label: `Label: ${lookups.labelName(filters.labelId) ?? "Label"}`,
+      label: l10n("local.label_filter_value_10300484", { v0: lookups.labelName(filters.labelId) ?? l10n("local.label_0e66373f") }),
       remove: (current) => {
         const next = { ...current };
         delete next.labelId;
@@ -192,7 +193,7 @@ export function buildFilterChips(filters: SearchFilters, lookups: FilterChipLook
   if (filters.updatedWithin) {
     chips.push({
       id: "updated",
-      label: `Updated: ${updatedWithinLabel(filters.updatedWithin)}`,
+      label: l10n("local.updated_value_85e9fe2b", { v0: updatedWithinLabel(filters.updatedWithin) }),
       remove: (current) => {
         const next = { ...current };
         delete next.updatedWithin;
@@ -208,20 +209,20 @@ export function buildFilterChips(filters: SearchFilters, lookups: FilterChipLook
 export function describeLoosenSuggestion(filterKey: string, values: string[], lookups: FilterChipLookups): string {
   switch (filterKey) {
     case "status":
-      return `Status: ${values.map(humanize).join(", ")}`;
+      return l10n("local.status_filter_value_10300480", { v0: values.map(humanize).join(", ") });
     case "priority":
-      return `Priority: ${values.map(humanize).join(", ")}`;
+      return l10n("local.priority_filter_value_10300481", { v0: values.map(humanize).join(", ") });
     case "assigneeAgentId":
-      return `Assignee: ${values.map((id) => lookups.agentName(id) ?? "Agent").join(", ")}`;
+      return l10n("local.assignee_filter_value_10300482", { v0: values.map((id) => lookups.agentName(id) ?? l10n("local.agent_d4f0bc5a")).join(", ") });
     case "assigneeUserId":
-      return `Assignee: ${values.map((id) => (id === lookups.currentUserId ? "Me" : lookups.userName(id) ?? "User")).join(", ")}`;
+      return l10n("local.assignee_filter_value_10300482", { v0: values.map((id) => (id === lookups.currentUserId ? l10n("local.me_d30af076") : lookups.userName(id) ?? l10n("local.user_b512d97e"))).join(", ") });
     case "projectId":
-      return `Project: ${values.map((id) => lookups.projectName(id) ?? "Project").join(", ")}`;
+      return l10n("local.project_filter_value_10300483", { v0: values.map((id) => lookups.projectName(id) ?? l10n("local.project_98595978")).join(", ") });
     case "labelId":
-      return `Label: ${values.map((id) => lookups.labelName(id) ?? "Label").join(", ")}`;
+      return l10n("local.label_filter_value_10300484", { v0: values.map((id) => lookups.labelName(id) ?? l10n("local.label_0e66373f")).join(", ") });
     case "updatedWithin":
     case "updatedAfter":
-      return "Updated window";
+      return l10n("local.updated_window_10300485");
     default:
       return humanize(filterKey);
   }

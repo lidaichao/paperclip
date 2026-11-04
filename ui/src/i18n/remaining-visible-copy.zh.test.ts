@@ -666,6 +666,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.one_item_10300476).toBe("1 个条目");
     expect(messages.count_items_value_10300477).toBe("{{v0}} 个条目");
     expect(messages.budget_used_value_10300478).toContain("已使用预算");
+    expect(messages.updated_within_value_10300479).toBe("更新时间不超过 {{v0}}");
+    expect(messages.status_filter_value_10300480).toBe("状态：{{v0}}");
+    expect(messages.priority_filter_value_10300481).toBe("优先级：{{v0}}");
+    expect(messages.assignee_filter_value_10300482).toBe("负责人：{{v0}}");
+    expect(messages.project_filter_value_10300483).toBe("项目：{{v0}}");
+    expect(messages.label_filter_value_10300484).toBe("标签：{{v0}}");
+    expect(messages.updated_window_10300485).toBe("更新时间范围");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");

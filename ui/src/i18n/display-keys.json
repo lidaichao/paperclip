@@ -10100,5 +10100,12 @@
   "{{v0}} suggested tasks": "local.count_suggested_tasks_value_10300475",
   "1 item": "local.one_item_10300476",
   "{{v0}} items": "local.count_items_value_10300477",
-  "{{v0}}% of budget used (${{v1}} / ${{v2}})": "local.budget_used_value_10300478"
+  "{{v0}}% of budget used (${{v1}} / ${{v2}})": "local.budget_used_value_10300478",
+  "updated ≤ {{v0}}": "local.updated_within_value_10300479",
+  "status: {{v0}}": "local.status_filter_value_10300480",
+  "priority: {{v0}}": "local.priority_filter_value_10300481",
+  "assignee: {{v0}}": "local.assignee_filter_value_10300482",
+  "project: {{v0}}": "local.project_filter_value_10300483",
+  "label: {{v0}}": "local.label_filter_value_10300484",
+  "updated window": "local.updated_window_10300485"
 }
