@@ -592,7 +592,7 @@ export function Costs() {
               value={activeBudgetIncidents.length > 0 ? String(activeBudgetIncidents.length) : (
                 spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
                   ? `${spendData.summary.utilizationPercent}%`
-                  : "Open"
+                  : l10n("local.manual_budget_open")
               )}
               subtitle={
                 activeBudgetIncidents.length > 0

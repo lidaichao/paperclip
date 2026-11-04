@@ -1076,7 +1076,7 @@ export function AgentDetail() {
     } else {
       crumbs.push({ label: agentName, href: `/agents/${canonicalAgentRef}/dashboard` });
       if (urlRunId) {
-        crumbs.push({ label: "Runs", href: `/agents/${canonicalAgentRef}/runs` });
+        crumbs.push({ label: l10n("local.runs_848f54e8"), href: `/agents/${canonicalAgentRef}/runs` });
         crumbs.push({ label: l10n("local.run_value_0f400007", { v0: urlRunId.slice(0, 8) }) });
       } else if (activeView === "instructions") {
         crumbs.push({ label: l10n("local.instructions_934652dc") });
@@ -1087,11 +1087,11 @@ export function AgentDetail() {
       // } else if (activeView === "skills") { // TODO: bring back later
       //   crumbs.push({ label: "Skills" });
       } else if (activeView === "tools") {
-        crumbs.push({ label: "Tools" });
+        crumbs.push({ label: l10n("local.tools_f9d35d43") });
       } else if (activeView === "runs") {
-        crumbs.push({ label: "Runs" });
+        crumbs.push({ label: l10n("local.runs_848f54e8") });
       } else if (activeView === "budget") {
-        crumbs.push({ label: "Budget" });
+        crumbs.push({ label: l10n("local.budget_1c6225ec") });
       } else {
         crumbs.push({ label: l10n("local.dashboard_67b69646") });
       }
