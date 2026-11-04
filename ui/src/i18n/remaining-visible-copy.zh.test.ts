@@ -857,6 +857,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.agents_use_skill_10300667).toContain("使用此技能");
     expect(messages.one_agent_has_skill_10300668).toContain("期望集合");
     expect(messages.agents_have_skill_10300669).toContain("期望集合");
+    expect(messages.one_thing_to_fix_10300670).toContain("问题需要修复");
+    expect(messages.things_to_fix_10300671).toContain("问题需要修复");
+    expect(messages.one_version_behind_latest_10300672).toContain("落后最新版本");
+    expect(messages.versions_behind_latest_10300673).toContain("落后最新版本");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

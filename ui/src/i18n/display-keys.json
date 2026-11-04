@@ -10282,5 +10282,9 @@
   "{{v0}} agent uses this skill": "local.one_agent_uses_skill_10300666",
   "{{v0}} agents use this skill": "local.agents_use_skill_10300667",
   "{{v0}} agent has this skill in their desired set.": "local.one_agent_has_skill_10300668",
-  "{{v0}} agents have this skill in their desired set.": "local.agents_have_skill_10300669"
+  "{{v0}} agents have this skill in their desired set.": "local.agents_have_skill_10300669",
+  "{{v0}} thing to fix": "local.one_thing_to_fix_10300670",
+  "{{v0}} things to fix": "local.things_to_fix_10300671",
+  "{{v0}} version behind latest": "local.one_version_behind_latest_10300672",
+  "{{v0}} versions behind latest": "local.versions_behind_latest_10300673"
 }

@@ -12863,6 +12863,10 @@
     "one_agent_uses_skill_10300666": "有 {{v0}} 个智能体使用此技能",
     "agents_use_skill_10300667": "有 {{v0}} 个智能体使用此技能",
     "one_agent_has_skill_10300668": "有 {{v0}} 个智能体将此技能列入期望集合。",
-    "agents_have_skill_10300669": "有 {{v0}} 个智能体将此技能列入期望集合。"
+    "agents_have_skill_10300669": "有 {{v0}} 个智能体将此技能列入期望集合。",
+    "one_thing_to_fix_10300670": "有 {{v0}} 个问题需要修复",
+    "things_to_fix_10300671": "有 {{v0}} 个问题需要修复",
+    "one_version_behind_latest_10300672": "落后最新版本 {{v0}} 个版本",
+    "versions_behind_latest_10300673": "落后最新版本 {{v0}} 个版本"
   }
 }

@@ -1,4 +1,4 @@
-import { l10n, englishPluralSuffix } from "../../i18n";
+import { l10n } from "../../i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2, Users } from "lucide-react";
@@ -377,7 +377,9 @@ function AgentRow({
         )}
         {behindLatest > 0 ? (
           <span className="text-(length:--text-nano) text-amber-500">
-            {behindLatest} {l10n("local.version_5ca4f385")}{behindLatest === 1 ? "" : englishPluralSuffix("s")} {l10n("local.behind_latest_e7e36725")}</span>
+            {behindLatest === 1
+              ? l10n("local.one_version_behind_latest_10300672", { v0: behindLatest })
+              : l10n("local.versions_behind_latest_10300673", { v0: behindLatest })}</span>
         ) : null}
       </div>
 

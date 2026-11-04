@@ -11,7 +11,9 @@ import { cn } from "../lib/utils";
  */
 
 function warningCount(count: number) {
-  return `${count} thing${count === 1 ? "" : "s"} to fix`;
+  return count === 1
+    ? l10n("local.one_thing_to_fix_10300670", { v0: count })
+    : l10n("local.things_to_fix_10300671", { v0: count });
 }
 
 /** Board-bar caps its list so a busy pipeline doesn't render a wall of warnings. */

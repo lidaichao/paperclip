@@ -12863,6 +12863,10 @@
     "one_agent_uses_skill_10300666": "{{v0}} agent uses this skill",
     "agents_use_skill_10300667": "{{v0}} agents use this skill",
     "one_agent_has_skill_10300668": "{{v0}} agent has this skill in their desired set.",
-    "agents_have_skill_10300669": "{{v0}} agents have this skill in their desired set."
+    "agents_have_skill_10300669": "{{v0}} agents have this skill in their desired set.",
+    "one_thing_to_fix_10300670": "{{v0}} thing to fix",
+    "things_to_fix_10300671": "{{v0}} things to fix",
+    "one_version_behind_latest_10300672": "{{v0}} version behind latest",
+    "versions_behind_latest_10300673": "{{v0}} versions behind latest"
   }
 }
