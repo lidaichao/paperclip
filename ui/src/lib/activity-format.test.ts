@@ -1,5 +1,6 @@
 import type { Agent } from "@paperclipai/shared";
 import { describe, expect, it } from "vitest";
+import { i18n } from "../i18n";
 import { formatActivityVerb, formatIssueActivityAction } from "./activity-format";
 
 describe("activity formatting", () => {
@@ -171,5 +172,31 @@ describe("activity formatting", () => {
       .toBe("listed provider trace metadata for");
     expect(formatActivityVerb("provider_trace.redacted_viewed"))
       .toBe("viewed a redacted provider trace for");
+  });
+
+  it("renders structured task and app activity in Chinese", async () => {
+    const previousLanguage = i18n.language;
+    try {
+      await i18n.changeLanguage("zh-CN");
+
+      expect(formatActivityVerb("issue.updated", { status: "in_review" }))
+        .toBe("将状态更改为审查中：");
+      expect(formatIssueActivityAction("issue.updated", { title: "新标题", description: "新描述" }))
+        .toBe("已更新标题，已更新描述");
+      expect(formatIssueActivityAction("issue.blockers_updated", {
+        addedBlockedByIssues: [{ identifier: "PAP-22" }],
+        removedBlockedByIssues: [],
+      })).toBe("添加了阻塞项 PAP-22");
+      expect(formatActivityVerb("tool_gateway.call_allowed", {
+        tool: "google_drive.search",
+      })).toBe("获准使用google drive search，所属任务：");
+      expect(formatIssueActivityAction("issue.accepted_plan_decomposition_updated", {
+        status: "completed",
+        childIssueIds: ["one", "two"],
+        newlyCreatedChildIssueIds: ["one"],
+      })).toBe("任务拆解已完成（新建 1 个，复用 1 个已有任务）");
+    } finally {
+      await i18n.changeLanguage(previousLanguage);
+    }
   });
 });

@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type { Agent } from "@paperclipai/shared";
 import type { CompanyUserProfile } from "./company-members";
 import { formatReviewPolicyValue } from "./review-policy";
@@ -249,8 +250,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 function humanizeValue(value: unknown): string {
-  if (typeof value !== "string") return String(value ?? "none");
-  return value.replace(/_/g, " ");
+  return enumLabel(String(value ?? "none"), "lower");
 }
 
 function isActivityParticipant(value: unknown): value is ActivityParticipant {
@@ -299,13 +299,30 @@ function formatIssueReferenceLabel(reference: ActivityIssueReference): string {
 }
 
 function formatChangedEntityLabel(
-  singular: string,
-  plural: string,
+  entity: "blocker" | "reviewer" | "approver",
   labels: string[],
 ): string {
-  if (labels.length <= 0) return plural;
-  if (labels.length === 1) return `${singular} ${labels[0]}`;
-  return `${labels.length} ${plural}`;
+  const keys = {
+    blocker: {
+      one: "local.activity_blocker_value_10300587",
+      many: "local.activity_blockers_count_10300588",
+      empty: "local.activity_blockers_10300589",
+    },
+    reviewer: {
+      one: "local.activity_reviewer_value_10300590",
+      many: "local.activity_reviewers_count_10300591",
+      empty: "local.activity_reviewers_10300592",
+    },
+    approver: {
+      one: "local.activity_approver_value_10300593",
+      many: "local.activity_approvers_count_10300594",
+      empty: "local.activity_approvers_10300595",
+    },
+  } as const;
+  const entityKeys = keys[entity];
+  if (labels.length <= 0) return l10n(entityKeys.empty);
+  if (labels.length === 1) return l10n(entityKeys.one, { v0: labels[0] });
+  return l10n(entityKeys.many, { v0: labels.length });
 }
 
 function readNumber(value: unknown): number | null {
@@ -326,13 +343,21 @@ function formatAcceptedPlanDecompositionDetail(details: ActivityDetails): string
   const newlyCreated = readStringArrayLength(details.newlyCreatedChildIssueIds);
   const reused = Math.max(0, totalChildren - newlyCreated);
   const parts: string[] = [];
-  if (newlyCreated > 0) parts.push(`created ${newlyCreated} new`);
-  if (reused > 0) parts.push(`reused ${reused} existing`);
-  if (parts.length === 0 && requested !== null) parts.push(`${requested} requested`);
-  const summary = parts.length > 0 ? parts.join(", ") : null;
-  if (status === "completed" && summary) return `decomposition completed (${summary})`;
-  if (status === "completed") return "decomposition completed";
-  if (status === "in_flight" && summary) return `decomposition in flight (${summary})`;
+  if (newlyCreated > 0) parts.push(l10n("local.activity_created_new_value_10300567", { v0: newlyCreated }));
+  if (reused > 0) parts.push(l10n("local.activity_reused_existing_value_10300568", { v0: reused }));
+  if (parts.length === 0 && requested !== null) {
+    parts.push(l10n("local.activity_requested_value_10300569", { v0: requested }));
+  }
+  const summary = parts.length > 0
+    ? parts.join(l10n("local.activity_list_separator_10300570"))
+    : null;
+  if (status === "completed" && summary) {
+    return l10n("local.activity_decomposition_completed_summary_10300571", { v0: summary });
+  }
+  if (status === "completed") return l10n("local.activity_decomposition_completed_10300572");
+  if (status === "in_flight" && summary) {
+    return l10n("local.activity_decomposition_in_flight_summary_10300573", { v0: summary });
+  }
   return summary;
 }
 
@@ -343,14 +368,17 @@ function formatIssueUpdatedVerb(details: ActivityDetails): string | null {
     const from = previous.status;
     const to = humanizeValue(details.status === "in_review" && details.externalConversationState === "waiting" ? "idle" : details.status);
     return from
-      ? `changed status from ${humanizeValue(from)} to ${to} on`
-      : `changed status to ${to} on`;
+      ? l10n("local.activity_changed_status_from_to_on_10300574", { v0: humanizeValue(from), v1: to })
+      : l10n("local.activity_changed_status_to_on_10300575", { v0: to });
   }
   if (details.priority !== undefined) {
     const from = previous.priority;
     return from
-      ? `changed priority from ${humanizeValue(from)} to ${humanizeValue(details.priority)} on`
-      : `changed priority to ${humanizeValue(details.priority)} on`;
+      ? l10n("local.activity_changed_priority_from_to_on_10300576", {
+          v0: humanizeValue(from),
+          v1: humanizeValue(details.priority),
+        })
+      : l10n("local.activity_changed_priority_to_on_10300577", { v0: humanizeValue(details.priority) });
   }
   return null;
 }
@@ -378,31 +406,42 @@ function formatIssueUpdatedAction(details: ActivityDetails, options: ActivityFor
     const to = humanizeValue(details.status === "in_review" && details.externalConversationState === "waiting" ? "idle" : details.status);
     parts.push(
       from
-        ? `changed the status from ${humanizeValue(from)} to ${to}`
-        : `changed the status to ${to}`,
+        ? l10n("local.activity_changed_status_from_to_10300578", { v0: humanizeValue(from), v1: to })
+        : l10n("local.activity_changed_status_to_10300579", { v0: to }),
     );
   }
   if (details.priority !== undefined) {
     const from = previous.priority;
     parts.push(
       from
-        ? `changed the priority from ${humanizeValue(from)} to ${humanizeValue(details.priority)}`
-        : `changed the priority to ${humanizeValue(details.priority)}`,
+        ? l10n("local.activity_changed_priority_from_to_10300580", {
+            v0: humanizeValue(from),
+            v1: humanizeValue(details.priority),
+          })
+        : l10n("local.activity_changed_priority_to_10300581", { v0: humanizeValue(details.priority) }),
     );
   }
   if (details.assigneeAgentId !== undefined || details.assigneeUserId !== undefined) {
     const assigneeName = formatAssigneeName(details, options);
-    parts.push(assigneeName ? `made ${assigneeName} responsible for the task` : "cleared the responsible");
+    parts.push(
+      assigneeName
+        ? l10n("local.activity_made_responsible_10300582", { v0: assigneeName })
+        : l10n("local.activity_cleared_responsible_10300583"),
+    );
   }
   if (details.reviewPolicy !== undefined) {
     // `null` is the default ("anyone can approve"), so it must not read as
     // "changed the review policy to none" (PAP-16506).
-    parts.push(`changed who can approve to ${formatReviewPolicyValue(details.reviewPolicy)}`);
+    parts.push(l10n("local.activity_changed_approval_policy_10300584", {
+      v0: formatReviewPolicyValue(details.reviewPolicy),
+    }));
   }
-  if (details.title !== undefined) parts.push("updated the title");
-  if (details.description !== undefined) parts.push("updated the description");
+  if (details.title !== undefined) parts.push(l10n("local.activity_updated_title_10300585"));
+  if (details.description !== undefined) parts.push(l10n("local.activity_updated_description_10300586"));
 
-  return parts.length > 0 ? parts.join(", ") : null;
+  return parts.length > 0
+    ? parts.join(l10n("local.activity_list_separator_10300570"))
+    : null;
 }
 
 function formatStructuredIssueChange(input: {
@@ -418,30 +457,42 @@ function formatStructuredIssueChange(input: {
     const added = readIssueReferences(details, "addedBlockedByIssues").map(formatIssueReferenceLabel);
     const removed = readIssueReferences(details, "removedBlockedByIssues").map(formatIssueReferenceLabel);
     if (added.length > 0 && removed.length === 0) {
-      const changed = formatChangedEntityLabel("blocker", "blockers", added);
-      return input.forIssueDetail ? `added ${changed}` : `added ${changed} to`;
+      const changed = formatChangedEntityLabel("blocker", added);
+      return input.forIssueDetail
+        ? l10n("local.activity_added_value_10300596", { v0: changed })
+        : l10n("local.activity_added_value_to_10300597", { v0: changed });
     }
     if (removed.length > 0 && added.length === 0) {
-      const changed = formatChangedEntityLabel("blocker", "blockers", removed);
-      return input.forIssueDetail ? `removed ${changed}` : `removed ${changed} from`;
+      const changed = formatChangedEntityLabel("blocker", removed);
+      return input.forIssueDetail
+        ? l10n("local.activity_removed_value_10300598", { v0: changed })
+        : l10n("local.activity_removed_value_from_10300599", { v0: changed });
     }
-    return input.forIssueDetail ? "updated blockers" : "updated blockers on";
+    return input.forIssueDetail
+      ? l10n("local.activity_updated_value_10300600", { v0: formatChangedEntityLabel("blocker", []) })
+      : l10n("local.activity_updated_value_on_10300601", { v0: formatChangedEntityLabel("blocker", []) });
   }
 
   if (input.action === "issue.reviewers_updated" || input.action === "issue.approvers_updated") {
     const added = readParticipants(details, "addedParticipants").map((participant) => formatParticipantLabel(participant, input.options));
     const removed = readParticipants(details, "removedParticipants").map((participant) => formatParticipantLabel(participant, input.options));
-    const singular = input.action === "issue.reviewers_updated" ? "reviewer" : "approver";
-    const plural = input.action === "issue.reviewers_updated" ? "reviewers" : "approvers";
+    const entity = input.action === "issue.reviewers_updated" ? "reviewer" : "approver";
     if (added.length > 0 && removed.length === 0) {
-      const changed = formatChangedEntityLabel(singular, plural, added);
-      return input.forIssueDetail ? `added ${changed}` : `added ${changed} to`;
+      const changed = formatChangedEntityLabel(entity, added);
+      return input.forIssueDetail
+        ? l10n("local.activity_added_value_10300596", { v0: changed })
+        : l10n("local.activity_added_value_to_10300597", { v0: changed });
     }
     if (removed.length > 0 && added.length === 0) {
-      const changed = formatChangedEntityLabel(singular, plural, removed);
-      return input.forIssueDetail ? `removed ${changed}` : `removed ${changed} from`;
+      const changed = formatChangedEntityLabel(entity, removed);
+      return input.forIssueDetail
+        ? l10n("local.activity_removed_value_10300598", { v0: changed })
+        : l10n("local.activity_removed_value_from_10300599", { v0: changed });
     }
-    return input.forIssueDetail ? `updated ${plural}` : `updated ${plural} on`;
+    const changed = formatChangedEntityLabel(entity, []);
+    return input.forIssueDetail
+      ? l10n("local.activity_updated_value_10300600", { v0: changed })
+      : l10n("local.activity_updated_value_on_10300601", { v0: changed });
   }
 
   return null;
@@ -457,16 +508,24 @@ export function formatActivityVerb(
       ? details.tool
       : typeof details?.upstreamToolName === "string"
         ? details.upstreamToolName
-        : "an app action";
+        : l10n("local.activity_app_action_10300602");
     const tool = rawTool.replace(/[._-]+/g, " ");
     const isTest = details?.source === "test";
-    if (action === "tool_gateway.call_completed") return `${isTest ? "tested" : "used"} ${tool} on`;
-    if (action === "tool_gateway.call_allowed") return `${isTest ? "started a test of" : "was allowed to use"} ${tool} on`;
-    if (action === "tool_gateway.call_denied") return `was blocked from using ${tool} on`;
-    if (action === "tool_gateway.approval_requested") return `asked to use ${tool} on`;
-    if (action === "tool_gateway.session_created") return "opened an app session for";
-    if (action === "tool_gateway.session_rejected") return "was blocked from opening an app session for";
-    if (action === "tool_gateway.discovery") return "discovered app actions for";
+    if (action === "tool_gateway.call_completed") {
+      return l10n(isTest ? "local.activity_tested_tool_on_10300603" : "local.activity_used_tool_on_10300604", { v0: tool });
+    }
+    if (action === "tool_gateway.call_allowed") {
+      return l10n(isTest ? "local.activity_started_test_tool_on_10300605" : "local.activity_allowed_tool_on_10300606", { v0: tool });
+    }
+    if (action === "tool_gateway.call_denied") {
+      return l10n("local.activity_blocked_tool_on_10300607", { v0: tool });
+    }
+    if (action === "tool_gateway.approval_requested") {
+      return l10n("local.activity_asked_tool_on_10300608", { v0: tool });
+    }
+    if (action === "tool_gateway.session_created") return l10n("local.activity_opened_session_for_10300609");
+    if (action === "tool_gateway.session_rejected") return l10n("local.activity_blocked_session_for_10300610");
+    if (action === "tool_gateway.discovery") return l10n("local.activity_discovered_actions_for_10300611");
   }
 
   if (action === "issue.updated") {
