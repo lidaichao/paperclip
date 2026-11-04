@@ -12845,6 +12845,9 @@
     "edited_names_10300648": "已编辑：{{v0}}",
     "removed_names_10300649": "已移除：{{v0}}",
     "imported_one_variable_10300650": "已导入 1 个变量",
-    "imported_variables_10300651": "已导入 {{v0}} 个变量"
+    "imported_variables_10300651": "已导入 {{v0}} 个变量",
+    "relative_weeks_short_10300652": "{{v0}}周",
+    "relative_months_short_10300653": "{{v0}}个月",
+    "relative_years_short_10300654": "{{v0}}年"
   }
 }

@@ -32,19 +32,19 @@ function formatRelativeTime(input: string | null): string {
   if (Number.isNaN(value.getTime())) return "";
   const diffMs = Date.now() - value.getTime();
   const seconds = Math.round(diffMs / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return l10n("local.manual_just_now");
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 60) return l10n("local.manual_monitor_duration_m", { v0: minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return l10n("local.manual_monitor_duration_h", { v0: hours });
   const days = Math.round(hours / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) return l10n("local.manual_monitor_duration_d", { v0: days });
   const weeks = Math.round(days / 7);
-  if (weeks < 5) return `${weeks}w`;
+  if (weeks < 5) return l10n("local.relative_weeks_short_10300652", { v0: weeks });
   const months = Math.round(days / 30);
-  if (months < 12) return `${months}mo`;
+  if (months < 12) return l10n("local.relative_months_short_10300653", { v0: months });
   const years = Math.round(days / 365);
-  return `${years}y`;
+  return l10n("local.relative_years_short_10300654", { v0: years });
 }
 
 export interface SearchResultRowProps {

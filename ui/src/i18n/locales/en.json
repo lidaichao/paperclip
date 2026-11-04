@@ -12845,6 +12845,9 @@
     "edited_names_10300648": "Edited: {{v0}}",
     "removed_names_10300649": "Removed: {{v0}}",
     "imported_one_variable_10300650": "Imported 1 variable",
-    "imported_variables_10300651": "Imported {{v0}} variables"
+    "imported_variables_10300651": "Imported {{v0}} variables",
+    "relative_weeks_short_10300652": "{{v0}}w",
+    "relative_months_short_10300653": "{{v0}}mo",
+    "relative_years_short_10300654": "{{v0}}y"
   }
 }

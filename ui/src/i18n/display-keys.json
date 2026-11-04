@@ -10265,5 +10265,8 @@
   "edited: {{v0}}": "local.edited_names_10300648",
   "removed: {{v0}}": "local.removed_names_10300649",
   "imported 1 variable": "local.imported_one_variable_10300650",
-  "imported {{v0}} variables": "local.imported_variables_10300651"
+  "imported {{v0}} variables": "local.imported_variables_10300651",
+  "{{v0}}w": "local.relative_weeks_short_10300652",
+  "{{v0}}mo": "local.relative_months_short_10300653",
+  "{{v0}}y": "local.relative_years_short_10300654"
 }

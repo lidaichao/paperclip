@@ -839,6 +839,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.removed_names_10300649).toContain("已移除");
     expect(messages.imported_one_variable_10300650).toBe("已导入 1 个变量");
     expect(messages.imported_variables_10300651).toContain("个变量");
+    expect(messages.relative_weeks_short_10300652).toContain("周");
+    expect(messages.relative_months_short_10300653).toContain("个月");
+    expect(messages.relative_years_short_10300654).toContain("年");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
