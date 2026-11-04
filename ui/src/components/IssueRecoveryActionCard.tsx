@@ -216,14 +216,14 @@ const STATE_TONE: Record<RecoveryCardCardState, {
 };
 
 const OUTCOME_LABEL: Record<IssueRecoveryActionOutcome, string> = {
-  restored: "restored",
-  handed_back: "handed back to original owner",
-  owner_completed: "completed by recovery owner",
-  delegated: "delegated to follow-up",
-  false_positive: "false positive",
-  blocked: "blocked",
-  escalated: "escalated",
-  cancelled: "cancelled",
+  restored: l10n("local.outcome_restored_10301306"),
+  handed_back: l10n("local.outcome_handed_back_10301307"),
+  owner_completed: l10n("local.outcome_owner_completed_10301308"),
+  delegated: l10n("local.outcome_delegated_10301309"),
+  false_positive: l10n("local.outcome_false_positive_10301310"),
+  blocked: l10n("local.outcome_blocked_10301311"),
+  escalated: l10n("local.outcome_escalated_10301312"),
+  cancelled: l10n("local.outcome_cancelled_10301313"),
 };
 
 function readEvidenceString(value: unknown): string | null {
@@ -496,7 +496,9 @@ function DivergenceDiagnosis({
 function contentionLabel(contention: WorkspaceContention): string {
   return (
     contention.claimedByIssueIdentifier ??
-    (contention.claimedByIssueId ? `issue ${contention.claimedByIssueId.slice(0, 8)}` : "another task")
+    (contention.claimedByIssueId
+      ? l10n("local.issue_value_10301314", { v0: contention.claimedByIssueId.slice(0, 8) })
+      : l10n("local.another_task_10301315"))
   );
 }
 
@@ -751,7 +753,9 @@ function readWakePolicySummary(action: IssueRecoveryAction): string | null {
   if (type === "manual_repair_required") return l10n("local.repair_needed_before_retry_a014a14c");
   if (type === "monitor") {
     const interval = readEvidenceString(policy.intervalLabel);
-    return interval ? `Check scheduled · ${interval}` : "Check scheduled";
+    return interval
+      ? l10n("local.check_scheduled_interval_10301316", { v0: interval })
+      : l10n("local.check_scheduled_10301317");
   }
   return type.replaceAll("_", " ");
 }
@@ -765,7 +769,9 @@ function formatTimeShort(value: string | Date | null | undefined): string | null
     const diffMs = date.getTime() - now;
     const absMin = Math.round(Math.abs(diffMs) / 60_000);
     if (absMin < 60) {
-      return diffMs >= 0 ? `in ${absMin}m` : `${absMin}m ago`;
+      return diffMs >= 0
+        ? l10n("local.in_minutes_10301318", { v0: absMin })
+        : l10n("local.minutes_ago_10301319", { v0: absMin });
     }
     return date.toLocaleString(undefined, {
       month: "short",
@@ -846,7 +852,7 @@ function RunChip({
   const inner = (
     <>
       <code className="rounded bg-background/80 px-1.5 py-0.5 font-mono text-(length:--text-micro) text-foreground/80">
-        run {short}
+        {l10n("local.run_value_10301320", { v0: short })}
       </code>
       {status ? (
         <span className="font-sans text-(length:--text-micro) text-muted-foreground">{status}</span>
@@ -985,14 +991,16 @@ export function IssueRecoveryActionCard({
 
   const headline = useMemo(() => {
     if (cardState === "resolved" && action.outcome) {
-      return `Recovery resolved as ${OUTCOME_LABEL[action.outcome] ?? action.outcome}.`;
+      return l10n("local.recovery_resolved_as_value_10301321", {
+        v0: OUTCOME_LABEL[action.outcome] ?? action.outcome,
+      });
     }
     if (
       (cardState === "needed" || cardState === "escalated") &&
       action.kind === "active_run_watchdog" &&
       action.ownerType === "board"
     ) {
-      return "This recovery needs a human decision. Review the recorded failure and choose the next step.";
+      return l10n("local.recovery_needs_human_decision_10301322");
     }
     if (lineage) return lineageHeadline(lineage);
     return KIND_HEADLINE[action.kind] ?? KIND_HEADLINE.missing_disposition;
@@ -1033,11 +1041,11 @@ export function IssueRecoveryActionCard({
   const updatedAtLabel = formatTimeShort(action.updatedAt);
 
   const ariaState = ({
-    needed: "needed",
-    in_progress: "in progress",
-    observe_only: "observing active run",
-    escalated: "escalated",
-    resolved: "resolved",
+    needed: l10n("local.state_needed_10301323"),
+    in_progress: l10n("local.state_in_progress_10301324"),
+    observe_only: l10n("local.state_observing_active_run_10301325"),
+    escalated: l10n("local.state_escalated_10301326"),
+    resolved: l10n("local.state_resolved_10301327"),
   } satisfies Record<RecoveryCardCardState, string>)[cardState];
 
   const showResolveActions = onResolve !== undefined && cardState !== "resolved";
@@ -1080,7 +1088,9 @@ export function IssueRecoveryActionCard({
     divergence !== null &&
     divergence.cleanliness === "dirty";
   const repairDisabledReason = repairContention
-    ? `Held by ${contentionLabel(repairContention)}${showReissueAction ? " — re-issue on an isolated workspace instead." : "."}`
+    ? showReissueAction
+      ? l10n("local.held_by_reissue_isolated_10301328", { v0: contentionLabel(repairContention) })
+      : l10n("local.held_by_value_10301329", { v0: contentionLabel(repairContention) })
     : null;
   // When contended, the re-issue is the recommended path, so it takes the primary emphasis and a
   // "Recommended" hint while the repair button is disabled.
