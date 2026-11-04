@@ -211,13 +211,13 @@ export async function materializeNativeInteractionResponses(input: {
               companyScopeValid: true,
               responseState: "none",
               route: "duplicate",
-              summary: interaction.summary ?? interaction.title ?? "Duplicate native attention request",
+              summary: interaction.summary ?? interaction.title ?? "重复的原生关注请求",
             }
           : {
               companyScopeValid: true,
               responseState: "stale",
               route: "context",
-              summary: interaction.summary ?? interaction.title ?? "Stale native attention response",
+              summary: interaction.summary ?? interaction.title ?? "已过期的原生关注回复",
             },
         priorIssueStatus: issue.status as NativeAuthoritativeIssueStatus,
         agentId: input.agentId,
@@ -277,7 +277,7 @@ export async function materializeNativeInteractionResponses(input: {
           companyScopeValid: true,
           responseState: "resolved",
           route: "context",
-          summary: interaction.summary ?? interaction.title ?? "Resolved native interaction",
+          summary: interaction.summary ?? interaction.title ?? "已解决的原生交互",
         },
         priorIssueStatus: issue.status as NativeAuthoritativeIssueStatus,
         agentId: input.agentId,
@@ -329,7 +329,7 @@ export async function materializeNativeInteractionResponses(input: {
           companyScopeValid: true,
           responseState: "resolved",
           route: "context",
-          summary: interaction.summary ?? interaction.title ?? "Answered native interaction",
+          summary: interaction.summary ?? interaction.title ?? "已回答的原生交互",
         },
         priorIssueStatus: issue.status as NativeAuthoritativeIssueStatus,
         agentId: input.agentId,
@@ -868,7 +868,7 @@ export function resolveNativeAttentionStatus(input: {
     return preserve("result_schema_rejected", [{
       kind: "record_finalization_error",
       cause: "result_schema_rejected",
-      nextAction: "Remove the cross-company attention target.",
+      nextAction: "移除跨公司的关注目标。",
       agentId: input.agentId,
     }]);
   }
@@ -882,7 +882,7 @@ export function resolveNativeAttentionStatus(input: {
     return preserve("attention_budget_exhausted", [{
       kind: "record_finalization_error",
       cause: "attention_budget_exhausted",
-      nextAction: "Assign a named recovery owner.",
+      nextAction: "指定一名明确的恢复负责人。",
       agentId: input.agentId,
     }]);
   }
@@ -913,7 +913,7 @@ export function resolveNativeAttentionStatus(input: {
       return preserve("attention_budget_exhausted", [{
         kind: "record_finalization_error",
         cause: "attention_no_valid_route",
-        nextAction: "Assign a same-company eligible delegate.",
+        nextAction: "指派一名同公司且符合条件的代理人。",
         agentId: input.agentId,
       }]);
     }
