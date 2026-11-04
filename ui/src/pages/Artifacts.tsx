@@ -59,7 +59,7 @@ function parseKind(value: string | null): ArtifactKindFilter {
 }
 
 export function artifactGroupByLabel(value: ArtifactGroupBy): string {
-  return ARTIFACT_GROUP_OPTIONS.find((option) => option.value === value)?.label ?? "None";
+  return ARTIFACT_GROUP_OPTIONS.find((option) => option.value === value)?.label ?? l10n("local.none_dc937b59");
 }
 
 export function Artifacts() {

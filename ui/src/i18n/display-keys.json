@@ -10303,5 +10303,10 @@
   "- Labels: {{v0}}": "local.case_clipboard_labels_10300687",
   "the run was cancelled before returning an answer.": "local.run_cancelled_before_answer_10300688",
   "found the activity groups.": "local.found_activity_groups_10300689",
-  "read the activity groups.": "local.read_activity_groups_10300690"
+  "read the activity groups.": "local.read_activity_groups_10300690",
+  "received": "local.routine_run_received_10300691",
+  "coalesced": "local.routine_run_coalesced_10300692",
+  "issue created": "local.routine_run_issue_created_10300693",
+  "plugin entered an error state without a stored error message.": "local.plugin_error_without_details_10300694",
+  "no stored error message.": "local.no_stored_error_message_10300695"
 }

@@ -39,12 +39,21 @@ export type RoutineListRowItem = {
 };
 
 export function formatLastRunTimestamp(value: Date | string | null | undefined) {
-  if (!value) return "Never";
+  if (!value) return l10n("local.never_6497e4b3");
   return new Date(value).toLocaleString();
 }
 
 export function formatRoutineRunStatus(value: string | null | undefined) {
   if (!value) return null;
+  const statusLabels: Record<string, () => string> = {
+    received: () => l10n("local.routine_run_received_10300691"),
+    coalesced: () => l10n("local.routine_run_coalesced_10300692"),
+    skipped: () => l10n("local.skipped_389595a4"),
+    issue_created: () => l10n("local.routine_run_issue_created_10300693"),
+    completed: () => l10n("local.completed_22a970d2"),
+    failed: () => l10n("local.failed_5d28a90f"),
+  };
+  if (statusLabels[value]) return statusLabels[value]();
   return value.replaceAll("_", " ");
 }
 
@@ -60,7 +69,7 @@ export function RoutineListRow<TRoutine extends RoutineListRowItem>({
   runningRoutineId,
   statusMutationRoutineId,
   href,
-  configureLabel = "Edit",
+  configureLabel = l10n("local.edit_464c4ffd"),
   managedByLabel,
   secondaryDetails,
   runNowButton = false,

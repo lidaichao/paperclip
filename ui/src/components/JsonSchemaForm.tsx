@@ -533,7 +533,7 @@ const EnumField = React.memo(({
         </SelectTrigger>
         <SelectContent>
           {showUnsetOption && (
-            <SelectItem value={ENUM_UNSET_VALUE} textValue="None">
+            <SelectItem value={ENUM_UNSET_VALUE} textValue={l10n("local.none_dc937b59")}>
               <span className="text-muted-foreground">{l10n("local.none_dc937b59")}</span>
             </SelectItem>
           )}

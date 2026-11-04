@@ -12884,6 +12884,11 @@
     "case_clipboard_labels_10300687": "- Labels: {{v0}}",
     "run_cancelled_before_answer_10300688": "The run was cancelled before returning an answer.",
     "found_activity_groups_10300689": "Found the activity groups.",
-    "read_activity_groups_10300690": "Read the activity groups."
+    "read_activity_groups_10300690": "Read the activity groups.",
+    "routine_run_received_10300691": "Received",
+    "routine_run_coalesced_10300692": "Coalesced",
+    "routine_run_issue_created_10300693": "Issue created",
+    "plugin_error_without_details_10300694": "Plugin entered an error state without a stored error message.",
+    "no_stored_error_message_10300695": "No stored error message."
   }
 }

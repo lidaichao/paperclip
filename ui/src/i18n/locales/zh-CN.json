@@ -12884,6 +12884,11 @@
     "case_clipboard_labels_10300687": "- 标签：{{v0}}",
     "run_cancelled_before_answer_10300688": "本次运行在返回回答前已取消。",
     "found_activity_groups_10300689": "已找到活动分组。",
-    "read_activity_groups_10300690": "已读取活动分组。"
+    "read_activity_groups_10300690": "已读取活动分组。",
+    "routine_run_received_10300691": "已接收",
+    "routine_run_coalesced_10300692": "已合并",
+    "routine_run_issue_created_10300693": "已创建任务",
+    "plugin_error_without_details_10300694": "插件进入错误状态，但未保存错误详情。",
+    "no_stored_error_message_10300695": "没有已保存的错误消息。"
   }
 }

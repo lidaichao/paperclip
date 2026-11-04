@@ -878,6 +878,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.run_cancelled_before_answer_10300688).toContain("返回回答前已取消");
     expect(messages.found_activity_groups_10300689).toContain("已找到活动分组");
     expect(messages.read_activity_groups_10300690).toContain("已读取活动分组");
+    expect(messages.routine_run_received_10300691).toBe("已接收");
+    expect(messages.routine_run_coalesced_10300692).toBe("已合并");
+    expect(messages.routine_run_issue_created_10300693).toBe("已创建任务");
+    expect(messages.plugin_error_without_details_10300694).toContain("未保存错误详情");
+    expect(messages.no_stored_error_message_10300695).toContain("没有已保存的错误消息");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

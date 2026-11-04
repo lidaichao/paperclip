@@ -41,7 +41,7 @@ function firstNonEmptyLine(value: string | null | undefined): string | null {
 }
 
 function getPluginErrorSummary(plugin: PluginRecord): string {
-  return firstNonEmptyLine(plugin.lastError) ?? "Plugin entered an error state without a stored error message.";
+  return firstNonEmptyLine(plugin.lastError) ?? l10n("local.plugin_error_without_details_10300694");
 }
 
 function isExperimentalPluginIdentity(input: {
@@ -542,7 +542,7 @@ export function PluginManager() {
             <div className="space-y-2">
               <p className="text-sm font-medium">{l10n("local.full_error_output_414e8495")}</p>
               <pre className="max-h-(--sz-50vh) overflow-auto rounded-md border bg-muted/40 p-3 text-xs leading-5 whitespace-pre-wrap break-words">
-                {errorDetailsPlugin?.lastError ?? "No stored error message."}
+                {errorDetailsPlugin?.lastError ?? l10n("local.no_stored_error_message_10300695")}
               </pre>
             </div>
           </div>

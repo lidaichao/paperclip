@@ -931,10 +931,10 @@ export function Routines() {
                 <PopoverContent align="end" className="w-44 p-0">
                   <div className="p-2 space-y-0.5">
                     {([
-                      ["folder", "Folder"],
-                      ["project", "Project"],
-                      ["assignee", "Agent"],
-                      ["none", "None"],
+                      ["folder", l10n("local.folder_74ccd433")],
+                      ["project", l10n("local.project_98595978")],
+                      ["assignee", l10n("local.agent_d4f0bc5a")],
+                      ["none", l10n("local.none_dc937b59")],
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}
