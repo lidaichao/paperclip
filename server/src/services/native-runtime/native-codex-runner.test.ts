@@ -4,7 +4,15 @@ import type { PaperclipSemanticToolDefinition } from "../../vendor/paperclip-run
 import {
   buildNativeRunnerArguments,
   buildNativeRunnerPreparePayload,
+  resolvePaperclipRunnerBinary,
 } from "./native-codex-runner.js";
+
+describe("resolvePaperclipRunnerBinary", () => {
+  it("使用中文提示拒绝相对路径", () => {
+    expect(() => resolvePaperclipRunnerBinary("relative/runner"))
+      .toThrow("PAPERCLIP_RUNNER_BINARY 必须是绝对路径");
+  });
+});
 
 describe("buildNativeRunnerArguments", () => {
   it("binds every durable identity without exposing the bootstrap ticket", () => {

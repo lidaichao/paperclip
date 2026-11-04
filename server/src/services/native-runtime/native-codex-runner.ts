@@ -182,7 +182,7 @@ export function resolvePaperclipRunnerBinary(
     ),
   ].filter((candidate): candidate is string => Boolean(candidate));
   if (configuredPath && !isAbsolute(configuredPath)) {
-    throw new Error("PAPERCLIP_RUNNER_BINARY must be an absolute path");
+    throw new Error("PAPERCLIP_RUNNER_BINARY 必须是绝对路径");
   }
   for (const candidate of candidates) {
     try {
@@ -193,7 +193,7 @@ export function resolvePaperclipRunnerBinary(
     }
   }
   throw new Error(
-    "paperclip_runner_binary_missing: build @paperclipai/paperclip-runner or set PAPERCLIP_RUNNER_BINARY",
+    "paperclip_runner_binary_missing：请构建 @paperclipai/paperclip-runner 或设置 PAPERCLIP_RUNNER_BINARY",
   );
 }
 
@@ -496,7 +496,7 @@ export async function executeNativeCodexRunner(input: {
           } : {}),
         },
       },
-      summary: completed?.result.summary ?? "Agent session goal control applied.",
+      summary: completed?.result.summary ?? "已应用智能体会话目标控制。",
     };
   } catch (error) {
     if (goalControl) {
