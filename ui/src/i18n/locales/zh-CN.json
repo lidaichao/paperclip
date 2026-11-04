@@ -13429,6 +13429,8 @@
     "retry_waiting_for_response_10301234": "会话重试正在等待待处理问题或审批的答复。",
     "retry_target_missing_10301235": "已取消重试：目标任务已不存在。",
     "replacement_dependencies_blocked_10301236": "已取消替换运行：派发前任务依赖重新进入受阻状态。",
-    "subscription_retry_lock_changed_10301237": "订阅重试已被阻止：任务执行锁已变化。"
+    "subscription_retry_lock_changed_10301237": "订阅重试已被阻止：任务执行锁已变化。",
+    "connection_open_workspace_10301238": "Alice 将打开 {{v0}}，你可以选择工作区并批准访问。",
+    "connection_creating_secure_10301239": "Alice 正在创建安全的 {{v0}} 连接。"
   }
 }

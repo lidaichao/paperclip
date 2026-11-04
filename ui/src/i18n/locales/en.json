@@ -13429,6 +13429,8 @@
     "retry_waiting_for_response_10301234": "The conversation retry is waiting for a response to a pending question or approval.",
     "retry_target_missing_10301235": "The retry was cancelled because the target task no longer exists.",
     "replacement_dependencies_blocked_10301236": "The replacement was cancelled because task dependencies became blocked before dispatch.",
-    "subscription_retry_lock_changed_10301237": "The subscription retry was suppressed because the task execution lock changed."
+    "subscription_retry_lock_changed_10301237": "The subscription retry was suppressed because the task execution lock changed.",
+    "connection_open_workspace_10301238": "Alice will open {{v0}} so you can choose a workspace and approve access.",
+    "connection_creating_secure_10301239": "Alice is creating a secure {{v0}} connection."
   }
 }

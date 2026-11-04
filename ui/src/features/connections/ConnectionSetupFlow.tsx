@@ -777,7 +777,7 @@ function StandardConnectionSetupFlow({
       if (target.kind === "reauthentication") {
         const destination = host === "dialog" ? oauthPopupRef.current : window;
         if (!destination || destination.closed || !start.handoff) {
-          throw new Error("Paperclip couldn’t preserve this sign-in while refreshing your account.");
+          throw new Error(l10n("local.paperclip_couldn_t_refresh_this_sign_in_try_a_9cc94d34"));
         }
         savePendingCloudHandoff(start.handoff.session, destination.sessionStorage);
         setOAuthPhase("starting");
@@ -789,7 +789,11 @@ function StandardConnectionSetupFlow({
     } catch (error) {
       if (controller.signal.aborted) return;
       setOAuthPhase("error");
-      setOAuthError(error instanceof Error ? error.message : "Paperclip couldn’t start secure sign-in. Try again.");
+      setOAuthError(
+        error instanceof Error
+          ? error.message
+          : l10n("local.alice_could_not_start_secure_sign_in_0d400005"),
+      );
       onPhaseChange?.("needs_retry");
     } finally {
       if (oauthHandoffAbortRef.current === controller) oauthHandoffAbortRef.current = null;
@@ -1075,7 +1079,9 @@ function StandardConnectionSetupFlow({
     onError: (error) => {
       closeEnrollmentPopup();
       setConnectorEnrollmentError(
-        error instanceof Error ? error.message : "Paperclip couldn’t reach Paperclip Cloud. Try again.",
+        error instanceof Error
+          ? error.message
+          : l10n("local.couldn_t_reach_paperclip_cloud_79f03565"),
       );
     },
   });
@@ -1223,7 +1229,7 @@ function StandardConnectionSetupFlow({
           ? "Your authorization expired or was revoked. Reconnect to continue."
           : error instanceof Error
             ? error.message
-            : "Paperclip couldn’t start secure sign-in. Try again.",
+            : l10n("local.alice_could_not_start_secure_sign_in_0d400005"),
       );
     },
   });
@@ -1395,7 +1401,7 @@ function StandardConnectionSetupFlow({
             ? "Your authorization expired or was revoked. Reconnect to continue."
             : error instanceof Error
               ? error.message
-              : "Paperclip couldn’t start secure sign-in. Try again.",
+              : l10n("local.alice_could_not_start_secure_sign_in_0d400005"),
         );
         return;
       }
@@ -2569,12 +2575,12 @@ export function OAuthConnectStateScreen({
           : l10n("local.connect_value_to_paperclip_c7a0e178", {v0: (serverName)}),
         body: resuming
           ? `Your connection is saved. Continue in ${serverName} to approve access; its identity and agent access will stay the same.`
-          : `Paperclip will open ${serverName} so you can choose a workspace and approve access.`,
+          : l10n("local.connection_open_workspace_10301238", { v0: serverName }),
       }
     : phase === "starting"
       ? {
           title: l10n("local.preparing_secure_sign_in_5909bba0"),
-          body: `Paperclip is creating a secure ${serverName} connection.`,
+          body: l10n("local.connection_creating_secure_10301239", { v0: serverName }),
         }
       : phase === "redirecting"
         ? {
@@ -2585,7 +2591,7 @@ export function OAuthConnectStateScreen({
           }
         : {
             title: l10n("local.value_couldn_t_connect_37b5bbb7", {v0: (serverName)}),
-            body: error ?? "Paperclip couldn’t start secure sign-in. Try again.",
+            body: error ?? l10n("local.alice_could_not_start_secure_sign_in_0d400005"),
           };
 
   return (
