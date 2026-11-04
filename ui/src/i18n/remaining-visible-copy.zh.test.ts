@@ -729,6 +729,8 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.called_one_tool_10300539).toContain("1 个工具");
     expect(messages.called_tools_value_10300540).toContain("{{v0}} 个工具");
     expect(messages.for_duration_value_10300541).toContain("已持续");
+    expect(messages.system_notice_10300542).toBe("系统通知");
+    expect(messages.system_warning_10300543).toBe("系统警告");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");

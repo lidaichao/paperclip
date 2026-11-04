@@ -10162,5 +10162,7 @@
   "ran {{v0}} commands": "local.ran_commands_value_10300538",
   "called 1 tool": "local.called_one_tool_10300539",
   "called {{v0}} tools": "local.called_tools_value_10300540",
-  "for {{v0}}": "local.for_duration_value_10300541"
+  "for {{v0}}": "local.for_duration_value_10300541",
+  "system notice": "local.system_notice_10300542",
+  "system warning": "local.system_warning_10300543"
 }

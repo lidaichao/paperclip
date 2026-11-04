@@ -12735,6 +12735,8 @@
     "ran_commands_value_10300538": "ran {{v0}} commands",
     "called_one_tool_10300539": "called 1 tool",
     "called_tools_value_10300540": "called {{v0}} tools",
-    "for_duration_value_10300541": "for {{v0}}"
+    "for_duration_value_10300541": "for {{v0}}",
+    "system_notice_10300542": "System notice",
+    "system_warning_10300543": "System warning"
   }
 }

@@ -12735,6 +12735,8 @@
     "ran_commands_value_10300538": "运行了 {{v0}} 条命令",
     "called_one_tool_10300539": "调用了 1 个工具",
     "called_tools_value_10300540": "调用了 {{v0}} 个工具",
-    "for_duration_value_10300541": "已持续 {{v0}}"
+    "for_duration_value_10300541": "已持续 {{v0}}",
+    "system_notice_10300542": "系统通知",
+    "system_warning_10300543": "系统警告"
   }
 }

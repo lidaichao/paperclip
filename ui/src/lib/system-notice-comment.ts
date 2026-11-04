@@ -9,13 +9,14 @@ import type {
   SystemNoticeProps,
   SystemNoticeTone,
 } from "../components/SystemNotice";
+import { l10n } from "../i18n";
 
 const TONE_LABEL: Record<SystemNoticeTone, string> = {
-  neutral: "System notice",
-  info: "System notice",
-  success: "System notice",
-  warning: "System warning",
-  danger: "System alert",
+  neutral: l10n("local.system_notice_10300542"),
+  info: l10n("local.system_notice_10300542"),
+  success: l10n("local.system_notice_10300542"),
+  warning: l10n("local.system_warning_10300543"),
+  danger: l10n("local.system_alert_2b1c663e"),
 };
 
 function metadataRowText(row: { label?: string | null }, fallback: string) {
@@ -29,19 +30,19 @@ function mapMetadataRow(
 ): SystemNoticeMetadataRow | null {
   switch (row.type) {
     case "text":
-      return { kind: "text", label: metadataRowText(row, "Detail"), value: row.text };
+      return { kind: "text", label: metadataRowText(row, l10n("local.detail_fb5f27d5")), value: row.text };
     case "code":
-      return { kind: "code", label: metadataRowText(row, "Code"), value: row.code };
+      return { kind: "code", label: metadataRowText(row, l10n("local.code_340f4630")), value: row.code };
     case "key_value":
       return { kind: "text", label: row.label, value: row.value };
     case "issue_link": {
       const identifier = row.identifier ?? null;
       if (!identifier) {
-        return { kind: "text", label: metadataRowText(row, "Task"), value: row.title ?? "unknown" };
+        return { kind: "text", label: metadataRowText(row, l10n("local.task_4bc74b21")), value: row.title ?? l10n("local.unknown_b764cdc0") };
       }
       return {
         kind: "issue",
-        label: metadataRowText(row, "Task"),
+        label: metadataRowText(row, l10n("local.task_4bc74b21")),
         identifier,
         href: `/issues/${identifier}`,
         title: row.title ?? undefined,
@@ -51,7 +52,7 @@ function mapMetadataRow(
       const name = row.name?.trim() || row.agentId.slice(0, 8);
       return {
         kind: "agent",
-        label: metadataRowText(row, "Agent"),
+        label: metadataRowText(row, l10n("local.agent_d4f0bc5a")),
         name,
         href: `/agents/${row.agentId}`,
       };
@@ -61,7 +62,7 @@ function mapMetadataRow(
       const href = runAgentId ? `/agents/${runAgentId}/runs/${row.runId}` : undefined;
       return {
         kind: "run",
-        label: metadataRowText(row, "Run"),
+        label: metadataRowText(row, l10n("local.run_acba2551")),
         runId: row.runId,
         href,
         status: row.title ?? undefined,
