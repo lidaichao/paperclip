@@ -13478,6 +13478,7 @@
     "selected_agent_count_one_10301283": "{{v0}} selected agent",
     "selected_agent_count_many_10301284": "{{v0}} selected agents",
     "action_count_on_one_10301285": "{{v0}} action on",
-    "action_count_on_many_10301286": "{{v0}} actions on"
+    "action_count_on_many_10301286": "{{v0}} actions on",
+    "agent_identity_10301287": "Agent identity"
   }
 }

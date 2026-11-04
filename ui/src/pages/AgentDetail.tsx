@@ -873,7 +873,11 @@ export function AgentDetail() {
       builtInAgentsApi.reset(resolvedCompanyId!, builtInState!.definition.key, [kind]),
     onSuccess: invalidateBuiltIn,
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to update bundle resource");
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : l10n("local.failed_to_update_bundle_resource_0f400001"),
+      );
     },
   });
   const runBuiltInRoutine = useMutation({
@@ -881,7 +885,11 @@ export function AgentDetail() {
       builtInAgentsApi.runRoutine(resolvedCompanyId!, builtInState!.definition.key, routineKey),
     onSuccess: invalidateBuiltIn,
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to run built-in routine");
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : l10n("local.failed_to_run_built_in_routine_0f400002"),
+      );
     },
   });
   const enableBuiltInSchedule = useMutation({
@@ -889,7 +897,11 @@ export function AgentDetail() {
       builtInAgentsApi.enableRoutineSchedule(resolvedCompanyId!, builtInState!.definition.key, routineKey),
     onSuccess: invalidateBuiltIn,
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to enable routine schedule");
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : l10n("local.failed_to_enable_routine_schedule_0f400003"),
+      );
     },
   });
   const disableBuiltInSchedule = useMutation({
@@ -897,7 +909,11 @@ export function AgentDetail() {
       builtInAgentsApi.disableRoutineSchedule(resolvedCompanyId!, builtInState!.definition.key, routineKey),
     onSuccess: invalidateBuiltIn,
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to disable routine schedule");
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : l10n("local.failed_to_disable_routine_schedule_0f400004"),
+      );
     },
   });
   const builtInRoutineActionPending =
@@ -1012,7 +1028,7 @@ export function AgentDetail() {
       }
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Action failed");
+      setActionError(err instanceof Error ? err.message : l10n("local.action_failed_6e1704d8"));
     },
   });
 
@@ -1039,7 +1055,11 @@ export function AgentDetail() {
       }
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to update permissions");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : l10n("local.failed_to_update_permissions_0f400006"),
+      );
     },
   });
 
@@ -2069,7 +2089,11 @@ export function ConfigurationTab({
         environmentVariablesPlacement="configuration"
         compactTestFeedback
         sectionOrder={["identity", "adapter", "configuration", "environment", "environment-variables", "run-policy"]}
-        sectionTitles={{ adapter: "Adapter", configuration: "Configuration", identity: "Agent identity" }}
+        sectionTitles={{
+          adapter: l10n("local.adapter_0252b849"),
+          configuration: l10n("local.configuration_b332c349"),
+          identity: l10n("local.agent_identity_10301287"),
+        }}
         canConfigureProviderTrace={canConfigureProviderTrace}
       /> : null}
 
@@ -3983,7 +4007,11 @@ export function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType
             setLogLoading(false);
             return;
           }
-          setLogError(err instanceof Error ? err.message : "Failed to load run log");
+          setLogError(
+            err instanceof Error
+              ? err.message
+              : l10n("local.failed_to_load_run_log_0f400011"),
+          );
         }
       } finally {
         if (!cancelled) setLogLoading(false);
@@ -4007,7 +4035,11 @@ export function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType
       setLogOffset(next);
       setHasMoreLog(result.nextOffset !== undefined);
     } catch (err) {
-      setLogError(err instanceof Error ? err.message : "Failed to load more run log");
+      setLogError(
+        err instanceof Error
+          ? err.message
+          : l10n("local.failed_to_load_more_run_log_0f400012"),
+      );
     } finally {
       setLoadingMoreLog(false);
     }

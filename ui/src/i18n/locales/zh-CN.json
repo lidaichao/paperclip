@@ -13478,6 +13478,7 @@
     "selected_agent_count_one_10301283": "已选择 {{v0}} 个智能体",
     "selected_agent_count_many_10301284": "已选择 {{v0}} 个智能体",
     "action_count_on_one_10301285": "已启用 {{v0}} 个操作",
-    "action_count_on_many_10301286": "已启用 {{v0}} 个操作"
+    "action_count_on_many_10301286": "已启用 {{v0}} 个操作",
+    "agent_identity_10301287": "智能体身份"
   }
 }
