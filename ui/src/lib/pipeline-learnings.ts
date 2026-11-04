@@ -24,7 +24,7 @@ function eventItemTitle(event: PipelineCompanyCaseEvent): string {
     asString(payload.itemTitle) ??
     asString(payload.caseTitle) ??
     asString(payload.title) ??
-    "Untitled item"
+    l10n("local.untitled_item_5f9e46c7")
   );
 }
 
@@ -35,7 +35,7 @@ function eventActorName(event: PipelineCompanyCaseEvent): string {
     asString(payload.actorName) ??
     asString(payload.reviewerName) ??
     asString(payload.decidedByName) ??
-    "Someone"
+    l10n("local.someone_864c855e")
   );
 }
 
@@ -49,9 +49,9 @@ function payloadText(event: PipelineCompanyCaseEvent, ...keys: string[]): string
 }
 
 function reviewVerb(decision: string | null): string {
-  if (decision === "request_changes") return "sent back";
-  if (decision === "reject" || decision === "drop") return "declined";
-  return "approved";
+  if (decision === "request_changes") return l10n("local.review_sent_back_10301360");
+  if (decision === "reject" || decision === "drop") return l10n("local.review_declined_10301361");
+  return l10n("local.review_approved_10301362");
 }
 
 export function formatLearningEvent(event: PipelineCompanyCaseEvent): LearningEventPresentation {
@@ -68,7 +68,13 @@ export function formatLearningEvent(event: PipelineCompanyCaseEvent): LearningEv
     const noteCopy = note ? (" " + l10n("local._note_value_4be06247", {v0: (note)})) : "";
     return {
       kind: "review",
-      sentence: `${actor} ${reviewVerb(decision)} '${title}'${stageCopy}${noteCopy}.`,
+      sentence: l10n("local.learning_review_sentence_10301363", {
+        v0: actor,
+        v1: reviewVerb(decision),
+        v2: title,
+        v3: stageCopy,
+        v4: noteCopy,
+      }),
     };
   }
 
@@ -82,13 +88,18 @@ export function formatLearningEvent(event: PipelineCompanyCaseEvent): LearningEv
     const reasonCopy = reason ? (" " + l10n("local._reason_value_ff8c539d", {v0: (reason)})) : "";
     return {
       kind: "forced_move",
-      sentence: `'${title}' was moved by hand${fromCopy}${toCopy}${reasonCopy}.`,
+      sentence: l10n("local.learning_manual_move_sentence_10301364", {
+        v0: title,
+        v1: fromCopy,
+        v2: toCopy,
+        v3: reasonCopy,
+      }),
     };
   }
 
   return {
     kind: "unknown",
-    sentence: `'${title}' changed.`,
+    sentence: l10n("local.learning_changed_sentence_10301365", { v0: title }),
   };
 }
 

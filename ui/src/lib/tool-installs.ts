@@ -46,14 +46,14 @@ export function installPayload(
 // --- Copy (verbatim from the PAP-13615 wireframe spec) ---
 
 export function installInfoNotice(appName: string): string {
-  return `Installing adds ${appName}'s tools to the agent's context on every run — install only where it will actually be used.`;
+  return l10n("local.install_info_notice_10301366", { v0: appName });
 }
 
 export const INSTALL_ALL_WARNING =
-  "Adds context cost to every run of every agent — a deliberate choice. New agents you add later are installed automatically.";
+  l10n("local.install_all_warning_10301367");
 
 export function autoExtendNotice(agentName: string): string {
-  return `Installing on ${agentName} will also grant access. A tool can't be installed on an agent that isn't allowed to use it, so we'll add ${agentName} to who can use it. This is logged.`;
+  return l10n("local.auto_extend_access_notice_10301368", { v0: agentName });
 }
 
 export const INSTALLED_HINT =
