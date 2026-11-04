@@ -1485,7 +1485,7 @@ export async function prepareReusedChatAttachment(input: {
       );
     const comment = await issueService(input.db).addComment(
       input.binding.issueId,
-      `Prepared ${input.title} for this response.`,
+      `已为本次答复准备：${input.title}。`,
       { agentId: input.binding.agentId, runId: input.binding.runId },
       {
         attachmentIds: [attachment.id],

@@ -469,6 +469,16 @@ describe("native same-conversation chat attachment reuse", () => {
       disposition: "duplicate",
       prepared: (first as { prepared: unknown }).prepared,
     });
+    const preparedCommentId = (
+      first as { prepared: { commentId: string } }
+    ).prepared.commentId;
+    const [preparedComment] = await db
+      .select({ body: issueComments.body })
+      .from(issueComments)
+      .where(eq(issueComments.id, preparedCommentId));
+    expect(preparedComment?.body).toBe(
+      "已为本次答复准备：Earlier requested file。",
+    );
     const preparedId = (first as { prepared: { attachmentId: string } })
       .prepared.attachmentId;
     const attachments = await db
@@ -539,7 +549,9 @@ describe("native same-conversation chat attachment reuse", () => {
         const prepared = (receipt.result as { prepared?: Record<string, unknown> }).prepared;
         if (prepared) prepared[field] = field === "filename" ? "different.txt" : sourceBody.length + 1;
       }
-      await expect(verifyReceipt(corrupted)).rejects.toThrow("this run's requested output");
+      await expect(verifyReceipt(corrupted)).rejects.toThrow(
+        "本次运行请求输出匹配",
+      );
     }
     const legacy = structuredClone(receipts);
     for (const receipt of Object.values(legacy)) {
@@ -559,7 +571,9 @@ describe("native same-conversation chat attachment reuse", () => {
         if (mutation === "hash") await db.update(assets).set({ sha256: "0".repeat(64) }).where(eq(assets.id, sourceRow.asset.id));
         if (mutation === "foreign company") await db.update(issueAttachments).set({ companyId: foreignCompanyId }).where(eq(issueAttachments.id, sourceAttachmentId));
         try {
-          await expect(verifyReceipt(legacy)).rejects.toThrow("this run's requested output");
+          await expect(verifyReceipt(legacy)).rejects.toThrow(
+            "本次运行请求输出匹配",
+          );
           // New receipts preserve the verified tuple even after the source is removed.
           await expect(verifyReceipt(receipts)).resolves.toBeUndefined();
         } finally {
