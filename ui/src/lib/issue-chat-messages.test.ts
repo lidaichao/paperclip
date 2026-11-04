@@ -21,6 +21,7 @@ import { pendingConnectionIntentInteraction } from "../fixtures/issueThreadInter
 import type { IssueTimelineEvent } from "./issue-timeline-events";
 import type { ActiveRunForIssue, LiveRunForIssue } from "../api/heartbeats";
 import { registerUIAdapter, unregisterUIAdapter } from "../adapters/registry";
+import { i18n } from "../i18n";
 
 describe("connection intents in the task feed", () => {
   it("orders the card chronologically and collapses live/polling snapshots into one updated message", () => {
@@ -513,6 +514,42 @@ describe("buildAssistantPartsFromTranscript", () => {
 });
 
 describe("buildIssueChatMessages", () => {
+  it("renders timeline event details in Chinese", async () => {
+    const previousLanguage = i18n.language;
+    try {
+      await i18n.changeLanguage("zh-CN");
+      const messages = buildIssueChatMessages({
+        comments: [],
+        timelineEvents: [{
+          id: "event-zh",
+          createdAt: new Date("2026-04-06T11:59:00.000Z"),
+          actorType: "system",
+          actorId: "system",
+          followUpRequested: true,
+          statusChange: { from: "in_progress", to: "in_review" },
+          assigneeChange: {
+            from: { agentId: null, userId: null },
+            to: { agentId: "agent-1", userId: null },
+          },
+          workspaceChange: {
+            from: { label: null, projectWorkspaceId: null, executionWorkspaceId: null, mode: null },
+            to: { label: "开发工作区", projectWorkspaceId: "workspace-1", executionWorkspaceId: null, mode: "local" },
+          },
+        }],
+        linkedRuns: [],
+        liveRuns: [],
+        agentMap: new Map([["agent-1", createAgent("agent-1", "Rabbit")]]),
+      });
+
+      expect(messages[0]?.content[0]).toMatchObject({
+        type: "text",
+        text: "系统请求后续处理\n状态：进行中 → 审查中\n负责人：未分配 → Rabbit\n工作区：无 → 开发工作区",
+      });
+    } finally {
+      await i18n.changeLanguage(previousLanguage);
+    }
+  });
+
   it("uses the company user label for current-user comments instead of collapsing to You", () => {
     const messages = buildIssueChatMessages({
       comments: [createComment({ authorUserId: "user-1" })],

@@ -12805,6 +12805,11 @@
     "activity_asked_tool_on_10300608": "asked to use {{v0}} on",
     "activity_opened_session_for_10300609": "opened an app session for",
     "activity_blocked_session_for_10300610": "was blocked from opening an app session for",
-    "activity_discovered_actions_for_10300611": "discovered app actions for"
+    "activity_discovered_actions_for_10300611": "discovered app actions for",
+    "timeline_actor_requested_follow_up_10300612": "{{v0}} requested follow-up",
+    "timeline_actor_updated_issue_10300613": "{{v0}} updated this issue",
+    "timeline_status_change_10300614": "Status: {{v0}} -> {{v1}}",
+    "timeline_assignee_change_10300615": "Assignee: {{v0}} -> {{v1}}",
+    "timeline_workspace_change_10300616": "Workspace: {{v0}} -> {{v1}}"
   }
 }

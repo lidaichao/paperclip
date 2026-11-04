@@ -12805,6 +12805,11 @@
     "activity_asked_tool_on_10300608": "请求使用{{v0}}，所属任务：",
     "activity_opened_session_for_10300609": "为以下任务打开了应用会话：",
     "activity_blocked_session_for_10300610": "为以下任务打开应用会话时被阻止：",
-    "activity_discovered_actions_for_10300611": "发现了以下任务可用的应用操作："
+    "activity_discovered_actions_for_10300611": "发现了以下任务可用的应用操作：",
+    "timeline_actor_requested_follow_up_10300612": "{{v0}}请求后续处理",
+    "timeline_actor_updated_issue_10300613": "{{v0}}更新了此任务",
+    "timeline_status_change_10300614": "状态：{{v0}} → {{v1}}",
+    "timeline_assignee_change_10300615": "负责人：{{v0}} → {{v1}}",
+    "timeline_workspace_change_10300616": "工作区：{{v0}} → {{v1}}"
   }
 }

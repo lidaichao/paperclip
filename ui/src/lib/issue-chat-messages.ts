@@ -19,7 +19,7 @@ import {
   shouldHideInteractionCard,
   type IssueThreadInteraction,
 } from "./issue-thread-interactions";
-import type { IssueTimelineEvent } from "./issue-timeline-events";
+import { formatTimelineWorkspaceLabel, type IssueTimelineEvent } from "./issue-timeline-events";
 import { isLiveIssueRun } from "./liveIssueIds";
 import { findUIAdapter } from "../adapters/registry";
 import {
@@ -652,29 +652,39 @@ function createTimelineEventMessage(args: {
   const actorName = event.actorType === "agent"
     ? (agentMap?.get(event.actorId)?.name ?? event.actorId.slice(0, 8))
     : event.actorType === "system"
-      ? "System"
-      : (formatAssigneeUserLabel(event.actorId, currentUserId, userLabelMap) ?? "Board");
+      ? l10n("local.system_bbc5e661")
+      : (formatAssigneeUserLabel(event.actorId, currentUserId, userLabelMap) ?? l10n("local.board_859169b3"));
 
   const lines: string[] = [
-    event.followUpRequested ? `${actorName} requested follow-up` : `${actorName} updated this issue`,
+    event.followUpRequested
+      ? l10n("local.timeline_actor_requested_follow_up_10300612", { v0: actorName })
+      : l10n("local.timeline_actor_updated_issue_10300613", { v0: actorName }),
   ];
   if (event.statusChange) {
+    const from = event.statusChange.from
+      ? formatStatusLabel(event.statusChange.from)
+      : l10n("local.none_dc937b59");
+    const to = event.statusChange.to
+      ? formatStatusLabel(event.statusChange.to)
+      : l10n("local.none_dc937b59");
     lines.push(
-      `Status: ${event.statusChange.from ?? "none"} -> ${event.statusChange.to ?? "none"}`,
+      l10n("local.timeline_status_change_10300614", { v0: from, v1: to }),
     );
   }
   if (event.assigneeChange) {
     const from = event.assigneeChange.from.agentId
       ? (agentMap?.get(event.assigneeChange.from.agentId)?.name ?? event.assigneeChange.from.agentId.slice(0, 8))
-      : (formatAssigneeUserLabel(event.assigneeChange.from.userId, currentUserId, userLabelMap) ?? "Unassigned");
+      : (formatAssigneeUserLabel(event.assigneeChange.from.userId, currentUserId, userLabelMap) ?? l10n("local.unassigned_14d33bd0"));
     const to = event.assigneeChange.to.agentId
       ? (agentMap?.get(event.assigneeChange.to.agentId)?.name ?? event.assigneeChange.to.agentId.slice(0, 8))
-      : (formatAssigneeUserLabel(event.assigneeChange.to.userId, currentUserId, userLabelMap) ?? "Unassigned");
-    lines.push(`Assignee: ${from} -> ${to}`);
+      : (formatAssigneeUserLabel(event.assigneeChange.to.userId, currentUserId, userLabelMap) ?? l10n("local.unassigned_14d33bd0"));
+    lines.push(l10n("local.timeline_assignee_change_10300615", { v0: from, v1: to }));
   }
   if (event.workspaceChange) {
+    const from = formatTimelineWorkspaceLabel(event.workspaceChange.from);
+    const to = formatTimelineWorkspaceLabel(event.workspaceChange.to);
     lines.push(
-      `Workspace: ${event.workspaceChange.from.label ?? "none"} -> ${event.workspaceChange.to.label ?? "none"}`,
+      l10n("local.timeline_workspace_change_10300616", { v0: from, v1: to }),
     );
   }
 
@@ -949,7 +959,7 @@ export function buildAssistantPartsFromTranscript(entries: readonly IssueChatTra
         family: entry.family ?? "provider_notice",
         eventType: entry.eventType ?? "provider.notice.recorded",
         status: entry.status ?? "informational",
-        title: entry.title ?? "Provider activity",
+        title: entry.title ?? l10n("local.provider_activity_2cb218ea"),
         summary: entry.summary ?? "",
         payload: entry.payload ?? {},
       });

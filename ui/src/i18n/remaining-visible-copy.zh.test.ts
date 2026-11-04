@@ -799,6 +799,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.activity_opened_session_for_10300609).toContain("打开了应用会话");
     expect(messages.activity_blocked_session_for_10300610).toContain("被阻止");
     expect(messages.activity_discovered_actions_for_10300611).toContain("应用操作");
+    expect(messages.timeline_actor_requested_follow_up_10300612).toContain("请求后续处理");
+    expect(messages.timeline_actor_updated_issue_10300613).toContain("更新了此任务");
+    expect(messages.timeline_status_change_10300614).toContain("状态");
+    expect(messages.timeline_assignee_change_10300615).toContain("负责人");
+    expect(messages.timeline_workspace_change_10300616).toContain("工作区");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");
