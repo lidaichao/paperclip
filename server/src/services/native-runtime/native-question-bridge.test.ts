@@ -229,6 +229,39 @@ describeEmbeddedPostgres("native question bridge", () => {
     } finally { bridge.close(); }
   });
 
+  it("localizes the default free-text answer option", async () => {
+    await seed();
+    const event = runtimeRequestEvent();
+    (event.payload.request as Record<string, unknown>).input = {
+      schema: "paperclip.question_set.v1",
+      questions: [{
+        id: "estimate",
+        prompt: "预计需要几天？",
+        required: true,
+        answerMode: "text",
+        textValidation: { inputType: "integer" },
+      }],
+    };
+
+    const interaction = await projectNativeRuntimeRequest({
+      db,
+      binding: binding(),
+      event,
+    });
+    if (!interaction) throw new Error("question projection missing");
+
+    expect(interaction.payload.questions).toEqual([
+      expect.objectContaining({
+        id: "estimate",
+        options: [expect.objectContaining({
+          label: "请输入回答",
+          description: "请输入整数",
+          freeText: true,
+        })],
+      }),
+    ]);
+  });
+
   it.each(["codex", "claude"])("materializes, validates, and durably resumes a %s question response", async (provider) => {
     await seed();
     const interaction = await projectNativeRuntimeRequest({

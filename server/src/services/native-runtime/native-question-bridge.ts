@@ -93,6 +93,12 @@ function uniqueSyntheticOptionId(existing: readonly string[], preferred: string)
   throw new Error("native_question_synthetic_option_exhausted");
 }
 
+const localizedInputType = {
+  text: "文本",
+  number: "数字",
+  integer: "整数",
+} as const;
+
 function toInteractionPayload(questionSet: PaperclipQuestionSet, runtimeRequestId: string) {
   return {
     version: 1 as const,
@@ -108,16 +114,16 @@ function toInteractionPayload(questionSet: PaperclipQuestionSet, runtimeRequestI
       if (question.answerMode === "text") {
         options.push({
           id: uniqueSyntheticOptionId([], TEXT_ANSWER_OPTION_ID),
-          label: question.header ?? "Type an answer",
+          label: question.header ?? "请输入回答",
           ...(question.textValidation?.inputType
-            ? { description: `Expected ${question.textValidation.inputType} input` }
+            ? { description: `请输入${localizedInputType[question.textValidation.inputType]}` }
             : {}),
           freeText: true,
         });
       } else if (question.customAnswer?.enabled) {
         options.push({
           id: uniqueSyntheticOptionId(canonicalOptions.map((option) => option.id), CUSTOM_ANSWER_OPTION_ID),
-          label: question.customAnswer.label ?? "Other",
+          label: question.customAnswer.label ?? "其他",
           ...(question.customAnswer.placeholder ? { description: question.customAnswer.placeholder } : {}),
           freeText: true,
         });
@@ -292,7 +298,7 @@ export function validateNativeQuestionResponseInput(
     canonicalResponse(interaction.payload.questionSet, input.answers);
   } catch (error) {
     throw unprocessable(
-      error instanceof Error ? error.message : "Invalid native question response",
+      error instanceof Error ? error.message : "原生问题回答无效",
       { code: "invalid_question_response" },
     );
   }
