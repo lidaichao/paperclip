@@ -21,9 +21,9 @@ import {
 } from "@paperclipai/adapter-utils/server-utils";
 
 const NATIVE_GITHUB_ATTACHMENT_RECOVERY_GUIDANCE = [
-  "## GitHub attachment recovery navigation",
-  "Paperclip owns recovery navigation for unavailable GitHub attachments. It may append an authenticated task link after an accepted response, only when the current source remains authorized and a safe configured Board URL is available. The model does not select or authorize that link.",
-  "A task URL missing from your prompt or tool results is not evidence that no task link can be provided; do not claim that a link is unavailable merely because you cannot see its URL. Do not invent a URL or promise that a link will appear. Briefly explain the unavailable input and ask the user to attach it directly to this Paperclip task or paste the needed text. Never infer the file's contents or substitute an older file.",
+  "## GitHub 附件恢复导航",
+  "Alice 负责不可用 GitHub 附件的恢复导航。仅当当前来源仍获授权且存在安全配置的管理面板 URL 时，Alice 才可在已接受的答复后追加经过认证的任务链接；模型不能选择或授权该链接。",
+  "提示或工具结果中没有任务 URL，并不代表无法提供任务链接；不能仅因看不到 URL 就声称链接不可用。不要编造 URL，也不要承诺链接会出现。请简要说明输入不可用，并请用户将文件直接附加到此 Alice 任务，或粘贴所需文本。绝不能推测文件内容，也不能用旧文件替代。",
 ].join("\n");
 
 /** Closed constructor: callers cannot spread legacy context or environment data. */
@@ -134,7 +134,7 @@ export function buildNativeExecutionInput(input: {
     answerChain.at(-1)?.interactionId === question?.interactionId
       ? answerChain.map((response, index) => {
           const label = index === answerChain.length - 1
-            ? "Latest answered question" : `Earlier answer ${index + 1}`;
+            ? "最近已回答问题" : `较早答复 ${index + 1}`;
           return `${label}:\n${(response.response.result as Record<string, unknown>).summaryMarkdown}`;
         }).join("\n\n")
       : answerResult?.summaryMarkdown;
@@ -161,7 +161,7 @@ export function buildNativeExecutionInput(input: {
     wakePrompt,
     // Durable task questions must survive the current provider turn.
     // Keep routing visible before deferred tool discovery; usage belongs in the tool schema.
-    "Use Paperclip's request_human_input for durable task questions.",
+    "请使用 Alice 的 request_human_input 提出需要持久保留的任务问题。",
     externalChatTurn && wake?.externalChatProvider === "github"
       ? NATIVE_GITHUB_ATTACHMENT_RECOVERY_GUIDANCE
       : "",
@@ -198,7 +198,7 @@ export function buildNativeExecutionInput(input: {
       // models. Keep the canonical title and description in task.prompt as
       // explicitly labeled background, but give authenticated external-chat
       // turns neutral structured fields.
-      title: externalChatTurn ? "External chat follow-up" : input.issue.title,
+      title: externalChatTurn ? "外部聊天后续消息" : input.issue.title,
       description: externalChatTurn ? null : input.issue.description,
       prompt: taskPrompt,
       workMode: input.issue.workMode,

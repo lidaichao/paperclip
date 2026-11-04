@@ -106,7 +106,7 @@ describe("native execution input external-chat framing", () => {
       expect(input.initialCommunicationGuidance).toBe("Initial Slack communication preferences.");
       // The runtime adds this only after deciding whether provider recovery succeeded.
       expect(input.task.prompt).not.toContain("Initial Slack communication preferences.");
-      expect(input.task.title).toBe("External chat follow-up");
+      expect(input.task.title).toBe("外部聊天后续消息");
       expect(input.task.prompt).toContain("Amber");
       expect(input.task.prompt).not.toContain("## Questions that need a user response");
       expect(input.task.prompt).toContain(
@@ -242,7 +242,7 @@ describe("native execution input external-chat framing", () => {
           ...args.interactionResponses!,
         ],
       });
-      expect(sequential.task.title).toBe("External chat follow-up");
+      expect(sequential.task.title).toBe("外部聊天后续消息");
       expect(sequential.task.prompt).toContain("Circle");
       expect(sequential.task.prompt).toContain("Amber");
       expect(sequential.task.prompt).not.toContain("## Questions that need a user response");
@@ -332,7 +332,7 @@ describe("native execution input external-chat framing", () => {
         runtimeContext: nativeRuntimeContextFixture(),
       });
 
-      expect(input.task.title).toBe("External chat follow-up");
+      expect(input.task.title).toBe("外部聊天后续消息");
       expect(input.task.description).toBeNull();
       expect(input.task.prompt).toContain("read_current_wake_comments");
       expect(input.task.prompt).toContain(staleRootTitle);
@@ -412,22 +412,22 @@ describe("native execution input external-chat framing", () => {
         "Preparation does not confirm provider delivery",
       );
       expect(input.task.prompt).toContain(
-        "Paperclip owns recovery navigation for unavailable GitHub attachments",
+        "Alice 负责不可用 GitHub 附件的恢复导航",
       );
       expect(input.task.prompt).toContain(
-        "after an accepted response, only when the current source remains authorized and a safe configured Board URL is available",
+        "仅当当前来源仍获授权且存在安全配置的管理面板 URL 时",
       );
       expect(input.task.prompt).toContain(
-        "A task URL missing from your prompt or tool results is not evidence that no task link can be provided",
+        "提示或工具结果中没有任务 URL，并不代表无法提供任务链接",
       );
       expect(input.task.prompt).toContain(
-        "Do not invent a URL or promise that a link will appear",
+        "不要编造 URL，也不要承诺链接会出现",
       );
       expect(input.task.prompt).toContain(
-        "Briefly explain the unavailable input and ask the user to attach it directly to this Paperclip task or paste the needed text",
+        "请简要说明输入不可用，并请用户将文件直接附加到此 Alice 任务，或粘贴所需文本",
       );
       expect(input.task.prompt).toContain(
-        "Never infer the file's contents or substitute an older file",
+        "绝不能推测文件内容，也不能用旧文件替代",
       );
 
       const wake = args.wakePayload as Record<string, unknown>;
@@ -445,7 +445,7 @@ describe("native execution input external-chat framing", () => {
           wakePayload: { ...wake, ...patch },
         });
         expect(unrelated.task.prompt).not.toContain(
-          "Paperclip owns recovery navigation for unavailable GitHub attachments",
+          "Alice 负责不可用 GitHub 附件的恢复导航",
         );
       }
     },
@@ -480,7 +480,7 @@ describe("native execution input external-chat framing", () => {
       : provider === "opencode" ? { kind: "opencode", permissionMode: "allow" }
       : { kind: "codex", approvalPolicy: "never" });
     expect(input.task.prompt).not.toContain("## Questions that need a user response");
-    expect(input.task.prompt).toContain("Use Paperclip's request_human_input for durable task questions.");
+    expect(input.task.prompt).toContain("请使用 Alice 的 request_human_input 提出需要持久保留的任务问题。");
     expect(input.task.prompt).not.toContain("payload.questionSet");
   });
 

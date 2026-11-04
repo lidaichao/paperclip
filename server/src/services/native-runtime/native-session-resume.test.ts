@@ -2393,7 +2393,7 @@ describe("buildNativeExecutionInput wake projection", () => {
       runtimeContext: nativeRuntimeContextFixture(),
     });
 
-    expect(input.task.title).toBe("External chat follow-up");
+    expect(input.task.title).toBe("外部聊天后续消息");
     expect(input.task.description).toBeNull();
     expect(input.task.prompt).toContain(staleRootTitle);
     expect(input.task.prompt).toContain("Quick question: what is 55 + 8?");

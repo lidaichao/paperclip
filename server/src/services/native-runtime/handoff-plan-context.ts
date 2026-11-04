@@ -27,7 +27,7 @@ export async function handoffPlanContext(db: Db, task: typeof issues.$inferSelec
         eq(issueDocuments.issueId, source.id), eq(issueDocuments.key, "plan"),
       )).where(and(eq(documentRevisions.id, target.revisionId), eq(documentRevisions.companyId, task.companyId)));
     if (revision) return { sourceIssueId: source.id, interactionId: interaction.id, ...revision,
-      guidance: "This source plan was accepted before this task was created. Execute the assigned scope within that plan; planning and handoff steps already completed in the source are not new work. This is not approval of changes to scope or of a new task document. Preserve other applicable gates." };
+      guidance: "此来源计划在本任务创建前已经接受。请在该计划内执行分配范围；来源中已完成的规划和交接步骤不属于新工作。这并不代表批准范围变更或新的任务文档。其他适用门禁仍需保留。" };
   }
   return null;
 }
