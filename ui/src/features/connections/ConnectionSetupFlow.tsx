@@ -2021,7 +2021,9 @@ function StandardConnectionSetupFlow({
     return (
       <OAuthConnectStateScreen
         identity={{
-          name: linkName.trim() || endpointHost(linkUrl) || "this server",
+          name: linkName.trim()
+            || endpointHost(linkUrl)
+            || l10n("local.this_server_10301268"),
           unverifiedHost: endpointHost(linkUrl),
         }}
         // A pasted endpoint walks the generic three-step wizard, so keep that
@@ -2062,7 +2064,9 @@ function StandardConnectionSetupFlow({
   const appName =
     connectResult?.application.name ??
     entry?.name ??
-    (linkName.trim() || defaultGenericMcpName(linkUrl) || "this app");
+    (linkName.trim()
+      || defaultGenericMcpName(linkUrl)
+      || l10n("local.this_app_10301275"));
   const credentialSourceMethods = connectionMethodsForCredentialSource(entry, credentialSource);
   const setupCredentialSourceMethods = preEnrollmentManagedMethod
     ? [preEnrollmentManagedMethod]

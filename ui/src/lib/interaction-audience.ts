@@ -187,7 +187,9 @@ export function describeResolverAudience({
   const addressee = midSentence(
     addresseeLabel?.trim() || (isUserAddressee ? "the addressed user" : "the addressed agent"),
   );
-  const creator = midSentence(creatorLabel?.trim() || "the agent that created it");
+  const creator = midSentence(
+    creatorLabel?.trim() || l10n("local.the_agent_that_created_it_10301276"),
+  );
 
   const summary = isUserAddressee
     ? l10n("local.only_value_can_respond_5acc7611", {v0: (addressee)})

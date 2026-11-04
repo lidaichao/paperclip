@@ -13466,6 +13466,8 @@
     "another_pipeline_10301271": "其他流水线",
     "workspace_no_longer_on_record_10301272": "工作区已不在记录中",
     "provisioned_and_maintained_for_you_10301273": "已为你配置并维护。",
-    "proposed_secret_10301274": "待审批密钥"
+    "proposed_secret_10301274": "待审批密钥",
+    "this_app_10301275": "该应用",
+    "the_agent_that_created_it_10301276": "创建该请求的智能体"
   }
 }
