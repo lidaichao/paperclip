@@ -905,7 +905,7 @@ async function materializeDecisionEffect(input: {
       }),
       evidence: { runId: input.runId, decisionId: input.decisionId },
       nextAction:
-        "Review the expired attention route and choose a new authorized path.",
+        "检查已过期的处理路径，并选择新的已授权路径。",
       wakePolicy: null,
       maxAttempts: 3,
     });
@@ -937,7 +937,7 @@ async function materializeDecisionEffect(input: {
       }),
       evidence: { runId: input.runId, decisionId: input.decisionId },
       nextAction:
-        "Reconcile the native decision against the latest issue status version.",
+        "根据最新任务状态版本重新核对原生决定。",
       wakePolicy: null,
       maxAttempts: 3,
     });
@@ -954,7 +954,7 @@ async function materializeDecisionEffect(input: {
       .set({
         status: "running",
         continuationAttempt: sql`${heartbeatRuns.continuationAttempt} + 1`,
-        nextAction: "Accept a replacement native turn on the existing run.",
+        nextAction: "在现有运行中接受替代原生轮次。",
         updatedAt: new Date(),
       })
       .where(
@@ -1001,7 +1001,7 @@ async function materializeDecisionEffect(input: {
         .set({
           status: "cancelled",
           finishedAt: new Date(),
-          error: "Cancelled by native issue cancellation",
+          error: "因原生任务取消而终止",
           updatedAt: new Date(),
         })
         .where(
