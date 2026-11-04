@@ -13531,6 +13531,8 @@
     "assigned_to_sentence_10301336": "已分配给 {{v0}}。",
     "governed_action_human_only_10301337": "此卡片涉及受治理操作，因此无论请求了哪种响应范围，都仅限人员处理。",
     "organization_governance_narrowed_10301338": "组织交互治理已将响应范围从“{{v0}}”收窄为“{{v1}}”。",
-    "legacy_card_stays_restricted_10301339": "此卡片创建于“任何人”成为默认范围之前，因此继续受限；新建卡片将默认开放。"
+    "legacy_card_stays_restricted_10301339": "此卡片创建于“任何人”成为默认范围之前，因此继续受限；新建卡片将默认开放。",
+    "workspace_name_default_10301340": "{{v0}}（默认）",
+    "default_workspace_10301341": "默认工作区"
   }
 }

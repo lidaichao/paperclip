@@ -534,7 +534,9 @@ export function getInboxSearchSupplementIssues({
 
 function formatDefaultWorkspaceGroupLabel(name: string | null | undefined): string {
   const normalizedName = name?.trim();
-  return normalizedName ? `${normalizedName} (default)` : "Default workspace";
+  return normalizedName
+    ? l10n("local.workspace_name_default_10301340", { v0: normalizedName })
+    : l10n("local.default_workspace_10301341");
 }
 
 function resolveDefaultProjectWorkspaceInfo(

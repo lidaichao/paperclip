@@ -13531,6 +13531,8 @@
     "assigned_to_sentence_10301336": "Assigned to {{v0}}. ",
     "governed_action_human_only_10301337": "This card runs a governed action, so it stays human-only whatever audience was requested.",
     "organization_governance_narrowed_10301338": "Organization interaction governance narrowed this from {{v0}} to {{v1}}.",
-    "legacy_card_stays_restricted_10301339": "Created before Anyone became the default, so it stays restricted. A new card would be open."
+    "legacy_card_stays_restricted_10301339": "Created before Anyone became the default, so it stays restricted. A new card would be open.",
+    "workspace_name_default_10301340": "{{v0}} (default)",
+    "default_workspace_10301341": "Default workspace"
   }
 }
