@@ -21,7 +21,7 @@ export function runnerApiRestriction(
       ) ||
         /^\/api\/companies\/\{companyId\}\/exports?(\/|$)/.test(path)))
   ) {
-    return "Use the existing credential broker or secure management client: call_api cannot return secret values, manage credentials, or export company credential configuration.";
+    return "请使用现有的凭据代理或安全管理客户端：call_api 不能返回机密值、管理凭据或导出公司凭据配置。";
   }
   return ["GET", "HEAD", "OPTIONS"].includes(method)
     ? null
@@ -56,7 +56,7 @@ export function runnerApiMutationRestriction(path: string): string | null {
         path,
       ))
   ) {
-    return "Use the dedicated tools and existing clients: call_api cannot bypass runner lifecycle, execution-control or approval authority";
+    return "请使用专用工具和现有客户端：call_api 不能绕过运行器生命周期、执行控制或审批权限";
   }
   return null;
 }

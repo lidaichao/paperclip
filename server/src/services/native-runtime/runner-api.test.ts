@@ -53,7 +53,7 @@ describe("runner API catalog", () => {
     expect(runnerApiOperation(projects).dedicatedTools).toEqual(["list_projects"]);
     expect(runnerApiOperation("GET /api/companies/{companyId}/project-repositories").dedicatedTools).toEqual(["list_project_repositories"]);
     expect(runnerApiOperation("POST /api/companies/{companyId}/agent-hires").dedicatedTools).toEqual(["hire_agent"]);
-    expect(runnerApiOperation("POST /api/companies/{companyId}/agent-hires").dedicatedToolGuidance).toContain("inherits the caller's native runtime");
+    expect(runnerApiOperation("POST /api/companies/{companyId}/agent-hires").dedicatedToolGuidance).toContain("继承调用者的原生运行时");
   });
   it.each(runnerApiCatalog().filter(operation => operation.transport === "rest"))("resolves the catalog route $operationId inside the bound origin", operation => {
     const pathParams = Object.fromEntries(operation.parameters.filter(parameter => parameter.in === "path").map(parameter => [parameter.name, parameter.name === "companyId" ? context.companyId : "fixture-id"]));
@@ -112,7 +112,7 @@ describe("runner API catalog", () => {
     );
     expect(() =>
       searchRunnerApi({ query: "agent", cursor: first.nextCursor! }),
-    ).toThrow("different query");
+    ).toThrow("其他查询或目录");
     expect(() => searchRunnerApi({ query: "project", limit: 50 })).toThrow();
   });
 });
@@ -131,7 +131,7 @@ describe("runner API request boundary", () => {
       const request = vi.fn<typeof fetch>();
       await expect(
         executeRunnerApi({ operationId }, context, io(request)),
-      ).rejects.toThrow(/cannot bypass|credential broker/);
+      ).rejects.toThrow(/不能绕过|凭据代理/);
       expect(request).not.toHaveBeenCalled();
     },
   );
@@ -168,7 +168,7 @@ describe("runner API request boundary", () => {
           context,
           io(request),
         ),
-      ).rejects.toThrow(/cannot bypass|credential broker/);
+      ).rejects.toThrow(/不能绕过|凭据代理/);
       expect(request).not.toHaveBeenCalled();
       expect(operation.callPolicy).toBe("restricted");
     },
@@ -244,7 +244,7 @@ describe("runner API request boundary", () => {
       const request = vi.fn<typeof fetch>();
       await expect(
         executeRunnerApi({ operationId }, context, io(request)),
-      ).rejects.toThrow("credential broker");
+      ).rejects.toThrow("凭据代理");
       expect(request).not.toHaveBeenCalled();
       expect(searchRunnerApi({ query: operationId }).results[0]).toMatchObject({
         callPolicy: "restricted",
@@ -341,7 +341,7 @@ describe("runner API request boundary", () => {
         },
         context,
       ),
-    ).toThrow("lifecycle");
+    ).toThrow("运行器生命周期");
   });
   it.each(["issue-a", "ISSUE-A", "API-1", "api-1", " api-1 "])(
     "cannot delete its active task using the route identity alias %s",
@@ -561,7 +561,7 @@ describe("runner API request boundary", () => {
           { operationId, pathParams: { id: "fixture" } },
           context,
         ),
-      ).toThrow("cannot bypass");
+      ).toThrow("不能绕过");
     }
   });
   it("keeps skill-test mode consistent with the advertised tool contract", () => {

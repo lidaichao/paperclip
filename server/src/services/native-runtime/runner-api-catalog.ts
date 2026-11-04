@@ -98,24 +98,24 @@ export function buildRunnerApiCatalog(document: Json = buildOpenApiDocument()): 
         }),
         runnerRestrictions: [...(restriction ? [restriction] : []), "Active run and assignment must remain authorized.", "Cannot replace checkout, completion, task status/ownership changes, approval decisions, or runner execution control. Dedicated tools retain their existing permissions."],
         dedicatedToolGuidance: dedicatedTools(method, path).includes("hire_agent")
-          ? "Use hire_agent for native teammate identity and persona fields. It fixes the reportsTo and source task context and inherits the caller's native runtime; never use call_api to supply adapter, environment, or credential configuration."
-          : "Use an available dedicated tool for its supported fields. Inspect that tool's advertised schema; call_api may be used for additional API fields, subject to lifecycle restrictions.",
+          ? "原生队友的身份和角色字段请使用 hire_agent。该工具会固定 reportsTo 和来源任务上下文，并继承调用者的原生运行时；绝不能使用 call_api 提供适配器、环境或凭据配置。"
+          : "支持的字段请优先使用可用的专用工具。请检查该工具公开的结构；其他 API 字段可使用 call_api，但仍受生命周期限制。",
         allowedModes: method === "GET" || method === "HEAD" ? ["standard", "ask", "planning", "skill_test"] : ["standard", "skill_test"],
         ...(skillReference ? { skillReference } : {}),
       });
     }
   }
   for (const [path, summary, actor] of [
-    ["/api/companies/{companyId}/events/ws", "Live company events WebSocket; use the existing event client", "board_or_agent"],
-    ["/api/runner/v1/connect/{runId}", "Authenticated runner PRP WebSocket; runner-owned transport", "runner"],
-    ["/api/environment-custom-image-setup-sessions/{sessionId}/terminal/ws", "Image setup terminal WebSocket; use the existing terminal client", "board"],
+    ["/api/companies/{companyId}/events/ws", "实时公司事件 WebSocket；请使用现有事件客户端", "board_or_agent"],
+    ["/api/runner/v1/connect/{runId}", "已认证的运行器 PRP WebSocket；由运行器负责传输", "runner"],
+    ["/api/environment-custom-image-setup-sessions/{sessionId}/terminal/ws", "镜像设置终端 WebSocket；请使用现有终端客户端", "board"],
   ]) {
     if (result.some(operation => operation.path === path)) continue;
     result.push({ operationId: `GET ${path}`, method: "GET", path, summary,
-      description: "WebSocket upgrade. Not callable through call_api.",
+      description: "WebSocket 升级。不能通过 call_api 调用。",
       parameters: [...path.matchAll(/\{([^}]+)\}/g)].map(match => ({ in: "path", name: match[1], required: true, schema: { type: "string" } })),
-      responses: { "101": { description: "Switching Protocols" } }, authorization: { actor },
-      transport: "protocol", callPolicy: "protocol", dedicatedTools: [], dedicatedToolGuidance: "Use the existing protocol client.", allowedModes: [],
+      responses: { "101": { description: "切换协议" } }, authorization: { actor },
+      transport: "protocol", callPolicy: "protocol", dedicatedTools: [], dedicatedToolGuidance: "请使用现有协议客户端。", allowedModes: [],
     });
   }
   return result.sort((a, b) => a.operationId.localeCompare(b.operationId));
@@ -126,14 +126,14 @@ let cachedDigest: string | undefined;
 export function runnerApiCatalog(): RunnerApiOperation[] { return cached ??= buildRunnerApiCatalog(); }
 export function runnerApiOperation(id: string): RunnerApiOperation {
   const operation = runnerApiCatalog().find((entry) => entry.operationId === id);
-  if (!operation) throw notFound("Unknown API operation; use search_api to discover its exact operationId");
+  if (!operation) throw notFound("未知的 API 操作；请使用 search_api 查找准确的 operationId");
   return operation;
 }
 
 export const runnerApiSearchSchema = z.object({ query: z.string().trim().min(1).max(500), limit: z.number().int().min(1).max(10).default(5), cursor: z.string().max(200).optional() }).strict();
 export function searchRunnerApi(value: unknown) {
   const parsed = runnerApiSearchSchema.safeParse(value);
-  if (!parsed.success) throw badRequest("Invalid API search query or limit");
+  if (!parsed.success) throw badRequest("API 搜索条件或数量上限无效");
   const input = parsed.data;
   const { query, limit } = input;
   const catalog = runnerApiCatalog();
@@ -142,9 +142,9 @@ export function searchRunnerApi(value: unknown) {
   let offset = 0;
   if (input.cursor) {
     const match = /^([a-f0-9]{16}):(\d+)$/.exec(input.cursor);
-    if (!match || match[1] !== fingerprint) throw badRequest("Search cursor belongs to a different query or catalog");
+    if (!match || match[1] !== fingerprint) throw badRequest("搜索游标属于其他查询或目录");
     offset = Number(match[2]);
-    if (!Number.isSafeInteger(offset)) throw badRequest("Invalid search cursor");
+    if (!Number.isSafeInteger(offset)) throw badRequest("搜索游标无效");
   }
   const exact = catalog.find((entry) => entry.operationId.toLowerCase() === query.trim().toLowerCase());
   const terms = [...new Set(words(query))];
@@ -157,6 +157,6 @@ export function searchRunnerApi(value: unknown) {
   return {
     results, total: matches.length,
     nextCursor: offset + limit < matches.length ? `${fingerprint}:${offset + limit}` : null,
-    guidance: "Prefer an available dedicated tool when it supports the required operation and parameters. API permissions still apply. Protocol endpoints require their existing clients. Ask and Plan permit only reads through call_api.",
+    guidance: "若可用的专用工具支持所需操作和参数，请优先使用。API 权限仍然生效。协议端点必须使用现有客户端。在询问和规划模式下，call_api 仅允许读取。",
   };
 }
