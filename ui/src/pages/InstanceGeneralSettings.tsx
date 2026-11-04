@@ -101,7 +101,7 @@ export function InstanceGeneralSettings({ embedded = false }: { embedded?: boole
   const visibleActionError = signOutMutation.error instanceof Error
     ? signOutMutation.error.message
     : signOutMutation.error
-      ? "Failed to sign out."
+      ? l10n("local.failed_to_sign_out_10300643")
       : actionError;
 
   return (

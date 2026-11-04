@@ -12836,6 +12836,9 @@
     "agent_can_use_connection_next_run_10300639": "{{v0}} can use this connection on the continuation run.",
     "agent_notified_continue_without_10300640": "{{v0}} was notified and can continue without it.",
     "account_owner_10300641": "The account owner",
-    "my_provider_account_10300642": "My {{v0}} account"
+    "my_provider_account_10300642": "My {{v0}} account",
+    "failed_to_sign_out_10300643": "Failed to sign out.",
+    "saved_credentials_retained_10300644": "Saved credentials are retained when these fields are left blank. Enter a replacement only to change them.",
+    "required_by_connection_install_10300645": "Required by this connection's install setting"
   }
 }

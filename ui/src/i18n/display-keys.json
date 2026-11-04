@@ -10256,5 +10256,8 @@
   "{{v0}} can use this connection on the continuation run.": "local.agent_can_use_connection_next_run_10300639",
   "{{v0}} was notified and can continue without it.": "local.agent_notified_continue_without_10300640",
   "the account owner": "local.account_owner_10300641",
-  "my {{v0}} account": "local.my_provider_account_10300642"
+  "my {{v0}} account": "local.my_provider_account_10300642",
+  "failed to sign out.": "local.failed_to_sign_out_10300643",
+  "saved credentials are retained when these fields are left blank. enter a replacement only to change them.": "local.saved_credentials_retained_10300644",
+  "required by this connection's install setting": "local.required_by_connection_install_10300645"
 }

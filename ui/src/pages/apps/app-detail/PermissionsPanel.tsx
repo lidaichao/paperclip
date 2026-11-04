@@ -168,7 +168,7 @@ function AgentAccessSection({
                 : l10n("local.value_value_selected_c05d4e8d", {v0: (access.agentIds.size), v1: (access.agentIds.size === 1 ? "agent" : "agents")})}
               emptyMessage={l10n("local.you_cannot_edit_any_agents_yet_1fe14169")}
               isAgentDisabled={(agent) => requiredAgentIds.has(agent.id)}
-              getDescription={(agent) => requiredAgentIds.has(agent.id) ? "Required by this connection's install setting" : agent.title}
+              getDescription={(agent) => requiredAgentIds.has(agent.id) ? l10n("local.required_by_connection_install_10300645") : agent.title}
               onChange={(agentIds) => onSave({
                 mode: "specific",
                 agentIds: new Set([...agentIds, ...requiredAgentIds]),

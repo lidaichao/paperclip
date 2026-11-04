@@ -52,7 +52,7 @@ export function RemoteMcpProductionSetup({ providerId, connection, host = "page"
     url: typeof connection?.config?.url === "string" ? connection.config?.url : provider.defaultUrl,
     auth: connection?.config?.mcpAuthMode === "bearer" ? "bearer" : connection?.authKind === "api_key" ? "headers" : provider.supportsBrowserAuth ? "auto" : "none",
     token: "", headers: [], advanced: false, connectStatus: oauthOutcome === "denied" ? "cancelled" : oauthOutcome === "failed" ? "oauth_failed" : "idle", connected: false,
-    identity: null, allAgents: true, agentIds: [], permissions: {}, tools: [], notice: connection?.authKind === "api_key" ? "Saved credentials are retained when these fields are left blank. Enter a replacement only to change them." : null, refreshing: false,
+    identity: null, allAgents: true, agentIds: [], permissions: {}, tools: [], notice: connection?.authKind === "api_key" ? l10n("local.saved_credentials_retained_10300644") : null, refreshing: false,
     ...(!connection ? readAccessDraft(accessDraftKey) : {}),
     ...(requestedAgentId ? { allAgents: false, agentIds: [requestedAgentId] } : {}),
   }));

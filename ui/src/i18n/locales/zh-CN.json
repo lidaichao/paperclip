@@ -12836,6 +12836,9 @@
     "agent_can_use_connection_next_run_10300639": "{{v0}} 可在继续执行时使用此连接。",
     "agent_notified_continue_without_10300640": "已通知 {{v0}}，其可在没有此连接的情况下继续。",
     "account_owner_10300641": "账户所有者",
-    "my_provider_account_10300642": "我的 {{v0}} 账户"
+    "my_provider_account_10300642": "我的 {{v0}} 账户",
+    "failed_to_sign_out_10300643": "退出登录失败。",
+    "saved_credentials_retained_10300644": "这些字段留空时将保留已保存的凭据；仅在需要更改时输入新凭据。",
+    "required_by_connection_install_10300645": "此连接的安装设置要求使用该智能体"
   }
 }

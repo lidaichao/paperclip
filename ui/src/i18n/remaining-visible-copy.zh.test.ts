@@ -830,6 +830,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.agent_notified_continue_without_10300640).toContain("已通知");
     expect(messages.account_owner_10300641).toBe("账户所有者");
     expect(messages.my_provider_account_10300642).toContain("我的");
+    expect(messages.failed_to_sign_out_10300643).toBe("退出登录失败。");
+    expect(messages.saved_credentials_retained_10300644).toContain("保留已保存的凭据");
+    expect(messages.required_by_connection_install_10300645).toContain("安装设置要求");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
