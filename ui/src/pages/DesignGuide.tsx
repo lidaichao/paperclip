@@ -1526,7 +1526,7 @@ export function DesignGuide() {
           <EmptyState
             icon={Inbox}
             message={l10n("local.no_items_create_first_to_get_started_10300711")}
-            action="Create Item"
+            action={l10n("local.create_item_10301061")}
             onAction={() => {}}
           />
         </div>

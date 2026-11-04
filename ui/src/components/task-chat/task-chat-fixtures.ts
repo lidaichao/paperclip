@@ -19,18 +19,18 @@ const AGENT = "Atlas";
 /** A short human→agent exchange used as context in several scenarios. */
 function exchangePrefix(): TaskChatItem[] {
   return [
-    { id: "m-user-1", kind: "message", author: "human", text: "Add a rate limiter to the login route.", timestamp: "2:31 PM" },
+    { id: "m-user-1", kind: "message", author: "human", text: l10n("local.add_rate_limiter_to_login_route_10301036"), timestamp: "14:31" },
   ];
 }
 
 const SAMPLE_PLAN: TaskChatPlan = {
   revision: 2,
-  updatedAt: "2:33 PM",
+  updatedAt: "14:33",
   entries: [
-    { id: "p1", content: "Read the login route and existing middleware", status: "completed", priority: "medium" },
-    { id: "p2", content: "Add a token-bucket rate limiter util", status: "in_progress", priority: "high" },
-    { id: "p3", content: "Wire the limiter into POST /login", status: "pending", priority: "high" },
-    { id: "p4", content: "Add tests for the limit + reset window", status: "pending", priority: "low" },
+    { id: "p1", content: l10n("local.read_login_route_existing_middleware_10301037"), status: "completed", priority: "medium" },
+    { id: "p2", content: l10n("local.add_token_bucket_rate_limiter_util_10301038"), status: "in_progress", priority: "high" },
+    { id: "p3", content: l10n("local.wire_limiter_into_post_login_10301039"), status: "pending", priority: "high" },
+    { id: "p4", content: l10n("local.add_tests_limit_reset_window_10301040"), status: "pending", priority: "low" },
   ],
 };
 
@@ -40,7 +40,7 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
       return {
         surface: "thread",
         items: [
-          { id: "mk-start", kind: "marker", variant: "session_start", label: l10n("local.session_started_a6a7c4b6"), detail: "claude · Auto mode" },
+          { id: "mk-start", kind: "marker", variant: "session_start", label: l10n("local.session_started_a6a7c4b6"), detail: l10n("local.claude_auto_mode_10301062") },
           ...exchangePrefix(),
         ],
       };
@@ -51,7 +51,7 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
         surface: "thread",
         items: [
           ...exchangePrefix(),
-          { id: "m-agent-1", kind: "message", author: "agent", authorName: AGENT, agentIcon: "bot", text: "On it — I'll add a token-bucket limiter and wire it into the login route.", timestamp: "2:31 PM" },
+          { id: "m-agent-1", kind: "message", author: "agent", authorName: AGENT, agentIcon: "bot", text: l10n("local.on_it_add_token_bucket_limiter_10301041"), timestamp: "14:31" },
         ],
       };
     case "thinking":
@@ -91,8 +91,7 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
             summary: { toolCount: 1, added: 0, removed: 0 },
             liveStatus: {
               id: "st-responding", kind: "status", status: "running", label: l10n("local.responding_98047c1e"), startedAtMs: Date.now() - 9300, tokens: { used: 18240, size: 200000 },
-              selfTalk:
-                "I found an existing ipRateLimit helper, so I'll extend it with a per-account token bucket keyed on the email address instead of adding a second limiter. The bucket refills at six requests a minute, matching the lockout policy the auth spec documents, and failed attempts drain it twice as fast so brute-force runs hit the ceiling quickly while a fat-fingered password barely registers.",
+              selfTalk: l10n("local.found_existing_ip_rate_limit_helper_10301042"),
             },
             items: [
               { id: "resp-read", kind: "tool", name: "Read", target: "server/src/routes/auth.ts", toolKind: "read", status: "completed" },
@@ -117,11 +116,12 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
             summary: { toolCount: 2, added: 0, removed: 0 },
             liveStatus: {
               id: "st-responding-burst", kind: "status", status: "running", label: l10n("local.responding_98047c1e"), startedAtMs: Date.now() - 21400, tokens: { used: 18240, size: 200000 },
-              selfTalk:
-                "Found the existing ipRateLimit helper — extending it beats adding a second limiter.\n\n" +
-                "Wiring a per-account token bucket keyed on the email address, refilling at six requests a minute per the auth spec.\n\n" +
-                "Failed attempts drain the bucket twice as fast, so brute-force runs hit the ceiling while a fat-fingered password barely registers.\n\n" +
-                "Now updating the login route to consume from the bucket before the password check and adding tests for the lockout path.",
+              selfTalk: [
+                l10n("local.extend_existing_ip_rate_limit_helper_10301043"),
+                l10n("local.wire_per_account_token_bucket_10301044"),
+                l10n("local.failed_attempts_drain_bucket_twice_10301045"),
+                l10n("local.update_login_route_and_add_tests_10301046"),
+              ].join("\n\n"),
             },
             items: [
               { id: "burst-read", kind: "tool", name: "Read", target: "server/src/routes/auth.ts", toolKind: "read", status: "completed" },
@@ -187,7 +187,7 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
             kind: "turn",
             settled: false,
             summary: { toolCount: 1, added: 0, removed: 0 },
-            liveStatus: { id: "st-running", kind: "status", status: "running", label: l10n("local.running_f4ccae29"), detail: "no output for 3s — still running", startedAtMs: Date.now() - 12000, tokens: { used: 18240, size: 200000 } },
+            liveStatus: { id: "st-running", kind: "status", status: "running", label: l10n("local.running_f4ccae29"), detail: l10n("local.no_output_for_three_seconds_still_running_10301063"), startedAtMs: Date.now() - 12000, tokens: { used: 18240, size: 200000 } },
             items: [
               { id: "r-grep", kind: "tool", name: "Grep", target: "rateLimit", toolKind: "search", status: "completed" },
             ],
@@ -208,15 +208,15 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
             author: "agent",
             authorName: AGENT,
             agentIcon: "bot",
-            text: "Done — added a per-account token-bucket limiter and wired it into the login route. Tests pass.",
-            timestamp: "2:34 PM",
+            text: l10n("local.done_added_token_bucket_limiter_tests_pass_10301047"),
+            timestamp: "14:34",
             attachedTurn: {
               id: "turn-done",
               kind: "turn",
               settled: true,
               // "Worked · N tools" expands to exactly the tool rows (PAP-361):
               // toolCount matches the nested rows, no thinking row.
-              summary: { durationLabel: "38s", toolCount: 2, added: 34, removed: 3, tokensLabel: "12.3k tokens" },
+              summary: { durationLabel: l10n("local.duration_38_seconds_10301048"), toolCount: 2, added: 34, removed: 3, tokensLabel: l10n("local.tokens_12_3k_10301049") },
               items: [
                 { id: "tool-done-1", kind: "tool", name: "Read", target: "server/src/routes/auth.ts", toolKind: "read", status: "completed" },
                 { id: "tool-done-2", kind: "tool", name: "Edit", target: "server/src/routes/auth.ts", toolKind: "edit", status: "completed", diff: { path: "server/src/routes/auth.ts", added: 34, removed: 3 } },
@@ -231,7 +231,7 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
         items: [
           {
             id: "st-approval", kind: "status", status: "awaiting_approval", label: l10n("local.approve_running_a_command_7347bea3"),
-            detail: "npm run migrate — modifies the database",
+            detail: l10n("local.npm_run_migrate_modifies_database_10301050"),
             approval: {
               toolName: "execute",
               options: [
@@ -250,7 +250,11 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
         active,
         interstitial: text ? { id: `${id}:message`, kind: "message" as const, author: "agent" as const, authorName: AGENT, text, interstitial: true } : undefined,
         items: tools.filter((item): item is Extract<TaskChatItem, { kind: "tool" | "usage" }> => item.kind === "tool" || item.kind === "usage"),
-        summary: active ? "Ran 1 command, called 1 tool" : id.endsWith("opening") ? "Called 2 tools" : "Read 3 files, edited 1 file",
+        summary: active
+          ? l10n("local.ran_one_command_called_one_tool_10301051")
+          : id.endsWith("opening")
+            ? l10n("local.called_two_tools_10301052")
+            : l10n("local.read_three_files_edited_one_file_10301053"),
       });
       return {
         surface: "thread",
@@ -263,15 +267,15 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
             items: [
               phase("phase-opening", undefined, false, [
                 { id: "generic-1", kind: "tool", name: "Tool", rawName: "tool call", status: "completed" },
-                { id: "generic-2", kind: "tool", name: "Tool", rawName: "acp_tool", status: "failed", detail: "Adapter interrupted" },
+                { id: "generic-2", kind: "tool", name: "Tool", rawName: "acp_tool", status: "failed", detail: l10n("local.adapter_interrupted_10301054") },
               ]),
-              phase("phase-read", "I found the relevant adapter and am tracing its render boundary.", false, [
+              phase("phase-read", l10n("local.found_adapter_tracing_render_boundary_10301055"), false, [
                 { id: "read-1", kind: "tool", name: "Read", status: "completed", target: "ui/src/components/task-chat/transcript-adapter.ts" },
                 { id: "read-2", kind: "tool", name: "Read", status: "completed", target: "ui/src/components/task-chat/TaskChatTurn.tsx" },
                 { id: "read-3", kind: "tool", name: "Read", status: "completed", target: "ui/src/components/task-chat/TaskChatThreadView.tsx" },
                 { id: "edit-1", kind: "tool", name: "Edit", status: "completed", target: "ui/src/components/task-chat/task-chat-model.ts" },
               ]),
-              phase("phase-active", "The grouping is wired; I’m running focused checks now.", true, [
+              phase("phase-active", l10n("local.grouping_wired_running_checks_10301056"), true, [
                 { id: "bash-1", kind: "tool", name: "Bash", status: "in_progress", target: "vitest task-chat" },
                 { id: "mcp-1", kind: "tool", name: "Search", rawName: "mcp__docs__search", status: "completed" },
               ]),
@@ -286,22 +290,22 @@ export function buildScenario(id: TaskChatStateId): TaskChatScenario {
       return {
         surface: "thread",
         items: [
-          { id: "m-int", kind: "message", author: "agent", authorName: AGENT, text: "Starting the migration now…" },
-          { id: "mk-int", kind: "marker", variant: "interrupted", label: l10n("local.interrupted_132d124d"), detail: "stopped by you at 2:35 PM" },
+          { id: "m-int", kind: "message", author: "agent", authorName: AGENT, text: l10n("local.starting_migration_now_10301057") },
+          { id: "mk-int", kind: "marker", variant: "interrupted", label: l10n("local.interrupted_132d124d"), detail: l10n("local.stopped_by_you_at_1435_10301058") },
         ],
       };
     case "refused":
       return {
         surface: "thread",
         items: [
-          { id: "st-refused", kind: "status", status: "refused", label: l10n("local.turn_ended_refusal_fb399aa0"), detail: "The agent declined to complete this request." },
+          { id: "st-refused", kind: "status", status: "refused", label: l10n("local.turn_ended_refusal_fb399aa0"), detail: l10n("local.agent_declined_request_10301059") },
         ],
       };
     case "truncated":
       return {
         surface: "thread",
         items: [
-          { id: "st-trunc", kind: "status", status: "truncated", label: l10n("local.turn_ended_max_tokens_216e3343"), detail: "Output was cut off — continue to resume.", tokens: { used: 199120, size: 200000 } },
+          { id: "st-trunc", kind: "status", status: "truncated", label: l10n("local.turn_ended_max_tokens_216e3343"), detail: l10n("local.output_cut_off_continue_to_resume_10301060"), tokens: { used: 199120, size: 200000 } },
         ],
       };
     case "live-token-cost":
