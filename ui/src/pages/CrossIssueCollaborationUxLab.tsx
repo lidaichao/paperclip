@@ -132,7 +132,7 @@ export function CrossIssueCollaborationUxLab() {
         </header>
 
         <LabSection
-          index="1 · Attribution chip (plan §3a)"
+          index={l10n("local.attribution_chip_plan_10300800")}
           title={l10n("local._fable_for_dotta_on_a_cross_task_agent_commen_89066eeb")}
           description={l10n("local.an_agent_commenting_on_a_task_it_is_not_assig_65a88410")}
         >
@@ -152,7 +152,7 @@ export function CrossIssueCollaborationUxLab() {
           <Frame label={l10n("local.responsible_user_not_in_the_loaded_directory_6babdf34")}>
             <AgentCommentBubble
               authorName="Fable"
-              onBehalfOf="the responsible user"
+              onBehalfOf={l10n("local.the_responsible_user_10300801")}
               body={l10n("local.falls_back_to_a_generic_label_rather_than_pri_c74ad23c")}
             />
           </Frame>
@@ -166,12 +166,12 @@ export function CrossIssueCollaborationUxLab() {
         </LabSection>
 
         <LabSection
-          index="2 · Field-edit audit receipt (plan §3b)"
+          index={l10n("local.field_edit_audit_receipt_plan_10300802")}
           title={l10n("local.every_patch_says_who_changed_what_and_under_w_b1368a71")}
           description={l10n("local.required_for_agent_and_board_edits_alike_befo_14061d15")}
         >
           <Frame label={l10n("local.cross_task_agent_edit_e4405f7c")}>
-            <ActivityRow actorName="Fable" verb="changed the status from todo to in progress">
+            <ActivityRow actorName="Fable" verb={l10n("local.changed_status_todo_to_in_progress_10300803")}>
               <IssueFieldChangeReceipt
                 event={{
                   action: "issue.updated",
@@ -190,7 +190,7 @@ export function CrossIssueCollaborationUxLab() {
             </ActivityRow>
           </Frame>
           <Frame label={l10n("local.board_human_edit_audited_the_same_way_42e957f9")}>
-            <ActivityRow actorName="Dotta" verb="updated the issue">
+            <ActivityRow actorName="Dotta" verb={l10n("local.updated_the_issue_ad4620e2")}>
               <IssueFieldChangeReceipt
                 event={{
                   action: "issue.updated",
@@ -202,7 +202,11 @@ export function CrossIssueCollaborationUxLab() {
                         from: "3108ef8e-5ed0-41d9-b561-6b41c41b8545",
                         to: "6670e11b-91d3-4429-82e0-436b88b51808",
                       },
-                      description: { from: "Old brief…", to: "New brief…", updated: true },
+                      description: {
+                        from: l10n("local.old_brief_10300804"),
+                        to: l10n("local.new_brief_10300805"),
+                        updated: true,
+                      },
                     },
                   },
                 }}
@@ -212,7 +216,7 @@ export function CrossIssueCollaborationUxLab() {
             </ActivityRow>
           </Frame>
           <Frame label={l10n("local.reassignment_blockers_and_work_mode_in_one_wr_f94600c0")}>
-            <ActivityRow actorName="CTO" verb="updated the issue">
+            <ActivityRow actorName="CTO" verb={l10n("local.updated_the_issue_ad4620e2")}>
               <IssueFieldChangeReceipt
                 event={{
                   action: "issue.updated",
@@ -235,12 +239,12 @@ export function CrossIssueCollaborationUxLab() {
             </ActivityRow>
           </Frame>
           <Frame label={l10n("local.older_activity_row_no_receipt_renders_unchang_a4b11034")}>
-            <ActivityRow actorName="CodexCoder" verb="checked out the issue" />
+            <ActivityRow actorName="CodexCoder" verb={l10n("local.checked_out_the_issue_6716c0d7")} />
           </Frame>
         </LabSection>
 
         <LabSection
-          index="3 · Actionable denial copy (plan §6)"
+          index={l10n("local.actionable_denial_copy_plan_10300806")}
           title={l10n("local.every_wall_names_the_boundary_who_can_act_and_733ce275")}
           description={l10n("local.a_real_incident_burned_a_full_detour_discover_ed947644")}
           columns={1}

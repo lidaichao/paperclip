@@ -12991,6 +12991,13 @@
     "neutral_expanded_10300796": "中性 · 已展开",
     "reassigned_to_claudefixer_10300797": "已重新分配给 ClaudeFixer。",
     "warning_no_metadata_10300798": "警告 · 无元数据（隐藏“详情”入口）",
-    "run_paused_waiting_board_approval_10300799": "此运行已暂停，正在等待管理方审批。"
+    "run_paused_waiting_board_approval_10300799": "此运行已暂停，正在等待管理方审批。",
+    "attribution_chip_plan_10300800": "1 · 归属标记（方案 §3a）",
+    "the_responsible_user_10300801": "责任用户",
+    "field_edit_audit_receipt_plan_10300802": "2 · 字段编辑审计回执（方案 §3b）",
+    "changed_status_todo_to_in_progress_10300803": "将状态从“待办”改为“进行中”",
+    "old_brief_10300804": "旧需求说明……",
+    "new_brief_10300805": "新需求说明……",
+    "actionable_denial_copy_plan_10300806": "3 · 可执行的拒绝提示（方案 §6）"
   }
 }

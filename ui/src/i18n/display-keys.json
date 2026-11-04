@@ -10410,5 +10410,12 @@
   "neutral · expanded": "local.neutral_expanded_10300796",
   "reassigned to claudefixer.": "local.reassigned_to_claudefixer_10300797",
   "warning · no metadata (details affordance hidden)": "local.warning_no_metadata_10300798",
-  "this run paused while waiting on board approval.": "local.run_paused_waiting_board_approval_10300799"
+  "this run paused while waiting on board approval.": "local.run_paused_waiting_board_approval_10300799",
+  "1 · attribution chip (plan §3a)": "local.attribution_chip_plan_10300800",
+  "the responsible user": "local.the_responsible_user_10300801",
+  "2 · field-edit audit receipt (plan §3b)": "local.field_edit_audit_receipt_plan_10300802",
+  "changed the status from todo to in progress": "local.changed_status_todo_to_in_progress_10300803",
+  "old brief…": "local.old_brief_10300804",
+  "new brief…": "local.new_brief_10300805",
+  "3 · actionable denial copy (plan §6)": "local.actionable_denial_copy_plan_10300806"
 }

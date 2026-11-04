@@ -12991,6 +12991,13 @@
     "neutral_expanded_10300796": "Neutral · expanded",
     "reassigned_to_claudefixer_10300797": "Reassigned to ClaudeFixer.",
     "warning_no_metadata_10300798": "Warning · no metadata (Details affordance hidden)",
-    "run_paused_waiting_board_approval_10300799": "This run paused while waiting on board approval."
+    "run_paused_waiting_board_approval_10300799": "This run paused while waiting on board approval.",
+    "attribution_chip_plan_10300800": "1 · Attribution chip (plan §3a)",
+    "the_responsible_user_10300801": "the responsible user",
+    "field_edit_audit_receipt_plan_10300802": "2 · Field-edit audit receipt (plan §3b)",
+    "changed_status_todo_to_in_progress_10300803": "changed the status from todo to in progress",
+    "old_brief_10300804": "Old brief…",
+    "new_brief_10300805": "New brief…",
+    "actionable_denial_copy_plan_10300806": "3 · Actionable denial copy (plan §6)"
   }
 }

@@ -986,6 +986,13 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.reassigned_to_claudefixer_10300797).toContain("已重新分配");
     expect(messages.warning_no_metadata_10300798).toContain("无元数据");
     expect(messages.run_paused_waiting_board_approval_10300799).toContain("等待管理方审批");
+    expect(messages.attribution_chip_plan_10300800).toContain("归属标记");
+    expect(messages.the_responsible_user_10300801).toBe("责任用户");
+    expect(messages.field_edit_audit_receipt_plan_10300802).toContain("字段编辑审计回执");
+    expect(messages.changed_status_todo_to_in_progress_10300803).toContain("进行中");
+    expect(messages.old_brief_10300804).toContain("旧需求说明");
+    expect(messages.new_brief_10300805).toContain("新需求说明");
+    expect(messages.actionable_denial_copy_plan_10300806).toContain("可执行的拒绝提示");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
