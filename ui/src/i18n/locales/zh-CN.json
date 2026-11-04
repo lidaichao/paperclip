@@ -13450,6 +13450,7 @@
     "recovery_owner_attempts_exhausted_10301255": "任务上次运行因等待而停止，但没有任何对象在等待它。原负责人已用完所有自动修复次数，需要人工决定后续步骤；任务仍由原负责人持有。",
     "recovery_retrying_original_owner_10301256": "任务上次运行因等待而停止，但没有任何对象在等待它。Alice 正在重试原负责人，以记录明确的后续步骤；任务仍由原负责人持有，目前无需操作。",
     "recovery_owner_repairing_path_10301257": "原负责人未能在重试次数内记录后续步骤。恢复负责人现在只修复后续流程；任务本身仍属于原负责人。",
-    "recovery_board_must_choose_10301258": "自动恢复次数已用完，管理委员会必须选择后续步骤；任务本身仍属于原负责人。"
+    "recovery_board_must_choose_10301258": "自动恢复次数已用完，管理委员会必须选择后续步骤；任务本身仍属于原负责人。",
+    "run_ledger_watchdog_decision_failed_10301259": "Alice 无法记录运行监控的处理决定。"
   }
 }

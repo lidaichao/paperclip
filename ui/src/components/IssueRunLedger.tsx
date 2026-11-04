@@ -428,7 +428,7 @@ function watchdogDecisionErrorMessage(error: unknown) {
   }
   return error instanceof Error && error.message.trim().length > 0
     ? error.message
-    : "Paperclip could not record the watchdog decision.";
+    : l10n("local.run_ledger_watchdog_decision_failed_10301259");
 }
 
 export function IssueRunLedger({

@@ -13450,6 +13450,7 @@
     "recovery_owner_attempts_exhausted_10301255": "This task's last run stopped to wait, but nothing was waiting for it. The original owner has used every automatic repair attempt, so the next step needs a decision. The task stays with its owner.",
     "recovery_retrying_original_owner_10301256": "This task's last run stopped to wait, but nothing was waiting for it. Alice is retrying the original owner to record a real next step. The task stays with its owner, and no action is needed yet.",
     "recovery_owner_repairing_path_10301257": "The original owner could not record a next step within its retry budget. A recovery owner is now repairing the path only — the task itself still belongs to its original owner.",
-    "recovery_board_must_choose_10301258": "Automatic recovery is exhausted, so the board must choose the next step. The task itself still belongs to its original owner."
+    "recovery_board_must_choose_10301258": "Automatic recovery is exhausted, so the board must choose the next step. The task itself still belongs to its original owner.",
+    "run_ledger_watchdog_decision_failed_10301259": "Alice could not record the watchdog decision."
   }
 }
