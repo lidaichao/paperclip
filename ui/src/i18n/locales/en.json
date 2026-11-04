@@ -12922,6 +12922,24 @@
     "account_already_belongs_to_organization_10300725": "This account already belongs to the organization.",
     "result_states_10300726": "Result states",
     "standalone_auth_10300727": "Standalone auth",
-    "invalid_email_or_password_10300728": "Invalid email or password"
+    "invalid_email_or_password_10300728": "Invalid email or password",
+    "running_assistant_replies_preview_10300729": "Running assistant replies with streamed text, reasoning, tool cards, and background status notes",
+    "historical_issue_events_preview_10300730": "Historical issue events and linked runs rendered inline with the chat timeline",
+    "queued_messages_feedback_preview_10300731": "Queued user messages, settled assistant comments, and feedback controls",
+    "submitting_message_bubble_preview_10300732": "Submitting (pending) message bubble with Sending... label and reduced opacity",
+    "empty_disabled_composer_preview_10300733": "Empty and disabled-composer states without relying on live backend data",
+    "analyzing_animation_smoothness_10300734": "Analyzing the user's request about the animation smoothness...",
+    "current_implementation_causes_flash_10300735": "The current implementation unmounts the old span instantly, causing a flash...",
+    "looking_at_css_keyframes_10300736": "Looking at the CSS keyframes for cot-line-slide-up...",
+    "need_paired_exit_animation_10300737": "We need a paired exit animation so the old line slides out while the new one slides in...",
+    "implementing_two_span_ticker_10300738": "Implementing a two-span ticker: exiting line goes up and out, entering line comes up from below...",
+    "testing_transition_timing_10300739": "Testing the 280ms cubic-bezier transition timing...",
+    "animation_demo_10300740": "Animation demo",
+    "status_tokens_10300741": "Status tokens",
+    "primary_preview_10300742": "Primary preview",
+    "submitting_state_10300743": "Submitting state",
+    "settled_review_10300744": "Settled review",
+    "empty_thread_10300745": "Empty thread",
+    "workspace_closed_chat_disabled_10300746": "This workspace is closed, so new chat replies are disabled until the issue is reopened."
   }
 }

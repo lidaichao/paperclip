@@ -28,11 +28,11 @@ import { Bot, Brain, FlaskConical, Loader2, MessagesSquare, Route, Sparkles, Wan
 const noop = async () => {};
 
 const highlights = [
-  "Running assistant replies with streamed text, reasoning, tool cards, and background status notes",
-  "Historical issue events and linked runs rendered inline with the chat timeline",
-  "Queued user messages, settled assistant comments, and feedback controls",
-  "Submitting (pending) message bubble with Sending... label and reduced opacity",
-  "Empty and disabled-composer states without relying on live backend data",
+  l10n("local.running_assistant_replies_preview_10300729"),
+  l10n("local.historical_issue_events_preview_10300730"),
+  l10n("local.queued_messages_feedback_preview_10300731"),
+  l10n("local.submitting_message_bubble_preview_10300732"),
+  l10n("local.empty_disabled_composer_preview_10300733"),
 ];
 
 function LabSection({
@@ -73,12 +73,12 @@ function LabSection({
 }
 
 const DEMO_REASONING_LINES = [
-  "Analyzing the user's request about the animation smoothness...",
-  "The current implementation unmounts the old span instantly, causing a flash...",
-  "Looking at the CSS keyframes for cot-line-slide-up...",
-  "We need a paired exit animation so the old line slides out while the new one slides in...",
-  "Implementing a two-span ticker: exiting line goes up and out, entering line comes up from below...",
-  "Testing the 280ms cubic-bezier transition timing...",
+  l10n("local.analyzing_animation_smoothness_10300734"),
+  l10n("local.current_implementation_causes_flash_10300735"),
+  l10n("local.looking_at_css_keyframes_10300736"),
+  l10n("local.need_paired_exit_animation_10300737"),
+  l10n("local.implementing_two_span_ticker_10300738"),
+  l10n("local.testing_transition_timing_10300739"),
 ];
 
 function RotatingReasoningDemo({ intervalMs = 2200 }: { intervalMs?: number }) {
@@ -199,7 +199,7 @@ export function IssueChatUxLab() {
 
       <LabSection
         id="rotating-text"
-        eyebrow="Animation demo"
+        eyebrow={l10n("local.animation_demo_10300740")}
         title={l10n("local.rotating_reasoning_text_c4c0ead3")}
         description={l10n("local.isolated_ticker_that_cycles_sample_reasoning_45daa099")}
         accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
@@ -220,7 +220,7 @@ export function IssueChatUxLab() {
 
       <LabSection
         id="working-tokens"
-        eyebrow="Status tokens"
+        eyebrow={l10n("local.status_tokens_10300741")}
         title={l10n("local.working_worked_header_verb_4f96256f")}
         description={l10n("local.the_working_token_uses_the_shimmer_text_gradi_91d87b75")}
         accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_28%),var(--background)]"
@@ -254,7 +254,7 @@ export function IssueChatUxLab() {
 
       <LabSection
         id="live-execution"
-        eyebrow="Primary preview"
+        eyebrow={l10n("local.primary_preview_10300742")}
         title={l10n("local.live_execution_thread_90f82992")}
         description={l10n("local.shows_the_fully_active_state_timeline_events_729cf126")}
         accentClassName="bg-[linear-gradient(180deg,rgba(6,182,212,0.05),transparent_28%),var(--background)]"
@@ -285,7 +285,7 @@ export function IssueChatUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Submitting state"
+        eyebrow={l10n("local.submitting_state_10300743")}
         title={l10n("local.pending_message_bubble_e4452d63")}
         description={l10n("local.when_a_user_sends_a_message_the_bubble_briefl_149c3abd")}
         accentClassName="bg-[linear-gradient(180deg,rgba(59,130,246,0.06),transparent_28%),var(--background)]"
@@ -306,7 +306,7 @@ export function IssueChatUxLab() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <LabSection
-          eyebrow="Settled review"
+          eyebrow={l10n("local.settled_review_10300744")}
           title={l10n("local.durable_comments_and_feedback_c7c7176a")}
           description={l10n("local.shows_the_post_run_state_assistant_comment_fe_4cbacd25")}
           accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.05),transparent_26%),var(--background)]"
@@ -330,7 +330,7 @@ export function IssueChatUxLab() {
 
         <div className="space-y-6">
           <LabSection
-            eyebrow="Empty thread"
+            eyebrow={l10n("local.empty_thread_10300745")}
             title={l10n("local.empty_state_and_disabled_composer_33b198a4")}
             description={l10n("local.keeps_the_message_area_visible_even_when_ther_63bbc394")}
             accentClassName="bg-[linear-gradient(180deg,rgba(245,158,11,0.08),transparent_26%),var(--background)]"
@@ -343,7 +343,7 @@ export function IssueChatUxLab() {
               agentMap={issueChatUxAgentMap}
               currentUserId="user-1"
               onAdd={noop}
-              composerDisabledReason="This workspace is closed, so new chat replies are disabled until the issue is reopened."
+              composerDisabledReason={l10n("local.workspace_closed_chat_disabled_10300746")}
               draftKey="issue-chat-ux-lab-empty"
               enableLiveTranscriptPolling={false}
             />
