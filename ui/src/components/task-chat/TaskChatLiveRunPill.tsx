@@ -1,5 +1,6 @@
 import type { ExecutionProjection } from "@paperclipai/shared";
 import { Loader2 } from "lucide-react";
+import { l10n } from "@/i18n";
 import type { TranscriptEntry } from "../../adapters";
 import { cn } from "@/lib/utils";
 import { useSecondTick } from "@/hooks/useSecondTick";
@@ -29,8 +30,12 @@ export function toolCountSummaryFromEntries(entries: readonly TranscriptEntry[])
     else other += 1;
   }
   const parts: string[] = [];
-  if (commands > 0) parts.push(`ran ${commands} command${commands === 1 ? "" : "s"}`);
-  if (other > 0) parts.push(`called ${other} tool${other === 1 ? "" : "s"}`);
+  if (commands > 0) parts.push(commands === 1
+    ? l10n("local.ran_one_command_10300537")
+    : l10n("local.ran_commands_value_10300538", { v0: commands }));
+  if (other > 0) parts.push(other === 1
+    ? l10n("local.called_one_tool_10300539")
+    : l10n("local.called_tools_value_10300540", { v0: other }));
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
@@ -68,8 +73,12 @@ export function TaskChatLiveRunPill({
     ? formatDurationWords(elapsedMs)
     : null;
   const failed = ["failed", "timed_out", "cancelled", "interrupted"].includes(status);
-  const verb = active ? "Working" : failed ? "Stopped" : "Worked";
-  const suffix = elapsed ? `for ${elapsed}` : null;
+  const verb = active
+    ? l10n("local.working_a92f0449")
+    : failed
+      ? l10n("local.stopped_1a4f630a")
+      : l10n("local.worked_e7f93aad");
+  const suffix = elapsed ? l10n("local.for_duration_value_10300541", { v0: elapsed }) : null;
 
   return (
     <div

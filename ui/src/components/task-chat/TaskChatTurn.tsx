@@ -103,7 +103,7 @@ export function TaskChatTurn({
           <span className="min-w-0 truncate">
             {item.continuedAfterSteering ? (l10n("local.continued_after_steering_d964b95e") + " ") : ""}
             {item.summary.durationLabel
-              ? l10n("local.value_for_value_72c7a158", {v0: (item.summary.failed ? "Stopped" : "Worked"), v1: (item.summary.durationLabel)})
+              ? l10n("local.value_for_value_72c7a158", {v0: (item.summary.failed ? l10n("local.stopped_1a4f630a") : l10n("local.worked_e7f93aad")), v1: (item.summary.durationLabel)})
               : item.summary.failed
                 ? l10n("local.stopped_1a4f630a")
                 : l10n("local.worked_e7f93aad")}
@@ -207,7 +207,7 @@ export function TaskChatTurn({
       ) : null}
       <span>
         {item.standaloneHeader && item.summary.durationLabel
-          ? l10n("local.value_for_value_72c7a158", {v0: (item.summary.failed ? "Stopped" : "Worked"), v1: (item.summary.durationLabel)})
+          ? l10n("local.value_for_value_72c7a158", {v0: (item.summary.failed ? l10n("local.stopped_1a4f630a") : l10n("local.worked_e7f93aad")), v1: (item.summary.durationLabel)})
           : item.summary.failed
             ? l10n("local.stopped_1a4f630a")
             : l10n("local.worked_e7f93aad")}

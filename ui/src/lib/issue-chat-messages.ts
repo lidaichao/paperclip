@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type { ExecutionProjection } from "@paperclipai/shared";
 import type {
   ReasoningMessagePart,
@@ -552,7 +553,7 @@ function authorNameForComment(
 }
 
 function formatStatusLabel(status: string) {
-  return status.replace(/_/g, " ");
+  return enumLabel(status, "lower");
 }
 
 function createCommentMessage(args: {
@@ -778,18 +779,30 @@ export function formatDurationWords(ms: number | null) {
   if (ms === null || !Number.isFinite(ms) || ms <= 0) return null;
   const totalSeconds = Math.max(1, Math.round(ms / 1000));
   if (totalSeconds < 60) {
-    return `${totalSeconds} second${totalSeconds === 1 ? "" : "s"}`;
+    return totalSeconds === 1
+      ? l10n("local.one_second_10300520")
+      : l10n("local.count_seconds_10300521", { v0: totalSeconds });
   }
   const totalMinutes = Math.round(totalSeconds / 60);
   if (totalMinutes < 60) {
-    return `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
+    return totalMinutes === 1
+      ? l10n("local.one_minute_10300522")
+      : l10n("local.count_minutes_10300523", { v0: totalMinutes });
   }
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   if (minutes === 0) {
-    return `${hours} hour${hours === 1 ? "" : "s"}`;
+    return hours === 1
+      ? l10n("local.one_hour_10300524")
+      : l10n("local.count_hours_10300525", { v0: hours });
   }
-  return `${hours} hour${hours === 1 ? "" : "s"} ${minutes} minute${minutes === 1 ? "" : "s"}`;
+  const hourText = hours === 1
+    ? l10n("local.one_hour_10300524")
+    : l10n("local.count_hours_10300525", { v0: hours });
+  const minuteText = minutes === 1
+    ? l10n("local.one_minute_10300522")
+    : l10n("local.count_minutes_10300523", { v0: minutes });
+  return l10n("local.hours_minutes_value_10300526", { v0: hourText, v1: minuteText });
 }
 
 function runDurationLabel(run: {
@@ -807,20 +820,20 @@ function runDurationLabel(run: {
   const stopReason = typeof run.resultJson?.stopReason === "string" ? run.resultJson.stopReason : null;
   switch (run.status) {
     case "succeeded":
-      return durationText ? `Worked for ${durationText}` : "Finished work";
+      return durationText ? l10n("local.worked_for_value_10300527", { v0: durationText }) : l10n("local.finished_work_10300528");
     case "failed":
     case "error":
-      return durationText ? `Failed after ${durationText}` : "Run failed";
+      return durationText ? l10n("local.failed_after_value_10300529", { v0: durationText }) : l10n("local.run_failed_97fddf2d");
     case "timed_out":
-      return durationText ? `Timed out after ${durationText}` : "Run timed out";
+      return durationText ? l10n("local.timed_out_after_value_10300530", { v0: durationText }) : l10n("local.run_timed_out_7b73d2f7");
     case "cancelled":
       if (isOperatorInterruptedRun(run.resultJson, run.errorCode)) {
-        return durationText ? `Interrupted by board after ${durationText}` : "Interrupted by board";
+        return durationText ? l10n("local.interrupted_by_board_after_value_10300531", { v0: durationText }) : l10n("local.interrupted_by_board_10300532");
       }
       if (stopReason === "paused") {
-        return durationText ? `Paused by board after ${durationText}` : "Paused by board";
+        return durationText ? l10n("local.paused_by_board_after_value_10300533", { v0: durationText }) : l10n("local.paused_by_board_0c48b774");
       }
-      return durationText ? `Cancelled after ${durationText}` : "Run cancelled";
+      return durationText ? l10n("local.cancelled_after_value_10300534", { v0: durationText }) : l10n("local.run_cancelled_2d34c9f1");
     case "queued":
       return l10n("local.queued_661ff40a");
     case "running":
@@ -836,7 +849,7 @@ function createHistoricalRunMessage(run: IssueChatLinkedRun, agentMap?: Map<stri
     id: `run:${run.runId}`,
     role: "system",
     createdAt: toDate(runTimestamp(run)),
-    content: [{ type: "text", text: `${agentName} run ${run.runId.slice(0, 8)} ${formatStatusLabel(run.status)}` }],
+    content: [{ type: "text", text: l10n("local.agent_run_status_value_10300536", { v0: agentName, v1: run.runId.slice(0, 8), v2: formatStatusLabel(run.status) }) }],
     metadata: {
       custom: {
         kind: "run",
@@ -1010,13 +1023,13 @@ export function buildAssistantPartsFromTranscript(entries: readonly IssueChatTra
     if (entry.kind === "result") {
       if (entry.isError && entry.errors?.length) {
         for (const error of entry.errors) {
-          orderedParts.push({ type: "reasoning", text: `Run error: ${summarizeNotice(error)}` });
+          orderedParts.push({ type: "reasoning", text: l10n("local.run_error_value_10300535", { v0: summarizeNotice(error) }) });
         }
       } else if (entry.text) {
         orderedParts.push({
           type: "reasoning",
           text: entry.isError
-            ? `Run error: ${summarizeNotice(entry.text)}`
+            ? l10n("local.run_error_value_10300535", { v0: summarizeNotice(entry.text) })
             : summarizeNotice(entry.text),
         });
       }
