@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -390,7 +391,7 @@ export function StatusCardDetailDrawer({
                           <span className="flex items-center gap-2 text-sm font-medium">
                             {updateKindLabel(update.kind)}
                             <Badge variant={update.status === "failed" ? "destructive" : "secondary"}>
-                              {update.status === "ok" ? update.trigger : update.status}
+                              {update.status === "ok" ? enumLabel(update.trigger, "lower") : enumLabel(update.status, "lower")}
                             </Badge>
                           </span>
                           <span className="text-xs text-muted-foreground" title={formatDateTime(update.startedAt)}>

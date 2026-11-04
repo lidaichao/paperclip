@@ -953,7 +953,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
                           <span className="truncate font-medium text-foreground">{profile.name}</span>
                           {profile.status !== "active" ? (
                             <Badge variant={statusVariant(profile.status)} className="text-(length:--text-nano)">
-                              {profile.status}
+                              {enumLabel(profile.status, "lower")}
                             </Badge>
                           ) : null}
                         </span>

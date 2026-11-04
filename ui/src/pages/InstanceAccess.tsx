@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Shield, ShieldCheck } from "lucide-react";
@@ -248,7 +249,7 @@ export function InstanceAccess() {
                       <div>
                         <div className="font-medium">{membership.companyName || membership.companyId}</div>
                         <div className="text-muted-foreground">
-                          {membership.membershipRole || l10n("local.unset_6cbf83e0")} • {membership.status}
+                          {membership.membershipRole || l10n("local.unset_6cbf83e0")} • {enumLabel(membership.status, "lower")}
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground">

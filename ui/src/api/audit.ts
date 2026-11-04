@@ -1,4 +1,5 @@
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
+import { l10n } from "@/i18n";
 import { api, createApiError, fetchWithLocalizedNetworkError } from "./client";
 
 /**
@@ -113,7 +114,8 @@ export const auditApi = {
       const body = await res.json().catch(() => null);
       const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, body);
       if (recovery) return recovery;
-      const message = (body as { error?: string } | null)?.error ?? `Export failed: ${res.status}`;
+      const message = (body as { error?: string } | null)?.error
+        ?? l10n("local.api_request_failed_10301181", { v0: res.status });
       throw createApiError(message, res.status, body);
     }
     return res.blob();

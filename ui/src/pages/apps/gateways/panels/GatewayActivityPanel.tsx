@@ -1,4 +1,5 @@
 import { l10n } from "../../../../i18n";
+import { enumLabel } from "../../../../i18n/display";
 import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -109,7 +110,7 @@ function ActivityRow({ event }: { event: ToolGatewayActivityEvent }) {
         <div className="border-t border-border bg-muted/30 px-4 py-3 pl-10 text-xs">
           <dl>
             {rawTool ? <Fact label={l10n("local.tool_2e53bdcd")} value={rawTool} mono /> : null}
-            {event.invocation?.status ? <Fact label={l10n("local.call_status_c43d9824")} value={event.invocation.status} /> : null}
+            {event.invocation?.status ? <Fact label={l10n("local.call_status_c43d9824")} value={enumLabel(event.invocation.status, "lower")} /> : null}
             {event.invocation?.policyDecision ? <Fact label={l10n("local.decision_640ae4ba")} value={event.invocation.policyDecision} /> : null}
             {reason ? <Fact label={l10n("local.reason_f81ab834")} value={reason} mono /> : null}
             {duration ? <Fact label={l10n("local.duration_4fc52a3c")} value={duration} /> : null}

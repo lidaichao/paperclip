@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -283,7 +284,7 @@ export function SmokeLabTab({ companyId }: { companyId: string }) {
                       serviceTone(service.status) === "muted" && "text-muted-foreground",
                     )}
                   >
-                    {service.status}
+                    {enumLabel(service.status, "lower")}
                   </span>
                 </span>
               </div>

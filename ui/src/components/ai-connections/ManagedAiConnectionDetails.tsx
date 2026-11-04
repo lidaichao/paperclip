@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { heartbeatsApi } from "@/api/heartbeats";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -108,7 +109,7 @@ export function ManagedAiConnectionDetails({
                 className="flex items-center justify-between gap-3 text-sm"
               >
                 <span>
-                  {run.agentName} · {run.status}
+                  {run.agentName} · {enumLabel(run.status, "lower")}
                 </span>
                 <Button
                   variant="outline"

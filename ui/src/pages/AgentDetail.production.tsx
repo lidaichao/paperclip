@@ -153,7 +153,7 @@ const JWT_VALUE_RE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-
 
 function formatOrgChainHealthPath(agent: AgentDetailRecord) {
   return agent.orgChainHealth?.fullChain
-    .map((entry) => `${entry.name}${entry.status !== "active" && entry.status !== "idle" ? ` (${entry.status})` : ""}`)
+    .map((entry) => `${entry.name}${entry.status !== "active" && entry.status !== "idle" ? ` (${enumLabel(entry.status, "lower")})` : ""}`)
     .join(" -> ") ?? agent.name;
 }
 

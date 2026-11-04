@@ -666,7 +666,7 @@ const TimelineList = memo(function TimelineList({
                       <span className="font-mono text-foreground">
                         {run.environmentLease.id.slice(0, 8)}
                       </span>
-                      <span> · {run.environmentLease.status}</span>
+                      <span> · {enumLabel(run.environmentLease.status, "lower")}</span>
                     </span>
                   ) : null}
                   {run.environmentLease?.workspacePath ? (

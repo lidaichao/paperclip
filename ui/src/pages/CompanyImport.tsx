@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
@@ -495,7 +496,7 @@ function ConflictResolutionList({
                       ? "text-emerald-500 border-emerald-500/30"
                       : "text-amber-500 border-amber-500/30",
                 )}>
-                  {item.kind}
+                  {enumLabel(item.kind, "lower")}
                 </Badge>
 
                 <span className={cn(
@@ -1768,7 +1769,7 @@ export function CompanyImport() {
                         ? "text-blue-500 border-blue-500/30"
                         : "text-purple-500 border-purple-500/30",
                     )}>
-                      {item.kind}
+                      {enumLabel(item.kind, "lower")}
                     </Badge>
                     <span className="min-w-0 flex-1 truncate">{item.name}</span>
                     {isActivated ? (

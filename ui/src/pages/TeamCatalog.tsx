@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -568,7 +569,7 @@ export function RequiredSkillsList({ skills }: { skills: CatalogTeamSkillRequire
           <Boxes className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="font-mono text-xs">{skill.ref}</span>
           <Badge variant="outline" className="ml-auto text-(length:--text-nano)">
-            {skill.type}
+            {enumLabel(skill.type, "lower")}
           </Badge>
           {skill.resolved ? (
             <Badge variant="outline" className="text-(length:--text-nano) text-emerald-600 dark:text-emerald-300 border-emerald-500/30">
@@ -605,7 +606,7 @@ export function EnvInputsList({ inputs }: { inputs: CatalogTeamEnvInputSummary[]
                   : "text-muted-foreground",
               )}
             >
-              {input.kind}
+              {enumLabel(input.kind, "lower")}
             </Badge>
             {input.requirement === "required" && (
               <Badge variant="outline" className="text-(length:--text-nano)">{l10n("local.required_d0a36305")}</Badge>
@@ -726,7 +727,7 @@ export function TeamDetailPane({
             <h2 className="text-base font-semibold">{team.name}</h2>
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant={team.kind === "bundled" ? "secondary" : "outline"} className="text-(length:--text-nano) capitalize">
-                {team.kind}
+                {enumLabel(team.kind, "lower")}
               </Badge>
               <span className="text-xs text-muted-foreground">{team.category}</span>
               <TrustChip level={team.trustLevel} />
@@ -1577,7 +1578,7 @@ export function StepSourcePolicy({
                       : "text-emerald-600 dark:text-emerald-300 border-emerald-500/30",
                 )}
               >
-                {source.type}
+                {enumLabel(source.type, "lower")}
               </Badge>
             </li>
           );
@@ -1948,7 +1949,7 @@ export function StepPreview({
                     variant="outline"
                     className={cn("ml-auto text-(length:--text-nano)", input.kind === "secret" ? "text-rose-600 dark:text-rose-300 border-rose-500/30" : "text-muted-foreground")}
                   >
-                    {input.kind}
+                    {enumLabel(input.kind, "lower")}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-1.5">
