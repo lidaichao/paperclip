@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { parseAgentMentionHref } from "@paperclipai/shared";
 
 /**
@@ -74,11 +75,11 @@ export function resolveRunStatusPresentation(
     return {
       label: l10n("local.interrupted_d512d96e"),
       className: "text-amber-700 dark:text-amber-300",
-      srHint: "interrupted by board comment",
+      srHint: l10n("local.interrupted_by_board_comment_10300486"),
     };
   }
   return {
-    label: status === "timed_out" ? l10n("local.timed_out_3dcd80f1") : status.replace(/_/g, " "),
+    label: status === "timed_out" ? l10n("local.timed_out_3dcd80f1") : enumLabel(status, "lower"),
     className: runStatusClassName(status),
     srHint: null,
   };
@@ -226,13 +227,13 @@ export function computeComposerHandoffPreview(
         ? {
             kind: "interrupt_handoff_agent",
             tone: "neutral",
-            text: "Interrupt current run, hand off to",
+            text: l10n("local.interrupt_current_run_hand_off_to_10300487"),
             chip: { kind: "agent", id: target.id },
           }
         : {
             kind: "wake_agent",
             tone: "neutral",
-            text: "Wake",
+            text: l10n("local.wake_33a7e908"),
             chip: { kind: "agent", id: target.id },
           };
     }
@@ -240,16 +241,16 @@ export function computeComposerHandoffPreview(
       return {
         kind: "user_handoff",
         tone: "neutral",
-        text: "Hand off to",
+        text: l10n("local.hand_off_to_7bcbd89d"),
         chip: { kind: "user", id: target.id },
-        suffix: "— no agent will be notified",
+        suffix: l10n("local.no_agent_will_be_notified_suffix_10300488"),
       };
     }
     // Cleared / no target chosen for the mutation.
     return {
       kind: "clear_assignee",
       tone: "neutral",
-      text: "Clear responsible — no agent will be notified",
+      text: l10n("local.clear_responsible_no_agent_10300489"),
     };
   }
 
@@ -257,9 +258,9 @@ export function computeComposerHandoffPreview(
     return {
       kind: "notify_agent",
       tone: "neutral",
-      text: "Notify",
+      text: l10n("local.notify_10300490"),
       chip: input.mentionedAgentId ? { kind: "agent", id: input.mentionedAgentId } : undefined,
-      suffix: input.mentionedAgentId ? undefined : "the mentioned agent",
+      suffix: input.mentionedAgentId ? undefined : l10n("local.the_mentioned_agent_10300491"),
     };
   }
 
@@ -267,7 +268,7 @@ export function computeComposerHandoffPreview(
     return {
       kind: "plain_text_only",
       tone: "warn",
-      text: "No agent will be notified. Use @ to mention an agent.",
+      text: l10n("local.no_agent_notified_use_mention_10300492"),
     };
   }
 
@@ -299,19 +300,19 @@ export function classifyAssigneeHandoff(
   opts: { agentName?: string | null; interruptedRunAttached?: boolean } = {},
 ): AssigneeHandoffInfo {
   if (to.agentId) {
-    const who = opts.agentName ?? "the responsible agent";
-    const suffix = opts.interruptedRunAttached ? " (interrupted run attached)" : "";
-    return { kind: "agent_wake", wakeText: `queued for ${who}${suffix}` };
+    const who = opts.agentName ?? l10n("local.the_responsible_agent_10300493");
+    const suffix = opts.interruptedRunAttached ? l10n("local.interrupted_run_attached_10300494") : "";
+    return { kind: "agent_wake", wakeText: `${l10n("local.queued_for_value_10300495", { v0: who })}${suffix}` };
   }
   if (to.userId) {
     return {
       kind: "user_handoff",
-      wakeText: "not created — this is a handoff to a board user",
+      wakeText: l10n("local.handoff_board_user_no_wake_10300496"),
     };
   }
   return {
     kind: "unassigned",
-    wakeText: "not created — no agent selected. Mention @agent or pick a responsible to dispatch.",
+    wakeText: l10n("local.no_agent_selected_instruction_10300497"),
   };
 }
 
@@ -335,12 +336,12 @@ export interface ReassignInterruptCopy {
  * the interrupt consequence concrete instead of a bare "are you sure".
  */
 export function describeReassignInterrupt(opts: { runningAgentName?: string | null } = {}): ReassignInterruptCopy {
-  const who = opts.runningAgentName?.trim() || "An agent";
+  const who = opts.runningAgentName?.trim() || l10n("local.an_agent_ea6a0363");
   return {
-    banner: `${who} is running — changing the responsible will interrupt this run.`,
-    confirmTitle: "Interrupt the current run?",
-    confirmAction: "Interrupt & assign",
-    cancelAction: "Cancel",
+    banner: l10n("local.running_agent_interrupt_value_10300498", { v0: who }),
+    confirmTitle: l10n("local.interrupt_current_run_question_10300499"),
+    confirmAction: l10n("local.interrupt_and_assign_10300500"),
+    cancelAction: l10n("local.cancel_19766ed6"),
   };
 }
 
@@ -377,19 +378,19 @@ export interface PauseAffectsSummary {
 }
 
 const PAUSE_BUCKET_LABEL: Record<PauseAffectsBucketKey, string> = {
-  live_runs: "Live agent runs",
-  queued_wakes: "Queued wakes",
-  agent_owned: "Agent-owned",
-  human_owned: "Human-owned",
-  static: "Static",
+  live_runs: l10n("local.live_agent_runs_6663a17b"),
+  queued_wakes: l10n("local.queued_wakes_10300501"),
+  agent_owned: l10n("local.agent_owned_10300502"),
+  human_owned: l10n("local.human_owned_10300503"),
+  static: l10n("local.static_tasks_10300504"),
 };
 
 const PAUSE_BUCKET_DETAIL: Record<PauseAffectsBucketKey, string> = {
-  live_runs: "interrupted now, re-queued when you resume",
-  queued_wakes: "held — they won't start until you resume",
-  agent_owned: "responsible agent; no run is live",
-  human_owned: "owned by a board user; pausing won't notify them",
-  static: "no responsible; nothing was going to run",
+  live_runs: l10n("local.live_runs_pause_detail_10300505"),
+  queued_wakes: l10n("local.queued_wakes_pause_detail_10300506"),
+  agent_owned: l10n("local.agent_owned_pause_detail_10300507"),
+  human_owned: l10n("local.human_owned_pause_detail_10300508"),
+  static: l10n("local.static_pause_detail_10300509"),
 };
 
 /**
