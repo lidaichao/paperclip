@@ -1651,8 +1651,8 @@ describe("Secrets folder view (PAP-14698)", () => {
     expect(table.textContent).toContain("prod");
     expect(table.textContent).toContain("standalone");
     // dev groups both oauth secrets recursively; github and oauth are descendant folders.
-    expect(table.textContent).toContain("2 secrets · 2 folders");
-    expect(table.textContent).toContain("1 secret · 1 folder");
+    expect(table.textContent).toContain("2 个密钥 · 2 个文件夹");
+    expect(table.textContent).toContain("1 个密钥 · 1 个文件夹");
     // Folder rows are real links carrying ?path=.
     const links = [...container.querySelectorAll("a")].map((a) => a.getAttribute("href") ?? "");
     expect(links.some((href) => href.includes("path=dev"))).toBe(true);
@@ -1959,7 +1959,7 @@ describe("Secrets folder view (PAP-14698)", () => {
 
     const table = container.querySelector('[data-testid="secrets-table-view"]')!;
     expect(table.textContent).toContain("dev/github/oauth/clientid");
-    expect(table.textContent).not.toContain("2 secrets · 1 folder");
+    expect(table.textContent).not.toContain("2 个密钥 · 1 个文件夹");
 
     await act(async () => root.unmount());
   });

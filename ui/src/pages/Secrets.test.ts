@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { CompanySecretProviderConfig, SecretProviderDescriptor } from "@paperclipai/shared";
 import {
   findCreateProviderReplacement,
+  formatRelative,
+  formatSecretPathCounts,
   getAwsManagedPathPreview,
   getCreateProviderBlockReason,
   getDefaultProviderConfigId,
@@ -50,6 +52,26 @@ function providerConfig(
     ...overrides,
   };
 }
+
+describe("密钥页面中文格式", () => {
+  it("以中文显示密钥和文件夹数量", () => {
+    expect(formatSecretPathCounts(12, 3)).toBe("12 个密钥 · 3 个文件夹");
+    expect(formatSecretPathCounts(1, 0)).toBe("1 个密钥");
+  });
+
+  it("以中文显示相对时间", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-11-04T08:00:00.000Z"));
+      expect(formatRelative("2026-11-04T07:59:30.000Z")).toBe("30 秒前");
+      expect(formatRelative("2026-11-04T07:30:00.000Z")).toBe("30 分钟前");
+      expect(formatRelative("2026-11-04T05:00:00.000Z")).toBe("3 小时前");
+      expect(formatRelative("2026-11-01T08:00:00.000Z")).toBe("3 天前");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
 
 describe("Secrets page provider helpers", () => {
   it("previews the derived AWS managed path from provider health details", () => {

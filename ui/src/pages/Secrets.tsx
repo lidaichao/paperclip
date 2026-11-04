@@ -151,11 +151,11 @@ function readStoredViewMode(): SecretsViewMode | null {
   }
 }
 
-/** "12 secrets · 3 folders" — folder part omitted when there are no subfolders. */
-function formatSecretPathCounts(secretCount: number, folderCount: number): string {
-  const parts = [`${secretCount} ${secretCount === 1 ? "secret" : "secrets"}`];
+/** “12 个密钥 · 3 个文件夹”——没有子文件夹时省略文件夹数量。 */
+export function formatSecretPathCounts(secretCount: number, folderCount: number): string {
+  const parts = [`${secretCount} 个密钥`];
   if (folderCount > 0) {
-    parts.push(`${folderCount} ${folderCount === 1 ? "folder" : "folders"}`);
+    parts.push(`${folderCount} 个文件夹`);
   }
   return parts.join(" · ");
 }
@@ -263,7 +263,7 @@ function isAwsDiscoveryAccessDenied(error: unknown): boolean {
 }
 
 function readableErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) return error.message || `Request failed: ${error.status}`;
+  if (error instanceof ApiError) return error.message || `请求失败：${error.status}`;
   if (error instanceof Error) return error.message;
   return l10n("local.unexpected_error_d24c41ae");
 }
@@ -290,20 +290,20 @@ function providerVaultFormFromConfig(config: CompanySecretProviderConfig): Provi
   };
 }
 
-function formatRelative(value: Date | string | null | undefined): string {
+export function formatRelative(value: Date | string | null | undefined): string {
   if (!value) return "—";
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "—";
   const diff = Date.now() - date.getTime();
   if (diff < 0) return date.toLocaleString();
   const seconds = Math.floor(diff / 1000);
-  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 60) return `${seconds} 秒前`;
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes} 分钟前`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 48) return `${hours}h ago`;
+  if (hours < 48) return `${hours} 小时前`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return `${days} 天前`;
   return date.toLocaleDateString();
 }
 
