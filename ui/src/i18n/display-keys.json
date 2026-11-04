@@ -10084,5 +10084,9 @@
   "qa 通过": "local.qa_38427d89",
   "qa": "local.qa_48947c06",
   "qa 退回": "local.qa_fd96a11b",
-  "planned": "local.manual_planned"
+  "planned": "local.manual_planned",
+  "plugin ui failed to render.": "local.plugin_ui_failed_to_render_10300463",
+  "failed to create comment.": "local.failed_to_create_comment_10300464",
+  "failed to add reply.": "local.failed_to_add_reply_10300465",
+  "failed to update comment status.": "local.failed_to_update_comment_status_10300466"
 }

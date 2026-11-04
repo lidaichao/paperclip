@@ -69,7 +69,7 @@ export function useDocumentAnnotationMutations(options: MutationOptions) {
     },
     onError: (error, _body, context) => {
       if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
-      setMutationError(messageFor(error, "Failed to create comment."));
+      setMutationError(messageFor(error, l10n("local.failed_to_create_comment_10300464")));
     },
     onSuccess: (thread, _body, context) => {
       queryClient.setQueryData<DocumentAnnotationThreadWithComments[]>(queryKey, (current) =>
@@ -94,7 +94,7 @@ export function useDocumentAnnotationMutations(options: MutationOptions) {
     },
     onError: (error, _variables, context) => {
       if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
-      setMutationError(messageFor(error, "Failed to add reply."));
+      setMutationError(messageFor(error, l10n("local.failed_to_add_reply_10300465")));
     },
     onSuccess: (_comment, variables) => {
       setMutationError(null);
@@ -114,7 +114,7 @@ export function useDocumentAnnotationMutations(options: MutationOptions) {
     },
     onError: (error, _variables, context) => {
       if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
-      setMutationError(messageFor(error, "Failed to update comment status."));
+      setMutationError(messageFor(error, l10n("local.failed_to_update_comment_status_10300466")));
     },
     onSuccess: () => setMutationError(null),
     onSettled: invalidateAll,

@@ -12656,6 +12656,10 @@
     "already_has_value_10300459": "already has: {{v0}}",
     "no_profiles_yet_10300460": "no profiles yet",
     "catalog_entry_10300461": "catalog entry",
-    "joined_value_10300462": "joined {{v0}}"
+    "joined_value_10300462": "joined {{v0}}",
+    "plugin_ui_failed_to_render_10300463": "Plugin UI failed to render.",
+    "failed_to_create_comment_10300464": "Failed to create comment.",
+    "failed_to_add_reply_10300465": "Failed to add reply.",
+    "failed_to_update_comment_status_10300466": "Failed to update comment status."
   }
 }

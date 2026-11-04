@@ -12656,6 +12656,10 @@
     "already_has_value_10300459": "已有：{{v0}}",
     "no_profiles_yet_10300460": "尚无配置",
     "catalog_entry_10300461": "目录条目",
-    "joined_value_10300462": "加入于 {{v0}}"
+    "joined_value_10300462": "加入于 {{v0}}",
+    "plugin_ui_failed_to_render_10300463": "插件界面加载失败。",
+    "failed_to_create_comment_10300464": "创建评论失败。",
+    "failed_to_add_reply_10300465": "添加回复失败。",
+    "failed_to_update_comment_status_10300466": "更新评论状态失败。"
   }
 }

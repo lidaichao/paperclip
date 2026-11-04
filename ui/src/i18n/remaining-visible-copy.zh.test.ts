@@ -650,6 +650,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.no_profiles_yet_10300460).toBe("尚无配置");
     expect(messages.catalog_entry_10300461).toBe("目录条目");
     expect(messages.joined_value_10300462).toBe("加入于 {{v0}}");
+    expect(messages.plugin_ui_failed_to_render_10300463).toBe("插件界面加载失败。");
+    expect(messages.failed_to_create_comment_10300464).toBe("创建评论失败。");
+    expect(messages.failed_to_add_reply_10300465).toBe("添加回复失败。");
+    expect(messages.failed_to_update_comment_status_10300466).toBe("更新评论状态失败。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");
