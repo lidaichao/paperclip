@@ -13582,6 +13582,12 @@
     "setup_status_10301387": "Setup status",
     "base_image_changed_detail_10301388": "The base image changed: {{v0}} {{v1}} -> {{v2}}.",
     "base_image_changed_since_capture_10301389": "The base image changed since this image was captured.",
-    "boot_source_unverified_snapshot_override_10301390": "The server cannot verify the boot source; the snapshot will override the current base image."
+    "boot_source_unverified_snapshot_override_10301390": "The server cannot verify the boot source; the snapshot will override the current base image.",
+    "frame_value_10301391": "frame {{v0}}",
+    "frames_range_10301392": "frames {{v0}}–{{v1}}",
+    "frame_prp_event_one_10301393": "{{v0}} · {{v1}} PRP event",
+    "frame_prp_event_many_10301394": "{{v0}} · {{v1}} PRP events",
+    "event_value_10301395": "event {{v0}}",
+    "prp_no_raw_correlation_10301396": "PRP {{v0}} · no raw correlation"
   }
 }

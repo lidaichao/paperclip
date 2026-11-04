@@ -13582,6 +13582,12 @@
     "setup_status_10301387": "设置状态",
     "base_image_changed_detail_10301388": "基础镜像已变更：{{v0}} 从 {{v1}} 变为 {{v2}}。",
     "base_image_changed_since_capture_10301389": "捕获此镜像后，基础镜像已发生变更。",
-    "boot_source_unverified_snapshot_override_10301390": "服务器无法验证启动来源；此快照将覆盖当前基础镜像。"
+    "boot_source_unverified_snapshot_override_10301390": "服务器无法验证启动来源；此快照将覆盖当前基础镜像。",
+    "frame_value_10301391": "帧 {{v0}}",
+    "frames_range_10301392": "帧 {{v0}}–{{v1}}",
+    "frame_prp_event_one_10301393": "{{v0}} · {{v1}} 个 PRP 事件",
+    "frame_prp_event_many_10301394": "{{v0}} · {{v1}} 个 PRP 事件",
+    "event_value_10301395": "事件 {{v0}}",
+    "prp_no_raw_correlation_10301396": "PRP {{v0}} · 无原始关联"
   }
 }

@@ -391,15 +391,23 @@ function buildOperations(
     const firstFrame = groupFrames[0];
     const lastFrame = groupFrames.at(-1);
     const range = firstFrame === lastFrame
-      ? `frame ${firstFrame?.frameId}`
-      : `frames ${firstFrame?.frameId}–${lastFrame?.frameId}`;
+      ? l10n("local.frame_value_10301391", { v0: firstFrame?.frameId })
+      : l10n("local.frames_range_10301392", {
+          v0: firstFrame?.frameId,
+          v1: lastFrame?.frameId,
+        });
     operations.push({
       key: `frames:${firstFrame?.frameId}`,
       frames: groupFrames,
       interpretations: stages,
       events: groupEvents,
       title,
-      subtitle: `${range} · ${groupEvents.length} PRP event${groupEvents.length === 1 ? "" : "s"}`,
+      subtitle: l10n(
+        groupEvents.length === 1
+          ? "local.frame_prp_event_one_10301393"
+          : "local.frame_prp_event_many_10301394",
+        { v0: range, v1: groupEvents.length },
+      ),
       itemType: itemTypes.at(-1) ?? "",
       nativeMethods: methods,
       directions: unique(groupFrames.map((frame) => text(frame.direction))),
@@ -418,7 +426,9 @@ function buildOperations(
       interpretations: [],
       events: [event],
       title: event.eventType,
-      subtitle: `PRP ${eventSourceId(event) || `event ${event.seq}`} · no raw correlation`,
+      subtitle: l10n("local.prp_no_raw_correlation_10301396", {
+        v0: eventSourceId(event) || l10n("local.event_value_10301395", { v0: event.seq }),
+      }),
       itemType: "",
       nativeMethods: [],
       directions: [],
