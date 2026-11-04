@@ -185,7 +185,7 @@ export function CaseFieldValue({
 
   if (typeof value === "boolean") {
     return value ? (
-      <Check className="h-4 w-4 text-green-600 dark:text-green-400" aria-label="true" />
+      <Check className="h-4 w-4 text-green-600 dark:text-green-400" aria-label={l10n("local.true_b5bea41b")} />
     ) : (
       <EmptyValue />
     );

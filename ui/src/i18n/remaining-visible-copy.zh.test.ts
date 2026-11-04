@@ -897,6 +897,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.adapter_credential_supplied_during_agent_setup_10300707).toContain("适配器凭据");
     expect(messages.model_provider_credential_for_new_agent_setup_10300708).toContain("模型服务商凭据");
     expect(messages.duplicate_agent_name_10300709).toContain("副本");
+    expect(messages.true_b5bea41b).toBe("是");
+    expect(messages.gateway_token_name_example_10300710).toContain("开发机");
+    expect(messages.no_items_create_first_to_get_started_10300711).toContain("暂无可显示的条目");
+    expect(messages.no_connections_yet_10300712).toBe("暂无连接。");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

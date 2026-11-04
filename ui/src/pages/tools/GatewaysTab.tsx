@@ -413,7 +413,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                               [gateway.id]: { ...tokenDraft, name: event.target.value },
                             }))
                           }
-                          placeholder="Dotta's MacBook"
+                          placeholder={l10n("local.gateway_token_name_example_10300710")}
                           required
                         />
                       </label>

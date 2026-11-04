@@ -10322,5 +10322,8 @@
   "alice root element is missing.": "local.alice_root_element_missing_10300706",
   "adapter credential supplied during agent setup.": "local.adapter_credential_supplied_during_agent_setup_10300707",
   "model provider credential for a new agent setup.": "local.model_provider_credential_for_new_agent_setup_10300708",
-  "{{v0}} Copy": "local.duplicate_agent_name_10300709"
+  "{{v0}} Copy": "local.duplicate_agent_name_10300709",
+  "dotta's macbook": "local.gateway_token_name_example_10300710",
+  "no items to show. create your first one to get started.": "local.no_items_create_first_to_get_started_10300711",
+  "no connections yet.": "local.no_connections_yet_10300712"
 }

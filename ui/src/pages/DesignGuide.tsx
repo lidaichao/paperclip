@@ -1525,7 +1525,7 @@ export function DesignGuide() {
         <div className="border border-border rounded-md">
           <EmptyState
             icon={Inbox}
-            message="No items to show. Create your first one to get started."
+            message={l10n("local.no_items_create_first_to_get_started_10300711")}
             action="Create Item"
             onAction={() => {}}
           />
@@ -2076,7 +2076,7 @@ export function DesignGuide() {
         <SubSection title={l10n("local.emptystate_canonical_with_description_action_b3132a7e")}>
           <EmptyState
             icon={Inbox}
-            message="No connections yet"
+            message={l10n("local.no_connections_yet_10300712")}
             description={l10n("local.add_a_connection_to_an_application_to_configu_99930f06")}
             action="New connection"
             onAction={() => {}}

@@ -12903,6 +12903,9 @@
     "alice_root_element_missing_10300706": "Alice root element is missing.",
     "adapter_credential_supplied_during_agent_setup_10300707": "Adapter credential supplied during agent setup.",
     "model_provider_credential_for_new_agent_setup_10300708": "Model provider credential for a new agent setup.",
-    "duplicate_agent_name_10300709": "{{v0}} Copy"
+    "duplicate_agent_name_10300709": "{{v0}} Copy",
+    "gateway_token_name_example_10300710": "Dotta's MacBook",
+    "no_items_create_first_to_get_started_10300711": "No items to show. Create your first one to get started.",
+    "no_connections_yet_10300712": "No connections yet."
   }
 }

@@ -9183,7 +9183,7 @@
     "troubleshoot_delivery_f854de03": "交货故障排除",
     "troubleshooting_c3af076f": "故障排除",
     "true_3cbc87c7": "是",
-    "true_b5bea41b": "true",
+    "true_b5bea41b": "是",
     "truncated_d9d9fcf3": "已截断",
     "trust_ade9248e": "信任",
     "trust_preset_d41e165d": "信任预设",
@@ -12903,6 +12903,9 @@
     "alice_root_element_missing_10300706": "未找到 Alice 根元素。",
     "adapter_credential_supplied_during_agent_setup_10300707": "智能体设置期间提供的适配器凭据。",
     "model_provider_credential_for_new_agent_setup_10300708": "新建智能体时使用的模型服务商凭据。",
-    "duplicate_agent_name_10300709": "{{v0}} 副本"
+    "duplicate_agent_name_10300709": "{{v0}} 副本",
+    "gateway_token_name_example_10300710": "例如：开发机 MacBook",
+    "no_items_create_first_to_get_started_10300711": "暂无可显示的条目。请创建第一项以开始使用。",
+    "no_connections_yet_10300712": "暂无连接。"
   }
 }
