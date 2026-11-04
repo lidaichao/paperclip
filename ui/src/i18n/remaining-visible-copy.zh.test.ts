@@ -1023,6 +1023,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.issue_changed_10301411).toBe("任务已变更");
     expect(messages.this_member_10301412).toBe("该成员");
     expect(messages.your_time_value_10301413).toContain("你的时区");
+    expect(messages.refresh_manual_10301414).toBe("手动刷新");
+    expect(messages.refresh_every_minutes_if_changed_10301415).toContain("每 {{v0}} 分钟");
+    expect(messages.refresh_schedule_if_changed_10301416).toContain("按计划刷新");
+    expect(messages.refresh_on_change_debounce_10301417).toContain("延迟 {{v0}} 秒");
+    expect(messages.policy_redact_10301418).toBe("隐去");
+    expect(messages.policy_rate_limit_10301419).toBe("速率限制");
     expect(Object.values(messages).filter((value) => /\bURL\b/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /Application ID|Client ID|Client Secret|Tenant ID|Signing Secret|Alice Runner|Runner Inspector/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /请求 地址|此 地址|实例 地址|回调 地址|网关 地址/.test(value))).toEqual([]);

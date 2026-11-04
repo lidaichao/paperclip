@@ -13605,6 +13605,12 @@
     "issue_updated_10301410": "任务已更新",
     "issue_changed_10301411": "任务已变更",
     "this_member_10301412": "该成员",
-    "your_time_value_10301413": "{{v0}}（你的时区）"
+    "your_time_value_10301413": "{{v0}}（你的时区）",
+    "refresh_manual_10301414": "手动刷新",
+    "refresh_every_minutes_if_changed_10301415": "有变更时每 {{v0}} 分钟刷新",
+    "refresh_schedule_if_changed_10301416": "有变更时按计划刷新",
+    "refresh_on_change_debounce_10301417": "变更后刷新（延迟 {{v0}} 秒）",
+    "policy_redact_10301418": "隐去",
+    "policy_rate_limit_10301419": "速率限制"
   }
 }

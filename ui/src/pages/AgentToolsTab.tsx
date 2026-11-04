@@ -308,12 +308,12 @@ function InstallSaveStatusChip({
 }
 
 const POLICY_EFFECT_LABEL: Record<string, string> = {
-  allow: "allow",
-  block: "block",
-  deny: "deny",
-  require_approval: "require approval",
-  redact: "redact",
-  rate_limit: "rate limit",
+  allow: l10n("local.allow_e213c161"),
+  block: l10n("local.block_496aca80"),
+  deny: l10n("local.deny_05a2d733"),
+  require_approval: l10n("local.require_approval_ba46f298"),
+  redact: l10n("local.policy_redact_10301418"),
+  rate_limit: l10n("local.policy_rate_limit_10301419"),
 };
 
 const DENIED_TOOLS_DISPLAY_LIMIT = 30;

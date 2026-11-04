@@ -129,16 +129,16 @@ export function formatUsdFromCents(cents: number): string {
 export function describeRefreshPolicy(policy: StatusCardRefreshPolicy): string {
   switch (policy.mode) {
     case "manual":
-      return "manual";
+      return l10n("local.refresh_manual_10301414");
     case "interval":
       return policy.intervalMinutes
-        ? `every ${policy.intervalMinutes}m if changed`
-        : "on a schedule if changed";
+        ? l10n("local.refresh_every_minutes_if_changed_10301415", { v0: policy.intervalMinutes })
+        : l10n("local.refresh_schedule_if_changed_10301416");
     case "reactive": {
       const debounce = policy.debounceSeconds ?? 60;
-      return `on change (${debounce}s)`;
+      return l10n("local.refresh_on_change_debounce_10301417", { v0: debounce });
     }
     default:
-      return "manual";
+      return l10n("local.refresh_manual_10301414");
   }
 }

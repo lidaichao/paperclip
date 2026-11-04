@@ -13605,6 +13605,12 @@
     "issue_updated_10301410": "issue updated",
     "issue_changed_10301411": "issue changed",
     "this_member_10301412": "this member",
-    "your_time_value_10301413": "{{v0}} (your time)"
+    "your_time_value_10301413": "{{v0}} (your time)",
+    "refresh_manual_10301414": "manual",
+    "refresh_every_minutes_if_changed_10301415": "every {{v0}}m if changed",
+    "refresh_schedule_if_changed_10301416": "on a schedule if changed",
+    "refresh_on_change_debounce_10301417": "on change ({{v0}}s)",
+    "policy_redact_10301418": "redact",
+    "policy_rate_limit_10301419": "rate limit"
   }
 }
