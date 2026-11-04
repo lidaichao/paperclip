@@ -97,8 +97,10 @@ export function pickReusableFork(
 
 /** Unmissable agent-usage sentence for the dialog body (P3 hard requirement). */
 export function agentUsageSentence(count: number): string {
-  if (count <= 0) return "No agents currently use this skill";
-  return `${count} ${count === 1 ? "agent" : "agents"} currently use${count === 1 ? "s" : ""} this skill`;
+  if (count <= 0) return l10n("local.no_agents_use_skill_10300510");
+  return count === 1
+    ? l10n("local.one_agent_uses_skill_10300511")
+    : l10n("local.count_agents_use_skill_10300512", { v0: count });
 }
 
 /** Agent ids to reassign when the "Switch these agents to the copy" toggle is on. */

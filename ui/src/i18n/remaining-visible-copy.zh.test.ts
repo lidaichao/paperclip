@@ -697,6 +697,16 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.agent_owned_pause_detail_10300507).toContain("当前没有运行");
     expect(messages.human_owned_pause_detail_10300508).toContain("暂停不会通知");
     expect(messages.static_pause_detail_10300509).toContain("无负责人");
+    expect(messages.no_agents_use_skill_10300510).toContain("没有智能体");
+    expect(messages.one_agent_uses_skill_10300511).toContain("1 个智能体");
+    expect(messages.count_agents_use_skill_10300512).toContain("{{v0}} 个智能体");
+    expect(messages.skill_has_no_files_to_test_10300513).toContain("没有可测试的文件");
+    expect(messages.pick_agent_to_run_10300514).toContain("请选择");
+    expect(messages.add_input_text_to_run_10300515).toContain("测试输入");
+    expect(messages.save_skill_edits_before_running_10300516).toContain("先保存技能修改");
+    expect(messages.run_already_in_progress_10300517).toContain("正在运行");
+    expect(messages.stored_snapshots_content_unavailable_10300518).toContain("运行快照");
+    expect(messages.unknown_editor_10300519).toBe("未知编辑者");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");

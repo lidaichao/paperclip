@@ -12703,6 +12703,16 @@
     "queued_wakes_pause_detail_10300506": "held — they won't start until you resume",
     "agent_owned_pause_detail_10300507": "responsible agent; no run is live",
     "human_owned_pause_detail_10300508": "owned by a board user; pausing won't notify them",
-    "static_pause_detail_10300509": "no responsible; nothing was going to run"
+    "static_pause_detail_10300509": "no responsible; nothing was going to run",
+    "no_agents_use_skill_10300510": "No agents currently use this skill",
+    "one_agent_uses_skill_10300511": "1 agent currently uses this skill",
+    "count_agents_use_skill_10300512": "{{v0}} agents currently use this skill",
+    "skill_has_no_files_to_test_10300513": "This skill has no files to test",
+    "pick_agent_to_run_10300514": "Pick an agent to run",
+    "add_input_text_to_run_10300515": "Add or paste input text to run",
+    "save_skill_edits_before_running_10300516": "Save skill edits before running",
+    "run_already_in_progress_10300517": "A run is already in progress",
+    "stored_snapshots_content_unavailable_10300518": "Stored run snapshots are still shown. Harness documents, attachments, and work products are no longer available.",
+    "unknown_editor_10300519": "Unknown editor"
   }
 }

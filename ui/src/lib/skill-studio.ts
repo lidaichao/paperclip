@@ -95,7 +95,7 @@ export function testTaskLinkState(run: {
   harnessIssue?: { id: string } | null;
 }): { enabled: boolean; reason: string | null } {
   if (run.taskExpired || !run.harnessIssue) {
-    return { enabled: false, reason: "Test task expired" };
+    return { enabled: false, reason: l10n("local.test_task_expired_f2a8da3a") };
   }
   return { enabled: true, reason: null };
 }
@@ -130,19 +130,19 @@ export interface RunGateResult {
  */
 export function evaluateRunGate(input: RunGateInput): RunGateResult {
   if (input.skillFileCount <= 0) {
-    return { disabled: true, reason: "This skill has no files to test" };
+    return { disabled: true, reason: l10n("local.skill_has_no_files_to_test_10300513") };
   }
   if (!input.hasAgent) {
-    return { disabled: true, reason: "Pick an agent to run" };
+    return { disabled: true, reason: l10n("local.pick_agent_to_run_10300514") };
   }
   if (!input.hasInput) {
-    return { disabled: true, reason: "Add or paste input text to run" };
+    return { disabled: true, reason: l10n("local.add_input_text_to_run_10300515") };
   }
   if (input.hasUnsavedSkillEdits) {
-    return { disabled: true, reason: "Save skill edits before running" };
+    return { disabled: true, reason: l10n("local.save_skill_edits_before_running_10300516") };
   }
   if (input.runInFlight) {
-    return { disabled: true, reason: "A run is already in progress" };
+    return { disabled: true, reason: l10n("local.run_already_in_progress_10300517") };
   }
   return { disabled: false, reason: null };
 }
@@ -369,7 +369,7 @@ export function runHarnessUnavailableCopy(
   if (detail.harnessContent.available) return null;
   return {
     title: runHarnessUnavailableTitle(detail.harnessContent.unavailableReason),
-    body: "Stored run snapshots are still shown. Harness documents, attachments, and work products are no longer available.",
+    body: l10n("local.stored_snapshots_content_unavailable_10300518"),
   };
 }
 
@@ -547,7 +547,7 @@ export function skillEditorAvatar(
   lastEditor: CompanySkillLastEditor | null | undefined,
 ): SkillEditorAvatar | null {
   if (!lastEditor || lastEditor.kind !== "user") return null;
-  const name = lastEditor.name?.trim() || "Unknown editor";
+  const name = lastEditor.name?.trim() || l10n("local.unknown_editor_10300519");
   return {
     name,
     imageUrl: lastEditor.imageUrl,

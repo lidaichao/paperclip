@@ -12703,6 +12703,16 @@
     "queued_wakes_pause_detail_10300506": "已暂停 — 恢复后才会开始",
     "agent_owned_pause_detail_10300507": "已有负责智能体，但当前没有运行",
     "human_owned_pause_detail_10300508": "由管理端用户负责；暂停不会通知对方",
-    "static_pause_detail_10300509": "无负责人；原本不会运行"
+    "static_pause_detail_10300509": "无负责人；原本不会运行",
+    "no_agents_use_skill_10300510": "当前没有智能体使用此技能",
+    "one_agent_uses_skill_10300511": "当前有 1 个智能体使用此技能",
+    "count_agents_use_skill_10300512": "当前有 {{v0}} 个智能体使用此技能",
+    "skill_has_no_files_to_test_10300513": "此技能没有可测试的文件",
+    "pick_agent_to_run_10300514": "请选择运行此测试的智能体",
+    "add_input_text_to_run_10300515": "请添加或粘贴测试输入内容",
+    "save_skill_edits_before_running_10300516": "请先保存技能修改再运行",
+    "run_already_in_progress_10300517": "已有测试正在运行",
+    "stored_snapshots_content_unavailable_10300518": "仍会显示已保存的运行快照，但测试任务文档、附件和工作成果已不可用。",
+    "unknown_editor_10300519": "未知编辑者"
   }
 }
