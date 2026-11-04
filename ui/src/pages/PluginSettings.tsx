@@ -1152,13 +1152,27 @@ function PluginConfigForm({ pluginId, companyId, schema, initialValues, isLoadin
 function formatUptime(uptimeMs: number | null): string {
   if (uptimeMs == null) return "—";
   const totalSeconds = Math.floor(uptimeMs / 1000);
-  if (totalSeconds < 60) return `${totalSeconds}s`;
+  if (totalSeconds < 60) {
+    return l10n("local.duration_seconds_10301465", { v0: totalSeconds });
+  }
   const minutes = Math.floor(totalSeconds / 60);
-  if (minutes < 60) return `${minutes}m ${totalSeconds % 60}s`;
+  if (minutes < 60) {
+    return l10n("local.duration_minutes_seconds_10301469", {
+      v0: minutes,
+      v1: totalSeconds % 60,
+    });
+  }
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ${minutes % 60}m`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ${hours % 24}h`;
+  if (hours < 24) {
+    return l10n("local.duration_hours_minutes_10301467", {
+      v0: hours,
+      v1: minutes % 60,
+    });
+  }
+  return l10n("local.duration_days_hours_10301468", {
+    v0: Math.floor(hours / 24),
+    v1: hours % 24,
+  });
 }
 
 /**

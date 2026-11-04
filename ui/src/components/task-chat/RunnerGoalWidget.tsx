@@ -46,11 +46,14 @@ function requestId() {
 }
 
 function formatDuration(seconds: number) {
-  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 60) return l10n("local.duration_seconds_10301465", { v0: seconds });
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 60) return l10n("local.duration_minutes_10301466", { v0: minutes });
   const hours = Math.floor(minutes / 60);
-  return `${hours}h ${minutes % 60}m`;
+  return l10n("local.duration_hours_minutes_10301467", {
+    v0: hours,
+    v1: minutes % 60,
+  });
 }
 
 function formatTokens(tokens: number) {

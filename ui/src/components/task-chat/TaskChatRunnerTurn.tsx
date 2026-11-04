@@ -47,10 +47,14 @@ function currentActivityStatusItems(
 function formatCompactDuration(ms: number | null): string | null {
   if (ms == null || !Number.isFinite(ms)) return null;
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  if (totalSeconds < 60) return `${totalSeconds}s`;
+  if (totalSeconds < 60) {
+    return l10n("local.duration_seconds_10301465", { v0: totalSeconds });
+  }
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
+  return seconds === 0
+    ? l10n("local.duration_minutes_10301466", { v0: minutes })
+    : l10n("local.duration_minutes_seconds_10301469", { v0: minutes, v1: seconds });
 }
 
 function terminalStatusFailed(status: string): boolean {

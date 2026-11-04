@@ -59,7 +59,7 @@ import { formatActionPermissionSummary } from "./action-permission-summary";
 
 /** "1.2s" / "0.4s" — the copy-spec always shows seconds with one decimal. */
 function seconds(ms: number): string {
-  return `${(ms / 1000).toFixed(1)}s`;
+  return l10n("local.duration_seconds_10301465", { v0: (ms / 1000).toFixed(1) });
 }
 
 /** relativeTime() returns "just now"; the spec capitalizes it ("Just now"). */

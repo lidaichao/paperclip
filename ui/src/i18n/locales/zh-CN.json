@@ -13660,6 +13660,7 @@
     "duration_seconds_10301465": "{{v0}} 秒",
     "duration_minutes_10301466": "{{v0}} 分钟",
     "duration_hours_minutes_10301467": "{{v0}} 小时 {{v1}} 分钟",
-    "duration_days_hours_10301468": "{{v0}} 天 {{v1}} 小时"
+    "duration_days_hours_10301468": "{{v0}} 天 {{v1}} 小时",
+    "duration_minutes_seconds_10301469": "{{v0}} 分钟 {{v1}} 秒"
   }
 }
