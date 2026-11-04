@@ -13365,6 +13365,18 @@
     "update_provider_cli_and_retry_10301170": "请将 {{v0}} 命令行程序更新到兼容版本，然后重试。",
     "authenticated_account_10301171": "认证账号：{{v0}}",
     "api_key_name_10301172": "API 密钥：{{v0}}",
-    "provider_auth_ready_no_action_10301173": "{{v0}} 认证已就绪，无需操作。"
+    "provider_auth_ready_no_action_10301173": "{{v0}} 认证已就绪，无需操作。",
+    "api_authentication_required_10301174": "登录状态无效，请重新登录。",
+    "api_permission_denied_10301175": "你没有权限执行此操作。",
+    "api_resource_not_found_10301176": "请求的资源不存在。",
+    "api_state_conflict_10301177": "当前状态已发生变化，请刷新后重试。",
+    "api_validation_failed_10301178": "提交内容未通过验证。",
+    "api_rate_limited_10301179": "请求过于频繁，请稍后重试。",
+    "api_server_error_10301180": "服务器发生错误，请稍后重试。",
+    "api_request_failed_10301181": "请求失败（状态码 {{v0}}）。",
+    "api_invalid_json_body_10301182": "请求内容不是有效的 JSON。",
+    "api_method_not_supported_10301183": "当前操作不受支持。",
+    "api_invalid_gateway_payload_10301184": "网关请求内容无效。",
+    "api_invalid_audit_cursor_10301185": "审计分页位置无效，请刷新后重试。"
   }
 }

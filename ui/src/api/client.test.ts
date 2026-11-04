@@ -72,7 +72,7 @@ describe("tenant-session recovery", () => {
     await expect(api.get("/ordinary-401")).rejects.toMatchObject({
       name: "ApiError",
       status: 401,
-      message: "unauthorized",
+      message: "Your sign-in is no longer valid. Sign in again.",
     });
   });
 });

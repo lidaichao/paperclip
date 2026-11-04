@@ -13365,6 +13365,18 @@
     "update_provider_cli_and_retry_10301170": "Update the {{v0}} CLI to a compatible version, then retry.",
     "authenticated_account_10301171": "Authenticated account: {{v0}}",
     "api_key_name_10301172": "API key: {{v0}}",
-    "provider_auth_ready_no_action_10301173": "{{v0}} authentication is ready; no action is required."
+    "provider_auth_ready_no_action_10301173": "{{v0}} authentication is ready; no action is required.",
+    "api_authentication_required_10301174": "Your sign-in is no longer valid. Sign in again.",
+    "api_permission_denied_10301175": "You do not have permission to perform this action.",
+    "api_resource_not_found_10301176": "The requested resource could not be found.",
+    "api_state_conflict_10301177": "The current state changed. Refresh and try again.",
+    "api_validation_failed_10301178": "The submitted content did not pass validation.",
+    "api_rate_limited_10301179": "Too many requests. Try again later.",
+    "api_server_error_10301180": "The server encountered an error. Try again later.",
+    "api_request_failed_10301181": "Request failed (status {{v0}}).",
+    "api_invalid_json_body_10301182": "The request body is not valid JSON.",
+    "api_method_not_supported_10301183": "This operation is not supported.",
+    "api_invalid_gateway_payload_10301184": "The gateway request content is invalid.",
+    "api_invalid_audit_cursor_10301185": "The audit page position is invalid. Refresh and try again."
   }
 }
