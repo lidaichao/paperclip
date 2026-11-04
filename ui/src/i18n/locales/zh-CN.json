@@ -13490,6 +13490,10 @@
     "waiting_monitor_resumes_value_10301295": "等待监控 · 将在{{v0}}恢复",
     "agent_retry_value_10301296": "智能体重试{{v0}}",
     "waiting_monitor_value_10301297": "等待监控 · {{v0}}",
-    "fires_on_next_tick_10301298": "将在下次轮询时触发"
+    "fires_on_next_tick_10301298": "将在下次轮询时触发",
+    "intent_10301299": "意图",
+    "directory_10301300": "目录",
+    "pattern_10301301": "匹配模式",
+    "more_count_10301302": "，另有 {{v0}} 项"
   }
 }

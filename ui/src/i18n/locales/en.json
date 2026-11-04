@@ -13490,6 +13490,10 @@
     "waiting_monitor_resumes_value_10301295": "Waiting on monitor — resumes {{v0}}",
     "agent_retry_value_10301296": "Agent retry {{v0}}",
     "waiting_monitor_value_10301297": "Waiting on monitor — {{v0}}",
-    "fires_on_next_tick_10301298": "Fires on next tick"
+    "fires_on_next_tick_10301298": "Fires on next tick",
+    "intent_10301299": "Intent",
+    "directory_10301300": "Directory",
+    "pattern_10301301": "Pattern",
+    "more_count_10301302": ", +{{v0}} more"
   }
 }

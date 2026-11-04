@@ -119,7 +119,7 @@ export function isCommandTool(name: string, input: unknown): boolean {
 }
 
 export function displayToolName(name: string, input: unknown): string {
-  if (isCommandTool(name, input)) return "Executing command";
+  if (isCommandTool(name, input)) return l10n("local.executing_command_d7ad4e19");
   return humanizeLabel(name);
 }
 
@@ -136,7 +136,9 @@ export function summarizeToolInput(
   const record = asRecord(input);
   if (!record) {
     const serialized = compactWhitespace(formatUnknown(input));
-    return serialized ? truncate(serialized, compactMax) : `Inspect ${name} input`;
+    return serialized
+      ? truncate(serialized, compactMax)
+      : l10n("local.inspect_tool_input_0cf00001", { v0: name });
   }
 
   const command = typeof record.command === "string"
@@ -163,14 +165,22 @@ export function summarizeToolInput(
   if (Array.isArray(record.paths) && record.paths.length > 0) {
     const first = record.paths.find((value): value is string => typeof value === "string" && value.trim().length > 0);
     if (first) {
-      return truncate(`${record.paths.length} paths, starting with ${first}`, compactMax);
+      return truncate(
+        l10n("local.paths_starting_with_0cf00002", { v0: record.paths.length, v1: first }),
+        compactMax,
+      );
     }
   }
 
   const keys = Object.keys(record);
-  if (keys.length === 0) return `No ${name} input`;
-  if (keys.length === 1) return truncate(`${keys[0]} payload`, compactMax);
-  return truncate(`${keys.length} fields: ${keys.slice(0, 3).join(", ")}`, compactMax);
+  if (keys.length === 0) return l10n("local.no_tool_input_0cf00003", { v0: name });
+  if (keys.length === 1) {
+    return truncate(l10n("local.field_payload_0cf00004", { v0: keys[0] }), compactMax);
+  }
+  return truncate(
+    l10n("local.fields_summary_0cf00005", { v0: keys.length, v1: keys.slice(0, 3).join(", ") }),
+    compactMax,
+  );
 }
 
 function readToolDetailValue(value: unknown, max = 200): string | null {
@@ -204,16 +214,16 @@ export function describeToolInput(name: string, input: unknown): ToolInputDetail
   };
 
   pushDetail(
-    "Intent",
+    l10n("local.intent_10301299"),
     summarizeRecord(record, ["description", "summary", "reason", "goal", "intent", "action", "task"]) ?? null,
   );
-  pushDetail("Path", readToolDetailValue(record.path) ?? readToolDetailValue(record.filePath) ?? readToolDetailValue(record.file_path));
-  pushDetail("Directory", readToolDetailValue(record.cwd));
-  pushDetail("Query", readToolDetailValue(record.query));
-  pushDetail("Target", readToolDetailValue(record.url) ?? readToolDetailValue(record.target));
-  pushDetail("Prompt", readToolDetailValue(record.prompt) ?? readToolDetailValue(record.message));
-  pushDetail("Pattern", readToolDetailValue(record.pattern));
-  pushDetail("Name", readToolDetailValue(record.name) ?? readToolDetailValue(record.title));
+  pushDetail(l10n("local.path_62fa5a5b"), readToolDetailValue(record.path) ?? readToolDetailValue(record.filePath) ?? readToolDetailValue(record.file_path));
+  pushDetail(l10n("local.directory_10301300"), readToolDetailValue(record.cwd));
+  pushDetail(l10n("local.query_b80a3756"), readToolDetailValue(record.query));
+  pushDetail(l10n("local.target_978354db"), readToolDetailValue(record.url) ?? readToolDetailValue(record.target));
+  pushDetail(l10n("local.prompt_5c391238"), readToolDetailValue(record.prompt) ?? readToolDetailValue(record.message));
+  pushDetail(l10n("local.pattern_10301301"), readToolDetailValue(record.pattern));
+  pushDetail(l10n("local.name_dcd1d522"), readToolDetailValue(record.name) ?? readToolDetailValue(record.title));
 
   if (Array.isArray(record.paths) && record.paths.length > 0) {
     const paths = record.paths
@@ -221,8 +231,10 @@ export function describeToolInput(name: string, input: unknown): ToolInputDetail
       .slice(0, 3)
       .join(", ");
     if (paths) {
-      const suffix = record.paths.length > 3 ? `, +${record.paths.length - 3} more` : "";
-      pushDetail("Paths", `${paths}${suffix}`);
+      const suffix = record.paths.length > 3
+        ? l10n("local.more_count_10301302", { v0: record.paths.length - 3 })
+        : "";
+      pushDetail(l10n("local.paths_9c7995b5"), `${paths}${suffix}`);
     }
   }
 
@@ -231,8 +243,8 @@ export function describeToolInput(name: string, input: unknown): ToolInputDetail
     : typeof record.cmd === "string"
       ? record.cmd
       : null;
-  if (command && isCommandTool(name, record) && !details.some((detail) => detail.label === "Intent")) {
-    pushDetail("Command", truncate(stripWrappedShell(command), 200), "code");
+  if (command && isCommandTool(name, record) && !details.some((detail) => detail.label === l10n("local.intent_10301299"))) {
+    pushDetail(l10n("local.command_71316697"), truncate(stripWrappedShell(command), 200), "code");
   }
 
   return details;
@@ -243,15 +255,21 @@ export function summarizeToolResult(
   isError: boolean | undefined,
   density: TranscriptDensity = "comfortable",
 ): string {
-  if (!result) return isError ? "Tool failed" : "Waiting for result";
+  if (!result) {
+    return isError
+      ? l10n("local.tool_failed_0cf00006")
+      : l10n("local.waiting_for_result_0cf00007");
+  }
   const structured = parseStructuredToolResult(result);
   if (structured) {
     if (structured.body) {
       return truncate(structured.body.split("\n")[0] ?? structured.body, density === "compact" ? 84 : 140);
     }
-    if (structured.status === "completed") return "Completed";
+    if (structured.status === "completed") return l10n("local.completed_22a970d2");
     if (structured.status === "failed" || structured.status === "error") {
-      return structured.exitCode ? `Failed with exit code ${structured.exitCode}` : "Failed";
+      return structured.exitCode
+        ? l10n("local.failed_with_exit_code_0cf00008", { v0: structured.exitCode })
+        : l10n("local.failed_031a8f0f");
     }
   }
   const lines = result
