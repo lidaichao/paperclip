@@ -11091,7 +11091,7 @@
     "alice_cannot_manage_custom_acp_skills_5e0be10b": "Alice 暂不支持管理自定义 ACP 命令的技能。",
     "alice_cannot_manage_openclaw_skills_b98627a5": "Alice 无法在此管理 OpenClaw 技能。请前往你的 OpenClaw 实例管理此智能体的技能。",
     "alice_cannot_manage_adapter_skills_e812f5a6": "Alice 暂不支持管理此适配器的技能。请直接在适配器中管理。",
-    "alice_runner_cannot_attach_legacy_skill_1d4c9229": "Alice 运行器 使用原生语义协作机制，无法附加旧版 Paperclip 操作技能。",
+    "alice_runner_cannot_attach_legacy_skill_1d4c9229": "Alice 运行器使用原生语义协作机制，无法附加旧版 Alice 操作技能。",
     "settings_tab_44b57896": "设置",
     "access_tab_e0394fc5": "访问权限",
     "reviews_tab_258c6af3": "评审",
@@ -13636,6 +13636,12 @@
     "finance_custom_model_storage_10301441": "自定义模型存储费用",
     "finance_manual_adjustment_10301442": "人工调整",
     "finance_direction_credit_10301443": "入账",
-    "finance_direction_debit_10301444": "支出"
+    "finance_direction_debit_10301444": "支出",
+    "value_could_not_start_chat_10301445": "{{v0}} 无法启动此对话",
+    "previous_retry_already_stopped_10301446": "上一次重试已停止。请刷新任务，然后重试最新的失败运行。",
+    "retry_could_not_start_review_task_10301447": "无法启动此次重试。请打开任务，检查当前访问权限和恢复状态。",
+    "no_environment_selected_10301448": "未选择环境",
+    "select_organization_to_create_environment_10301449": "请选择组织后再创建环境",
+    "select_organization_to_test_environment_10301450": "请选择组织后再测试环境"
   }
 }

@@ -11091,7 +11091,7 @@
     "alice_cannot_manage_custom_acp_skills_5e0be10b": "Alice cannot manage skills for custom ACP commands yet.",
     "alice_cannot_manage_openclaw_skills_b98627a5": "Alice cannot manage OpenClaw skills here. Visit your OpenClaw instance to manage this agent's skills.",
     "alice_cannot_manage_adapter_skills_e812f5a6": "Alice cannot manage skills for this adapter yet. Manage them in the adapter directly.",
-    "alice_runner_cannot_attach_legacy_skill_1d4c9229": "Alice Runner uses native semantic coordination and cannot attach the legacy Paperclip operational skill.",
+    "alice_runner_cannot_attach_legacy_skill_1d4c9229": "Alice Runner uses native semantic coordination and cannot attach the legacy Alice operational skill.",
     "settings_tab_44b57896": "Settings",
     "access_tab_e0394fc5": "Access",
     "reviews_tab_258c6af3": "Reviews",
@@ -13636,6 +13636,12 @@
     "finance_custom_model_storage_10301441": "Custom model storage",
     "finance_manual_adjustment_10301442": "Manual adjustment",
     "finance_direction_credit_10301443": "Credit",
-    "finance_direction_debit_10301444": "Debit"
+    "finance_direction_debit_10301444": "Debit",
+    "value_could_not_start_chat_10301445": "{{v0}} couldn't start this chat",
+    "previous_retry_already_stopped_10301446": "The previous retry has already stopped. Refresh the task and retry its latest failed run.",
+    "retry_could_not_start_review_task_10301447": "This retry could not start. Open the task to review its current access and recovery state.",
+    "no_environment_selected_10301448": "No environment selected",
+    "select_organization_to_create_environment_10301449": "Select an organization to create an environment",
+    "select_organization_to_test_environment_10301450": "Select an organization to test the environment"
   }
 }

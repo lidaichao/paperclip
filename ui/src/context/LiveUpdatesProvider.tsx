@@ -1093,7 +1093,7 @@ function buildRunStatusToast(
     contextSource?.startsWith("chat:")
   ) {
     return {
-      title: `${name} couldn't start this chat`,
+      title: l10n("local.value_could_not_start_chat_10301445", { v0: name }),
       body: l10n("local.external_chat_identity_not_linked_10300703"),
       tone: "warn",
       ttlMs: 10_000,

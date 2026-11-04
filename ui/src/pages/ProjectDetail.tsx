@@ -476,7 +476,7 @@ export function ProjectDetail() {
 
   const uploadImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!resolvedCompanyId) throw new Error("No organization selected");
+      if (!resolvedCompanyId) throw new Error(l10n("local.no_organization_selected_278cd177"));
       return assetsApi.uploadImage(resolvedCompanyId, file, `projects/${projectLookupRef || "draft"}`);
     },
   });

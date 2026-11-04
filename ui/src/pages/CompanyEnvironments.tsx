@@ -1413,7 +1413,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
   });
   const createSecret = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedCompanyId) throw new Error("Select an organization to create secrets");
+      if (!selectedCompanyId) throw new Error(l10n("local.select_organization_to_create_secrets_c1e2a413"));
       return secretsApi.create(selectedCompanyId, input);
     },
     onSuccess: async () => {
@@ -1428,7 +1428,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
   // shape the floor admits.
   const managedEnvironmentEnvVarsMutation = useMutation({
     mutationFn: async (envVars: EnvironmentFormState["envVars"]) => {
-      if (!editingEnvironmentId) throw new Error("No environment selected");
+      if (!editingEnvironmentId) throw new Error(l10n("local.no_environment_selected_10301448"));
       return await environmentsApi.update(editingEnvironmentId, { envVars }, selectedCompanyId);
     },
     onSuccess: async (environment) => {
@@ -1465,7 +1465,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
         return await environmentsApi.update(editingEnvironmentId, body, selectedCompanyId);
       }
 
-      if (!selectedCompanyId) throw new Error("Select a company to create environments");
+      if (!selectedCompanyId) throw new Error(l10n("local.select_organization_to_create_environment_10301449"));
       return await environmentsApi.create(selectedCompanyId!, body);
     },
     onSuccess: async (environment) => {
@@ -1638,7 +1638,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
 
   const draftEnvironmentProbeMutation = useMutation({
     mutationFn: async (form: EnvironmentFormState) => {
-      if (!selectedCompanyId) throw new Error("Select a company to test environments");
+      if (!selectedCompanyId) throw new Error(l10n("local.select_organization_to_test_environment_10301450"));
       const body = buildEnvironmentPayload(form);
       return await environmentsApi.probeConfig(selectedCompanyId, body);
     },
