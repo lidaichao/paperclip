@@ -1,4 +1,5 @@
 import type { AgentDetail } from "@paperclipai/shared";
+import { l10n } from "../i18n";
 
 const INSTRUCTION_CONFIG_KEYS = [
   "instructionsBundleMode",
@@ -39,7 +40,7 @@ function cloneRecord(value: Record<string, unknown> | null | undefined): Record<
 
 export function duplicateAgentName(name: string): string {
   const trimmed = name.trim();
-  return `${trimmed || "Agent"} Copy`;
+  return l10n("local.duplicate_agent_name_10300709", { v0: trimmed || l10n("local.agent_11b39c93") });
 }
 
 export function buildDuplicateAgentPayload(

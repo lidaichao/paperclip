@@ -889,6 +889,14 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.folder_name_cannot_contain_slashes_10300699).toContain("不能包含斜杠");
     expect(messages.resolve_the_blocker_to_continue_10300700).toContain("解决阻塞问题");
     expect(messages.retry_was_skipped_10300701).toBe("已跳过重试。");
+    expect(messages.new_join_request_waiting_for_approval_10300702).toContain("等待审批");
+    expect(messages.external_chat_identity_not_linked_10300703).toContain("外部聊天身份尚未关联");
+    expect(messages.queued_messages_changed_refresh_10300704).toContain("刷新后重试");
+    expect(messages.alice_plugin_react_runtime_not_initialized_10300705).toContain("运行时尚未初始化");
+    expect(messages.alice_root_element_missing_10300706).toContain("未找到 Alice 根元素");
+    expect(messages.adapter_credential_supplied_during_agent_setup_10300707).toContain("适配器凭据");
+    expect(messages.model_provider_credential_for_new_agent_setup_10300708).toContain("模型服务商凭据");
+    expect(messages.duplicate_agent_name_10300709).toContain("副本");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

@@ -10314,5 +10314,13 @@
   "folder name is required.": "local.folder_name_is_required_10300698",
   "folder name cannot contain slashes.": "local.folder_name_cannot_contain_slashes_10300699",
   "resolve the blocker to continue.": "local.resolve_the_blocker_to_continue_10300700",
-  "retry was skipped.": "local.retry_was_skipped_10300701"
+  "retry was skipped.": "local.retry_was_skipped_10300701",
+  "a new join request is waiting for approval.": "local.new_join_request_waiting_for_approval_10300702",
+  "this external chat identity isn't linked, and isolated guest workspaces are disabled. link the identity in connectors or enable isolated workspaces, then start a new task.": "local.external_chat_identity_not_linked_10300703",
+  "the queued messages changed. refresh and try again.": "local.queued_messages_changed_refresh_10300704",
+  "alice plugin react runtime is not initialized.": "local.alice_plugin_react_runtime_not_initialized_10300705",
+  "alice root element is missing.": "local.alice_root_element_missing_10300706",
+  "adapter credential supplied during agent setup.": "local.adapter_credential_supplied_during_agent_setup_10300707",
+  "model provider credential for a new agent setup.": "local.model_provider_credential_for_new_agent_setup_10300708",
+  "{{v0}} Copy": "local.duplicate_agent_name_10300709"
 }

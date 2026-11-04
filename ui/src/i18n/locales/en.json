@@ -12895,6 +12895,14 @@
     "folder_name_is_required_10300698": "Folder name is required.",
     "folder_name_cannot_contain_slashes_10300699": "Folder name cannot contain slashes.",
     "resolve_the_blocker_to_continue_10300700": "Resolve the blocker to continue.",
-    "retry_was_skipped_10300701": "Retry was skipped."
+    "retry_was_skipped_10300701": "Retry was skipped.",
+    "new_join_request_waiting_for_approval_10300702": "A new join request is waiting for approval.",
+    "external_chat_identity_not_linked_10300703": "This external chat identity isn't linked, and isolated guest workspaces are disabled. Link the identity in Connectors or enable isolated workspaces, then start a new task.",
+    "queued_messages_changed_refresh_10300704": "The queued messages changed. Refresh and try again.",
+    "alice_plugin_react_runtime_not_initialized_10300705": "Alice plugin React runtime is not initialized.",
+    "alice_root_element_missing_10300706": "Alice root element is missing.",
+    "adapter_credential_supplied_during_agent_setup_10300707": "Adapter credential supplied during agent setup.",
+    "model_provider_credential_for_new_agent_setup_10300708": "Model provider credential for a new agent setup.",
+    "duplicate_agent_name_10300709": "{{v0}} Copy"
   }
 }

@@ -4,6 +4,7 @@ import * as ReactDOM from "react-dom";
 import { BrowserRouter } from "@/lib/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "./App";
+import { l10n } from "./i18n";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { SentryGate } from "./components/SentryGate";
 import { CompanyProvider, useCompany } from "./context/CompanyContext";
@@ -58,7 +59,7 @@ function CompanyAwareBreadcrumbProvider({ children }: { children: React.ReactNod
 }
 
 const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error("Alice root element is missing");
+if (!rootElement) throw new Error(l10n("local.alice_root_element_missing_10300706"));
 
 getOrCreatePaperclipReactRoot(window, rootElement).render(
   <StrictMode>

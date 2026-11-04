@@ -1031,7 +1031,7 @@ function buildJoinRequestToast(
 
   return {
     title: l10n("local.value_wants_to_join_549c285e", {v0: (label)}),
-    body: "A new join request is waiting for approval.",
+    body: l10n("local.new_join_request_waiting_for_approval_10300702"),
     tone: "info",
     action: { label: l10n("local.view_inbox_1c8264bf"), href: "/inbox/mine" },
     dedupeKey: `join-request:${entityId}`,
@@ -1094,7 +1094,7 @@ function buildRunStatusToast(
   ) {
     return {
       title: `${name} couldn't start this chat`,
-      body: "This external chat identity isn't linked, and isolated guest workspaces are disabled. Link the identity in Connectors or enable isolated workspaces, then start a new task.",
+      body: l10n("local.external_chat_identity_not_linked_10300703"),
       tone: "warn",
       ttlMs: 10_000,
       action: { label: l10n("local.open_chat_connections_9f7e518a"), href: "/apps" },

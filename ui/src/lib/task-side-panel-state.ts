@@ -224,7 +224,7 @@ export function taskPanelArtifactsTab(): SidePanelTabRecord<TaskSidePanelTabPayl
   return { id: "artifacts", type: "artifacts", label: l10n("local.artifacts_314ae71b"), closable: true, contentMode: "padded", payload: { kind: "artifacts" } };
 }
 
-export function taskPanelSkillTab(skillId: string, label = "Skill"): SidePanelTabRecord<TaskSidePanelTabPayload> {
+export function taskPanelSkillTab(skillId: string, label = l10n("local.skill_6df1bb18")): SidePanelTabRecord<TaskSidePanelTabPayload> {
   return { id: `skill:${skillId}`, type: "skill", label, closable: true, contentMode: "prose", payload: { kind: "skill", skillId } };
 }
 

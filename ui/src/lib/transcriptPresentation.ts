@@ -267,7 +267,7 @@ export function parseSystemActivity(text: string): TranscriptActivity | null {
   if (!match) return null;
   return {
     status: match[1].toLowerCase() === "started" ? "running" : "completed",
-    name: humanizeLabel(match[2] ?? "Activity"),
+    name: humanizeLabel(match[2] ?? l10n("local.activity_38da1505")),
     activityId: match[3] || undefined,
   };
 }

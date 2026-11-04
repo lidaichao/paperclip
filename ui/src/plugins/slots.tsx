@@ -296,7 +296,7 @@ function createReactShimSource(reactModule: object): string {
   return `
         const R = globalThis.__paperclipPluginBridge__?.react;
         if (!R) {
-          throw new Error("Alice plugin React runtime is not initialized.");
+          throw new Error(l10n("local.alice_plugin_react_runtime_not_initialized_10300705"));
         }
         export default R;
 ${namedExports}

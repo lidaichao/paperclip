@@ -12895,6 +12895,14 @@
     "folder_name_is_required_10300698": "文件夹名称不能为空。",
     "folder_name_cannot_contain_slashes_10300699": "文件夹名称不能包含斜杠。",
     "resolve_the_blocker_to_continue_10300700": "请先解决阻塞问题再继续。",
-    "retry_was_skipped_10300701": "已跳过重试。"
+    "retry_was_skipped_10300701": "已跳过重试。",
+    "new_join_request_waiting_for_approval_10300702": "新的加入请求正在等待审批。",
+    "external_chat_identity_not_linked_10300703": "此外部聊天身份尚未关联，且已禁用隔离访客工作区。请先在连接器中关联身份，或启用隔离工作区，然后再新建任务。",
+    "queued_messages_changed_refresh_10300704": "排队消息已发生变化，请刷新后重试。",
+    "alice_plugin_react_runtime_not_initialized_10300705": "Alice 插件的 React 运行时尚未初始化。",
+    "alice_root_element_missing_10300706": "未找到 Alice 根元素。",
+    "adapter_credential_supplied_during_agent_setup_10300707": "智能体设置期间提供的适配器凭据。",
+    "model_provider_credential_for_new_agent_setup_10300708": "新建智能体时使用的模型服务商凭据。",
+    "duplicate_agent_name_10300709": "{{v0}} 副本"
   }
 }
