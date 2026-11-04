@@ -116,7 +116,7 @@ export async function validateNativeDeliverableEvidence(
             .limit(1)
         : [];
       if (!attachment) {
-        throw new Error("Completion cites no registered attachment on this task. Use register_deliverable for the requested file and cite deliverable:<attachmentId> from its receipt. No human completion approval was created.");
+        throw new Error("完成报告引用的附件未登记在此任务中。请对请求的文件使用 register_deliverable，并引用回执中的 deliverable:<attachmentId>。Alice 未创建人工完成审批。");
       }
       // A prior output (or user input) can be useful context, but does not prove
       // this run published the newly requested output. The receipt survives a
@@ -124,7 +124,7 @@ export async function validateNativeDeliverableEvidence(
       // workspace bytes internally rather than asking the user to confirm them.
       if (fileRequested && attachment.originatingRunId !== binding.runId) continue;
       if (fileRequested && !await hasCurrentPublicationReceipt(db, binding.companyId, binding.semanticToolReceipts, attachment)) {
-        throw new Error("This attachment has no matching verified publication receipt for this run's requested output. Inspect any preserved file and use register_deliverable to verify its current filename, size, and SHA-256, then cite the new receipt. No human completion approval was created.");
+        throw new Error("此附件没有与本次运行请求输出匹配的已验证发布回执。请检查保留的文件，并使用 register_deliverable 验证其当前文件名、大小和 SHA-256，然后引用新回执。Alice 未创建人工完成审批。");
       }
       registeredAttachment = true;
       continue;
@@ -134,7 +134,7 @@ export async function validateNativeDeliverableEvidence(
     const localFile = /^(?:file:|\.{0,2}\/|[a-z]:[\\/])/iu.test(ref)
       || (!/^[a-z][a-z0-9+.-]*:/iu.test(ref) && /^[^\r\n]+\.[a-z0-9]{1,16}(?::\d+(?::\d+)?)?$/iu.test(ref));
     if (localFile && (fileRequested || artifactRefs.has(value))) {
-      throw new Error("Completion cites a workspace-only file that the user cannot download. Before finishing, use register_deliverable for requested file outputs and cite deliverable:<attachmentId> from the receipt, with /api/attachments/<attachmentId>/content as the download link. For repository changes, cite an accessible PR or registered work product instead. No human completion approval was created.");
+      throw new Error("完成报告引用了用户无法下载的工作区内部文件。结束前，请对请求的文件输出使用 register_deliverable，引用回执中的 deliverable:<attachmentId>，并以 /api/attachments/<attachmentId>/content 作为下载链接。仓库变更应改为引用可访问的 PR 或已登记工作产物。Alice 未创建人工完成审批。");
     }
   }
   if (fileRequested && !registeredAttachment) {
@@ -151,6 +151,6 @@ export async function validateNativeDeliverableEvidence(
       return accessible && [product.url, `work_product:${product.id}`, `work-product:${product.id}`, `artifact:${product.id}`]
         .some(ref => typeof ref === "string" && refs.has(ref));
     });
-    if (!accessibleProduct) throw new Error("The requested file has no accessible delivery evidence. Use register_deliverable and cite deliverable:<attachmentId>, or cite an accessible work product registered by this run for this task. Empty evidence, prior-run output, and a verification result cannot substitute for the requested file. Continue publishing or report a concrete blocker; no human completion approval was created.");
+    if (!accessibleProduct) throw new Error("请求的文件没有可访问的交付证据。请使用 register_deliverable 并引用 deliverable:<attachmentId>，或引用本次运行在此任务中登记的可访问工作产物。空证据、先前运行的输出和验证结果都不能替代请求的文件。请继续发布，或报告具体阻碍；Alice 未创建人工完成审批。");
   }
 }

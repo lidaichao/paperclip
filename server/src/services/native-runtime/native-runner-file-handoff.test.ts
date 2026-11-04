@@ -209,9 +209,9 @@ describe("native runner file handoff", () => {
     await db.update(issues).set({ title: "Explain how a newsletter works" }).where(eq(issues.id, issueId));
     try {
       await expect(nativeCompletionFeedback(db, runId, doneReport([])))
-        .resolves.toContain("Completion report accepted");
+        .resolves.toContain("完成报告已接受");
       await expect(nativeCompletionFeedback(db, runId, doneReport(["README.md"])))
-        .resolves.toContain("Completion report accepted");
+        .resolves.toContain("完成报告已接受");
       await expect(nativeCompletionFeedback(db, runId, { ...doneReport([]), artifacts: [{ kind: "file", ref: "unpublished.pdf" }] }))
         .rejects.toThrow("workspace-only file");
     } finally {
@@ -225,7 +225,7 @@ describe("native runner file handoff", () => {
     try {
       for (const ref of [product.url!, `work_product:${product.id}`]) {
         await expect(nativeCompletionFeedback(db, runId, doneReport([ref])))
-          .resolves.toContain("Completion report accepted");
+          .resolves.toContain("完成报告已接受");
       }
       // Metadata can name a nonexistent or cleaned-up workspace file; it is not a download.
       await db.update(issueWorkProducts).set({ url: null, metadata: { resourceRef: { kind: "workspace_file", path: "missing-report.pdf" } } }).where(eq(issueWorkProducts.id, product.id));
@@ -237,7 +237,7 @@ describe("native runner file handoff", () => {
         .rejects.toThrow("requested file has no accessible delivery evidence");
       await db.update(heartbeatRuns).set({ contextSnapshot: { issueId, executionContinuation: { objective: "Do not create a file. Explain the result inline." } } }).where(eq(heartbeatRuns.id, runId));
       await expect(nativeCompletionFeedback(db, runId, doneReport([])))
-        .resolves.toContain("Completion report accepted");
+        .resolves.toContain("完成报告已接受");
     } finally {
       await db.delete(issueWorkProducts).where(eq(issueWorkProducts.id, product.id));
       await db.update(heartbeatRuns).set({ contextSnapshot: { issueId } }).where(eq(heartbeatRuns.id, runId));
@@ -314,7 +314,7 @@ describe("native runner file handoff", () => {
     }
 
     await expect(nativeCompletionFeedback(db, runId, doneReport([`deliverable:${first.entityRefs[0]}`])))
-      .resolves.toContain("Completion report accepted");
+      .resolves.toContain("完成报告已接受");
     const otherIssueId = "00000000-0000-4000-8000-000000009111";
     await db.insert(issues).values({ id: otherIssueId, companyId, title: "Unrelated file", status: "in_progress" });
     await db.update(issueAttachments).set({ issueId: otherIssueId }).where(eq(issueAttachments.id, first.entityRefs[0]));
@@ -460,7 +460,7 @@ describe("native runner file handoff", () => {
     const result = await remote.execute(call) as { entityRefs: string[] };
     expect(reader).toHaveBeenCalledWith({ contentRef: call.arguments.contentRef, byteSize: body.length, sha256: call.arguments.sha256 });
     await expect(nativeCompletionFeedback(db, runId, doneReport([`deliverable:${result.entityRefs[0]}`])))
-      .resolves.toContain("Completion report accepted");
+      .resolves.toContain("完成报告已接受");
     const badReader = vi.fn(async () => Buffer.from("wrong bytes"));
     await expect(authority({ executionTargetKind: "remote", readRemoteWorkspaceFile: badReader })
       .execute(callFor("remote-only/drift.txt", body, "remote-drift")))
@@ -1193,7 +1193,7 @@ describe("native runner file handoff", () => {
       // A reference in a text-only follow-up is still useful evidence, not a new output claim.
       await db.update(heartbeatRuns).set({ contextSnapshot: { issueId, executionContinuation: { objective: "Do not create a file. Explain the result inline." } } }).where(eq(heartbeatRuns.id, nextRunId));
       await expect(nativeCompletionFeedback(db, nextRunId, doneReport([ref])))
-        .resolves.toContain("Completion report accepted");
+        .resolves.toContain("完成报告已接受");
       await db.update(heartbeatRuns).set({ contextSnapshot: { issueId } }).where(eq(heartbeatRuns.id, nextRunId));
 
       // The replacement can verify and publish the existing bytes itself. No user action is needed.
@@ -1204,13 +1204,13 @@ describe("native runner file handoff", () => {
       expect(await readFile(path.join(workspaceRoot, `${key}.txt`))).toEqual(body);
       // Feedback reloads the durable receipt, so a controller restart of the same run keeps this proof.
       await expect(nativeCompletionFeedback(db, nextRunId, doneReport([`deliverable:${current.entityRefs[0]}`])))
-        .resolves.toContain("Completion report accepted");
+        .resolves.toContain("完成报告已接受");
       await expect(nativeCompletionFeedback(db, nextRunId, doneReport([ref, `deliverable:${current.entityRefs[0]}`])))
-        .resolves.toContain("Completion report accepted");
+        .resolves.toContain("完成报告已接受");
       const [currentProduct] = await db.insert(issueWorkProducts).values({ companyId, issueId, type: "artifact", provider: "external",
         title: "Current report", status: "ready_for_review", url: "https://example.com/current.pdf", createdByRunId: nextRunId }).returning();
       await expect(nativeCompletionFeedback(db, nextRunId, doneReport([ref, `work_product:${currentProduct.id}`])))
-        .resolves.toContain("Completion report accepted");
+        .resolves.toContain("完成报告已接受");
     } finally {
       await db.update(issues).set({ executionRunId: runId }).where(eq(issues.id, issueId));
       await db.delete(issueWorkProducts).where(eq(issueWorkProducts.id, product.id));

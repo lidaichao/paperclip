@@ -1100,18 +1100,18 @@ describe("PaperclipControlPlanePort conformance", () => {
     });
     const result = { ...structuredClone(CONTROL_PLANE_CONFORMANCE_RESULT), completionClaim: { ...CONTROL_PLANE_CONFORMANCE_RESULT.completionClaim, contractRevision: "phase6-v1" }, reportedWorkDisposition: "needs_review" as const, attentionRequests: [{ kind: "approval" as const, summary: "Approve publication", ownerClass: "human" as const }, { kind: "review" as const, summary: "Review release notes", ownerClass: "agent" as const, targetAgentId: reviewerAgentId }] };
     await expect(nativeCompletionFeedback(db, runId, { ...result, attentionRequests: [] }))
-      .rejects.toThrow("needs_review requires");
+      .rejects.toThrow("needs_review 要求");
     await expect(nativeCompletionFeedback(db, runId, {
       ...result, attentionRequests: [{ kind: "review", summary: "Review work", ownerClass: "agent", targetAgentId: identity.agentId }],
-    })).rejects.toThrow("cannot review its own");
+    })).rejects.toThrow("不能评审自己的完成结果");
     await expect(nativeCompletionFeedback(db, runId, {
       ...result, attentionRequests: [{ kind: "review", summary: "Review work", ownerClass: "agent", targetAgentId: "99999999-9999-4999-8999-999999999999" }],
-    })).rejects.toThrow("not available in this company");
+    })).rejects.toThrow("当前组织中不可用");
     await expect(nativeCompletionFeedback(db, runId, {
       ...result,
       completionClaim: { ...result.completionClaim, contractRevision: "stale-first-turn" },
     })).rejects.toThrow(/contractRevision.*phase6-v1/);
-    await expect(nativeCompletionFeedback(db, runId, result)).resolves.toContain("Completion report accepted");
+    await expect(nativeCompletionFeedback(db, runId, result)).resolves.toContain("完成报告已接受");
     await port.completeRun({
       result,
       terminal: { ...CONTROL_PLANE_CONFORMANCE_TERMINAL, reportedWorkDisposition: "needs_review" },
@@ -1227,7 +1227,7 @@ describe("PaperclipControlPlanePort conformance", () => {
     await expect(reviewAuthority.execute({ tool: "set_dependencies", callId: "review-mutate", arguments: {} }))
       .rejects.toThrow("may only inspect");
     await expect(nativeCompletionFeedback(db, reviewRunId, CONTROL_PLANE_CONFORMANCE_RESULT))
-      .rejects.toThrow("Resolve your assigned review");
+      .rejects.toThrow("使用 resolve_review 处理分配给你的评审");
     await expect(reviewAuthority.execute({ tool: "resolve_review", callId: "review-missing-reason", arguments: { decision: "reject" } }))
       .rejects.toThrow("Explain the changes");
     await expect(reviewAuthority.execute({ tool: "resolve_review", callId: "review-other-target", arguments: { decision: "accept", issueId: taskIssueId } }))
@@ -1296,7 +1296,7 @@ describe("PaperclipControlPlanePort conformance", () => {
       expect.objectContaining({ status: "done" }),
     ]);
     await expect(nativeCompletionFeedback(db, reviewRunId, CONTROL_PLANE_CONFORMANCE_RESULT))
-      .resolves.toContain("recorded review decision controls task completion");
+      .resolves.toContain("已记录的评审决定控制任务是否完成");
     // The real executor checks this fence after the reviewer has accepted and
     // finished. Acceptance releases the lock but keeps the worker assignee.
     await expect(db.select({ executionRunId: issues.executionRunId }).from(issues)
