@@ -12848,6 +12848,10 @@
     "imported_variables_10300651": "Imported {{v0}} variables",
     "relative_weeks_short_10300652": "{{v0}}w",
     "relative_months_short_10300653": "{{v0}}mo",
-    "relative_years_short_10300654": "{{v0}}y"
+    "relative_years_short_10300654": "{{v0}}y",
+    "tab_closed_10300655": "Tab closed.",
+    "last_tab_closed_choose_item_10300656": "Last tab closed. Choose something to open.",
+    "moved_tab_to_position_10300657": "Moved {{v0}} to position {{v1}} of {{v2}}.",
+    "tab_10300658": "tab"
   }
 }

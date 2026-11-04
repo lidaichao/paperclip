@@ -202,7 +202,9 @@ export function SidePanelTabs({
     const index = tabIds.indexOf(tabId);
     const nextFocus = tabIds[index + 1] ?? tabIds[index - 1] ?? null;
     onCloseTab(tabId);
-    setAnnouncement(nextFocus ? "Tab closed." : "Last tab closed. Choose something to open.");
+    setAnnouncement(nextFocus
+      ? l10n("local.tab_closed_10300655")
+      : l10n("local.last_tab_closed_choose_item_10300656"));
     focusTab(nextFocus);
   }
 
@@ -218,7 +220,11 @@ export function SidePanelTabs({
       const [moved] = ordered.splice(index, 1);
       ordered.splice(target, 0, moved!);
       onReorderTabs(ordered);
-      setAnnouncement(`Moved ${tabs[index]?.label ?? "tab"} to position ${target + 1} of ${tabs.length}.`);
+      setAnnouncement(l10n("local.moved_tab_to_position_10300657", {
+        v0: tabs[index]?.label ?? l10n("local.tab_10300658"),
+        v1: target + 1,
+        v2: tabs.length,
+      }));
       focusTab(tabId);
       return;
     }
@@ -247,7 +253,11 @@ export function SidePanelTabs({
     const [moved] = ordered.splice(from, 1);
     ordered.splice(to, 0, moved!);
     onReorderTabs(ordered);
-    setAnnouncement(`Moved ${tabs[from]?.label ?? "tab"} to position ${to + 1} of ${tabs.length}.`);
+    setAnnouncement(l10n("local.moved_tab_to_position_10300657", {
+      v0: tabs[from]?.label ?? l10n("local.tab_10300658"),
+      v1: to + 1,
+      v2: tabs.length,
+    }));
   }
 
   return (

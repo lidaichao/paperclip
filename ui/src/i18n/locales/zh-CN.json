@@ -12848,6 +12848,10 @@
     "imported_variables_10300651": "已导入 {{v0}} 个变量",
     "relative_weeks_short_10300652": "{{v0}}周",
     "relative_months_short_10300653": "{{v0}}个月",
-    "relative_years_short_10300654": "{{v0}}年"
+    "relative_years_short_10300654": "{{v0}}年",
+    "tab_closed_10300655": "标签页已关闭。",
+    "last_tab_closed_choose_item_10300656": "最后一个标签页已关闭，请选择要打开的内容。",
+    "moved_tab_to_position_10300657": "已将 {{v0}} 移至第 {{v1}} 个位置，共 {{v2}} 个。",
+    "tab_10300658": "标签页"
   }
 }

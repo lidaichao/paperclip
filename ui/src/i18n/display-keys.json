@@ -10268,5 +10268,9 @@
   "imported {{v0}} variables": "local.imported_variables_10300651",
   "{{v0}}w": "local.relative_weeks_short_10300652",
   "{{v0}}mo": "local.relative_months_short_10300653",
-  "{{v0}}y": "local.relative_years_short_10300654"
+  "{{v0}}y": "local.relative_years_short_10300654",
+  "tab closed.": "local.tab_closed_10300655",
+  "last tab closed. choose something to open.": "local.last_tab_closed_choose_item_10300656",
+  "moved {{v0}} to position {{v1}} of {{v2}}.": "local.moved_tab_to_position_10300657",
+  "tab": "local.tab_10300658"
 }

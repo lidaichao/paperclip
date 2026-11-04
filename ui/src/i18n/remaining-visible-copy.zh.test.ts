@@ -842,6 +842,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.relative_weeks_short_10300652).toContain("周");
     expect(messages.relative_months_short_10300653).toContain("个月");
     expect(messages.relative_years_short_10300654).toContain("年");
+    expect(messages.tab_closed_10300655).toBe("标签页已关闭。");
+    expect(messages.last_tab_closed_choose_item_10300656).toContain("请选择要打开的内容");
+    expect(messages.moved_tab_to_position_10300657).toContain("移至第");
+    expect(messages.tab_10300658).toBe("标签页");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
