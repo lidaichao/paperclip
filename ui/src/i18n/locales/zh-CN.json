@@ -13665,6 +13665,12 @@
     "duration_hours_10301470": "{{v0}} 小时",
     "duration_days_10301471": "{{v0}} 天",
     "duration_weeks_10301472": "{{v0}} 周",
-    "timeline_visible_range_10301473": "可见范围：{{v0}}"
+    "timeline_visible_range_10301473": "可见范围：{{v0}}",
+    "enum_status_success_10301474": "成功",
+    "enum_status_processed_10301475": "已处理",
+    "enum_status_preparing_10301476": "准备中",
+    "enum_status_informational_10301477": "信息",
+    "enum_status_not_dispatched_10301478": "未派发",
+    "enum_status_ended_10301479": "已结束"
   }
 }

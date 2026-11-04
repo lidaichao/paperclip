@@ -10423,5 +10423,11 @@
   "deploy v2 is live 🎉": "local.deploy_v2_is_live_10300809",
   "full transcript": "local.full_transcript_10300810",
   "live stream": "local.live_stream_10300811",
-  "dense card": "local.dense_card_10300812"
+  "dense card": "local.dense_card_10300812",
+  "success": "local.enum_status_success_10301474",
+  "processed": "local.enum_status_processed_10301475",
+  "preparing": "local.enum_status_preparing_10301476",
+  "informational": "local.enum_status_informational_10301477",
+  "not dispatched": "local.enum_status_not_dispatched_10301478",
+  "ended": "local.enum_status_ended_10301479"
 }

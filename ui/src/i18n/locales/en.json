@@ -13665,6 +13665,12 @@
     "duration_hours_10301470": "{{v0}}h",
     "duration_days_10301471": "{{v0}}d",
     "duration_weeks_10301472": "{{v0}}wk",
-    "timeline_visible_range_10301473": "{{v0}} visible"
+    "timeline_visible_range_10301473": "{{v0}} visible",
+    "enum_status_success_10301474": "Success",
+    "enum_status_processed_10301475": "Processed",
+    "enum_status_preparing_10301476": "Preparing",
+    "enum_status_informational_10301477": "Informational",
+    "enum_status_not_dispatched_10301478": "Not dispatched",
+    "enum_status_ended_10301479": "Ended"
   }
 }
