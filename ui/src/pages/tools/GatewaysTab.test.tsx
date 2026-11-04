@@ -221,8 +221,8 @@ describe("GatewaysTab", () => {
       </>,
     );
 
-    expect(container.textContent).toContain("in 2d");
-    expect(container.textContent).toContain("2d ago");
+    expect(container.textContent).toContain("in 2 days");
+    expect(container.textContent).toContain("2 days ago");
   });
 
   it("renders token expiry, revocation date, and empty snippets copy", async () => {
@@ -254,9 +254,9 @@ describe("GatewaysTab", () => {
       </QueryClientProvider>,
     );
 
-    expect(container.textContent).toContain("expires in 2d");
-    expect(container.textContent).not.toContain("expires 2d ago");
-    expect(container.textContent).toContain("revoked 3h ago");
+    expect(container.textContent).toContain("expires in 2 days");
+    expect(container.textContent).not.toContain("expires 2 days ago");
+    expect(container.textContent).toContain("revoked 3 hr. ago");
     expect(container.textContent).toContain("No snippets available.");
   });
 });
