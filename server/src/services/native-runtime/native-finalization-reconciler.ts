@@ -94,7 +94,7 @@ export function resolveNativeReconciliationStatus(input: {
     effects: [{
       kind: "enqueue_continuation",
       continuationKind: "same_agent",
-      summary: `Continue native reconciliation after ${reasonCode}.`,
+      summary: `因 ${reasonCode} 继续进行原生协调。`,
       idempotencyKey: `native-reconciliation:${reasonCode}`,
       agentId: input.agentId,
     }, ...effects],
@@ -108,7 +108,7 @@ export function resolveNativeReconciliationStatus(input: {
     return preserve("structured_result_replay_conflict", [{
       kind: "record_finalization_error",
       cause: "structured_result_replay_conflict",
-      nextAction: "Use a fresh canonical result identity.",
+      nextAction: "使用新的规范结果标识。",
       agentId: input.agentId,
     }]);
   }
@@ -446,7 +446,7 @@ export async function claimNativeSessionResumptions(input: {
             providerSessionEstablished:
               checkpointHasProviderIdentity || providerEvent !== null,
             recoveryOwner: { kind: "board" },
-            nextAction: "Inspect the original provider failure; durable state is missing or ambiguous and opening a replacement provider session is forbidden.",
+            nextAction: "检查原始提供方故障；持久状态缺失或存在歧义，禁止打开替代提供方会话。",
           },
           nextAttemptAt: null,
           updatedAt: now,
@@ -459,7 +459,7 @@ export async function claimNativeSessionResumptions(input: {
           errorCode: failureCode,
           error: typeof failureDetail.message === "string"
             ? failureDetail.message
-            : "Persisted native session state is ambiguous and cannot be resumed safely",
+            : "已持久化的原生会话状态存在歧义，无法安全恢复",
           updatedAt: now,
         }).where(eq(heartbeatRuns.id, row.run.id)).returning();
         // Only a genuine transition into "failed" is a new terminal failure.
@@ -488,7 +488,7 @@ export async function claimNativeSessionResumptions(input: {
             providerEventsExist: providerEvent !== null,
             originalFailureCode,
           },
-          nextAction: "Inspect the original provider failure and explicitly resolve recovery; do not open a duplicate provider session.",
+          nextAction: "检查原始提供方故障并明确处理恢复；不要打开重复提供方会话。",
           wakePolicy: null,
           maxAttempts: 3,
           supersedeOnIdentityChange: true,
@@ -547,7 +547,7 @@ export async function reconcileNativeFinalizations(
   } = {},
 ) {
   await dismissObsoleteNativePolicyReviews(db, runIds).catch((err) => {
-    logger.warn({ err }, "Obsolete native policy review lookup failed; continuing native reconciliation");
+    logger.warn({ err }, "查询过时原生策略评审失败；继续原生协调");
   });
   if (runIds?.length) {
     const scopes = await db.select({ issueId: nativeRunFinalizations.issueId }).from(nativeRunFinalizations)
