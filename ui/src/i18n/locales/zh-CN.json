@@ -13462,6 +13462,10 @@
     "custom_app_10301267": "自定义应用",
     "this_server_10301268": "该服务器",
     "the_requesting_agent_10301269": "发起请求的智能体",
-    "adapter_default_10301270": "适配器默认值"
+    "adapter_default_10301270": "适配器默认值",
+    "another_pipeline_10301271": "其他流水线",
+    "workspace_no_longer_on_record_10301272": "工作区已不在记录中",
+    "provisioned_and_maintained_for_you_10301273": "已为你配置并维护。",
+    "proposed_secret_10301274": "待审批密钥"
   }
 }

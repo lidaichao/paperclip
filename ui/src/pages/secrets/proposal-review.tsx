@@ -180,9 +180,12 @@ export function bindingSecretLabel(proposal: SecretProposalView): {
   pending: boolean;
 } {
   if (proposal.secretProposalId) {
-    return { name: proposal.secretProposalName ?? "proposed secret", pending: true };
+    return {
+      name: proposal.secretProposalName ?? l10n("local.proposed_secret_10301274"),
+      pending: true,
+    };
   }
-  return { name: proposal.secretName ?? "secret", pending: false };
+  return { name: proposal.secretName ?? l10n("local.secret_2bb80d53"), pending: false };
 }
 
 function readableError(error: unknown): string {

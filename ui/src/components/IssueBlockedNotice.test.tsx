@@ -145,7 +145,7 @@ describe("IssueBlockedNotice", () => {
     expect(node.querySelector('[data-successful-run-handoff="required"]')).not.toBeNull();
     expect(node.textContent).toContain("This task still needs a next step.");
     expect(node.textContent).toContain(
-      "A run finished successfully, but the task is still open. Paperclip needs someone to choose what happens next.",
+      "A run finished successfully, but the task is still open. Alice needs someone to choose what happens next.",
     );
     expect(node.textContent).toContain("Mark it done or cancelled.");
     expect(node.textContent).toContain("Send it for review or ask for input.");
@@ -859,7 +859,7 @@ describe("IssueBlockedNotice", () => {
       expect(chip?.getAttribute("data-recovery-state")).toBe("in_progress");
       expect(chip?.getAttribute("data-recovery-lane")).toBe("source_owner");
       expect(chip?.textContent).toContain("Recovery in progress · 2/5");
-      expect(chip?.getAttribute("title")).toContain("Attempt 2 of 5 · next try in 3m");
+      expect(chip?.getAttribute("title")).toContain("Attempt 2 of 5 · Next try in 3m");
 
       // The card the blocker links to must not contradict the chip.
       const cardState = deriveRecoveryCardState(liveAction);

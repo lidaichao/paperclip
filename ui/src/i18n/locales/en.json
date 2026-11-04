@@ -13462,6 +13462,10 @@
     "custom_app_10301267": "Custom app",
     "this_server_10301268": "this server",
     "the_requesting_agent_10301269": "the requesting agent",
-    "adapter_default_10301270": "Adapter default"
+    "adapter_default_10301270": "Adapter default",
+    "another_pipeline_10301271": "another pipeline",
+    "workspace_no_longer_on_record_10301272": "Workspace no longer on record",
+    "provisioned_and_maintained_for_you_10301273": "Provisioned and maintained for you.",
+    "proposed_secret_10301274": "proposed secret"
   }
 }

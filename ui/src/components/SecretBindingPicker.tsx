@@ -197,7 +197,7 @@ export function SecretBindingPicker({
             {selectedMissing && value ? (
               <option value={value.secretId}>
                 {missingHint
-                  ? `${missingHint.name} — ${missingHint.companyName ?? "another organization"}`
+                  ? `${missingHint.name} — ${missingHint.companyName ?? l10n("local.another_organization_7398b63d")}`
                   : hintsPending
                     ? l10n("local.secret_value_469499ec", {v0: (value.secretId.slice(0, 8))})
                     : l10n("local.missing_secret_value_8a494bb4", {v0: (value.secretId.slice(0, 8))})}

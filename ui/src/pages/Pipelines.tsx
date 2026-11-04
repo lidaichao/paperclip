@@ -1562,7 +1562,8 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
       if (breakdown?.targetPipelineId) {
         map.set(stage.id, {
           pipelineId: breakdown.targetPipelineId,
-          name: pipelineNameById.get(breakdown.targetPipelineId) ?? "another pipeline",
+          name: pipelineNameById.get(breakdown.targetPipelineId)
+            ?? l10n("local.another_pipeline_10301271"),
         });
       }
     }
@@ -3704,7 +3705,7 @@ function PipelineEventText({
 }) {
   const kind = event.type.startsWith("case.") ? event.type.slice("case.".length) : event.type;
   if (kind === "automation_executed" && event.automation) {
-    const routineName = event.automation.routine?.title ?? "the automation";
+    const routineName = event.automation.routine?.title ?? l10n("local.the_automation_0c980034");
     const issue = event.automation.issue;
     return (
       <>
@@ -4198,7 +4199,9 @@ function PipelineAddItems({ pipelineId }: { pipelineId: string }) {
     return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">{l10n("local.pipeline_not_found_97115fd9")}</div>;
   }
 
-  const firstStageName = intake.data.stageName ?? pipeline.data.stages[0]?.name ?? "first stage";
+  const firstStageName = intake.data.stageName
+    ?? pipeline.data.stages[0]?.name
+    ?? l10n("local.first_stage_f9db553d");
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
