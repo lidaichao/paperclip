@@ -631,6 +631,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.kimi_api_base_url_b46e77c4).toBe("Kimi API 基础地址");
     expect(messages.kimi_api_model_name_d880c2be).toBe("Kimi API 模型名称");
     expect(messages.under_the_target_user_or_organization_create_d17f40b3).toContain("Alice 主页地址");
+    expect(Object.values(messages).filter((value) => /型号/.test(value))).toEqual([]);
+    expect(
+      Object.values(messages).filter((value) =>
+        /[\u3400-\u9fff](?:GitHub|Slack|Discord|Alice|Codex|Claude|Teams|BotFather|AgentMail|OAuth|JSON|API|PR|RSC|AI)|(?:GitHub|Slack|Discord|Alice|Codex|Claude|Teams|BotFather|AgentMail|OAuth|JSON|API|PR|RSC|AI)[\u3400-\u9fff]/.test(value),
+      ),
+    ).toEqual([]);
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");
