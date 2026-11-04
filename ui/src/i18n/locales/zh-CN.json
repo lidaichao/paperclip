@@ -13560,6 +13560,13 @@
     "learning_changed_sentence_10301365": "“{{v0}}”已发生变更。",
     "install_info_notice_10301366": "安装后，每次运行都会将 {{v0}} 的工具加入智能体上下文；请仅为实际需要的智能体安装。",
     "install_all_warning_10301367": "这会增加所有智能体每次运行的上下文开销，请谨慎选择。后续新增的智能体也会自动安装。",
-    "auto_extend_access_notice_10301368": "在 {{v0}} 上安装时也会授予访问权限。工具不能安装给无权使用它的智能体，因此系统会把 {{v0}} 加入允许使用者并记录此操作。"
+    "auto_extend_access_notice_10301368": "在 {{v0}} 上安装时也会授予访问权限。工具不能安装给无权使用它的智能体，因此系统会把 {{v0}} 加入允许使用者并记录此操作。",
+    "no_fingerprint_10301369": "无指纹",
+    "byte_count_one_10301370": "{{v0}} 字节",
+    "byte_count_many_10301371": "{{v0}} 字节",
+    "request_failed_status_10301372": "请求失败：{{v0}}",
+    "something_went_wrong_try_again_10301373": "发生错误，请重试。",
+    "invalid_json_paste_full_snippet_10301374": "当前内容不是有效的 JSON；请粘贴包含最外层大括号的完整配置。",
+    "working_with_tool_10301375": "正在使用 {{v0}}"
   }
 }

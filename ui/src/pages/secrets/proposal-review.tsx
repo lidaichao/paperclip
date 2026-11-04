@@ -42,8 +42,15 @@ import { SecretPathName } from "./SecretPathName";
 
 /** Short, non-reversible fingerprint label. Never renders the value. */
 export function fingerprintLabel(fingerprint: string | null, length: number | null): string {
-  const digest = fingerprint ? `sha256:${fingerprint.slice(0, 10)}…` : "no fingerprint";
-  const size = typeof length === "number" ? `${length} ${length === 1 ? "byte" : "bytes"}` : null;
+  const digest = fingerprint
+    ? `sha256:${fingerprint.slice(0, 10)}…`
+    : l10n("local.no_fingerprint_10301369");
+  const size = typeof length === "number"
+    ? l10n(
+        length === 1 ? "local.byte_count_one_10301370" : "local.byte_count_many_10301371",
+        { v0: length },
+      )
+    : null;
   return size ? `${digest} · ${size}` : digest;
 }
 
@@ -189,9 +196,11 @@ export function bindingSecretLabel(proposal: SecretProposalView): {
 }
 
 function readableError(error: unknown): string {
-  if (error instanceof ApiError) return error.message || `Request failed: ${error.status}`;
+  if (error instanceof ApiError) {
+    return error.message || l10n("local.request_failed_status_10301372", { v0: error.status });
+  }
   if (error instanceof Error) return error.message;
-  return "Something went wrong. Try again.";
+  return l10n("local.something_went_wrong_try_again_10301373");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -268,7 +277,7 @@ export function useProposalReview(
         body:
           result.kind === "secret"
             ? (result.proposedName ?? l10n("local.secret_created_e4a1e1fd"))
-            : `${result.target?.name ?? "Agent"} · ${bindingEnvKey(result) || "binding"}`,
+            : `${result.target?.name ?? l10n("local.agent_11b39c93")} · ${bindingEnvKey(result) || l10n("local.binding_164c690a")}`,
         tone: "success",
       });
       setApproveDraft(null);

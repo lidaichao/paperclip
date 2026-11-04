@@ -229,7 +229,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
       JSON.parse(trimmed);
       return null;
     } catch {
-      return "That doesn't look like valid JSON yet — paste the whole snippet, including the outer braces.";
+      return l10n("local.invalid_json_paste_full_snippet_10301374");
     }
   }, [draftText]);
 

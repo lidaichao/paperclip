@@ -13560,6 +13560,13 @@
     "learning_changed_sentence_10301365": "'{{v0}}' changed.",
     "install_info_notice_10301366": "Installing adds {{v0}}'s tools to the agent's context on every run — install only where it will actually be used.",
     "install_all_warning_10301367": "Adds context cost to every run of every agent — a deliberate choice. New agents you add later are installed automatically.",
-    "auto_extend_access_notice_10301368": "Installing on {{v0}} will also grant access. A tool can't be installed on an agent that isn't allowed to use it, so we'll add {{v0}} to who can use it. This is logged."
+    "auto_extend_access_notice_10301368": "Installing on {{v0}} will also grant access. A tool can't be installed on an agent that isn't allowed to use it, so we'll add {{v0}} to who can use it. This is logged.",
+    "no_fingerprint_10301369": "no fingerprint",
+    "byte_count_one_10301370": "{{v0}} byte",
+    "byte_count_many_10301371": "{{v0}} bytes",
+    "request_failed_status_10301372": "Request failed: {{v0}}",
+    "something_went_wrong_try_again_10301373": "Something went wrong. Try again.",
+    "invalid_json_paste_full_snippet_10301374": "That doesn't look like valid JSON yet — paste the whole snippet, including the outer braces.",
+    "working_with_tool_10301375": "Working with {{v0}}"
   }
 }

@@ -90,7 +90,9 @@ export function resolveGenerationStatusLine(status: LiveGenerationStatus | null)
   if (!status) return null;
   if (status.message) return status.message;
   if (status.lastAssistantSnippet) return status.lastAssistantSnippet;
-  if (status.currentToolName) return `Working with ${status.currentToolName}`;
+  if (status.currentToolName) {
+    return l10n("local.working_with_tool_10301375", { v0: status.currentToolName });
+  }
   return null;
 }
 
