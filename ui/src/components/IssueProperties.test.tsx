@@ -2837,7 +2837,7 @@ describe("IssueProperties", () => {
     }));
     await flush();
     expect(monitorRowText()).toContain("Due now");
-    expect(monitorRowText()).toContain("checking momentarily…");
+    expect(monitorRowText()).toContain("Checking momentarily…");
 
     renderMonitor(createIssue({
       executionPolicy: createExecutionPolicy({ monitor: { ...baseMonitorState, nextCheckAt: at(-18) } }),

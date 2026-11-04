@@ -1062,9 +1062,19 @@ export function IssueProperties({
         : userLabel(participant.userId ?? null))
       : null;
     if (issue.executionState.status === "changes_requested") {
-      return `${stageLabel} requested changes${participantLabel ? ` by ${participantLabel}` : ""}`;
+      return participantLabel
+        ? l10n("local.stage_requested_changes_by_10301260", {
+            v0: stageLabel,
+            v1: participantLabel,
+          })
+        : l10n("local.stage_requested_changes_10301261", { v0: stageLabel });
     }
-    return `${stageLabel} pending${participantLabel ? ` with ${participantLabel}` : ""}`;
+    return participantLabel
+      ? l10n("local.stage_pending_with_10301262", {
+          v0: stageLabel,
+          v1: participantLabel,
+        })
+      : l10n("local.stage_pending_10301263", { v0: stageLabel });
   })();
   useEffect(() => {
     setMonitorAtInput(toDateTimeLocalValue(issue.executionPolicy?.monitor?.nextCheckAt));

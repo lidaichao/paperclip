@@ -102,8 +102,8 @@ function configuredWorkspaceLabel(
       return l10n("local.new_isolated_workspace_0c67029f");
     case "reuse_existing":
       return reusableWorkspace?.mode === "isolated_workspace"
-        ? "Existing isolated workspace"
-        : "Reuse existing workspace";
+        ? l10n("local.existing_isolated_workspace_cb171f74")
+        : l10n("local.reuse_existing_workspace_c84ba2b6");
     default:
       return l10n("local.project_default_e8cb80e5");
   }

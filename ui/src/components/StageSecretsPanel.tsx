@@ -62,7 +62,7 @@ export function StageSecretsPanel({
     );
   }
 
-  const displayName = agentName?.trim() || "the responsible agent";
+  const displayName = agentName?.trim() || l10n("local.the_responsible_agent_10300493");
 
   return (
     <div className="space-y-5">
