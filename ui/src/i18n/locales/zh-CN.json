@@ -13004,6 +13004,20 @@
     "deploy_v2_is_live_10300809": "v2 版本已上线 🎉",
     "full_transcript_10300810": "完整转录",
     "live_stream_10300811": "实时流",
-    "dense_card_10300812": "紧凑卡片"
+    "dense_card_10300812": "紧凑卡片",
+    "task_chat_perf_title_10300813": "任务聊天：{{responses}} 条回复，{{tools}} 次工具调用",
+    "investigation_10300814": "排查 {{number}}",
+    "agent_inspected_implementation_10300815": "智能体检查了实现、核对了**边界条件**，并记录结果。",
+    "preserve_existing_behavior_10300816": "保留现有行为。",
+    "verify_next_update_10300817": "验证下一次更新。",
+    "engineer_10300818": "工程师",
+    "historical_response_10300819": "历史回复 {{number}}",
+    "file_inspected_successfully_10300820": "文件检查成功。",
+    "stop_streaming_10300821": "停止流式输出",
+    "start_streaming_10300822": "开始流式输出",
+    "recreate_history_objects_10300823": "重新创建历史对象",
+    "live_response_10300824": "实时回复 {{number}}",
+    "reply_10300825": "回复",
+    "reply_to_task_10300826": "回复此任务"
   }
 }

@@ -13004,6 +13004,20 @@
     "deploy_v2_is_live_10300809": "Deploy v2 is live 🎉",
     "full_transcript_10300810": "Full transcript",
     "live_stream_10300811": "Live stream",
-    "dense_card_10300812": "Dense card"
+    "dense_card_10300812": "Dense card",
+    "task_chat_perf_title_10300813": "Task chat: {{responses}} responses, {{tools}} tools",
+    "investigation_10300814": "Investigation {{number}}",
+    "agent_inspected_implementation_10300815": "The agent inspected the implementation, checked **boundary conditions**, and recorded the result.",
+    "preserve_existing_behavior_10300816": "Preserve existing behavior.",
+    "verify_next_update_10300817": "Verify the next update.",
+    "engineer_10300818": "Engineer",
+    "historical_response_10300819": "Historical response {{number}}",
+    "file_inspected_successfully_10300820": "File inspected successfully.",
+    "stop_streaming_10300821": "Stop streaming",
+    "start_streaming_10300822": "Start streaming",
+    "recreate_history_objects_10300823": "Recreate history objects",
+    "live_response_10300824": "Live response {{number}}",
+    "reply_10300825": "Reply",
+    "reply_to_task_10300826": "Reply to the task"
   }
 }
