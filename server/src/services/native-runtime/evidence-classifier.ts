@@ -372,7 +372,7 @@ export async function classifyNativeEvidence(input: {
       remaining.some((entry) => entry.blocksCompletion === true)
       || (reported === "done" && Object.keys(blocker).length > 0),
     reportedDisposition: reported as NativeEvidenceAssessment["reportedDisposition"],
-    summary: typeof input.result.summary === "string" ? input.result.summary : "Native run completed.",
+    summary: typeof input.result.summary === "string" ? input.result.summary : "原生运行已完成。",
     contractRevisionMatches,
     criterionAssessments,
     verificationAssessments,

@@ -27,7 +27,7 @@ const SCHEMA = "paperclip.chat_review_response_presentation.v1";
 export class NativeChatReviewPresentationContentionError extends Error {
   constructor() {
     super(
-      "Chat response authorization is temporarily busy; no provider delivery was attempted",
+      "聊天回复授权暂时繁忙；尚未尝试向外部平台发送",
     );
     this.name = "NativeChatReviewPresentationContentionError";
   }

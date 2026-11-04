@@ -60,6 +60,16 @@ describe("classifyNativeEvidence", () => {
     }));
   });
 
+  it("uses a localized fallback when the native result omits its summary", async () => {
+    const nativeResult = result("satisfied", true);
+    const assessment = await classifyNativeEvidence({
+      ...input,
+      result: { ...nativeResult, summary: undefined },
+    });
+
+    expect(assessment.summary).toBe("原生运行已完成。");
+  });
+
   it("does not turn durable evidence into completion when the claim says the criterion is unsatisfied", async () => {
     const assessment = await classifyNativeEvidence({
       ...input,

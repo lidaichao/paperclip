@@ -65723,7 +65723,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       providerMessageId: null,
       nextAttemptAt: expect.any(Date),
       redactedError:
-        "Chat response authorization is temporarily busy; no provider delivery was attempted",
+        "聊天回复授权暂时繁忙；尚未尝试向外部平台发送",
     });
     await db
       .update(chatPublications)
