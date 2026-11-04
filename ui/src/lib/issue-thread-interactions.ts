@@ -214,19 +214,27 @@ export function buildIssueThreadInteractionSummary(
       if (skippedCount > 0) {
         return l10n("local.accepted_value_of_value_tasks_b6c3d5d3", {v0: (createdCount), v1: (count)});
       }
-      return createdCount === 1 ? "Accepted 1 task" : `Accepted ${createdCount} tasks`;
+      return createdCount === 1
+        ? l10n("local.accepted_one_task_10300544")
+        : l10n("local.accepted_tasks_value_10300545", { v0: createdCount });
     }
     if (interaction.status === "rejected") {
-      return count === 1 ? "Rejected 1 task" : `Rejected ${count} tasks`;
+      return count === 1
+        ? l10n("local.rejected_one_task_10300546")
+        : l10n("local.rejected_tasks_value_10300547", { v0: count });
     }
-    return count === 1 ? "Suggested 1 task" : `Suggested ${count} tasks`;
+    return count === 1
+      ? l10n("local.suggested_one_task_10300548")
+      : l10n("local.suggested_tasks_value_10300549", { v0: count });
   }
 
   if (interaction.kind === "request_confirmation") {
     if (interaction.status === "accepted") return l10n("local.confirmed_request_e716c397");
     if (interaction.status === "rejected") {
       const rejectLabel = interaction.payload.rejectLabel?.trim();
-      return rejectLabel ? `Selected “${rejectLabel}”` : "Declined request";
+      return rejectLabel
+        ? l10n("local.selected_value_10300550", { v0: rejectLabel })
+        : l10n("local.declined_request_10300551");
     }
     if (interaction.status === "expired") {
       const outcome = interaction.result?.outcome;
@@ -243,8 +251,8 @@ export function buildIssueThreadInteractionSummary(
       const selectedCount = interaction.result?.selectedOptionIds?.length ?? 0;
       if (selectedCount === 0) return l10n("local.confirmed_with_no_options_selected_1962f778");
       return selectedCount === 1
-        ? `Confirmed 1 of ${optionCount} options`
-        : `Confirmed ${selectedCount} of ${optionCount} options`;
+        ? l10n("local.confirmed_one_of_options_10300552", { v0: optionCount })
+        : l10n("local.confirmed_count_of_options_10300553", { v0: selectedCount, v1: optionCount });
     }
     if (interaction.status === "rejected") return l10n("local.declined_selection_52c166c8");
     if (interaction.status === "expired") {
@@ -254,8 +262,8 @@ export function buildIssueThreadInteractionSummary(
       return l10n("local.selection_expired_1a7ff345");
     }
     return optionCount === 1
-      ? "Requested a selection from 1 option"
-      : `Requested a selection from ${optionCount} options`;
+      ? l10n("local.requested_selection_one_option_10300554")
+      : l10n("local.requested_selection_options_value_10300555", { v0: optionCount });
   }
 
   if (interaction.kind === "request_item_verdicts") {
@@ -275,18 +283,26 @@ export function buildIssueThreadInteractionSummary(
 
   const count = interaction.payload.questions.length;
   if (interaction.status === "answered") {
-    return count === 1 ? "Answered 1 question" : `Answered ${count} questions`;
+    return count === 1
+      ? l10n("local.answered_one_question_10300556")
+      : l10n("local.answered_questions_value_10300557", { v0: count });
   }
   if (interaction.status === "cancelled") {
-    return count === 1 ? "Cancelled 1 question" : `Cancelled ${count} questions`;
+    return count === 1
+      ? l10n("local.cancelled_one_question_10300558")
+      : l10n("local.cancelled_questions_value_10300559", { v0: count });
   }
   if (interaction.status === "expired") {
     if (interaction.result?.expirationReason === "superseded_by_comment") {
-      return count === 1 ? "Question expired after comment" : "Questions expired after comment";
+      return count === 1
+        ? l10n("local.question_expired_after_comment_10300560")
+        : l10n("local.questions_expired_after_comment_10300561");
     }
-    return count === 1 ? "Question expired" : "Questions expired";
+    return count === 1 ? l10n("local.question_expired_10300562") : l10n("local.questions_expired_405a359b");
   }
-  return count === 1 ? "Asked 1 question" : `Asked ${count} questions`;
+  return count === 1
+    ? l10n("local.asked_one_question_10300563")
+    : l10n("local.asked_questions_value_10300564", { v0: count });
 }
 
 /** Readable model input for a durable answer delivered into a successor run. */
@@ -312,9 +328,9 @@ export function buildAnsweredQuestionsDeliveryText(
     const label = canonical?.header && canonical.header !== prompt
       ? `${canonical.header} — ${prompt}`
       : prompt;
-    return `- ${label}: ${values.join(", ") || "No answer"}`;
+    return `- ${label}: ${values.join(", ") || l10n("local.no_answer_7e49c68d")}`;
   });
-  return ["Answered questions", ...(lines.length > 0 ? ["", ...lines] : [])].join("\n");
+  return [l10n("local.answered_questions_heading_10300565"), ...(lines.length > 0 ? ["", ...lines] : [])].join("\n");
 }
 
 export function buildSuggestedTaskTree(
@@ -365,7 +381,7 @@ export function getQuestionAnswerLabels(args: {
     .map((optionId) => optionLabelById.get(optionId))
     .filter((label): label is string => typeof label === "string");
   const otherText = answer?.otherText?.trim();
-  if (otherText) labels.push(`Other: ${otherText}`);
+  if (otherText) labels.push(l10n("local.other_value_10300566", { v0: otherText }));
   return labels;
 }
 
