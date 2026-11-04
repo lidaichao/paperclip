@@ -12,6 +12,7 @@
  * action is permitted, it only explains the answer the server already gave.
  */
 
+import { l10n } from "../i18n";
 import type { InteractionAudienceDescription } from "./interaction-audience";
 
 /**
@@ -79,7 +80,9 @@ function serverReason(error: unknown): string | null {
   const reason = fromBody || fromError;
   if (!reason) return null;
   // The API writes reasons as bare clauses ("This interaction is human-only").
-  return /[.!?]$/.test(reason) ? reason : `${reason}.`;
+  return /[.!?。！？]$/.test(reason)
+    ? reason
+    : l10n("local.value_5296dd69", { v0: reason });
 }
 
 export function isInteractionAudienceDenial(error: unknown): boolean {
@@ -117,7 +120,7 @@ export function describeInteractionResolutionFailure(
     // which happens whenever the snapshot the client holds is wider than the
     // policy the server just enforced (PAP-17289).
     const responder = audience && !audience.isOpen && audience.shortSummary
-      ? `${audience.shortSummary}.`
+      ? l10n("local.value_5296dd69", { v0: audience.shortSummary })
       : null;
     // Without a code the server has told us only that this is forbidden, not
     // *why*. Restate the status; do not invent a resolver-audience cause it
@@ -130,8 +133,8 @@ export function describeInteractionResolutionFailure(
       message: [
         reason
           ?? (coded
-            ? "You are not in this card's resolver audience."
-            : "You do not have permission to respond to this card."),
+            ? l10n("local.not_in_resolver_audience_10300628")
+            : l10n("local.no_permission_to_respond_10300629")),
         responder,
       ]
         .filter(Boolean)
@@ -143,14 +146,16 @@ export function describeInteractionResolutionFailure(
     return {
       kind: "settled",
       code,
-      message: reason ?? "This request is no longer waiting for a decision.",
+      message: reason ?? l10n("local.request_no_longer_waiting_10300630"),
     };
   }
 
   return {
     kind: "transient",
     code,
-    message: reason ? `${reason} Try again.` : "Couldn't submit. Try again.",
+    message: reason
+      ? l10n("local.reason_try_again_10300631", { v0: reason })
+      : l10n("local.could_not_submit_try_again_10300632"),
   };
 }
 

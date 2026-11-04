@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../api/client";
+import { i18n } from "../i18n";
 import {
   describeInteractionResolutionFailure,
   interactionResolutionErrorCode,
@@ -58,6 +59,38 @@ describe("isInteractionAudienceDenial", () => {
 });
 
 describe("describeInteractionResolutionFailure", () => {
+  it("uses Chinese fallback copy and punctuation", async () => {
+    const previousLanguage = i18n.language;
+    try {
+      await i18n.changeLanguage("zh-CN");
+
+      expect(describeInteractionResolutionFailure(undefined, null).message)
+        .toBe("提交失败，请重试。");
+      expect(describeInteractionResolutionFailure(
+        new ApiError("", 403, {
+          code: "interaction_human_only",
+          details: { code: "interaction_human_only" },
+        }),
+        null,
+      ).message).toBe("你不在此卡片的可回应范围内。");
+      expect(describeInteractionResolutionFailure(
+        new ApiError("", 403, null),
+        null,
+      ).message).toBe("你没有权限回应此卡片。");
+      expect(describeInteractionResolutionFailure(
+        new ApiError("", 409, {
+          code: "interaction_already_resolved",
+          details: { code: "interaction_already_resolved" },
+        }),
+        null,
+      ).message).toBe("此请求已不再等待决定。");
+      expect(describeInteractionResolutionFailure(new Error("临时错误"), null).message)
+        .toBe("临时错误。 请重试。");
+    } finally {
+      await i18n.changeLanguage(previousLanguage);
+    }
+  });
+
   it("keeps the server denial reason and names who can respond", () => {
     const failure = describeInteractionResolutionFailure(
       denial(403, "interaction_human_only", "This issue-thread interaction is human-only"),

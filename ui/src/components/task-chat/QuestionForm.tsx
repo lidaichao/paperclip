@@ -71,27 +71,27 @@ function answerError(
   answer: Answer | undefined,
 ): string | null {
   if (question.required && !answerHasValue(answer))
-    return "This question is required.";
+    return l10n("local.question_required_10300617");
   if (
     question.answerMode !== "text" &&
     answer?.customText !== undefined &&
     !answer.customText.trim()
   ) {
-    return "Enter a custom answer.";
+    return l10n("local.enter_custom_answer_10300618");
   }
   const value =
     question.answerMode === "text" ? answer?.text : answer?.customText;
   if (value == null || value.length === 0) return null;
   const validation = question.textValidation;
   if (validation?.minLength != null && value.length < validation.minLength)
-    return `Enter at least ${validation.minLength} characters.`;
+    return l10n("local.enter_min_characters_10300619", { v0: validation.minLength });
   if (validation?.maxLength != null && value.length > validation.maxLength)
-    return `Enter no more than ${validation.maxLength} characters.`;
+    return l10n("local.enter_max_characters_10300620", { v0: validation.maxLength });
   if (validation?.pattern) {
     const result = matchSafeQuestionValidationPattern(validation.pattern, value);
     if (result === "unsupported")
-      return "This question has an unsupported validation pattern.";
-    if (result === "no_match") return "Use the requested format.";
+      return l10n("local.unsupported_question_validation_10300621");
+    if (result === "no_match") return l10n("local.use_requested_format_10300622");
   }
   if (
     validation?.inputType === "number" ||
@@ -102,12 +102,15 @@ function answerError(
       !Number.isFinite(numeric) ||
       (validation.inputType === "integer" && !Number.isInteger(numeric))
     ) {
-      return `Enter a valid ${validation.inputType}.`;
+      const inputType = validation.inputType === "integer"
+        ? l10n("local.integer_10300634")
+        : l10n("local.number_10300633");
+      return l10n("local.enter_valid_value_type_10300623", { v0: inputType });
     }
     if (validation.minimum != null && numeric < validation.minimum)
-      return `Enter a value of at least ${validation.minimum}.`;
+      return l10n("local.enter_min_value_10300624", { v0: validation.minimum });
     if (validation.maximum != null && numeric > validation.maximum)
-      return `Enter a value no greater than ${validation.maximum}.`;
+      return l10n("local.enter_max_value_10300625", { v0: validation.maximum });
   }
   return null;
 }
@@ -384,7 +387,7 @@ export function QuestionForm({
       // question and say so rather than dropping the send.
       setPage(invalidIndex);
       setError({
-        message: `Question ${invalidIndex + 1} needs an answer before you can send.`,
+        message: l10n("local.question_needs_answer_before_send_10300626", { v0: invalidIndex + 1 }),
         fromMissingAnswer: true,
       });
       return;

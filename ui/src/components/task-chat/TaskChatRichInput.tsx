@@ -70,7 +70,7 @@ export function TaskChatRichInput({
       setUploadError(
         error instanceof Error
           ? error.message
-          : "The image could not be uploaded.",
+          : l10n("local.image_could_not_be_uploaded_10300627"),
       );
       throw error;
     } finally {

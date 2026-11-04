@@ -12810,6 +12810,24 @@
     "timeline_actor_updated_issue_10300613": "{{v0}} updated this issue",
     "timeline_status_change_10300614": "Status: {{v0}} -> {{v1}}",
     "timeline_assignee_change_10300615": "Assignee: {{v0}} -> {{v1}}",
-    "timeline_workspace_change_10300616": "Workspace: {{v0}} -> {{v1}}"
+    "timeline_workspace_change_10300616": "Workspace: {{v0}} -> {{v1}}",
+    "question_required_10300617": "This question is required.",
+    "enter_custom_answer_10300618": "Enter a custom answer.",
+    "enter_min_characters_10300619": "Enter at least {{v0}} characters.",
+    "enter_max_characters_10300620": "Enter no more than {{v0}} characters.",
+    "unsupported_question_validation_10300621": "This question has an unsupported validation pattern.",
+    "use_requested_format_10300622": "Use the requested format.",
+    "enter_valid_value_type_10300623": "Enter a valid {{v0}}.",
+    "enter_min_value_10300624": "Enter a value of at least {{v0}}.",
+    "enter_max_value_10300625": "Enter a value no greater than {{v0}}.",
+    "question_needs_answer_before_send_10300626": "Question {{v0}} needs an answer before you can send.",
+    "image_could_not_be_uploaded_10300627": "The image could not be uploaded.",
+    "not_in_resolver_audience_10300628": "You are not in this card's resolver audience.",
+    "no_permission_to_respond_10300629": "You do not have permission to respond to this card.",
+    "request_no_longer_waiting_10300630": "This request is no longer waiting for a decision.",
+    "reason_try_again_10300631": "{{v0}} Try again.",
+    "could_not_submit_try_again_10300632": "Couldn't submit. Try again.",
+    "number_10300633": "number",
+    "integer_10300634": "integer"
   }
 }
