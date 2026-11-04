@@ -789,7 +789,7 @@ export function IssueRunLedgerContent({
                     snoozedUntil: new Date(
                       Date.now() + 60 * 60 * 1000,
                     ).toISOString(),
-                    reason: "Snoozed from issue run ledger",
+                    reason: l10n("local.snoozed_from_run_ledger_10301399"),
                   })
                 }
                 disabled={pendingWatchdogDecision != null}
@@ -804,7 +804,7 @@ export function IssueRunLedgerContent({
                     decision: "dismissed_false_positive",
                     evaluationIssueId:
                       latestSilentRun.outputSilence?.evaluationIssueId ?? null,
-                    reason: "Dismissed from issue run ledger",
+                    reason: l10n("local.dismissed_from_run_ledger_10301400"),
                   })
                 }
                 disabled={pendingWatchdogDecision != null}

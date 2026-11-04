@@ -13590,6 +13590,8 @@
     "event_value_10301395": "event {{v0}}",
     "prp_no_raw_correlation_10301396": "PRP {{v0}} · no raw correlation",
     "no_agent_reference_10301397": "No agent reference",
-    "repair_reporting_chain_before_work_10301398": "Repair this agent's reporting chain before assigning tasks or starting runs"
+    "repair_reporting_chain_before_work_10301398": "Repair this agent's reporting chain before assigning tasks or starting runs",
+    "snoozed_from_run_ledger_10301399": "Snoozed from issue run ledger",
+    "dismissed_from_run_ledger_10301400": "Dismissed from issue run ledger"
   }
 }
