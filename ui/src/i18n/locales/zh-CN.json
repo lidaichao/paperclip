@@ -12660,6 +12660,18 @@
     "plugin_ui_failed_to_render_10300463": "插件界面加载失败。",
     "failed_to_create_comment_10300464": "创建评论失败。",
     "failed_to_add_reply_10300465": "添加回复失败。",
-    "failed_to_update_comment_status_10300466": "更新评论状态失败。"
+    "failed_to_update_comment_status_10300466": "更新评论状态失败。",
+    "decide_now_10300467": "立即决定",
+    "new_today_10300468": "今日新增",
+    "this_month_10300469": "本月",
+    "newest_first_10300470": "最新优先",
+    "oldest_first_10300471": "最早优先",
+    "one_option_10300472": "1 个选项",
+    "count_options_value_10300473": "{{v0}} 个选项",
+    "one_suggested_task_10300474": "1 个建议任务",
+    "count_suggested_tasks_value_10300475": "{{v0}} 个建议任务",
+    "one_item_10300476": "1 个条目",
+    "count_items_value_10300477": "{{v0}} 个条目",
+    "budget_used_value_10300478": "已使用预算的 {{v0}}%（${{v1}} / ${{v2}}）"
   }
 }

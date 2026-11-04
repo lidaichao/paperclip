@@ -654,6 +654,18 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.failed_to_create_comment_10300464).toBe("创建评论失败。");
     expect(messages.failed_to_add_reply_10300465).toBe("添加回复失败。");
     expect(messages.failed_to_update_comment_status_10300466).toBe("更新评论状态失败。");
+    expect(messages.decide_now_10300467).toBe("立即决定");
+    expect(messages.new_today_10300468).toBe("今日新增");
+    expect(messages.this_month_10300469).toBe("本月");
+    expect(messages.newest_first_10300470).toBe("最新优先");
+    expect(messages.oldest_first_10300471).toBe("最早优先");
+    expect(messages.one_option_10300472).toBe("1 个选项");
+    expect(messages.count_options_value_10300473).toBe("{{v0}} 个选项");
+    expect(messages.one_suggested_task_10300474).toBe("1 个建议任务");
+    expect(messages.count_suggested_tasks_value_10300475).toBe("{{v0}} 个建议任务");
+    expect(messages.one_item_10300476).toBe("1 个条目");
+    expect(messages.count_items_value_10300477).toBe("{{v0}} 个条目");
+    expect(messages.budget_used_value_10300478).toContain("已使用预算");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");

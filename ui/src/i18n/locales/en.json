@@ -12660,6 +12660,18 @@
     "plugin_ui_failed_to_render_10300463": "Plugin UI failed to render.",
     "failed_to_create_comment_10300464": "Failed to create comment.",
     "failed_to_add_reply_10300465": "Failed to add reply.",
-    "failed_to_update_comment_status_10300466": "Failed to update comment status."
+    "failed_to_update_comment_status_10300466": "Failed to update comment status.",
+    "decide_now_10300467": "Decide now",
+    "new_today_10300468": "New today",
+    "this_month_10300469": "This month",
+    "newest_first_10300470": "Newest first",
+    "oldest_first_10300471": "Oldest first",
+    "one_option_10300472": "1 option",
+    "count_options_value_10300473": "{{v0}} options",
+    "one_suggested_task_10300474": "1 suggested task",
+    "count_suggested_tasks_value_10300475": "{{v0}} suggested tasks",
+    "one_item_10300476": "1 item",
+    "count_items_value_10300477": "{{v0}} items",
+    "budget_used_value_10300478": "{{v0}}% of budget used (${{v1}} / ${{v2}})"
   }
 }

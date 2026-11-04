@@ -188,8 +188,8 @@ function quote(text: string | null | undefined): string | null {
   return `“${trimmed}”`;
 }
 
-function countNoun(count: number, singular: string): string {
-  return `${count} ${count === 1 ? singular : `${singular}s`}`;
+function countNoun(count: number, singularKey: string, pluralKey: string): string {
+  return l10n(count === 1 ? singularKey : pluralKey, { v0: count });
 }
 
 /**
@@ -211,21 +211,22 @@ export function attentionDetailLine(item: AttentionItem): string | null {
       return quote(detail.promptExcerpt);
     case "checkbox_confirmation": {
       const q = quote(detail.promptExcerpt);
-      return q ? `${countNoun(detail.optionCount, "option")} — ${q}` : countNoun(detail.optionCount, "option");
+      const label = countNoun(detail.optionCount, "local.one_option_10300472", "local.count_options_value_10300473");
+      return q ? `${label} — ${q}` : label;
     }
     case "questions": {
       const q = quote(detail.firstQuestionText);
-      const label = countNoun(detail.questionCount, "question");
+      const label = countNoun(detail.questionCount, "local.1_question_d69c3b18", "local.value_questions_0d98d85d");
       return q ? `${label} — ${q}` : label;
     }
     case "suggested_tasks": {
       const q = quote(detail.firstTaskTitle);
-      const label = countNoun(detail.taskCount, "suggested task");
+      const label = countNoun(detail.taskCount, "local.one_suggested_task_10300474", "local.count_suggested_tasks_value_10300475");
       return q ? `${label} — ${q}` : label;
     }
     case "item_verdicts": {
       const q = quote(detail.promptExcerpt);
-      const label = l10n("local.value_to_verdict_f464a64f", {v0: (countNoun(detail.itemCount, "item"))});
+      const label = l10n("local.value_to_verdict_f464a64f", {v0: (countNoun(detail.itemCount, "local.one_item_10300476", "local.count_items_value_10300477"))});
       return q ? `${label} — ${q}` : label;
     }
     case "failed_run":
@@ -238,10 +239,18 @@ export function attentionDetailLine(item: AttentionItem): string | null {
       const b = detail.blockingIssue;
       if (!b) return null;
       const id = b.identifier ? `${b.identifier} ` : "";
-      return b.title ? `Blocked by ${id}${b.title}` : b.identifier ? `Blocked by ${b.identifier}` : null;
+      return b.title
+        ? `${l10n("local.blocked_by_36931a94")} ${id}${b.title}`
+        : b.identifier
+          ? `${l10n("local.blocked_by_36931a94")} ${b.identifier}`
+          : null;
     }
     case "budget":
-      return `${Math.round(detail.observedPercent)}% of budget used ($${detail.amountObserved} / $${detail.amountLimit})`;
+      return l10n("local.budget_used_value_10300478", {
+        v0: Math.round(detail.observedPercent),
+        v1: detail.amountObserved,
+        v2: detail.amountLimit,
+      });
     case "generic":
       return quote(detail.summaryExcerpt);
     default:
@@ -372,9 +381,9 @@ export function buildDeskShelves(items: AttentionItem[], now: number): DeskShelf
   const earlier = rest.filter((item) => !attentionIsNewToday(item, now));
 
   const shelves: DeskShelf[] = [];
-  if (decideNow.length > 0) shelves.push({ key: "desk:decide-now", label: "Decide now", items: decideNow });
-  if (newToday.length > 0) shelves.push({ key: "desk:new-today", label: "New today", items: newToday });
-  if (earlier.length > 0) shelves.push({ key: "desk:earlier", label: "Earlier", items: earlier });
+  if (decideNow.length > 0) shelves.push({ key: "desk:decide-now", label: l10n("local.decide_now_10300467"), items: decideNow });
+  if (newToday.length > 0) shelves.push({ key: "desk:new-today", label: l10n("local.new_today_10300468"), items: newToday });
+  if (earlier.length > 0) shelves.push({ key: "desk:earlier", label: l10n("local.earlier_e10ae990"), items: earlier });
   return shelves;
 }
 
@@ -414,9 +423,9 @@ export function attentionIdleDays(item: AttentionItem, now: number): number {
 export type DecideByPreset = "today" | "this_week" | "whenever";
 
 export const DECIDE_BY_OPTIONS: ReadonlyArray<[DecideByPreset, string]> = [
-  ["today", "Today"],
-  ["this_week", "This week"],
-  ["whenever", "Whenever"],
+  ["today", l10n("local.today_2b065c7c")],
+  ["this_week", l10n("local.this_week_8c4eef5a")],
+  ["whenever", l10n("local.whenever_4591883c")],
 ];
 
 /** Human label for any stored `decideBy` value (preset or `YYYY-MM-DD`). */
@@ -443,11 +452,11 @@ export function decideByLabel(decideBy: string | null): string {
 export type AttentionDateRangeId = "all" | "today" | "yesterday" | "last_7_days" | "this_month" | "custom";
 
 export const ATTENTION_DATE_RANGE_OPTIONS: ReadonlyArray<[AttentionDateRangeId, string]> = [
-  ["all", "All"],
-  ["today", "Today"],
-  ["yesterday", "Yesterday"],
-  ["last_7_days", "Last 7 days"],
-  ["this_month", "This month"],
+  ["all", l10n("local.all_a52ace42")],
+  ["today", l10n("local.today_2b065c7c")],
+  ["yesterday", l10n("local.yesterday_56618125")],
+  ["last_7_days", l10n("local.last_7_days_b84372e5")],
+  ["this_month", l10n("local.this_month_10300469")],
 ];
 
 export interface AttentionActivityBounds {
@@ -523,16 +532,16 @@ export type AttentionSortOrder = "newest" | "oldest";
 
 /** Ordered list used to render the group-by picker (label + value). */
 export const ATTENTION_GROUP_BY_OPTIONS: ReadonlyArray<[AttentionGroupBy, string]> = [
-  ["none", "None"],
-  ["date", "Date"],
-  ["type", "Type"],
-  ["project", "Project"],
-  ["severity", "Severity"],
+  ["none", l10n("local.none_dc937b59")],
+  ["date", l10n("local.date_99c40ab4")],
+  ["type", l10n("local.type_baaddf70")],
+  ["project", l10n("local.project_98595978")],
+  ["severity", l10n("local.severity_5e9f9812")],
 ];
 
 export const ATTENTION_SORT_OPTIONS: ReadonlyArray<[AttentionSortOrder, string]> = [
-  ["newest", "Newest first"],
-  ["oldest", "Oldest first"],
+  ["newest", l10n("local.newest_first_10300470")],
+  ["oldest", l10n("local.oldest_first_10300471")],
 ];
 
 /**
@@ -835,10 +844,10 @@ export function attentionDateBucket(activityAt: string, now: number): DateBucket
 }
 
 const SEVERITY_LABEL: Record<AttentionSeverity, string> = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
+  critical: l10n("local.critical_427dd296"),
+  high: l10n("local.high_c4ebc6d4"),
+  medium: l10n("local.medium_8e588cd1"),
+  low: l10n("local.low_f793de20"),
 };
 
 /**

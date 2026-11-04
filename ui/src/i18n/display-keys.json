@@ -10088,5 +10088,17 @@
   "plugin ui failed to render.": "local.plugin_ui_failed_to_render_10300463",
   "failed to create comment.": "local.failed_to_create_comment_10300464",
   "failed to add reply.": "local.failed_to_add_reply_10300465",
-  "failed to update comment status.": "local.failed_to_update_comment_status_10300466"
+  "failed to update comment status.": "local.failed_to_update_comment_status_10300466",
+  "decide now": "local.decide_now_10300467",
+  "new today": "local.new_today_10300468",
+  "this month": "local.this_month_10300469",
+  "newest first": "local.newest_first_10300470",
+  "oldest first": "local.oldest_first_10300471",
+  "1 option": "local.one_option_10300472",
+  "{{v0}} options": "local.count_options_value_10300473",
+  "1 suggested task": "local.one_suggested_task_10300474",
+  "{{v0}} suggested tasks": "local.count_suggested_tasks_value_10300475",
+  "1 item": "local.one_item_10300476",
+  "{{v0}} items": "local.count_items_value_10300477",
+  "{{v0}}% of budget used (${{v1}} / ${{v2}})": "local.budget_used_value_10300478"
 }
