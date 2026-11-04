@@ -566,25 +566,14 @@ export function buildPipelineTableRows(
 }
 
 function formatOpenItems(count: number) {
-  return `${formatNumber(count)} open`;
+  return l10n("local.open_item_count_10301404", { v0: formatNumber(count) });
 }
 
 function formatPipelineActivity(value: string | Date | null) {
   if (!value) return l10n("local.no_activity_52e8b54c");
   const then = new Date(value).getTime();
   if (!Number.isFinite(then)) return l10n("local.no_activity_52e8b54c");
-  const diffSeconds = Math.max(0, Math.round((Date.now() - then) / 1000));
-  if (diffSeconds < 60) return "just now";
-  const diffMinutes = Math.round(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
-  const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return diffHours === 1 ? "1 hr ago" : `${diffHours} hr ago`;
-  const diffDays = Math.round(diffHours / 24);
-  if (diffDays === 1) return "yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 14) return "last week";
-  if (diffDays < 30) return `${Math.round(diffDays / 7)} weeks ago`;
-  return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return relativeTime(value);
 }
 
 function PipelineStatusChip({ archivedAt }: { archivedAt: Date | string | null }) {

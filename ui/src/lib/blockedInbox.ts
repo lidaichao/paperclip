@@ -250,27 +250,37 @@ export function blockedBadgeTone(rows: readonly BlockedInboxIssueRow[]): Blocked
 }
 
 export function formatStoppedAge(stoppedSinceAt: string | null, now: number = Date.now()): string {
-  if (!stoppedSinceAt) return "stopped";
+  if (!stoppedSinceAt) return l10n("local.stopped_label_10301401");
   const then = new Date(stoppedSinceAt).getTime();
-  if (!Number.isFinite(then)) return "stopped";
+  if (!Number.isFinite(then)) return l10n("local.stopped_label_10301401");
   const seconds = Math.max(0, Math.round((now - then) / 1000));
-  if (seconds < 60) return "stopped just now";
+  if (seconds < 60) return l10n("local.stopped_just_now_10301402");
   if (seconds < 3600) {
     const m = Math.floor(seconds / 60);
-    return `stopped ${m}m`;
+    return l10n("local.stopped_duration_10301403", {
+      v0: l10n("local.manual_monitor_duration_m", { v0: m }),
+    });
   }
   if (seconds < 86_400) {
     const h = Math.floor(seconds / 3600);
-    return `stopped ${h}h`;
+    return l10n("local.stopped_duration_10301403", {
+      v0: l10n("local.manual_monitor_duration_h", { v0: h }),
+    });
   }
   if (seconds < 86_400 * 7) {
     const d = Math.floor(seconds / 86_400);
-    return `stopped ${d}d`;
+    return l10n("local.stopped_duration_10301403", {
+      v0: l10n("local.manual_monitor_duration_d", { v0: d }),
+    });
   }
   if (seconds < 86_400 * 30) {
     const w = Math.floor(seconds / (86_400 * 7));
-    return `stopped ${w}w`;
+    return l10n("local.stopped_duration_10301403", {
+      v0: l10n("local.relative_weeks_short_10300652", { v0: w }),
+    });
   }
   const mo = Math.floor(seconds / (86_400 * 30));
-  return `stopped ${mo}mo`;
+  return l10n("local.stopped_duration_10301403", {
+    v0: l10n("local.relative_months_short_10300653", { v0: mo }),
+  });
 }

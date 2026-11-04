@@ -13592,6 +13592,10 @@
     "no_agent_reference_10301397": "缺少智能体引用",
     "repair_reporting_chain_before_work_10301398": "请先修复该智能体的汇报关系，再分配任务或启动运行",
     "snoozed_from_run_ledger_10301399": "已从任务运行账本中稍后提醒",
-    "dismissed_from_run_ledger_10301400": "已从任务运行账本中忽略"
+    "dismissed_from_run_ledger_10301400": "已从任务运行账本中忽略",
+    "stopped_label_10301401": "已停止",
+    "stopped_just_now_10301402": "刚刚停止",
+    "stopped_duration_10301403": "已停止 {{v0}}",
+    "open_item_count_10301404": "{{v0}} 个未关闭条目"
   }
 }

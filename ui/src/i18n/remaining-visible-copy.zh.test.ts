@@ -1010,6 +1010,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.the_routine_is_paused_enable_its_automatic_tr_28f90721).toBe("例行任务已暂停。准备使用此计划时，请启用自动触发器。");
     expect(messages.allow_new_codex_agents_to_select_the_experime_813b44bc).toContain("新手引导仍使用旧版适配器");
     expect(messages.paperclip_could_not_validate_this_skill_as_ag_11cb7a41).toContain("智能体技能 Markdown");
+    expect(messages.stopped_label_10301401).toBe("已停止");
+    expect(messages.stopped_just_now_10301402).toBe("刚刚停止");
+    expect(messages.stopped_duration_10301403).toContain("已停止");
+    expect(messages.open_item_count_10301404).toContain("未关闭条目");
     expect(Object.values(messages).filter((value) => /\bURL\b/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /Application ID|Client ID|Client Secret|Tenant ID|Signing Secret|Alice Runner|Runner Inspector/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /请求 地址|此 地址|实例 地址|回调 地址|网关 地址/.test(value))).toEqual([]);

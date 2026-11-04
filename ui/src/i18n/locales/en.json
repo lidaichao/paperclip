@@ -13592,6 +13592,10 @@
     "no_agent_reference_10301397": "No agent reference",
     "repair_reporting_chain_before_work_10301398": "Repair this agent's reporting chain before assigning tasks or starting runs",
     "snoozed_from_run_ledger_10301399": "Snoozed from issue run ledger",
-    "dismissed_from_run_ledger_10301400": "Dismissed from issue run ledger"
+    "dismissed_from_run_ledger_10301400": "Dismissed from issue run ledger",
+    "stopped_label_10301401": "stopped",
+    "stopped_just_now_10301402": "stopped just now",
+    "stopped_duration_10301403": "stopped {{v0}}",
+    "open_item_count_10301404": "{{v0}} open"
   }
 }
