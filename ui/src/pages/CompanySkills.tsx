@@ -953,7 +953,7 @@ function SkillCard({
           <span>
             {card.installed
               ? card.agentCount > 0
-                ? l10n("local.enabled_for_value_value_cfdad7da", {v0: (card.agentCount), v1: (card.agentCount === 1 ? "agent" : "agents")})
+                ? l10n("local.enabled_for_value_value_cfdad7da", {v0: (card.agentCount), v1: (card.agentCount === 1 ? l10n("local.agent_d4f0bc5a") : l10n("local.agents_8c70b25c"))})
                 : l10n("local.not_enabled_for_any_agents_700c5537")
               : l10n("local.available_to_install_887cf5fe")}
           </span>

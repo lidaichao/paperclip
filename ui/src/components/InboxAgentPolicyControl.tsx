@@ -155,7 +155,7 @@ export function InboxAgentPolicyControl({ companyId }: { companyId: string | nul
             triggerLabel={
               selectedAgentIds.size === 0
                 ? l10n("local.select_agents_9c2f5e9f")
-                : l10n("local.value_value_selected_c05d4e8d", {v0: (selectedAgentIds.size), v1: (selectedAgentIds.size === 1 ? "agent" : "agents")})
+                : l10n("local.value_value_selected_c05d4e8d", {v0: (selectedAgentIds.size), v1: (selectedAgentIds.size === 1 ? l10n("local.agent_d4f0bc5a") : l10n("local.agents_8c70b25c"))})
             }
             triggerFullWidth={false}
             showSelectionPreview={false}

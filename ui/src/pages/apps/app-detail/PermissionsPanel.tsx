@@ -165,7 +165,7 @@ function AgentAccessSection({
               disabled={disabled}
               triggerLabel={access.agentIds.size === 0
                 ? l10n("local.choose_agents_14300162")
-                : l10n("local.value_value_selected_c05d4e8d", {v0: (access.agentIds.size), v1: (access.agentIds.size === 1 ? "agent" : "agents")})}
+                : l10n("local.value_value_selected_c05d4e8d", {v0: (access.agentIds.size), v1: (access.agentIds.size === 1 ? l10n("local.agent_d4f0bc5a") : l10n("local.agents_8c70b25c"))})}
               emptyMessage={l10n("local.you_cannot_edit_any_agents_yet_1fe14169")}
               isAgentDisabled={(agent) => requiredAgentIds.has(agent.id)}
               getDescription={(agent) => requiredAgentIds.has(agent.id) ? l10n("local.required_by_connection_install_10300645") : agent.title}
