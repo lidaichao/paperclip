@@ -638,6 +638,7 @@ describe("remaining visible Chinese copy", () => {
       ),
     ).toEqual([]);
     expect(Object.values(messages).filter((value) => /存储库/.test(value))).toEqual([]);
+    expect(Object.values(messages).filter((value) => /帐户/.test(value))).toEqual([]);
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");
