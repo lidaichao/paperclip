@@ -13281,7 +13281,7 @@
     "codex_git_repo_check_skipped_10301086": "沙盒 Hello 探测已添加 --skip-git-repo-check 参数。",
     "codex_probe_cleanup_incomplete_10301087": "临时探测文件未能完全清理，但这不会影响连接结果。",
     "execution_engine_selected_acp_10301088": "已选择执行引擎：ACP。",
-    "codex_acp_remote_environment_10301089": "Codex ACP 将在远程执行环境中运行。",
+    "codex_acp_remote_environment_10301089": "{{v0}} ACP 将在远程执行环境中运行。",
     "node_version_supports_acp_10301090": "Node {{v0}} 满足 ACP 运行要求。",
     "node_version_does_not_support_acp_10301091": "Node {{v0}} 不满足 ACP 运行要求。",
     "codex_acp_command_executable_10301092": "Codex ACP 服务命令可以执行：{{v0}}",
@@ -13290,7 +13290,7 @@
     "codex_acp_uses_external_home_10301095": "Codex ACP 将使用外部管理的 CODEX_HOME。",
     "codex_acp_native_auth_ready_10301096": "Codex ACP 可以使用 Codex 原生认证。",
     "codex_acp_credentials_missing_10301097": "Alice 服务器未检测到可用的 Codex ACP 凭据。",
-    "codex_acp_runtime_available_10301098": "可通过共享 ACP 引擎执行 Codex ACP。",
+    "codex_acp_runtime_available_10301098": "可通过共享 ACP 引擎执行 {{v0}} ACP。",
     "run_provider_probe_manually_10301099": "请在相同工作目录中手动运行 {{v0}} 探测，以查看完整输出。",
     "complete_provider_login_or_api_key_10301100": "请完成 {{v0}} 登录或配置 API 密钥，然后重新探测。",
     "use_default_provider_cli_entrypoint_10301101": "请使用默认的 {{v0}} 命令行入口运行 Hello 探测。",
@@ -13298,6 +13298,8 @@
     "install_codex_acp_or_set_command_10301103": "请安装 Codex ACP 依赖，或设置有效的 ACP 服务命令。",
     "detected_in_adapter_environment_10301104": "已在适配器环境配置中检测到。",
     "detected_in_server_environment_10301105": "已在服务器环境中检测到。",
-    "credentials_available_through_paths_10301106": "凭据可通过 {{v0}} 或共享来源 {{v1}} 使用。"
+    "credentials_available_through_paths_10301106": "凭据可通过 {{v0}} 或共享来源 {{v1}} 使用。",
+    "provider_acp_credentials_detected_10301107": "已为 {{v0}} ACP 认证配置凭据。",
+    "provider_acp_credentials_not_detected_10301108": "未检测到 {{v0}} ACP 凭据。"
   }
 }

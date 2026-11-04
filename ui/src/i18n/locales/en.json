@@ -13281,7 +13281,7 @@
     "codex_git_repo_check_skipped_10301086": "Added --skip-git-repo-check for the sandbox hello probe.",
     "codex_probe_cleanup_incomplete_10301087": "Temporary probe files could not be fully removed; this does not change the connection result.",
     "execution_engine_selected_acp_10301088": "Execution engine selected: ACP.",
-    "codex_acp_remote_environment_10301089": "Codex ACP will run against the remote execution environment.",
+    "codex_acp_remote_environment_10301089": "{{v0}} ACP will run against the remote execution environment.",
     "node_version_supports_acp_10301090": "Node {{v0}} satisfies ACP runtime requirements.",
     "node_version_does_not_support_acp_10301091": "Node {{v0}} does not satisfy ACP runtime requirements.",
     "codex_acp_command_executable_10301092": "Codex ACP server command is executable: {{v0}}",
@@ -13290,7 +13290,7 @@
     "codex_acp_uses_external_home_10301095": "Codex ACP will use an externally managed CODEX_HOME.",
     "codex_acp_native_auth_ready_10301096": "Codex ACP can use Codex native authentication.",
     "codex_acp_credentials_missing_10301097": "No Codex ACP credentials visible to the Alice server were detected.",
-    "codex_acp_runtime_available_10301098": "Codex ACP runtime execution is available through the shared ACP engine.",
+    "codex_acp_runtime_available_10301098": "{{v0}} ACP runtime execution is available through the shared ACP engine.",
     "run_provider_probe_manually_10301099": "Run the {{v0}} probe manually in the same working directory to inspect the full output.",
     "complete_provider_login_or_api_key_10301100": "Complete {{v0}} login or configure its API key, then retry the probe.",
     "use_default_provider_cli_entrypoint_10301101": "Use the default {{v0}} CLI entrypoint to run the hello probe.",
@@ -13298,6 +13298,8 @@
     "install_codex_acp_or_set_command_10301103": "Install the Codex ACP dependency, or set a valid ACP server command.",
     "detected_in_adapter_environment_10301104": "Detected in the adapter environment configuration.",
     "detected_in_server_environment_10301105": "Detected in the server environment.",
-    "credentials_available_through_paths_10301106": "Credentials are available through {{v0}} or the shared source {{v1}}."
+    "credentials_available_through_paths_10301106": "Credentials are available through {{v0}} or the shared source {{v1}}.",
+    "provider_acp_credentials_detected_10301107": "{{v0}} credentials are set for ACP authentication.",
+    "provider_acp_credentials_not_detected_10301108": "No {{v0}} ACP credentials were detected."
   }
 }

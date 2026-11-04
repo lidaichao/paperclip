@@ -5,8 +5,19 @@ import type {
 import { l10n } from "../i18n";
 
 function providerName(code: string): string {
-  if (code.startsWith("cursor_")) return "Cursor";
-  return "Codex";
+  const prefix = code.split("_", 1)[0];
+  return {
+    claude: "Claude",
+    codex: "Codex",
+    cursor: "Cursor",
+    gemini: "Gemini",
+    grok: "Grok",
+    hermes: "Hermes",
+    kimi: "Kimi",
+    opencode: "OpenCode",
+    openclaw: "OpenClaw",
+    pi: "Pi",
+  }[prefix] ?? "Adapter";
 }
 
 function valueAfterColon(message: string): string {
@@ -83,11 +94,11 @@ function localizedMessage(check: AdapterEnvironmentCheck): string {
   if (code === "codex_probe_cleanup_incomplete") {
     return l10n("local.codex_probe_cleanup_incomplete_10301087");
   }
-  if (code === "codex_engine_selected") {
+  if (code.endsWith("_engine_selected")) {
     return l10n("local.execution_engine_selected_acp_10301088");
   }
-  if (code === "codex_acp_remote_target") {
-    return l10n("local.codex_acp_remote_environment_10301089");
+  if (code.endsWith("_acp_remote_target")) {
+    return l10n("local.codex_acp_remote_environment_10301089", { v0: provider });
   }
   if (code === "codex_acp_node_supported" || code === "codex_acp_node_unsupported") {
     const version = message.match(/Node\s+(\S+)/)?.[1] ?? "Node";
@@ -113,8 +124,14 @@ function localizedMessage(check: AdapterEnvironmentCheck): string {
   if (code === "codex_acp_credentials_missing") {
     return l10n("local.codex_acp_credentials_missing_10301097");
   }
-  if (code === "codex_acp_runtime_scaffold") {
-    return l10n("local.codex_acp_runtime_available_10301098");
+  if (code.endsWith("_acp_credentials_detected")) {
+    return l10n("local.provider_acp_credentials_detected_10301107", { v0: provider });
+  }
+  if (code.endsWith("_acp_credentials_not_detected")) {
+    return l10n("local.provider_acp_credentials_not_detected_10301108", { v0: provider });
+  }
+  if (code.endsWith("_acp_runtime_scaffold")) {
+    return l10n("local.codex_acp_runtime_available_10301098", { v0: provider });
   }
   return message;
 }

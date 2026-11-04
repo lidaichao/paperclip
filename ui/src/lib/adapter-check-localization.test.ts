@@ -50,4 +50,23 @@ describe("adapter check localization", () => {
     expect(check.hint).toBe("请完成 Codex 登录或配置 API 密钥，然后重新探测。");
     expect(adapterCheckLevelLabel(check.level)).toBe("警告");
   });
+
+  it("uses the correct provider name for shared adapter checks", async () => {
+    await i18n.changeLanguage("zh-CN");
+
+    const check = localizeAdapterEnvironmentCheck({
+      code: "gemini_cwd_valid",
+      level: "info",
+      message: "Working directory is valid: /workspace/alice",
+    });
+
+    expect(check.message).toBe("工作目录有效：/workspace/alice");
+
+    const runtime = localizeAdapterEnvironmentCheck({
+      code: "gemini_acp_runtime_scaffold",
+      level: "info",
+      message: "Gemini ACP runtime execution is available through the shared ACP engine.",
+    });
+    expect(runtime.message).toBe("可通过共享 ACP 引擎执行 Gemini ACP。");
+  });
 });
