@@ -13643,6 +13643,23 @@
     "no_environment_selected_10301448": "No environment selected",
     "select_organization_to_create_environment_10301449": "Select an organization to create an environment",
     "select_organization_to_test_environment_10301450": "Select an organization to test the environment",
-    "api_network_request_failed_10301451": "Could not reach the server. Check your connection and try again."
+    "api_network_request_failed_10301451": "Could not reach the server. Check your connection and try again.",
+    "local_folder_problem_not_configured_10301452": "No local folder path is configured.",
+    "local_folder_problem_not_absolute_10301453": "The local folder path must be absolute.",
+    "local_folder_problem_missing_10301454": "The configured local folder cannot be inspected.",
+    "local_folder_problem_not_directory_10301455": "The configured local folder path is not a directory.",
+    "local_folder_problem_not_readable_10301456": "The configured local folder is not readable.",
+    "local_folder_problem_not_writable_10301457": "The configured local folder is not writable.",
+    "local_folder_problem_missing_directory_10301458": "A required directory is missing.",
+    "local_folder_problem_missing_file_10301459": "A required file is missing.",
+    "local_folder_problem_path_traversal_10301460": "A required path points outside the configured folder.",
+    "local_folder_problem_symlink_escape_10301461": "A symbolic link points outside the configured folder.",
+    "local_folder_problem_atomic_write_failed_10301462": "The folder could not be verified for safe writes.",
+    "local_folder_problem_required_path_not_file_10301463": "A required path is not a file.",
+    "duration_milliseconds_10301464": "{{v0}}ms",
+    "duration_seconds_10301465": "{{v0}}s",
+    "duration_minutes_10301466": "{{v0}}m",
+    "duration_hours_minutes_10301467": "{{v0}}h {{v1}}m",
+    "duration_days_hours_10301468": "{{v0}}d {{v1}}h"
   }
 }

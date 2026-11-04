@@ -13643,6 +13643,23 @@
     "no_environment_selected_10301448": "未选择环境",
     "select_organization_to_create_environment_10301449": "请选择组织后再创建环境",
     "select_organization_to_test_environment_10301450": "请选择组织后再测试环境",
-    "api_network_request_failed_10301451": "无法连接服务器，请检查网络后重试。"
+    "api_network_request_failed_10301451": "无法连接服务器，请检查网络后重试。",
+    "local_folder_problem_not_configured_10301452": "尚未配置本地文件夹路径。",
+    "local_folder_problem_not_absolute_10301453": "本地文件夹必须使用绝对路径。",
+    "local_folder_problem_missing_10301454": "无法检查已配置的本地文件夹。",
+    "local_folder_problem_not_directory_10301455": "已配置的本地文件夹路径不是目录。",
+    "local_folder_problem_not_readable_10301456": "无法读取已配置的本地文件夹。",
+    "local_folder_problem_not_writable_10301457": "无法写入已配置的本地文件夹。",
+    "local_folder_problem_missing_directory_10301458": "缺少必需目录。",
+    "local_folder_problem_missing_file_10301459": "缺少必需文件。",
+    "local_folder_problem_path_traversal_10301460": "必需路径超出了已配置文件夹的范围。",
+    "local_folder_problem_symlink_escape_10301461": "符号链接指向了已配置文件夹之外。",
+    "local_folder_problem_atomic_write_failed_10301462": "无法确认该文件夹支持安全写入。",
+    "local_folder_problem_required_path_not_file_10301463": "必需路径不是文件。",
+    "duration_milliseconds_10301464": "{{v0}} 毫秒",
+    "duration_seconds_10301465": "{{v0}} 秒",
+    "duration_minutes_10301466": "{{v0}} 分钟",
+    "duration_hours_minutes_10301467": "{{v0}} 小时 {{v1}} 分钟",
+    "duration_days_hours_10301468": "{{v0}} 天 {{v1}} 小时"
   }
 }

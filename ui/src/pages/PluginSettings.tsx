@@ -1,4 +1,5 @@
-import { l10n } from "../i18n";
+import { i18n, l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Puzzle, ArrowLeft, ShieldAlert, ActivitySquare, CheckCircle, XCircle, Loader2, Clock, Cpu, Webhook, CalendarClock, AlertTriangle, FolderOpen, Save } from "lucide-react";
@@ -9,7 +10,11 @@ import { useManagedSandboxOnly } from "@/hooks/useManagedSandboxOnly";
 import { Link, Navigate, useParams } from "@/lib/router";
 import { relativeTime } from "@/lib/utils";
 import { PluginSlotMount, usePluginSlots } from "@/plugins/slots";
-import { pluginsApi, type PluginLocalFolderStatus } from "@/api/plugins";
+import {
+  pluginsApi,
+  type PluginLocalFolderProblem,
+  type PluginLocalFolderStatus,
+} from "@/api/plugins";
 import { queryKeys } from "@/lib/queryKeys";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -766,7 +771,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
           <ul className="space-y-1">
             {status.problems.map((problem, index) => (
               <li key={`${problem.code}:${problem.path ?? ""}:${index}`}>
-                {problem.message}
+                {localizeLocalFolderProblem(problem)}
                 {problem.path ? <span className="font-mono"> {problem.path}</span> : null}
               </li>
             ))}
@@ -838,6 +843,28 @@ function isRootNotInspected(status?: PluginLocalFolderStatus) {
   return status.problems.some((problem) =>
     problem.code === "missing" || problem.code === "not_readable" || problem.code === "not_directory"
   );
+}
+
+const LOCAL_FOLDER_PROBLEM_KEYS: Record<PluginLocalFolderProblem["code"], string> = {
+  not_configured: "local.local_folder_problem_not_configured_10301452",
+  not_absolute: "local.local_folder_problem_not_absolute_10301453",
+  missing: "local.local_folder_problem_missing_10301454",
+  not_directory: "local.local_folder_problem_not_directory_10301455",
+  not_readable: "local.local_folder_problem_not_readable_10301456",
+  not_writable: "local.local_folder_problem_not_writable_10301457",
+  missing_directory: "local.local_folder_problem_missing_directory_10301458",
+  missing_file: "local.local_folder_problem_missing_file_10301459",
+  path_traversal: "local.local_folder_problem_path_traversal_10301460",
+  symlink_escape: "local.local_folder_problem_symlink_escape_10301461",
+  atomic_write_failed: "local.local_folder_problem_atomic_write_failed_10301462",
+};
+
+function localizeLocalFolderProblem(problem: PluginLocalFolderProblem): string {
+  if (i18n.language !== "zh-CN") return problem.message;
+  if (problem.code === "missing_file" && /not a file/i.test(problem.message)) {
+    return l10n("local.local_folder_problem_required_path_not_file_10301463");
+  }
+  return l10n(LOCAL_FOLDER_PROBLEM_KEYS[problem.code]);
 }
 
 function RequirementList({
@@ -1138,9 +1165,25 @@ function formatUptime(uptimeMs: number | null): string {
  * Format a duration in milliseconds to a compact display string.
  */
 function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${(ms / 60000).toFixed(1)}m`;
+  if (ms < 1000) return l10n("local.duration_milliseconds_10301464", { v0: ms });
+  if (ms < 60000) {
+    return l10n("local.duration_seconds_10301465", { v0: (ms / 1000).toFixed(1) });
+  }
+  if (ms < 3600000) {
+    return l10n("local.duration_minutes_10301466", { v0: (ms / 60000).toFixed(1) });
+  }
+  const totalMinutes = Math.floor(ms / 60000);
+  const totalHours = Math.floor(totalMinutes / 60);
+  if (totalHours < 24) {
+    return l10n("local.duration_hours_minutes_10301467", {
+      v0: totalHours,
+      v1: totalMinutes % 60,
+    });
+  }
+  return l10n("local.duration_days_hours_10301468", {
+    v0: Math.floor(totalHours / 24),
+    v1: totalHours % 24,
+  });
 }
 
 /**
@@ -1174,7 +1217,7 @@ function JobStatusDot({ status }: { status: string }) {
   return (
     <span
       className={`inline-block h-2 w-2 rounded-full shrink-0 ${colorClass}`}
-      title={status}
+      title={enumLabel(status)}
     />
   );
 }
@@ -1194,7 +1237,7 @@ function DeliveryStatusDot({ status }: { status: string }) {
   return (
     <span
       className={`inline-block h-2 w-2 rounded-full shrink-0 ${colorClass}`}
-      title={status}
+      title={enumLabel(status)}
     />
   );
 }
