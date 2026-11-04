@@ -29,15 +29,17 @@ const runSegmentColors = {
 
 // Compact per-day tooltip that also attributes failures to their error class.
 function runDayTooltip(entry: DashboardRunActivityDay): string {
-  const lines = [`${entry.date}: ${entry.total} run${entry.total === 1 ? "" : "s"}`];
-  if (entry.succeeded > 0) lines.push(`  succeeded: ${entry.succeeded}`);
-  if (entry.recovered > 0) lines.push(`  recovered: ${entry.recovered} (retry succeeded)`);
+  const lines = [entry.total === 1
+    ? l10n("local.chart_one_run_10300659", { v0: entry.date })
+    : l10n("local.chart_runs_count_10300660", { v0: entry.date, v1: entry.total })];
+  if (entry.succeeded > 0) lines.push(l10n("local.chart_succeeded_count_10300661", { v0: entry.succeeded }));
+  if (entry.recovered > 0) lines.push(l10n("local.chart_recovered_count_10300662", { v0: entry.recovered }));
   if (entry.failed > 0) {
-    lines.push(`  failed: ${entry.failed}`);
+    lines.push(l10n("local.chart_failed_count_10300663", { v0: entry.failed }));
     const codes = Object.entries(entry.failedByErrorCode ?? {}).sort((a, b) => b[1] - a[1]);
     for (const [code, count] of codes) lines.push(`    ${code}: ${count}`);
   }
-  if (entry.other > 0) lines.push(`  other: ${entry.other}`);
+  if (entry.other > 0) lines.push(l10n("local.chart_other_count_10300664", { v0: entry.other }));
   return lines.join("\n");
 }
 
@@ -199,7 +201,7 @@ export function PriorityChart({ issues }: { issues: { priority: string; createdA
           const total = Object.values(entry).reduce((a, b) => a + b, 0);
           const heightPct = (total / maxValue) * 100;
           return (
-            <div key={day} className="flex-1 h-full flex flex-col justify-end" title={`${day}: ${total} issues`}>
+            <div key={day} className="flex-1 h-full flex flex-col justify-end" title={l10n("local.chart_issues_count_10300665", { v0: day, v1: total })}>
               {total > 0 ? (
                 <div className="flex flex-col-reverse gap-px overflow-hidden" style={{ height: `${heightPct}%`, minHeight: 2 }}>
                   {priorityOrder.map(p => entry[p] > 0 ? (
@@ -274,7 +276,7 @@ export function IssueStatusChart({ issues }: { issues: { status: string; created
           const total = Object.values(entry).reduce((a, b) => a + b, 0);
           const heightPct = (total / maxValue) * 100;
           return (
-            <div key={day} className="flex-1 h-full flex flex-col justify-end" title={`${day}: ${total} issues`}>
+            <div key={day} className="flex-1 h-full flex flex-col justify-end" title={l10n("local.chart_issues_count_10300665", { v0: day, v1: total })}>
               {total > 0 ? (
                 <div className="flex flex-col-reverse gap-px overflow-hidden" style={{ height: `${heightPct}%`, minHeight: 2 }}>
                   {statusOrder.map(s => (entry[s] ?? 0) > 0 ? (

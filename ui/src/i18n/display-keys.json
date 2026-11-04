@@ -10272,5 +10272,15 @@
   "tab closed.": "local.tab_closed_10300655",
   "last tab closed. choose something to open.": "local.last_tab_closed_choose_item_10300656",
   "moved {{v0}} to position {{v1}} of {{v2}}.": "local.moved_tab_to_position_10300657",
-  "tab": "local.tab_10300658"
+  "tab": "local.tab_10300658",
+  "{{v0}}: 1 run": "local.chart_one_run_10300659",
+  "{{v0}}: {{v1}} runs": "local.chart_runs_count_10300660",
+  "succeeded: {{v0}}": "local.chart_succeeded_count_10300661",
+  "recovered: {{v0}} (retry succeeded)": "local.chart_recovered_count_10300662",
+  "failed: {{v0}}": "local.chart_failed_count_10300663",
+  "{{v0}}: {{v1}} issues": "local.chart_issues_count_10300665",
+  "{{v0}} agent uses this skill": "local.one_agent_uses_skill_10300666",
+  "{{v0}} agents use this skill": "local.agents_use_skill_10300667",
+  "{{v0}} agent has this skill in their desired set.": "local.one_agent_has_skill_10300668",
+  "{{v0}} agents have this skill in their desired set.": "local.agents_have_skill_10300669"
 }

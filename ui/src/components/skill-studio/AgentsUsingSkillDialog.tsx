@@ -57,7 +57,9 @@ export function AgentsUsingSkillBadge({
 }) {
   const [open, setOpen] = useState(false);
   const count = skill.usedByAgents.length;
-  const label = l10n("local.value_value_this_skill_c64ccb98", {v0: (count), v1: (count === 1 ? "agent uses" : "agents use")});
+  const label = count === 1
+    ? l10n("local.one_agent_uses_skill_10300666", { v0: count })
+    : l10n("local.agents_use_skill_10300667", { v0: count });
 
   return (
     <>
@@ -237,7 +239,9 @@ export function AgentsUsingSkillDialog({
           <DialogDescription>
             {count === 0
               ? l10n("local.no_agents_have_this_skill_assigned_yet_765a266e")
-              : l10n("local.value_value_this_skill_in_their_desired_set_d669510b", {v0: (count), v1: (count === 1 ? "agent has" : "agents have")})}
+              : count === 1
+                ? l10n("local.one_agent_has_skill_10300668", { v0: count })
+                : l10n("local.agents_have_skill_10300669", { v0: count })}
           </DialogDescription>
         </DialogHeader>
 

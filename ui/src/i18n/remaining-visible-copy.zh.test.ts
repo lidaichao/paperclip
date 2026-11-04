@@ -846,6 +846,17 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.last_tab_closed_choose_item_10300656).toContain("请选择要打开的内容");
     expect(messages.moved_tab_to_position_10300657).toContain("移至第");
     expect(messages.tab_10300658).toBe("标签页");
+    expect(messages.chart_one_run_10300659).toContain("次运行");
+    expect(messages.chart_runs_count_10300660).toContain("次运行");
+    expect(messages.chart_succeeded_count_10300661).toContain("成功");
+    expect(messages.chart_recovered_count_10300662).toContain("重试成功");
+    expect(messages.chart_failed_count_10300663).toContain("失败");
+    expect(messages.chart_other_count_10300664).toContain("其他");
+    expect(messages.chart_issues_count_10300665).toContain("个任务");
+    expect(messages.one_agent_uses_skill_10300666).toContain("使用此技能");
+    expect(messages.agents_use_skill_10300667).toContain("使用此技能");
+    expect(messages.one_agent_has_skill_10300668).toContain("期望集合");
+    expect(messages.agents_have_skill_10300669).toContain("期望集合");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
