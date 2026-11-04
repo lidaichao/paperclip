@@ -206,6 +206,16 @@ describe("ConnectionIntentInteractionBody states and audience", () => {
     expect(document.body.textContent).toContain(expected);
   });
 
+  it.each([
+    [connectedConnectionIntentInteraction, "Researcher can use this connection on the continuation run."],
+    [terminal("rejected", "declined"), "Researcher was notified and can continue without it."],
+    [terminal("expired", "superseded"), "This request was replaced. Use the latest connection card instead."],
+    [terminal("expired", "expired"), "This request is no longer active."],
+  ] as const)("renders the terminal-state explanation", (interaction, expected) => {
+    renderBody(interaction as ConnectionIntentInteraction);
+    expect(document.body.textContent).toContain(expected);
+  });
+
   it("shows non-addressees only the waiting state and never loads setup", () => {
     renderBody(pendingConnectionIntentInteraction, "other-user");
     expect(document.body.textContent).toContain("Waiting for Carol");

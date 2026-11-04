@@ -10248,5 +10248,13 @@
   "{{v0}} try again.": "local.reason_try_again_10300631",
   "couldn't submit. try again.": "local.could_not_submit_try_again_10300632",
   "number": "local.number_10300633",
-  "integer": "local.integer_10300634"
+  "integer": "local.integer_10300634",
+  "this agent can now use the connection.": "local.agent_connection_ready_10300635",
+  "the task still needs a working ai connection before it can run.": "local.agent_connection_required_10300636",
+  "this request was replaced. use the latest connection card instead.": "local.request_replaced_use_latest_10300637",
+  "this request is no longer active.": "local.request_no_longer_active_10300638",
+  "{{v0}} can use this connection on the continuation run.": "local.agent_can_use_connection_next_run_10300639",
+  "{{v0}} was notified and can continue without it.": "local.agent_notified_continue_without_10300640",
+  "the account owner": "local.account_owner_10300641",
+  "my {{v0}} account": "local.my_provider_account_10300642"
 }

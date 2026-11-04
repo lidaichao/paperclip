@@ -12828,6 +12828,14 @@
     "reason_try_again_10300631": "{{v0}} Try again.",
     "could_not_submit_try_again_10300632": "Couldn't submit. Try again.",
     "number_10300633": "number",
-    "integer_10300634": "integer"
+    "integer_10300634": "integer",
+    "agent_connection_ready_10300635": "This agent can now use the connection.",
+    "agent_connection_required_10300636": "The task still needs a working AI connection before it can run.",
+    "request_replaced_use_latest_10300637": "This request was replaced. Use the latest connection card instead.",
+    "request_no_longer_active_10300638": "This request is no longer active.",
+    "agent_can_use_connection_next_run_10300639": "{{v0}} can use this connection on the continuation run.",
+    "agent_notified_continue_without_10300640": "{{v0}} was notified and can continue without it.",
+    "account_owner_10300641": "The account owner",
+    "my_provider_account_10300642": "My {{v0}} account"
   }
 }

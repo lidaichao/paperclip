@@ -822,6 +822,14 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.could_not_submit_try_again_10300632).toBe("提交失败，请重试。");
     expect(messages.number_10300633).toBe("数字");
     expect(messages.integer_10300634).toBe("整数");
+    expect(messages.agent_connection_ready_10300635).toContain("可以使用该连接");
+    expect(messages.agent_connection_required_10300636).toContain("才能运行");
+    expect(messages.request_replaced_use_latest_10300637).toContain("最新的连接卡片");
+    expect(messages.request_no_longer_active_10300638).toBe("此请求已失效。");
+    expect(messages.agent_can_use_connection_next_run_10300639).toContain("继续执行");
+    expect(messages.agent_notified_continue_without_10300640).toContain("已通知");
+    expect(messages.account_owner_10300641).toBe("账户所有者");
+    expect(messages.my_provider_account_10300642).toContain("我的");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

@@ -12828,6 +12828,14 @@
     "reason_try_again_10300631": "{{v0}} 请重试。",
     "could_not_submit_try_again_10300632": "提交失败，请重试。",
     "number_10300633": "数字",
-    "integer_10300634": "整数"
+    "integer_10300634": "整数",
+    "agent_connection_ready_10300635": "此智能体现在可以使用该连接。",
+    "agent_connection_required_10300636": "任务仍需可用的人工智能连接才能运行。",
+    "request_replaced_use_latest_10300637": "此请求已被替换，请使用最新的连接卡片。",
+    "request_no_longer_active_10300638": "此请求已失效。",
+    "agent_can_use_connection_next_run_10300639": "{{v0}} 可在继续执行时使用此连接。",
+    "agent_notified_continue_without_10300640": "已通知 {{v0}}，其可在没有此连接的情况下继续。",
+    "account_owner_10300641": "账户所有者",
+    "my_provider_account_10300642": "我的 {{v0}} 账户"
   }
 }

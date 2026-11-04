@@ -183,13 +183,21 @@ export function ConnectionIntentInteractionBody({
       ? {
           icon: CheckCircle2,
           title: l10n("local.value_connected_db4ed330", {v0: (interaction.payload.serviceName)}),
-          body: isAi ? "This agent can now use the connection." : `${interaction.payload.requestingAgentName} can use this connection on the continuation run.`,
+          body: isAi
+            ? l10n("local.agent_connection_ready_10300635")
+            : l10n("local.agent_can_use_connection_next_run_10300639", {
+                v0: interaction.payload.requestingAgentName,
+              }),
         }
       : interaction.status === "rejected"
         ? {
             icon: XCircle,
             title: l10n("local.connection_declined_b17945c0"),
-            body: isAi ? "The task still needs a working AI connection before it can run." : `${interaction.payload.requestingAgentName} was notified and can continue without it.`,
+            body: isAi
+              ? l10n("local.agent_connection_required_10300636")
+              : l10n("local.agent_notified_continue_without_10300640", {
+                  v0: interaction.payload.requestingAgentName,
+                }),
           }
         : interaction.status === "expired"
           ? {
@@ -200,8 +208,8 @@ export function ConnectionIntentInteractionBody({
                   : l10n("local.connection_request_expired_cc0c7bc0"),
               body:
                 resultOutcome === "superseded"
-                  ? "This request was replaced. Use the latest connection card instead."
-                  : "This request is no longer active.",
+                  ? l10n("local.request_replaced_use_latest_10300637")
+                  : l10n("local.request_no_longer_active_10300638"),
             }
           : null;
   const StatusIcon = status?.icon;
@@ -300,14 +308,16 @@ export function ConnectionIntentInteractionBody({
         onComplete={(result) => { void finishNewConnection(result); }}
         onCancel={() => { closeSetup(); returnFocusToCard(); }}
       /> : <p role="status" className="text-sm text-muted-foreground">
-        {repair.connection.ownership === "personal" ? l10n("local.value_must_reconnect_value_9928410c", {v0: (repair.connection.ownerName ?? "The account owner"), v1: (repair.connection.name)}) : l10n("local.the_account_owner_must_reconnect_value_f2ebe0e1", {v0: (repair.connection.name)})}
+        {repair.connection.ownership === "personal" ? l10n("local.value_must_reconnect_value_9928410c", {v0: (repair.connection.ownerName ?? l10n("local.account_owner_10300641")), v1: (repair.connection.name)}) : l10n("local.the_account_owner_must_reconnect_value_f2ebe0e1", {v0: (repair.connection.name)})}
         {" "}{l10n("local.you_can_continue_here_once_it_is_restored_0eacf5ca")}</p>
     : setupQuery.data?.aiConnection && setupQuery.data.aiConnection.mode !== "responsible_user"
       ? <p role="status" className="text-sm text-muted-foreground">{l10n("local.the_selected_account_is_no_longer_available_t_fbec3492")}</p>
       : setupQuery.data?.aiConnection ? <AiConnectionCredentialStep
           companyId={interaction.companyId}
           provider={setupQuery.data.aiConnection.provider}
-          name={`My ${AI_PROVIDERS[setupQuery.data.aiConnection.provider].name} account`}
+          name={l10n("local.my_provider_account_10300642", {
+            v0: AI_PROVIDERS[setupQuery.data.aiConnection.provider].name,
+          })}
           ownership="personal"
           agentIds={[interaction.payload.requestingAgentId]}
           allAgents={false}
