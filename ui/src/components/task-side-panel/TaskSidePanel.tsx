@@ -297,7 +297,7 @@ export function TaskSidePanel({
   useEffect(() => {
     if (!openSkillId) return;
     setLauncherOpen(false);
-    controller.openTab(taskPanelSkillTab(openSkillId, openSkillName ?? "Skill"));
+    controller.openTab(taskPanelSkillTab(openSkillId, openSkillName ?? l10n("local.skill_6df1bb18")));
     onSkillOpened?.(openSkillId);
   }, [controller.openTab, onSkillOpened, openSkillId, openSkillName]);
 

@@ -187,7 +187,7 @@ function resolveActorLabel(
   }
   if (actorType === "system") return l10n("local.system_6725e7bb");
   if (actorType === "user" && actorId) {
-    return resolveUserName(queryClient, companyId, actorId) ?? "Board";
+    return resolveUserName(queryClient, companyId, actorId) ?? l10n("local.board_4816cbfd");
   }
   return l10n("local.someone_864c855e");
 }
@@ -1049,7 +1049,7 @@ function buildAgentStatusToast(
   if (!agentId || !status || !AGENT_TOAST_STATUSES.has(status)) return null;
 
   const tone = status === "error" ? "error" : "info";
-  const name = nameOf(agentId) ?? `Agent ${shortId(agentId)}`;
+  const name = nameOf(agentId) ?? l10n("local.agent_value_10300385", { v0: shortId(agentId) });
   const title = status === "running" ? l10n("local.value_started_d83eb38a", {v0: (name)}) : l10n("local.value_errored_0e6cd727", {v0: (name)});
 
   const agents = queryClient.getQueryData<Agent[]>(
@@ -1086,7 +1086,7 @@ function buildRunStatusToast(
   if (errorCode === "workspace_busy") return null;
   const contextSource = readString(payload.contextSource);
   const triggerDetail = readString(payload.triggerDetail);
-  const name = nameOf(agentId) ?? "Agent";
+  const name = nameOf(agentId) ?? l10n("local.agent_11b39c93");
   if (
     status === "failed" &&
     errorCode === "low_trust_isolation_unavailable" &&

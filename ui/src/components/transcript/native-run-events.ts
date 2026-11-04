@@ -250,7 +250,7 @@ function runResultEntry(
     verification: (Array.isArray(payload.verification) ? payload.verification : [])
       .map(record)
       .flatMap((item) => item ? [{
-        commandOrCheck: text(item.commandOrCheck) ?? "Verification",
+        commandOrCheck: text(item.commandOrCheck) ?? l10n("local.manual_runner_verification"),
         status: verificationStatus(item.status),
         ...(text(item.detail) ? { detail: text(item.detail)! } : {}),
         ...(text(item.artifactRef) ? { artifactRef: text(item.artifactRef)! } : {}),
@@ -563,7 +563,7 @@ function toolPresentation(
     };
   }
   return {
-    name: reportedName ?? operation ?? "Tool",
+    name: reportedName ?? operation ?? l10n("local.manual_runner_tool"),
     input: item?.input ?? {
       ...(operation ? { operation } : {}),
       ...(text(payload.namespace) ? { namespace: text(payload.namespace) } : {}),

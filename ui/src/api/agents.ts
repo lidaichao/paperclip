@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type {
   Agent,
   AgentDesiredSkillEntry,
@@ -277,7 +278,7 @@ export const agentsApi = {
       }
       return { runId: result.runId, issueId: result.issueId };
     }
-    throw new Error(result.message ?? "Retry was skipped.");
+    throw new Error(result.message ?? l10n("local.retry_was_skipped_10300701"));
   },
   loginWithClaude: (id: string, companyId?: string) =>
     api.post<ClaudeLoginResult>(agentPath(id, companyId, "/claude-login"), {}),

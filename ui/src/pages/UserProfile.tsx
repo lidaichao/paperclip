@@ -41,7 +41,7 @@ function membershipLabel(value: string | null | undefined): string {
 }
 
 function initials(name: string | null | undefined) {
-  const value = name?.trim() || "User";
+  const value = name?.trim() || l10n("local.user_b512d97e");
   const parts = value.split(/\s+/).filter(Boolean);
   if (parts.length > 1) return `${parts[0]?.[0] ?? ""}${parts[parts.length - 1]?.[0] ?? ""}`.toUpperCase();
   return value.slice(0, 2).toUpperCase();
@@ -226,7 +226,7 @@ export function UserProfile() {
 
   const allTime = data?.stats.find((entry) => entry.key === "all");
   const last7 = data?.stats.find((entry) => entry.key === "last7");
-  const displayName = data?.user.name?.trim() || data?.user.email?.split("@")[0] || "User";
+  const displayName = data?.user.name?.trim() || data?.user.email?.split("@")[0] || l10n("local.user_b512d97e");
 
   const agentUsageRows = useMemo<UsageRow[]>(
     () =>

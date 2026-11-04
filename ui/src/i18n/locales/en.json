@@ -12894,6 +12894,7 @@
     "start_date_must_be_before_end_date_10300697": "Start date must be before end date.",
     "folder_name_is_required_10300698": "Folder name is required.",
     "folder_name_cannot_contain_slashes_10300699": "Folder name cannot contain slashes.",
-    "resolve_the_blocker_to_continue_10300700": "Resolve the blocker to continue."
+    "resolve_the_blocker_to_continue_10300700": "Resolve the blocker to continue.",
+    "retry_was_skipped_10300701": "Retry was skipped."
   }
 }

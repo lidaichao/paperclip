@@ -25,5 +25,5 @@ export function isGatewayTabKey(value: string | undefined): value is GatewayTabK
 }
 
 export function gatewayTabLabel(tabKey: GatewayTabKey): string {
-  return GATEWAY_TABS.find((tab) => tab.key === tabKey)?.label ?? "Overview";
+  return GATEWAY_TABS.find((tab) => tab.key === tabKey)?.label ?? l10n("local.overview_d4b1ea57");
 }

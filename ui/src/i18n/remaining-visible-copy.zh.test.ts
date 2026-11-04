@@ -888,6 +888,7 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.folder_name_is_required_10300698).toContain("文件夹名称不能为空");
     expect(messages.folder_name_cannot_contain_slashes_10300699).toContain("不能包含斜杠");
     expect(messages.resolve_the_blocker_to_continue_10300700).toContain("解决阻塞问题");
+    expect(messages.retry_was_skipped_10300701).toBe("已跳过重试。");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

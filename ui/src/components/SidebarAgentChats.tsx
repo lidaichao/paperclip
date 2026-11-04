@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { l10n } from "../i18n";
 import { agentsApi } from "@/api/agents";
 import { authApi } from "@/api/auth";
 import { useCompany } from "@/context/CompanyContext";
@@ -61,7 +62,7 @@ function CompanyAgentChats({ companyId, userId }: { companyId: string | null; us
           mutation.mutate({
             resourceType: "agent",
             resourceId: id,
-            resourceName: agents.find((agent) => agent.id === id)?.name ?? "Agent",
+            resourceName: agents.find((agent) => agent.id === id)?.name ?? l10n("local.agent_11b39c93"),
             starred: !stars.includes(id),
           });
         }}

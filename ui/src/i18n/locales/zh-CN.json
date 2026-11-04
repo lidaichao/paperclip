@@ -12894,6 +12894,7 @@
     "start_date_must_be_before_end_date_10300697": "开始日期必须早于结束日期。",
     "folder_name_is_required_10300698": "文件夹名称不能为空。",
     "folder_name_cannot_contain_slashes_10300699": "文件夹名称不能包含斜杠。",
-    "resolve_the_blocker_to_continue_10300700": "请先解决阻塞问题再继续。"
+    "resolve_the_blocker_to_continue_10300700": "请先解决阻塞问题再继续。",
+    "retry_was_skipped_10300701": "已跳过重试。"
   }
 }
