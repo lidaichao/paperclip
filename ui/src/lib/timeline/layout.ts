@@ -19,6 +19,7 @@ import type {
   WorkTimelineResult,
   WorkTimelineSpan,
 } from "@paperclipai/shared";
+import { l10n } from "../../i18n";
 
 export interface LayoutOptions {
   /** px per minute along the x axis (set by the zoom level). */
@@ -409,7 +410,19 @@ export function chooseTickStepMs(pxPerMinute: number): number {
 
 export function formatDuration(startMs: number, endMs: number): string {
   const mins = Math.max(0, Math.round((endMs - startMs) / 60000));
-  if (mins >= 1440) return `${Math.floor(mins / 1440)}d ${Math.floor((mins % 1440) / 60)}h`;
-  if (mins >= 60) return `${Math.floor(mins / 60)}h ${mins % 60}m`;
-  return `${mins}m`;
+  if (mins >= 1440) {
+    const days = Math.floor(mins / 1440);
+    const hours = Math.floor((mins % 1440) / 60);
+    return hours > 0
+      ? l10n("local.duration_days_hours_10301468", { v0: days, v1: hours })
+      : l10n("local.duration_days_10301471", { v0: days });
+  }
+  if (mins >= 60) {
+    const hours = Math.floor(mins / 60);
+    const minutes = mins % 60;
+    return minutes > 0
+      ? l10n("local.duration_hours_minutes_10301467", { v0: hours, v1: minutes })
+      : l10n("local.duration_hours_10301470", { v0: hours });
+  }
+  return l10n("local.duration_minutes_10301466", { v0: mins });
 }

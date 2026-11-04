@@ -13661,6 +13661,10 @@
     "duration_minutes_10301466": "{{v0}}m",
     "duration_hours_minutes_10301467": "{{v0}}h {{v1}}m",
     "duration_days_hours_10301468": "{{v0}}d {{v1}}h",
-    "duration_minutes_seconds_10301469": "{{v0}}m {{v1}}s"
+    "duration_minutes_seconds_10301469": "{{v0}}m {{v1}}s",
+    "duration_hours_10301470": "{{v0}}h",
+    "duration_days_10301471": "{{v0}}d",
+    "duration_weeks_10301472": "{{v0}}wk",
+    "timeline_visible_range_10301473": "{{v0}} visible"
   }
 }

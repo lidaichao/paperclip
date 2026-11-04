@@ -121,12 +121,14 @@ export function formatCleanupOutcome(outcome: string): string {
 export function formatSilenceAgeMs(ms: number | null | undefined): string | null {
   if (!ms || ms <= 0) return null;
   const totalMinutes = Math.floor(ms / 60_000);
-  if (totalMinutes < 1) return "under 1 minute";
-  if (totalMinutes < 60) return `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
+  if (totalMinutes < 1) return l10n("local.under_one_minute_10301405");
+  if (totalMinutes < 60) {
+    return l10n("local.duration_minutes_10301466", { v0: totalMinutes });
+  }
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  if (minutes === 0) return `${hours} hour${hours === 1 ? "" : "s"}`;
-  return `${hours}h ${minutes}m`;
+  if (minutes === 0) return l10n("local.duration_hours_10301470", { v0: hours });
+  return l10n("local.duration_hours_minutes_10301467", { v0: hours, v1: minutes });
 }
 
 export function shortenEvidenceId(id: string): string {

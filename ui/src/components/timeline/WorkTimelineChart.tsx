@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { displayLocale } from "../../i18n/display";
 import { agentAvatarUrl } from "@/lib/agent-avatar-url";
 import { resolveAgentAppearance } from "@paperclipai/shared";
 /**
@@ -122,16 +123,15 @@ interface DragSelectionState {
 function fmtClock(ms: number): string {
   const d = new Date(ms);
   const hasMinutes = d.getMinutes() !== 0;
-  return d.toLocaleTimeString("en-US", {
+  return d.toLocaleTimeString(displayLocale(), {
     hour: "numeric",
     minute: hasMinutes ? "2-digit" : undefined,
-    hour12: true,
   });
 }
 
 function fmtTick(ms: number, stepMs: number): string {
   const d = new Date(ms);
-  const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const date = d.toLocaleDateString(displayLocale(), { month: "short", day: "numeric" });
   if (stepMs >= 24 * 60 * 60 * 1000) {
     return date;
   }
@@ -142,23 +142,15 @@ export function formatVisibleDurationMinutes(minutes: number): string {
   const rounded = Math.max(1, Math.round(minutes));
   if (rounded >= 7 * 24 * 60 && rounded % (7 * 24 * 60) === 0) {
     const weeks = rounded / (7 * 24 * 60);
-    return `${weeks} week${weeks === 1 ? "" : "s"} visible`;
+    return l10n("local.timeline_visible_range_10301473", {
+      v0: l10n("local.duration_weeks_10301472", {
+        v0: weeks,
+      }),
+    });
   }
-  if (rounded >= 24 * 60 && rounded % (24 * 60) === 0) {
-    const days = rounded / (24 * 60);
-    return `${days} day${days === 1 ? "" : "s"} visible`;
-  }
-  if (rounded >= 24 * 60) {
-    const days = Math.floor(rounded / (24 * 60));
-    const hours = Math.round((rounded % (24 * 60)) / 60);
-    return `${days}d${hours > 0 ? ` ${hours}h` : ""} visible`;
-  }
-  if (rounded >= 60 && rounded % 60 === 0) {
-    const hours = rounded / 60;
-    return `${hours} hour${hours === 1 ? "" : "s"} visible`;
-  }
-  if (rounded >= 60) return `${Math.floor(rounded / 60)}h ${rounded % 60}m visible`;
-  return `${rounded} minutes visible`;
+  return l10n("local.timeline_visible_range_10301473", {
+    v0: formatDuration(0, rounded * 60_000),
+  });
 }
 
 function truncate(text: string, n = 42): string {
