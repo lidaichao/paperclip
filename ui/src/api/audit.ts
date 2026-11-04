@@ -1,5 +1,5 @@
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
-import { api } from "./client";
+import { api, createApiError } from "./client";
 
 /**
  * Agent audit API client.
@@ -114,7 +114,7 @@ export const auditApi = {
       const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, body);
       if (recovery) return recovery;
       const message = (body as { error?: string } | null)?.error ?? `Export failed: ${res.status}`;
-      throw new Error(message);
+      throw createApiError(message, res.status, body);
     }
     return res.blob();
   },

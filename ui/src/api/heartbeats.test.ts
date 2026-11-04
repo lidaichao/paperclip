@@ -4,19 +4,22 @@ const mockApi = vi.hoisted(() => ({
   get: vi.fn(),
 }));
 
-vi.mock("./client", () => ({
-  api: mockApi,
-}));
+vi.mock("./client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./client")>();
+  return { ...actual, api: mockApi };
+});
 
 import { heartbeatsApi } from "./heartbeats";
 import {
   createTenantSessionRecoveryCoordinator,
   tenantSessionRecovery,
 } from "@/lib/tenant-session-recovery";
+import { i18n } from "../i18n";
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  await i18n.changeLanguage("en");
 });
 
 describe("heartbeatsApi.list", () => {
@@ -79,5 +82,21 @@ describe("heartbeatsApi.downloadProviderTrace", () => {
     );
     await Promise.resolve();
     expect(settled).toBe(false);
+  });
+
+  it("localizes a direct trace download failure", async () => {
+    await i18n.changeLanguage("zh-CN");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: "Trace archive unavailable" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+    ));
+
+    await expect(heartbeatsApi.downloadProviderTrace("run-1")).rejects.toMatchObject({
+      message: "服务器发生错误，请稍后重试。",
+      rawMessage: "Trace archive unavailable",
+      status: 503,
+    });
   });
 });

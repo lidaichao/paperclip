@@ -18,6 +18,10 @@ export class ApiError extends Error {
   }
 }
 
+export function createApiError(rawMessage: string, status: number, body: unknown): ApiError {
+  return new ApiError(localizeApiErrorMessage(rawMessage, status), status, body, rawMessage);
+}
+
 export interface RequestOptions {
   /** Abort signal wired through to `fetch` and coalescing (per-caller). */
   signal?: AbortSignal;
@@ -63,12 +67,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, errorBody);
     if (recovery) return recovery;
     const rawMessage = (errorBody as { error?: string } | null)?.error ?? `Request failed: ${res.status}`;
-    throw new ApiError(
-      localizeApiErrorMessage(rawMessage, res.status),
-      res.status,
-      errorBody,
-      rawMessage,
-    );
+    throw createApiError(rawMessage, res.status, errorBody);
   }
   if (res.status === 204) return undefined as T;
   return res.json();

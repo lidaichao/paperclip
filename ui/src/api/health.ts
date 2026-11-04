@@ -1,5 +1,6 @@
 import type { ServerInfoSnapshot } from "@paperclipai/shared";
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
+import { createApiError } from "./client";
 
 export type DevServerHealthStatus = {
   enabled: true;
@@ -55,7 +56,7 @@ export const healthApi = {
       const payload = await res.json().catch(() => null) as { error?: string } | null;
       const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, payload);
       if (recovery) return recovery;
-      throw new Error(payload?.error ?? `Failed to load health (${res.status})`);
+      throw createApiError(payload?.error ?? `Failed to load health (${res.status})`, res.status, payload);
     }
     return res.json();
   },
@@ -69,7 +70,7 @@ export const healthApi = {
       const payload = await res.json().catch(() => null) as { error?: string } | null;
       const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, payload);
       if (recovery) return recovery;
-      throw new Error(payload?.error ?? `Failed to request restart (${res.status})`);
+      throw createApiError(payload?.error ?? `Failed to request restart (${res.status})`, res.status, payload);
     }
   },
 };

@@ -3,11 +3,13 @@ import {
   createTenantSessionRecoveryCoordinator,
   tenantSessionRecovery,
 } from "@/lib/tenant-session-recovery";
+import { i18n } from "../i18n";
 import { healthApi } from "./health";
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  await i18n.changeLanguage("en");
 });
 
 describe("healthApi", () => {
@@ -33,5 +35,21 @@ describe("healthApi", () => {
     );
     await Promise.resolve();
     expect(settled).toBe(false);
+  });
+
+  it("localizes a direct health failure", async () => {
+    await i18n.changeLanguage("zh-CN");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: "Health probe unavailable" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+    ));
+
+    await expect(healthApi.get()).rejects.toMatchObject({
+      message: "服务器发生错误，请稍后重试。",
+      rawMessage: "Health probe unavailable",
+      status: 503,
+    });
   });
 });

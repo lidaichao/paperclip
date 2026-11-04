@@ -8,7 +8,7 @@ import type {
   ProviderTraceMetadata,
 } from "@paperclipai/shared";
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
-import { api, type RequestOptions } from "./client";
+import { api, createApiError, type RequestOptions } from "./client";
 
 export interface RunLivenessFields {
   livenessState: HeartbeatRun["livenessState"];
@@ -182,8 +182,10 @@ export const heartbeatsApi = {
       } | null;
       const recovery = tenantSessionRecovery.recoverIfNeeded(response.status, body);
       if (recovery) return recovery;
-      throw new Error(
+      throw createApiError(
         body?.error ?? `Trace download failed: ${response.status}`,
+        response.status,
+        body,
       );
     }
     return response.blob();
