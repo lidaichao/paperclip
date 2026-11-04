@@ -138,7 +138,7 @@ export function arbitrateNativeStatus(input: {
           kind: "record_finalization_error",
           cause: "workspace_finalization_failed",
           nextAction:
-            "Repair and re-run workspace finalization for the persisted native result.",
+            "修复并重新执行持久化原生运行结果的工作区收尾。",
           agentId: input.agentId,
         },
       ],
@@ -154,7 +154,7 @@ export function arbitrateNativeStatus(input: {
         { kind: "release_checkout" },
         ...(input.nativeReviewOutcome === "pending" ? [{
           kind: "record_recovery" as const, cause: "native_review_unresolved",
-          nextAction: "The named reviewer must resolve the pending completion review or explain the concrete blocker. Do not restart the worker's assignment or create another review request.",
+          nextAction: "指定评审人必须处理待完成评审，或说明具体阻碍。不要重启执行者的任务，也不要再创建评审请求。",
           agentId: input.agentId,
         }] : []),
       ],
@@ -182,7 +182,7 @@ export function arbitrateNativeStatus(input: {
           kind: "schedule_retry",
           cause: "native_run_failed",
           summary:
-            "Resume the persisted native run without opening a second provider session.",
+            "恢复持久化原生运行，不要开启第二个提供方会话。",
           agentId: input.agentId,
         },
       ],
@@ -262,7 +262,7 @@ export function arbitrateNativeStatus(input: {
         owner,
         action:
           input.assessment.blocker?.unblockAction ??
-          "Wait for the issue's durable dependency blockers to complete.",
+          "等待任务的持久依赖阻碍全部完成。",
       },
       // Dependency completion owns the wake. Do not immediately rerun the
       // blocked issue merely because the provider mislabeled its scope/status.
@@ -467,7 +467,7 @@ export function arbitrateNativeStatus(input: {
           kind: "record_finalization_error",
           cause: "completion_evidence_incomplete",
           nextAction:
-            "Bind a durable continuation or a named recovery owner before changing issue status.",
+            "更改任务状态前，请绑定持久续办路径或指定恢复负责人。",
           agentId: input.agentId,
         },
       ],
@@ -484,7 +484,7 @@ export function arbitrateNativeStatus(input: {
         kind: "enqueue_continuation",
         continuationKind: "same_agent",
         summary:
-          "Finish the remaining work and report done, or explicitly request a named reviewer decision. Waiting for checks or an incomplete completion report does not require human approval.",
+          "完成剩余工作并报告 done，或明确请求指定评审人作出决定。等待检查或提交不完整完成报告均不需要人工审批。",
         idempotencyKey: "native-completion-incomplete",
         agentId: input.agentId,
       },
