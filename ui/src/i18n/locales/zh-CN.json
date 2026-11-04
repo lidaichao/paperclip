@@ -13455,6 +13455,9 @@
     "stage_requested_changes_by_10301260": "{{v0}}要求修改 · {{v1}}",
     "stage_requested_changes_10301261": "{{v0}}要求修改",
     "stage_pending_with_10301262": "{{v0}}等待处理 · {{v1}}",
-    "stage_pending_10301263": "{{v0}}等待处理"
+    "stage_pending_10301263": "{{v0}}等待处理",
+    "trace_rerun_skipped_10301264": "已跳过轨迹重新运行。",
+    "rich_editor_failed_to_load_content_10301265": "富文本编辑器加载内容失败。",
+    "no_image_upload_handler_10301266": "当前没有可用的图片上传处理程序。"
   }
 }

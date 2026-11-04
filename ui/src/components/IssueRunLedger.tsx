@@ -540,7 +540,7 @@ export function IssueRunLedger({
         companyId,
       );
       if (!("id" in result))
-        throw new Error(result.message ?? "Trace re-run was skipped.");
+        throw new Error(result.message ?? l10n("local.trace_rerun_skipped_10301264"));
       return result;
     },
     onSuccess: () => {
