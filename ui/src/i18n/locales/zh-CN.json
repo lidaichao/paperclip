@@ -13484,6 +13484,12 @@
     "terminal_connection_failed_10301289": "终端连接失败。",
     "terminal_session_could_not_open_10301290": "无法打开终端会话。",
     "provider_no_interactive_template_setup_10301291": "此提供方不支持交互式模板设置。",
-    "provider_setup_capture_unavailable_10301292": "此提供方支持设置，但当前无法捕获安装镜像。"
+    "provider_setup_capture_unavailable_10301292": "此提供方支持设置，但当前无法捕获安装镜像。",
+    "work_starts_when_workspace_available_10301293": "工作区可用后将自动开始工作。",
+    "agent_resumes_value_10301294": "智能体将在{{v0}}恢复",
+    "waiting_monitor_resumes_value_10301295": "等待监控 · 将在{{v0}}恢复",
+    "agent_retry_value_10301296": "智能体重试{{v0}}",
+    "waiting_monitor_value_10301297": "等待监控 · {{v0}}",
+    "fires_on_next_tick_10301298": "将在下次轮询时触发"
   }
 }

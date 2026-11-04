@@ -72,10 +72,10 @@ export function buildMonitorSurfaceCopy(
 
   if (derived.source === "scheduled-retry" && scheduledRetryReason === "workspace_busy") {
     return {
-      bannerTitle: "Waiting for workspace",
-      stripTitle: "Waiting for workspace",
-      bannerMeta: ["Another task is using this workspace. Work starts automatically when it is available."],
-      stripMeta: ["Work starts automatically when the workspace is available."],
+      bannerTitle: l10n("local.waiting_for_workspace_e682cb09"),
+      stripTitle: l10n("local.waiting_for_workspace_e682cb09"),
+      bannerMeta: [l10n("local.another_task_is_using_this_workspace_work_sta_db345acc")],
+      stripMeta: [l10n("local.work_starts_when_workspace_available_10301293")],
       tone: "info",
       workspaceWait: true,
     };
@@ -92,7 +92,9 @@ export function buildMonitorSurfaceCopy(
   switch (derived.state) {
     case "scheduled":
     case "retrying":
-      bannerTitle = isScheduledRetryOnly ? `Agent resumes ${shownEta}` : `Waiting on monitor — resumes ${shownEta}`;
+      bannerTitle = isScheduledRetryOnly
+        ? l10n("local.agent_resumes_value_10301294", { v0: shownEta })
+        : l10n("local.waiting_monitor_resumes_value_10301295", { v0: shownEta });
       stripTitle = l10n("local.manual_monitor_resumes", { v0: shownEta });
       break;
     case "due-now":
@@ -102,9 +104,11 @@ export function buildMonitorSurfaceCopy(
       break;
     case "overdue":
     default:
-      bannerTitle = isScheduledRetryOnly ? `Agent retry ${shownEta}` : `Waiting on monitor — ${shownEta}`;
+      bannerTitle = isScheduledRetryOnly
+        ? l10n("local.agent_retry_value_10301296", { v0: shownEta })
+        : l10n("local.waiting_monitor_value_10301297", { v0: shownEta });
       stripTitle = capitalize(shownEta);
-      statusHint = "Fires on next tick";
+      statusHint = l10n("local.fires_on_next_tick_10301298");
       break;
   }
 

@@ -13484,6 +13484,12 @@
     "terminal_connection_failed_10301289": "Terminal connection failed.",
     "terminal_session_could_not_open_10301290": "Terminal session could not be opened.",
     "provider_no_interactive_template_setup_10301291": "This provider does not advertise interactive template setup.",
-    "provider_setup_capture_unavailable_10301292": "This provider advertises setup, but image capture is unavailable."
+    "provider_setup_capture_unavailable_10301292": "This provider advertises setup, but image capture is unavailable.",
+    "work_starts_when_workspace_available_10301293": "Work starts automatically when the workspace is available.",
+    "agent_resumes_value_10301294": "Agent resumes {{v0}}",
+    "waiting_monitor_resumes_value_10301295": "Waiting on monitor — resumes {{v0}}",
+    "agent_retry_value_10301296": "Agent retry {{v0}}",
+    "waiting_monitor_value_10301297": "Waiting on monitor — {{v0}}",
+    "fires_on_next_tick_10301298": "Fires on next tick"
   }
 }
