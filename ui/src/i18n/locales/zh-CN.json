@@ -13377,6 +13377,7 @@
     "api_invalid_json_body_10301182": "请求内容不是有效的 JSON。",
     "api_method_not_supported_10301183": "当前操作不受支持。",
     "api_invalid_gateway_payload_10301184": "网关请求内容无效。",
-    "api_invalid_audit_cursor_10301185": "审计分页位置无效，请刷新后重试。"
+    "api_invalid_audit_cursor_10301185": "审计分页位置无效，请刷新后重试。",
+    "organizations_created_in_alice_cloud_unreachable_10301186": "组织需要在 Alice Cloud 中创建。当前实例暂时无法连接，请从 Cloud 工作台重试。"
   }
 }

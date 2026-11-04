@@ -593,7 +593,7 @@ export function OnboardingRoutePage() {
             <p className="text-sm text-muted-foreground">
               {t("app.cloudCreateUnavailable", {
                 defaultValue:
-                  "Organizations are created in Paperclip Cloud. This instance can't reach it right now — try again from your Cloud portfolio.",
+                  l10n("local.organizations_created_in_alice_cloud_unreachable_10301186"),
               })}
             </p>
           ) : (
@@ -722,7 +722,7 @@ function NoCompaniesStartPage() {
             <p className="text-sm text-muted-foreground">
               {t("app.cloudCreateUnavailable", {
                 defaultValue:
-                  "Organizations are created in Paperclip Cloud. This instance can't reach it right now — try again from your Cloud portfolio.",
+                  l10n("local.organizations_created_in_alice_cloud_unreachable_10301186"),
               })}
             </p>
           ) : (
