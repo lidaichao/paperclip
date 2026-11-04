@@ -12875,6 +12875,8 @@
     "base_ref_live_branch_10300678": "- Base ref (live branch): `{{v0}}`",
     "recorded_branch_10300679": "- Recorded branch: `{{v0}}`",
     "reissue_isolated_title_10300680": "Re-issue (isolated): {{v0}}",
-    "field_number_10300681": "field {{v0}}"
+    "field_number_10300681": "field {{v0}}",
+    "join_invite_context_10300682": "{{v0}} join invite",
+    "join_invite_default_role_10300683": "{{v0}} join invite • default role {{v1}}"
   }
 }

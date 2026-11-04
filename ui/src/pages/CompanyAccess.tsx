@@ -27,6 +27,7 @@ import { useCompany } from "@/context/CompanyContext";
 import { useToast } from "@/context/ToastContext";
 import { Link, Navigate, useSearchParams } from "@/lib/router";
 import { queryKeys } from "@/lib/queryKeys";
+import { formatJoinInviteContext } from "@/lib/join-invite-labels";
 import { usePluginSlots } from "@/plugins/slots";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PageTabBar } from "@/components/PageTabBar";
@@ -316,7 +317,7 @@ export function CompanyAccess() {
                   }
                   context={
                     request.invite
-                      ? `${request.invite.allowedJoinTypes} join invite${request.invite.humanRole ? ` • default role ${request.invite.humanRole}` : ""}`
+                      ? formatJoinInviteContext(request.invite)
                       : l10n("local.invite_metadata_unavailable_1ba4d74c")
                   }
                   detail={l10n("local.submitted_value_9640439c", {v0: (new Date(request.createdAt).toLocaleString())})}

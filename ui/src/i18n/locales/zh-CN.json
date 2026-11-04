@@ -12875,6 +12875,8 @@
     "base_ref_live_branch_10300678": "- 基准引用（当前分支）：`{{v0}}`",
     "recorded_branch_10300679": "- 已记录分支：`{{v0}}`",
     "reissue_isolated_title_10300680": "重新创建（独立工作区）：{{v0}}",
-    "field_number_10300681": "字段 {{v0}}"
+    "field_number_10300681": "字段 {{v0}}",
+    "join_invite_context_10300682": "{{v0}}加入邀请",
+    "join_invite_default_role_10300683": "{{v0}}加入邀请 • 默认角色：{{v1}}"
   }
 }

@@ -11,6 +11,7 @@ import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { formatJoinInviteContext } from "@/lib/join-invite-labels";
 
 export function JoinRequestQueue() {
   const { selectedCompany, selectedCompanyId } = useCompany();
@@ -169,7 +170,7 @@ export function JoinRequestQueue() {
                   <div className="text-xs font-medium uppercase tracking-wide">{l10n("local.invite_context_b13541ba")}</div>
                   <div className="mt-2">
                     {request.invite
-                      ? l10n("local.value_join_invitevalue_08f022e5", {v0: (request.invite.allowedJoinTypes), v1: (request.invite.humanRole ? ` • default role ${request.invite.humanRole}` : "")})
+                      ? formatJoinInviteContext(request.invite)
                       : l10n("local.invite_metadata_unavailable_1ba4d74c")}
                   </div>
                   {request.invite?.inviteMessage ? (
