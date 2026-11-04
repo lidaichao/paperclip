@@ -177,6 +177,7 @@ import { timeAgo } from "../lib/timeAgo";
 import {
   isSuccessfulRunHandoffComment,
   isSuccessfulRunHandoffEscalationComment,
+  successfulRunHandoffCommentDisplay,
 } from "../lib/successful-run-handoff";
 import {
   SystemNotice,
@@ -1082,6 +1083,7 @@ export function SuccessfulRunHandoffCommentCallout({
   onImageClick?: (src: string) => void;
 }) {
   const escalated = isSuccessfulRunHandoffEscalationComment(text);
+  const displayText = successfulRunHandoffCommentDisplay(text);
   return (
     <div
       className={cn(
@@ -1106,7 +1108,7 @@ export function SuccessfulRunHandoffCommentCallout({
           softBreaks
           onImageClick={onImageClick}
         >
-          {text}
+          {displayText}
         </MarkdownBody>
       </div>
     </div>

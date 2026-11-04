@@ -7,6 +7,7 @@ import {
   SUCCESSFUL_RUN_HANDOFF_RESOLVED_ACTION,
   isSuccessfulRunHandoffComment,
   isSuccessfulRunHandoffEscalationComment,
+  successfulRunHandoffCommentDisplay,
   successfulRunHandoffActivityTone,
 } from "./successful-run-handoff";
 
@@ -33,5 +34,11 @@ describe("successful run handoff UI helpers", () => {
     expect(successfulRunHandoffActivityTone(SUCCESSFUL_RUN_HANDOFF_REQUIRED_ACTION).className).toContain("amber");
     expect(successfulRunHandoffActivityTone(SUCCESSFUL_RUN_HANDOFF_ESCALATED_ACTION).className).toContain("red");
     expect(successfulRunHandoffActivityTone(SUCCESSFUL_RUN_HANDOFF_RESOLVED_ACTION).className).toContain("border");
+  });
+
+  it("uses Alice display copy for canonical server notices", () => {
+    expect(successfulRunHandoffCommentDisplay(SUCCESSFUL_RUN_HANDOFF_REQUIRED_NOTICE_BODY)).toContain("Alice");
+    expect(successfulRunHandoffCommentDisplay(SUCCESSFUL_RUN_HANDOFF_EXHAUSTED_NOTICE_BODY)).toContain("Alice");
+    expect(successfulRunHandoffCommentDisplay("Ordinary issue comment")).toBe("Ordinary issue comment");
   });
 });

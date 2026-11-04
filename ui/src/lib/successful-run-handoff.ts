@@ -1,3 +1,4 @@
+import { l10n } from "../i18n";
 import type { ActivityEvent, Issue, SuccessfulRunHandoffState } from "@paperclipai/shared";
 
 export const SUCCESSFUL_RUN_HANDOFF_REQUIRED_ACTION = "issue.successful_run_handoff_required";
@@ -78,6 +79,17 @@ export function isSuccessfulRunHandoffEscalationComment(text: string) {
   const trimmed = text.trim();
   return trimmed === SUCCESSFUL_RUN_HANDOFF_EXHAUSTED_NOTICE_BODY
     || /^Paperclip exhausted the bounded successful-run handoff correction\b/i.test(trimmed);
+}
+
+export function successfulRunHandoffCommentDisplay(text: string) {
+  const trimmed = text.trim();
+  if (trimmed === SUCCESSFUL_RUN_HANDOFF_REQUIRED_NOTICE_BODY) {
+    return l10n("local.alice_needs_disposition_10300792");
+  }
+  if (trimmed === SUCCESSFUL_RUN_HANDOFF_EXHAUSTED_NOTICE_BODY) {
+    return l10n("local.paperclip_could_not_resolve_this_issue_s_miss_c1bc4a74");
+  }
+  return text;
 }
 
 export function successfulRunHandoffActivityTone(action: string) {
