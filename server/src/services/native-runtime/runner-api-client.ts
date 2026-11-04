@@ -10,7 +10,7 @@ const fileSchema = z.object({
   field: z.string().min(1).max(200).optional(),
   artifactId: z.string().min(1).optional(),
   path: z.string().min(1).max(1000).optional(),
-}).strict().refine((file) => Boolean(file.artifactId) !== Boolean(file.path), "Specify exactly one artifactId or workspace path");
+}).strict().refine((file) => Boolean(file.artifactId) !== Boolean(file.path), "必须且只能指定一个 artifactId 或工作区路径");
 export const runnerApiCallSchema = z.object({
   operationId: z.string().min(1).max(500),
   pathParams: z.record(z.string().max(200), z.string().max(1000)).optional(),
@@ -40,14 +40,14 @@ export interface RunnerApiIo {
 
 export function validateRunnerApiCall(value: unknown, context: RunnerApiContext): { input: RunnerApiCall; operation: RunnerApiOperation } {
   const parsed = runnerApiCallSchema.safeParse(value);
-  if (!parsed.success) throw badRequest("Invalid call_api arguments", { issues: parsed.error.issues });
+  if (!parsed.success) throw badRequest("call_api 参数无效", { issues: parsed.error.issues });
   const input = parsed.data;
   const operation = runnerApiOperation(input.operationId);
-  if (operation.transport !== "rest") throw unprocessable("This endpoint requires its existing protocol client; call_api supports REST only");
+  if (operation.transport !== "rest") throw unprocessable("此端点必须使用现有协议客户端；call_api 仅支持 REST");
   const restriction = runnerApiRestriction(operation.method, operation.path);
   if (restriction) throw forbidden(restriction);
-  if (!operation.allowedModes.includes(context.workMode)) throw forbidden("call_api permits only reads in Ask and Plan modes; use the permitted dedicated tools");
-  if (input.pathParams?.companyId && input.pathParams.companyId !== context.companyId) throw forbidden("API call belongs to another company");
+  if (!operation.allowedModes.includes(context.workMode)) throw forbidden("在询问和规划模式下，call_api 仅允许读取；请使用获准的专用工具");
+  if (input.pathParams?.companyId && input.pathParams.companyId !== context.companyId) throw forbidden("API 调用属于其他公司");
   const mutation = !["GET", "HEAD", "OPTIONS"].includes(operation.method);
   if (mutation) {
     const issueRoute = /^\/api\/issues\/\{[^}]+\}/.test(operation.path);
@@ -57,32 +57,32 @@ export function validateRunnerApiCall(value: unknown, context: RunnerApiContext)
     const guardedBody = /^\/api\/(issues|agents)\/\{[^}]+\}$/.test(operation.path)
       || (issueRoute && /\/comments$/.test(operation.path));
     if (guardedBody && (input.files?.length || (input.body !== undefined && (!input.body || typeof input.body !== "object" || Array.isArray(input.body))))) {
-      throw forbidden("Lifecycle-sensitive API updates require an inline JSON object");
+      throw forbidden("涉及生命周期的 API 更新必须使用内联 JSON 对象");
     }
     if (/^\/api\/agents\/\{[^}]+\}$/.test(operation.path) && ["status", "runtimeState"].some(key => Object.hasOwn(body, key))) {
-      throw forbidden("API agent updates cannot bypass runner execution-control authority");
+      throw forbidden("通过 API 更新智能体时，不能绕过运行器的执行控制权限");
     }
     if (issueRoute && /\/comments$/.test(operation.path) && ["reopen", "resume", "interrupt"].some(key => body[key] === true)) {
-      throw forbidden("API comments cannot change runner execution state");
+      throw forbidden("API 评论不能更改运行器执行状态");
     }
     if (issueRoute && /\/issues\/\{[^}]+\}$/.test(operation.path)) {
       const lifecycle = ["status", "workMode", "executionRunId", "checkoutRunId", "executionState", "executionPolicy", "executionAgentNameKey", "executionLockedAt", "completedAt", "cancelledAt", "startedAt", "assigneeAgentId", "assigneeUserId", "blockedByIssueIds", "reopen", "resume", "interrupt"];
-      if (lifecycle.some((key) => Object.hasOwn(body, key))) throw forbidden("Use dedicated completion, review, delegation or dependency tools for task lifecycle changes");
+      if (lifecycle.some((key) => Object.hasOwn(body, key))) throw forbidden("任务生命周期变更请使用专用的完成、评审、委派或依赖工具");
       // The real issue router normalizes identifiers and PostgreSQL accepts
       // uppercase UUIDs. Apply the same identity comparison before dispatch.
       const target = Object.values(input.pathParams ?? {}).map(id => id.trim().toLowerCase());
       const activeIds = [context.issueId, context.issueIdentifier].filter((id): id is string => Boolean(id)).map(id => id.toLowerCase());
-      if (operation.method === "DELETE" && target.some(id => activeIds.includes(id))) throw forbidden("The active runner task cannot delete itself");
+      if (operation.method === "DELETE" && target.some(id => activeIds.includes(id))) throw forbidden("当前运行器任务不能删除自己");
     }
   }
   const contentType = (input.contentType ?? "application/json").split(";", 1)[0].trim().toLowerCase();
   if (input.body !== undefined && !input.files?.length) {
     const requestSchema = operation.requestBody?.content?.[contentType]?.schema as { type?: string } | undefined;
     if (contentType.includes("json") && requestSchema?.type === "object" && (!input.body || typeof input.body !== "object" || Array.isArray(input.body))) {
-      throw badRequest("This operation requires body to be a JSON object. Pass the object directly, not a JSON-encoded string.");
+      throw badRequest("此操作要求请求体为 JSON 对象。请直接传入对象，不要传入经过 JSON 编码的字符串。");
     }
     if (contentType.includes("json") && requestSchema?.type === "array" && !Array.isArray(input.body)) {
-      throw badRequest("This operation requires body to be a JSON array. Pass the array directly, not a JSON-encoded string.");
+      throw badRequest("此操作要求请求体为 JSON 数组。请直接传入数组，不要传入经过 JSON 编码的字符串。");
     }
   }
   return { input, operation };
@@ -90,34 +90,34 @@ export function validateRunnerApiCall(value: unknown, context: RunnerApiContext)
 
 export function runnerApiUrl(operation: RunnerApiOperation, input: RunnerApiCall, context: RunnerApiContext, apiUrl: string): URL {
   const origin = new URL(apiUrl);
-  if (!["http:", "https:"].includes(origin.protocol) || origin.username || origin.password || origin.search || origin.hash) throw new Error("Invalid configured Paperclip API origin");
+  if (!["http:", "https:"].includes(origin.protocol) || origin.username || origin.password || origin.search || origin.hash) throw new Error("配置的 Alice API 来源地址无效");
   const params = { ...input.pathParams };
   if (operation.path.includes("{companyId}")) params.companyId ??= context.companyId;
   const names = [...operation.path.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
-  for (const name of Object.keys(params)) if (!names.includes(name)) throw badRequest(`Unknown path parameter: ${name}`);
+  for (const name of Object.keys(params)) if (!names.includes(name)) throw badRequest(`未知的路径参数：${name}`);
   const path = operation.path.replace(/\{([^}]+)\}/g, (_, name: string) => {
     const value = params[name];
-    if (!value || value === "." || value === ".." || /[\\/\x00-\x1f]/.test(value) || /%[0-9a-f]{2}/i.test(value)) throw badRequest(`Invalid or missing path parameter: ${name}`);
+    if (!value || value === "." || value === ".." || /[\\/\x00-\x1f]/.test(value) || /%[0-9a-f]{2}/i.test(value)) throw badRequest(`路径参数无效或缺失：${name}`);
     return encodeURIComponent(value);
   });
   const url = new URL(path, origin.origin);
-  if (url.origin !== origin.origin || !url.pathname.startsWith("/api/")) throw badRequest("Invalid API path");
+  if (url.origin !== origin.origin || !url.pathname.startsWith("/api/")) throw badRequest("API 路径无效");
   for (const [key, value] of Object.entries(input.query ?? {})) {
     if (value === undefined || value === null) continue;
     const parameter = operation.parameters.find((entry) => entry.in === "query" && entry.name === key);
     const values = Array.isArray(value) ? value : [value];
-    if (values.some((entry) => !["string", "number", "boolean"].includes(typeof entry))) throw badRequest(`Query parameter ${key} must contain scalar values`);
+    if (values.some((entry) => !["string", "number", "boolean"].includes(typeof entry))) throw badRequest(`查询参数 ${key} 只能包含标量值`);
     if (Array.isArray(value) && parameter?.explode === false) url.searchParams.set(key, values.join(","));
     else for (const entry of values) url.searchParams.append(key, String(entry));
   }
-  if (url.href.length > 16_384) throw badRequest("API URL exceeds the request limit");
+  if (url.href.length > 16_384) throw badRequest("API URL 超出请求长度上限");
   return url;
 }
 
 export async function readBoundedResponse(response: Response, maxBytes = RUNNER_API_MAX_BYTES): Promise<Buffer> {
   if (Number(response.headers.get("content-length")) > maxBytes) {
     await response.body?.cancel();
-    throw unprocessable("API response exceeds the transfer limit; narrow the request");
+    throw unprocessable("API 响应超出传输上限；请缩小请求范围");
   }
   const chunks: Uint8Array[] = [];
   let bytes = 0;
@@ -128,7 +128,7 @@ export async function readBoundedResponse(response: Response, maxBytes = RUNNER_
       const next = await reader.read();
       if (next.done) break;
       bytes += next.value.byteLength;
-      if (bytes > maxBytes) throw unprocessable("API response exceeds the transfer limit; narrow the request");
+      if (bytes > maxBytes) throw unprocessable("API 响应超出传输上限；请缩小请求范围");
       chunks.push(next.value);
     }
   } finally {
@@ -141,16 +141,16 @@ export async function readBoundedResponse(response: Response, maxBytes = RUNNER_
 export async function executeRunnerApi(input: RunnerApiCall, context: RunnerApiContext, io: RunnerApiIo) {
   const { operation } = validateRunnerApiCall(input, context);
   const url = runnerApiUrl(operation, input, context, io.apiUrl);
-  if (!io.token) throw new Error("Paperclip run authentication is unavailable");
+  if (!io.token) throw new Error("Alice 运行认证不可用");
   const headers = new Headers({ Authorization: `Bearer ${io.token}`, "X-Paperclip-Run-Id": context.runId });
   let body: BodyInit | undefined;
   const contentType = input.contentType ?? (input.files?.length ? "multipart/form-data" : "application/json");
-  if (/\r|\n/.test(contentType)) throw badRequest("Invalid content type");
+  if (/\r|\n/.test(contentType)) throw badRequest("内容类型无效");
   let totalBytes = 0;
   if (input.files?.length) {
-    if (["GET", "HEAD"].includes(operation.method)) throw badRequest("Read requests cannot upload files");
+    if (["GET", "HEAD"].includes(operation.method)) throw badRequest("读取请求不能上传文件");
     const form = new FormData();
-    if (input.body !== undefined && (!input.body || typeof input.body !== "object" || Array.isArray(input.body))) throw badRequest("Multipart body must be an object of form fields");
+    if (input.body !== undefined && (!input.body || typeof input.body !== "object" || Array.isArray(input.body))) throw badRequest("多部分请求体必须是由表单字段组成的对象");
     for (const [key, value] of Object.entries((input.body ?? {}) as Record<string, unknown>)) {
       const text = typeof value === "string" ? value : JSON.stringify(value);
       totalBytes += Buffer.byteLength(text);
@@ -159,20 +159,20 @@ export async function executeRunnerApi(input: RunnerApiCall, context: RunnerApiC
     for (const file of input.files) {
       const resolved = await io.readFile(file);
       totalBytes += resolved.bytes.length;
-      if (totalBytes > RUNNER_API_MAX_BYTES) throw badRequest("API upload exceeds the transfer limit");
+      if (totalBytes > RUNNER_API_MAX_BYTES) throw badRequest("API 上传内容超出传输上限");
       if (contentType === "multipart/form-data") form.append(file.field ?? "file", new Blob([new Uint8Array(resolved.bytes)], { type: resolved.contentType }), resolved.filename);
       else {
-        if (input.files.length !== 1 || input.body !== undefined) throw badRequest("Raw uploads require exactly one file and no body");
+        if (input.files.length !== 1 || input.body !== undefined) throw badRequest("原始上传必须且只能包含一个文件，并且不能包含请求体");
         body = new Uint8Array(resolved.bytes);
       }
     }
     if (contentType === "multipart/form-data") body = form;
     else headers.set("Content-Type", contentType);
   } else if (input.body !== undefined) {
-    if (["GET", "HEAD"].includes(operation.method)) throw badRequest("Read requests cannot have a body");
+    if (["GET", "HEAD"].includes(operation.method)) throw badRequest("读取请求不能包含请求体");
     body = contentType.includes("json") ? JSON.stringify(input.body) : typeof input.body === "string" ? input.body : undefined;
-    if (body === undefined) throw badRequest("Non-JSON request bodies must be strings");
-    if (Buffer.byteLength(body) > RUNNER_API_MAX_BYTES) throw badRequest("API request exceeds the transfer limit");
+    if (body === undefined) throw badRequest("非 JSON 请求体必须是字符串");
+    if (Buffer.byteLength(body) > RUNNER_API_MAX_BYTES) throw badRequest("API 请求超出传输上限");
     headers.set("Content-Type", contentType);
   }
   let response: Response;
@@ -182,14 +182,14 @@ export async function executeRunnerApi(input: RunnerApiCall, context: RunnerApiC
     response = await (io.fetch ?? fetch)(url, { method: operation.method, headers, body, redirect: "manual", signal: AbortSignal.timeout(RUNNER_API_TIMEOUT_MS) });
     bytes = await readBoundedResponse(response);
   } catch {
-    return { ok: false, status: null, operationId: operation.operationId, error: "api_transport_failure", outcome: ["GET", "HEAD", "OPTIONS"].includes(operation.method) ? "read_failed" : "unknown", guidance: "Inspect current state before retrying a mutation; it may already have succeeded." };
+    return { ok: false, status: null, operationId: operation.operationId, error: "api_transport_failure", outcome: ["GET", "HEAD", "OPTIONS"].includes(operation.method) ? "read_failed" : "unknown", guidance: "重试变更操作前请先检查当前状态；该操作可能已经成功。" };
   }
   const type = response.headers.get("content-type") ?? "application/octet-stream";
   const mutation = !["GET", "HEAD", "OPTIONS"].includes(operation.method);
   // A server can commit a write before an error response or redirect. Preserve
   // the HTTP evidence, but never describe that write as definitely not applied.
   const uncertain = mutation && (response.status >= 500 || response.status === 408 || (response.status >= 300 && response.status < 400));
-  const uncertainty = { outcome: "unknown", guidance: "Inspect current state before retrying this mutation; it may already have succeeded." };
+  const uncertainty = { outcome: "unknown", guidance: "重试此变更操作前请先检查当前状态；该操作可能已经成功。" };
   const base = { ok: response.ok, status: response.status, operationId: operation.operationId, contentType: type, retryAfter: response.headers.get("retry-after"), ...(uncertain ? uncertainty : {}) };
   if (response.status >= 300 && response.status < 400) return { ...base, ok: false, error: "api_redirect_not_followed" };
   if (!bytes.length) return { ...base, data: null };

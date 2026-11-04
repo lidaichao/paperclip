@@ -147,7 +147,7 @@ describe("runner API request boundary", () => {
       expect(runnerApiOperation(operationId).transport).toBe("protocol");
       await expect(
         executeRunnerApi({ operationId }, context, io(request)),
-      ).rejects.toThrow("existing protocol client");
+      ).rejects.toThrow("现有协议客户端");
       expect(request).not.toHaveBeenCalled();
     },
   );
@@ -220,7 +220,7 @@ describe("runner API request boundary", () => {
           context,
           io(request),
         ),
-      ).rejects.toThrow("lifecycle changes");
+      ).rejects.toThrow("任务生命周期变更");
       expect(request).not.toHaveBeenCalled();
     },
   );
@@ -305,14 +305,14 @@ describe("runner API request boundary", () => {
         { operationId: projects, pathParams: { companyId: "foreign" } },
         context,
       ),
-    ).toThrow("another company");
+    ).toThrow("其他公司");
     for (const workMode of ["planning", "ask"]) {
       expect(() =>
         validateRunnerApiCall(
           { operationId: createProject, body: { name: "bad" } },
           { ...context, workMode },
         ),
-      ).toThrow("only reads");
+      ).toThrow("仅允许读取");
       expect(
         validateRunnerApiCall(
           { operationId: projects },
@@ -332,7 +332,7 @@ describe("runner API request boundary", () => {
     );
     expect(() =>
       validateRunnerApiCall({ ...input, body: { status: "done" } }, context),
-    ).toThrow("dedicated");
+    ).toThrow("专用的");
     expect(() =>
       validateRunnerApiCall(
         {
@@ -351,7 +351,7 @@ describe("runner API request boundary", () => {
           { operationId: "DELETE /api/issues/{id}", pathParams: { id } },
           context,
         ),
-      ).toThrow("cannot delete itself");
+      ).toThrow("不能删除自己");
     },
   );
   it("forwards only server-owned authentication and preserves API denials", async () => {
@@ -440,7 +440,7 @@ describe("runner API request boundary", () => {
         context,
         io(request),
       ),
-    ).rejects.toThrow("not a JSON-encoded string");
+    ).rejects.toThrow("不要传入经过 JSON 编码的字符串");
     expect(request).not.toHaveBeenCalled();
     expect(
       await executeRunnerApi(
@@ -549,7 +549,7 @@ describe("runner API request boundary", () => {
     for (const operation of protocols)
       expect(() =>
         validateRunnerApiCall({ operationId: operation.operationId }, context),
-      ).toThrow("protocol client");
+      ).toThrow("协议客户端");
     for (const operationId of [
       "POST /api/issues/{id}/tree-holds",
       "POST /api/issues/{id}/stalled-review-decision",
@@ -588,12 +588,12 @@ describe("runner API request boundary", () => {
           },
           context,
         ),
-      ).toThrow("inline JSON object");
+      ).toThrow("内联 JSON 对象");
     }
   });
   it("bounds streamed responses even without content-length", async () => {
     await expect(
       readBoundedResponse(new Response("too large"), 3),
-    ).rejects.toThrow("transfer limit");
+    ).rejects.toThrow("传输上限");
   });
 });
