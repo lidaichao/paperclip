@@ -122,11 +122,11 @@ function MockAgentBubble({ agentName, body }: { agentName: string; body: string 
 }
 
 const checklist = [
-  "One container per system notice — no nested chat bubble",
-  "Tone communicated by icon + label, never color alone",
-  "Operational evidence hidden behind Details, expanded only on demand",
-  "Issue, agent, and run metadata render as typed link rows, not raw markdown",
-  "Hierarchy visibly distinct from user (right-aligned) and agent (left-aligned) bubbles",
+  l10n("local.one_container_per_system_notice_10300768"),
+  l10n("local.tone_communicated_by_icon_and_label_10300769"),
+  l10n("local.operational_evidence_hidden_behind_details_10300770"),
+  l10n("local.typed_metadata_link_rows_10300771"),
+  l10n("local.system_notice_hierarchy_distinct_10300772"),
 ];
 
 export function SystemNoticeUxLab() {
@@ -183,7 +183,7 @@ export function SystemNoticeUxLab() {
 
       <LabSection
         id="tones"
-        eyebrow="Tone matrix"
+        eyebrow={l10n("local.tone_matrix_10300773")}
         title={l10n("local.three_tones_two_states_3a3b08ac")}
         description={l10n("local.each_tone_pairs_a_unique_icon_and_tone_label_e23307ca")}
         accentClassName="bg-[linear-gradient(180deg,rgba(245,158,11,0.05),transparent_28%),var(--background)]"
@@ -215,7 +215,7 @@ export function SystemNoticeUxLab() {
 
       <LabSection
         id="hierarchy"
-        eyebrow="Hierarchy in thread"
+        eyebrow={l10n("local.hierarchy_in_thread_10300774")}
         title={l10n("local.distinct_from_user_and_agent_comments_0b63fb91")}
         description={l10n("local.side_by_side_with_adjacent_comment_types_so_r_3522305c")}
         accentClassName="bg-[linear-gradient(180deg,rgba(8,145,178,0.05),transparent_28%),var(--background)]"
@@ -279,7 +279,7 @@ export function SystemNoticeUxLab() {
 
       <div className="grid gap-5 xl:grid-cols-2">
         <LabSection
-          eyebrow="Before"
+          eyebrow={l10n("local.before_9bb72500")}
           title={l10n("local.today_s_nested_treatment_bc7b7e9b")}
           description={l10n("local.the_same_content_rendered_through_the_existin_16e2fcb5")}
           accentClassName="bg-[linear-gradient(180deg,rgba(244,63,94,0.05),transparent_28%),var(--background)]"
@@ -318,7 +318,7 @@ export function SystemNoticeUxLab() {
         </LabSection>
 
         <LabSection
-          eyebrow="After"
+          eyebrow={l10n("local.after_7b68fe55")}
           title={l10n("local.system_notice_replacement_3eae843c")}
           description={l10n("local.one_container_system_authored_label_hidden_de_75815629")}
           accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.05),transparent_28%),var(--background)]"
