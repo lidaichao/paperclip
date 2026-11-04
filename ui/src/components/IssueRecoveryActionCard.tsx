@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useWorkspaceIsolationControls } from "@/hooks/useWorkspaceIsolationControls";
 import { requiresExecutionReconciliation } from "@paperclipai/shared";
 import { useMemo, useState } from "react";
@@ -855,7 +856,9 @@ function RunChip({
         {l10n("local.run_value_10301320", { v0: short })}
       </code>
       {status ? (
-        <span className="font-sans text-(length:--text-micro) text-muted-foreground">{status}</span>
+        <span className="font-sans text-(length:--text-micro) text-muted-foreground">
+          {enumLabel(status)}
+        </span>
       ) : null}
     </>
   );
