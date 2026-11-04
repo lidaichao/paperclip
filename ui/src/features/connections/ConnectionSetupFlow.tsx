@@ -1315,7 +1315,9 @@ function StandardConnectionSetupFlow({
           oauthClientSecret: linkOAuthClientSecret,
         });
         const connectionName = connectionNameForGrantKind(
-          genericPayload.name ?? defaultGenericMcpName(linkUrl) ?? "Custom app",
+          genericPayload.name
+            ?? defaultGenericMcpName(linkUrl)
+            ?? l10n("local.custom_app_10301267"),
           effectiveGrantKind,
         );
         result = await toolsApi.connectApp(selectedCompanyId!, {
@@ -2566,7 +2568,7 @@ export function OAuthConnectStateScreen({
   onBack: () => void;
   onCancel: () => void;
 }) {
-  const serverName = entry?.name ?? identity?.name ?? "this server";
+  const serverName = entry?.name ?? identity?.name ?? l10n("local.this_server_10301268");
   const unverifiedHost = entry ? null : identity?.unverifiedHost ?? null;
   const status = phase === "entry"
     ? {
@@ -3971,7 +3973,8 @@ export function AccessStepContent({
     ? canSetCompanyInstall
     : installAgentIds.size > 0);
   const lockedAgentName = lockedAgentId
-    ? allAgents.find((agent) => agent.id === lockedAgentId)?.name ?? "the requesting agent"
+    ? allAgents.find((agent) => agent.id === lockedAgentId)?.name
+      ?? l10n("local.the_requesting_agent_10301269")
     : null;
   const identityHeading = githubIdentity ? l10n("local.connect_github_as_172e5b28") : l10n("local.which_humans_can_use_this_credential_df3c5fa3");
   const agentAccessHeading = grantKind === "agent"
