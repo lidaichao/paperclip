@@ -644,6 +644,12 @@ describe("remaining visible Chinese copy", () => {
         (value) => value.includes("...") && !value.includes(".../edit") && !value.includes("scl_...") && !value.includes("arn:aws:secretsmanager:..."),
       ),
     ).toEqual([]);
+    expect(messages.billed_through_value_10300457).toBe("通过 {{v0}} 计费");
+    expect(messages.rollback_operations_failed_value_10300458).toContain("回滚操作失败");
+    expect(messages.already_has_value_10300459).toBe("已有：{{v0}}");
+    expect(messages.no_profiles_yet_10300460).toBe("尚无配置");
+    expect(messages.catalog_entry_10300461).toBe("目录条目");
+    expect(messages.joined_value_10300462).toBe("加入于 {{v0}}");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
     expect(messages.the_previous_execution_must_be_checked_before_b8424cab).toContain("上一次执行");

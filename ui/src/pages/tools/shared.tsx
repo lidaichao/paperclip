@@ -1,4 +1,4 @@
-import { l10n } from "../../i18n";
+import { i18n, l10n } from "../../i18n";
 import type { ReactNode } from "react";
 import type {
   ToolRiskLevel,
@@ -123,13 +123,18 @@ export function RelativeTime({ value }: { value: Date | string | null | undefine
   const diffMs = Date.now() - date.getTime();
   const abs = Math.abs(diffMs);
   const mins = Math.round(abs / 60000);
-  const isFuture = diffMs < 0;
   let text: string;
-  if (mins < 1) text = "just now";
-  else {
-    const value =
-      mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.round(mins / 60)}h` : `${Math.round(mins / 1440)}d`;
-    text = isFuture ? `in ${value}` : `${value} ago`;
+  if (mins < 1) {
+    text = l10n("local.manual_just_now");
+  } else {
+    const [value, unit]: [number, Intl.RelativeTimeFormatUnit] =
+      mins < 60
+        ? [mins, "minute"]
+        : mins < 1440
+          ? [Math.round(mins / 60), "hour"]
+          : [Math.round(mins / 1440), "day"];
+    text = new Intl.RelativeTimeFormat(i18n.language, { numeric: "always", style: "short" })
+      .format(diffMs < 0 ? value : -value, unit);
   }
   return (
     <span title={date.toLocaleString()} className="text-muted-foreground">

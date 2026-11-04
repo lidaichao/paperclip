@@ -22,6 +22,7 @@ import {
   usePluginToast,
 } from "./bridge.js";
 import { Component, createElement, useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { l10n } from "../i18n";
 import * as ReactJsxRuntimeModule from "react/jsx-runtime";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "lucide-react";
@@ -324,7 +325,7 @@ function PluginSdkIssuesList({
   });
 
   if (!companyId) {
-    return createElement("div", { className: "text-sm text-muted-foreground" }, "Select an organization to view tasks.");
+    return createElement("div", { className: "text-sm text-muted-foreground" }, l10n("local.select_organization_to_view_tasks_10300228"));
   }
 
   return createElement(HostIssuesList, {
@@ -347,10 +348,10 @@ function PluginSdkAssigneePicker({
   companyId,
   value,
   onChange,
-  placeholder = "Responsible",
-  noneLabel = "No responsible",
-  searchPlaceholder = "Search responsible...",
-  emptyMessage = "No responsible found.",
+  placeholder = l10n("local.responsible_bc110a6d"),
+  noneLabel = l10n("local.no_responsible_15abdee5"),
+  searchPlaceholder = l10n("local.search_responsible_9cb8d79f"),
+  emptyMessage = l10n("local.no_responsible_found_045a8ffe"),
   includeUsers = true,
   includeTerminatedAgents = false,
   className,
@@ -457,10 +458,10 @@ function PluginSdkProjectPicker({
   companyId,
   value,
   onChange,
-  placeholder = "Project",
-  noneLabel = "No project",
-  searchPlaceholder = "Search projects...",
-  emptyMessage = "No projects found.",
+  placeholder = l10n("local.project_98595978"),
+  noneLabel = l10n("local.no_project_f34c2be0"),
+  searchPlaceholder = l10n("local.search_projects_c59dd5a3"),
+  emptyMessage = l10n("local.no_projects_found_26e92309"),
   includeArchived = false,
   className,
   onConfirm,

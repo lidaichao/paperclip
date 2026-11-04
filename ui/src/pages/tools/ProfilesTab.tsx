@@ -142,8 +142,8 @@ function entryLabel(
 ) {
   if (entry.selectorType === "application") return applicationsById.get(entry.applicationId ?? "") ?? entry.applicationId ?? "application";
   if (entry.selectorType === "connection") return connectionsById.get(entry.connectionId ?? "") ?? entry.connectionId ?? "connection";
-  if (entry.selectorType === "catalog_entry") return entry.catalogEntryId ?? "catalog entry";
-  if (entry.selectorType === "risk_level") return entry.riskLevel ?? "risk level";
+  if (entry.selectorType === "catalog_entry") return entry.catalogEntryId ?? l10n("local.catalog_entry_10300461");
+  if (entry.selectorType === "risk_level") return entry.riskLevel ?? l10n("local.risk_level_d4419ea3");
   return entry.toolName ?? "tool";
 }
 

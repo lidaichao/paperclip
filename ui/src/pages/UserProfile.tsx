@@ -25,6 +25,21 @@ import {
 
 const NO_COMPANY = "__none__";
 
+function membershipLabel(value: string | null | undefined): string {
+  const labels: Record<string, string> = {
+    owner: l10n("local.owner_4b1b8aa3"),
+    admin: l10n("local.admin_c1c224b0"),
+    operator: l10n("local.operator_291101a0"),
+    viewer: l10n("local.viewer_678bfa6a"),
+    member: l10n("local.member_e31ab643"),
+    pending: l10n("local.pending_62a2fed3"),
+    active: l10n("local.active_96879611"),
+    suspended: l10n("local.suspended_e392a389"),
+    archived: l10n("local.archived_bdb86505"),
+  };
+  return value ? (labels[value] ?? value) : labels.member!;
+}
+
 function initials(name: string | null | undefined) {
   const value = name?.trim() || "User";
   const parts = value.split(/\s+/).filter(Boolean);
@@ -232,7 +247,7 @@ export function UserProfile() {
       (data?.topProviders ?? []).map((row) => ({
         key: `${row.provider}:${row.biller}:${row.model}`,
         label: `${providerDisplayName(row.provider)} / ${row.model}`,
-        sublabel: `Billed through ${providerDisplayName(row.biller)}`,
+        sublabel: l10n("local.billed_through_value_10300457", { v0: providerDisplayName(row.biller) }),
         costCents: row.costCents,
         inputTokens: row.inputTokens,
         cachedInputTokens: row.cachedInputTokens,
@@ -255,9 +270,9 @@ export function UserProfile() {
 
   const allTimeTokens = allTime ? totalTokens(allTime) : 0;
   const metaParts = [
-    data.user.membershipRole ?? "member",
-    data.user.membershipStatus,
-    `joined ${formatDate(data.user.joinedAt)}`,
+    membershipLabel(data.user.membershipRole),
+    membershipLabel(data.user.membershipStatus),
+    l10n("local.joined_value_10300462", { v0: formatDate(data.user.joinedAt) }),
   ];
 
   return (

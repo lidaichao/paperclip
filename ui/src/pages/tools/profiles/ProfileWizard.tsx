@@ -387,7 +387,9 @@ async function reconcileBindings(
     } catch (error) {
       const rollbacks = await Promise.allSettled(completed.reverse().map((done) => done.rollback()));
       const rollbackFailures = rollbacks.filter((result) => result.status === "rejected").length;
-      const suffix = rollbackFailures > 0 ? `; ${rollbackFailures} rollback operation(s) also failed` : "";
+      const suffix = rollbackFailures > 0
+        ? l10n("local.rollback_operations_failed_value_10300458", { v0: rollbackFailures })
+        : "";
       throw new Error(
         l10n("local.could_not_update_assignment_10300055", {
           v0: operation.key,
@@ -628,8 +630,10 @@ export function StepAssign({
           getDescription={(agent) => {
             const context = contextByAgent.get(agent.id) ?? [];
             const bits = [...context];
-            if (defaultProfileName) bits.push("organization default");
-            return bits.length > 0 ? `already has: ${bits.join(" · ")}` : "no profiles yet";
+            if (defaultProfileName) bits.push(l10n("local.organization_default_804a1f08"));
+            return bits.length > 0
+              ? l10n("local.already_has_value_10300459", { v0: bits.join(" · ") })
+              : l10n("local.no_profiles_yet_10300460");
           }}
         />
         <p className="text-xs text-muted-foreground">
