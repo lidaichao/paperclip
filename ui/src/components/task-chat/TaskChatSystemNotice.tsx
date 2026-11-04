@@ -17,6 +17,7 @@ import {
   type SystemNoticeTone,
 } from "@/components/SystemNotice";
 import { humanizeSystemNotice } from "@/lib/system-notice-humanizer";
+import { localizeRuntimeMessage } from "@/lib/runtime-message-localization";
 import { mapCommentMetadataToSystemNoticeSections } from "@/lib/system-notice-comment";
 import { timeAgo } from "@/lib/timeAgo";
 import type { TaskChatMessageItem } from "./task-chat-model";
@@ -58,8 +59,9 @@ export function TaskChatSystemNotice({
   const streamlined = useStreamlinedTaskChatPresentation();
   const [open, setOpen] = useState(Boolean(item.presentation?.detailsDefaultOpen));
   const detailsId = useId();
+  const localizedText = localizeRuntimeMessage(item.text);
   const { title, tone, detail } = humanizeSystemNotice({
-    body: item.text,
+    body: localizedText,
     presentation: item.presentation,
   });
   const sections = mapCommentMetadataToSystemNoticeSections(item.metadata, {
@@ -88,7 +90,7 @@ export function TaskChatSystemNotice({
     Boolean(onTryAgainNoLiveExecutionPath) &&
     noLiveExecutionPathLabels.some((label) =>
       item.presentation?.title?.trim().toLocaleLowerCase() === label ||
-      item.text.toLocaleLowerCase().includes(label),
+      item.text.toLocaleLowerCase().includes(label) || localizedText.toLocaleLowerCase().includes(label),
     );
   const handleTryAgain = () => {
     void Promise.resolve()
@@ -148,7 +150,7 @@ export function TaskChatSystemNotice({
           {showBody ? (
             <div className="px-3 py-2.5 text-foreground/90">
               <MarkdownBody softBreaks linkIssueReferences>
-                {item.text}
+                {localizedText}
               </MarkdownBody>
             </div>
           ) : null}

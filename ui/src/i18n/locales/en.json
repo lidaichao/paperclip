@@ -13378,6 +13378,20 @@
     "api_method_not_supported_10301183": "This operation is not supported.",
     "api_invalid_gateway_payload_10301184": "The gateway request content is invalid.",
     "api_invalid_audit_cursor_10301185": "The audit page position is invalid. Refresh and try again.",
-    "organizations_created_in_alice_cloud_unreachable_10301186": "Organizations are created in Alice Cloud. This instance cannot reach it right now. Try again from your Cloud portfolio."
+    "organizations_created_in_alice_cloud_unreachable_10301186": "Organizations are created in Alice Cloud. This instance cannot reach it right now. Try again from your Cloud portfolio.",
+    "waiting_for_execution_recovery_10301187": "Waiting for execution recovery. Your message is saved.",
+    "agent_daily_limit_message_saved_10301188": "The agent reached its daily limit. Your message is saved and will be processed after work resumes.",
+    "new_conversation_session_10301189": "New conversation session started",
+    "scheduled_retry_requested_now_10301190": "The scheduled retry was requested to run now",
+    "scheduled_retry_promoted_10301191": "The scheduled retry was moved to the queued run pool",
+    "scheduled_retry_already_promoted_10301192": "The scheduled retry was already queued",
+    "no_live_scheduled_retry_10301193": "No active scheduled retry exists for this task",
+    "process_identity_recorded_10301194": "Process identity was recorded; previous stop evidence no longer applies.",
+    "live_child_process_adopted_10301195": "The live child process was recovered after the restart",
+    "local_process_stop_verified_10301196": "Recovery verified that the local process stopped before clearing its identity.",
+    "old_runtime_stopped_fresh_session_10301197": "The previous runner and provider stopped. New input will use a fresh session; earlier action outcomes remain recorded.",
+    "attachment_staging_cleanup_failed_10301198": "Failed to clean up staged inbound attachments.",
+    "native_execution_requested_10301199": "Native execution was requested; previous local stop evidence no longer applies.",
+    "stale_active_run_finalized_10301200": "A stale active run was finalized after its source resolved"
   }
 }

@@ -13378,6 +13378,20 @@
     "api_method_not_supported_10301183": "当前操作不受支持。",
     "api_invalid_gateway_payload_10301184": "网关请求内容无效。",
     "api_invalid_audit_cursor_10301185": "审计分页位置无效，请刷新后重试。",
-    "organizations_created_in_alice_cloud_unreachable_10301186": "组织需要在 Alice Cloud 中创建。当前实例暂时无法连接，请从 Cloud 工作台重试。"
+    "organizations_created_in_alice_cloud_unreachable_10301186": "组织需要在 Alice Cloud 中创建。当前实例暂时无法连接，请从 Cloud 工作台重试。",
+    "waiting_for_execution_recovery_10301187": "正在等待执行恢复，你的消息已保存。",
+    "agent_daily_limit_message_saved_10301188": "智能体已达到每日额度上限；你的消息已保存，恢复后会继续处理。",
+    "new_conversation_session_10301189": "新会话已开始",
+    "scheduled_retry_requested_now_10301190": "已请求立即执行计划重试",
+    "scheduled_retry_promoted_10301191": "计划重试已进入运行队列",
+    "scheduled_retry_already_promoted_10301192": "计划重试已在队列中",
+    "no_live_scheduled_retry_10301193": "当前任务没有有效的计划重试",
+    "process_identity_recorded_10301194": "进程身份已记录，之前的停止证据不再适用。",
+    "live_child_process_adopted_10301195": "重启后已接管仍在运行的子进程",
+    "local_process_stop_verified_10301196": "恢复流程已确认本地进程停止，然后清除了进程身份。",
+    "old_runtime_stopped_fresh_session_10301197": "旧运行器和提供商已停止；新输入将使用新会话，之前的操作结果仍会保留。",
+    "attachment_staging_cleanup_failed_10301198": "清理暂存的传入附件失败。",
+    "native_execution_requested_10301199": "已请求原生执行，之前的本地停止证据不再适用。",
+    "stale_active_run_finalized_10301200": "来源问题解决后，已结束过期的活动运行"
   }
 }
