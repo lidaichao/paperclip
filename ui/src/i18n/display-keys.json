@@ -10325,5 +10325,21 @@
   "{{v0}} Copy": "local.duplicate_agent_name_10300709",
   "dotta's macbook": "local.gateway_token_name_example_10300710",
   "no items to show. create your first one to get started.": "local.no_items_create_first_to_get_started_10300711",
-  "no connections yet.": "local.no_connections_yet_10300712"
+  "no connections yet.": "local.no_connections_yet_10300712",
+  "board user {{v0}}": "local.board_user_number_10300713",
+  "board user": "local.board_user_10300714",
+  "acme ops agent": "local.acme_ops_agent_10300715",
+  "reviews invites, triages requests, and keeps the board queue moving.": "local.reviews_invites_triages_requests_10300716",
+  "invite loading, access-check, missing-token, and unavailable states": "local.invite_loading_access_check_states_10300717",
+  "inline account creation and sign-in variants, including feedback/error copy": "local.inline_account_creation_variants_10300718",
+  "human accept, agent request, and auto-accept transitions": "local.human_accept_agent_request_transitions_10300719",
+  "pending approval, joined-now, claim secret, and onboarding result screens": "local.pending_approval_joined_now_screens_10300720",
+  "organization invite creation, copied-link, history, empty, and permission-error states": "local.organization_invite_creation_states_10300721",
+  "top-level states": "local.top_level_states_10300722",
+  "invite landing": "local.invite_landing_10300723",
+  "an account already exists for jane@example.com. sign in below to continue with this invite.": "local.account_exists_sign_in_to_continue_10300724",
+  "this account already belongs to the organization.": "local.account_already_belongs_to_organization_10300725",
+  "result states": "local.result_states_10300726",
+  "standalone auth": "local.standalone_auth_10300727",
+  "invalid email or password": "local.invalid_email_or_password_10300728"
 }

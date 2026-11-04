@@ -12906,6 +12906,22 @@
     "duplicate_agent_name_10300709": "{{v0}} 副本",
     "gateway_token_name_example_10300710": "例如：开发机 MacBook",
     "no_items_create_first_to_get_started_10300711": "暂无可显示的条目。请创建第一项以开始使用。",
-    "no_connections_yet_10300712": "暂无连接。"
+    "no_connections_yet_10300712": "暂无连接。",
+    "board_user_number_10300713": "董事会用户 {{v0}}",
+    "board_user_10300714": "董事会用户",
+    "acme_ops_agent_10300715": "Acme 运维智能体",
+    "reviews_invites_triages_requests_10300716": "审核邀请、分流请求，并持续推进董事会队列。",
+    "invite_loading_access_check_states_10300717": "邀请加载、权限检查、令牌缺失及不可用状态",
+    "inline_account_creation_variants_10300718": "内嵌创建账号与登录变体，包括反馈和错误提示",
+    "human_accept_agent_request_transitions_10300719": "人工接受、智能体请求和自动接受的流程转换",
+    "pending_approval_joined_now_screens_10300720": "等待审批、立即加入、认领密钥和引导结果页面",
+    "organization_invite_creation_states_10300721": "组织邀请创建、链接复制、历史记录、空状态和权限错误状态",
+    "top_level_states_10300722": "顶层状态",
+    "invite_landing_10300723": "邀请落地页",
+    "account_exists_sign_in_to_continue_10300724": "jane@example.com 已有账号。请在下方登录以继续处理此邀请。",
+    "account_already_belongs_to_organization_10300725": "此账号已属于该组织。",
+    "result_states_10300726": "结果状态",
+    "standalone_auth_10300727": "独立认证页",
+    "invalid_email_or_password_10300728": "邮箱或密码错误"
   }
 }

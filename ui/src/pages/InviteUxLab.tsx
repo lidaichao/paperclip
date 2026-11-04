@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanyPatternIcon } from "@/components/CompanyPatternIcon";
-import { cn } from "@/lib/utils";
+import { cn, formatDate, formatDateTime } from "@/lib/utils";
 import {
   ArrowRight,
   Check,
@@ -56,9 +56,9 @@ const inviteHistory = [
     id: "invite-active",
     state: "Active",
     humanRole: "operator",
-    invitedBy: "Board User 25",
+    invitedByNumber: 25,
     email: "board25@paperclip.local",
-    createdAt: "Apr 25, 2026, 9:00 AM",
+    createdAt: "2026-04-25T09:00:00+08:00",
     action: "Revoke",
     relatedLabel: "Review request",
   },
@@ -66,9 +66,9 @@ const inviteHistory = [
     id: "invite-accepted",
     state: "Accepted",
     humanRole: "viewer",
-    invitedBy: "Board User 24",
+    invitedByNumber: 24,
     email: "board24@paperclip.local",
-    createdAt: "Apr 24, 2026, 8:15 AM",
+    createdAt: "2026-04-24T08:15:00+08:00",
     action: "Inactive",
     relatedLabel: "—",
   },
@@ -76,9 +76,9 @@ const inviteHistory = [
     id: "invite-revoked",
     state: "Revoked",
     humanRole: "admin",
-    invitedBy: "Board User 20",
+    invitedByNumber: 20,
     email: "board20@paperclip.local",
-    createdAt: "Apr 20, 2026, 2:45 PM",
+    createdAt: "2026-04-20T14:45:00+08:00",
     action: "Inactive",
     relatedLabel: "—",
   },
@@ -86,9 +86,9 @@ const inviteHistory = [
     id: "invite-expired",
     state: "Expired",
     humanRole: "owner",
-    invitedBy: "Board User 19",
+    invitedByNumber: 19,
     email: "board19@paperclip.local",
-    createdAt: "Apr 19, 2026, 7:10 PM",
+    createdAt: "2026-04-19T19:10:00+08:00",
     action: "Inactive",
     relatedLabel: "—",
   },
@@ -97,6 +97,17 @@ const inviteHistory = [
 const fieldClassName =
   "w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500";
 const panelClassName = "border border-zinc-800 bg-zinc-950/95 p-6";
+
+const inviteStateLabels: Record<(typeof inviteHistory)[number]["state"], string> = {
+  Active: l10n("local.active_96879611"),
+  Accepted: l10n("local.accepted_a00fb0c5"),
+  Revoked: l10n("local.revoked_f6f738d0"),
+  Expired: l10n("local.expired_424a2551"),
+};
+
+function inviteRoleLabel(role: (typeof inviteHistory)[number]["humanRole"]): string {
+  return inviteRoleOptions.find((option) => option.value === role)?.label ?? role;
+}
 
 function LabSection({
   eyebrow,
@@ -212,9 +223,12 @@ function InviteSummaryPanel({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <MetaCard label={l10n("local.organization_d764d425")} value="Acme Robotics" />
-        <MetaCard label={l10n("local.invited_by_c7a6f156")} value="Board User" />
+        <MetaCard label={l10n("local.invited_by_c7a6f156")} value={l10n("local.board_user_10300714")} />
         <MetaCard label={l10n("local.requested_access_82303475")} value={requestedAccess} />
-        <MetaCard label={l10n("local.invite_expires_2a91147e")} value="Mar 7, 2027" />
+        <MetaCard
+          label={l10n("local.invite_expires_2a91147e")}
+          value={formatDate("2027-03-07T00:00:00+08:00")}
+        />
       </div>
 
       {inviteMessage ? (
@@ -291,7 +305,12 @@ function InlineAuthPreview({
         {mode === "sign_up" ? (
           <label className="block text-sm">
             <span className="mb-1 block text-zinc-400">{l10n("local.name_dcd1d522")}</span>
-            <input name="name" className={fieldClassName} defaultValue="Jane Example" readOnly />
+            <input
+              name="name"
+              className={fieldClassName}
+              defaultValue={l10n("local.jane_example_eea33f8b")}
+              readOnly
+            />
           </label>
         ) : null}
         <label className="block text-sm">
@@ -331,7 +350,11 @@ function AgentRequestPreview() {
       </div>
       <label className="block text-sm">
         <span className="mb-1 block text-zinc-400">{l10n("local.agent_name_1cfb2187")}</span>
-        <input className={fieldClassName} defaultValue="Acme Ops Agent" readOnly />
+        <input
+          className={fieldClassName}
+          defaultValue={l10n("local.acme_ops_agent_10300715")}
+          readOnly
+        />
       </label>
       <label className="block text-sm">
         <span className="mb-1 block text-zinc-400">{l10n("local.adapter_type_03298f66")}</span>
@@ -346,7 +369,7 @@ function AgentRequestPreview() {
         <textarea
           className={fieldClassName}
           rows={4}
-          defaultValue="Reviews invites, triages requests, and keeps the board queue moving."
+          defaultValue={l10n("local.reviews_invites_triages_requests_10300716")}
           readOnly
         />
       </label>
@@ -625,19 +648,21 @@ function CompanyInvitesPreview() {
                   <tr key={invite.id} className="border-b border-border last:border-b-0">
                     <td className="px-5 py-3 align-top">
                       <Badge variant="outline" className="border-border text-muted-foreground">
-                        {invite.state}
+                        {inviteStateLabels[invite.state]}
                       </Badge>
                     </td>
-                    <td className="px-5 py-3 align-top">{invite.humanRole}</td>
+                    <td className="px-5 py-3 align-top">{inviteRoleLabel(invite.humanRole)}</td>
                     <td className="px-5 py-3 align-top">
-                      <div>{invite.invitedBy}</div>
+                      <div>{l10n("local.board_user_number_10300713", { v0: invite.invitedByNumber })}</div>
                       <div className="text-xs text-muted-foreground">{invite.email}</div>
                     </td>
-                    <td className="px-5 py-3 align-top text-muted-foreground">{invite.createdAt}</td>
+                    <td className="px-5 py-3 align-top text-muted-foreground">
+                      {formatDateTime(invite.createdAt)}
+                    </td>
                     <td className="px-5 py-3 align-top">
                       {invite.relatedLabel === "Review request" ? (
                         <a href="/inbox/requests" className="underline underline-offset-4">
-                          {invite.relatedLabel}
+                          {l10n("local.review_request_dcea8abb")}
                         </a>
                       ) : (
                         <span className="text-muted-foreground">{invite.relatedLabel}</span>
@@ -704,11 +729,11 @@ export function InviteUxLab() {
               {l10n("local.covered_states_0e6b1d07")}</div>
             <div className="space-y-3">
               {[
-                "Invite loading, access-check, missing-token, and unavailable states",
-                "Inline account creation and sign-in variants, including feedback/error copy",
-                "Human accept, agent request, and auto-accept transitions",
-                "Pending approval, joined-now, claim secret, and onboarding result screens",
-                "Organization invite creation, copied-link, history, empty, and permission-error states",
+                l10n("local.invite_loading_access_check_states_10300717"),
+                l10n("local.inline_account_creation_variants_10300718"),
+                l10n("local.human_accept_agent_request_transitions_10300719"),
+                l10n("local.pending_approval_joined_now_screens_10300720"),
+                l10n("local.organization_invite_creation_states_10300721"),
               ].map((highlight) => (
                 <div
                   key={highlight}
@@ -723,7 +748,7 @@ export function InviteUxLab() {
       </div>
 
       <LabSection
-        eyebrow="Top-level states"
+        eyebrow={l10n("local.top_level_states_10300722")}
         title={l10n("local.landing_state_coverage_a1f8df69")}
         description={l10n("local.small_cards_for_the_fast_return_invite_states_268cf5ee")}
         accentClassName="bg-[linear-gradient(180deg,rgba(59,130,246,0.05),transparent_30%),var(--background)]"
@@ -777,7 +802,7 @@ export function InviteUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Invite landing"
+        eyebrow={l10n("local.invite_landing_10300723")}
         title={l10n("local.split_screen_invite_flows_3d088c51")}
         description={l10n("local.these_frames_mirror_the_production_invite_sur_a0ef3ab2")}
         accentClassName="bg-[linear-gradient(180deg,rgba(234,179,8,0.06),transparent_28%),var(--background)]"
@@ -789,7 +814,7 @@ export function InviteUxLab() {
                 title={l10n("local.join_acme_robotics_c811b50d")}
                 description={l10n("local.create_your_paperclip_account_first_if_you_al_9a84bdf6")}
                 inviteMessage={l10n("local.welcome_aboard_0d7f4488")}
-                requestedAccess="Operator"
+                requestedAccess={l10n("local.operator_291101a0")}
               />
             }
             right={<InlineAuthPreview mode="sign_up" />}
@@ -801,7 +826,7 @@ export function InviteUxLab() {
                 title={l10n("local.join_acme_robotics_c811b50d")}
                 description={l10n("local.create_your_paperclip_account_first_if_you_al_9a84bdf6")}
                 inviteMessage={l10n("local.welcome_aboard_0d7f4488")}
-                requestedAccess="Operator"
+                requestedAccess={l10n("local.operator_291101a0")}
               />
             }
             right={
@@ -809,7 +834,7 @@ export function InviteUxLab() {
                 mode="sign_in"
                 feedback={{
                   tone: "info",
-                  text: "An account already exists for jane@example.com. Sign in below to continue with this invite.",
+                  text: l10n("local.account_exists_sign_in_to_continue_10300724"),
                 }}
               />
             }
@@ -821,8 +846,8 @@ export function InviteUxLab() {
                 title={l10n("local.join_acme_robotics_c811b50d")}
                 description={l10n("local.your_account_is_ready_review_the_invite_detai_08185f11")}
                 inviteMessage={l10n("local.welcome_aboard_0d7f4488")}
-                requestedAccess="Operator"
-                signedInLabel="Jane Example"
+                requestedAccess={l10n("local.operator_291101a0")}
+                signedInLabel={l10n("local.jane_example_eea33f8b")}
               />
             }
             right={<AcceptInvitePreview autoAccept />}
@@ -833,7 +858,7 @@ export function InviteUxLab() {
               <InviteSummaryPanel
                 title={l10n("local.join_acme_robotics_c811b50d")}
                 description={l10n("local.review_the_invite_details_then_submit_the_age_98fb0b9b")}
-                requestedAccess="Agent join request"
+                requestedAccess={l10n("local.agent_join_request_b6d6c8b8")}
               />
             }
             right={<AgentRequestPreview />}
@@ -844,17 +869,22 @@ export function InviteUxLab() {
               <InviteSummaryPanel
                 title={l10n("local.join_acme_robotics_c811b50d")}
                 description={l10n("local.your_account_is_ready_review_the_invite_detai_08185f11")}
-                requestedAccess="Operator"
-                signedInLabel="Jane Example"
+                requestedAccess={l10n("local.operator_291101a0")}
+                signedInLabel={l10n("local.jane_example_eea33f8b")}
               />
             }
-            right={<AcceptInvitePreview error="This account already belongs to the organization." isCurrentMember />}
+            right={
+              <AcceptInvitePreview
+                error={l10n("local.account_already_belongs_to_organization_10300725")}
+                isCurrentMember
+              />
+            }
           />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Result states"
+        eyebrow={l10n("local.result_states_10300726")}
         title={l10n("local.approval_and_completion_screens_fc337f81")}
         description={l10n("local.these_are_the_post_submit_states_returned_fro_79b2fa7d")}
         accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_30%),var(--background)]"
@@ -879,19 +909,22 @@ export function InviteUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Standalone auth"
+        eyebrow={l10n("local.standalone_auth_10300727")}
         title={l10n("local.auth_page_states_56ab5f04")}
         description={l10n("local.the_general_auth_page_uses_a_different_compos_1b78eeba")}
         accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
       >
         <div className="space-y-5">
-          <AuthScreenPreview mode="sign_in" error="Invalid email or password" />
+          <AuthScreenPreview
+            mode="sign_in"
+            error={l10n("local.invalid_email_or_password_10300728")}
+          />
           <AuthScreenPreview mode="sign_up" />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Settings"
+        eyebrow={l10n("local.settings_74a883a0")}
         title={l10n("local.organization_invite_management_bfc76b32")}
         description={l10n("local.this_section_captures_the_board_side_invite_c_9034f5ba")}
         accentClassName="bg-[linear-gradient(180deg,rgba(244,114,182,0.06),transparent_28%),var(--background)]"

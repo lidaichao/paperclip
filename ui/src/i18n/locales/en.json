@@ -12906,6 +12906,22 @@
     "duplicate_agent_name_10300709": "{{v0}} Copy",
     "gateway_token_name_example_10300710": "Dotta's MacBook",
     "no_items_create_first_to_get_started_10300711": "No items to show. Create your first one to get started.",
-    "no_connections_yet_10300712": "No connections yet."
+    "no_connections_yet_10300712": "No connections yet.",
+    "board_user_number_10300713": "Board User {{v0}}",
+    "board_user_10300714": "Board User",
+    "acme_ops_agent_10300715": "Acme Ops Agent",
+    "reviews_invites_triages_requests_10300716": "Reviews invites, triages requests, and keeps the board queue moving.",
+    "invite_loading_access_check_states_10300717": "Invite loading, access-check, missing-token, and unavailable states",
+    "inline_account_creation_variants_10300718": "Inline account creation and sign-in variants, including feedback/error copy",
+    "human_accept_agent_request_transitions_10300719": "Human accept, agent request, and auto-accept transitions",
+    "pending_approval_joined_now_screens_10300720": "Pending approval, joined-now, claim secret, and onboarding result screens",
+    "organization_invite_creation_states_10300721": "Organization invite creation, copied-link, history, empty, and permission-error states",
+    "top_level_states_10300722": "Top-level states",
+    "invite_landing_10300723": "Invite landing",
+    "account_exists_sign_in_to_continue_10300724": "An account already exists for jane@example.com. Sign in below to continue with this invite.",
+    "account_already_belongs_to_organization_10300725": "This account already belongs to the organization.",
+    "result_states_10300726": "Result states",
+    "standalone_auth_10300727": "Standalone auth",
+    "invalid_email_or_password_10300728": "Invalid email or password"
   }
 }
