@@ -87,7 +87,7 @@ export async function applyNativeAttentionStatusDecision(input: {
         if (!canonical || !duplicate || canonical.id === duplicate.id) {
           throw new NativeInteractionBridgeError("native_attention_canonical_pair_missing", "Canonical and duplicate requests are required");
         }
-        const summary = `Canonical native attention request: ${canonical.id}`;
+        const summary = `规范原生运行处理请求：${canonical.id}`;
         if (duplicate.summary !== summary) {
           await tx.update(issueThreadInteractions).set({
             summary,
@@ -108,7 +108,7 @@ export async function applyNativeAttentionStatusDecision(input: {
             ...(input.targetInteractionId ? [eq(issueThreadInteractions.id, input.targetInteractionId)] : []),
           )).limit(1).then((rows) => rows[0] ?? null);
         if (!interaction) throw new NativeInteractionBridgeError("native_stale_response_missing", "Stale response is not durable");
-        const summary = "Response retained for audit after native supersession.";
+        const summary = "原生运行被取代后，答复已保留用于审计。";
         if (interaction.summary !== summary) {
           await tx.update(issueThreadInteractions).set({
             summary,

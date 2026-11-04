@@ -1623,10 +1623,10 @@ describe("P6-31 Section 18.13 executable status-authority corpus", () => {
     }
     if (persistedEffects.includes("finish_as_native")) expect(persistedRunResult.nativeKillSwitchDisposition, `${fixture.id}:finish-native target`).toBe("finish_as_native");
     if (materializedEffects.has("link_canonical_request")) {
-      expect(interactionRows.some((row) => row.summary?.startsWith("Canonical native attention request:")), `${fixture.id}:canonical link target`).toBe(true);
+      expect(interactionRows.some((row) => row.summary?.startsWith("规范原生运行处理请求：")), `${fixture.id}:canonical link target`).toBe(true);
     }
     if (materializedEffects.has("record_stale_response")) {
-      expect(interactionRows.some((row) => row.summary === "Response retained for audit after native supersession."), `${fixture.id}:stale audit target`).toBe(true);
+      expect(interactionRows.some((row) => row.summary === "原生运行被取代后，答复已保留用于审计。"), `${fixture.id}:stale audit target`).toBe(true);
     }
     if (
       materializedEffects.has("record_finalization_error")

@@ -547,17 +547,17 @@ async function materializeDecisionEffect(input: {
         kind: "ask_user_questions",
         idempotencyKey: `native-attention:${input.decisionId}`,
         sourceRunId: input.runId,
-        title: "Native attention request",
-        summary: "The native runner requires a board response.",
+        title: "需要处理原生运行请求",
+        summary: "Alice 原生运行需要管理者答复。",
         continuationPolicy: "wake_assignee",
         payload: {
           version: 1,
           questions: [
             {
               id: "response",
-              prompt: effect.prompt ?? "Provide the required response.",
+              prompt: effect.prompt ?? "请提供所需答复。",
               selectionMode: "single",
-              options: [{ id: "continue", label: "Continue" }],
+              options: [{ id: "continue", label: "继续" }],
             },
           ],
         },
@@ -586,7 +586,7 @@ async function materializeDecisionEffect(input: {
       resolverPolicy: effect.ownerAgentId ? "anyone" : "human_only",
       addresseeAgentId: effect.ownerAgentId ?? null,
       addresseeUserId: effect.ownerUserId,
-      title: "Review requested",
+      title: "请求评审",
       summary:
         effect.prompt,
       continuationPolicy: "wake_assignee",
@@ -594,8 +594,8 @@ async function materializeDecisionEffect(input: {
         version: 1,
         prompt: effect.prompt,
         detailsMarkdown: effect.detailsMarkdown ?? null,
-        acceptLabel: "Approve completion",
-        rejectLabel: "Continue work",
+        acceptLabel: "批准完成",
+        rejectLabel: "继续处理",
         allowDeclineReason: true,
         rejectRequiresReason: true,
         supersedeOnUserComment: false,
@@ -603,7 +603,7 @@ async function materializeDecisionEffect(input: {
           type: "custom",
           key: "native_completion_review",
           revisionId: input.decisionId,
-          label: "Completion decision",
+          label: "完成决定",
         },
       },
     };
@@ -1424,7 +1424,7 @@ async function materializeDecisionEffect(input: {
     await input.tx
       .update(issueThreadInteractions)
       .set({
-        summary: "Response retained for audit after native supersession.",
+        summary: "原生运行被取代后，答复已保留用于审计。",
         updatedAt: new Date(),
       })
       .where(eq(issueThreadInteractions.id, interaction.id));
@@ -1454,7 +1454,7 @@ async function materializeDecisionEffect(input: {
     await input.tx
       .update(issueThreadInteractions)
       .set({
-        summary: `Canonical native attention request: ${canonical.id}`,
+        summary: `规范原生运行处理请求：${canonical.id}`,
         updatedAt: new Date(),
       })
       .where(eq(issueThreadInteractions.id, duplicate.id));
