@@ -981,7 +981,7 @@ export function nativeGovernedWaitResult(input: {
       })),
       remainingWork: [
         {
-          description: "Resume after the durable interaction is resolved.",
+          description: "持久交互处理完成后恢复执行。",
           blocksCompletion: true,
         },
       ],
@@ -1033,7 +1033,7 @@ export function nativeConversationReplyResult(input: {
     artifacts: [],
     continuation: {
       kind: "response_wake",
-      summary: "Wait for the next user message in this conversation.",
+      summary: "等待此对话中的下一条用户消息。",
       idempotencyKey: `conversation-reply:${reply.sourceEventId}`,
     },
   };
@@ -1116,7 +1116,7 @@ export function nativeToolsRefreshWaitResult(input: {
   return {
     schema: "paperclip.run_result.v1",
     reportedWorkDisposition: "yielded",
-    summary: "Continuing with the newly installed connection tools.",
+    summary: "使用新安装的连接工具继续执行。",
     completionClaim: {
       contractRevision: input.completionContract.revision,
       objectiveSatisfied: false,
@@ -1127,7 +1127,7 @@ export function nativeToolsRefreshWaitResult(input: {
       })),
       remainingWork: [
         {
-          description: "Continue in the queued session with updated tools.",
+          description: "使用更新后的工具在排队会话中继续执行。",
           blocksCompletion: true,
         },
       ],
@@ -1138,7 +1138,7 @@ export function nativeToolsRefreshWaitResult(input: {
     artifacts: [],
     continuation: {
       kind: "same_agent",
-      summary: "Use the updated connection tools in a fresh session.",
+      summary: "在新会话中使用更新后的连接工具。",
       idempotencyKey: input.key,
     },
   };
@@ -1320,7 +1320,7 @@ export async function synchronizeCompletedProviderPlan(input: {
         idempotencyKey: `runner-plan-approval:v1:${input.execution.binding.runId}:${planId}:${providerRevision}:${digest}`,
         sourceRunId: input.execution.binding.runId,
         title: `Review plan revision ${revision.revisionNumber}`,
-        summary: "Review the synchronized Paperclip plan.",
+        summary: "评审已同步的 Alice 计划。",
         continuationPolicy: "wake_assignee",
         payload: {
           version: 1,
@@ -6887,7 +6887,7 @@ export async function cancelNativeSession(
             .set({
               status: "running",
               continuationAttempt: sql`${heartbeatRuns.continuationAttempt} + 1`,
-              nextAction: "Accept a replacement native turn on the existing run.",
+              nextAction: "在现有运行中接受替代原生轮次。",
               updatedAt: new Date(),
             })
             .where(
@@ -12604,7 +12604,7 @@ async function createRunnerdBackendWithinSessionClaim(
           readSandboxAuth: async () => {
             if (!remoteAuth || !remoteCommandRunner) return readFileSync(localAuth);
             const result = await remoteCommandRunner.execute({ command: "base64", args: [remoteAuth], bypassSession: true, timeoutMs: 10000 });
-            if (result.exitCode !== 0 || result.timedOut) throw new Error("AI credential copy-back failed");
+            if (result.exitCode !== 0 || result.timedOut) throw new Error("AI 凭据回写失败");
             return Buffer.from(result.stdout, "base64");
           },
           log: () => {},
