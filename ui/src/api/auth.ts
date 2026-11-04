@@ -5,6 +5,8 @@ import {
   type CurrentUserProfile,
   type UpdateCurrentUserProfile,
 } from "@paperclipai/shared";
+import { l10n } from "../i18n";
+import { localizeApiErrorMessage } from "@/lib/api-error-localization";
 import { redactUrlSecrets } from "@/lib/redact-url-secrets";
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
 
@@ -25,13 +27,15 @@ export class AuthApiError extends Error {
   status: number;
   code: string | null;
   body: unknown;
+  rawMessage: string;
 
-  constructor(message: string, status: number, body: unknown, code: string | null = null) {
+  constructor(message: string, status: number, body: unknown, code: string | null = null, rawMessage = message) {
     super(message);
     this.name = "AuthApiError";
     this.status = status;
     this.code = code;
     this.body = body;
+    this.rawMessage = rawMessage;
   }
 }
 
@@ -64,7 +68,7 @@ function extractAuthError(payload: AuthErrorBody, status: number) {
           ? payload.error
           : `Request failed: ${status}`;
 
-  return new AuthApiError(message, status, payload, code);
+  return new AuthApiError(localizeApiErrorMessage(message, status), status, payload, code, message);
 }
 
 // Rich diagnostics for auth requests. Network-layer failures (Safari
@@ -111,19 +115,25 @@ function logAuthHttpError(method: string, path: string, status: number, statusTe
   });
 }
 
-async function authPost(path: string, body: Record<string, unknown>): Promise<unknown> {
-  let res: Response;
+async function authFetch(method: string, path: string, init: RequestInit): Promise<Response> {
   try {
-    res = await fetch(`/api/auth${path}`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    return await fetch(`/api/auth${path}`, init);
   } catch (networkError) {
-    logAuthNetworkFailure("POST", path, networkError);
-    throw networkError;
+    logAuthNetworkFailure(method, path, networkError);
+    const error = new Error(l10n("local.auth_network_request_failed_10301227"));
+    error.name = "AuthNetworkError";
+    error.cause = networkError;
+    throw error;
   }
+}
+
+async function authPost(path: string, body: Record<string, unknown>): Promise<unknown> {
+  const res = await authFetch("POST", path, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
   const payload = await res.json().catch(() => null);
   if (!res.ok) {
     const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, payload);
@@ -135,7 +145,7 @@ async function authPost(path: string, body: Record<string, unknown>): Promise<un
 }
 
 async function authPatch<T>(path: string, body: Record<string, unknown>, parse: (value: unknown) => T): Promise<T> {
-  const res = await fetch(`/api/auth${path}`, {
+  const res = await authFetch("PATCH", path, {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -152,7 +162,7 @@ async function authPatch<T>(path: string, body: Record<string, unknown>, parse: 
 
 export const authApi = {
   getSession: async (): Promise<AuthSession | null> => {
-    const res = await fetch("/api/auth/get-session", {
+    const res = await authFetch("GET", "/get-session", {
       credentials: "include",
       headers: { Accept: "application/json" },
     });
@@ -161,7 +171,7 @@ export const authApi = {
       const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, payload);
       if (recovery) return recovery;
       if (res.status === 401) return null;
-      throw new Error(`Failed to load session (${res.status})`);
+      throw extractAuthError(payload as AuthErrorBody, res.status);
     }
     const direct = toSession(payload);
     if (direct) return direct;
@@ -178,7 +188,7 @@ export const authApi = {
   },
 
   getProfile: async (): Promise<CurrentUserProfile> => {
-    const res = await fetch("/api/auth/profile", {
+    const res = await authFetch("GET", "/profile", {
       credentials: "include",
       headers: { Accept: "application/json" },
     });
@@ -186,7 +196,7 @@ export const authApi = {
     if (!res.ok) {
       const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, payload);
       if (recovery) return recovery;
-      throw new Error((payload as { error?: string } | null)?.error ?? `Failed to load profile (${res.status})`);
+      throw extractAuthError(payload as AuthErrorBody, res.status);
     }
     return currentUserProfileSchema.parse(payload);
   },

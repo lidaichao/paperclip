@@ -11,6 +11,7 @@ describe("API error localization", () => {
     ["unauthorized", 401, "登录状态无效，请重新登录。"],
     ["Internal server error", 500, "服务器发生错误，请稍后重试。"],
     ["Validation error", 422, "提交内容未通过验证。"],
+    ["Invalid email or password", 401, "邮箱或密码错误"],
     ["Execution workspace is not reopenable", 409, "此执行工作区无法重新打开。"],
     ["Failed to rebuild the execution workspace", 500, "重建执行工作区失败。"],
     ["Release is waiting for durable delivery", 409, "正在等待可靠交付完成。"],

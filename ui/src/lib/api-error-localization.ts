@@ -53,6 +53,7 @@ export function localizeApiErrorMessage(message: string, status: number): string
   if (/[^\u0000-\u007f]/.test(normalized)) return normalized;
   if (AUTH_ERRORS.has(normalized)) return l10n("local.api_authentication_required_10301174");
   if (normalized === "Forbidden") return l10n("local.api_permission_denied_10301175");
+  if (normalized === "Invalid email or password") return l10n("local.invalid_email_or_password_10300728");
   if (status === 404 && /\bnot found\.?$/i.test(normalized)) {
     return l10n("local.api_resource_not_found_10301176");
   }

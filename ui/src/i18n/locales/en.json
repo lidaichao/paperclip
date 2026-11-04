@@ -13418,6 +13418,7 @@
     "api_decision_already_trained_10301223": "This user has already trained this decision.",
     "api_skill_policy_stale_10301224": "The skill policy changed. Refresh and try again.",
     "work_record_projection_stale_10301225": "The execution projection is stale. Reconcile it again.",
-    "work_record_recovery_required_10301226": "This status needs to be reconciled."
+    "work_record_recovery_required_10301226": "This status needs to be reconciled.",
+    "auth_network_request_failed_10301227": "Could not reach the server. Check your connection and try again."
   }
 }

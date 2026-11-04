@@ -13418,6 +13418,7 @@
     "api_decision_already_trained_10301223": "此用户已用该决策完成训练。",
     "api_skill_policy_stale_10301224": "技能策略已更新，请刷新后重试。",
     "work_record_projection_stale_10301225": "执行投影已过期，请重新核对。",
-    "work_record_recovery_required_10301226": "状态需要重新核对。"
+    "work_record_recovery_required_10301226": "状态需要重新核对。",
+    "auth_network_request_failed_10301227": "无法连接服务器，请检查网络后重试。"
   }
 }

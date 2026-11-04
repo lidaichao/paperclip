@@ -3,11 +3,13 @@ import {
   createTenantSessionRecoveryCoordinator,
   tenantSessionRecovery,
 } from "@/lib/tenant-session-recovery";
-import { authApi } from "./auth";
+import { i18n } from "../i18n";
+import { authApi, AuthApiError } from "./auth";
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  await i18n.changeLanguage("en");
 });
 
 describe("authApi.getSession", () => {
@@ -68,5 +70,34 @@ describe("authApi.signOut", () => {
       headers: { "Content-Type": "application/json" },
       body: "{}",
     });
+  });
+});
+
+describe("authApi localized failures", () => {
+  it("shows a localized sign-in error and preserves the server diagnostic", async () => {
+    await i18n.changeLanguage("zh-CN");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ code: "INVALID_EMAIL_OR_PASSWORD", message: "Invalid email or password" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    ));
+
+    const error = await authApi.signInEmail({ email: "jack@example.com", password: "wrong" })
+      .catch((value: unknown) => value);
+    expect(error).toBeInstanceOf(AuthApiError);
+    expect(error).toMatchObject({
+      message: "邮箱或密码错误",
+      rawMessage: "Invalid email or password",
+      code: "INVALID_EMAIL_OR_PASSWORD",
+    });
+  });
+
+  it("shows a localized network failure", async () => {
+    await i18n.changeLanguage("zh-CN");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    await expect(authApi.signInEmail({ email: "jack@example.com", password: "secret" }))
+      .rejects.toThrow("无法连接服务器，请检查网络后重试。");
   });
 });

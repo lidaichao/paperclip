@@ -1,11 +1,15 @@
 import { announcementSchema, type Announcement } from "@paperclipai/shared";
+import { localizeApiErrorMessage } from "@/lib/api-error-localization";
 import { ApiError } from "./client";
 
 async function request(path: string, init: RequestInit) {
   const response = await fetch(`/api/announcements/${path}`, {
     credentials: "same-origin", cache: "no-store", ...init,
   });
-  if (!response.ok) throw new ApiError("Announcement request failed", response.status, null);
+  if (!response.ok) {
+    const rawMessage = "Announcement request failed";
+    throw new ApiError(localizeApiErrorMessage(rawMessage, response.status), response.status, null, rawMessage);
+  }
   return response;
 }
 
