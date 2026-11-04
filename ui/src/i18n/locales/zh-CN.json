@@ -13255,6 +13255,7 @@
     "output_cut_off_continue_to_resume_10301060": "输出已被截断——请继续以恢复执行。",
     "create_item_10301061": "创建条目",
     "claude_auto_mode_10301062": "Claude · 自动模式",
-    "no_output_for_three_seconds_still_running_10301063": "3 秒内没有输出——仍在运行"
+    "no_output_for_three_seconds_still_running_10301063": "3 秒内没有输出——仍在运行",
+    "new_connection_10301064": "新建连接"
   }
 }

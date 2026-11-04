@@ -2086,7 +2086,7 @@ export function DesignGuide() {
             icon={Inbox}
             message={l10n("local.no_connections_yet_10300712")}
             description={l10n("local.add_a_connection_to_an_application_to_configu_99930f06")}
-            action="New connection"
+            action={l10n("local.new_connection_10301064")}
             onAction={() => {}}
           />
         </SubSection>
