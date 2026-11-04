@@ -50,11 +50,9 @@ const RESOLVER_POLICY_LABELS: Record<IssueThreadInteractionCanonicalResolverPoli
  * {@link describeInteractionAudience}.
  */
 const RESOLVER_POLICY_EFFECTS: Record<IssueThreadInteractionCanonicalResolverPolicy, string> = {
-  anyone:
-    "Anyone in the organization can respond — the board or any agent, including the one that asked.",
-  not_creator:
-    "Anyone in the organization except the agent that created the card, and its run. Use this when the answer has to come from someone else.",
-  human_only: "Only a person on the board can respond. Agents are turned away.",
+  anyone: l10n("local.policy_effect_anyone_10301330"),
+  not_creator: l10n("local.policy_effect_not_creator_10301331"),
+  human_only: l10n("local.policy_effect_human_only_10301332"),
 };
 
 /** Accepts canonical values and the deprecated `board_*` compatibility aliases. */
@@ -183,9 +181,17 @@ export function describeResolverAudience({
   // `formatAssigneeUserLabel` returns the display-cased "You" for the signed-in
   // reader, which is right for a badge and wrong mid-sentence ("Only You can
   // respond."). Every use below is inside a sentence.
-  const midSentence = (label: string) => (label === "You" ? "you" : label);
+  const midSentence = (label: string) => (
+    label === l10n("local.you_08b04193")
+      ? l10n("local.you_mid_sentence_10301333")
+      : label
+  );
   const addressee = midSentence(
-    addresseeLabel?.trim() || (isUserAddressee ? "the addressed user" : "the addressed agent"),
+    addresseeLabel?.trim() || (
+      isUserAddressee
+        ? l10n("local.addressed_user_10301334")
+        : l10n("local.addressed_agent_10301335")
+    ),
   );
   const creator = midSentence(
     creatorLabel?.trim() || l10n("local.the_agent_that_created_it_10301276"),
@@ -194,7 +200,11 @@ export function describeResolverAudience({
   const summary = isUserAddressee
     ? l10n("local.only_value_can_respond_5acc7611", {v0: (addressee)})
     : policy === "human_only"
-    ? l10n("local.valueonly_a_person_on_the_board_can_respond_a_2f257615", {v0: (hasAddressee ? `Assigned to ${addressee}. ` : "")})
+    ? l10n("local.valueonly_a_person_on_the_board_can_respond_a_2f257615", {
+        v0: hasAddressee
+          ? l10n("local.assigned_to_sentence_10301336", { v0: addressee })
+          : "",
+      })
     : hasAddressee
       ? l10n("local.only_value_or_a_person_on_the_board_can_respo_92a31ca6", {v0: (addressee)})
       : policy === "not_creator"
@@ -223,11 +233,14 @@ export function describeResolverAudience({
   // open resolution existed. An explicitly requested restriction is already
   // fully described by `summary`.
   const narrowedNote = source === "governed_action"
-    ? "This card runs a governed action, so it stays human-only whatever audience was requested."
+    ? l10n("local.governed_action_human_only_10301337")
     : source === "company_cap"
-      ? `Organization interaction governance narrowed this from ${RESOLVER_POLICY_LABELS[requestedPolicy]} to ${RESOLVER_POLICY_LABELS[policy]}.`
+      ? l10n("local.organization_governance_narrowed_10301338", {
+          v0: RESOLVER_POLICY_LABELS[requestedPolicy],
+          v1: RESOLVER_POLICY_LABELS[policy],
+        })
       : provenance === "legacy_inherited_restriction"
-        ? "Created before Anyone became the default, so it stays restricted. A new card would be open."
+        ? l10n("local.legacy_card_stays_restricted_10301339")
         : null;
 
   const narrowedBy: InteractionAudienceNarrowing | null = source === "governed_action"

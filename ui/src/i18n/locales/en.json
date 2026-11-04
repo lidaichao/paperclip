@@ -13521,6 +13521,16 @@
     "state_escalated_10301326": "escalated",
     "state_resolved_10301327": "resolved",
     "held_by_reissue_isolated_10301328": "Held by {{v0}} — re-issue on an isolated workspace instead.",
-    "held_by_value_10301329": "Held by {{v0}}."
+    "held_by_value_10301329": "Held by {{v0}}.",
+    "policy_effect_anyone_10301330": "Anyone in the organization can respond — the board or any agent, including the one that asked.",
+    "policy_effect_not_creator_10301331": "Anyone in the organization except the agent that created the card, and its run. Use this when the answer has to come from someone else.",
+    "policy_effect_human_only_10301332": "Only a person on the board can respond. Agents are turned away.",
+    "you_mid_sentence_10301333": "you",
+    "addressed_user_10301334": "the addressed user",
+    "addressed_agent_10301335": "the addressed agent",
+    "assigned_to_sentence_10301336": "Assigned to {{v0}}. ",
+    "governed_action_human_only_10301337": "This card runs a governed action, so it stays human-only whatever audience was requested.",
+    "organization_governance_narrowed_10301338": "Organization interaction governance narrowed this from {{v0}} to {{v1}}.",
+    "legacy_card_stays_restricted_10301339": "Created before Anyone became the default, so it stays restricted. A new card would be open."
   }
 }
