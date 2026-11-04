@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AGENT_ADAPTER_TYPES } from "@paperclipai/shared";
@@ -52,7 +53,7 @@ const modeButtonBaseClassName =
 
 function formatHumanRole(role: string | null | undefined) {
   if (!role) return null;
-  return role.charAt(0).toUpperCase() + role.slice(1);
+  return enumLabel(role);
 }
 
 function getAuthErrorCode(error: unknown) {

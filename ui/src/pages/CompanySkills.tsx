@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { localizedCatalogSkillDescription, localizedSkillSourceLabel } from "../lib/skill-catalog-display";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { AgentAvatar } from "@/components/AgentAvatar";
@@ -1954,7 +1955,7 @@ function CatalogDetailPane({
               {localizedCatalogSkillDescription(skill.key, skill.name, skill.description, skill.kind)}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 uppercase tracking-wide">{skill.kind}</span>
+              <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 uppercase tracking-wide">{enumLabel(skill.kind, "lower")}</span>
               <span>·</span>
               <span>{skill.category}</span>
               <span>·</span>
@@ -2124,7 +2125,7 @@ export function InstallPreviewDialog({
             {defaultAction === "update" ? l10n("local.update_c1c1009d") : defaultAction === "replace" ? l10n("local.replace_95e15439") : l10n("local.install_569ca49f")} · {skill.name}
           </DialogTitle>
           <DialogDescription>
-            <span className="capitalize">{skill.kind}</span> · {skill.category}
+            <span className="capitalize">{enumLabel(skill.kind, "lower")}</span> · {skill.category}
             {packageName ? <> · {packageName}{packageVersion ? ` v${packageVersion}` : ""}</> : null}
           </DialogDescription>
         </DialogHeader>
@@ -2173,7 +2174,7 @@ export function InstallPreviewDialog({
               {skill.files.map((file) => (
                 <div key={file.path} className="grid grid-cols-(--gtc-27) items-center gap-x-3 border-b border-border/50 px-3 py-1.5 text-xs last:border-b-0">
                   <span className="truncate font-mono text-muted-foreground">{file.path}</span>
-                  <span className="rounded border border-border bg-muted/40 px-1 py-0.5 text-(length:--text-nano) uppercase text-muted-foreground">{file.kind}</span>
+                  <span className="rounded border border-border bg-muted/40 px-1 py-0.5 text-(length:--text-nano) uppercase text-muted-foreground">{enumLabel(file.kind, "lower")}</span>
                   <span className="text-(length:--text-micro) text-muted-foreground">{formatBytes(file.sizeBytes)}</span>
                 </div>
               ))}

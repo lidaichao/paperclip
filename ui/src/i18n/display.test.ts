@@ -24,6 +24,8 @@ describe("enumLabel", () => {
     expect(enumLabel("job")).toBe("作业");
     expect(enumLabel("ephemeral")).toBe("临时");
     expect(enumLabel("cleanup_failed")).toBe("清理失败");
+    expect(enumLabel("script")).toBe("脚本");
+    expect(enumLabel("asset")).toBe("资源");
   });
 
   it("keeps English labels readable", async () => {

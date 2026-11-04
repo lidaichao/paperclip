@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useMemo, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Layers, Plus, Pencil, Trash2, Link2, ShieldCheck } from "lucide-react";
@@ -1257,9 +1258,9 @@ function ProfileDetail({
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium text-foreground">{profile.name}</span>
               <Badge variant="outline">{profile.profileKey}</Badge>
-              <Badge variant={statusVariant(profile.status)}>{profile.status}</Badge>
+              <Badge variant={statusVariant(profile.status)}>{enumLabel(profile.status, "lower")}</Badge>
               <Badge variant={profile.defaultAction === "allow" ? "secondary" : "outline"}>
-                {l10n("local.default_37a8eec1")}{" "}{profile.defaultAction}
+                {l10n("local.default_37a8eec1")}{" "}{enumLabel(profile.defaultAction, "lower")}
               </Badge>
             </div>
             {profile.description ? (

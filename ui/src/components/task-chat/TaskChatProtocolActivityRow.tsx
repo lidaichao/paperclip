@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useId, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -159,7 +160,7 @@ function ProviderDetails({ item, neutral = false }: { item: TaskChatProviderActi
             <li className="flex min-w-0 flex-col gap-0.5" key={child.id}>
               <span className="flex min-w-0 items-center gap-2">
                 <span className="font-medium text-foreground">{child.title}</span>
-                <span className="capitalize text-muted-foreground">{child.status}</span>
+                <span className="capitalize text-muted-foreground">{enumLabel(child.status, "lower")}</span>
                 {child.metadata ? <span className="min-w-0 truncate font-mono text-(length:--text-micro)">{child.metadata}</span> : null}
               </span>
               {child.summary ? <span className="text-muted-foreground">{child.summary}</span> : null}

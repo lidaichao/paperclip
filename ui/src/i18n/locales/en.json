@@ -13694,6 +13694,8 @@
     "enum_runtime_job_10301499": "Job",
     "enum_runtime_shared_10301500": "Shared",
     "enum_runtime_ephemeral_10301501": "Ephemeral",
-    "enum_status_cleanup_failed_10301502": "Cleanup failed"
+    "enum_status_cleanup_failed_10301502": "Cleanup failed",
+    "enum_skill_file_script_10301503": "Script",
+    "enum_skill_file_asset_10301504": "Asset"
   }
 }

@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useId, useState, type ReactNode } from "react";
 import {
   ChevronDown,
@@ -180,7 +181,7 @@ function MetadataRow({ row, tone }: { row: SystemNoticeMetadataRow; tone: ToneTo
                 <>
                   <code className="rounded bg-muted px-1.5 py-0.5 text-foreground/80">{runShort}</code>
                   {row.status ? (
-                    <span className={cn("font-sans", tone.label)}>{row.status}</span>
+                    <span className={cn("font-sans", tone.label)}>{enumLabel(row.status, "lower")}</span>
                   ) : null}
                 </>
               );

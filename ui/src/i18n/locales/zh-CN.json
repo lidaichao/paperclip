@@ -13694,6 +13694,8 @@
     "enum_runtime_job_10301499": "作业",
     "enum_runtime_shared_10301500": "共享",
     "enum_runtime_ephemeral_10301501": "临时",
-    "enum_status_cleanup_failed_10301502": "清理失败"
+    "enum_status_cleanup_failed_10301502": "清理失败",
+    "enum_skill_file_script_10301503": "脚本",
+    "enum_skill_file_asset_10301504": "资源"
   }
 }

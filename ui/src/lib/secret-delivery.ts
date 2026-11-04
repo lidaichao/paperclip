@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type { SecretAccessEvent } from "@paperclipai/shared";
 
 /**
@@ -79,6 +80,6 @@ export function consumerTypeLabel(consumerType: SecretAccessEvent["consumerType"
     case "tool_connection":
       return l10n("local.tool_connection_84c49dc9");
     default:
-      return consumerType.charAt(0).toUpperCase() + consumerType.slice(1);
+      return enumLabel(consumerType);
   }
 }

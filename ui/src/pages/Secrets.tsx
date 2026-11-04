@@ -4645,7 +4645,7 @@ export function SecretUsageTab({ loading, bindings }: { loading: boolean; bindin
           >
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5">
-                <span className="font-medium capitalize">{binding.target.type}</span>
+                <span className="font-medium capitalize">{enumLabel(binding.target.type, "lower")}</span>
                 <Badge
                   variant="outline"
                   className={cn(

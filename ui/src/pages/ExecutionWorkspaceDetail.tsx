@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useWorkspaceIsolationControls } from "@/hooks/useWorkspaceIsolationControls";
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "@/lib/router";
@@ -614,7 +615,7 @@ function WorkspaceRoutineRow({
             {routine.title}
           </Link>
           {routine.status !== "active" ? (
-            <span className="text-xs text-muted-foreground">{routine.status}</span>
+            <span className="text-xs text-muted-foreground">{enumLabel(routine.status, "lower")}</span>
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -1538,7 +1539,7 @@ export function ExecutionWorkspaceDetail() {
                           <div className="whitespace-pre-wrap break-words text-xs text-muted-foreground">{operation.stdoutExcerpt}</div>
                         ) : null}
                       </div>
-                      <StatusPill className="self-start">{operation.status}</StatusPill>
+                      <StatusPill className="self-start">{enumLabel(operation.status, "lower")}</StatusPill>
                     </div>
                   </div>
                 ))}

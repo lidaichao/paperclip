@@ -10452,5 +10452,7 @@
   "job": "local.enum_runtime_job_10301499",
   "shared": "local.enum_runtime_shared_10301500",
   "ephemeral": "local.enum_runtime_ephemeral_10301501",
-  "cleanup failed": "local.enum_status_cleanup_failed_10301502"
+  "cleanup failed": "local.enum_status_cleanup_failed_10301502",
+  "script": "local.enum_skill_file_script_10301503",
+  "asset": "local.enum_skill_file_asset_10301504"
 }

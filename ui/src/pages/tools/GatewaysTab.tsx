@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { type FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
@@ -356,7 +357,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                     <div className="flex items-center gap-2">
                       <LinkIcon className="h-4 w-4 text-muted-foreground" />
                       <h3 className="truncate text-sm font-semibold text-foreground">{gateway.name}</h3>
-                      <span className="text-xs text-muted-foreground">{gateway.status}</span>
+                      <span className="text-xs text-muted-foreground">{enumLabel(gateway.status, "lower")}</span>
                     </div>
                     {gateway.description ? (
                       <p className="mt-1 text-sm text-muted-foreground">{gateway.description}</p>

@@ -150,7 +150,7 @@ export function SourceResolvedFoldCallout({
         <MetaRow label={l10n("local.process_cleanup_2e6ef181")}>
           <span
             className="inline-flex flex-wrap items-baseline gap-1.5"
-            title={fold.cleanup.outcome}
+            title={cleanupLabel}
           >
             <span>{cleanupLabel}</span>
             {fold.cleanup.error ? (

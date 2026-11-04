@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -3412,7 +3413,7 @@ function InteractionSection({
             <EntityRow
               key={summary.id}
               title={summary.title}
-              subtitle={`${summary.kind} · ${summary.status}`}
+              subtitle={`${enumLabel(summary.kind, "lower")} · ${enumLabel(summary.status, "lower")}`}
               trailing={
                 harnessIssueId ? (
                   <Button variant="link" size="xs" asChild>

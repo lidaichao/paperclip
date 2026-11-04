@@ -1,5 +1,5 @@
 import { l10n } from "../../i18n";
-import { displayLocale } from "../../i18n/display";
+import { displayLocale, enumLabel } from "../../i18n/display";
 import { agentAvatarUrl } from "@/lib/agent-avatar-url";
 import { resolveAgentAppearance } from "@paperclipai/shared";
 /**
@@ -786,7 +786,7 @@ function Tooltip({ tooltip, now }: { tooltip: TooltipState; now: number }) {
       <div className="text-(length:--text-compact) font-medium text-foreground">{truncate(title)}</div>
       <div className="mt-0.5 text-muted-foreground">
         {fmtClock(startMs)}–{bar.span.end ? fmtClock(endMs) : l10n("local.now_ed5eb9a3")} · {formatDuration(startMs, endMs)} ·{" "}
-        <span className="font-medium text-foreground">{bar.span.status}</span>
+        <span className="font-medium text-foreground">{enumLabel(bar.span.status, "lower")}</span>
       </div>
       {bar.kickoff && (
         <div className="text-muted-foreground">

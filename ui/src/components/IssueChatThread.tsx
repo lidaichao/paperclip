@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { TaskChatPausedTakeover, type TaskComposerPause } from "./task-chat/TaskChatPausedTakeover";
 import { useEmailComment } from "./EmailMessageCard";
@@ -3206,7 +3207,7 @@ function StaleDispositionWarningMetadataRow({
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-(length:--text-micro) text-foreground/80">
               {runShort}
             </code>
-            {row.status ? <span>{row.status}</span> : null}
+            {row.status ? <span>{enumLabel(row.status, "lower")}</span> : null}
           </>
         );
         return row.href ? (
