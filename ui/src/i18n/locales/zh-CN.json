@@ -13416,6 +13416,8 @@
     "api_document_key_exists_10301221": "此任务中已存在相同标识的文档。",
     "api_document_revision_latest_10301222": "所选修订已经是最新版本。",
     "api_decision_already_trained_10301223": "此用户已用该决策完成训练。",
-    "api_skill_policy_stale_10301224": "技能策略已更新，请刷新后重试。"
+    "api_skill_policy_stale_10301224": "技能策略已更新，请刷新后重试。",
+    "work_record_projection_stale_10301225": "执行投影已过期，请重新核对。",
+    "work_record_recovery_required_10301226": "状态需要重新核对。"
   }
 }

@@ -13416,6 +13416,8 @@
     "api_document_key_exists_10301221": "A document with the same key already exists on this task.",
     "api_document_revision_latest_10301222": "The selected revision is already the latest version.",
     "api_decision_already_trained_10301223": "This user has already trained this decision.",
-    "api_skill_policy_stale_10301224": "The skill policy changed. Refresh and try again."
+    "api_skill_policy_stale_10301224": "The skill policy changed. Refresh and try again.",
+    "work_record_projection_stale_10301225": "The execution projection is stale. Reconcile it again.",
+    "work_record_recovery_required_10301226": "This status needs to be reconciled."
   }
 }
