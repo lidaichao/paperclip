@@ -1009,7 +1009,9 @@ export function AgentDetail() {
   // which is surfaced via the pending-approval banner below.
   const agentAction = useMutation({
     mutationFn: async (action: "approve") => {
-      if (!agentLookupRef) return Promise.reject(new Error("No agent reference"));
+      if (!agentLookupRef) {
+        return Promise.reject(new Error(l10n("local.no_agent_reference_10301397")));
+      }
       if (action === "approve") {
         return agentsApi.approve(agentLookupRef, resolvedCompanyId ?? undefined);
       }
@@ -1067,19 +1069,19 @@ export function AgentDetail() {
     const crumbs: { label: string; href?: string }[] = [
       { label: l10n("local.agents_279b44d2"), href: "/agents" },
     ];
-    const agentName = agent?.name ?? routeAgentRef ?? "Agent";
+    const agentName = agent?.name ?? routeAgentRef ?? l10n("local.agent_11b39c93");
     if (activeView === "overview" && !urlRunId) {
       crumbs.push({ label: agentName });
     } else {
       crumbs.push({ label: agentName, href: agentDetailHref(canonicalAgentRef) });
       if (urlRunId) {
-        crumbs.push({ label: "Runs", href: agent?.id ? agentScopedAuditHref(agent.id, "runs") : undefined });
-        crumbs.push({ label: `Run ${urlRunId.slice(0, 8)}` });
+        crumbs.push({ label: l10n("local.runs_848f54e8"), href: agent?.id ? agentScopedAuditHref(agent.id, "runs") : undefined });
+        crumbs.push({ label: l10n("local.run_value_b0b0fae1", { v0: urlRunId.slice(0, 8) }) });
       } else {
         const item = AGENT_DETAIL_NAVIGATION
           .flatMap((section) => section.items)
           .find((candidate) => candidate.value === activeView);
-        crumbs.push({ label: item?.label ?? "Overview" });
+        crumbs.push({ label: item?.label ?? l10n("local.overview_d4b1ea57") });
       }
     }
     setBreadcrumbs(crumbs);
@@ -1301,7 +1303,7 @@ export function AgentDetail() {
             canRunWithProviderTrace={canUseProviderTrace}
             actionsDisabled={agentAction.isPending}
             workActionsDisabled={hasInvalidOrgChain}
-            workActionsDisabledReason="Repair this agent's reporting chain before assigning tasks or starting runs"
+            workActionsDisabledReason={l10n("local.repair_reporting_chain_before_work_10301398")}
             hasPendingNavigationChanges={configDirty}
             onBeforeNavigate={prepareAgentNavigation}
             onActionError={setActionError}
@@ -1781,7 +1783,7 @@ export function AgentOverview({
             <SummaryRow label={l10n("local.model_5e2c614c")}><span className="max-w-64 truncate text-sm font-mono">{configuredModel}</span></SummaryRow>
             <SummaryRow label={l10n("local.session_6959b415")}><span className="max-w-64 truncate text-sm font-mono">{runtimeState?.sessionDisplayId ?? runtimeState?.sessionId ?? l10n("local.no_session_64f06c96")}</span></SummaryRow>
             <SummaryRow label={l10n("local.last_run_512a4821")}>
-              <span className="text-sm">{lastRun ? `${lastRun.status} · ${relativeTime(lastRun.createdAt)}` : l10n("local.no_runs_26735edf")}</span>
+                <span className="text-sm">{lastRun ? `${enumLabel(lastRun.status)} · ${relativeTime(lastRun.createdAt)}` : l10n("local.no_runs_26735edf")}</span>
             </SummaryRow>
           </div>
         </section>
@@ -2357,7 +2359,9 @@ export function PromptsTab({
 
   const uploadMarkdownImage = useMutation({
     mutationFn: async ({ file, namespace }: { file: File; namespace: string }) => {
-      if (!selectedCompanyId) throw new Error("Select an organization to upload images");
+      if (!selectedCompanyId) {
+        throw new Error(l10n("local.select_an_organization_to_upload_an_avatar_in_e8837162"));
+      }
       return assetsApi.uploadImage(selectedCompanyId, file, namespace);
     },
   });
@@ -3754,7 +3758,7 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
       {/* stderr excerpt for failed runs */}
       {run.stderrExcerpt && (
         <div className="space-y-1">
-          <span className="text-xs font-medium text-red-600 dark:text-red-400">stderr</span>
+          <span className="text-xs font-medium text-red-600 dark:text-red-400">{l10n("local.stderr_7e6b710b")}</span>
           <pre className="bg-neutral-100 dark:bg-neutral-950 rounded-md p-3 text-xs font-mono text-red-700 dark:text-red-300 overflow-x-auto whitespace-pre-wrap">{run.stderrExcerpt}</pre>
         </div>
       )}
@@ -4466,7 +4470,7 @@ export function KeysTab({ agentId, companyId }: { agentId: string; companyId?: s
   });
 
   const createKey = useMutation({
-    mutationFn: () => agentsApi.createKey(agentId, newKeyName.trim() || "Default", companyId),
+    mutationFn: () => agentsApi.createKey(agentId, newKeyName.trim() || l10n("local.default_21b111cb"), companyId),
     onSuccess: (data) => {
       setNewToken(data.token);
       setTokenVisible(true);

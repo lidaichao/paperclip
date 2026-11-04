@@ -13588,6 +13588,8 @@
     "frame_prp_event_one_10301393": "{{v0}} · {{v1}} 个 PRP 事件",
     "frame_prp_event_many_10301394": "{{v0}} · {{v1}} 个 PRP 事件",
     "event_value_10301395": "事件 {{v0}}",
-    "prp_no_raw_correlation_10301396": "PRP {{v0}} · 无原始关联"
+    "prp_no_raw_correlation_10301396": "PRP {{v0}} · 无原始关联",
+    "no_agent_reference_10301397": "缺少智能体引用",
+    "repair_reporting_chain_before_work_10301398": "请先修复该智能体的汇报关系，再分配任务或启动运行"
   }
 }

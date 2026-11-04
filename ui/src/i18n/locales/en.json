@@ -13588,6 +13588,8 @@
     "frame_prp_event_one_10301393": "{{v0}} · {{v1}} PRP event",
     "frame_prp_event_many_10301394": "{{v0}} · {{v1}} PRP events",
     "event_value_10301395": "event {{v0}}",
-    "prp_no_raw_correlation_10301396": "PRP {{v0}} · no raw correlation"
+    "prp_no_raw_correlation_10301396": "PRP {{v0}} · no raw correlation",
+    "no_agent_reference_10301397": "No agent reference",
+    "repair_reporting_chain_before_work_10301398": "Repair this agent's reporting chain before assigning tasks or starting runs"
   }
 }
