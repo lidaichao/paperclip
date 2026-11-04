@@ -423,16 +423,16 @@ function parseTerminalFrame(raw: string): Record<string, unknown> | null {
 function customImageTerminalStatusCopy(state: CustomImageTerminalConnectionState) {
   switch (state) {
     case "connecting":
-      return "Connecting";
+      return l10n("local.connecting_d403c686");
     case "connected":
-      return "Connected";
+      return l10n("local.connected_22965568");
     case "closed":
-      return "Closed";
+      return l10n("local.closed_c21ead06");
     case "error":
-      return "Connection failed";
+      return l10n("local.connection_failed_596c52f1");
     case "idle":
     default:
-      return "Ready to connect";
+      return l10n("local.ready_to_connect_10301376");
   }
 }
 
@@ -451,15 +451,15 @@ function customImageTerminalCloseReasonCopy(reason: unknown) {
 
   switch (reason) {
     case "expired":
-      return "Setup session expired.";
+      return l10n("local.setup_session_expired_10301377");
     case "ssh_closed":
-      return "SSH session closed.";
+      return l10n("local.ssh_session_closed_10301378");
     case "server_shutdown":
-      return "Terminal server shut down.";
+      return l10n("local.terminal_server_shut_down_10301379");
     case "setup_finished":
-      return "Setup session finished.";
+      return l10n("local.setup_session_finished_10301380");
     case "setup_cancelled":
-      return "Setup session cancelled.";
+      return l10n("local.setup_session_cancelled_10301381");
     default:
       return null;
   }
@@ -814,21 +814,21 @@ function capabilityState(capability: EnvironmentProviderCapability | null | unde
 function sessionStatusCopy(status: EnvironmentCustomImageSetupSession["status"]) {
   switch (status) {
     case "starting":
-      return "Setup starting";
+      return l10n("local.setup_starting_10301382");
     case "waiting_for_user":
-      return "Setup running";
+      return l10n("local.setup_running_10301383");
     case "capturing":
-      return "Capturing template";
+      return l10n("local.capturing_template_10301384");
     case "promoted":
-      return "Template captured";
+      return l10n("local.template_captured_28445ed0");
     case "cancelled":
-      return "Setup cancelled";
+      return l10n("local.setup_cancelled_cd2153e3");
     case "timed_out":
-      return "Setup expired";
+      return l10n("local.setup_expired_10301385");
     case "failed":
-      return "Setup failed";
+      return l10n("local.setup_failed_10301386");
     default:
-      return "Setup status";
+      return l10n("local.setup_status_10301387");
   }
 }
 
@@ -842,7 +842,7 @@ class RelinkConfirmationDeclined extends Error {
 }
 
 function formatRelinkDriftValue(value: unknown): string {
-  if (value === null || value === undefined) return "(none)";
+  if (value === null || value === undefined) return l10n("local.none_parenthesized_91546b68");
   if (typeof value === "string") return value;
   return JSON.stringify(value);
 }
@@ -856,11 +856,15 @@ function relinkDriftWarning(conflict: EnvironmentCustomImageRelinkConflict): str
       (entry) => entry.from !== undefined || entry.to !== undefined,
     );
     if (valued) {
-      return `The base image changed: ${valued.path} ${formatRelinkDriftValue(valued.from)} -> ${formatRelinkDriftValue(valued.to)}.`;
+      return l10n("local.base_image_changed_detail_10301388", {
+        v0: valued.path,
+        v1: formatRelinkDriftValue(valued.from),
+        v2: formatRelinkDriftValue(valued.to),
+      });
     }
-    return "The base image changed since this image was captured.";
+    return l10n("local.base_image_changed_since_capture_10301389");
   }
-  return "The server cannot verify the boot source; the snapshot will override the current base image.";
+  return l10n("local.boot_source_unverified_snapshot_override_10301390");
 }
 
 function EnvironmentImageTemplatePanel({

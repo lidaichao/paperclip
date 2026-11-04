@@ -13567,6 +13567,21 @@
     "request_failed_status_10301372": "Request failed: {{v0}}",
     "something_went_wrong_try_again_10301373": "Something went wrong. Try again.",
     "invalid_json_paste_full_snippet_10301374": "That doesn't look like valid JSON yet — paste the whole snippet, including the outer braces.",
-    "working_with_tool_10301375": "Working with {{v0}}"
+    "working_with_tool_10301375": "Working with {{v0}}",
+    "ready_to_connect_10301376": "Ready to connect",
+    "setup_session_expired_10301377": "Setup session expired.",
+    "ssh_session_closed_10301378": "SSH session closed.",
+    "terminal_server_shut_down_10301379": "Terminal server shut down.",
+    "setup_session_finished_10301380": "Setup session finished.",
+    "setup_session_cancelled_10301381": "Setup session cancelled.",
+    "setup_starting_10301382": "Setup starting",
+    "setup_running_10301383": "Setup running",
+    "capturing_template_10301384": "Capturing template",
+    "setup_expired_10301385": "Setup expired",
+    "setup_failed_10301386": "Setup failed",
+    "setup_status_10301387": "Setup status",
+    "base_image_changed_detail_10301388": "The base image changed: {{v0}} {{v1}} -> {{v2}}.",
+    "base_image_changed_since_capture_10301389": "The base image changed since this image was captured.",
+    "boot_source_unverified_snapshot_override_10301390": "The server cannot verify the boot source; the snapshot will override the current base image."
   }
 }
