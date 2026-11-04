@@ -433,7 +433,7 @@ async function recordRetryableFailure(input: {
           status: "resolved",
           outcome: "false_positive",
           resolutionNote:
-            "A newer native run already committed the authoritative issue decision; the stale finalizer was retired without changing issue state.",
+            "较新的原生运行已经提交权威任务决定；过期收尾器已退出，任务状态未被更改。",
         },
         tx,
       );
@@ -470,7 +470,7 @@ async function recordRetryableFailure(input: {
         nextAction: exhausted
           ? input.permanent
             ? input.nextAction
-            : `Finalization retry budget exhausted. ${input.nextAction}`
+            : `收尾重试次数已用完。${input.nextAction}`
           : input.nextAction,
         wakePolicy: exhausted
           ? null
@@ -537,9 +537,9 @@ export async function recordNativeFinalizationFailure(input: {
     nextAction:
       input.failureScope === "workspace"
         ? input.permanent
-          ? "Restore the exact sandbox containing the unexported workspace changes, or resolve the task manually from durable evidence."
-          : "Retry workspace export and merge from the retained sandbox; do not submit another provider turn."
-        : "Repair the persisted native result or contract discriminator, then resume finalization from the coordinator.",
+          ? "恢复包含未导出工作区变更的原始沙箱，或依据持久证据手动处理任务。"
+          : "从保留的沙箱重试工作区导出与合并；不要再提交提供方轮次。"
+        : "修复已持久化的原生结果或契约判别字段，然后从协调器恢复收尾。",
     projectRunStatus: input.projectRunStatus,
     failureScope: input.failureScope,
     permanent: input.permanent,
@@ -701,7 +701,7 @@ async function materializeCommittedReviewResponse(db: Db, runId: string) {
     // sweep. Presentation failure must not reclassify a successful native run.
     logger.warn(
       { runId, error },
-      "Committed chat review response is awaiting presentation retry",
+      "已提交的聊天评审答复正在等待展示重试",
     );
   }
 }
@@ -945,7 +945,7 @@ export async function repairCommittedNativeChatResponse(
     // committed run or acknowledging a publication that never committed.
     logger.warn(
       { runId: input.runId, error },
-      "Committed chat response is awaiting presentation retry",
+      "已提交的聊天答复正在等待展示重试",
     );
     return false;
   }
@@ -1042,7 +1042,7 @@ export async function finalizeNativeRun(input: {
       });
     if (input.projectRunStatus) {
       await settleSlackConversation(input.db, run.companyId, coordinator.issueId).catch((err) => {
-        logger.warn({ err, runId: run.id }, "Slack conversation settlement deferred to reconciliation");
+        logger.warn({ err, runId: run.id }, "Slack 对话结算已延后至协调阶段");
       });
     }
     return coordinator;
@@ -1371,7 +1371,7 @@ export async function finalizeNativeRun(input: {
         });
       if (input.projectRunStatus && finalizationPhase === "committed") {
         await settleSlackConversation(input.db, run.companyId, coordinator.issueId).catch((err) => {
-          logger.warn({ err, runId: run.id }, "Slack conversation settlement deferred to reconciliation");
+          logger.warn({ err, runId: run.id }, "Slack 对话结算已延后至协调阶段");
         });
       }
       return {
@@ -1397,8 +1397,8 @@ export async function finalizeNativeRun(input: {
         message: error instanceof Error ? error.message : String(error),
         nextAction:
           error instanceof NativeStatusRaceError
-            ? "Reassess against the latest authoritative issue status version."
-            : "Retry atomic status and liveness materialization from the persisted assessment.",
+            ? "根据最新权威任务状态版本重新评估。"
+            : "根据已持久化评估，重试状态与存活路径的原子实体化。",
         projectRunStatus: input.projectRunStatus,
       });
     }
