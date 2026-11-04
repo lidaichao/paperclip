@@ -13468,6 +13468,16 @@
     "provisioned_and_maintained_for_you_10301273": "已为你配置并维护。",
     "proposed_secret_10301274": "待审批密钥",
     "this_app_10301275": "该应用",
-    "the_agent_that_created_it_10301276": "创建该请求的智能体"
+    "the_agent_that_created_it_10301276": "创建该请求的智能体",
+    "authorization_expired_reconnect_10301277": "授权已过期或被撤销，请重新连接后继续。",
+    "could_not_use_this_connection_10301278": "无法使用此连接。",
+    "your_identity_10301279": "你的身份",
+    "dedicated_agent_identity_10301280": "智能体专用身份",
+    "only_connection_manager_can_share_10301281": "只有连接管理员可以将此凭证共享给组织。",
+    "connection_option_unavailable_10301282": "{{v0}}。不可用：{{v1}}",
+    "selected_agent_count_one_10301283": "已选择 {{v0}} 个智能体",
+    "selected_agent_count_many_10301284": "已选择 {{v0}} 个智能体",
+    "action_count_on_one_10301285": "已启用 {{v0}} 个操作",
+    "action_count_on_many_10301286": "已启用 {{v0}} 个操作"
   }
 }

@@ -1226,7 +1226,7 @@ function StandardConnectionSetupFlow({
       onPhaseChange?.("needs_retry");
       setOAuthError(
         details?.code === "invalid_grant"
-          ? "Your authorization expired or was revoked. Reconnect to continue."
+          ? l10n("local.authorization_expired_reconnect_10301277")
           : error instanceof Error
             ? error.message
             : l10n("local.alice_could_not_start_secure_sign_in_0d400005"),
@@ -1400,7 +1400,7 @@ function StandardConnectionSetupFlow({
         onPhaseChange?.("needs_retry");
         setOAuthError(
           details?.code === "invalid_grant"
-            ? "Your authorization expired or was revoked. Reconnect to continue."
+            ? l10n("local.authorization_expired_reconnect_10301277")
             : error instanceof Error
               ? error.message
               : l10n("local.alice_could_not_start_secure_sign_in_0d400005"),
@@ -1882,7 +1882,11 @@ function StandardConnectionSetupFlow({
             setExistingConnectionError(null);
             try { await onUseExisting(id); }
             catch (error) {
-              setExistingConnectionError(error instanceof Error ? error.message : "Couldn’t use this connection.");
+              setExistingConnectionError(
+                error instanceof Error
+                  ? error.message
+                  : l10n("local.could_not_use_this_connection_10301278"),
+              );
               setExistingConnectionPendingId(null);
             }
           }}
@@ -2257,7 +2261,11 @@ function StandardConnectionSetupFlow({
       ) : step === "key" && entry && credentialStep !== undefined ? credentialStep : step === "key" && entry ? (
         <KeyStep
           entry={entry}
-          error={connectMutation.isError ? (connectMutation.error instanceof Error ? connectMutation.error.message : "Please check your key and try again.") : null}
+          error={connectMutation.isError
+            ? (connectMutation.error instanceof Error
+              ? connectMutation.error.message
+              : l10n("local.please_check_your_key_and_try_again_65c0f7cc"))
+            : null}
           values={credentials}
           onChange={setCredentials}
           oauthClientId={curatedOAuthClientId}
@@ -4048,35 +4056,46 @@ export function AccessStepContent({
                 options={[
                   {
                     value: "user",
-                    title: githubIdentity ? "My GitHub account" : "Just me",
+                    title: githubIdentity
+                      ? l10n("local.my_github_account_d1f22b9c")
+                      : l10n("local.just_me_3a4b4df8"),
                     description: githubIdentity
-                      ? "Agents use it only for runs where you are the responsible person."
+                      ? l10n("local.agents_use_it_only_for_runs_where_you_are_the_e8f48c17")
                       : undefined,
                     icon: <UserRound className="h-4 w-4" aria-hidden="true" />,
                   },
                   {
                     value: "agent",
-                    title: "A dedicated account for an agent",
+                    title: l10n("local.a_dedicated_account_for_an_agent_b6833582"),
                     description: githubIdentity
-                      ? "That agent always uses this account, regardless of who starts the run."
+                      ? l10n("local.that_agent_always_uses_this_account_regardles_e70310b4")
                       : undefined,
                     icon: <Bot className="h-4 w-4" aria-hidden="true" />,
                   },
                   {
                     value: "organization",
-                    title: githubIdentity ? "Shared organization GitHub account (advanced)" : "Any human in the organization",
+                    title: githubIdentity
+                      ? l10n("local.shared_organization_github_account_advanced_fc8ce435")
+                      : l10n("local.any_human_in_the_organization_e6b1c669"),
                     description: githubIdentity
-                      ? "Eligible agents use one shared credential, regardless of who starts the run."
+                      ? l10n("local.eligible_agents_use_one_shared_credential_reg_72580e0b")
                       : undefined,
                     icon: <UsersRound className="h-4 w-4" aria-hidden="true" />,
                     accessibleLabel: canCreateOrganizationGrant
-                      ? githubIdentity ? "Shared organization GitHub account (advanced)" : "Any human in the organization"
-                      : `${githubIdentity ? "Shared organization GitHub account (advanced)" : "Any human in the organization"}. Unavailable: ${capabilities?.organizationGrantReason ??
-                        "Only a connection manager can share this credential with the organization."}`,
+                      ? (githubIdentity
+                        ? l10n("local.shared_organization_github_account_advanced_fc8ce435")
+                        : l10n("local.any_human_in_the_organization_e6b1c669"))
+                      : l10n("local.connection_option_unavailable_10301282", {
+                          v0: githubIdentity
+                            ? l10n("local.shared_organization_github_account_advanced_fc8ce435")
+                            : l10n("local.any_human_in_the_organization_e6b1c669"),
+                          v1: capabilities?.organizationGrantReason
+                            ?? l10n("local.only_connection_manager_can_share_10301281"),
+                        }),
                     tooltip: canCreateOrganizationGrant
                       ? undefined
                       : capabilities?.organizationGrantReason ??
-                        "Only a connection manager can share this credential with the organization.",
+                        l10n("local.only_connection_manager_can_share_10301281"),
                     disabled: !canCreateOrganizationGrant,
                   },
                 ].filter((option) => allowedGrantKinds.includes(option.value as ConnectionGrantKind))}
@@ -4131,9 +4150,12 @@ export function AccessStepContent({
                       : undefined,
                     icon: <BotGroupIcon />,
                     accessibleLabel: canSetCompanyInstall
-                      ? "Any agent"
-                      : `Any agent. Unavailable: ${capabilities?.companyInstallReason ??
-                        "Only someone who can configure this connection can choose this."}`,
+                      ? l10n("local.any_agent_ee3e7690")
+                      : l10n("local.connection_option_unavailable_10301282", {
+                          v0: l10n("local.any_agent_ee3e7690"),
+                          v1: capabilities?.companyInstallReason
+                            ?? l10n("local.only_someone_who_can_configure_this_connectio_072221df"),
+                        }),
                     tooltip: canSetCompanyInstall
                       ? undefined
                       : capabilities?.companyInstallReason ??
@@ -4201,21 +4223,25 @@ export function accessSummaryLines(input: {
   enabledCount: number;
 }): Array<{ label: string; value: string }> {
   const identity = input.authKind === "none"
-    ? "No identity required"
+    ? l10n("local.no_identity_required_d50f3993")
     : input.grantKind === "user"
-      ? "Your identity"
+      ? l10n("local.your_identity_10301279")
       : input.grantKind === "agent"
-        ? "Dedicated agent identity"
-      : "Organization identity";
+        ? l10n("local.dedicated_agent_identity_10301280")
+      : l10n("local.organization_identity_4f644c74");
   const availableTo = input.installChoice === "all"
-    ? "Any agent"
-    : `${input.installCount} selected ${input.installCount === 1 ? "agent" : "agents"}`;
+    ? l10n("local.any_agent_ee3e7690")
+    : input.installCount === 1
+      ? l10n("local.selected_agent_count_one_10301283", { v0: input.installCount })
+      : l10n("local.selected_agent_count_many_10301284", { v0: input.installCount });
   return [
     { label: l10n("local.identity_999f23fc"), value: identity },
     { label: l10n("local.available_to_1963260d"), value: availableTo },
     {
       label: l10n("local.actions_ff8059dc"),
-      value: `${input.enabledCount} ${input.enabledCount === 1 ? "action" : "actions"} on`,
+      value: input.enabledCount === 1
+        ? l10n("local.action_count_on_one_10301285", { v0: input.enabledCount })
+        : l10n("local.action_count_on_many_10301286", { v0: input.enabledCount }),
     },
   ];
 }

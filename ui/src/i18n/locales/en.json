@@ -13468,6 +13468,16 @@
     "provisioned_and_maintained_for_you_10301273": "Provisioned and maintained for you.",
     "proposed_secret_10301274": "proposed secret",
     "this_app_10301275": "this app",
-    "the_agent_that_created_it_10301276": "the agent that created it"
+    "the_agent_that_created_it_10301276": "the agent that created it",
+    "authorization_expired_reconnect_10301277": "Your authorization expired or was revoked. Reconnect to continue.",
+    "could_not_use_this_connection_10301278": "Couldn’t use this connection.",
+    "your_identity_10301279": "Your identity",
+    "dedicated_agent_identity_10301280": "Dedicated agent identity",
+    "only_connection_manager_can_share_10301281": "Only a connection manager can share this credential with the organization.",
+    "connection_option_unavailable_10301282": "{{v0}}. Unavailable: {{v1}}",
+    "selected_agent_count_one_10301283": "{{v0}} selected agent",
+    "selected_agent_count_many_10301284": "{{v0}} selected agents",
+    "action_count_on_one_10301285": "{{v0}} action on",
+    "action_count_on_many_10301286": "{{v0}} actions on"
   }
 }
