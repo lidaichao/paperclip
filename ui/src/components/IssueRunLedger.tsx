@@ -204,14 +204,20 @@ function formatDuration(
   const endMs = end ? new Date(end).getTime() : Date.now();
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return null;
   const totalSeconds = Math.max(0, Math.round((endMs - startMs) / 1000));
-  if (totalSeconds < 60) return `${totalSeconds}s`;
+  if (totalSeconds < 60) {
+    return l10n("local.duration_seconds_10301465", { v0: totalSeconds });
+  }
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   if (minutes < 60)
-    return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+    return seconds > 0
+      ? l10n("local.duration_minutes_seconds_10301469", { v0: minutes, v1: seconds })
+      : l10n("local.duration_minutes_10301466", { v0: minutes });
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  return remainingMinutes > 0
+    ? l10n("local.duration_hours_minutes_10301467", { v0: hours, v1: remainingMinutes })
+    : l10n("local.duration_hours_10301470", { v0: hours });
 }
 
 function toIsoString(value: string | Date | null | undefined) {
