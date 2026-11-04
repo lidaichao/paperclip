@@ -1,4 +1,5 @@
 import { l10n } from "../../../i18n";
+import { enumLabel } from "../../../i18n/display";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw } from "lucide-react";
@@ -318,7 +319,7 @@ export function GitHubReviews({ endpointId }: { endpointId: string }) {
             <span className="text-sm">
               {review.assessment?.complete
                 ? l10n("local.value_5_931c6465", {v0: (review.assessment.score)})
-                : review.state.replaceAll("_", " ")}{" "}
+                : enumLabel(review.state, "lower")}{" "}
               ·{" "}
               {review.conclusion?.replaceAll("_", " ") ?? l10n("local.awaiting_assessment_53000e1b")}
             </span>

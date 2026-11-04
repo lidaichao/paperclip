@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useWorkspaceIsolationControls } from "@/hooks/useWorkspaceIsolationControls";
 import { useState, type ReactNode } from "react";
 import { environmentDisplayLabel, filterManagedSandboxSelectableEnvironments } from "@/lib/managed-sandbox-environment";
@@ -608,7 +609,7 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
                               : "text-muted-foreground",
                           )}
                         >
-                          {l10n("local.https_205ecf3f")}{" "}{service.exposure.state.replace("_", " ")}
+                          {l10n("local.https_205ecf3f")}{" "}{enumLabel(service.exposure.state, "lower")}
                         </div>
                       ) : null}
                     </div>

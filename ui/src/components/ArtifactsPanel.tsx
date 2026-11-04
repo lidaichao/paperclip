@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { IssueWorkProduct } from "@paperclipai/shared";
@@ -210,7 +211,7 @@ export function ArtifactsPanel({ taskId, isAgentWorking, openDocKey, openDocTitl
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-(length:--text-nano) text-muted-foreground capitalize">
-                          {wp.type.replace(/_/g, " ")}
+                          {enumLabel(wp.type, "lower")}
                         </span>
                         {showGenerating ? (
                           <Badge variant="ghost" className="[&>svg]:size-2.5 text-(length:--text-nano) px-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400">

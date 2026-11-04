@@ -13672,6 +13672,24 @@
     "enum_status_informational_10301477": "信息",
     "enum_status_not_dispatched_10301478": "未派发",
     "enum_status_ended_10301479": "已结束",
-    "enum_status_revision_requested_10301480": "已要求修改"
+    "enum_status_revision_requested_10301480": "已要求修改",
+    "enum_status_returned_10301481": "已返回",
+    "enum_status_oauth_failed_10301482": "OAuth 认证失败",
+    "enum_status_invalid_url_10301483": "网址无效",
+    "enum_status_destroyed_10301484": "已销毁",
+    "enum_status_verifying_10301485": "验证中",
+    "enum_phase_consent_pending_10301486": "等待同意",
+    "enum_phase_consent_sending_10301487": "正在发送同意请求",
+    "enum_phase_consent_unknown_10301488": "同意状态未知",
+    "enum_phase_upload_pending_10301489": "等待上传",
+    "enum_phase_uploading_10301490": "上传中",
+    "enum_phase_upload_unknown_10301491": "上传状态未知",
+    "enum_phase_file_info_pending_10301492": "等待发送文件信息",
+    "enum_phase_file_info_sending_10301493": "正在发送文件信息",
+    "enum_phase_file_info_unknown_10301494": "文件信息状态未知",
+    "enum_work_product_preview_url_10301495": "预览链接",
+    "enum_work_product_runtime_service_10301496": "运行服务",
+    "enum_work_product_commit_10301497": "代码提交",
+    "enum_status_needs_board_review_10301498": "需要管理层审核"
   }
 }

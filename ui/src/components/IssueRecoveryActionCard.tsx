@@ -758,7 +758,7 @@ function readWakePolicySummary(action: IssueRecoveryAction): string | null {
       ? l10n("local.check_scheduled_interval_10301316", { v0: interval })
       : l10n("local.check_scheduled_10301317");
   }
-  return type.replaceAll("_", " ");
+  return enumLabel(type, "lower");
 }
 
 function formatTimeShort(value: string | Date | null | undefined): string | null {
@@ -995,7 +995,7 @@ export function IssueRecoveryActionCard({
   const headline = useMemo(() => {
     if (cardState === "resolved" && action.outcome) {
       return l10n("local.recovery_resolved_as_value_10301321", {
-        v0: OUTCOME_LABEL[action.outcome] ?? action.outcome,
+        v0: OUTCOME_LABEL[action.outcome] ?? enumLabel(action.outcome, "lower"),
       });
     }
     if (
@@ -1135,7 +1135,7 @@ export function IssueRecoveryActionCard({
             <span className={tone.labelClass}>{tone.label}</span>
             <span className="text-muted-foreground/60" aria-hidden>·</span>
             <code className="rounded bg-background/70 px-1.5 py-0.5 font-mono text-(length:--text-micro) tracking-normal text-muted-foreground">
-              {KIND_LABEL[action.kind] ?? action.kind}
+              {KIND_LABEL[action.kind] ?? enumLabel(action.kind, "lower")}
             </code>
             {updatedAtLabel ? (
               <>

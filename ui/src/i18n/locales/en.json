@@ -13672,6 +13672,24 @@
     "enum_status_informational_10301477": "Informational",
     "enum_status_not_dispatched_10301478": "Not dispatched",
     "enum_status_ended_10301479": "Ended",
-    "enum_status_revision_requested_10301480": "Revision requested"
+    "enum_status_revision_requested_10301480": "Revision requested",
+    "enum_status_returned_10301481": "Returned",
+    "enum_status_oauth_failed_10301482": "OAuth failed",
+    "enum_status_invalid_url_10301483": "Invalid URL",
+    "enum_status_destroyed_10301484": "Destroyed",
+    "enum_status_verifying_10301485": "Verifying",
+    "enum_phase_consent_pending_10301486": "Consent pending",
+    "enum_phase_consent_sending_10301487": "Sending consent",
+    "enum_phase_consent_unknown_10301488": "Consent status unknown",
+    "enum_phase_upload_pending_10301489": "Upload pending",
+    "enum_phase_uploading_10301490": "Uploading",
+    "enum_phase_upload_unknown_10301491": "Upload status unknown",
+    "enum_phase_file_info_pending_10301492": "File information pending",
+    "enum_phase_file_info_sending_10301493": "Sending file information",
+    "enum_phase_file_info_unknown_10301494": "File information status unknown",
+    "enum_work_product_preview_url_10301495": "Preview URL",
+    "enum_work_product_runtime_service_10301496": "Runtime service",
+    "enum_work_product_commit_10301497": "Commit",
+    "enum_status_needs_board_review_10301498": "Needs board review"
   }
 }

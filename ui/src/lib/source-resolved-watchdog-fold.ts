@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type { HeartbeatRun } from "@paperclipai/shared";
 
 export type SourceResolvedFoldCleanupOutcome =
@@ -115,7 +116,7 @@ const CLEANUP_OUTCOME_LABELS: Record<string, string> = {
 };
 
 export function formatCleanupOutcome(outcome: string): string {
-  return CLEANUP_OUTCOME_LABELS[outcome] ?? outcome.replace(/_/g, " ");
+  return CLEANUP_OUTCOME_LABELS[outcome] ?? enumLabel(outcome, "lower");
 }
 
 export function formatSilenceAgeMs(ms: number | null | undefined): string | null {

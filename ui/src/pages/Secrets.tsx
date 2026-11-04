@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -3408,7 +3409,7 @@ function ProviderVaultInlineWarning({ config }: { config: CompanySecretProviderC
   if (!message) {
     return (
       <p className="mt-1 text-(length:--text-micro) text-muted-foreground">
-        {config.isDefault ? l10n("local.default_vault_653cc063") : l10n("local.vault_5d55c415")} · {config.status.replace("_", " ")}
+        {config.isDefault ? l10n("local.default_vault_653cc063") : l10n("local.vault_5d55c415")} · {enumLabel(config.status, "lower")}
       </p>
     );
   }
@@ -3622,7 +3623,7 @@ function ProviderVaultCard({
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Badge variant="outline" className={cn("font-medium", providerConfigStatusTone(config.status))}>
-              {config.status.replace("_", " ")}
+              {enumLabel(config.status, "lower")}
             </Badge>
             {config.healthStatus ? (
               <span className="text-xs text-muted-foreground">
@@ -4671,7 +4672,7 @@ export function SecretUsageTab({ loading, bindings }: { loading: boolean; bindin
               )}
               {binding.target.status ? (
                 <Badge variant="outline" className="h-5 px-1.5 text-(length:--text-nano) font-normal">
-                  {binding.target.status.replaceAll("_", " ")}
+                  {enumLabel(binding.target.status, "lower")}
                 </Badge>
               ) : null}
             </div>

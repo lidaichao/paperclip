@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type {
   AttentionDetailImage,
   AttentionFeed,
@@ -64,7 +65,7 @@ const SOURCE_META: Record<AttentionSourceKind, SourceMeta> = {
 };
 
 export function sourceMeta(kind: AttentionSourceKind): SourceMeta {
-  return SOURCE_META[kind] ?? { label: kind.replaceAll("_", " ") };
+  return SOURCE_META[kind] ?? { label: enumLabel(kind, "lower") };
 }
 
 interface SeverityStyle {

@@ -17,6 +17,10 @@ describe("enumLabel", () => {
     expect(enumLabel("not_dispatched")).toBe("未派发");
     expect(enumLabel("ended")).toBe("已结束");
     expect(enumLabel("revision_requested")).toBe("已要求修改");
+    expect(enumLabel("oauth_failed")).toBe("OAuth 认证失败");
+    expect(enumLabel("file_info_unknown")).toBe("文件信息状态未知");
+    expect(enumLabel("preview_url")).toBe("预览链接");
+    expect(enumLabel("needs_board_review")).toBe("需要管理层审核");
   });
 
   it("keeps English labels readable", async () => {

@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type { ActivityEvent } from "@paperclipai/shared";
 import { useProjectCreatedItems } from "@/hooks/useProjectCreatedItems";
 import { skillCreatedItems } from "@/components/task-chat/skill-created-items";
@@ -1263,7 +1264,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
           resourceKind: "deliverable",
           title: workProduct.title,
           subtitle: [
-            workProduct.type.replaceAll("_", " "),
+            enumLabel(workProduct.type, "lower"),
             workProduct.status,
             workProduct.reviewState !== "none" ? workProduct.reviewState : null,
           ]

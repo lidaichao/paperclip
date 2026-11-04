@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { isRetiredComposioConnection, RETIRED_COMPOSIO_MESSAGE } from "@paperclipai/shared";
 import { ManagedAiConnectionRow } from "@/components/ai-connections/ManagedAiConnectionDetails";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -875,7 +876,7 @@ export function ConnectorCard({
                 </p>
               </div>
               <span className="text-xs text-muted-foreground">
-                {endpoint.status.replace(/_/g, " ")}
+                {enumLabel(endpoint.status, "lower")}
               </span>
               <div className="flex items-center gap-2">
                 {endpoint.status === "draft" ? (

@@ -1,4 +1,5 @@
 import { l10n } from "../../../i18n";
+import { enumLabel } from "../../../i18n/display";
 import { SlackToolsSettings, SlackSearchAccess } from "./SlackToolSettings";
 import { defaultSlackAppName } from "./slack-app-name";
 import { ChatCommunicationInstructions } from "./ChatCommunicationInstructions";
@@ -1094,7 +1095,7 @@ function Activity({
                   {item.fileTransfer && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       {item.fileTransfer.filename} —{" "}
-                      {item.fileTransfer.phase.replaceAll("_", " ")}
+                      {enumLabel(item.fileTransfer.phase, "lower")}
                     </p>
                   )}
                   {item.detail && (
