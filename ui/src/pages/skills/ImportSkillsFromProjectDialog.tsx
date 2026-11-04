@@ -34,6 +34,7 @@ import { ApiError } from "../../api/client";
 import { companySkillsApi } from "../../api/companySkills";
 import { projectsApi } from "../../api/projects";
 import { useToastActions } from "../../context/ToastContext";
+import { localizeApiErrorMessage } from "../../lib/api-error-localization";
 import { queryKeys } from "../../lib/queryKeys";
 import { skillStudioRoute } from "../../lib/company-skill-routes";
 import { Button } from "@/components/ui/button";
@@ -219,7 +220,7 @@ export function isValidSelectionSlug(selection: SkillSelection): boolean {
 
 function readableErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
-    return error.message || `Request failed: ${error.status}`;
+    return localizeApiErrorMessage(error.message, error.status);
   }
   if (error instanceof Error) return error.message;
   return l10n("local.unexpected_error_d24c41ae");
