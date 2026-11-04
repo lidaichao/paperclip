@@ -10259,5 +10259,11 @@
   "my {{v0}} account": "local.my_provider_account_10300642",
   "failed to sign out.": "local.failed_to_sign_out_10300643",
   "saved credentials are retained when these fields are left blank. enter a replacement only to change them.": "local.saved_credentials_retained_10300644",
-  "required by this connection's install setting": "local.required_by_connection_install_10300645"
+  "required by this connection's install setting": "local.required_by_connection_install_10300645",
+  "{{v0}} +{{v1}} more": "local.names_and_more_count_10300646",
+  "new: {{v0}}": "local.new_names_10300647",
+  "edited: {{v0}}": "local.edited_names_10300648",
+  "removed: {{v0}}": "local.removed_names_10300649",
+  "imported 1 variable": "local.imported_one_variable_10300650",
+  "imported {{v0}} variables": "local.imported_variables_10300651"
 }

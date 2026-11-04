@@ -12839,6 +12839,12 @@
     "my_provider_account_10300642": "我的 {{v0}} 账户",
     "failed_to_sign_out_10300643": "退出登录失败。",
     "saved_credentials_retained_10300644": "这些字段留空时将保留已保存的凭据；仅在需要更改时输入新凭据。",
-    "required_by_connection_install_10300645": "此连接的安装设置要求使用该智能体"
+    "required_by_connection_install_10300645": "此连接的安装设置要求使用该智能体",
+    "names_and_more_count_10300646": "{{v0}}，另有 {{v1}} 项",
+    "new_names_10300647": "新增：{{v0}}",
+    "edited_names_10300648": "已编辑：{{v0}}",
+    "removed_names_10300649": "已移除：{{v0}}",
+    "imported_one_variable_10300650": "已导入 1 个变量",
+    "imported_variables_10300651": "已导入 {{v0}} 个变量"
   }
 }

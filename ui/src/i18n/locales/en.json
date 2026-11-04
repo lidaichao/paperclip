@@ -12839,6 +12839,12 @@
     "my_provider_account_10300642": "My {{v0}} account",
     "failed_to_sign_out_10300643": "Failed to sign out.",
     "saved_credentials_retained_10300644": "Saved credentials are retained when these fields are left blank. Enter a replacement only to change them.",
-    "required_by_connection_install_10300645": "Required by this connection's install setting"
+    "required_by_connection_install_10300645": "Required by this connection's install setting",
+    "names_and_more_count_10300646": "{{v0}} +{{v1}} more",
+    "new_names_10300647": "New: {{v0}}",
+    "edited_names_10300648": "Edited: {{v0}}",
+    "removed_names_10300649": "Removed: {{v0}}",
+    "imported_one_variable_10300650": "Imported 1 variable",
+    "imported_variables_10300651": "Imported {{v0}} variables"
   }
 }

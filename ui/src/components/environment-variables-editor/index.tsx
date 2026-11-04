@@ -84,7 +84,10 @@ const CHANGE_SUMMARY_MAX_NAMES = 3;
 function formatChangedNames(names: readonly string[]): string {
   const shown = names.slice(0, CHANGE_SUMMARY_MAX_NAMES).join(", ");
   return names.length > CHANGE_SUMMARY_MAX_NAMES
-    ? `${shown} +${names.length - CHANGE_SUMMARY_MAX_NAMES} more`
+    ? l10n("local.names_and_more_count_10300646", {
+        v0: shown,
+        v1: names.length - CHANGE_SUMMARY_MAX_NAMES,
+      })
     : shown;
 }
 
@@ -265,9 +268,9 @@ export const EnvironmentVariablesEditor = forwardRef<EnvironmentVariablesEditorH
 
   const changeSummaryText = useMemo(() => {
     const parts: string[] = [];
-    if (changeSummary.added.length > 0) parts.push(`New: ${formatChangedNames(changeSummary.added)}`);
-    if (changeSummary.changed.length > 0) parts.push(`Edited: ${formatChangedNames(changeSummary.changed)}`);
-    if (changeSummary.removed.length > 0) parts.push(`Removed: ${formatChangedNames(changeSummary.removed)}`);
+    if (changeSummary.added.length > 0) parts.push(l10n("local.new_names_10300647", { v0: formatChangedNames(changeSummary.added) }));
+    if (changeSummary.changed.length > 0) parts.push(l10n("local.edited_names_10300648", { v0: formatChangedNames(changeSummary.changed) }));
+    if (changeSummary.removed.length > 0) parts.push(l10n("local.removed_names_10300649", { v0: formatChangedNames(changeSummary.removed) }));
     return parts.join(" · ");
   }, [changeSummary]);
 
@@ -375,7 +378,12 @@ export const EnvironmentVariablesEditor = forwardRef<EnvironmentVariablesEditorH
       }
     }
     updateDraft(working);
-    toast?.pushToast({ title: `Imported ${pairs.length} variable${pairs.length === 1 ? "" : "s"}`, tone: "success" });
+    toast?.pushToast({
+      title: pairs.length === 1
+        ? l10n("local.imported_one_variable_10300650")
+        : l10n("local.imported_variables_10300651", { v0: pairs.length }),
+      tone: "success",
+    });
     return true;
   }
 

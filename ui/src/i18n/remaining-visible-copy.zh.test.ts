@@ -833,6 +833,12 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.failed_to_sign_out_10300643).toBe("退出登录失败。");
     expect(messages.saved_credentials_retained_10300644).toContain("保留已保存的凭据");
     expect(messages.required_by_connection_install_10300645).toContain("安装设置要求");
+    expect(messages.names_and_more_count_10300646).toContain("另有");
+    expect(messages.new_names_10300647).toContain("新增");
+    expect(messages.edited_names_10300648).toContain("已编辑");
+    expect(messages.removed_names_10300649).toContain("已移除");
+    expect(messages.imported_one_variable_10300650).toBe("已导入 1 个变量");
+    expect(messages.imported_variables_10300651).toContain("个变量");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
