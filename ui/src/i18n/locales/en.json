@@ -13213,6 +13213,20 @@
     "pressure_test_issue_interactions_10301018": "Pressure-test first-class issue-thread interactions before we touch persistence. I want to see the cards in the real feed, not in a disconnected mock.",
     "found_existing_issue_chat_10301019": "I found the existing issue chat surface and I am adding prototype-only interaction records so the Storybook review can happen before persistence work.",
     "wiring_interaction_cards_10301020": "Wiring the prototype interaction cards into the same issue feed that already renders comments and live runs.",
-    "keep_payload_shapes_local_10301021": "Need to keep the payload shapes local to the UI layer so Phase 0 stays non-persistent."
+    "keep_payload_shapes_local_10301021": "Need to keep the payload shapes local to the UI layer so Phase 0 stays non-persistent.",
+    "background_10301022": "Background",
+    "foreground_10301023": "Foreground",
+    "primary_foreground_10301024": "Primary foreground",
+    "muted_10301025": "Muted",
+    "muted_foreground_10301026": "Muted foreground",
+    "accent_10301027": "Accent",
+    "border_10301028": "Border",
+    "ring_10301029": "Ring",
+    "sidebar_border_10301030": "Sidebar border",
+    "chart_number_10301031": "Chart {{number}}",
+    "inspect_activity_feed_layout_10301032": "I’ll inspect the activity feed and check the layout.",
+    "token_check_needs_another_pass_10301033": "A token check needs another pass.",
+    "backend_service_10301034": "Backend Service",
+    "fallback_10301035": "Fallback"
   }
 }

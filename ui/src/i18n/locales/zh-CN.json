@@ -13213,6 +13213,20 @@
     "pressure_test_issue_interactions_10301018": "在接入持久化前，先充分验证一等任务线程交互。我希望在真实动态中看到这些卡片，而不是脱离环境的模拟稿。",
     "found_existing_issue_chat_10301019": "我已找到现有任务聊天界面，正在添加仅用于原型的交互记录，以便在持久化工作前进行 Storybook 审阅。",
     "wiring_interaction_cards_10301020": "正在把交互卡片原型接入同一个任务动态；该动态已经可以显示评论和实时运行。",
-    "keep_payload_shapes_local_10301021": "需要将载荷结构保留在界面层，确保阶段 0 不引入持久化。"
+    "keep_payload_shapes_local_10301021": "需要将载荷结构保留在界面层，确保阶段 0 不引入持久化。",
+    "background_10301022": "背景",
+    "foreground_10301023": "前景",
+    "primary_foreground_10301024": "主色前景",
+    "muted_10301025": "弱化色",
+    "muted_foreground_10301026": "弱化前景",
+    "accent_10301027": "强调色",
+    "border_10301028": "边框",
+    "ring_10301029": "聚焦环",
+    "sidebar_border_10301030": "侧栏边框",
+    "chart_number_10301031": "图表 {{number}}",
+    "inspect_activity_feed_layout_10301032": "我会检查活动动态并核对布局。",
+    "token_check_needs_another_pass_10301033": "令牌检查还需要再处理一次。",
+    "backend_service_10301034": "后端服务",
+    "fallback_10301035": "后备图标"
   }
 }

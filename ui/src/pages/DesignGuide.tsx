@@ -564,35 +564,35 @@ export function DesignGuide() {
       <Section title={l10n("local.colors_88c45d9e")}>
         <SubSection title={l10n("local.core_70ea1983")}>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Swatch name="Background" cssVar="--background" />
-            <Swatch name="Foreground" cssVar="--foreground" />
-            <Swatch name="Card" cssVar="--card" />
-            <Swatch name="Primary" cssVar="--primary" />
-            <Swatch name="Primary foreground" cssVar="--primary-foreground" />
-            <Swatch name="Secondary" cssVar="--secondary" />
-            <Swatch name="Muted" cssVar="--muted" />
-            <Swatch name="Muted foreground" cssVar="--muted-foreground" />
-            <Swatch name="Accent" cssVar="--accent" />
-            <Swatch name="Destructive" cssVar="--destructive" />
-            <Swatch name="Border" cssVar="--border" />
-            <Swatch name="Ring" cssVar="--ring" />
+            <Swatch name={l10n("local.background_10301022")} cssVar="--background" />
+            <Swatch name={l10n("local.foreground_10301023")} cssVar="--foreground" />
+            <Swatch name={l10n("local.card_8367cd66")} cssVar="--card" />
+            <Swatch name={l10n("local.primary_efe10c80")} cssVar="--primary" />
+            <Swatch name={l10n("local.primary_foreground_10301024")} cssVar="--primary-foreground" />
+            <Swatch name={l10n("local.secondary_62f2ccff")} cssVar="--secondary" />
+            <Swatch name={l10n("local.muted_10301025")} cssVar="--muted" />
+            <Swatch name={l10n("local.muted_foreground_10301026")} cssVar="--muted-foreground" />
+            <Swatch name={l10n("local.accent_10301027")} cssVar="--accent" />
+            <Swatch name={l10n("local.destructive_1b933329")} cssVar="--destructive" />
+            <Swatch name={l10n("local.border_10301028")} cssVar="--border" />
+            <Swatch name={l10n("local.ring_10301029")} cssVar="--ring" />
           </div>
         </SubSection>
 
         <SubSection title={l10n("local.sidebar_f7efa7bc")}>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Swatch name="Sidebar" cssVar="--sidebar" />
-            <Swatch name="Sidebar border" cssVar="--sidebar-border" />
+            <Swatch name={l10n("local.sidebar_f7efa7bc")} cssVar="--sidebar" />
+            <Swatch name={l10n("local.sidebar_border_10301030")} cssVar="--sidebar-border" />
           </div>
         </SubSection>
 
         <SubSection title={l10n("local.chart_3e5b90ae")}>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Swatch name="Chart 1" cssVar="--chart-1" />
-            <Swatch name="Chart 2" cssVar="--chart-2" />
-            <Swatch name="Chart 3" cssVar="--chart-3" />
-            <Swatch name="Chart 4" cssVar="--chart-4" />
-            <Swatch name="Chart 5" cssVar="--chart-5" />
+            <Swatch name={l10n("local.chart_number_10301031", { number: 1 })} cssVar="--chart-1" />
+            <Swatch name={l10n("local.chart_number_10301031", { number: 2 })} cssVar="--chart-2" />
+            <Swatch name={l10n("local.chart_number_10301031", { number: 3 })} cssVar="--chart-3" />
+            <Swatch name={l10n("local.chart_number_10301031", { number: 4 })} cssVar="--chart-4" />
+            <Swatch name={l10n("local.chart_number_10301031", { number: 5 })} cssVar="--chart-5" />
           </div>
         </SubSection>
       </Section>
@@ -601,13 +601,13 @@ export function DesignGuide() {
       {/*  TYPOGRAPHY                                                   */}
       {/* ============================================================ */}
       <Section title={l10n("local.runner_activity_4da41ca2")}>
-        <TaskChatRunnerActivityGroup item={{ id: "design-runner-activity", kind: "activity_phase", active: true, summary: "", interstitial: { id: "design-runner-commentary", kind: "message", author: "agent", text: "I’ll inspect the activity feed and check the layout.", interstitial: true }, items: [
+        <TaskChatRunnerActivityGroup item={{ id: "design-runner-activity", kind: "activity_phase", active: true, summary: "", interstitial: { id: "design-runner-commentary", kind: "message", author: "agent", text: l10n("local.inspect_activity_feed_layout_10301032"), interstitial: true }, items: [
           { id: "design-runner-read", kind: "tool", name: "read", target: "TaskChatRunnerTurn.tsx", status: "completed", detail: l10n("local.found_activity_groups_10300689") },
           { id: "design-runner-check", kind: "tool", name: "exec_command", target: "pnpm check:token-gates", status: "in_progress" },
         ] }} />
         <TaskChatRunnerActivityGroup item={{ id: "design-runner-completed", kind: "activity_phase", active: false, summary: "", items: [
           { id: "design-completed-read", kind: "tool", name: "read", target: "TaskChatRunnerTurn.tsx", status: "completed", detail: l10n("local.read_activity_groups_10300690") },
-          { id: "design-completed-check", kind: "tool", name: "exec_command", target: "pnpm check:token-gates", status: "failed", detail: "A token check needs another pass." },
+          { id: "design-completed-check", kind: "tool", name: "exec_command", target: "pnpm check:token-gates", status: "failed", detail: l10n("local.token_check_needs_another_pass_10301033") },
         ] }} />
       </Section>
 
@@ -1427,7 +1427,7 @@ export function DesignGuide() {
               size={36}
             />
             <AppLogo name="Jira" logoUrl="/brands/apps/jira.svg" darkLogoUrl="/brands/apps/jira-dark.svg" size={44} />
-            <AppLogo name="Fallback" logoUrl="/brands/apps/does-not-exist.svg" size={36} />
+            <AppLogo name={l10n("local.fallback_10301035")} logoUrl="/brands/apps/does-not-exist.svg" size={36} />
           </div>
         </SubSection>
       </Section>
@@ -1462,7 +1462,7 @@ export function DesignGuide() {
         </SubSection>
 
         <SubSection title={l10n("local.custom_initials_dba05082")}>
-          <Identity name="Backend Service" initials="BS" size="sm" />
+          <Identity name={l10n("local.backend_service_10301034")} initials="BS" size="sm" />
         </SubSection>
       </Section>
 
