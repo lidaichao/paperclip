@@ -13409,6 +13409,13 @@
     "api_release_delivery_pending_10301214": "Waiting for reliable delivery to complete.",
     "api_provider_vault_disabled_10301215": "The provider vault is disabled.",
     "api_provider_vault_locked_10301216": "Provider vault runtime support is not available yet.",
-    "api_provider_reference_already_linked_10301217": "A secret already links to the same provider reference."
+    "api_provider_reference_already_linked_10301217": "A secret already links to the same provider reference.",
+    "api_document_locked_10301218": "The document is locked and cannot be changed right now.",
+    "api_document_changed_10301219": "Someone else updated the document. Refresh and try again.",
+    "api_document_missing_10301220": "The document does not exist yet.",
+    "api_document_key_exists_10301221": "A document with the same key already exists on this task.",
+    "api_document_revision_latest_10301222": "The selected revision is already the latest version.",
+    "api_decision_already_trained_10301223": "This user has already trained this decision.",
+    "api_skill_policy_stale_10301224": "The skill policy changed. Refresh and try again."
   }
 }

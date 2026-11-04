@@ -13409,6 +13409,13 @@
     "api_release_delivery_pending_10301214": "正在等待可靠交付完成。",
     "api_provider_vault_disabled_10301215": "提供商密钥库已停用。",
     "api_provider_vault_locked_10301216": "提供商密钥库运行功能尚未开放。",
-    "api_provider_reference_already_linked_10301217": "已有密钥关联到相同的提供商引用。"
+    "api_provider_reference_already_linked_10301217": "已有密钥关联到相同的提供商引用。",
+    "api_document_locked_10301218": "文档已锁定，暂时无法修改。",
+    "api_document_changed_10301219": "文档已被其他人更新，请刷新后重试。",
+    "api_document_missing_10301220": "文档尚不存在。",
+    "api_document_key_exists_10301221": "此任务中已存在相同标识的文档。",
+    "api_document_revision_latest_10301222": "所选修订已经是最新版本。",
+    "api_decision_already_trained_10301223": "此用户已用该决策完成训练。",
+    "api_skill_policy_stale_10301224": "技能策略已更新，请刷新后重试。"
   }
 }

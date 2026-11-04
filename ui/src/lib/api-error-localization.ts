@@ -24,6 +24,13 @@ const DOMAIN_ERROR_KEYS: Record<string, string> = {
   "Provider vault runtime is locked while coming soon.": "local.api_provider_vault_locked_10301216",
   "An existing secret already links this exact provider reference.":
     "local.api_provider_reference_already_linked_10301217",
+  "Document is locked": "local.api_document_locked_10301218",
+  "Document was updated by someone else": "local.api_document_changed_10301219",
+  "Document does not exist yet": "local.api_document_missing_10301220",
+  "Document key already exists on this issue": "local.api_document_key_exists_10301221",
+  "Selected revision is already the latest revision": "local.api_document_revision_latest_10301222",
+  "This decision is already trained by this user": "local.api_decision_already_trained_10301223",
+  "Skill policy revision is stale": "local.api_skill_policy_stale_10301224",
 };
 
 function statusFallback(status: number): string {

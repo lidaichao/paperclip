@@ -21,6 +21,13 @@ describe("API error localization", () => {
       409,
       "已有密钥关联到相同的提供商引用。",
     ],
+    ["Document is locked", 409, "文档已锁定，暂时无法修改。"],
+    ["Document was updated by someone else", 409, "文档已被其他人更新，请刷新后重试。"],
+    ["Document does not exist yet", 409, "文档尚不存在。"],
+    ["Document key already exists on this issue", 409, "此任务中已存在相同标识的文档。"],
+    ["Selected revision is already the latest revision", 409, "所选修订已经是最新版本。"],
+    ["This decision is already trained by this user", 409, "此用户已用该决策完成训练。"],
+    ["Skill policy revision is stale", 409, "技能策略已更新，请刷新后重试。"],
   ])("localizes generic server error %s", async (message, status, expected) => {
     await i18n.changeLanguage("zh-CN");
     expect(localizeApiErrorMessage(message, status)).toBe(expected);
