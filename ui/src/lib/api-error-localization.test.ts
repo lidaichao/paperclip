@@ -43,10 +43,10 @@ describe("API error localization", () => {
     expect(localizeApiErrorMessage("Sandbox with ID sandbox-7 not found", 404)).toBe("请求的资源不存在。");
   });
 
-  it("preserves a specific diagnostic that has no safe translation", async () => {
+  it("uses a localized status fallback for an unmapped English diagnostic", async () => {
     await i18n.changeLanguage("zh-CN");
     const diagnostic = "Repository URL must include an owner and name: acme";
-    expect(localizeApiErrorMessage(diagnostic, 422)).toBe(diagnostic);
+    expect(localizeApiErrorMessage(diagnostic, 422)).toBe("提交内容未通过验证。");
   });
 
   it("preserves an existing Chinese server explanation", async () => {

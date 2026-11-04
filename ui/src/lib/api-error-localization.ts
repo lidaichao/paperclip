@@ -45,9 +45,8 @@ function statusFallback(status: number): string {
 }
 
 /**
- * Translate only stable, generic API errors. Domain diagnostics remain intact
- * because replacing them with a status-only sentence would remove the detail
- * an operator needs to fix the request.
+ * Keep user-visible API errors in the active locale. ApiError separately keeps
+ * the raw server diagnostic and response body for branching and troubleshooting.
  */
 export function localizeApiErrorMessage(message: string, status: number): string {
   const normalized = message.trim();
@@ -67,5 +66,5 @@ export function localizeApiErrorMessage(message: string, status: number): string
   const domainErrorKey = DOMAIN_ERROR_KEYS[normalized];
   if (domainErrorKey) return l10n(domainErrorKey);
   if (/^Request failed:\s*\d+$/.test(normalized)) return statusFallback(status);
-  return message;
+  return statusFallback(status);
 }
