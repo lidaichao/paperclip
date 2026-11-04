@@ -12881,6 +12881,9 @@
     "case_clipboard_key_10300684": "- Key: {{v0}}",
     "case_clipboard_type_10300685": "- Type: {{v0}}",
     "case_clipboard_status_10300686": "- Status: {{v0}}",
-    "case_clipboard_labels_10300687": "- Labels: {{v0}}"
+    "case_clipboard_labels_10300687": "- Labels: {{v0}}",
+    "run_cancelled_before_answer_10300688": "The run was cancelled before returning an answer.",
+    "found_activity_groups_10300689": "Found the activity groups.",
+    "read_activity_groups_10300690": "Read the activity groups."
   }
 }

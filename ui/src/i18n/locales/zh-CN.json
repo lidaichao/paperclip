@@ -12881,6 +12881,9 @@
     "case_clipboard_key_10300684": "- 键：{{v0}}",
     "case_clipboard_type_10300685": "- 类型：{{v0}}",
     "case_clipboard_status_10300686": "- 状态：{{v0}}",
-    "case_clipboard_labels_10300687": "- 标签：{{v0}}"
+    "case_clipboard_labels_10300687": "- 标签：{{v0}}",
+    "run_cancelled_before_answer_10300688": "本次运行在返回回答前已取消。",
+    "found_activity_groups_10300689": "已找到活动分组。",
+    "read_activity_groups_10300690": "已读取活动分组。"
   }
 }

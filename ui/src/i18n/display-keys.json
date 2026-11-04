@@ -10300,5 +10300,8 @@
   "- Key: {{v0}}": "local.case_clipboard_key_10300684",
   "- Type: {{v0}}": "local.case_clipboard_type_10300685",
   "- Status: {{v0}}": "local.case_clipboard_status_10300686",
-  "- Labels: {{v0}}": "local.case_clipboard_labels_10300687"
+  "- Labels: {{v0}}": "local.case_clipboard_labels_10300687",
+  "the run was cancelled before returning an answer.": "local.run_cancelled_before_answer_10300688",
+  "found the activity groups.": "local.found_activity_groups_10300689",
+  "read the activity groups.": "local.read_activity_groups_10300690"
 }

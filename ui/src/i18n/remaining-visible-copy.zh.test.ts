@@ -875,6 +875,9 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.case_clipboard_type_10300685).toContain("类型");
     expect(messages.case_clipboard_status_10300686).toContain("状态");
     expect(messages.case_clipboard_labels_10300687).toContain("标签");
+    expect(messages.run_cancelled_before_answer_10300688).toContain("返回回答前已取消");
+    expect(messages.found_activity_groups_10300689).toContain("已找到活动分组");
+    expect(messages.read_activity_groups_10300690).toContain("已读取活动分组");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");
