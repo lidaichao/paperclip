@@ -871,6 +871,10 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.field_number_10300681).toContain("字段");
     expect(messages.join_invite_context_10300682).toContain("加入邀请");
     expect(messages.join_invite_default_role_10300683).toContain("默认角色");
+    expect(messages.case_clipboard_key_10300684).toContain("键");
+    expect(messages.case_clipboard_type_10300685).toContain("类型");
+    expect(messages.case_clipboard_status_10300686).toContain("状态");
+    expect(messages.case_clipboard_labels_10300687).toContain("标签");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

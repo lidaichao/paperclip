@@ -10296,5 +10296,9 @@
   "re-issue (isolated): {{v0}}": "local.reissue_isolated_title_10300680",
   "field {{v0}}": "local.field_number_10300681",
   "{{v0}} join invite": "local.join_invite_context_10300682",
-  "{{v0}} join invite • default role {{v1}}": "local.join_invite_default_role_10300683"
+  "{{v0}} join invite • default role {{v1}}": "local.join_invite_default_role_10300683",
+  "- Key: {{v0}}": "local.case_clipboard_key_10300684",
+  "- Type: {{v0}}": "local.case_clipboard_type_10300685",
+  "- Status: {{v0}}": "local.case_clipboard_status_10300686",
+  "- Labels: {{v0}}": "local.case_clipboard_labels_10300687"
 }

@@ -37,17 +37,9 @@ import { IssueReferencePill } from "@/components/IssueReferencePill";
 import { PropertyChip, PropertyRow, PropertySection } from "@/components/issue-properties";
 import { IssueDocumentsSection } from "@/components/IssueDocumentsSection";
 import { CaseCopyableToken, CaseIdentifierKey } from "@/components/CaseIdentifierKey";
+import { formatCaseClipboardMarkdown } from "@/lib/case-clipboard";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
-
-const STATUS_LABEL: Record<CaseStatus, string> = {
-  draft: l10n("local.draft_ebf12ef4"),
-  in_progress: l10n("local.in_progress_c1f88e9d"),
-  in_review: l10n("local.in_review_c3905914"),
-  approved: l10n("local.approved_87b42e40"),
-  done: l10n("local.done_11a6767d"),
-  cancelled: l10n("local.cancelled_d353a99e"),
-};
 
 const PRIMARY_FIELD_KEYS = ["name", "title", "body", "description"] as const;
 const ISSUE_REFERENCE_STATUSES = ["backlog", "todo", "in_progress", "in_review", "done", "blocked", "cancelled"] as const;
@@ -598,14 +590,7 @@ export function CaseDetail() {
   const description = caseData.fields.description ?? caseData.fields.Description ?? null;
 
   function copyCaseToClipboard(currentCase: CaseDetailData) {
-    const markdown = [
-      `# ${currentCase.identifier} ${currentCase.title}`,
-      "",
-      `- Key: ${currentCase.key ?? "none"}`,
-      `- Type: ${currentCase.caseType}`,
-      `- Status: ${STATUS_LABEL[currentCase.status]}`,
-      currentCase.labels.length > 0 ? `- Labels: ${currentCase.labels.map((label) => label.name).join(", ")}` : "- Labels: none",
-    ].join("\n");
+    const markdown = formatCaseClipboardMarkdown(currentCase);
     void copyTextToClipboard(markdown).then(() => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);

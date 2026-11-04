@@ -12877,6 +12877,10 @@
     "reissue_isolated_title_10300680": "Re-issue (isolated): {{v0}}",
     "field_number_10300681": "field {{v0}}",
     "join_invite_context_10300682": "{{v0}} join invite",
-    "join_invite_default_role_10300683": "{{v0}} join invite • default role {{v1}}"
+    "join_invite_default_role_10300683": "{{v0}} join invite • default role {{v1}}",
+    "case_clipboard_key_10300684": "- Key: {{v0}}",
+    "case_clipboard_type_10300685": "- Type: {{v0}}",
+    "case_clipboard_status_10300686": "- Status: {{v0}}",
+    "case_clipboard_labels_10300687": "- Labels: {{v0}}"
   }
 }

@@ -12877,6 +12877,10 @@
     "reissue_isolated_title_10300680": "重新创建（独立工作区）：{{v0}}",
     "field_number_10300681": "字段 {{v0}}",
     "join_invite_context_10300682": "{{v0}}加入邀请",
-    "join_invite_default_role_10300683": "{{v0}}加入邀请 • 默认角色：{{v1}}"
+    "join_invite_default_role_10300683": "{{v0}}加入邀请 • 默认角色：{{v1}}",
+    "case_clipboard_key_10300684": "- 键：{{v0}}",
+    "case_clipboard_type_10300685": "- 类型：{{v0}}",
+    "case_clipboard_status_10300686": "- 状态：{{v0}}",
+    "case_clipboard_labels_10300687": "- 标签：{{v0}}"
   }
 }
