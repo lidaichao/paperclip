@@ -18,6 +18,18 @@ describe("runtime message localization", () => {
     ],
     ["New conversation session", "新会话已开始"],
     ["Scheduled retry was requested to run now", "已请求立即执行计划重试"],
+    [
+      "Scheduled retry suppressed because issue dependencies are still blocked",
+      "计划重试已被阻止：任务依赖仍未解除。",
+    ],
+    [
+      "Conversation retry is waiting for a response to a pending question or approval",
+      "会话重试正在等待待处理问题或审批的答复。",
+    ],
+    [
+      "Scheduled replacement suppressed because another run owns task execution or checkout",
+      "计划替换运行已被阻止：已有其他运行占用任务执行权或签出权。",
+    ],
   ])("localizes server runtime message %s", async (message, expected) => {
     await i18n.changeLanguage("zh-CN");
     expect(localizeRuntimeMessage(message)).toBe(expected);

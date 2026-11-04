@@ -6,6 +6,7 @@ import { ApiError } from "../api/client";
 import { issuesApi } from "../api/issues";
 import { useToastActions } from "../context/ToastContext";
 import { queryKeys } from "../lib/queryKeys";
+import { localizeRuntimeMessage } from "../lib/runtime-message-localization";
 
 export type RetryNowError = {
   message: string;
@@ -43,6 +44,7 @@ export function useRetryNowMutation(
       return issuesApi.retryScheduledRetryNow(issueId);
     },
     onSuccess: (response) => {
+      const responseMessage = localizeRuntimeMessage(response.message);
       if (issueId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(issueId) });
@@ -53,13 +55,13 @@ export function useRetryNowMutation(
       if (response.outcome === "promoted") {
         pushToast({
           title: RETRY_NOW_OUTCOME_HEADLINE.promoted,
-          body: response.message,
+          body: responseMessage,
           tone: "success",
         });
       } else if (response.outcome === "gate_suppressed") {
         pushToast({
           title: RETRY_NOW_OUTCOME_HEADLINE.gate_suppressed,
-          body: response.message,
+          body: responseMessage,
           tone: "error",
         });
       }
@@ -87,8 +89,8 @@ export function useRetryNowMutation(
     }
     if (mutation.data && mutation.data.outcome === "gate_suppressed") {
       return {
-        message: mutation.data.message,
-        outcomeMessage: mutation.data.message,
+        message: localizeRuntimeMessage(mutation.data.message),
+        outcomeMessage: localizeRuntimeMessage(mutation.data.message),
         status: null,
       };
     }

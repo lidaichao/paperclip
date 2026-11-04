@@ -13419,6 +13419,16 @@
     "api_skill_policy_stale_10301224": "The skill policy changed. Refresh and try again.",
     "work_record_projection_stale_10301225": "The execution projection is stale. Reconcile it again.",
     "work_record_recovery_required_10301226": "This status needs to be reconciled.",
-    "auth_network_request_failed_10301227": "Could not reach the server. Check your connection and try again."
+    "auth_network_request_failed_10301227": "Could not reach the server. Check your connection and try again.",
+    "retry_agent_missing_10301228": "The scheduled retry was suppressed because the agent no longer exists.",
+    "retry_agent_not_invokable_10301229": "The scheduled retry was suppressed because the agent cannot run right now.",
+    "retry_owner_changed_10301230": "The scheduled retry was suppressed because task ownership changed.",
+    "replacement_blocked_after_recovery_10301231": "The scheduled replacement was suppressed because the task became blocked after recovery.",
+    "replacement_execution_owned_10301232": "The scheduled replacement was suppressed because another run owns task execution or checkout.",
+    "retry_dependencies_blocked_10301233": "The scheduled retry was suppressed because task dependencies are still blocked.",
+    "retry_waiting_for_response_10301234": "The conversation retry is waiting for a response to a pending question or approval.",
+    "retry_target_missing_10301235": "The retry was cancelled because the target task no longer exists.",
+    "replacement_dependencies_blocked_10301236": "The replacement was cancelled because task dependencies became blocked before dispatch.",
+    "subscription_retry_lock_changed_10301237": "The subscription retry was suppressed because the task execution lock changed."
   }
 }

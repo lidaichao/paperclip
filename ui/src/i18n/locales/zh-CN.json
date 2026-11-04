@@ -13419,6 +13419,16 @@
     "api_skill_policy_stale_10301224": "技能策略已更新，请刷新后重试。",
     "work_record_projection_stale_10301225": "执行投影已过期，请重新核对。",
     "work_record_recovery_required_10301226": "状态需要重新核对。",
-    "auth_network_request_failed_10301227": "无法连接服务器，请检查网络后重试。"
+    "auth_network_request_failed_10301227": "无法连接服务器，请检查网络后重试。",
+    "retry_agent_missing_10301228": "计划重试已被阻止：智能体已不存在。",
+    "retry_agent_not_invokable_10301229": "计划重试已被阻止：智能体当前不可执行。",
+    "retry_owner_changed_10301230": "计划重试已被阻止：任务负责人已变更。",
+    "replacement_blocked_after_recovery_10301231": "计划替换运行已被阻止：任务在恢复后进入受阻状态。",
+    "replacement_execution_owned_10301232": "计划替换运行已被阻止：已有其他运行占用任务执行权或签出权。",
+    "retry_dependencies_blocked_10301233": "计划重试已被阻止：任务依赖仍未解除。",
+    "retry_waiting_for_response_10301234": "会话重试正在等待待处理问题或审批的答复。",
+    "retry_target_missing_10301235": "已取消重试：目标任务已不存在。",
+    "replacement_dependencies_blocked_10301236": "已取消替换运行：派发前任务依赖重新进入受阻状态。",
+    "subscription_retry_lock_changed_10301237": "订阅重试已被阻止：任务执行锁已变化。"
   }
 }
