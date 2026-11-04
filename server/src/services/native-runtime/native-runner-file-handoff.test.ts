@@ -254,16 +254,16 @@ describe("native runner file handoff", () => {
       .find((entry) => entry.name === "register_deliverable");
     expect(definition).toMatchObject({
       description: expect.stringContaining(
-        "does not confirm provider delivery",
+        "不代表外部平台已经收到",
       ),
       inputSchema: {
         properties: {
           filename: {
-            description: expect.stringContaining("Directory components"),
+            description: expect.stringContaining("拒绝包含目录部分"),
           },
           byteSize: { minimum: 1, maximum: 10 * 1024 * 1024 },
           contentRef: {
-            description: expect.stringContaining("Workspace-relative"),
+            description: expect.stringContaining("工作区相对源路径"),
           },
         },
       },
@@ -365,7 +365,7 @@ describe("native runner file handoff", () => {
       expect.objectContaining({
         authorAgentId: agentId,
         createdByRunId: runId,
-        body: "Prepared Requested answer for this response.",
+        body: "已为本次答复准备：Requested answer。",
         metadata: expect.objectContaining({
           authorizationReason: "paperclip_runner_protocol",
         }),
@@ -637,7 +637,7 @@ describe("native runner file handoff", () => {
 
     const prompt = renderNativeRunnerStagedAttachmentPrompt(stage.attachments);
     expect(prompt).toContain(
-      "Never substitute an older generated workspace file",
+      "绝不能用较早生成的工作区文件",
     );
     expect(prompt).toContain(relativePath!);
     expect(prompt).not.toContain("/api/attachments/");
