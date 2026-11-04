@@ -13611,6 +13611,9 @@
     "refresh_schedule_if_changed_10301416": "on a schedule if changed",
     "refresh_on_change_debounce_10301417": "on change ({{v0}}s)",
     "policy_redact_10301418": "redact",
-    "policy_rate_limit_10301419": "rate limit"
+    "policy_rate_limit_10301419": "rate limit",
+    "chat_setup_error_fallback_10301420": "Check the required values and provider access, then try again.",
+    "expires_in_days_10301421": "Expires in {{v0}}d",
+    "local_stdio_10301422": "Local stdio"
   }
 }

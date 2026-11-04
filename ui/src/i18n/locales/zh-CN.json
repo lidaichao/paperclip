@@ -13611,6 +13611,9 @@
     "refresh_schedule_if_changed_10301416": "有变更时按计划刷新",
     "refresh_on_change_debounce_10301417": "变更后刷新（延迟 {{v0}} 秒）",
     "policy_redact_10301418": "隐去",
-    "policy_rate_limit_10301419": "速率限制"
+    "policy_rate_limit_10301419": "速率限制",
+    "chat_setup_error_fallback_10301420": "请检查必填信息和服务商访问权限，然后重试。",
+    "expires_in_days_10301421": "{{v0}} 天后到期",
+    "local_stdio_10301422": "本地 stdio"
   }
 }

@@ -32,12 +32,17 @@ import {
 /** ISO expiry → "expires in 12d" / "expires in 5h" / "expired". */
 function expiryLabel(expiresAt: string): { text: string; urgent: boolean } {
   const ms = new Date(expiresAt).getTime() - Date.now();
-  if (Number.isNaN(ms)) return { text: "no expiry", urgent: false };
-  if (ms <= 0) return { text: "expired", urgent: true };
+  if (Number.isNaN(ms)) return { text: l10n("local.no_expiry_fe06351d"), urgent: false };
+  if (ms <= 0) return { text: l10n("local.expired_424a2551"), urgent: true };
   const hours = Math.floor(ms / 3_600_000);
-  if (hours < 24) return { text: `expires in ${hours}h`, urgent: true };
+  if (hours < 24) {
+    return { text: l10n("local.expires_in_valueh_a0f26414", { v0: hours }), urgent: true };
+  }
   const days = Math.floor(hours / 24);
-  return { text: `expires in ${days}d`, urgent: days <= 2 };
+  return {
+    text: l10n("local.expires_in_days_10301421", { v0: days }),
+    urgent: days <= 2,
+  };
 }
 
 function ProposalRow({

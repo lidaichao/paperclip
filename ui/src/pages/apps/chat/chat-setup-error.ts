@@ -1,5 +1,7 @@
+import { l10n } from "../../../i18n";
+
 export const chatSetupErrorFallback =
-  "Check the required values and provider access, then try again.";
+  l10n("local.chat_setup_error_fallback_10301420");
 
 function uriEncoded(value: string): string | null {
   try {

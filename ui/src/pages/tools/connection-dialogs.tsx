@@ -41,8 +41,8 @@ import {
 } from "./shared";
 
 export const TRANSPORT_LABEL: Record<string, string> = {
-  mcp_remote: "remote http",
-  local_stdio: "local stdio",
+  mcp_remote: l10n("local.remote_http_3dd421f7"),
+  local_stdio: l10n("local.local_stdio_10301422"),
 };
 
 /** Mono URL (remote) or command-template (stdio) subtitle for a connection row. */
