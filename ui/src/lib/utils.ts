@@ -137,12 +137,12 @@ export function providerDisplayName(provider: string): string {
 
 export function billingTypeDisplayName(billingType: BillingType): string {
   const map: Record<BillingType, string> = {
-    metered_api: "Metered API",
-    subscription_included: "Subscription",
-    subscription_overage: "Subscription overage",
-    credits: "Credits",
-    fixed: "Fixed",
-    unknown: "Unknown",
+    metered_api: l10n("local.billing_metered_api_10301423"),
+    subscription_included: l10n("local.billing_subscription_10301424"),
+    subscription_overage: l10n("local.billing_subscription_overage_10301425"),
+    credits: l10n("local.billing_credits_10301426"),
+    fixed: l10n("local.billing_fixed_10301427"),
+    unknown: l10n("local.billing_unknown_10301428"),
   };
   return map[billingType];
 }
@@ -192,26 +192,28 @@ export function visibleRunCostUsd(
 
 export function financeEventKindDisplayName(eventKind: FinanceEventKind): string {
   const map: Record<FinanceEventKind, string> = {
-    inference_charge: "Inference charge",
-    platform_fee: "Platform fee",
-    credit_purchase: "Credit purchase",
-    credit_refund: "Credit refund",
-    credit_expiry: "Credit expiry",
-    byok_fee: "BYOK fee",
-    gateway_overhead: "Gateway overhead",
-    log_storage_charge: "Log storage",
-    logpush_charge: "Logpush",
-    provisioned_capacity_charge: "Provisioned capacity",
-    training_charge: "Training",
-    custom_model_import_charge: "Custom model import",
-    custom_model_storage_charge: "Custom model storage",
-    manual_adjustment: "Manual adjustment",
+    inference_charge: l10n("local.finance_inference_charge_10301429"),
+    platform_fee: l10n("local.finance_platform_fee_10301430"),
+    credit_purchase: l10n("local.finance_credit_purchase_10301431"),
+    credit_refund: l10n("local.finance_credit_refund_10301432"),
+    credit_expiry: l10n("local.finance_credit_expiry_10301433"),
+    byok_fee: l10n("local.finance_byok_fee_10301434"),
+    gateway_overhead: l10n("local.finance_gateway_overhead_10301435"),
+    log_storage_charge: l10n("local.finance_log_storage_10301436"),
+    logpush_charge: l10n("local.finance_logpush_10301437"),
+    provisioned_capacity_charge: l10n("local.finance_provisioned_capacity_10301438"),
+    training_charge: l10n("local.finance_training_10301439"),
+    custom_model_import_charge: l10n("local.finance_custom_model_import_10301440"),
+    custom_model_storage_charge: l10n("local.finance_custom_model_storage_10301441"),
+    manual_adjustment: l10n("local.finance_manual_adjustment_10301442"),
   };
   return map[eventKind];
 }
 
 export function financeDirectionDisplayName(direction: FinanceDirection): string {
-  return direction === "credit" ? "Credit" : "Debit";
+  return direction === "credit"
+    ? l10n("local.finance_direction_credit_10301443")
+    : l10n("local.finance_direction_debit_10301444");
 }
 
 /** Build an issue URL using the human-readable identifier when available. */

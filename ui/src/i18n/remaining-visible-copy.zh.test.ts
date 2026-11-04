@@ -1032,6 +1032,15 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.chat_setup_error_fallback_10301420).toContain("服务商访问权限");
     expect(messages.expires_in_days_10301421).toContain("天后到期");
     expect(messages.local_stdio_10301422).toBe("本地 stdio");
+    expect(messages.billing_metered_api_10301423).toContain("按量计费");
+    expect(messages.billing_subscription_overage_10301425).toContain("超额用量");
+    expect(messages.finance_inference_charge_10301429).toBe("推理费用");
+    expect(messages.finance_credit_refund_10301432).toBe("退还额度");
+    expect(messages.finance_gateway_overhead_10301435).toContain("网关");
+    expect(messages.finance_custom_model_storage_10301441).toContain("模型存储");
+    expect(messages.finance_manual_adjustment_10301442).toBe("人工调整");
+    expect(messages.finance_direction_credit_10301443).toBe("入账");
+    expect(messages.finance_direction_debit_10301444).toBe("支出");
     expect(Object.values(messages).filter((value) => /\bURL\b/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /Application ID|Client ID|Client Secret|Tenant ID|Signing Secret|Alice Runner|Runner Inspector/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /请求 地址|此 地址|实例 地址|回调 地址|网关 地址/.test(value))).toEqual([]);
