@@ -9,6 +9,7 @@ import {
 import type { AdapterEnvironmentTestResult } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { localizeAdapterEnvironmentCheck } from "@/lib/adapter-check-localization";
 export type TestState = "idle" | "running" | "pass" | "fail";
 
 const copy = {
@@ -53,6 +54,7 @@ export function RuntimeTestCard({
   disabled?: boolean;
 }) {
   const content = copy[state];
+  const checks = result?.checks.map(localizeAdapterEnvironmentCheck) ?? [];
   const Icon =
     state === "running"
       ? Loader2
@@ -108,7 +110,7 @@ export function RuntimeTestCard({
           </Button>
         </div>
       </div>
-      {result && result.checks.length > 0 && (
+      {result && checks.length > 0 && (
         <details
           key={`${state}:${result.testedAt}`}
           className="group border-t border-border"
@@ -120,7 +122,7 @@ export function RuntimeTestCard({
             />
             {l10n("local.test_details_7cc561a5")}</summary>
           <ul className="space-y-3 px-4 pb-4">
-            {result.checks.map((check) => (
+            {checks.map((check) => (
               <li
                 key={check.code}
                 className="flex gap-2 text-xs leading-relaxed"

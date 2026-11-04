@@ -2,6 +2,7 @@ import { l10n } from "../i18n";
 import { AiConnectionField } from "./ai-connections/AiConnectionField";
 import { aiConnectionBindingSchema } from "@paperclipai/shared";
 import { testAgentSetup } from "@/lib/test-agent-setup";
+import { adapterCheckLevelLabel, localizeAdapterEnvironmentCheck } from "@/lib/adapter-check-localization";
 import { setupEfforts } from "../lib/agent-setup-fields";
 import { RuntimeTestCard } from "./RuntimeTestCard";
 import { useState, useEffect, useRef, useMemo, useCallback, Children, isValidElement, type ReactNode } from "react";
@@ -3552,6 +3553,7 @@ function SubmittedBrowserCodeLoginPanel({
 }
 
 export function AdapterEnvironmentResult({ result }: { result: AdapterEnvironmentTestResult }) {
+  const checks = result.checks.map(localizeAdapterEnvironmentCheck);
   const statusLabel =
     result.status === "pass" ? l10n("local.passed_436fe71b") : result.status === "warn" ? l10n("local.warnings_0e04cd10") : l10n("local.failed_031a8f0f");
   const statusClass =
@@ -3570,10 +3572,10 @@ export function AdapterEnvironmentResult({ result }: { result: AdapterEnvironmen
         </span>
       </div>
       <div className="mt-2 space-y-1.5">
-        {result.checks.map((check, idx) => (
+        {checks.map((check, idx) => (
           <div key={`${check.code}-${idx}`} className="text-(length:--text-micro) leading-relaxed break-words">
             <span className="font-medium uppercase tracking-wide opacity-80">
-              {check.level}
+              {adapterCheckLevelLabel(check.level)}
             </span>
             <span className="mx-1 opacity-60">·</span>
             <span>{check.message}</span>

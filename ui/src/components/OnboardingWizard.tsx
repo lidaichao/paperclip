@@ -1,5 +1,6 @@
 import { l10n } from "../i18n";
 import { healthApi } from "@/api/health";
+import { adapterCheckLevelLabel, localizeAdapterEnvironmentCheck } from "@/lib/adapter-check-localization";
 import { LocalProviderLoginInstructions } from "./AdapterLoginChrome";
 import { useLocalAiLogin } from "./ai-connections/useLocalAiLogin";
 import { aiConnectionsApi } from "@/api/ai-connections";
@@ -3156,6 +3157,7 @@ function AdapterEnvironmentResult({
 }: {
   result: AdapterEnvironmentTestResult;
 }) {
+  const checks = result.checks.map(localizeAdapterEnvironmentCheck);
   const statusLabel =
     result.status === "pass"
       ? l10n("local.passed_436fe71b")
@@ -3178,13 +3180,13 @@ function AdapterEnvironmentResult({
         </span>
       </div>
       <div className="mt-1.5 space-y-1">
-        {result.checks.map((check, idx) => (
+        {checks.map((check, idx) => (
           <div
             key={`${check.code}-${idx}`}
             className="leading-relaxed break-words"
           >
             <span className="font-medium uppercase tracking-wide opacity-80">
-              {check.level}
+              {adapterCheckLevelLabel(check.level)}
             </span>
             <span className="mx-1 opacity-60">·</span>
             <span>{check.message}</span>
