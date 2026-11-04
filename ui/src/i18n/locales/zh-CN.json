@@ -13403,6 +13403,12 @@
     "interaction_already_resolved_reason_10301208": "此交互已经处理",
     "interaction_superseded_reason_10301209": "此交互已被更新请求取代",
     "interaction_stale_target_reason_10301210": "此交互所针对的内容已经变更",
-    "interaction_issue_closed_reason_10301211": "任务已关闭，无法再处理此交互"
+    "interaction_issue_closed_reason_10301211": "任务已关闭，无法再处理此交互",
+    "api_workspace_not_reopenable_10301212": "此执行工作区无法重新打开。",
+    "api_workspace_rebuild_failed_10301213": "重建执行工作区失败。",
+    "api_release_delivery_pending_10301214": "正在等待可靠交付完成。",
+    "api_provider_vault_disabled_10301215": "提供商密钥库已停用。",
+    "api_provider_vault_locked_10301216": "提供商密钥库运行功能尚未开放。",
+    "api_provider_reference_already_linked_10301217": "已有密钥关联到相同的提供商引用。"
   }
 }

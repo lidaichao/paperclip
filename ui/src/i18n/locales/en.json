@@ -13403,6 +13403,12 @@
     "interaction_already_resolved_reason_10301208": "This issue-thread interaction is already resolved",
     "interaction_superseded_reason_10301209": "This confirmation was superseded by a newer request",
     "interaction_stale_target_reason_10301210": "This issue-thread interaction targets content that has changed",
-    "interaction_issue_closed_reason_10301211": "This task is closed and the interaction can no longer be resolved"
+    "interaction_issue_closed_reason_10301211": "This task is closed and the interaction can no longer be resolved",
+    "api_workspace_not_reopenable_10301212": "This execution workspace cannot be reopened.",
+    "api_workspace_rebuild_failed_10301213": "Failed to rebuild the execution workspace.",
+    "api_release_delivery_pending_10301214": "Waiting for reliable delivery to complete.",
+    "api_provider_vault_disabled_10301215": "The provider vault is disabled.",
+    "api_provider_vault_locked_10301216": "Provider vault runtime support is not available yet.",
+    "api_provider_reference_already_linked_10301217": "A secret already links to the same provider reference."
   }
 }

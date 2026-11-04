@@ -11,6 +11,16 @@ describe("API error localization", () => {
     ["unauthorized", 401, "登录状态无效，请重新登录。"],
     ["Internal server error", 500, "服务器发生错误，请稍后重试。"],
     ["Validation error", 422, "提交内容未通过验证。"],
+    ["Execution workspace is not reopenable", 409, "此执行工作区无法重新打开。"],
+    ["Failed to rebuild the execution workspace", 500, "重建执行工作区失败。"],
+    ["Release is waiting for durable delivery", 409, "正在等待可靠交付完成。"],
+    ["Provider vault is disabled.", 422, "提供商密钥库已停用。"],
+    ["Provider vault runtime is locked while coming soon.", 422, "提供商密钥库运行功能尚未开放。"],
+    [
+      "An existing secret already links this exact provider reference.",
+      409,
+      "已有密钥关联到相同的提供商引用。",
+    ],
   ])("localizes generic server error %s", async (message, status, expected) => {
     await i18n.changeLanguage("zh-CN");
     expect(localizeApiErrorMessage(message, status)).toBe(expected);
