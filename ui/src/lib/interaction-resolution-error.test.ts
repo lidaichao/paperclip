@@ -72,7 +72,7 @@ describe("describeInteractionResolutionFailure", () => {
           details: { code: "interaction_human_only" },
         }),
         null,
-      ).message).toBe("你不在此卡片的可回应范围内。");
+      ).message).toBe("此交互只能由人工管理方处理。");
       expect(describeInteractionResolutionFailure(
         new ApiError("", 403, null),
         null,
@@ -83,9 +83,24 @@ describe("describeInteractionResolutionFailure", () => {
           details: { code: "interaction_already_resolved" },
         }),
         null,
-      ).message).toBe("此请求已不再等待决定。");
+      ).message).toBe("此交互已经处理。");
       expect(describeInteractionResolutionFailure(new Error("临时错误"), null).message)
         .toBe("临时错误。 请重试。");
+    } finally {
+      await i18n.changeLanguage(previousLanguage);
+    }
+  });
+
+  it("uses the structured denial code instead of leaking the English server reason", async () => {
+    const previousLanguage = i18n.language;
+    try {
+      await i18n.changeLanguage("zh-CN");
+      const failure = describeInteractionResolutionFailure(
+        denial(403, "interaction_human_only", "This issue-thread interaction is human-only"),
+        { shortSummary: "只有管理方可以回应", isOpen: false },
+      );
+
+      expect(failure.message).toBe("此交互只能由人工管理方处理。 只有管理方可以回应。");
     } finally {
       await i18n.changeLanguage(previousLanguage);
     }
@@ -144,7 +159,7 @@ describe("describeInteractionResolutionFailure", () => {
     );
 
     expect(failure.kind).toBe("audience_denied");
-    expect(failure.message).toBe("Only the addressed agent can resolve this interaction.");
+    expect(failure.message).toBe("Only the addressed agent or an authorized human may resolve this issue-thread interaction.");
     expect(failure.message).not.toMatch(/anyone can respond/i);
   });
 
@@ -192,7 +207,7 @@ describe("describeInteractionResolutionFailure", () => {
 
   it("leaves punctuation the server already wrote alone", () => {
     expect(
-      interactionResolutionErrorMessage(denial(403, "interaction_human_only", "Agents cannot resolve this."), null),
+      interactionResolutionErrorMessage(new ApiError("Agents cannot resolve this.", 403, { error: "Agents cannot resolve this." }), null),
     ).toBe("Agents cannot resolve this.");
   });
 });

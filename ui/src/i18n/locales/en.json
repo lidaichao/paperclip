@@ -13392,6 +13392,17 @@
     "old_runtime_stopped_fresh_session_10301197": "The previous runner and provider stopped. New input will use a fresh session; earlier action outcomes remain recorded.",
     "attachment_staging_cleanup_failed_10301198": "Failed to clean up staged inbound attachments.",
     "native_execution_requested_10301199": "Native execution was requested; previous local stop evidence no longer applies.",
-    "stale_active_run_finalized_10301200": "A stale active run was finalized after its source resolved"
+    "stale_active_run_finalized_10301200": "A stale active run was finalized after its source resolved",
+    "interaction_human_only_reason_10301201": "This issue-thread interaction is human-only",
+    "interaction_creator_excluded_reason_10301202": "This issue-thread interaction requires a resolver other than its creator",
+    "interaction_addressee_mismatch_reason_10301203": "Only the addressed agent or an authorized human may resolve this issue-thread interaction",
+    "interaction_governed_action_denied_reason_10301204": "This interaction is bound to a governed action that requires independent authorization",
+    "interaction_run_attribution_required_reason_10301205": "A valid authenticated agent run is required to resolve this issue-thread interaction",
+    "interaction_scope_denied_reason_10301206": "The current identity is outside this interaction's resolver scope",
+    "interaction_not_found_reason_10301207": "This issue-thread interaction was not found",
+    "interaction_already_resolved_reason_10301208": "This issue-thread interaction is already resolved",
+    "interaction_superseded_reason_10301209": "This confirmation was superseded by a newer request",
+    "interaction_stale_target_reason_10301210": "This issue-thread interaction targets content that has changed",
+    "interaction_issue_closed_reason_10301211": "This task is closed and the interaction can no longer be resolved"
   }
 }

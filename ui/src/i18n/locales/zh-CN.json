@@ -13392,6 +13392,17 @@
     "old_runtime_stopped_fresh_session_10301197": "旧运行器和提供商已停止；新输入将使用新会话，之前的操作结果仍会保留。",
     "attachment_staging_cleanup_failed_10301198": "清理暂存的传入附件失败。",
     "native_execution_requested_10301199": "已请求原生执行，之前的本地停止证据不再适用。",
-    "stale_active_run_finalized_10301200": "来源问题解决后，已结束过期的活动运行"
+    "stale_active_run_finalized_10301200": "来源问题解决后，已结束过期的活动运行",
+    "interaction_human_only_reason_10301201": "此交互只能由人工管理方处理",
+    "interaction_creator_excluded_reason_10301202": "创建者不能处理此交互，需要其他负责人处理",
+    "interaction_addressee_mismatch_reason_10301203": "只有指定智能体或获授权人员可以处理此交互",
+    "interaction_governed_action_denied_reason_10301204": "此交互绑定了需要独立授权的受控操作",
+    "interaction_run_attribution_required_reason_10301205": "需要有效且已认证的智能体运行才能处理此交互",
+    "interaction_scope_denied_reason_10301206": "当前身份不在此交互的处理范围内",
+    "interaction_not_found_reason_10301207": "此交互不存在或已被删除",
+    "interaction_already_resolved_reason_10301208": "此交互已经处理",
+    "interaction_superseded_reason_10301209": "此交互已被更新请求取代",
+    "interaction_stale_target_reason_10301210": "此交互所针对的内容已经变更",
+    "interaction_issue_closed_reason_10301211": "任务已关闭，无法再处理此交互"
   }
 }

@@ -42,6 +42,20 @@ const INTERACTION_SETTLED_CODES = [
   "interaction_issue_closed",
 ] as const;
 
+const INTERACTION_REASON_KEYS: Readonly<Record<string, string>> = {
+  interaction_human_only: "local.interaction_human_only_reason_10301201",
+  interaction_creator_excluded: "local.interaction_creator_excluded_reason_10301202",
+  interaction_addressee_mismatch: "local.interaction_addressee_mismatch_reason_10301203",
+  interaction_governed_action_denied: "local.interaction_governed_action_denied_reason_10301204",
+  interaction_run_attribution_required: "local.interaction_run_attribution_required_reason_10301205",
+  interaction_scope_denied: "local.interaction_scope_denied_reason_10301206",
+  interaction_not_found: "local.interaction_not_found_reason_10301207",
+  interaction_already_resolved: "local.interaction_already_resolved_reason_10301208",
+  interaction_superseded: "local.interaction_superseded_reason_10301209",
+  interaction_stale_target: "local.interaction_stale_target_reason_10301210",
+  interaction_issue_closed: "local.interaction_issue_closed_reason_10301211",
+};
+
 export type InteractionResolutionFailureKind = "audience_denied" | "settled" | "transient";
 
 export interface InteractionResolutionFailure {
@@ -73,11 +87,12 @@ function errorStatus(error: unknown): number | null {
 }
 
 /** The server's human-readable reason, preserved verbatim apart from punctuation. */
-function serverReason(error: unknown): string | null {
+function serverReason(error: unknown, code: string | null): string | null {
   const body = record(record(error)?.body);
   const fromBody = typeof body?.error === "string" ? body.error.trim() : "";
   const fromError = error instanceof Error ? error.message.trim() : "";
-  const reason = fromBody || fromError;
+  const reasonKey = code ? INTERACTION_REASON_KEYS[code] : null;
+  const reason = reasonKey ? l10n(reasonKey) : fromBody || fromError;
   if (!reason) return null;
   // The API writes reasons as bare clauses ("This interaction is human-only").
   return /[.!?。！？]$/.test(reason)
@@ -111,7 +126,7 @@ export function describeInteractionResolutionFailure(
   audience?: InteractionResolutionAudience | null,
 ): InteractionResolutionFailure {
   const code = interactionResolutionErrorCode(error);
-  const reason = serverReason(error);
+  const reason = serverReason(error, code);
 
   if (isInteractionAudienceDenial(error)) {
     // Only a *narrowed* audience has a responder worth naming. Appending the
