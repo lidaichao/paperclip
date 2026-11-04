@@ -8,7 +8,7 @@ import type {
   ProviderTraceMetadata,
 } from "@paperclipai/shared";
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
-import { api, createApiError, type RequestOptions } from "./client";
+import { api, createApiError, fetchWithLocalizedNetworkError, type RequestOptions } from "./client";
 
 export interface RunLivenessFields {
   livenessState: HeartbeatRun["livenessState"];
@@ -169,7 +169,7 @@ export const heartbeatsApi = {
   deleteProviderTrace: (runId: string) =>
     api.delete<{ ok: true }>(`/heartbeat-runs/${runId}/provider-trace`),
   downloadProviderTrace: async (runId: string): Promise<Blob> => {
-    const response = await fetch(
+    const response = await fetchWithLocalizedNetworkError(
       `/api/heartbeat-runs/${runId}/provider-trace/download`,
       {
         credentials: "include",

@@ -1,8 +1,8 @@
 import { announcementSchema, type Announcement } from "@paperclipai/shared";
-import { createApiError } from "./client";
+import { createApiError, fetchWithLocalizedNetworkError } from "./client";
 
 async function request(path: string, init: RequestInit) {
-  const response = await fetch(`/api/announcements/${path}`, {
+  const response = await fetchWithLocalizedNetworkError(`/api/announcements/${path}`, {
     credentials: "same-origin", cache: "no-store", ...init,
   });
   if (!response.ok) {

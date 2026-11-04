@@ -22,6 +22,19 @@ export function createApiError(rawMessage: string, status: number, body: unknown
   return new ApiError(localizeApiErrorMessage(rawMessage, status), status, body, rawMessage);
 }
 
+export async function fetchWithLocalizedNetworkError(
+  input: Parameters<typeof fetch>[0],
+  init?: Parameters<typeof fetch>[1],
+): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    throw createApiError(rawMessage, 0, null);
+  }
+}
+
 export interface RequestOptions {
   /** Abort signal wired through to `fetch` and coalescing (per-caller). */
   signal?: AbortSignal;
@@ -57,18 +70,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   applyObservabilityHeaders(headers);
 
-  let res: Response;
-  try {
-    res = await fetch(`${BASE}${path}`, {
-      headers,
-      credentials: "include",
-      ...init,
-    });
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") throw error;
-    const rawMessage = error instanceof Error ? error.message : String(error);
-    throw createApiError(rawMessage, 0, null);
-  }
+  const res = await fetchWithLocalizedNetworkError(`${BASE}${path}`, {
+    headers,
+    credentials: "include",
+    ...init,
+  });
   if (!res.ok) {
     const errorBody = await res.json().catch(() => null);
     const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, errorBody);
