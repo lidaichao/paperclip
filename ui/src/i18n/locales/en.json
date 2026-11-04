@@ -13604,6 +13604,7 @@
     "issue_human_comment_added_10301409": "new human comment",
     "issue_updated_10301410": "issue updated",
     "issue_changed_10301411": "issue changed",
-    "this_member_10301412": "this member"
+    "this_member_10301412": "this member",
+    "your_time_value_10301413": "{{v0}} (your time)"
   }
 }

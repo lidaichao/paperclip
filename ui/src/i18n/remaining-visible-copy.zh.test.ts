@@ -1022,6 +1022,7 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.issue_updated_10301410).toBe("任务已更新");
     expect(messages.issue_changed_10301411).toBe("任务已变更");
     expect(messages.this_member_10301412).toBe("该成员");
+    expect(messages.your_time_value_10301413).toContain("你的时区");
     expect(Object.values(messages).filter((value) => /\bURL\b/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /Application ID|Client ID|Client Secret|Tenant ID|Signing Secret|Alice Runner|Runner Inspector/.test(value))).toEqual([]);
     expect(Object.values(messages).filter((value) => /请求 地址|此 地址|实例 地址|回调 地址|网关 地址/.test(value))).toEqual([]);

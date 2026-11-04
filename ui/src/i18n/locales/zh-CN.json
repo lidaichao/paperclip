@@ -13604,6 +13604,7 @@
     "issue_human_comment_added_10301409": "新增人工评论",
     "issue_updated_10301410": "任务已更新",
     "issue_changed_10301411": "任务已变更",
-    "this_member_10301412": "该成员"
+    "this_member_10301412": "该成员",
+    "your_time_value_10301413": "{{v0}}（你的时区）"
   }
 }

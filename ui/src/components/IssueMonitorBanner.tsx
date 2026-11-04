@@ -98,9 +98,11 @@ export function buildMonitorSurfaceCopy(
       stripTitle = l10n("local.manual_monitor_resumes", { v0: shownEta });
       break;
     case "due-now":
-      bannerTitle = isScheduledRetryOnly ? `Agent retry ${shownEta}` : `Waiting on monitor — ${shownEta}`;
+      bannerTitle = isScheduledRetryOnly
+        ? l10n("local.agent_retry_value_10301296", { v0: shownEta })
+        : l10n("local.waiting_monitor_value_10301297", { v0: shownEta });
       stripTitle = capitalize(shownEta);
-      statusHint = "Checking momentarily…";
+      statusHint = l10n("local.checking_momentarily_0ed00002");
       break;
     case "overdue":
     default:
@@ -115,7 +117,7 @@ export function buildMonitorSurfaceCopy(
   const attemptLabel = derived.attemptCount >= 1 ? l10n("local.attempt_value_48acbb29", {v0: (derived.attemptCount)}) : null;
   const serviceLabel = derived.serviceName ? l10n("local.watching_value_56cfbd9c", {v0: (derived.serviceName)}) : null;
 
-  const bannerMeta = [statusHint, `${absolute} (your time)`, attemptLabel, serviceLabel].filter(
+  const bannerMeta = [statusHint, l10n("local.your_time_value_10301413", { v0: absolute }), attemptLabel, serviceLabel].filter(
     (piece): piece is string => Boolean(piece),
   );
   const stripMeta = [statusHint, absolute, attemptLabel, serviceLabel].filter(
