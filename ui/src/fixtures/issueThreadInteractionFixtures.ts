@@ -1043,9 +1043,9 @@ export const staleTargetRequestConfirmationInteraction = createRequestConfirmati
   updatedAt: new Date("2026-04-20T14:40:00.000Z"),
   payload: {
     version: 1,
-    prompt: "Approve the plan and let the responsible start implementation?",
-    acceptLabel: "Approve plan",
-    rejectLabel: "Request revisions",
+    prompt: l10n("local.approve_plan_start_implementation_10300884"),
+    acceptLabel: l10n("local.approve_plan_10300885"),
+    rejectLabel: l10n("local.request_revisions_10300886"),
     rejectRequiresReason: true,
     target: {
       type: "issue_document",
@@ -1081,9 +1081,8 @@ export const failedRequestConfirmationInteraction = createRequestConfirmationInt
 export const agentAddressedRequestConfirmationInteraction =
   createRequestConfirmationInteraction({
     id: "interaction-confirmation-agent-addressed",
-    title: "Confirm the deploy window with the release agent",
-    summary:
-      "Directed to the release agent, who owns this response without waiting on the board.",
+    title: l10n("local.confirm_deploy_window_10300952"),
+    summary: l10n("local.release_agent_owns_response_10300953"),
     addresseeAgentId: "agent-codex",
   });
 
@@ -1095,8 +1094,8 @@ export const agentAddressedRequestConfirmationInteraction =
 export const notCreatorRequestConfirmationInteraction =
   createRequestConfirmationInteraction({
     id: "interaction-confirmation-not-creator",
-    title: "Independent review of the migration plan",
-    summary: "Asked for a second pair of eyes, so the agent that wrote the plan cannot approve it.",
+    title: l10n("local.independent_migration_review_10300954"),
+    summary: l10n("local.second_reviewer_excludes_creator_10300955"),
     requestedResolverPolicy: "not_creator",
   });
 
@@ -1104,8 +1103,8 @@ export const notCreatorRequestConfirmationInteraction =
 export const humanOnlyRequestConfirmationInteraction =
   createRequestConfirmationInteraction({
     id: "interaction-confirmation-human-only",
-    title: "Approve the customer-facing announcement",
-    summary: "Reserved for a human on the board because it commits the organization publicly.",
+    title: l10n("local.approve_customer_announcement_10300956"),
+    summary: l10n("local.human_board_public_commitment_10300957"),
     requestedResolverPolicy: "human_only",
   });
 
@@ -1113,8 +1112,8 @@ export const humanOnlyRequestConfirmationInteraction =
 export const companyCappedRequestConfirmationInteraction =
   createRequestConfirmationInteraction({
     id: "interaction-confirmation-company-capped",
-    title: "Confirm the data retention change",
-    summary: "Asked for an open audience; the organization caps this kind at a human decision.",
+    title: l10n("local.confirm_data_retention_change_10300958"),
+    summary: l10n("local.organization_caps_human_decision_10300959"),
     requestedResolverPolicy: "anyone",
     effectiveResolverPolicy: "human_only",
     effectiveResolverPolicySource: "company_cap",
@@ -1124,8 +1123,8 @@ export const companyCappedRequestConfirmationInteraction =
 export const legacyRestrictedRequestConfirmationInteraction =
   createRequestConfirmationInteraction({
     id: "interaction-confirmation-legacy-restricted",
-    title: "Confirm the archived cleanup batch",
-    summary: "Created before Anyone became the default, so it stays restricted until re-created.",
+    title: l10n("local.confirm_archived_cleanup_batch_10300960"),
+    summary: l10n("local.legacy_restricted_until_recreated_10300961"),
     requestedResolverPolicy: "not_creator",
     resolverPolicyProvenance: "legacy_inherited_restriction",
   });
@@ -1135,7 +1134,7 @@ export const legacyRestrictedRequestConfirmationInteraction =
 export const agentResolvedRequestConfirmationInteraction =
   createRequestConfirmationInteraction({
     id: "interaction-confirmation-agent-resolved",
-    title: "Approved by the release agent",
+    title: l10n("local.approved_by_release_agent_10300962"),
     status: "accepted",
     createdByAgentId: "agent-codex",
     resolvedByAgentId: "agent-codex",
@@ -1150,7 +1149,7 @@ export const agentResolvedRequestConfirmationInteraction =
 export const withdrawnRequestConfirmationInteraction =
   createRequestConfirmationInteraction({
     id: "interaction-confirmation-withdrawn",
-    title: "Withdrawn: approve the plan",
+    title: l10n("local.withdrawn_approve_plan_10300963"),
     status: "cancelled",
     createdByAgentId: "agent-codex",
     resolvedByAgentId: "agent-codex",
@@ -1160,7 +1159,7 @@ export const withdrawnRequestConfirmationInteraction =
     result: {
       version: 1,
       outcome: "withdrawn",
-      reason: "Plan superseded by a newer revision; no board decision needed.",
+      reason: l10n("local.plan_superseded_no_decision_10300964"),
     },
   });
 
@@ -1168,7 +1167,7 @@ export const withdrawnRequestConfirmationInteraction =
 export const issueClosedRequestConfirmationInteraction =
   createRequestConfirmationInteraction({
     id: "interaction-confirmation-issue-closed",
-    title: "Expired: confirm the migration cutover",
+    title: l10n("local.expired_confirm_migration_cutover_10300965"),
     status: "expired",
     // Local, not UTC. The expiry footer renders this in the machine's timezone,
     // and 15:12Z on the 20th is already the 21st at UTC+9, which breaks the
@@ -1178,7 +1177,7 @@ export const issueClosedRequestConfirmationInteraction =
     result: {
       version: 1,
       outcome: "issue_closed",
-      reason: "Issue was closed before the confirmation was resolved.",
+      reason: l10n("local.issue_closed_before_resolution_10300966"),
     },
   });
 
@@ -1188,25 +1187,25 @@ export const pendingRequestCheckboxConfirmationInteraction =
 export const boundedRequestCheckboxConfirmationInteraction =
   createRequestCheckboxConfirmationInteraction({
     id: "interaction-checkbox-bounded",
-    title: "Pick the regions to deploy first",
-    summary: "Choose between two and three regions for the Phase 1 rollout.",
+    title: l10n("local.pick_initial_deploy_regions_10300967"),
+    summary: l10n("local.choose_two_to_three_regions_10300968"),
     payload: {
       version: 1,
-      prompt: "Which regions should we deploy to initially?",
-      detailsMarkdown: "Select at least 2 and at most 3 regions.",
+      prompt: l10n("local.which_regions_initially_10300969"),
+      detailsMarkdown: l10n("local.select_two_to_three_regions_10300970"),
       options: [
-        { id: "us-west", label: "US West (Oregon)", description: "Lowest latency for our primary user base." },
-        { id: "us-east", label: "US East (Virginia)", description: "Redundancy and east coast coverage." },
-        { id: "eu-west", label: "EU West (Ireland)", description: "GDPR compliance and European users." },
-        { id: "ap-southeast", label: "AP Southeast (Singapore)", description: "Asia-Pacific expansion." },
+        { id: "us-west", label: l10n("local.us_west_oregon_10300971"), description: l10n("local.lowest_primary_user_latency_10300972") },
+        { id: "us-east", label: l10n("local.us_east_virginia_10300973"), description: l10n("local.redundancy_east_coast_10300974") },
+        { id: "eu-west", label: l10n("local.eu_west_ireland_10300975"), description: l10n("local.gdpr_european_users_10300976") },
+        { id: "ap-southeast", label: l10n("local.ap_southeast_singapore_10300977"), description: l10n("local.asia_pacific_expansion_10300978") },
       ],
       defaultSelectedOptionIds: ["us-west", "us-east"],
       minSelected: 2,
       maxSelected: 3,
-      acceptLabel: "Confirm regions",
-      rejectLabel: "Reconsider",
+      acceptLabel: l10n("local.confirm_regions_10300979"),
+      rejectLabel: l10n("local.reconsider_10300980"),
       rejectRequiresReason: true,
-      rejectReasonLabel: "What should change about the region set?",
+      rejectReasonLabel: l10n("local.change_region_set_10300981"),
     },
   });
 
@@ -1228,9 +1227,9 @@ const manyOptionList = Array.from({ length: 100 }, (_, index) => {
   const number = index + 1;
   return {
     id: `record-${number}`,
-    label: `Customer record #${number}`,
+    label: l10n("local.customer_record_number_10300982", { number }),
     description: number % 4 === 0
-      ? "Flagged as a possible duplicate during the last import."
+      ? l10n("local.flagged_possible_duplicate_10300983")
       : undefined,
   };
 });
@@ -1238,18 +1237,18 @@ const manyOptionList = Array.from({ length: 100 }, (_, index) => {
 export const manyOptionsRequestCheckboxConfirmationInteraction =
   createRequestCheckboxConfirmationInteraction({
     id: "interaction-checkbox-many",
-    title: "Select the customer records to archive",
-    summary: "The cleanup job found 100 stale customer records. Confirm which ones to archive.",
+    title: l10n("local.select_customer_records_to_archive_10300984"),
+    summary: l10n("local.cleanup_found_stale_records_10300985", { count: 100 }),
     payload: {
       version: 1,
-      prompt: "Check every customer record you want archived.",
-      detailsMarkdown: "The list scrolls. Use Select all / Clear selection to move quickly.",
+      prompt: l10n("local.check_customer_records_to_archive_10300986"),
+      detailsMarkdown: l10n("local.scroll_list_select_all_clear_10300987"),
       options: manyOptionList,
       defaultSelectedOptionIds: [],
       minSelected: 0,
       maxSelected: null,
-      acceptLabel: "Archive selected",
-      rejectLabel: "Reject",
+      acceptLabel: l10n("local.archive_selected_10300988"),
+      rejectLabel: l10n("local.reject_10300902"),
       rejectRequiresReason: false,
     },
   });
@@ -1258,7 +1257,7 @@ export const acceptedManyRequestCheckboxConfirmationInteraction =
   createRequestCheckboxConfirmationInteraction({
     id: "interaction-checkbox-many-accepted",
     status: "accepted",
-    title: "Select the customer records to archive",
+    title: l10n("local.select_customer_records_to_archive_10300984"),
     resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
     resolvedAt: new Date("2026-04-20T14:52:00.000Z"),
     updatedAt: new Date("2026-04-20T14:52:00.000Z"),
@@ -1280,7 +1279,7 @@ export const rejectedRequestCheckboxConfirmationInteraction =
     result: {
       version: 1,
       outcome: "rejected",
-      reason: "Don't delete anything yet — let me confirm with the data owner first.",
+      reason: l10n("local.confirm_with_data_owner_first_10300989"),
     },
   });
 
@@ -1293,12 +1292,12 @@ export const staleTargetRequestCheckboxConfirmationInteraction =
     updatedAt: new Date("2026-04-20T14:51:00.000Z"),
     payload: {
       version: 1,
-      prompt: "Check the draft documents you want me to delete.",
-      acceptLabel: "Delete selected",
-      rejectLabel: "Reject",
+      prompt: l10n("local.check_drafts_to_delete_10300891"),
+      acceptLabel: l10n("local.delete_selected_10300901"),
+      rejectLabel: l10n("local.reject_10300902"),
       options: [
-        { id: "draft-march-report", label: "Old draft report" },
-        { id: "draft-spec-v1", label: "Spec v1 (superseded)" },
+        { id: "draft-march-report", label: l10n("local.old_draft_report_10300893") },
+        { id: "draft-spec-v1", label: l10n("local.spec_v1_superseded_10300895") },
       ],
       target: {
         type: "issue_document",
