@@ -12889,6 +12889,11 @@
     "routine_run_coalesced_10300692": "Coalesced",
     "routine_run_issue_created_10300693": "Issue created",
     "plugin_error_without_details_10300694": "Plugin entered an error state without a stored error message.",
-    "no_stored_error_message_10300695": "No stored error message."
+    "no_stored_error_message_10300695": "No stored error message.",
+    "choose_start_and_end_date_10300696": "Choose a start and end date.",
+    "start_date_must_be_before_end_date_10300697": "Start date must be before end date.",
+    "folder_name_is_required_10300698": "Folder name is required.",
+    "folder_name_cannot_contain_slashes_10300699": "Folder name cannot contain slashes.",
+    "resolve_the_blocker_to_continue_10300700": "Resolve the blocker to continue."
   }
 }

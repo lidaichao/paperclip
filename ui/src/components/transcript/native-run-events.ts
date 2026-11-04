@@ -265,7 +265,7 @@ function runResultEntry(
       .slice(0, 64),
     blocker: blocker ? {
       reasonCode: text(blocker.reasonCode) ?? "blocked",
-      unblockAction: text(blocker.unblockAction) ?? "Resolve the blocker to continue.",
+      unblockAction: text(blocker.unblockAction) ?? l10n("local.resolve_the_blocker_to_continue_10300700"),
       scope: blocker.scope === "task_wide" ? "task_wide" : "current_track",
     } : null,
     artifacts: (Array.isArray(payload.artifacts) ? payload.artifacts : [])

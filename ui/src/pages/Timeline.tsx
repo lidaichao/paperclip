@@ -133,8 +133,8 @@ function rangeWindow(range: DateRangeState): Pick<WorkTimelineParams, "from" | "
 }
 
 function rangeError(range: DateRangeState): string | null {
-  if (!range.fromDate || !range.toDate) return "Choose a start and end date.";
-  if (!rangeWindow(range)) return "Start date must be before end date.";
+  if (!range.fromDate || !range.toDate) return l10n("local.choose_start_and_end_date_10300696");
+  if (!rangeWindow(range)) return l10n("local.start_date_must_be_before_end_date_10300697");
   return null;
 }
 

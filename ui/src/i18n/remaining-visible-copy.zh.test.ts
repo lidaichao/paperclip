@@ -883,6 +883,11 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.routine_run_issue_created_10300693).toBe("已创建任务");
     expect(messages.plugin_error_without_details_10300694).toContain("未保存错误详情");
     expect(messages.no_stored_error_message_10300695).toContain("没有已保存的错误消息");
+    expect(messages.choose_start_and_end_date_10300696).toContain("开始日期和结束日期");
+    expect(messages.start_date_must_be_before_end_date_10300697).toContain("早于结束日期");
+    expect(messages.folder_name_is_required_10300698).toContain("文件夹名称不能为空");
+    expect(messages.folder_name_cannot_contain_slashes_10300699).toContain("不能包含斜杠");
+    expect(messages.resolve_the_blocker_to_continue_10300700).toContain("解决阻塞问题");
     expect(messages.value_5296dd69).toBe("{{v0}}。");
     expect(messages.the_login_did_not_return_a_saved_connection_t_35407fca).toBe("登录后未返回已保存的连接，请重试。");
     expect(messages.the_model_provider_has_reached_its_current_us_14acaa2d).toContain("用量上限");

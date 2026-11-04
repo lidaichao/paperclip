@@ -10308,5 +10308,10 @@
   "coalesced": "local.routine_run_coalesced_10300692",
   "issue created": "local.routine_run_issue_created_10300693",
   "plugin entered an error state without a stored error message.": "local.plugin_error_without_details_10300694",
-  "no stored error message.": "local.no_stored_error_message_10300695"
+  "no stored error message.": "local.no_stored_error_message_10300695",
+  "choose a start and end date.": "local.choose_start_and_end_date_10300696",
+  "start date must be before end date.": "local.start_date_must_be_before_end_date_10300697",
+  "folder name is required.": "local.folder_name_is_required_10300698",
+  "folder name cannot contain slashes.": "local.folder_name_cannot_contain_slashes_10300699",
+  "resolve the blocker to continue.": "local.resolve_the_blocker_to_continue_10300700"
 }

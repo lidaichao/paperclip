@@ -12889,6 +12889,11 @@
     "routine_run_coalesced_10300692": "已合并",
     "routine_run_issue_created_10300693": "已创建任务",
     "plugin_error_without_details_10300694": "插件进入错误状态，但未保存错误详情。",
-    "no_stored_error_message_10300695": "没有已保存的错误消息。"
+    "no_stored_error_message_10300695": "没有已保存的错误消息。",
+    "choose_start_and_end_date_10300696": "请选择开始日期和结束日期。",
+    "start_date_must_be_before_end_date_10300697": "开始日期必须早于结束日期。",
+    "folder_name_is_required_10300698": "文件夹名称不能为空。",
+    "folder_name_cannot_contain_slashes_10300699": "文件夹名称不能包含斜杠。",
+    "resolve_the_blocker_to_continue_10300700": "请先解决阻塞问题再继续。"
   }
 }

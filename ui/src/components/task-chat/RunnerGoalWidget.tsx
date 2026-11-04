@@ -111,7 +111,7 @@ export function useRunnerGoalControl(issueId: string | null, agentId: string | n
       const current = query.data ?? (await query.refetch()).data;
       if (!current?.agentId) throw new Error(current?.capability.reason ?? l10n("local.select_agent_to_use_goal_10300345"));
       if (current.capability.availability !== "available") {
-        throw new Error(current.capability.reason ?? "Session goals are unsupported by this agent.");
+        throw new Error(current.capability.reason ?? l10n("local.session_goals_are_unsupported_by_this_agent_83fd8f12"));
       }
       await mutation.mutateAsync({
         requestId: requestId(),
