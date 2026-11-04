@@ -13479,6 +13479,11 @@
     "selected_agent_count_many_10301284": "{{v0}} selected agents",
     "action_count_on_one_10301285": "{{v0}} action on",
     "action_count_on_many_10301286": "{{v0}} actions on",
-    "agent_identity_10301287": "Agent identity"
+    "agent_identity_10301287": "Agent identity",
+    "terminal_closed_10301288": "Terminal closed.",
+    "terminal_connection_failed_10301289": "Terminal connection failed.",
+    "terminal_session_could_not_open_10301290": "Terminal session could not be opened.",
+    "provider_no_interactive_template_setup_10301291": "This provider does not advertise interactive template setup.",
+    "provider_setup_capture_unavailable_10301292": "This provider advertises setup, but image capture is unavailable."
   }
 }

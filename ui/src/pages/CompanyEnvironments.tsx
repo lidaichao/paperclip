@@ -444,7 +444,9 @@ function customImageTerminalCloseReasonCopy(reason: unknown) {
     && reason !== "setup_finished"
     && reason !== "setup_cancelled"
   ) {
-    return typeof reason === "string" && reason.trim() ? "Terminal closed." : null;
+    return typeof reason === "string" && reason.trim()
+      ? l10n("local.terminal_closed_10301288")
+      : null;
   }
 
   switch (reason) {
@@ -687,7 +689,11 @@ function EnvironmentCustomImageBrowserTerminal({
 
         if (frame.type === "error") {
           setConnectionState("error");
-          setErrorMessage(typeof frame.message === "string" ? frame.message : "Terminal connection failed.");
+          setErrorMessage(
+            typeof frame.message === "string"
+              ? frame.message
+              : l10n("local.terminal_connection_failed_10301289"),
+          );
           return;
         }
 
@@ -710,7 +716,11 @@ function EnvironmentCustomImageBrowserTerminal({
       };
     } catch (error) {
       setConnectionState("error");
-      setErrorMessage(error instanceof Error ? error.message : "Terminal session could not be opened.");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : l10n("local.terminal_session_could_not_open_10301290"),
+      );
     }
   }, [closeSocket, fitTerminal, getTerminalDimensions, resetTerminalScreen, sendTerminalResize, sessionId]);
 
@@ -782,7 +792,7 @@ function capabilityState(capability: EnvironmentProviderCapability | null | unde
     return {
       kind: "unsupported" as const,
       label: l10n("local.unsupported_provider_1609d5fb"),
-      reason: "This provider does not advertise interactive template setup.",
+      reason: l10n("local.provider_no_interactive_template_setup_10301291"),
     };
   }
 
@@ -790,7 +800,7 @@ function capabilityState(capability: EnvironmentProviderCapability | null | unde
     return {
       kind: "capture_unavailable" as const,
       label: l10n("local.setup_capture_unavailable_03343786"),
-      reason: "This provider advertises setup, but image capture is unavailable.",
+      reason: l10n("local.provider_setup_capture_unavailable_10301292"),
     };
   }
 
@@ -1314,8 +1324,8 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
         ? { label: l10n("local.environments_07437cd6"), href: ENVIRONMENTS_PATH }
         : { label: l10n("local.environments_07437cd6") },
     ];
-    if (mode === "create") crumbs.push({ label: "Add environment" });
-    if (mode === "edit") crumbs.push({ label: "Edit environment" });
+    if (mode === "create") crumbs.push({ label: l10n("local.add_environment_dcbe4c44") });
+    if (mode === "edit") crumbs.push({ label: l10n("local.edit_environment_05515e83") });
     setBreadcrumbs(crumbs);
   }, [isEnvironmentFormPage, mode, setBreadcrumbs]);
 
@@ -1608,7 +1618,9 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
         [environmentId]: {
           ok: false,
           driver: failedEnvironment?.driver ?? "local",
-          summary: error instanceof Error ? error.message : "Environment probe failed.",
+          summary: error instanceof Error
+            ? error.message
+            : l10n("local.environment_probe_failed_f7f3392f"),
           details: null,
         },
       }));
