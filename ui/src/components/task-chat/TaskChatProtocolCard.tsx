@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -161,7 +162,7 @@ function CardShell({
           )}
         >
           <StatusIcon status={status} className="h-3.5 w-3.5" />
-          {status.replaceAll("_", " ")}
+          {enumLabel(status, "lower")}
         </span>
       ) : null}
     </div>
@@ -215,7 +216,7 @@ function CardShell({
                 )}
               >
                 <StatusIcon status={status} className="h-3.5 w-3.5" />
-                {status.replaceAll("_", " ")}
+                {enumLabel(status, "lower")}
               </span>
             ) : null}
           </div>

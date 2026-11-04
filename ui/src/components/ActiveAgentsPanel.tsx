@@ -169,7 +169,7 @@ export const AgentRunCard = memo(function AgentRunCard({
   issueLoadFailed?: boolean;
   className?: string;
 }) {
-  const statusLabel = runStatusLabels[run.status] ?? enumLabel(run.status);
+  const statusLabel = runStatusLabels[run.status] ?? enumLabel(run.status, "lower");
   const runUrl = `/agents/${run.agentId}/runs/${run.id}`;
   const timestamp = run.finishedAt
     ? l10n("local.manual_finished_at", { v0: relativeTime(run.finishedAt) })

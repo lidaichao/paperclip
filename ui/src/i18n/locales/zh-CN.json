@@ -13671,6 +13671,7 @@
     "enum_status_preparing_10301476": "准备中",
     "enum_status_informational_10301477": "信息",
     "enum_status_not_dispatched_10301478": "未派发",
-    "enum_status_ended_10301479": "已结束"
+    "enum_status_ended_10301479": "已结束",
+    "enum_status_revision_requested_10301480": "已要求修改"
   }
 }

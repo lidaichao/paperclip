@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentIdentity } from "./AgentIdentity";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { memo, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
@@ -214,12 +215,7 @@ function initialsForName(name: string) {
 }
 
 function formatRunStatusLabel(status: string) {
-  switch (status) {
-    case "timed_out":
-      return l10n("local.timed_out_3dcd80f1");
-    default:
-      return status.replace(/_/g, " ");
-  }
+  return enumLabel(status, "lower");
 }
 
 function runTimestamp(run: LinkedRunItem) {

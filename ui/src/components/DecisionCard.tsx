@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -85,7 +86,7 @@ function humanStatus(status: string | null | undefined): string {
     case "":
       return l10n("local.unknown_b764cdc0");
     default:
-      return status.replaceAll("_", " ");
+      return enumLabel(status, "lower");
   }
 }
 

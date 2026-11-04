@@ -13671,6 +13671,7 @@
     "enum_status_preparing_10301476": "Preparing",
     "enum_status_informational_10301477": "Informational",
     "enum_status_not_dispatched_10301478": "Not dispatched",
-    "enum_status_ended_10301479": "Ended"
+    "enum_status_ended_10301479": "Ended",
+    "enum_status_revision_requested_10301480": "Revision requested"
   }
 }

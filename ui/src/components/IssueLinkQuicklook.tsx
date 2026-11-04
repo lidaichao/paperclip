@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import * as React from "react";
 import { useMemo } from "react";
 import * as RouterDom from "react-router-dom";
@@ -130,8 +131,7 @@ function QuicklookSeparator({ className }: { className?: string }) {
 
 /** "in_review" -> "In review". The card states the status as a word, not a chip. */
 function statusLabel(status: string): string {
-  const words = status.replace(/_/g, " ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
+  return enumLabel(status, "sentence");
 }
 
 /**
