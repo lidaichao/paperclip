@@ -175,6 +175,6 @@ describe("Chinese UI with the real locale catalog", () => {
     expect(defaultSkillMarkdown("Code Review", "Read H:\\AIagent\\Luna\\AGENTS.md and keep API_KEY.")).toBe(chineseNamed);
     expect(chineseNamed).toContain("name: Code Review");
     expect(chineseNamed).toContain("Read H:\\AIagent\\Luna\\AGENTS.md and keep API_KEY.");
-    expect(chineseNamed).toContain("## Workflow");
+    expect(chineseNamed).toContain("## 工作流程");
   });
 });
