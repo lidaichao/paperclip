@@ -13533,6 +13533,11 @@
     "organization_governance_narrowed_10301338": "组织交互治理已将响应范围从“{{v0}}”收窄为“{{v1}}”。",
     "legacy_card_stays_restricted_10301339": "此卡片创建于“任何人”成为默认范围之前，因此继续受限；新建卡片将默认开放。",
     "workspace_name_default_10301340": "{{v0}}（默认）",
-    "default_workspace_10301341": "默认工作区"
+    "default_workspace_10301341": "默认工作区",
+    "manual_board_move_reason_10301342": "在条目页面手动调整：已从“{{v0}}”移动到“{{v1}}”。",
+    "pipeline_thinks_item_ready_10301343": "{{v0}} 认为“{{v1}}”已准备好进入下一阶段。",
+    "decide_item_ready_10301344": "请判断“{{v0}}”是否已准备好进入下一阶段。",
+    "upstream_changed_review_10301345": "上游“{{v0}}”已发生变更，请在继续工作前快速检查。",
+    "item_needs_quick_review_10301346": "请在继续工作前快速检查“{{v0}}”。"
   }
 }

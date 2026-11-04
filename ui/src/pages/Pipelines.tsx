@@ -180,7 +180,7 @@ export function validateDraftRows(rows: DraftRow[], fields: PipelineIntakeField[
     const rowErrors: FieldErrors = {};
     for (const field of fields) {
       if (field.required && isBlank(row.values[field.key])) {
-        rowErrors[field.key] = `${field.label} is required.`;
+        rowErrors[field.key] = l10n("local.field_is_required_value_639e027e", { v0: field.label });
       }
     }
     if (Object.keys(rowErrors).length > 0) {
@@ -1791,7 +1791,7 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
               const automationAgent = automationAssigneeAgentId
                 ? agentById.get(automationAssigneeAgentId) ?? {
                     id: automationAssigneeAgentId,
-                    name: `Agent ${automationAssigneeAgentId.slice(0, 8)}`,
+                    name: l10n("local.agent_value_8e17b76e", { v0: automationAssigneeAgentId.slice(0, 8) }),
                     icon: null,
                     urlKey: automationAssigneeAgentId,
                   }
@@ -2631,7 +2631,10 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
       return pipelinesApi.transitionCase(caseId, {
         toStageKey: selectedMoveStage.key,
         expectedVersion: detail.case.version,
-        reason: `Manual board override from item page: moved from ${detail.stage.name} to ${selectedMoveStage.name}.`,
+        reason: l10n("local.manual_board_move_reason_10301342", {
+          v0: detail.stage.name,
+          v1: selectedMoveStage.name,
+        }),
         force: true,
       });
     },
@@ -4444,7 +4447,10 @@ export function buildReviewQueueRows({
       title: entry.case.title,
       prompt:
         entry.suggestion.rationale?.trim() ||
-        `${entry.case.pipeline.name} thinks ${entry.case.title} is ready to move forward.`,
+        l10n("local.pipeline_thinks_item_ready_10301343", {
+          v0: entry.case.pipeline.name,
+          v1: entry.case.title,
+        }),
       kind: "suggestion",
       createdAt: entry.suggestion.createdAt ?? entry.case.updatedAt ?? null,
       expectedVersion: entry.case.version ?? null,
@@ -4465,7 +4471,7 @@ export function buildReviewQueueRows({
       title: entry.case.title,
       prompt:
         entry.case.summary?.trim() ||
-        `Decide whether ${entry.case.title} is ready to move forward.`,
+        l10n("local.decide_item_ready_10301344", { v0: entry.case.title }),
       kind: "review",
       createdAt: entry.case.updatedAt ?? entry.case.createdAt ?? null,
       expectedVersion: entry.review.expectedVersion ?? entry.case.version ?? null,
@@ -4486,8 +4492,8 @@ export function buildReviewQueueRows({
       pipelineName: entry.case.pipeline.name,
       title: entry.case.title,
       prompt: upstreamTitle
-        ? `${upstreamTitle} changed upstream. Take a quick look before work continues.`
-        : `${entry.case.title} needs a quick look before work continues.`,
+        ? l10n("local.upstream_changed_review_10301345", { v0: upstreamTitle })
+        : l10n("local.item_needs_quick_review_10301346", { v0: entry.case.title }),
       kind: "headsUp",
       createdAt: entry.drift.createdAt ?? entry.case.updatedAt ?? null,
       expectedVersion: entry.case.version ?? null,
@@ -4518,7 +4524,7 @@ export function buildReviewQueueRows({
       prompt:
         pendingSuggestion?.rationale?.trim() ||
         entry.case.summary?.trim() ||
-        `Decide whether ${entry.case.title} is ready to move forward.`,
+        l10n("local.decide_item_ready_10301344", { v0: entry.case.title }),
       kind: "review",
       createdAt: entry.case.updatedAt ?? entry.case.createdAt ?? null,
       expectedVersion: typeof entry.case.version === "number" ? entry.case.version : null,
