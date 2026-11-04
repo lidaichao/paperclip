@@ -79,7 +79,7 @@ export class NativeRuntimeEligibilityError extends NativeRunnerSelectionError {
     code: string,
     reason?: string,
   ) {
-    super(code, reason ?? `Native runner profile is ineligible: ${code}`);
+    super(code, reason ?? `原生运行器配置不符合要求：${code}`);
     this.name = "NativeRuntimeEligibilityError";
   }
 }
@@ -118,7 +118,7 @@ export function resolveNativeRuntimeMode(input: {
   if (!input.enabled) {
     throw ineligible(
       "paperclip_runner_rollout_disabled",
-      "Paperclip Runner is experimental and disabled on this instance.",
+      "Alice Runner 仍是实验功能，此实例已禁用。",
     );
   }
   let runnerProfile: PaperclipRunnerProviderProfile;
@@ -136,14 +136,14 @@ export function resolveNativeRuntimeMode(input: {
   ) {
     throw ineligible(
       "paperclip_runner_agent_ineligible",
-      "Paperclip Runner requires an active agent.",
+      "Alice Runner 需要处于活动状态的智能体。",
     );
   }
   const allowedWorkModes = ["standard", "planning", "ask"];
   if (!input.issue || !allowedWorkModes.includes(input.issue.workMode)) {
     throw ineligible(
       "paperclip_runner_issue_ineligible",
-      "Paperclip Runner requires a standard, planning, or ask task.",
+      "Alice Runner 只支持标准、计划或提问任务。",
     );
   }
   const rollout = resolveNativeMigrationStatus({
@@ -154,7 +154,7 @@ export function resolveNativeRuntimeMode(input: {
   if (!rollout.effects.some((effect) => effect.kind === "record_mode_native")) {
     throw ineligible(
       "paperclip_runner_rollout_policy_rejected",
-      "Native rollout policy did not select native mode.",
+      "原生灰度策略未选择原生模式。",
     );
   }
   return {
@@ -273,7 +273,7 @@ export function resolveHeartbeatNativeRuntimeMode(input: {
       if (input.agent.adapterType !== "paperclip_runner") {
         throw ineligible(
           "paperclip_runner_adapter_binding_mismatch",
-          "A persisted native run must remain bound to the Paperclip Runner adapter.",
+          "已持久化的原生运行必须继续绑定 Alice Runner 适配器。",
         );
       }
       if (
@@ -282,7 +282,7 @@ export function resolveHeartbeatNativeRuntimeMode(input: {
       ) {
         throw ineligible(
           "paperclip_runner_agent_ineligible",
-          "A persisted Paperclip Runner run cannot recover through a non-invokable agent.",
+          "已持久化的 Alice Runner 运行无法通过不可调用的智能体恢复。",
         );
       }
       const driverKind = input.persisted.driverKind;
@@ -303,7 +303,7 @@ export function resolveHeartbeatNativeRuntimeMode(input: {
       if (backend === null) {
         throw ineligible(
           "paperclip_runner_driver_unsupported",
-          `Persisted Paperclip Runner driver is unsupported: ${driverKind}`,
+          `已持久化的 Alice Runner 驱动不受支持：${driverKind}`,
         );
       }
       return {
@@ -418,7 +418,7 @@ export function resolveNativeCompatibilityStatus(input: {
     return preserve("native_finalization_invalid", [{
       kind: "record_finalization_error",
       cause: "native_finalization_invalid",
-      nextAction: "Repair the persisted native result.",
+      nextAction: "修复已持久化的原生结果。",
       agentId: input.agentId,
     }]);
   }
@@ -432,7 +432,7 @@ export function resolveNativeCompatibilityStatus(input: {
       effects: [{
         kind: "enqueue_continuation",
         continuationKind: "same_agent",
-        summary: "Resume the terminal issue through the authorized compatibility path.",
+        summary: "通过已授权兼容路径恢复终态任务。",
         idempotencyKey: "native-compatibility:authorized-resume",
         agentId: input.agentId,
       }],
@@ -494,7 +494,7 @@ export function resolveNativeMigrationStatus(input: {
         {
           kind: "enqueue_continuation",
           continuationKind: "same_agent",
-          summary: "Finish the already-active run in native mode.",
+          summary: "以原生模式完成已经处于活动状态的运行。",
           idempotencyKey: "native-migration:kill-switch-active-run",
           agentId: input.agentId,
         },
@@ -523,7 +523,7 @@ export function resolveNativeMigrationStatus(input: {
         {
           kind: "enqueue_continuation",
           continuationKind: "same_agent",
-          summary: "Continue the allowlisted native run.",
+          summary: "继续执行白名单允许的原生运行。",
           idempotencyKey: "native-migration:application-enabled",
           agentId: input.agentId,
         },
