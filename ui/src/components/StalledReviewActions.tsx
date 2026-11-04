@@ -29,9 +29,9 @@ interface StalledReviewActionsProps {
 }
 
 const ACTION_PAST_TENSE: Record<StalledReviewDecisionAction, string> = {
-  approve: "Review approved — issue marked done.",
-  request_changes: "Changes requested — issue returned to the assignee.",
-  send_back: "Sent back to work — issue returned to the assignee.",
+  approve: l10n("local.review_approved_issue_done_10301303"),
+  request_changes: l10n("local.changes_requested_issue_returned_10301304"),
+  send_back: l10n("local.sent_back_issue_returned_10301305"),
 };
 
 /**

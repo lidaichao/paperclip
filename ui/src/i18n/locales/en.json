@@ -13494,6 +13494,9 @@
     "intent_10301299": "Intent",
     "directory_10301300": "Directory",
     "pattern_10301301": "Pattern",
-    "more_count_10301302": ", +{{v0}} more"
+    "more_count_10301302": ", +{{v0}} more",
+    "review_approved_issue_done_10301303": "Review approved — issue marked done.",
+    "changes_requested_issue_returned_10301304": "Changes requested — issue returned to the assignee.",
+    "sent_back_issue_returned_10301305": "Sent back to work — issue returned to the assignee."
   }
 }

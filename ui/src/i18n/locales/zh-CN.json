@@ -13494,6 +13494,9 @@
     "intent_10301299": "意图",
     "directory_10301300": "目录",
     "pattern_10301301": "匹配模式",
-    "more_count_10301302": "，另有 {{v0}} 项"
+    "more_count_10301302": "，另有 {{v0}} 项",
+    "review_approved_issue_done_10301303": "审核已通过，任务已标记为完成。",
+    "changes_requested_issue_returned_10301304": "已请求修改，任务已退回负责人。",
+    "sent_back_issue_returned_10301305": "已退回继续处理，任务已交还负责人。"
   }
 }
