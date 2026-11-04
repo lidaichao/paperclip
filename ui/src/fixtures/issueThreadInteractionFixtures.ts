@@ -16,6 +16,7 @@ import type {
   RequestItemVerdictsInteraction,
   SuggestTasksInteraction,
 } from "../lib/issue-thread-interactions";
+import { l10n } from "../i18n";
 
 export const issueThreadInteractionFixtureMeta = {
   companyId: "company-storybook",
@@ -86,9 +87,8 @@ function createSuggestTasksInteraction(
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "suggest_tasks",
-    title: "Suggested issue tree for the first interaction pass",
-    summary:
-      "Draft task creation stays pending until a reviewer accepts it, so the thread can preview structure without mutating the task system.",
+    title: l10n("local.suggested_issue_tree_10300854"),
+    summary: l10n("local.draft_task_creation_pending_10300855"),
     status: "pending",
     continuationPolicy: "wake_assignee",
     createdByAgentId: "agent-codex",
@@ -104,20 +104,18 @@ function createSuggestTasksInteraction(
       tasks: [
         {
           clientKey: "root-design",
-          title: "Prototype issue-thread interaction cards",
-          description:
-            "Build render-only cards that sit in the issue feed and show suggested tasks before anything is persisted.",
+          title: l10n("local.prototype_issue_interaction_cards_10300856"),
+          description: l10n("local.build_render_only_cards_10300857"),
           priority: "high",
           assigneeAgentId: "agent-codex",
           billingCode: "ui-research",
-          labels: ["UI", "interaction"],
+          labels: ["UI", l10n("local.interaction_10300925")],
         },
         {
           clientKey: "child-stories",
           parentClientKey: "root-design",
-          title: "Add Storybook coverage for acceptance and rejection states",
-          description:
-            "Cover pending, accepted, rejected, and collapsed-child previews in a fixture-backed story.",
+          title: l10n("local.add_storybook_coverage_10300858"),
+          description: l10n("local.cover_interaction_states_10300859"),
           priority: "medium",
           assigneeAgentId: "agent-qa",
           labels: ["Storybook"],
@@ -125,19 +123,17 @@ function createSuggestTasksInteraction(
         {
           clientKey: "child-mixed-thread",
           parentClientKey: "root-design",
-          title: "Prototype the mixed thread feed",
-          description:
-            "Show comments, activity, live runs, and interaction cards in one chronological feed.",
+          title: l10n("local.prototype_mixed_thread_feed_10300860"),
+          description: l10n("local.show_mixed_thread_content_10300861"),
           priority: "medium",
           assigneeAgentId: "agent-codex",
-          labels: ["Issue thread"],
+          labels: [l10n("local.issue_thread_10300926")],
         },
         {
           clientKey: "hidden-follow-up",
           parentClientKey: "child-mixed-thread",
-          title: "Follow-up polish on spacing and answered summaries",
-          description:
-            "Collapse this under the visible task tree so the preview proves the hidden-descendant treatment.",
+          title: l10n("local.follow_up_polish_10300862"),
+          description: l10n("local.collapse_hidden_follow_up_10300863"),
           priority: "low",
           hiddenInPreview: true,
         },
@@ -157,9 +153,8 @@ function createAskUserQuestionsInteraction(
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "ask_user_questions",
-    title: "Resolve open UX decisions before Phase 1",
-    summary:
-      "This form stays local until the operator submits it, so the responsible only wakes once after the whole answer set is ready.",
+    title: l10n("local.resolve_open_ux_decisions_10300864"),
+    summary: l10n("local.form_stays_local_until_submit_10300865"),
     status: "pending",
     continuationPolicy: "wake_assignee",
     createdByAgentId: "agent-codex",
@@ -171,50 +166,49 @@ function createAskUserQuestionsInteraction(
     resolvedAt: null,
     payload: {
       version: 1,
-      title: "Before I wire the persistence layer, which preview behavior do you want?",
-      submitLabel: "Send answers",
+      title: l10n("local.preview_behavior_question_10300866"),
+      submitLabel: l10n("local.send_answers_10300867"),
       questions: [
         {
           id: "collapse-depth",
-          prompt: "How aggressive should the suggested-task preview collapse descendant work?",
-          helpText:
-            "We need enough context to review the tree without making the feed feel like a project plan.",
+          prompt: l10n("local.collapse_descendant_work_prompt_10300868"),
+          helpText: l10n("local.review_tree_context_help_10300869"),
           selectionMode: "single",
           required: true,
           options: [
             {
               id: "visible-root",
-              label: "Only collapse hidden descendants",
-              description: "Keep top-level and visible child tasks expanded.",
+              label: l10n("local.only_collapse_hidden_descendants_10300870"),
+              description: l10n("local.keep_visible_tasks_expanded_10300871"),
             },
             {
               id: "collapse-all",
-              label: "Collapse all descendants by default",
-              description: "Show only root tasks until the operator expands the tree.",
+              label: l10n("local.collapse_all_descendants_10300872"),
+              description: l10n("local.show_only_root_tasks_10300873"),
             },
           ],
         },
         {
           id: "post-submit-summary",
-          prompt: "What should the answered-state card emphasize after submission?",
-          helpText: "Pick every summary treatment that would help future reviewers.",
+          prompt: l10n("local.answered_state_emphasis_10300874"),
+          helpText: l10n("local.pick_summary_treatments_10300875"),
           selectionMode: "multi",
           required: true,
           options: [
             {
               id: "answers-inline",
-              label: "Inline answer pills",
-              description: "Keep the exact operator choices visible under each question.",
+              label: l10n("local.inline_answer_pills_10300876"),
+              description: l10n("local.keep_exact_choices_visible_10300877"),
             },
             {
               id: "summary-note",
-              label: "Short markdown summary",
-              description: "Add a compact narrative summary at the bottom of the card.",
+              label: l10n("local.short_markdown_summary_10300878"),
+              description: l10n("local.add_compact_narrative_summary_10300879"),
             },
             {
               id: "resolver-meta",
-              label: "Resolver metadata",
-              description: "Show who answered and when without opening the raw thread.",
+              label: l10n("local.resolver_metadata_10300880"),
+              description: l10n("local.show_answerer_and_time_10300881"),
             },
           ],
         },
@@ -234,9 +228,8 @@ function createRequestConfirmationInteraction(
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "request_confirmation",
-    title: "Approve the proposed plan",
-    summary:
-      "The responsible is waiting on a direct board decision before continuing from the plan document.",
+    title: l10n("local.approve_proposed_plan_10300882"),
+    summary: l10n("local.responsible_waiting_board_decision_10300883"),
     status: "pending",
     continuationPolicy: "wake_assignee",
     createdByAgentId: "agent-codex",
@@ -248,13 +241,12 @@ function createRequestConfirmationInteraction(
     resolvedAt: null,
     payload: {
       version: 1,
-      prompt: "Approve the plan and let the responsible start implementation?",
-      acceptLabel: "Approve plan",
-      rejectLabel: "Request revisions",
+      prompt: l10n("local.approve_plan_start_implementation_10300884"),
+      acceptLabel: l10n("local.approve_plan_10300885"),
+      rejectLabel: l10n("local.request_revisions_10300886"),
       rejectRequiresReason: true,
-      rejectReasonLabel: "Describe the plan changes needed before approval",
-      detailsMarkdown:
-        "This confirmation watches the `plan` document revision so stale approvals are blocked if the plan changes.",
+      rejectReasonLabel: l10n("local.describe_plan_changes_10300887"),
+      detailsMarkdown: l10n("local.confirmation_watches_plan_revision_10300888"),
       supersedeOnUserComment: true,
       target: {
         type: "issue_document",
@@ -278,9 +270,8 @@ function createRequestCheckboxConfirmationInteraction(
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "request_checkbox_confirmation",
-    title: "Choose the stale drafts to delete",
-    summary:
-      "The agent found several stale draft documents and needs the board to confirm exactly which ones to remove.",
+    title: l10n("local.choose_stale_drafts_10300889"),
+    summary: l10n("local.agent_found_stale_drafts_10300890"),
     status: "pending",
     continuationPolicy: "wake_assignee",
     createdByAgentId: "agent-codex",
@@ -292,36 +283,35 @@ function createRequestCheckboxConfirmationInteraction(
     resolvedAt: null,
     payload: {
       version: 1,
-      prompt: "Check the draft documents you want me to delete.",
-      detailsMarkdown:
-        "Only the checked items will be deleted. Leave an item unchecked to keep it for now.",
+      prompt: l10n("local.check_drafts_to_delete_10300891"),
+      detailsMarkdown: l10n("local.only_checked_items_deleted_10300892"),
       options: [
         {
           id: "draft-march-report",
-          label: "Old draft report",
-          description: "Created by QA during the March test pass.",
+          label: l10n("local.old_draft_report_10300893"),
+          description: l10n("local.created_by_qa_march_10300894"),
         },
         {
           id: "draft-spec-v1",
-          label: "Spec v1 (superseded)",
-          description: "Replaced by the approved v2 specification.",
+          label: l10n("local.spec_v1_superseded_10300895"),
+          description: l10n("local.replaced_by_v2_spec_10300896"),
         },
         {
           id: "draft-scratch-notes",
-          label: "Scratch notes",
-          description: "Unstructured notes from the kickoff call.",
+          label: l10n("local.scratch_notes_10300897"),
+          description: l10n("local.unstructured_kickoff_notes_10300898"),
         },
         {
           id: "draft-import-sample",
-          label: "Import sample fixture",
-          description: "Temporary fixture used while wiring the importer.",
+          label: l10n("local.import_sample_fixture_10300899"),
+          description: l10n("local.temporary_importer_fixture_10300900"),
         },
       ],
       defaultSelectedOptionIds: [],
       minSelected: 0,
       maxSelected: null,
-      acceptLabel: "Delete selected",
-      rejectLabel: "Reject",
+      acceptLabel: l10n("local.delete_selected_10300901"),
+      rejectLabel: l10n("local.reject_10300902"),
       rejectRequiresReason: false,
     },
     result: null,
@@ -345,13 +335,13 @@ export const acceptedSuggestedTasksInteraction = createSuggestTasksInteraction({
         clientKey: "root-design",
         issueId: "issue-created-1",
         identifier: "PAP-1713",
-        title: "Prototype issue-thread interaction cards",
+        title: l10n("local.prototype_issue_interaction_cards_10300856"),
       },
       {
         clientKey: "child-stories",
         issueId: "issue-created-2",
         identifier: "PAP-1714",
-        title: "Add Storybook coverage for acceptance and rejection states",
+        title: l10n("local.add_storybook_coverage_10300858"),
         parentIssueId: "issue-created-1",
         parentIdentifier: "PAP-1713",
       },
@@ -359,7 +349,7 @@ export const acceptedSuggestedTasksInteraction = createSuggestTasksInteraction({
         clientKey: "child-mixed-thread",
         issueId: "issue-created-3",
         identifier: "PAP-1715",
-        title: "Prototype the mixed thread feed",
+        title: l10n("local.prototype_mixed_thread_feed_10300860"),
         parentIssueId: "issue-created-1",
         parentIdentifier: "PAP-1713",
       },
@@ -367,7 +357,7 @@ export const acceptedSuggestedTasksInteraction = createSuggestTasksInteraction({
         clientKey: "hidden-follow-up",
         issueId: "issue-created-4",
         identifier: "PAP-1716",
-        title: "Follow-up polish on spacing and answered summaries",
+        title: l10n("local.follow_up_polish_10300862"),
         parentIssueId: "issue-created-3",
         parentIdentifier: "PAP-1715",
       },
@@ -383,8 +373,7 @@ export const rejectedSuggestedTasksInteraction = createSuggestTasksInteraction({
   updatedAt: new Date("2026-04-20T14:17:00.000Z"),
   result: {
     version: 1,
-    rejectionReason:
-      "Keep the first pass tighter. The hidden follow-on work is useful, but the acceptance story should stay focused on one visible root and one visible child.",
+    rejectionReason: l10n("local.keep_first_pass_tighter_10300903"),
   },
 });
 
@@ -400,27 +389,27 @@ export const pendingAskUserQuestionsWithFreeTextOption = createAskUserQuestionsI
   id: "interaction-questions-freetext",
   payload: {
     version: 1,
-    title: "How should we name the new surface?",
-    submitLabel: "Send answers",
+    title: l10n("local.name_new_surface_10300904"),
+    submitLabel: l10n("local.send_answers_10300867"),
     questions: [
       {
         id: "surface-name",
-        prompt: "What should we call the new surface?",
+        prompt: l10n("local.what_call_new_surface_10300905"),
         selectionMode: "single",
         required: true,
         options: [
           {
             id: "keep-tasks",
-            label: "Keep calling it Tasks",
+            label: l10n("local.keep_calling_tasks_10300906"),
           },
           {
             id: "rename-work",
-            label: "Rename it Work",
+            label: l10n("local.rename_it_work_10300907"),
           },
           {
             id: "describe-it",
-            label: "I'll describe it",
-            description: "Tell us the exact name you have in mind.",
+            label: l10n("local.ill_describe_it_10300908"),
+            description: l10n("local.tell_exact_name_10300909"),
             freeText: true,
           },
         ],
@@ -448,9 +437,9 @@ export const answeredAskUserQuestionsInteraction = createAskUserQuestionsInterac
       },
     ],
     summaryMarkdown: [
-      "- Keep visible child tasks expanded when they are part of the main review path.",
-      "- Preserve inline answer chips and resolver metadata in the answered state.",
-      "- Add a short summary note so future reviewers understand the operator's intent without replaying the form.",
+      `- ${l10n("local.keep_visible_child_tasks_expanded_10300910")}`,
+      `- ${l10n("local.preserve_answer_chips_metadata_10300911")}`,
+      `- ${l10n("local.add_short_summary_for_reviewers_10300912")}`,
     ].join("\n"),
   },
 });
@@ -474,12 +463,12 @@ export const pendingRequestConfirmationInteraction = createRequestConfirmationIn
 
 export const genericPendingRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-generic-pending",
-  title: "Confirm next step",
-  summary: "The responsible needs a lightweight yes or no before continuing.",
+  title: l10n("local.confirm_next_step_10300913"),
+  summary: l10n("local.responsible_needs_yes_or_no_10300914"),
   continuationPolicy: "none",
   payload: {
     version: 1,
-    prompt: "Continue with the current approach?",
+    prompt: l10n("local.continue_current_approach_10300915"),
   },
 });
 
@@ -488,11 +477,11 @@ export const optionalDeclineRequestConfirmationInteraction = createRequestConfir
   continuationPolicy: "none",
   payload: {
     version: 1,
-    prompt: "Use the smaller implementation path?",
-    acceptLabel: "Confirm",
-    rejectLabel: "Decline",
+    prompt: l10n("local.use_smaller_implementation_10300916"),
+    acceptLabel: l10n("local.confirm_10300917"),
+    rejectLabel: l10n("local.decline_10300918"),
     rejectRequiresReason: false,
-    declineReasonPlaceholder: "Optional: tell the agent what you'd change.",
+    declineReasonPlaceholder: l10n("local.optional_tell_agent_change_10300919"),
   },
 });
 
@@ -501,9 +490,9 @@ export const disabledDeclineReasonRequestConfirmationInteraction = createRequest
   continuationPolicy: "none",
   payload: {
     version: 1,
-    prompt: "Close this low-risk follow-up as unnecessary?",
-    acceptLabel: "Close it",
-    rejectLabel: "Keep it",
+    prompt: l10n("local.close_low_risk_follow_up_10300920"),
+    acceptLabel: l10n("local.close_it_10300921"),
+    rejectLabel: l10n("local.keep_it_10300922"),
     allowDeclineReason: false,
   },
 });
@@ -528,11 +517,11 @@ export const planApprovalAcceptedRequestConfirmationInteraction = createRequestC
   updatedAt: new Date("2026-04-20T14:34:00.000Z"),
   payload: {
     version: 1,
-    prompt: "Approve the plan and let the responsible start implementation?",
-    acceptLabel: "Approve plan",
-    rejectLabel: "Reject",
+    prompt: l10n("local.approve_plan_start_implementation_10300884"),
+    acceptLabel: l10n("local.approve_plan_10300885"),
+    rejectLabel: l10n("local.reject_10300902"),
     rejectRequiresReason: true,
-    declineReasonPlaceholder: "Optional: what would you like revised?",
+    declineReasonPlaceholder: l10n("local.optional_what_revised_10300923"),
     target: {
       type: "issue_document",
       issueId: issueThreadInteractionFixtureMeta.issueId,
@@ -574,7 +563,7 @@ export const rejectedRequestConfirmationInteraction = createRequestConfirmationI
   result: {
     version: 1,
     outcome: "rejected",
-    reason: "Split the migration and UI work into separate reviewable steps.",
+    reason: l10n("local.split_migration_and_ui_work_10300924"),
   },
 });
 
