@@ -121,7 +121,7 @@ export function AgentProviderConnection({
       ? "subscription" : savedKeys.options.length ? "api" : "subscription"
   );
   const localLogin = useLocalAiLogin(companyId, managedAccount?.intent ?? {
-    provider: aiProvider, method: "subscription", name: `My ${provider} subscription`,
+    provider: aiProvider, method: "subscription", name: l10n("local.my_provider_subscription_0c960004", { v0: provider }),
     ownership: "personal", agentIds: [], allAgents: true,
   }, canUseLocalLogin && method === "subscription" && !savedSubscription && !storedLogin.data,
   { allowHostClaude: health.data?.deploymentMode === "local_trusted" });
@@ -181,7 +181,7 @@ export function AgentProviderConnection({
         connection = { env: {}, aiConnection: { provider: aiProvider, method: "subscription", mode: "responsible_user" } };
       }
       if (connection.credentials) {
-        await aiConnectionsApi.create(companyId, { provider: aiProvider, method: "api_key", name: `My ${provider} API`, ownership: "personal", apiKey: connection.credentials[envKey], agentIds: [], allAgents: true });
+        await aiConnectionsApi.create(companyId, { provider: aiProvider, method: "api_key", name: l10n("local.my_provider_api_0c960005", { v0: provider }), ownership: "personal", apiKey: connection.credentials[envKey], agentIds: [], allAgents: true });
         connection = { env: {}, aiConnection: { provider: aiProvider, method: "api_key", mode: "responsible_user" } };
       }
       if (run !== epoch.current) return;
@@ -318,7 +318,7 @@ export function AgentProviderConnection({
                 adapterType={adapterType}
                 environmentId={environmentId}
                 chrome="onboarding"
-                aiConnection={managedAccount?.intent ?? { provider: aiProvider, method: "subscription", name: `My ${provider} subscription`, ownership: "personal", agentIds: [], allAgents: true }}
+                aiConnection={managedAccount?.intent ?? { provider: aiProvider, method: "subscription", name: l10n("local.my_provider_subscription_0c960004", { v0: provider }), ownership: "personal", agentIds: [], allAgents: true }}
                 autoStart
                 onStored={() => {}}
                 onPromptReady={(url) => {

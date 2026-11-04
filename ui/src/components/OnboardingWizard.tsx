@@ -1018,7 +1018,7 @@ function OnboardingWizardInner({
   const canUseLocalLogin = resolvedLoginEnvironment?.driver === "local" && (localLoginHealth.data?.localAiLoginSupported ?? localLoginHealth.data?.deploymentMode === "local_trusted");
   const localLogin = useLocalAiLogin(createdCompanyId, {
     provider: managedProvider ?? "anthropic", method: "subscription",
-    name: `My ${CONNECT_SOURCE_NAMES[adapterType] ?? managedProvider} subscription`,
+    name: l10n("local.my_provider_subscription_0c960004", { v0: CONNECT_SOURCE_NAMES[adapterType] ?? managedProvider }),
     ownership: "personal", agentIds: [], allAgents: true,
   }, effectiveOnboardingOpen && step === 4 && canUseLocalLogin && credentialMode !== "api" &&
     Boolean(managedProvider) && !savedSubscription && !savedKeys.storedLogin.data && !managedBindingForStep(),
@@ -1803,7 +1803,7 @@ function OnboardingWizardInner({
     if (apiKeySecretRef.current?.key === key && apiKeySecretRef.current.companyId === companyId && apiKeySecretRef.current.envKey === envKey) return true;
     try {
       if (managedProvider) {
-        await aiConnectionsApi.create(companyId, { provider: managedProvider, method: "api_key", name: `My ${CONNECT_SOURCE_NAMES[adapterType] ?? managedProvider} API`, ownership: "personal", apiKey: key, agentIds: [], allAgents: true });
+        await aiConnectionsApi.create(companyId, { provider: managedProvider, method: "api_key", name: l10n("local.my_provider_api_0c960005", { v0: CONNECT_SOURCE_NAMES[adapterType] ?? managedProvider }), ownership: "personal", apiKey: key, agentIds: [], allAgents: true });
         apiKeySecretRef.current = { key, companyId, envKey, aiConnection: { provider: managedProvider, method: "api_key", mode: "responsible_user" } };
         return true;
       }
@@ -2828,7 +2828,7 @@ function OnboardingWizardInner({
                         adapterType={adapterType}
                         environmentId={resolvedLoginEnvironmentId}
                         chrome="onboarding"
-                        aiConnection={managedProvider ? { provider: managedProvider, method: "subscription", name: `My ${CONNECT_SOURCE_NAMES[adapterType] ?? managedProvider} subscription`, ownership: "personal", agentIds: [], allAgents: true } : undefined}
+                        aiConnection={managedProvider ? { provider: managedProvider, method: "subscription", name: l10n("local.my_provider_subscription_0c960004", { v0: CONNECT_SOURCE_NAMES[adapterType] ?? managedProvider }), ownership: "personal", agentIds: [], allAgents: true } : undefined}
                         autoStart
                         onPromptReady={(url) => {
                           setConnectAuthUrl(url);
