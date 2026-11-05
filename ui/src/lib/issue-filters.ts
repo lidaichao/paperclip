@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type { ExternalObjectSummary, Issue } from "@paperclipai/shared";
 
 export type IssueFilterWorkspaceLookup = {
@@ -88,7 +89,7 @@ export const issueQuickFilterPresets = [
 ];
 
 export function issueFilterLabel(value: string): string {
-  return value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  return enumLabel(value);
 }
 
 export function issueFilterArraysEqual(a: string[], b: string[]): boolean {

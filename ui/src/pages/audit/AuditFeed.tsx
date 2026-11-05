@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -527,7 +528,7 @@ export function AuditFeed({
             ? l10n("local.scoped_to_run_value_4af1e039", {v0: (lockedRunId.slice(0, 8))})
             : lockedAgentId
               ? l10n("local.scoped_to_one_agent_03939ef9")
-              : l10n("local.scoped_to_value_1976914e", {v0: (lockedEntity?.label ?? lockedEntity?.type ?? l10n("local.entity_2ed3bb60"))})}
+              : l10n("local.scoped_to_value_1976914e", {v0: (lockedEntity?.label ?? (lockedEntity?.type ? enumLabel(lockedEntity.type, "lower") : l10n("local.entity_2ed3bb60")))})}
         </div>
       ) : null}
 

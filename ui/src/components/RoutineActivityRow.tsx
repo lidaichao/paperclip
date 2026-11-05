@@ -43,7 +43,7 @@ function summarizeEvent(event: RoutineActivityEvent): string {
     return `${source} · ${status}`;
   }
   return Object.entries(details).filter(([key]) => !/id$/i.test(key)).slice(0, 3)
-    .map(([key, value]) => `${key.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " ").toLowerCase()}: ${formatDetailValue(value)}`)
+    .map(([key, value]) => `${enumLabel(key.replace(/([a-z])([A-Z])/g, "$1_$2"), "lower")}: ${formatDetailValue(value)}`)
     .join(" · ");
 }
 
@@ -70,7 +70,7 @@ const actionLabels: Record<string, string> = {
   "routine.run_triggered": l10n("local.routine_started_768fcb18"), "routine.run_created": l10n("local.run_created_4c211da8"),
 };
 function actionLabel(action: string) {
-  return actionLabels[action] ?? action.replace(/^routine[._]/, "").replaceAll("_", " ").replaceAll(".", " ").replace(/^./, (char) => char.toUpperCase());
+  return actionLabels[action] ?? enumLabel(action.replace(/^routine[._]/, "").replaceAll(".", "_"), "sentence");
 }
 
 /** Activity log row with an expandable JSON payload (§3.7). */
