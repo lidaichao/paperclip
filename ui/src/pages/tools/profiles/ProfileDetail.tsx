@@ -1,4 +1,5 @@
 import { l10n } from "../../../i18n";
+import { enumLabel } from "../../../i18n/display";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, Copy, Pencil, PlugZap, ShieldCheck, Trash2, UserMinus } from "lucide-react";
@@ -773,7 +774,7 @@ function entryMatchesTool(entry: ToolProfileEntry, tool: ToolCatalogEntry): bool
 function sourceLabel(entry: ToolProfileEntry | null, app: string): string {
   if (!entry) return l10n("local.added_directly_3fa2db40");
   if (entry.selectorType === "application" || entry.selectorType === "connection") return l10n("local.added_by_rule_all_value_e2eb3fad", {v0: (app)});
-  if (entry.selectorType === "risk_level" && entry.riskLevel) return l10n("local.added_by_rule_value_tools_0330d67c", {v0: (entry.riskLevel)});
+  if (entry.selectorType === "risk_level" && entry.riskLevel) return l10n("local.added_by_rule_value_tools_0330d67c", {v0: enumLabel(entry.riskLevel, "lower")});
   return l10n("local.added_directly_3fa2db40");
 }
 

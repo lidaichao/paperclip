@@ -55,7 +55,7 @@ function formatDetailValue(value: unknown): string {
   try {
     return JSON.stringify(value);
   } catch {
-    return "[unserializable]";
+    return l10n("local.unserializable_value_10301617");
   }
 }
 

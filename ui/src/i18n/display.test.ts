@@ -68,6 +68,9 @@ describe("enumLabel", () => {
     expect(enumLabel("bearer", "lower")).toBe("Bearer 令牌");
     expect(enumLabel("hmac_sha256", "lower")).toBe("HMAC-SHA256");
     expect(enumLabel("github_hmac", "lower")).toBe("GitHub HMAC");
+    expect(enumLabel("pending_approval", "lower")).toBe("待审批");
+    expect(enumLabel("needs_setup", "lower")).toBe("需要设置");
+    expect(enumLabel("draft_config", "lower")).toBe("草稿配置");
   });
 
   it("keeps English labels readable", async () => {

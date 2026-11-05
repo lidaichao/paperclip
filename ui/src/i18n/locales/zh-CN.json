@@ -2983,7 +2983,7 @@
     "draft_7743ce34": "草稿",
     "draft_an_organization_brief_bbb3dce9": "起草组织简报",
     "draft_at_failure_39d035d4": "失败时的草稿",
-    "draft_config_f657b727": "draft_config",
+    "draft_config_f657b727": "草稿配置",
     "draft_ebf12ef4": "草稿",
     "draft_probe_failed_a48eacbd": "草稿探测失败",
     "draft_probe_passed_87b2ad50": "草稿探测通过",
@@ -5057,7 +5057,7 @@
     "needs_follow_up_7594b78e": "需要跟进",
     "needs_next_step_e45a2c0f": "需要下一步",
     "needs_permissions_fa8dc2e4": "需要权限",
-    "needs_setup_a2989bf3": "needs_setup",
+    "needs_setup_a2989bf3": "需要设置",
     "needs_setup_b6df2441": "需要设置",
     "needs_work_738a3278": "需要完善",
     "needs_your_approval_before_this_runs_d66b3952": "运行前需要你批准。",
@@ -6172,7 +6172,7 @@
     "pdf_1d393b00": "PDF",
     "pending_331551b0": "待处理",
     "pending_62a2fed3": "待处理",
-    "pending_approval_92950a08": "pending_approval",
+    "pending_approval_92950a08": "等待审批",
     "pending_approval_bb33a7f4": "待审批",
     "pending_approvals_0405f4b6": "待处理审批",
     "pending_approvals_495aae90": "待处理审批",
@@ -13808,6 +13808,7 @@
     "routine_activity_annotation_comment_added_10301613": "已添加文档批注回复",
     "routine_activity_annotation_thread_resolved_10301614": "已解决文档批注",
     "routine_activity_annotation_thread_reopened_10301615": "已重新打开文档批注",
-    "routine_activity_annotation_remapped_10301616": "已重新定位文档批注"
+    "routine_activity_annotation_remapped_10301616": "已重新定位文档批注",
+    "unserializable_value_10301617": "[无法序列化]"
   }
 }

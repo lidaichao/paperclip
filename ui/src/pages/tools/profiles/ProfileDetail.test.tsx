@@ -35,6 +35,7 @@ vi.mock("@/api/tools", () => ({ toolsApi: api }));
 vi.mock("./useProfilesData", () => ({ useProfilesData: () => profilesData.current }));
 
 import { ProfileDetail } from "./ProfileDetail";
+import { i18n } from "../../../i18n";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -191,11 +192,12 @@ describe("ProfileDetail", () => {
     api.deleteProfile.mockResolvedValue({ deleted: true });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     flushSync(() => root.unmount());
     container.remove();
     vi.clearAllMocks();
     document.body.innerHTML = "";
+    await i18n.changeLanguage("en");
   });
 
   async function render() {
@@ -221,6 +223,19 @@ describe("ProfileDetail", () => {
     expect(container.textContent).toContain("Who has it");
     expect(container.textContent).toContain("Sage");
     expect(container.textContent).toContain("New tools that appear later");
+  });
+
+  it("localizes risk-level rules instead of exposing the stored enum", async () => {
+    await i18n.changeLanguage("zh-CN");
+    setData([
+      profile({
+        entries: [entry({ selectorType: "risk_level", applicationId: null, riskLevel: "write" })],
+      }),
+    ], [tool({ riskLevel: "write", isReadOnly: false, isWrite: true })]);
+    await render();
+
+    expect(container.textContent).toContain("由规则添加：写入 个工具");
+    expect(container.textContent).not.toContain("由规则添加：write 个工具");
   });
 
   it("shows degraded app rows and the 0-tools warning state", async () => {
