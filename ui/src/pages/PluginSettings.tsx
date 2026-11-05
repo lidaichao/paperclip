@@ -220,8 +220,8 @@ export function PluginSettings() {
                     <div className="flex flex-wrap gap-2">
                       {plugin.categories.length > 0 ? (
                         plugin.categories.map((category) => (
-                          <Badge key={category} variant="outline" className="capitalize">
-                            {category}
+                          <Badge key={category} variant="outline">
+                            {enumLabel(category, "lower")}
                           </Badge>
                         ))
                       ) : (
@@ -369,7 +369,7 @@ export function PluginSettings() {
                                     {run.jobKey ?? run.jobId.slice(0, 8)}
                                   </span>
                                   <Badge variant="outline" className="px-1 py-0 text-(length:--text-nano)">
-                                    {run.trigger}
+                                    {enumLabel(run.trigger, "lower")}
                                   </Badge>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
@@ -451,7 +451,7 @@ export function PluginSettings() {
                           }`}
                         >
                           <span className="shrink-0 text-muted-foreground/50">{new Date(entry.createdAt).toLocaleTimeString()}</span>
-                          <Badge variant="outline" className="h-4 shrink-0 px-1 text-(length:--text-nano)">{entry.level}</Badge>
+                          <Badge variant="outline" className="h-4 shrink-0 px-1 text-(length:--text-nano)">{enumLabel(entry.level, "lower")}</Badge>
                           <span className="truncate" title={entry.message}>{entry.message}</span>
                         </div>
                       ))}

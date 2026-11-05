@@ -13785,6 +13785,9 @@
     "enum_trace_renamed_10301590": "已重命名",
     "enum_trace_normalized_10301591": "已标准化",
     "enum_trace_derived_10301592": "已派生",
-    "enum_trace_dropped_10301593": "已丢弃"
+    "enum_trace_dropped_10301593": "已丢弃",
+    "enum_log_warn_10301594": "警告",
+    "enum_log_debug_10301595": "调试",
+    "enum_trigger_manual_10301596": "手动"
   }
 }

@@ -50,6 +50,12 @@ describe("enumLabel", () => {
     expect(enumLabel("normalized")).toBe("已标准化");
     expect(enumLabel("dropped")).toBe("已丢弃");
     expect(enumLabel("company", "lower")).toBe("公司");
+    expect(enumLabel("team", "lower")).toBe("团队");
+    expect(enumLabel("task", "lower")).toBe("任务");
+    expect(enumLabel("automation", "lower")).toBe("自动化");
+    expect(enumLabel("warn", "lower")).toBe("警告");
+    expect(enumLabel("debug", "lower")).toBe("调试");
+    expect(enumLabel("manual", "lower")).toBe("手动");
   });
 
   it("keeps English labels readable", async () => {

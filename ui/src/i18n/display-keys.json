@@ -10543,5 +10543,8 @@
   "renamed": "local.enum_trace_renamed_10301590",
   "normalized": "local.enum_trace_normalized_10301591",
   "derived": "local.enum_trace_derived_10301592",
-  "dropped": "local.enum_trace_dropped_10301593"
+  "dropped": "local.enum_trace_dropped_10301593",
+  "warn": "local.enum_log_warn_10301594",
+  "debug": "local.enum_log_debug_10301595",
+  "manual": "local.enum_trigger_manual_10301596"
 }
