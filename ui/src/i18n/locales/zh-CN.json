@@ -13796,6 +13796,18 @@
     "enum_signing_bearer_10301601": "Bearer 令牌",
     "enum_signing_hmac_sha256_10301602": "HMAC-SHA256",
     "enum_signing_github_hmac_10301603": "GitHub HMAC",
-    "enum_signing_fireflies_hmac_10301604": "Fireflies HMAC"
+    "enum_signing_fireflies_hmac_10301604": "Fireflies HMAC",
+    "routine_activity_run_completed_10301605": "运行完成",
+    "routine_activity_run_skipped_10301606": "运行已跳过",
+    "routine_activity_revision_created_10301607": "已创建修订版",
+    "routine_activity_revision_restored_10301608": "已恢复修订版",
+    "routine_activity_origin_stamped_10301609": "已关联来源",
+    "routine_activity_origin_cleared_10301610": "已清除来源",
+    "routine_activity_webhook_ignored_10301611": "已忽略回调通知",
+    "routine_activity_annotation_thread_created_10301612": "已创建文档批注讨论",
+    "routine_activity_annotation_comment_added_10301613": "已添加文档批注回复",
+    "routine_activity_annotation_thread_resolved_10301614": "已解决文档批注",
+    "routine_activity_annotation_thread_reopened_10301615": "已重新打开文档批注",
+    "routine_activity_annotation_remapped_10301616": "已重新定位文档批注"
   }
 }

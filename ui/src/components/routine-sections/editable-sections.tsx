@@ -31,6 +31,7 @@ import { InlineEntitySelector } from "../InlineEntitySelector";
 import { DocumentAnnotationsCountChip, IssueDocumentAnnotations } from "../IssueDocumentAnnotations";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { RoutineVariablesEditor, RoutineVariablesHint } from "../RoutineVariablesEditor";
+import { routineActivityActionLabel } from "../RoutineActivityRow";
 import { EnvironmentVariablesEditor } from "../environment-variables-editor";
 import { useRoutineDetail } from "./context";
 import type { EnvBinding, RoutineDetail as RoutineDetailType } from "@paperclipai/shared";
@@ -334,8 +335,8 @@ export function OverviewSection({
           <div className="divide-y divide-border/60">
             {recentActivity.map((event) => (
               <div key={event.id} className="flex items-center gap-2 py-1.5 text-xs">
-                <Badge variant="outline" className="shrink-0 font-mono">
-                  {event.action}
+                <Badge variant="outline" className="shrink-0" title={event.action}>
+                  {routineActivityActionLabel(event.action)}
                 </Badge>
                 <span className="min-w-0 flex-1 truncate text-muted-foreground">
                   {event.details && Object.keys(event.details).length > 0

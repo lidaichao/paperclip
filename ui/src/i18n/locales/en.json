@@ -13796,6 +13796,18 @@
     "enum_signing_bearer_10301601": "Bearer token",
     "enum_signing_hmac_sha256_10301602": "HMAC-SHA256",
     "enum_signing_github_hmac_10301603": "GitHub HMAC",
-    "enum_signing_fireflies_hmac_10301604": "Fireflies HMAC"
+    "enum_signing_fireflies_hmac_10301604": "Fireflies HMAC",
+    "routine_activity_run_completed_10301605": "Run completed",
+    "routine_activity_run_skipped_10301606": "Run skipped",
+    "routine_activity_revision_created_10301607": "Revision created",
+    "routine_activity_revision_restored_10301608": "Revision restored",
+    "routine_activity_origin_stamped_10301609": "Source linked",
+    "routine_activity_origin_cleared_10301610": "Source cleared",
+    "routine_activity_webhook_ignored_10301611": "Webhook ignored",
+    "routine_activity_annotation_thread_created_10301612": "Annotation thread created",
+    "routine_activity_annotation_comment_added_10301613": "Annotation reply added",
+    "routine_activity_annotation_thread_resolved_10301614": "Annotation resolved",
+    "routine_activity_annotation_thread_reopened_10301615": "Annotation reopened",
+    "routine_activity_annotation_remapped_10301616": "Annotation relocated"
   }
 }
