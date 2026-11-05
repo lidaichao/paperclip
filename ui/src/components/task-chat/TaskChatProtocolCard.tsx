@@ -290,7 +290,7 @@ function ProviderActivityCard({
                     statusTone(child.status),
                   )}
                 >
-                  {child.status}
+                  {enumLabel(child.status, "lower")}
                 </span>
               </div>
               {child.metadata ? (

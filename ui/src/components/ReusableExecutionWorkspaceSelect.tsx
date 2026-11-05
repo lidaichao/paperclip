@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useMemo } from "react";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import {
@@ -59,7 +60,7 @@ export function ReusableExecutionWorkspaceSelect<TWorkspace extends ReusableExec
         <span className="flex min-w-0 flex-col">
           <span className={cn("truncate", selected && "font-medium")}>{option.label}</span>
           <span className="truncate text-(length:--text-micro) text-muted-foreground">
-            {option.workspace.status ? `${option.workspace.status} - ` : ""}
+            {option.workspace.status ? `${enumLabel(option.workspace.status, "lower")} - ` : ""}
             {option.description}
           </span>
         </span>

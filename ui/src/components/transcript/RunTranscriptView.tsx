@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { TranscriptEntry } from "../../adapters";
 import type { ToolRunDecision } from "@paperclipai/shared";
@@ -1139,7 +1140,7 @@ function ToolDecisionDetails({ decision, compact }: { decision: ToolRunDecision 
       <div className="mt-2 grid gap-1 font-mono text-muted-foreground sm:grid-cols-2">
         <span>{l10n("local.invocation_40493fe6")}{" "}{decision.invocation.id.slice(0, 8)}</span>
         <span>{l10n("local.audit_b81f37a0")}{" "}{decision.auditEvents.length}</span>
-        {actionRequest && <span>{l10n("local.action_bd938c68")}{" "}{actionRequest.status} {actionRequest.id.slice(0, 8)}</span>}
+        {actionRequest && <span>{l10n("local.action_bd938c68")}{" "}{enumLabel(actionRequest.status, "lower")} {actionRequest.id.slice(0, 8)}</span>}
         {actionRequest?.interactionId && <span>{l10n("local.card_8367cd66")}{" "}{actionRequest.interactionId.slice(0, 8)}</span>}
       </div>
       {decision.pendingAction?.previewMarkdown && (

@@ -541,7 +541,7 @@ function ReceiptDisclosure({
           <div className="rounded-sm bg-muted/45 px-3 py-2.5 text-sm">
             <p>
               <strong>{interaction.payload.toolAction.toolDisplayName}</strong>{" "}
-              · {interaction.payload.toolAction.risk} {l10n("local.risk_2c6ef0f0")}</p>
+              · {enumLabel(interaction.payload.toolAction.risk, "lower")} {l10n("local.risk_2c6ef0f0")}</p>
             <p className="mt-1">
               {l10n("local.expires_f6725f3a")}{" "}
               {new Date(
@@ -900,7 +900,7 @@ function ConfirmationCard({
                   : "text-muted-foreground",
               )}
             >
-              {interaction.payload.toolAction.risk} {l10n("local.risk_2c6ef0f0")}</span>
+              {enumLabel(interaction.payload.toolAction.risk, "lower")} {l10n("local.risk_2c6ef0f0")}</span>
             <span className="ml-auto text-xs text-muted-foreground">
               {l10n("local.expires_f6725f3a")}{" "}
               {new Date(
