@@ -509,7 +509,7 @@ function WorkspaceFileCard({ item }: { item: TaskChatWorkspaceFileItem }) {
     ? item.displayName.split(".").at(-1)?.toUpperCase()
     : "FILE";
   const label =
-    item.presentation === "generic" ? l10n("local.file_50009ce1") : titleCaseKey(item.presentation);
+    item.presentation === "generic" ? l10n("local.file_50009ce1") : enumLabel(item.presentation, "lower");
   const workspaceFileRef = useMemo(
     () => ({
       path: item.path,
@@ -580,12 +580,6 @@ function WorkspaceFileCard({ item }: { item: TaskChatWorkspaceFileItem }) {
       </Dialog>
     </>
   );
-}
-
-function titleCaseKey(value: string): string {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function RuntimeQuestionHistory({
