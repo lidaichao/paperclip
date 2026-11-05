@@ -82,7 +82,8 @@ export function encodeInventory(value) {
 }
 
 export function decodeInventory(source) {
-  const json = source.startsWith(sourceHeader) ? source.slice(sourceHeader.length) : source;
+  const normalized = source.replace(/\r\n/g, "\n");
+  const json = normalized.startsWith(sourceHeader) ? normalized.slice(sourceHeader.length) : normalized;
   return JSON.parse(json);
 }
 
