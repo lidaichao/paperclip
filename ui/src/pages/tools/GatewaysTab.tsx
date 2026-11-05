@@ -479,7 +479,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                               setTokenDrafts((current) => ({ ...current, [gateway.id]: { ...tokenDraft, allowedActions: next } }));
                             }}
                           />
-                          {action}
+                          {enumLabel(action, "lower")}
                         </label>
                       ))}
                     </div>

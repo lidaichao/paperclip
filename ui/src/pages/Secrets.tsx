@@ -1895,13 +1895,13 @@ export function Secrets() {
                   disabled={searching}
                   onClick={() => setViewMode(mode)}
                   className={cn(
-                    "rounded-sm px-2.5 py-1 text-xs font-medium capitalize transition-colors disabled:cursor-not-allowed",
+                    "rounded-sm px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed",
                     effectiveViewMode === mode
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {mode}
+                  {enumLabel(mode, "lower")}
                 </button>
               ))}
             </div>

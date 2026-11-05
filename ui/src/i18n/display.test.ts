@@ -60,6 +60,10 @@ describe("enumLabel", () => {
     expect(enumLabel("update", "lower")).toBe("更新");
     expect(enumLabel("skip", "lower")).toBe("跳过");
     expect(enumLabel("rename", "lower")).toBe("重命名");
+    expect(enumLabel("folders", "lower")).toBe("文件夹");
+    expect(enumLabel("flat", "lower")).toBe("平铺");
+    expect(enumLabel("tools/list", "lower")).toBe("列出工具");
+    expect(enumLabel("tools/call", "lower")).toBe("调用工具");
   });
 
   it("keeps English labels readable", async () => {

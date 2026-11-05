@@ -13788,6 +13788,9 @@
     "enum_trace_dropped_10301593": "Dropped",
     "enum_log_warn_10301594": "Warning",
     "enum_log_debug_10301595": "Debug",
-    "enum_trigger_manual_10301596": "Manual"
+    "enum_trigger_manual_10301596": "Manual",
+    "enum_view_flat_10301597": "Flat",
+    "enum_tool_action_list_10301598": "List tools",
+    "enum_tool_action_call_10301599": "Call tools"
   }
 }
