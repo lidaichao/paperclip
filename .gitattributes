@@ -1,1 +1,3 @@
 patches/*.patch whitespace=-space-before-tab
+packages/paperclip-runner/generated/capability/* text eol=lf
+packages/paperclip-runner/protocol/manifest.json text eol=lf
