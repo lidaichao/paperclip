@@ -583,7 +583,7 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
                                 : "bg-muted text-muted-foreground",
                           )}
                         >
-                          {service.status}
+                          {enumLabel(service.status, "lower")}
                         </Badge>
                       </div>
                       <div className="text-(length:--text-micro) text-muted-foreground">
@@ -614,7 +614,7 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
                       ) : null}
                     </div>
                     <div className="text-(length:--text-nano) text-muted-foreground whitespace-nowrap">
-                      {service.lifecycle}
+                      {enumLabel(service.lifecycle, "lower")}
                     </div>
                   </div>
                 ))}
