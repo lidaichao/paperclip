@@ -90,7 +90,7 @@ export function HireAgentPayload({ payload }: { payload: Record<string, unknown>
         <span className="text-muted-foreground w-20 sm:w-24 shrink-0 text-xs">{l10n("local.name_dcd1d522")}</span>
         <span className="font-medium">{String(payload.name ?? "—")}</span>
       </div>
-      <PayloadField label={l10n("local.role_14736a2e")} value={payload.role} />
+      <PayloadField label={l10n("local.role_14736a2e")} value={typeof payload.role === "string" ? enumLabel(payload.role, "lower") : payload.role} />
       <PayloadField label={l10n("local.title_7e8cd205")} value={payload.title} />
       <PayloadField label={l10n("local.icon_a35abcd6")} value={payload.icon} />
       {!!payload.capabilities && (

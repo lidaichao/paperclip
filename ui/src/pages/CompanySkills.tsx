@@ -1957,7 +1957,7 @@ function CatalogDetailPane({
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 uppercase tracking-wide">{enumLabel(skill.kind, "lower")}</span>
               <span>·</span>
-              <span>{skill.category}</span>
+              <span>{enumLabel(skill.category, "lower")}</span>
               <span>·</span>
               <ProvenanceBadge packageName={packageName} packageVersion={packageVersion} />
             </div>
