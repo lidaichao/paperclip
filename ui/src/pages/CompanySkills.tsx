@@ -1985,7 +1985,7 @@ function CatalogDetailPane({
           ) : null}
           {skill.recommendedForRoles.length > 0 ? (
             <Badge variant="outline" className="border-border bg-muted/40 text-(length:--text-micro) text-muted-foreground">
-              {l10n("local.roles_47d6de66")}{" "}{skill.recommendedForRoles.join(" · ")}
+              {l10n("local.roles_47d6de66")}{" "}{skill.recommendedForRoles.map((role) => enumLabel(role, "lower")).join(" · ")}
             </Badge>
           ) : null}
           {skill.tags.length > 0 ? (
@@ -2157,7 +2157,7 @@ export function InstallPreviewDialog({
               <div className="text-muted-foreground">{l10n("local.requires_143f0330")}</div>
               <div className="text-foreground">{skill.requires.length === 0 ? l10n("local.none_140bedbf") : skill.requires.join(", ")}</div>
               <div className="text-muted-foreground">{l10n("local.roles_c2533705")}</div>
-              <div className="text-foreground">{skill.recommendedForRoles.length === 0 ? l10n("local.any_d6a7cd2a") : skill.recommendedForRoles.join(" · ")}</div>
+              <div className="text-foreground">{skill.recommendedForRoles.length === 0 ? l10n("local.any_d6a7cd2a") : skill.recommendedForRoles.map((role) => enumLabel(role, "lower")).join(" · ")}</div>
               <div className="text-muted-foreground">{l10n("local.provenance_1c4b8ff6")}</div>
               <div className="min-w-0">
                 <div className="truncate">{packageName ?? "—"}{packageVersion ? ` v${packageVersion}` : ""}</div>

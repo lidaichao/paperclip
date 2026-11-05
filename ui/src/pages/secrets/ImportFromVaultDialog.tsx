@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -927,7 +928,7 @@ function SelectStep(props: SelectStepProps) {
                       )}
                       {blocked && (
                         <Badge variant="outline" className="px-1 py-0 text-(length:--text-nano) text-muted-foreground">
-                          {vault.status === "coming_soon" ? l10n("local.coming_soon_62bfdf0b") : vault.status}
+                          {vault.status === "coming_soon" ? l10n("local.coming_soon_62bfdf0b") : enumLabel(vault.status, "lower")}
                         </Badge>
                       )}
                     </span>

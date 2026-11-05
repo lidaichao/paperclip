@@ -1823,9 +1823,9 @@ function IssueChatProviderActivity({
               return (
                 <div key={String(child.childId ?? index)}>
                   <span className="font-medium">
-                    {String(child.role ?? l10n("local.child_agent_0cf00021"))}
+                    {typeof child.role === "string" ? enumLabel(child.role, "lower") : l10n("local.child_agent_0cf00021")}
                   </span>{" "}
-                  · {String(child.status ?? l10n("local.unknown_b23a6a84"))}
+                  · {typeof child.status === "string" ? enumLabel(child.status, "lower") : l10n("local.unknown_b23a6a84")}
                   {child.summary ? ` — ${String(child.summary)}` : ""}
                 </div>
               );

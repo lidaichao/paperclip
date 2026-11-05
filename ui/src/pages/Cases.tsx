@@ -1022,7 +1022,7 @@ export function Cases() {
   const activeFilters: FilterValue[] = [];
   if (viewState.search.trim()) activeFilters.push({ key: "search", label: l10n("local.search_49c266ba"), value: viewState.search.trim() });
   if (viewState.typeFilters.length > 0) {
-    activeFilters.push({ key: "type", label: l10n("local.type_baaddf70"), value: viewState.typeFilters.join(", ") });
+    activeFilters.push({ key: "type", label: l10n("local.type_baaddf70"), value: viewState.typeFilters.map((type) => enumLabel(type, "lower")).join(", ") });
   }
   if (!usesDefaultStatusFilter) {
     activeFilters.push({

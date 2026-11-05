@@ -148,7 +148,7 @@ export function PluginSettings() {
     return <Navigate to="/company/settings/instance/plugins" replace />;
   }
 
-  const displayStatus = plugin.status;
+  const displayStatus = enumLabel(plugin.status, "lower");
   const statusVariant =
     plugin.status === "ready"
       ? "default"
