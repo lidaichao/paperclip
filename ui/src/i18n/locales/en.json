@@ -13816,6 +13816,13 @@
     "routine_activity_annotation_thread_resolved_10301614": "Annotation resolved",
     "routine_activity_annotation_thread_reopened_10301615": "Annotation reopened",
     "routine_activity_annotation_remapped_10301616": "Annotation relocated",
-    "unserializable_value_10301617": "[unserializable]"
+    "unserializable_value_10301617": "[unserializable]",
+    "interface_language_20261105": "Interface language",
+    "language_switch_refreshes_page_20261105": "The page will refresh after switching languages.",
+    "language_preference_storage_unavailable_20261105": "Could not save the language preference. Allow this site to use browser storage.",
+    "environment_delete_other_references_20261105": "Other references to this environment (agents in other organizations or terminated agents) fall back to the instance default.",
+    "environment_delete_selections_20261105": "Environment selections to clear across workspaces, issues, and projects: {{count}}.",
+    "environment_delete_secret_bindings_20261105": "Secret bindings to remove: {{count}}.",
+    "environment_delete_active_runtime_20261105": "Active runs or sandbox leases currently resolve to this environment."
   }
 }

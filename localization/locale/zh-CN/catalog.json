@@ -10382,5 +10382,9 @@
   "local.po_qa_675cfba6": "PO/QA 写入已按权限预先禁用：",
   "local.qa_38427d89": "QA 通过",
   "local.qa_48947c06": "QA",
-  "local.qa_fd96a11b": "QA 退回"
+  "local.qa_fd96a11b": "QA 退回",
+  "local.environment_delete_other_references_20261105": "其他组织或已终止智能体对该环境的引用将回退到实例默认环境。",
+  "local.environment_delete_selections_20261105": "将清除 {{count}} 处工作区、任务或项目的环境选择。",
+  "local.environment_delete_secret_bindings_20261105": "将移除 {{count}} 个密钥绑定。",
+  "local.environment_delete_active_runtime_20261105": "当前有运行中的任务或沙箱租约使用此环境。"
 }

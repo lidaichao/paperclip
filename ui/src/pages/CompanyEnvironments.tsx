@@ -295,6 +295,13 @@ function summarizeSandboxConfig(config: Record<string, unknown>): string | null 
   return null;
 }
 
+function environmentDriverLabel(driver: Environment["driver"]): string {
+  if (driver === "local") return l10n("local.local_8c31e6e7");
+  if (driver === "ssh") return l10n("local.ssh_01c4d3c2");
+  if (driver === "sandbox") return l10n("local.sandbox_67fc6249");
+  return driver;
+}
+
 const ACTIVE_CUSTOM_IMAGE_SETUP_STATUSES = new Set<EnvironmentCustomImageSetupSession["status"]>([
   "starting",
   "waiting_for_user",
@@ -1894,7 +1901,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
   if (deleteBlastRadius && !deleteBlockMessage) {
     if (deleteBlastRadius.staticReferences.agentDefaultCount > agentsUsingEnvironment.length) {
       deleteImpactNotes.push(
-        "Other references to this environment (agents in other organizations or terminated agents) fall back to the instance default.",
+        l10n("local.environment_delete_other_references_20261105"),
       );
     }
     const selectionCount =
@@ -1903,16 +1910,18 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
       deleteBlastRadius.staticReferences.projectSelectionCount;
     if (selectionCount > 0) {
       deleteImpactNotes.push(
-        `${selectionCount} workspace, issue, or project environment ${selectionCount === 1 ? "selection" : "selections"} will be cleared.`,
+        l10n("local.environment_delete_selections_20261105", { count: selectionCount }),
       );
     }
     if (deleteBlastRadius.staticReferences.secretBindingCount > 0) {
       deleteImpactNotes.push(
-        `${deleteBlastRadius.staticReferences.secretBindingCount} secret ${deleteBlastRadius.staticReferences.secretBindingCount === 1 ? "binding" : "bindings"} will be removed.`,
+        l10n("local.environment_delete_secret_bindings_20261105", {
+          count: deleteBlastRadius.staticReferences.secretBindingCount,
+        }),
       );
     }
     if (deleteBlastRadius.activeRuntimeUse.hasActiveRuntimeUse) {
-      deleteImpactNotes.push("Active runs or sandbox leases currently resolve to this environment.");
+      deleteImpactNotes.push(l10n("local.environment_delete_active_runtime_20261105"));
     }
   }
   // One row per workspace holding blocking sandbox leases (several leases can
@@ -2020,7 +2029,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                       <span>
                         {environment.name}
                         {isPlatformManagedEnvironment(environment) ? null : (
-                          <span className="text-muted-foreground"> · {environment.driver}</span>
+                          <span className="text-muted-foreground"> · {environmentDriverLabel(environment.driver)}</span>
                         )}
                       </span>
                       {isPlatformManagedEnvironment(environment) ? (
@@ -2049,7 +2058,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                             return summary
                               ?? l10n("local.provisioned_and_maintained_for_you_10301273");
                           }
-                          return `${sandboxProviderDisplayName} sandbox provider${summary ? ` · ${summary}` : ""}`;
+                          return `${l10n("local.value_sandbox_provider_d0c65138", { v0: sandboxProviderDisplayName })}${summary ? ` · ${summary}` : ""}`;
                         })()}
                       </div>
                     ) : (
@@ -2561,12 +2570,12 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                         >
                           <option value="">
                             {l10n("local.default_d1f6d9e7")}{" "}{instanceDefaultEnvironment
-                              ? `${instanceDefaultEnvironment.name} · ${instanceDefaultEnvironment.driver}`
+                              ? `${instanceDefaultEnvironment.name} · ${environmentDriverLabel(instanceDefaultEnvironment.driver)}`
                               : l10n("local.local_8c31e6e7")}
                           </option>
                           {reassignTargetEnvironments.map((environment) => (
                             <option key={environment.id} value={environment.id}>
-                              {environment.name} · {environment.driver}
+                              {environment.name} · {environmentDriverLabel(environment.driver)}
                             </option>
                           ))}
                         </select>

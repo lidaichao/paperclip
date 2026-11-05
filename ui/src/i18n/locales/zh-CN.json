@@ -13816,6 +13816,13 @@
     "routine_activity_annotation_thread_resolved_10301614": "已解决文档批注",
     "routine_activity_annotation_thread_reopened_10301615": "已重新打开文档批注",
     "routine_activity_annotation_remapped_10301616": "已重新定位文档批注",
-    "unserializable_value_10301617": "[无法序列化]"
+    "unserializable_value_10301617": "[无法序列化]",
+    "interface_language_20261105": "界面语言",
+    "language_switch_refreshes_page_20261105": "切换后将刷新页面。",
+    "language_preference_storage_unavailable_20261105": "无法保存语言设置，请允许此网站使用浏览器存储。",
+    "environment_delete_other_references_20261105": "其他组织或已终止智能体对该环境的引用将回退到实例默认环境。",
+    "environment_delete_selections_20261105": "将清除 {{count}} 处工作区、任务或项目的环境选择。",
+    "environment_delete_secret_bindings_20261105": "将移除 {{count}} 个密钥绑定。",
+    "environment_delete_active_runtime_20261105": "当前有运行中的任务或沙箱租约使用此环境。"
   }
 }

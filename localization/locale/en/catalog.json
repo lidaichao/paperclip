@@ -10318,5 +10318,9 @@
   "local.zapier_mcp_url_fc88a55a": "Zapier MCP URL",
   "local.zip_eaca4b30": "ZIP",
   "local.zoom_in_0e47f09a": "Zoom in",
-  "local.zoom_out_bc7b631a": "Zoom out"
+  "local.zoom_out_bc7b631a": "Zoom out",
+  "local.environment_delete_other_references_20261105": "Other references to this environment (agents in other organizations or terminated agents) fall back to the instance default.",
+  "local.environment_delete_selections_20261105": "Environment selections to clear across workspaces, issues, and projects: {{count}}.",
+  "local.environment_delete_secret_bindings_20261105": "Secret bindings to remove: {{count}}.",
+  "local.environment_delete_active_runtime_20261105": "Active runs or sandbox leases currently resolve to this environment."
 }
