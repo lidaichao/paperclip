@@ -504,8 +504,13 @@ async function mapHashesToMigrationFiles(migrationFiles: string[]): Promise<Map<
   await Promise.all(
     migrationFiles.map(async (migrationFile) => {
       const content = await readMigrationFileContent(migrationFile);
-      const hash = createHash("sha256").update(content).digest("hex");
-      mapped.set(hash, migrationFile);
+      // Older Windows checkouts recorded hashes of CRLF migration files. Git
+      // archives and Linux images use LF, so both byte forms must resolve to
+      // the same migration without trusting position or timestamp alone.
+      const lfContent = content.replace(/\r\n/g, "\n");
+      for (const variant of [lfContent, lfContent.replace(/\n/g, "\r\n")]) {
+        mapped.set(createHash("sha256").update(variant).digest("hex"), migrationFile);
+      }
     }),
   );
 

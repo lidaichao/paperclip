@@ -168,6 +168,28 @@ describeEmbeddedPostgres("resetPostgresDatabase", () => {
 });
 
 describeEmbeddedPostgres("applyPendingMigrations", () => {
+  it("recognizes mixed LF and CRLF migration journal hashes", async () => {
+    const connectionString = await createTempDatabase();
+    await applyPendingMigrations(connectionString);
+    const sql = postgres(connectionString, { max: 1, onnotice: () => {} });
+    try {
+      for (const file of ["0001_fast_northstar.sql", "0003_shallow_quentin_quire.sql"]) {
+        const content = await fs.promises.readFile(new URL(`./migrations/${file}`, import.meta.url), "utf8");
+        const lfContent = content.replace(/\r\n/g, "\n");
+        const lfHash = createHash("sha256").update(lfContent).digest("hex");
+        const crlfHash = createHash("sha256").update(lfContent.replace(/\n/g, "\r\n")).digest("hex");
+        const currentHash = await migrationHash(file);
+        const otherHash = currentHash === lfHash ? crlfHash : lfHash;
+        await sql`UPDATE "drizzle"."__drizzle_migrations" SET hash = ${otherHash} WHERE hash = ${currentHash}`;
+      }
+
+      expect((await inspectMigrations(connectionString)).status).toBe("upToDate");
+      await expect(applyPendingMigrations(connectionString)).resolves.toBeUndefined();
+    } finally {
+      await sql.end();
+    }
+  }, 30_000);
+
   it("upgrades renumbered recovery migrations and replays their schema idempotently", async () => {
     const connectionString = await createTempDatabase();
     await applyPendingMigrations(connectionString);
