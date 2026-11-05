@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { ActivityEvent } from "@paperclipai/shared";
@@ -38,7 +39,7 @@ function summarizeEvent(event: RoutineActivityEvent): string {
         : l10n("local.manual_source_0d200003");
     const status = details.status === "issue_created"
       ? l10n("local.task_created_a3e3e968")
-      : String(details.status ?? "").replaceAll("_", " ");
+      : enumLabel(String(details.status ?? ""), "lower");
     return `${source} · ${status}`;
   }
   return Object.entries(details).filter(([key]) => !/id$/i.test(key)).slice(0, 3)

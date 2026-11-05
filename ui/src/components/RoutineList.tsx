@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type { AgentAppearance } from "@paperclipai/shared";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import type { ReactNode } from "react";
@@ -54,7 +55,7 @@ export function formatRoutineRunStatus(value: string | null | undefined) {
     failed: () => l10n("local.failed_5d28a90f"),
   };
   if (statusLabels[value]) return statusLabels[value]();
-  return value.replaceAll("_", " ");
+  return enumLabel(value, "lower");
 }
 
 export function nextRoutineStatus(currentStatus: string, enabled: boolean) {

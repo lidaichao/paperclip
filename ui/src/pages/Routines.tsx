@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1195,7 +1196,7 @@ export function Routines() {
                         </SelectTrigger>
                         <SelectContent>
                           {concurrencyPolicies.map((value) => (
-                            <SelectItem key={value} value={value}>{value.replaceAll("_", " ")}</SelectItem>
+                            <SelectItem key={value} value={value}>{enumLabel(value, "lower")}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -1212,7 +1213,7 @@ export function Routines() {
                         </SelectTrigger>
                         <SelectContent>
                           {catchUpPolicies.map((value) => (
-                            <SelectItem key={value} value={value}>{value.replaceAll("_", " ")}</SelectItem>
+                            <SelectItem key={value} value={value}>{enumLabel(value, "lower")}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

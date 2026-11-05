@@ -191,7 +191,7 @@ function WorkspaceChangeDetails({ item }: { item: TaskChatWorkspaceChangeItem })
             <span className="min-w-0 flex-1 truncate font-mono text-foreground" title={file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}>
               {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
             </span>
-            <span className="shrink-0 capitalize text-muted-foreground">{file.operation.replaceAll("_", " ")}</span>
+            <span className="shrink-0 capitalize text-muted-foreground">{enumLabel(file.operation, "lower")}</span>
             {file.additions != null || file.deletions != null ? (
               <span className="shrink-0 font-mono text-(length:--text-micro) text-muted-foreground">
                 {file.additions == null ? "" : l10n("local._value_8b26dc05", {v0: (file.additions)})} {file.deletions == null ? "" : l10n("local._value_85362958", {v0: (file.deletions)})}

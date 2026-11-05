@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import {
   AlertCircle,
   AlertOctagon,
@@ -90,7 +91,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export function externalObjectCategoryLabel(category: string): string {
-  return CATEGORY_LABELS[category] ?? category.replace(/_/g, " ");
+  return CATEGORY_LABELS[category] ?? enumLabel(category, "lower");
 }
 
 const LIVENESS_LABELS: Record<string, string> = {
@@ -102,7 +103,7 @@ const LIVENESS_LABELS: Record<string, string> = {
 };
 
 export function externalObjectLivenessLabel(liveness: string): string {
-  return LIVENESS_LABELS[liveness] ?? liveness.replace(/_/g, " ");
+  return LIVENESS_LABELS[liveness] ?? enumLabel(liveness, "lower");
 }
 
 export function externalObjectDisplayStatusLabel(input: {
@@ -194,7 +195,7 @@ const OBJECT_TYPE_LABELS: Record<string, string> = {
 
 export function externalObjectTypeLabel(objectType: string | null | undefined): string {
   if (!objectType) return l10n("local.object_2958d416");
-  return OBJECT_TYPE_LABELS[objectType] ?? objectType.replace(/_/g, " ");
+  return OBJECT_TYPE_LABELS[objectType] ?? enumLabel(objectType, "lower");
 }
 
 export function externalObjectDisplayLabel(

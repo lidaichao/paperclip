@@ -495,11 +495,11 @@ function TimelineEventCard({
             <span className="w-14 text-(length:--text-nano) font-medium uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
               {l10n("local.status_920e413c")}</span>
             <span className="text-muted-foreground">
-              {humanizeValue(event.statusChange.from)}
+              {event.statusChange.from ? enumLabel(event.statusChange.from, "lower") : l10n("local.none_dc937b59")}
             </span>
             <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="font-medium text-foreground">
-              {humanizeValue(event.statusChange.to)}
+              {event.statusChange.to ? enumLabel(event.statusChange.to, "lower") : l10n("local.none_dc937b59")}
             </span>
           </div>
         ) : null}

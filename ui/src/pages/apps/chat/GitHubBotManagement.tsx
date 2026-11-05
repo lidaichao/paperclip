@@ -321,7 +321,7 @@ export function GitHubReviews({ endpointId }: { endpointId: string }) {
                 ? l10n("local.value_5_931c6465", {v0: (review.assessment.score)})
                 : enumLabel(review.state, "lower")}{" "}
               ·{" "}
-              {review.conclusion?.replaceAll("_", " ") ?? l10n("local.awaiting_assessment_53000e1b")}
+              {review.conclusion ? enumLabel(review.conclusion, "lower") : l10n("local.awaiting_assessment_53000e1b")}
             </span>
           </div>
           <p className="text-sm">

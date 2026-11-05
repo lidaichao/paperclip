@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { Link } from "@/lib/router";
 import type { ExecutionWorkspace } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,7 @@ export function ProjectWorkspaceSummaryCard({
               ) : null}
               {summary.executionWorkspaceStatus ? (
                 <Badge variant="outline" className="border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
-                  {summary.executionWorkspaceStatus.replace(/_/g, " ")}
+                  {enumLabel(summary.executionWorkspaceStatus, "lower")}
                 </Badge>
               ) : null}
             </div>

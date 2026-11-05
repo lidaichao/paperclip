@@ -425,7 +425,7 @@ function WorkspaceChangeCard({ item }: { item: TaskChatWorkspaceChangeItem }) {
                 </span>
                 <span className="text-xs capitalize text-muted-foreground">
                   {file.binary ? (l10n("local.binary_a10eca32") + " ") : ""}
-                  {file.operation.replaceAll("_", " ")}
+                  {enumLabel(file.operation, "lower")}
                 </span>
               </span>
               {diffStats(file)}
@@ -995,7 +995,7 @@ function TerminalCard({
       icon={TerminalSquare}
       title={l10n("local.run_ended_65ad5d90")}
       status={item.runState}
-      summary={[item.disposition.replaceAll("_", " "), item.stopReason]
+      summary={[enumLabel(item.disposition, "lower"), item.stopReason]
         .filter(Boolean)
         .join(" · ")}
       testId="task-chat-run-terminal"

@@ -366,19 +366,19 @@ function formatIssueUpdatedVerb(details: ActivityDetails): string | null {
   const previous = asRecord(details._previous) ?? {};
   if (details.status !== undefined) {
     const from = previous.status;
-    const to = humanizeValue(details.status === "in_review" && details.externalConversationState === "waiting" ? "idle" : details.status);
+    const to = enumLabel(details.status === "in_review" && details.externalConversationState === "waiting" ? "idle" : String(details.status), "lower");
     return from
-      ? l10n("local.activity_changed_status_from_to_on_10300574", { v0: humanizeValue(from), v1: to })
+      ? l10n("local.activity_changed_status_from_to_on_10300574", { v0: enumLabel(String(from), "lower"), v1: to })
       : l10n("local.activity_changed_status_to_on_10300575", { v0: to });
   }
   if (details.priority !== undefined) {
     const from = previous.priority;
     return from
       ? l10n("local.activity_changed_priority_from_to_on_10300576", {
-          v0: humanizeValue(from),
-          v1: humanizeValue(details.priority),
+          v0: enumLabel(String(from), "lower"),
+          v1: enumLabel(String(details.priority), "lower"),
         })
-      : l10n("local.activity_changed_priority_to_on_10300577", { v0: humanizeValue(details.priority) });
+      : l10n("local.activity_changed_priority_to_on_10300577", { v0: enumLabel(String(details.priority), "lower") });
   }
   return null;
 }
@@ -403,10 +403,10 @@ function formatIssueUpdatedAction(details: ActivityDetails, options: ActivityFor
 
   if (details.status !== undefined) {
     const from = previous.status;
-    const to = humanizeValue(details.status === "in_review" && details.externalConversationState === "waiting" ? "idle" : details.status);
+    const to = enumLabel(details.status === "in_review" && details.externalConversationState === "waiting" ? "idle" : String(details.status), "lower");
     parts.push(
       from
-        ? l10n("local.activity_changed_status_from_to_10300578", { v0: humanizeValue(from), v1: to })
+        ? l10n("local.activity_changed_status_from_to_10300578", { v0: enumLabel(String(from), "lower"), v1: to })
         : l10n("local.activity_changed_status_to_10300579", { v0: to }),
     );
   }
@@ -415,10 +415,10 @@ function formatIssueUpdatedAction(details: ActivityDetails, options: ActivityFor
     parts.push(
       from
         ? l10n("local.activity_changed_priority_from_to_10300580", {
-            v0: humanizeValue(from),
-            v1: humanizeValue(details.priority),
+            v0: enumLabel(String(from), "lower"),
+            v1: enumLabel(String(details.priority), "lower"),
           })
-        : l10n("local.activity_changed_priority_to_10300581", { v0: humanizeValue(details.priority) }),
+        : l10n("local.activity_changed_priority_to_10300581", { v0: enumLabel(String(details.priority), "lower") }),
     );
   }
   if (details.assigneeAgentId !== undefined || details.assigneeUserId !== undefined) {

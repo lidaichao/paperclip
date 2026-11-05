@@ -540,13 +540,13 @@ function RevisionPreview({
     {
       key: "concurrencyPolicy",
       label: l10n("local.concurrency_8708492f"),
-      value: snapshot.concurrencyPolicy.replaceAll("_", " "),
+      value: enumLabel(snapshot.concurrencyPolicy, "lower"),
       differs: !!currentSnapshot && currentSnapshot.concurrencyPolicy !== snapshot.concurrencyPolicy,
     },
     {
       key: "catchUpPolicy",
       label: l10n("local.catch_up_1c2d0f8e"),
-      value: snapshot.catchUpPolicy.replaceAll("_", " "),
+      value: enumLabel(snapshot.catchUpPolicy, "lower"),
       differs: !!currentSnapshot && currentSnapshot.catchUpPolicy !== snapshot.catchUpPolicy,
     },
     {

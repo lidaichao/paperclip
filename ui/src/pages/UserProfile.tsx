@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, UserRound } from "lucide-react";
@@ -351,7 +352,7 @@ export function UserProfile() {
               {data.recentActivity.map((event) => (
                 <li key={event.id} className="grid gap-2 py-2.5 sm:grid-cols-(--gtc-17) sm:items-center">
                   <div className="min-w-0">
-                    <div className="truncate text-sm">{event.action.replaceAll("_", " ")}</div>
+                    <div className="truncate text-sm">{enumLabel(event.action.replaceAll(".", "_"), "lower")}</div>
                     <div className="truncate text-xs text-muted-foreground">
                       {event.entityType} · {event.entityId.slice(0, 12)}
                     </div>

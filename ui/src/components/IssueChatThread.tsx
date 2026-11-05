@@ -3802,11 +3802,11 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
             <span className="text-(length:--text-nano) font-medium uppercase tracking-wider text-muted-foreground/70">
               {l10n("local.status_920e413c")}</span>
             <span className="text-muted-foreground">
-              {humanizeValue(statusChange.from)}
+              {statusChange.from ? enumLabel(statusChange.from, "lower") : l10n("local.none_dc937b59")}
             </span>
             <ArrowRight className="h-3 w-3 text-muted-foreground/70" />
             <span className="font-medium text-foreground">
-              {humanizeValue(statusChange.to)}
+              {statusChange.to ? enumLabel(statusChange.to, "lower") : l10n("local.none_dc937b59")}
             </span>
           </div>
         ) : null}
