@@ -1508,7 +1508,7 @@ export function StepTargetManager({
                     <div className="flex w-full items-center gap-2">
                       <Users2 className="h-3.5 w-3.5 text-muted-foreground" />
                       <span className="font-medium">{agent.name}</span>
-                      <span className="text-xs text-muted-foreground capitalize">{agent.role}</span>
+                      <span className="text-xs text-muted-foreground capitalize">{enumLabel(agent.role, "lower")}</span>
                       {targetManagerAgentId === agent.id && <Check className="ml-auto h-4 w-4 text-emerald-500" />}
                     </div>
                   </CommandItem>

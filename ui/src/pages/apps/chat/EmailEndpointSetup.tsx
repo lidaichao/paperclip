@@ -1,4 +1,5 @@
 import { l10n } from "../../../i18n";
+import { enumLabel } from "../../../i18n/display";
 import { ChatSetupNavigation } from "@/components/chat/ChatSetupNavigation";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -731,7 +732,7 @@ export function EmailEndpointSettings({
     <div className="max-w-xl space-y-4">
       <h1 className="text-xl font-bold">{inbox.address}</h1>
       <p className="text-sm text-muted-foreground">
-        {inbox.status} ·{" "}
+        {enumLabel(inbox.status, "lower")} ·{" "}
         {inbox.receiveMode === "websocket"
           ? l10n("local.live_connection_2f4eeda9")
           : l10n("local.webhook_4814f62c")}

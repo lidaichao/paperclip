@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 /**
  * @fileoverview Plugin Manager page — admin UI for discovering,
  * installing, enabling/disabling, and uninstalling plugins.
@@ -292,7 +293,7 @@ export function PluginManager() {
                             variant={installedPlugin.status === "ready" ? "default" : "secondary"}
                             className={installedPlugin.status === "ready" ? "bg-green-600 hover:bg-green-700" : ""}
                           >
-                            {installedPlugin.status}
+                            {enumLabel(installedPlugin.status, "lower")}
                           </Badge>
                         ) : (
                           <Badge variant="secondary">{l10n("local.not_installed_d177cdc0")}</Badge>
@@ -440,7 +441,7 @@ export function PluginManager() {
                             plugin.status === "ready" ? "bg-green-600 hover:bg-green-700" : ""
                           )}
                         >
-                          {plugin.status}
+                          {enumLabel(plugin.status, "lower")}
                         </Badge>
                         <Button
                           variant="outline"

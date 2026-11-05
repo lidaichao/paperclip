@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/lib/router";
@@ -54,7 +55,7 @@ export function AgentProperties({ agent, runtimeState }: AgentPropertiesProps) {
           </PropertyRow>
         )}
         <PropertyRow label={l10n("local.role_14736a2e")}>
-          <span className="text-sm">{roleLabels[agent.role] ?? agent.role}</span>
+          <span className="text-sm">{roleLabels[agent.role] ?? enumLabel(agent.role, "lower")}</span>
         </PropertyRow>
         {agent.title && (
           <PropertyRow label={l10n("local.title_7e8cd205")}>

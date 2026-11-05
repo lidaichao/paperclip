@@ -312,7 +312,7 @@ export function PluginSettings() {
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">{l10n("local.status_920e413c")}</span>
                               <Badge variant={dashboardData.worker.status === "running" ? "default" : "secondary"}>
-                                {dashboardData.worker.status}
+                                {enumLabel(dashboardData.worker.status, "lower")}
                               </Badge>
                             </div>
                             <div className="flex justify-between">
@@ -476,7 +476,7 @@ export function PluginSettings() {
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">{l10n("local.overall_715b1458")}</span>
                         <Badge variant={healthData.healthy ? "default" : "destructive"}>
-                          {healthData.status}
+                          {enumLabel(healthData.status, "lower")}
                         </Badge>
                       </div>
 

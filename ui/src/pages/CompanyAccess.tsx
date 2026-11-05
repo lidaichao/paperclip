@@ -512,7 +512,7 @@ export function CompanyAccess() {
                       <optgroup label={l10n("local.agents_279b44d2")}>
                         {activeReassignmentAgents.map((agent) => (
                           <option key={agent.id} value={`agent:${agent.id}`}>
-                            {agent.name} ({agent.role})
+                            {agent.name} ({enumLabel(agent.role, "lower")})
                           </option>
                         ))}
                       </optgroup>

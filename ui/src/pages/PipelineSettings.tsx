@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useWorkspaceIsolationControls } from "@/hooks/useWorkspaceIsolationControls";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
@@ -3024,7 +3025,7 @@ export function PipelineSettings() {
                                       <option value="">{l10n("local.choose_an_existing_workspace_f8f73210")}</option>
                                       {deduplicatedReusableWorkspaces.map((workspace) => (
                                         <option key={workspace.id} value={workspace.id}>
-                                          {workspace.name} · {workspace.status} · {workspace.branchName ?? workspace.cwd ?? workspace.id.slice(0, 8)}
+                                          {workspace.name} · {enumLabel(workspace.status, "lower")} · {workspace.branchName ?? workspace.cwd ?? workspace.id.slice(0, 8)}
                                         </option>
                                       ))}
                                     </select>

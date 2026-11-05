@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CompanySecret } from "@paperclipai/shared";
@@ -139,7 +140,7 @@ function MyUserSecretRow({
           </code>
           {disabledDefinition ? (
             <Badge variant="outline" className="text-(length:--text-nano)">
-              {definition.status}
+              {enumLabel(definition.status, "lower")}
             </Badge>
           ) : null}
         </div>
