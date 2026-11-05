@@ -38,6 +38,9 @@ describe("enumLabel", () => {
     expect(enumLabel("runtime_request")).toBe("运行请求");
     expect(enumLabel("runner_verified")).toBe("运行器已验证");
     expect(enumLabel("needs_review")).toBe("需要审核");
+    expect(enumLabel("slack_post_message")).toBe("发送 Slack 消息");
+    expect(enumLabel("slack_delete_message")).toBe("删除 Slack 消息");
+    expect(enumLabel("slack_canvas_sections")).toBe("查找 Slack 画布区段");
   });
 
   it("keeps English labels readable", async () => {

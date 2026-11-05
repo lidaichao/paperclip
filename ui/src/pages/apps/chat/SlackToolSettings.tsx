@@ -1,4 +1,5 @@
 import { l10n } from "../../../i18n";
+import { enumLabel } from "../../../i18n/display";
 import { Link } from "react-router-dom";
 import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -71,9 +72,7 @@ export function SlackCapabilitiesView({
                   key={tool.name}
                   className="flex items-center justify-between gap-3 py-2"
                 >
-                  <span>
-                    {tool.name.replace(/^slack_/, "").replaceAll("_", " ")}
-                  </span>
+                  <span>{enumLabel(tool.name, "lower")}</span>
                   <span className="text-xs text-muted-foreground">
                     {tool.available === false
                       ? l10n("local.needs_permissions_fa8dc2e4")
