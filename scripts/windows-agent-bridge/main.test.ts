@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { acquireSingleInstanceLock, runBridge, waitForPollInterval, writeHealth } from "./main.js";
 
 describe("bridge lifecycle", () => {
-  it("refuses to start before any lock or poll while no server run binding exists", async () => {
+  it("refuses to start before any lock or poll while ordinary writes are fenced", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "alice-run-binding-"));
     const stateFile = path.join(dir, "state.json");
     const configFile = path.join(dir, "bridge.json");
@@ -26,7 +26,7 @@ describe("bridge lifecycle", () => {
         maxConcurrentRuns: 1,
       }],
     }));
-    await expect(runBridge(configFile, new AbortController().signal)).rejects.toThrow("run binding is unavailable");
+    await expect(runBridge(configFile, new AbortController().signal)).rejects.toThrow("write fencing is unavailable");
     await expect(stat(`${stateFile}.lock`)).rejects.toMatchObject({ code: "ENOENT" });
   });
 

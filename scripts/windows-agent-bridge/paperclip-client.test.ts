@@ -142,11 +142,12 @@ describe("AliceClient", () => {
 
   it("loads only the claimed issue and refuses a changed assignee", async () => {
     let assignee = AGENT_ID;
+    let executionRunId = RUN_ID;
     const client = new AliceClient({
       apiBase: "http://alice.test", token: "secret",
       fetch: async (url) => String(url).endsWith("/api/agents/me")
         ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
-        : jsonResponse({ id: ISSUE_ID, companyId: COMPANY_ID, assigneeAgentId: assignee,
+        : jsonResponse({ id: ISSUE_ID, companyId: COMPANY_ID, assigneeAgentId: assignee, executionRunId,
           projectId: null, identifier: "PAP-20", title: "只读验收", status: "in_progress",
           priority: "medium", updatedAt: "2026-11-06T03:00:00Z" }),
     });
@@ -155,6 +156,9 @@ describe("AliceClient", () => {
       generation: 1, leaseExpiresAt: "2026-11-06T04:00:00Z", wakeReason: "assignment", workspacePolicy: "agent_home" as const };
     expect((await client.getClaimedIssue(claim)).activeRunId).toBe(RUN_ID);
     assignee = DEVICE_ID;
+    await expect(client.getClaimedIssue(claim)).rejects.toThrow("ownership mismatch");
+    assignee = AGENT_ID;
+    executionRunId = DEVICE_ID;
     await expect(client.getClaimedIssue(claim)).rejects.toThrow("ownership mismatch");
   });
 

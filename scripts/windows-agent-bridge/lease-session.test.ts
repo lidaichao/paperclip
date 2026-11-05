@@ -65,4 +65,14 @@ describe("local run lease session", () => {
     })).rejects.toThrow("stop was not confirmed");
     expect(finish).not.toHaveBeenCalled();
   });
+
+  it("does not acknowledge stop when the executor rejects after cancellation", async () => {
+    const finish = vi.fn();
+    await expect(runLeaseSession({
+      client: { renewLocalRun: vi.fn().mockResolvedValue({ leaseExpiresAt: new Date(Date.now() + 60_000).toISOString(), cancelRequested: true }), finishLocalRun: finish },
+      claim, deviceId: "device-one", renewIntervalMs: 5,
+      execute: async (signal) => new Promise((_, reject) => signal.addEventListener("abort", () => reject(new Error("adapter lost child status")), { once: true })),
+    })).rejects.toThrow("stop was not confirmed");
+    expect(finish).not.toHaveBeenCalled();
+  });
 });

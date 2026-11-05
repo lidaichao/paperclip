@@ -46,6 +46,7 @@ export async function runLeaseSession(input: {
   };
   const onParentAbort = () => stop("cancelled");
   input.signal?.addEventListener("abort", onParentAbort, { once: true });
+  if (input.signal?.aborted) stop("cancelled");
 
   const sleep = (milliseconds: number) => new Promise<void>((resolve) => {
     wake = () => { clearTimeout(timer); wake = undefined; resolve(); };
@@ -80,6 +81,7 @@ export async function runLeaseSession(input: {
     const aborted = new Promise<{ kind: "aborted" }>((resolve) => {
       abortListener = () => resolve({ kind: "aborted" });
       controller.signal.addEventListener("abort", abortListener, { once: true });
+      if (controller.signal.aborted) abortListener();
     });
     const settled = await Promise.race([
       execution.then((result) => ({ kind: "settled" as const, result }), (error) => ({ kind: "error" as const, error })),
@@ -88,11 +90,11 @@ export async function runLeaseSession(input: {
     if (abortListener) controller.signal.removeEventListener("abort", abortListener);
     let result: { succeeded: boolean; exitCode: number | null } | null = null;
     if (settled.kind === "settled") result = settled.result;
-    else if (settled.kind === "error" && !reason) throw settled.error;
+    else if (settled.kind === "error") throw settled.error;
     else {
       let stopTimer: ReturnType<typeof setTimeout> | undefined;
       const stopped = await Promise.race([
-        execution.then((value) => ({ stopped: true as const, value }), () => ({ stopped: true as const, value: null })),
+        execution.then((value) => ({ stopped: true as const, value }), () => ({ stopped: false as const })),
         new Promise<{ stopped: false }>((resolve) => { stopTimer = setTimeout(() => resolve({ stopped: false }), stopTimeoutMs); }),
       ]);
       clearTimeout(stopTimer);

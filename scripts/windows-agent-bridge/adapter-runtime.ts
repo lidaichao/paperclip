@@ -21,6 +21,7 @@ export interface AdapterRuntimeDependencies {
 export interface LocalAgentRunInput {
   signal?: AbortSignal;
   runId: string;
+  wakeReason?: string;
   apiBase: string;
   remoteCompanyId: string;
   remoteAgentId: string;
@@ -104,7 +105,7 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
       context: {
         taskId: input.issue.id,
         issueId: input.issue.id,
-        wakeReason: "assignment",
+        wakeReason: input.wakeReason ?? "assignment",
         conversationMode: false,
         paperclipWorkspace: {
           cwd,

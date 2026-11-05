@@ -12,5 +12,6 @@ if ($settings.PSObject.Properties.Name -contains 'localApiBase' -or
 }
 
 # A local config is parsed by config.ts, but no bridge process may be installed
-# until 192 can issue a real run ID and an authenticated execution lease.
-throw '桥接尚未实现 192 服务端运行号、任务签领与本人 GB 密钥解析；禁止安装。'
+# until ordinary writes are fenced by the lease and per-agent GB credentials
+# can be resolved without embedding secrets in config.
+throw '桥接普通写入的租约围栏与本人 GB 密钥解析尚未完成；禁止安装。'

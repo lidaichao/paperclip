@@ -21,6 +21,7 @@ describe("installation safety", () => {
     expect(runner).toMatch(/Start-Process[\s\S]*-WindowStyle Hidden/);
     expect(install).toContain("$taskName = 'AliceWindowsAgentBridge'");
     expect(install).toContain("-WindowStyle Hidden");
+    expect(install).not.toContain("-RestartCount");
   });
 
   it("blocks scheduled-task installation while the server run contract is missing", async () => {

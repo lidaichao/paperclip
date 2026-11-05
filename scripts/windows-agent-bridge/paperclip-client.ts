@@ -156,6 +156,10 @@ export class AliceClient {
     this.#timeoutMs = options.timeoutMs ?? 10_000;
   }
 
+  get apiBase(): string {
+    return this.#apiBase;
+  }
+
   async #getJson(pathname: string): Promise<unknown> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.#timeoutMs);
@@ -232,7 +236,8 @@ export class AliceClient {
     const identity = this.#requireVerifiedIdentity();
     if (claim.agentId !== identity.id) throw new Error("claimed issue agent identity mismatch");
     const record = asRecord(await this.#getJson(`/api/issues/${claim.issueId}`), "claimed issue");
-    if (record.id !== claim.issueId || record.companyId !== identity.companyId || record.assigneeAgentId !== identity.id) {
+    if (record.id !== claim.issueId || record.companyId !== identity.companyId ||
+      record.assigneeAgentId !== identity.id || record.executionRunId !== claim.runId) {
       throw new Error("claimed issue ownership mismatch");
     }
     const status = requiredString(record, "status", "claimed issue") as BridgeIssueStatus;

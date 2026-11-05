@@ -5,10 +5,10 @@ import { fileURLToPath } from "node:url";
 import { loadBridgeConfig } from "./config.js";
 import { loadAgentTokens } from "./credentials.js";
 import { AliceClient } from "./paperclip-client.js";
-import { StateStore } from "./state-store.js";
-import { Dispatcher } from "./dispatcher.js";
+import { ClaimStateStore } from "./claim-state.js";
+import { executeClaimedRun } from "./claimed-run.js";
 import { runLocalAgent } from "./adapter-runtime.js";
-import type { LocalAgentRuntimeConfig } from "./types.js";
+import type { BridgeAgentConfig, LocalAgentRuntimeConfig } from "./types.js";
 
 interface LockDocument { pid: number; startedAt: string; token: string }
 
@@ -98,92 +98,81 @@ function safeError(error: unknown): string {
   return error.message.replace(/Bearer\s+\S+/gi, "Bearer [redacted]").slice(0, 500);
 }
 
-function requireClaimedRunId(): never {
-  // inbox-lite is not an authenticated claim, even if it reports an active run.
-  throw new Error("服务端尚未签发本执行端的任务运行号，拒绝本机执行");
+export async function claimAndRunOnce(input: {
+  client: AliceClient;
+  state: ClaimStateStore;
+  deviceId: string;
+  companyId: string;
+  agent: BridgeAgentConfig;
+  localAgent: LocalAgentRuntimeConfig;
+  token: string;
+  signal: AbortSignal;
+  runner?: typeof runLocalAgent;
+  stopProcessTree?: (pid: number) => Promise<void>;
+  renewIntervalMs?: number;
+  stopTimeoutMs?: number;
+}): Promise<"idle" | "finished"> {
+  if (input.signal.aborted) return "idle";
+  // The key must reach disk before POST. A lost response reuses the same key.
+  const key = await input.state.claimKey();
+  const claim = await input.client.claimLocalRun(input.deviceId, key);
+  if (!claim) return "idle";
+  // An interrupted or unconfirmed run stays latched on restart. Never spawn
+  // another process merely because the server lease expired.
+  await input.state.markClaimed(claim);
+  await executeClaimedRun({
+    claim, client: input.client, deviceId: input.deviceId,
+    companyId: input.companyId, agent: input.agent, localAgent: input.localAgent,
+    token: input.token, signal: input.signal, runner: input.runner,
+    stopProcessTree: input.stopProcessTree,
+    renewIntervalMs: input.renewIntervalMs, stopTimeoutMs: input.stopTimeoutMs,
+  });
+  await input.state.markFinished(claim.runId);
+  return "finished";
+}
+
+function requireWriteFence(): void {
+  throw new Error("Alice bridge write fencing is unavailable; local execution remains disabled");
 }
 
 export async function runBridge(configPath: string, signal: AbortSignal): Promise<"started" | "already-running"> {
   const config = await loadBridgeConfig(configPath);
-  // This bridge has no server-issued run/checkout handshake. A local UUID
-  // cannot authorize issue writes, so fail before a lock, poll, or agent spawn.
-  throw new Error("Alice bridge run binding is unavailable; use a server-managed execution target");
+  // Ordinary agent writes still lack a transaction-bound lease fence. Keep
+  // installation and direct invocation disabled even though claim is wired.
+  requireWriteFence();
+  if (config.agents.length !== 1) throw new Error("pilot bridge requires exactly one local agent");
   const lock = await acquireSingleInstanceLock(`${config.stateFile}.lock`);
   if (!lock) return "already-running";
   const healthPath = `${config.stateFile}.health.json`;
-  const state = new StateStore(config.stateFile);
-  await state.load();
-  await state.recoverOrphans(isProcessAlive);
-  const agentIds = config.agents.map((agent) => agent.remoteAgentId);
-  const tokens = await loadAgentTokens(config.credentialsFile, agentIds);
-  const clients = new Map<string, AliceClient>();
-  const localAgents = new Map<string, LocalAgentRuntimeConfig>();
-
   try {
-    for (const agent of config.agents) {
-      const token = tokens.get(agent.remoteAgentId);
-      if (!token) throw new Error(`缺少 ${agent.remoteAgentName} 的凭据`);
-      const client = new AliceClient({ apiBase: config.apiBase, token });
-      await client.verifyIdentity(agent.remoteAgentId, config.companyId);
-      clients.set(agent.remoteAgentId, client);
-      localAgents.set(agent.remoteAgentId, {
-        id: agent.remoteAgentId,
-        companyId: config.companyId,
-        name: agent.localAgentName,
-        adapterType: agent.adapterType,
-        adapterConfig: agent.localAdapterConfig,
-      });
-    }
-
-    const dispatcher = new Dispatcher({
-      companyId: config.companyId,
-      agents: config.agents,
-      state,
-      dependencies: {
-        clientFor: (agent) => {
-          const client = clients.get(agent.remoteAgentId);
-          if (!client) throw new Error("Alice 客户端未初始化");
-          return client;
-        },
-        run: async ({ agent, issue, onSpawn }) => {
-          const token = tokens.get(agent.remoteAgentId);
-          const localAgent = localAgents.get(agent.remoteAgentId);
-          if (!token || !localAgent) throw new Error("智能体运行配置未初始化");
-          return await runLocalAgent({
-            signal,
-            runId: requireClaimedRunId(),
-            apiBase: config.apiBase,
-            remoteCompanyId: config.companyId,
-            remoteAgentId: agent.remoteAgentId,
-            remoteAgentName: agent.remoteAgentName,
-            issue,
-            token,
-            localAgent,
-            onSpawn: async (meta) => onSpawn({ pid: meta.pid, startedAt: meta.startedAt }),
-          });
-        },
-      },
-    });
-
+    const agent = config.agents[0];
+    const tokens = await loadAgentTokens(config.credentialsFile, [agent.remoteAgentId]);
+    const token = tokens.get(agent.remoteAgentId);
+    if (!token) throw new Error(`缺少 ${agent.remoteAgentName} 的凭据`);
+    const client = new AliceClient({ apiBase: config.apiBase, token });
+    await client.verifyIdentity(agent.remoteAgentId, config.companyId);
+    const state = new ClaimStateStore(config.stateFile, config.deviceId, agent.remoteAgentId);
+    const localAgent: LocalAgentRuntimeConfig = {
+      id: agent.remoteAgentId, companyId: config.companyId, name: agent.localAgentName,
+      adapterType: agent.adapterType, adapterConfig: agent.localAdapterConfig,
+    };
     let lastSuccessfulPollAt: string | null = null;
     while (!signal.aborted) {
-      let lastError: string | null = null;
-      try { await dispatcher.cycle(); lastSuccessfulPollAt = new Date().toISOString(); }
-      catch (error) { lastError = safeError(error); }
+      // A failed cycle exits. The scheduled task must not repeatedly relaunch
+      // an uncertain claim or a process whose stop was not confirmed.
+      await claimAndRunOnce({ client, state, deviceId: config.deviceId,
+        companyId: config.companyId, agent, localAgent, token, signal });
+      lastSuccessfulPollAt = new Date().toISOString();
       await writeHealth(healthPath, {
         schemaVersion: 1,
-        connected: lastError === null,
+        connected: true,
         lastSuccessfulPollAt,
-        agents: Object.fromEntries(config.agents.map((agent) => [agent.remoteAgentId, {
-          state: dispatcher.activeCount > 0 ? "running" : "idle",
-          activeTask: null,
-        }])),
-        lastError,
+        agents: { [agent.remoteAgentId]: { state: "idle", activeTask: null } },
+        lastError: null,
         updatedAt: new Date().toISOString(),
       });
       await waitForPollInterval(config.pollIntervalMs, signal);
     }
-    await Promise.race([dispatcher.waitForIdle(), new Promise((resolve) => setTimeout(resolve, 20_000))]);
     return "started";
   } finally {
     await lock.release();
