@@ -45,6 +45,11 @@ describe("enumLabel", () => {
     expect(enumLabel("queued_comment_interrupt")).toBe("队列评论中断");
     expect(enumLabel("company_default")).toBe("公司默认");
     expect(enumLabel("dedicated")).toBe("专用");
+    expect(enumLabel("mapped")).toBe("已映射");
+    expect(enumLabel("operator_only")).toBe("仅操作员");
+    expect(enumLabel("normalized")).toBe("已标准化");
+    expect(enumLabel("dropped")).toBe("已丢弃");
+    expect(enumLabel("company", "lower")).toBe("公司");
   });
 
   it("keeps English labels readable", async () => {

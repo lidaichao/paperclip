@@ -10535,5 +10535,13 @@
   "company default": "local.enum_identity_company_default_10301582",
   "absent": "local.enum_identity_absent_10301583",
   "dedicated": "local.enum_identity_dedicated_10301584",
-  "anonymous": "local.enum_identity_anonymous_10301585"
+  "anonymous": "local.enum_identity_anonymous_10301585",
+  "mapped": "local.enum_trace_mapped_10301586",
+  "generic": "local.enum_trace_generic_10301587",
+  "ignored": "local.enum_trace_ignored_10301588",
+  "operator only": "local.enum_trace_operator_only_10301589",
+  "renamed": "local.enum_trace_renamed_10301590",
+  "normalized": "local.enum_trace_normalized_10301591",
+  "derived": "local.enum_trace_derived_10301592",
+  "dropped": "local.enum_trace_dropped_10301593"
 }

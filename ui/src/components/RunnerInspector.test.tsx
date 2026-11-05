@@ -4,6 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { i18n } from "../i18n";
 import { RunnerInspector } from "./RunnerInspector";
 
 const accessMock = vi.hoisted(() => vi.fn());
@@ -126,11 +127,12 @@ describe("RunnerInspector", () => {
     traceMock.mockResolvedValue({ trace: null, entries: [] });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     flushSync(() => root.unmount());
     container.remove();
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    await i18n.changeLanguage("en");
   });
 
   it("keeps canonical inspection available when raw capture was disabled", async () => {
@@ -513,6 +515,62 @@ describe("RunnerInspector", () => {
     expect(container.textContent).toContain("frames 1–2 · 0 PRP events");
     expect(container.textContent).toContain("frames 3–4 · 1 PRP event");
     expect(container.textContent).not.toContain("frames 1–4");
+  });
+
+  it("localizes runtime status, interpretation disposition, and field actions in Chinese", async () => {
+    await i18n.changeLanguage("zh-CN");
+    traceMock.mockResolvedValue({
+      trace: null,
+      entries: [
+        {
+          kind: "frame",
+          frameId: 3,
+          timestamp: "3",
+          direction: "provider_to_client",
+          parsed: { id: 1, method: "item/completed" },
+        },
+        {
+          kind: "interpretation",
+          frameId: 3,
+          stage: "typescript_codex_driver_normalization",
+          disposition: "mapped",
+          emittedEventIds: [],
+          ruleId: "codex_driver.normalize.item/completed",
+          fieldMappings: [
+            {
+              inputPath: "params.item.results",
+              action: "dropped",
+              reason: "Raw provider results are not part of this semantic event",
+            },
+          ],
+          reason: "Normalized provider event",
+        },
+      ],
+    });
+
+    flushSync(() =>
+      root.render(
+        <RunnerInspector
+          runId="run-1"
+          run={{ status: "running", resultJson: null }}
+          open
+          onOpenChange={vi.fn()}
+        />,
+      ),
+    );
+    await flush();
+
+    expect(container.textContent).toContain("运行中");
+    expect(container.textContent).toContain("已映射");
+
+    flushSync(() =>
+      (container.querySelectorAll('[role="tab"]')[1] as HTMLButtonElement | undefined)?.click(),
+    );
+    await flush();
+
+    expect(container.textContent).toContain("已映射");
+    expect(container.textContent).toContain("已丢弃");
+    expect(container.textContent).toContain("仅操作员");
   });
 
   it("correlates a Codex web search through every stage to canonical PRP and presentation", async () => {

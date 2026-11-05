@@ -633,7 +633,7 @@ function InterpretationStage({ entry, last }: { entry: TraceEntry; last: boolean
       <div className="mb-4 overflow-hidden rounded-lg border border-border bg-card">
         <div className="flex flex-wrap items-center gap-2 border-b border-border/70 px-3 py-2">
           <code className="text-xs font-semibold">{text(entry.stage)}</code>
-          <Badge variant="outline" className="capitalize">{text(entry.disposition)}</Badge>
+          <Badge variant="outline">{enumLabel(text(entry.disposition), "lower")}</Badge>
           <code className="ml-auto text-(length:--text-nano) text-muted-foreground">{text(entry.ruleId)}</code>
         </div>
         <p className="px-3 py-2 text-xs text-muted-foreground">{text(entry.reason)}</p>
@@ -652,7 +652,7 @@ function InterpretationStage({ entry, last }: { entry: TraceEntry; last: boolean
                 {mappings.map((mapping, index) => (
                   <tr key={`${mapping.inputPath}:${mapping.outputPath}:${index}`} className="border-t border-border/50 align-top">
                     <td className="px-3 py-2">
-                      <span className={cn("rounded border px-1.5 py-0.5 text-(length:--text-nano)", mappingTone(mapping.action))}>{mapping.action}</span>
+                      <span className={cn("rounded border px-1.5 py-0.5 text-(length:--text-nano)", mappingTone(mapping.action))}>{enumLabel(mapping.action, "lower")}</span>
                     </td>
                     <td className="px-3 py-2 font-mono">{mapping.inputPath ?? "—"}</td>
                     <td className="px-3 py-2 font-mono">{mapping.outputPath ?? "—"}</td>
@@ -1174,7 +1174,7 @@ export function RunnerInspector({
                   <StatCard label={l10n("local.operations_358cc201")} value={operations.length} detail={l10n("local.correlated_groups_2dff3c1f")} />
                   <StatCard label={l10n("local.prp_events_8fe17fe8")} value={events.length} detail={l10n("local.value_visible_6fe47f66", {v0: (visibleEventCount)})} />
                   <StatCard label={l10n("local.mappings_f64ec16b")} value={interpretations.length} detail={l10n("local.value_ignored_7a47755c", {v0: (ignoredCount)})} />
-                  <StatCard label={l10n("local.run_status_3b75c879")} value={run?.status ?? "unknown"} detail={inspection?.trace ? traceBadgeLabel(inspection.trace.status, inspection.trace.expiresAt) : l10n("local.raw_capture_off_0135c0cc")} />
+                  <StatCard label={l10n("local.run_status_3b75c879")} value={enumLabel(run?.status ?? "unknown", "lower")} detail={inspection?.trace ? traceBadgeLabel(inspection.trace.status, inspection.trace.expiresAt) : l10n("local.raw_capture_off_0135c0cc")} />
                 </div>
                 <div className="grid gap-4 lg:grid-cols-2">
                   <section className="rounded-lg border border-border bg-card p-4">
@@ -1182,7 +1182,7 @@ export function RunnerInspector({
                     <div className="mt-3 space-y-2">
                       {Object.entries(dispositionCounts).length ? Object.entries(dispositionCounts).map(([label, count]) => (
                         <div key={label} className="flex items-center gap-3 text-sm">
-                          <Badge variant="outline" className="w-24 justify-center capitalize">{label}</Badge>
+                          <Badge variant="outline" className="w-24 justify-center">{enumLabel(label, "lower")}</Badge>
                           <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(4, (count / Math.max(1, interpretations.length)) * 100)}%` }} /></div>
                           <span className="w-8 text-right font-mono text-xs">{count}</span>
                         </div>
@@ -1215,7 +1215,7 @@ export function RunnerInspector({
                 <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-8" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={l10n("local.search_operations_fields_and_events_535b98e7")} /></div>
                 <Select value={direction} onValueChange={setDirection}><SelectTrigger><SelectValue placeholder={l10n("local.direction_9c8a9579")} /></SelectTrigger><SelectContent><SelectItem value="all">{l10n("local.all_directions_6cc0f999")}</SelectItem><SelectItem value="client_to_provider">{l10n("local.client_provider_1bd07e0a")}</SelectItem><SelectItem value="provider_to_client">{l10n("local.provider_client_a8950f0b")}</SelectItem><SelectItem value="provider_stderr">{l10n("local.provider_stderr_63b3e297")}</SelectItem></SelectContent></Select>
                 <Select value={nativeMethod} onValueChange={setNativeMethod}><SelectTrigger><SelectValue placeholder={l10n("local.native_method_604030e9")} /></SelectTrigger><SelectContent><SelectItem value="all">{l10n("local.all_native_methods_217fc4c5")}</SelectItem>{unique(frames.map(frameMethod)).sort().map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select>
-                <Select value={disposition} onValueChange={setDisposition}><SelectTrigger><SelectValue placeholder={l10n("local.mapping_1ff9a5f8")} /></SelectTrigger><SelectContent><SelectItem value="all">{l10n("local.all_mappings_e1ff97d8")}</SelectItem>{["mapped", "generic", "ignored", "rejected", "operator_only"].map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select>
+                <Select value={disposition} onValueChange={setDisposition}><SelectTrigger><SelectValue placeholder={l10n("local.mapping_1ff9a5f8")} /></SelectTrigger><SelectContent><SelectItem value="all">{l10n("local.all_mappings_e1ff97d8")}</SelectItem>{["mapped", "generic", "ignored", "rejected", "operator_only"].map((value) => <SelectItem key={value} value={value}>{enumLabel(value, "lower")}</SelectItem>)}</SelectContent></Select>
                 <Select value={prpType} onValueChange={setPrpType}><SelectTrigger><SelectValue placeholder={l10n("local.prp_type_7b084b20")} /></SelectTrigger><SelectContent><SelectItem value="all">{l10n("local.all_prp_types_3cc13cd2")}</SelectItem>{unique(events.map((event) => event.eventType)).sort().map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select>
                 <Select value={visibility} onValueChange={setVisibility}><SelectTrigger><SelectValue placeholder={l10n("local.visibility_7448611d")} /></SelectTrigger><SelectContent><SelectItem value="all">{l10n("local.visible_hidden_a27b96a9")}</SelectItem><SelectItem value="visible">{l10n("local.visible_8411f5ab")}</SelectItem><SelectItem value="hidden">{l10n("local.hidden_7e6fefff")}</SelectItem></SelectContent></Select>
               </div>

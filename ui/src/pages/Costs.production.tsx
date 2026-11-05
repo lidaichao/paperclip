@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -903,7 +904,7 @@ export function Costs() {
                   return (
                     <section key={scopeType} className="space-y-3">
                       <div>
-                        <h2 className="text-lg font-semibold capitalize">{scopeType} {l10n("local.budgets_eefa0849")}</h2>
+                        <h2 className="text-lg font-semibold">{enumLabel(scopeType, "lower")} {l10n("local.budgets_eefa0849")}</h2>
                         <p className="text-sm text-muted-foreground">
                           {scopeType === "company"
                             ? l10n("local.company_wide_monthly_policy_31f1ee9c")

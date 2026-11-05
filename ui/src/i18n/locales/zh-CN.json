@@ -13777,6 +13777,14 @@
     "enum_identity_company_default_10301582": "公司默认",
     "enum_identity_absent_10301583": "不存在",
     "enum_identity_dedicated_10301584": "专用",
-    "enum_identity_anonymous_10301585": "匿名"
+    "enum_identity_anonymous_10301585": "匿名",
+    "enum_trace_mapped_10301586": "已映射",
+    "enum_trace_generic_10301587": "通用",
+    "enum_trace_ignored_10301588": "已忽略",
+    "enum_trace_operator_only_10301589": "仅操作员",
+    "enum_trace_renamed_10301590": "已重命名",
+    "enum_trace_normalized_10301591": "已标准化",
+    "enum_trace_derived_10301592": "已派生",
+    "enum_trace_dropped_10301593": "已丢弃"
   }
 }
