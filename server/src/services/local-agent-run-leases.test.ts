@@ -105,6 +105,8 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await db.update(localAgentRunLeases).set({ expiresAt: new Date(0) }).where(eq(localAgentRunLeases.runId, scope.runId));
     await expect(svc.renew(owner)).rejects.toMatchObject({ status: 409 });
     expect((await svc.control(owner)).action).toBe("cancel");
+    const [afterControl] = await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId));
+    expect(afterControl.cancelRequestedAt).not.toBeNull();
     await expect(svc.claim({ ...scope, deviceId: "device-desktop-004", idempotencyKey: randomUUID() }))
       .rejects.toMatchObject({ status: 409 });
     await expect(svc.finish({ ...owner, outcome: "succeeded", exitCode: 0, processStopped: true }))

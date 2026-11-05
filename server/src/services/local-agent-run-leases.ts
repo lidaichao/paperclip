@@ -186,7 +186,15 @@ export function localAgentRunLeaseService(db: Db) {
         lease.deviceId !== input.deviceId || lease.leaseId !== input.leaseId || lease.generation !== input.generation) {
         throw forbidden("Local run lease owner mismatch");
       }
-      return { run, lease };
+      const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
+        .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
+      const shouldStop = run.status !== "running" || !live?.live || Boolean(lease.cancelRequestedAt) || Boolean(lease.releasedAt);
+      const currentLease = shouldStop && !lease.cancelRequestedAt && !lease.releasedAt
+        ? (await tx.update(localAgentRunLeases).set({
+            cancelRequestedAt: sql`now()`, updatedAt: sql`now()`,
+          }).where(eq(localAgentRunLeases.runId, input.runId)).returning())[0]
+        : lease;
+      return { run, lease: currentLease, shouldStop };
     });
   }
 
@@ -220,12 +228,9 @@ export function localAgentRunLeaseService(db: Db) {
   }
 
   async function control(input: LocalRunOwner) {
-    const { run, lease } = await lockedOwner(input);
-    const [row] = await db.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
-      .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
+    const { lease, shouldStop } = await lockedOwner(input);
     return {
-      action: run.status === "running" && !lease.cancelRequestedAt && !lease.releasedAt && row?.live
-        ? "continue" as const : "cancel" as const,
+      action: shouldStop ? "cancel" as const : "continue" as const,
       generation: lease.generation,
       leaseExpiresAt: lease.expiresAt,
     };
