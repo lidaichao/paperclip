@@ -31,7 +31,7 @@ import { InlineEntitySelector } from "../InlineEntitySelector";
 import { DocumentAnnotationsCountChip, IssueDocumentAnnotations } from "../IssueDocumentAnnotations";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { RoutineVariablesEditor, RoutineVariablesHint } from "../RoutineVariablesEditor";
-import { routineActivityActionLabel } from "../RoutineActivityRow";
+import { routineActivityActionLabel, routineActivitySummary } from "../RoutineActivityRow";
 import { EnvironmentVariablesEditor } from "../environment-variables-editor";
 import { useRoutineDetail } from "./context";
 import type { EnvBinding, RoutineDetail as RoutineDetailType } from "@paperclipai/shared";
@@ -339,9 +339,7 @@ export function OverviewSection({
                   {routineActivityActionLabel(event.action)}
                 </Badge>
                 <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                  {event.details && Object.keys(event.details).length > 0
-                    ? Object.keys(event.details).slice(0, 3).join(" · ")
-                    : ""}
+                  {routineActivitySummary(event)}
                 </span>
                 <span className="shrink-0 text-muted-foreground/60">{timeAgo(event.createdAt)}</span>
               </div>

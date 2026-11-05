@@ -15,7 +15,7 @@ function formatTime(value: string | Date): string {
   }
 }
 
-function summarizeEvent(event: RoutineActivityEvent): string {
+export function routineActivitySummary(event: RoutineActivityEvent): string {
   const details = event.details;
   if (event.action === "routine.webhook_test_received") {
     return l10n("local.connection_working_no_run_created_10300201");
@@ -108,8 +108,8 @@ export function RoutineActivityRow({ event }: { event: RoutineActivityEvent }) {
         <span title={event.action} className="min-w-0 max-w-1/2 shrink-0 truncate font-medium text-foreground">
           {routineActivityActionLabel(event.action)}
         </span>
-        <span title={summarizeEvent(event)} className="min-w-0 flex-1 truncate text-muted-foreground">
-          {summarizeEvent(event)}
+        <span title={routineActivitySummary(event)} className="min-w-0 flex-1 truncate text-muted-foreground">
+          {routineActivitySummary(event)}
         </span>
         {hasPayload ? (
           <ChevronRight
