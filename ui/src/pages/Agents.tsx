@@ -492,7 +492,7 @@ export function Agents({ initialView = "list" }: { initialView?: AgentsView } = 
           />
         </Tabs>
         <div className="flex items-center gap-2">
-          {!forceListView ? <div className="flex items-center overflow-hidden rounded-md border border-border" role="group" aria-label={l10n("local.agent_view_c26e47e8")}>
+          {!forceListView ? <div className="flex items-center overflow-hidden rounded-md border border-border" data-agent-view role="group" aria-label={l10n("local.agent_view_c26e47e8")}>
               <Button
                 type="button"
                 size="icon-sm"

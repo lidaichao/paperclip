@@ -276,7 +276,7 @@ export function FileTree({
   loading = false,
   error,
   empty,
-  ariaLabel = "Files",
+  ariaLabel = l10n("local.files_abc7e989"),
 }: FileTreeProps) {
   const effectiveCheckedFiles = checkedFiles ?? new Set<string>();
   const visibleNodes = useMemo(

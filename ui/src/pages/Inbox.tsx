@@ -758,11 +758,13 @@ function InboxCollectionToolbar({
   controls,
   feedback,
   ariaLabel,
+  className,
 }: CollectionToolbarProps & { streamlined: boolean }) {
   if (streamlined) {
     return (
       <CollectionToolbar
         ariaLabel={ariaLabel}
+        className={cn("inbox-collection-toolbar", className)}
         context={context}
         search={search}
         controls={controls}
@@ -772,7 +774,7 @@ function InboxCollectionToolbar({
   }
 
   return (
-    <div role="toolbar" aria-label={ariaLabel} className="space-y-2">
+    <div role="toolbar" aria-label={ariaLabel} className={cn("inbox-collection-toolbar space-y-2", className)}>
       {search ? <div className="sm:hidden">{search}</div> : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {context}

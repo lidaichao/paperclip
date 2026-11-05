@@ -571,12 +571,12 @@
 
 /* Mobile collection toolbars and square agent actions. */
 @media (width < 40rem) {
-  [role="toolbar"][aria-label="Inbox controls"] [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"]::after {
+  .inbox-collection-toolbar [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"]::after {
     bottom: var(--spacing);
   }
 
-  [role="toolbar"][aria-label="Inbox controls"] button[data-size="icon"],
-  [role="group"][aria-label="Agent view"] > button {
+  .inbox-collection-toolbar button[data-size="icon"],
+  [data-agent-view] > button {
     width: var(--sz-44px);
     height: var(--sz-44px);
     min-height: var(--sz-44px);

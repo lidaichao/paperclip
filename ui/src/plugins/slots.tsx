@@ -341,7 +341,7 @@ function getShimBlobUrl(specifier: "react" | "react-dom" | "react-dom/client" | 
         const SDK = globalThis.__paperclipPluginBridge__?.sdkUi ?? {};
         function missing(name) {
           return function MissingPaperclipSdkUiComponent() {
-            throw new Error('Alice plugin UI runtime is not initialized for "' + name + '". Ensure the host loaded the plugin bridge before rendering this UI module.');
+            throw new Error(${JSON.stringify(l10n("local.alice_plugin_react_runtime_not_initialized_10300705"))} + ' "' + name + '"');
           };
         }
         const { usePluginData, usePluginAction, useHostContext, useHostLocation, useHostNavigation, usePluginStream, usePluginToast, copyTextToClipboard } = SDK;
