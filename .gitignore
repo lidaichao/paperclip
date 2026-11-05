@@ -26,6 +26,7 @@ cli/tmp/
 
 # Scratch/seed scripts (but not scripts/ dir)
 check-*.mjs
+!localization/scripts/check-locales.mjs
 !.github/scripts/check-*.mjs
 !.github/scripts/tests/check-*.mjs
 !scripts/check-*.mjs
