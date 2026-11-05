@@ -22,7 +22,7 @@ patchedDependencies:
     hash: rt7c5otjh4is5hljadvoq7qcem
     path: patches/@agentclientprotocol__codex-acp@1.6.2.patch
   '@chat-adapter/discord@4.39.0':
-    hash: nywlhls7dd4npegrgax7jqdbxa
+    hash: cks3c7r5pzengz4yfzfrwlwzdq
     path: patches/@chat-adapter__discord@4.39.0.patch
   '@chat-adapter/github@4.39.0':
     hash: x25bk7vvljpm57viwan5qoaddi
@@ -879,7 +879,7 @@ importers:
         version: 3.1122.0
       '@chat-adapter/discord':
         specifier: 4.39.0
-        version: 4.39.0(patch_hash=nywlhls7dd4npegrgax7jqdbxa)(zod@4.4.3)
+        version: 4.39.0(patch_hash=cks3c7r5pzengz4yfzfrwlwzdq)(zod@4.4.3)
       '@chat-adapter/github':
         specifier: 4.39.0
         version: 4.39.0(patch_hash=x25bk7vvljpm57viwan5qoaddi)(zod@4.4.3)
@@ -4767,6 +4767,7 @@ packages:
   '@smithy/core@3.33.3':
     resolution: {integrity: sha512-CsOeKq/9kA3y6VJHt+/+VTCtBaxJ4OTFpgrjIUhPpDIKxBci1k2bJaQASF2h/ELWrulGp+t97DZ0mevfAD8idg==}
     engines: {node: '>=18.0.0'}
+    deprecated: Deprecated due to a bug in custom logger data redaction. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
 
   '@smithy/credential-provider-imds@4.5.2':
     resolution: {integrity: sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==}
@@ -9546,7 +9547,7 @@ snapshots:
 
   '@bufbuild/protobuf@2.15.0': {}
 
-  '@chat-adapter/discord@4.39.0(patch_hash=nywlhls7dd4npegrgax7jqdbxa)(zod@4.4.3)':
+  '@chat-adapter/discord@4.39.0(patch_hash=cks3c7r5pzengz4yfzfrwlwzdq)(zod@4.4.3)':
     dependencies:
       '@chat-adapter/shared': 4.39.0(zod@4.4.3)
       chat: 4.39.0(zod@4.4.3)
