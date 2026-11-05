@@ -10322,5 +10322,11 @@
   "local.environment_delete_other_references_20261105": "Other references to this environment (agents in other organizations or terminated agents) fall back to the instance default.",
   "local.environment_delete_selections_20261105": "Environment selections to clear across workspaces, issues, and projects: {{count}}.",
   "local.environment_delete_secret_bindings_20261105": "Secret bindings to remove: {{count}}.",
-  "local.environment_delete_active_runtime_20261105": "Active runs or sandbox leases currently resolve to this environment."
+  "local.environment_delete_active_runtime_20261105": "Active runs or sandbox leases currently resolve to this environment.",
+  "local.activity_delivered_work_20261105": "Delivered work",
+  "local.activity_updated_work_20261105": "Updated work",
+  "local.activity_removed_work_20261105": "Removed work",
+  "local.one_blocker_needs_attention_20261105": "{{count}} blocker needs attention",
+  "local.many_blockers_need_attention_20261105": "{{count}} blockers need attention",
+  "local.blockers_need_attention_20261105": "needs attention"
 }

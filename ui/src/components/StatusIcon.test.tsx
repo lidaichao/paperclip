@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { StatusIcon } from "./StatusIcon";
 import { IssueStatusBadge } from "./StatusBadge";
+import { i18n } from "../i18n";
 
 /**
  * StatusIcon renders the unified {@link StatusGlyph} (one shape per status) at
@@ -66,6 +67,31 @@ describe("StatusIcon", () => {
     // needs_attention is not "covered", so it keeps the blocked glyph (not in_queue).
     expect(html).toContain("var(--status-task-icon-blocked)");
     expect(html).not.toContain("var(--status-task-icon-in_queue)");
+  });
+
+  it("keeps blocked attention labels in Chinese, including missing blocker counts", async () => {
+    await i18n.changeLanguage("zh-CN");
+    try {
+      const blockerAttention = {
+        state: "needs_attention" as const,
+        reason: "attention_required" as const,
+        unresolvedBlockerCount: 3,
+        coveredBlockerCount: 0,
+        stalledBlockerCount: 0,
+        attentionBlockerCount: 3,
+        sampleBlockerIdentifier: null,
+        sampleStalledBlockerIdentifier: null,
+      };
+      expect(renderToStaticMarkup(<StatusIcon status="blocked" blockerAttention={blockerAttention} />))
+        .toContain("受阻 · 3 个阻塞项需要关注");
+      expect(renderToStaticMarkup(<StatusIcon status="blocked" blockerAttention={{
+        ...blockerAttention,
+        unresolvedBlockerCount: 0,
+        attentionBlockerCount: 0,
+      }} />)).toContain("受阻 · 需关注");
+    } finally {
+      await i18n.changeLanguage("en");
+    }
   });
 
   it("surfaces stalled-review blocked copy on the accessible label", () => {

@@ -21,6 +21,19 @@ describe("activity formatting", () => {
     expect(formatActivityVerb("issue.read_unmarked")).toBe("marked unread");
   });
 
+  it("labels work product activity instead of exposing raw event codes", async () => {
+    const previousLanguage = i18n.language;
+    try {
+      await i18n.changeLanguage("zh-CN");
+      expect(formatActivityVerb("issue.work_product_created")).toBe("交付了工作成果：");
+      expect(formatActivityVerb("issue.work_product_updated")).toBe("更新了工作成果：");
+      expect(formatActivityVerb("issue.work_product_deleted")).toBe("移除了工作成果：");
+      expect(formatIssueActivityAction("issue.work_product_created")).toBe("交付了工作成果");
+    } finally {
+      await i18n.changeLanguage(previousLanguage);
+    }
+  });
+
   it("formats blocker activity using linked issue identifiers", () => {
     const details = {
       addedBlockedByIssues: [

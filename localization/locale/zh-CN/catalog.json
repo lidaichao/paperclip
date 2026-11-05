@@ -10386,5 +10386,11 @@
   "local.environment_delete_other_references_20261105": "其他组织或已终止智能体对该环境的引用将回退到实例默认环境。",
   "local.environment_delete_selections_20261105": "将清除 {{count}} 处工作区、任务或项目的环境选择。",
   "local.environment_delete_secret_bindings_20261105": "将移除 {{count}} 个密钥绑定。",
-  "local.environment_delete_active_runtime_20261105": "当前有运行中的任务或沙箱租约使用此环境。"
+  "local.environment_delete_active_runtime_20261105": "当前有运行中的任务或沙箱租约使用此环境。",
+  "local.activity_delivered_work_20261105": "交付了工作成果",
+  "local.activity_updated_work_20261105": "更新了工作成果",
+  "local.activity_removed_work_20261105": "移除了工作成果",
+  "local.one_blocker_needs_attention_20261105": "{{count}} 个阻塞项需要关注",
+  "local.many_blockers_need_attention_20261105": "{{count}} 个阻塞项需要关注",
+  "local.blockers_need_attention_20261105": "需关注"
 }

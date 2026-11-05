@@ -55,7 +55,11 @@ function blockedAttentionLabel(blockerAttention: IssueBlockerAttention | null | 
 
   if (blockerAttention.reason === "attention_required") {
     const count = blockerAttention.attentionBlockerCount || blockerAttention.unresolvedBlockerCount;
-    const attentionCopy = l10n("local.value_value_attention_3a36fdfb", {v0: (count), v1: (count === 1 ? "blocker needs" : "blockers need")});
+    const attentionCopy = count > 0
+      ? l10n(count === 1
+        ? "local.one_blocker_needs_attention_20261105"
+        : "local.many_blockers_need_attention_20261105", { count })
+      : l10n("local.blockers_need_attention_20261105");
     const coveredCount = blockerAttention.coveredBlockerCount;
     if (coveredCount > 0) {
       return l10n("local.blocked_value_value_covered_by_active_work_e9f905f5", {v0: (attentionCopy), v1: (coveredCount)});

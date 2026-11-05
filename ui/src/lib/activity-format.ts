@@ -503,6 +503,9 @@ export function formatActivityVerb(
   details?: Record<string, unknown> | null,
   options: ActivityFormatOptions = {},
 ): string {
+  if (action === "issue.work_product_created") return l10n("local.activity_delivered_work_on_fd9e6b42");
+  if (action === "issue.work_product_updated") return l10n("local.activity_updated_work_on_311d014b");
+  if (action === "issue.work_product_deleted") return l10n("local.activity_removed_work_from_d7e97e8c");
   if (action.startsWith("tool_gateway.")) {
     const rawTool = typeof details?.tool === "string"
       ? details.tool
@@ -558,6 +561,9 @@ export function formatIssueActivityAction(
   details?: Record<string, unknown> | null,
   options: ActivityFormatOptions = {},
 ): string {
+  if (action === "issue.work_product_created") return l10n("local.activity_delivered_work_20261105");
+  if (action === "issue.work_product_updated") return l10n("local.activity_updated_work_20261105");
+  if (action === "issue.work_product_deleted") return l10n("local.activity_removed_work_20261105");
   if (action === "issue.updated") {
     const issueUpdatedAction = formatIssueUpdatedAction(details, options);
     if (issueUpdatedAction) return issueUpdatedAction;
