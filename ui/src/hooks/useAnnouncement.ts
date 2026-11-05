@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { announcementIdSchema, type Announcement } from "@paperclipai/shared";
 import { announcementsApi } from "@/api/announcements";
+import { i18n } from "@/i18n";
 import { announcementStoragePrefix, readAnnouncementDismissals, saveAnnouncementDismissal } from "@/lib/announcement-dismissals";
+import { announcementForLocale } from "@/lib/announcement-locale";
 
 export const ANNOUNCEMENT_SETTLE_MS = 3000;
 interface Options {
@@ -86,7 +88,7 @@ export function useAnnouncement(options: Options) {
       settleTimer = setTimeout(() => { settled = true; show(); }, ANNOUNCEMENT_SETTLE_MS);
       void flush();
       void announcementsApi.current(controller.signal).then((value) => {
-        candidate = value;
+        candidate = announcementForLocale(value, i18n.language);
         loaded = true;
         show();
       }).catch(() => { /* Optional content stays absent when state is unknown. */ });
