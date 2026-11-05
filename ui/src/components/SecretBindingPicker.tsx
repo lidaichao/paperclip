@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { createContext, useContext, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, KeyRound, Loader2, Plus, X } from "lucide-react";
@@ -62,7 +63,7 @@ interface SecretBindingPickerProps {
 const VERSION_LATEST: SecretVersionSelector = "latest";
 
 function describeSecret(secret: CompanySecret): string {
-  const provider = secret.provider.replaceAll("_", " ");
+  const provider = enumLabel(secret.provider, "lower");
   if (secret.managedMode === "external_reference") {
     return l10n("local.external_value_14c50b2d", { v0: provider });
   }

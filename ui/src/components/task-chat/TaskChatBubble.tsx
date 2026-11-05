@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { ArtifactPreview } from "@/components/artifacts/ArtifactCard";
 import { isVideoLikeOutput } from "@/lib/issue-output";
 import { AgentAvatar, type AvatarAgent } from "../AgentAvatar";
@@ -357,7 +358,7 @@ function TaskChatBubbleContent({
                   {caveat.commandOrCheck}
                 </span>
                 {caveat.reasonCode
-                  ? ` · ${caveat.reasonCode.replaceAll("_", " ")}`
+                  ? ` · ${enumLabel(caveat.reasonCode, "lower")}`
                   : ""}
                 {caveat.detail ? (
                   <span className="block">{caveat.detail}</span>

@@ -324,7 +324,7 @@ function statusTextTone(status: SecretStatus) {
 }
 
 function providerLabel(providers: SecretProviderDescriptor[] | undefined, id: SecretProvider) {
-  return providers?.find((p) => p.id === id)?.label ?? id.replaceAll("_", " ");
+  return providers?.find((p) => p.id === id)?.label ?? enumLabel(id, "lower");
 }
 
 function normalizeSecretKeyForPreview(input: string) {
@@ -1206,7 +1206,7 @@ export function Secrets() {
       }
     },
     onSuccess: (updated) => {
-      pushToast({ title: l10n("local.secret_value_4838bb70", {v0: (updated.status)}), body: updated.name, tone: "info" });
+      pushToast({ title: l10n("local.secret_value_4838bb70", { v0: enumLabel(updated.status, "lower") }), body: updated.name, tone: "info" });
       invalidateAll([updated.id]);
     },
     onError: (error) => {
@@ -1222,7 +1222,7 @@ export function Secrets() {
     mutationFn: ({ definition, status }: { definition: UserSecretDefinition; status: SecretStatus }) =>
       secretsApi.updateUserSecretDefinition(selectedCompanyId!, definition.id, { status }),
     onSuccess: (updated) => {
-      pushToast({ title: l10n("local.user_provided_secret_value_fa0fc39a", {v0: (updated.status)}), body: updated.name, tone: "info" });
+      pushToast({ title: l10n("local.user_provided_secret_value_fa0fc39a", { v0: enumLabel(updated.status, "lower") }), body: updated.name, tone: "info" });
       invalidateAll([updated.id]);
     },
     onError: (error) => {
@@ -3538,7 +3538,7 @@ export function ProviderVaultsTab({
               className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground"
             >
               <Icon className="h-4 w-4" />
-              <span className="truncate">{provider?.label ?? id.replaceAll("_", " ")}</span>
+              <span className="truncate">{provider?.label ?? enumLabel(id, "lower")}</span>
             </a>
           ))}
         </nav>
@@ -3549,7 +3549,7 @@ export function ProviderVaultsTab({
           <section key={id} id={`provider-vaults-${id}`} className={cn("scroll-mt-6 space-y-2", isComingSoonFamily && "opacity-50")}>
             <div className="flex flex-wrap items-center gap-2">
               <Icon className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">{provider?.label ?? id.replaceAll("_", " ")}</h2>
+              <h2 className="text-sm font-semibold">{provider?.label ?? enumLabel(id, "lower")}</h2>
               {isComingSoonFamily ? (
                 <span className="ml-auto text-xs text-muted-foreground">{l10n("local.coming_soon_4f7d6401")}</span>
               ) : (

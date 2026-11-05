@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { UserCheck, UserMinus, type LucideIcon } from "lucide-react";
 import { ISSUE_REVIEW_POLICIES, type IssueReviewPolicy } from "@paperclipai/shared";
 
@@ -71,7 +72,7 @@ export function formatReviewPolicyValue(value: unknown): string {
   if (value === null || value === undefined) return VALUE_LABELS.anyone;
   if (typeof value !== "string") return VALUE_LABELS.anyone;
   // Forward-compatible: a policy this build does not know reads as itself.
-  return VALUE_LABELS[value as IssueReviewPolicy] ?? value.replace(/_/g, " ");
+  return VALUE_LABELS[value as IssueReviewPolicy] ?? enumLabel(value, "lower");
 }
 
 /**

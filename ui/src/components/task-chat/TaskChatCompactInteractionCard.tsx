@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import {
   useEffect,
   useMemo,
@@ -369,7 +370,7 @@ function receiptReason(interaction: IssueThreadInteraction): string | null {
   if (interaction.kind === "ask_user_questions") {
     return (
       interaction.result?.cancellationReason ??
-      interaction.result?.expirationReason?.replaceAll("_", " ") ??
+      (interaction.result?.expirationReason ? enumLabel(interaction.result.expirationReason, "lower") : null) ??
       null
     );
   }

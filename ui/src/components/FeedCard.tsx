@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { Link } from "@/lib/router";
 import { timeAgo } from "../lib/timeAgo";
@@ -47,7 +48,7 @@ function humanize(value: unknown): string {
     high: l10n("local.activity_value_high_280cc574"),
     critical: l10n("local.activity_value_critical_9fa48cf0"),
   };
-  return localizedValues[value] ?? value.replace(/_/g, " ");
+  return localizedValues[value] ?? enumLabel(value, "lower");
 }
 
 /** One verb per action. Pinned context (Tier 0) swaps a couple of verbs to

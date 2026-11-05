@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { formatDateTime } from "./utils";
 
 type RetryAwareRun = {
@@ -40,7 +41,7 @@ function joinFragments(parts: Array<string | null>) {
 export function formatRetryReason(reason: string | null | undefined) {
   const normalized = readNonEmptyString(reason);
   if (!normalized) return null;
-  return RETRY_REASON_LABELS[normalized] ?? normalized.replace(/_/g, " ");
+  return RETRY_REASON_LABELS[normalized] ?? enumLabel(normalized, "lower");
 }
 
 export function describeRunRetryState(run: RetryAwareRun): RunRetryStateSummary | null {
