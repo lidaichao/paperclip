@@ -1726,7 +1726,7 @@ function PlanRow({
   return (
     <li className="flex items-center gap-2 px-3 py-2 text-sm">
       <Badge variant="outline" className={cn("text-(length:--text-nano) uppercase", PLAN_ACTION_TONE[action] ?? "border-border")}>
-        {action}
+        {enumLabel(action, "lower")}
       </Badge>
       <span className={cn("font-mono text-xs", action === "skip" && "line-through opacity-60")}>{slug}</span>
       <ArrowRight className="h-3 w-3 text-muted-foreground" />

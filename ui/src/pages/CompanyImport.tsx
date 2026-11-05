@@ -254,7 +254,7 @@ function ImportPreviewPane({
               "uppercase tracking-wide",
               actionColor,
             )}>
-              {action}
+              {enumLabel(action, "lower")}
             </Badge>
           )}
         </div>

@@ -56,6 +56,10 @@ describe("enumLabel", () => {
     expect(enumLabel("warn", "lower")).toBe("警告");
     expect(enumLabel("debug", "lower")).toBe("调试");
     expect(enumLabel("manual", "lower")).toBe("手动");
+    expect(enumLabel("create", "lower")).toBe("创建");
+    expect(enumLabel("update", "lower")).toBe("更新");
+    expect(enumLabel("skip", "lower")).toBe("跳过");
+    expect(enumLabel("rename", "lower")).toBe("重命名");
   });
 
   it("keeps English labels readable", async () => {
