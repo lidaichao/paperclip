@@ -1,5 +1,5 @@
 import { l10n } from "../i18n";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -50,6 +50,7 @@ export function CompanySettings() {
   const [companyName, setCompanyName] = useState("");
   const [description, setDescription] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
   const [governance, setGovernance] = useState<InteractionResolverGovernance>({});
 
@@ -271,11 +272,21 @@ export function CompanySettings() {
               >
                 <div className="space-y-2">
                   <input
+                    ref={logoInputRef}
                     type="file"
                     accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
                     onChange={handleLogoFileChange}
-                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none file:mr-4 file:rounded-md file:border-0 file:bg-muted file:px-2.5 file:py-1 file:text-xs"
+                    className="hidden"
                   />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={logoUploadMutation.isPending}
+                    onClick={() => logoInputRef.current?.click()}
+                  >
+                    {l10n("local.choose_logo_image_20261105")}
+                  </Button>
                   {logoUrl && (
                     <div className="flex items-center gap-2">
                       <Button
