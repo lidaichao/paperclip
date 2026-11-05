@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -3782,7 +3783,7 @@ function deliverableDocumentLabel(item: PipelineCaseDocumentOutputItem): string 
 function humanizeOutputStatus(status: string) {
   const normalized = status.trim().toLowerCase();
   if (!normalized) return l10n("local.unknown_b764cdc0");
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, " ");
+  return enumLabel(normalized, "sentence");
 }
 
 function isLowTrustOutput(item: PipelineCaseOutputItem) {
