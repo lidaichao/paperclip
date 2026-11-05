@@ -13696,6 +13696,21 @@
     "enum_runtime_ephemeral_10301501": "Ephemeral",
     "enum_status_cleanup_failed_10301502": "Cleanup failed",
     "enum_skill_file_script_10301503": "Script",
-    "enum_skill_file_asset_10301504": "Asset"
+    "enum_skill_file_asset_10301504": "Asset",
+    "enum_role_security_10301505": "Security",
+    "enum_role_designer_10301506": "Designer",
+    "enum_role_pm_10301507": "PM",
+    "enum_role_devops_10301508": "DevOps",
+    "enum_role_researcher_10301509": "Researcher",
+    "enum_variable_boolean_10301510": "Boolean",
+    "enum_preview_unsupported_10301511": "Unsupported",
+    "enum_category_company_defaults_10301512": "Company defaults",
+    "enum_category_product_10301513": "Product",
+    "enum_category_software_development_10301514": "Software development",
+    "enum_category_docs_10301515": "Docs",
+    "enum_category_paperclip_operations_10301516": "Paperclip operations",
+    "enum_category_quality_10301517": "Quality",
+    "enum_category_browser_10301518": "Browser",
+    "enum_category_research_10301519": "Research"
   }
 }

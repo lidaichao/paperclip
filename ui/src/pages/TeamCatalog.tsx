@@ -729,7 +729,7 @@ export function TeamDetailPane({
               <Badge variant={team.kind === "bundled" ? "secondary" : "outline"} className="text-(length:--text-nano) capitalize">
                 {enumLabel(team.kind, "lower")}
               </Badge>
-              <span className="text-xs text-muted-foreground">{team.category}</span>
+              <span className="text-xs text-muted-foreground">{enumLabel(team.category, "lower")}</span>
               <TrustChip level={team.trustLevel} />
               <CompatChip compatibility={team.compatibility} />
               <ProvenanceBadge team={team} />

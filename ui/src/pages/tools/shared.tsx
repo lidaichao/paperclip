@@ -1,4 +1,5 @@
 import { i18n, l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import type { ReactNode } from "react";
 import type {
   ToolRiskLevel,
@@ -20,7 +21,7 @@ export function RiskBadge({ risk }: { risk: ToolRiskLevel | null | undefined }) 
       : risk === "medium"
         ? "secondary"
         : "outline";
-  return <Badge variant={variant}>{risk}</Badge>;
+  return <Badge variant={variant}>{enumLabel(risk, "lower")}</Badge>;
 }
 
 /** Read/Write/Destructive capability chips. */

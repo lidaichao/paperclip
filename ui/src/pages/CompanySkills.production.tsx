@@ -457,7 +457,7 @@ function CatalogFilterMenu({
           <DropdownMenuRadioItem value="__all__">{l10n("local.all_categories_9d5097a8")}</DropdownMenuRadioItem>
           {categories.map((category) => (
             <DropdownMenuRadioItem key={category} value={category}>
-              {category}
+              {enumLabel(category, "lower")}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -808,7 +808,7 @@ function SkillStat({ icon: Icon, value }: { icon: typeof Star; value: string }) 
 function SkillCategoryChip({ label }: { label: string }) {
   return (
     <Badge variant="outline" className="border-border bg-muted/40 text-(length:--text-nano) capitalize text-muted-foreground">
-      {label}
+      {enumLabel(label, "lower")}
     </Badge>
   );
 }
@@ -1018,7 +1018,7 @@ function CategoryNav({
             active === category.slug ? "bg-accent/60 font-medium text-foreground" : "text-muted-foreground",
           )}
         >
-          <span className="truncate">{category.slug}</span>
+          <span className="truncate">{enumLabel(category.slug, "lower")}</span>
           <span className="ml-2 shrink-0 text-xs text-muted-foreground">{category.count}</span>
         </button>
       ))}
@@ -1319,7 +1319,11 @@ export function DiscoveryGrid({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full justify-between">
-                  <span className="capitalize">{activeCategory ?? l10n("local.all_categories_9d5097a8")}</span>
+                  <span className="capitalize">
+                    {activeCategory
+                      ? enumLabel(activeCategory, "lower")
+                      : l10n("local.all_categories_9d5097a8")}
+                  </span>
                   <ChevronDown className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -1331,7 +1335,7 @@ export function DiscoveryGrid({
                   <DropdownMenuRadioItem value="__all__">{l10n("local.all_6ddbebad")}{categoryTotal})</DropdownMenuRadioItem>
                   {categories.map((category) => (
                     <DropdownMenuRadioItem key={category.slug} value={category.slug} className="capitalize">
-                      {category.slug} ({category.count})
+                      {enumLabel(category.slug, "lower")} ({category.count})
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
@@ -1445,7 +1449,7 @@ export function DiscoveryGrid({
             <>
               <p className="mb-3 text-xs text-muted-foreground">
                 {sourceFilteredCards.length} {sourceFilteredCards.length === 1 ? l10n("local.skill_9c53c074") : l10n("local.skills_32c1cf49")}
-                {activeCategory ? <span className="capitalize"> · {activeCategory}</span> : null}
+                {activeCategory ? <span className="capitalize"> · {enumLabel(activeCategory, "lower")}</span> : null}
               </p>
               <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(19rem,1fr))]">
                 {sourceFilteredCards.map((card) => (
@@ -2104,7 +2108,7 @@ export function InstallPreviewDialog({
             {defaultAction === "update" ? l10n("local.update_c1c1009d") : defaultAction === "replace" ? l10n("local.replace_95e15439") : l10n("local.install_569ca49f")} · {skill.name}
           </DialogTitle>
           <DialogDescription>
-            <span className="capitalize">{enumLabel(skill.kind, "lower")}</span> · {skill.category}
+            <span className="capitalize">{enumLabel(skill.kind, "lower")}</span> · {enumLabel(skill.category, "lower")}
             {packageName ? <> · {packageName}{packageVersion ? ` v${packageVersion}` : ""}</> : null}
           </DialogDescription>
         </DialogHeader>

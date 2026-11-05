@@ -10454,5 +10454,20 @@
   "ephemeral": "local.enum_runtime_ephemeral_10301501",
   "cleanup failed": "local.enum_status_cleanup_failed_10301502",
   "script": "local.enum_skill_file_script_10301503",
-  "asset": "local.enum_skill_file_asset_10301504"
+  "asset": "local.enum_skill_file_asset_10301504",
+  "security": "local.enum_role_security_10301505",
+  "designer": "local.enum_role_designer_10301506",
+  "pm": "local.enum_role_pm_10301507",
+  "devops": "local.enum_role_devops_10301508",
+  "researcher": "local.enum_role_researcher_10301509",
+  "boolean": "local.enum_variable_boolean_10301510",
+  "unsupported": "local.enum_preview_unsupported_10301511",
+  "company defaults": "local.enum_category_company_defaults_10301512",
+  "product": "local.enum_category_product_10301513",
+  "software development": "local.enum_category_software_development_10301514",
+  "docs": "local.enum_category_docs_10301515",
+  "paperclip operations": "local.enum_category_paperclip_operations_10301516",
+  "quality": "local.enum_category_quality_10301517",
+  "browser": "local.enum_category_browser_10301518",
+  "research": "local.enum_category_research_10301519"
 }

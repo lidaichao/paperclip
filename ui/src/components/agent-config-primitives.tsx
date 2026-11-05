@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { displayText } from "../i18n/display";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Tooltip,
@@ -69,7 +70,9 @@ import { getAdapterLabels } from "../adapters/adapter-display-registry";
 
 export const adapterLabels = getAdapterLabels();
 
-export const roleLabels = AGENT_ROLE_LABELS as Record<string, string>;
+export const roleLabels = Object.fromEntries(
+  Object.entries(AGENT_ROLE_LABELS).map(([role, label]) => [role, displayText(label)]),
+) as Record<string, string>;
 
 /* ---- Primitive components ---- */
 

@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, HelpCircle } from "lucide-react";
 import { isValidRoutineDateString, syncRoutineVariablesWithTemplate, type RoutineVariable } from "@paperclipai/shared";
@@ -130,7 +131,7 @@ export function RoutineVariablesEditor({
                   </SelectTrigger>
                   <SelectContent>
                     {variableTypes.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                      <SelectItem key={type} value={type}>{enumLabel(type, "lower")}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

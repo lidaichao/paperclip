@@ -26,6 +26,13 @@ describe("enumLabel", () => {
     expect(enumLabel("cleanup_failed")).toBe("清理失败");
     expect(enumLabel("script")).toBe("脚本");
     expect(enumLabel("asset")).toBe("资源");
+    expect(enumLabel("designer")).toBe("设计师");
+    expect(enumLabel("devops")).toBe("运维工程师");
+    expect(enumLabel("boolean")).toBe("布尔值");
+    expect(enumLabel("unsupported")).toBe("不支持预览");
+    expect(enumLabel("software-development")).toBe("软件开发");
+    expect(enumLabel("paperclip-operations")).toBe("Alice 运维");
+    expect(enumLabel("quality")).toBe("质量保障");
   });
 
   it("keeps English labels readable", async () => {

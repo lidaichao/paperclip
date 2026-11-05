@@ -13696,6 +13696,21 @@
     "enum_runtime_ephemeral_10301501": "临时",
     "enum_status_cleanup_failed_10301502": "清理失败",
     "enum_skill_file_script_10301503": "脚本",
-    "enum_skill_file_asset_10301504": "资源"
+    "enum_skill_file_asset_10301504": "资源",
+    "enum_role_security_10301505": "安全",
+    "enum_role_designer_10301506": "设计师",
+    "enum_role_pm_10301507": "产品经理",
+    "enum_role_devops_10301508": "运维工程师",
+    "enum_role_researcher_10301509": "研究员",
+    "enum_variable_boolean_10301510": "布尔值",
+    "enum_preview_unsupported_10301511": "不支持预览",
+    "enum_category_company_defaults_10301512": "公司默认",
+    "enum_category_product_10301513": "产品",
+    "enum_category_software_development_10301514": "软件开发",
+    "enum_category_docs_10301515": "文档",
+    "enum_category_paperclip_operations_10301516": "Alice 运维",
+    "enum_category_quality_10301517": "质量保障",
+    "enum_category_browser_10301518": "浏览器",
+    "enum_category_research_10301519": "研究"
   }
 }

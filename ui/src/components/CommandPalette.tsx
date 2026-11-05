@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentIdentity } from "@/components/AgentIdentity";
 import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "@/lib/router";
@@ -413,7 +414,9 @@ export function CommandPalette() {
                 <CommandItem key={agent.id} onSelect={() => go(agentUrl(agent))}>
                   <Bot className="mr-2 h-4 w-4" />
                   {agent.name}
-                  <span className="text-xs text-muted-foreground ml-2">{agent.role}</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {enumLabel(agent.role, "lower")}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>

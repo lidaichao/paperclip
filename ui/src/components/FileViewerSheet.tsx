@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import {
   useCallback,
   useEffect,
@@ -207,7 +208,9 @@ export function FileViewerMetadataRow({
     <div className="flex min-h-(--sz-18px) flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
       {resolvedResource ? (
         <>
-          {resolvedResource.previewKind ? <span className="capitalize">{resolvedResource.previewKind}</span> : null}
+          {resolvedResource.previewKind ? (
+            <span className="capitalize">{enumLabel(resolvedResource.previewKind, "lower")}</span>
+          ) : null}
           {formatBytes(resolvedResource.byteSize) ? (
             <>
               <span aria-hidden="true" className="opacity-50">·</span>
