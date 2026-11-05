@@ -150,7 +150,7 @@ export function RoutineTriggerCard({
                 <SelectContent>
                   {signingModes.map((mode) => (
                     <SelectItem key={mode} value={mode}>
-                      {mode}
+                      {enumLabel(mode, "lower")}
                     </SelectItem>
                   ))}
                 </SelectContent>

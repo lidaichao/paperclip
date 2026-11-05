@@ -13791,6 +13791,11 @@
     "enum_trigger_manual_10301596": "手动",
     "enum_view_flat_10301597": "平铺",
     "enum_tool_action_list_10301598": "列出工具",
-    "enum_tool_action_call_10301599": "调用工具"
+    "enum_tool_action_call_10301599": "调用工具",
+    "enum_signing_app_webhook_10301600": "应用回调通知",
+    "enum_signing_bearer_10301601": "Bearer 令牌",
+    "enum_signing_hmac_sha256_10301602": "HMAC-SHA256",
+    "enum_signing_github_hmac_10301603": "GitHub HMAC",
+    "enum_signing_fireflies_hmac_10301604": "Fireflies HMAC"
   }
 }

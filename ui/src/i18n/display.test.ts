@@ -64,6 +64,10 @@ describe("enumLabel", () => {
     expect(enumLabel("flat", "lower")).toBe("平铺");
     expect(enumLabel("tools/list", "lower")).toBe("列出工具");
     expect(enumLabel("tools/call", "lower")).toBe("调用工具");
+    expect(enumLabel("app_webhook", "lower")).toBe("应用回调通知");
+    expect(enumLabel("bearer", "lower")).toBe("Bearer 令牌");
+    expect(enumLabel("hmac_sha256", "lower")).toBe("HMAC-SHA256");
+    expect(enumLabel("github_hmac", "lower")).toBe("GitHub HMAC");
   });
 
   it("keeps English labels readable", async () => {

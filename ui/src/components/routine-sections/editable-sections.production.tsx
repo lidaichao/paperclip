@@ -1,4 +1,5 @@
 import { l10n, englishPluralSuffix } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -511,7 +512,7 @@ export function TriggersSection() {
                   <SelectContent>
                     {signingModes.map((mode) => (
                       <SelectItem key={mode} value={mode}>
-                        {mode}
+                        {enumLabel(mode, "lower")}
                       </SelectItem>
                     ))}
                   </SelectContent>

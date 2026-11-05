@@ -1726,7 +1726,7 @@ export function CompanyImport() {
               {skillResults.map((skill) => (
                 <div key={`${skill.originalKey}:${skill.id}`} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                   <span className="min-w-0 flex-1 truncate">{skill.originalSlug}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">{skill.action}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{enumLabel(skill.action, "lower")}</span>
                   {skill.slug !== skill.originalSlug && (
                     <span className="shrink-0 text-xs text-muted-foreground">{l10n("local.as_f4bf9f7f")}{" "}{skill.slug}</span>
                   )}
