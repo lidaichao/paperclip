@@ -1,4 +1,5 @@
 import { l10n } from "../../i18n";
+import { enumLabel } from "../../i18n/display";
 import {
   useCallback,
   useEffect,
@@ -421,7 +422,7 @@ export function SkillFolderRail({
                 onClick={() => onSelectTag(null)}
                 className="inline-flex items-center gap-1 rounded-full border border-border bg-accent/60 px-2 py-0.5 text-xs text-foreground"
               >
-                {activeTag}
+                {enumLabel(activeTag, "lower")}
                 <Check className="h-3 w-3" />
               </button>
             ) : null}
@@ -434,7 +435,7 @@ export function SkillFolderRail({
                   onClick={() => onSelectTag(tag.slug)}
                   className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
                 >
-                  <span className="max-w-32 truncate">{tag.slug}</span>
+                  <span className="max-w-32 truncate">{enumLabel(tag.slug, "lower")}</span>
                   <span className="text-(length:--text-micro) opacity-70">{tag.count}</span>
                 </button>
               ))}
