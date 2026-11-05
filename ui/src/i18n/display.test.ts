@@ -33,6 +33,11 @@ describe("enumLabel", () => {
     expect(enumLabel("software-development")).toBe("软件开发");
     expect(enumLabel("paperclip-operations")).toBe("Alice 运维");
     expect(enumLabel("quality")).toBe("质量保障");
+    expect(enumLabel("tool_result")).toBe("工具结果");
+    expect(enumLabel("workspace_change")).toBe("工作区变更");
+    expect(enumLabel("runtime_request")).toBe("运行请求");
+    expect(enumLabel("runner_verified")).toBe("运行器已验证");
+    expect(enumLabel("needs_review")).toBe("需要审核");
   });
 
   it("keeps English labels readable", async () => {

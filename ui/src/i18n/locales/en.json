@@ -13711,6 +13711,22 @@
     "enum_category_paperclip_operations_10301516": "Paperclip operations",
     "enum_category_quality_10301517": "Quality",
     "enum_category_browser_10301518": "Browser",
-    "enum_category_research_10301519": "Research"
+    "enum_category_research_10301519": "Research",
+    "enum_transcript_assistant_10301520": "Assistant",
+    "enum_transcript_tool_result_10301521": "Tool result",
+    "enum_transcript_init_10301522": "Initialization",
+    "enum_transcript_workspace_change_10301523": "Workspace change",
+    "enum_transcript_workspace_file_reference_10301524": "Workspace file",
+    "enum_transcript_runtime_request_10301525": "Runtime request",
+    "enum_transcript_run_terminal_10301526": "Run terminal",
+    "enum_source_harness_reported_10301527": "Harness reported",
+    "enum_source_runner_verified_10301528": "Runner verified",
+    "enum_request_command_approval_10301529": "Command approval",
+    "enum_request_file_approval_10301530": "File approval",
+    "enum_request_permission_approval_10301531": "Permission approval",
+    "enum_request_user_input_10301532": "User input",
+    "enum_request_elicitation_10301533": "Elicitation",
+    "enum_disposition_needs_review_10301534": "Needs review",
+    "enum_disposition_yielded_10301535": "Yielded"
   }
 }

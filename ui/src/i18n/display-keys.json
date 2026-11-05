@@ -10469,5 +10469,21 @@
   "paperclip operations": "local.enum_category_paperclip_operations_10301516",
   "quality": "local.enum_category_quality_10301517",
   "browser": "local.enum_category_browser_10301518",
-  "research": "local.enum_category_research_10301519"
+  "research": "local.enum_category_research_10301519",
+  "assistant": "local.enum_transcript_assistant_10301520",
+  "tool result": "local.enum_transcript_tool_result_10301521",
+  "init": "local.enum_transcript_init_10301522",
+  "workspace change": "local.enum_transcript_workspace_change_10301523",
+  "workspace file reference": "local.enum_transcript_workspace_file_reference_10301524",
+  "runtime request": "local.enum_transcript_runtime_request_10301525",
+  "run terminal": "local.enum_transcript_run_terminal_10301526",
+  "harness reported": "local.enum_source_harness_reported_10301527",
+  "runner verified": "local.enum_source_runner_verified_10301528",
+  "command approval": "local.enum_request_command_approval_10301529",
+  "file approval": "local.enum_request_file_approval_10301530",
+  "permission approval": "local.enum_request_permission_approval_10301531",
+  "user input": "local.enum_request_user_input_10301532",
+  "elicitation": "local.enum_request_elicitation_10301533",
+  "needs review": "local.enum_disposition_needs_review_10301534",
+  "yielded": "local.enum_disposition_yielded_10301535"
 }

@@ -1876,13 +1876,13 @@ function rawEntryContent(entry: TranscriptEntry): string {
     return `${entry.text}\n${formatTokens(entry.inputTokens)} / ${formatTokens(entry.outputTokens)} / $${entry.costUsd.toFixed(6)}`;
   }
   if (entry.kind === "init") {
-    return `model=${entry.model}${entry.sessionId ? ` session=${entry.sessionId}` : ""}`;
+    return `${l10n("local.model_9372c470")}=${entry.model}${entry.sessionId ? ` ${l10n("local.session_6959b415")}=${entry.sessionId}` : ""}`;
   }
-  if (entry.kind === "workspace_change") return `${entry.totals.files} files · ${entry.source} · revision ${entry.revision}`;
+  if (entry.kind === "workspace_change") return `${entry.totals.files} ${l10n("local.files_abc7e989")} · ${enumLabel(entry.source, "lower")} · ${l10n("local.revision_2e516d68")} ${entry.revision}`;
   if (entry.kind === "workspace_file_reference") return `${entry.displayName}\n${entry.path}`;
-  if (entry.kind === "runtime_request") return `${entry.requestType} · ${entry.status}\n${entry.prompt}`;
-  if (entry.kind === "run_result") return `${entry.disposition}\n${entry.summary}`;
-  if (entry.kind === "run_terminal") return `${entry.runState} · ${entry.turnState} · ${entry.disposition}${entry.stopReason ? `\n${entry.stopReason}` : ""}`;
+  if (entry.kind === "runtime_request") return `${enumLabel(entry.requestType, "lower")} · ${enumLabel(entry.status, "lower")}\n${entry.prompt}`;
+  if (entry.kind === "run_result") return `${enumLabel(entry.disposition, "lower")}\n${entry.summary}`;
+  if (entry.kind === "run_terminal") return `${enumLabel(entry.runState, "lower")} · ${enumLabel(entry.turnState, "lower")} · ${enumLabel(entry.disposition, "lower")}${entry.stopReason ? `\n${entry.stopReason}` : ""}`;
   return entry.text;
 }
 
@@ -1957,7 +1957,7 @@ function RawTranscriptView({
           )}
         >
           <span className="text-(length:--text-nano) uppercase tracking-(--tracking-caps) text-muted-foreground">
-            {entry.kind}
+            {enumLabel(entry.kind, "lower")}
           </span>
           <pre className="min-w-0 whitespace-pre-wrap break-words text-foreground/80">
             {rawEntryContent(entry)}
