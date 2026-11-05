@@ -329,7 +329,10 @@ export function Dashboard() {
         <InlineBanner
           tone="warning"
           icon={PauseCircle}
-          title={l10n("local.value_imported_agentvalue_paused_and_will_not_69fbdede", {v0: (pausedImportedCount), v1: (pausedImportedCount === 1 ? " is" : "s are")})}
+          title={l10n("local.imported_agents_paused_count_75c0c71e", {
+            v0: pausedImportedCount,
+            v1: englishPluralSuffix(pausedImportedCount === 1 ? "" : "s"),
+          })}
           actions={
             <Button
               size="sm"

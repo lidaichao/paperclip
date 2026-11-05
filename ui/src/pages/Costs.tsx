@@ -931,7 +931,15 @@ export function Costs({
                   return (
                     <section key={scopeType} className="space-y-3">
                       <div>
-                        <h2 className="text-lg font-semibold capitalize">{scopeType === "company" ? l10n("local.organization_af3a1bb3") : scopeType} {l10n("local.budgets_eefa0849")}</h2>
+                        <h2 className="text-lg font-semibold">
+                          {l10n("local.budget_scope_heading_0f4cda01", {
+                            v0: scopeType === "company"
+                              ? l10n("local.organization_d764d425")
+                              : scopeType === "agent"
+                                ? l10n("local.agent_11b39c93")
+                                : l10n("local.project_98595978"),
+                          })}
+                        </h2>
                         <p className="text-sm text-muted-foreground">
                           {scopeType === "company"
                             ? l10n("local.organization_wide_monthly_policy_17c42f18")
