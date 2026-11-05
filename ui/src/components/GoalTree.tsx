@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import type { Goal } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
 import { StatusBadge } from "./StatusBadge";
@@ -46,7 +47,7 @@ function GoalNode({ goal, children, allGoals, depth, goalLink, onSelect }: GoalN
       ) : (
         <span className="w-4" />
       )}
-      <span className="text-xs text-muted-foreground capitalize">{goal.level}</span>
+      <span className="text-xs text-muted-foreground capitalize">{enumLabel(goal.level, "lower")}</span>
       <span className="flex-1 truncate">{goal.title}</span>
       <StatusBadge status={goal.status} />
     </>
