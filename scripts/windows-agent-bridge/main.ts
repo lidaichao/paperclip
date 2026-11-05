@@ -98,6 +98,11 @@ function safeError(error: unknown): string {
   return error.message.replace(/Bearer\s+\S+/gi, "Bearer [redacted]").slice(0, 500);
 }
 
+function requireClaimedRunId(): never {
+  // inbox-lite is not an authenticated claim, even if it reports an active run.
+  throw new Error("服务端尚未签发本执行端的任务运行号，拒绝本机执行");
+}
+
 export async function runBridge(configPath: string, signal: AbortSignal): Promise<"started" | "already-running"> {
   const config = await loadBridgeConfig(configPath);
   // This bridge has no server-issued run/checkout handshake. A local UUID
@@ -145,6 +150,7 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
           if (!token || !localAgent) throw new Error("智能体运行配置未初始化");
           return await runLocalAgent({
             signal,
+            runId: requireClaimedRunId(),
             apiBase: config.apiBase,
             remoteCompanyId: config.companyId,
             remoteAgentId: agent.remoteAgentId,

@@ -1,5 +1,4 @@
 import path from "node:path";
-import { randomUUID } from "node:crypto";
 import type {
   AdapterExecutionContext,
   AdapterExecutionResult,
@@ -34,6 +33,7 @@ const SAFE_ADAPTER_CONFIG_KEYS = new Set([
   "instructionsBundleMode",
   "dangerouslyBypassApprovalsAndSandbox",
 ]);
+const RUN_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type LocalAdapterExecute = (ctx: AdapterExecutionContext) => Promise<AdapterExecutionResult>;
 
@@ -41,11 +41,11 @@ export interface AdapterRuntimeDependencies {
   codexExecute?: LocalAdapterExecute;
   cursorExecute?: LocalAdapterExecute;
   fetch?: typeof globalThis.fetch;
-  randomId?: () => string;
 }
 
 export interface LocalAgentRunInput {
   signal?: AbortSignal;
+  runId: string;
   apiBase: string;
   remoteCompanyId: string;
   remoteAgentId: string;
@@ -59,7 +59,7 @@ export interface LocalAgentRunInput {
 }
 
 export interface LocalAgentRunResult {
-  localRunId: string;
+  runId: string;
   exitCode: number | null;
   signal: string | null;
   timedOut: boolean;
@@ -157,6 +157,9 @@ function redactToken(text: string, token: string): string {
 }
 
 export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAgentRunResult> {
+  if (typeof input.runId !== "string" || !RUN_ID_PATTERN.test(input.runId)) {
+    throw new Error("valid server-issued Paperclip run id is required before local execution");
+  }
   if (input.issue.assigneeAgentId !== input.remoteAgentId || input.issue.companyId !== input.remoteCompanyId) {
     throw new Error("refusing to run a task assigned to a different Alice identity");
   }
@@ -171,7 +174,6 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
   }
   process.env.PAPERCLIP_API_URL = requestedApiBase;
 
-  const localRunId = input.dependencies?.randomId?.() ?? randomUUID();
   const execute = input.localAgent.adapterType === "codex_local"
     ? input.dependencies?.codexExecute ?? executeCodex
     : input.dependencies?.cursorExecute ?? executeCursor;
@@ -184,7 +186,7 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
   try {
     result = await execute({
       signal: input.signal,
-      runId: localRunId,
+      runId: input.runId,
       agent: {
         id: input.remoteAgentId,
         companyId: input.remoteCompanyId,
@@ -221,7 +223,7 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
   }
 
   return {
-    localRunId,
+    runId: input.runId,
     exitCode: result.exitCode,
     signal: result.signal,
     timedOut: result.timedOut,
