@@ -139,8 +139,8 @@ export function ProviderQuotaCard({
               {providerDisplayName(provider)}
             </CardTitle>
             <CardDescription className="text-xs mt-0.5">
-              <span className="font-mono">{formatTokens(totalInputTokens)}</span> {l10n("local.in_58296753")}{" · "}
-              <span className="font-mono">{formatTokens(totalOutputTokens)}</span> {l10n("local.out_762069bc")}{(totalApiRuns > 0 || totalSubRuns > 0) && (
+              {l10n("local.input_36ecb4f8")}{" "}<span className="font-mono">{formatTokens(totalInputTokens)}</span>{" · "}
+              {l10n("local.output_b2439bcb")}{" "}<span className="font-mono">{formatTokens(totalOutputTokens)}</span>{(totalApiRuns > 0 || totalSubRuns > 0) && (
                 <span className="ml-1.5">
                   ·{" "}
                   {totalApiRuns > 0 && l10n("local._value_api_087278dc", {v0: (totalApiRuns)})}
@@ -228,8 +228,8 @@ export function ProviderQuotaCard({
                     <span className="font-mono text-foreground">{formatTokens(totalSubTokens)}</span> {l10n("local.total_11239872")}{" · "}
                   </>
                 )}
-                <span className="font-mono text-foreground">{formatTokens(totalSubInputTokens)}</span> {l10n("local.in_58296753")}{" · "}
-                <span className="font-mono text-foreground">{formatTokens(totalSubOutputTokens)}</span> {l10n("local.out_762069bc")}</p>
+                {l10n("local.input_36ecb4f8")}{" "}<span className="font-mono text-foreground">{formatTokens(totalSubInputTokens)}</span>{" · "}
+                {l10n("local.output_b2439bcb")}{" "}<span className="font-mono text-foreground">{formatTokens(totalSubOutputTokens)}</span></p>
               {subSharePct > 0 && (
                 <>
                   <div className="h-1.5 w-full border border-border overflow-hidden">

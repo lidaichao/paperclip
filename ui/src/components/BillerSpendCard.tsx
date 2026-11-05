@@ -63,8 +63,8 @@ export function BillerSpendCard({
               {providerDisplayName(row.biller)}
             </CardTitle>
             <CardDescription className="text-xs mt-0.5">
-              <span className="font-mono">{formatTokens(row.inputTokens + row.cachedInputTokens)}</span> {l10n("local.in_58296753")}{" · "}
-              <span className="font-mono">{formatTokens(row.outputTokens)}</span> {l10n("local.out_762069bc")}{" · "}
+              {l10n("local.input_36ecb4f8")}{" "}<span className="font-mono">{formatTokens(row.inputTokens + row.cachedInputTokens)}</span>{" · "}
+              {l10n("local.output_b2439bcb")}{" "}<span className="font-mono">{formatTokens(row.outputTokens)}</span>{" · "}
               {row.providerCount} {l10n("local.provider_5c4c1964")}{row.providerCount === 1 ? "" : englishPluralSuffix("s")}
               {" · "}
               {row.modelCount} {l10n("local.model_9372c470")}{row.modelCount === 1 ? "" : englishPluralSuffix("s")}

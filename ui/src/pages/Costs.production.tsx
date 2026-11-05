@@ -747,7 +747,7 @@ export function Costs() {
                               <div className="text-right text-sm tabular-nums">
                                 <div className="font-medium">{formatCents(row.costCents)}</div>
                                 <div className="text-xs text-muted-foreground">
-                                  {l10n("local.in_58296753")}{" "}{formatTokens(row.inputTokens + row.cachedInputTokens)} {l10n("local._out_0815f5b0")}{" "}{formatTokens(row.outputTokens)}
+                                  {l10n("local.input_36ecb4f8")}{" "}{formatTokens(row.inputTokens + row.cachedInputTokens)} {l10n("local._out_0815f5b0")}{" "}{formatTokens(row.outputTokens)}
                                 </div>
                                 {(row.apiRunCount > 0 || row.subscriptionRunCount > 0) ? (
                                   <div className="text-xs text-muted-foreground">
