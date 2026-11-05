@@ -1,4 +1,5 @@
 import { l10n } from "../i18n";
+import { enumLabel } from "../i18n/display";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "@/lib/router";
@@ -636,5 +637,5 @@ export function OrgChart() {
 const roleLabels: Record<string, string> = AGENT_ROLE_LABELS;
 
 function roleLabel(role: string): string {
-  return roleLabels[role] ?? role;
+  return roleLabels[role] ?? enumLabel(role, "lower");
 }
