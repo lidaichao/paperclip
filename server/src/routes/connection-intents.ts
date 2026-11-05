@@ -1,6 +1,7 @@
 import { connectionIntentDeliveryService } from "../services/connection-intent-delivery.js";
 import { Router, type Request } from "express";
-import type { Db } from "@paperclipai/db";
+import { heartbeatRuns, type Db } from "@paperclipai/db";
+import { eq } from "drizzle-orm";
 import {
   CONNECTION_REQUEST_TOOL_DESCRIPTION,
   CONNECTIONS_SEARCH_TOOL_DESCRIPTION,
@@ -51,6 +52,9 @@ export function runtimeConnectionIntentRoutes(db: Db) {
     const claims = verifyRuntimeToolsToken(typeof req.headers["x-paperclip-github-capability"] === "string"
       ? req.headers["x-paperclip-github-capability"] : bearer(req), "github_credentials");
     if (!claims) throw unauthorized("GitHub 运行时能力无效");
+    const [run] = await db.select({ runtimeMode: heartbeatRuns.runtimeMode })
+      .from(heartbeatRuns).where(eq(heartbeatRuns.id, claims.run_id)).limit(1);
+    if (run?.runtimeMode === "client_pull") throw forbidden("本机领取运行暂不支持服务端运行工具");
     res.setHeader("Cache-Control", "no-store");
     res.json(await resolveGitHubOperationCredentials(db, {
       companyId: claims.company_id, agentId: claims.sub, runId: claims.run_id,

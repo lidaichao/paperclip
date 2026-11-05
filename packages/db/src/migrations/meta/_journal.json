@@ -2059,6 +2059,13 @@
       "when": 1793194458579,
       "tag": "0295_serious_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 296,
+      "version": "7",
+      "when": 1793902080255,
+      "tag": "0296_exotic_epoch",
+      "breakpoints": true
     }
   ]
 }

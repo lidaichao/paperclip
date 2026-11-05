@@ -16,6 +16,7 @@ import { connectionIntentService } from "./connection-intents.js";
 import { managedAiSessionFingerprintConfig, prepareManagedAiRuntime, assertManagedAiProjectAuth, stripAiAuthBindings, isAiConnectionBusy, AI_AUTH_ENV_KEYS } from "./ai-connection-runtime.js";
 import { aiConnectionBindingSchema } from "@paperclipai/shared";
 import { executionBlockerPredicate, getExecutionBlocker } from "./execution-blocker.js";
+import { isClientPullRuntimeConfig } from "./local-agent-run-leases.js";
 import { CONVERSATION_CONTINUATION_POLICY, claimedAdapterType, runUsedConversationAdapter, hasConversationContinuationPolicy, isConversationAdapter } from "./conversation-continuation.js";
 import { recordExecutionWait } from "./execution-wait.js";
 import { getNativeReviewAssignment, readNativeReviewAssignmentContext } from "./native-runtime/native-review-participant.js";
@@ -138,6 +139,7 @@ import {
   executionWorkspaces,
   heartbeatRunEvents,
   heartbeatRuns,
+  localAgentRunLeases,
   issueApprovals,
   issueAttachments,
   issueComments,
@@ -17333,6 +17335,17 @@ export function heartbeatService(
     }
 
     const issueId = readNonEmptyString(context.issueId);
+    if (issueId) {
+      const [localIssueOwner] = await db.select({ runId: localAgentRunLeases.runId })
+        .from(localAgentRunLeases).where(and(
+          eq(localAgentRunLeases.companyId, run.companyId),
+          eq(localAgentRunLeases.issueId, issueId),
+          isNull(localAgentRunLeases.releasedAt),
+        )).limit(1);
+      // Assignment may change while a desktop process is still stopping.
+      // A terminal heartbeat status does not prove that process has exited.
+      if (localIssueOwner) return null;
+    }
     if (issueId && activeRunExecutions.size > 0) {
       // Native finalization publishes success before workspace synchronization,
       // provider suspension, and lease release finish. A queued comment must
@@ -17796,6 +17809,35 @@ export function heartbeatService(
           )).returning().then((rows) => rows[0] ?? null);
         });
     if (!claimed) return null;
+
+    // The server-side claim and a desktop claim can race across different
+    // assignees during reassignment. Serialize the final admission on the issue
+    // row. If a desktop lease committed first, put this run back in the queue
+    // before any adapter executes. If we commit first, the desktop claim sees
+    // this running run and refuses ownership.
+    const claimedIssueForLocalFence = readNonEmptyString(parseObject(claimed.contextSnapshot).issueId);
+    if (claimedIssueForLocalFence) {
+      const desktopOwnsIssue = await db.transaction(async (tx) => {
+        const [issueRow] = await tx.select({ id: issues.id }).from(issues).where(and(
+          eq(issues.companyId, claimed.companyId), eq(issues.id, claimedIssueForLocalFence),
+        )).for("update");
+        if (!issueRow) return false;
+        const [localOwner] = await tx.select({ runId: localAgentRunLeases.runId })
+          .from(localAgentRunLeases).where(and(
+            eq(localAgentRunLeases.companyId, claimed.companyId),
+            eq(localAgentRunLeases.issueId, claimedIssueForLocalFence),
+            isNull(localAgentRunLeases.releasedAt),
+          )).limit(1);
+        if (!localOwner) return false;
+        await tx.update(heartbeatRuns).set({
+          status: "queued", startedAt: null,
+          controllerBootId: null, controllerLeaseExpiresAt: null,
+          updatedAt: new Date(),
+        }).where(and(eq(heartbeatRuns.id, claimed.id), eq(heartbeatRuns.status, "running")));
+        return true;
+      });
+      if (desktopOwnsIssue) return null;
+    }
 
     publishLiveEvent({
       companyId: claimed.companyId,
@@ -19155,6 +19197,9 @@ export function heartbeatService(
       nativeControllerProcessStartedAt,
       nativeControllerLeaseExpiresAt,
     } of activeRuns) {
+      // Local computers own these processes. The server PID reaper cannot
+      // infer they stopped; the durable lease and stop acknowledgement do.
+      if (run.runtimeMode === "client_pull") continue;
       // Authentication timeout requires an explicit ownership resolution, not
       // repeated reattachment or a process-gone guess on subsequent sweeps.
       if (isNativeRunnerOwnershipHeld(run)) continue;
@@ -19904,6 +19949,15 @@ export function heartbeatService(
     return withAgentStartLock(agentId, async () => {
       const agent = await getAgent(agentId);
       if (!agent) return [];
+      // A client-pull agent is claimed only through the durable local-run
+      // endpoint. Never dispatch its queued run on the server.
+      if (isClientPullRuntimeConfig(agent.runtimeConfig)) return [];
+      const [localOwner] = await db.select({ runId: localAgentRunLeases.runId })
+        .from(localAgentRunLeases).where(and(
+          eq(localAgentRunLeases.agentId, agentId),
+          isNull(localAgentRunLeases.releasedAt),
+        )).limit(1);
+      if (localOwner) return [];
       const invokability = await getAgentInvokability(agent);
       if (!invokability.invokable) {
         if (shouldCancelRunsForNonInvokableAgent(invokability)) {
@@ -20152,6 +20206,9 @@ export function heartbeatService(
     let run = await getRun(runId);
     if (!run) return;
     if (run.status !== "queued" && run.status !== "running") return;
+    if (run.runtimeMode === "client_pull") return;
+    const executionAgent = await getAgent(run.agentId);
+    if (executionAgent && isClientPullRuntimeConfig(executionAgent.runtimeConfig)) return;
 
     if (run.status === "queued") {
       const claimed = await claimQueuedRun(run);

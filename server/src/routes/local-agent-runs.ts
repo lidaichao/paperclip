@@ -1,0 +1,70 @@
+import { Router, type Request } from "express";
+import type { Db } from "@paperclipai/db";
+import { badRequest, forbidden } from "../errors.js";
+import { localAgentRunLeaseService, type LocalRunOwner } from "../services/local-agent-run-leases.js";
+
+function objectBody(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw badRequest("JSON object required");
+  return value as Record<string, unknown>;
+}
+
+export function localAgentRunRoutes(db: Db) {
+  const router = Router();
+  const leases = localAgentRunLeaseService(db);
+
+  function actorScope(req: Request) {
+    if (req.actor.type !== "agent" || req.actor.source !== "agent_key" || !req.actor.agentId || !req.actor.companyId) {
+      throw forbidden("An agent's own API key is required");
+    }
+    return { companyId: req.actor.companyId, agentId: req.actor.agentId };
+  }
+
+  function owner(req: Request, body: Record<string, unknown>): LocalRunOwner {
+    const scope = actorScope(req);
+    return {
+      ...scope,
+      runId: String(req.params.runId ?? ""),
+      deviceId: String(body.deviceId ?? ""),
+      leaseId: String(body.leaseId ?? ""),
+      generation: Number(body.generation),
+    };
+  }
+
+  router.post("/agents/me/local-runs/claim", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const scope = actorScope(req);
+    const body = objectBody(req.body);
+    const claimed = await leases.claim({
+      ...scope,
+      deviceId: String(body.deviceId ?? ""),
+      idempotencyKey: req.header("Idempotency-Key") ?? "",
+    });
+    if (!claimed) return res.status(204).end();
+    return res.json(claimed);
+  });
+
+  router.post("/agents/me/local-runs/:runId/renew", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    return res.json(await leases.renew(owner(req, objectBody(req.body))));
+  });
+
+  router.get("/agents/me/local-runs/:runId/control", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    return res.json(await leases.control(owner(req, req.query as Record<string, unknown>)));
+  });
+
+  router.post("/agents/me/local-runs/:runId/finish", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    if (!["succeeded", "failed", "cancelled"].includes(String(body.outcome ?? ""))) throw badRequest("Invalid outcome");
+    if (body.processStopped !== true) throw badRequest("processStopped must be true");
+    return res.json(await leases.finish({
+      ...owner(req, body),
+      outcome: body.outcome as "succeeded" | "failed" | "cancelled",
+      exitCode: body.exitCode === null ? null : Number(body.exitCode),
+      processStopped: true,
+    }));
+  });
+
+  return router;
+}

@@ -140,6 +140,7 @@ export function connectionIntentService(db: Db) {
         companyId: heartbeatRuns.companyId,
         agentId: heartbeatRuns.agentId,
         status: heartbeatRuns.status,
+        runtimeMode: heartbeatRuns.runtimeMode,
         responsibleUserId: heartbeatRuns.responsibleUserId,
         activeIdentityContextId: heartbeatRuns.activeIdentityContextId,
         contextSnapshot: heartbeatRuns.contextSnapshot,
@@ -154,6 +155,9 @@ export function connectionIntentService(db: Db) {
       || (!run.activeIdentityContextId && run.responsibleUserId !== claims.responsible_user_id)
     ) throw forbidden("运行时工具令牌与其心跳运行不匹配");
     if (run.status !== "running") throw forbidden("运行时工具令牌已失效");
+    // This route is mounted before the normal actor middleware. Until its
+    // mutations can share the desktop lease transaction, it must fail closed.
+    if (run.runtimeMode === "client_pull") throw forbidden("本机领取运行暂不支持运行时连接工具");
     if (run.activeIdentityContextId) {
       const current = await captureRunIdentity(db, { companyId: run.companyId, agentId: run.agentId, runId: run.id });
       run = { ...run, responsibleUserId: current.run.responsibleUserId };
