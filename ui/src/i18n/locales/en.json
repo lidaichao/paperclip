@@ -13767,6 +13767,16 @@
     "enum_slack_tool_canvas_sections_10301572": "Find Slack canvas sections",
     "enum_slack_tool_replace_canvas_section_10301573": "Replace Slack canvas section",
     "enum_slack_tool_create_channel_10301574": "Create Slack channel",
-    "enum_slack_tool_invite_10301575": "Invite to Slack channel"
+    "enum_slack_tool_invite_10301575": "Invite to Slack channel",
+    "enum_identity_issue_responsible_user_10301576": "Task responsible user",
+    "enum_identity_instruction_10301577": "Instruction",
+    "enum_identity_steering_10301578": "Steering update",
+    "enum_identity_dispatch_10301579": "Dispatch",
+    "enum_identity_queued_comment_interrupt_10301580": "Queued comment interruption",
+    "enum_identity_delegation_10301581": "Delegation",
+    "enum_identity_company_default_10301582": "Company default",
+    "enum_identity_absent_10301583": "Absent",
+    "enum_identity_dedicated_10301584": "Dedicated",
+    "enum_identity_anonymous_10301585": "Anonymous"
   }
 }

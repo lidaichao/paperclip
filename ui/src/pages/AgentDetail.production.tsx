@@ -1290,7 +1290,7 @@ export function AgentDetail() {
               <h2 className="text-2xl font-bold truncate">{agent.name}</h2>
             </div>
             <p className="text-sm text-muted-foreground truncate">
-              {roleLabels[agent.role] ?? agent.role}
+              {roleLabels[agent.role] ?? enumLabel(agent.role, "lower")}
               {agent.title ? ` - ${agent.title}` : ""}
             </p>
           </div>
@@ -2033,7 +2033,7 @@ function AgentConfigurePage({
                         <span className="mx-1">·</span>
                         <span>{formatDate(revision.createdAt)}</span>
                         <span className="mx-1">·</span>
-                        <span>{revision.source}</span>
+                        <span>{enumLabel(revision.source, "lower")}</span>
                       </div>
                       <Button
                         size="sm"

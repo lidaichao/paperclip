@@ -41,6 +41,10 @@ describe("enumLabel", () => {
     expect(enumLabel("slack_post_message")).toBe("发送 Slack 消息");
     expect(enumLabel("slack_delete_message")).toBe("删除 Slack 消息");
     expect(enumLabel("slack_canvas_sections")).toBe("查找 Slack 画布区段");
+    expect(enumLabel("issue_responsible_user")).toBe("任务负责人");
+    expect(enumLabel("queued_comment_interrupt")).toBe("队列评论中断");
+    expect(enumLabel("company_default")).toBe("公司默认");
+    expect(enumLabel("dedicated")).toBe("专用");
   });
 
   it("keeps English labels readable", async () => {

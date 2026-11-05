@@ -164,7 +164,7 @@ const JWT_VALUE_RE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-
 
 function formatOrgChainHealthPath(agent: AgentDetailRecord) {
   return agent.orgChainHealth?.fullChain
-    .map((entry) => `${entry.name}${entry.status !== "active" && entry.status !== "idle" ? ` (${entry.status})` : ""}`)
+    .map((entry) => `${entry.name}${entry.status !== "active" && entry.status !== "idle" ? ` (${enumLabel(entry.status, "lower")})` : ""}`)
     .join(" -> ") ?? agent.name;
 }
 
@@ -1279,7 +1279,7 @@ export function AgentDetail() {
                 ? <img src={`/brands/${agent.adapterType === "claude_local" ? "claude" : "codex"}-color.svg`} className="size-4" alt="" />
                 : null}
               <span>{getAdapterDisplay(agent.adapterType).label}</span><span>·</span>
-              <span>{agent.title || roleLabels[agent.role] || agent.role}</span>
+              <span>{agent.title || roleLabels[agent.role] || enumLabel(agent.role, "lower")}</span>
             </div>
           </div>
         </div>
@@ -1761,7 +1761,7 @@ export function AgentOverview({
             <StatusBadge status={agent.status} />
           </div>
           <div className="space-y-3">
-            <SummaryRow label={l10n("local.role_14736a2e")}><span className="text-sm">{roleLabels[agent.role] ?? agent.role}</span></SummaryRow>
+            <SummaryRow label={l10n("local.role_14736a2e")}><span className="text-sm">{roleLabels[agent.role] ?? enumLabel(agent.role, "lower")}</span></SummaryRow>
             <SummaryRow label={l10n("local.title_7e8cd205")}><span className="text-sm">{agent.title ?? l10n("local.not_set_4895f731")}</span></SummaryRow>
             <SummaryRow label={l10n("local.reports_to_2b488c09")}>
               {reportsToAgent ? (
@@ -1931,7 +1931,7 @@ export function AgentRevisionsTab({
                   <span className="mx-1">·</span>
                   <span>{formatDate(revision.createdAt)}</span>
                   <span className="mx-1">·</span>
-                  <span>{revision.source}</span>
+                  <span>{enumLabel(revision.source, "lower")}</span>
                 </div>
                 <Button
                   size="sm"
@@ -3529,12 +3529,12 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
                     return (
                       <li key={identity.id}>
                         <span className="text-foreground">{person?.user?.name ?? person?.user?.email ?? identity.responsibleUserId ?? l10n("local.no_responsible_person_409926df")}</span>
-                        {" · "}{identity.cause}{" · "}{identity.status}
+                        {" · "}{enumLabel(identity.cause, "lower")}{" · "}{enumLabel(identity.status, "lower")}
                         {identity.github ? (
                           <span className="block">
                             {identity.github.login ? (l10n("local._value_8d7c421d", {v0: (identity.github.login)}) + " ") : ""}
-                            {identity.github.source ? (l10n("local.value_33b1db25", {v0: (identity.github.source)}) + " ") : ""}
-                            {identity.github.status}{identity.github.reason ? `: ${identity.github.reason}` : ""}
+                            {identity.github.source ? (l10n("local.value_33b1db25", {v0: enumLabel(identity.github.source, "lower")}) + " ") : ""}
+                            {enumLabel(identity.github.status, "lower")}{identity.github.reason ? `: ${identity.github.reason}` : ""}
                           </span>
                         ) : <span className="block">{l10n("local.no_github_operation_recorded_5e5bfca3")}</span>}
                       </li>
