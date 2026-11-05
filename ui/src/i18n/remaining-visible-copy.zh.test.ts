@@ -865,6 +865,7 @@ describe("remaining visible Chinese copy", () => {
     expect(messages.args_block_10300675).toContain("参数");
     expect(messages.result_block_10300676).toContain("结果");
     expect(messages.reissued_from_isolated_worktree_10300677).toContain("独立 Git 工作树");
+    expect(messages._paperclip_worktrees_2ed5251a).toBe(".paperclip/worktrees");
     expect(messages.base_ref_live_branch_10300678).toContain("基准引用");
     expect(messages.recorded_branch_10300679).toContain("已记录分支");
     expect(messages.reissue_isolated_title_10300680).toContain("独立工作区");

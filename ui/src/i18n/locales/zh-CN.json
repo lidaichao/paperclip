@@ -139,7 +139,7 @@
     "_out_0815f5b0": "· 输出",
     "_paperclip_stores_the_credentials_in_its_vaul_92f80fda": "。 Alice 将凭证存储在其保管库中，并将同一应用程序用于智能体的 GitHub 工具。",
     "_paperclip_will_retry_automatically_c8bed3e2": "。Alice 将自动重试。",
-    "_paperclip_worktrees_2ed5251a": ".回形针/工作树",
+    "_paperclip_worktrees_2ed5251a": ".paperclip/worktrees",
     "_paperclipai_plugin_example_937e8b91": "@paperclipai/plugin-example",
     "_placeholders_in_the_title_and_instructions_f71c60c7": "` 占位符可用于标题和指令中。",
     "_placeholders_in_the_title_or_instructions_to_2f70c3ce": "` 占位符，以便在例行任务运行时提示输入参数。",
