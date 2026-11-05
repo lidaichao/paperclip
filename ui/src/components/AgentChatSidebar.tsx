@@ -46,7 +46,9 @@ export function AgentChatSidebar({
             type="button"
             variant="ghost"
             size="icon-xs"
-            aria-label={`${pinned ? "Unstar" : "Star"} ${agent.name}`}
+            aria-label={pinned
+              ? l10n("local.unstar_value_cd4371d8", { v0: agent.name })
+              : l10n("local.star_value_3158291a", { v0: agent.name })}
             aria-pressed={pinned}
             title={pinned ? l10n("local.unstar_agent_87f2a385") : l10n("local.star_agent_to_pin_28d20be6")}
             onClick={(event) => {

@@ -351,7 +351,9 @@ export function TaskChatRunnerActivityGroup({
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
             aria-controls={expanded ? historyId : undefined}
-            aria-label={`${expanded ? "Collapse" : "Expand"} ${item.active ? countLabel : `${summary.fullLabel.toLowerCase()} (${countLabel})`}`}
+            aria-label={expanded
+              ? l10n("local.collapse_value_f8942621", { v0: item.active ? countLabel : `${summary.fullLabel.toLowerCase()} (${countLabel})` })
+              : l10n("local.expand_value_614e2df2", { v0: item.active ? countLabel : `${summary.fullLabel.toLowerCase()} (${countLabel})` })}
           >
             {!item.active ? (
               <span

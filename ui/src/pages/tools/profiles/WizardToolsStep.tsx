@@ -311,7 +311,9 @@ function createAdvancedRuleId() {
 }
 
 function ruleSummary(rule: AdvancedRule): string {
-  const verb = rule.effect === "include" ? "Allow" : "Block";
+  const verb = rule.effect === "include"
+    ? l10n("local.allow_e213c161")
+    : l10n("local.block_496aca80");
   if (rule.kind === "tool_name") return l10n("local.value_tools_matching_value_bc96bafd", {v0: (verb), v1: (rule.value)});
   if (rule.kind === "risk_level") return l10n("local.value_value_tools_4e671565", {v0: (verb), v1: (rule.riskLevel ?? rule.value)});
   return l10n("local.value_tool_value_92078b1b", {v0: (verb), v1: (rule.value)});

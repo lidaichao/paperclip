@@ -105,7 +105,7 @@ export function formatLearningEvent(event: PipelineCompanyCaseEvent): LearningEv
 
 export function learningDayKey(value: string | Date) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unknown";
+  if (Number.isNaN(date.getTime())) return l10n("local.unknown_b764cdc0");
   return date.toISOString().slice(0, 10);
 }
 
