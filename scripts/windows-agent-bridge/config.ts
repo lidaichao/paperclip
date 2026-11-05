@@ -6,8 +6,6 @@ const ROOT_KEYS = new Set([
   "schemaVersion",
   "apiBase",
   "companyId",
-  "localApiBase",
-  "localCompanyId",
   "credentialsFile",
   "stateFile",
   "pollIntervalMs",
@@ -19,7 +17,16 @@ const AGENT_KEYS = new Set([
   "remoteAgentName",
   "localAgentName",
   "adapterType",
+  "localAdapterConfig",
   "maxConcurrentRuns",
+]);
+
+const LOCAL_ADAPTER_KEYS = new Set([
+  "cwd", "command", "model", "mode", "effort", "engine", "search",
+  "variant", "fastMode", "graceSec", "timeoutSec", "paperclipSkillSync",
+  "instructionsFilePath", "instructionsRootPath", "instructionsEntryFile",
+  "instructionsBundleMode", "modelReasoningEffort",
+  "dangerouslyBypassApprovalsAndSandbox",
 ]);
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -89,6 +96,26 @@ function resolveConfigPath(configDir: string, raw: string, label: string): strin
   return resolved;
 }
 
+function parseLocalAdapterConfig(value: unknown, adapterType: BridgeAdapterType, label: string): Record<string, unknown> {
+  const config = asRecord(value, label);
+  assertKnownKeys(config, LOCAL_ADAPTER_KEYS, label);
+  for (const key of ["cwd", "command"]) {
+    const candidate = requiredString(config, key, label);
+    if (!path.isAbsolute(candidate) && !path.win32.isAbsolute(candidate)) {
+      throw new Error(`${label}.${key} must be an absolute local path`);
+    }
+  }
+  for (const key of ["instructionsFilePath", "instructionsRootPath", "instructionsEntryFile"]) {
+    if (config[key] === undefined) continue;
+    const candidate = requiredString(config, key, label);
+    if (!path.isAbsolute(candidate) && !path.win32.isAbsolute(candidate)) {
+      throw new Error(`${label}.${key} must be an absolute local path`);
+    }
+  }
+  if (adapterType === "cursor") requiredString(config, "model", label);
+  return structuredClone(config);
+}
+
 function parseAgent(value: unknown, index: number): BridgeAgentConfig {
   const label = `agents[${index}]`;
   const record = asRecord(value, label);
@@ -106,6 +133,7 @@ function parseAgent(value: unknown, index: number): BridgeAgentConfig {
     remoteAgentName: requiredString(record, "remoteAgentName", label),
     localAgentName: requiredString(record, "localAgentName", label),
     adapterType: adapterType as BridgeAdapterType,
+    localAdapterConfig: parseLocalAdapterConfig(record.localAdapterConfig, adapterType as BridgeAdapterType, `${label}.localAdapterConfig`),
     maxConcurrentRuns: 1,
   };
 }
@@ -137,12 +165,8 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
   assertNoInlineSecrets(raw);
   const record = asRecord(raw, "config");
   assertKnownKeys(record, ROOT_KEYS, "config");
-  if (record.schemaVersion !== 1) throw new Error("schemaVersion must be 1");
+  if (record.schemaVersion !== 2) throw new Error("schemaVersion must be 2");
   const apiBase = normalizeApiBase(requiredString(record, "apiBase", "config"));
-  const localApiBase = requiredString(record, "localApiBase", "config");
-  if (localApiBase !== "http://127.0.0.1:3100") {
-    throw new Error("localApiBase must be exactly http://127.0.0.1:3100");
-  }
   if (!Number.isInteger(record.pollIntervalMs) || Number(record.pollIntervalMs) < 5_000 || Number(record.pollIntervalMs) > 300_000) {
     throw new Error("pollIntervalMs must be an integer between 5000 and 300000");
   }
@@ -154,11 +178,9 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
   const configDir = path.dirname(absoluteConfigPath);
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     apiBase,
     companyId: requiredUuid(record, "companyId", "config"),
-    localApiBase,
-    localCompanyId: requiredUuid(record, "localCompanyId", "config"),
     credentialsFile: resolveConfigPath(configDir, requiredString(record, "credentialsFile", "config"), "credentialsFile"),
     stateFile: resolveConfigPath(configDir, requiredString(record, "stateFile", "config"), "stateFile"),
     pollIntervalMs: Number(record.pollIntervalMs),

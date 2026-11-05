@@ -11,6 +11,7 @@ const agent = (id: string, name: string): BridgeAgentConfig => ({
   remoteAgentName: name,
   localAgentName: name,
   adapterType: "codex_local",
+  localAdapterConfig: { cwd: "H:/AIagent/Luna", command: "C:/tools/codex.exe" },
   maxConcurrentRuns: 1,
 });
 

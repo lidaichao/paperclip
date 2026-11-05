@@ -10,11 +10,9 @@ describe("bridge lifecycle", () => {
     const stateFile = path.join(dir, "state.json");
     const configFile = path.join(dir, "bridge.json");
     await writeFile(configFile, JSON.stringify({
-      schemaVersion: 1,
+      schemaVersion: 2,
       apiBase: "http://192.168.72.157:3100",
       companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6",
-      localApiBase: "http://127.0.0.1:3100",
-      localCompanyId: "832910ae-5efa-4b9f-9992-1d70b281be1e",
       credentialsFile: "credentials.dpapi",
       stateFile,
       pollIntervalMs: 10_000,
@@ -23,6 +21,7 @@ describe("bridge lifecycle", () => {
         remoteAgentName: "Luna",
         localAgentName: "Luna",
         adapterType: "codex_local",
+        localAdapterConfig: { cwd: "H:/AIagent/Luna", command: "C:/tools/codex.exe" },
         maxConcurrentRuns: 1,
       }],
     }));

@@ -7,7 +7,7 @@ import { loadAgentTokens } from "./credentials.js";
 import { AliceClient } from "./paperclip-client.js";
 import { StateStore } from "./state-store.js";
 import { Dispatcher } from "./dispatcher.js";
-import { loadLocalAgentRuntimeConfig, runLocalAgent } from "./adapter-runtime.js";
+import { runLocalAgent } from "./adapter-runtime.js";
 import type { LocalAgentRuntimeConfig } from "./types.js";
 
 interface LockDocument { pid: number; startedAt: string; token: string }
@@ -126,12 +126,13 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
       const client = new AliceClient({ apiBase: config.apiBase, token });
       await client.verifyIdentity(agent.remoteAgentId, config.companyId);
       clients.set(agent.remoteAgentId, client);
-      localAgents.set(agent.remoteAgentId, await loadLocalAgentRuntimeConfig({
-        localApiBase: config.localApiBase,
-        localCompanyId: config.localCompanyId,
-        localAgentName: agent.localAgentName,
-        expectedAdapterType: agent.adapterType,
-      }));
+      localAgents.set(agent.remoteAgentId, {
+        id: agent.remoteAgentId,
+        companyId: config.companyId,
+        name: agent.localAgentName,
+        adapterType: agent.adapterType,
+        adapterConfig: agent.localAdapterConfig,
+      });
     }
 
     const dispatcher = new Dispatcher({

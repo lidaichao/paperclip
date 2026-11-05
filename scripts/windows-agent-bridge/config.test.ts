@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest";
 import { loadBridgeConfig } from "./config.js";
 
 const COMPANY_ID = "af8e9089-b0bb-43ac-ade3-c029c73b96e6";
-const LOCAL_COMPANY_ID = "832910ae-5efa-4b9f-9992-1d70b281be1e";
 const AGENT_A = "38a5808c-47f3-4029-bdfe-0d84504bdc8a";
 const AGENT_B = "b4cb456a-f1c9-4659-8413-7044bdd36d1d";
 
@@ -15,17 +14,20 @@ function agent(id = AGENT_A, name = "Luna") {
     remoteAgentName: name,
     localAgentName: name,
     adapterType: "codex_local",
+    localAdapterConfig: {
+      cwd: `H:/AIagent/${name}`,
+      command: "C:/tools/codex.exe",
+      model: "gpt-5.6-sol",
+    } as Record<string, unknown>,
     maxConcurrentRuns: 1,
   };
 }
 
 function validConfig() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     apiBase: "http://192.168.72.157:3100/",
     companyId: COMPANY_ID,
-    localApiBase: "http://127.0.0.1:3100",
-    localCompanyId: LOCAL_COMPANY_ID,
     credentialsFile: "credentials.dpapi",
     stateFile: "state.json",
     pollIntervalMs: 10_000,
@@ -47,6 +49,7 @@ describe("loadBridgeConfig", () => {
     expect(config.apiBase).toBe("http://192.168.72.157:3100");
     expect(config.credentialsFile).toBe(path.join(path.dirname(file), "credentials.dpapi"));
     expect(config.stateFile).toBe(path.join(path.dirname(file), "state.json"));
+    expect(config.agents[0].localAdapterConfig.cwd).toBe("H:/AIagent/Luna");
   });
 
   it("rejects non-http origins", async () => {
@@ -71,6 +74,33 @@ describe("loadBridgeConfig", () => {
     const input = validConfig();
     input.agents = [agent(AGENT_A, "Luna"), { ...agent(AGENT_B, "Rabbit"), localAgentName: "Luna" }];
     await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("duplicate localAgentName");
+  });
+
+  it("rejects obsolete 127 Paperclip settings", async () => {
+    const input = { ...validConfig(), localApiBase: "http://127.0.0.1:3100" };
+    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("unknown keys: localApiBase");
+  });
+
+  it("rejects inline GBrain credentials and unrestricted adapter arguments", async () => {
+    const withToken = validConfig();
+    withToken.agents[0].localAdapterConfig = {
+      ...withToken.agents[0].localAdapterConfig,
+      env: { GBRAIN_AGENT_TOKEN: "inline-secret" },
+    };
+    await expect(loadBridgeConfig(await fixture(withToken))).rejects.toThrow("credentialsFile");
+
+    const withArgs = validConfig();
+    withArgs.agents[0].localAdapterConfig = {
+      ...withArgs.agents[0].localAdapterConfig,
+      extraArgs: ["--api-key=inline-secret"],
+    };
+    await expect(loadBridgeConfig(await fixture(withArgs))).rejects.toThrow("unknown keys: extraArgs");
+  });
+
+  it("requires absolute local workspace and executable paths", async () => {
+    const input = validConfig();
+    input.agents[0].localAdapterConfig = { cwd: "relative/path", command: "codex.exe" };
+    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("cwd must be an absolute local path");
   });
 });
 

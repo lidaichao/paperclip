@@ -5,15 +5,14 @@ export interface BridgeAgentConfig {
   remoteAgentName: string;
   localAgentName: string;
   adapterType: BridgeAdapterType;
+  localAdapterConfig: Record<string, unknown>;
   maxConcurrentRuns: 1;
 }
 
 export interface BridgeConfig {
-  schemaVersion: 1;
+  schemaVersion: 2;
   apiBase: string;
   companyId: string;
-  localApiBase: "http://127.0.0.1:3100";
-  localCompanyId: string;
   credentialsFile: string;
   stateFile: string;
   pollIntervalMs: number;

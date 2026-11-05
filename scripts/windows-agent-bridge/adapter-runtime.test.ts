@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadLocalAgentRuntimeConfig, runLocalAgent } from "./adapter-runtime.js";
+import { runLocalAgent } from "./adapter-runtime.js";
 import type { AdapterExecutionContext } from "../../packages/adapter-utils/src/types.js";
 import type { BridgeInboxItem, LocalAgentRuntimeConfig } from "./types.js";
 
@@ -36,30 +36,6 @@ function localAgent(): LocalAgentRuntimeConfig {
     },
   };
 }
-
-describe("loadLocalAgentRuntimeConfig", () => {
-  it("refuses unresolved environment bindings instead of silently dropping GR identity", async () => {
-    const pending = loadLocalAgentRuntimeConfig({
-      localApiBase: "http://127.0.0.1:3100",
-      localCompanyId: LOCAL_COMPANY_ID,
-      localAgentName: "Luna",
-      expectedAdapterType: "codex_local",
-      fetch: async () => new Response(JSON.stringify([{
-        id: "local-agent-1",
-        companyId: LOCAL_COMPANY_ID,
-        name: "Luna",
-        adapterType: "codex_local",
-        adapterConfig: {
-          cwd: "H:/AIagent/Luna",
-          command: "C:/tools/codex.exe",
-          model: "gpt-5.6-sol",
-          env: { GBRAIN_AGENT_TOKEN: { type: "secret_ref", secretId: "secret-id" } },
-        },
-      }]), { status: 200, headers: { "content-type": "application/json" } }),
-    });
-    await expect(pending).rejects.toThrow("verified secret-resolution path");
-  });
-});
 
 describe("runLocalAgent", () => {
   it("passes the token only through authToken and redacts adapter logs", async () => {
