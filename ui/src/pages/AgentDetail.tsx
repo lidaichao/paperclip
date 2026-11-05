@@ -1853,7 +1853,12 @@ export function AgentOverview({
               to={agentScopedAuditHref(agent.id, section)}
               className="rounded-lg border border-border px-3 py-2 text-sm font-medium capitalize hover:bg-accent"
             >
-              {section}
+              {{
+                activity: l10n("local.activity_38da1505"),
+                runs: l10n("local.runs_848f54e8"),
+                costs: l10n("local.costs_b88fc5fc"),
+                budgets: l10n("local.budgets_a1a06e04"),
+              }[section]}
             </Link>
           ))}
         </div>
