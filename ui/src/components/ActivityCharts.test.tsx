@@ -6,6 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import type { HeartbeatRun } from "@paperclipai/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RunActivityChart, SuccessRateChart } from "./ActivityCharts";
+import { i18n } from "../i18n";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -131,5 +132,27 @@ describe("ActivityCharts", () => {
     expect(container.textContent).toContain("Recovered");
     const dayCell = container.querySelector("[title*='recovered: 4']");
     expect(dayCell).not.toBeNull();
+  });
+
+  it("localizes known failure categories and labels unknown codes as diagnostics", async () => {
+    await i18n.changeLanguage("zh-CN");
+    try {
+      render(<RunActivityChart activity={[{
+        date: "2026-04-20",
+        succeeded: 0,
+        failed: 3,
+        recovered: 0,
+        other: 0,
+        total: 3,
+        failedByErrorCode: { timeout: 1, adapter_failed: 1, provider_quota: 1 },
+      }]} />);
+      const tooltip = container.querySelector("[title^='2026-04-20：']")?.getAttribute("title");
+      expect(tooltip).toContain("运行超时: 1");
+      expect(tooltip).toContain("适配器失败: 1");
+      expect(tooltip).toContain("错误代码 provider_quota: 1");
+      expect(tooltip).not.toContain("adapter_failed");
+    } finally {
+      await i18n.changeLanguage("en");
+    }
   });
 });

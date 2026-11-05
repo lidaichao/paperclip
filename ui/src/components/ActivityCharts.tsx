@@ -1,4 +1,4 @@
-import { l10n } from "../i18n";
+import { i18n, l10n } from "../i18n";
 import { enumLabel } from "../i18n/display";
 import type { DashboardRunActivityDay, HeartbeatRun } from "@paperclipai/shared";
 
@@ -28,6 +28,15 @@ const runSegmentColors = {
   other: "var(--hex-737373)",
 } as const;
 
+function runFailureLabel(code: string): string {
+  if (i18n.language !== "zh-CN") return code;
+  if (code === "timeout") return l10n("local.run_timed_out_7b73d2f7");
+  const label = enumLabel(code, "lower");
+  return label === code.replace(/[_-]/g, " ")
+    ? `${l10n("local.error_code_0570b384")} ${code}`
+    : label;
+}
+
 // Compact per-day tooltip that also attributes failures to their error class.
 function runDayTooltip(entry: DashboardRunActivityDay): string {
   const lines = [entry.total === 1
@@ -38,7 +47,7 @@ function runDayTooltip(entry: DashboardRunActivityDay): string {
   if (entry.failed > 0) {
     lines.push(l10n("local.chart_failed_count_10300663", { v0: entry.failed }));
     const codes = Object.entries(entry.failedByErrorCode ?? {}).sort((a, b) => b[1] - a[1]);
-    for (const [code, count] of codes) lines.push(`    ${code}: ${count}`);
+    for (const [code, count] of codes) lines.push(`    ${runFailureLabel(code)}: ${count}`);
   }
   if (entry.other > 0) lines.push(l10n("local.chart_other_count_10300664", { v0: entry.other }));
   return lines.join("\n");
