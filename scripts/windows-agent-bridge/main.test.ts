@@ -11,6 +11,7 @@ describe("bridge lifecycle", () => {
     const configFile = path.join(dir, "bridge.json");
     await writeFile(configFile, JSON.stringify({
       schemaVersion: 2,
+      deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
       apiBase: "http://192.168.72.157:3100",
       companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6",
       credentialsFile: "credentials.dpapi",

@@ -11,6 +11,7 @@ export interface BridgeAgentConfig {
 
 export interface BridgeConfig {
   schemaVersion: 2;
+  deviceId: string;
   apiBase: string;
   companyId: string;
   credentialsFile: string;

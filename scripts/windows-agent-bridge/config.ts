@@ -4,6 +4,7 @@ import type { BridgeAdapterType, BridgeAgentConfig, BridgeConfig } from "./types
 
 const ROOT_KEYS = new Set([
   "schemaVersion",
+  "deviceId",
   "apiBase",
   "companyId",
   "credentialsFile",
@@ -179,6 +180,7 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
 
   return {
     schemaVersion: 2,
+    deviceId: requiredUuid(record, "deviceId", "config"),
     apiBase,
     companyId: requiredUuid(record, "companyId", "config"),
     credentialsFile: resolveConfigPath(configDir, requiredString(record, "credentialsFile", "config"), "credentialsFile"),

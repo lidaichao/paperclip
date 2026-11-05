@@ -26,6 +26,7 @@ function agent(id = AGENT_A, name = "Luna") {
 function validConfig() {
   return {
     schemaVersion: 2,
+    deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
     apiBase: "http://192.168.72.157:3100/",
     companyId: COMPANY_ID,
     credentialsFile: "credentials.dpapi",
