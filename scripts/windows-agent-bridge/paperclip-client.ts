@@ -58,7 +58,7 @@ function parseIdentity(value: unknown): RemoteAgentIdentity {
   };
 }
 
-function parseInboxItem(value: unknown, index: number): BridgeInboxItem {
+function parseInboxItem(value: unknown, index: number, identity: RemoteAgentIdentity): BridgeInboxItem {
   const label = `agent inbox[${index}]`;
   const record = asRecord(value, label);
   const status = requiredString(record, "status", label) as BridgeIssueStatus;
@@ -71,16 +71,25 @@ function parseInboxItem(value: unknown, index: number): BridgeInboxItem {
   const activeRun = record.activeRun && typeof record.activeRun === "object" && !Array.isArray(record.activeRun)
     ? record.activeRun as Record<string, unknown>
     : null;
+  // inbox-lite is scoped by the authenticated agent; its rows do not repeat
+  // companyId or assigneeAgentId. Reject unexpected conflicting values rather
+  // than trusting them or requiring fields the server does not send.
+  if (record.companyId != null && record.companyId !== identity.companyId) {
+    throw new Error(`${label}.companyId conflicts with the verified identity`);
+  }
+  if (record.assigneeAgentId != null && record.assigneeAgentId !== identity.id) {
+    throw new Error(`${label}.assigneeAgentId conflicts with the verified identity`);
+  }
 
   return {
     id: requiredString(record, "id", label),
-    companyId: requiredString(record, "companyId", label),
+    companyId: identity.companyId,
     projectId: typeof record.projectId === "string" && record.projectId.trim() ? record.projectId.trim() : null,
     identifier,
     title: requiredString(record, "title", label),
     status,
     priority,
-    assigneeAgentId: requiredString(record, "assigneeAgentId", label),
+    assigneeAgentId: identity.id,
     updatedAt: requiredString(record, "updatedAt", label),
     activeRunId: activeRun && typeof activeRun.id === "string" ? activeRun.id : null,
   };
@@ -92,6 +101,7 @@ export class AliceClient {
   readonly #fetch: typeof globalThis.fetch;
   readonly #logger: AliceClientLogger;
   readonly #timeoutMs: number;
+  #verifiedIdentity: RemoteAgentIdentity | null = null;
 
   constructor(options: AliceClientOptions) {
     this.#apiBase = options.apiBase.replace(/\/+$/, "");
@@ -130,20 +140,24 @@ export class AliceClient {
   }
 
   async verifyIdentity(expectedAgentId: string, expectedCompanyId: string): Promise<RemoteAgentIdentity> {
+    this.#verifiedIdentity = null;
     const identity = parseIdentity(await this.#getJson("/api/agents/me"));
     if (identity.id !== expectedAgentId || identity.companyId !== expectedCompanyId) {
       throw new Error("Alice agent identity mismatch");
     }
+    this.#verifiedIdentity = identity;
     this.#logger.info(`Alice identity verified for ${identity.name}`);
     return identity;
   }
 
   async listInbox(expectedAgentId: string, expectedCompanyId: string): Promise<BridgeInboxItem[]> {
+    const identity = this.#verifiedIdentity;
+    if (!identity || identity.id !== expectedAgentId || identity.companyId !== expectedCompanyId) {
+      throw new Error("Alice identity must be verified before polling the inbox");
+    }
     const raw = await this.#getJson("/api/agents/me/inbox-lite");
     if (!Array.isArray(raw)) throw new Error("Alice agent inbox returned an invalid array");
-    return raw
-      .map(parseInboxItem)
-      .filter((issue) => issue.assigneeAgentId === expectedAgentId && issue.companyId === expectedCompanyId);
+    return raw.map((item, index) => parseInboxItem(item, index, identity));
   }
 }
 

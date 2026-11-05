@@ -100,6 +100,9 @@ function safeError(error: unknown): string {
 
 export async function runBridge(configPath: string, signal: AbortSignal): Promise<"started" | "already-running"> {
   const config = await loadBridgeConfig(configPath);
+  // This bridge has no server-issued run/checkout handshake. A local UUID
+  // cannot authorize issue writes, so fail before a lock, poll, or agent spawn.
+  throw new Error("Alice bridge run binding is unavailable; use a server-managed execution target");
   const lock = await acquireSingleInstanceLock(`${config.stateFile}.lock`);
   if (!lock) return "already-running";
   const healthPath = `${config.stateFile}.health.json`;

@@ -22,4 +22,11 @@ describe("installation safety", () => {
     expect(install).toContain("$taskName = 'AliceWindowsAgentBridge'");
     expect(install).toContain("-WindowStyle Hidden");
   });
+
+  it("blocks scheduled-task installation while the server run contract is missing", async () => {
+    const doctor = await readFile(path.join(root, "doctor.ps1"), "utf8");
+    const install = await readFile(path.join(root, "install.ps1"), "utf8");
+    expect(doctor).toContain("禁止安装");
+    expect(install.indexOf("doctor.ps1")).toBeLessThan(install.indexOf("Register-ScheduledTask"));
+  });
 });

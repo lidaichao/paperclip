@@ -1,10 +1,35 @@
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { acquireSingleInstanceLock, waitForPollInterval, writeHealth } from "./main.js";
+import { acquireSingleInstanceLock, runBridge, waitForPollInterval, writeHealth } from "./main.js";
 
 describe("bridge lifecycle", () => {
+  it("refuses to start before any lock or poll while no server run binding exists", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "alice-run-binding-"));
+    const stateFile = path.join(dir, "state.json");
+    const configFile = path.join(dir, "bridge.json");
+    await writeFile(configFile, JSON.stringify({
+      schemaVersion: 1,
+      apiBase: "http://192.168.72.157:3100",
+      companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6",
+      localApiBase: "http://127.0.0.1:3100",
+      localCompanyId: "832910ae-5efa-4b9f-9992-1d70b281be1e",
+      credentialsFile: "credentials.dpapi",
+      stateFile,
+      pollIntervalMs: 10_000,
+      agents: [{
+        remoteAgentId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a",
+        remoteAgentName: "Luna",
+        localAgentName: "Luna",
+        adapterType: "codex_local",
+        maxConcurrentRuns: 1,
+      }],
+    }));
+    await expect(runBridge(configFile, new AbortController().signal)).rejects.toThrow("run binding is unavailable");
+    await expect(stat(`${stateFile}.lock`)).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
   it("allows only one healthy lock owner and safely replaces a stale lock", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "alice-lock-"));
     const lockPath = path.join(dir, "bridge.lock");

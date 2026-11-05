@@ -85,6 +85,11 @@ function requiredString(record: Record<string, unknown>, key: string, label: str
 
 function sanitizeAdapterConfig(value: unknown, adapterType: BridgeAdapterType): Record<string, unknown> {
   const source = asRecord(value);
+  // The local API returns binding descriptors, not resolved secret values.
+  // Silently dropping env would launch members without their GR identity.
+  if (source.env != null && (typeof source.env !== "object" || Array.isArray(source.env) || Object.keys(source.env).length > 0)) {
+    throw new Error("local adapter env bindings require a verified secret-resolution path");
+  }
   const config: Record<string, unknown> = {};
   for (const [key, entry] of Object.entries(source)) {
     if (SAFE_ADAPTER_CONFIG_KEYS.has(key)) config[key] = structuredClone(entry);

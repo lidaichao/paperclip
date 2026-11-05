@@ -37,8 +37,8 @@ function localAgent(): LocalAgentRuntimeConfig {
 }
 
 describe("loadLocalAgentRuntimeConfig", () => {
-  it("copies executable settings but drops redacted environment secrets", async () => {
-    const runtime = await loadLocalAgentRuntimeConfig({
+  it("refuses unresolved environment bindings instead of silently dropping GR identity", async () => {
+    const pending = loadLocalAgentRuntimeConfig({
       localApiBase: "http://127.0.0.1:3100",
       localCompanyId: LOCAL_COMPANY_ID,
       localAgentName: "Luna",
@@ -56,8 +56,7 @@ describe("loadLocalAgentRuntimeConfig", () => {
         },
       }]), { status: 200, headers: { "content-type": "application/json" } }),
     });
-    expect(runtime.adapterConfig).toMatchObject({ cwd: "H:/AIagent/Luna", command: "C:/tools/codex.exe" });
-    expect(runtime.adapterConfig).not.toHaveProperty("env");
+    await expect(pending).rejects.toThrow("verified secret-resolution path");
   });
 });
 

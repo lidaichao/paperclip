@@ -7,6 +7,7 @@ $configPath = (Resolve-Path $Config).Path
 $settings = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
 if ($settings.schemaVersion -ne 1) { throw '配置版本必须为 1。' }
 if ($settings.localApiBase -ne 'http://127.0.0.1:3100') { throw '本地 Paperclip 地址必须是 http://127.0.0.1:3100。' }
+throw '桥接尚未实现 Alice 服务端运行号、任务签领与本人 GR 密钥解析；禁止安装。请使用服务端管理的执行目标。'
 if (-not (Get-Command node.exe -ErrorAction SilentlyContinue)) { throw '未找到 node.exe。' }
 
 $serverHealth = Invoke-RestMethod -Uri ($settings.apiBase.TrimEnd('/') + '/api/health') -TimeoutSec 10
