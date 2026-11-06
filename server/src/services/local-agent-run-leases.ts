@@ -1,4 +1,5 @@
 import type { Db } from "@paperclipai/db";
+import { createHash, randomUUID } from "node:crypto";
 import {
   activityLog,
   agentWakeupRequests,
@@ -6,6 +7,7 @@ import {
   heartbeatRuns,
   heartbeatRunEvents,
   issueCommandDeliveries,
+  issueCompletionReviews,
   issueComments,
   issueThreadInteractions,
   issues,
@@ -24,6 +26,7 @@ import { issueReferenceService } from "./issue-references.js";
 import { issueThreadInteractionService } from "./issue-thread-interactions.js";
 import { executeReviewHandoff } from "./issue-review-handoff.js";
 import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
+import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
 
@@ -832,6 +835,182 @@ export function localAgentRunLeaseService(
     return result;
   }
 
+  /** Internal-only dedicated review creation. No HTTP route or wakeup uses this yet. */
+  async function createFencedCompletionReviewHandoff(
+    input: LocalRunOwner & { issueId: string; reviewerAgentId: string; prompt: string;
+      body: string; clientRequestId: string },
+    actor: Express.Request["actor"],
+  ) {
+    if (!UUID.test(input.reviewerAgentId) || !UUID.test(input.clientRequestId)) {
+      throw badRequest("Reviewer and client request IDs must be UUIDs");
+    }
+    if (!input.prompt.trim() || input.prompt.length > 1000 || !input.body.trim() ||
+      /@|https?:\/\/|www\./i.test(input.body)) {
+      throw badRequest("Dedicated review requires a prompt and plain handoff comment");
+    }
+    const digest = createHash("sha256").update(JSON.stringify({
+      companyId: input.companyId, issueId: input.issueId, sourceRunId: input.runId,
+      sourceAgentId: input.agentId, reviewerAgentId: input.reviewerAgentId,
+      prompt: input.prompt, body: input.body,
+    })).digest("hex");
+    const publications: ActivityPublication[] = [];
+    const result = await withFencedIssueWrite(input, actor, "issue:mutate",
+      async (tx, issue, authorizationReason) => {
+        const [existing] = await tx.select().from(issueCompletionReviews).where(and(
+          eq(issueCompletionReviews.companyId, input.companyId),
+          eq(issueCompletionReviews.sourceRunId, input.runId),
+          eq(issueCompletionReviews.requestId, input.clientRequestId),
+        )).limit(1);
+        if (existing) {
+          const [interaction] = await tx.select().from(issueThreadInteractions).where(and(
+            eq(issueThreadInteractions.id, existing.interactionId),
+            eq(issueThreadInteractions.companyId, input.companyId),
+          ));
+          const [comment] = await tx.select().from(issueComments).where(and(
+            eq(issueComments.issueId, input.issueId),
+            eq(issueComments.authorAgentId, input.agentId),
+            eq(issueComments.createdByRunId, input.runId),
+            eq(issueComments.clientRequestId, input.clientRequestId),
+          ));
+          const [delivery] = await tx.select().from(issueCommandDeliveries).where(and(
+            eq(issueCommandDeliveries.companyId, input.companyId),
+            eq(issueCommandDeliveries.interactionId, existing.interactionId),
+            eq(issueCommandDeliveries.kind, "completion_review"),
+          ));
+          const target = interaction?.payload && typeof interaction.payload === "object" &&
+            "target" in interaction.payload ? interaction.payload.target : null;
+          const [interactionAudit] = await tx.select({ id: activityLog.id }).from(activityLog).where(and(
+            eq(activityLog.companyId, input.companyId), eq(activityLog.entityId, input.issueId),
+            eq(activityLog.runId, input.runId), eq(activityLog.action, "issue.thread_interaction_created"),
+            sql`${activityLog.details}->>'interactionId' = ${existing.interactionId}`,
+          )).limit(1);
+          const [statusAudit] = await tx.select({ id: activityLog.id }).from(activityLog).where(and(
+            eq(activityLog.companyId, input.companyId), eq(activityLog.entityId, input.issueId),
+            eq(activityLog.runId, input.runId), eq(activityLog.action, "issue.updated"),
+            sql`${activityLog.details}->>'clientRequestId' = ${input.clientRequestId}`,
+            sql`${activityLog.details}->>'reviewInteractionId' = ${existing.interactionId}`,
+          )).limit(1);
+          const [commentAudit] = comment ? await tx.select({ id: activityLog.id }).from(activityLog).where(and(
+            eq(activityLog.companyId, input.companyId), eq(activityLog.entityId, input.issueId),
+            eq(activityLog.runId, input.runId), eq(activityLog.action, "issue.comment_added"),
+            sql`${activityLog.details}->>'commentId' = ${comment.id}`,
+          )).limit(1) : [];
+          const enabled = (await instanceSettingsService(tx).getGeneral()).censorUsernameInLogs;
+          if (existing.issueId !== input.issueId || existing.sourceAgentId !== input.agentId ||
+            existing.reviewerAgentId !== input.reviewerAgentId || existing.sourceKind !== "client_pull" ||
+            existing.clientPullLeaseRunId !== input.runId || existing.requestDigest !== digest ||
+            existing.state !== "pending" ||
+            issue.status !== "in_review" || issue.statusVersion !== existing.issueStatusVersion ||
+            issue.assigneeAgentId !== input.agentId || !interaction || !comment || !delivery ||
+            !interactionAudit || !statusAudit || !commentAudit ||
+            interaction.kind !== "request_confirmation" || interaction.status !== "pending" ||
+            interaction.createdByAgentId !== input.agentId ||
+            interaction.sourceRunId !== input.runId || interaction.addresseeAgentId !== input.reviewerAgentId ||
+            interaction.effectiveResolverPolicy !== "not_creator" ||
+            interaction.idempotencyKey !== input.clientRequestId ||
+            !("prompt" in interaction.payload) || interaction.payload.prompt !== input.prompt ||
+            !target || typeof target !== "object" || !("type" in target) || target.type !== "custom" ||
+            !("key" in target) ||
+            target.key !== ISSUE_COMPLETION_REVIEW_TARGET_KEY ||
+            !("revisionId" in target) || target.revisionId !== existing.id ||
+            comment.companyId !== input.companyId ||
+            comment.body !== redactCurrentUserText(input.body, { enabled }) ||
+            delivery.reviewId !== existing.id || delivery.issueId !== input.issueId ||
+            delivery.sourceRunId !== input.runId || delivery.targetAgentId !== input.reviewerAgentId ||
+            delivery.status !== "awaiting_handoff") {
+            throw conflict("Completion review request differs from the committed command");
+          }
+          return { issue, interaction, review: existing, comment, delivery, replayed: true };
+        }
+        if (issue.status !== "in_progress") throw conflict("Completion review requires an in-progress task");
+        if (input.reviewerAgentId === input.agentId) throw unprocessable("An agent cannot review its own work");
+        const [reviewer] = await tx.select({ companyId: agents.companyId, status: agents.status,
+          pausedAt: agents.pausedAt, runtimeConfig: agents.runtimeConfig }).from(agents)
+          .where(eq(agents.id, input.reviewerAgentId));
+        if (!reviewer || reviewer.companyId !== input.companyId ||
+          reviewer.status === "paused" || reviewer.status === "terminated" ||
+          reviewer.status === "pending_approval" || reviewer.pausedAt ||
+          !isClientPullRuntimeConfig(reviewer.runtimeConfig)) {
+          throw unprocessable("Reviewer must be an active local agent in the same company");
+        }
+        const [sibling] = await tx.select({ id: issueThreadInteractions.id })
+          .from(issueThreadInteractions).where(and(
+            eq(issueThreadInteractions.companyId, input.companyId),
+            eq(issueThreadInteractions.issueId, input.issueId),
+            eq(issueThreadInteractions.kind, "request_confirmation"),
+            eq(issueThreadInteractions.status, "pending"),
+            eq(issueThreadInteractions.createdByAgentId, input.agentId),
+          )).limit(1);
+        if (sibling) throw conflict("Resolve the existing review confirmation before creating another");
+        const reviewId = randomUUID();
+        const interaction = await issueThreadInteractionService(tx).create(issue, {
+          kind: "request_confirmation", idempotencyKey: input.clientRequestId,
+          sourceRunId: input.runId, addresseeAgentId: input.reviewerAgentId,
+          continuationPolicy: "wake_assignee", resolverPolicy: "not_creator",
+          payload: { version: 1, prompt: input.prompt, allowDeclineReason: true,
+            target: { type: "custom", key: ISSUE_COMPLETION_REVIEW_TARGET_KEY,
+              revisionId: reviewId } },
+        }, { agentId: input.agentId, identityContextId: actor.identityContextId ?? null },
+        { supersedePendingSiblingInteractions: false });
+        const target = interaction.payload && typeof interaction.payload === "object" &&
+          "target" in interaction.payload ? interaction.payload.target : null;
+        if (interaction.kind !== "request_confirmation" || interaction.status !== "pending" ||
+          interaction.idempotencyKey !== input.clientRequestId ||
+          interaction.sourceRunId !== input.runId ||
+          interaction.effectiveResolverPolicy !== "not_creator" ||
+          interaction.addresseeAgentId !== input.reviewerAgentId ||
+          interaction.createdByAgentId !== input.agentId ||
+          !target || typeof target !== "object" || !("type" in target) || target.type !== "custom" ||
+          !("key" in target) || target.key !== ISSUE_COMPLETION_REVIEW_TARGET_KEY ||
+          !("revisionId" in target) || target.revisionId !== reviewId) {
+          throw unprocessable("Company governance does not permit this agent review");
+        }
+        await logActivity(tx, {
+          companyId: issue.companyId, actorType: "agent", actorId: input.agentId,
+          agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
+          action: "issue.thread_interaction_created", entityType: "issue", entityId: issue.id,
+          details: { interactionId: interaction.id, interactionKind: interaction.kind,
+            interactionStatus: interaction.status, continuationPolicy: interaction.continuationPolicy,
+            addresseeAgentId: input.reviewerAgentId,
+            requestedResolverPolicy: interaction.requestedResolverPolicy,
+            effectiveResolverPolicy: interaction.effectiveResolverPolicy },
+        }, publications);
+        const lockedIssue = await issueService(db).getByIdForUpdate(input.issueId, tx);
+        if (!lockedIssue) throw notFound("Issue not found");
+        const handoff = await executeReviewHandoff({
+          db, tx, existing: lockedIssue,
+          patch: { status: "in_review", statusVersion: issue.statusVersion + 1,
+            actorAgentId: input.agentId, companyGuard: input.companyId },
+          commentBody: input.body, clientRequestId: input.clientRequestId,
+          reviewInteractionId: interaction.id,
+          actor: { agentId: input.agentId, runId: input.runId,
+            agentApiKeyId: actor.keyId, responsibleUserId: actor.onBehalfOfUserId },
+          authorizationReason, publications,
+        });
+        if (handoff.issue.status !== "in_review" ||
+          handoff.issue.statusVersion !== issue.statusVersion + 1) {
+          throw conflict("Completion review status revision changed");
+        }
+        const [review] = await tx.insert(issueCompletionReviews).values({
+          id: reviewId, companyId: input.companyId, issueId: input.issueId,
+          sourceRunId: input.runId, sourceAgentId: input.agentId,
+          reviewerAgentId: input.reviewerAgentId, interactionId: interaction.id,
+          sourceKind: "client_pull", clientPullLeaseRunId: input.runId,
+          requestId: input.clientRequestId, requestDigest: digest,
+          issueStatusVersion: handoff.issue.statusVersion,
+        }).returning();
+        const [delivery] = await tx.insert(issueCommandDeliveries).values({
+          companyId: input.companyId, issueId: input.issueId,
+          interactionId: interaction.id, reviewId,
+          sourceRunId: input.runId, targetAgentId: input.reviewerAgentId,
+          kind: "completion_review", status: "awaiting_handoff",
+        }).returning();
+        return { ...handoff, interaction, review, delivery, replayed: false };
+      }, { allowReviewReplay: true });
+    for (const publication of publications) publishActivity(publication);
+    return result;
+  }
+
   async function patchFencedIssue(
     input: LocalRunOwner & { issueId: string; title?: string; description?: string | null; priority?: string },
     actor: Express.Request["actor"],
@@ -863,5 +1042,5 @@ export function localAgentRunLeaseService(
 
   return { claim, renew, control, finish, appendFencedEvent,
     addFencedComment, createFencedReviewConfirmation, reviewFencedIssue,
-    createFencedAgentReviewHandoff, patchFencedIssue };
+    createFencedAgentReviewHandoff, createFencedCompletionReviewHandoff, patchFencedIssue };
 }

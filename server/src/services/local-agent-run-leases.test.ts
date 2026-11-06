@@ -14,6 +14,8 @@ import {
   heartbeatRuns,
   heartbeatRunEvents,
   issueComments,
+  issueCommandDeliveries,
+  issueCompletionReviews,
   issueThreadInteractions,
   issues,
   localAgentRunLeases,
@@ -909,6 +911,123 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .filter((row) => row.action === "issue.thread_interaction_created")).toHaveLength(0);
     await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
     await request(app).post(path).send({ ...payload, reviewerAgentId: reviewerId }).expect(403);
+  }, 30_000);
+
+  it("atomically creates a dedicated completion review and replays only the exact request", async () => {
+    const scope = await fixture();
+    const reviewerAgentId = randomUUID();
+    await db.insert(agents).values({ id: reviewerAgentId, companyId: scope.companyId,
+      name: "Local reviewer", adapterType: "codex_local",
+      runtimeConfig: { executionMode: "client_pull" } });
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const [before] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const owner = { ...scope, issueId: scope.issueId, reviewerAgentId,
+      deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, prompt: "Verify the delivered task",
+      body: "Ready for acceptance", clientRequestId: randomUUID() };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    const first = await svc.createFencedCompletionReviewHandoff(owner, actor);
+    expect(first.replayed).toBe(false);
+    expect(first.issue.status).toBe("in_review");
+    expect(first.issue.statusVersion).toBe(before.statusVersion + 1);
+    expect(first.issue.assigneeAgentId).toBe(scope.agentId);
+    expect(first.review.issueStatusVersion).toBe(before.statusVersion + 1);
+    expect(first.review.clientPullLeaseRunId).toBe(scope.runId);
+    expect((first.interaction.payload as unknown as Record<string, unknown>).target).toEqual({ type: "custom",
+      key: "issue_completion_review", revisionId: first.review.id });
+    expect(first.delivery).toMatchObject({ kind: "completion_review", reviewId: first.review.id,
+      status: "awaiting_handoff", targetAgentId: reviewerAgentId });
+    const replay = await svc.createFencedCompletionReviewHandoff(owner, actor);
+    expect(replay.replayed).toBe(true);
+    expect(replay.review.id).toBe(first.review.id);
+    await expect(svc.createFencedCompletionReviewHandoff({ ...owner, body: "Changed" }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    await expect(svc.createFencedCompletionReviewHandoff({ ...owner,
+      reviewerAgentId: randomUUID() }, actor)).rejects.toMatchObject({ status: 409 });
+    expect(await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.issueId, scope.issueId))).toHaveLength(1);
+    expect(await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.issueId, scope.issueId))).toHaveLength(1);
+    expect(await db.select().from(issueComments)
+      .where(eq(issueComments.issueId, scope.issueId))).toHaveLength(1);
+  }, 30_000);
+
+  it("rolls back the dedicated review if its durable intent fails", async () => {
+    const scope = await fixture();
+    const reviewerAgentId = randomUUID();
+    await db.insert(agents).values({ id: reviewerAgentId, companyId: scope.companyId,
+      name: "Local reviewer", adapterType: "codex_local",
+      runtimeConfig: { executionMode: "client_pull" } });
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const [before] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const owner = { ...scope, reviewerAgentId, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation,
+      prompt: "Verify", body: "Ready", clientRequestId: randomUUID() };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    await db.execute(sql`create function reject_dedicated_review_intent() returns trigger language plpgsql as $$
+      begin
+        if NEW.issue_id = '${sql.raw(scope.issueId)}' then
+          raise exception 'injected dedicated intent failure';
+        end if;
+        return NEW;
+      end $$`);
+    await db.execute(sql`create trigger reject_dedicated_review_intent_trigger before insert on issue_command_deliveries
+      for each row execute function reject_dedicated_review_intent()`);
+    try {
+      await expect(svc.createFencedCompletionReviewHandoff(owner, actor)).rejects.toThrow();
+    } finally {
+      await db.execute(sql`drop trigger reject_dedicated_review_intent_trigger on issue_command_deliveries`);
+      await db.execute(sql`drop function reject_dedicated_review_intent()`);
+    }
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    expect(issue.status).toBe("in_progress");
+    expect(issue.statusVersion).toBe(before.statusVersion);
+    expect(await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.issueId, scope.issueId))).toHaveLength(0);
+    expect(await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.issueId, scope.issueId))).toHaveLength(0);
+    expect(await db.select().from(issueComments)
+      .where(eq(issueComments.issueId, scope.issueId))).toHaveLength(0);
+  }, 30_000);
+
+  it("rejects a governed or cancelled dedicated review without leaving a card", async () => {
+    const scope = await fixture();
+    const reviewerAgentId = randomUUID();
+    await db.insert(agents).values({ id: reviewerAgentId, companyId: scope.companyId,
+      name: "Local reviewer", adapterType: "codex_local",
+      runtimeConfig: { executionMode: "client_pull" } });
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const owner = { ...scope, reviewerAgentId, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation,
+      prompt: "Verify", body: "Ready", clientRequestId: randomUUID() };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    await db.update(companies).set({ interactionResolverGovernance: {
+      request_confirmation: { cap: "human_only" },
+    } }).where(eq(companies.id, scope.companyId));
+    await expect(svc.createFencedCompletionReviewHandoff(owner, actor))
+      .rejects.toMatchObject({ status: 422 });
+    expect(await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.issueId, scope.issueId))).toHaveLength(0);
+    await db.update(companies).set({ interactionResolverGovernance: {} })
+      .where(eq(companies.id, scope.companyId));
+    await db.update(localAgentRunLeases).set({ cancelRequestedAt: new Date() })
+      .where(eq(localAgentRunLeases.runId, scope.runId));
+    await expect(svc.createFencedCompletionReviewHandoff(owner, actor))
+      .rejects.toMatchObject({ status: 403 });
+    expect(await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.issueId, scope.issueId))).toHaveLength(0);
   }, 30_000);
 
   it("preserves deletion of a task and its run after a historical lease", async () => {
