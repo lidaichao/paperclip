@@ -3658,10 +3658,14 @@ export function issueThreadInteractionService(
         );
       }
       const interaction = hydrateInteraction(created);
-      emitInteractionCreatedTelemetry({
-        interactionKind: interaction.kind,
-        usedDeprecatedResolverPolicyAlias,
-      });
+      // Dedicated completion-review creation may be part of a larger fenced
+      // transaction. Do not emit an irreversible metric before that commits.
+      if (!sharedCompletionReviewTarget(created)) {
+        emitInteractionCreatedTelemetry({
+          interactionKind: interaction.kind,
+          usedDeprecatedResolverPolicyAlias,
+        });
+      }
       return interaction;
     },
 

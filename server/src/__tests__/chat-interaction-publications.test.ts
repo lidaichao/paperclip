@@ -20,7 +20,9 @@ import {
   toolConnections,
 } from "@paperclipai/db";
 import type { ChatProvider } from "@paperclipai/shared";
-import { enqueueTerminalIssueInteractionChatPublications } from "../services/chat-interaction-publications.js";
+import { enqueueIssueInteractionChatPublications,
+  enqueueTerminalIssueInteractionChatPublications,
+  nativeTelegramConfirmation } from "../services/chat-interaction-publications.js";
 import { issueThreadInteractionService } from "../services/issue-thread-interactions.js";
 import {
   getEmbeddedPostgresTestSupport,
@@ -228,6 +230,37 @@ describeEmbeddedPostgres(
         update: db.update.bind(db),
       };
     }
+
+    it("never externalizes dedicated completion-review cards, including replay and terminal edits", async () => {
+      const fixture = await seedBoundIssue(["telegram"]);
+      const service = issueThreadInteractionService(db);
+      const scope = { id: fixture.issueId, companyId: fixture.companyId };
+      const ordinary = await service.create(scope, {
+        kind: "request_confirmation", idempotencyKey: randomUUID(),
+        payload: { version: 1, prompt: "Ordinary confirmation" },
+      }, { agentId: fixture.agentId }, { supersedePendingSiblingInteractions: false });
+      expect(await publicationsForInteraction(fixture.companyId, ordinary.id)).toHaveLength(1);
+      expect(nativeTelegramConfirmation(ordinary)).not.toBeNull();
+
+      const dedicatedInput = { kind: "request_confirmation" as const,
+        idempotencyKey: randomUUID(),
+        payload: { version: 1 as const, prompt: "Dedicated completion review",
+          target: { type: "custom" as const, key: "issue_completion_review",
+            revisionId: randomUUID() } } };
+      const dedicated = await service.create(scope, dedicatedInput,
+        { agentId: fixture.agentId }, { supersedePendingSiblingInteractions: false });
+      expect(nativeTelegramConfirmation(dedicated)).toBeNull();
+      expect(await publicationsForInteraction(fixture.companyId, dedicated.id)).toEqual([]);
+      expect(await enqueueIssueInteractionChatPublications(db, dedicated)).toEqual([]);
+      expect((await service.create(scope, dedicatedInput,
+        { agentId: fixture.agentId }, { supersedePendingSiblingInteractions: false })).id)
+        .toBe(dedicated.id);
+      expect(await publicationsForInteraction(fixture.companyId, dedicated.id)).toEqual([]);
+      expect(await enqueueTerminalIssueInteractionChatPublications(db, {
+        ...dedicated, status: "expired", result: { version: 1, outcome: "stale_target" },
+      })).toEqual([]);
+      expect(await publicationsForInteraction(fixture.companyId, dedicated.id)).toEqual([]);
+    });
 
     it("publishes prompts only for the endpoint's verified immutable agent", async () => {
       const fixture = await seedBoundIssue();

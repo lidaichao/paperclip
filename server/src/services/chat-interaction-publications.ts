@@ -18,6 +18,7 @@ import type {
   SafeExternalChatCardAction,
 } from "@paperclipai/shared";
 import { projectSafeChatPublication } from "./chat-publication-projection.js";
+import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
 import { publicChatTaskUrl } from "./chat-task-url.js";
 import {
   chatQuestionFormActionRecords,
@@ -31,6 +32,12 @@ export const CHAT_QUESTION_ACTION_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1_000;
 export const TELEGRAM_CALLBACK_DATA_LIMIT_BYTES = 64;
 
 type ChatPublicationDb = Pick<Db, "select" | "insert" | "update">;
+
+function isDedicatedCompletionReview(interaction: IssueThreadInteraction) {
+  return interaction.kind === "request_confirmation" &&
+    interaction.payload.target?.type === "custom" &&
+    interaction.payload.target.key === ISSUE_COMPLETION_REVIEW_TARGET_KEY;
+}
 
 function terminalNativeInteractionCopy(
   interaction: IssueThreadInteraction,
@@ -172,6 +179,7 @@ export function nativeTelegramConfirmation(
   interaction: IssueThreadInteraction,
 ): RequestConfirmationInteraction | null {
   if (interaction.kind !== "request_confirmation") return null;
+  if (isDedicatedCompletionReview(interaction)) return null;
   if (
     interaction.payload.rejectRequiresReason === true ||
     interaction.payload.toolAction !== undefined ||
@@ -227,6 +235,10 @@ export async function enqueueIssueInteractionChatPublications(
   interaction: IssueThreadInteraction,
 ) {
   if (interaction.status !== "pending") return [];
+  // This target can only be settled by the shared review command. External
+  // provider cards currently offer generic accept/reject actions, so do not
+  // publish a link or button that cannot safely perform the decision.
+  if (isDedicatedCompletionReview(interaction)) return [];
   // The first native-chat wave intentionally externalizes only questions and
   // confirmations. Other governance interactions have richer partial and
   // terminal semantics that are authoritative in Paperclip; projecting a
@@ -506,6 +518,7 @@ export async function enqueueTerminalIssueInteractionChatPublications(
   interaction: IssueThreadInteraction,
 ) {
   if (interaction.status === "pending") return [];
+  if (isDedicatedCompletionReview(interaction)) return [];
   const originals = (
     await db
       .select()
