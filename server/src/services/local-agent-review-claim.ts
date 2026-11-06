@@ -199,6 +199,79 @@ export async function assertClientPullReviewEventContext(tx: Db, input: {
   }
 }
 
+/** A reviewer may stop successfully only after its own immutable decision committed. */
+export async function assertClientPullAcceptedReviewContext(tx: Db, input: {
+  run: typeof heartbeatRuns.$inferSelect;
+  issue: typeof issues.$inferSelect;
+}) {
+  const { run, issue } = input;
+  const context = object(run.contextSnapshot);
+  if (run.status !== "running" || run.runtimeMode !== "client_pull" ||
+    context.wakeReason !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
+    context.issueId !== issue.id || run.companyId !== issue.companyId ||
+    !["in_review", "done"].includes(issue.status) || issue.executionRunId !== null ||
+    issue.assigneeAgentId === run.agentId || issue.conversationAgentId ||
+    typeof context.reviewId !== "string" ||
+    typeof context.interactionId !== "string" ||
+    typeof context.sourceRunId !== "string" || !run.wakeupRequestId) {
+    throw staleReviewEvent();
+  }
+  const [review] = await tx.select().from(issueCompletionReviews).where(and(
+    eq(issueCompletionReviews.id, context.reviewId),
+    eq(issueCompletionReviews.companyId, issue.companyId),
+    eq(issueCompletionReviews.issueId, issue.id),
+  )).for("update");
+  const [card] = await tx.select().from(issueThreadInteractions).where(and(
+    eq(issueThreadInteractions.id, context.interactionId),
+    eq(issueThreadInteractions.companyId, issue.companyId),
+    eq(issueThreadInteractions.issueId, issue.id),
+  )).for("update");
+  const [wake] = await tx.select().from(agentWakeupRequests).where(and(
+    eq(agentWakeupRequests.id, run.wakeupRequestId),
+    eq(agentWakeupRequests.companyId, issue.companyId),
+  )).for("update");
+  const target = object(object(card?.payload).target);
+  const receipt = object(review?.decisionReceipt);
+  const wakePayload = object(wake?.payload);
+  if (!review || !card || !wake || review.state !== "accepted" ||
+    review.sourceKind !== "client_pull" ||
+    review.reviewerAgentId !== run.agentId ||
+    review.sourceAgentId !== issue.assigneeAgentId ||
+    review.sourceRunId !== context.sourceRunId ||
+    review.clientPullLeaseRunId !== context.sourceRunId ||
+    review.interactionId !== card.id ||
+    !((issue.status === "in_review" &&
+      issue.statusVersion === review.issueStatusVersion) ||
+      (issue.status === "done" &&
+        issue.statusVersion === review.issueStatusVersion + 1)) ||
+    !review.decisionRequestId || !review.decidedAt ||
+    receipt.schemaVersion !== 1 || receipt.outcome !== "accepted" ||
+    receipt.reviewerRuntimeMode !== "client_pull" ||
+    receipt.reviewId !== review.id || receipt.requestId !== review.decisionRequestId ||
+    receipt.issueId !== issue.id || receipt.interactionId !== card.id ||
+    receipt.summary !== review.decisionSummary ||
+    card.kind !== "request_confirmation" || card.status !== "accepted" ||
+    card.sourceRunId !== review.sourceRunId ||
+    card.createdByAgentId !== review.sourceAgentId ||
+    card.addresseeAgentId !== run.agentId || card.addresseeUserId !== null ||
+    card.continuationPolicy !== "wake_assignee" ||
+    card.requestedResolverPolicy !== "not_creator" ||
+    card.effectiveResolverPolicy !== "not_creator" ||
+    card.resolvedByAgentId !== run.agentId || card.resolvedByRunId !== run.id ||
+    target.type !== "custom" || target.key !== ISSUE_COMPLETION_REVIEW_TARGET_KEY ||
+    target.revisionId !== review.id ||
+    wake.runId !== run.id || wake.agentId !== run.agentId ||
+    wake.status !== "claimed" ||
+    wake.reason !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
+    wake.idempotencyKey !== clientPullCompletionReviewWakeKey(review.id, card.id) ||
+    wakePayload.issueId !== issue.id || wakePayload.reviewId !== review.id ||
+    wakePayload.interactionId !== card.id ||
+    wakePayload.sourceRunId !== review.sourceRunId) {
+    throw staleReviewEvent();
+  }
+  return { reviewId: review.id, decisionRequestId: review.decisionRequestId };
+}
+
 function staleReviewEvent() {
   return conflict("Dedicated reviewer run no longer owns an open review");
 }

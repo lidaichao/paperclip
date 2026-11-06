@@ -27,7 +27,8 @@ import { issueThreadInteractionService } from "./issue-thread-interactions.js";
 import { executeReviewHandoff } from "./issue-review-handoff.js";
 import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
-import { assertClientPullReviewClaimCandidate, assertClientPullReviewEventContext,
+import { assertClientPullAcceptedReviewContext, assertClientPullReviewClaimCandidate,
+  assertClientPullReviewEventContext,
   CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
@@ -104,7 +105,15 @@ export function localAgentRunLeaseService(
       await assertClientPullReviewEventContext(tx, { run, issue });
       return false;
     } catch (error) {
-      if (error instanceof HttpError && error.status === 409) return true;
+      if (error instanceof HttpError && error.status === 409) {
+        try {
+          await assertClientPullAcceptedReviewContext(tx, { run, issue });
+          return false;
+        } catch (acceptedError) {
+          if (acceptedError instanceof HttpError && acceptedError.status === 409) return true;
+          throw acceptedError;
+        }
+      }
       throw error;
     }
   }
@@ -411,12 +420,17 @@ export function localAgentRunLeaseService(
       )).limit(2);
       if (reviews.length > 1) throw conflict("Run has multiple completion reviews; reconcile before finishing");
       const reviewHint = reviews[0] ?? null;
-      if (reviewHint && !input.clientRequestId) {
+      const reviewerRun = wakeReasonFromRun(run) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON;
+      const reviewerReviewId = reviewerRun ? run.contextSnapshot?.reviewId : null;
+      if (reviewerRun && typeof reviewerReviewId !== "string") {
+        throw conflict("Dedicated reviewer run lacks a review identity");
+      }
+      if ((reviewHint || reviewerRun) && !input.clientRequestId) {
         throw badRequest("Dedicated review finish requires clientRequestId");
       }
       if (lease.releasedAt) {
         if (lease.outcome !== input.outcome) throw conflict("Run already finished with another outcome");
-        if (input.clientRequestId || reviewHint) {
+        if (input.clientRequestId || reviewHint || reviewerRun) {
           const saved = run.resultJson?.localWorkerFinish;
           const [savedDelivery] = reviewHint ? await tx.select({ id: issueCommandDeliveries.id })
             .from(issueCommandDeliveries).where(and(
@@ -429,6 +443,9 @@ export function localAgentRunLeaseService(
             (saved as Record<string, unknown>).outcome !== input.outcome ||
             (saved as Record<string, unknown>).exitCode !== input.exitCode ||
             (saved as Record<string, unknown>).summary !== (input.summary ?? null) ||
+            (reviewerRun && ((saved as Record<string, unknown>).reviewerReviewId !== reviewerReviewId ||
+              (saved as Record<string, unknown>).reviewerDisposition !==
+                (input.outcome === "succeeded" ? "accepted" : "cancelled"))) ||
             (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
               (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
               !["ready", "blocked", "preserved"].includes(String((saved as Record<string, unknown>).disposition))))) {
@@ -444,6 +461,31 @@ export function localAgentRunLeaseService(
       const status = cancelled ? "cancelled" : input.outcome;
       let reviewReceipt: { reviewId: string; deliveryId: string; issueStatus: string;
         issueStatusVersion: number; disposition: "ready" | "blocked" | "preserved" } | null = null;
+      let reviewerReceipt: { reviewerReviewId: string; reviewerDisposition: "accepted" | "cancelled";
+        decisionRequestId?: string } | null = null;
+      if (reviewerRun) {
+        const [issue] = await tx.select().from(issues).where(and(
+          eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
+        )).for("update");
+        if (!issue) throw conflict("Dedicated review issue is missing");
+        if (input.outcome === "succeeded") {
+          if (cancelled) throw conflict("Cancelled reviewer run cannot finish successfully");
+          const accepted = await assertClientPullAcceptedReviewContext(tx as unknown as Db, { run, issue });
+          reviewerReceipt = { reviewerReviewId: accepted.reviewId,
+            reviewerDisposition: "accepted", decisionRequestId: accepted.decisionRequestId };
+        } else {
+          const [review] = await tx.select().from(issueCompletionReviews).where(and(
+            eq(issueCompletionReviews.id, reviewerReviewId as string),
+            eq(issueCompletionReviews.companyId, input.companyId),
+            eq(issueCompletionReviews.issueId, issue.id),
+          )).for("update");
+          if (!review || review.reviewerAgentId !== input.agentId ||
+            review.state !== "cancelled") {
+            throw conflict("Pending or accepted reviewer decision cannot finish unsuccessfully");
+          }
+          reviewerReceipt = { reviewerReviewId: review.id, reviewerDisposition: "cancelled" };
+        }
+      }
       if (reviewHint) {
         // The issue lock serializes human edits and review decisions. Other
         // paths use issue -> delivery -> review -> interaction ordering too.
@@ -535,6 +577,7 @@ export function localAgentRunLeaseService(
               clientRequestId: input.clientRequestId, outcome: input.outcome,
               exitCode: input.exitCode, summary: input.summary ?? null,
               ...(reviewReceipt ?? {}),
+              ...(reviewerReceipt ?? {}),
             },
           } } : {}),
         }).where(eq(heartbeatRuns.id, input.runId));

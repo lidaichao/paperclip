@@ -25,6 +25,7 @@ import {
 } from "@paperclipai/db";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
 import { localAgentReviewDeliveryService } from "./local-agent-review-delivery.js";
+import { issueCompletionReviewDecisionService } from "./issue-completion-review-decisions.js";
 import { clientPullCompletionReviewWakeKey } from "./local-agent-review-claim.js";
 import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { localAgentDeviceBindingService } from "./local-agent-device-bindings.js";
@@ -115,6 +116,30 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       reviewerAgentId, prompt: "Verify", body: "Ready for acceptance",
       clientRequestId: randomUUID() }, actor);
     return { scope, owner, svc, handoff };
+  }
+
+  async function claimedReviewerFixture() {
+    const f = await dedicatedReviewFixture();
+    await f.svc.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const { run } = await localAgentReviewDeliveryService(db)
+      .deliver(f.handoff.delivery.id);
+    const keyId = randomUUID(), deviceId = "reviewer-finish-001";
+    await db.insert(agentApiKeys).values({ id: keyId,
+      companyId: f.scope.companyId, agentId: f.handoff.review.reviewerAgentId,
+      name: "Reviewer finish key", keyHash: randomUUID() });
+    await db.insert(localAgentDeviceBindings).values({ companyId: f.scope.companyId,
+      agentId: f.handoff.review.reviewerAgentId, keyId, deviceId });
+    const claim = await f.svc.claim({ companyId: f.scope.companyId,
+      agentId: f.handoff.review.reviewerAgentId, keyId, deviceId,
+      idempotencyKey: randomUUID() });
+    const reviewerOwner = { companyId: f.scope.companyId,
+      agentId: f.handoff.review.reviewerAgentId, keyId, deviceId,
+      runId: run.id, leaseId: claim!.leaseId, generation: claim!.generation };
+    const proof = { owner: reviewerOwner, actor: { type: "agent" as const,
+      source: "agent_key" as const, companyId: f.scope.companyId,
+      agentId: reviewerOwner.agentId, keyId, runId: run.id } };
+    return { ...f, reviewerOwner, proof };
   }
 
   it("refuses a client-pull claim without a registered credential binding", async () => {
@@ -1458,5 +1483,138 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const [lease] = await db.select().from(localAgentRunLeases)
       .where(eq(localAgentRunLeases.runId, run.id));
     expect(lease.cancelRequestedAt).not.toBeNull();
+  }, 30_000);
+
+  it("does not finish a pending reviewer run as success, failure or cancellation", async () => {
+    const f = await claimedReviewerFixture();
+    for (const outcome of ["succeeded", "failed", "cancelled"] as const) {
+      await expect(f.svc.finish({ ...f.reviewerOwner, outcome, exitCode: 0,
+        processStopped: true, clientRequestId: randomUUID() }))
+        .rejects.toMatchObject({ status: 409 });
+    }
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, f.reviewerOwner.runId));
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, f.reviewerOwner.runId));
+    expect(run.status).toBe("running");
+    expect(lease.releasedAt).toBeNull();
+  }, 30_000);
+
+  it("keeps an accepted reviewer live and finishes only its own decision", async () => {
+    const f = await claimedReviewerFixture();
+    const decision = await issueCompletionReviewDecisionService(db).accept({
+      companyId: f.scope.companyId, issueId: f.scope.issueId,
+      reviewId: f.handoff.review.id, actorAgentId: f.reviewerOwner.agentId,
+      actorRunId: f.reviewerOwner.runId, requestId: randomUUID(),
+      summary: "Reviewed and accepted", clientPullProof: f.proof,
+    });
+    expect(decision.outcome).toBe("accepted");
+    expect((await f.svc.control(f.reviewerOwner)).action).toBe("continue");
+    expect((await f.svc.renew(f.reviewerOwner)).cancelRequested).toBe(false);
+    await expect(f.svc.finish({ ...f.reviewerOwner, outcome: "succeeded",
+      exitCode: 0, processStopped: true }))
+      .rejects.toMatchObject({ status: 400 });
+    const requestId = randomUUID();
+    const finish = { ...f.reviewerOwner, outcome: "succeeded" as const,
+      exitCode: 0, processStopped: true as const, clientRequestId: requestId };
+    expect((await f.svc.finish(finish)).status).toBe("succeeded");
+    expect((await f.svc.finish(finish)).status).toBe("succeeded");
+    await expect(f.svc.finish({ ...finish, clientRequestId: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, f.reviewerOwner.runId));
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({
+      reviewerReviewId: f.handoff.review.id,
+      decisionRequestId: decision.requestId,
+      reviewerDisposition: "accepted",
+    });
+  }, 30_000);
+
+  it("lets one accepted reviewer finish while another review keeps the issue in review", async () => {
+    const f = await claimedReviewerFixture();
+    const otherReviewerId = randomUUID(), otherReviewId = randomUUID();
+    await db.insert(agents).values({ id: otherReviewerId, companyId: f.scope.companyId,
+      name: "Second reviewer" });
+    const [otherCard] = await db.insert(issueThreadInteractions).values({
+      companyId: f.scope.companyId, issueId: f.scope.issueId,
+      sourceRunId: f.scope.runId, kind: "request_confirmation", status: "pending",
+      effectiveResolverPolicy: "not_creator", createdByAgentId: f.scope.agentId,
+      addresseeAgentId: otherReviewerId, addresseeUserId: null,
+      payload: { version: 1, prompt: "Second review", target: {
+        type: "custom", key: "issue_completion_review", revisionId: otherReviewId,
+      } },
+    }).returning();
+    await db.insert(issueCompletionReviews).values({ id: otherReviewId,
+      companyId: f.scope.companyId, issueId: f.scope.issueId,
+      sourceRunId: f.scope.runId, sourceAgentId: f.scope.agentId,
+      reviewerAgentId: otherReviewerId, interactionId: otherCard.id,
+      sourceKind: "client_pull", clientPullLeaseRunId: f.scope.runId,
+      requestId: randomUUID(), requestDigest: "second-review-request",
+      issueStatusVersion: f.handoff.review.issueStatusVersion });
+    await issueCompletionReviewDecisionService(db).accept({
+      companyId: f.scope.companyId, issueId: f.scope.issueId,
+      reviewId: f.handoff.review.id, actorAgentId: f.reviewerOwner.agentId,
+      actorRunId: f.reviewerOwner.runId, requestId: randomUUID(),
+      summary: "My review accepted", clientPullProof: f.proof,
+    });
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    expect(issue.status).toBe("in_review");
+    expect((await f.svc.control(f.reviewerOwner)).action).toBe("continue");
+    expect((await f.svc.renew(f.reviewerOwner)).cancelRequested).toBe(false);
+    expect((await f.svc.finish({ ...f.reviewerOwner, outcome: "succeeded",
+      exitCode: 0, processStopped: true, clientRequestId: randomUUID() })).status)
+      .toBe("succeeded");
+  }, 30_000);
+
+  it("rejects another run's accepted card as reviewer finish proof", async () => {
+    const f = await claimedReviewerFixture();
+    await issueCompletionReviewDecisionService(db).accept({
+      companyId: f.scope.companyId, issueId: f.scope.issueId,
+      reviewId: f.handoff.review.id, actorAgentId: f.reviewerOwner.agentId,
+      actorRunId: f.reviewerOwner.runId, requestId: randomUUID(),
+      summary: "Reviewed and accepted", clientPullProof: f.proof,
+    });
+    await db.update(issueThreadInteractions).set({ resolvedByRunId: f.scope.runId })
+      .where(eq(issueThreadInteractions.id, f.handoff.interaction.id));
+    await expect(f.svc.finish({ ...f.reviewerOwner, outcome: "succeeded",
+      exitCode: 0, processStopped: true, clientRequestId: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, f.reviewerOwner.runId));
+    expect(lease.releasedAt).toBeNull();
+  }, 30_000);
+
+  it("rolls back reviewer lease release when run completion cannot commit", async () => {
+    const f = await claimedReviewerFixture();
+    await issueCompletionReviewDecisionService(db).accept({
+      companyId: f.scope.companyId, issueId: f.scope.issueId,
+      reviewId: f.handoff.review.id, actorAgentId: f.reviewerOwner.agentId,
+      actorRunId: f.reviewerOwner.runId, requestId: randomUUID(),
+      summary: "Reviewed and accepted", clientPullProof: f.proof,
+    });
+    await db.execute(sql`create function reject_reviewer_run_finish() returns trigger language plpgsql as $$
+      begin
+        if old.status = 'running' and new.status = 'succeeded'
+          and new.runtime_mode = 'client_pull' then
+          raise exception 'injected reviewer run finish failure';
+        end if;
+        return new;
+      end $$`);
+    await db.execute(sql`create trigger reject_reviewer_run_finish_trigger before update on heartbeat_runs
+      for each row execute function reject_reviewer_run_finish()`);
+    try {
+      await expect(f.svc.finish({ ...f.reviewerOwner, outcome: "succeeded",
+        exitCode: 0, processStopped: true, clientRequestId: randomUUID() }))
+        .rejects.toThrow();
+    } finally {
+      await db.execute(sql`drop trigger reject_reviewer_run_finish_trigger on heartbeat_runs`);
+      await db.execute(sql`drop function reject_reviewer_run_finish()`);
+    }
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, f.reviewerOwner.runId));
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, f.reviewerOwner.runId));
+    expect(lease.releasedAt).toBeNull();
+    expect(run.status).toBe("running");
   }, 30_000);
 });
