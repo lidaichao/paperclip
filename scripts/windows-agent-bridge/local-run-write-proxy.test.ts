@@ -107,6 +107,27 @@ describe("fenced local run write capability", () => {
     await response;
   });
 
+  it("waits for an in-flight field edit before closing a successful run", async () => {
+    const f = await fixture();
+    let entered!: () => void;
+    let finishWrite!: (value: unknown) => void;
+    const enteredWrite = new Promise<void>((resolve) => { entered = resolve; });
+    f.patchLocalRunIssue.mockImplementationOnce(() => {
+      entered();
+      return new Promise((resolve) => { finishWrite = resolve; });
+    });
+    const response = f.request(`/api/issues/${issueId}`, "PATCH", { priority: "high" }).catch(() => null);
+    await enteredWrite;
+    let settled = false;
+    const close = f.proxy.close().then(() => { settled = true; });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    finishWrite({ id: issueId, priority: "high" });
+    await close;
+    expect(f.patchLocalRunIssue).toHaveBeenCalledTimes(1);
+    await response;
+  });
+
   it("accepts a completed prior-run intent when the current run has no comment", async () => {
     const f = await fixture();
     const store = new LocalCommentIntentStore(f.intentFile);

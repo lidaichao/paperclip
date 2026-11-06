@@ -158,8 +158,13 @@ export async function startLocalRunWriteProxy(input: {
         if (!Object.keys(patch).length || Object.keys(patch).some((key) => !["title", "description", "priority"].includes(key))) {
           json(res, 400, { error: "unsupported issue field" }); return;
         }
-        if (closed || input.signal.aborted) throw new Error("local run cancelled");
-        json(res, 200, await input.client.patchLocalRunIssue(lease, input.claim.issueId, patch, input.signal)); return;
+        const perform = async () => {
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          return input.client.patchLocalRunIssue(lease, input.claim.issueId, patch, input.signal);
+        };
+        const next = writeQueue.then(perform);
+        writeQueue = next.then(() => undefined, () => undefined);
+        json(res, 200, await next); return;
       }
       json(res, 403, { error: "operation unavailable for local run" });
     } catch (error) {
