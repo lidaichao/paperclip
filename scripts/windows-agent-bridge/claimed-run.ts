@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 import { runLocalAgent } from "./adapter-runtime.js";
 import { runLeaseSession } from "./lease-session.js";
 import { LocalCommentIntentStore, startLocalRunWriteProxy } from "./local-run-write-proxy.js";
-import { RunTelemetryStore, summarizeRunText } from "./run-telemetry.js";
+import { RunTelemetryStore } from "./run-telemetry.js";
 import type { AliceClient, LocalRunClaim } from "./paperclip-client.js";
 import type { BridgeAgentConfig, BridgeInboxItem, LocalAgentRuntimeConfig } from "./types.js";
 
@@ -142,6 +142,9 @@ export async function executeClaimedRun(input: {
       signal.addEventListener("abort", stop, { once: true });
       try {
         let telemetryError: unknown;
+        await telemetry.append("system", "info", "local adapter started");
+        if (signal.aborted) return { succeeded: false, exitCode: null };
+        let outputObserved = false;
         const result = await runner({
           signal,
           runId: input.claim.runId,
@@ -153,10 +156,13 @@ export async function executeClaimedRun(input: {
           issue,
           token: proxy.token,
           localAgent: input.localAgent,
-          onLog: async (stream, chunk) => {
-            if (signal.aborted) return;
+          // Raw model output may contain auth files, environment values or command
+          // arguments. Keep stdout/stderr outside both the local journal and API.
+          onLog: async () => {
+            if (signal.aborted || outputObserved) return;
+            outputObserved = true;
             try {
-              await telemetry!.appendLogChunk(stream, chunk);
+              await telemetry!.append("system", "info", "local adapter output observed");
               await telemetry!.flush(input.client, {
                 deviceId: input.deviceId, runId: input.claim.runId, leaseId: input.claim.leaseId,
                 generation: input.claim.generation,
@@ -171,7 +177,9 @@ export async function executeClaimedRun(input: {
           onEvent: async (event) => {
             if (signal.aborted) return;
             try {
-              await telemetry!.append("system", event.level ?? "info", event.message ?? event.eventType);
+              const safeEvent = event.eventType === "codex.auth_precedence_warning"
+                ? "Codex authentication precedence warning" : "local adapter event";
+              await telemetry!.append("system", event.level ?? "info", safeEvent);
               await telemetry!.flush(input.client, {
                 deviceId: input.deviceId, runId: input.claim.runId, leaseId: input.claim.leaseId,
                 generation: input.claim.generation,
@@ -190,8 +198,7 @@ export async function executeClaimedRun(input: {
           },
         });
         if (telemetryError) throw telemetryError;
-        await telemetry.flushTails();
-        summary = summarizeRunText(result.summary, secrets);
+        summary = result.succeeded ? "Local adapter completed successfully" : "Local adapter finished with an error";
         if (signal.aborted) {
           if (pids.size === 0) throw new Error("cancelled run has no reported process identity");
           stop();

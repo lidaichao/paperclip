@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { mkdtemp, readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { RunTelemetryStore, summarizeRunText } from "./run-telemetry.js";
+import { RunTelemetryStore } from "./run-telemetry.js";
 
 const RUN = "f2c991f1-b53d-4bb5-b134-8e29d43815d0";
 const ISSUE = "1b9c2019-b811-40a0-bd21-0365977a0001";
@@ -30,17 +30,13 @@ describe("local run telemetry", () => {
     expect(ids).toHaveLength(2);
   });
 
-  it("redacts secrets split across chunks before persisting or sending", async () => {
+  it("redacts known secret values before persisting", async () => {
     const file = path.join(await mkdtemp(path.join(os.tmpdir(), "run-events-")), "events.json");
     const store = new RunTelemetryStore(file, RUN, ISSUE, ["private-token-123456"]);
-    await store.appendLogChunk("stdout", "token private-token-");
-    await store.appendLogChunk("stdout", "123456\nnext line");
-    await store.flushTails();
+    await store.append("system", "warn", "token private-token-123456");
     const saved = await readFile(file, "utf8");
     expect(saved).not.toContain("private-token-123456");
     expect(saved).toContain("[redacted]");
-    expect(Buffer.byteLength(summarizeRunText("private-token-123456 " + "文".repeat(3000),
-      ["private-token-123456"])!, "utf8")).toBeLessThanOrEqual(4096);
   });
 
   it("does not upload after cancellation", async () => {

@@ -27,13 +27,6 @@ export interface RunEventClient {
 const MAX_MESSAGE_BYTES = 8 * 1024;
 const MAX_EVENTS = 2_000;
 
-export function summarizeRunText(raw: string | null | undefined, secrets: readonly (string | undefined)[]): string | undefined {
-  if (!raw) return undefined;
-  const text = redactRunText(raw, secrets);
-  const bytes = Buffer.from(text, "utf8");
-  return bytes.length <= 4 * 1024 ? text : `${bytes.subarray(0, 4 * 1024 - 32).toString("utf8")} [truncated]`;
-}
-
 export function redactRunText(raw: string, secrets: readonly (string | undefined)[]): string {
   let result = raw;
   for (const secret of secrets) {
@@ -52,8 +45,6 @@ export function redactRunText(raw: string, secrets: readonly (string | undefined
 export class RunTelemetryStore {
   private document: RunTelemetryDocument | null = null;
   private queue: Promise<unknown> = Promise.resolve();
-  private lines: Record<"stdout" | "stderr", string> = { stdout: "", stderr: "" };
-  private dropping: Record<"stdout" | "stderr", boolean> = { stdout: false, stderr: false };
 
   constructor(private readonly filePath: string, private readonly runId: string,
     private readonly issueId: string, private readonly secrets: readonly (string | undefined)[]) {}
@@ -104,32 +95,6 @@ export class RunTelemetryStore {
       document.events.push({ clientRequestId: randomUUID(), stream, level, message, acknowledged: false });
       await this.save(document);
     });
-  }
-
-  async appendLogChunk(stream: "stdout" | "stderr", chunk: string): Promise<void> {
-    const parts = chunk.split(/\r?\n/);
-    let pending = this.lines[stream] + parts.shift()!;
-    for (const part of parts) {
-      if (this.dropping[stream]) this.dropping[stream] = false;
-      else await this.append(stream, stream === "stderr" ? "warn" : "info", pending);
-      pending = part;
-    }
-    if (Buffer.byteLength(pending, "utf8") > 1024 * 1024) {
-      pending = "";
-      this.dropping[stream] = true;
-      await this.append("system", "warn", "[oversized log line omitted]");
-    }
-    this.lines[stream] = pending;
-  }
-
-  async flushTails(): Promise<void> {
-    for (const stream of ["stdout", "stderr"] as const) {
-      if (this.lines[stream] && !this.dropping[stream]) {
-        await this.append(stream, stream === "stderr" ? "warn" : "info", this.lines[stream]);
-      }
-      this.lines[stream] = "";
-      this.dropping[stream] = false;
-    }
   }
 
   async flush(client: RunEventClient, lease: LocalRunLease, signal?: AbortSignal): Promise<void> {

@@ -60,8 +60,8 @@ describe("claimed local run", () => {
     } });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
     const runner = vi.fn(async (_input: LocalAgentRunInput) => {
-      await _input.onLog?.("stdout", `started ${_input.token}\n`);
-      await _input.onEvent?.({ eventType: "work", message: "step complete" });
+      await _input.onLog?.("stdout", `private stdout content ${_input.token}\n`);
+      await _input.onEvent?.({ eventType: "work", message: "private event content" });
       return { runId: RUN_ID, exitCode: 0, signal: null, timedOut: false,
         succeeded: true, errorCode: null, sessionParams: null, sessionDisplayId: null,
         summary: `finished ${_input.token}` };
@@ -76,10 +76,15 @@ describe("claimed local run", () => {
     expect(adapterInput.apiBase).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
     expect(JSON.stringify(adapterInput)).not.toContain(claim.leaseId);
     expect(calls.some((url) => url.endsWith(`/api/agents/me/local-runs/${RUN_ID}/finish`))).toBe(true);
-    expect(calls.filter((url) => url.endsWith(`/api/agents/me/local-runs/${RUN_ID}/events`))).toHaveLength(2);
+    expect(calls.filter((url) => url.endsWith(`/api/agents/me/local-runs/${RUN_ID}/events`))).toHaveLength(3);
     expect(JSON.stringify(bodies)).not.toContain(adapterInput.token);
     expect(JSON.stringify(bodies)).not.toContain("server-only-key-123456");
-    expect((await readFile(`${intentFile}.${RUN_ID}.events.json`, "utf8"))).not.toContain(adapterInput.token);
+    expect(JSON.stringify(bodies)).not.toContain("private stdout content");
+    expect(JSON.stringify(bodies)).not.toContain("private event content");
+    const journal = await readFile(`${intentFile}.${RUN_ID}.events.json`, "utf8");
+    expect(journal).not.toContain(adapterInput.token);
+    expect(journal).not.toContain("private stdout content");
+    expect(journal).not.toContain("private event content");
   });
 
   it("rejects a claim for another agent without running a model", async () => {
