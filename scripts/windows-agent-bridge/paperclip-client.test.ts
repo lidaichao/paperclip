@@ -264,6 +264,48 @@ describe("AliceClient", () => {
       wakeReason: "assignment" }, DEVICE_ID)).rejects.toThrow("wake reason mismatch");
   });
 
+  it("writes dedicated handoff and acceptance with the exact lease and request ID", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url, init) => {
+        calls.push({ url: String(url), init });
+        if (String(url).endsWith("/api/agents/me")) {
+          return jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
+        }
+        if (String(url).endsWith("/completion-review-handoff")) {
+          return jsonResponse({ issueId: ISSUE_ID, status: "in_review",
+            reviewId: KEY_ID, interactionId: INTERACTION_ID,
+            deliveryId: DEVICE_ID }, 201);
+        }
+        return jsonResponse({ issueId: ISSUE_ID, reviewId: KEY_ID,
+          requestId: INTERACTION_ID, outcome: "accepted" });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const lease = { runId: RUN_ID, deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1 };
+    expect(await client.createLocalCompletionReviewHandoff(lease, {
+      issueId: ISSUE_ID, reviewerAgentId: DEVICE_ID, prompt: "Verify",
+      body: "Ready", clientRequestId: KEY_ID,
+    })).toMatchObject({ reviewId: KEY_ID, interactionId: INTERACTION_ID });
+    expect(await client.acceptLocalCompletionReview(lease, {
+      issueId: ISSUE_ID, reviewId: KEY_ID, summary: "Passed",
+      clientRequestId: INTERACTION_ID,
+    })).toMatchObject({ outcome: "accepted", requestId: INTERACTION_ID });
+    expect(calls.slice(1).map((call) => [new URL(call.url).pathname, call.init?.method]))
+      .toEqual([
+        [`/api/agents/me/local-runs/${RUN_ID}/issue/completion-review-handoff`, "POST"],
+        [`/api/agents/me/local-runs/${RUN_ID}/review-accept`, "POST"],
+      ]);
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease,
+      issueId: ISSUE_ID, reviewerAgentId: DEVICE_ID, clientRequestId: KEY_ID });
+    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...lease,
+      issueId: ISSUE_ID, reviewId: KEY_ID, clientRequestId: INTERACTION_ID });
+    await expect(client.acceptLocalCompletionReview(lease, {
+      issueId: ISSUE_ID, reviewId: KEY_ID, summary: " ",
+      clientRequestId: INTERACTION_ID,
+    })).rejects.toThrow("summary");
+    expect(calls).toHaveLength(3);
+  });
+
   it("sends the current lease on renew, control and finish without printing it", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const logs: string[] = [];

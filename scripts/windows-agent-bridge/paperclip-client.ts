@@ -474,6 +474,53 @@ export class AliceClient {
     return response.body;
   }
 
+  async createLocalCompletionReviewHandoff(lease: LocalRunLease, input: {
+    issueId: string; reviewerAgentId: string; prompt: string;
+    body: string; clientRequestId: string;
+  }, signal?: AbortSignal): Promise<{ reviewId: string; interactionId: string; deliveryId: string }> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(input.issueId, "issueId");
+    requireUuid(input.reviewerAgentId, "reviewerAgentId");
+    requireUuid(input.clientRequestId, "clientRequestId");
+    if (!input.prompt.trim() || input.prompt.length > 1000 || !input.body.trim() ||
+      /@|https?:\/\/|www\./i.test(input.body)) {
+      throw new Error("completion review requires a prompt and plain handoff summary");
+    }
+    const response = await this.#writeJson("POST",
+      `/api/agents/me/local-runs/${lease.runId}/issue/completion-review-handoff`,
+      { ...lease, ...input }, {}, signal);
+    const record = asRecord(response.body, "completion review handoff");
+    if (record.issueId !== input.issueId || record.status !== "in_review") {
+      throw new Error("completion review handoff identity mismatch");
+    }
+    return { reviewId: requireUuid(record.reviewId, "reviewId"),
+      interactionId: requireUuid(record.interactionId, "interactionId"),
+      deliveryId: requireUuid(record.deliveryId, "deliveryId") };
+  }
+
+  async acceptLocalCompletionReview(lease: LocalRunLease, input: {
+    issueId: string; reviewId: string; summary: string; clientRequestId: string;
+  }, signal?: AbortSignal): Promise<{ reviewId: string; requestId: string; outcome: "accepted" }> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(input.issueId, "issueId");
+    requireUuid(input.reviewId, "reviewId");
+    requireUuid(input.clientRequestId, "clientRequestId");
+    if (!input.summary.trim() || input.summary.length > 4096) {
+      throw new Error("review decision summary must be 1–4096 characters");
+    }
+    const response = await this.#writeJson("POST",
+      `/api/agents/me/local-runs/${lease.runId}/review-accept`,
+      { ...lease, ...input }, {}, signal);
+    const record = asRecord(response.body, "completion review acceptance");
+    if (record.issueId !== input.issueId || record.reviewId !== input.reviewId ||
+      record.requestId !== input.clientRequestId || record.outcome !== "accepted") {
+      throw new Error("completion review acceptance receipt mismatch");
+    }
+    return { reviewId: input.reviewId, requestId: input.clientRequestId, outcome: "accepted" };
+  }
+
   async patchLocalRunIssue(lease: LocalRunLease, issueId: string, patch: Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
     this.#requireVerifiedIdentity();
     this.#validateLease(lease);
