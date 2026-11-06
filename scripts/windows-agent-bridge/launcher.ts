@@ -7,11 +7,19 @@ import { buildWorkerEnvironment } from "./environment.js";
 import { loadMemberGbrainToken } from "./member-credential.js";
 import { verifyGbrainIdentity } from "./gbrain-identity.js";
 import { assertPrivateModelAuthReady } from "./model-readiness.js";
+import type { BridgeConfig } from "./types.js";
+
+export function assertModelAuthLaunchReady(config: BridgeConfig): void {
+  if (config.modelAuthMode === "shared_user_cursor") {
+    throw new Error("shared Cursor login mode is disabled until CLI writes to the shared config are verified");
+  }
+}
 
 async function main(): Promise<void> {
   const configPath = process.argv[2];
   if (!configPath) throw new Error("usage: launcher <config.json>");
   const config = await loadBridgeConfig(configPath);
+  assertModelAuthLaunchReady(config);
   const memberToken = await loadMemberGbrainToken(config.agents[0], process.env);
   await verifyGbrainIdentity({ agent: config.agents[0], endpoint: config.gbrainMcpUrl, token: memberToken });
   const env = buildWorkerEnvironment(process.env, config, memberToken);

@@ -9,8 +9,11 @@ export async function assertPrivateModelAuthReady(config: BridgeConfig, agent: B
   const home = await realpath(config.workerHome);
   if (!(await lstat(config.workerHome)).isDirectory()) throw new Error("private worker home is invalid");
   const sharedCodex = config.modelAuthMode === "shared_user_codex";
+  const sharedCursor = config.modelAuthMode === "shared_user_cursor";
   if (sharedCodex && agent.adapterType !== "codex_local") throw new Error("shared user model login is Codex only");
-  const privateDirectory = sharedCodex ? path.join(userHome, ".codex") : agent.adapterType === "codex_local"
+  if (sharedCursor && agent.adapterType !== "cursor") throw new Error("shared user model login is Cursor only");
+  const privateDirectory = sharedCodex ? path.join(userHome, ".codex") : sharedCursor
+    ? path.join(userHome, ".cursor") : agent.adapterType === "codex_local"
     ? path.join(config.workerHome, "codex-home")
     : path.join(config.workerHome, "home", ".cursor");
   const privateFile = agent.adapterType === "codex_local"
@@ -22,7 +25,7 @@ export async function assertPrivateModelAuthReady(config: BridgeConfig, agent: B
     throw new Error("member model login is missing from private worker home");
   }
   const resolved = await realpath(privateFile);
-  if (!sharedCodex && !resolved.startsWith(`${home}${path.sep}`)) {
+  if (!sharedCodex && !sharedCursor && !resolved.startsWith(`${home}${path.sep}`)) {
     throw new Error("member model login escapes private worker home");
   }
   const raw = await readFile(privateFile, "utf8");

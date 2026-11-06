@@ -56,6 +56,10 @@ describe("loadBridgeConfig", () => {
     cursor.agents[0].localAdapterConfig.model = "test";
     await expect(loadBridgeConfig(await fixture({ ...cursor, modelAuthMode: "shared_user_codex" })))
       .rejects.toThrow("codex_local");
+    expect((await loadBridgeConfig(await fixture({ ...cursor, modelAuthMode: "shared_user_cursor" }))).modelAuthMode)
+      .toBe("shared_user_cursor");
+    await expect(loadBridgeConfig(await fixture({ ...validConfig(), modelAuthMode: "shared_user_cursor" })))
+      .rejects.toThrow("cursor agents");
   });
   it("normalizes the Alice origin and resolves local file paths", async () => {
     const file = await fixture(validConfig());

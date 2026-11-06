@@ -17,6 +17,12 @@
 不复制订阅认证文件：Codex 刷新令牌会轮换。当前 Windows 进程创建文件符号链接返回 `EPERM`，不能依赖无权限的自动建链。硬链接也不能当作等价替代：用同卷假文件实测，源文件经原子替换后，硬链接仍读到旧内容；Codex 是否采用这种替换方式尚未核实。未来每人独立电脑时，各自电脑需有自己的模型订阅登录或受管模型凭据，不能引用 Jack 电脑的本机认证文件。
 
 隔离工作树现已加入显式 `"modelAuthMode": "shared_user_codex"`：只有 Codex 成员可选。工作器继续使用成员私有 `HOME`、`APPDATA`、Paperclip/GBrain 环境，只把 `CODEX_HOME` 指向当前 Windows 用户的 `.codex`。适配器的 `externalCodexHomeNoManagedWrites` 模式跳过共享目录的 MCP 配置、技能写入和认证缓存回填；不复制登录文件，也不自动登录。模拟测试已覆盖这些适配器写入，尚未用真实模型运行验证 Codex CLI 自身写入、多个成员并发刷新或项目级 MCP 配置。Cursor 不复用这条证据，继续按独立门禁处理。`doctor.ps1` 和 `main.ts` 的真实启动门继续关闭。
+
+### Cursor 共享订阅的独立审查
+
+[Cursor 官方配置文档](https://prod.cursor.com/docs/cli/reference/configuration)写明 Windows CLI 的默认配置文件在 `%USERPROFILE%\.cursor\cli-config.json`，且可用 `CURSOR_CONFIG_DIR` 指定目录；[官方认证文档](https://prod.cursor.com/docs/cli/reference/authentication)说明浏览器登录保存在本机，并提供 `agent status` 状态查询。本轮没有运行 `agent status` 或模型命令，因为官方文档还说明 CLI 会自修复缺失/损坏的配置，无法把状态命令视为严格无写入探针。
+
+桥接已加入显式 `"modelAuthMode": "shared_user_cursor"` 的配置解析与模拟预检：只让 Cursor 使用本机用户共享的 `.cursor` 作为 `CURSOR_CONFIG_DIR`，成员 `HOME`、`USERPROFILE`、`APPDATA`、Paperclip/GBrain 环境仍独立；Cursor adapter 的技能目录从成员私有 `config.env.HOME` 解析，不再落到共享用户 `.cursor/skills`。本机共享认证文件只读检查为常规文件且字段形状符合预检，未输出任何凭据。由于 CLI 自身可能改写共享 `cli-config.json`，也尚未验证并发与登录有效性，launcher 对此模式**显式拒绝启动**；`main.ts` 和 `doctor.ps1` 的总门禁也保持关闭。未来每人独立电脑时，应在各自电脑完成 Cursor 登录或使用各自受管凭据。
 - 登录脚本与工作器默认清除父进程的代理变量。本机 2026-11-06 的一次只读 HEAD 检查显示 `chatgpt.com` 和 `api2.cursor.sh` 直连可达；这不能保证后续网络环境。需要代理时，在**该成员私有配置**中显式增加 `"localProxyUrl": "http://127.0.0.1:7897"`。只接受无用户名、无密码、无路径的 IPv4 回环 HTTP 地址和明确端口；工作器把 Paperclip 控制面主机、GBrain 主机及回环地址加入 `NO_PROXY`。
 
 ## 私有登录备选流程（当前暂停）

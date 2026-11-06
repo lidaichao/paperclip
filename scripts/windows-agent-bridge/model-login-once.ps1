@@ -22,6 +22,12 @@ if ($config.modelAuthMode -eq 'shared_user_codex') {
   Write-Output 'Shared Codex subscription mode selected; private login is not required. Worker startup remains disabled.'
   return
 }
+if ($config.modelAuthMode -eq 'shared_user_cursor') {
+  if ($agent.adapterType -ne 'cursor') { throw 'Shared user model auth is Cursor only.' }
+  if ($Login -or $Probe) { throw 'Shared Cursor login is already owned by this Windows user; do not create a private login with this script.' }
+  Write-Output 'Shared Cursor subscription mode selected; private login is not required. Worker startup remains disabled.'
+  return
+}
 $configDir = Split-Path -Parent $resolvedConfig
 $workerHome = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($configDir, [string]$config.workerHome))
 $command = [string]$agent.localAdapterConfig.command

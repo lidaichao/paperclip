@@ -50,4 +50,18 @@ describe("private member model login preflight", () => {
     await expect(assertPrivateModelAuthReady(config, config.agents[0], path.join(root, "other")))
       .rejects.toThrow("missing");
   });
+
+  it("accepts shared Cursor auth only from the current user's config directory", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "cursor-auth-shared-"));
+    const workerHome = path.join(root, "worker");
+    const userHome = path.join(root, "user");
+    const config = { ...fixture(workerHome, "cursor"), modelAuthMode: "shared_user_cursor" as const };
+    await mkdir(workerHome);
+    await mkdir(path.join(userHome, ".cursor"), { recursive: true });
+    await writeFile(path.join(userHome, ".cursor", "cli-config.json"),
+      '{"authInfo":{"email":"example.test"}}');
+    await expect(assertPrivateModelAuthReady(config, config.agents[0], userHome)).resolves.toBeUndefined();
+    await expect(assertPrivateModelAuthReady(config, config.agents[0], path.join(root, "other")))
+      .rejects.toThrow("missing");
+  });
 });

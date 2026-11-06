@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { assertModelAuthLaunchReady } from "./launcher.js";
 
 const root = path.resolve(import.meta.dirname);
 
@@ -36,5 +37,9 @@ describe("installation safety", () => {
     const script = await readFile(path.join(root, "model-login-once.ps1"), "utf8");
     expect(script).toContain("$config.modelAuthMode -eq 'shared_user_codex'");
     expect(script.indexOf("if ($Login -or $Probe)")).toBeLessThan(script.indexOf("& $command login"));
+    expect(script).toContain("$config.modelAuthMode -eq 'shared_user_cursor'");
+    expect(() => assertModelAuthLaunchReady({ modelAuthMode: "shared_user_cursor" } as never))
+      .toThrow("disabled until CLI writes");
+    expect(() => assertModelAuthLaunchReady({ modelAuthMode: "private" } as never)).not.toThrow();
   });
 });

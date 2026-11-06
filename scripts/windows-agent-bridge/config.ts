@@ -220,11 +220,14 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
     throw new Error("gbrainEnvRef must name one member-specific GBRAIN_*_TOKEN variable");
   }
   const modelAuthMode = record.modelAuthMode ?? "private";
-  if (modelAuthMode !== "private" && modelAuthMode !== "shared_user_codex") {
-    throw new Error("modelAuthMode must be private or shared_user_codex");
+  if (modelAuthMode !== "private" && modelAuthMode !== "shared_user_codex" && modelAuthMode !== "shared_user_cursor") {
+    throw new Error("modelAuthMode must be private, shared_user_codex or shared_user_cursor");
   }
   if (modelAuthMode === "shared_user_codex" && agents[0].adapterType !== "codex_local") {
     throw new Error("shared_user_codex is only supported for codex_local agents");
+  }
+  if (modelAuthMode === "shared_user_cursor" && agents[0].adapterType !== "cursor") {
+    throw new Error("shared_user_cursor is only supported for cursor agents");
   }
 
   return {

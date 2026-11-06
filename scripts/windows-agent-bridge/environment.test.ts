@@ -1,6 +1,7 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { assertWorkerEnvironment, buildLocalAdapterConfig, buildWorkerEnvironment } from "./environment.js";
+import { resolveCursorSkillsHome } from "../../packages/adapters/cursor-local/src/server/skills.js";
 import type { BridgeConfig } from "./types.js";
 
 const agentId = "38a5808c-47f3-4029-bdfe-0d84504bdc8a";
@@ -72,5 +73,28 @@ describe("single-member worker environment", () => {
       ...shared.agents[0].localAdapterConfig, env: { CODEX_HOME: worker.CODEX_HOME },
       externalCodexHomeNoManagedWrites: true,
     });
+  });
+
+  it("routes Cursor subscription config to the shared user but skills and identity to the member", () => {
+    const cursorAgent = { ...config.agents[0], adapterType: "cursor" as const,
+      localAdapterConfig: { cwd: "H:/AIagent/Belle", command: "C:/tools/agent.exe", model: "auto" } };
+    const shared: BridgeConfig = { ...config, modelAuthMode: "shared_user_cursor", agents: [cursorAgent] };
+    const worker = buildWorkerEnvironment({ GBRAIN_LUNA_TOKEN: "own-only",
+      GBRAIN_RABBIT_TOKEN: "other", CURSOR_API_KEY: "other", PAPERCLIP_API_KEY: "other" }, shared);
+    expect(worker.CURSOR_CONFIG_DIR).toMatch(/[\\/]\.cursor$/);
+    expect(worker.CURSOR_HOME).toBe(worker.CURSOR_CONFIG_DIR);
+    expect(worker.HOME).toBe(path.join(workerHome, "home"));
+    expect(worker.USERPROFILE).toBe(worker.HOME);
+    expect(worker.APPDATA).toBe(path.join(workerHome, "appdata"));
+    expect(worker.GBRAIN_RABBIT_TOKEN).toBeUndefined();
+    expect(worker.CURSOR_API_KEY).toBeUndefined();
+    expect(worker.PAPERCLIP_API_KEY).toBeUndefined();
+    expect(() => assertWorkerEnvironment(worker, shared)).not.toThrow();
+    const localConfig = buildLocalAdapterConfig(cursorAgent, shared, worker);
+    expect(localConfig.env).toEqual({ HOME: worker.HOME, CURSOR_HOME: worker.CURSOR_HOME,
+      CURSOR_CONFIG_DIR: worker.CURSOR_CONFIG_DIR });
+    expect(resolveCursorSkillsHome(localConfig)).toBe(path.join(workerHome, "home", ".cursor", "skills"));
+    expect(() => assertWorkerEnvironment({ ...worker, CURSOR_CONFIG_DIR: path.join(workerHome, "home") }, shared))
+      .toThrow("Cursor config directory is mismatched");
   });
 });
