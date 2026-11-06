@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 import express from "express";
 import request from "supertest";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   activityLog,
   agentApiKeys,
@@ -733,6 +733,79 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await request(app).post(path).send({ ...payload, clientRequestId: randomUUID() }).expect(409);
     await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
     await request(app).post(path).send(payload).expect(403);
+  }, 30_000);
+
+  it("creates a human review confirmation in the lease transaction and replays one receipt", async () => {
+    const scope = await fixture();
+    const deviceId = "device-desktop-001";
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId, idempotencyKey: randomUUID(),
+    });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+        companyId: scope.companyId, keyId: scope.keyId };
+      next();
+    });
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message });
+    });
+    const path = `/api/agents/me/local-runs/${scope.runId}/issue/review-confirmation`;
+    const payload = { deviceId, leaseId: claimed!.leaseId, generation: claimed!.generation,
+      issueId: scope.issueId, prompt: "Please verify the result", clientRequestId: randomUUID() };
+    const first = await request(app).post(path).send(payload).expect(201);
+    const replay = await request(app).post(path).send(payload).expect(200);
+    expect(replay.body.interaction.id).toBe(first.body.interaction.id);
+    expect(first.body.interaction).toMatchObject({ kind: "request_confirmation", status: "pending",
+      sourceRunId: scope.runId, createdByAgentId: scope.agentId,
+      effectiveResolverPolicy: "human_only" });
+    await request(app).post(path).send({ ...payload, prompt: "Different request" }).expect(409);
+    const activities = await db.select().from(activityLog).where(eq(activityLog.entityId, scope.issueId));
+    expect(activities.filter((row) => row.action === "issue.thread_interaction_created" &&
+      row.details?.interactionId === first.body.interaction.id)).toHaveLength(1);
+    await request(app).post(`/api/agents/me/local-runs/${scope.runId}/issue/review-handoff`)
+      .send({ ...payload, body: "Ready for acceptance", reviewInteractionId: first.body.interaction.id,
+        clientRequestId: randomUUID(), prompt: undefined }).expect(201);
+    const [pendingReview] = await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.id, first.body.interaction.id));
+    expect(pendingReview.status).toBe("pending");
+    await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
+    await request(app).post(path).send(payload).expect(403);
+  }, 30_000);
+
+  it("rolls back a fenced review confirmation when its audit row cannot persist", async () => {
+    const scope = await fixture();
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
+    });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    await db.execute(sql`create function reject_local_review_audit() returns trigger language plpgsql as $$
+      begin
+        if new.action = 'issue.thread_interaction_created' then
+          raise exception 'injected review audit failure';
+        end if;
+        return new;
+      end $$`);
+    await db.execute(sql`create trigger reject_local_review_audit_trigger before insert on activity_log
+      for each row execute function reject_local_review_audit()`);
+    try {
+      await expect(localAgentRunLeaseService(db).createFencedReviewConfirmation({
+        ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
+        generation: claimed!.generation, prompt: "Please verify the result",
+        clientRequestId: randomUUID(),
+      }, { type: "agent", source: "agent_key", agentId: scope.agentId,
+        companyId: scope.companyId, keyId: scope.keyId }))
+        .rejects.toThrow("Failed query");
+      expect(await db.select().from(issueThreadInteractions)
+        .where(eq(issueThreadInteractions.issueId, scope.issueId))).toHaveLength(0);
+    } finally {
+      await db.execute(sql`drop trigger reject_local_review_audit_trigger on activity_log`);
+      await db.execute(sql`drop function reject_local_review_audit()`);
+    }
   }, 30_000);
 
   it("preserves deletion of a task and its run after a historical lease", async () => {

@@ -180,6 +180,17 @@ export function localAgentRunRoutes(db: Db) {
     return res.status(result.replayed ? 200 : 201).json(result);
   });
 
+  router.post("/agents/me/local-runs/:runId/issue/review-confirmation", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "prompt", "clientRequestId"]);
+    const result = await leases.createFencedReviewConfirmation({
+      ...owner(req, body), issueId: String(body.issueId ?? ""),
+      prompt: body.prompt as string, clientRequestId: body.clientRequestId as string,
+    }, req.actor);
+    return res.status(result.replayed ? 200 : 201).json(result);
+  });
+
   router.patch("/agents/me/local-runs/:runId/issue", async (req, res) => {
     res.set("Cache-Control", "no-store");
     const body = objectBody(req.body);

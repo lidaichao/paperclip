@@ -6,6 +6,7 @@ import {
   heartbeatRuns,
   heartbeatRunEvents,
   issueComments,
+  issueThreadInteractions,
   issues,
   localAgentRunLeases,
 } from "@paperclipai/db";
@@ -18,6 +19,7 @@ import { logActivity, publishActivity, type ActivityPublication } from "./activi
 import { getExecutionBlocker } from "./execution-blocker.js";
 import { issueService } from "./issues.js";
 import { issueReferenceService } from "./issue-references.js";
+import { issueThreadInteractionService } from "./issue-thread-interactions.js";
 import { executeReviewHandoff } from "./issue-review-handoff.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
@@ -554,6 +556,60 @@ export function localAgentRunLeaseService(
     return result.comment;
   }
 
+  async function createFencedReviewConfirmation(
+    input: LocalRunOwner & { issueId: string; prompt: string; clientRequestId: string },
+    actor: Express.Request["actor"],
+  ) {
+    if (!UUID.test(input.clientRequestId)) throw badRequest("clientRequestId must be a UUID");
+    if (typeof input.prompt !== "string" || !input.prompt.trim() || input.prompt.length > 1000) {
+      throw badRequest("A review prompt of at most 1000 characters is required");
+    }
+    const publications: ActivityPublication[] = [];
+    const result = await withFencedIssueWrite(input, actor, "issue:mutate",
+      async (tx, issue) => {
+        if (issue.status !== "in_progress") {
+          throw conflict("Review confirmation requires an in-progress task");
+        }
+        const [existing] = await tx.select({ id: issueThreadInteractions.id })
+          .from(issueThreadInteractions).where(and(
+            eq(issueThreadInteractions.companyId, issue.companyId),
+            eq(issueThreadInteractions.issueId, issue.id),
+            eq(issueThreadInteractions.idempotencyKey, input.clientRequestId),
+          )).limit(1);
+        // The existing interaction service owns governance, target validation,
+        // supersession and durable chat publication. Passing the locked tx
+        // keeps its savepoint and all resulting rows inside the lease fence.
+        const interaction = await issueThreadInteractionService(tx).create(issue, {
+          kind: "request_confirmation",
+          idempotencyKey: input.clientRequestId,
+          sourceRunId: input.runId,
+          continuationPolicy: "wake_assignee",
+          resolverPolicy: "human_only",
+          payload: { version: 1, prompt: input.prompt, allowDeclineReason: true },
+        }, { agentId: input.agentId, identityContextId: actor.identityContextId ?? null });
+        if (!existing) {
+          await logActivity(tx, {
+            companyId: issue.companyId, actorType: "agent", actorId: input.agentId,
+            agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
+            action: "issue.thread_interaction_created", entityType: "issue", entityId: issue.id,
+            details: {
+              interactionId: interaction.id, interactionKind: interaction.kind,
+              interactionStatus: interaction.status,
+              continuationPolicy: interaction.continuationPolicy,
+              addresseeAgentId: null, addresseeUserId: null,
+              requestedResolverPolicy: interaction.requestedResolverPolicy,
+              effectiveResolverPolicy: interaction.effectiveResolverPolicy,
+              resolverPolicyProvenance: interaction.resolverPolicyProvenance,
+              effectiveResolverPolicySource: interaction.effectiveResolverPolicySource,
+            },
+          }, publications);
+        }
+        return { interaction, replayed: Boolean(existing) };
+      });
+    for (const publication of publications) publishActivity(publication);
+    return result;
+  }
+
   async function reviewFencedIssue(
     input: LocalRunOwner & { issueId: string; body: string;
       reviewInteractionId: string; clientRequestId: string },
@@ -643,5 +699,5 @@ export function localAgentRunLeaseService(
   }
 
   return { claim, renew, control, finish, appendFencedEvent,
-    addFencedComment, reviewFencedIssue, patchFencedIssue };
+    addFencedComment, createFencedReviewConfirmation, reviewFencedIssue, patchFencedIssue };
 }
