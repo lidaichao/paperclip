@@ -63,6 +63,46 @@ describe("fenced local run write capability", () => {
     } finally { await f.proxy.close(); }
   });
 
+  it("refuses a successful run finish when a comment result is unresolved", async () => {
+    const f = await fixture();
+    f.addLocalRunComment.mockRejectedValueOnce(new Error("response lost"));
+    expect((await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Final result" })).status).toBe(409);
+    await expect(f.proxy.close()).rejects.toThrow("manual reconciliation");
+    const persisted = JSON.parse(await readFile(f.intentFile, "utf8")) as {
+      intents: Array<{ body: string; confirmed: boolean }>;
+    };
+    expect(persisted.intents).toEqual([expect.objectContaining({ body: "Final result", confirmed: false })]);
+  });
+
+  it("waits for an accepted comment write before closing a successful run", async () => {
+    const f = await fixture();
+    let entered!: () => void;
+    let finishWrite!: (value: unknown) => void;
+    const enteredWrite = new Promise<void>((resolve) => { entered = resolve; });
+    f.addLocalRunComment.mockImplementationOnce(() => {
+      entered();
+      return new Promise((resolve) => { finishWrite = resolve; });
+    });
+    const response = f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Final result" }).catch(() => null);
+    await enteredWrite;
+    let settled = false;
+    const close = f.proxy.close().then(() => { settled = true; });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    finishWrite({ id: "comment-1" });
+    await close;
+    expect(f.addLocalRunComment).toHaveBeenCalledTimes(1);
+    await response;
+  });
+
+  it("accepts a completed prior-run intent when the current run has no comment", async () => {
+    const f = await fixture();
+    const store = new LocalCommentIntentStore(f.intentFile);
+    const previous = await store.pending("e154778a-02bb-45d0-8391-d8a1b2a24112", issueId, "Previous result");
+    await store.confirmed(previous);
+    await expect(f.proxy.close()).resolves.toBeUndefined();
+  });
+
   it("closes the write capability on cancellation before another write", async () => {
     const f = await fixture();
     f.controller.abort();

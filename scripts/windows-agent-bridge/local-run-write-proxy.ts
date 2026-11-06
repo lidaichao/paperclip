@@ -77,6 +77,14 @@ export class LocalCommentIntentStore {
     }
     if (!saved.confirmed) { saved.confirmed = true; await this.save(current); }
   }
+
+  async assertNoPending(): Promise<void> {
+    const saved = await this.read();
+    if (!saved) return;
+    if (saved.intents.some((intent) => !intent.confirmed)) {
+      throw new Error("unresolved comment intent requires manual reconciliation");
+    }
+  }
 }
 
 /** Per-run loopback capability. It never exposes the agent key or lease to the model. */
@@ -93,6 +101,7 @@ export async function startLocalRunWriteProxy(input: {
   const lease: LocalRunLease = { deviceId: input.deviceId, runId: input.claim.runId,
     leaseId: input.claim.leaseId, generation: input.claim.generation };
   let closed = false;
+  let closing = false;
   let writeQueue = Promise.resolve();
   const server = createServer(async (req, res) => {
     const bearer = req.headers.authorization?.replace(/^Bearer /i, "") ?? "";
@@ -100,7 +109,7 @@ export async function startLocalRunWriteProxy(input: {
     if (supplied.length !== token.length || !timingSafeEqual(supplied, Buffer.from(token))) {
       json(res, 401, { error: "unauthorized" }); return;
     }
-    if (closed || input.signal.aborted) { json(res, 409, { error: "local run cancelled" }); return; }
+    if (closed || closing || input.signal.aborted) { json(res, 409, { error: "local run cancelled" }); return; }
     const pathname = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
     try {
       if (req.method === "GET" && pathname === "/api/agents/me") {
@@ -150,10 +159,20 @@ export async function startLocalRunWriteProxy(input: {
     apiBase: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     token,
     async close() {
-      closed = true;
-      input.signal.removeEventListener("abort", onAbort);
-      server.closeAllConnections();
-      if (server.listening) await new Promise<void>((resolve) => server.close(() => resolve()));
+      closing = true;
+      try {
+        // A model may exit before its final comment receives a response. Let
+        // already accepted writes settle before the run reports success.
+        if (!input.signal.aborted) {
+          await writeQueue;
+          await input.intentStore.assertNoPending();
+        }
+      } finally {
+        closed = true;
+        input.signal.removeEventListener("abort", onAbort);
+        server.closeAllConnections();
+        if (server.listening) await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
     },
   };
 }
