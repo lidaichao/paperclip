@@ -667,6 +667,14 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const configuredHomeIsManaged =
     configuredCodexHome != null &&
     isManagedCodexHomePath(process.env, agent.companyId, configuredCodexHome);
+  // Local bridge workers can share the Windows user's subscription login while
+  // keeping their own Paperclip/GBrain environment. The adapter must not edit
+  // that user's config, skills, or auth cache on their behalf.
+  const externalCodexHomeNoManagedWrites = config.externalCodexHomeNoManagedWrites === true;
+  if (externalCodexHomeNoManagedWrites &&
+    (!configuredCodexHome || configuredHomeIsManaged || executionTargetIsRemote || connectorSkillDigest)) {
+    throw new Error("external Codex home no-write mode requires a local, external CODEX_HOME");
+  }
   // Identity-anchored cache vend (host to sandbox). Before the managed home is
   // seeded from the shared source `auth.json`, refresh the shared credential with
   // a strictly-newer cached copy of the SAME identity. The vend reads the host
@@ -674,7 +682,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   // holds no credential it does nothing (no random pick). This keeps the change
   // additive: the managed home still symlinks the shared `auth.json`, now at its
   // freshest same-identity copy. The off-switch (default on) skips the vend.
-  if (!config.managedAiConnection && isCodexAuthCacheEnabled(process.env)) {
+  if (!externalCodexHomeNoManagedWrites && !config.managedAiConnection && isCodexAuthCacheEnabled(process.env)) {
     const sharedHomeAuthPath = path.join(resolveSharedCodexHomeDir(process.env), "auth.json");
     // This caller reads `process.env` directly and holds no separate `env`
     // object, so `selectVendCredential` falls back to its own `process.env`
@@ -708,7 +716,13 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   }
   const defaultCodexHome = resolveManagedCodexHomeDir(process.env, agent.companyId);
   const effectiveCodexHome = configuredCodexHome ?? defaultCodexHome;
-  await fs.mkdir(effectiveCodexHome, { recursive: true });
+  if (externalCodexHomeNoManagedWrites) {
+    if (!(await fs.stat(effectiveCodexHome).catch(() => null))?.isDirectory()) {
+      throw new Error("external Codex home no-write mode requires an existing directory");
+    }
+  } else {
+    await fs.mkdir(effectiveCodexHome, { recursive: true });
+  }
 
   // Never launch a managed CODEX_HOME with no credentials. Without auth.json
   // and with OPENAI_API_KEY="" the provider rejects every request with
@@ -761,11 +775,16 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       runtimeMcpGateways,
       managedMcpGatewaysFromContext(context),
     );
-    const managedMcp = await writeManagedCodexMcpConfig({
-      codexHome: effectiveCodexHome,
-      apiBaseUrl: paperclipBaseEnv.PAPERCLIP_API_URL,
-      gateways: managedMcpGateways,
-    });
+    if (externalCodexHomeNoManagedWrites && managedMcpGateways.length > 0) {
+      throw new Error("external Codex home no-write mode cannot install managed MCP gateways");
+    }
+    const managedMcp = externalCodexHomeNoManagedWrites
+      ? { configPath: path.join(effectiveCodexHome, "config.toml"), warnings: [] as string[] }
+      : await writeManagedCodexMcpConfig({
+          codexHome: effectiveCodexHome,
+          apiBaseUrl: paperclipBaseEnv.PAPERCLIP_API_URL,
+          gateways: managedMcpGateways,
+        });
     if (managedMcpGateways.length > 0) {
       await onLog(
         "stdout",
@@ -778,7 +797,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     // Inject skills into the same CODEX_HOME that Codex will actually run with
     // (managed home in the default case, or an explicit override from adapter config).
     const codexSkillsDir = resolveCodexSkillsDir(effectiveCodexHome);
-    await ensureCodexSkillsInjected(
+    if (!externalCodexHomeNoManagedWrites) await ensureCodexSkillsInjected(
       onLog,
       {
         skillsHome: codexSkillsDir,

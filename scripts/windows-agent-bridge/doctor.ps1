@@ -14,5 +14,5 @@ if ($settings.PSObject.Properties.Name -contains 'localApiBase' -or
 
 # A local config is parsed by config.ts, but no bridge process may be installed
 # until ordinary writes are fenced by the lease, member identity is verified,
-# and Codex/Cursor login works in the new private homes. Never copy a shared login.
-throw '普通写入租约围栏、本人 GB 身份和独立 CODEX_HOME/Cursor 登录尚未验收；禁止安装。'
+# and a safe model-auth path is verified. Never copy a rotating shared login.
+throw '普通写入租约围栏、本人 GB 身份和模型订阅安全隔离尚未验收；禁止安装。'

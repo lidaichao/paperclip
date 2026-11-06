@@ -7,6 +7,7 @@ const ROOT_KEYS = new Set([
   "schemaVersion",
   "deviceId",
   "workerHome",
+  "modelAuthMode",
   "apiBase",
   "localProxyUrl",
   "gbrainMcpUrl",
@@ -218,11 +219,19 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
   if (!GBRAIN_ENV_REF.test(agents[0].gbrainEnvRef) || agents[0].gbrainEnvRef === "GBRAIN_AGENT_TOKEN") {
     throw new Error("gbrainEnvRef must name one member-specific GBRAIN_*_TOKEN variable");
   }
+  const modelAuthMode = record.modelAuthMode ?? "private";
+  if (modelAuthMode !== "private" && modelAuthMode !== "shared_user_codex") {
+    throw new Error("modelAuthMode must be private or shared_user_codex");
+  }
+  if (modelAuthMode === "shared_user_codex" && agents[0].adapterType !== "codex_local") {
+    throw new Error("shared_user_codex is only supported for codex_local agents");
+  }
 
   return {
     schemaVersion: 3,
     deviceId: requiredUuid(record, "deviceId", "config"),
     workerHome,
+    modelAuthMode,
     apiBase,
     localProxyUrl: record.localProxyUrl === undefined ? undefined :
       normalizeLocalProxyUrl(requiredString(record, "localProxyUrl", "config")),

@@ -1,5 +1,6 @@
 import path from "node:path";
-import type { BridgeConfig } from "./types.js";
+import os from "node:os";
+import type { BridgeAgentConfig, BridgeConfig } from "./types.js";
 import { expectedGbrainIdentity } from "./gbrain-identity.js";
 import { normalizeLocalProxyUrl } from "./config.js";
 
@@ -20,6 +21,20 @@ function workerProxyBypass(config: BridgeConfig): string {
   return [...hosts].join(",");
 }
 
+function codexHome(config: BridgeConfig): string {
+  return config.modelAuthMode === "shared_user_codex"
+    ? path.join(os.userInfo().homedir, ".codex") : path.join(config.workerHome, "codex-home");
+}
+
+/** The parser never accepts adapter env from private JSON; inject only this trusted path. */
+export function buildLocalAdapterConfig(agent: BridgeAgentConfig, config: BridgeConfig,
+  env: NodeJS.ProcessEnv): Record<string, unknown> {
+  if (agent.adapterType !== "codex_local") return { ...agent.localAdapterConfig };
+  if (env.CODEX_HOME !== codexHome(config)) throw new Error("Codex home identity is mismatched");
+  return { ...agent.localAdapterConfig, env: { CODEX_HOME: env.CODEX_HOME },
+    ...(config.modelAuthMode === "shared_user_codex" ? { externalCodexHomeNoManagedWrites: true } : {}) };
+}
+
 /** The launcher keeps a source token only long enough to build one child env. */
 export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: BridgeConfig, loadedToken?: string): NodeJS.ProcessEnv {
   if (config.agents.length !== 1) throw new Error("one worker requires exactly one agent");
@@ -35,7 +50,7 @@ export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: Bridge
   env[ref] = token;
   env.HOME = path.join(config.workerHome, "home");
   env.USERPROFILE = env.HOME;
-  env.CODEX_HOME = path.join(config.workerHome, "codex-home");
+  env.CODEX_HOME = codexHome(config);
   env.CURSOR_HOME = path.join(config.workerHome, "home", ".cursor");
   env.PAPERCLIP_HOME = path.join(config.workerHome, "paperclip-home");
   env.APPDATA = path.join(config.workerHome, "appdata");
@@ -78,7 +93,7 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
   } else if (["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"].some((key) => nonEmpty(env, key))) {
     throw new Error("worker proxy was not explicitly configured");
   }
-  if (nonEmpty(env, "CODEX_HOME") !== path.join(config.workerHome, "codex-home") ||
+  if (nonEmpty(env, "CODEX_HOME") !== codexHome(config) ||
     nonEmpty(env, "CURSOR_HOME") !== path.join(config.workerHome, "home", ".cursor") ||
     nonEmpty(env, "PAPERCLIP_HOME") !== path.join(config.workerHome, "paperclip-home") ||
     nonEmpty(env, "HOME") !== path.join(config.workerHome, "home") ||

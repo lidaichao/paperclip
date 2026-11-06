@@ -1,12 +1,16 @@
 import { lstat, readFile, realpath } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { BridgeAgentConfig, BridgeConfig } from "./types.js";
 
-/** Read only. This checks private auth presence, not whether a subscription is still valid. */
-export async function assertPrivateModelAuthReady(config: BridgeConfig, agent: BridgeAgentConfig): Promise<void> {
+/** Read only. Never copies subscription auth; shape does not prove network validity. */
+export async function assertPrivateModelAuthReady(config: BridgeConfig, agent: BridgeAgentConfig,
+  userHome = os.userInfo().homedir): Promise<void> {
   const home = await realpath(config.workerHome);
   if (!(await lstat(config.workerHome)).isDirectory()) throw new Error("private worker home is invalid");
-  const privateDirectory = agent.adapterType === "codex_local"
+  const sharedCodex = config.modelAuthMode === "shared_user_codex";
+  if (sharedCodex && agent.adapterType !== "codex_local") throw new Error("shared user model login is Codex only");
+  const privateDirectory = sharedCodex ? path.join(userHome, ".codex") : agent.adapterType === "codex_local"
     ? path.join(config.workerHome, "codex-home")
     : path.join(config.workerHome, "home", ".cursor");
   const privateFile = agent.adapterType === "codex_local"
@@ -18,7 +22,9 @@ export async function assertPrivateModelAuthReady(config: BridgeConfig, agent: B
     throw new Error("member model login is missing from private worker home");
   }
   const resolved = await realpath(privateFile);
-  if (!resolved.startsWith(`${home}${path.sep}`)) throw new Error("member model login escapes private worker home");
+  if (!sharedCodex && !resolved.startsWith(`${home}${path.sep}`)) {
+    throw new Error("member model login escapes private worker home");
+  }
   const raw = await readFile(privateFile, "utf8");
   if (Buffer.byteLength(raw, "utf8") > 1024 * 1024) throw new Error("member model login file is invalid");
   let parsed: unknown;

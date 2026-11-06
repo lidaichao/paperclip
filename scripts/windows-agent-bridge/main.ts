@@ -6,7 +6,7 @@ import { loadBridgeConfig } from "./config.js";
 import { loadAgentTokens } from "./credentials.js";
 import { AliceClient } from "./paperclip-client.js";
 import { ClaimStateStore } from "./claim-state.js";
-import { assertWorkerEnvironment } from "./environment.js";
+import { assertWorkerEnvironment, buildLocalAdapterConfig } from "./environment.js";
 import { executeClaimedRun } from "./claimed-run.js";
 import { runLocalAgent } from "./adapter-runtime.js";
 import { verifyGbrainIdentity } from "./gbrain-identity.js";
@@ -106,7 +106,7 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
     const state = new ClaimStateStore(config.stateFile, config.deviceId, agent.remoteAgentId);
     const localAgent: LocalAgentRuntimeConfig = {
       id: agent.remoteAgentId, companyId: config.companyId, name: agent.localAgentName,
-      adapterType: agent.adapterType, adapterConfig: agent.localAdapterConfig,
+      adapterType: agent.adapterType, adapterConfig: buildLocalAdapterConfig(agent, config, process.env),
     };
     let lastSuccessfulPollAt: string | null = null;
     while (!signal.aborted) {

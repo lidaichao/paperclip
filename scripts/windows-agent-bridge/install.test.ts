@@ -31,4 +31,10 @@ describe("installation safety", () => {
     expect(doctor).toContain("禁止安装");
     expect(install.indexOf("doctor.ps1")).toBeLessThan(install.indexOf("Register-ScheduledTask"));
   });
+
+  it("does not start a private login for explicit shared Codex mode", async () => {
+    const script = await readFile(path.join(root, "model-login-once.ps1"), "utf8");
+    expect(script).toContain("$config.modelAuthMode -eq 'shared_user_codex'");
+    expect(script.indexOf("if ($Login -or $Probe)")).toBeLessThan(script.indexOf("& $command login"));
+  });
 });

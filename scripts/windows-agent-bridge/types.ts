@@ -15,6 +15,7 @@ export interface BridgeConfig {
   schemaVersion: 3;
   deviceId: string;
   workerHome: string;
+  modelAuthMode?: "private" | "shared_user_codex";
   apiBase: string;
   localProxyUrl?: string;
   gbrainMcpUrl?: string;

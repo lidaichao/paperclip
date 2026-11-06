@@ -36,4 +36,18 @@ describe("private member model login preflight", () => {
     await writeFile(path.join(home, "home", ".cursor", "cli-config.json"), '{"authInfo":{"email":"example.test"}}');
     await expect(assertPrivateModelAuthReady(config, config.agents[0])).resolves.toBeUndefined();
   });
+
+  it("accepts a shared Codex subscription without copying it into the worker home", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "model-auth-shared-"));
+    const workerHome = path.join(root, "worker");
+    const userHome = path.join(root, "user");
+    const config = { ...fixture(workerHome, "codex_local"), modelAuthMode: "shared_user_codex" as const };
+    await mkdir(workerHome);
+    await mkdir(path.join(userHome, ".codex"), { recursive: true });
+    await writeFile(path.join(userHome, ".codex", "auth.json"),
+      '{"tokens":{"account_id":"test","refresh_token":"test-only"}}');
+    await expect(assertPrivateModelAuthReady(config, config.agents[0], userHome)).resolves.toBeUndefined();
+    await expect(assertPrivateModelAuthReady(config, config.agents[0], path.join(root, "other")))
+      .rejects.toThrow("missing");
+  });
 });

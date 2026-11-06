@@ -1,6 +1,6 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { assertWorkerEnvironment, buildWorkerEnvironment } from "./environment.js";
+import { assertWorkerEnvironment, buildLocalAdapterConfig, buildWorkerEnvironment } from "./environment.js";
 import type { BridgeConfig } from "./types.js";
 
 const agentId = "38a5808c-47f3-4029-bdfe-0d84504bdc8a";
@@ -56,5 +56,21 @@ describe("single-member worker environment", () => {
   it("refuses to build an environment when the member reference is absent", () => {
     expect(() => buildWorkerEnvironment({ GBRAIN_RABBIT_TOKEN: "placeholder" }, config))
       .toThrow("credential reference GBRAIN_LUNA_TOKEN is unavailable");
+  });
+
+  it("shares only the user's Codex login directory, not another member's keys", () => {
+    const shared = { ...config, modelAuthMode: "shared_user_codex" as const };
+    const worker = buildWorkerEnvironment({ GBRAIN_LUNA_TOKEN: "own-only",
+      GBRAIN_RABBIT_TOKEN: "other", PAPERCLIP_API_KEY: "other" }, shared);
+    expect(worker.CODEX_HOME).toMatch(/[\\/]\.codex$/);
+    expect(worker.HOME).toBe(path.join(workerHome, "home"));
+    expect(worker.APPDATA).toBe(path.join(workerHome, "appdata"));
+    expect(worker.GBRAIN_RABBIT_TOKEN).toBeUndefined();
+    expect(worker.PAPERCLIP_API_KEY).toBeUndefined();
+    expect(() => assertWorkerEnvironment(worker, shared)).not.toThrow();
+    expect(buildLocalAdapterConfig(shared.agents[0], shared, worker)).toEqual({
+      ...shared.agents[0].localAdapterConfig, env: { CODEX_HOME: worker.CODEX_HOME },
+      externalCodexHomeNoManagedWrites: true,
+    });
   });
 });

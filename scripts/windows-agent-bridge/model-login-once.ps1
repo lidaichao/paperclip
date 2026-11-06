@@ -16,6 +16,12 @@ if ($config.schemaVersion -ne 3 -or @($config.agents).Count -ne 1) {
 }
 $agent = $config.agents[0]
 if ($agent.adapterType -notin @('codex_local', 'cursor')) { throw 'Unsupported model adapter.' }
+if ($config.modelAuthMode -eq 'shared_user_codex') {
+  if ($agent.adapterType -ne 'codex_local') { throw 'Shared user model auth is Codex only.' }
+  if ($Login -or $Probe) { throw 'Shared Codex login is already owned by this Windows user; do not create a private login with this script.' }
+  Write-Output 'Shared Codex subscription mode selected; private login is not required. Worker startup remains disabled.'
+  return
+}
 $configDir = Split-Path -Parent $resolvedConfig
 $workerHome = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($configDir, [string]$config.workerHome))
 $command = [string]$agent.localAdapterConfig.command

@@ -15,7 +15,9 @@ async function main(): Promise<void> {
   const memberToken = await loadMemberGbrainToken(config.agents[0], process.env);
   await verifyGbrainIdentity({ agent: config.agents[0], endpoint: config.gbrainMcpUrl, token: memberToken });
   const env = buildWorkerEnvironment(process.env, config, memberToken);
-  for (const folder of [config.workerHome, env.HOME!, env.CODEX_HOME!, env.CURSOR_HOME!, env.PAPERCLIP_HOME!, env.APPDATA!,
+  for (const folder of [config.workerHome, env.HOME!,
+    ...(config.modelAuthMode === "shared_user_codex" ? [] : [env.CODEX_HOME!]),
+    env.CURSOR_HOME!, env.PAPERCLIP_HOME!, env.APPDATA!,
     env.LOCALAPPDATA!, env.TEMP!, env.XDG_CONFIG_HOME!]) {
     await mkdir(folder, { recursive: true });
   }

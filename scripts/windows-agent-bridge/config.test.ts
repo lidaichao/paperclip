@@ -45,6 +45,18 @@ async function fixture(value: unknown): Promise<string> {
 }
 
 describe("loadBridgeConfig", () => {
+  it("opts into shared Codex subscription only for Codex agents", async () => {
+    expect((await loadBridgeConfig(await fixture(validConfig()))).modelAuthMode).toBe("private");
+    expect((await loadBridgeConfig(await fixture({ ...validConfig(), modelAuthMode: "shared_user_codex" }))).modelAuthMode)
+      .toBe("shared_user_codex");
+    await expect(loadBridgeConfig(await fixture({ ...validConfig(), modelAuthMode: "shared_system" })))
+      .rejects.toThrow("modelAuthMode");
+    const cursor = validConfig();
+    cursor.agents[0].adapterType = "cursor";
+    cursor.agents[0].localAdapterConfig.model = "test";
+    await expect(loadBridgeConfig(await fixture({ ...cursor, modelAuthMode: "shared_user_codex" })))
+      .rejects.toThrow("codex_local");
+  });
   it("normalizes the Alice origin and resolves local file paths", async () => {
     const file = await fixture(validConfig());
     const config = await loadBridgeConfig(file);
