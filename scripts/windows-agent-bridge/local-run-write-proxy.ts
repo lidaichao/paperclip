@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { mkdir, open, readFile, rename } from "node:fs/promises";
 import path from "node:path";
 import type { AddressInfo } from "node:net";
-import type { AliceClient, LocalRunClaim, LocalRunLease } from "./paperclip-client.js";
+import type { AliceClient, LocalReviewContext, LocalRunClaim, LocalRunLease } from "./paperclip-client.js";
 
 interface PendingComment { runId: string; issueId: string; body: string; clientRequestId: string; confirmed: boolean }
 interface CommentIntentDocument { runId: string; issueId: string; intents: PendingComment[] }
@@ -98,13 +98,26 @@ export class LocalCommentIntentStore {
 
 /** Per-run loopback capability. It never exposes the agent key or lease to the model. */
 export async function startLocalRunWriteProxy(input: {
-  client: Pick<AliceClient, "readLocalRunIdentity" | "readLocalRunIssue" | "addLocalRunComment" | "patchLocalRunIssue">;
+  client: Pick<AliceClient, "readLocalRunIdentity" | "readLocalRunIssue" | "addLocalRunComment" | "patchLocalRunIssue"> &
+    Partial<Pick<AliceClient, "acceptLocalCompletionReview" | "rejectLocalCompletionReview" |
+      "createLocalCompletionReviewHandoff">>;
   claim: LocalRunClaim;
   deviceId: string;
   signal: AbortSignal;
   intentStore: LocalCommentIntentStore;
-}): Promise<{ apiBase: string; token: string; close(): Promise<void> }> {
+  reviewContext?: LocalReviewContext;
+}): Promise<{ apiBase: string; token: string; decisionConfirmed(): boolean;
+  close(): Promise<void> }> {
   if (input.signal.aborted) throw new Error("local run already cancelled");
+  const review = input.claim.wakeReason === "issue_completion_review";
+  if (review !== Boolean(input.reviewContext) ||
+    (review && (input.reviewContext?.issue.id !== input.claim.issueId ||
+      input.reviewContext?.review.reviewerAgentId !== input.claim.agentId ||
+      input.reviewContext?.review.sourceAgentId !== input.reviewContext?.issue.assigneeAgentId ||
+      input.reviewContext?.issue.status !== "in_review" ||
+      !input.client.acceptLocalCompletionReview || !input.client.rejectLocalCompletionReview))) {
+    throw new Error("review capability does not match the claimed run");
+  }
   const token = randomBytes(32).toString("hex");
   const issuePath = `/api/issues/${input.claim.issueId}`;
   const lease: LocalRunLease = { deviceId: input.deviceId, runId: input.claim.runId,
@@ -112,6 +125,8 @@ export async function startLocalRunWriteProxy(input: {
   let closed = false;
   let closing = false;
   let failedFieldWrite = false;
+  let reviewDecisionConfirmed = false;
+  let completionHandoffConfirmed = false;
   let writeQueue = Promise.resolve();
   const server = createServer(async (req, res) => {
     const bearer = req.headers.authorization?.replace(/^Bearer /i, "") ?? "";
@@ -126,7 +141,91 @@ export async function startLocalRunWriteProxy(input: {
         json(res, 200, input.client.readLocalRunIdentity()); return;
       }
       if (req.method === "GET" && pathname === issuePath) {
-        json(res, 200, await input.client.readLocalRunIssue(input.claim)); return;
+        json(res, 200, review ? {
+          ...input.reviewContext!.issue,
+          completionReview: input.reviewContext!.review,
+        } : await input.client.readLocalRunIssue(input.claim)); return;
+      }
+      if (!review && completionHandoffConfirmed && req.method !== "GET") {
+        json(res, 409, { error: "source run already handed off" }); return;
+      }
+      if (review && req.method === "POST" && pathname === `${issuePath}/review-decision`) {
+        const decision = await bodyOf(req);
+        if (Object.keys(decision).some((key) => !["outcome", "summary", "clientRequestId"].includes(key)) ||
+          !["accepted", "rejected"].includes(String(decision.outcome)) ||
+          typeof decision.summary !== "string" || !decision.summary.trim() ||
+          decision.summary.length > 4096 ||
+          (decision.clientRequestId !== undefined &&
+            (typeof decision.clientRequestId !== "string" || !UUID.test(decision.clientRequestId)))) {
+          json(res, 400, { error: "unsupported review decision" }); return;
+        }
+        const perform = async () => {
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          if (reviewDecisionConfirmed) throw new Error("review already decided in this run");
+          const canonical = JSON.stringify({ outcome: decision.outcome, summary: decision.summary });
+          const intent = await input.intentStore.pending(input.claim.runId, input.claim.issueId,
+            canonical, decision.clientRequestId as string | undefined);
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          let saved: unknown;
+          try {
+            const command = { issueId: input.claim.issueId,
+              reviewId: input.reviewContext!.review.id,
+              summary: decision.summary as string,
+              clientRequestId: intent.clientRequestId };
+            saved = decision.outcome === "accepted"
+              ? await input.client.acceptLocalCompletionReview!(lease, command, input.signal)
+              : await input.client.rejectLocalCompletionReview!(lease, command, input.signal);
+          } catch {
+            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          }
+          await input.intentStore.confirmed(intent);
+          reviewDecisionConfirmed = true;
+          return saved;
+        };
+        const next = writeQueue.then(perform);
+        writeQueue = next.then(() => undefined, () => undefined);
+        json(res, 200, await next); return;
+      }
+      if (review) { json(res, 403, { error: "operation unavailable for reviewer" }); return; }
+      if (req.method === "POST" && pathname === `${issuePath}/completion-review-handoff`) {
+        const handoff = await bodyOf(req);
+        if (Object.keys(handoff).some((key) => !["reviewerAgentId", "prompt", "body", "clientRequestId"].includes(key)) ||
+          typeof handoff.reviewerAgentId !== "string" || !UUID.test(handoff.reviewerAgentId) ||
+          typeof handoff.prompt !== "string" || !handoff.prompt.trim() || handoff.prompt.length > 1000 ||
+          typeof handoff.body !== "string" || !handoff.body.trim() ||
+          /@|https?:\/\/|www\./i.test(handoff.body) ||
+          (handoff.clientRequestId !== undefined &&
+            (typeof handoff.clientRequestId !== "string" || !UUID.test(handoff.clientRequestId)))) {
+          json(res, 400, { error: "unsupported completion review handoff" }); return;
+        }
+        const perform = async () => {
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          if (completionHandoffConfirmed) throw new Error("completion review already handed off");
+          if (!input.client.createLocalCompletionReviewHandoff) {
+            throw new Error("completion review handoff is unavailable");
+          }
+          const canonical = JSON.stringify({ reviewerAgentId: handoff.reviewerAgentId,
+            prompt: handoff.prompt, body: handoff.body });
+          const intent = await input.intentStore.pending(input.claim.runId, input.claim.issueId,
+            canonical, handoff.clientRequestId as string | undefined);
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          let saved: unknown;
+          try {
+            saved = await input.client.createLocalCompletionReviewHandoff(lease, {
+              issueId: input.claim.issueId, reviewerAgentId: handoff.reviewerAgentId as string,
+              prompt: handoff.prompt as string, body: handoff.body as string,
+              clientRequestId: intent.clientRequestId,
+            }, input.signal);
+          } catch {
+            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          }
+          await input.intentStore.confirmed(intent);
+          completionHandoffConfirmed = true;
+          return saved;
+        };
+        const next = writeQueue.then(perform);
+        writeQueue = next.then(() => undefined, () => undefined);
+        json(res, 201, await next); return;
       }
       if (req.method === "POST" && pathname === `${issuePath}/comments`) {
         const body = await bodyOf(req);
@@ -137,6 +236,7 @@ export async function startLocalRunWriteProxy(input: {
         }
         const perform = async () => {
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          if (completionHandoffConfirmed) throw new Error("source run already handed off");
           const intent = await input.intentStore.pending(input.claim.runId, input.claim.issueId,
             body.body as string, body.clientRequestId as string | undefined);
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
@@ -161,6 +261,7 @@ export async function startLocalRunWriteProxy(input: {
         }
         const perform = async () => {
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          if (completionHandoffConfirmed) throw new Error("source run already handed off");
           return input.client.patchLocalRunIssue(lease, input.claim.issueId, patch, input.signal);
         };
         const next = writeQueue.then(perform);
@@ -185,6 +286,7 @@ export async function startLocalRunWriteProxy(input: {
   return {
     apiBase: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     token,
+    decisionConfirmed: () => reviewDecisionConfirmed,
     async close() {
       closing = true;
       try {

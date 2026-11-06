@@ -87,7 +87,9 @@ export async function executeClaimedRun(input: {
   if (input.claim.agentId !== input.agent.remoteAgentId || input.localAgent.id !== input.agent.remoteAgentId) {
     throw new Error("claimed run is for a different agent");
   }
-  const issue: BridgeInboxItem = await input.client.getClaimedIssue(input.claim);
+  const reviewContext = input.claim.wakeReason === "issue_completion_review"
+    ? await input.client.readLocalReviewContext(input.claim, input.deviceId) : undefined;
+  const issue: BridgeInboxItem = reviewContext?.issue ?? await input.client.getClaimedIssue(input.claim);
   if (issue.companyId !== input.companyId || issue.id !== input.claim.issueId) {
     throw new Error("claimed run is for a different company or issue");
   }
@@ -117,6 +119,7 @@ export async function executeClaimedRun(input: {
       const proxy = await startLocalRunWriteProxy({
         client: input.client, claim: input.claim, deviceId: input.deviceId, signal,
         intentStore: new LocalCommentIntentStore(input.intentFile),
+        reviewContext,
       });
       const secrets = [input.token, proxy.token, process.env[input.agent.gbrainEnvRef]];
       try {
@@ -154,6 +157,7 @@ export async function executeClaimedRun(input: {
           remoteAgentId: input.agent.remoteAgentId,
           remoteAgentName: input.agent.remoteAgentName,
           issue,
+          reviewContext,
           token: proxy.token,
           localAgent: input.localAgent,
           // Raw model output may contain auth files, environment values or command
@@ -198,13 +202,17 @@ export async function executeClaimedRun(input: {
           },
         });
         if (telemetryError) throw telemetryError;
-        summary = result.succeeded ? "Local adapter completed successfully" : "Local adapter finished with an error";
+        const succeeded = result.succeeded && (!reviewContext || proxy.decisionConfirmed());
+        summary = succeeded ? "Local adapter completed successfully"
+          : reviewContext && !proxy.decisionConfirmed()
+            ? "Reviewer stopped without a committed decision"
+            : "Local adapter finished with an error";
         if (signal.aborted) {
           if (pids.size === 0) throw new Error("cancelled run has no reported process identity");
           stop();
           await Promise.all(stopPromises.values());
         }
-        return { succeeded: result.succeeded, exitCode: result.exitCode };
+        return { succeeded, exitCode: succeeded ? result.exitCode : result.exitCode ?? 1 };
       } finally {
         signal.removeEventListener("abort", stop);
         await proxy.close();

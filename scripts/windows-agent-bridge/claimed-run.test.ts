@@ -95,4 +95,54 @@ describe("claimed local run", () => {
       .rejects.toThrow("different agent");
     expect(runner).not.toHaveBeenCalled();
   });
+
+  it("runs a designated reviewer through the single-task loopback decision capability", async () => {
+    const reviewClaim = { ...claim, wakeReason: "issue_completion_review" };
+    const reviewId = "807c65f2-11aa-4e37-a6f8-ae5896363e88";
+    const sourceId = "420ed639-455c-4617-9a36-18b46dfbb141";
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key-123456",
+      fetch: async (url) => {
+        if (String(url).endsWith("/api/agents/me")) {
+          return Response.json({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
+        }
+        if (String(url).includes(`/local-runs/${RUN_ID}/control`)) {
+          return Response.json({ action: "continue", generation: 1,
+            leaseExpiresAt: new Date(Date.now() + 60_000).toISOString() });
+        }
+        return Response.json({ runId: RUN_ID, status: "succeeded" });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const readOrdinary = vi.spyOn(client, "getClaimedIssue").mockRejectedValue(new Error("not source assignee"));
+    vi.spyOn(client, "readLocalReviewContext").mockResolvedValue({
+      issue: { id: ISSUE_ID, companyId: COMPANY_ID, projectId: null,
+        identifier: "PAP-21", title: "Verify delivery", description: "Acceptance criteria",
+        status: "in_review", priority: "medium", assigneeAgentId: sourceId,
+        updatedAt: "2026-11-07T00:00:00Z", activeRunId: RUN_ID, statusVersion: 3 },
+      review: { id: reviewId, interactionId: "87953994-acd5-4f9d-8fc8-5bf46e1c83f7",
+        sourceRunId: "6dbca282-4e89-4c79-9707-93cff72ba24c",
+        sourceAgentId: sourceId, reviewerAgentId: AGENT_ID,
+        issueStatusVersion: 3, prompt: "Verify", handoffSummary: "Ready" },
+    });
+    const reject = vi.spyOn(client, "rejectLocalCompletionReview")
+      .mockResolvedValue({ reviewId, requestId: "87953994-acd5-4f9d-8fc8-5bf46e1c83f7",
+        outcome: "rejected" });
+    const runner = vi.fn(async (input: LocalAgentRunInput) => {
+      expect(input.reviewContext?.review.id).toBe(reviewId);
+      const response = await fetch(`${input.apiBase}/api/issues/${ISSUE_ID}/review-decision`, {
+        method: "POST", headers: { authorization: `Bearer ${input.token}`,
+          "content-type": "application/json" },
+        body: JSON.stringify({ outcome: "rejected", summary: "One requirement is missing" }),
+      });
+      expect(response.status).toBe(200);
+      return { runId: RUN_ID, exitCode: 0, signal: null, timedOut: false,
+        succeeded: true, errorCode: null, sessionParams: null, sessionDisplayId: null };
+    });
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-review-run-")), "intent.json");
+    const result = await executeClaimedRun({ claim: reviewClaim, client, deviceId: DEVICE_ID,
+      companyId: COMPANY_ID, agent, localAgent, token: "server-only-key-123456",
+      intentFile, runner });
+    expect(result.outcome).toBe("succeeded");
+    expect(readOrdinary).not.toHaveBeenCalled();
+    expect(reject).toHaveBeenCalledTimes(1);
+  });
 });

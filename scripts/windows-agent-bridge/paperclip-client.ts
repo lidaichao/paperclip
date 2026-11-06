@@ -348,7 +348,7 @@ export class AliceClient {
         description: typeof issue.description === "string" ? issue.description : null,
         status, priority, assigneeAgentId,
         updatedAt: requiredString(issue, "updatedAt", "local review issue"),
-        activeRunId: claim.runId, statusVersion: Number(issue.statusVersion),
+        activeRunId: null, statusVersion: Number(issue.statusVersion),
       },
       review: parsedReview,
     };

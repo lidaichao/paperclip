@@ -1,3 +1,4 @@
+import type { LocalReviewContext } from "./paperclip-client.js";
 import type {
   AdapterExecutionContext,
   AdapterExecutionResult,
@@ -27,6 +28,7 @@ export interface LocalAgentRunInput {
   remoteAgentId: string;
   remoteAgentName: string;
   issue: BridgeInboxItem;
+  reviewContext?: LocalReviewContext;
   token: string;
   localAgent: LocalAgentRuntimeConfig;
   onLog?: (stream: "stdout" | "stderr", chunk: string) => Promise<void>;
@@ -64,8 +66,16 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
   if (typeof input.runId !== "string" || !RUN_ID_PATTERN.test(input.runId)) {
     throw new Error("valid server-issued Paperclip run id is required before local execution");
   }
-  if (input.issue.assigneeAgentId !== input.remoteAgentId || input.issue.companyId !== input.remoteCompanyId) {
-    throw new Error("refusing to run a task assigned to a different Alice identity");
+  const reviewerRun = input.wakeReason === "issue_completion_review";
+  if (input.issue.companyId !== input.remoteCompanyId ||
+    (reviewerRun ? !input.reviewContext ||
+      input.reviewContext.issue.id !== input.issue.id ||
+      input.reviewContext.review.reviewerAgentId !== input.remoteAgentId ||
+      input.reviewContext.review.sourceAgentId !== input.issue.assigneeAgentId ||
+      input.issue.assigneeAgentId === input.remoteAgentId ||
+      input.issue.status !== "in_review"
+      : input.reviewContext !== undefined || input.issue.assigneeAgentId !== input.remoteAgentId)) {
+    throw new Error("refusing to run a task assigned to a different Alice identity or review lease");
   }
   if (input.localAgent.adapterType !== "codex_local" && input.localAgent.adapterType !== "cursor") {
     throw new Error("unsupported local adapter type");
@@ -85,6 +95,34 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
     await input.onLog?.(stream, redactToken(chunk, input.token));
   };
   const cwd = requiredString(input.localAgent.adapterConfig, "cwd", "local adapter config");
+  const reviewerPrompt = [
+    "You are the designated completion reviewer for this one Paperclip task.",
+    "Read the task and review brief with GET /api/issues/$PAPERCLIP_TASK_ID on PAPERCLIP_API_URL.",
+    "Verify the delivered work against the original requirement and acceptance criteria.",
+    "Submit exactly one decision with POST /api/issues/$PAPERCLIP_TASK_ID/review-decision,",
+    "JSON {\"outcome\":\"accepted\"|\"rejected\",\"summary\":\"specific evidence and reason\"}.",
+    "This run may not edit the source task or post an ordinary comment.",
+    "Only finish after the decision endpoint confirms the receipt.",
+  ].join("\n");
+  const sourcePrompt = [
+    "You are the source agent for this one locally claimed Paperclip task.",
+    "Read its current details with GET /api/issues/$PAPERCLIP_TASK_ID on PAPERCLIP_API_URL.",
+    "Do the assigned work in your local workspace. The API capability only permits this task's",
+    "plain comments and title, description, or priority edits while the lease is live.",
+    "When the deliverable is ready and the task identifies a distinct reviewer agent UUID,",
+    "POST /api/issues/$PAPERCLIP_TASK_ID/completion-review-handoff with JSON",
+    "{\"reviewerAgentId\":\"UUID\",\"prompt\":\"specific acceptance check\",\"body\":\"plain handoff summary\"}.",
+    "Wait for the handoff receipt before ending. Do not mark the task done yourself.",
+    "If no authorized reviewer is identified or work is incomplete, report the blocker;",
+    "a run without an accepted handoff is returned to a recoverable blocked state.",
+  ].join("\n");
+  const existingPrompt = typeof input.localAgent.adapterConfig.promptTemplate === "string"
+    ? input.localAgent.adapterConfig.promptTemplate.trim() : "";
+  const adapterConfig = {
+    ...input.localAgent.adapterConfig,
+    promptTemplate: [existingPrompt, reviewerRun ? reviewerPrompt : sourcePrompt]
+      .filter(Boolean).join("\n\n"),
+  };
 
   let result: AdapterExecutionResult;
   try {
@@ -96,7 +134,7 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
         companyId: input.remoteCompanyId,
         name: input.remoteAgentName,
         adapterType: input.localAgent.adapterType,
-        adapterConfig: input.localAgent.adapterConfig,
+        adapterConfig,
       },
       runtime: {
         sessionId: null,
@@ -104,11 +142,17 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
         sessionDisplayId: null,
         taskKey: input.issue.identifier,
       },
-      config: input.localAgent.adapterConfig,
+      config: adapterConfig,
       context: {
         taskId: input.issue.id,
         issueId: input.issue.id,
         wakeReason: input.wakeReason ?? "assignment",
+        ...(reviewerRun ? { paperclipTaskMarkdown: [
+          `# ${input.issue.identifier} — ${input.issue.title}`,
+          `Review request: ${input.reviewContext!.review.prompt}`,
+          `Source handoff: ${input.reviewContext!.review.handoffSummary}`,
+          `Original description: ${input.reviewContext!.issue.description ?? "(none)"}`,
+        ].join("\n\n") } : {}),
         conversationMode: false,
         paperclipWorkspace: {
           cwd,

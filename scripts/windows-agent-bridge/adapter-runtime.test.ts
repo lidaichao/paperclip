@@ -73,6 +73,7 @@ describe("runLocalAgent", () => {
       if (!invocation) throw new Error("adapter invocation was not captured");
       expect(invocation.authToken).toBe(token);
       expect(invocation.runId).toBe(SERVER_RUN_ID);
+      expect(String(invocation.config.promptTemplate)).toContain("completion-review-handoff");
       expect(JSON.stringify(invocation.context)).not.toContain(token);
       expect(JSON.stringify(invocation.config)).not.toContain(token);
       expect(lines.join("\n")).not.toContain(token);
@@ -98,6 +99,38 @@ describe("runLocalAgent", () => {
       token: "pc_agent_secret_1234567890",
       localAgent: localAgent(),
     })).rejects.toThrow("different Alice identity");
+  });
+
+  it("uses a dedicated review prompt without treating the reviewer as the source assignee", async () => {
+    const task = issue();
+    task.assigneeAgentId = "source-agent";
+    task.status = "in_review";
+    const reviewContext = { issue: { ...task, description: "Original requirement",
+      statusVersion: 3 },
+      review: { id: "review-1", interactionId: "interaction-1",
+        sourceRunId: "source-run-1", sourceAgentId: "source-agent",
+        reviewerAgentId: REMOTE_AGENT_ID, issueStatusVersion: 3,
+        prompt: "Verify behavior", handoffSummary: "Ready to check" } };
+    let captured: AdapterExecutionContext | undefined;
+    await runLocalAgent({ runId: SERVER_RUN_ID,
+      wakeReason: "issue_completion_review", apiBase: "http://127.0.0.1:43123",
+      remoteCompanyId: REMOTE_COMPANY_ID, remoteAgentId: REMOTE_AGENT_ID,
+      remoteAgentName: "Luna", issue: task, reviewContext,
+      token: "review-capability", localAgent: localAgent(),
+      dependencies: { codexExecute: async (ctx) => {
+        captured = ctx;
+        return { exitCode: 0, signal: null, timedOut: false };
+      } },
+    });
+    expect(String(captured?.config.promptTemplate)).toContain("review-decision");
+    expect(String(captured?.context.paperclipTaskMarkdown)).toContain("Verify behavior");
+    expect(captured?.agent.id).toBe(REMOTE_AGENT_ID);
+    await expect(runLocalAgent({ runId: SERVER_RUN_ID,
+      wakeReason: "issue_completion_review", apiBase: "http://127.0.0.1:43123",
+      remoteCompanyId: REMOTE_COMPANY_ID, remoteAgentId: REMOTE_AGENT_ID,
+      remoteAgentName: "Luna", issue: task,
+      token: "review-capability", localAgent: localAgent(),
+    })).rejects.toThrow("review lease");
   });
 
   it("never launches an adapter without a server-issued run id", async () => {

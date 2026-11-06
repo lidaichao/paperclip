@@ -17,23 +17,124 @@ async function fixture() {
   const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-local-write-")), "intent.json");
   const addLocalRunComment = vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({ id: "comment-1" }));
   const patchLocalRunIssue = vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({ id: issueId }));
+  const createLocalCompletionReviewHandoff = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+    async () => ({ reviewId: "807c65f2-11aa-4e37-a6f8-ae5896363e88" }));
   const controller = new AbortController();
   const proxy = await startLocalRunWriteProxy({ claim, deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
     signal: controller.signal, intentStore: new LocalCommentIntentStore(intentFile),
     client: {
       readLocalRunIdentity: () => ({ id: agentId, companyId: "company-1", name: "Luna" }),
       readLocalRunIssue: async () => ({ id: issueId, title: "Task" }),
-      addLocalRunComment, patchLocalRunIssue,
+      addLocalRunComment, patchLocalRunIssue, createLocalCompletionReviewHandoff,
     },
   });
   const request = (route: string, method = "GET", body?: unknown, bearer = proxy.token) =>
     fetch(`${proxy.apiBase}${route}`, { method,
       headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
-  return { proxy, controller, request, addLocalRunComment, patchLocalRunIssue, intentFile };
+  return { proxy, controller, request, addLocalRunComment, patchLocalRunIssue,
+    createLocalCompletionReviewHandoff, intentFile };
 }
 
 describe("fenced local run write capability", () => {
+  it("hands source work to one named reviewer and blocks later source edits", async () => {
+    const f = await fixture();
+    const reviewerAgentId = "420ed639-455c-4617-9a36-18b46dfbb141";
+    try {
+      const response = await f.request(`/api/issues/${issueId}/completion-review-handoff`, "POST", {
+        reviewerAgentId, prompt: "Verify acceptance criteria", body: "Work is ready",
+      });
+      expect(response.status).toBe(201);
+      expect(f.createLocalCompletionReviewHandoff).toHaveBeenCalledTimes(1);
+      expect(f.createLocalCompletionReviewHandoff.mock.calls[0]?.[1]).toMatchObject({
+        issueId, reviewerAgentId, prompt: "Verify acceptance criteria",
+        body: "Work is ready", clientRequestId: expect.any(String),
+      });
+      expect((await f.request(`/api/issues/${issueId}/comments`, "POST",
+        { body: "Late comment" })).status).toBe(409);
+      expect((await f.request(`/api/issues/${issueId}`, "PATCH",
+        { title: "Late edit" })).status).toBe(409);
+      expect((await f.request(`/api/issues/${issueId}/completion-review-handoff`, "POST", {
+        reviewerAgentId, prompt: "Another", body: "Later",
+      })).status).toBe(409);
+    } finally { await f.proxy.close(); }
+  });
+  it("gives a reviewer only the redacted review and one fenced decision", async () => {
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-review-proxy-")), "intent.json");
+    const sourceId = "420ed639-455c-4617-9a36-18b46dfbb141";
+    const reviewId = "807c65f2-11aa-4e37-a6f8-ae5896363e88";
+    const reviewClaim = { ...claim, wakeReason: "issue_completion_review" };
+    const accept = vi.fn(async () => ({ issueId, reviewId, outcome: "accepted" as const }));
+    const reject = vi.fn(async () => ({ issueId, reviewId, outcome: "rejected" as const }));
+    const readOrdinary = vi.fn(async () => { throw new Error("ordinary issue read forbidden"); });
+    const proxy = await startLocalRunWriteProxy({ claim: reviewClaim,
+      deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+      signal: new AbortController().signal,
+      intentStore: new LocalCommentIntentStore(intentFile),
+      reviewContext: {
+        issue: { id: issueId, companyId: "company-1", projectId: null,
+          identifier: "PAP-1", title: "Review task", description: "Acceptance criteria",
+          status: "in_review", priority: "medium", assigneeAgentId: sourceId,
+          activeRunId: runId, updatedAt: "2026-11-07T00:00:00Z", statusVersion: 3 },
+        review: { id: reviewId, interactionId: "87953994-acd5-4f9d-8fc8-5bf46e1c83f7",
+          sourceRunId: "6dbca282-4e89-4c79-9707-93cff72ba24c",
+          sourceAgentId: sourceId, reviewerAgentId: agentId,
+          issueStatusVersion: 3, prompt: "Verify feature", handoffSummary: "Ready" },
+      },
+      client: { readLocalRunIdentity: () => ({ id: agentId, companyId: "company-1", name: "Luna" }),
+        readLocalRunIssue: readOrdinary, addLocalRunComment: vi.fn(),
+        patchLocalRunIssue: vi.fn(), acceptLocalCompletionReview: accept,
+        rejectLocalCompletionReview: reject },
+    });
+    const request = (route: string, method = "GET", body?: unknown) =>
+      fetch(`${proxy.apiBase}${route}`, { method,
+        headers: { authorization: `Bearer ${proxy.token}`, "content-type": "application/json" },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    try {
+      const detail = await request(`/api/issues/${issueId}`);
+      expect((await detail.json()).completionReview).toMatchObject({ id: reviewId,
+        prompt: "Verify feature" });
+      expect(readOrdinary).not.toHaveBeenCalled();
+      expect((await request(`/api/issues/${issueId}/comments`, "POST", { body: "Not allowed" })).status)
+        .toBe(403);
+      expect((await request(`/api/issues/${issueId}`, "PATCH", { title: "Not allowed" })).status)
+        .toBe(403);
+      const decided = await request(`/api/issues/${issueId}/review-decision`, "POST",
+        { outcome: "rejected", summary: "Missing acceptance criterion" });
+      expect(decided.status).toBe(200);
+      expect(reject).toHaveBeenCalledTimes(1);
+      expect(accept).not.toHaveBeenCalled();
+      expect(reject.mock.calls[0]?.[1]).toMatchObject({ issueId, reviewId,
+        summary: "Missing acceptance criterion", clientRequestId: expect.any(String) });
+      expect((await request(`/api/issues/${issueId}/review-decision`, "POST",
+        { outcome: "accepted", summary: "Changed mind" })).status).toBe(409);
+    } finally { await proxy.close(); }
+  });
+
+  it("reports that a reviewer exited without a durable decision", async () => {
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-review-proxy-")), "intent.json");
+    const reviewClaim = { ...claim, wakeReason: "issue_completion_review" };
+    const proxy = await startLocalRunWriteProxy({ claim: reviewClaim,
+      deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+      signal: new AbortController().signal,
+      intentStore: new LocalCommentIntentStore(intentFile),
+      reviewContext: { issue: { id: issueId, companyId: "company-1", projectId: null,
+        identifier: "PAP-1", title: "Review task", description: null,
+        status: "in_review", priority: "medium", assigneeAgentId: "420ed639-455c-4617-9a36-18b46dfbb141",
+        activeRunId: runId, updatedAt: "2026-11-07T00:00:00Z", statusVersion: 3 },
+        review: { id: "807c65f2-11aa-4e37-a6f8-ae5896363e88",
+          interactionId: "87953994-acd5-4f9d-8fc8-5bf46e1c83f7",
+          sourceRunId: "6dbca282-4e89-4c79-9707-93cff72ba24c",
+          sourceAgentId: "420ed639-455c-4617-9a36-18b46dfbb141",
+          reviewerAgentId: agentId, issueStatusVersion: 3,
+          prompt: "Verify", handoffSummary: "Ready" } },
+      client: { readLocalRunIdentity: () => ({ id: agentId, companyId: "company-1", name: "Luna" }),
+        readLocalRunIssue: vi.fn(), addLocalRunComment: vi.fn(), patchLocalRunIssue: vi.fn(),
+        acceptLocalCompletionReview: vi.fn(), rejectLocalCompletionReview: vi.fn() },
+    });
+    expect(proxy.decisionConfirmed()).toBe(false);
+    await expect(proxy.close()).resolves.toBeUndefined();
+  });
   it("binds reads to one issue and refuses another member's token or any other path", async () => {
     const f = await fixture();
     try {
