@@ -22,6 +22,7 @@ import {
   heartbeatRuns,
   runIdentityContexts,
   issueComments,
+  issueCompletionReviews,
   issueDocuments,
   issueQuestionResponseDeliveries,
   issueThreadInteractions,
@@ -357,15 +358,21 @@ function isNativeCompletionReview(
   return target.type === "custom" && target.key === "native_completion_review";
 }
 
-/** The shared completion-review target has no generic resolution semantics yet. */
-function assertNotSharedCompletionReview(
+function sharedCompletionReviewTarget(
   row: Pick<IssueThreadInteractionRow, "payload">,
 ) {
   const payload = row.payload && typeof row.payload === "object"
     && !Array.isArray(row.payload) ? row.payload as unknown as Record<string, unknown> : {};
   const target = payload.target && typeof payload.target === "object"
     && !Array.isArray(payload.target) ? payload.target as Record<string, unknown> : {};
-  if (target.key === ISSUE_COMPLETION_REVIEW_TARGET_KEY) {
+  return target.key === ISSUE_COMPLETION_REVIEW_TARGET_KEY ? target : null;
+}
+
+/** The shared completion-review target has no generic resolution semantics yet. */
+function assertNotSharedCompletionReview(
+  row: Pick<IssueThreadInteractionRow, "payload">,
+) {
+  if (sharedCompletionReviewTarget(row)) {
     throw unprocessable("Completion reviews require the dedicated review decision command");
   }
 }
@@ -4585,6 +4592,7 @@ export function issueThreadInteractionService(
       const now = new Date();
       const expired: IssueThreadInteraction[] = [];
       for (const row of rows) {
+        const initialReviewTarget = sharedCompletionReviewTarget(row);
         // Same ordering as withdrawal: revoke the linked tool action before
         // resolving the card, inside one transaction. A concurrent gateway
         // claim (approved -> executing) blocks on the revocation's row lock
@@ -4595,6 +4603,24 @@ export function issueThreadInteractionService(
         // lifecycle reflection.
         const updated = await db
           .transaction(async (tx) => {
+            // The enclosing issue transition holds the issue lock. Take the
+            // review lock before the interaction lock, in the same savepoint.
+            // A missing review must abort the terminal transition rather than
+            // leave a pending review behind an expired card.
+            const review = initialReviewTarget ? await tx.select({ id: issueCompletionReviews.id })
+              .from(issueCompletionReviews)
+              .where(and(
+                eq(issueCompletionReviews.companyId, issue.companyId),
+                eq(issueCompletionReviews.issueId, issue.id),
+                eq(issueCompletionReviews.interactionId, row.id),
+                eq(issueCompletionReviews.state, "pending"),
+              ))
+              .for("update")
+              .then((found) => found[0] ?? null) : null;
+            if (initialReviewTarget && (!review || initialReviewTarget.type !== "custom"
+              || initialReviewTarget.revisionId !== review.id)) {
+              throw conflict("Pending completion review record or revision is missing");
+            }
             if (row.kind === "connection_intent") {
               await tx
                 .delete(toolOauthStates)
@@ -4630,6 +4656,22 @@ export function issueThreadInteractionService(
               )
               .returning();
             if (!resolved) throw new InteractionResolvedConcurrentlyError();
+            const resolvedReviewTarget = sharedCompletionReviewTarget(resolved);
+            if (Boolean(resolvedReviewTarget) !== Boolean(initialReviewTarget)
+              || (initialReviewTarget && (resolvedReviewTarget?.type !== "custom"
+                || resolvedReviewTarget.revisionId !== initialReviewTarget.revisionId))) {
+              throw conflict("Completion review target changed during issue closure");
+            }
+            if (review) {
+              const [cancelled] = await tx.update(issueCompletionReviews)
+                .set({ state: "cancelled", decidedAt: now })
+                .where(and(
+                  eq(issueCompletionReviews.id, review.id),
+                  eq(issueCompletionReviews.state, "pending"),
+                ))
+                .returning({ id: issueCompletionReviews.id });
+              if (!cancelled) throw conflict("Pending completion review changed during issue closure");
+            }
             await enqueueTerminalIssueInteractionChatPublications(
               tx as unknown as Db,
               hydrateInteraction(resolved),
