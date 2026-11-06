@@ -499,6 +499,33 @@ export class AliceClient {
       deliveryId: requireUuid(record.deliveryId, "deliveryId") };
   }
 
+  async completeLocalChildWorkRecord(lease: LocalRunLease, input: {
+    issueId: string; expectedStatusVersion: number;
+    summary: string; clientRequestId: string;
+  }, signal?: AbortSignal): Promise<{ receiptId: string; statusVersion: number }> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(input.issueId, "issueId");
+    requireUuid(input.clientRequestId, "clientRequestId");
+    if (!Number.isSafeInteger(input.expectedStatusVersion) ||
+      input.expectedStatusVersion < 0 || !input.summary.trim() ||
+      Buffer.byteLength(input.summary, "utf8") > 4096) {
+      throw new Error("child completion requires a valid revision and summary");
+    }
+    const response = await this.#writeJson("POST",
+      `/api/agents/me/local-runs/${lease.runId}/issue/child-complete`,
+      { ...lease, ...input }, {}, signal);
+    const record = asRecord(response.body, "child completion");
+    if (record.issueId !== input.issueId || record.status !== "in_progress" ||
+      record.disposition !== "prepared" ||
+      !Number.isSafeInteger(record.statusVersion) ||
+      Number(record.statusVersion) !== input.expectedStatusVersion) {
+      throw new Error("child completion receipt changed");
+    }
+    return { receiptId: requireUuid(record.receiptId, "receiptId"),
+      statusVersion: Number(record.statusVersion) };
+  }
+
   async acceptLocalCompletionReview(lease: LocalRunLease, input: {
     issueId: string; reviewId: string; summary: string; clientRequestId: string;
   }, signal?: AbortSignal): Promise<{ reviewId: string; requestId: string; outcome: "accepted" }> {

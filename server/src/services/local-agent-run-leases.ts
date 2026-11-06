@@ -12,6 +12,11 @@ import {
   issueThreadInteractions,
   issues,
   localAgentRunLeases,
+  localIssueCompletionCommands,
+  workRecordIssueLinks,
+  workRecordQualityCycles,
+  workRecordQualityItems,
+  workRecords,
 } from "@paperclipai/db";
 import { and, asc, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
 import { HttpError, badRequest, conflict, forbidden, notFound, unprocessable } from "../errors.js";
@@ -429,17 +434,26 @@ export function localAgentRunLeaseService(
       )).limit(2);
       if (reviews.length > 1) throw conflict("Run has multiple completion reviews; reconcile before finishing");
       const reviewHint = reviews[0] ?? null;
+      const childCompletions = await tx.select().from(localIssueCompletionCommands).where(and(
+        eq(localIssueCompletionCommands.companyId, input.companyId),
+        eq(localIssueCompletionCommands.issueId, lease.issueId),
+        eq(localIssueCompletionCommands.runId, input.runId),
+      )).limit(2);
+      if (childCompletions.length > 1 || (childCompletions.length > 0 && reviewHint)) {
+        throw conflict("Run has conflicting completion dispositions");
+      }
+      const childCompletion = childCompletions[0] ?? null;
       const reviewerRun = wakeReasonFromRun(run) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON;
       const reviewerReviewId = reviewerRun ? run.contextSnapshot?.reviewId : null;
       if (reviewerRun && typeof reviewerReviewId !== "string") {
         throw conflict("Dedicated reviewer run lacks a review identity");
       }
-      if ((reviewHint || reviewerRun) && !input.clientRequestId) {
-        throw badRequest("Dedicated review finish requires clientRequestId");
+      if ((reviewHint || reviewerRun || childCompletion) && !input.clientRequestId) {
+        throw badRequest("Completion finish requires clientRequestId");
       }
       if (lease.releasedAt) {
         if (lease.outcome !== input.outcome) throw conflict("Run already finished with another outcome");
-        if (input.clientRequestId || reviewHint || reviewerRun) {
+        if (input.clientRequestId || reviewHint || reviewerRun || childCompletion) {
           const saved = run.resultJson?.localWorkerFinish;
           const [savedDelivery] = reviewHint ? await tx.select({ id: issueCommandDeliveries.id })
             .from(issueCommandDeliveries).where(and(
@@ -458,6 +472,8 @@ export function localAgentRunLeaseService(
                     (saved as Record<string, unknown>).reviewerDisposition))
                 : !["accepted", "rejected", "blocked", "preserved"].includes(String(
                     (saved as Record<string, unknown>).reviewerDisposition))))) ||
+            (childCompletion && ((saved as Record<string, unknown>).childCompletionId !== childCompletion.id ||
+              (saved as Record<string, unknown>).childCompletionDisposition !== childCompletion.state)) ||
             (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
               (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
               !["ready", "blocked", "preserved"].includes(String((saved as Record<string, unknown>).disposition))))) {
@@ -476,6 +492,9 @@ export function localAgentRunLeaseService(
       let reviewerReceipt: { reviewerReviewId: string;
         reviewerDisposition: "accepted" | "rejected" | "blocked" | "preserved";
         decisionRequestId?: string; issueStatus?: string; issueStatusVersion?: number } | null = null;
+      let childReceipt: { childCompletionId: string;
+        childCompletionDisposition: "completed" | "aborted";
+        childCompletedStatusVersion?: number } | null = null;
       if (reviewerRun) {
         const [issue] = await tx.select().from(issues).where(and(
           eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
@@ -665,6 +684,59 @@ export function localAgentRunLeaseService(
             disposition: "preserved" };
         }
       }
+      if (childCompletion) {
+        if (childCompletion.state !== "prepared" || reviewerRun ||
+          childCompletion.companyId !== input.companyId ||
+          childCompletion.issueId !== lease.issueId) {
+          throw conflict("Child completion receipt is no longer prepared");
+        }
+        if (status === "succeeded") {
+          const [issue] = await tx.select().from(issues).where(and(
+            eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
+          )).for("update");
+          const [comment] = childCompletion.commentId
+            ? await tx.select({ id: issueComments.id }).from(issueComments).where(and(
+                eq(issueComments.id, childCompletion.commentId),
+                eq(issueComments.companyId, input.companyId),
+                eq(issueComments.issueId, lease.issueId),
+              )) : [];
+          if (!issue || !comment || issue.status !== "in_progress" ||
+            issue.statusVersion !== childCompletion.preparedStatusVersion ||
+            issue.assigneeAgentId !== input.agentId || issue.executionRunId !== input.runId) {
+            throw conflict("Child task changed before its process stopped");
+          }
+          const postCommitActions: IssuePostCommitAction[] = [];
+          const completed = await issueService(db).update(issue.id, {
+            status: "done", actorAgentId: input.agentId,
+            companyGuard: input.companyId,
+          }, tx, publications, postCommitActions);
+          if (!completed || completed.status !== "done" ||
+            completed.statusVersion !== issue.statusVersion + 1 ||
+            postCommitActions.length > 0) {
+            throw conflict("Could not safely complete the stopped child process");
+          }
+          await tx.update(localIssueCompletionCommands).set({
+            state: "completed", completedStatusVersion: completed.statusVersion,
+          }).where(eq(localIssueCompletionCommands.id, childCompletion.id));
+          await logActivity(tx as unknown as Db, {
+            companyId: input.companyId, actorType: "agent", actorId: input.agentId,
+            agentId: input.agentId, runId: input.runId,
+            action: "work_record.child_execution_completed", entityType: "issue",
+            entityId: issue.id, issueId: issue.id,
+            details: { recordId: childCompletion.recordId,
+              receiptId: childCompletion.id,
+              statusVersion: completed.statusVersion },
+          }, publications);
+          childReceipt = { childCompletionId: childCompletion.id,
+            childCompletionDisposition: "completed",
+            childCompletedStatusVersion: completed.statusVersion };
+        } else {
+          await tx.update(localIssueCompletionCommands).set({ state: "aborted" })
+            .where(eq(localIssueCompletionCommands.id, childCompletion.id));
+          childReceipt = { childCompletionId: childCompletion.id,
+            childCompletionDisposition: "aborted" };
+        }
+      }
       // A local process result is not a business completion. Without an atomic
       // handoff, releasing any source run would strand an in_progress task.
       // Preserve a human's newer state if they changed it.
@@ -708,6 +780,7 @@ export function localAgentRunLeaseService(
               exitCode: input.exitCode, summary: input.summary ?? null,
               ...(reviewReceipt ?? {}),
               ...(reviewerReceipt ?? {}),
+              ...(childReceipt ?? {}),
             },
           } } : {}),
         }).where(eq(heartbeatRuns.id, input.runId));
@@ -871,6 +944,115 @@ export function localAgentRunLeaseService(
       if (!decision.allowed) throw forbidden("Issue write permission denied");
       return write(tx as unknown as Db, issue, decision.reason ?? "local_run_assignee");
     });
+  }
+
+  async function completeFencedChildWorkRecord(
+    input: LocalRunOwner & { issueId: string; summary: string;
+      expectedStatusVersion: number; clientRequestId: string },
+    actor: Express.Request["actor"],
+  ) {
+    if (!UUID.test(input.clientRequestId) || !input.summary.trim() ||
+      Buffer.byteLength(input.summary, "utf8") > 4096 ||
+      /@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\./i.test(input.summary) ||
+      !Number.isSafeInteger(input.expectedStatusVersion) || input.expectedStatusVersion < 0) {
+      throw badRequest("Child completion requires a request ID, plain summary and status revision");
+    }
+    const digest = createHash("sha256").update(JSON.stringify({
+      companyId: input.companyId, issueId: input.issueId, runId: input.runId,
+      agentId: input.agentId, summary: input.summary,
+      expectedStatusVersion: input.expectedStatusVersion,
+    })).digest("hex");
+    const publications: ActivityPublication[] = [];
+    const result = await withFencedIssueWrite(input, actor, "issue:mutate",
+      async (tx, issue, authorizationReason) => {
+        const [existing] = await tx.select().from(localIssueCompletionCommands).where(and(
+          eq(localIssueCompletionCommands.companyId, input.companyId),
+          eq(localIssueCompletionCommands.runId, input.runId),
+          eq(localIssueCompletionCommands.clientRequestId, input.clientRequestId),
+        )).limit(1);
+        if (existing) {
+          if (existing.issueId !== issue.id || existing.requestDigest !== digest ||
+            existing.state !== "prepared" || issue.status !== "in_progress" ||
+            issue.statusVersion !== existing.preparedStatusVersion) {
+            throw conflict("Child completion request differs from its committed receipt");
+          }
+          return { issueId: issue.id, status: issue.status,
+            statusVersion: issue.statusVersion, receiptId: existing.id,
+            disposition: "prepared" as const, replayed: true };
+        }
+        if (issue.status !== "in_progress" || issue.statusVersion !== input.expectedStatusVersion) {
+          throw conflict("Child completion task revision changed");
+        }
+        const [otherCompletion] = await tx.select({ id: localIssueCompletionCommands.id })
+          .from(localIssueCompletionCommands).where(and(
+            eq(localIssueCompletionCommands.companyId, input.companyId),
+            eq(localIssueCompletionCommands.issueId, issue.id),
+            eq(localIssueCompletionCommands.runId, input.runId),
+          )).limit(1);
+        if (otherCompletion) throw conflict("This run already prepared a child completion");
+        const [linked] = await tx.select({ link: workRecordIssueLinks, record: workRecords })
+          .from(workRecordIssueLinks)
+          .innerJoin(workRecords, and(
+            eq(workRecords.companyId, workRecordIssueLinks.companyId),
+            eq(workRecords.id, workRecordIssueLinks.recordId),
+          )).where(and(
+            eq(workRecordIssueLinks.companyId, input.companyId),
+            eq(workRecordIssueLinks.issueId, issue.id),
+            eq(workRecordIssueLinks.purpose, "primary"),
+          )).limit(1);
+        if (!linked || linked.record.kind !== "plan" || !linked.record.parentRecordId ||
+          linked.record.assigneeAgentId !== input.agentId ||
+          linked.record.projectId !== issue.projectId ||
+          linked.record.dispatchState === "not_dispatched") {
+          throw unprocessable("Only a dispatched, assigned plan child can use this completion command",
+            { code: "work_record_child_completion_scope_invalid" });
+        }
+        const [quality] = await tx.select({ id: workRecordQualityItems.id })
+          .from(workRecordQualityItems)
+          .innerJoin(workRecordQualityCycles, and(
+            eq(workRecordQualityCycles.companyId, workRecordQualityItems.companyId),
+            eq(workRecordQualityCycles.id, workRecordQualityItems.cycleId),
+          )).where(and(
+            eq(workRecordQualityItems.companyId, input.companyId),
+            eq(workRecordQualityItems.projectId, linked.record.projectId),
+            eq(workRecordQualityItems.recordId, linked.record.id),
+            eq(workRecordQualityItems.role, "repair"),
+            eq(workRecordQualityItems.required, true),
+            eq(workRecordQualityCycles.kind, "package_acceptance"),
+            eq(workRecordQualityCycles.state, "open"),
+            ne(workRecordQualityItems.state, "accepted"),
+            ne(workRecordQualityItems.state, "rejected"),
+          )).limit(1);
+        if (!quality) throw conflict("Child is not part of an open PO work package");
+        const sourceTrust = await resolveActorSourceTrustForIssue({ db: tx, issue,
+          actor: { actorType: "agent", actorId: input.agentId,
+            agentId: input.agentId, runId: input.runId } });
+        const comment = await issueService(db).addComment(issue.id, input.summary,
+          { agentId: input.agentId, runId: input.runId,
+            onBehalfOfUserId: actor.onBehalfOfUserId },
+          { authorType: "agent", authorizationReason, sourceTrust,
+            clientRequestId: input.clientRequestId }, tx);
+        const [receipt] = await tx.insert(localIssueCompletionCommands).values({
+          companyId: input.companyId, issueId: issue.id,
+          recordId: linked.record.id, runId: input.runId,
+          clientRequestId: input.clientRequestId, requestDigest: digest,
+          preparedStatusVersion: issue.statusVersion, commentId: comment.id,
+        }).returning({ id: localIssueCompletionCommands.id });
+        await logActivity(tx, {
+          companyId: input.companyId, actorType: "agent", actorId: input.agentId,
+          agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
+          action: "work_record.child_execution_prepared", entityType: "issue",
+          entityId: issue.id, issueId: issue.id,
+          details: { recordId: linked.record.id, receiptId: receipt.id,
+            commentId: comment.id, clientRequestId: input.clientRequestId,
+            statusVersion: issue.statusVersion },
+        }, publications);
+        return { issueId: issue.id, status: issue.status,
+          statusVersion: issue.statusVersion, receiptId: receipt.id,
+          disposition: "prepared" as const, replayed: false };
+      });
+    for (const publication of publications) publishActivity(publication);
+    return result;
   }
 
   async function addFencedComment(
@@ -1274,6 +1456,18 @@ export function localAgentRunLeaseService(
           return { issue, interaction, review: existing, comment, delivery, replayed: true };
         }
         if (issue.status !== "in_progress") throw conflict("Completion review requires an in-progress task");
+        // Work-record tasks have their own child/QA/PO completion contract.
+        // A generic second-agent review would strand dependent children and
+        // could accept the package without its PO's whole-work review.
+        const [linkedRecord] = await tx.select({ id: workRecordIssueLinks.id })
+          .from(workRecordIssueLinks).where(and(
+            eq(workRecordIssueLinks.companyId, input.companyId),
+            eq(workRecordIssueLinks.issueId, issue.id),
+          )).limit(1);
+        if (linkedRecord) throw unprocessable(
+          "Work-record execution requires its child, QA or PO completion command",
+          { code: "work_record_completion_contract_required" },
+        );
         if (input.reviewerAgentId === input.agentId) throw unprocessable("An agent cannot review its own work");
         const [reviewer] = await tx.select({ companyId: agents.companyId, status: agents.status,
           pausedAt: agents.pausedAt, runtimeConfig: agents.runtimeConfig }).from(agents)
@@ -1392,6 +1586,7 @@ export function localAgentRunLeaseService(
   }
 
   return { claim, renew, control, finish, appendFencedEvent,
-    addFencedComment, createFencedReviewConfirmation, reviewFencedIssue,
+    addFencedComment, completeFencedChildWorkRecord,
+    createFencedReviewConfirmation, reviewFencedIssue,
     createFencedAgentReviewHandoff, createFencedCompletionReviewHandoff, patchFencedIssue };
 }

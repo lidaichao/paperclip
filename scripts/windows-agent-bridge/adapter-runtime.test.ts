@@ -74,6 +74,10 @@ describe("runLocalAgent", () => {
       expect(invocation.authToken).toBe(token);
       expect(invocation.runId).toBe(SERVER_RUN_ID);
       expect(String(invocation.config.promptTemplate)).toContain("completion-review-handoff");
+      expect(String(invocation.config.promptTemplate)).toContain(
+        "only to ordinary native tasks");
+      expect(String(invocation.config.promptTemplate)).toContain(
+        "child-complete");
       expect(JSON.stringify(invocation.context)).not.toContain(token);
       expect(JSON.stringify(invocation.config)).not.toContain(token);
       expect(lines.join("\n")).not.toContain(token);

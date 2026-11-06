@@ -263,6 +263,19 @@ export function localAgentRunRoutes(db: Db) {
     });
   });
 
+  router.post("/agents/me/local-runs/:runId/issue/child-complete", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "summary", "expectedStatusVersion", "clientRequestId"]);
+    const result = await leases.completeFencedChildWorkRecord({
+      ...owner(req, body), issueId: String(body.issueId ?? ""),
+      summary: body.summary as string,
+      expectedStatusVersion: body.expectedStatusVersion as number,
+      clientRequestId: String(body.clientRequestId ?? ""),
+    }, req.actor);
+    return res.status(result.replayed ? 200 : 201).json(result);
+  });
+
   router.patch("/agents/me/local-runs/:runId/issue", async (req, res) => {
     res.set("Cache-Control", "no-store");
     const body = objectBody(req.body);

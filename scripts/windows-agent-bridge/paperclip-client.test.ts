@@ -314,6 +314,27 @@ describe("AliceClient", () => {
     expect(calls).toHaveLength(4);
   });
 
+  it("validates the child completion receipt and keeps the lease on the request", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url, init) => {
+        calls.push({ url: String(url), init });
+        return String(url).endsWith("/api/agents/me")
+          ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+          : jsonResponse({ issueId: ISSUE_ID, status: "in_progress",
+              disposition: "prepared", statusVersion: 3, receiptId: KEY_ID }, 201);
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const lease = { runId: RUN_ID, deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1 };
+    expect(await client.completeLocalChildWorkRecord(lease, { issueId: ISSUE_ID,
+      expectedStatusVersion: 3, summary: "Delivered", clientRequestId: KEY_ID }))
+      .toEqual({ receiptId: KEY_ID, statusVersion: 3 });
+    expect(new URL(calls[1].url).pathname)
+      .toBe(`/api/agents/me/local-runs/${RUN_ID}/issue/child-complete`);
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease,
+      issueId: ISSUE_ID, expectedStatusVersion: 3, clientRequestId: KEY_ID });
+  });
+
   it("sends the current lease on renew, control and finish without printing it", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const logs: string[] = [];

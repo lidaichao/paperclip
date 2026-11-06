@@ -15,12 +15,19 @@ import {
   heartbeatRuns,
   heartbeatRunEvents,
   issueComments,
+  issueRelations,
   issueCommandDeliveries,
   issueCompletionReviews,
   issueThreadInteractions,
   issues,
   localAgentRunLeases,
+  localIssueCompletionCommands,
   localAgentDeviceBindings,
+  projects,
+  workRecords,
+  workRecordIssueLinks,
+  workRecordQualityCycles,
+  workRecordQualityItems,
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
@@ -1060,6 +1067,183 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await request(app).post(path).send({ ...payload, body: "Changed" }).expect(409);
     expect(await db.select().from(issueCompletionReviews)
       .where(eq(issueCompletionReviews.issueId, scope.issueId))).toHaveLength(1);
+  }, 30_000);
+
+  it("refuses generic review for a dispatched child work record", async () => {
+    const scope = await fixture();
+    const projectId = randomUUID();
+    const parentRecordId = randomUUID();
+    const childRecordId = randomUUID();
+    await db.insert(projects).values({ id: projectId, companyId: scope.companyId,
+      name: "Package completion boundary" });
+    await db.insert(workRecords).values([
+      { id: parentRecordId, companyId: scope.companyId, projectId,
+        kind: "plan", title: "Parent PO package" },
+      { id: childRecordId, companyId: scope.companyId, projectId,
+        parentRecordId, kind: "plan", title: "Child delivery",
+        dispatchState: "dispatched", dispatchRound: 1 },
+    ]);
+    await db.update(issues).set({ projectId }).where(eq(issues.id, scope.issueId));
+    await db.insert(workRecordIssueLinks).values({ companyId: scope.companyId,
+      projectId, recordId: childRecordId, issueId: scope.issueId,
+      purpose: "primary", dispatchRound: 1 });
+    const reviewerAgentId = randomUUID();
+    await db.insert(agents).values({ id: reviewerAgentId, companyId: scope.companyId,
+      name: "Second agent", adapterType: "codex_local",
+      runtimeConfig: { executionMode: "client_pull" } });
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const actor = { type: "agent" as const, source: "agent_key" as const,
+      agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId };
+    await expect(svc.createFencedCompletionReviewHandoff({ ...scope,
+      deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, reviewerAgentId,
+      prompt: "Review", body: "Ready", clientRequestId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 422,
+        details: { code: "work_record_completion_contract_required" } });
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    expect(issue.status).toBe("in_progress");
+    expect(await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.issueId, scope.issueId))).toHaveLength(0);
+    expect(await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.issueId, scope.issueId))).toHaveLength(0);
+  }, 30_000);
+
+  it("completes one assigned child under its source lease and replays only its receipt", async () => {
+    const scope = await fixture();
+    const projectId = randomUUID();
+    const parentRecordId = randomUUID();
+    const childRecordId = randomUUID();
+    await db.insert(projects).values({ id: projectId, companyId: scope.companyId,
+      name: "Child completion package" });
+    await db.insert(workRecords).values([
+      { id: parentRecordId, companyId: scope.companyId, projectId,
+        kind: "plan", title: "PO package", assigneeAgentId: scope.agentId,
+        dispatchState: "linked", dispatchRound: 1 },
+      { id: childRecordId, companyId: scope.companyId, projectId,
+        parentRecordId, kind: "plan", title: "Child task",
+        assigneeAgentId: scope.agentId, dispatchState: "linked", dispatchRound: 1 },
+    ]);
+    await db.update(issues).set({ projectId }).where(eq(issues.id, scope.issueId));
+    await db.insert(workRecordIssueLinks).values({ companyId: scope.companyId,
+      projectId, recordId: childRecordId, issueId: scope.issueId,
+      purpose: "primary", dispatchRound: 1 });
+    const [cycle] = await db.insert(workRecordQualityCycles).values({
+      companyId: scope.companyId, projectId, aggregateRecordId: parentRecordId,
+      cycleNumber: 1, kind: "package_acceptance", state: "open",
+      qualityPhase: "waiting_children", scopeDigest: "fixture",
+    }).returning();
+    await db.insert(workRecordQualityItems).values({ companyId: scope.companyId,
+      projectId, cycleId: cycle.id, recordId: childRecordId,
+      role: "repair", required: true, state: "waiting" });
+    const dependentId = randomUUID();
+    await db.insert(issues).values({ id: dependentId,
+      companyId: scope.companyId, projectId, title: "Dependent child",
+      status: "blocked", blockedTransitionAt: new Date(),
+      assigneeAgentId: scope.agentId });
+    await db.insert(issueRelations).values({ companyId: scope.companyId,
+      issueId: scope.issueId, relatedIssueId: dependentId, type: "blocks" });
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const [before] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const actor = { type: "agent" as const, source: "agent_key" as const,
+      agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId };
+    const command = { ...scope, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation,
+      expectedStatusVersion: before.statusVersion,
+      summary: "Child delivery checked against the brief",
+      clientRequestId: randomUUID() };
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => { req.actor = actor; next(); });
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string; details?: unknown },
+      _req: Request, res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message, details: err.details });
+    });
+    const endpoint = `/api/agents/me/local-runs/${scope.runId}/issue/child-complete`;
+    const body = { deviceId: command.deviceId, leaseId: command.leaseId,
+      generation: command.generation, issueId: scope.issueId,
+      expectedStatusVersion: command.expectedStatusVersion,
+      summary: command.summary, clientRequestId: command.clientRequestId };
+    await request(app).post(endpoint).send({ ...body, generation: 99 }).expect(403);
+    const completedResponse = await request(app).post(endpoint).send(body).expect(201);
+    const completed = completedResponse.body;
+    expect(completed).toMatchObject({ issueId: scope.issueId, status: "in_progress",
+      statusVersion: before.statusVersion, disposition: "prepared", replayed: false });
+    const replay = (await request(app).post(endpoint).send(body).expect(200)).body;
+    expect(replay).toMatchObject({ ...completed, replayed: true });
+    await expect(svc.completeFencedChildWorkRecord({ ...command,
+      summary: "Changed" }, actor)).rejects.toMatchObject({ status: 409 });
+    expect(await db.select().from(localIssueCompletionCommands)
+      .where(eq(localIssueCompletionCommands.issueId, scope.issueId))).toHaveLength(1);
+    expect(await db.select().from(issueComments)
+      .where(eq(issueComments.issueId, scope.issueId))).toHaveLength(1);
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    expect(issue.status).toBe("in_progress");
+    expect(await issueService(db).listWakeableBlockedDependents(scope.issueId)).toEqual([]);
+    expect((await svc.finish({ ...scope, deviceId: command.deviceId,
+      leaseId: command.leaseId, generation: command.generation,
+      outcome: "succeeded", exitCode: 0, processStopped: true,
+      clientRequestId: randomUUID() })).status)
+      .toBe("succeeded");
+    expect((await db.select().from(issues).where(eq(issues.id, scope.issueId)))[0].status)
+      .toBe("done");
+    expect((await issueService(db).listWakeableBlockedDependents(scope.issueId))
+      .map((candidate) => candidate.id)).toEqual([dependentId]);
+    const [receipt] = await db.select().from(localIssueCompletionCommands)
+      .where(eq(localIssueCompletionCommands.issueId, scope.issueId));
+    expect(receipt.state).toBe("completed");
+    expect(receipt.completedStatusVersion).toBe(before.statusVersion + 1);
+  }, 30_000);
+
+  it("aborts a prepared child completion when its local process fails", async () => {
+    const scope = await fixture();
+    const projectId = randomUUID(), rootId = randomUUID(), childId = randomUUID();
+    await db.insert(projects).values({ id: projectId, companyId: scope.companyId,
+      name: "Failed child package" });
+    await db.insert(workRecords).values([
+      { id: rootId, companyId: scope.companyId, projectId, kind: "plan",
+        title: "Package", assigneeAgentId: scope.agentId },
+      { id: childId, companyId: scope.companyId, projectId, parentRecordId: rootId,
+        kind: "plan", title: "Child", assigneeAgentId: scope.agentId,
+        dispatchState: "linked", dispatchRound: 1 },
+    ]);
+    await db.update(issues).set({ projectId }).where(eq(issues.id, scope.issueId));
+    await db.insert(workRecordIssueLinks).values({ companyId: scope.companyId,
+      projectId, recordId: childId, issueId: scope.issueId,
+      purpose: "primary", dispatchRound: 1 });
+    const [cycle] = await db.insert(workRecordQualityCycles).values({
+      companyId: scope.companyId, projectId, aggregateRecordId: rootId,
+      cycleNumber: 1, kind: "package_acceptance", scopeDigest: "failed",
+    }).returning();
+    await db.insert(workRecordQualityItems).values({ companyId: scope.companyId,
+      projectId, cycleId: cycle.id, recordId: childId, role: "repair" });
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const [before] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const owner = { ...scope, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const actor = { type: "agent" as const, source: "agent_key" as const,
+      agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId };
+    await svc.completeFencedChildWorkRecord({ ...owner,
+      expectedStatusVersion: before.statusVersion, summary: "Prepared delivery",
+      clientRequestId: randomUUID() }, actor);
+    expect((await svc.finish({ ...owner, outcome: "failed", exitCode: 1,
+      processStopped: true, clientRequestId: randomUUID() })).status).toBe("failed");
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const [receipt] = await db.select().from(localIssueCompletionCommands)
+      .where(eq(localIssueCompletionCommands.issueId, scope.issueId));
+    expect(issue.status).toBe("blocked");
+    expect(receipt.state).toBe("aborted");
+    expect(receipt.completedStatusVersion).toBeNull();
   }, 30_000);
 
   it("atomically creates a dedicated completion review and replays only the exact request", async () => {
