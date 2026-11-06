@@ -227,6 +227,43 @@ describe("AliceClient", () => {
     await expect(client.getClaimedIssue(claim)).rejects.toThrow("ownership mismatch");
   });
 
+  it("reads a dedicated non-assignee review only through its fenced context endpoint", async () => {
+    const calls: string[] = [];
+    let revision = 3;
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url) => {
+        calls.push(String(url));
+        return String(url).endsWith("/api/agents/me")
+          ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+          : jsonResponse({
+            issue: { id: ISSUE_ID, companyId: COMPANY_ID, projectId: null,
+              identifier: "PAP-20", title: "Review this", description: "Acceptance criteria",
+              status: "in_review", statusVersion: 3, assigneeAgentId: DEVICE_ID,
+              priority: "medium", updatedAt: "2026-11-07T04:00:00Z" },
+            review: { id: KEY_ID, interactionId: INTERACTION_ID,
+              sourceRunId: LEASE_ID, sourceAgentId: DEVICE_ID,
+              reviewerAgentId: AGENT_ID, issueStatusVersion: revision,
+              prompt: "Verify", handoffSummary: "Delivered" },
+          });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const claim = { runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID,
+      leaseId: LEASE_ID, generation: 1, leaseExpiresAt: "2026-11-07T05:00:00Z",
+      leaseDeadlineMonotonicMs: performance.now() + 60_000,
+      wakeReason: "issue_completion_review", workspacePolicy: "agent_home" as const };
+    const context = await client.readLocalReviewContext(claim, DEVICE_ID);
+    expect(context.issue.assigneeAgentId).toBe(DEVICE_ID);
+    expect(context.review.prompt).toBe("Verify");
+    expect(calls[1]).toContain(`/api/agents/me/local-runs/${RUN_ID}/review-context?`);
+    expect(calls[1]).toContain(`leaseId=${LEASE_ID}`);
+    expect(calls.join("\n")).not.toContain(`/api/issues/${ISSUE_ID}`);
+    revision = 4;
+    await expect(client.readLocalReviewContext(claim, DEVICE_ID))
+      .rejects.toThrow("revision mismatch");
+    await expect(client.readLocalReviewContext({ ...claim,
+      wakeReason: "assignment" }, DEVICE_ID)).rejects.toThrow("wake reason mismatch");
+  });
+
   it("sends the current lease on renew, control and finish without printing it", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const logs: string[] = [];

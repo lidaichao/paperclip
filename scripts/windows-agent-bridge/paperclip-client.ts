@@ -54,6 +54,13 @@ export interface LocalRunLease {
   generation: number;
 }
 
+export interface LocalReviewContext {
+  issue: BridgeInboxItem & { description: string | null; statusVersion: number };
+  review: { id: string; interactionId: string; sourceRunId: string;
+    sourceAgentId: string; reviewerAgentId: string; issueStatusVersion: number;
+    prompt: string; handoffSummary: string };
+}
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function requireUuid(value: unknown, label: string): string {
@@ -293,6 +300,58 @@ export class AliceClient {
       throw new Error("local run issue ownership mismatch");
     }
     return record;
+  }
+
+  /** Dedicated review is read with the current device lease, never via generic issue ownership. */
+  async readLocalReviewContext(claim: LocalRunClaim, deviceId: string): Promise<LocalReviewContext> {
+    const identity = this.#requireVerifiedIdentity();
+    if (claim.agentId !== identity.id || claim.wakeReason !== "issue_completion_review") {
+      throw new Error("local review claim identity or wake reason mismatch");
+    }
+    const lease = { runId: claim.runId, leaseId: claim.leaseId,
+      generation: claim.generation, deviceId };
+    this.#validateLease(lease);
+    const query = new URLSearchParams({ deviceId, leaseId: claim.leaseId,
+      generation: String(claim.generation) });
+    const response = asRecord(await this.#getJson(
+      `/api/agents/me/local-runs/${claim.runId}/review-context?${query}`), "local review context");
+    const issue = asRecord(response.issue, "local review issue");
+    const review = asRecord(response.review, "local review decision");
+    const status = requiredString(issue, "status", "local review issue") as BridgeIssueStatus;
+    const priority = requiredString(issue, "priority", "local review issue") as BridgeIssuePriority;
+    const assigneeAgentId = requireUuid(issue.assigneeAgentId, "local review issue.assigneeAgentId");
+    if (issue.id !== claim.issueId || issue.companyId !== identity.companyId ||
+      assigneeAgentId === identity.id || status !== "in_review" ||
+      !ISSUE_PRIORITIES.has(priority) || !Number.isSafeInteger(issue.statusVersion) ||
+      Number(issue.statusVersion) < 1 ||
+      review.reviewerAgentId !== identity.id ||
+      review.sourceAgentId !== issue.assigneeAgentId ||
+      review.issueStatusVersion !== issue.statusVersion) {
+      throw new Error("local review context identity or revision mismatch");
+    }
+    const parsedReview = {
+      id: requireUuid(review.id, "local review id"),
+      interactionId: requireUuid(review.interactionId, "local review interactionId"),
+      sourceRunId: requireUuid(review.sourceRunId, "local review sourceRunId"),
+      sourceAgentId: requireUuid(review.sourceAgentId, "local review sourceAgentId"),
+      reviewerAgentId: identity.id,
+      issueStatusVersion: Number(review.issueStatusVersion),
+      prompt: requiredString(review, "prompt", "local review"),
+      handoffSummary: requiredString(review, "handoffSummary", "local review"),
+    };
+    return {
+      issue: {
+        id: claim.issueId, companyId: identity.companyId,
+        projectId: typeof issue.projectId === "string" ? issue.projectId : null,
+        identifier: requiredString(issue, "identifier", "local review issue"),
+        title: requiredString(issue, "title", "local review issue"),
+        description: typeof issue.description === "string" ? issue.description : null,
+        status, priority, assigneeAgentId,
+        updatedAt: requiredString(issue, "updatedAt", "local review issue"),
+        activeRunId: claim.runId, statusVersion: Number(issue.statusVersion),
+      },
+      review: parsedReview,
+    };
   }
 
   readLocalRunIdentity(): { id: string; companyId: string; name: string } {

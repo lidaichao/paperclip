@@ -65,6 +65,7 @@ export function localAgentReviewContextService(db: Db) {
           projectId: issue.projectId, identifier: issue.identifier,
           title: issue.title, description: issue.description,
           priority: issue.priority, status: issue.status,
+          updatedAt: issue.updatedAt,
           statusVersion: issue.statusVersion,
           assigneeAgentId: issue.assigneeAgentId },
         review: { id: review.id, interactionId: card.id,
