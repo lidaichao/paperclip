@@ -5,6 +5,7 @@ import type { WorkRecord } from "@paperclipai/shared";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import i18n from "i18next";
 import { ProjectWorkRecords } from "./ProjectWorkRecords";
 
 const listMock = vi.hoisted(() => vi.fn());
@@ -17,16 +18,18 @@ vi.mock("@/api/work-records", () => ({
 }));
 vi.mock("@/api/agents", () => ({ agentsApi: { list: agentsMock } }));
 vi.mock("@/components/WorkPackageConsole", () => ({
-  WorkPackageConsole: ({ visibleKind, records, onReopenRecord }: {
+  WorkPackageConsole: ({ visibleKind, records, onReopenRecord, onEditRecord }: {
     visibleKind: "plan" | "defect";
     records: WorkRecord[];
     onReopenRecord?: (record: WorkRecord) => void;
+    onEditRecord?: (record: WorkRecord) => void;
   }) => (
     <div data-testid="console" data-kind={visibleKind}>
       {records.filter((record) => record.kind === visibleKind).map((record) => (
         <div key={record.id}>
           {record.title}
           {onReopenRecord ? <button onClick={() => onReopenRecord(record)}>重新打开测试</button> : null}
+          {onEditRecord ? <button onClick={() => onEditRecord(record)}>编辑测试</button> : null}
         </div>
       ))}
     </div>
@@ -78,7 +81,8 @@ describe("ProjectWorkRecords", () => {
   const plan = record("plan");
   const defect = record("defect");
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("zh-CN");
     listMock.mockResolvedValue([plan, defect]);
     agentsMock.mockResolvedValue([]);
     createMock.mockResolvedValue(plan);
@@ -89,11 +93,12 @@ describe("ProjectWorkRecords", () => {
     client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     act(() => root.unmount());
     client.clear();
     container.remove();
     vi.clearAllMocks();
+    await i18n.changeLanguage("zh-CN");
   });
 
   async function render(kind: "plan" | "defect") {
@@ -141,5 +146,18 @@ describe("ProjectWorkRecords", () => {
       businessStatus: "todo",
     });
     expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("switches fixed form and status copy to English while preserving record titles", async () => {
+    await i18n.changeLanguage("en");
+    await render("plan");
+    expect(container.textContent).toContain("发布计划");
+    await act(async () => button("编辑测试").click());
+    expect(document.body.textContent).toContain("Edit Plan");
+    expect(document.body.textContent).toContain("Business status");
+    const statusSelect = [...document.body.querySelectorAll("select")].find((node) => node.value === "backlog");
+    expect(statusSelect?.textContent).toContain("Backlog");
+    expect((document.body.querySelector('input[maxlength="500"]') as HTMLInputElement)?.value).toBe("发布计划");
+    expect(document.body.textContent).toContain("Save Plan");
   });
 });

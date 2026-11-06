@@ -6,6 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { WorkPackageDispatchPreview, WorkRecord, WorkRecordQualityView } from "@paperclipai/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import i18n from "i18next";
 import { queryKeys } from "@/lib/queryKeys";
 import { WorkPackageConsole } from "./WorkPackageConsole";
 
@@ -108,7 +109,8 @@ describe("WorkPackageConsole", () => {
   let root: Root;
   let client: QueryClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("zh-CN");
     Object.defineProperty(window.navigator, "onLine", { configurable: true, value: true });
     localStorage.clear(); sessionStorage.clear();
     liveRunsMock.mockResolvedValue([{ issueId: "issue-1", status: "running" }]);
@@ -122,14 +124,25 @@ describe("WorkPackageConsole", () => {
     root = createRoot(container);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     act(() => root.unmount()); client.clear(); container.remove(); vi.clearAllMocks();
+    await i18n.changeLanguage("zh-CN");
   });
 
   async function render(currentRecords = records, visibleKind?: "plan" | "defect") {
     await act(async () => root.render(<QueryClientProvider client={client}><WorkPackageConsole companyId="company-1" projectId="project-1" records={currentRecords} visibleKind={visibleKind} agentNames={{ "agent-po": "卡罗尔", "agent-qa": "Belle" }} recordsLoading={false} recordsError={null} onRetryRecords={() => undefined} /></QueryClientProvider>));
     await flush(); await flush();
   }
+
+  it("localizes package status and actions without translating record data", async () => {
+    await i18n.changeLanguage("en");
+    await render();
+    expect(container.textContent).toContain("Work packages and quality evidence");
+    expect(container.textContent).toContain("Preview whole work package");
+    expect(container.textContent).toContain("In review");
+    expect(container.textContent).toContain("发布工作包");
+    expect(container.textContent).toContain("等待整体验收");
+  });
 
   it("fails closed when a cached running result becomes offline", async () => {
     await render();
