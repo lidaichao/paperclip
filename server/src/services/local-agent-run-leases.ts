@@ -3,6 +3,7 @@ import {
   agentWakeupRequests,
   agents,
   heartbeatRuns,
+  heartbeatRunEvents,
   issueComments,
   issues,
   localAgentRunLeases,
@@ -279,8 +280,15 @@ export function localAgentRunLeaseService(
     outcome: "succeeded" | "failed" | "cancelled";
     exitCode: number | null;
     processStopped: true;
+    clientRequestId?: string;
+    summary?: string;
   }) {
     requireOwner(input);
+    if (input.clientRequestId !== undefined && !UUID.test(input.clientRequestId)) throw badRequest("clientRequestId must be a UUID");
+    if (input.summary !== undefined && (!input.clientRequestId || typeof input.summary !== "string" ||
+      Buffer.byteLength(input.summary, "utf8") > 4096)) {
+      throw badRequest("summary requires clientRequestId and at most 4096 UTF-8 bytes");
+    }
     if (input.processStopped !== true) throw badRequest("Process-stop acknowledgement is required");
     if (input.exitCode !== null && (!Number.isSafeInteger(input.exitCode) || input.exitCode < -1 || input.exitCode > 255)) {
       throw badRequest("Invalid exitCode");
@@ -297,6 +305,16 @@ export function localAgentRunLeaseService(
       }
       if (lease.releasedAt) {
         if (lease.outcome !== input.outcome) throw conflict("Run already finished with another outcome");
+        if (input.clientRequestId) {
+          const saved = run.resultJson?.localWorkerFinish;
+          if (!saved || typeof saved !== "object" ||
+            (saved as Record<string, unknown>).clientRequestId !== input.clientRequestId ||
+            (saved as Record<string, unknown>).outcome !== input.outcome ||
+            (saved as Record<string, unknown>).exitCode !== input.exitCode ||
+            (saved as Record<string, unknown>).summary !== (input.summary ?? null)) {
+            throw conflict("Run finish request changed after completion");
+          }
+        }
         return { runId: run.id, status: run.status };
       }
       const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
@@ -308,9 +326,19 @@ export function localAgentRunLeaseService(
         stopAcknowledgedAt: sql`now()`, releasedAt: sql`now()`, outcome: input.outcome,
         updatedAt: sql`now()`,
       }).where(eq(localAgentRunLeases.runId, input.runId));
-      if (run.status === "running") {
+      if (run.status === "running" || input.clientRequestId) {
         await tx.update(heartbeatRuns).set({
-          status, exitCode: input.exitCode, finishedAt: sql`now()`, updatedAt: sql`now()`,
+          ...(run.status === "running" ? {
+            status, exitCode: input.exitCode, finishedAt: sql`now()`,
+          } : {}),
+          updatedAt: sql`now()`,
+          ...(input.clientRequestId ? { resultJson: {
+            ...(run.resultJson ?? {}),
+            localWorkerFinish: {
+              clientRequestId: input.clientRequestId, outcome: input.outcome,
+              exitCode: input.exitCode, summary: input.summary ?? null,
+            },
+          } } : {}),
         }).where(eq(heartbeatRuns.id, input.runId));
       }
       await tx.update(issues).set({
@@ -324,6 +352,74 @@ export function localAgentRunLeaseService(
         }).where(eq(agentWakeupRequests.id, run.wakeupRequestId));
       }
       return { runId: run.id, status };
+    });
+  }
+
+  async function appendFencedEvent(
+    input: LocalRunOwner & { issueId: string; clientRequestId: string;
+      stream: "stdout" | "stderr" | "system"; level: "info" | "warn" | "error"; message: string },
+    actor: Express.Request["actor"],
+  ) {
+    if (!UUID.test(input.clientRequestId)) throw badRequest("clientRequestId must be a UUID");
+    if (!(["stdout", "stderr", "system"] as string[]).includes(input.stream) ||
+      !(["info", "warn", "error"] as string[]).includes(input.level) ||
+      typeof input.message !== "string" || !input.message.trim() ||
+      Buffer.byteLength(input.message, "utf8") > 8192) {
+      throw badRequest("Invalid run event or message over 8192 UTF-8 bytes");
+    }
+    requireOwner(input);
+    if (!UUID.test(input.issueId)) throw badRequest("Invalid issueId");
+    if (actor.type !== "agent" || actor.source !== "agent_key" ||
+      actor.agentId !== input.agentId || actor.companyId !== input.companyId ||
+      (actor.runId && actor.runId !== input.runId)) {
+      throw forbidden("An agent's own run and API key are required");
+    }
+    return db.transaction(async (tx) => {
+      const [run] = await tx.select().from(heartbeatRuns).where(and(
+        eq(heartbeatRuns.id, input.runId), eq(heartbeatRuns.companyId, input.companyId),
+        eq(heartbeatRuns.agentId, input.agentId), eq(heartbeatRuns.runtimeMode, "client_pull"),
+      )).for("update");
+      const [lease] = await tx.select().from(localAgentRunLeases)
+        .where(eq(localAgentRunLeases.runId, input.runId)).for("update");
+      if (!run || !lease || lease.companyId !== input.companyId || lease.agentId !== input.agentId ||
+        lease.issueId !== input.issueId || lease.deviceId !== input.deviceId ||
+        lease.leaseId !== input.leaseId || lease.generation !== input.generation ||
+        issueIdFromRun(run) !== input.issueId) {
+        throw forbidden("Local run event owner mismatch");
+      }
+      const [existing] = await tx.select().from(heartbeatRunEvents).where(and(
+        eq(heartbeatRunEvents.runId, input.runId),
+        eq(heartbeatRunEvents.sourceEventId, input.clientRequestId),
+      )).limit(1);
+      if (existing) {
+        if (existing.sourceInstanceId !== input.deviceId || existing.stream !== input.stream ||
+          existing.level !== input.level || existing.message !== input.message) {
+          throw conflict("clientRequestId already belongs to different run event content");
+        }
+        return existing;
+      }
+      const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
+        .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
+      if (run.status !== "running" || lease.cancelRequestedAt || lease.releasedAt || !live?.live) {
+        throw conflict("Run event lease is cancelled, expired, or released");
+      }
+      const [issue] = await tx.select({ assigneeAgentId: issues.assigneeAgentId,
+        executionRunId: issues.executionRunId, conversationAgentId: issues.conversationAgentId })
+        .from(issues).where(and(eq(issues.id, input.issueId), eq(issues.companyId, input.companyId)))
+        .for("update");
+      if (!issue || issue.assigneeAgentId !== input.agentId ||
+        issue.executionRunId !== input.runId || issue.conversationAgentId) {
+        throw forbidden("Local run no longer owns this task");
+      }
+      const [sequence] = await tx.select({ next: sql<number>`coalesce(max(${heartbeatRunEvents.seq}), 0) + 1` })
+        .from(heartbeatRunEvents).where(eq(heartbeatRunEvents.runId, input.runId));
+      const [saved] = await tx.insert(heartbeatRunEvents).values({
+        companyId: input.companyId, agentId: input.agentId, runId: input.runId,
+        seq: Number(sequence?.next ?? 1), eventType: "log", stream: input.stream,
+        level: input.level, message: input.message,
+        sourceInstanceId: input.deviceId, sourceEventId: input.clientRequestId,
+      }).returning();
+      return saved;
     });
   }
 
@@ -456,5 +552,5 @@ export function localAgentRunLeaseService(
     return updated;
   }
 
-  return { claim, renew, control, finish, addFencedComment, patchFencedIssue };
+  return { claim, renew, control, finish, appendFencedEvent, addFencedComment, patchFencedIssue };
 }

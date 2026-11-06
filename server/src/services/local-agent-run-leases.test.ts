@@ -10,6 +10,7 @@ import {
   createDb,
   getEmbeddedPostgresTestSupport,
   heartbeatRuns,
+  heartbeatRunEvents,
   issueComments,
   issues,
   localAgentRunLeases,
@@ -194,6 +195,62 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .toBe("cancelled");
     expect((await svc.finish({ ...owner, outcome: "cancelled", exitCode: null, processStopped: true })).status)
       .toBe("cancelled");
+  });
+
+  it("persists bounded run events and a finish summary under the same lease identity", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-log-001", idempotencyKey: randomUUID() });
+    const owner = { ...scope, issueId: scope.issueId, deviceId: "device-desktop-log-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const event = { ...owner, clientRequestId: randomUUID(), stream: "stdout" as const,
+      level: "info" as const, message: "Executed local step" };
+    const first = await svc.appendFencedEvent(event, actor);
+    expect(first.seq).toBe(1);
+    expect((await svc.appendFencedEvent(event, actor)).id).toBe(first.id);
+    await expect(svc.appendFencedEvent({ ...event, message: "Changed intent" }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    await expect(svc.appendFencedEvent({ ...event, clientRequestId: randomUUID(), message: "字".repeat(3000) }, actor))
+      .rejects.toMatchObject({ status: 400 });
+    await expect(svc.appendFencedEvent({ ...event, issueId: randomUUID(), clientRequestId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    const finish = { ...owner, outcome: "succeeded" as const, exitCode: 0,
+      processStopped: true as const, clientRequestId: randomUUID(), summary: "Finished test work" };
+    expect((await svc.finish(finish)).status).toBe("succeeded");
+    expect((await svc.finish(finish)).status).toBe("succeeded");
+    await expect(svc.finish({ ...finish, summary: "Changed summary" }))
+      .rejects.toMatchObject({ status: 409 });
+    await expect(svc.appendFencedEvent({ ...event, clientRequestId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    expect(run.resultJson?.localWorkerFinish).toEqual({
+      clientRequestId: finish.clientRequestId, outcome: "succeeded", exitCode: 0,
+      summary: "Finished test work",
+    });
+    expect(await db.select().from(heartbeatRunEvents).where(eq(heartbeatRunEvents.runId, scope.runId)))
+      .toHaveLength(1);
+  });
+
+  it("rejects new run events after a cancellation commits", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-log-002", idempotencyKey: randomUUID() });
+    const owner = { ...scope, issueId: scope.issueId, deviceId: "device-desktop-log-002",
+      leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
+    await expect(svc.appendFencedEvent({ ...owner, clientRequestId: randomUUID(),
+      stream: "stderr", level: "warn", message: "Too late" }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    const stop = { ...owner, outcome: "cancelled" as const, exitCode: null,
+      processStopped: true as const, clientRequestId: randomUUID() };
+    await expect(svc.finish({ ...stop, outcome: "succeeded", exitCode: 0 }))
+      .rejects.toMatchObject({ status: 409 });
+    expect((await svc.finish(stop)).status).toBe("cancelled");
+    expect((await svc.finish(stop)).status).toBe("cancelled");
+    expect(await db.select().from(heartbeatRunEvents).where(eq(heartbeatRunEvents.runId, scope.runId)))
+      .toHaveLength(0);
   });
 
   it("keeps an unacknowledged cancelled issue reserved across reassignment", async () => {
@@ -382,6 +439,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId };
       next();
     });
+    app.use(localAgentRunWriteGate(db));
     app.use("/api", localAgentRunRoutes(db));
     app.use((err: { status?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
       res.status(err.status ?? 500).json({ error: err.message });
@@ -392,6 +450,13 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .send({ ...payload, status: "in_review", comment: "Review this" }).expect(400);
     await request(app).patch(`/api/agents/me/local-runs/${scope.runId}/issue`)
       .send({ ...payload, assigneeAgentId: randomUUID() }).expect(400);
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: payload.deviceId, idempotencyKey: randomUUID(),
+    });
+    await request(app).post(`/api/agents/me/local-runs/${scope.runId}/events`).send({
+      ...payload, leaseId: claimed!.leaseId, generation: claimed!.generation,
+      clientRequestId: randomUUID(), stream: "system", level: "info", message: "HTTP event",
+    }).expect(201);
     const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
     expect(issue.status).toBe("todo");
     expect(issue.assigneeAgentId).toBe(scope.agentId);

@@ -66,12 +66,29 @@ export function localAgentRunRoutes(db: Db) {
     const body = objectBody(req.body);
     if (!["succeeded", "failed", "cancelled"].includes(String(body.outcome ?? ""))) throw badRequest("Invalid outcome");
     if (body.processStopped !== true) throw badRequest("processStopped must be true");
+    onlyFields(body, [...ownerFields.slice(0, 3), "outcome", "exitCode", "processStopped", "clientRequestId", "summary"]);
     return res.json(await leases.finish({
       ...owner(req, body),
       outcome: body.outcome as "succeeded" | "failed" | "cancelled",
       exitCode: body.exitCode === null ? null : Number(body.exitCode),
       processStopped: true,
+      ...(body.clientRequestId !== undefined ? { clientRequestId: String(body.clientRequestId) } : {}),
+      ...(body.summary !== undefined ? { summary: body.summary as string } : {}),
     }));
+  });
+
+  router.post("/agents/me/local-runs/:runId/events", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "clientRequestId", "stream", "level", "message"]);
+    const event = await leases.appendFencedEvent({
+      ...owner(req, body), issueId: String(body.issueId ?? ""),
+      clientRequestId: String(body.clientRequestId ?? ""),
+      stream: body.stream as "stdout" | "stderr" | "system",
+      level: body.level as "info" | "warn" | "error",
+      message: body.message as string,
+    }, req.actor);
+    return res.status(201).json(event);
   });
 
   router.post("/agents/me/local-runs/:runId/comments", async (req, res) => {
