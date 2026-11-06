@@ -1395,8 +1395,11 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       keyId: reviewerKeyId, runId: run.id } as const;
     expect((await svc.appendFencedEvent(eventInput, actor)).message)
       .toBe("Review started");
+    expect((await svc.control(eventInput)).action).toBe("continue");
     await db.update(issueThreadInteractions).set({ status: "cancelled" })
       .where(eq(issueThreadInteractions.id, handoff.interaction.id));
+    expect((await svc.control(eventInput)).action).toBe("cancel");
+    expect((await svc.renew(eventInput)).cancelRequested).toBe(true);
     await expect(svc.appendFencedEvent({ ...eventInput,
       clientRequestId: randomUUID(), message: "Stale review event" }, actor))
       .rejects.toMatchObject({ status: 409 });
@@ -1426,5 +1429,34 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(queued.status).toBe("queued");
     expect(await db.select().from(localAgentRunLeases)
       .where(eq(localAgentRunLeases.runId, run.id))).toHaveLength(0);
+  }, 30_000);
+
+  it("stops renewal when a claimed review becomes obsolete", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const { run } = await localAgentReviewDeliveryService(db)
+      .deliver(handoff.delivery.id);
+    const reviewerKeyId = randomUUID();
+    await db.insert(agentApiKeys).values({ id: reviewerKeyId,
+      companyId: scope.companyId, agentId: handoff.review.reviewerAgentId,
+      name: "Reviewer renewal key", keyHash: randomUUID() });
+    await db.insert(localAgentDeviceBindings).values({ companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, keyId: reviewerKeyId,
+      deviceId: "reviewer-renew-001" });
+    const claim = await svc.claim({ companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, keyId: reviewerKeyId,
+      deviceId: "reviewer-renew-001", idempotencyKey: randomUUID() });
+    expect(claim?.runId).toBe(run.id);
+    await db.update(issueThreadInteractions).set({ status: "cancelled" })
+      .where(eq(issueThreadInteractions.id, handoff.interaction.id));
+    const renewed = await svc.renew({ companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, keyId: reviewerKeyId,
+      deviceId: "reviewer-renew-001", runId: run.id,
+      leaseId: claim!.leaseId, generation: claim!.generation });
+    expect(renewed.cancelRequested).toBe(true);
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, run.id));
+    expect(lease.cancelRequestedAt).not.toBeNull();
   }, 30_000);
 });

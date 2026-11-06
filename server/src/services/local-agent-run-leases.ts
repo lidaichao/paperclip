@@ -14,7 +14,7 @@ import {
   localAgentRunLeases,
 } from "@paperclipai/db";
 import { and, asc, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
-import { badRequest, conflict, forbidden, notFound, unprocessable } from "../errors.js";
+import { HttpError, badRequest, conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { redactCurrentUserText } from "../log-redaction.js";
 import { accessService } from "./access.js";
 import { assertBoundLocalDevice } from "./local-agent-device-bindings.js";
@@ -90,6 +90,23 @@ export function localAgentRunLeaseService(
       value: sql<number>`greatest(0, floor(extract(epoch from (${localAgentRunLeases.expiresAt} - now())) * 1000))::integer`,
     }).from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, runId));
     return row?.value ?? 0;
+  }
+
+  async function dedicatedReviewChanged(tx: Db,
+    run: typeof heartbeatRuns.$inferSelect,
+    lease: typeof localAgentRunLeases.$inferSelect) {
+    if (wakeReasonFromRun(run) !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON) return false;
+    const [issue] = await tx.select().from(issues).where(and(
+      eq(issues.id, lease.issueId), eq(issues.companyId, lease.companyId),
+    )).for("update");
+    if (!issue) return true;
+    try {
+      await assertClientPullReviewEventContext(tx, { run, issue });
+      return false;
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 409) return true;
+      throw error;
+    }
   }
 
   async function claim(input: {
@@ -295,7 +312,8 @@ export function localAgentRunLeaseService(
       const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
         .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
       const shouldStop = run.status !== "running" || !live?.live || Boolean(lease.cancelRequestedAt) ||
-        Boolean(lease.releasedAt) || Boolean(binding.revokedAt);
+        Boolean(lease.releasedAt) || Boolean(binding.revokedAt) ||
+        await dedicatedReviewChanged(tx as unknown as Db, run, lease);
       const currentLease = shouldStop && !lease.cancelRequestedAt && !lease.releasedAt
         ? (await tx.update(localAgentRunLeases).set({
             cancelRequestedAt: sql`now()`, updatedAt: sql`now()`,
@@ -327,6 +345,12 @@ export function localAgentRunLeaseService(
       const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
         .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
       if (!live?.live) throw conflict("Local run lease expired; stop the process and acknowledge it");
+      if (await dedicatedReviewChanged(tx as unknown as Db, run, lease)) {
+        await tx.update(localAgentRunLeases).set({
+          cancelRequestedAt: sql`now()`, updatedAt: sql`now()`,
+        }).where(eq(localAgentRunLeases.runId, input.runId));
+        return { leaseExpiresAt: lease.expiresAt, cancelRequested: true };
+      }
       const [renewed] = await tx.update(localAgentRunLeases).set({
         expiresAt: sql`now() + interval '90 seconds'`,
         lastRenewedAt: sql`now()`, updatedAt: sql`now()`,
