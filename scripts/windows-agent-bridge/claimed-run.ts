@@ -148,7 +148,9 @@ export async function executeClaimedRun(input: {
         await telemetry.append("system", "info", "local adapter started");
         if (signal.aborted) return { succeeded: false, exitCode: null };
         let outputObserved = false;
-        const result = await runner({
+        let result: Awaited<ReturnType<LocalRunner>>;
+        try {
+          result = await runner({
           signal,
           runId: input.claim.runId,
           wakeReason: input.claim.wakeReason,
@@ -200,8 +202,18 @@ export async function executeClaimedRun(input: {
             pids.set(meta.pid, meta.startedAt);
             if (signal.aborted) stopPid(meta.pid);
           },
-        });
-        if (telemetryError) throw telemetryError;
+          });
+          if (telemetryError) throw telemetryError;
+        } catch (error) {
+          // A thrown adapter result alone does not prove that its child exited.
+          // Only the child identity reported by this invocation can be stopped
+          // and confirmed before the server lease is released.
+          if (pids.size === 0) throw error;
+          stop();
+          await Promise.all(stopPromises.values());
+          summary = "Local adapter failed after its reported process stopped";
+          return { succeeded: false, exitCode: 1 };
+        }
         const succeeded = result.succeeded && !proxy.writeFailed() &&
           (!reviewContext || proxy.decisionConfirmed());
         summary = succeeded ? "Local adapter completed successfully"

@@ -87,6 +87,65 @@ describe("claimed local run", () => {
     expect(journal).not.toContain("private event content");
   });
 
+  it("finishes a failed adapter only after its reported child stop is confirmed", async () => {
+    const calls: string[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key-123456",
+      fetch: async (url) => {
+        calls.push(String(url));
+        if (String(url).endsWith("/api/agents/me")) return Response.json({
+          id: AGENT_ID, companyId: COMPANY_ID, name: "Luna",
+        });
+        if (String(url).endsWith(`/api/issues/${ISSUE_ID}`)) return Response.json({
+          id: ISSUE_ID, companyId: COMPANY_ID, assigneeAgentId: AGENT_ID,
+          executionRunId: RUN_ID, identifier: "PAP-20", title: "Work",
+          status: "in_progress", priority: "medium", updatedAt: "2026-11-07T00:00:00Z",
+        });
+        if (String(url).includes(`/local-runs/${RUN_ID}/control`)) return Response.json({
+          action: "continue", generation: 1,
+          leaseExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+        });
+        return Response.json({ runId: RUN_ID, status: "failed" });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const startedAt = new Date().toISOString();
+    const stop = vi.fn(async () => undefined);
+    const runner = vi.fn(async (input: LocalAgentRunInput) => {
+      await input.onSpawn?.({ pid: 12345, processGroupId: null, startedAt });
+      throw new Error("adapter crashed after spawn");
+    });
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-crash-")), "intent.json");
+    const result = await executeClaimedRun({ claim, client, deviceId: DEVICE_ID,
+      companyId: COMPANY_ID, agent, localAgent, token: "server-only-key-123456",
+      intentFile, runner, stopProcessTree: stop });
+    expect(result.outcome).toBe("failed");
+    expect(stop).toHaveBeenCalledWith(12345, startedAt);
+    expect(calls.some((url) => url.endsWith(`/local-runs/${RUN_ID}/finish`))).toBe(true);
+  });
+
+  it("keeps the claim latched when an adapter throws without a reported child identity", async () => {
+    const calls: string[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key-123456",
+      fetch: async (url) => {
+        calls.push(String(url));
+        if (String(url).endsWith("/api/agents/me")) return Response.json({
+          id: AGENT_ID, companyId: COMPANY_ID, name: "Luna",
+        });
+        if (String(url).endsWith(`/api/issues/${ISSUE_ID}`)) return Response.json({
+          id: ISSUE_ID, companyId: COMPANY_ID, assigneeAgentId: AGENT_ID,
+          executionRunId: RUN_ID, identifier: "PAP-20", title: "Work",
+          status: "in_progress", priority: "medium", updatedAt: "2026-11-07T00:00:00Z",
+        });
+        return Response.json({ runId: RUN_ID, status: "failed" });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const runner = vi.fn(async () => { throw new Error("adapter crashed before identity"); });
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-unknown-")), "intent.json");
+    await expect(executeClaimedRun({ claim, client, deviceId: DEVICE_ID,
+      companyId: COMPANY_ID, agent, localAgent, token: "server-only-key-123456",
+      intentFile, runner })).rejects.toThrow("adapter crashed before identity");
+    expect(calls.some((url) => url.endsWith(`/local-runs/${RUN_ID}/finish`))).toBe(false);
+  });
+
   it("rejects a claim for another agent without running a model", async () => {
     const runner = vi.fn();
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async () => { throw new Error("no network expected"); } });
