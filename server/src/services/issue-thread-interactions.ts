@@ -4672,6 +4672,7 @@ export function issueThreadInteractionService(
         throw interactionNotFoundError();
       }
       if (current.status !== "pending") throw interactionTerminalError(current);
+      assertNotSharedCompletionReview(current);
 
       const reason = data.reason?.trim() || null;
       const now = new Date();
@@ -4696,6 +4697,16 @@ export function issueThreadInteractionService(
           reason,
           now,
         });
+        // Keep the existing tool-action -> proposal -> interaction lock order.
+        // Any linked changes above roll back if the card acquired this target
+        // after the first read.
+        const lockedCurrent = await tx.select({ payload: issueThreadInteractions.payload })
+          .from(issueThreadInteractions)
+          .where(eq(issueThreadInteractions.id, interactionId))
+          .for("update")
+          .then((rows) => rows[0] ?? null);
+        if (!lockedCurrent) throw interactionNotFoundError();
+        assertNotSharedCompletionReview(lockedCurrent);
         if (current.kind === "request_confirmation") {
           const active = await tx
             .select({ id: toolActionRequests.id })
@@ -4862,6 +4873,7 @@ export function issueThreadInteractionService(
         throw interactionNotFoundError();
       }
       if (current.status !== "pending") throw interactionTerminalError(current);
+      assertNotSharedCompletionReview(current);
 
       const reason = data.reason?.trim() || null;
       const now = new Date();
@@ -4878,6 +4890,13 @@ export function issueThreadInteractionService(
           reason: reason ?? "Skipped from the task composer",
           now,
         });
+        const lockedCurrent = await tx.select({ payload: issueThreadInteractions.payload })
+          .from(issueThreadInteractions)
+          .where(eq(issueThreadInteractions.id, interactionId))
+          .for("update")
+          .then((rows) => rows[0] ?? null);
+        if (!lockedCurrent) throw interactionNotFoundError();
+        assertNotSharedCompletionReview(lockedCurrent);
 
         if (current.kind === "request_confirmation") {
           const active = await tx

@@ -11,19 +11,24 @@ vi.mock("./issues.js", () => ({
 
 type SelectRow = Record<string, unknown>;
 
-function createSelectChain(rows: SelectRow[]) {
+function createSelectChain(rows: SelectRow[] | ((table: unknown) => SelectRow[])) {
   return {
-    from() {
+    from(table?: unknown) {
+      const selectedRows = typeof rows === "function" ? rows(table) : rows;
       const query = {
         innerJoin() {
           return query;
         },
         where() {
-          return {
+          const whereQuery = {
+            for() {
+              return whereQuery;
+            },
             then(callback: (rows: SelectRow[]) => unknown) {
-              return Promise.resolve(callback(rows));
+              return Promise.resolve(callback(selectedRows));
             },
           };
+          return whereQuery;
         },
       };
       return query;
@@ -45,7 +50,10 @@ function createFakeDb(args: {
   const db: any = {
     select: vi.fn(() => {
       selectCallCount += 1;
-      return createSelectChain(selectCallCount === 1 ? [interactionRow] : (args.parentRows ?? []));
+      const firstSelect = selectCallCount === 1;
+      return createSelectChain((table) => getTableName(table as never) === "issue_thread_interactions"
+        ? [interactionRow]
+        : (firstSelect ? [interactionRow] : (args.parentRows ?? [])));
     }),
     update: vi.fn((table: unknown) => ({
       set(values: Record<string, unknown>) {
@@ -123,6 +131,35 @@ describe("issueThreadInteractionService", () => {
       expect(fake.getInteractionRow()).toMatchObject({ status: "pending" });
       expect(fake.issueTouches).toHaveLength(0);
       expect(fake.interactionUpdates).toHaveLength(0);
+    },
+  );
+
+  it.each(["withdraw", "skip"] as const)(
+    "rejects the new completion-review target before %s can start a transaction",
+    async (decision) => {
+      const { issueThreadInteractionService } = await import("./issue-thread-interactions.js");
+      const issueId = "11111111-1111-4111-8111-111111111111";
+      const interactionId = "22222222-2222-4222-8222-222222222222";
+      const fake = createFakeDb({ interactionRow: {
+        id: interactionId, companyId: "company-1", issueId,
+        kind: "request_confirmation", status: "pending",
+        payload: { version: 1, prompt: "Review", target: {
+          type: "custom", key: "issue_completion_review",
+          revisionId: "33333333-3333-4333-8333-333333333333" } },
+      } });
+      const transactionSpy = vi.spyOn(fake.db, "transaction");
+      const service = issueThreadInteractionService(fake.db);
+      const issue = { id: issueId, companyId: "company-1", status: "in_review" };
+      const actor = { userId: "board-user" };
+      const call = decision === "withdraw"
+        ? service.withdrawInteraction(issue, interactionId, { reason: "Withdraw" }, actor)
+        : service.skipInteraction(issue, interactionId, { reason: "Skip" }, actor);
+      await expect(call).rejects.toThrow("dedicated review decision command");
+      expect(fake.db.select).toHaveBeenCalledTimes(1);
+      expect(transactionSpy).not.toHaveBeenCalled();
+      expect(fake.db.update).not.toHaveBeenCalled();
+      expect(fake.db.insert).not.toHaveBeenCalled();
+      expect(fake.getInteractionRow()).toMatchObject({ status: "pending" });
     },
   );
 
