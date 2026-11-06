@@ -1485,13 +1485,11 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(lease.cancelRequestedAt).not.toBeNull();
   }, 30_000);
 
-  it("does not finish a pending reviewer run as success, failure or cancellation", async () => {
+  it("does not finish a pending reviewer run as success", async () => {
     const f = await claimedReviewerFixture();
-    for (const outcome of ["succeeded", "failed", "cancelled"] as const) {
-      await expect(f.svc.finish({ ...f.reviewerOwner, outcome, exitCode: 0,
-        processStopped: true, clientRequestId: randomUUID() }))
-        .rejects.toMatchObject({ status: 409 });
-    }
+    await expect(f.svc.finish({ ...f.reviewerOwner, outcome: "succeeded",
+      exitCode: 0, processStopped: true, clientRequestId: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
     const [run] = await db.select().from(heartbeatRuns)
       .where(eq(heartbeatRuns.id, f.reviewerOwner.runId));
     const [lease] = await db.select().from(localAgentRunLeases)
@@ -1616,5 +1614,140 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .where(eq(heartbeatRuns.id, f.reviewerOwner.runId));
     expect(lease.releasedAt).toBeNull();
     expect(run.status).toBe("running");
+  }, 30_000);
+
+  it("blocks a failed reviewer run and cancels its current review in one transaction", async () => {
+    const f = await claimedReviewerFixture();
+    const finish = { ...f.reviewerOwner, outcome: "failed" as const,
+      exitCode: 1, processStopped: true as const, clientRequestId: randomUUID(),
+      summary: "Reviewer process stopped before a decision" };
+    expect((await f.svc.finish(finish)).status).toBe("failed");
+    expect((await f.svc.finish(finish)).status).toBe("failed");
+    await expect(f.svc.finish({ ...finish, clientRequestId: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, f.handoff.review.id));
+    const [card] = await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.id, f.handoff.interaction.id));
+    const [delivery] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, f.handoff.delivery.id));
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, f.reviewerOwner.runId));
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, f.reviewerOwner.runId));
+    expect(issue.status).toBe("blocked");
+    expect(review.state).toBe("cancelled");
+    expect(card.status).toBe("expired");
+    expect(delivery.status).toBe("delivered");
+    expect(lease.releasedAt).not.toBeNull();
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({
+      reviewerDisposition: "blocked", reviewerReviewId: review.id,
+      issueStatus: "blocked", summary: finish.summary,
+    });
+    const events = await db.select().from(activityLog)
+      .where(eq(activityLog.entityId, f.scope.issueId));
+    expect(events.some((row) => row.action === "issue.completion_review_reviewer_run_failed"
+      && row.runId === f.reviewerOwner.runId)).toBe(true);
+  }, 30_000);
+
+  it("acknowledges reviewer cancellation by blocking and invalidating its review", async () => {
+    const f = await claimedReviewerFixture();
+    await db.update(localAgentRunLeases).set({ cancelRequestedAt: new Date() })
+      .where(eq(localAgentRunLeases.runId, f.reviewerOwner.runId));
+    expect((await f.svc.finish({ ...f.reviewerOwner, outcome: "cancelled",
+      exitCode: null, processStopped: true, clientRequestId: randomUUID() })).status)
+      .toBe("cancelled");
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, f.handoff.review.id));
+    const [card] = await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.id, f.handoff.interaction.id));
+    expect(issue.status).toBe("blocked");
+    expect(review.state).toBe("cancelled");
+    expect(card.status).toBe("expired");
+  }, 30_000);
+
+  it("preserves a human status change before an unsuccessful reviewer finish", async () => {
+    const f = await claimedReviewerFixture();
+    await issueService(db).update(f.scope.issueId, {
+      status: "todo", companyGuard: f.scope.companyId,
+    });
+    const [changed] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    expect((await f.svc.finish({ ...f.reviewerOwner, outcome: "failed",
+      exitCode: 1, processStopped: true, clientRequestId: randomUUID() })).status)
+      .toBe("failed");
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, f.reviewerOwner.runId));
+    expect(issue.status).toBe("todo");
+    expect(issue.statusVersion).toBe(changed.statusVersion);
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({
+      reviewerDisposition: "preserved", issueStatus: "todo",
+    });
+  }, 30_000);
+
+  it("rolls an unsuccessful reviewer finish back if blocking the issue fails", async () => {
+    const f = await claimedReviewerFixture();
+    await db.execute(sql`create function reject_reviewer_blocked() returns trigger language plpgsql as $$
+      begin
+        if new.status = 'blocked' and old.status = 'in_review' then
+          raise exception 'injected reviewer blocked failure';
+        end if;
+        return new;
+      end $$`);
+    await db.execute(sql`create trigger reject_reviewer_blocked_trigger before update on issues
+      for each row execute function reject_reviewer_blocked()`);
+    try {
+      await expect(f.svc.finish({ ...f.reviewerOwner, outcome: "failed",
+        exitCode: 1, processStopped: true, clientRequestId: randomUUID() }))
+        .rejects.toThrow();
+    } finally {
+      await db.execute(sql`drop trigger reject_reviewer_blocked_trigger on issues`);
+      await db.execute(sql`drop function reject_reviewer_blocked()`);
+    }
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, f.handoff.review.id));
+    const [card] = await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.id, f.handoff.interaction.id));
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, f.reviewerOwner.runId));
+    expect(issue.status).toBe("in_review");
+    expect(review.state).toBe("pending");
+    expect(card.status).toBe("pending");
+    expect(lease.releasedAt).toBeNull();
+  }, 30_000);
+
+  it("rolls the blocked issue back if its reviewer card cannot expire", async () => {
+    const f = await claimedReviewerFixture();
+    await db.execute(sql`create function reject_reviewer_card_expiry() returns trigger language plpgsql as $$
+      begin
+        if new.status = 'expired' and old.status = 'pending' then
+          raise exception 'injected reviewer card expiry failure';
+        end if;
+        return new;
+      end $$`);
+    await db.execute(sql`create trigger reject_reviewer_card_expiry_trigger before update on issue_thread_interactions
+      for each row execute function reject_reviewer_card_expiry()`);
+    try {
+      await expect(f.svc.finish({ ...f.reviewerOwner, outcome: "cancelled",
+        exitCode: null, processStopped: true, clientRequestId: randomUUID() }))
+        .rejects.toThrow();
+    } finally {
+      await db.execute(sql`drop trigger reject_reviewer_card_expiry_trigger on issue_thread_interactions`);
+      await db.execute(sql`drop function reject_reviewer_card_expiry()`);
+    }
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, f.handoff.review.id));
+    const [card] = await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.id, f.handoff.interaction.id));
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, f.reviewerOwner.runId));
+    expect(issue.status).toBe("in_review");
+    expect(review.state).toBe("pending");
+    expect(card.status).toBe("pending");
+    expect(lease.releasedAt).toBeNull();
   }, 30_000);
 });

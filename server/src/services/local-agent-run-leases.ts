@@ -21,7 +21,7 @@ import { assertBoundLocalDevice } from "./local-agent-device-bindings.js";
 import { logActivity, publishActivity, type ActivityPublication } from "./activity-log.js";
 import { getExecutionBlocker } from "./execution-blocker.js";
 import { externalObjectService } from "./external-objects.js";
-import { issueService } from "./issues.js";
+import { issueService, type IssuePostCommitAction } from "./issues.js";
 import { issueReferenceService } from "./issue-references.js";
 import { issueThreadInteractionService } from "./issue-thread-interactions.js";
 import { executeReviewHandoff } from "./issue-review-handoff.js";
@@ -444,8 +444,10 @@ export function localAgentRunLeaseService(
             (saved as Record<string, unknown>).exitCode !== input.exitCode ||
             (saved as Record<string, unknown>).summary !== (input.summary ?? null) ||
             (reviewerRun && ((saved as Record<string, unknown>).reviewerReviewId !== reviewerReviewId ||
-              (saved as Record<string, unknown>).reviewerDisposition !==
-                (input.outcome === "succeeded" ? "accepted" : "cancelled"))) ||
+              (input.outcome === "succeeded"
+                ? (saved as Record<string, unknown>).reviewerDisposition !== "accepted"
+                : !["blocked", "preserved"].includes(String(
+                    (saved as Record<string, unknown>).reviewerDisposition))))) ||
             (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
               (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
               !["ready", "blocked", "preserved"].includes(String((saved as Record<string, unknown>).disposition))))) {
@@ -461,8 +463,9 @@ export function localAgentRunLeaseService(
       const status = cancelled ? "cancelled" : input.outcome;
       let reviewReceipt: { reviewId: string; deliveryId: string; issueStatus: string;
         issueStatusVersion: number; disposition: "ready" | "blocked" | "preserved" } | null = null;
-      let reviewerReceipt: { reviewerReviewId: string; reviewerDisposition: "accepted" | "cancelled";
-        decisionRequestId?: string } | null = null;
+      let reviewerReceipt: { reviewerReviewId: string;
+        reviewerDisposition: "accepted" | "blocked" | "preserved";
+        decisionRequestId?: string; issueStatus?: string; issueStatusVersion?: number } | null = null;
       if (reviewerRun) {
         const [issue] = await tx.select().from(issues).where(and(
           eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
@@ -474,16 +477,84 @@ export function localAgentRunLeaseService(
           reviewerReceipt = { reviewerReviewId: accepted.reviewId,
             reviewerDisposition: "accepted", decisionRequestId: accepted.decisionRequestId };
         } else {
+          const context = run.contextSnapshot ?? {};
+          const [delivery] = await tx.select().from(issueCommandDeliveries).where(and(
+            eq(issueCommandDeliveries.companyId, input.companyId),
+            eq(issueCommandDeliveries.issueId, issue.id),
+            eq(issueCommandDeliveries.reviewId, reviewerReviewId as string),
+            eq(issueCommandDeliveries.kind, "completion_review"),
+          )).for("update");
           const [review] = await tx.select().from(issueCompletionReviews).where(and(
             eq(issueCompletionReviews.id, reviewerReviewId as string),
             eq(issueCompletionReviews.companyId, input.companyId),
             eq(issueCompletionReviews.issueId, issue.id),
           )).for("update");
-          if (!review || review.reviewerAgentId !== input.agentId ||
-            review.state !== "cancelled") {
+          const [card] = review ? await tx.select().from(issueThreadInteractions).where(and(
+            eq(issueThreadInteractions.id, review.interactionId),
+            eq(issueThreadInteractions.companyId, input.companyId),
+            eq(issueThreadInteractions.issueId, issue.id),
+          )).for("update") : [];
+          const payload = card?.payload && typeof card.payload === "object"
+            ? card.payload as unknown as Record<string, unknown> : {};
+          const target = payload.target && typeof payload.target === "object"
+            ? payload.target as Record<string, unknown> : {};
+          if (!review || !card || !delivery ||
+            context.issueId !== issue.id || context.reviewId !== review.id ||
+            context.interactionId !== card.id || context.sourceRunId !== review.sourceRunId ||
+            review.sourceKind !== "client_pull" || review.companyId !== input.companyId ||
+            review.reviewerAgentId !== input.agentId || review.sourceAgentId !== issue.assigneeAgentId ||
+            review.clientPullLeaseRunId !== review.sourceRunId ||
+            delivery.interactionId !== card.id || delivery.targetAgentId !== input.agentId ||
+            delivery.sourceRunId !== review.sourceRunId || delivery.status !== "delivered" ||
+            card.kind !== "request_confirmation" || card.sourceRunId !== review.sourceRunId ||
+            card.createdByAgentId !== review.sourceAgentId || card.addresseeAgentId !== input.agentId ||
+            card.addresseeUserId !== null || card.effectiveResolverPolicy !== "not_creator" ||
+            target.type !== "custom" || target.key !== ISSUE_COMPLETION_REVIEW_TARGET_KEY ||
+            target.revisionId !== review.id) {
+            throw conflict("Dedicated reviewer evidence changed before unsuccessful finish");
+          }
+          const current = issue.status === "in_review" &&
+            issue.statusVersion === review.issueStatusVersion &&
+            issue.executionRunId === null && review.state === "pending" &&
+            card.status === "pending";
+          if (current) {
+            await assertClientPullReviewEventContext(tx as unknown as Db, { run, issue });
+            const postCommitActions: IssuePostCommitAction[] = [];
+            const blocked = await issueService(db).update(issue.id, {
+              status: "blocked", actorAgentId: input.agentId, companyGuard: input.companyId,
+            }, tx, publications, postCommitActions);
+            if (!blocked || blocked.status !== "blocked" || postCommitActions.length > 0) {
+              throw conflict("Could not safely block the failed reviewer task");
+            }
+            const [cancelledReview] = await tx.select({ state: issueCompletionReviews.state })
+              .from(issueCompletionReviews).where(eq(issueCompletionReviews.id, review.id));
+            const [expiredCard] = await tx.select({ status: issueThreadInteractions.status })
+              .from(issueThreadInteractions).where(eq(issueThreadInteractions.id, card.id));
+            if (cancelledReview?.state !== "cancelled" || expiredCard?.status !== "expired") {
+              throw conflict("Failed reviewer card was not cancelled with the task");
+            }
+            await logActivity(tx as unknown as Db, {
+              companyId: input.companyId, actorType: "agent", actorId: input.agentId,
+              agentId: input.agentId, runId: input.runId,
+              action: "issue.completion_review_reviewer_run_failed", entityType: "issue",
+              entityId: issue.id, issueId: issue.id,
+              details: { reviewId: review.id, interactionId: card.id,
+                outcome: input.outcome, exitCode: input.exitCode,
+                reason: "reviewer_process_stopped_before_decision" },
+            }, publications);
+            reviewerReceipt = { reviewerReviewId: review.id,
+              reviewerDisposition: "blocked", issueStatus: blocked.status,
+              issueStatusVersion: blocked.statusVersion };
+          } else if (review.state === "cancelled" &&
+            ["cancelled", "expired"].includes(card.status) &&
+            (issue.status !== "in_review" || issue.statusVersion !== review.issueStatusVersion ||
+              issue.assigneeAgentId !== review.sourceAgentId)) {
+            reviewerReceipt = { reviewerReviewId: review.id,
+              reviewerDisposition: "preserved", issueStatus: issue.status,
+              issueStatusVersion: issue.statusVersion };
+          } else {
             throw conflict("Pending or accepted reviewer decision cannot finish unsuccessfully");
           }
-          reviewerReceipt = { reviewerReviewId: review.id, reviewerDisposition: "cancelled" };
         }
       }
       if (reviewHint) {
