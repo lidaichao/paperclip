@@ -234,6 +234,7 @@ async function startEmbeddedPostgresWithRetry(tempDirPrefix: string): Promise<{
 
   throw new Error(
     `Failed to start embedded PostgreSQL test database after ${EMBEDDED_POSTGRES_START_MAX_ATTEMPTS} attempts: ${lastError.message}`,
+    { cause: lastError },
   );
 }
 
@@ -298,12 +299,12 @@ export async function startEmbeddedPostgresTestDatabase(
     };
   } catch (error) {
     await stopEmbeddedPostgresBounded(instance, () => cleanupEmbeddedPostgresTestDirs(dataDir));
+    const formatted = formatEmbeddedPostgresError(error, {
+      fallbackMessage: "embedded Postgres startup failed",
+    });
     throw new Error(
-      `Failed to start embedded PostgreSQL test database: ${
-        formatEmbeddedPostgresError(error, {
-          fallbackMessage: "embedded Postgres startup failed",
-        }).message
-      }`,
+      `Failed to start embedded PostgreSQL test database: ${formatted.message}`,
+      { cause: formatted },
     );
   }
 }

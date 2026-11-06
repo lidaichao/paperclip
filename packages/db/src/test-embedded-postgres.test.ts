@@ -109,5 +109,6 @@ describe("startEmbeddedPostgresWithRetry", () => {
     // The thrown message carries the captured Postgres output, not only the
     // generic "embedded Postgres startup failed" text.
     expect((error as Error).message).toContain("Address already in use");
+    expect((error as Error).cause).toBeInstanceOf(Error);
   });
 });

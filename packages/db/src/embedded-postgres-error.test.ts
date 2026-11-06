@@ -25,4 +25,30 @@ describe("formatEmbeddedPostgresError", () => {
 
     expect(buffer.getRecentLogs()).toEqual(["line two", "line three"]);
   });
+
+  it("retains SQLSTATE without exposing query parameters or row details", () => {
+    const privateValue = "private-database-value";
+    const postgresError = Object.assign(new Error("database row contains " + privateValue), {
+      code: "23503",
+      detail: `Key (token)=(${privateValue}) is not present`,
+      table: "document_annotation_threads",
+      constraint: "document_annotation_threads_current_revision_id_document_revisi",
+    });
+    const queryError = Object.assign(new Error(`Failed query: SELECT '${privateValue}'`), {
+      name: "DrizzleQueryError",
+      cause: postgresError,
+    });
+
+    const formatted = formatEmbeddedPostgresError(queryError, {
+      fallbackMessage: "embedded Postgres migration failed",
+    });
+    const diagnostic = formatted.cause as Error & { code?: string; table?: string; constraint?: string };
+
+    expect(formatted.message).toBe("embedded Postgres migration failed");
+    expect(diagnostic.code).toBe("23503");
+    expect(diagnostic.table).toBe("document_annotation_threads");
+    expect(diagnostic.constraint).toBe("document_annotation_threads_current_revision_id_document_revisi");
+    expect(`${formatted.message} ${diagnostic.message}`).not.toContain(privateValue);
+    expect((diagnostic as Error & { detail?: string }).detail).toBeUndefined();
+  });
 });

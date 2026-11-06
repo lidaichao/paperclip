@@ -13,6 +13,36 @@ function toError(error: unknown, fallbackMessage: string): Error {
   }
 }
 
+type PostgresDiagnostic = Error & {
+  code: string;
+  schema?: string;
+  table?: string;
+  constraint?: string;
+};
+
+// Drizzle wraps postgres.js errors in DrizzleQueryError.cause. Preserve only
+// structural diagnostics: raw query parameters and DETAIL can contain private
+// row values, so neither belongs in a test failure message or its cause chain.
+function safePostgresDiagnostic(error: unknown): PostgresDiagnostic | undefined {
+  let current = error;
+  for (let depth = 0; depth < 5 && current && typeof current === "object"; depth += 1) {
+    const candidate = current as Record<string, unknown>;
+    if (typeof candidate.code === "string" && /^[0-9A-Z]{5}$/.test(candidate.code)) {
+      const diagnostic = new Error(`PostgreSQL SQLSTATE ${candidate.code}`) as PostgresDiagnostic;
+      diagnostic.code = candidate.code;
+      for (const key of ["schema", "table", "constraint"] as const) {
+        const value = candidate[key];
+        if (typeof value === "string" && value.length <= 63 && /^[A-Za-z_][A-Za-z0-9_$]*$/.test(value)) {
+          diagnostic[key] = value;
+        }
+      }
+      return diagnostic;
+    }
+    current = candidate.cause;
+  }
+  return undefined;
+}
+
 function summarizeRecentLogs(recentLogs: string[]): string | null {
   if (recentLogs.length === 0) return null;
   return recentLogs
@@ -73,8 +103,10 @@ export function formatEmbeddedPostgresError(
   },
 ): Error {
   const baseError = toError(error, input.fallbackMessage);
+  const diagnostic = safePostgresDiagnostic(error);
   const recentLogs = input.recentLogs ?? [];
-  const parts = [baseError.message];
+  const isQueryWrapper = baseError.name === "DrizzleQueryError" || baseError.message.startsWith("Failed query:");
+  const parts = [isQueryWrapper ? input.fallbackMessage : baseError.message];
   const hint = detectEmbeddedPostgresHint(recentLogs);
   const recentSummary = summarizeRecentLogs(recentLogs);
 
@@ -85,5 +117,5 @@ export function formatEmbeddedPostgresError(
     parts.push(`Recent embedded Postgres logs: ${recentSummary}`);
   }
 
-  return new Error(parts.join(" "));
+  return new Error(parts.join(" "), diagnostic ? { cause: diagnostic } : undefined);
 }
