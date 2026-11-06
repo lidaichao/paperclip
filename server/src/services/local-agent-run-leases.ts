@@ -456,7 +456,7 @@ export function localAgentRunLeaseService(
               (input.outcome === "succeeded"
                 ? !["accepted", "rejected"].includes(String(
                     (saved as Record<string, unknown>).reviewerDisposition))
-                : !["rejected", "blocked", "preserved"].includes(String(
+                : !["accepted", "rejected", "blocked", "preserved"].includes(String(
                     (saved as Record<string, unknown>).reviewerDisposition))))) ||
             (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
               (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
@@ -500,7 +500,11 @@ export function localAgentRunLeaseService(
               eq(issueCompletionReviews.companyId, input.companyId),
               eq(issueCompletionReviews.issueId, issue.id),
             )).limit(1);
-          if (decidedReview?.state === "rejected") {
+          if (decidedReview?.state === "accepted") {
+            const accepted = await assertClientPullAcceptedReviewContext(tx as unknown as Db, { run, issue });
+            reviewerReceipt = { reviewerReviewId: accepted.reviewId,
+              reviewerDisposition: "accepted", decisionRequestId: accepted.decisionRequestId };
+          } else if (decidedReview?.state === "rejected") {
             const rejected = await assertClientPullRejectedReviewContext(tx as unknown as Db, { run, issue });
             reviewerReceipt = { reviewerReviewId: rejected.reviewId,
               reviewerDisposition: "rejected", decisionRequestId: rejected.decisionRequestId };

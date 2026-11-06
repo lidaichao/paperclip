@@ -1627,6 +1627,29 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     });
   }, 30_000);
 
+  it("preserves an accepted reviewer decision when its local process later fails", async () => {
+    const f = await claimedReviewerFixture();
+    const decision = await issueCompletionReviewDecisionService(db).accept({
+      companyId: f.scope.companyId, issueId: f.scope.issueId,
+      reviewId: f.handoff.review.id, actorAgentId: f.reviewerOwner.agentId,
+      actorRunId: f.reviewerOwner.runId, requestId: randomUUID(),
+      summary: "Reviewed before local process failure", clientPullProof: f.proof,
+    });
+    const finish = { ...f.reviewerOwner, outcome: "failed" as const,
+      exitCode: 1, processStopped: true as const, clientRequestId: randomUUID() };
+    expect((await f.svc.finish(finish)).status).toBe("failed");
+    expect((await f.svc.finish(finish)).status).toBe("failed");
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, f.reviewerOwner.runId));
+    expect(issue.status).toBe("done");
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({
+      reviewerReviewId: f.handoff.review.id,
+      decisionRequestId: decision.requestId,
+      reviewerDisposition: "accepted",
+    });
+  }, 30_000);
+
   it("lets one accepted reviewer finish while another review keeps the issue in review", async () => {
     const f = await claimedReviewerFixture();
     const otherReviewerId = randomUUID(), otherReviewId = randomUUID();
