@@ -1,5 +1,6 @@
 import type { Db } from "@paperclipai/db";
 import {
+  activityLog,
   agentWakeupRequests,
   agents,
   heartbeatRuns,
@@ -16,6 +17,7 @@ import { logActivity, publishActivity, type ActivityPublication } from "./activi
 import { getExecutionBlocker } from "./execution-blocker.js";
 import { issueService } from "./issues.js";
 import { issueReferenceService } from "./issue-references.js";
+import { executeReviewHandoff } from "./issue-review-handoff.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
 
@@ -428,6 +430,7 @@ export function localAgentRunLeaseService(
     actor: Express.Request["actor"],
     action: "issue:comment" | "issue:mutate",
     write: (tx: Db, issue: typeof issues.$inferSelect, authorizationReason: string) => Promise<T>,
+    options: { allowReviewReplay?: boolean } = {},
   ) {
     requireOwner(input);
     if (!UUID.test(input.issueId)) throw badRequest("Invalid issueId");
@@ -457,11 +460,15 @@ export function localAgentRunLeaseService(
       const [issue] = await tx.select().from(issues).where(and(
         eq(issues.id, input.issueId), eq(issues.companyId, input.companyId),
       )).for("update");
+      const reviewReplay = options.allowReviewReplay && issue?.status === "in_review" &&
+        issue.executionRunId === null;
       if (!issue || issue.assigneeAgentId !== input.agentId ||
-        issue.executionRunId !== input.runId || !["todo", "in_progress"].includes(issue.status) ||
+        (!reviewReplay && (issue.executionRunId !== input.runId ||
+          !["todo", "in_progress"].includes(issue.status))) ||
         issue.conversationAgentId) {
         throw forbidden("Local run no longer owns this open task");
       }
+      if (reviewReplay) return write(tx as unknown as Db, issue, "review_handoff_replay");
       const decision = await accessService(tx as unknown as Db).decide({
         actor: { ...actor, runId: input.runId }, action,
         resource: {
@@ -523,6 +530,65 @@ export function localAgentRunLeaseService(
     return result.comment;
   }
 
+  async function reviewFencedIssue(
+    input: LocalRunOwner & { issueId: string; body: string;
+      reviewInteractionId: string; clientRequestId: string },
+    actor: Express.Request["actor"],
+  ) {
+    if (!UUID.test(input.reviewInteractionId) || !UUID.test(input.clientRequestId)) {
+      throw badRequest("Review interaction and client request IDs must be UUIDs");
+    }
+    if (!input.body.trim() || /@|https?:\/\//i.test(input.body)) {
+      throw badRequest("Review handoff requires a plain comment without mentions or external links");
+    }
+    const publications: ActivityPublication[] = [];
+    const result = await withFencedIssueWrite(input, actor, "issue:mutate",
+      async (tx, issue, authorizationReason) => {
+        if (issue.status === "in_review") {
+          // The issue execution lock is intentionally cleared by the status
+          // transition. Only the exact committed command may replay here.
+          const [comment] = await tx.select().from(issueComments).where(and(
+            eq(issueComments.issueId, input.issueId),
+            eq(issueComments.authorAgentId, input.agentId),
+            eq(issueComments.createdByRunId, input.runId),
+            eq(issueComments.clientRequestId, input.clientRequestId),
+          )).limit(1);
+          const enabled = (await instanceSettingsService(tx).getGeneral()).censorUsernameInLogs;
+          const [receipt] = await tx.select({ id: activityLog.id }).from(activityLog).where(and(
+            eq(activityLog.companyId, input.companyId),
+            eq(activityLog.entityId, input.issueId),
+            eq(activityLog.runId, input.runId),
+            eq(activityLog.action, "issue.updated"),
+            sql`${activityLog.details}->>'clientRequestId' = ${input.clientRequestId}`,
+            sql`${activityLog.details}->>'reviewInteractionId' = ${input.reviewInteractionId}`,
+          )).limit(1);
+          if (!comment || !receipt || comment.body !== redactCurrentUserText(input.body, { enabled })) {
+            throw conflict("Review handoff request differs from the committed command");
+          }
+          return { issue, comment, replayed: true };
+        }
+        if (issue.status !== "in_progress") throw conflict("Review handoff requires an in-progress task");
+        const lockedIssue = await issueService(db).getByIdForUpdate(input.issueId, tx);
+        if (!lockedIssue) throw notFound("Issue not found");
+        const handoff = await executeReviewHandoff({
+          db, tx, existing: lockedIssue,
+          patch: { status: "in_review", actorAgentId: input.agentId,
+            companyGuard: input.companyId },
+          commentBody: input.body, clientRequestId: input.clientRequestId,
+          reviewInteractionId: input.reviewInteractionId,
+          actor: {
+            agentId: input.agentId, runId: input.runId,
+            agentApiKeyId: actor.keyId,
+            responsibleUserId: actor.onBehalfOfUserId,
+          },
+          authorizationReason, publications,
+        });
+        return { ...handoff, replayed: false };
+      }, { allowReviewReplay: true });
+    for (const publication of publications) publishActivity(publication);
+    return result;
+  }
+
   async function patchFencedIssue(
     input: LocalRunOwner & { issueId: string; title?: string; description?: string | null; priority?: string },
     actor: Express.Request["actor"],
@@ -552,5 +618,6 @@ export function localAgentRunLeaseService(
     return updated;
   }
 
-  return { claim, renew, control, finish, appendFencedEvent, addFencedComment, patchFencedIssue };
+  return { claim, renew, control, finish, appendFencedEvent,
+    addFencedComment, reviewFencedIssue, patchFencedIssue };
 }

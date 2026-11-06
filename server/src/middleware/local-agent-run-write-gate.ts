@@ -4,7 +4,7 @@ import { agents, heartbeatRuns, localAgentRunLeases } from "@paperclipai/db";
 import { and, eq } from "drizzle-orm";
 import { isClientPullRuntimeConfig } from "../services/local-agent-run-leases.js";
 
-const localRunMutation = /^\/api\/agents\/me\/local-runs\/(?:claim|[0-9a-f-]{36}\/(?:renew|finish|events|comments|issue))\/?$/i;
+const localRunMutation = /^\/api\/agents\/me\/local-runs\/(?:claim|[0-9a-f-]{36}\/(?:renew|finish|events|issue\/review-handoff))\/?$/i;
 
 /**
  * Fail closed until each ordinary write endpoint can verify the lease inside

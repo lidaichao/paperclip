@@ -390,4 +390,32 @@ describeEmbeddedPostgres("issue comment attribution and patch audit routes", () 
       await db.execute(sql`drop function if exists reject_review_comment_activity()`);
     }
   }, 30_000);
+
+  it("uses the shared review handoff command for an explicit same-run confirmation", async () => {
+    const fixture = await seed();
+    const [confirmation] = await db.insert(issueThreadInteractions).values({
+      companyId: fixture.company.id, issueId: fixture.sourceIssue.id,
+      kind: "request_confirmation", status: "pending", continuationPolicy: "wake_assignee",
+      createdByAgentId: fixture.actorAgent.id, sourceRunId: fixture.run.id,
+      payload: { version: 1, prompt: "Review the result" },
+    }).returning();
+    const app = await createApp(db, agentActor(fixture));
+    const response = await request(app).patch(`/api/issues/${fixture.sourceIssue.id}`)
+      .send({ status: "in_review", comment: "Ready for acceptance",
+        reviewInteractionId: confirmation.id });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const [issue] = await db.select().from(issues).where(eq(issues.id, fixture.sourceIssue.id));
+    expect(issue.status).toBe("in_review");
+    const comments = await db.select().from(issueComments).where(eq(issueComments.issueId, issue.id));
+    expect(comments).toEqual([expect.objectContaining({
+      body: "Ready for acceptance", createdByRunId: fixture.run.id,
+    })]);
+    const events = await db.select().from(activityLog).where(eq(activityLog.entityId, issue.id));
+    expect(events).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: "issue.updated",
+        details: expect.objectContaining({ reviewInteractionId: confirmation.id }) }),
+      expect.objectContaining({ action: "issue.comment_added",
+        details: expect.objectContaining({ commentId: comments[0]!.id }) }),
+    ]));
+  }, 30_000);
 });

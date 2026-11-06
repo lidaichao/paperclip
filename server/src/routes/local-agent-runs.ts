@@ -104,6 +104,20 @@ export function localAgentRunRoutes(db: Db) {
     return res.status(201).json(comment);
   });
 
+  router.post("/agents/me/local-runs/:runId/issue/review-handoff", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "body", "reviewInteractionId", "clientRequestId"]);
+    const parsed = addIssueCommentSchema.pick({ body: true, clientRequestId: true }).parse(body);
+    if (!parsed.clientRequestId) throw badRequest("clientRequestId is required");
+    const result = await leases.reviewFencedIssue({
+      ...owner(req, body), issueId: String(body.issueId ?? ""),
+      body: parsed.body, clientRequestId: parsed.clientRequestId,
+      reviewInteractionId: String(body.reviewInteractionId ?? ""),
+    }, req.actor);
+    return res.status(result.replayed ? 200 : 201).json(result);
+  });
+
   router.patch("/agents/me/local-runs/:runId/issue", async (req, res) => {
     res.set("Cache-Control", "no-store");
     const body = objectBody(req.body);

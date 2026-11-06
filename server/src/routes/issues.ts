@@ -1,5 +1,6 @@
 import { queuedInteractionId, readQueuedInteractionResponse, hasQueuedInteractionResponse } from "../services/queued-interaction-response.js";
 import { assertInReviewReviewPath, ACTIVE_REVIEW_APPROVAL_STATUSES } from "../services/issue-review-path.js";
+import { executeReviewHandoff } from "../services/issue-review-handoff.js";
 import { deliverConversationComments, isConversation } from "../services/agent-conversations.js";
 import { issueRecoveryActionReadModel } from "../services/issue-recovery-actions.js";
 import { getExecutionBlocker } from "../services/execution-blocker.js";
@@ -13191,6 +13192,13 @@ export function issueRoutes(
       });
       const enteringReviewRequested =
         existing.status !== "in_review" && updateFields.status === "in_review";
+      const narrowReviewHandoff =
+        existing.status === "in_progress" && enteringReviewRequested &&
+        actor.actorType === "agent" && Boolean(actor.agentId && actor.runId) &&
+        Boolean(commentBody && requestedReviewInteractionId) &&
+        !/@|https?:\/\//i.test(commentBody ?? "") &&
+        Object.keys(req.body).every((field) =>
+          ["status", "comment", "reviewInteractionId"].includes(field));
       const persistReviewActivityTransactionally =
         enteringReviewRequested || Boolean(reviewInteractionId);
 
@@ -13522,6 +13530,24 @@ export function issueRoutes(
                 actorRunId: actor.runId,
                 reviewInteractionId: requestedReviewInteractionId,
               });
+              if (narrowReviewHandoff && !decision && !shouldRelayStop &&
+                !reviewPolicySensitiveMutationRequested) {
+                const handoff = await executeReviewHandoff({
+                  db, tx: tx as unknown as Db, existing: lockedExisting,
+                  patch: issueUpdateData, commentBody: commentBody!,
+                  reviewInteractionId: requestedReviewInteractionId!,
+                  actor: {
+                    agentId: actor.agentId!, runId: actor.runId!,
+                    agentApiKeyId: actor.agentApiKeyId,
+                    responsibleUserId: authenticatedActorResponsibleUserId(req),
+                  },
+                  authorizationReason: issueMutationAuthorizationReason,
+                  publications: postCommitActivityPublications,
+                });
+                attachmentComment = handoff.comment;
+                reviewTransitionCommentActivityLogged = true;
+                return handoff.issue;
+              }
             }
             const updated = await updateIssue(tx);
             if (!updated) return null;

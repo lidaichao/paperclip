@@ -5,6 +5,7 @@ import express from "express";
 import request from "supertest";
 import { eq } from "drizzle-orm";
 import {
+  activityLog,
   agents,
   companies,
   createDb,
@@ -12,6 +13,7 @@ import {
   heartbeatRuns,
   heartbeatRunEvents,
   issueComments,
+  issueThreadInteractions,
   issues,
   localAgentRunLeases,
   startEmbeddedPostgresTestDatabase,
@@ -447,9 +449,11 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const payload = { deviceId: "device-desktop-016", leaseId: randomUUID(),
       generation: 1, issueId: scope.issueId };
     await request(app).patch(`/api/agents/me/local-runs/${scope.runId}/issue`)
-      .send({ ...payload, status: "in_review", comment: "Review this" }).expect(400);
+      .send({ ...payload, status: "in_review", comment: "Review this" }).expect(403);
     await request(app).patch(`/api/agents/me/local-runs/${scope.runId}/issue`)
-      .send({ ...payload, assigneeAgentId: randomUUID() }).expect(400);
+      .send({ ...payload, assigneeAgentId: randomUUID() }).expect(403);
+    await request(app).post(`/api/agents/me/local-runs/${scope.runId}/comments`)
+      .send({ ...payload, body: "Not enabled", clientRequestId: randomUUID() }).expect(403);
     const claimed = await localAgentRunLeaseService(db).claim({
       ...scope, deviceId: payload.deviceId, idempotencyKey: randomUUID(),
     });
@@ -461,6 +465,89 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(issue.status).toBe("todo");
     expect(issue.assigneeAgentId).toBe(scope.agentId);
   });
+
+  it("atomically hands an owned task to review and replays only the exact committed command", async () => {
+    const scope = await fixture();
+    const deviceId = "device-desktop-review-001";
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId, idempotencyKey: randomUUID(),
+    });
+    const owner = { ...scope, deviceId, leaseId: claimed!.leaseId, generation: claimed!.generation };
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const [confirmation] = await db.insert(issueThreadInteractions).values({
+      companyId: scope.companyId, issueId: scope.issueId,
+      kind: "request_confirmation", status: "pending", continuationPolicy: "wake_assignee",
+      createdByAgentId: scope.agentId, sourceRunId: scope.runId,
+      payload: { version: 1, prompt: "Review the result" },
+    }).returning();
+    const command = { ...owner, body: "Ready for acceptance", reviewInteractionId: confirmation.id,
+      clientRequestId: randomUUID() };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId } as const;
+    const svc = localAgentRunLeaseService(db);
+    const first = await svc.reviewFencedIssue(command, actor);
+    expect(first.replayed).toBe(false);
+    expect(first.issue.status).toBe("in_review");
+    expect(first.comment.createdByRunId).toBe(scope.runId);
+    const second = await svc.reviewFencedIssue(command, actor);
+    expect(second.replayed).toBe(true);
+    expect(second.comment.id).toBe(first.comment.id);
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId)))
+      .toHaveLength(1);
+    const events = (await db.select().from(activityLog).where(eq(activityLog.entityId, scope.issueId)))
+      .filter((event) => event.action === "issue.updated" || event.action === "issue.comment_added");
+    expect(events.map((event) => event.action).sort()).toEqual(["issue.comment_added", "issue.updated"]);
+    expect((await db.select().from(issueThreadInteractions).where(eq(issueThreadInteractions.id, confirmation.id)))[0]?.status)
+      .toBe("pending");
+    await expect(svc.reviewFencedIssue({ ...command, body: "Different content" }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    await expect(svc.reviewFencedIssue({ ...command, clientRequestId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    await expect(svc.reviewFencedIssue({ ...command, reviewInteractionId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    const replacement = randomUUID();
+    await db.insert(agents).values({ id: replacement, companyId: scope.companyId,
+      name: "Replacement", runtimeConfig: { executionMode: "client_pull" } });
+    await db.update(issues).set({ assigneeAgentId: replacement }).where(eq(issues.id, scope.issueId));
+    await expect(svc.reviewFencedIssue(command, actor)).rejects.toMatchObject({ status: 403 });
+  }, 30_000);
+
+  it("exposes only the fenced review handoff over HTTP and rejects it after cancellation", async () => {
+    const scope = await fixture();
+    const deviceId = "device-desktop-review-http-001";
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId, idempotencyKey: randomUUID(),
+    });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const [confirmation] = await db.insert(issueThreadInteractions).values({
+      companyId: scope.companyId, issueId: scope.issueId,
+      kind: "request_confirmation", status: "pending", continuationPolicy: "wake_assignee",
+      createdByAgentId: scope.agentId, sourceRunId: scope.runId,
+      payload: { version: 1, prompt: "Review this" },
+    }).returning();
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+        companyId: scope.companyId };
+      next();
+    });
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message });
+    });
+    const path = `/api/agents/me/local-runs/${scope.runId}/issue/review-handoff`;
+    const payload = { deviceId, leaseId: claimed!.leaseId, generation: claimed!.generation,
+      issueId: scope.issueId, body: "Ready for acceptance",
+      reviewInteractionId: confirmation.id, clientRequestId: randomUUID() };
+    const first = await request(app).post(path).send(payload).expect(201);
+    const replay = await request(app).post(path).send(payload).expect(200);
+    expect(replay.body.comment.id).toBe(first.body.comment.id);
+    await request(app).post(path).send({ ...payload, clientRequestId: randomUUID() }).expect(409);
+    await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
+    await request(app).post(path).send(payload).expect(403);
+  }, 30_000);
 
   it("preserves deletion of a task and its run after a historical lease", async () => {
     const scope = await fixture();
