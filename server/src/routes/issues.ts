@@ -13529,6 +13529,28 @@ export function issueRoutes(
                 },
                 tx,
               );
+            } else if (enteringReviewRequested && commentBody) {
+              // Keep the review handoff and its explanation in one database
+              // transaction. A failed comment must not strand an issue in
+              // review without the agent's handoff context.
+              attachmentComment = await svc.addComment(
+                id,
+                commentBody,
+                {
+                  agentId: actor.agentId ?? undefined,
+                  userId: actor.actorType === "user" ? actor.actorId : undefined,
+                  runId: actor.runId,
+                  onBehalfOfUserId: authenticatedActorResponsibleUserId(req),
+                },
+                {
+                  authorizationReason: issueMutationAuthorizationReason,
+                  clientRequestId: actor.actorType === "user" ? commentClientRequestId : undefined,
+                  sourceTrust: await resolveActorSourceTrustForIssue({
+                    db: tx as unknown as Db, issue: updated, actor,
+                  }),
+                },
+                tx,
+              );
             }
 
             if (decision && decisionId) {

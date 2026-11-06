@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import request from "supertest";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   activityLog,
@@ -325,5 +325,39 @@ describeEmbeddedPostgres("issue comment attribution and patch audit routes", () 
     expect(stillReview.status).toBe("in_review");
     expect(await db.select().from(issueComments).where(eq(issueComments.issueId, fixture.sourceIssue.id)))
       .toHaveLength(1);
+  }, 30_000);
+
+  it("rolls back a review transition when its handoff comment cannot commit", async () => {
+    const fixture = await seed();
+    const app = await createApp(db, agentActor(fixture));
+    await db.insert(issueThreadInteractions).values({
+      companyId: fixture.company.id, issueId: fixture.sourceIssue.id,
+      kind: "request_confirmation", status: "pending", continuationPolicy: "wake_assignee",
+      payload: { version: 1, prompt: "Review the result" },
+    });
+    await db.execute(sql`
+      create function reject_review_handoff_comment() returns trigger language plpgsql as $$
+      begin raise exception 'test comment insert failure'; end; $$
+    `);
+    await db.execute(sql`
+      create trigger reject_review_handoff_comment_trigger before insert on issue_comments
+      for each row execute function reject_review_handoff_comment()
+    `);
+    try {
+      const response = await request(app)
+        .patch(`/api/issues/${fixture.sourceIssue.id}`)
+        .send({ status: "in_review", comment: "Cannot commit" });
+      expect(response.status).toBe(500);
+      const [issue] = await db.select().from(issues).where(eq(issues.id, fixture.sourceIssue.id));
+      expect(issue.status).toBe("in_progress");
+      expect(await db.select().from(issueComments).where(eq(issueComments.issueId, fixture.sourceIssue.id)))
+        .toHaveLength(0);
+      expect((await db.select().from(activityLog).where(eq(activityLog.entityId, fixture.sourceIssue.id)))
+        .filter((event) => event.action === "issue.updated" || event.action === "issue.comment_added"))
+        .toHaveLength(0);
+    } finally {
+      await db.execute(sql`drop trigger if exists reject_review_handoff_comment_trigger on issue_comments`);
+      await db.execute(sql`drop function if exists reject_review_handoff_comment()`);
+    }
   }, 30_000);
 });
