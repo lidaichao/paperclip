@@ -95,6 +95,37 @@ describe("issueThreadInteractionService", () => {
     vi.clearAllMocks();
   });
 
+  it.each(["accept", "reject"] as const)(
+    "rejects the new completion-review target before %s can mutate the issue, interaction or audit",
+    async (decision) => {
+      const { issueThreadInteractionService } = await import("./issue-thread-interactions.js");
+      const issueId = "11111111-1111-4111-8111-111111111111";
+      const interactionId = "22222222-2222-4222-8222-222222222222";
+      const row = { id: interactionId, companyId: "company-1", issueId,
+        kind: "request_confirmation", status: "pending", sourceRunId: null,
+        payload: { version: 1, prompt: "Review", target: {
+          type: "custom", key: "issue_completion_review",
+          revisionId: "33333333-3333-4333-8333-333333333333" } } };
+      const fake = createFakeDb({ interactionRow: row });
+      const transactionSpy = vi.spyOn(fake.db, "transaction");
+      const service = issueThreadInteractionService(fake.db);
+      const issue = { id: issueId, companyId: "company-1",
+        status: "in_review", projectId: null, goalId: null };
+      const actor = { userId: "board-user" };
+      const call = decision === "accept"
+        ? service.acceptInteraction(issue, interactionId, {}, actor)
+        : service.rejectInteraction(issue, interactionId, { reason: "Needs work" }, actor);
+      await expect(call).rejects.toThrow("dedicated review decision command");
+      expect(fake.db.select).toHaveBeenCalledTimes(1);
+      expect(fake.db.update).not.toHaveBeenCalled();
+      expect(fake.db.insert).not.toHaveBeenCalled();
+      expect(transactionSpy).not.toHaveBeenCalled();
+      expect(fake.getInteractionRow()).toMatchObject({ status: "pending" });
+      expect(fake.issueTouches).toHaveLength(0);
+      expect(fake.interactionUpdates).toHaveLength(0);
+    },
+  );
+
   it.each([
     ["ask_user_questions", undefined, {}, "anyone", "anyone", "inherited", "requested"],
     ["suggest_tasks", undefined, {}, "anyone", "anyone", "inherited", "requested"],

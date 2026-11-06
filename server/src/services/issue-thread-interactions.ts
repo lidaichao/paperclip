@@ -87,6 +87,7 @@ import {
 } from "@paperclipai/shared";
 import { z } from "zod";
 import { conflict, forbidden, notFound, unprocessable } from "../errors.js";
+import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
 import { getTelemetryClient } from "../telemetry.js";
 import {
   logActivity,
@@ -354,6 +355,19 @@ function isNativeCompletionReview(
       ? (payload.target as Record<string, unknown>)
       : {};
   return target.type === "custom" && target.key === "native_completion_review";
+}
+
+/** The shared completion-review target has no generic resolution semantics yet. */
+function assertNotSharedCompletionReview(
+  row: Pick<IssueThreadInteractionRow, "payload">,
+) {
+  const payload = row.payload && typeof row.payload === "object"
+    && !Array.isArray(row.payload) ? row.payload as unknown as Record<string, unknown> : {};
+  const target = payload.target && typeof payload.target === "object"
+    && !Array.isArray(payload.target) ? payload.target as Record<string, unknown> : {};
+  if (target.key === ISSUE_COMPLETION_REVIEW_TARGET_KEY) {
+    throw unprocessable("Completion reviews require the dedicated review decision command");
+  }
 }
 
 export const DEFAULT_RESOLVER_POLICY_BY_KIND: Record<
@@ -2090,6 +2104,7 @@ export function issueThreadInteractionService(
     interaction: IssueThreadInteraction;
     continuationIssue: IssueWakeTarget | null;
   }> {
+    assertNotSharedCompletionReview(args.current);
     const expired = await expireStaleRequestConfirmationTarget(db, {
       row: args.current,
       actor: args.actor,
@@ -2153,6 +2168,7 @@ export function issueThreadInteractionService(
           "Interaction has already been resolved",
         );
       }
+      assertNotSharedCompletionReview(lockedCurrent);
       await assertRequestConfirmationResolutionAllowedUnderLock(
         tx as unknown as Db,
         issueContext,
@@ -2358,6 +2374,7 @@ export function issueThreadInteractionService(
     actor: InteractionActor;
     mutationOptions?: InteractionResolutionMutationOptions;
   }): Promise<IssueThreadInteraction> {
+    assertNotSharedCompletionReview(args.current);
     const expired = await expireStaleRequestConfirmationTarget(db, {
       row: args.current,
       actor: args.actor,
@@ -2428,6 +2445,7 @@ export function issueThreadInteractionService(
           "Interaction has already been resolved",
         );
       }
+      assertNotSharedCompletionReview(lockedCurrent);
       await assertRequestConfirmationResolutionAllowedUnderLock(
         tx as unknown as Db,
         issueContext,
@@ -3657,6 +3675,7 @@ export function issueThreadInteractionService(
         issue,
         interactionId,
       });
+      assertNotSharedCompletionReview(current);
       assertInteractionResolutionAllowed(current, actor);
       switch (current.kind) {
         case "suggest_tasks":
@@ -3927,6 +3946,7 @@ export function issueThreadInteractionService(
         issue,
         interactionId,
       });
+      assertNotSharedCompletionReview(current);
       assertInteractionResolutionAllowed(current, actor);
       switch (current.kind) {
         case "suggest_tasks":
