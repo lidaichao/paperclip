@@ -632,6 +632,30 @@ export function localAgentRunLeaseService(
             disposition: "preserved" };
         }
       }
+      // A local process exiting successfully is not a business completion.
+      // Without an atomic handoff, leaving in_progress after releasing its run
+      // would strand the task. Preserve a human's newer state if they changed it.
+      if (!reviewHint && !reviewerRun && status === "succeeded") {
+        const [issue] = await tx.select().from(issues).where(and(
+          eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
+        )).for("update");
+        if (issue?.status === "in_progress" && issue.assigneeAgentId === input.agentId &&
+          issue.executionRunId === input.runId) {
+          const blocked = await issueService(db).update(issue.id, {
+            status: "blocked", actorAgentId: input.agentId, companyGuard: input.companyId,
+          }, tx, publications);
+          if (!blocked || blocked.status !== "blocked") {
+            throw conflict("Could not recover a local run without a review handoff");
+          }
+          await logActivity(tx as unknown as Db, {
+            companyId: input.companyId, actorType: "agent", actorId: input.agentId,
+            agentId: input.agentId, runId: input.runId,
+            action: "issue.local_run_missing_review_handoff", entityType: "issue",
+            entityId: issue.id, issueId: issue.id,
+            details: { reason: "successful_process_without_business_handoff" },
+          }, publications);
+        }
+      }
       await tx.update(localAgentRunLeases).set({
         stopAcknowledgedAt: sql`now()`, releasedAt: sql`now()`, outcome: input.outcome,
         updatedAt: sql`now()`,
