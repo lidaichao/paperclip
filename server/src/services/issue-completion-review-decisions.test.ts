@@ -2,21 +2,24 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq, sql } from "drizzle-orm";
 import {
-  activityLog, agentApiKeys, agents, companies, createDb, heartbeatRuns,
-  issueCompletionReviews, issueThreadInteractions, issues,
+  activityLog, agentApiKeys, agentWakeupRequests, agents, companies, createDb, heartbeatRuns,
+  issueComments, issueCompletionReviews, issueThreadInteractions, issues,
   localAgentDeviceBindings, localAgentRunLeases,
 } from "@paperclipai/db";
 import {
   getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase,
 } from "../__tests__/helpers/embedded-postgres.js";
 import { issueCompletionReviewDecisionService } from "./issue-completion-review-decisions.js";
+import { clientPullCompletionReviewWakeKey,
+  CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
 import { issueService } from "./issues.js";
+import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
 import type { Db } from "@paperclipai/db";
 
 const external = process.env.PAPERCLIP_TEST_DATABASE_URL;
 const support = external ? { supported: true } : await getEmbeddedPostgresTestSupport();
 
-describe.runIf(support.supported)("inert shared completion review acceptance (PostgreSQL)", () => {
+describe.runIf(support.supported)("shared completion review decisions (PostgreSQL)", () => {
   let temporary: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | undefined;
   let db: ReturnType<typeof createDb>;
   beforeAll(async () => {
@@ -62,6 +65,7 @@ describe.runIf(support.supported)("inert shared completion review acceptance (Po
       agentId: reviewerAgentId, status: "running",
       contextSnapshot: { issueId, interactionId: interaction.id } });
     return { companyId, issueId, reviewId, interactionId: interaction.id,
+      sourceAgentId, sourceRunId,
       reviewerAgentId, reviewerRunId };
   }
 
@@ -73,6 +77,8 @@ describe.runIf(support.supported)("inert shared completion review acceptance (Po
 
   async function clientPullProof(f: Awaited<ReturnType<typeof fixture>>) {
     const keyId = randomUUID(), deviceId = "reviewer-desktop-001";
+    await db.update(agents).set({ runtimeConfig: { executionMode: "client_pull" } })
+      .where(eq(agents.id, f.sourceAgentId));
     // The source run has already handed off. Only one active lease may own an issue.
     await db.update(localAgentRunLeases).set({ releasedAt: new Date(),
       stopAcknowledgedAt: new Date(), outcome: "succeeded" })
@@ -81,7 +87,23 @@ describe.runIf(support.supported)("inert shared completion review acceptance (Po
       agentId: f.reviewerAgentId, name: "Reviewer desktop", keyHash: randomUUID() });
     await db.insert(localAgentDeviceBindings).values({ companyId: f.companyId,
       agentId: f.reviewerAgentId, keyId, deviceId });
-    await db.update(heartbeatRuns).set({ runtimeMode: "client_pull" })
+    await db.update(heartbeatRuns).set({ runtimeMode: "client_pull",
+      contextSnapshot: { issueId: f.issueId, interactionId: f.interactionId,
+        reviewId: f.reviewId, sourceRunId: f.sourceRunId,
+        wakeReason: CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } })
+      .where(eq(heartbeatRuns.id, f.reviewerRunId));
+    await db.update(issueThreadInteractions).set({
+      continuationPolicy: "wake_assignee", requestedResolverPolicy: "not_creator",
+    }).where(eq(issueThreadInteractions.id, f.interactionId));
+    const [reviewWake] = await db.insert(agentWakeupRequests).values({
+      companyId: f.companyId, agentId: f.reviewerAgentId,
+      source: "automation", reason: CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON,
+      idempotencyKey: clientPullCompletionReviewWakeKey(f.reviewId, f.interactionId),
+      status: "claimed", runId: f.reviewerRunId,
+      payload: { issueId: f.issueId, interactionId: f.interactionId,
+        reviewId: f.reviewId, sourceRunId: f.sourceRunId },
+    }).returning();
+    await db.update(heartbeatRuns).set({ wakeupRequestId: reviewWake.id })
       .where(eq(heartbeatRuns.id, f.reviewerRunId));
     const [lease] = await db.insert(localAgentRunLeases).values({
       runId: f.reviewerRunId, companyId: f.companyId,
@@ -437,5 +459,88 @@ describe.runIf(support.supported)("inert shared completion review acceptance (Po
     await expect(issueCompletionReviewDecisionService(db).reject(request(f)))
       .rejects.toMatchObject({ status: 422 });
     expect((await state(f)).review?.state).toBe("pending");
+  });
+
+  it("rejects atomically, leaves one feedback comment and one local source retry, and replays", async () => {
+    const f = await fixture(), proof = await clientPullProof(f);
+    const input = { ...request(f), summary: "Fix the missing acceptance behavior",
+      clientPullProof: proof };
+    const service = issueCompletionReviewDecisionService(db);
+    const first = await service.reject(input);
+    expect(first).toMatchObject({ reviewId: f.reviewId, outcome: "rejected",
+      requestId: input.requestId });
+    const result = await state(f);
+    expect(result.issue?.status).toBe("todo");
+    expect(result.issue?.statusVersion).toBe(5);
+    expect(result.review?.state).toBe("rejected");
+    expect(result.card?.status).toBe("rejected");
+    const wakes = (await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.companyId)))
+      .filter((wake) => wake.reason === "issue_completion_review_rejected");
+    expect(wakes).toHaveLength(1);
+    expect(wakes[0]).toMatchObject({ agentId: f.sourceAgentId,
+      status: "queued", idempotencyKey: `completion-review-rejected:${f.reviewId}` });
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, wakes[0]!.runId!));
+    expect(run).toMatchObject({ agentId: f.sourceAgentId, runtimeMode: "client_pull",
+      status: "queued" });
+    const comments = await db.select().from(issueComments)
+      .where(eq(issueComments.issueId, f.issueId));
+    expect(comments).toHaveLength(1);
+    expect(comments[0]?.body).toContain(input.summary);
+    expect(await service.reject(input)).toEqual(first);
+    await expect(service.reject({ ...input, summary: "Different feedback" }))
+      .rejects.toMatchObject({ status: 409 });
+    const leases = localAgentRunLeaseService(db);
+    expect((await leases.control(proof.owner)).action).toBe("continue");
+    expect(await leases.finish({ ...proof.owner, outcome: "succeeded",
+      exitCode: 0, processStopped: true, clientRequestId: randomUUID(),
+      summary: "Reviewer decision committed" })).toMatchObject({ status: "succeeded" });
+    expect((await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, run.id)))[0]?.status).toBe("queued");
+    await expect(service.reject(input)).rejects.toMatchObject({ status: 409 });
+    expect((await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.companyId)))
+      .filter((wake) => wake.reason === "issue_completion_review_rejected")).toHaveLength(1);
+  });
+
+  it("keeps a committed rejection and source retry when the reviewer process later fails", async () => {
+    const f = await fixture(), proof = await clientPullProof(f);
+    await issueCompletionReviewDecisionService(db).reject({ ...request(f),
+      clientPullProof: proof });
+    await localAgentRunLeaseService(db).finish({ ...proof.owner, outcome: "failed",
+      exitCode: 1, processStopped: true, clientRequestId: randomUUID() });
+    const settled = await state(f);
+    expect(settled.issue?.status).toBe("todo");
+    expect(settled.review?.state).toBe("rejected");
+    expect(settled.card?.status).toBe("rejected");
+    const wake = (await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.companyId)))
+      .find((item) => item.reason === "issue_completion_review_rejected");
+    expect(wake?.status).toBe("queued");
+  });
+
+  it("rolls back the decision when the source retry cannot be persisted", async () => {
+    const f = await fixture(), proof = await clientPullProof(f);
+    const triggerName = `review_reject_fail_${f.reviewId.replaceAll("-", "")}`;
+    const functionName = `${triggerName}_fn`;
+    await db.execute(sql.raw(`CREATE FUNCTION ${functionName}() RETURNS trigger AS $$
+      BEGIN RAISE EXCEPTION 'forced source wake failure'; END; $$ LANGUAGE plpgsql`));
+    await db.execute(sql.raw(`CREATE TRIGGER ${triggerName} BEFORE INSERT ON agent_wakeup_requests
+      FOR EACH ROW WHEN (NEW.reason = 'issue_completion_review_rejected'
+        AND NEW.company_id = '${f.companyId}') EXECUTE FUNCTION ${functionName}()`));
+    try {
+      await expect(issueCompletionReviewDecisionService(db).reject({ ...request(f),
+        clientPullProof: proof })).rejects.toThrow('Failed query: insert into "agent_wakeup_requests"');
+      const unchanged = await state(f);
+      expect(unchanged.issue?.status).toBe("in_review");
+      expect(unchanged.review?.state).toBe("pending");
+      expect(unchanged.card?.status).toBe("pending");
+      expect(await db.select().from(issueComments)
+        .where(eq(issueComments.issueId, f.issueId))).toHaveLength(0);
+    } finally {
+      await db.execute(sql.raw(`DROP TRIGGER ${triggerName} ON agent_wakeup_requests`));
+      await db.execute(sql.raw(`DROP FUNCTION ${functionName}()`));
+    }
   });
 });

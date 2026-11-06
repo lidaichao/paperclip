@@ -5,7 +5,8 @@ import {
 } from "@paperclipai/db";
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { conflict } from "../errors.js";
-import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
+import { completionReviewRejectedWakeKey,
+  ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
 
 export const CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON = "issue_completion_review";
 
@@ -268,6 +269,87 @@ export async function assertClientPullAcceptedReviewContext(tx: Db, input: {
     wakePayload.issueId !== issue.id || wakePayload.reviewId !== review.id ||
     wakePayload.interactionId !== card.id ||
     wakePayload.sourceRunId !== review.sourceRunId) {
+    throw staleReviewEvent();
+  }
+  return { reviewId: review.id, decisionRequestId: review.decisionRequestId };
+}
+
+/** A committed rejection remains valid after the source task is returned. */
+export async function assertClientPullRejectedReviewContext(tx: Db, input: {
+  run: typeof heartbeatRuns.$inferSelect;
+  issue: typeof issues.$inferSelect;
+}) {
+  const { run, issue } = input;
+  const context = object(run.contextSnapshot);
+  if (run.status !== "running" || run.runtimeMode !== "client_pull" ||
+    context.wakeReason !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
+    context.issueId !== issue.id || run.companyId !== issue.companyId ||
+    typeof context.reviewId !== "string" ||
+    typeof context.interactionId !== "string" ||
+    typeof context.sourceRunId !== "string" || !run.wakeupRequestId) {
+    throw staleReviewEvent();
+  }
+  const [review] = await tx.select().from(issueCompletionReviews).where(and(
+    eq(issueCompletionReviews.id, context.reviewId),
+    eq(issueCompletionReviews.companyId, issue.companyId),
+    eq(issueCompletionReviews.issueId, issue.id),
+  )).for("update");
+  const [card] = await tx.select().from(issueThreadInteractions).where(and(
+    eq(issueThreadInteractions.id, context.interactionId),
+    eq(issueThreadInteractions.companyId, issue.companyId),
+    eq(issueThreadInteractions.issueId, issue.id),
+  )).for("update");
+  const [reviewWake] = await tx.select().from(agentWakeupRequests).where(and(
+    eq(agentWakeupRequests.id, run.wakeupRequestId),
+    eq(agentWakeupRequests.companyId, issue.companyId),
+  )).for("update");
+  const receipt = object(review?.decisionReceipt);
+  const target = object(object(card?.payload).target);
+  const reviewWakePayload = object(reviewWake?.payload);
+  if (!review || !card || !reviewWake || review.state !== "rejected" ||
+    review.sourceKind !== "client_pull" || review.reviewerAgentId !== run.agentId ||
+    review.sourceRunId !== context.sourceRunId ||
+    review.clientPullLeaseRunId !== context.sourceRunId ||
+    review.interactionId !== card.id || !review.decisionRequestId || !review.decidedAt ||
+    receipt.schemaVersion !== 1 || receipt.outcome !== "rejected" ||
+    receipt.reviewerRuntimeMode !== "client_pull" || receipt.reviewId !== review.id ||
+    receipt.requestId !== review.decisionRequestId || receipt.issueId !== issue.id ||
+    receipt.interactionId !== card.id || receipt.summary !== review.decisionSummary ||
+    card.kind !== "request_confirmation" || card.status !== "rejected" ||
+    card.sourceRunId !== review.sourceRunId ||
+    card.createdByAgentId !== review.sourceAgentId ||
+    card.addresseeAgentId !== run.agentId || card.addresseeUserId !== null ||
+    card.resolvedByAgentId !== run.agentId || card.resolvedByRunId !== run.id ||
+    target.type !== "custom" || target.key !== ISSUE_COMPLETION_REVIEW_TARGET_KEY ||
+    target.revisionId !== review.id ||
+    reviewWake.runId !== run.id || reviewWake.agentId !== run.agentId ||
+    reviewWake.status !== "claimed" ||
+    reviewWake.reason !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
+    reviewWake.idempotencyKey !== clientPullCompletionReviewWakeKey(review.id, card.id) ||
+    reviewWakePayload.issueId !== issue.id ||
+    reviewWakePayload.reviewId !== review.id ||
+    reviewWakePayload.interactionId !== card.id ||
+    reviewWakePayload.sourceRunId !== review.sourceRunId) {
+    throw staleReviewEvent();
+  }
+  const [sourceWake] = await tx.select().from(agentWakeupRequests).where(and(
+    eq(agentWakeupRequests.companyId, issue.companyId),
+    eq(agentWakeupRequests.idempotencyKey, completionReviewRejectedWakeKey(review.id)),
+  )).limit(1);
+  const sourcePayload = object(sourceWake?.payload);
+  const [sourceRun] = sourceWake?.runId ? await tx.select({
+    id: heartbeatRuns.id, companyId: heartbeatRuns.companyId,
+    agentId: heartbeatRuns.agentId, wakeupRequestId: heartbeatRuns.wakeupRequestId,
+  }).from(heartbeatRuns).where(eq(heartbeatRuns.id, sourceWake.runId)) : [];
+  if (!sourceWake || !sourceRun || sourceWake.id !== receipt.wakeupRequestId ||
+    sourceWake.runId !== receipt.sourceRetryRunId ||
+    sourceWake.agentId !== review.sourceAgentId ||
+    sourceRun.companyId !== issue.companyId ||
+    sourceRun.agentId !== review.sourceAgentId ||
+    sourceRun.wakeupRequestId !== sourceWake.id ||
+    sourcePayload.issueId !== issue.id || sourcePayload.reviewId !== review.id ||
+    sourcePayload.interactionId !== card.id ||
+    sourcePayload.decisionRequestId !== review.decisionRequestId) {
     throw staleReviewEvent();
   }
   return { reviewId: review.id, decisionRequestId: review.decisionRequestId };

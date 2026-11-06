@@ -521,6 +521,28 @@ export class AliceClient {
     return { reviewId: input.reviewId, requestId: input.clientRequestId, outcome: "accepted" };
   }
 
+  async rejectLocalCompletionReview(lease: LocalRunLease, input: {
+    issueId: string; reviewId: string; summary: string; clientRequestId: string;
+  }, signal?: AbortSignal): Promise<{ reviewId: string; requestId: string; outcome: "rejected" }> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(input.issueId, "issueId");
+    requireUuid(input.reviewId, "reviewId");
+    requireUuid(input.clientRequestId, "clientRequestId");
+    if (!input.summary.trim() || input.summary.length > 4096) {
+      throw new Error("review decision summary must be 1–4096 characters");
+    }
+    const response = await this.#writeJson("POST",
+      `/api/agents/me/local-runs/${lease.runId}/review-reject`,
+      { ...lease, ...input }, {}, signal);
+    const record = asRecord(response.body, "completion review rejection");
+    if (record.issueId !== input.issueId || record.reviewId !== input.reviewId ||
+      record.requestId !== input.clientRequestId || record.outcome !== "rejected") {
+      throw new Error("completion review rejection receipt mismatch");
+    }
+    return { reviewId: input.reviewId, requestId: input.clientRequestId, outcome: "rejected" };
+  }
+
   async patchLocalRunIssue(lease: LocalRunLease, issueId: string, patch: Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
     this.#requireVerifiedIdentity();
     this.#validateLease(lease);

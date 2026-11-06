@@ -264,7 +264,7 @@ describe("AliceClient", () => {
       wakeReason: "assignment" }, DEVICE_ID)).rejects.toThrow("wake reason mismatch");
   });
 
-  it("writes dedicated handoff and acceptance with the exact lease and request ID", async () => {
+  it("writes dedicated handoff and both review decisions with the exact lease and request ID", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
       fetch: async (url, init) => {
@@ -278,7 +278,8 @@ describe("AliceClient", () => {
             deliveryId: DEVICE_ID }, 201);
         }
         return jsonResponse({ issueId: ISSUE_ID, reviewId: KEY_ID,
-          requestId: INTERACTION_ID, outcome: "accepted" });
+          requestId: INTERACTION_ID,
+          outcome: String(url).endsWith("/review-reject") ? "rejected" : "accepted" });
       } });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
     const lease = { runId: RUN_ID, deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1 };
@@ -290,10 +291,15 @@ describe("AliceClient", () => {
       issueId: ISSUE_ID, reviewId: KEY_ID, summary: "Passed",
       clientRequestId: INTERACTION_ID,
     })).toMatchObject({ outcome: "accepted", requestId: INTERACTION_ID });
+    expect(await client.rejectLocalCompletionReview(lease, {
+      issueId: ISSUE_ID, reviewId: KEY_ID, summary: "Missing behavior",
+      clientRequestId: INTERACTION_ID,
+    })).toMatchObject({ outcome: "rejected", requestId: INTERACTION_ID });
     expect(calls.slice(1).map((call) => [new URL(call.url).pathname, call.init?.method]))
       .toEqual([
         [`/api/agents/me/local-runs/${RUN_ID}/issue/completion-review-handoff`, "POST"],
         [`/api/agents/me/local-runs/${RUN_ID}/review-accept`, "POST"],
+        [`/api/agents/me/local-runs/${RUN_ID}/review-reject`, "POST"],
       ]);
     expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease,
       issueId: ISSUE_ID, reviewerAgentId: DEVICE_ID, clientRequestId: KEY_ID });
@@ -303,7 +309,9 @@ describe("AliceClient", () => {
       issueId: ISSUE_ID, reviewId: KEY_ID, summary: " ",
       clientRequestId: INTERACTION_ID,
     })).rejects.toThrow("summary");
-    expect(calls).toHaveLength(3);
+    expect(JSON.parse(String(calls[3].init?.body))).toMatchObject({ ...lease,
+      issueId: ISSUE_ID, reviewId: KEY_ID, clientRequestId: INTERACTION_ID });
+    expect(calls).toHaveLength(4);
   });
 
   it("sends the current lease on renew, control and finish without printing it", async () => {

@@ -4,7 +4,7 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import {
-  agentApiKeys, agents, companies, createDb, getEmbeddedPostgresTestSupport,
+  agentApiKeys, agentWakeupRequests, agents, companies, createDb, getEmbeddedPostgresTestSupport,
   heartbeatRuns, issueThreadInteractions, issues, localAgentDeviceBindings,
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
@@ -90,7 +90,8 @@ suite("local reviewer context (PostgreSQL)", () => {
       generation: claim!.generation };
     const actor = { type: "agent", source: "agent_key", companyId,
       agentId: reviewerAgentId, keyId: reviewerKeyId, runId: queued.run.id } as const;
-    return { owner, actor, handoff, issueId };
+    return { owner, actor, handoff, issueId, sourceKeyId,
+      sourceDeviceId: "source-context-001" };
   }
 
   it("reads only the currently addressed review and closes after card invalidation", async () => {
@@ -150,5 +151,49 @@ suite("local reviewer context (PostgreSQL)", () => {
     expect(replay.body).toEqual(accepted.body);
     await request(app).post(decisionPath).send({ ...decisionBody,
       clientRequestId: randomUUID() }).expect(409);
+  }, 30_000);
+
+  it("rejects through the fenced route and returns the task to its local source agent", async () => {
+    const f = await fixture();
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => { req.actor = f.actor; next(); });
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((error: { status?: number; message?: string }, _req: Request,
+      res: Response, _next: NextFunction) => {
+      res.status(error.status ?? 500).json({ error: error.message });
+    });
+    const path = `/api/agents/me/local-runs/${f.owner.runId}/review-reject`;
+    const body = { deviceId: f.owner.deviceId, leaseId: f.owner.leaseId,
+      generation: f.owner.generation, issueId: f.issueId,
+      reviewId: f.handoff.review.id, clientRequestId: randomUUID(),
+      summary: "Acceptance criterion is missing" };
+    await request(app).post(path).send({ ...body, generation: 99 }).expect(409);
+    const rejected = await request(app).post(path).send(body).expect(200);
+    expect(rejected.body).toMatchObject({ outcome: "rejected",
+      reviewId: f.handoff.review.id, requestId: body.clientRequestId });
+    expect((await db.select({ status: issues.status }).from(issues)
+      .where(eq(issues.id, f.issueId)))[0]?.status).toBe("todo");
+    const sourceWake = (await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.owner.companyId)))
+      .find((wake) => wake.reason === "issue_completion_review_rejected");
+    expect(sourceWake?.agentId).toBe(f.handoff.review.sourceAgentId);
+    expect((await localAgentRunLeaseService(db).control(f.owner)).action).toBe("continue");
+    expect(await localAgentRunLeaseService(db).claim({
+      companyId: f.owner.companyId, agentId: f.handoff.review.sourceAgentId,
+      keyId: f.sourceKeyId, deviceId: f.sourceDeviceId,
+      idempotencyKey: randomUUID(),
+    })).toBeNull();
+    await localAgentRunLeaseService(db).finish({ ...f.owner, outcome: "succeeded",
+      exitCode: 0, processStopped: true, clientRequestId: randomUUID() });
+    const sourceClaim = await localAgentRunLeaseService(db).claim({
+      companyId: f.owner.companyId, agentId: f.handoff.review.sourceAgentId,
+      keyId: f.sourceKeyId, deviceId: f.sourceDeviceId,
+      idempotencyKey: randomUUID(),
+    });
+    expect(sourceClaim?.runId).toBe(sourceWake?.runId);
+    expect((await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, sourceWake!.id)))[0]?.status).toBe("claimed");
   }, 30_000);
 });

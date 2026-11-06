@@ -27,7 +27,8 @@ import { issueThreadInteractionService } from "./issue-thread-interactions.js";
 import { executeReviewHandoff } from "./issue-review-handoff.js";
 import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
-import { assertClientPullAcceptedReviewContext, assertClientPullReviewClaimCandidate,
+import { assertClientPullAcceptedReviewContext, assertClientPullRejectedReviewContext,
+  assertClientPullReviewClaimCandidate,
   assertClientPullReviewEventContext,
   CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
 import { instanceSettingsService } from "./instance-settings.js";
@@ -110,7 +111,15 @@ export function localAgentRunLeaseService(
           await assertClientPullAcceptedReviewContext(tx, { run, issue });
           return false;
         } catch (acceptedError) {
-          if (acceptedError instanceof HttpError && acceptedError.status === 409) return true;
+          if (acceptedError instanceof HttpError && acceptedError.status === 409) {
+            try {
+              await assertClientPullRejectedReviewContext(tx, { run, issue });
+              return false;
+            } catch (rejectedError) {
+              if (rejectedError instanceof HttpError && rejectedError.status === 409) return true;
+              throw rejectedError;
+            }
+          }
           throw acceptedError;
         }
       }
@@ -445,8 +454,9 @@ export function localAgentRunLeaseService(
             (saved as Record<string, unknown>).summary !== (input.summary ?? null) ||
             (reviewerRun && ((saved as Record<string, unknown>).reviewerReviewId !== reviewerReviewId ||
               (input.outcome === "succeeded"
-                ? (saved as Record<string, unknown>).reviewerDisposition !== "accepted"
-                : !["blocked", "preserved"].includes(String(
+                ? !["accepted", "rejected"].includes(String(
+                    (saved as Record<string, unknown>).reviewerDisposition))
+                : !["rejected", "blocked", "preserved"].includes(String(
                     (saved as Record<string, unknown>).reviewerDisposition))))) ||
             (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
               (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
@@ -464,7 +474,7 @@ export function localAgentRunLeaseService(
       let reviewReceipt: { reviewId: string; deliveryId: string; issueStatus: string;
         issueStatusVersion: number; disposition: "ready" | "blocked" | "preserved" } | null = null;
       let reviewerReceipt: { reviewerReviewId: string;
-        reviewerDisposition: "accepted" | "blocked" | "preserved";
+        reviewerDisposition: "accepted" | "rejected" | "blocked" | "preserved";
         decisionRequestId?: string; issueStatus?: string; issueStatusVersion?: number } | null = null;
       if (reviewerRun) {
         const [issue] = await tx.select().from(issues).where(and(
@@ -473,10 +483,28 @@ export function localAgentRunLeaseService(
         if (!issue) throw conflict("Dedicated review issue is missing");
         if (input.outcome === "succeeded") {
           if (cancelled) throw conflict("Cancelled reviewer run cannot finish successfully");
-          const accepted = await assertClientPullAcceptedReviewContext(tx as unknown as Db, { run, issue });
-          reviewerReceipt = { reviewerReviewId: accepted.reviewId,
-            reviewerDisposition: "accepted", decisionRequestId: accepted.decisionRequestId };
+          try {
+            const accepted = await assertClientPullAcceptedReviewContext(tx as unknown as Db, { run, issue });
+            reviewerReceipt = { reviewerReviewId: accepted.reviewId,
+              reviewerDisposition: "accepted", decisionRequestId: accepted.decisionRequestId };
+          } catch (acceptedError) {
+            if (!(acceptedError instanceof HttpError) || acceptedError.status !== 409) throw acceptedError;
+            const rejected = await assertClientPullRejectedReviewContext(tx as unknown as Db, { run, issue });
+            reviewerReceipt = { reviewerReviewId: rejected.reviewId,
+              reviewerDisposition: "rejected", decisionRequestId: rejected.decisionRequestId };
+          }
         } else {
+          const [decidedReview] = await tx.select({ state: issueCompletionReviews.state })
+            .from(issueCompletionReviews).where(and(
+              eq(issueCompletionReviews.id, reviewerReviewId as string),
+              eq(issueCompletionReviews.companyId, input.companyId),
+              eq(issueCompletionReviews.issueId, issue.id),
+            )).limit(1);
+          if (decidedReview?.state === "rejected") {
+            const rejected = await assertClientPullRejectedReviewContext(tx as unknown as Db, { run, issue });
+            reviewerReceipt = { reviewerReviewId: rejected.reviewId,
+              reviewerDisposition: "rejected", decisionRequestId: rejected.decisionRequestId };
+          } else {
           const context = run.contextSnapshot ?? {};
           const [delivery] = await tx.select().from(issueCommandDeliveries).where(and(
             eq(issueCommandDeliveries.companyId, input.companyId),
@@ -554,6 +582,7 @@ export function localAgentRunLeaseService(
               issueStatusVersion: issue.statusVersion };
           } else {
             throw conflict("Pending or accepted reviewer decision cannot finish unsuccessfully");
+          }
           }
         }
       }
