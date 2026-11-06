@@ -42,4 +42,25 @@ Codex 源码明确记录：订阅刷新令牌会轮换且只能使用一次。�
 3. 仅一名成员的真实任务先验证事件、评论、取消停进程树和任务收尾；之后再逐人扩展。
 4. `main.ts` 的 `requireWriteFence()` 与 `doctor.ps1` 的禁止安装门禁在上述验收完成前继续保持关闭。
 
+## 2026-11-06 Luna 登录故障记录
+
+Luna 按本手册执行一次私有 `-Login` 后，Codex app CLI 退出 1，报 `HW capability found … but HW capability requested …`，私有 `auth.json` 未产生。后续未重试登录或模型探针。只读对照显示：配置中的 app `codex.exe`（0.166.0-alpha.6）在完整及相同隔离环境下，`--version`、`--help`、`login --help` 均正常；本机 npm 安装内另一份原生 `codex.exe`（0.152.1）在隔离环境下 `--version` 与 `login --help` 也正常。帮助命令没有进入真正登录逻辑，因此不能据此断定登录已修复，也不能把环境清理或 CPU 视为已证明根因。
+
+候选修复：保持私有 `workerHome`，由操作员在下一次受控验证时把**该成员私有配置**的 `localAdapterConfig.command` 临时改为现成 npm 安装的原生 `codex.exe`，仅运行一次 `-Login`；失败立即停止并恢复原命令，不循环重试或复制共享认证。若登录成功，随后单独运行一次 `-Probe` 并检查私有认证文件，才认为该候选可用。CLI 版本差异还需与 Paperclip adapter 的真实任务运行共同验收。
+
+### 候选二进制的只读证据
+
+| 项目 | 2026-11-06 本机结果 |
+| --- | --- |
+| npm 原生可执行文件 | `C:\Users\Administrator\AppData\Roaming\npm\node_modules\@openai\codex\node_modules\@openai\codex-win32-x64\vendor\x86_64-pc-windows-msvc\bin\codex.exe` |
+| npm 包来源 | `@openai/codex@0.152.1`；原生包 `@openai/codex@0.152.1-win32-x64`，见同级 `package.json` |
+| Authenticode | `Valid`，签名主体 `OpenAI OpCo, LLC` |
+| SHA-256 | `01B0FD4167393E004B9174C77AE5F8570486118E19DC4216CFC62A62A74B6EE6` |
+| 私有环境 `--version` | 退出 0，首行 `codex-cli 0.152.1` |
+| 私有环境 `login --help` | 退出 0，首行 `Manage login`；只读取帮助，未登录 |
+
+这次只读对照使用 Luna 配置中的私有 `HOME`、`USERPROFILE`、`CODEX_HOME`、`APPDATA`、`LOCALAPPDATA`、`TEMP`，且没有继承 Paperclip/GBrain/模型密钥。作为对照，当前 Codex app 可执行文件 `C:\Users\Administrator\AppData\Local\OpenAI\Codex\bin\a159911ff70742e9\codex.exe` 是 v0.166.0-alpha.6、签名同样有效；完整和私有环境下 `--version`、`--help` 均退出 0。以上只证明帮助路径可启动。
+
+单独修改 Luna **私有桥接配置**的 `localAdapterConfig.command` 只改变未来桥接调用哪个 CLI，不安装或替换程序，不修改已运行 Codex app 的进程和会话。脚本的私有目录与现有 app 登录目录分开，按当前源码应不覆盖现有 app 凭据；设备登录是否还会改写 OS 级状态未实测，因此真实登录后仍要检查现有 app 会话，并在异常时恢复配置。不要在本次只读诊断中更改配置或再次执行登录。
+
 源码证据：`packages/adapters/codex-local/src/server/codex-home.ts` 的 `resolveSharedCodexHomeDir`、`ensureSymlink` 和 `seedManagedCodexHome`；`packages/adapters/cursor-local/src/server/test.ts` 的 `cursorConfigPath`；本目录的 `environment.ts`、`model-readiness.ts` 与 `model-login-once.ps1`。
