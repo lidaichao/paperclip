@@ -4,14 +4,16 @@ export interface BridgeAgentConfig {
   remoteAgentId: string;
   remoteAgentName: string;
   localAgentName: string;
+  gbrainEnvRef: string;
   adapterType: BridgeAdapterType;
   localAdapterConfig: Record<string, unknown>;
   maxConcurrentRuns: 1;
 }
 
 export interface BridgeConfig {
-  schemaVersion: 2;
+  schemaVersion: 3;
   deviceId: string;
+  workerHome: string;
   apiBase: string;
   companyId: string;
   credentialsFile: string;

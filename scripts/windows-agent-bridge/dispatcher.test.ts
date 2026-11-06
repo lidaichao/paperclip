@@ -9,6 +9,7 @@ import type { BridgeAgentConfig, BridgeInboxItem } from "./types.js";
 const agent = (id: string, name: string): BridgeAgentConfig => ({
   remoteAgentId: id,
   remoteAgentName: name,
+  gbrainEnvRef: `GBRAIN_${name.toUpperCase()}_TOKEN`,
   localAgentName: name,
   adapterType: "codex_local",
   localAdapterConfig: { cwd: "H:/AIagent/Luna", command: "C:/tools/codex.exe" },

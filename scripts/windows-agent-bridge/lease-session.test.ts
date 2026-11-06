@@ -9,6 +9,7 @@ const claim: LocalRunClaim = {
   leaseId: "784d88a1-7a05-42d2-a7d8-e714d70f2d0b",
   generation: 1,
   leaseExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+  leaseDeadlineMonotonicMs: performance.now() + 60_000,
   wakeReason: "assignment",
   workspacePolicy: "agent_home",
 };
@@ -50,10 +51,37 @@ describe("local run lease session", () => {
     const execute = vi.fn();
     await expect(runLeaseSession({
       client: { renewLocalRun: vi.fn(), finishLocalRun: vi.fn() },
-      claim: { ...claim, leaseExpiresAt: new Date(Date.now() + 4_000).toISOString() },
+      claim: { ...claim, leaseDeadlineMonotonicMs: performance.now() + 4_000 },
       deviceId: "device-one", execute,
     })).rejects.toThrow("too close to expiry");
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("uses the server TTL deadline even when the local wall clock disagrees", async () => {
+    const finish = vi.fn().mockResolvedValue("succeeded");
+    const result = await runLeaseSession({
+      client: { renewLocalRun: vi.fn(), finishLocalRun: finish },
+      claim: { ...claim, leaseExpiresAt: "2000-01-01T00:00:00Z",
+        leaseDeadlineMonotonicMs: performance.now() + 60_000 },
+      deviceId: "device-one", execute: async () => ({ succeeded: true, exitCode: 0 }),
+    });
+    expect(result.outcome).toBe("succeeded");
+    expect(finish).toHaveBeenCalledOnce();
+  });
+
+  it("renews from a monotonic server TTL while ignoring stale wall-clock dates", async () => {
+    const finish = vi.fn().mockResolvedValue("succeeded");
+    const renew = vi.fn().mockImplementation(async () => ({
+      leaseExpiresAt: "2000-01-01T00:00:00Z", cancelRequested: false,
+      leaseDeadlineMonotonicMs: performance.now() + 60_000,
+    }));
+    const result = await runLeaseSession({
+      client: { renewLocalRun: renew, finishLocalRun: finish }, claim,
+      deviceId: "device-one", renewIntervalMs: 5,
+      execute: async () => { await new Promise((resolve) => setTimeout(resolve, 18)); return { succeeded: true, exitCode: 0 }; },
+    });
+    expect(result.outcome).toBe("succeeded");
+    expect(renew).toHaveBeenCalled();
   });
 
   it("does not report processStopped when cancellation leaves a hung executor", async () => {

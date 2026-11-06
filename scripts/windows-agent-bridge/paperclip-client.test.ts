@@ -102,7 +102,7 @@ describe("AliceClient", () => {
         calls.push({ url: String(url), init });
         if (String(url).endsWith("/api/agents/me")) return jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
         return jsonResponse({ runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID, leaseId: LEASE_ID, generation: 1,
-          leaseExpiresAt: "2026-11-06T04:00:00Z", wakeReason: "assignment", workspacePolicy: "agent_home" });
+          leaseExpiresAt: "2026-11-06T04:00:00Z", leaseTtlMs: 60_000, wakeReason: "assignment", workspacePolicy: "agent_home" });
       },
     });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
@@ -120,12 +120,23 @@ describe("AliceClient", () => {
         ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
         : claimStatus === 204 ? new Response(null, { status: 204 })
           : jsonResponse({ runId: RUN_ID, issueId: ISSUE_ID, agentId: DEVICE_ID, leaseId: LEASE_ID, generation: 1,
-            leaseExpiresAt: "2026-11-06T04:00:00Z", wakeReason: "assignment", workspacePolicy: "agent_home" }),
+            leaseExpiresAt: "2026-11-06T04:00:00Z", leaseTtlMs: 60_000, wakeReason: "assignment", workspacePolicy: "agent_home" }),
     });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
     expect(await client.claimLocalRun(DEVICE_ID, KEY_ID)).toBeNull();
     claimStatus = 200;
     await expect(client.claimLocalRun(DEVICE_ID, KEY_ID)).rejects.toThrow("identity mismatch");
+  });
+
+  it("rejects a claim without the server-calculated remaining lease time", async () => {
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async (url) =>
+      String(url).endsWith("/api/agents/me")
+        ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+        : jsonResponse({ runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID, leaseId: LEASE_ID,
+          generation: 1, leaseExpiresAt: "2026-11-06T04:00:00Z", wakeReason: "assignment", workspacePolicy: "agent_home" }),
+    });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    await expect(client.claimLocalRun(DEVICE_ID, KEY_ID)).rejects.toThrow("leaseTtlMs is invalid");
   });
 
   it("rejects renewal after the server fences an expired or cancelled lease", async () => {
@@ -153,7 +164,8 @@ describe("AliceClient", () => {
     });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
     const claim = { runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID, leaseId: LEASE_ID,
-      generation: 1, leaseExpiresAt: "2026-11-06T04:00:00Z", wakeReason: "assignment", workspacePolicy: "agent_home" as const };
+      generation: 1, leaseExpiresAt: "2026-11-06T04:00:00Z", leaseDeadlineMonotonicMs: performance.now() + 60_000,
+      wakeReason: "assignment", workspacePolicy: "agent_home" as const };
     expect((await client.getClaimedIssue(claim)).activeRunId).toBe(RUN_ID);
     assignee = DEVICE_ID;
     await expect(client.getClaimedIssue(claim)).rejects.toThrow("ownership mismatch");
@@ -171,7 +183,7 @@ describe("AliceClient", () => {
       fetch: async (url, init) => {
         calls.push({ url: String(url), init });
         if (String(url).endsWith("/api/agents/me")) return jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
-        if (String(url).includes("/renew")) return jsonResponse({ leaseExpiresAt: "2026-11-06T04:01:00Z", cancelRequested: false });
+        if (String(url).includes("/renew")) return jsonResponse({ leaseExpiresAt: "2026-11-06T04:01:00Z", leaseTtlMs: 60_000, cancelRequested: false });
         if (String(url).includes("/control")) return jsonResponse({ action: "continue", generation: 1, leaseExpiresAt: "2026-11-06T04:01:00Z" });
         return jsonResponse({ runId: RUN_ID, status: "succeeded" });
       },

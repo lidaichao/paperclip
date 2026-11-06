@@ -1,7 +1,9 @@
 param([Parameter(Mandatory = $true)][string]$Config)
 $ErrorActionPreference = 'Stop'
-$taskName = 'AliceWindowsAgentBridge'
 $configPath = (Resolve-Path $Config).Path
+$bridgeConfig = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+if ($bridgeConfig.agents.Count -ne 1) { throw '每个本机工作器只能配置一名智能体。' }
+$taskName = 'AliceWorker_' + $bridgeConfig.agents[0].remoteAgentId
 if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) {
   throw "$taskName 已存在；请先运行 uninstall.ps1，避免覆盖未知配置。"
 }
@@ -15,6 +17,10 @@ New-Item -ItemType Directory -Path $dist -Force | Out-Null
   (Join-Path $PSScriptRoot 'main.ts') --bundle --platform=node --format=esm `
   --packages=external --outfile=(Join-Path $dist 'bridge.bundle.mjs')
 if ($LASTEXITCODE -ne 0) { throw '桥接程序构建失败。' }
+& node.exe (Join-Path $root 'node_modules\esbuild\bin\esbuild') `
+  (Join-Path $PSScriptRoot 'launcher.ts') --bundle --platform=node --format=esm `
+  --packages=external --outfile=(Join-Path $dist 'launcher.bundle.mjs')
+if ($LASTEXITCODE -ne 0) { throw '隔离启动程序构建失败。' }
 
 $runner = Join-Path $PSScriptRoot 'run-hidden.ps1'
 $argument = "-NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runner`" -Config `"$configPath`""

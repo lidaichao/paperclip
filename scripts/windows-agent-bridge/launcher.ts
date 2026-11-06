@@ -1,0 +1,32 @@
+import { spawn } from "node:child_process";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { loadBridgeConfig } from "./config.js";
+import { buildWorkerEnvironment } from "./environment.js";
+
+async function main(): Promise<void> {
+  const configPath = process.argv[2];
+  if (!configPath) throw new Error("usage: launcher <config.json>");
+  const config = await loadBridgeConfig(configPath);
+  const env = buildWorkerEnvironment(process.env, config);
+  for (const folder of [config.workerHome, env.HOME!, env.CODEX_HOME!, env.PAPERCLIP_HOME!]) {
+    await mkdir(folder, { recursive: true });
+  }
+  const runtime = path.join(path.dirname(fileURLToPath(import.meta.url)), "bridge.bundle.mjs");
+  const code = await new Promise<number>((resolve, reject) => {
+    const child = spawn(process.execPath, [runtime, path.resolve(configPath)], {
+      env, shell: false, windowsHide: true, stdio: "inherit",
+    });
+    child.once("error", () => reject(new Error("isolated worker could not start")));
+    child.once("close", (exitCode) => resolve(exitCode ?? 1));
+  });
+  process.exitCode = code;
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  void main().catch((error) => {
+    process.stderr.write(`${error instanceof Error ? error.message : "isolated launcher failed"}\n`);
+    process.exitCode = 1;
+  });
+}

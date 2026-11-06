@@ -19,8 +19,9 @@ describe("installation safety", () => {
     const runner = await readFile(path.join(root, "run-hidden.ps1"), "utf8");
     const install = await readFile(path.join(root, "install.ps1"), "utf8");
     expect(runner).toMatch(/Start-Process[\s\S]*-WindowStyle Hidden/);
-    expect(install).toContain("$taskName = 'AliceWindowsAgentBridge'");
+    expect(install).toContain("$taskName = 'AliceWorker_' + $bridgeConfig.agents[0].remoteAgentId");
     expect(install).toContain("-WindowStyle Hidden");
+    expect(runner).toContain("launcher.bundle.mjs");
     expect(install).not.toContain("-RestartCount");
   });
 

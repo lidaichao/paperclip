@@ -5,10 +5,10 @@ import type { BridgeAdapterType, BridgeAgentConfig, BridgeConfig } from "./types
 const ROOT_KEYS = new Set([
   "schemaVersion",
   "deviceId",
+  "workerHome",
   "apiBase",
   "companyId",
   "credentialsFile",
-  "stateFile",
   "pollIntervalMs",
   "agents",
 ]);
@@ -17,6 +17,7 @@ const AGENT_KEYS = new Set([
   "remoteAgentId",
   "remoteAgentName",
   "localAgentName",
+  "gbrainEnvRef",
   "adapterType",
   "localAdapterConfig",
   "maxConcurrentRuns",
@@ -31,6 +32,7 @@ const LOCAL_ADAPTER_KEYS = new Set([
 ]);
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const GBRAIN_ENV_REF = /^GBRAIN_[A-Z][A-Z0-9_]*_TOKEN$/;
 const FORBIDDEN_SECRET_KEY = /(?:^|[_-])(api[_-]?key|token|secret)(?:$|[_-])/i;
 
 function asRecord(value: unknown, label: string): Record<string, unknown> {
@@ -133,6 +135,7 @@ function parseAgent(value: unknown, index: number): BridgeAgentConfig {
     remoteAgentId: requiredUuid(record, "remoteAgentId", label),
     remoteAgentName: requiredString(record, "remoteAgentName", label),
     localAgentName: requiredString(record, "localAgentName", label),
+    gbrainEnvRef: requiredString(record, "gbrainEnvRef", label),
     adapterType: adapterType as BridgeAdapterType,
     localAdapterConfig: parseLocalAdapterConfig(record.localAdapterConfig, adapterType as BridgeAdapterType, `${label}.localAdapterConfig`),
     maxConcurrentRuns: 1,
@@ -166,25 +169,37 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
   assertNoInlineSecrets(raw);
   const record = asRecord(raw, "config");
   assertKnownKeys(record, ROOT_KEYS, "config");
-  if (record.schemaVersion !== 2) throw new Error("schemaVersion must be 2");
+  if (record.schemaVersion !== 3) throw new Error("schemaVersion must be 3");
   const apiBase = normalizeApiBase(requiredString(record, "apiBase", "config"));
   if (!Number.isInteger(record.pollIntervalMs) || Number(record.pollIntervalMs) < 5_000 || Number(record.pollIntervalMs) > 300_000) {
     throw new Error("pollIntervalMs must be an integer between 5000 and 300000");
   }
-  if (!Array.isArray(record.agents) || record.agents.length === 0) {
-    throw new Error("agents must be a non-empty array");
+  if (!Array.isArray(record.agents) || record.agents.length !== 1) {
+    throw new Error("one bridge process requires exactly one agent");
   }
   const agents = record.agents.map(parseAgent);
   assertUniqueAgents(agents);
   const configDir = path.dirname(absoluteConfigPath);
+  const workerHomeRaw = requiredString(record, "workerHome", "config");
+  if (!path.isAbsolute(workerHomeRaw) && !path.win32.isAbsolute(workerHomeRaw)) {
+    throw new Error("workerHome must be an absolute local path");
+  }
+  const workerHome = resolveConfigPath(configDir, workerHomeRaw, "workerHome");
+  if (path.basename(workerHome).toLowerCase() !== agents[0].remoteAgentId) {
+    throw new Error("workerHome must end with the configured agent ID");
+  }
+  if (!GBRAIN_ENV_REF.test(agents[0].gbrainEnvRef) || agents[0].gbrainEnvRef === "GBRAIN_AGENT_TOKEN") {
+    throw new Error("gbrainEnvRef must name one member-specific GBRAIN_*_TOKEN variable");
+  }
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     deviceId: requiredUuid(record, "deviceId", "config"),
+    workerHome,
     apiBase,
     companyId: requiredUuid(record, "companyId", "config"),
     credentialsFile: resolveConfigPath(configDir, requiredString(record, "credentialsFile", "config"), "credentialsFile"),
-    stateFile: resolveConfigPath(configDir, requiredString(record, "stateFile", "config"), "stateFile"),
+    stateFile: path.join(workerHome, "claim-state.json"),
     pollIntervalMs: Number(record.pollIntervalMs),
     agents,
   };

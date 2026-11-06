@@ -1,0 +1,41 @@
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { assertWorkerEnvironment, buildWorkerEnvironment } from "./environment.js";
+import type { BridgeConfig } from "./types.js";
+
+const agentId = "38a5808c-47f3-4029-bdfe-0d84504bdc8a";
+const workerHome = path.join(path.resolve("."), "isolated-test", agentId);
+const config: BridgeConfig = {
+  schemaVersion: 3, deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+  workerHome, apiBase: "http://alice.test", companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6",
+  credentialsFile: path.join(workerHome, "credentials.dpapi"),
+  stateFile: path.join(workerHome, "claim-state.json"), pollIntervalMs: 10_000,
+  agents: [{ remoteAgentId: agentId, remoteAgentName: "Luna", localAgentName: "Luna",
+    gbrainEnvRef: "GBRAIN_LUNA_TOKEN", adapterType: "codex_local",
+    localAdapterConfig: { cwd: "H:/AIagent/Luna", command: "C:/tools/codex.exe" }, maxConcurrentRuns: 1 }],
+};
+
+describe("single-member worker environment", () => {
+  it("passes only OS keys, isolated homes and the selected member credential keys", () => {
+    const source = {
+      Path: "C:/Windows/System32", SystemRoot: "C:/Windows",
+      GBRAIN_LUNA_TOKEN: "placeholder-one", GBRAIN_RABBIT_TOKEN: "placeholder-two",
+      GBRAIN_AGENT_TOKEN: "placeholder-other", PAPERCLIP_API_KEY: "placeholder-other",
+      PAPERCLIP_RUN_ID: "placeholder-other", OPENAI_API_KEY: "placeholder-other",
+      CURSOR_API_KEY: "placeholder-other", NODE_OPTIONS: "placeholder-other",
+    };
+    const worker = buildWorkerEnvironment(source, config);
+    expect(Object.keys(worker).sort()).toEqual([
+      "CODEX_HOME", "GBRAIN_AGENT_TOKEN", "GBRAIN_LUNA_TOKEN", "HOME", "PAPERCLIP_HOME", "Path", "SystemRoot",
+    ].sort());
+    expect(() => assertWorkerEnvironment(worker, config)).not.toThrow();
+    expect(() => assertWorkerEnvironment(source, config)).toThrow("mismatched");
+    expect(() => assertWorkerEnvironment({ ...worker, GBRAIN_RABBIT_TOKEN: "placeholder" }, config))
+      .toThrow("unapproved key GBRAIN_RABBIT_TOKEN");
+  });
+
+  it("refuses to build an environment when the member reference is absent", () => {
+    expect(() => buildWorkerEnvironment({ GBRAIN_RABBIT_TOKEN: "placeholder" }, config))
+      .toThrow("credential reference GBRAIN_LUNA_TOKEN is unavailable");
+  });
+});

@@ -1,9 +1,9 @@
 param([Parameter(Mandatory = $true)][string]$Config)
 $ErrorActionPreference = 'Stop'
-$taskName = 'AliceWindowsAgentBridge'
 $configPath = (Resolve-Path $Config).Path
 $settings = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-$lockPath = [System.IO.Path]::GetFullPath($settings.stateFile + '.lock')
+$taskName = 'AliceWorker_' + $settings.agents[0].remoteAgentId
+$lockPath = [System.IO.Path]::GetFullPath((Join-Path $settings.workerHome 'claim-state.json.lock'))
 $bundlePath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'dist\bridge.bundle.mjs'))
 
 if (Test-Path -LiteralPath $lockPath) {

@@ -1,7 +1,11 @@
 import type { LocalRunClaim, LocalRunLease } from "./paperclip-client.js";
+import { performance } from "node:perf_hooks";
 
 export interface LeaseSessionClient {
-  renewLocalRun(lease: LocalRunLease): Promise<{ leaseExpiresAt: string; cancelRequested: boolean }>;
+  renewLocalRun(lease: LocalRunLease): Promise<
+    { leaseExpiresAt: string; cancelRequested: true } |
+    { leaseExpiresAt: string; cancelRequested: false; leaseDeadlineMonotonicMs: number }
+  >;
   finishLocalRun(lease: LocalRunLease, outcome: "succeeded" | "failed" | "cancelled", exitCode: number | null): Promise<string>;
 }
 
@@ -20,7 +24,7 @@ export async function runLeaseSession(input: {
   stopTimeoutMs?: number;
   now?: () => number;
 }): Promise<LeaseSessionResult> {
-  const now = input.now ?? Date.now;
+  const now = input.now ?? (() => performance.now());
   const renewIntervalMs = input.renewIntervalMs ?? 20_000;
   const stopTimeoutMs = input.stopTimeoutMs ?? 20_000;
   if (renewIntervalMs <= 0 || stopTimeoutMs <= 0) throw new Error("lease timers must be positive");
@@ -30,7 +34,7 @@ export async function runLeaseSession(input: {
     leaseId: input.claim.leaseId,
     generation: input.claim.generation,
   };
-  let deadline = Date.parse(input.claim.leaseExpiresAt);
+  let deadline = input.claim.leaseDeadlineMonotonicMs;
   if (!Number.isFinite(deadline) || deadline <= now() + 5_000) throw new Error("server lease is expired or too close to expiry");
   if (input.signal?.aborted) throw new Error("local run was cancelled before execution");
 
@@ -61,7 +65,7 @@ export async function runLeaseSession(input: {
       try {
         const renewed = await input.client.renewLocalRun(lease);
         if (renewed.cancelRequested) { stop("cancelled"); return; }
-        const nextDeadline = Date.parse(renewed.leaseExpiresAt);
+        const nextDeadline = renewed.leaseDeadlineMonotonicMs;
         if (!Number.isFinite(nextDeadline) || nextDeadline <= now() + 5_000) { stop("lease_lost"); return; }
         deadline = nextDeadline;
       } catch (error) {

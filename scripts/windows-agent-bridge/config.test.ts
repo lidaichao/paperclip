@@ -13,6 +13,7 @@ function agent(id = AGENT_A, name = "Luna") {
     remoteAgentId: id,
     remoteAgentName: name,
     localAgentName: name,
+    gbrainEnvRef: `GBRAIN_${name.toUpperCase()}_TOKEN`,
     adapterType: "codex_local",
     localAdapterConfig: {
       cwd: `H:/AIagent/${name}`,
@@ -25,12 +26,12 @@ function agent(id = AGENT_A, name = "Luna") {
 
 function validConfig() {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+    workerHome: path.join(os.tmpdir(), AGENT_A),
     apiBase: "http://192.168.72.157:3100/",
     companyId: COMPANY_ID,
     credentialsFile: "credentials.dpapi",
-    stateFile: "state.json",
     pollIntervalMs: 10_000,
     agents: [agent()],
   };
@@ -49,7 +50,7 @@ describe("loadBridgeConfig", () => {
     const config = await loadBridgeConfig(file);
     expect(config.apiBase).toBe("http://192.168.72.157:3100");
     expect(config.credentialsFile).toBe(path.join(path.dirname(file), "credentials.dpapi"));
-    expect(config.stateFile).toBe(path.join(path.dirname(file), "state.json"));
+    expect(config.stateFile).toBe(path.join(config.workerHome, "claim-state.json"));
     expect(config.agents[0].localAdapterConfig.cwd).toBe("H:/AIagent/Luna");
   });
 
@@ -59,10 +60,10 @@ describe("loadBridgeConfig", () => {
     await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("http or https");
   });
 
-  it("rejects duplicate agent ids", async () => {
+  it("rejects multiple agents in one process", async () => {
     const input = validConfig();
     input.agents = [agent(AGENT_A, "Luna"), agent(AGENT_A, "Rabbit")];
-    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("duplicate remoteAgentId");
+    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("exactly one agent");
   });
 
   it("rejects inline tokens before unknown-key validation", async () => {
@@ -71,10 +72,22 @@ describe("loadBridgeConfig", () => {
     await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("credentialsFile");
   });
 
-  it("rejects duplicate local identities", async () => {
+  it("binds the private worker home to the configured agent", async () => {
     const input = validConfig();
-    input.agents = [agent(AGENT_A, "Luna"), { ...agent(AGENT_B, "Rabbit"), localAgentName: "Luna" }];
-    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("duplicate localAgentName");
+    input.workerHome = path.join(os.tmpdir(), AGENT_B);
+    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("workerHome must end");
+  });
+
+  it("requires an absolute worker home and derives its own state file", async () => {
+    const input = validConfig();
+    input.workerHome = AGENT_A;
+    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("workerHome must be an absolute local path");
+  });
+
+  it("accepts only a member-specific GBrain environment reference", async () => {
+    const input = validConfig();
+    input.agents[0].gbrainEnvRef = "GBRAIN_AGENT_TOKEN";
+    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("gbrainEnvRef");
   });
 
   it("rejects obsolete 127 Paperclip settings", async () => {

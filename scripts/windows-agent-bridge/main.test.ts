@@ -7,20 +7,21 @@ import { acquireSingleInstanceLock, runBridge, waitForPollInterval, writeHealth 
 describe("bridge lifecycle", () => {
   it("refuses to start before any lock or poll while ordinary writes are fenced", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "alice-run-binding-"));
-    const stateFile = path.join(dir, "state.json");
+    const stateFile = path.join(dir, "38a5808c-47f3-4029-bdfe-0d84504bdc8a", "claim-state.json");
     const configFile = path.join(dir, "bridge.json");
     await writeFile(configFile, JSON.stringify({
-      schemaVersion: 2,
+      schemaVersion: 3,
       deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+      workerHome: path.join(dir, "38a5808c-47f3-4029-bdfe-0d84504bdc8a"),
       apiBase: "http://192.168.72.157:3100",
       companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6",
       credentialsFile: "credentials.dpapi",
-      stateFile,
       pollIntervalMs: 10_000,
       agents: [{
         remoteAgentId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a",
         remoteAgentName: "Luna",
         localAgentName: "Luna",
+        gbrainEnvRef: "GBRAIN_LUNA_TOKEN",
         adapterType: "codex_local",
         localAdapterConfig: { cwd: "H:/AIagent/Luna", command: "C:/tools/codex.exe" },
         maxConcurrentRuns: 1,

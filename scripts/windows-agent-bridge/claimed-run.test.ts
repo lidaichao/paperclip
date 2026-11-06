@@ -11,9 +11,11 @@ const claim: LocalRunClaim = {
   runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID,
   leaseId: "784d88a1-7a05-42d2-a7d8-e714d70f2d0b", generation: 1,
   leaseExpiresAt: new Date(Date.now() + 60_000).toISOString(), wakeReason: "assignment", workspacePolicy: "agent_home",
+  leaseDeadlineMonotonicMs: performance.now() + 60_000,
 };
 const agent = {
   remoteAgentId: AGENT_ID, remoteAgentName: "Luna", localAgentName: "Luna",
+  gbrainEnvRef: "GBRAIN_LUNA_TOKEN",
   adapterType: "codex_local" as const,
   localAdapterConfig: { cwd: "H:/AIagent/Luna", command: "C:/tools/codex.exe" }, maxConcurrentRuns: 1 as const,
 };

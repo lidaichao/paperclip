@@ -14,6 +14,7 @@ const claim: LocalRunClaim = {
   leaseId: "784d88a1-7a05-42d2-a7d8-e714d70f2d0b",
   generation: 1,
   leaseExpiresAt: "2026-11-06T04:00:00Z",
+  leaseDeadlineMonotonicMs: performance.now() + 60_000,
   wakeReason: "assignment",
   workspacePolicy: "agent_home",
 };

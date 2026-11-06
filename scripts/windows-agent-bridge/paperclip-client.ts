@@ -3,6 +3,7 @@ import type {
   BridgeIssuePriority,
   BridgeIssueStatus,
 } from "./types.js";
+import { performance } from "node:perf_hooks";
 
 const ISSUE_STATUSES = new Set<BridgeIssueStatus>([
   "backlog",
@@ -41,6 +42,7 @@ export interface LocalRunClaim {
   leaseId: string;
   generation: number;
   leaseExpiresAt: string;
+  leaseDeadlineMonotonicMs: number;
   wakeReason: string;
   workspacePolicy: "agent_home";
 }
@@ -59,7 +61,15 @@ function requireUuid(value: unknown, label: string): string {
   return value;
 }
 
-function parseClaim(value: unknown, expectedAgentId: string): LocalRunClaim {
+function leaseTtlMs(record: Record<string, unknown>, label: string): number {
+  const value = record.leaseTtlMs;
+  if (!Number.isSafeInteger(value) || Number(value) <= 0 || Number(value) > 300_000) {
+    throw new Error(`${label}.leaseTtlMs is invalid`);
+  }
+  return Number(value);
+}
+
+function parseClaim(value: unknown, expectedAgentId: string, requestStartedAt: number): LocalRunClaim {
   const record = asRecord(value, "local run claim");
   const agentId = requireUuid(record.agentId, "local run claim.agentId");
   if (agentId !== expectedAgentId) throw new Error("local run claim agent identity mismatch");
@@ -74,6 +84,7 @@ function parseClaim(value: unknown, expectedAgentId: string): LocalRunClaim {
     leaseId: requireUuid(record.leaseId, "local run claim.leaseId"),
     generation: Number(record.generation),
     leaseExpiresAt,
+    leaseDeadlineMonotonicMs: requestStartedAt + leaseTtlMs(record, "local run claim"),
     wakeReason: requiredString(record, "wakeReason", "local run claim"),
     workspacePolicy: "agent_home",
   };
@@ -228,8 +239,9 @@ export class AliceClient {
     const identity = this.#requireVerifiedIdentity();
     requireUuid(deviceId, "deviceId");
     requireUuid(idempotencyKey, "idempotencyKey");
+    const requestStartedAt = performance.now();
     const response = await this.#postJson("/api/agents/me/local-runs/claim", { deviceId }, { "Idempotency-Key": idempotencyKey });
-    return response.status === 204 ? null : parseClaim(response.body, identity.id);
+    return response.status === 204 ? null : parseClaim(response.body, identity.id, requestStartedAt);
   }
 
   async getClaimedIssue(claim: LocalRunClaim): Promise<BridgeInboxItem> {
@@ -257,9 +269,13 @@ export class AliceClient {
     };
   }
 
-  async renewLocalRun(lease: LocalRunLease): Promise<{ leaseExpiresAt: string; cancelRequested: boolean }> {
+  async renewLocalRun(lease: LocalRunLease): Promise<
+    { leaseExpiresAt: string; cancelRequested: true } |
+    { leaseExpiresAt: string; cancelRequested: false; leaseDeadlineMonotonicMs: number }
+  > {
     this.#requireVerifiedIdentity();
     this.#validateLease(lease);
+    const requestStartedAt = performance.now();
     const response = await this.#postJson(`/api/agents/me/local-runs/${lease.runId}/renew`, {
       deviceId: lease.deviceId, leaseId: lease.leaseId, generation: lease.generation,
     });
@@ -268,7 +284,9 @@ export class AliceClient {
     if (Number.isNaN(Date.parse(leaseExpiresAt)) || typeof record.cancelRequested !== "boolean") {
       throw new Error("local run renewal response is invalid");
     }
-    return { leaseExpiresAt, cancelRequested: record.cancelRequested };
+    if (record.cancelRequested) return { leaseExpiresAt, cancelRequested: true };
+    return { leaseExpiresAt, cancelRequested: false,
+      leaseDeadlineMonotonicMs: requestStartedAt + leaseTtlMs(record, "local run renewal") };
   }
 
   async controlLocalRun(lease: LocalRunLease): Promise<{ action: "continue" | "cancel"; generation: number; leaseExpiresAt: string }> {

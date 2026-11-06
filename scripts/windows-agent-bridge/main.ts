@@ -6,6 +6,7 @@ import { loadBridgeConfig } from "./config.js";
 import { loadAgentTokens } from "./credentials.js";
 import { AliceClient } from "./paperclip-client.js";
 import { ClaimStateStore } from "./claim-state.js";
+import { assertWorkerEnvironment } from "./environment.js";
 import { executeClaimedRun } from "./claimed-run.js";
 import { runLocalAgent } from "./adapter-runtime.js";
 import type { BridgeAgentConfig, LocalAgentRuntimeConfig } from "./types.js";
@@ -140,6 +141,7 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
   // Ordinary agent writes still lack a transaction-bound lease fence. Keep
   // installation and direct invocation disabled even though claim is wired.
   requireWriteFence();
+  assertWorkerEnvironment(process.env, config);
   if (config.agents.length !== 1) throw new Error("pilot bridge requires exactly one local agent");
   const lock = await acquireSingleInstanceLock(`${config.stateFile}.lock`);
   if (!lock) return "already-running";

@@ -14,6 +14,7 @@ const runId = "f2c991f1-b53d-4bb5-b134-8e29d43815d0";
 const issueId = "1b9c2019-b811-40a0-bd21-0365977a0001";
 const leaseId = "784d88a1-7a05-42d2-a7d8-e714d70f2d0b";
 const agent = { remoteAgentId: agentId, remoteAgentName: "Luna", localAgentName: "Luna",
+  gbrainEnvRef: "GBRAIN_LUNA_TOKEN",
   adapterType: "codex_local" as const, localAdapterConfig: { cwd: "H:/AIagent/Luna", command: "C:/tools/codex.exe" },
   maxConcurrentRuns: 1 as const };
 const localAgent = { id: agentId, companyId, name: "Luna", adapterType: "codex_local" as const,
@@ -23,6 +24,7 @@ function reply(value: unknown): Response { return Response.json(value); }
 function claimResponse() {
   return { runId, issueId, agentId, leaseId, generation: 1,
     leaseExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+    leaseTtlMs: 60_000,
     wakeReason: "assignment", workspacePolicy: "agent_home" };
 }
 async function fixture() {

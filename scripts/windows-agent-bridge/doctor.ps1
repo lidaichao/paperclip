@@ -5,13 +5,14 @@ param(
 $ErrorActionPreference = 'Stop'
 $configPath = (Resolve-Path $Config).Path
 $settings = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-if ($settings.schemaVersion -ne 2) { throw '桥接配置版本必须为 2。' }
+if ($settings.schemaVersion -ne 3) { throw '桥接配置版本必须为 3。' }
+if ($settings.agents.Count -ne 1) { throw '每个本机工作器只能配置一名智能体。' }
 if ($settings.PSObject.Properties.Name -contains 'localApiBase' -or
     $settings.PSObject.Properties.Name -contains 'localCompanyId') {
   throw '旧版 127 Paperclip 配置已停用。'
 }
 
 # A local config is parsed by config.ts, but no bridge process may be installed
-# until ordinary writes are fenced by the lease and per-agent GB credentials
-# can be resolved without embedding secrets in config.
-throw '桥接普通写入的租约围栏与本人 GB 密钥解析尚未完成；禁止安装。'
+# until ordinary writes are fenced by the lease, member identity is verified,
+# and Codex/Cursor login works in the new private homes. Never copy a shared login.
+throw '普通写入租约围栏、本人 GB 身份和独立 CODEX_HOME/Cursor 登录尚未验收；禁止安装。'
