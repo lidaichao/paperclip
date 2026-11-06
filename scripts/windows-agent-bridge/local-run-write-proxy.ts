@@ -111,6 +111,7 @@ export async function startLocalRunWriteProxy(input: {
     leaseId: input.claim.leaseId, generation: input.claim.generation };
   let closed = false;
   let closing = false;
+  let failedFieldWrite = false;
   let writeQueue = Promise.resolve();
   const server = createServer(async (req, res) => {
     const bearer = req.headers.authorization?.replace(/^Bearer /i, "") ?? "";
@@ -163,6 +164,7 @@ export async function startLocalRunWriteProxy(input: {
           return input.client.patchLocalRunIssue(lease, input.claim.issueId, patch, input.signal);
         };
         const next = writeQueue.then(perform);
+        void next.catch(() => { failedFieldWrite = true; });
         writeQueue = next.then(() => undefined, () => undefined);
         json(res, 200, await next); return;
       }
@@ -191,6 +193,7 @@ export async function startLocalRunWriteProxy(input: {
         if (!input.signal.aborted) {
           await writeQueue;
           await input.intentStore.assertNoPending();
+          if (failedFieldWrite) throw new Error("field edit failed; refusing successful run finish");
         }
       } finally {
         closed = true;

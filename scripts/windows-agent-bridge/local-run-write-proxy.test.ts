@@ -128,6 +128,13 @@ describe("fenced local run write capability", () => {
     await response;
   });
 
+  it("refuses a successful finish after a field edit failed", async () => {
+    const f = await fixture();
+    f.patchLocalRunIssue.mockRejectedValueOnce(new Error("server rejected edit"));
+    expect((await f.request(`/api/issues/${issueId}`, "PATCH", { priority: "high" })).status).toBe(409);
+    await expect(f.proxy.close()).rejects.toThrow("field edit failed");
+  });
+
   it("accepts a completed prior-run intent when the current run has no comment", async () => {
     const f = await fixture();
     const store = new LocalCommentIntentStore(f.intentFile);
