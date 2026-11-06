@@ -7,6 +7,7 @@
 - 本机 `codex.exe login --help` 提供 `--device-auth` 与 `login status`；`codex exec --help` 提供 `--ephemeral`、`--sandbox read-only`、`--ignore-user-config`。
 - 本机 `agent.exe login --help` 明示 `NO_OPEN_BROWSER` 可关闭自动打开浏览器；`agent status --help` 提供只读状态查询，`agent --help` 提供 `--mode ask` 与 `--model`。
 - 桥接把 `HOME`、`USERPROFILE`、`CODEX_HOME`、`CURSOR_HOME`、`APPDATA` 和 `LOCALAPPDATA` 指向成员私有目录；启动前检查其中的认证文件。静态文件检查不能证明订阅仍有效。
+- 登录脚本与工作器默认清除父进程的代理变量。本机 2026-11-06 的一次只读 HEAD 检查显示 `chatgpt.com` 和 `api2.cursor.sh` 直连可达；这不能保证后续网络环境。需要代理时，在**该成员私有配置**中显式增加 `"localProxyUrl": "http://127.0.0.1:7897"`。只接受无用户名、无密码、无路径的 IPv4 回环 HTTP 地址和明确端口；工作器把 Paperclip 控制面主机、GBrain 主机及回环地址加入 `NO_PROXY`。
 
 ## 单名成员的三步操作
 
@@ -17,6 +18,8 @@
    ```powershell
    & '.\scripts\windows-agent-bridge\model-login-once.ps1' -ConfigPath 'H:\AIagent\Luna\.paperclip\worker-luna-192.json'
    ```
+
+   如需确认当前网络，在命令末尾加 `-NetworkCheck`：只发送一次不带凭据的 HTTPS HEAD；输出 HTTP 状态，不保存响应正文。它使用私有配置的代理，未配置则直连。HTTP 403/405 仍只说明 TLS/HTTP 可达，不能说明登录成功。
 
 2. 由该成员主动登录一次：在同一命令末尾加 `-Login`。Codex 显示设备码，由操作员在浏览器完成；Cursor 设置 `NO_OPEN_BROWSER=1`，只显示登录链接，由操作员自行打开。脚本不复制现有共享 `auth.json` 或 `cli-config.json`，不继承 Paperclip/GBrain/模型密钥环境变量。退出码失败后停止，不自动再试。
 

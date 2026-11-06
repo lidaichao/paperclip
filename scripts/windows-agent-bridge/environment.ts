@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { BridgeConfig } from "./types.js";
 import { expectedGbrainIdentity } from "./gbrain-identity.js";
+import { normalizeLocalProxyUrl } from "./config.js";
 
 const OS_KEYS = new Set([
   "PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP",
@@ -11,6 +12,12 @@ const OS_KEYS = new Set([
 function nonEmpty(source: NodeJS.ProcessEnv, key: string): string | null {
   const entry = Object.entries(source).find(([name]) => name.toUpperCase() === key.toUpperCase());
   return entry && typeof entry[1] === "string" && entry[1].trim() ? entry[1] : null;
+}
+
+function workerProxyBypass(config: BridgeConfig): string {
+  const hosts = new Set(["127.0.0.1", "localhost", "::1", new URL(config.apiBase).hostname]);
+  if (config.gbrainMcpUrl) hosts.add(new URL(config.gbrainMcpUrl).hostname);
+  return [...hosts].join(",");
 }
 
 /** The launcher keeps a source token only long enough to build one child env. */
@@ -36,6 +43,13 @@ export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: Bridge
   env.TEMP = path.join(config.workerHome, "temp");
   env.TMP = env.TEMP;
   env.XDG_CONFIG_HOME = path.join(config.workerHome, "config");
+  if (config.localProxyUrl) {
+    const proxy = normalizeLocalProxyUrl(config.localProxyUrl);
+    env.HTTP_PROXY = proxy;
+    env.HTTPS_PROXY = proxy;
+    env.ALL_PROXY = proxy;
+    env.NO_PROXY = workerProxyBypass(config);
+  }
   return env;
 }
 
@@ -45,12 +59,24 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
   if (config.agents.length !== 1) throw new Error("one worker requires exactly one agent");
   expectedGbrainIdentity(config.agents[0]);
   const allowed = new Set([...OS_KEYS, "GBRAIN_AGENT_TOKEN", ref, "HOME", "USERPROFILE", "CODEX_HOME", "CURSOR_HOME", "PAPERCLIP_HOME",
-    "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "XDG_CONFIG_HOME"]);
+    "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "XDG_CONFIG_HOME",
+    "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"]);
   if (!ref || !nonEmpty(env, ref) || nonEmpty(env, ref) !== nonEmpty(env, "GBRAIN_AGENT_TOKEN")) {
     throw new Error("worker GBrain identity is missing or mismatched");
   }
   for (const key of Object.keys(env)) {
     if (!allowed.has(key.toUpperCase())) throw new Error(`worker environment contains unapproved key ${key}`);
+  }
+  if (config.localProxyUrl) {
+    const proxy = normalizeLocalProxyUrl(config.localProxyUrl);
+    if (nonEmpty(env, "HTTP_PROXY") !== proxy ||
+      nonEmpty(env, "HTTPS_PROXY") !== proxy ||
+      nonEmpty(env, "ALL_PROXY") !== proxy ||
+      nonEmpty(env, "NO_PROXY") !== workerProxyBypass(config)) {
+      throw new Error("worker proxy configuration is mismatched");
+    }
+  } else if (["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"].some((key) => nonEmpty(env, key))) {
+    throw new Error("worker proxy was not explicitly configured");
   }
   if (nonEmpty(env, "CODEX_HOME") !== path.join(config.workerHome, "codex-home") ||
     nonEmpty(env, "CURSOR_HOME") !== path.join(config.workerHome, "home", ".cursor") ||

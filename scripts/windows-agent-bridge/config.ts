@@ -8,6 +8,7 @@ const ROOT_KEYS = new Set([
   "deviceId",
   "workerHome",
   "apiBase",
+  "localProxyUrl",
   "gbrainMcpUrl",
   "companyId",
   "credentialsFile",
@@ -94,6 +95,18 @@ function normalizeApiBase(raw: string): string {
   }
   parsed.pathname = parsed.pathname.replace(/\/+$/, "") || "/";
   return parsed.toString().replace(/\/$/, "");
+}
+
+export function normalizeLocalProxyUrl(raw: string): string {
+  let parsed: URL;
+  try { parsed = new URL(raw); }
+  catch { throw new Error("localProxyUrl must be an absolute loopback HTTP URL"); }
+  if (parsed.protocol !== "http:" || parsed.hostname !== "127.0.0.1" ||
+    !parsed.port || parsed.username || parsed.password || parsed.pathname !== "/" ||
+    parsed.search || parsed.hash) {
+    throw new Error("localProxyUrl must be an uncredentialed 127.0.0.1 HTTP URL with an explicit port");
+  }
+  return `http://127.0.0.1:${parsed.port}`;
 }
 
 function resolveConfigPath(configDir: string, raw: string, label: string): string {
@@ -211,6 +224,8 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
     deviceId: requiredUuid(record, "deviceId", "config"),
     workerHome,
     apiBase,
+    localProxyUrl: record.localProxyUrl === undefined ? undefined :
+      normalizeLocalProxyUrl(requiredString(record, "localProxyUrl", "config")),
     gbrainMcpUrl: typeof record.gbrainMcpUrl === "string"
       ? normalizeApiBase(record.gbrainMcpUrl) : undefined,
     companyId: requiredUuid(record, "companyId", "config"),

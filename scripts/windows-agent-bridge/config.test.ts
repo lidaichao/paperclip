@@ -60,6 +60,17 @@ describe("loadBridgeConfig", () => {
     await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("http or https");
   });
 
+  it("accepts only an explicit uncredentialed IPv4 loopback proxy", async () => {
+    const good = { ...validConfig(), localProxyUrl: "http://127.0.0.1:7897/" };
+    expect((await loadBridgeConfig(await fixture(good))).localProxyUrl).toBe("http://127.0.0.1:7897");
+    for (const localProxyUrl of ["http://localhost:7897", "http://192.168.72.157:7897",
+      "http://user:pass@127.0.0.1:7897", "https://127.0.0.1:7897", "http://127.0.0.1",
+      "http://127.0.0.1:7897/other", "http://127.0.0.1:7897?key=x"]) {
+      await expect(loadBridgeConfig(await fixture({ ...validConfig(), localProxyUrl })))
+        .rejects.toThrow("localProxyUrl");
+    }
+  });
+
   it("rejects multiple agents in one process", async () => {
     const input = validConfig();
     input.agents = [agent(AGENT_A, "Luna"), agent(AGENT_A, "Rabbit")];

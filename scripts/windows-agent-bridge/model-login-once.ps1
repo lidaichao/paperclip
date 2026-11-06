@@ -1,11 +1,14 @@
 param(
   [Parameter(Mandatory = $true)][string]$ConfigPath,
   [switch]$Login,
-  [switch]$Probe
+  [switch]$Probe,
+  [switch]$NetworkCheck
 )
 
 $ErrorActionPreference = 'Stop'
-if ($Login -and $Probe) { throw 'Choose one action: -Login or -Probe.' }
+if (@($Login, $Probe, $NetworkCheck | Where-Object { $_ }).Count -gt 1) {
+  throw 'Choose one action: -Login, -Probe or -NetworkCheck.'
+}
 $resolvedConfig = (Resolve-Path -LiteralPath $ConfigPath).Path
 $config = Get-Content -LiteralPath $resolvedConfig -Raw | ConvertFrom-Json
 if ($config.schemaVersion -ne 3 -or @($config.agents).Count -ne 1) {
@@ -26,9 +29,42 @@ $authFile = if ($agent.adapterType -eq 'codex_local') {
 } else {
   Join-Path $privateHome '.cursor\cli-config.json'
 }
+$proxyUrl = $null
+if (-not [string]::IsNullOrWhiteSpace([string]$config.localProxyUrl)) {
+  $rawProxy = [string]$config.localProxyUrl
+  $proxy = $null
+  if (-not [uri]::TryCreate($rawProxy, [UriKind]::Absolute, [ref]$proxy) -or
+      $proxy.Scheme -ne 'http' -or $proxy.Host -ne '127.0.0.1' -or
+      $proxy.Authority -notmatch '^127\.0\.0\.1:[0-9]{1,5}$' -or
+      $proxy.AbsolutePath -ne '/' -or $proxy.Query -or $proxy.Fragment -or $proxy.UserInfo) {
+    throw 'localProxyUrl must be an uncredentialed 127.0.0.1 HTTP URL with an explicit port.'
+  }
+  $proxyUrl = 'http://127.0.0.1:' + $proxy.Port
+}
 Write-Output ('Member: ' + [string]$agent.remoteAgentName)
 Write-Output ('Adapter: ' + [string]$agent.adapterType)
 Write-Output ('Private login file present: ' + [bool](Test-Path -LiteralPath $authFile -PathType Leaf))
+Write-Output ('Explicit local proxy configured: ' + [bool]$proxyUrl)
+if ($NetworkCheck) {
+  $destination = if ($agent.adapterType -eq 'codex_local') { 'https://chatgpt.com' } else { 'https://api2.cursor.sh' }
+  $handler = [System.Net.Http.HttpClientHandler]::new()
+  $handler.UseProxy = [bool]$proxyUrl
+  if ($proxyUrl) { $handler.Proxy = [System.Net.WebProxy]::new($proxyUrl) }
+  $http = [System.Net.Http.HttpClient]::new($handler)
+  $http.Timeout = [TimeSpan]::FromSeconds(8)
+  $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Head, $destination)
+  try {
+    $response = $http.SendAsync($request).GetAwaiter().GetResult()
+    Write-Output ('One-shot network check HTTP status: ' + [int]$response.StatusCode)
+    $response.Dispose()
+  } catch {
+    throw 'One-shot network check failed; no login or model request was attempted.'
+  } finally {
+    $request.Dispose()
+    $http.Dispose()
+  }
+  return
+}
 if (-not $Login -and -not $Probe) { return }
 foreach ($candidate in @($workerHome, (Split-Path -Parent $authFile), $authFile)) {
   if (Test-Path -LiteralPath $candidate) {
@@ -71,6 +107,17 @@ try {
   }
   foreach ($entry in $privateEnv.GetEnumerator()) {
     [Environment]::SetEnvironmentVariable([string]$entry.Key, [string]$entry.Value, 'Process')
+  }
+  if ($proxyUrl) {
+    $bypass = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($hostName in @('127.0.0.1', 'localhost', '::1', ([uri]$config.apiBase).Host)) {
+      [void]$bypass.Add($hostName)
+    }
+    if ($config.gbrainMcpUrl) { [void]$bypass.Add(([uri]$config.gbrainMcpUrl).Host) }
+    foreach ($name in @('HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY')) {
+      [Environment]::SetEnvironmentVariable($name, $proxyUrl, 'Process')
+    }
+    [Environment]::SetEnvironmentVariable('NO_PROXY', ($bypass -join ','), 'Process')
   }
   if ($Login) {
     if ($agent.adapterType -eq 'codex_local') { & $command login --device-auth }
