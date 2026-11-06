@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { runLocalAgent } from "./adapter-runtime.js";
 import { runLeaseSession } from "./lease-session.js";
+import { LocalCommentIntentStore, startLocalRunWriteProxy } from "./local-run-write-proxy.js";
 import type { AliceClient, LocalRunClaim } from "./paperclip-client.js";
 import type { BridgeAgentConfig, BridgeInboxItem, LocalAgentRuntimeConfig } from "./types.js";
 
@@ -43,6 +44,7 @@ export async function executeClaimedRun(input: {
   agent: BridgeAgentConfig;
   localAgent: LocalAgentRuntimeConfig;
   token: string;
+  intentFile: string;
   signal?: AbortSignal;
   runner?: LocalRunner;
   stopProcessTree?: StopProcessTree;
@@ -66,6 +68,10 @@ export async function executeClaimedRun(input: {
     renewIntervalMs: input.renewIntervalMs,
     stopTimeoutMs: input.stopTimeoutMs,
     execute: async (signal) => {
+      const proxy = await startLocalRunWriteProxy({
+        client: input.client, claim: input.claim, deviceId: input.deviceId, signal,
+        intentStore: new LocalCommentIntentStore(input.intentFile),
+      });
       let pid: number | null = null;
       let stopPromise: Promise<void> | null = null;
       const stop = () => {
@@ -80,12 +86,12 @@ export async function executeClaimedRun(input: {
           signal,
           runId: input.claim.runId,
           wakeReason: input.claim.wakeReason,
-          apiBase: input.client.apiBase,
+          apiBase: proxy.apiBase,
           remoteCompanyId: input.companyId,
           remoteAgentId: input.agent.remoteAgentId,
           remoteAgentName: input.agent.remoteAgentName,
           issue,
-          token: input.token,
+          token: proxy.token,
           localAgent: input.localAgent,
           onSpawn: async (meta) => {
             if (pid !== null) throw new Error("local adapter reported more than one process");
@@ -101,6 +107,7 @@ export async function executeClaimedRun(input: {
         return { succeeded: result.succeeded, exitCode: result.exitCode };
       } finally {
         signal.removeEventListener("abort", stop);
+        await proxy.close();
       }
     },
   });

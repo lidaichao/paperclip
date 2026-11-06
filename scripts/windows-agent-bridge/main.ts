@@ -107,6 +107,7 @@ export async function claimAndRunOnce(input: {
   agent: BridgeAgentConfig;
   localAgent: LocalAgentRuntimeConfig;
   token: string;
+  intentFile: string;
   signal: AbortSignal;
   runner?: typeof runLocalAgent;
   stopProcessTree?: (pid: number) => Promise<void>;
@@ -124,7 +125,7 @@ export async function claimAndRunOnce(input: {
   await executeClaimedRun({
     claim, client: input.client, deviceId: input.deviceId,
     companyId: input.companyId, agent: input.agent, localAgent: input.localAgent,
-    token: input.token, signal: input.signal, runner: input.runner,
+    token: input.token, intentFile: input.intentFile, signal: input.signal, runner: input.runner,
     stopProcessTree: input.stopProcessTree,
     renewIntervalMs: input.renewIntervalMs, stopTimeoutMs: input.stopTimeoutMs,
   });
@@ -163,7 +164,8 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
       // A failed cycle exits. The scheduled task must not repeatedly relaunch
       // an uncertain claim or a process whose stop was not confirmed.
       await claimAndRunOnce({ client, state, deviceId: config.deviceId,
-        companyId: config.companyId, agent, localAgent, token, signal });
+        companyId: config.companyId, agent, localAgent, token, signal,
+        intentFile: `${config.stateFile}.comment-intent.json` });
       lastSuccessfulPollAt = new Date().toISOString();
       await writeHealth(healthPath, {
         schemaVersion: 1,

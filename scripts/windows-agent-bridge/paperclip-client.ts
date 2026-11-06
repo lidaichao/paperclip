@@ -199,13 +199,16 @@ export class AliceClient {
     }
   }
 
-  async #postJson(pathname: string, body: Record<string, unknown>, extraHeaders: Record<string, string> = {}): Promise<{ status: number; body: unknown }> {
+  async #writeJson(method: "POST" | "PATCH", pathname: string, body: Record<string, unknown>, extraHeaders: Record<string, string> = {}, signal?: AbortSignal): Promise<{ status: number; body: unknown }> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.#timeoutMs);
     timeout.unref?.();
+    const abort = () => controller.abort();
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) controller.abort();
     try {
       const response = await this.#fetch(`${this.#apiBase}${pathname}`, {
-        method: "POST",
+        method,
         headers: {
           accept: "application/json",
           "content-type": "application/json",
@@ -227,7 +230,12 @@ export class AliceClient {
       throw error;
     } finally {
       clearTimeout(timeout);
+      signal?.removeEventListener("abort", abort);
     }
+  }
+
+  async #postJson(pathname: string, body: Record<string, unknown>, extraHeaders: Record<string, string> = {}): Promise<{ status: number; body: unknown }> {
+    return this.#writeJson("POST", pathname, body, extraHeaders);
   }
 
   #requireVerifiedIdentity(): RemoteAgentIdentity {
@@ -267,6 +275,21 @@ export class AliceClient {
       updatedAt: requiredString(record, "updatedAt", "claimed issue"),
       activeRunId: claim.runId,
     };
+  }
+
+  async readLocalRunIssue(claim: LocalRunClaim): Promise<unknown> {
+    const identity = this.#requireVerifiedIdentity();
+    if (claim.agentId !== identity.id) throw new Error("local run identity mismatch");
+    const record = asRecord(await this.#getJson(`/api/issues/${claim.issueId}`), "local run issue");
+    if (record.id !== claim.issueId || record.companyId !== identity.companyId ||
+      record.assigneeAgentId !== identity.id || record.executionRunId !== claim.runId) {
+      throw new Error("local run issue ownership mismatch");
+    }
+    return record;
+  }
+
+  readLocalRunIdentity(): { id: string; companyId: string; name: string } {
+    return { ...this.#requireVerifiedIdentity() };
   }
 
   async renewLocalRun(lease: LocalRunLease): Promise<
@@ -312,6 +335,31 @@ export class AliceClient {
     const record = asRecord(response.body, "local run finish");
     if (record.runId !== lease.runId) throw new Error("local run finish identity mismatch");
     return requiredString(record, "status", "local run finish");
+  }
+
+  async addLocalRunComment(lease: LocalRunLease, issueId: string, body: string, clientRequestId: string, signal?: AbortSignal): Promise<unknown> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(issueId, "issueId");
+    requireUuid(clientRequestId, "clientRequestId");
+    if (!body.trim()) throw new Error("comment body is required");
+    const response = await this.#writeJson("POST", `/api/agents/me/local-runs/${lease.runId}/comments`, {
+      ...lease, issueId, body, clientRequestId,
+    }, {}, signal);
+    return response.body;
+  }
+
+  async patchLocalRunIssue(lease: LocalRunLease, issueId: string, patch: Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(issueId, "issueId");
+    if (!Object.keys(patch).length || Object.keys(patch).some((key) => !["title", "description", "priority"].includes(key))) {
+      throw new Error("unsupported local run issue field");
+    }
+    const response = await this.#writeJson("PATCH", `/api/agents/me/local-runs/${lease.runId}/issue`, {
+      ...lease, issueId, ...patch,
+    }, {}, signal);
+    return response.body;
   }
 
   #validateLease(lease: LocalRunLease): void {

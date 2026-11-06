@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { executeClaimedRun } from "./claimed-run.js";
 import { AliceClient, type LocalRunClaim } from "./paperclip-client.js";
+import type { LocalAgentRunInput } from "./adapter-runtime.js";
+import { mkdtemp } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 const AGENT_ID = "38a5808c-47f3-4029-bdfe-0d84504bdc8a";
 const COMPANY_ID = "af8e9089-b0bb-43ac-ade3-c029c73b96e6";
@@ -34,12 +38,16 @@ describe("claimed local run", () => {
       return Response.json({ runId: RUN_ID, status: "succeeded" });
     } });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
-    const runner = vi.fn(async () => ({ runId: RUN_ID, exitCode: 0, signal: null, timedOut: false,
+    const runner = vi.fn(async (_input: LocalAgentRunInput) => ({ runId: RUN_ID, exitCode: 0, signal: null, timedOut: false,
       succeeded: true, errorCode: null, sessionParams: null, sessionDisplayId: null }));
     const result = await executeClaimedRun({ claim, client, deviceId: DEVICE_ID, companyId: COMPANY_ID,
-      agent, localAgent, token: "secret", runner });
+      agent, localAgent, token: "secret", intentFile: path.join(await mkdtemp(path.join(os.tmpdir(), "alice-write-")), "intent.json"), runner });
     expect(result.outcome).toBe("succeeded");
     expect(runner).toHaveBeenCalledWith(expect.objectContaining({ runId: RUN_ID, issue: expect.objectContaining({ id: ISSUE_ID }) }));
+    const adapterInput = runner.mock.calls[0]?.[0] as { token: string; apiBase: string };
+    expect(adapterInput.token).not.toBe("secret");
+    expect(adapterInput.apiBase).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+    expect(JSON.stringify(adapterInput)).not.toContain(claim.leaseId);
     expect(calls.some((url) => url.endsWith(`/api/agents/me/local-runs/${RUN_ID}/finish`))).toBe(true);
   });
 
@@ -47,7 +55,7 @@ describe("claimed local run", () => {
     const runner = vi.fn();
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async () => { throw new Error("no network expected"); } });
     await expect(executeClaimedRun({ claim: { ...claim, agentId: ISSUE_ID }, client,
-      deviceId: DEVICE_ID, companyId: COMPANY_ID, agent, localAgent, token: "secret", runner }))
+      deviceId: DEVICE_ID, companyId: COMPANY_ID, agent, localAgent, token: "secret", intentFile: "unused", runner }))
       .rejects.toThrow("different agent");
     expect(runner).not.toHaveBeenCalled();
   });

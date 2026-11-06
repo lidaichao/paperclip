@@ -68,11 +68,11 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
     throw new Error("unsupported local adapter type");
   }
 
-  const configuredApiBase = process.env.PAPERCLIP_API_URL?.replace(/\/+$/, "");
   const requestedApiBase = input.apiBase.replace(/\/+$/, "");
-  if (configuredApiBase && configuredApiBase !== requestedApiBase) {
-    throw new Error("PAPERCLIP_API_URL is already bound to a different server");
+  if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(requestedApiBase)) {
+    throw new Error("local run API must be a loopback capability");
   }
+  const previousApiBase = process.env.PAPERCLIP_API_URL;
   process.env.PAPERCLIP_API_URL = requestedApiBase;
 
   const execute = input.localAgent.adapterType === "codex_local"
@@ -121,6 +121,9 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
     });
   } catch {
     throw new Error("local agent adapter execution failed");
+  } finally {
+    if (previousApiBase === undefined) delete process.env.PAPERCLIP_API_URL;
+    else process.env.PAPERCLIP_API_URL = previousApiBase;
   }
 
   return {

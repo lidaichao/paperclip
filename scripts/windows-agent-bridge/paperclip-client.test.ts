@@ -14,6 +14,26 @@ function jsonResponse(value: unknown, status = 200): Response {
 }
 
 describe("AliceClient", () => {
+  it("sends local writes only to the lease-fenced endpoints with the stable comment request ID", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key", fetch: async (url, init) => {
+      calls.push({ url: String(url), init });
+      return String(url).endsWith("/api/agents/me")
+        ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+        : jsonResponse({ id: ISSUE_ID }, 201);
+    } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const lease = { runId: RUN_ID, deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1 };
+    await client.addLocalRunComment(lease, ISSUE_ID, "Progress", KEY_ID);
+    await client.patchLocalRunIssue(lease, ISSUE_ID, { priority: "high" });
+    expect(calls.slice(1).map((call) => [new URL(call.url).pathname, call.init?.method])).toEqual([
+      [`/api/agents/me/local-runs/${RUN_ID}/comments`, "POST"],
+      [`/api/agents/me/local-runs/${RUN_ID}/issue`, "PATCH"],
+    ]);
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease, issueId: ISSUE_ID, clientRequestId: KEY_ID });
+    await expect(client.patchLocalRunIssue(lease, ISSUE_ID, { status: "done" })).rejects.toThrow("unsupported");
+    expect(calls).toHaveLength(3);
+  });
   it("sends bearer auth but never logs it", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const lines: string[] = [];

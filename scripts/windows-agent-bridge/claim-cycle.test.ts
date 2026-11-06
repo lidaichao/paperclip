@@ -30,12 +30,12 @@ function claimResponse() {
 async function fixture() {
   const dir = await mkdtemp(path.join(os.tmpdir(), "alice-claim-cycle-"));
   const file = path.join(dir, "claim.json");
-  return { file, state: new ClaimStateStore(file, deviceId, agentId) };
+  return { file, intentFile: `${file}.comment-intent.json`, state: new ClaimStateStore(file, deviceId, agentId) };
 }
 
 describe("single-agent claim cycle", () => {
   it("persists the key before claim and rotates it only after the server confirms finish", async () => {
-    const { file, state } = await fixture();
+    const { file, intentFile, state } = await fixture();
     let claimKey = "";
     const paths: string[] = [];
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async (url, init) => {
@@ -60,7 +60,7 @@ describe("single-agent claim cycle", () => {
     const runner = vi.fn(async () => ({ runId, exitCode: 0, signal: null, timedOut: false,
       succeeded: true, errorCode: null, sessionParams: null, sessionDisplayId: null }));
     expect(await claimAndRunOnce({ client, state, deviceId, companyId, agent, localAgent,
-      token: "secret", signal: new AbortController().signal, runner })).toBe("finished");
+      token: "secret", intentFile, signal: new AbortController().signal, runner })).toBe("finished");
     expect(paths).toEqual(["/api/agents/me", "/api/agents/me/local-runs/claim", `/api/issues/${issueId}`,
       `/api/agents/me/local-runs/${runId}/finish`]);
     expect(runner).toHaveBeenCalledWith(expect.objectContaining({ runId }));
@@ -68,7 +68,7 @@ describe("single-agent claim cycle", () => {
   });
 
   it("reuses the durable key after a lost claim response without starting a model", async () => {
-    const { file, state } = await fixture();
+    const { file, intentFile, state } = await fixture();
     const keys: string[] = [];
     let request = 0;
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async (url, init) => {
@@ -80,7 +80,7 @@ describe("single-agent claim cycle", () => {
     await client.verifyIdentity(agentId, companyId);
     const runner = vi.fn();
     const input = { client, state, deviceId, companyId, agent, localAgent,
-      token: "secret", signal: new AbortController().signal, runner };
+      token: "secret", intentFile, signal: new AbortController().signal, runner };
     await expect(claimAndRunOnce(input)).rejects.toThrow("connection dropped");
     expect(await claimAndRunOnce(input)).toBe("idle");
     expect(keys).toHaveLength(2);
@@ -90,7 +90,7 @@ describe("single-agent claim cycle", () => {
   });
 
   it("cancels the model and waits for its stop before acknowledging finish", async () => {
-    const { file, state } = await fixture();
+    const { file, intentFile, state } = await fixture();
     const events: string[] = [];
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async (url) => {
       const pathname = new URL(String(url)).pathname;
@@ -117,7 +117,7 @@ describe("single-agent claim cycle", () => {
     });
     const stopProcessTree = vi.fn(async () => { events.push("tree-stop"); });
     expect(await claimAndRunOnce({ client, state, deviceId, companyId, agent, localAgent,
-      token: "secret", signal: new AbortController().signal, runner,
+      token: "secret", intentFile, signal: new AbortController().signal, runner,
       stopProcessTree, renewIntervalMs: 5 })).toBe("finished");
     expect(events).toEqual(["tree-stop", "abort", "stopped", "finish"]);
     expect(stopProcessTree).toHaveBeenCalledWith(12345);
@@ -125,7 +125,7 @@ describe("single-agent claim cycle", () => {
   });
 
   it("keeps the claim latched if the local process never confirms stop", async () => {
-    const { file, state } = await fixture();
+    const { file, intentFile, state } = await fixture();
     const finish = vi.fn();
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async (url) => {
       const pathname = new URL(String(url)).pathname;
@@ -144,7 +144,7 @@ describe("single-agent claim cycle", () => {
       return new Promise<never>(() => undefined);
     });
     await expect(claimAndRunOnce({ client, state, deviceId, companyId, agent, localAgent,
-      token: "secret", signal: new AbortController().signal, runner,
+      token: "secret", intentFile, signal: new AbortController().signal, runner,
       stopProcessTree: async () => undefined,
       renewIntervalMs: 5, stopTimeoutMs: 5 })).rejects.toThrow("stop was not confirmed");
     expect(finish).not.toHaveBeenCalled();

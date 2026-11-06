@@ -47,7 +47,7 @@ describe("runLocalAgent", () => {
     try {
       const result = await runLocalAgent({
         runId: SERVER_RUN_ID,
-        apiBase: "http://192.168.72.157:3100",
+        apiBase: "http://127.0.0.1:43123",
         remoteCompanyId: REMOTE_COMPANY_ID,
         remoteAgentId: REMOTE_AGENT_ID,
         remoteAgentName: "Luna",
