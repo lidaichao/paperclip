@@ -483,6 +483,19 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect((await db.select().from(activityLog).where(eq(activityLog.entityId, scope.issueId)))
       .filter((row) => row.action === "issue.local_run_missing_review_handoff"))
       .toHaveLength(1);
+
+    const human = await fixture();
+    const humanClaim = await svc.claim({ ...human, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "todo", statusVersion: 9 })
+      .where(eq(issues.id, human.issueId));
+    await svc.finish({ ...human, deviceId: "device-desktop-001",
+      leaseId: humanClaim!.leaseId, generation: humanClaim!.generation,
+      outcome: "succeeded", exitCode: 0, processStopped: true,
+      clientRequestId: randomUUID() });
+    const [preserved] = await db.select().from(issues).where(eq(issues.id, human.issueId));
+    expect(preserved.status).toBe("todo");
+    expect(preserved.statusVersion).toBe(9);
   }, 30_000);
 
   it("rejects new run events after a cancellation commits", async () => {
