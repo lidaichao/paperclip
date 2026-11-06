@@ -12,16 +12,17 @@ import {
 import { agents } from "./agents.js";
 import { companies } from "./companies.js";
 import { heartbeatRuns } from "./heartbeat_runs.js";
-import { issues } from "./issues.js";
 
 /** A durable, exclusive owner for a run executed on an agent's own computer. */
 export const localAgentRunLeases = pgTable(
   "local_agent_run_leases",
   {
-    runId: uuid("run_id").primaryKey().references(() => heartbeatRuns.id),
-    companyId: uuid("company_id").notNull().references(() => companies.id),
-    agentId: uuid("agent_id").notNull().references(() => agents.id),
-    issueId: uuid("issue_id").notNull().references(() => issues.id),
+    runId: uuid("run_id").primaryKey().references(() => heartbeatRuns.id, { onDelete: "cascade" }),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    agentId: uuid("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+    // Keep the UUID for run audit after an issue is deleted. A foreign key here
+    // would make historical leases silently disable the existing delete action.
+    issueId: uuid("issue_id").notNull(),
     deviceId: text("device_id").notNull(),
     leaseId: uuid("lease_id").notNull().defaultRandom(),
     generation: integer("generation").notNull().default(1),

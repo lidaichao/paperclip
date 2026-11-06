@@ -8,8 +8,12 @@ import {
 } from "@paperclipai/db";
 import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
 import { badRequest, conflict, forbidden, notFound } from "../errors.js";
+import { accessService } from "./access.js";
+import { logActivity, publishActivity, type ActivityPublication } from "./activity-log.js";
 import { getExecutionBlocker } from "./execution-blocker.js";
 import { issueService } from "./issues.js";
+import { issueReferenceService } from "./issue-references.js";
+import { resolveActorSourceTrustForIssue } from "./source-trust.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -50,6 +54,13 @@ function wakeReasonFromRun(run: typeof heartbeatRuns.$inferSelect) {
 }
 
 export function localAgentRunLeaseService(db: Db) {
+  async function leaseTtlMs(tx: Db, runId: string) {
+    const [row] = await tx.select({
+      value: sql<number>`greatest(0, floor(extract(epoch from (${localAgentRunLeases.expiresAt} - now())) * 1000))::integer`,
+    }).from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, runId));
+    return row?.value ?? 0;
+  }
+
   async function claim(input: {
     companyId: string;
     agentId: string;
@@ -86,6 +97,7 @@ export function localAgentRunLeaseService(db: Db) {
           runId: run.id, issueId: sameClaim.issueId, agentId: input.agentId,
           leaseId: sameClaim.leaseId, generation: sameClaim.generation,
           leaseExpiresAt: sameClaim.expiresAt, wakeReason: wakeReasonFromRun(run),
+          leaseTtlMs: await leaseTtlMs(tx as unknown as Db, run.id),
           workspacePolicy: "agent_home" as const,
         };
       }
@@ -122,6 +134,10 @@ export function localAgentRunLeaseService(db: Db) {
         if (!issue || issue.assigneeAgentId !== input.agentId || !["todo", "in_progress"].includes(issue.status) ||
           (issue.executionRunId && issue.executionRunId !== run.id) ||
           (issue.checkoutRunId && issue.checkoutRunId !== run.id)) continue;
+        // Reuse the scheduler's own suppression, cutoff, org-chain, budget and
+        // daily-limit decisions before a desktop process can be admitted.
+        const { heartbeatService } = await import("./heartbeat.js");
+        await heartbeatService(db).assertClientPullClaimAdmission(run, agent, issue, tx as unknown as Db);
         const [otherRunning] = await tx.select({ id: heartbeatRuns.id })
           .from(heartbeatRuns).where(and(
             eq(heartbeatRuns.companyId, input.companyId),
@@ -167,6 +183,7 @@ export function localAgentRunLeaseService(db: Db) {
           runId: run.id, issueId, agentId: input.agentId,
           leaseId: lease.leaseId, generation: lease.generation,
           leaseExpiresAt: lease.expiresAt, wakeReason: wakeReasonFromRun(run),
+          leaseTtlMs: await leaseTtlMs(tx as unknown as Db, run.id),
           workspacePolicy: "agent_home" as const,
         };
       }
@@ -223,7 +240,8 @@ export function localAgentRunLeaseService(db: Db) {
         expiresAt: sql`now() + interval '90 seconds'`,
         lastRenewedAt: sql`now()`, updatedAt: sql`now()`,
       }).where(eq(localAgentRunLeases.runId, input.runId)).returning();
-      return { leaseExpiresAt: renewed.expiresAt, cancelRequested: false };
+      return { leaseExpiresAt: renewed.expiresAt,
+        leaseTtlMs: await leaseTtlMs(tx as unknown as Db, input.runId), cancelRequested: false };
     });
   }
 
@@ -288,5 +306,119 @@ export function localAgentRunLeaseService(db: Db) {
     });
   }
 
-  return { claim, renew, control, finish };
+  async function withFencedIssueWrite<T>(
+    input: LocalRunOwner & { issueId: string },
+    actor: Express.Request["actor"],
+    action: "issue:comment" | "issue:mutate",
+    write: (tx: Db, issue: typeof issues.$inferSelect, authorizationReason: string) => Promise<T>,
+  ) {
+    requireOwner(input);
+    if (!UUID.test(input.issueId)) throw badRequest("Invalid issueId");
+    if (actor.type !== "agent" || actor.source !== "agent_key" ||
+      actor.agentId !== input.agentId || actor.companyId !== input.companyId ||
+      (actor.runId && actor.runId !== input.runId)) {
+      throw forbidden("An agent's own run and API key are required");
+    }
+    // The run lock serializes cancellation and finish with the content write.
+    // All checks and the business mutation use the same transaction and locks.
+    return db.transaction(async (tx) => {
+      const [run] = await tx.select().from(heartbeatRuns).where(and(
+        eq(heartbeatRuns.id, input.runId), eq(heartbeatRuns.companyId, input.companyId),
+        eq(heartbeatRuns.agentId, input.agentId), eq(heartbeatRuns.runtimeMode, "client_pull"),
+      )).for("update");
+      const [lease] = await tx.select().from(localAgentRunLeases)
+        .where(eq(localAgentRunLeases.runId, input.runId)).for("update");
+      const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
+        .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
+      if (!run || !lease || run.status !== "running" || !live?.live ||
+        lease.companyId !== input.companyId || lease.agentId !== input.agentId ||
+        lease.issueId !== input.issueId || lease.deviceId !== input.deviceId ||
+        lease.leaseId !== input.leaseId || lease.generation !== input.generation ||
+        lease.cancelRequestedAt || lease.releasedAt || issueIdFromRun(run) !== input.issueId) {
+        throw forbidden("Local run write lease is no longer valid");
+      }
+      const [issue] = await tx.select().from(issues).where(and(
+        eq(issues.id, input.issueId), eq(issues.companyId, input.companyId),
+      )).for("update");
+      if (!issue || issue.assigneeAgentId !== input.agentId ||
+        issue.executionRunId !== input.runId || !["todo", "in_progress"].includes(issue.status) ||
+        issue.conversationAgentId) {
+        throw forbidden("Local run no longer owns this open task");
+      }
+      const decision = await accessService(tx as unknown as Db).decide({
+        actor: { ...actor, runId: input.runId }, action,
+        resource: {
+          type: "issue", companyId: issue.companyId, issueId: issue.id,
+          projectId: issue.projectId, parentIssueId: issue.parentId,
+          assigneeAgentId: issue.assigneeAgentId,
+          assigneeUserId: issue.assigneeUserId, status: issue.status,
+        },
+        scope: {
+          issueId: issue.id, projectId: issue.projectId, parentIssueId: issue.parentId,
+          assigneeAgentId: issue.assigneeAgentId, assigneeUserId: issue.assigneeUserId,
+        },
+      });
+      if (!decision.allowed) throw forbidden("Issue write permission denied");
+      return write(tx as unknown as Db, issue, decision.reason ?? "local_run_assignee");
+    });
+  }
+
+  async function addFencedComment(
+    input: LocalRunOwner & { issueId: string; body: string },
+    actor: Express.Request["actor"],
+  ) {
+    if (typeof input.body !== "string" || !input.body.trim()) throw badRequest("Comment body is required");
+    const publications: ActivityPublication[] = [];
+    const comment = await withFencedIssueWrite(input, actor, "issue:comment", async (tx, issue, authorizationReason) => {
+      const sourceTrust = await resolveActorSourceTrustForIssue({
+        db: tx, issue,
+        actor: { actorType: "agent", actorId: input.agentId, agentId: input.agentId, runId: input.runId },
+      });
+      const saved = await issueService(db).addComment(input.issueId, input.body,
+        { agentId: input.agentId, runId: input.runId, onBehalfOfUserId: actor.onBehalfOfUserId },
+        { authorType: "agent", authorizationReason, sourceTrust }, tx);
+      await logActivity(tx, {
+        companyId: input.companyId, actorType: "agent", actorId: input.agentId,
+        agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
+        action: "issue.comment_added", entityType: "issue", entityId: issue.id,
+        details: { commentId: saved.id, bodySnippet: saved.body.slice(0, 120),
+          identifier: issue.identifier, issueTitle: issue.title, authorizationReason },
+      }, publications);
+      return saved;
+    });
+    for (const publication of publications) publishActivity(publication);
+    await issueReferenceService(db).syncComment(comment.id);
+    return comment;
+  }
+
+  async function patchFencedIssue(
+    input: LocalRunOwner & { issueId: string; title?: string; description?: string | null; priority?: string },
+    actor: Express.Request["actor"],
+  ) {
+    const publications: ActivityPublication[] = [];
+    const updated = await withFencedIssueWrite(input, actor, "issue:mutate", async (tx, issue, authorizationReason) => {
+      const { issueId, title, description, priority } = input;
+      const patch = {
+        ...(title !== undefined ? { title } : {}),
+        ...(description !== undefined ? { description } : {}),
+        ...(priority !== undefined ? { priority } : {}),
+        actorAgentId: input.agentId, companyGuard: input.companyId,
+      };
+      const saved = await issueService(db).update(issueId, patch, tx, publications);
+      if (!saved) throw notFound("Issue not found");
+      const changes = saved.changes ?? {};
+      await logActivity(tx, {
+        companyId: input.companyId, actorType: "agent", actorId: input.agentId,
+        agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
+        action: "issue.updated", entityType: "issue", entityId: issue.id,
+        details: { identifier: issue.identifier, authorizationReason, changes,
+          _previous: Object.fromEntries(Object.entries(changes).map(([key, change]) => [key, change.from])) },
+      }, publications);
+      return saved;
+    });
+    for (const publication of publications) publishActivity(publication);
+    return updated;
+  }
+
+  return { claim, renew, control, finish, addFencedComment, patchFencedIssue };
 }

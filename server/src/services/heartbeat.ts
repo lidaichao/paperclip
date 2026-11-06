@@ -29463,7 +29463,37 @@ export function heartbeatService(
     await cancelPendingWakeupsForBudgetScope(scope);
   }
 
+  async function assertClientPullClaimAdmission(
+    run: typeof heartbeatRuns.$inferSelect,
+    agent: typeof agents.$inferSelect,
+    issue: typeof issues.$inferSelect,
+    client: Db,
+  ) {
+    const suppression = await getSchedulingSuppression();
+    if (suppression.suppressed) throw conflict(`Scheduling is suppressed: ${suppression.reason}`);
+    const cutoff = await getWorktreeExecutionCutoff();
+    if (cutoff && (run.createdAt < cutoff || issue.createdAt < cutoff)) {
+      throw conflict("Run or task predates the worktree execution cutoff");
+    }
+    const [company] = await client.select({ status: companies.status })
+      .from(companies).where(eq(companies.id, agent.companyId));
+    if (!company || company.status !== "active") throw conflict("Company is not active");
+    const invokability = await evaluateAgentInvokabilityFromDb(client, agent);
+    if (!invokability.invokable) throw conflict(invokability.message);
+    const policy = parseHeartbeatPolicy(agent);
+    if (policy.maxConcurrentRuns < 1) throw conflict("Agent run concurrency is disabled");
+    const budgetBlock = await budgetService(client).getInvocationBlock(
+      run.companyId, run.agentId, { issueId: issue.id, projectId: issue.projectId },
+    );
+    if (budgetBlock) throw conflict(budgetBlock.reason);
+    const dailyCapBlock = await getHeartbeatDailyCapBlock(agent, policy, {
+      excludeRunId: run.id, checkRunCap: true, checkCostCap: true,
+    }, client);
+    if (dailyCapBlock) throw conflict(`Agent daily run or cost limit reached: ${dailyCapBlock.reason}`);
+  }
+
   return {
+    assertClientPullClaimAdmission,
     waitForRunExecutionDrain: async (
       runId: string,
       options: { timeoutMs?: number; intervalMs?: number } = {},

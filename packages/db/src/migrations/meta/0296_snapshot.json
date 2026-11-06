@@ -31094,7 +31094,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "local_agent_run_leases_company_id_companies_id_fk": {
@@ -31107,7 +31107,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "local_agent_run_leases_agent_id_agents_id_fk": {
@@ -31120,20 +31120,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "local_agent_run_leases_issue_id_issues_id_fk": {
-          "name": "local_agent_run_leases_issue_id_issues_id_fk",
-          "tableFrom": "local_agent_run_leases",
-          "tableTo": "issues",
-          "columnsFrom": [
-            "issue_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

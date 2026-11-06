@@ -8,11 +8,14 @@ import {
   createDb,
   getEmbeddedPostgresTestSupport,
   heartbeatRuns,
+  issueComments,
   issues,
   localAgentRunLeases,
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
+import { agentService } from "./agents.js";
+import { updateAgentSchema } from "@paperclipai/shared";
 import { localAgentRunWriteGate } from "../middleware/local-agent-run-write-gate.js";
 
 const external = process.env.PAPERCLIP_TEST_DATABASE_URL;
@@ -194,5 +197,108 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await gate(request, response, next);
     expect(response.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it("writes a current-run comment and issue edit with the lease transaction", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-009", idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-009", leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const comment = await svc.addFencedComment({ ...owner, body: "Local execution progress" }, actor);
+    expect(comment.createdByRunId).toBe(scope.runId);
+    expect(comment.authorAgentId).toBe(scope.agentId);
+    const updated = await svc.patchFencedIssue({ ...owner, title: "Edited from desktop" }, actor);
+    expect(updated.title).toBe("Edited from desktop");
+    expect((await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).length).toBe(1);
+  });
+
+  it("rejects other issues, companies, generations, and writes after cancellation", async () => {
+    const scope = await fixture();
+    const other = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-010", idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-010", leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const count = async () => (await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).length;
+    await expect(svc.addFencedComment({ ...owner, issueId: other.issueId, body: "cross company" }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(svc.patchFencedIssue({ ...owner, issueId: other.issueId, title: "cross company" }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    const otherIssueId = randomUUID();
+    await db.insert(issues).values({ id: otherIssueId, companyId: scope.companyId, title: "Other issue", status: "todo", assigneeAgentId: scope.agentId });
+    await expect(svc.addFencedComment({ ...owner, issueId: otherIssueId, body: "cross issue" }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(svc.addFencedComment({ ...owner, generation: owner.generation + 1, body: "stale" }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
+    await expect(svc.addFencedComment({ ...owner, body: "after cancel" }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(svc.patchFencedIssue({ ...owner, title: "after cancel" }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    expect(await count()).toBe(0);
+  });
+
+  it("does not let a comment cross a concurrently committed cancellation", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-012", idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-012", leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    let releaseCancellation!: () => void;
+    let cancellationLocked!: () => void;
+    const allowCommit = new Promise<void>((resolve) => { releaseCancellation = resolve; });
+    const lockHeld = new Promise<void>((resolve) => { cancellationLocked = resolve; });
+    const cancellation = db.transaction(async (tx) => {
+      await tx.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId)).for("update");
+      cancellationLocked();
+      await allowCommit;
+      await tx.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
+    });
+    await lockHeld;
+    const lateWrite = svc.addFencedComment({ ...owner, body: "Must not escape" }, actor);
+    releaseCancellation();
+    await cancellation;
+    await expect(lateWrite).rejects.toMatchObject({ status: 403 });
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).toHaveLength(0);
+  });
+
+  it("honors the scheduler daily run limit before claiming a queued desktop run", async () => {
+    const scope = await fixture();
+    await db.update(agents).set({
+      runtimeConfig: { executionMode: "client_pull", heartbeat: { maxDailyRuns: 0 } },
+    }).where(eq(agents.id, scope.agentId));
+    const svc = localAgentRunLeaseService(db);
+    await expect(svc.claim({ ...scope, deviceId: "device-desktop-013", idempotencyKey: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    expect(run.status).toBe("queued");
+  });
+
+  it("persists executionMode through the existing agent update contract", async () => {
+    const scope = await fixture();
+    const parsed = updateAgentSchema.parse({ runtimeConfig: { executionMode: "client_pull" } });
+    expect(parsed.runtimeConfig?.executionMode).toBe("client_pull");
+    await agentService(db).update(scope.agentId, { runtimeConfig: {} });
+    await agentService(db).update(scope.agentId, { runtimeConfig: parsed.runtimeConfig });
+    const [stored] = await db.select({ runtimeConfig: agents.runtimeConfig }).from(agents)
+      .where(eq(agents.id, scope.agentId));
+    expect(stored.runtimeConfig?.executionMode).toBe("client_pull");
+    expect((await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-014", idempotencyKey: randomUUID(),
+    }))?.runId).toBe(scope.runId);
+  });
+
+  it("preserves deletion of a task and its run after a historical lease", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-011", idempotencyKey: randomUUID() });
+    await svc.finish({ ...scope, deviceId: "device-desktop-011", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, outcome: "succeeded", exitCode: 0, processStopped: true });
+    await db.delete(issues).where(eq(issues.id, scope.issueId));
+    const [lease] = await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId));
+    expect(lease.issueId).toBe(scope.issueId);
+    await db.delete(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    expect(await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId))).toHaveLength(0);
   });
 });

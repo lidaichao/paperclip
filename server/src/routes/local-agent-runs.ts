@@ -1,5 +1,6 @@
 import { Router, type Request } from "express";
 import type { Db } from "@paperclipai/db";
+import { addIssueCommentSchema, updateIssueSchema } from "@paperclipai/shared";
 import { badRequest, forbidden } from "../errors.js";
 import { localAgentRunLeaseService, type LocalRunOwner } from "../services/local-agent-run-leases.js";
 
@@ -7,6 +8,13 @@ function objectBody(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw badRequest("JSON object required");
   return value as Record<string, unknown>;
 }
+
+function onlyFields(body: Record<string, unknown>, allowed: readonly string[]) {
+  const unknown = Object.keys(body).find((key) => !allowed.includes(key));
+  if (unknown) throw badRequest(`Unsupported local run write field: ${unknown}`);
+}
+
+const ownerFields = ["deviceId", "leaseId", "generation", "issueId"] as const;
 
 export function localAgentRunRoutes(db: Db) {
   const router = Router();
@@ -64,6 +72,28 @@ export function localAgentRunRoutes(db: Db) {
       exitCode: body.exitCode === null ? null : Number(body.exitCode),
       processStopped: true,
     }));
+  });
+
+  router.post("/agents/me/local-runs/:runId/comments", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "body"]);
+    const parsed = addIssueCommentSchema.pick({ body: true }).parse(body);
+    const comment = await leases.addFencedComment({
+      ...owner(req, body), issueId: String(body.issueId ?? ""), body: parsed.body,
+    }, req.actor);
+    return res.status(201).json(comment);
+  });
+
+  router.patch("/agents/me/local-runs/:runId/issue", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "title", "description", "priority"]);
+    const patch = updateIssueSchema.pick({ title: true, description: true, priority: true }).parse(body);
+    if (Object.keys(patch).length === 0) throw badRequest("At least one issue field is required");
+    return res.json(await leases.patchFencedIssue({
+      ...owner(req, body), issueId: String(body.issueId ?? ""), ...patch,
+    }, req.actor));
   });
 
   return router;
