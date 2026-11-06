@@ -18,6 +18,10 @@ type PostgresDiagnostic = Error & {
   schema?: string;
   table?: string;
   constraint?: string;
+  file?: string;
+  line?: string;
+  routine?: string;
+  position?: string;
 };
 
 // Drizzle wraps postgres.js errors in DrizzleQueryError.cause. Preserve only
@@ -36,6 +40,18 @@ function safePostgresDiagnostic(error: unknown): PostgresDiagnostic | undefined 
           diagnostic[key] = value;
         }
       }
+      for (const key of ["file", "line", "routine", "position"] as const) {
+        const value = candidate[key];
+        if (typeof value === "string" && value.length <= 80 && /^[A-Za-z0-9_.-]+$/.test(value)) {
+          diagnostic[key] = value;
+        }
+      }
+      diagnostic.message = [
+        `PostgreSQL SQLSTATE ${candidate.code}`,
+        ...(["file", "line", "routine", "position"] as const)
+          .filter((key) => diagnostic[key])
+          .map((key) => `${key}=${diagnostic[key]}`),
+      ].join(" ");
       return diagnostic;
     }
     current = candidate.cause;
