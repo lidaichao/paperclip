@@ -6,6 +6,7 @@ import request from "supertest";
 import { eq, sql } from "drizzle-orm";
 import {
   activityLog,
+  agentWakeupRequests,
   agentApiKeys,
   agents,
   companies,
@@ -23,6 +24,9 @@ import {
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
+import { localAgentReviewDeliveryService } from "./local-agent-review-delivery.js";
+import { clientPullCompletionReviewWakeKey } from "./local-agent-review-claim.js";
+import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { localAgentDeviceBindingService } from "./local-agent-device-bindings.js";
 import { accessService } from "./access.js";
 import { heartbeatService } from "./heartbeat.js";
@@ -1241,4 +1245,110 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await db.delete(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
     expect(await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId))).toHaveLength(0);
   });
+
+  it("queues a dedicated local review exactly once after source finish", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    expect(await issueCommandDeliveryService(db).claim({ companyId: scope.companyId })).toBeNull();
+    const producer = localAgentReviewDeliveryService(db);
+    const [first, second] = await Promise.all([
+      producer.deliver(handoff.delivery.id), producer.deliver(handoff.delivery.id),
+    ]);
+    expect([first.replayed, second.replayed].sort()).toEqual([false, true]);
+    expect(first.run.id).toBe(second.run.id);
+    expect(first.wake.id).toBe(second.wake.id);
+    expect(first.run.runtimeMode).toBe("client_pull");
+    expect(first.run.status).toBe("queued");
+    expect(first.run.agentId).toBe(handoff.review.reviewerAgentId);
+    expect(first.run.responsibleUserId).toBeNull();
+    expect(first.wake.idempotencyKey).toBe(clientPullCompletionReviewWakeKey(
+      handoff.review.id, handoff.interaction.id));
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    expect(issue.assigneeAgentId).toBe(scope.agentId);
+    expect(issue.executionRunId).toBeNull();
+    const [intent] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    expect(intent.status).toBe("delivered");
+    expect(intent.wakeupRequestId).toBe(first.wake.id);
+    await db.update(heartbeatRuns).set({ runtimeMode: "legacy" })
+      .where(eq(heartbeatRuns.id, first.run.id));
+    await expect(producer.deliver(handoff.delivery.id)).rejects.toMatchObject({ status: 409 });
+  }, 30_000);
+
+  it("rolls back wake and run when dedicated intent delivery fails", async () => {
+    const { owner, svc, handoff } = await dedicatedReviewFixture();
+    await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    await db.execute(sql`create function reject_dedicated_delivery() returns trigger language plpgsql as $$
+      begin
+        if NEW.id = '${sql.raw(handoff.delivery.id)}' and NEW.status = 'delivered' then
+          raise exception 'injected dedicated delivery failure';
+        end if;
+        return NEW;
+      end $$`);
+    await db.execute(sql`create trigger reject_dedicated_delivery_trigger before update on issue_command_deliveries
+      for each row execute function reject_dedicated_delivery()`);
+    try {
+      await expect(localAgentReviewDeliveryService(db).deliver(handoff.delivery.id)).rejects.toThrow();
+    } finally {
+      await db.execute(sql`drop trigger reject_dedicated_delivery_trigger on issue_command_deliveries`);
+      await db.execute(sql`drop function reject_dedicated_delivery()`);
+    }
+    const key = clientPullCompletionReviewWakeKey(handoff.review.id, handoff.interaction.id);
+    expect(await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.idempotencyKey, key))).toHaveLength(0);
+    const [intent] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    expect(intent.status).toBe("ready");
+  }, 30_000);
+
+  it("refuses to queue before source finish or for a paused reviewer", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    const producer = localAgentReviewDeliveryService(db);
+    await expect(producer.deliver(handoff.delivery.id)).rejects.toMatchObject({ status: 409 });
+    await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    await db.update(agents).set({ status: "paused" })
+      .where(eq(agents.id, handoff.review.reviewerAgentId));
+    await expect(producer.deliver(handoff.delivery.id)).rejects.toMatchObject({ status: 409 });
+    await db.update(agents).set({ status: "idle", runtimeConfig: {} })
+      .where(eq(agents.id, handoff.review.reviewerAgentId));
+    await expect(producer.deliver(handoff.delivery.id)).rejects.toMatchObject({ status: 409 });
+    await db.update(agents).set({ runtimeConfig: { executionMode: "client_pull" } })
+      .where(eq(agents.id, handoff.review.reviewerAgentId));
+    await db.update(issueThreadInteractions).set({ status: "expired" })
+      .where(eq(issueThreadInteractions.id, handoff.interaction.id));
+    await expect(producer.deliver(handoff.delivery.id)).rejects.toMatchObject({ status: 409 });
+    const [intent] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    expect(intent.status).toBe("ready");
+    const key = clientPullCompletionReviewWakeKey(handoff.review.id, handoff.interaction.id);
+    expect(await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.idempotencyKey, key))).toHaveLength(0);
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    expect(issue.executionRunId).toBeNull();
+  }, 30_000);
+
+  it("refuses an obsolete review revision and an occupied cancelled wake key", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const producer = localAgentReviewDeliveryService(db);
+    await db.update(issues).set({ statusVersion: handoff.review.issueStatusVersion + 1 })
+      .where(eq(issues.id, scope.issueId));
+    await expect(producer.deliver(handoff.delivery.id)).rejects.toMatchObject({ status: 409 });
+    await db.update(issues).set({ statusVersion: handoff.review.issueStatusVersion })
+      .where(eq(issues.id, scope.issueId));
+    const key = clientPullCompletionReviewWakeKey(handoff.review.id, handoff.interaction.id);
+    await db.insert(agentWakeupRequests).values({ companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, source: "automation",
+      triggerDetail: "system", reason: "issue_completion_review", status: "cancelled",
+      idempotencyKey: key });
+    await expect(producer.deliver(handoff.delivery.id)).rejects.toMatchObject({ status: 409 });
+    await expect(db.insert(agentWakeupRequests).values({ companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, source: "automation",
+      triggerDetail: "system", reason: "issue_completion_review", status: "failed",
+      idempotencyKey: key })).rejects.toThrow();
+  }, 30_000);
 });

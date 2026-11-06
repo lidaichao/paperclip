@@ -75,6 +75,11 @@ export const agentWakeupRequests = pgTable(
     )
       .on(table.companyId, table.idempotencyKey)
       .where(sql`(${table.idempotencyKey} LIKE 'question-response:%' OR ${table.idempotencyKey} LIKE 'interaction:%') AND ${table.status} NOT IN ('skipped', 'failed', 'cancelled')`),
+    completionReviewWakeIdempotencyUq: uniqueIndex(
+      "agent_wakeup_requests_completion_review_idempotency_uq",
+    )
+      .on(table.companyId, table.idempotencyKey)
+      .where(sql`${table.idempotencyKey} LIKE 'interaction:%:completion-review:%'`),
     connectionIntentDeliveryIdempotencyUq: uniqueIndex("agent_wakeup_requests_connection_intent_delivery_idempotency_uq")
       .on(table.companyId, table.idempotencyKey)
       .where(sql`${table.idempotencyKey} LIKE 'connection-intent:%' AND ${table.status} NOT IN ('skipped', 'failed', 'cancelled')`),

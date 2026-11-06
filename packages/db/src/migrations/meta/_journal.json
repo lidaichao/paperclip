@@ -2101,6 +2101,13 @@
       "when": 1793991102846,
       "tag": "0301_colossal_susan_delgado",
       "breakpoints": true
+    },
+    {
+      "idx": 302,
+      "version": "7",
+      "when": 1793995357315,
+      "tag": "0302_broad_ezekiel_stane",
+      "breakpoints": true
     }
   ]
 }
