@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  bigint, check, foreignKey, pgTable, text, timestamp, uniqueIndex, uuid,
+  bigint, check, foreignKey, jsonb, pgTable, text, timestamp, uniqueIndex, uuid,
 } from "drizzle-orm/pg-core";
 import { agents } from "./agents.js";
 import { issues } from "./issues.js";
@@ -27,6 +27,10 @@ export const issueCompletionReviews = pgTable("issue_completion_reviews", {
   requestDigest: text("request_digest").notNull(),
   issueStatusVersion: bigint("issue_status_version", { mode: "number" }).notNull(),
   state: text("state").notNull().default("pending"),
+  decisionRequestId: uuid("decision_request_id"),
+  decisionRequestDigest: text("decision_request_digest"),
+  decisionSummary: text("decision_summary"),
+  decisionReceipt: jsonb("decision_receipt").$type<Record<string, unknown>>(),
   decidedAt: timestamp("decided_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
@@ -67,6 +71,9 @@ export const issueCompletionReviews = pgTable("issue_completion_reviews", {
     .on(table.companyId, table.sourceRunId, table.requestId),
   interactionUq: uniqueIndex("issue_completion_reviews_interaction_uq")
     .on(table.companyId, table.interactionId),
+  decisionRequestUq: uniqueIndex("issue_completion_reviews_decision_request_uq")
+    .on(table.companyId, table.decisionRequestId)
+    .where(sql`${table.decisionRequestId} is not null`),
   evidenceCheck: check("issue_completion_reviews_evidence_check", sql`
     (${table.sourceKind} = 'native' and ${table.nativeDecisionId} is not null
       and ${table.clientPullLeaseRunId} is null)
@@ -85,5 +92,24 @@ export const issueCompletionReviews = pgTable("issue_completion_reviews", {
   decisionCheck: check("issue_completion_reviews_decision_check", sql`
     (${table.state} = 'pending' and ${table.decidedAt} is null)
     or (${table.state} <> 'pending' and ${table.decidedAt} is not null)
+  `),
+  decisionReceiptCheck: check("issue_completion_reviews_decision_receipt_check", sql`
+    coalesce(((${table.state} in ('pending', 'cancelled')
+      and ${table.decisionRequestId} is null
+      and ${table.decisionRequestDigest} is null
+      and ${table.decisionSummary} is null
+      and ${table.decisionReceipt} is null)
+    or (${table.state} in ('accepted', 'rejected')
+      and ${table.decisionRequestId} is not null
+      and ${table.decisionRequestDigest} is not null
+      and ${table.decisionSummary} is not null
+      and ${table.decisionReceipt} is not null
+      and ${table.decisionRequestDigest} ~ '^[0-9a-f]{64}$'
+      and length(btrim(${table.decisionSummary})) between 1 and 4096
+      and jsonb_typeof(${table.decisionReceipt}) = 'object'
+      and ${table.decisionReceipt}->'schemaVersion' = '1'::jsonb
+      and ${table.decisionReceipt}->>'reviewId' = ${table.id}::text
+      and ${table.decisionReceipt}->>'requestId' = ${table.decisionRequestId}::text
+      and ${table.decisionReceipt}->>'outcome' = ${table.state})), false)
   `),
 }));

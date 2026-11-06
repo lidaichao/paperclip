@@ -2087,6 +2087,13 @@
       "when": 1793980000002,
       "tag": "0299_hard_marauders",
       "breakpoints": true
+    },
+    {
+      "idx": 300,
+      "version": "7",
+      "when": 1793980292476,
+      "tag": "0300_medical_garia",
+      "breakpoints": true
     }
   ]
 }
