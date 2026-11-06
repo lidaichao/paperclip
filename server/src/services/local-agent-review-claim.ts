@@ -197,6 +197,7 @@ export async function assertClientPullReviewEventContext(tx: Db, input: {
     wakePayload.sourceRunId !== review.sourceRunId) {
     throw staleReviewEvent();
   }
+  return { review, card };
 }
 
 /** A reviewer may stop successfully only after its own immutable decision committed. */

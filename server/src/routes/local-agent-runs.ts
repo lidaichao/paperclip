@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { addIssueCommentSchema, updateIssueSchema } from "@paperclipai/shared";
 import { badRequest, forbidden } from "../errors.js";
 import { localAgentRunLeaseService, type LocalRunOwner } from "../services/local-agent-run-leases.js";
+import { localAgentReviewContextService } from "../services/local-agent-review-context.js";
 import { localAgentDeviceBindingService } from "../services/local-agent-device-bindings.js";
 import { accessService } from "../services/access.js";
 import { assertBoard, getAccessibleResource } from "./authz.js";
@@ -24,6 +25,7 @@ const ownerFields = ["deviceId", "leaseId", "generation", "issueId"] as const;
 export function localAgentRunRoutes(db: Db) {
   const router = Router();
   const leases = localAgentRunLeaseService(db);
+  const reviewContext = localAgentReviewContextService(db);
   const bindings = localAgentDeviceBindingService(db);
 
   async function managedAgent(req: Request, res: Response) {
@@ -121,6 +123,12 @@ export function localAgentRunRoutes(db: Db) {
   router.get("/agents/me/local-runs/:runId/control", async (req, res) => {
     res.set("Cache-Control", "no-store");
     return res.json(await leases.control(owner(req, req.query as Record<string, unknown>)));
+  });
+
+  router.get("/agents/me/local-runs/:runId/review-context", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    return res.json(await reviewContext.read(
+      owner(req, req.query as Record<string, unknown>), req.actor));
   });
 
   router.post("/agents/me/local-runs/:runId/finish", async (req, res) => {
