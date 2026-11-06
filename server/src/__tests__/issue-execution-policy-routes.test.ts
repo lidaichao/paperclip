@@ -395,6 +395,40 @@ describe("issue execution policy routes", () => {
     expect(mockLogActivity.mock.calls[0]?.[0]).toBe(mockIssueService.update.mock.calls[0]?.[2]);
   });
 
+  it("rechecks the review path inside the locked write transaction", async () => {
+    const issue = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      companyId: "company-1", status: "in_progress",
+      assigneeAgentId: "33333333-3333-4333-8333-333333333333",
+      assigneeUserId: null, createdByUserId: "local-board",
+      identifier: "PAP-1005", title: "Review path race",
+      executionPolicy: null, executionState: null,
+    };
+    mockIssueService.getById.mockResolvedValue(issue);
+    mockIssueThreadInteractionService.listForIssue
+      .mockResolvedValueOnce([{
+        id: "11111111-1111-4111-8111-111111111111",
+        kind: "request_confirmation", status: "pending",
+        createdByAgentId: issue.assigneeAgentId,
+        sourceRunId: "55555555-5555-4555-8555-555555555555",
+      }])
+      .mockResolvedValueOnce([]);
+
+    const response = await request(await createApp({
+      type: "agent", agentId: issue.assigneeAgentId,
+      companyId: issue.companyId,
+      runId: "55555555-5555-4555-8555-555555555555",
+    })).patch(`/api/issues/${issue.id}`)
+      .send({ status: "in_review", comment: "Ready for review" });
+
+    expect(response.status).toBe(422);
+    expect(response.body.details?.code).toBe("invalid_issue_disposition");
+    expect(mockIssueThreadInteractionService.listForIssue).toHaveBeenCalledTimes(2);
+    expect(mockIssueService.update).not.toHaveBeenCalled();
+    expect(mockIssueService.addComment).not.toHaveBeenCalled();
+    expect(mockLogActivity).not.toHaveBeenCalled();
+  });
+
   it("binds an explicitly designated same-run confirmation to the review transition", async () => {
     const issue = {
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",

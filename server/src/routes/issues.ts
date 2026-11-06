@@ -13507,6 +13507,22 @@ export function issueRoutes(
               !(await assertLockedReviewPolicyAllowsMutation(tx))
             )
               return null;
+            if (enteringReviewRequested) {
+              const lockedExisting = await svc.getByIdForUpdate(id, tx);
+              if (!lockedExisting) return null;
+              // The preflight response is only advisory. A review interaction
+              // may be resolved while this request waits for the issue lock.
+              // Recheck against the locked task in the write transaction.
+              await assertInReviewReviewPath(tx as unknown as Db, {
+                existing: lockedExisting,
+                updateFields,
+                actorType: actor.actorType,
+                actorId: actor.actorId,
+                actorAgentId: actor.agentId,
+                actorRunId: actor.runId,
+                reviewInteractionId: requestedReviewInteractionId,
+              });
+            }
             const updated = await updateIssue(tx);
             if (!updated) return null;
             if (commentAttachmentIds?.length) {
