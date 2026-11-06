@@ -8,6 +8,7 @@ const ISSUE_ID = "1b9c2019-b811-40a0-bd21-0365977a0001";
 const LEASE_ID = "784d88a1-7a05-42d2-a7d8-e714d70f2d0b";
 const DEVICE_ID = "8da47d3b-0a6e-49d4-9c26-17bc76de470f";
 const KEY_ID = "fd7a78df-9781-4070-9974-7f7a7e051330";
+const INTERACTION_ID = "52c1a882-34da-4cd9-a408-38d03c02f457";
 
 function jsonResponse(value: unknown, status = 200): Response {
   return new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json" } });
@@ -50,6 +51,32 @@ describe("AliceClient", () => {
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
     expect(new Headers(calls[0]?.init?.headers).get("authorization")).toBe(`Bearer ${token}`);
     expect(lines.join("\n")).not.toContain(token);
+  });
+
+  it("uses the fenced same-run endpoints for a human review confirmation and handoff", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key", fetch: async (url, init) => {
+      calls.push({ url: String(url), init });
+      return String(url).endsWith("/api/agents/me")
+        ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+        : jsonResponse({ interaction: { id: INTERACTION_ID }, replayed: false }, 201);
+    } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const lease = { runId: RUN_ID, deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1 };
+    await client.createLocalReviewConfirmation(lease, ISSUE_ID, "Please verify", KEY_ID);
+    await client.handoffLocalReview(lease, ISSUE_ID, "Ready for acceptance", INTERACTION_ID, KEY_ID);
+    expect(calls.slice(1).map((call) => [new URL(call.url).pathname, call.init?.method])).toEqual([
+      [`/api/agents/me/local-runs/${RUN_ID}/issue/review-confirmation`, "POST"],
+      [`/api/agents/me/local-runs/${RUN_ID}/issue/review-handoff`, "POST"],
+    ]);
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease, issueId: ISSUE_ID,
+      prompt: "Please verify", clientRequestId: KEY_ID });
+    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...lease, issueId: ISSUE_ID,
+      body: "Ready for acceptance", reviewInteractionId: INTERACTION_ID, clientRequestId: KEY_ID });
+    await expect(client.createLocalReviewConfirmation(lease, ISSUE_ID, " ", KEY_ID)).rejects.toThrow("prompt");
+    await expect(client.handoffLocalReview(lease, ISSUE_ID, "@someone", INTERACTION_ID, KEY_ID))
+      .rejects.toThrow("plain text");
+    expect(calls).toHaveLength(3);
   });
 
   it("rejects an identity mismatch before polling", async () => {

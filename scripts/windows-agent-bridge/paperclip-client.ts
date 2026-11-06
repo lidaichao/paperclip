@@ -387,6 +387,34 @@ export class AliceClient {
     return response.body;
   }
 
+  /** Narrow human confirmation only. Agent reviewer handoff remains gated. */
+  async createLocalReviewConfirmation(lease: LocalRunLease, issueId: string, prompt: string,
+    clientRequestId: string, signal?: AbortSignal): Promise<unknown> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(issueId, "issueId");
+    requireUuid(clientRequestId, "clientRequestId");
+    if (!prompt.trim() || prompt.length > 1000) throw new Error("review prompt must be 1–1000 characters");
+    const response = await this.#writeJson("POST", `/api/agents/me/local-runs/${lease.runId}/issue/review-confirmation`, {
+      ...lease, issueId, prompt, clientRequestId,
+    }, {}, signal);
+    return response.body;
+  }
+
+  async handoffLocalReview(lease: LocalRunLease, issueId: string, body: string,
+    reviewInteractionId: string, clientRequestId: string, signal?: AbortSignal): Promise<unknown> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(issueId, "issueId");
+    requireUuid(reviewInteractionId, "reviewInteractionId");
+    requireUuid(clientRequestId, "clientRequestId");
+    if (!body.trim() || /@|https?:\/\//i.test(body)) throw new Error("review handoff requires plain text");
+    const response = await this.#writeJson("POST", `/api/agents/me/local-runs/${lease.runId}/issue/review-handoff`, {
+      ...lease, issueId, body, reviewInteractionId, clientRequestId,
+    }, {}, signal);
+    return response.body;
+  }
+
   async patchLocalRunIssue(lease: LocalRunLease, issueId: string, patch: Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
     this.#requireVerifiedIdentity();
     this.#validateLease(lease);
