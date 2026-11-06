@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -40,6 +41,8 @@ export const localAgentRunLeases = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
+    companyIssueRunUq: unique("local_agent_run_leases_company_issue_run_uq")
+      .on(table.companyId, table.issueId, table.runId),
     activeAgentUq: uniqueIndex("local_agent_run_leases_active_agent_uq")
       .on(table.companyId, table.agentId)
       .where(sql`${table.releasedAt} is null`),

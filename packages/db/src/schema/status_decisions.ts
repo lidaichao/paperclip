@@ -39,6 +39,12 @@ export const statusDecisions = pgTable(
       table.issueId,
       table.id,
     ),
+    companyIssueRunIdUq: unique("status_decisions_company_issue_run_id_uq").on(
+      table.companyId,
+      table.issueId,
+      table.runId,
+      table.id,
+    ),
     companyIssueRunAssessmentIdUq: unique(
       "status_decisions_company_issue_run_assessment_id_uq",
     ).on(

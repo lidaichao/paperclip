@@ -27,6 +27,7 @@ export { agentWakeupRequests } from "./agent_wakeup_requests.js";
 export { localAgentRunLeases } from "./local_agent_run_leases.js";
 export { localAgentDeviceBindings } from "./local_agent_device_bindings.js";
 export { issueCommandDeliveries } from "./issue_command_deliveries.js";
+export { issueCompletionReviews } from "./issue_completion_reviews.js";
 export { projects } from "./projects.js";
 export { projectMemberships } from "./project_memberships.js";
 export { documentMemberships } from "./document_memberships.js";
