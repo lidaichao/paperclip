@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { t } from ".";
 import en from "./locales/en.json";
+import zh from "./locales/zh-CN.json";
 import { localeMessages } from "./locales";
 import { validateLocaleMessages } from "./locale-validation";
 
 describe("locale validation", () => {
+  it("keeps Alice account and audit copy grammatical with stable semantic keys", () => {
+    expect(en.local.agent_audit_enterprise_view).toBe("Agent audit is an Alice Enterprise view");
+    expect(en.local.invite_create_alice_account).toContain("an Alice account");
+    expect(en.local.invite_create_alice_account).toContain("{{company}}");
+    expect(en.local.invite_create_alice_account_demo).toContain("an Alice account");
+    expect(en.local.system_notice_alice_warning_redesign).toContain("an Alice-authored warning");
+    expect(zh.local.invite_create_alice_account).toContain("{{company}}");
+  });
   it("resolves English messages with key and default fallbacks", () => {
     expect(t("app.noCompanies.title")).toBe(en.app.noCompanies.title);
     expect(t("app.missing", { defaultValue: "Fallback" })).toBe("Fallback");

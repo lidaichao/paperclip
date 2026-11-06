@@ -273,7 +273,7 @@ function InlineAuthPreview({
         </h3>
         <p className="mt-1 text-sm text-zinc-400">
           {mode === "sign_up"
-            ? l10n("local.start_with_a_paperclip_account_after_that_you_25f13e91")
+            ? l10n("local.invite_create_alice_account_demo")
             : l10n("local.use_the_paperclip_account_that_already_matche_9e291057")}
         </p>
       </div>

@@ -666,7 +666,7 @@ export function InviteLandingPage() {
                   </h2>
                   <p className="mt-1 text-sm text-zinc-400">
                     {authMode === "sign_up"
-                      ? l10n("local.start_with_a_paperclip_account_after_that_you_c3b2b0c8", {v0: (companyDisplayName)})
+                      ? l10n("local.invite_create_alice_account", { company: companyDisplayName })
                       : l10n("local.use_the_paperclip_account_that_already_matche_9e291057")}
                   </p>
                 </div>

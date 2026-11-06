@@ -243,7 +243,7 @@ function AuditUpsell() {
       <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
         <ShieldAlert className="h-10 w-10 text-muted-foreground/50" />
         <div>
-          <p className="text-sm font-medium text-foreground">{l10n("local.agent_audit_is_a_paperclip_enterprise_view_0f33f93b")}</p>
+          <p className="text-sm font-medium text-foreground">{l10n("local.agent_audit_enterprise_view")}</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
             {l10n("local.the_agent_audit_log_gives_you_a_searchable_ex_795b34a7")}{" "}
             <span className="font-mono text-(length:--text-micro)">audit:view_agent_actions</span>{" "}

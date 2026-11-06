@@ -151,7 +151,7 @@ export function SystemNoticeUxLab() {
             <h1 className="mt-4 text-3xl font-semibold tracking-tight">
               {l10n("local.first_class_system_notice_treatment_cd72c6b9")}</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-              {l10n("local.replaces_the_current_pattern_where_a_papercli_17231400")}</p>
+              {l10n("local.system_notice_alice_warning_redesign")}</p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="rounded-full px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps)">

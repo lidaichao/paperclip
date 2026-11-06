@@ -144,6 +144,48 @@ describe("WorkPackageConsole", () => {
     expect(container.textContent).toContain("等待整体验收");
   });
 
+  it("uses distinct English QA and PO result labels while preserving the recorded reason", async () => {
+    await i18n.changeLanguage("en");
+    const baseVerdict = quality.history.verdicts[0];
+    const verdictHistory = {
+      ...quality,
+      history: {
+        ...quality.history,
+        verdicts: [
+          { ...baseVerdict, id: "qa-pass", outcome: "pass", reason: "QA 原始结论" },
+          { ...baseVerdict, id: "po-approve", outcome: "approve", reason: "PO 原始结论" },
+        ],
+      },
+    };
+    qualityMock.mockResolvedValue(verdictHistory);
+    client.setQueryData(queryKeys.workRecords.quality("company-1", "project-1", ROOT_ID), verdictHistory);
+
+    await render();
+
+    expect(container.textContent).toContain("Passed · 回归缺陷");
+    expect(container.textContent).toContain("Approved · 回归缺陷");
+    expect(container.textContent).toContain("QA 原始结论");
+    expect(container.textContent).toContain("PO 原始结论");
+  });
+
+  it("uses locale-aware singular and plural defect evidence counts", async () => {
+    await i18n.changeLanguage("en");
+    await render();
+    expect(container.textContent).toContain("1 record");
+    await render(records.map((item) => item.id === ROOT_ID ? { ...item, quality: { ...item.quality, defectCount: 2 } } : item));
+    expect(container.textContent).toContain("2 records");
+  });
+
+  it("shows complete empty messages for each work record view", async () => {
+    await i18n.changeLanguage("en");
+    await render([], "plan");
+    expect(container.textContent).toContain("No plans yet. Use New at the top right to add the first plan.");
+    await render([], "defect");
+    expect(container.textContent).toContain("No defects yet. Use New at the top right to add the first defect.");
+    await render([]);
+    expect(container.textContent).toContain("No business records yet. Use New at the top right to add the first record.");
+  });
+
   it("fails closed when a cached running result becomes offline", async () => {
     await render();
     expect(container.querySelector('[data-testid="work-record-status"]')?.getAttribute("data-state")).toBe("running");
