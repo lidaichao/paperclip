@@ -9,7 +9,8 @@ import {
 import {
   getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase,
 } from "../__tests__/helpers/embedded-postgres.js";
-import { validateCompletionReviewContract } from "./issue-completion-review-contract.js";
+import { ISSUE_COMPLETION_REVIEW_TARGET_KEY,
+  validateCompletionReviewContract } from "./issue-completion-review-contract.js";
 
 const external = process.env.PAPERCLIP_TEST_DATABASE_URL;
 const support = external ? { supported: true } : await getEmbeddedPostgresTestSupport();
@@ -148,7 +149,7 @@ describe.runIf(support.supported)("inert completion review contract (PostgreSQL)
 
   it("purely rejects stale versions or false source agents and replays exact requests", async () => {
     const row = await fixture();
-    const request = { companyId: row.companyId, issueId: row.issueId,
+    const request = { reviewId: randomUUID(), companyId: row.companyId, issueId: row.issueId,
       sourceRunId: row.sourceRunId, sourceAgentId: row.sourceAgentId,
       reviewerAgentId: row.reviewerAgentId, interactionId: row.interactionId,
       sourceKind: row.sourceKind, requestId: row.requestId,
@@ -157,10 +158,14 @@ describe.runIf(support.supported)("inert completion review contract (PostgreSQL)
       status: "in_review", statusVersion: 4, assigneeAgentId: row.sourceAgentId,
       lastStatusDecisionId: null };
     const interaction = { companyId: row.companyId, issueId: row.issueId,
-      id: row.interactionId, status: "pending", addresseeAgentId: row.reviewerAgentId,
-      createdByAgentId: row.sourceAgentId, sourceRunId: row.sourceRunId };
+      id: row.interactionId, kind: "request_confirmation", status: "pending",
+      effectiveResolverPolicy: "not_creator", addresseeAgentId: row.reviewerAgentId,
+      addresseeUserId: null, createdByAgentId: row.sourceAgentId,
+      sourceRunId: row.sourceRunId, payload: { version: 1, prompt: "Review",
+        target: { type: "custom", key: ISSUE_COMPLETION_REVIEW_TARGET_KEY,
+          revisionId: request.reviewId } } };
     const reviewer = { companyId: row.companyId, id: row.reviewerAgentId,
-      status: "idle", executionMode: "client_pull" };
+      status: "idle", executionMode: "client_pull", invokable: true };
     const evidence = { companyId: row.companyId, issueId: row.issueId,
       runId: row.sourceRunId, agentId: row.sourceAgentId, kind: "client_pull" as const,
       id: row.sourceRunId, expiresAt: new Date(Date.now() + 60_000) };
@@ -174,7 +179,7 @@ describe.runIf(support.supported)("inert completion review contract (PostgreSQL)
       evidence: { ...evidence, cancelRequestedAt: new Date() } })).toThrow();
     expect(() => validateCompletionReviewContract({ ...facts,
       reviewer: { ...reviewer, pausedAt: new Date() } })).toThrow();
-    const existing = { ...request, id: randomUUID(), state: "accepted" };
+    const existing = { ...request, id: request.reviewId, state: "accepted" };
     expect(validateCompletionReviewContract({ ...facts, existing,
       issue: { ...issue, status: "done", statusVersion: 5 } })).toEqual({
         kind: "replay", reviewId: existing.id });
@@ -186,16 +191,22 @@ describe.runIf(support.supported)("inert completion review contract (PostgreSQL)
 it("pure validation refuses a paused reviewer or cancelled source lease without PostgreSQL", () => {
   const companyId = randomUUID(), issueId = randomUUID(), sourceRunId = randomUUID();
   const sourceAgentId = randomUUID(), reviewerAgentId = randomUUID(), interactionId = randomUUID();
+  const reviewId = randomUUID();
   const facts = {
-    request: { companyId, issueId, sourceRunId, sourceAgentId, reviewerAgentId,
+    request: { reviewId, companyId, issueId, sourceRunId, sourceAgentId, reviewerAgentId,
       interactionId, sourceKind: "client_pull" as const, requestId: randomUUID(),
       requestDigest: "sha256:request", expectedStatusVersion: 4 },
     issue: { companyId, issueId, status: "in_review", statusVersion: 4,
       assigneeAgentId: sourceAgentId, lastStatusDecisionId: null },
-    interaction: { companyId, issueId, id: interactionId, status: "pending",
-      addresseeAgentId: reviewerAgentId, createdByAgentId: sourceAgentId, sourceRunId },
+    interaction: { companyId, issueId, id: interactionId, kind: "request_confirmation",
+      status: "pending", effectiveResolverPolicy: "not_creator",
+      addresseeAgentId: reviewerAgentId, addresseeUserId: null,
+      createdByAgentId: sourceAgentId, sourceRunId,
+      payload: { version: 1, prompt: "Review", target: {
+        type: "custom", key: ISSUE_COMPLETION_REVIEW_TARGET_KEY,
+        revisionId: reviewId } } },
     reviewer: { companyId, id: reviewerAgentId, status: "idle",
-      executionMode: "client_pull" },
+      executionMode: "client_pull", invokable: true },
     evidence: { companyId, issueId, runId: sourceRunId, agentId: sourceAgentId,
       kind: "client_pull" as const, id: sourceRunId,
       expiresAt: new Date(Date.now() + 60_000) },
@@ -210,4 +221,42 @@ it("pure validation refuses a paused reviewer or cancelled source lease without 
     evidence: { ...facts.evidence, agentId: randomUUID() } })).toThrow();
   expect(() => validateCompletionReviewContract({ ...facts,
     issue: { ...facts.issue, statusVersion: 5 } })).toThrow();
+  expect(() => validateCompletionReviewContract({ ...facts,
+    interaction: { ...facts.interaction, payload: { version: 1, prompt: "Ordinary" } } })).toThrow();
+  expect(() => validateCompletionReviewContract({ ...facts,
+    interaction: { ...facts.interaction, payload: { version: 1, prompt: "Old native target",
+      target: { type: "custom", key: "native_completion_review",
+        revisionId: facts.request.reviewId } } } })).toThrow();
+  expect(() => validateCompletionReviewContract({ ...facts,
+    interaction: { ...facts.interaction, payload: { version: 1, prompt: "Wrong revision",
+      target: { type: "custom", key: ISSUE_COMPLETION_REVIEW_TARGET_KEY,
+        revisionId: randomUUID() } } } })).toThrow();
+  expect(() => validateCompletionReviewContract({ ...facts,
+    interaction: { ...facts.interaction, kind: "ask_user_questions" } })).toThrow();
+  expect(() => validateCompletionReviewContract({ ...facts,
+    interaction: { ...facts.interaction, effectiveResolverPolicy: "human_only" } })).toThrow();
+  expect(() => validateCompletionReviewContract({ ...facts,
+    reviewer: { ...facts.reviewer, status: "pending_approval" } })).toThrow();
+  expect(() => validateCompletionReviewContract({ ...facts,
+    reviewer: { ...facts.reviewer, invokable: false } })).toThrow();
+  expect(validateCompletionReviewContract({ ...facts,
+    reviewer: { ...facts.reviewer, executionMode: "native" } })).toEqual({ kind: "new" });
+  const nativeDecisionId = randomUUID();
+  const nativeFacts = { ...facts,
+    request: { ...facts.request, sourceKind: "native" as const },
+    issue: { ...facts.issue, lastStatusDecisionId: nativeDecisionId },
+    evidence: { ...facts.evidence, id: nativeDecisionId, kind: "native" as const,
+      applicationState: "applied" } };
+  expect(validateCompletionReviewContract(nativeFacts)).toEqual({ kind: "new" });
+  expect(validateCompletionReviewContract({ ...nativeFacts,
+    reviewer: { ...facts.reviewer, executionMode: "client_pull" } })).toEqual({ kind: "new" });
+  const existing = { ...facts.request, id: reviewId, state: "accepted" };
+  expect(validateCompletionReviewContract({ ...facts, existing,
+    issue: { ...facts.issue, status: "done", statusVersion: 5 },
+    interaction: { ...facts.interaction, status: "accepted" } })).toEqual({
+      kind: "replay", reviewId });
+  expect(() => validateCompletionReviewContract({ ...facts,
+    existing: { ...existing, requestDigest: "different" } })).toThrow();
+  expect(() => validateCompletionReviewContract({ ...facts, existing,
+    interaction: { ...facts.interaction, payload: { version: 1, prompt: "Ordinary" } } })).toThrow();
 });
