@@ -509,6 +509,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
     const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
       generation: claimed!.generation, clientRequestId: randomUUID() };
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
     const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId } as const;
     const comment = await svc.addFencedComment({ ...owner, body: "Local execution progress" }, actor);
     expect(comment.createdByRunId).toBe(scope.runId);
@@ -519,26 +520,77 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .rejects.toMatchObject({ status: 409 });
     const updated = await svc.patchFencedIssue({ ...owner, title: "Edited from desktop" }, actor);
     expect(updated.title).toBe("Edited from desktop");
+    await db.update(issues).set({ status: "in_review", executionRunId: null })
+      .where(eq(issues.id, scope.issueId));
+    const afterHandoffReplay = await svc.addFencedComment({ ...owner, body: "Local execution progress" }, actor);
+    expect(afterHandoffReplay.id).toBe(comment.id);
+    await expect(svc.addFencedComment({ ...owner, clientRequestId: randomUUID(),
+      body: "Another progress update" }, actor)).rejects.toMatchObject({ status: 409 });
     expect((await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).length).toBe(1);
   });
 
-  it("retries reference projection after a committed comment's first post-commit failure", async () => {
+  it("rolls back comment and audit when reference projection fails, then retries the same request", async () => {
     const scope = await fixture();
     const claimed = await localAgentRunLeaseService(db).claim({
       ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
     });
     const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
       generation: claimed!.generation, clientRequestId: randomUUID(), body: "Reference retry" };
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
     const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId } as const;
     const sync = vi.fn().mockRejectedValueOnce(new Error("projection unavailable")).mockResolvedValue(undefined);
     const svc = localAgentRunLeaseService(db, { syncCommentReferences: sync });
     await expect(svc.addFencedComment(owner, actor)).rejects.toThrow("projection unavailable");
-    const [stored] = await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId));
-    expect(stored.body).toBe("Reference retry");
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId)))
+      .toHaveLength(0);
+    expect((await db.select().from(activityLog).where(eq(activityLog.entityId, scope.issueId)))
+      .filter((event) => event.action === "issue.comment_added")).toHaveLength(0);
     const replay = await svc.addFencedComment(owner, actor);
-    expect(replay.id).toBe(stored.id);
+    expect(replay.body).toBe("Reference retry");
     expect(sync).toHaveBeenCalledTimes(2);
     expect(await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).toHaveLength(1);
+  });
+
+  it("rolls back a pure progress comment when external-object projection fails", async () => {
+    const scope = await fixture();
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
+    });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, clientRequestId: randomUUID(), body: "Halfway through" };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    const svc = localAgentRunLeaseService(db, {
+      syncCommentExternalObjects: async () => { throw new Error("external projection unavailable"); },
+    });
+    await expect(svc.addFencedComment(owner, actor)).rejects.toThrow("external projection unavailable");
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId)))
+      .toHaveLength(0);
+    expect((await db.select().from(activityLog).where(eq(activityLog.entityId, scope.issueId)))
+      .filter((event) => event.action === "issue.comment_added")).toHaveLength(0);
+  });
+
+  it("rejects mentions, links and progress comments on an unstarted task", async () => {
+    const scope = await fixture();
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
+    });
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, clientRequestId: randomUUID() };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    const svc = localAgentRunLeaseService(db);
+    await expect(svc.addFencedComment({ ...owner, body: "I started" }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    for (const body of ["@Luna please see", "https://example.com", "www.example.com",
+      "example.com", "mailto:team@example.com"]) {
+      await expect(svc.addFencedComment({ ...owner, body }, actor))
+        .rejects.toMatchObject({ status: 400 });
+    }
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId)))
+      .toHaveLength(0);
   });
 
   it("rejects other issues, companies, generations, and writes after cancellation", async () => {
@@ -619,7 +671,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     }))?.runId).toBe(scope.runId);
   });
 
-  it("keeps status and assignee edits closed at the dedicated HTTP route", async () => {
+  it("opens only a fenced progress comment while keeping ordinary writes and edits closed", async () => {
     const scope = await fixture();
     const app = express();
     app.use(express.json());
@@ -638,17 +690,21 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .send({ ...payload, status: "in_review", comment: "Review this" }).expect(403);
     await request(app).patch(`/api/agents/me/local-runs/${scope.runId}/issue`)
       .send({ ...payload, assigneeAgentId: randomUUID() }).expect(403);
-    await request(app).post(`/api/agents/me/local-runs/${scope.runId}/comments`)
-      .send({ ...payload, body: "Not enabled", clientRequestId: randomUUID() }).expect(403);
+    await request(app).post(`/api/issues/${scope.issueId}/comments`)
+      .send({ body: "Ordinary write forbidden" }).expect(403);
     const claimed = await localAgentRunLeaseService(db).claim({
       ...scope, deviceId: payload.deviceId, idempotencyKey: randomUUID(),
     });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    await request(app).post(`/api/agents/me/local-runs/${scope.runId}/comments`)
+      .send({ ...payload, leaseId: claimed!.leaseId, generation: claimed!.generation,
+        body: "Work is underway", clientRequestId: randomUUID() }).expect(201);
     await request(app).post(`/api/agents/me/local-runs/${scope.runId}/events`).send({
       ...payload, leaseId: claimed!.leaseId, generation: claimed!.generation,
       clientRequestId: randomUUID(), stream: "system", level: "info", message: "HTTP event",
     }).expect(201);
     const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
-    expect(issue.status).toBe("todo");
+    expect(issue.status).toBe("in_progress");
     expect(issue.assigneeAgentId).toBe(scope.agentId);
   });
 

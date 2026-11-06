@@ -18,6 +18,7 @@ import { accessService } from "./access.js";
 import { assertBoundLocalDevice } from "./local-agent-device-bindings.js";
 import { logActivity, publishActivity, type ActivityPublication } from "./activity-log.js";
 import { getExecutionBlocker } from "./execution-blocker.js";
+import { externalObjectService } from "./external-objects.js";
 import { issueService } from "./issues.js";
 import { issueReferenceService } from "./issue-references.js";
 import { issueThreadInteractionService } from "./issue-thread-interactions.js";
@@ -74,7 +75,10 @@ function wakeReasonFromRun(run: typeof heartbeatRuns.$inferSelect) {
 
 export function localAgentRunLeaseService(
   db: Db,
-  deps: { syncCommentReferences?: (commentId: string) => Promise<void> } = {},
+  deps: {
+    syncCommentReferences?: (commentId: string, tx: Db) => Promise<void>;
+    syncCommentExternalObjects?: (commentId: string, tx: Db) => Promise<void>;
+  } = {},
 ) {
   async function leaseTtlMs(tx: Db, runId: string) {
     const [row] = await tx.select({
@@ -520,6 +524,9 @@ export function localAgentRunLeaseService(
     actor: Express.Request["actor"],
   ) {
     if (typeof input.body !== "string" || !input.body.trim()) throw badRequest("Comment body is required");
+    if (/@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\.|\bmailto:|\b\S+\.(?:com|net|org|cn|io|dev|ai|co|xyz)(?:\b|\/)/i.test(input.body)) {
+      throw badRequest("Local progress comments cannot contain mentions or external links");
+    }
     if (!UUID.test(input.clientRequestId)) throw badRequest("clientRequestId must be a UUID");
     const publications: ActivityPublication[] = [];
     const result = await withFencedIssueWrite(input, actor, "issue:comment", async (tx, issue, authorizationReason) => {
@@ -534,6 +541,9 @@ export function localAgentRunLeaseService(
         }
         return { comment: existing, inserted: false };
       }
+      // A committed comment may be read back after the task entered review.
+      // This branch must never create new content once execution ownership ends.
+      if (issue.status !== "in_progress") throw conflict("Progress comments require an in-progress task");
       const sourceTrust = await resolveActorSourceTrustForIssue({
         db: tx, issue,
         actor: { actorType: "agent", actorId: input.agentId, agentId: input.agentId, runId: input.runId },
@@ -549,12 +559,13 @@ export function localAgentRunLeaseService(
         details: { commentId: saved.id, bodySnippet: saved.body.slice(0, 120),
           identifier: issue.identifier, issueTitle: issue.title, authorizationReason },
       }, publications);
+      await (deps.syncCommentReferences ?? ((id, currentTx) => issueReferenceService(db).syncComment(id, currentTx)))(saved.id, tx);
+      const externalEnabled = (await instanceSettingsService(tx).getExperimental()).enableExternalObjects === true;
+      await (deps.syncCommentExternalObjects ?? ((id, currentTx) =>
+        externalObjectService(db, { enabled: externalEnabled }).syncComment(id, currentTx)))(saved.id, tx);
       return { comment: saved, inserted: true };
-    });
+    }, { allowReviewReplay: true });
     for (const publication of publications) publishActivity(publication);
-    // Retry the idempotent projection even when the content command already
-    // committed. A previous post-commit failure must not strand references.
-    await (deps.syncCommentReferences ?? issueReferenceService(db).syncComment)(result.comment.id);
     return result.comment;
   }
 
