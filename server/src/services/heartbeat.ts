@@ -17,6 +17,7 @@ import { managedAiSessionFingerprintConfig, prepareManagedAiRuntime, assertManag
 import { aiConnectionBindingSchema } from "@paperclipai/shared";
 import { executionBlockerPredicate, getExecutionBlocker } from "./execution-blocker.js";
 import { isClientPullRuntimeConfig } from "./local-agent-run-leases.js";
+import { CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
 import { CONVERSATION_CONTINUATION_POLICY, claimedAdapterType, runUsedConversationAdapter, hasConversationContinuationPolicy, isConversationAdapter } from "./conversation-continuation.js";
 import { recordExecutionWait } from "./execution-wait.js";
 import { getNativeReviewAssignment, readNativeReviewAssignmentContext } from "./native-runtime/native-review-participant.js";
@@ -17035,6 +17036,11 @@ export function heartbeatService(
   }
 
   async function serverRunClaimAdmission(tx: Db, run: typeof heartbeatRuns.$inferSelect) {
+    // A persisted local run remains local even if its agent is later switched
+    // back to a server execution mode. Never reinterpret the queued run.
+    if (run.runtimeMode === "client_pull" ||
+      readNonEmptyString(parseObject(run.contextSnapshot).wakeReason) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON) return false;
+    if (await hasDedicatedLocalReviewReceipt(tx, run)) return false;
     // Both desktop and server claims lock this agent row before changing any
     // queued run to running. Recheck the persisted mode under that lock so a
     // concurrent mode switch cannot admit one run on each execution plane.
@@ -17048,6 +17054,18 @@ export function heartbeatService(
         isNull(localAgentRunLeases.releasedAt),
       )).limit(1);
     return !localOwner;
+  }
+
+  async function hasDedicatedLocalReviewReceipt(tx: Db, run: typeof heartbeatRuns.$inferSelect) {
+    if (!run.wakeupRequestId) return false;
+    const [wake] = await tx.select({ reason: agentWakeupRequests.reason,
+      idempotencyKey: agentWakeupRequests.idempotencyKey,
+    }).from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.id, run.wakeupRequestId),
+      eq(agentWakeupRequests.companyId, run.companyId),
+    )).limit(1);
+    return wake?.reason === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
+      /^interaction:[^:]+:completion-review:[^:]+$/.test(wake?.idempotencyKey ?? "");
   }
 
   async function withChatControlRecoveryGate(
@@ -17311,6 +17329,11 @@ export function heartbeatService(
     companyAgents?: AgentOrgRow[],
   ) {
     if (run.status !== "queued") return run;
+    // The dedicated review producer creates client_pull runs from the outset.
+    // Do not enter budget, dependency, or issue-lock mutation paths for them.
+    if (run.runtimeMode === "client_pull" ||
+      readNonEmptyString(parseObject(run.contextSnapshot).wakeReason) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON) return null;
+    if (await hasDedicatedLocalReviewReceipt(db, run)) return null;
     const agent = await getAgent(run.agentId);
     if (!agent) {
       await cancelRunInternal(
@@ -20011,6 +20034,8 @@ export function heartbeatService(
           and(
             eq(heartbeatRuns.agentId, agentId),
             eq(heartbeatRuns.status, "queued"),
+            ne(heartbeatRuns.runtimeMode, "client_pull"),
+            sql`${heartbeatRuns.contextSnapshot}->>'wakeReason' is distinct from ${CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON}`,
             cutoff ? gte(heartbeatRuns.createdAt, cutoff) : undefined,
           ),
         )
@@ -20234,7 +20259,9 @@ export function heartbeatService(
     let run = await getRun(runId);
     if (!run) return;
     if (run.status !== "queued" && run.status !== "running") return;
-    if (run.runtimeMode === "client_pull") return;
+    if (run.runtimeMode === "client_pull" ||
+      readNonEmptyString(parseObject(run.contextSnapshot).wakeReason) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON) return;
+    if (await hasDedicatedLocalReviewReceipt(db, run)) return;
     const executionAgent = await getAgent(run.agentId);
     if (executionAgent && isClientPullRuntimeConfig(executionAgent.runtimeConfig)) return;
 
