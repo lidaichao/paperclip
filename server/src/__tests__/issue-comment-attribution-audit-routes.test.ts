@@ -359,5 +359,35 @@ describeEmbeddedPostgres("issue comment attribution and patch audit routes", () 
       await db.execute(sql`drop trigger if exists reject_review_handoff_comment_trigger on issue_comments`);
       await db.execute(sql`drop function if exists reject_review_handoff_comment()`);
     }
+
+    await db.execute(sql`
+      create function reject_review_comment_activity() returns trigger language plpgsql as $$
+      begin
+        if new.action = 'issue.comment_added' then
+          raise exception 'test comment activity failure';
+        end if;
+        return new;
+      end; $$
+    `);
+    await db.execute(sql`
+      create trigger reject_review_comment_activity_trigger before insert on activity_log
+      for each row execute function reject_review_comment_activity()
+    `);
+    try {
+      const response = await request(app)
+        .patch(`/api/issues/${fixture.sourceIssue.id}`)
+        .send({ status: "in_review", comment: "Audit cannot commit" });
+      expect(response.status).toBe(500);
+      const [issue] = await db.select().from(issues).where(eq(issues.id, fixture.sourceIssue.id));
+      expect(issue.status).toBe("in_progress");
+      expect(await db.select().from(issueComments).where(eq(issueComments.issueId, fixture.sourceIssue.id)))
+        .toHaveLength(0);
+      expect((await db.select().from(activityLog).where(eq(activityLog.entityId, fixture.sourceIssue.id)))
+        .filter((event) => event.action === "issue.updated" || event.action === "issue.comment_added"))
+        .toHaveLength(0);
+    } finally {
+      await db.execute(sql`drop trigger if exists reject_review_comment_activity_trigger on activity_log`);
+      await db.execute(sql`drop function if exists reject_review_comment_activity()`);
+    }
   }, 30_000);
 });

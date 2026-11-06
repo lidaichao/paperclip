@@ -13489,6 +13489,7 @@ export function issueRoutes(
         transition.decision && decisionId ? transition.decision : null;
       let attachmentComment: Awaited<ReturnType<typeof svc.addComment>> | null =
         null;
+      let reviewTransitionCommentActivityLogged = false;
       const attachmentCommentSourceTrust = commentAttachmentIds?.length
         ? await sourceTrustForActorWrite(existing, actor)
         : undefined;
@@ -13533,6 +13534,8 @@ export function issueRoutes(
               // Keep the review handoff and its explanation in one database
               // transaction. A failed comment must not strand an issue in
               // review without the agent's handoff context.
+              await persistReviewTransitionActivity(tx, updated);
+              const commentReferencesBefore = await issueReferencesSvc.listIssueReferenceSummary(id, tx);
               attachmentComment = await svc.addComment(
                 id,
                 commentBody,
@@ -13551,6 +13554,44 @@ export function issueRoutes(
                 },
                 tx,
               );
+              await issueReferencesSvc.syncComment(attachmentComment.id, tx);
+              const commentReferencesAfter = await issueReferencesSvc.listIssueReferenceSummary(id, tx);
+              const referenceDiff = issueReferencesSvc.diffIssueReferenceSummary(
+                commentReferencesBefore, commentReferencesAfter,
+              );
+              await logActivity(tx as unknown as Db, {
+                companyId: updated.companyId,
+                actorType: actor.actorType,
+                actorId: actor.actorId,
+                agentId: actor.agentId,
+                runId: actor.runId,
+                agentApiKeyId: actor.agentApiKeyId,
+                responsibleUserIdOverride: authenticatedActorResponsibleUserId(req),
+                action: "issue.comment_added",
+                entityType: "issue",
+                entityId: updated.id,
+                details: {
+                  commentId: attachmentComment.id,
+                  bodySnippet: attachmentComment.body.slice(0, 120),
+                  identifier: updated.identifier,
+                  issueTitle: updated.title,
+                  authorizationReason: issueMutationAuthorizationReason,
+                  updated: true,
+                  ...(interruptedRunId ? { interruptedRunId } : {}),
+                  ...summarizeIssueReferenceActivityDetails({
+                    addedReferencedIssues: referenceDiff.addedReferencedIssues.map(
+                      summarizeIssueRelationForActivity,
+                    ),
+                    removedReferencedIssues: referenceDiff.removedReferencedIssues.map(
+                      summarizeIssueRelationForActivity,
+                    ),
+                    currentReferencedIssues: referenceDiff.currentReferencedIssues.map(
+                      summarizeIssueRelationForActivity,
+                    ),
+                  }),
+                },
+              }, postCommitActivityPublications);
+              reviewTransitionCommentActivityLogged = true;
             }
 
             if (decision && decisionId) {
@@ -13575,7 +13616,8 @@ export function issueRoutes(
               );
             }
 
-            await persistReviewTransitionActivity(tx, updated);
+            if (!reviewTransitionCommentActivityLogged)
+              await persistReviewTransitionActivity(tx, updated);
 
             return updated;
           });
@@ -14213,7 +14255,7 @@ export function issueRoutes(
           ),
         };
 
-        await logActivity(db, {
+        if (!reviewTransitionCommentActivityLogged) await logActivity(db, {
           companyId: issue.companyId,
           actorType: actor.actorType,
           actorId: actor.actorId,
