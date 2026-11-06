@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { and, eq, sql } from "drizzle-orm";
 import {
-  agents, companies, createDb, heartbeatRuns, issueCompletionReviews,
+  agents, companies, createDb, heartbeatRuns, issueCommandDeliveries, issueCompletionReviews,
   issueThreadInteractions, issues, localAgentRunLeases,
 } from "@paperclipai/db";
 import type { Db } from "@paperclipai/db";
@@ -27,7 +27,7 @@ describe.runIf(support.supported)("terminal issue expiry of shared completion re
     await temporary?.cleanup();
   });
 
-  async function fixture(withReview = true) {
+  async function fixture(withReview = true, withDelivery = false) {
     const companyId = randomUUID(), issueId = randomUUID();
     const sourceAgentId = randomUUID(), reviewerAgentId = randomUUID();
     const sourceRunId = randomUUID(), reviewId = randomUUID();
@@ -59,6 +59,11 @@ describe.runIf(support.supported)("terminal issue expiry of shared completion re
         requestDigest: "sha256:review-expiry", issueStatusVersion: 0,
       });
     }
+    if (withDelivery) {
+      await db.insert(issueCommandDeliveries).values({ companyId, issueId,
+        interactionId: interaction.id, sourceRunId, targetAgentId: reviewerAgentId,
+        kind: "interaction_pending", status: "ready" });
+    }
     return { companyId, issueId, interactionId: interaction.id, reviewId };
   }
 
@@ -69,7 +74,9 @@ describe.runIf(support.supported)("terminal issue expiry of shared completion re
     const [review] = await db.select().from(issueCompletionReviews)
       .where(and(eq(issueCompletionReviews.companyId, f.companyId),
         eq(issueCompletionReviews.interactionId, f.interactionId)));
-    return { issue, interaction, review };
+    const [delivery] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.interactionId, f.interactionId));
+    return { issue, interaction, review, delivery };
   }
 
   async function closeInTransaction(f: Awaited<ReturnType<typeof fixture>>) {
@@ -82,7 +89,7 @@ describe.runIf(support.supported)("terminal issue expiry of shared completion re
   }
 
   it("cancels the review and expires its card in the same issue transaction", async () => {
-    const f = await fixture();
+    const f = await fixture(true, true);
     expect(await issueService(db).update(f.issueId, {
       status: "done", companyGuard: f.companyId,
     })).toMatchObject({ status: "done" });
@@ -90,7 +97,75 @@ describe.runIf(support.supported)("terminal issue expiry of shared completion re
     expect(result.issue?.status).toBe("done");
     expect(result.interaction?.status).toBe("expired");
     expect(result.review?.state).toBe("cancelled");
+    expect(result.delivery?.status).toBe("cancelled");
     expect(result.review?.decidedAt?.getTime()).toBe(result.interaction?.resolvedAt?.getTime());
+  });
+
+  for (const status of ["todo", "in_progress", "blocked"] as const) {
+    it(`invalidates only the shared completion review when in_review becomes ${status}`, async () => {
+      const f = await fixture(true, true);
+      const [ordinary] = await db.insert(issueThreadInteractions).values({
+        companyId: f.companyId, issueId: f.issueId, kind: "request_confirmation",
+        status: "pending", payload: { version: 1, prompt: "Unrelated question" },
+      }).returning();
+      expect(await issueService(db).update(f.issueId, {
+        status, companyGuard: f.companyId,
+      })).toMatchObject({ status });
+      const result = await state(f);
+      expect(result.interaction?.status).toBe("expired");
+      expect(result.interaction?.result).toMatchObject({ outcome: "stale_target" });
+      expect(result.review?.state).toBe("cancelled");
+      expect(result.delivery?.status).toBe("cancelled");
+      const [other] = await db.select().from(issueThreadInteractions)
+        .where(eq(issueThreadInteractions.id, ordinary.id));
+      expect(other.status).toBe("pending");
+    });
+  }
+
+  it("does not revive an expired review card when the issue returns to in_review", async () => {
+    const f = await fixture(true, true);
+    await issueService(db).update(f.issueId, { status: "todo", companyGuard: f.companyId });
+    await issueService(db).update(f.issueId, { status: "in_review", companyGuard: f.companyId });
+    const result = await state(f);
+    expect(result.issue?.status).toBe("in_review");
+    expect(result.interaction?.status).toBe("expired");
+    expect(result.review?.state).toBe("cancelled");
+    expect(result.delivery?.status).toBe("cancelled");
+  });
+
+  it("clears an unsent claimed delivery token on review invalidation", async () => {
+    const f = await fixture(true, true);
+    await db.update(issueCommandDeliveries).set({ status: "claimed",
+      claimToken: randomUUID(), claimExpiresAt: new Date(Date.now() + 60_000) })
+      .where(eq(issueCommandDeliveries.interactionId, f.interactionId));
+    await issueService(db).update(f.issueId, { status: "blocked", companyGuard: f.companyId });
+    const result = await state(f);
+    expect(result.delivery?.status).toBe("cancelled");
+    expect(result.delivery?.claimToken).toBeNull();
+    expect(result.delivery?.claimExpiresAt).toBeNull();
+  });
+
+  it("rolls back issue, delivery, review and card when a nonterminal card update fails", async () => {
+    const f = await fixture(true, true);
+    const triggerName = `review_status_fail_${f.interactionId.replaceAll("-", "")}`;
+    const functionName = `${triggerName}_fn`;
+    await db.execute(sql.raw(`CREATE FUNCTION ${functionName}() RETURNS trigger AS $$
+      BEGIN RAISE EXCEPTION 'forced card update failure'; END; $$ LANGUAGE plpgsql`));
+    await db.execute(sql.raw(`CREATE TRIGGER ${triggerName} BEFORE UPDATE ON issue_thread_interactions
+      FOR EACH ROW WHEN (OLD.id = '${f.interactionId}') EXECUTE FUNCTION ${functionName}()`));
+    try {
+      await expect(issueService(db).update(f.issueId, {
+        status: "todo", companyGuard: f.companyId,
+      })).rejects.toThrow('Failed query: update "issue_thread_interactions"');
+      const result = await state(f);
+      expect(result.issue?.status).toBe("in_review");
+      expect(result.interaction?.status).toBe("pending");
+      expect(result.review?.state).toBe("pending");
+      expect(result.delivery?.status).toBe("ready");
+    } finally {
+      await db.execute(sql.raw(`DROP TRIGGER ${triggerName} ON issue_thread_interactions`));
+      await db.execute(sql.raw(`DROP FUNCTION ${functionName}()`));
+    }
   });
 
   it("fails closed when the target has no pending review and rolls back issue closure", async () => {

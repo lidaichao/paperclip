@@ -382,6 +382,33 @@ describe.runIf(support.supported)("inert shared completion review acceptance (Po
     expect(result.activities).toHaveLength(0);
   });
 
+  it("loses a nonterminal review-exit race without a partial acceptance", async () => {
+    const f = await fixture(), input = request(f);
+    let issueLocked!: () => void, releaseIssue!: () => void;
+    const locked = new Promise<void>((resolve) => { issueLocked = resolve; });
+    const hold = new Promise<void>((resolve) => { releaseIssue = resolve; });
+    const exitReview = db.transaction(async (tx) => {
+      await tx.select({ id: issues.id }).from(issues)
+        .where(eq(issues.id, f.issueId)).for("update");
+      issueLocked();
+      await hold;
+      await issueService(db).update(f.issueId, {
+        companyGuard: f.companyId, status: "todo",
+      }, tx as unknown as Db, [], []);
+    });
+    await locked;
+    const accepting = issueCompletionReviewDecisionService(db).accept(input)
+      .then(() => null, (error: unknown) => error);
+    releaseIssue();
+    await exitReview;
+    expect(await accepting).toMatchObject({ status: 409 });
+    const result = await state(f);
+    expect(result.issue?.status).toBe("todo");
+    expect(result.review?.state).toBe("cancelled");
+    expect(result.card?.status).toBe("expired");
+    expect(result.activities).toHaveLength(0);
+  });
+
   it("rolls back task, card, and review if activity persistence fails", async () => {
     const f = await fixture(), input = request(f);
     const triggerName = `review_accept_fail_${f.reviewId.replaceAll("-", "")}`;

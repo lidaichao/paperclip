@@ -10999,8 +10999,10 @@ export function issueService(db: Db) {
               });
             }
           }
-          if (updated.status === "done" || updated.status === "cancelled") {
-            await finalizeSummarySlotsForTerminalIssue(tx, updated);
+          const becameTerminal = updated.status === "done" || updated.status === "cancelled";
+          const leftReview = receiptExisting.status === "in_review" && updated.status !== "in_review";
+          if (becameTerminal || leftReview) {
+            if (becameTerminal) await finalizeSummarySlotsForTerminalIssue(tx, updated);
             // Every terminal transition funnels through here, including direct
             // service callers (tree control, recovery, pipelines, status cards)
             // that never touch the HTTP routes, so pending interaction cards
@@ -11008,18 +11010,20 @@ export function issueService(db: Db) {
             // cycle (issue-thread-interactions.js imports issueService).
             const { issueThreadInteractionService } =
               await import("./issue-thread-interactions.js");
-            const expiredInteractions = await issueThreadInteractionService(
-              tx,
-            ).expirePendingInteractionsForTerminalIssue(updated, {
+            const interactionService = issueThreadInteractionService(tx);
+            const interactionActor = {
               agentId: actorAgentId ?? null,
               userId: actorUserId ?? null,
-            });
-            const {
-              nativeQuestionCancellationIdentity,
-              requestNativeQuestionRunCancellation,
-            } = await import("./native-runtime/native-question-bridge.js");
+            };
+            const expiredInteractions = becameTerminal
+              ? await interactionService.expirePendingInteractionsForTerminalIssue(updated, interactionActor)
+              : await interactionService.expirePendingCompletionReviewsForIssueStatusChange(updated, interactionActor);
             for (const interaction of expiredInteractions) {
-              if (interaction.kind === "ask_user_questions") {
+              if (becameTerminal && interaction.kind === "ask_user_questions") {
+                const {
+                  nativeQuestionCancellationIdentity,
+                  requestNativeQuestionRunCancellation,
+                } = await import("./native-runtime/native-question-bridge.js");
                 const nativeQuestion =
                   nativeQuestionCancellationIdentity(interaction);
                 if (nativeQuestion) {
@@ -11060,7 +11064,8 @@ export function issueService(db: Db) {
                   interactionId: interaction.id,
                   interactionKind: interaction.kind,
                   interactionStatus: interaction.status,
-                  source: "issue.status_transition.issue_closed",
+                  source: becameTerminal ? "issue.status_transition.issue_closed"
+                    : "issue.status_transition.left_in_review",
                   result: interaction.result ?? null,
                 },
               });

@@ -89,6 +89,7 @@ import {
 import { z } from "zod";
 import { conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
+import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { getTelemetryClient } from "../telemetry.js";
 import {
   logActivity,
@@ -4572,11 +4573,19 @@ export function issueThreadInteractionService(
       if (expired.length) await db.delete(toolOauthStates).where(inArray(toolOauthStates.interactionId, expired.map((row) => row.id)));
       return expired;
     },
+    expirePendingCompletionReviewsForIssueStatusChange: async (
+      issue: { id: string; companyId: string; status: string },
+      actor: InteractionActor = {},
+    ) => issueThreadInteractionService(db, opts).expirePendingInteractionsForTerminalIssue(
+      issue, actor, "shared_only",
+    ),
     expirePendingInteractionsForTerminalIssue: async (
       issue: { id: string; companyId: string; status: string },
       actor: InteractionActor = {},
+      mode: "terminal" | "shared_only" = "terminal",
     ) => {
-      if (!isTerminalIssueStatus(issue.status)) return [];
+      const terminal = isTerminalIssueStatus(issue.status);
+      if (!terminal && mode === "terminal") return [];
       const rows = await db
         .select()
         .from(issueThreadInteractions)
@@ -4593,6 +4602,7 @@ export function issueThreadInteractionService(
       const expired: IssueThreadInteraction[] = [];
       for (const row of rows) {
         const initialReviewTarget = sharedCompletionReviewTarget(row);
+        if (mode === "shared_only" && !initialReviewTarget) continue;
         // Same ordering as withdrawal: revoke the linked tool action before
         // resolving the card, inside one transaction. A concurrent gateway
         // claim (approved -> executing) blocks on the revocation's row lock
@@ -4604,9 +4614,18 @@ export function issueThreadInteractionService(
         const updated = await db
           .transaction(async (tx) => {
             // The enclosing issue transition holds the issue lock. Take the
-            // review lock before the interaction lock, in the same savepoint.
-            // A missing review must abort the terminal transition rather than
-            // leave a pending review behind an expired card.
+            // delivery and review locks before the interaction lock, in the
+            // same savepoint. A missing review aborts the status transition.
+            if (initialReviewTarget) {
+              // Existing delivery paths that enqueue or claim first own the
+              // issue lock. The service currently handles only the persisted
+              // interaction_pending kind. A future dedicated review kind must
+              // join this transaction before its producer can be enabled.
+              // A delivered wake remains a historical receipt.
+              await issueCommandDeliveryService(tx as unknown as Db).cancel(tx as unknown as Db, {
+                companyId: issue.companyId, interactionId: row.id,
+              });
+            }
             const review = initialReviewTarget ? await tx.select({ id: issueCompletionReviews.id })
               .from(issueCompletionReviews)
               .where(and(
@@ -4642,7 +4661,9 @@ export function issueThreadInteractionService(
               .update(issueThreadInteractions)
               .set({
                 status: "expired",
-                result: buildAdministrativeOutcomeResult(row, "issue_closed"),
+                result: terminal ? buildAdministrativeOutcomeResult(row, "issue_closed")
+                  : { version: 1, outcome: "stale_target",
+                    reason: `Issue left in_review for ${issue.status}` },
                 resolvedByAgentId: actor.agentId ?? null,
                 resolvedByUserId: actor.userId ?? null,
                 resolvedAt: now,
