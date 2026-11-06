@@ -2,8 +2,9 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq, sql } from "drizzle-orm";
 import {
-  activityLog, agents, companies, createDb, heartbeatRuns, issueCompletionReviews,
-  issueThreadInteractions, issues, localAgentRunLeases,
+  activityLog, agentApiKeys, agents, companies, createDb, heartbeatRuns,
+  issueCompletionReviews, issueThreadInteractions, issues,
+  localAgentDeviceBindings, localAgentRunLeases,
 } from "@paperclipai/db";
 import {
   getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase,
@@ -68,6 +69,31 @@ describe.runIf(support.supported)("inert shared completion review acceptance (Po
     return { companyId: f.companyId, issueId: f.issueId, reviewId: f.reviewId,
       actorAgentId: f.reviewerAgentId, actorRunId: f.reviewerRunId,
       requestId: randomUUID(), summary: "The work meets the requirement" };
+  }
+
+  async function clientPullProof(f: Awaited<ReturnType<typeof fixture>>) {
+    const keyId = randomUUID(), deviceId = "reviewer-desktop-001";
+    // The source run has already handed off. Only one active lease may own an issue.
+    await db.update(localAgentRunLeases).set({ releasedAt: new Date(),
+      stopAcknowledgedAt: new Date(), outcome: "succeeded" })
+      .where(eq(localAgentRunLeases.issueId, f.issueId));
+    await db.insert(agentApiKeys).values({ id: keyId, companyId: f.companyId,
+      agentId: f.reviewerAgentId, name: "Reviewer desktop", keyHash: randomUUID() });
+    await db.insert(localAgentDeviceBindings).values({ companyId: f.companyId,
+      agentId: f.reviewerAgentId, keyId, deviceId });
+    await db.update(heartbeatRuns).set({ runtimeMode: "client_pull" })
+      .where(eq(heartbeatRuns.id, f.reviewerRunId));
+    const [lease] = await db.insert(localAgentRunLeases).values({
+      runId: f.reviewerRunId, companyId: f.companyId,
+      agentId: f.reviewerAgentId, issueId: f.issueId, deviceId,
+      deviceKeyId: keyId, idempotencyKey: randomUUID(),
+      expiresAt: new Date(Date.now() + 60_000),
+    }).returning();
+    return { owner: { companyId: f.companyId, agentId: f.reviewerAgentId,
+      deviceId, keyId, leaseId: lease.leaseId, generation: lease.generation,
+      runId: f.reviewerRunId },
+      actor: { type: "agent" as const, source: "agent_key" as const,
+        companyId: f.companyId, agentId: f.reviewerAgentId, keyId } };
   }
 
   async function state(f: Awaited<ReturnType<typeof fixture>>) {
@@ -216,6 +242,117 @@ describe.runIf(support.supported)("inert shared completion review acceptance (Po
     await expect(issueCompletionReviewDecisionService(db).accept(request(f)))
       .rejects.toMatchObject({ status: 422 });
     expect((await state(f)).review?.state).toBe("pending");
+  });
+
+  it("accepts only the authenticated live client-pull reviewer lease", async () => {
+    const f = await fixture(), proof = await clientPullProof(f);
+    const svc = issueCompletionReviewDecisionService(db);
+    const input = request(f);
+    await expect(svc.accept({ ...input, clientPullProof: {
+      ...proof, owner: { ...proof.owner, generation: proof.owner.generation + 1 },
+    } })).rejects.toMatchObject({ status: 409 });
+    await expect(svc.accept({ ...input, clientPullProof: {
+      ...proof, actor: { ...proof.actor, keyId: randomUUID() },
+    } })).rejects.toMatchObject({ status: 403 });
+    await expect(svc.accept({ ...input, clientPullProof: {
+      ...proof, owner: { ...proof.owner, deviceId: "another-desktop-001" },
+    } })).rejects.toMatchObject({ status: 409 });
+    expect((await state(f)).review?.state).toBe("pending");
+    const receipt = await svc.accept({ ...input, clientPullProof: proof });
+    expect(receipt).toMatchObject({ outcome: "accepted", reviewId: f.reviewId });
+    expect((await state(f)).issue?.status).toBe("done");
+    await expect(svc.accept(input)).rejects.toMatchObject({ status: 422 });
+    await expect(svc.accept({ ...input, clientPullProof: {
+      ...proof, actor: { ...proof.actor, keyId: randomUUID() },
+    } })).rejects.toMatchObject({ status: 403 });
+    expect(await svc.accept({ ...input, clientPullProof: proof })).toEqual(receipt);
+    expect((await state(f)).activities).toHaveLength(1);
+    await db.update(heartbeatRuns).set({ status: "succeeded" })
+      .where(eq(heartbeatRuns.id, f.reviewerRunId));
+    await db.update(localAgentRunLeases).set({ releasedAt: new Date(),
+      stopAcknowledgedAt: new Date(), outcome: "succeeded" })
+      .where(eq(localAgentRunLeases.runId, f.reviewerRunId));
+    await expect(svc.accept({ ...input, clientPullProof: proof }))
+      .rejects.toMatchObject({ status: 409 });
+  });
+
+  it("rejects expired, cancelled, revoked-device and revoked-key client-pull proofs", async () => {
+    for (const change of ["expired", "cancelled", "device", "key"] as const) {
+      const f = await fixture(), proof = await clientPullProof(f);
+      if (change === "expired") await db.update(localAgentRunLeases)
+        .set({ expiresAt: new Date(Date.now() - 1000) })
+        .where(eq(localAgentRunLeases.runId, f.reviewerRunId));
+      if (change === "cancelled") await db.update(localAgentRunLeases)
+        .set({ cancelRequestedAt: new Date() })
+        .where(eq(localAgentRunLeases.runId, f.reviewerRunId));
+      if (change === "device") await db.update(localAgentDeviceBindings)
+        .set({ revokedAt: new Date() })
+        .where(eq(localAgentDeviceBindings.keyId, proof.owner.keyId));
+      if (change === "key") await db.update(agentApiKeys)
+        .set({ revokedAt: new Date() })
+        .where(eq(agentApiKeys.id, proof.owner.keyId));
+      await expect(issueCompletionReviewDecisionService(db).accept({
+        ...request(f), clientPullProof: proof,
+      })).rejects.toMatchObject({ status: 409 });
+      const unchanged = await state(f);
+      expect(unchanged.issue?.status).toBe("in_review");
+      expect(unchanged.review?.state).toBe("pending");
+      expect(unchanged.card?.status).toBe("pending");
+      expect(unchanged.activities).toHaveLength(0);
+    }
+  });
+
+  it("does not wait on a cancellation holding the client-pull run or lease", async () => {
+    const f = await fixture(), proof = await clientPullProof(f);
+    let runLocked!: () => void, releaseRun!: () => void;
+    const locked = new Promise<void>((resolve) => { runLocked = resolve; });
+    const hold = new Promise<void>((resolve) => { releaseRun = resolve; });
+    const cancelling = db.transaction(async (tx) => {
+      await tx.select({ id: heartbeatRuns.id }).from(heartbeatRuns)
+        .where(eq(heartbeatRuns.id, f.reviewerRunId)).for("update");
+      await tx.select({ runId: localAgentRunLeases.runId }).from(localAgentRunLeases)
+        .where(eq(localAgentRunLeases.runId, f.reviewerRunId)).for("update");
+      runLocked();
+      await hold;
+      await tx.update(localAgentRunLeases).set({ cancelRequestedAt: new Date() })
+        .where(eq(localAgentRunLeases.runId, f.reviewerRunId));
+    });
+    await locked;
+    try {
+      await expect(issueCompletionReviewDecisionService(db).accept({
+        ...request(f), clientPullProof: proof,
+      })).rejects.toMatchObject({ status: 409,
+        message: expect.stringContaining("retry") });
+    } finally {
+      releaseRun();
+      await cancelling;
+    }
+    expect((await state(f)).review?.state).toBe("pending");
+  });
+
+  it("holds the client-pull run and lease through acceptance before a later cancellation", async () => {
+    const f = await fixture(), proof = await clientPullProof(f);
+    let proofLocked!: () => void, releaseProof!: () => void;
+    const locked = new Promise<void>((resolve) => { proofLocked = resolve; });
+    const hold = new Promise<void>((resolve) => { releaseProof = resolve; });
+    const accepting = issueCompletionReviewDecisionService(db, {
+      afterReviewerRunLocked: async () => { proofLocked(); await hold; },
+    }).accept({ ...request(f), clientPullProof: proof });
+    await locked;
+    try {
+      await expect(db.transaction(async (tx) => tx.select({ runId: localAgentRunLeases.runId })
+        .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, f.reviewerRunId))
+        .for("update", { noWait: true }))).rejects.toThrow();
+    } finally {
+      releaseProof();
+    }
+    await accepting;
+    await db.update(localAgentRunLeases).set({ cancelRequestedAt: new Date() })
+      .where(eq(localAgentRunLeases.runId, f.reviewerRunId));
+    const result = await state(f);
+    expect(result.review?.state).toBe("accepted");
+    expect(result.issue?.status).toBe("done");
+    expect(result.activities).toHaveLength(1);
   });
 
   it("loses a terminal cancellation race without a partial acceptance", async () => {

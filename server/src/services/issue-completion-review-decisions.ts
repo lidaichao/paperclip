@@ -1,12 +1,14 @@
 import { createHash } from "node:crypto";
 import type { Db } from "@paperclipai/db";
 import {
-  heartbeatRuns, issueCompletionReviews, issues, issueThreadInteractions,
+  agentApiKeys, heartbeatRuns, issueCompletionReviews, issues,
+  issueThreadInteractions, localAgentDeviceBindings, localAgentRunLeases,
 } from "@paperclipai/db";
-import { and, eq, ne } from "drizzle-orm";
-import { badRequest, conflict, unprocessable } from "../errors.js";
+import { and, eq, isNull, ne, sql } from "drizzle-orm";
+import { badRequest, conflict, forbidden, unprocessable } from "../errors.js";
 import { logActivity, publishActivity, type ActivityPublication } from "./activity-log.js";
 import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
+import type { LocalRunOwner } from "./local-agent-run-leases.js";
 import {
   issueService, type IssuePostCommitAction,
 } from "./issues.js";
@@ -19,6 +21,10 @@ type DecisionInput = {
   actorRunId: string;
   requestId: string;
   summary: string;
+  clientPullProof?: {
+    owner: LocalRunOwner;
+    actor: Express.Request["actor"];
+  };
 };
 
 function record(value: unknown): Record<string, unknown> {
@@ -36,6 +42,53 @@ function normalizedRequest(input: DecisionInput) {
     "issue_completion_review_accept_v1", input.reviewId, summary,
   ])).digest("hex");
   return { summary, digest };
+}
+
+async function assertClientPullReviewProof(tx: Db, input: DecisionInput,
+  run: { id: string; companyId: string; agentId: string }) {
+  const proof = input.clientPullProof;
+  if (!proof) throw unprocessable("Client-pull reviewer lease and device proof are required");
+  const { owner, actor } = proof;
+  if (actor.type !== "agent" || actor.source !== "agent_key" ||
+    actor.companyId !== input.companyId || actor.agentId !== input.actorAgentId ||
+    actor.keyId !== owner.keyId || (actor.runId && actor.runId !== input.actorRunId)) {
+    throw forbidden("An authenticated reviewer agent key is required");
+  }
+  if (owner.companyId !== input.companyId || owner.agentId !== input.actorAgentId ||
+    owner.runId !== input.actorRunId || run.id !== owner.runId ||
+    run.companyId !== owner.companyId || run.agentId !== owner.agentId) {
+    throw conflict("Reviewer run proof changed; retry after refreshing the review");
+  }
+  // The issue, review, card and run are already locked. Never wait on a lease
+  // or key held by the existing run-first cancellation/finish paths.
+  const [lease] = await tx.select().from(localAgentRunLeases)
+    .where(eq(localAgentRunLeases.runId, owner.runId))
+    .for("update", { skipLocked: true });
+  if (!lease || lease.companyId !== owner.companyId || lease.agentId !== owner.agentId ||
+    lease.issueId !== input.issueId || lease.deviceId !== owner.deviceId ||
+    lease.deviceKeyId !== owner.keyId || lease.leaseId !== owner.leaseId ||
+    lease.generation !== owner.generation || lease.cancelRequestedAt || lease.releasedAt) {
+    throw conflict("Reviewer lease is unavailable or changing; retry after refreshing the review");
+  }
+  const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
+    .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, owner.runId));
+  if (!live?.live) throw conflict("Reviewer lease expired; retry after refreshing the review");
+  const [key] = await tx.select({ id: agentApiKeys.id }).from(agentApiKeys).where(and(
+    eq(agentApiKeys.id, owner.keyId), eq(agentApiKeys.companyId, owner.companyId),
+    eq(agentApiKeys.agentId, owner.agentId), isNull(agentApiKeys.revokedAt),
+  )).for("update", { skipLocked: true });
+  if (!key) throw conflict("Reviewer device key is unavailable or changing; retry after refreshing the review");
+  // Device revocation locks run→lease before changing the binding, so the run
+  // lock above makes this nonblocking binding read stable until commit.
+  const [binding] = await tx.select({ id: localAgentDeviceBindings.id })
+    .from(localAgentDeviceBindings).where(and(
+      eq(localAgentDeviceBindings.companyId, owner.companyId),
+      eq(localAgentDeviceBindings.agentId, owner.agentId),
+      eq(localAgentDeviceBindings.keyId, owner.keyId),
+      eq(localAgentDeviceBindings.deviceId, owner.deviceId),
+      isNull(localAgentDeviceBindings.revokedAt),
+    )).limit(1);
+  if (!binding) throw conflict("Reviewer device binding changed; retry after refreshing the review");
 }
 
 /**
@@ -75,7 +128,23 @@ export function issueCompletionReviewDecisionService(db: Db, testHooks: {
           && review.decisionRequestDigest === normalized.digest
           && review.decisionReceipt && interaction.status === "accepted"
           && interaction.resolvedByAgentId === input.actorAgentId
-          && interaction.resolvedByRunId === input.actorRunId) return review.decisionReceipt;
+          && interaction.resolvedByRunId === input.actorRunId) {
+          if (record(review.decisionReceipt).reviewerRuntimeMode === "client_pull") {
+            if (!input.clientPullProof) {
+              throw unprocessable("Client-pull reviewer lease and device proof are required");
+            }
+            const [lockedRun] = await tx.select({ id: heartbeatRuns.id,
+              companyId: heartbeatRuns.companyId, agentId: heartbeatRuns.agentId,
+              status: heartbeatRuns.status,
+            }).from(heartbeatRuns).where(eq(heartbeatRuns.id, input.actorRunId))
+              .for("update", { skipLocked: true });
+            if (!lockedRun || lockedRun.status !== "running") {
+              throw conflict("Reviewer run changed; retry after refreshing the review");
+            }
+            await assertClientPullReviewProof(tx as unknown as Db, input, lockedRun);
+          }
+          return review.decisionReceipt;
+        }
         throw conflict("Completion review was already decided with different content");
       }
       const payload = record(interaction?.payload);
@@ -108,15 +177,16 @@ export function issueCompletionReviewDecisionService(db: Db, testHooks: {
         || context.issueId !== input.issueId || context.interactionId !== review.interactionId) {
         throw conflict("Reviewer run is unavailable or changing; retry after refreshing the review");
       }
-      if (reviewerRun.runtimeMode === "client_pull") {
-        throw unprocessable("Client-pull reviewer lease and device proof are not connected to this command");
-      }
+      if (reviewerRun.runtimeMode === "client_pull")
+        await assertClientPullReviewProof(tx as unknown as Db, input, reviewerRun);
       await testHooks.afterReviewerRunLocked?.();
 
       const decidedAt = new Date();
       const stableReceipt = { schemaVersion: 1, reviewId: review.id,
         requestId: input.requestId, outcome: "accepted", summary: normalized.summary,
         issueId: input.issueId, interactionId: interaction.id,
+        ...(reviewerRun.runtimeMode === "client_pull"
+          ? { reviewerRuntimeMode: "client_pull" } : {}),
         decidedAt: decidedAt.toISOString() };
       const [acceptedReview] = await tx.update(issueCompletionReviews).set({
         state: "accepted", decidedAt, decisionRequestId: input.requestId,
