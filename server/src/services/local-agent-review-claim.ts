@@ -23,7 +23,7 @@ function object(value: unknown): Record<string, unknown> {
  * Inert admission check for a future reviewer claim. The caller must already
  * hold agent→key→queued run→issue locks; this helper never claims a run, starts
  * a model, changes the source assignee, or writes issues.executionRunId.
- * No producer currently creates these dedicated queued reviewer runs.
+ * Dedicated queued reviewer runs may exist, but no claim path admits them yet.
  */
 export async function assertClientPullReviewClaimCandidate(
   db: Db,
@@ -40,7 +40,8 @@ export async function assertClientPullReviewClaimCandidate(
   const interactionId = context.interactionId;
   const reviewId = context.reviewId;
   const sourceRunId = context.sourceRunId;
-  if (run.status !== "queued" || run.companyId !== agent.companyId ||
+  if (run.status !== "queued" || run.runtimeMode !== "client_pull" ||
+    run.companyId !== agent.companyId ||
     run.agentId !== agent.id || issue.companyId !== agent.companyId ||
     issue.id !== issueId || issue.status !== "in_review" ||
     issue.executionRunId !== null || issue.assigneeAgentId === agent.id ||
@@ -49,7 +50,8 @@ export async function assertClientPullReviewClaimCandidate(
     context.wakeReason !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
     !run.wakeupRequestId ||
     object(agent.runtimeConfig).executionMode !== "client_pull" ||
-    ["terminated", "pending_approval", "paused"].includes(agent.status)) {
+    ["terminated", "pending_approval", "paused"].includes(agent.status) ||
+    agent.pausedAt) {
     throw conflict("Dedicated reviewer run is not claimable");
   }
 
@@ -74,6 +76,8 @@ export async function assertClientPullReviewClaimCandidate(
     review.interactionId !== interaction.id ||
     Number(review.issueStatusVersion) !== Number(issue.statusVersion) ||
     interaction.kind !== "request_confirmation" || interaction.status !== "pending" ||
+    interaction.continuationPolicy !== "wake_assignee" ||
+    interaction.requestedResolverPolicy !== "not_creator" ||
     interaction.effectiveResolverPolicy !== "not_creator" ||
     interaction.addresseeAgentId !== agent.id ||
     interaction.addresseeUserId !== null ||
