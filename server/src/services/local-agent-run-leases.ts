@@ -322,7 +322,8 @@ export function localAgentRunLeaseService(
     if (input.exitCode !== null && (!Number.isSafeInteger(input.exitCode) || input.exitCode < -1 || input.exitCode > 255)) {
       throw badRequest("Invalid exitCode");
     }
-    return db.transaction(async (tx) => {
+    const publications: ActivityPublication[] = [];
+    const finished = await db.transaction(async (tx) => {
       const [run] = await tx.select().from(heartbeatRuns).where(and(
         eq(heartbeatRuns.id, input.runId), eq(heartbeatRuns.companyId, input.companyId),
         eq(heartbeatRuns.agentId, input.agentId), eq(heartbeatRuns.runtimeMode, "client_pull"),
@@ -336,15 +337,37 @@ export function localAgentRunLeaseService(
       if (binding.revokedAt && input.outcome !== "cancelled") {
         throw conflict("Revoked device can only acknowledge cancellation");
       }
+      // A source run can create one dedicated review before it stops. The run
+      // lock prevents another source command from adding a review meanwhile.
+      const reviews = await tx.select().from(issueCompletionReviews).where(and(
+        eq(issueCompletionReviews.companyId, input.companyId),
+        eq(issueCompletionReviews.issueId, lease.issueId),
+        eq(issueCompletionReviews.sourceRunId, input.runId),
+        eq(issueCompletionReviews.sourceKind, "client_pull"),
+      )).limit(2);
+      if (reviews.length > 1) throw conflict("Run has multiple completion reviews; reconcile before finishing");
+      const reviewHint = reviews[0] ?? null;
+      if (reviewHint && !input.clientRequestId) {
+        throw badRequest("Dedicated review finish requires clientRequestId");
+      }
       if (lease.releasedAt) {
         if (lease.outcome !== input.outcome) throw conflict("Run already finished with another outcome");
-        if (input.clientRequestId) {
+        if (input.clientRequestId || reviewHint) {
           const saved = run.resultJson?.localWorkerFinish;
+          const [savedDelivery] = reviewHint ? await tx.select({ id: issueCommandDeliveries.id })
+            .from(issueCommandDeliveries).where(and(
+              eq(issueCommandDeliveries.companyId, input.companyId),
+              eq(issueCommandDeliveries.reviewId, reviewHint.id),
+              eq(issueCommandDeliveries.kind, "completion_review"),
+            )) : [];
           if (!saved || typeof saved !== "object" ||
             (saved as Record<string, unknown>).clientRequestId !== input.clientRequestId ||
             (saved as Record<string, unknown>).outcome !== input.outcome ||
             (saved as Record<string, unknown>).exitCode !== input.exitCode ||
-            (saved as Record<string, unknown>).summary !== (input.summary ?? null)) {
+            (saved as Record<string, unknown>).summary !== (input.summary ?? null) ||
+            (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
+              (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
+              !["ready", "blocked", "preserved"].includes(String((saved as Record<string, unknown>).disposition))))) {
             throw conflict("Run finish request changed after completion");
           }
         }
@@ -355,6 +378,83 @@ export function localAgentRunLeaseService(
       const cancelled = run.status !== "running" || lease.cancelRequestedAt || !live?.live || Boolean(binding.revokedAt);
       if (cancelled && input.outcome !== "cancelled") throw conflict("Cancelled or expired run cannot report success");
       const status = cancelled ? "cancelled" : input.outcome;
+      let reviewReceipt: { reviewId: string; deliveryId: string; issueStatus: string;
+        issueStatusVersion: number; disposition: "ready" | "blocked" | "preserved" } | null = null;
+      if (reviewHint) {
+        // The issue lock serializes human edits and review decisions. Other
+        // paths use issue -> delivery -> review -> interaction ordering too.
+        const [issue] = await tx.select().from(issues).where(and(
+          eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
+        )).for("update");
+        const [delivery] = await tx.select().from(issueCommandDeliveries).where(and(
+          eq(issueCommandDeliveries.companyId, input.companyId),
+          eq(issueCommandDeliveries.issueId, lease.issueId),
+          eq(issueCommandDeliveries.reviewId, reviewHint.id),
+          eq(issueCommandDeliveries.kind, "completion_review"),
+        )).for("update");
+        const [review] = await tx.select().from(issueCompletionReviews).where(and(
+          eq(issueCompletionReviews.id, reviewHint.id),
+          eq(issueCompletionReviews.companyId, input.companyId),
+        )).for("update");
+        const [interaction] = await tx.select().from(issueThreadInteractions).where(and(
+          eq(issueThreadInteractions.id, reviewHint.interactionId),
+          eq(issueThreadInteractions.companyId, input.companyId),
+        )).for("update");
+        const payload = interaction?.payload && typeof interaction.payload === "object"
+          ? interaction.payload as unknown as Record<string, unknown> : {};
+        const target = payload.target && typeof payload.target === "object"
+          ? payload.target as Record<string, unknown> : {};
+        if (!issue || !delivery || !review || !interaction ||
+          review.issueId !== issue.id || review.companyId !== input.companyId ||
+          delivery.companyId !== input.companyId || delivery.issueId !== issue.id ||
+          interaction.companyId !== input.companyId || interaction.issueId !== issue.id ||
+          review.sourceAgentId !== input.agentId || review.clientPullLeaseRunId !== input.runId ||
+          review.interactionId !== interaction.id || review.reviewerAgentId !== delivery.targetAgentId ||
+          delivery.interactionId !== interaction.id || delivery.sourceRunId !== input.runId ||
+          interaction.kind !== "request_confirmation" ||
+          interaction.sourceRunId !== input.runId ||
+          interaction.createdByAgentId !== input.agentId ||
+          interaction.addresseeAgentId !== review.reviewerAgentId ||
+          interaction.addresseeUserId !== null ||
+          interaction.effectiveResolverPolicy !== "not_creator" ||
+          target.type !== "custom" || target.key !== ISSUE_COMPLETION_REVIEW_TARGET_KEY ||
+          target.revisionId !== review.id) {
+          throw conflict("Dedicated review evidence changed before finish");
+        }
+        const current = issue.status === "in_review" &&
+          issue.statusVersion === review.issueStatusVersion &&
+          issue.assigneeAgentId === input.agentId && review.state === "pending" &&
+          interaction.status === "pending" && delivery.status === "awaiting_handoff";
+        if (current && status === "succeeded") {
+          reviewReceipt = { reviewId: review.id, deliveryId: delivery.id,
+            issueStatus: issue.status, issueStatusVersion: issue.statusVersion,
+            disposition: "ready" };
+        } else if (current) {
+          const blocked = await issueService(db).update(issue.id, {
+            status: "blocked", actorAgentId: input.agentId, companyGuard: input.companyId,
+          }, tx, publications);
+          if (!blocked || blocked.status !== "blocked") {
+            throw conflict("Could not return failed review handoff to a recoverable task");
+          }
+          reviewReceipt = { reviewId: review.id, deliveryId: delivery.id,
+            issueStatus: blocked.status, issueStatusVersion: blocked.statusVersion,
+            disposition: "blocked" };
+        } else {
+          // A human already changed the task or review. Stop the process but
+          // never overwrite their newer state.
+          if (issue.status === "in_review" &&
+            issue.statusVersion === review.issueStatusVersion &&
+            issue.assigneeAgentId === input.agentId) {
+            throw conflict("Current review evidence is incomplete; reconcile before finishing");
+          }
+          if (review.state === "pending" && interaction.status === "pending") {
+            throw conflict("Review revision changed without cancellation; reconcile before finishing");
+          }
+          reviewReceipt = { reviewId: review.id, deliveryId: delivery.id,
+            issueStatus: issue.status, issueStatusVersion: issue.statusVersion,
+            disposition: "preserved" };
+        }
+      }
       await tx.update(localAgentRunLeases).set({
         stopAcknowledgedAt: sql`now()`, releasedAt: sql`now()`, outcome: input.outcome,
         updatedAt: sql`now()`,
@@ -370,6 +470,7 @@ export function localAgentRunLeaseService(
             localWorkerFinish: {
               clientRequestId: input.clientRequestId, outcome: input.outcome,
               exitCode: input.exitCode, summary: input.summary ?? null,
+              ...(reviewReceipt ?? {}),
             },
           } } : {}),
         }).where(eq(heartbeatRuns.id, input.runId));
@@ -378,6 +479,15 @@ export function localAgentRunLeaseService(
         executionRunId: null, executionLockedAt: null, updatedAt: sql`now()`,
       }).where(and(eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
         eq(issues.executionRunId, input.runId)));
+      if (reviewReceipt?.disposition === "ready") {
+        const [ready] = await tx.update(issueCommandDeliveries).set({
+          status: "ready", updatedAt: sql`now()`,
+        }).where(and(
+          eq(issueCommandDeliveries.id, reviewReceipt.deliveryId),
+          eq(issueCommandDeliveries.status, "awaiting_handoff"),
+        )).returning({ id: issueCommandDeliveries.id });
+        if (!ready) throw conflict("Dedicated review notification changed before finish");
+      }
       if (run.wakeupRequestId) {
         await tx.update(agentWakeupRequests).set({
           status: status === "succeeded" ? "completed" : status,
@@ -386,6 +496,8 @@ export function localAgentRunLeaseService(
       }
       return { runId: run.id, status };
     });
+    for (const publication of publications) publishActivity(publication);
+    return finished;
   }
 
   async function appendFencedEvent(

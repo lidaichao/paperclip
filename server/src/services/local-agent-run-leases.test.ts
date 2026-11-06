@@ -27,6 +27,7 @@ import { localAgentDeviceBindingService } from "./local-agent-device-bindings.js
 import { accessService } from "./access.js";
 import { heartbeatService } from "./heartbeat.js";
 import { agentService } from "./agents.js";
+import { issueService } from "./issues.js";
 import { updateAgentSchema } from "@paperclipai/shared";
 import { localAgentRunWriteGate } from "../middleware/local-agent-run-write-gate.js";
 import { localAgentRunRoutes } from "../routes/local-agent-runs.js";
@@ -90,6 +91,26 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       contextSnapshot: { issueId, wakeReason: "issue_assigned" },
     });
     return { companyId, agentId, issueId, runId, keyId };
+  }
+
+  async function dedicatedReviewFixture() {
+    const scope = await fixture();
+    const reviewerAgentId = randomUUID();
+    await db.insert(agents).values({ id: reviewerAgentId, companyId: scope.companyId,
+      name: "Local reviewer", adapterType: "codex_local",
+      runtimeConfig: { executionMode: "client_pull" } });
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const owner = { ...scope, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    const handoff = await svc.createFencedCompletionReviewHandoff({ ...owner,
+      reviewerAgentId, prompt: "Verify", body: "Ready for acceptance",
+      clientRequestId: randomUUID() }, actor);
+    return { scope, owner, svc, handoff };
   }
 
   it("refuses a client-pull claim without a registered credential binding", async () => {
@@ -1028,6 +1049,184 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .rejects.toMatchObject({ status: 403 });
     expect(await db.select().from(issueCompletionReviews)
       .where(eq(issueCompletionReviews.issueId, scope.issueId))).toHaveLength(0);
+  }, 30_000);
+
+  it("releases a successful source run and readies only its dedicated review intent", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    const finish = { ...owner, outcome: "succeeded" as const, exitCode: 0,
+      processStopped: true as const, clientRequestId: randomUUID(), summary: "Delivered" };
+    expect((await svc.finish(finish)).status).toBe("succeeded");
+    expect((await svc.finish(finish)).status).toBe("succeeded");
+    await expect(svc.finish({ ...finish, clientRequestId: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, handoff.review.id));
+    const [delivery] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    const [card] = await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.id, handoff.interaction.id));
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    expect(issue.status).toBe("in_review");
+    expect(issue.assigneeAgentId).toBe(scope.agentId);
+    expect(review.state).toBe("pending");
+    expect(card.status).toBe("pending");
+    expect(delivery.status).toBe("ready");
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({
+      clientRequestId: finish.clientRequestId, reviewId: review.id,
+      deliveryId: delivery.id, disposition: "ready", issueStatus: "in_review",
+    });
+  }, 30_000);
+
+  it("blocks a failed handoff and atomically cancels the review card and intent", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    const finish = { ...owner, outcome: "failed" as const, exitCode: 1,
+      processStopped: true as const, clientRequestId: randomUUID() };
+    expect((await svc.finish(finish)).status).toBe("failed");
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, handoff.review.id));
+    const [delivery] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    const [card] = await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.id, handoff.interaction.id));
+    expect(issue.status).toBe("blocked");
+    expect(review.state).toBe("cancelled");
+    expect(delivery.status).toBe("cancelled");
+    expect(card.status).toBe("expired");
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({ disposition: "blocked",
+      reviewId: review.id, deliveryId: delivery.id, issueStatus: "blocked" });
+  }, 30_000);
+
+  it("acknowledges cancellation by blocking the task and invalidating review", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await db.update(localAgentRunLeases).set({ cancelRequestedAt: new Date() })
+      .where(eq(localAgentRunLeases.runId, scope.runId));
+    expect((await svc.finish({ ...owner, outcome: "cancelled", exitCode: null,
+      processStopped: true, clientRequestId: randomUUID() })).status).toBe("cancelled");
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, handoff.review.id));
+    const [delivery] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    expect(issue.status).toBe("blocked");
+    expect(review.state).toBe("cancelled");
+    expect(delivery.status).toBe("cancelled");
+  }, 30_000);
+
+  it("preserves a human change made before source finish", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await issueService(db).update(scope.issueId, { status: "todo", companyGuard: scope.companyId });
+    const [changed] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    expect((await svc.finish({ ...owner, outcome: "failed", exitCode: 1,
+      processStopped: true, clientRequestId: randomUUID() })).status).toBe("failed");
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, handoff.review.id));
+    expect(issue.status).toBe("todo");
+    expect(issue.statusVersion).toBe(changed.statusVersion);
+    expect(review.state).toBe("cancelled");
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({ disposition: "preserved",
+      issueStatus: "todo" });
+  }, 30_000);
+
+  it("rolls source finish back if dedicated intent cannot become ready", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await db.execute(sql`create function reject_review_ready() returns trigger language plpgsql as $$
+      begin
+        if NEW.id = '${sql.raw(handoff.delivery.id)}' and NEW.status = 'ready' then
+          raise exception 'injected review ready failure';
+        end if;
+        return NEW;
+      end $$`);
+    await db.execute(sql`create trigger reject_review_ready_trigger before update on issue_command_deliveries
+      for each row execute function reject_review_ready()`);
+    try {
+      await expect(svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+        processStopped: true, clientRequestId: randomUUID() })).rejects.toThrow();
+    } finally {
+      await db.execute(sql`drop trigger reject_review_ready_trigger on issue_command_deliveries`);
+      await db.execute(sql`drop function reject_review_ready()`);
+    }
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, scope.runId));
+    const [delivery] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    expect(run.status).toBe("running");
+    expect(lease.releasedAt).toBeNull();
+    expect(delivery.status).toBe("awaiting_handoff");
+  }, 30_000);
+
+  it("rolls cancellation back if moving the issue to blocked fails", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await db.execute(sql`create function reject_review_blocked() returns trigger language plpgsql as $$
+      begin
+        if NEW.id = '${sql.raw(scope.issueId)}' and NEW.status = 'blocked' then
+          raise exception 'injected blocked transition failure';
+        end if;
+        return NEW;
+      end $$`);
+    await db.execute(sql`create trigger reject_review_blocked_trigger before update on issues
+      for each row execute function reject_review_blocked()`);
+    try {
+      await expect(svc.finish({ ...owner, outcome: "cancelled", exitCode: null,
+        processStopped: true, clientRequestId: randomUUID() })).rejects.toThrow();
+    } finally {
+      await db.execute(sql`drop trigger reject_review_blocked_trigger on issues`);
+      await db.execute(sql`drop function reject_review_blocked()`);
+    }
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, scope.runId));
+    const [review] = await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.id, handoff.review.id));
+    const [delivery] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    expect(run.status).toBe("running");
+    expect(lease.releasedAt).toBeNull();
+    expect(review.state).toBe("pending");
+    expect(delivery.status).toBe("awaiting_handoff");
+  }, 30_000);
+
+  it("serializes a human status change before finish without overwriting it", async () => {
+    const { scope, owner, svc } = await dedicatedReviewFixture();
+    let notifyLocked!: (pid: number) => void;
+    let releaseIssue!: () => void;
+    const locked = new Promise<number>((resolve) => { notifyLocked = resolve; });
+    const release = new Promise<void>((resolve) => { releaseIssue = resolve; });
+    const human = db.transaction(async (tx) => {
+      await tx.select().from(issues).where(eq(issues.id, scope.issueId)).for("update");
+      const [backend] = await tx.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`);
+      notifyLocked(backend.pid);
+      await release;
+      await issueService(db).update(scope.issueId,
+        { status: "todo", companyGuard: scope.companyId }, tx);
+    });
+    const blockerPid = await locked;
+    const finishing = svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    try {
+      await expect.poll(async () => {
+        const [waiter] = await db.execute<{ blocked: boolean }>(sql`
+          select exists (
+            select 1 from pg_stat_activity where datname = current_database()
+              and ${blockerPid} = any(pg_blocking_pids(pid))
+          ) as blocked`);
+        return waiter?.blocked ?? false;
+      }, { timeout: 5_000 }).toBe(true);
+    } finally {
+      releaseIssue();
+      await human;
+    }
+    expect((await finishing).status).toBe("succeeded");
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    expect(issue.status).toBe("todo");
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({ disposition: "preserved",
+      issueStatus: "todo" });
   }, 30_000);
 
   it("preserves deletion of a task and its run after a historical lease", async () => {

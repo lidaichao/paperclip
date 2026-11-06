@@ -11068,7 +11068,7 @@ export function issueService(db: Db) {
                     : "issue.status_transition.left_in_review",
                   result: interaction.result ?? null,
                 },
-              });
+              }, activityPublications);
             }
           }
           // A status-card generation task that goes done/cancelled/blocked stops

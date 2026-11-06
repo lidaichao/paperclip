@@ -1440,10 +1440,14 @@ async function emitResolvedInteractionsTelemetry(
   db: Pick<Db, "select">,
   interactions: readonly IssueThreadInteraction[],
 ) {
-  if (interactions.length === 0 || !getTelemetryClient()) return;
+  // Dedicated completion reviews can be resolved inside an outer issue or
+  // local-run transaction. Suppress their eager telemetry until a durable
+  // post-commit publisher exists; otherwise a rollback emits a ghost result.
+  const publishable = interactions.filter((interaction) => !sharedCompletionReviewTarget(interaction));
+  if (publishable.length === 0 || !getTelemetryClient()) return;
   let roleByAgentId = new Map<string, string | null>();
   try {
-    roleByAgentId = await fetchCreatorAgentRoleById(db, interactions);
+    roleByAgentId = await fetchCreatorAgentRoleById(db, publishable);
   } catch (error) {
     console.error(
       "[paperclip] Failed to load interaction.resolved creator roles",
@@ -1451,7 +1455,7 @@ async function emitResolvedInteractionsTelemetry(
     );
   }
   await Promise.all(
-    interactions.map((interaction) =>
+    publishable.map((interaction) =>
       emitInteractionResolvedTelemetry(db, interaction, {
         creatorRoleByAgentId: roleByAgentId,
       }),
