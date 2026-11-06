@@ -29,6 +29,7 @@ export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: Bridge
   env.HOME = path.join(config.workerHome, "home");
   env.USERPROFILE = env.HOME;
   env.CODEX_HOME = path.join(config.workerHome, "codex-home");
+  env.CURSOR_HOME = path.join(config.workerHome, "home", ".cursor");
   env.PAPERCLIP_HOME = path.join(config.workerHome, "paperclip-home");
   env.APPDATA = path.join(config.workerHome, "appdata");
   env.LOCALAPPDATA = path.join(config.workerHome, "localappdata");
@@ -43,7 +44,7 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
   const ref = config.agents[0]?.gbrainEnvRef;
   if (config.agents.length !== 1) throw new Error("one worker requires exactly one agent");
   expectedGbrainIdentity(config.agents[0]);
-  const allowed = new Set([...OS_KEYS, "GBRAIN_AGENT_TOKEN", ref, "HOME", "USERPROFILE", "CODEX_HOME", "PAPERCLIP_HOME",
+  const allowed = new Set([...OS_KEYS, "GBRAIN_AGENT_TOKEN", ref, "HOME", "USERPROFILE", "CODEX_HOME", "CURSOR_HOME", "PAPERCLIP_HOME",
     "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "XDG_CONFIG_HOME"]);
   if (!ref || !nonEmpty(env, ref) || nonEmpty(env, ref) !== nonEmpty(env, "GBRAIN_AGENT_TOKEN")) {
     throw new Error("worker GBrain identity is missing or mismatched");
@@ -52,6 +53,7 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
     if (!allowed.has(key.toUpperCase())) throw new Error(`worker environment contains unapproved key ${key}`);
   }
   if (nonEmpty(env, "CODEX_HOME") !== path.join(config.workerHome, "codex-home") ||
+    nonEmpty(env, "CURSOR_HOME") !== path.join(config.workerHome, "home", ".cursor") ||
     nonEmpty(env, "PAPERCLIP_HOME") !== path.join(config.workerHome, "paperclip-home") ||
     nonEmpty(env, "HOME") !== path.join(config.workerHome, "home") ||
     nonEmpty(env, "USERPROFILE") !== path.join(config.workerHome, "home") ||

@@ -26,7 +26,7 @@ describe("single-member worker environment", () => {
     };
     const worker = buildWorkerEnvironment(source, config);
     expect(Object.keys(worker).sort()).toEqual([
-      "APPDATA", "CODEX_HOME", "GBRAIN_AGENT_TOKEN", "GBRAIN_LUNA_TOKEN", "HOME", "LOCALAPPDATA",
+      "APPDATA", "CODEX_HOME", "CURSOR_HOME", "GBRAIN_AGENT_TOKEN", "GBRAIN_LUNA_TOKEN", "HOME", "LOCALAPPDATA",
       "PAPERCLIP_HOME", "Path", "SystemRoot", "TEMP", "TMP", "USERPROFILE", "XDG_CONFIG_HOME",
     ].sort());
     expect(() => assertWorkerEnvironment(worker, config)).not.toThrow();
