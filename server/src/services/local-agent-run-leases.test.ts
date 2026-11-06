@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
+import express from "express";
+import request from "supertest";
 import { eq } from "drizzle-orm";
 import {
   agents,
@@ -17,6 +19,7 @@ import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
 import { agentService } from "./agents.js";
 import { updateAgentSchema } from "@paperclipai/shared";
 import { localAgentRunWriteGate } from "../middleware/local-agent-run-write-gate.js";
+import { localAgentRunRoutes } from "../routes/local-agent-runs.js";
 
 const external = process.env.PAPERCLIP_TEST_DATABASE_URL;
 const support = external ? { supported: true } : await getEmbeddedPostgresTestSupport();
@@ -313,6 +316,29 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect((await localAgentRunLeaseService(db).claim({
       ...scope, deviceId: "device-desktop-014", idempotencyKey: randomUUID(),
     }))?.runId).toBe(scope.runId);
+  });
+
+  it("keeps status and assignee edits closed at the dedicated HTTP route", async () => {
+    const scope = await fixture();
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId };
+      next();
+    });
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message });
+    });
+    const payload = { deviceId: "device-desktop-016", leaseId: randomUUID(),
+      generation: 1, issueId: scope.issueId };
+    await request(app).patch(`/api/agents/me/local-runs/${scope.runId}/issue`)
+      .send({ ...payload, status: "in_review", comment: "Review this" }).expect(400);
+    await request(app).patch(`/api/agents/me/local-runs/${scope.runId}/issue`)
+      .send({ ...payload, assigneeAgentId: randomUUID() }).expect(400);
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    expect(issue.status).toBe("todo");
+    expect(issue.assigneeAgentId).toBe(scope.agentId);
   });
 
   it("preserves deletion of a task and its run after a historical lease", async () => {
