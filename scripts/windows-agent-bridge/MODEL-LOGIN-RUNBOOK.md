@@ -63,4 +63,22 @@ Luna 按本手册执行一次私有 `-Login` 后，Codex app CLI 退出 1，报 
 
 单独修改 Luna **私有桥接配置**的 `localAdapterConfig.command` 只改变未来桥接调用哪个 CLI，不安装或替换程序，不修改已运行 Codex app 的进程和会话。脚本的私有目录与现有 app 登录目录分开，按当前源码应不覆盖现有 app 凭据；设备登录是否还会改写 OS 级状态未实测，因此真实登录后仍要检查现有 app 会话，并在异常时恢复配置。不要在本次只读诊断中更改配置或再次执行登录。
 
+### 设备授权 POST 的 TLS EOF：只读网络诊断
+
+第二次受控登录改用上述 npm CLI 后，在 `auth.openai.com/api/accounts/deviceauth/usercode` 的 POST 收到 TLS EOF；此前无凭据 POST 通过所谓“直连”和 `127.0.0.1:7897` 代理也报告 TLS EOF。此后没有再发送 POST 或登录。
+
+2026-11-06 的无凭据只读检查：
+
+| 检查 | 结果 |
+| --- | --- |
+| 本机 DNS `auth.openai.com` | `198.18.1.251` |
+| 现有 Clash 配置 | `enhanced-mode: fake-ip`，`fake-ip-range: 198.18.0.1/16`，`mixed-port: 7897`；7897 监听进程为 `verge-mihomo` |
+| `curl --noproxy '*'` 的 HEAD/GET | 实际远端 IP `198.18.1.251`，TLS 校验 0，接口返回 HTTP 405；响应来自 Cloudflare |
+| `curl --proxy http://127.0.0.1:7897` 的 HEAD/GET | 代理入口为 `127.0.0.1`，TLS 校验 0，接口返回 HTTP 405 |
+| 本机 curl | 8.21.0 Windows/Schannel 构建不支持 `--http2`，因此未比较 HTTP/2 与 HTTP/1.1 |
+
+**能确定：** CLI v0.152.1 与无凭据 curl 的 POST 都遇到 EOF，故不能把这次 POST 失败归咎于 CLI 版本。HEAD/GET 已抵达 Cloudflare，不能推断 POST 也通畅。`--noproxy '*'` 仍连接到 Clash 假地址，所以本次“直连”和显式代理不是两条独立上游路径。
+
+**尚不能确定：** EOF 发生在 mihomo、其选中的上游节点、边缘防护还是请求体/HTTP 协议处理。现有只读 GET/HEAD 无法证明具体一层。下一次排障应先用**独立网络路径**核对 DNS 不再返回 Clash 假地址，再在受控窗口对同一设备授权流程只尝试一次；失败保留退出码与脱敏网络日志即停。不要循环登录、复制共享认证、改系统代理或把 192 服务器当作成员运行位置。
+
 源码证据：`packages/adapters/codex-local/src/server/codex-home.ts` 的 `resolveSharedCodexHomeDir`、`ensureSymlink` 和 `seedManagedCodexHome`；`packages/adapters/cursor-local/src/server/test.ts` 的 `cursorConfigPath`；本目录的 `environment.ts`、`model-readiness.ts` 与 `model-login-once.ps1`。
