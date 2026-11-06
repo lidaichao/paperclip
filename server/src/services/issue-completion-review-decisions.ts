@@ -42,7 +42,9 @@ function normalizedRequest(input: DecisionInput) {
  * Inert internal command. No route or worker calls this until reviewer-run
  * authentication, dependency release, and the rejection outbox are verified.
  */
-export function issueCompletionReviewDecisionService(db: Db) {
+export function issueCompletionReviewDecisionService(db: Db, testHooks: {
+  afterReviewerRunLocked?: () => Promise<void>;
+} = {}) {
   async function accept(input: DecisionInput) {
     const normalized = normalizedRequest(input);
     const publications: ActivityPublication[] = [];
@@ -94,14 +96,22 @@ export function issueCompletionReviewDecisionService(db: Db) {
       }
       const [reviewerRun] = await tx.select({ id: heartbeatRuns.id,
         status: heartbeatRuns.status, companyId: heartbeatRuns.companyId,
-        agentId: heartbeatRuns.agentId, contextSnapshot: heartbeatRuns.contextSnapshot,
-      }).from(heartbeatRuns).where(eq(heartbeatRuns.id, input.actorRunId));
+        agentId: heartbeatRuns.agentId, runtimeMode: heartbeatRuns.runtimeMode,
+        contextSnapshot: heartbeatRuns.contextSnapshot,
+      }).from(heartbeatRuns).where(eq(heartbeatRuns.id, input.actorRunId))
+        // Existing cancel/finish paths lock run before issue. Never wait on
+        // that run while holding issue→review→card in the opposite order.
+        .for("update", { skipLocked: true });
       const context = record(reviewerRun?.contextSnapshot);
       if (!reviewerRun || reviewerRun.companyId !== input.companyId
         || reviewerRun.agentId !== review.reviewerAgentId || reviewerRun.status !== "running"
         || context.issueId !== input.issueId || context.interactionId !== review.interactionId) {
-        throw conflict("Reviewer run is not bound to this confirmation card");
+        throw conflict("Reviewer run is unavailable or changing; retry after refreshing the review");
       }
+      if (reviewerRun.runtimeMode === "client_pull") {
+        throw unprocessable("Client-pull reviewer lease and device proof are not connected to this command");
+      }
+      await testHooks.afterReviewerRunLocked?.();
 
       const decidedAt = new Date();
       const stableReceipt = { schemaVersion: 1, reviewId: review.id,

@@ -156,6 +156,68 @@ describe.runIf(support.supported)("inert shared completion review acceptance (Po
     expect(result.activities).toHaveLength(0);
   });
 
+  it("returns a retryable conflict when cancellation already holds the reviewer run", async () => {
+    const f = await fixture(), input = request(f);
+    let runLocked!: () => void, releaseRun!: () => void;
+    const locked = new Promise<void>((resolve) => { runLocked = resolve; });
+    const hold = new Promise<void>((resolve) => { releaseRun = resolve; });
+    const cancelling = db.transaction(async (tx) => {
+      await tx.select({ id: heartbeatRuns.id }).from(heartbeatRuns)
+        .where(eq(heartbeatRuns.id, f.reviewerRunId)).for("update");
+      runLocked();
+      await hold;
+      await tx.update(heartbeatRuns).set({ status: "cancelled" })
+        .where(eq(heartbeatRuns.id, f.reviewerRunId));
+    });
+    await locked;
+    try {
+      await expect(issueCompletionReviewDecisionService(db).accept(input))
+        .rejects.toMatchObject({ status: 409,
+          message: expect.stringContaining("retry") });
+    } finally {
+      releaseRun();
+      await cancelling;
+    }
+    const result = await state(f);
+    expect(result.issue?.status).toBe("in_review");
+    expect(result.review?.state).toBe("pending");
+    expect(result.card?.status).toBe("pending");
+  });
+
+  it("holds the reviewer run until an accepted decision commits before cancellation", async () => {
+    const f = await fixture(), input = request(f);
+    let runLocked!: () => void, releaseRun!: () => void;
+    const locked = new Promise<void>((resolve) => { runLocked = resolve; });
+    const hold = new Promise<void>((resolve) => { releaseRun = resolve; });
+    const accepting = issueCompletionReviewDecisionService(db, {
+      afterReviewerRunLocked: async () => { runLocked(); await hold; },
+    }).accept(input);
+    await locked;
+    try {
+      await expect(db.transaction(async (tx) => tx.select({ id: heartbeatRuns.id })
+        .from(heartbeatRuns).where(eq(heartbeatRuns.id, f.reviewerRunId))
+        .for("update", { noWait: true }))).rejects.toThrow();
+    } finally {
+      releaseRun();
+    }
+    await accepting;
+    await db.update(heartbeatRuns).set({ status: "cancelled" })
+      .where(eq(heartbeatRuns.id, f.reviewerRunId));
+    const result = await state(f);
+    expect(result.review?.state).toBe("accepted");
+    expect(result.issue?.status).toBe("done");
+    expect(result.activities).toHaveLength(1);
+  });
+
+  it("keeps client-pull reviewers closed until their lease and device proof can be fenced", async () => {
+    const f = await fixture();
+    await db.update(heartbeatRuns).set({ runtimeMode: "client_pull" })
+      .where(eq(heartbeatRuns.id, f.reviewerRunId));
+    await expect(issueCompletionReviewDecisionService(db).accept(request(f)))
+      .rejects.toMatchObject({ status: 422 });
+    expect((await state(f)).review?.state).toBe("pending");
+  });
+
   it("loses a terminal cancellation race without a partial acceptance", async () => {
     const f = await fixture(), input = request(f);
     let issueLocked!: () => void, releaseIssue!: () => void;
