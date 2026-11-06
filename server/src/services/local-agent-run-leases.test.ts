@@ -203,11 +203,14 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
     const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-009", idempotencyKey: randomUUID() });
-    const owner = { ...scope, deviceId: "device-desktop-009", leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const owner = { ...scope, deviceId: "device-desktop-009", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, clientRequestId: randomUUID() };
     const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
     const comment = await svc.addFencedComment({ ...owner, body: "Local execution progress" }, actor);
     expect(comment.createdByRunId).toBe(scope.runId);
     expect(comment.authorAgentId).toBe(scope.agentId);
+    const replay = await svc.addFencedComment({ ...owner, body: "Local execution progress" }, actor);
+    expect(replay.id).toBe(comment.id);
     const updated = await svc.patchFencedIssue({ ...owner, title: "Edited from desktop" }, actor);
     expect(updated.title).toBe("Edited from desktop");
     expect((await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).length).toBe(1);
@@ -218,7 +221,8 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const other = await fixture();
     const svc = localAgentRunLeaseService(db);
     const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-010", idempotencyKey: randomUUID() });
-    const owner = { ...scope, deviceId: "device-desktop-010", leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const owner = { ...scope, deviceId: "device-desktop-010", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, clientRequestId: randomUUID() };
     const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
     const count = async () => (await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).length;
     await expect(svc.addFencedComment({ ...owner, issueId: other.issueId, body: "cross company" }, actor))
@@ -243,7 +247,8 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
     const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-012", idempotencyKey: randomUUID() });
-    const owner = { ...scope, deviceId: "device-desktop-012", leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const owner = { ...scope, deviceId: "device-desktop-012", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, clientRequestId: randomUUID() };
     const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
     let releaseCancellation!: () => void;
     let cancellationLocked!: () => void;

@@ -77,10 +77,12 @@ export function localAgentRunRoutes(db: Db) {
   router.post("/agents/me/local-runs/:runId/comments", async (req, res) => {
     res.set("Cache-Control", "no-store");
     const body = objectBody(req.body);
-    onlyFields(body, [...ownerFields, "body"]);
-    const parsed = addIssueCommentSchema.pick({ body: true }).parse(body);
+    onlyFields(body, [...ownerFields, "body", "clientRequestId"]);
+    const parsed = addIssueCommentSchema.pick({ body: true, clientRequestId: true }).parse(body);
+    if (!parsed.clientRequestId) throw badRequest("clientRequestId is required");
     const comment = await leases.addFencedComment({
       ...owner(req, body), issueId: String(body.issueId ?? ""), body: parsed.body,
+      clientRequestId: parsed.clientRequestId,
     }, req.actor);
     return res.status(201).json(comment);
   });

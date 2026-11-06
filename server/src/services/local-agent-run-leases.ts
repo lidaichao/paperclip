@@ -3,6 +3,7 @@ import {
   agentWakeupRequests,
   agents,
   heartbeatRuns,
+  issueComments,
   issues,
   localAgentRunLeases,
 } from "@paperclipai/db";
@@ -364,19 +365,26 @@ export function localAgentRunLeaseService(db: Db) {
   }
 
   async function addFencedComment(
-    input: LocalRunOwner & { issueId: string; body: string },
+    input: LocalRunOwner & { issueId: string; body: string; clientRequestId: string },
     actor: Express.Request["actor"],
   ) {
     if (typeof input.body !== "string" || !input.body.trim()) throw badRequest("Comment body is required");
+    if (!UUID.test(input.clientRequestId)) throw badRequest("clientRequestId must be a UUID");
     const publications: ActivityPublication[] = [];
-    const comment = await withFencedIssueWrite(input, actor, "issue:comment", async (tx, issue, authorizationReason) => {
+    const result = await withFencedIssueWrite(input, actor, "issue:comment", async (tx, issue, authorizationReason) => {
+      const [existing] = await tx.select().from(issueComments).where(and(
+        eq(issueComments.issueId, issue.id), eq(issueComments.createdByRunId, input.runId),
+        eq(issueComments.authorAgentId, input.agentId), eq(issueComments.clientRequestId, input.clientRequestId),
+      )).limit(1);
+      if (existing) return { comment: existing, inserted: false };
       const sourceTrust = await resolveActorSourceTrustForIssue({
         db: tx, issue,
         actor: { actorType: "agent", actorId: input.agentId, agentId: input.agentId, runId: input.runId },
       });
       const saved = await issueService(db).addComment(input.issueId, input.body,
         { agentId: input.agentId, runId: input.runId, onBehalfOfUserId: actor.onBehalfOfUserId },
-        { authorType: "agent", authorizationReason, sourceTrust }, tx);
+        { authorType: "agent", authorizationReason, sourceTrust,
+          clientRequestId: input.clientRequestId }, tx);
       await logActivity(tx, {
         companyId: input.companyId, actorType: "agent", actorId: input.agentId,
         agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
@@ -384,11 +392,11 @@ export function localAgentRunLeaseService(db: Db) {
         details: { commentId: saved.id, bodySnippet: saved.body.slice(0, 120),
           identifier: issue.identifier, issueTitle: issue.title, authorizationReason },
       }, publications);
-      return saved;
+      return { comment: saved, inserted: true };
     });
     for (const publication of publications) publishActivity(publication);
-    await issueReferenceService(db).syncComment(comment.id);
-    return comment;
+    if (result.inserted) await issueReferenceService(db).syncComment(result.comment.id);
+    return result.comment;
   }
 
   async function patchFencedIssue(
