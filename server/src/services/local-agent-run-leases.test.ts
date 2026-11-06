@@ -1351,4 +1351,63 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       triggerDetail: "system", reason: "issue_completion_review", status: "failed",
       idempotencyKey: key })).rejects.toThrow();
   }, 30_000);
+
+  it("lets the addressed local reviewer claim without taking the source task owner lock", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const { run, wake } = await localAgentReviewDeliveryService(db)
+      .deliver(handoff.delivery.id);
+    const reviewerKeyId = randomUUID();
+    await db.insert(agentApiKeys).values({ id: reviewerKeyId,
+      companyId: scope.companyId, agentId: handoff.review.reviewerAgentId,
+      name: "Reviewer test key", keyHash: randomUUID() });
+    await db.insert(localAgentDeviceBindings).values({ companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, keyId: reviewerKeyId,
+      deviceId: "reviewer-desktop-001" });
+    const claimInput = { companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, keyId: reviewerKeyId,
+      deviceId: "reviewer-desktop-001", idempotencyKey: randomUUID() };
+    const claimed = await svc.claim(claimInput);
+    expect(claimed?.runId).toBe(run.id);
+    expect(claimed?.issueId).toBe(scope.issueId);
+    expect(claimed?.wakeReason).toBe("issue_completion_review");
+    expect((await svc.claim(claimInput))?.leaseId).toBe(claimed?.leaseId);
+    const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+    expect(issue.assigneeAgentId).toBe(scope.agentId);
+    expect(issue.executionRunId).toBeNull();
+    const [claimedWake] = await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, wake.id));
+    expect(claimedWake.status).toBe("claimed");
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, run.id));
+    expect(lease.agentId).toBe(handoff.review.reviewerAgentId);
+    expect(lease.issueId).toBe(scope.issueId);
+  }, 30_000);
+
+  it("rejects a stale reviewer card and leaves the queued run untouched", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const { run } = await localAgentReviewDeliveryService(db)
+      .deliver(handoff.delivery.id);
+    const reviewerKeyId = randomUUID();
+    await db.insert(agentApiKeys).values({ id: reviewerKeyId,
+      companyId: scope.companyId, agentId: handoff.review.reviewerAgentId,
+      name: "Reviewer stale key", keyHash: randomUUID() });
+    await db.insert(localAgentDeviceBindings).values({ companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, keyId: reviewerKeyId,
+      deviceId: "reviewer-stale-001" });
+    await db.update(issueThreadInteractions).set({ status: "cancelled" })
+      .where(eq(issueThreadInteractions.id, handoff.interaction.id));
+    await expect(svc.claim({ companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, keyId: reviewerKeyId,
+      deviceId: "reviewer-stale-001", idempotencyKey: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    const [queued] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, run.id));
+    expect(queued.status).toBe("queued");
+    expect(await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, run.id))).toHaveLength(0);
+  }, 30_000);
 });

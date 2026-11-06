@@ -27,6 +27,8 @@ import { issueThreadInteractionService } from "./issue-thread-interactions.js";
 import { executeReviewHandoff } from "./issue-review-handoff.js";
 import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
+import { assertClientPullReviewClaimCandidate,
+  CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
 
@@ -178,6 +180,44 @@ export function localAgentRunLeaseService(
         const [issue] = await tx.select().from(issues).where(and(
           eq(issues.id, issueId), eq(issues.companyId, input.companyId),
         )).for("update");
+        if (wakeReasonFromRun(run) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON) {
+          if (!issue) throw conflict("Dedicated reviewer task no longer exists");
+          // A reviewer is deliberately not the issue assignee. Keep the source
+          // issue's execution ownership untouched throughout this claim.
+          await assertClientPullReviewClaimCandidate(db, tx as unknown as Db,
+            { agent, run, issue });
+          const dependency = await issueService(db).getDependencyReadiness(issueId, tx);
+          if (!dependency.isDependencyReady ||
+            await getExecutionBlocker(tx as unknown as Db, input.companyId, issueId)) {
+            throw conflict("Dedicated review task is blocked");
+          }
+          const [claimed] = await tx.update(heartbeatRuns).set({
+            status: "running", startedAt: sql`now()`, updatedAt: sql`now()`,
+          }).where(and(eq(heartbeatRuns.id, run.id),
+            eq(heartbeatRuns.status, "queued"),
+            eq(heartbeatRuns.runtimeMode, "client_pull"))).returning();
+          if (!claimed) throw conflict("Dedicated reviewer run changed before claim");
+          const [wake] = await tx.update(agentWakeupRequests).set({
+            status: "claimed", claimedAt: sql`now()`, updatedAt: sql`now()`,
+          }).where(and(eq(agentWakeupRequests.id, run.wakeupRequestId!),
+            eq(agentWakeupRequests.status, "queued"))).returning();
+          if (!wake || wake.runId !== run.id) {
+            throw conflict("Dedicated reviewer wake changed before claim");
+          }
+          const [lease] = await tx.insert(localAgentRunLeases).values({
+            runId: run.id, companyId: input.companyId, agentId: input.agentId,
+            issueId, deviceId: input.deviceId, deviceKeyId: input.keyId,
+            idempotencyKey: input.idempotencyKey,
+            expiresAt: sql`now() + interval '90 seconds'`,
+          }).returning();
+          return {
+            runId: run.id, issueId, agentId: input.agentId,
+            leaseId: lease.leaseId, generation: lease.generation,
+            leaseExpiresAt: lease.expiresAt, wakeReason: wakeReasonFromRun(run),
+            leaseTtlMs: await leaseTtlMs(tx as unknown as Db, run.id),
+            workspacePolicy: "agent_home" as const,
+          };
+        }
         if (!issue || issue.assigneeAgentId !== input.agentId || !["todo", "in_progress"].includes(issue.status) ||
           (issue.executionRunId && issue.executionRunId !== run.id) ||
           (issue.checkoutRunId && issue.checkoutRunId !== run.id)) continue;

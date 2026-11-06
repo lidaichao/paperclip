@@ -59,12 +59,12 @@ export async function assertClientPullReviewClaimCandidate(
     eq(issueCompletionReviews.id, reviewId),
     eq(issueCompletionReviews.companyId, agent.companyId),
     eq(issueCompletionReviews.issueId, issue.id),
-  )).limit(1);
+  )).limit(1).for("update");
   const [interaction] = await tx.select().from(issueThreadInteractions).where(and(
     eq(issueThreadInteractions.id, interactionId),
     eq(issueThreadInteractions.companyId, agent.companyId),
     eq(issueThreadInteractions.issueId, issue.id),
-  )).limit(1);
+  )).limit(1).for("update");
   const target = object(object(interaction?.payload).target);
   if (!review || !interaction || review.state !== "pending" ||
     review.sourceKind !== "client_pull" ||
@@ -91,7 +91,7 @@ export async function assertClientPullReviewClaimCandidate(
   }
 
   const [wake] = await tx.select().from(agentWakeupRequests)
-    .where(eq(agentWakeupRequests.id, run.wakeupRequestId)).limit(1);
+    .where(eq(agentWakeupRequests.id, run.wakeupRequestId)).limit(1).for("update");
   const payload = object(wake?.payload);
   if (!wake || wake.companyId !== agent.companyId || wake.agentId !== agent.id ||
     wake.runId !== run.id || wake.status !== "queued" ||
