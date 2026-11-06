@@ -16,6 +16,7 @@ import {
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
+import { heartbeatService } from "./heartbeat.js";
 import { agentService } from "./agents.js";
 import { updateAgentSchema } from "@paperclipai/shared";
 import { localAgentRunWriteGate } from "../middleware/local-agent-run-write-gate.js";
@@ -100,6 +101,61 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(replay?.generation).toBe(1);
     const rows = await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId));
     expect(rows).toHaveLength(1);
+  });
+
+  it("continues past twenty ineligible queued runs instead of starving a ready task", async () => {
+    const scope = await fixture();
+    await db.insert(heartbeatRuns).values(Array.from({ length: 20 }, (_, index) => ({
+      id: randomUUID(), companyId: scope.companyId, agentId: scope.agentId,
+      status: "queued" as const,
+      createdAt: new Date(Date.now() - 120_000 + index),
+      contextSnapshot: { wakeReason: "no_issue" },
+    })));
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-page-001", idempotencyKey: randomUUID(),
+    });
+    expect(claimed?.runId).toBe(scope.runId);
+  });
+
+  it("serializes server admission with a concurrent mode switch and desktop claim across DB pools", async () => {
+    const scope = await fixture();
+    const second = createDb(external ?? temporary!.connectionString);
+    try {
+      await db.update(agents).set({ runtimeConfig: { executionMode: "server" } })
+        .where(eq(agents.id, scope.agentId));
+      const [queuedRun] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+      let signalLocked!: () => void;
+      let releaseLock!: () => void;
+      const locked = new Promise<void>((resolve) => { signalLocked = resolve; });
+      const released = new Promise<void>((resolve) => { releaseLock = resolve; });
+      const modeSwitch = db.transaction(async (tx) => {
+        await tx.select().from(agents).where(eq(agents.id, scope.agentId)).for("update");
+        signalLocked();
+        await released;
+        await tx.update(agents).set({ runtimeConfig: { executionMode: "client_pull" } })
+          .where(eq(agents.id, scope.agentId));
+      });
+      await locked;
+      const serverAdmission = second.transaction((tx) =>
+        heartbeatService(second).serverRunClaimAdmission(tx as unknown as typeof second, queuedRun));
+      const stillWaiting = await Promise.race([
+        serverAdmission.then(() => false),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(true), 40)),
+      ]);
+      expect(stillWaiting).toBe(true);
+      releaseLock();
+      await modeSwitch;
+      const desktopClaim = localAgentRunLeaseService(db).claim({
+        ...scope, deviceId: "device-desktop-mode-001", idempotencyKey: randomUUID(),
+      });
+      expect(await serverAdmission).toBe(false);
+      expect((await desktopClaim)?.runId).toBe(scope.runId);
+      const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+      expect(run.runtimeMode).toBe("client_pull");
+      expect(run.status).toBe("running");
+    } finally {
+      await second.$client.end();
+    }
   });
 
   it("does not renew an expired lease or reassign before stop acknowledgement", async () => {

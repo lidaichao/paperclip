@@ -7,7 +7,7 @@ import {
   issues,
   localAgentRunLeases,
 } from "@paperclipai/db";
-import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
 import { badRequest, conflict, forbidden, notFound } from "../errors.js";
 import { redactCurrentUserText } from "../log-redaction.js";
 import { accessService } from "./access.js";
@@ -125,13 +125,28 @@ export function localAgentRunLeaseService(
       )).limit(1);
       if (serverRun) throw conflict("Agent already has a running server run");
 
-      const queued = await tx.select().from(heartbeatRuns).where(and(
-        eq(heartbeatRuns.companyId, input.companyId),
-        eq(heartbeatRuns.agentId, input.agentId),
-        eq(heartbeatRuns.status, "queued"),
-      )).orderBy(asc(heartbeatRuns.createdAt)).limit(20).for("update", { skipLocked: true });
+      async function* queuedCandidates() {
+        let cursor: { createdAt: Date; id: string } | null = null;
+        while (true) {
+          const page: Array<typeof heartbeatRuns.$inferSelect> = await tx.select().from(heartbeatRuns).where(and(
+            eq(heartbeatRuns.companyId, input.companyId),
+            eq(heartbeatRuns.agentId, input.agentId),
+            eq(heartbeatRuns.status, "queued"),
+            cursor ? or(
+              gt(heartbeatRuns.createdAt, cursor.createdAt),
+              and(eq(heartbeatRuns.createdAt, cursor.createdAt), gt(heartbeatRuns.id, cursor.id)),
+            ) : undefined,
+          )).orderBy(asc(heartbeatRuns.createdAt), asc(heartbeatRuns.id))
+            .limit(20).for("update", { skipLocked: true });
+          if (page.length === 0) return;
+          for (const candidate of page) yield candidate;
+          const last = page[page.length - 1]!;
+          cursor = { createdAt: last.createdAt, id: last.id };
+          if (page.length < 20) return;
+        }
+      }
 
-      for (const run of queued) {
+      for await (const run of queuedCandidates()) {
         const issueId = issueIdFromRun(run);
         if (!issueId || run.runtimeMode === "native") continue;
         const [issue] = await tx.select().from(issues).where(and(

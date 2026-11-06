@@ -17034,6 +17034,22 @@ export function heartbeatService(
     return Number(count ?? 0);
   }
 
+  async function serverRunClaimAdmission(tx: Db, run: typeof heartbeatRuns.$inferSelect) {
+    // Both desktop and server claims lock this agent row before changing any
+    // queued run to running. Recheck the persisted mode under that lock so a
+    // concurrent mode switch cannot admit one run on each execution plane.
+    const [currentAgent] = await tx.select({ runtimeConfig: agents.runtimeConfig })
+      .from(agents).where(and(eq(agents.id, run.agentId), eq(agents.companyId, run.companyId)))
+      .for("update");
+    if (!currentAgent || isClientPullRuntimeConfig(currentAgent.runtimeConfig)) return false;
+    const [localOwner] = await tx.select({ runId: localAgentRunLeases.runId })
+      .from(localAgentRunLeases).where(and(
+        eq(localAgentRunLeases.agentId, run.agentId),
+        isNull(localAgentRunLeases.releasedAt),
+      )).limit(1);
+    return !localOwner;
+  }
+
   async function withChatControlRecoveryGate(
     run: typeof heartbeatRuns.$inferSelect,
     stage: "claim" | "dispatch",
@@ -17043,7 +17059,14 @@ export function heartbeatService(
     const issueId = readNonEmptyString(
       parseObject(run.contextSnapshot).issueId,
     );
-    if (!issueId || run.invocationSource !== "automation") return onClear(db);
+    if (!issueId || run.invocationSource !== "automation") {
+      if (stage !== "claim") return onClear(db);
+      return db.transaction(async (tx) =>
+        (await serverRunClaimAdmission(tx as unknown as Db, run))
+          ? onClear(tx as unknown as Db)
+          : null,
+      );
+    }
     await options.beforeChatControlRecoveryCheck?.({
       runId: run.id,
       issueId,
@@ -17084,6 +17107,7 @@ export function heartbeatService(
     try {
       const attempt = () => db.transaction(async (tx) => {
         terminal = null;
+        if (stage === "claim" && !(await serverRunClaimAdmission(tx as unknown as Db, run))) return null;
         // Same queue-edit lock order, then the close committer's conversation
         // row. NOWAIT releases partial locks on contention. Claim defers to the
         // queue; dispatch retries this transaction before considering failure.
@@ -17477,7 +17501,11 @@ export function heartbeatService(
       !nativeReviewContext && issueId && run.wakeupRequestId && queuedCommentIds.length > 0
         ? await db
             .transaction(async (tx) => {
-              // Match the queue-edit lock order: issue, wake, then run. Once the
+              if (!(await serverRunClaimAdmission(tx as unknown as Db, run))) {
+                return { kind: "stale" as const, run: null };
+              }
+              // The agent admission lock precedes the queue-edit lock order:
+              // issue, wake, then run. Once the
               // run becomes running, a concurrent discard must observe the
               // claimed wake and return an explicit conflict; if discard wins,
               // this claim observes the cancelled queue and does no work.
@@ -29819,6 +29847,9 @@ export function heartbeatService(
     retryScheduledRetryNow,
 
     resumeQueuedRuns,
+    // Internal admission primitive used by the server claim transactions and
+    // cross-pool race tests. It never starts an adapter by itself.
+    serverRunClaimAdmission,
 
     scheduleBoundedRetry: async (
       runId: string,
