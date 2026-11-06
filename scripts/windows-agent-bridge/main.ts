@@ -8,6 +8,7 @@ import { AliceClient } from "./paperclip-client.js";
 import { ClaimStateStore } from "./claim-state.js";
 import { assertWorkerEnvironment, buildLocalAdapterConfig } from "./environment.js";
 import { executeClaimedRun } from "./claimed-run.js";
+import { LocalCommentIntentStore } from "./local-run-write-proxy.js";
 import { runLocalAgent } from "./adapter-runtime.js";
 import { verifyGbrainIdentity } from "./gbrain-identity.js";
 import { acquireSingleInstanceLock } from "./single-instance-lock.js";
@@ -63,6 +64,10 @@ export async function claimAndRunOnce(input: {
   stopTimeoutMs?: number;
 }): Promise<"idle" | "finished"> {
   if (input.signal.aborted) return "idle";
+  // A prior write with an unknown server result must be reconciled before any
+  // new claim. Otherwise a fresh model process may start only to hit the old
+  // unresolved request ID on its first mutation.
+  await new LocalCommentIntentStore(input.intentFile).assertNoPending();
   // The key must reach disk before POST. A lost response reuses the same key.
   const key = await input.state.claimKey();
   const claim = await input.client.claimLocalRun(input.deviceId, key);
