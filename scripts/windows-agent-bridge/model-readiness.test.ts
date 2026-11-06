@@ -22,6 +22,8 @@ describe("private member model login preflight", () => {
     await expect(assertPrivateModelAuthReady(config, config.agents[0])).rejects.toThrow("missing");
     await mkdir(path.join(home, "codex-home"));
     await writeFile(path.join(home, "codex-home", "auth.json"), "{}");
+    await expect(assertPrivateModelAuthReady(config, config.agents[0])).rejects.toThrow("Codex login");
+    await writeFile(path.join(home, "codex-home", "auth.json"), '{"OPENAI_API_KEY":"test-only"}');
     await expect(assertPrivateModelAuthReady(config, config.agents[0])).resolves.toBeUndefined();
   });
 

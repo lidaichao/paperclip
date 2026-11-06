@@ -26,7 +26,22 @@ export async function assertPrivateModelAuthReady(config: BridgeConfig, agent: B
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error("member model login file is invalid");
   }
-  if (agent.adapterType === "cursor" && !("authInfo" in parsed)) {
-    throw new Error("member Cursor login is missing from private worker home");
+  const record = parsed as Record<string, unknown>;
+  if (agent.adapterType === "codex_local") {
+    const tokens = record.tokens && typeof record.tokens === "object" && !Array.isArray(record.tokens)
+      ? record.tokens as Record<string, unknown> : null;
+    const hasApiKey = typeof record.OPENAI_API_KEY === "string" && Boolean(record.OPENAI_API_KEY.trim());
+    const hasSubscription = Boolean(tokens && typeof tokens.account_id === "string" && tokens.account_id.trim() &&
+      ["id_token", "access_token", "refresh_token"].some((key) =>
+        typeof tokens[key] === "string" && Boolean((tokens[key] as string).trim())));
+    if (!hasApiKey && !hasSubscription) throw new Error("member Codex login is missing from private worker home");
+  } else {
+    const auth = record.authInfo && typeof record.authInfo === "object" && !Array.isArray(record.authInfo)
+      ? record.authInfo as Record<string, unknown> : null;
+    if (!auth || !["email", "displayName", "userId"].some((key) =>
+      typeof auth[key] === "string" && Boolean((auth[key] as string).trim()) ||
+      key === "userId" && typeof auth[key] === "number")) {
+      throw new Error("member Cursor login is missing from private worker home");
+    }
   }
 }
