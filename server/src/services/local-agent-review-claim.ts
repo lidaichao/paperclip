@@ -137,3 +137,68 @@ export async function assertClientPullReviewClaimCandidate(
   return { issueId: issue.id, interactionId: interaction.id, reviewId: review.id,
     sourceRunId, wakeReason: CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON };
 }
+
+/** The reviewer may write run telemetry while its exact review remains open. */
+export async function assertClientPullReviewEventContext(tx: Db, input: {
+  run: typeof heartbeatRuns.$inferSelect;
+  issue: typeof issues.$inferSelect;
+}) {
+  const { run, issue } = input;
+  const context = object(run.contextSnapshot);
+  if (run.status !== "running" || run.runtimeMode !== "client_pull" ||
+    context.wakeReason !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
+    context.issueId !== issue.id || run.companyId !== issue.companyId ||
+    issue.status !== "in_review" || issue.executionRunId !== null ||
+    issue.assigneeAgentId === run.agentId || issue.conversationAgentId ||
+    typeof context.reviewId !== "string" ||
+    typeof context.interactionId !== "string" ||
+    typeof context.sourceRunId !== "string" || !run.wakeupRequestId) {
+    throw staleReviewEvent();
+  }
+  const [review] = await tx.select().from(issueCompletionReviews).where(and(
+    eq(issueCompletionReviews.id, context.reviewId),
+    eq(issueCompletionReviews.companyId, issue.companyId),
+    eq(issueCompletionReviews.issueId, issue.id),
+  )).for("update");
+  const [card] = await tx.select().from(issueThreadInteractions).where(and(
+    eq(issueThreadInteractions.id, context.interactionId),
+    eq(issueThreadInteractions.companyId, issue.companyId),
+    eq(issueThreadInteractions.issueId, issue.id),
+  )).for("update");
+  const [wake] = await tx.select().from(agentWakeupRequests).where(and(
+    eq(agentWakeupRequests.id, run.wakeupRequestId),
+    eq(agentWakeupRequests.companyId, issue.companyId),
+  )).for("update");
+  const target = object(object(card?.payload).target);
+  const wakePayload = object(wake?.payload);
+  if (!review || !card || !wake || review.state !== "pending" ||
+    review.sourceKind !== "client_pull" ||
+    review.reviewerAgentId !== run.agentId ||
+    review.sourceAgentId !== issue.assigneeAgentId ||
+    review.sourceRunId !== context.sourceRunId ||
+    review.clientPullLeaseRunId !== context.sourceRunId ||
+    review.issueStatusVersion !== issue.statusVersion ||
+    review.interactionId !== card.id ||
+    card.kind !== "request_confirmation" || card.status !== "pending" ||
+    card.sourceRunId !== review.sourceRunId ||
+    card.createdByAgentId !== review.sourceAgentId ||
+    card.addresseeAgentId !== run.agentId || card.addresseeUserId !== null ||
+    card.continuationPolicy !== "wake_assignee" ||
+    card.requestedResolverPolicy !== "not_creator" ||
+    card.effectiveResolverPolicy !== "not_creator" ||
+    target.type !== "custom" || target.key !== ISSUE_COMPLETION_REVIEW_TARGET_KEY ||
+    target.revisionId !== review.id ||
+    wake.runId !== run.id || wake.agentId !== run.agentId ||
+    wake.status !== "claimed" ||
+    wake.reason !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
+    wake.idempotencyKey !== clientPullCompletionReviewWakeKey(review.id, card.id) ||
+    wakePayload.issueId !== issue.id || wakePayload.reviewId !== review.id ||
+    wakePayload.interactionId !== card.id ||
+    wakePayload.sourceRunId !== review.sourceRunId) {
+    throw staleReviewEvent();
+  }
+}
+
+function staleReviewEvent() {
+  return conflict("Dedicated reviewer run no longer owns an open review");
+}

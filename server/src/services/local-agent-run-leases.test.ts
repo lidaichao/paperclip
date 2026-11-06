@@ -1383,6 +1383,23 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .where(eq(localAgentRunLeases.runId, run.id));
     expect(lease.agentId).toBe(handoff.review.reviewerAgentId);
     expect(lease.issueId).toBe(scope.issueId);
+    const eventInput = { companyId: scope.companyId,
+      agentId: handoff.review.reviewerAgentId, issueId: scope.issueId,
+      runId: run.id, keyId: reviewerKeyId,
+      deviceId: claimInput.deviceId, leaseId: claimed!.leaseId,
+      generation: claimed!.generation, clientRequestId: randomUUID(),
+      stream: "system" as const, level: "info" as const,
+      message: "Review started" };
+    const actor = { type: "agent", source: "agent_key",
+      companyId: scope.companyId, agentId: handoff.review.reviewerAgentId,
+      keyId: reviewerKeyId, runId: run.id } as const;
+    expect((await svc.appendFencedEvent(eventInput, actor)).message)
+      .toBe("Review started");
+    await db.update(issueThreadInteractions).set({ status: "cancelled" })
+      .where(eq(issueThreadInteractions.id, handoff.interaction.id));
+    await expect(svc.appendFencedEvent({ ...eventInput,
+      clientRequestId: randomUUID(), message: "Stale review event" }, actor))
+      .rejects.toMatchObject({ status: 409 });
   }, 30_000);
 
   it("rejects a stale reviewer card and leaves the queued run untouched", async () => {

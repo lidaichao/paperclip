@@ -27,7 +27,7 @@ import { issueThreadInteractionService } from "./issue-thread-interactions.js";
 import { executeReviewHandoff } from "./issue-review-handoff.js";
 import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
-import { assertClientPullReviewClaimCandidate,
+import { assertClientPullReviewClaimCandidate, assertClientPullReviewEventContext,
   CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
@@ -590,11 +590,13 @@ export function localAgentRunLeaseService(
       if (run.status !== "running" || lease.cancelRequestedAt || lease.releasedAt || !live?.live) {
         throw conflict("Run event lease is cancelled, expired, or released");
       }
-      const [issue] = await tx.select({ assigneeAgentId: issues.assigneeAgentId,
-        executionRunId: issues.executionRunId, conversationAgentId: issues.conversationAgentId })
-        .from(issues).where(and(eq(issues.id, input.issueId), eq(issues.companyId, input.companyId)))
+      const [issue] = await tx.select().from(issues)
+        .where(and(eq(issues.id, input.issueId), eq(issues.companyId, input.companyId)))
         .for("update");
-      if (!issue || issue.assigneeAgentId !== input.agentId ||
+      if (!issue) throw forbidden("Local run no longer owns this task");
+      if (wakeReasonFromRun(run) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON) {
+        await assertClientPullReviewEventContext(tx as unknown as Db, { run, issue });
+      } else if (issue.assigneeAgentId !== input.agentId ||
         issue.executionRunId !== input.runId || issue.conversationAgentId) {
         throw forbidden("Local run no longer owns this task");
       }
