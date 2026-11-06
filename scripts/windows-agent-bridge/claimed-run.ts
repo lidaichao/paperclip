@@ -202,10 +202,12 @@ export async function executeClaimedRun(input: {
           },
         });
         if (telemetryError) throw telemetryError;
-        const succeeded = result.succeeded && (!reviewContext || proxy.decisionConfirmed());
+        const succeeded = result.succeeded && !proxy.writeFailed() &&
+          (!reviewContext || proxy.decisionConfirmed());
         summary = succeeded ? "Local adapter completed successfully"
           : reviewContext && !proxy.decisionConfirmed()
             ? "Reviewer stopped without a committed decision"
+            : proxy.writeFailed() ? "Local field write failed"
             : "Local adapter finished with an error";
         if (signal.aborted) {
           if (pids.size === 0) throw new Error("cancelled run has no reported process identity");

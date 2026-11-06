@@ -498,6 +498,31 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(preserved.statusVersion).toBe(9);
   }, 30_000);
 
+  it.each(["failed", "cancelled"] as const)(
+    "recovers a %s source process that never made a business handoff",
+    async (outcome) => {
+      const scope = await fixture();
+      const svc = localAgentRunLeaseService(db);
+      const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+        idempotencyKey: randomUUID() });
+      await db.update(issues).set({ status: "in_progress" })
+        .where(eq(issues.id, scope.issueId));
+      const finish = { ...scope, deviceId: "device-desktop-001",
+        leaseId: claimed!.leaseId, generation: claimed!.generation,
+        outcome, exitCode: outcome === "failed" ? 1 : null,
+        processStopped: true as const, clientRequestId: randomUUID() };
+      expect((await svc.finish(finish)).status).toBe(outcome);
+      const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
+      expect(issue.status).toBe("blocked");
+      expect(issue.executionRunId).toBeNull();
+      const activities = await db.select().from(activityLog)
+        .where(eq(activityLog.entityId, scope.issueId));
+      expect(activities.filter((row) => row.action === "issue.local_run_missing_review_handoff" &&
+        row.details?.reason === "unsuccessful_process_without_business_handoff"))
+        .toHaveLength(1);
+    }, 30_000,
+  );
+
   it("rejects new run events after a cancellation commits", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);

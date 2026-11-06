@@ -661,10 +661,10 @@ export function localAgentRunLeaseService(
             disposition: "preserved" };
         }
       }
-      // A local process exiting successfully is not a business completion.
-      // Without an atomic handoff, leaving in_progress after releasing its run
-      // would strand the task. Preserve a human's newer state if they changed it.
-      if (!reviewHint && !reviewerRun && status === "succeeded") {
+      // A local process result is not a business completion. Without an atomic
+      // handoff, releasing any source run would strand an in_progress task.
+      // Preserve a human's newer state if they changed it.
+      if (!reviewHint && !reviewerRun) {
         const [issue] = await tx.select().from(issues).where(and(
           eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
         )).for("update");
@@ -681,7 +681,9 @@ export function localAgentRunLeaseService(
             agentId: input.agentId, runId: input.runId,
             action: "issue.local_run_missing_review_handoff", entityType: "issue",
             entityId: issue.id, issueId: issue.id,
-            details: { reason: "successful_process_without_business_handoff" },
+            details: { reason: status === "succeeded"
+              ? "successful_process_without_business_handoff"
+              : "unsuccessful_process_without_business_handoff" },
           }, publications);
         }
       }

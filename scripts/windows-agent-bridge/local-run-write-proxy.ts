@@ -107,6 +107,7 @@ export async function startLocalRunWriteProxy(input: {
   intentStore: LocalCommentIntentStore;
   reviewContext?: LocalReviewContext;
 }): Promise<{ apiBase: string; token: string; decisionConfirmed(): boolean;
+  writeFailed(): boolean;
   close(): Promise<void> }> {
   if (input.signal.aborted) throw new Error("local run already cancelled");
   const review = input.claim.wakeReason === "issue_completion_review";
@@ -287,6 +288,7 @@ export async function startLocalRunWriteProxy(input: {
     apiBase: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     token,
     decisionConfirmed: () => reviewDecisionConfirmed,
+    writeFailed: () => failedFieldWrite,
     async close() {
       closing = true;
       try {
@@ -295,7 +297,6 @@ export async function startLocalRunWriteProxy(input: {
         if (!input.signal.aborted) {
           await writeQueue;
           await input.intentStore.assertNoPending();
-          if (failedFieldWrite) throw new Error("field edit failed; refusing successful run finish");
         }
       } finally {
         closed = true;
