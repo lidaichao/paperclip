@@ -808,6 +808,53 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     }
   }, 30_000);
 
+  it("rejects addressed-agent review before creating a card until delivery is durable", async () => {
+    const scope = await fixture();
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
+    });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const reviewerId = randomUUID();
+    const pausedId = randomUUID();
+    const foreignCompanyId = randomUUID();
+    const foreignReviewerId = randomUUID();
+    await db.insert(companies).values({ id: foreignCompanyId,
+      name: "Foreign review company", issuePrefix: `F${foreignCompanyId.slice(0, 7)}` });
+    await db.insert(agents).values([
+      { id: reviewerId, companyId: scope.companyId, name: "Review agent" },
+      { id: pausedId, companyId: scope.companyId, name: "Paused review agent", status: "paused" },
+      { id: foreignReviewerId, companyId: foreignCompanyId, name: "Foreign review agent" },
+    ]);
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+        companyId: scope.companyId, keyId: scope.keyId };
+      next();
+    });
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string; details?: unknown }, _req: Request,
+      res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message, details: err.details });
+    });
+    const path = `/api/agents/me/local-runs/${scope.runId}/issue/review-confirmation`;
+    const payload = { deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, issueId: scope.issueId,
+      prompt: "Please review", clientRequestId: randomUUID() };
+    for (const target of [reviewerId, scope.agentId, pausedId, foreignReviewerId]) {
+      const denied = await request(app).post(path)
+        .send({ ...payload, reviewerAgentId: target }).expect(422);
+      expect(denied.body.details?.code).toBe("local_run_agent_review_delivery_unavailable");
+    }
+    expect(await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.issueId, scope.issueId))).toHaveLength(0);
+    expect((await db.select().from(activityLog).where(eq(activityLog.entityId, scope.issueId)))
+      .filter((row) => row.action === "issue.thread_interaction_created")).toHaveLength(0);
+    await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
+    await request(app).post(path).send({ ...payload, reviewerAgentId: reviewerId }).expect(403);
+  }, 30_000);
+
   it("preserves deletion of a task and its run after a historical lease", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);

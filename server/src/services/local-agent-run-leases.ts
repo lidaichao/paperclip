@@ -11,7 +11,7 @@ import {
   localAgentRunLeases,
 } from "@paperclipai/db";
 import { and, asc, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
-import { badRequest, conflict, forbidden, notFound } from "../errors.js";
+import { badRequest, conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { redactCurrentUserText } from "../log-redaction.js";
 import { accessService } from "./access.js";
 import { assertBoundLocalDevice } from "./local-agent-device-bindings.js";
@@ -557,7 +557,8 @@ export function localAgentRunLeaseService(
   }
 
   async function createFencedReviewConfirmation(
-    input: LocalRunOwner & { issueId: string; prompt: string; clientRequestId: string },
+    input: LocalRunOwner & { issueId: string; prompt: string; clientRequestId: string;
+      reviewerAgentId?: string },
     actor: Express.Request["actor"],
   ) {
     if (!UUID.test(input.clientRequestId)) throw badRequest("clientRequestId must be a UUID");
@@ -567,6 +568,14 @@ export function localAgentRunLeaseService(
     const publications: ActivityPublication[] = [];
     const result = await withFencedIssueWrite(input, actor, "issue:mutate",
       async (tx, issue) => {
+        if (input.reviewerAgentId !== undefined) {
+          // The canonical interaction creator persists the card, but its
+          // addressed-agent wake is still fire-and-forget in the ordinary route.
+          // Never leave an agent review card without a durable wake owner.
+          throw unprocessable("Agent review requires durable wake delivery", {
+            code: "local_run_agent_review_delivery_unavailable",
+          });
+        }
         if (issue.status !== "in_progress") {
           throw conflict("Review confirmation requires an in-progress task");
         }
