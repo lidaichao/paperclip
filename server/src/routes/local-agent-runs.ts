@@ -6,6 +6,7 @@ import { addIssueCommentSchema, updateIssueSchema } from "@paperclipai/shared";
 import { badRequest, forbidden } from "../errors.js";
 import { localAgentRunLeaseService, type LocalRunOwner } from "../services/local-agent-run-leases.js";
 import { localAgentReviewContextService } from "../services/local-agent-review-context.js";
+import { issueCompletionReviewDecisionService } from "../services/issue-completion-review-decisions.js";
 import { localAgentDeviceBindingService } from "../services/local-agent-device-bindings.js";
 import { accessService } from "../services/access.js";
 import { assertBoard, getAccessibleResource } from "./authz.js";
@@ -26,6 +27,7 @@ export function localAgentRunRoutes(db: Db) {
   const router = Router();
   const leases = localAgentRunLeaseService(db);
   const reviewContext = localAgentReviewContextService(db);
+  const reviewDecisions = issueCompletionReviewDecisionService(db);
   const bindings = localAgentDeviceBindingService(db);
 
   async function managedAgent(req: Request, res: Response) {
@@ -129,6 +131,24 @@ export function localAgentRunRoutes(db: Db) {
     res.set("Cache-Control", "no-store");
     return res.json(await reviewContext.read(
       owner(req, req.query as Record<string, unknown>), req.actor));
+  });
+
+  router.post("/agents/me/local-runs/:runId/review-accept", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "reviewId", "clientRequestId", "summary"]);
+    const proof = owner(req, body);
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuid.test(String(body.issueId ?? "")) || !uuid.test(String(body.reviewId ?? "")) ||
+      !uuid.test(String(body.clientRequestId ?? "")) || typeof body.summary !== "string") {
+      throw badRequest("Issue, review, decision request and summary are required");
+    }
+    return res.json(await reviewDecisions.accept({
+      companyId: proof.companyId, issueId: String(body.issueId),
+      reviewId: String(body.reviewId), actorAgentId: proof.agentId,
+      actorRunId: proof.runId, requestId: String(body.clientRequestId),
+      summary: body.summary, clientPullProof: { owner: proof, actor: req.actor },
+    }));
   });
 
   router.post("/agents/me/local-runs/:runId/finish", async (req, res) => {

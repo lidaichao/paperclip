@@ -132,5 +132,21 @@ suite("local reviewer context (PostgreSQL)", () => {
     await expect(localAgentReviewContextService(db).read(f.owner, {
       ...f.actor, agentId: randomUUID(),
     })).rejects.toMatchObject({ status: 403 });
+
+    const decisionPath = `/api/agents/me/local-runs/${f.owner.runId}/review-accept`;
+    const decisionBody = { ...query, issueId: f.issueId,
+      reviewId: f.handoff.review.id, clientRequestId: randomUUID(),
+      summary: "Acceptance criteria verified" };
+    await request(app).post(decisionPath).send({ ...decisionBody,
+      generation: 99 }).expect(409);
+    const accepted = await request(app).post(decisionPath).send(decisionBody).expect(200);
+    expect(accepted.body).toMatchObject({ outcome: "accepted",
+      reviewId: f.handoff.review.id, requestId: decisionBody.clientRequestId });
+    expect((await db.select({ status: issues.status }).from(issues)
+      .where(eq(issues.id, f.issueId)))[0]?.status).toBe("done");
+    const replay = await request(app).post(decisionPath).send(decisionBody).expect(200);
+    expect(replay.body).toEqual(accepted.body);
+    await request(app).post(decisionPath).send({ ...decisionBody,
+      clientRequestId: randomUUID() }).expect(409);
   }, 30_000);
 });
