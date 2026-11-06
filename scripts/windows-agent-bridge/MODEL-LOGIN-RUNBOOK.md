@@ -23,6 +23,13 @@
 [Cursor 官方配置文档](https://prod.cursor.com/docs/cli/reference/configuration)写明 Windows CLI 的默认配置文件在 `%USERPROFILE%\.cursor\cli-config.json`，且可用 `CURSOR_CONFIG_DIR` 指定目录；[官方认证文档](https://prod.cursor.com/docs/cli/reference/authentication)说明浏览器登录保存在本机，并提供 `agent status` 状态查询。本轮没有运行 `agent status` 或模型命令，因为官方文档还说明 CLI 会自修复缺失/损坏的配置，无法把状态命令视为严格无写入探针。
 
 桥接已加入显式 `"modelAuthMode": "shared_user_cursor"` 的配置解析与模拟预检：只让 Cursor 使用本机用户共享的 `.cursor` 作为 `CURSOR_CONFIG_DIR`，成员 `HOME`、`USERPROFILE`、`APPDATA`、Paperclip/GBrain 环境仍独立；Cursor adapter 的技能目录从成员私有 `config.env.HOME` 解析，不再落到共享用户 `.cursor/skills`。本机共享认证文件只读检查为常规文件且字段形状符合预检，未输出任何凭据。由于 CLI 自身可能改写共享 `cli-config.json`，也尚未验证并发与登录有效性，launcher 对此模式**显式拒绝启动**；`main.ts` 和 `doctor.ps1` 的总门禁也保持关闭。未来每人独立电脑时，应在各自电脑完成 Cursor 登录或使用各自受管凭据。
+
+#### Belle 单次受控检查（尚未执行）
+
+1. 在 Cursor 空闲的维护窗口，只读确认共享 `cli-config.json` 是有效 JSON，记录文件哈希和修改时间；不复制文件或输出认证字段值。
+2. 由独立的临时子进程执行**一次** `agent status --format json`：`CURSOR_CONFIG_DIR` 指向当前 Windows 用户 `.cursor`，`HOME`、`USERPROFILE`、`APPDATA`、`LOCALAPPDATA` 指向 Belle 私有目录，环境只保留必要系统键，不注入任何 GBrain、Paperclip 或模型 API key；`windowsHide=true`、`shell=false`、10 秒超时、无自动重试。不要把状态原文写入 Paperclip 日志。
+3. 退出后再次只读核对共享配置哈希、修改时间与登录状态。若配置被改写、出现身份不一致、弹出窗口或超时，立即停止该路线并检查差异；不要自动覆盖或恢复共享配置。
+4. 只有状态检查可解释且写入围栏、进程停稳门禁都完成后，才安排 Belle 的一条受控真实任务；验证当前任务回写、取消和全树停稳，再决定是否解除 launcher 的 Cursor 专用拒绝。当前不得提前运行该步骤。
 - 登录脚本与工作器默认清除父进程的代理变量。本机 2026-11-06 的一次只读 HEAD 检查显示 `chatgpt.com` 和 `api2.cursor.sh` 直连可达；这不能保证后续网络环境。需要代理时，在**该成员私有配置**中显式增加 `"localProxyUrl": "http://127.0.0.1:7897"`。只接受无用户名、无密码、无路径的 IPv4 回环 HTTP 地址和明确端口；工作器把 Paperclip 控制面主机、GBrain 主机及回环地址加入 `NO_PROXY`。
 
 ## 私有登录备选流程（当前暂停）
