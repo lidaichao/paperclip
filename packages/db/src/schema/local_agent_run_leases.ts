@@ -24,6 +24,9 @@ export const localAgentRunLeases = pgTable(
     // would make historical leases silently disable the existing delete action.
     issueId: uuid("issue_id").notNull(),
     deviceId: text("device_id").notNull(),
+    // The exact authenticated key that won the lease. A replacement key for
+    // the same device must never inherit an older run's lease identity.
+    deviceKeyId: uuid("device_key_id"),
     leaseId: uuid("lease_id").notNull().defaultRandom(),
     generation: integer("generation").notNull().default(1),
     idempotencyKey: text("idempotency_key").notNull(),

@@ -6,6 +6,7 @@ import request from "supertest";
 import { eq } from "drizzle-orm";
 import {
   activityLog,
+  agentApiKeys,
   agents,
   companies,
   createDb,
@@ -16,9 +17,12 @@ import {
   issueThreadInteractions,
   issues,
   localAgentRunLeases,
+  localAgentDeviceBindings,
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
+import { localAgentDeviceBindingService } from "./local-agent-device-bindings.js";
+import { accessService } from "./access.js";
 import { heartbeatService } from "./heartbeat.js";
 import { agentService } from "./agents.js";
 import { updateAgentSchema } from "@paperclipai/shared";
@@ -62,6 +66,13 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       adapterType: "codex_local",
       runtimeConfig: { executionMode: "client_pull" },
     });
+    const keyId = randomUUID();
+    await db.insert(agentApiKeys).values({
+      id: keyId, companyId, agentId, name: "Desktop test key", keyHash: randomUUID(),
+    });
+    await db.insert(localAgentDeviceBindings).values({
+      companyId, agentId, keyId, deviceId: "device-desktop-001",
+    });
     await db.insert(issues).values({
       id: issueId,
       companyId,
@@ -76,8 +87,176 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       status: "queued",
       contextSnapshot: { issueId, wakeReason: "issue_assigned" },
     });
-    return { companyId, agentId, issueId, runId };
+    return { companyId, agentId, issueId, runId, keyId };
   }
+
+  it("refuses a client-pull claim without a registered credential binding", async () => {
+    const scope = await fixture();
+    await expect(localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "unregistered-device-001", keyId: randomUUID(),
+      idempotencyKey: randomUUID(),
+    })).rejects.toMatchObject({ status: 403 });
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
+    expect(run.status).toBe("queued");
+  });
+
+  it("revokes an active device and lets a new key rebind without inheriting its old lease", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const bindings = localAgentDeviceBindingService(db);
+    const deviceId = "device-desktop-001";
+    const claimed = await svc.claim({ ...scope, deviceId, idempotencyKey: randomUUID() });
+    const oldOwner = { ...scope, deviceId, leaseId: claimed!.leaseId,
+      generation: claimed!.generation };
+    const [oldBinding] = await db.select().from(localAgentDeviceBindings)
+      .where(eq(localAgentDeviceBindings.keyId, scope.keyId));
+    const replacementKeyId = randomUUID();
+    await db.insert(agentApiKeys).values({ id: replacementKeyId, companyId: scope.companyId,
+      agentId: scope.agentId, name: "Replacement key", keyHash: randomUUID() });
+    await expect(bindings.bind({ ...scope, keyId: replacementKeyId, deviceId }))
+      .rejects.toMatchObject({ status: 409 });
+    await bindings.revoke({ ...scope, bindingId: oldBinding.id });
+    const [lease] = await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, scope.runId));
+    expect(lease.cancelRequestedAt).not.toBeNull();
+    expect((await svc.control(oldOwner)).action).toBe("cancel");
+    expect((await svc.renew(oldOwner)).cancelRequested).toBe(true);
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    await expect(svc.addFencedComment({ ...oldOwner, issueId: scope.issueId,
+      body: "After device revocation", clientRequestId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    const replacement = await bindings.bind({ ...scope, keyId: replacementKeyId, deviceId });
+    expect(replacement.revokedAt).toBeNull();
+    await expect(svc.renew({ ...oldOwner, keyId: replacementKeyId }))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(svc.control({ ...oldOwner, keyId: replacementKeyId }))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(svc.finish({ ...oldOwner, keyId: replacementKeyId,
+      outcome: "cancelled", exitCode: null, processStopped: true }))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(svc.finish({ ...oldOwner, outcome: "succeeded",
+      exitCode: 0, processStopped: true })).rejects.toMatchObject({ status: 409 });
+    expect((await svc.finish({ ...oldOwner, outcome: "cancelled",
+      exitCode: null, processStopped: true })).status).toBe("cancelled");
+    await expect(bindings.bind({ ...scope, keyId: scope.keyId,
+      deviceId: "other-approved-device" })).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("serializes claim and device revocation across database pools", async () => {
+    const scope = await fixture();
+    const [binding] = await db.select().from(localAgentDeviceBindings)
+      .where(eq(localAgentDeviceBindings.keyId, scope.keyId));
+    const second = createDb(external ?? temporary!.connectionString);
+    let release!: () => void;
+    let locked!: () => void;
+    const hold = new Promise<void>((resolve) => { release = resolve; });
+    const ready = new Promise<void>((resolve) => { locked = resolve; });
+    try {
+      const gate = db.transaction(async (tx) => {
+        await tx.select().from(agents).where(eq(agents.id, scope.agentId)).for("update");
+        locked();
+        await hold;
+      });
+      await ready;
+      const claim = localAgentRunLeaseService(db).claim({
+        ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
+      });
+      const revoke = localAgentDeviceBindingService(second).revoke({
+        ...scope, bindingId: binding.id,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      release();
+      await gate;
+      const [claimResult, revokeResult] = await Promise.allSettled([claim, revoke]);
+      expect(revokeResult.status).toBe("fulfilled");
+      if (claimResult.status === "rejected") {
+        expect(claimResult.reason).toMatchObject({ status: 403 });
+      }
+      const [after] = await db.select().from(localAgentDeviceBindings)
+        .where(eq(localAgentDeviceBindings.id, binding.id));
+      expect(after.revokedAt).not.toBeNull();
+      const leases = await db.select().from(localAgentRunLeases)
+        .where(eq(localAgentRunLeases.runId, scope.runId));
+      if (leases.length) expect(leases[0]!.cancelRequestedAt).not.toBeNull();
+    } finally {
+      release?.();
+      await second.$client.end();
+    }
+  }, 30_000);
+
+  it("limits device management HTTP routes to an authorized company administrator and audits changes", async () => {
+    const scope = await fixture();
+    const keyId = randomUUID();
+    await db.insert(agentApiKeys).values({ id: keyId, companyId: scope.companyId,
+      agentId: scope.agentId, name: "Second device key", keyHash: randomUUID() });
+    function appFor(actor: Request["actor"]) {
+      const app = express();
+      app.use(express.json());
+      app.use((req, _res, next) => { req.actor = actor; next(); });
+      app.use(localAgentRunWriteGate(db));
+      app.use("/api", localAgentRunRoutes(db));
+      app.use((err: { status?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
+        res.status(err.status ?? 500).json({ error: err.message });
+      });
+      return app;
+    }
+    const path = `/api/agents/${scope.agentId}/local-devices`;
+    const payload = { keyId, deviceId: "device-desktop-002" };
+    const admin = appFor({ type: "board", source: "session", userId: "device-admin",
+      companyIds: [scope.companyId], isInstanceAdmin: true });
+    const viewer = appFor({ type: "board", source: "session", userId: "viewer",
+      companyIds: [scope.companyId], memberships: [{ companyId: scope.companyId,
+        membershipRole: "viewer", status: "active" }] });
+    const outsider = appFor({ type: "board", source: "session", userId: "other-admin",
+      companyIds: [], isInstanceAdmin: true });
+    const agent = appFor({ type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId });
+    await request(outsider).post(path).send(payload).expect(404);
+    await request(viewer).post(path).send(payload).expect(403);
+    await request(agent).post(path).send(payload).expect(403);
+    await request(admin).post(path).send({ ...payload, createdByUserId: "spoofed" }).expect(400);
+    const created = await request(admin).post(path).send(payload).expect(201);
+    expect(created.body.keyId).toBe(keyId);
+    expect(created.body.createdByUserId).toBe("device-admin");
+    const listed = await request(admin).get(path).expect(200);
+    expect(listed.body).toHaveLength(2);
+    const revoked = await request(admin).delete(`${path}/${created.body.id}`).expect(200);
+    expect(revoked.body.revokedByUserId).toBe("device-admin");
+    const events = (await db.select().from(activityLog).where(eq(activityLog.entityId, scope.agentId)))
+      .filter((event) => event.action.startsWith("agent.local_device_"));
+    expect(events.map((event) => event.action).sort()).toEqual([
+      "agent.local_device_bound", "agent.local_device_revoked",
+    ]);
+    expect(events.every((event) => event.actorId === "device-admin")).toBe(true);
+  }, 30_000);
+
+  it("allows a company owner with explicit agent-management permission to bind a device", async () => {
+    const scope = await fixture();
+    const userId = "device-company-owner";
+    const access = accessService(db);
+    await access.setPrincipalPermission(scope.companyId, "user", userId,
+      "agents:create", true, null);
+    await access.ensureMembership(scope.companyId, "user", userId, "owner", "active");
+    const keyId = randomUUID();
+    await db.insert(agentApiKeys).values({ id: keyId, companyId: scope.companyId,
+      agentId: scope.agentId, name: "Owner approved key", keyHash: randomUUID() });
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.actor = { type: "board", source: "session", userId,
+        companyIds: [scope.companyId], memberships: [{ companyId: scope.companyId,
+          membershipRole: "owner", status: "active" }] };
+      next();
+    });
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message });
+    });
+    const response = await request(app).post(`/api/agents/${scope.agentId}/local-devices`)
+      .send({ keyId, deviceId: "device-desktop-002" }).expect(201);
+    expect(response.body.createdByUserId).toBe(userId);
+  }, 30_000);
 
   it("atomically admits one device and replays the same idempotency key after a service restart", async () => {
     const scope = await fixture();
@@ -115,7 +294,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       contextSnapshot: { wakeReason: "no_issue" },
     })));
     const claimed = await localAgentRunLeaseService(db).claim({
-      ...scope, deviceId: "device-desktop-page-001", idempotencyKey: randomUUID(),
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
     });
     expect(claimed?.runId).toBe(scope.runId);
   });
@@ -149,7 +328,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       releaseLock();
       await modeSwitch;
       const desktopClaim = localAgentRunLeaseService(db).claim({
-        ...scope, deviceId: "device-desktop-mode-001", idempotencyKey: randomUUID(),
+        ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
       });
       expect(await serverAdmission).toBe(false);
       expect((await desktopClaim)?.runId).toBe(scope.runId);
@@ -164,15 +343,15 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("does not renew an expired lease or reassign before stop acknowledgement", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-003", idempotencyKey: randomUUID() });
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
     expect(claimed).not.toBeNull();
-    const owner = { ...scope, deviceId: "device-desktop-003", leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId, generation: claimed!.generation };
     await db.update(localAgentRunLeases).set({ expiresAt: new Date(0) }).where(eq(localAgentRunLeases.runId, scope.runId));
     await expect(svc.renew(owner)).rejects.toMatchObject({ status: 409 });
     expect((await svc.control(owner)).action).toBe("cancel");
     const [afterControl] = await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId));
     expect(afterControl.cancelRequestedAt).not.toBeNull();
-    await expect(svc.claim({ ...scope, deviceId: "device-desktop-004", idempotencyKey: randomUUID() }))
+    await expect(svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() }))
       .rejects.toMatchObject({ status: 409 });
     await expect(svc.finish({ ...owner, outcome: "succeeded", exitCode: 0, processStopped: true }))
       .rejects.toMatchObject({ status: 409 });
@@ -186,8 +365,8 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("rejects success after cancellation and rejects a stale generation", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-005", idempotencyKey: randomUUID() });
-    const owner = { ...scope, deviceId: "device-desktop-005", leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId, generation: claimed!.generation };
     await expect(svc.renew({ ...owner, generation: owner.generation + 1 })).rejects.toMatchObject({ status: 403 });
     await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
     expect((await svc.renew(owner)).cancelRequested).toBe(true);
@@ -202,10 +381,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("persists bounded run events and a finish summary under the same lease identity", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-log-001", idempotencyKey: randomUUID() });
-    const owner = { ...scope, issueId: scope.issueId, deviceId: "device-desktop-log-001",
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
+    const owner = { ...scope, issueId: scope.issueId, deviceId: "device-desktop-001",
       leaseId: claimed!.leaseId, generation: claimed!.generation };
-    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId } as const;
     const event = { ...owner, clientRequestId: randomUUID(), stream: "stdout" as const,
       level: "info" as const, message: "Executed local step" };
     const first = await svc.appendFencedEvent(event, actor);
@@ -237,10 +416,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("rejects new run events after a cancellation commits", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-log-002", idempotencyKey: randomUUID() });
-    const owner = { ...scope, issueId: scope.issueId, deviceId: "device-desktop-log-002",
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
+    const owner = { ...scope, issueId: scope.issueId, deviceId: "device-desktop-001",
       leaseId: claimed!.leaseId, generation: claimed!.generation };
-    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId } as const;
     await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
     await expect(svc.appendFencedEvent({ ...owner, clientRequestId: randomUUID(),
       stream: "stderr", level: "warn", message: "Too late" }, actor))
@@ -258,13 +437,18 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("keeps an unacknowledged cancelled issue reserved across reassignment", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const old = await svc.claim({ ...scope, deviceId: "device-desktop-006", idempotencyKey: randomUUID() });
+    const old = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
     const newAgentId = randomUUID();
     const newRunId = randomUUID();
     await db.insert(agents).values({
       id: newAgentId, companyId: scope.companyId, name: "Replacement desktop",
       runtimeConfig: { executionMode: "client_pull" },
     });
+    const newKeyId = randomUUID();
+    await db.insert(agentApiKeys).values({ id: newKeyId, companyId: scope.companyId,
+      agentId: newAgentId, name: "Replacement desktop key", keyHash: randomUUID() });
+    await db.insert(localAgentDeviceBindings).values({ companyId: scope.companyId,
+      agentId: newAgentId, keyId: newKeyId, deviceId: "device-desktop-001" });
     await db.update(heartbeatRuns).set({ status: "cancelled" }).where(eq(heartbeatRuns.id, scope.runId));
     await db.update(issues).set({
       assigneeAgentId: newAgentId, executionRunId: null,
@@ -275,12 +459,14 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     });
     const nextInput = {
       companyId: scope.companyId, agentId: newAgentId,
-      deviceId: "device-desktop-007", idempotencyKey: randomUUID(),
+      keyId: newKeyId,
+      deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
     };
     expect(await svc.claim(nextInput)).toBeNull();
     await svc.finish({
       companyId: scope.companyId, agentId: scope.agentId, runId: scope.runId,
-      deviceId: "device-desktop-006", leaseId: old!.leaseId, generation: old!.generation,
+      keyId: scope.keyId,
+      deviceId: "device-desktop-001", leaseId: old!.leaseId, generation: old!.generation,
       outcome: "cancelled", exitCode: null, processStopped: true,
     });
     expect((await svc.claim(nextInput))?.runId).toBe(newRunId);
@@ -303,9 +489,9 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(next).not.toHaveBeenCalled();
 
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-008", idempotencyKey: randomUUID() });
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
     await svc.finish({
-      ...scope, deviceId: "device-desktop-008", leaseId: claimed!.leaseId,
+      ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
       generation: claimed!.generation, outcome: "succeeded", exitCode: 0,
       processStopped: true,
     });
@@ -320,10 +506,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("writes a current-run comment and issue edit with the lease transaction", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-009", idempotencyKey: randomUUID() });
-    const owner = { ...scope, deviceId: "device-desktop-009", leaseId: claimed!.leaseId,
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
       generation: claimed!.generation, clientRequestId: randomUUID() };
-    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId } as const;
     const comment = await svc.addFencedComment({ ...owner, body: "Local execution progress" }, actor);
     expect(comment.createdByRunId).toBe(scope.runId);
     expect(comment.authorAgentId).toBe(scope.agentId);
@@ -339,11 +525,11 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("retries reference projection after a committed comment's first post-commit failure", async () => {
     const scope = await fixture();
     const claimed = await localAgentRunLeaseService(db).claim({
-      ...scope, deviceId: "device-desktop-015", idempotencyKey: randomUUID(),
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
     });
-    const owner = { ...scope, deviceId: "device-desktop-015", leaseId: claimed!.leaseId,
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
       generation: claimed!.generation, clientRequestId: randomUUID(), body: "Reference retry" };
-    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId } as const;
     const sync = vi.fn().mockRejectedValueOnce(new Error("projection unavailable")).mockResolvedValue(undefined);
     const svc = localAgentRunLeaseService(db, { syncCommentReferences: sync });
     await expect(svc.addFencedComment(owner, actor)).rejects.toThrow("projection unavailable");
@@ -359,10 +545,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const scope = await fixture();
     const other = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-010", idempotencyKey: randomUUID() });
-    const owner = { ...scope, deviceId: "device-desktop-010", leaseId: claimed!.leaseId,
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
       generation: claimed!.generation, clientRequestId: randomUUID() };
-    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId } as const;
     const count = async () => (await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).length;
     await expect(svc.addFencedComment({ ...owner, issueId: other.issueId, body: "cross company" }, actor))
       .rejects.toMatchObject({ status: 403 });
@@ -385,10 +571,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("does not let a comment cross a concurrently committed cancellation", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-012", idempotencyKey: randomUUID() });
-    const owner = { ...scope, deviceId: "device-desktop-012", leaseId: claimed!.leaseId,
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
       generation: claimed!.generation, clientRequestId: randomUUID() };
-    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId } as const;
     let releaseCancellation!: () => void;
     let cancellationLocked!: () => void;
     const allowCommit = new Promise<void>((resolve) => { releaseCancellation = resolve; });
@@ -413,7 +599,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       runtimeConfig: { executionMode: "client_pull", heartbeat: { maxDailyRuns: 0 } },
     }).where(eq(agents.id, scope.agentId));
     const svc = localAgentRunLeaseService(db);
-    await expect(svc.claim({ ...scope, deviceId: "device-desktop-013", idempotencyKey: randomUUID() }))
+    await expect(svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() }))
       .rejects.toMatchObject({ status: 409 });
     const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
     expect(run.status).toBe("queued");
@@ -429,7 +615,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .where(eq(agents.id, scope.agentId));
     expect(stored.runtimeConfig?.executionMode).toBe("client_pull");
     expect((await localAgentRunLeaseService(db).claim({
-      ...scope, deviceId: "device-desktop-014", idempotencyKey: randomUUID(),
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
     }))?.runId).toBe(scope.runId);
   });
 
@@ -438,7 +624,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
-      req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId };
+      req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId, keyId: scope.keyId };
       next();
     });
     app.use(localAgentRunWriteGate(db));
@@ -446,7 +632,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     app.use((err: { status?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
       res.status(err.status ?? 500).json({ error: err.message });
     });
-    const payload = { deviceId: "device-desktop-016", leaseId: randomUUID(),
+    const payload = { deviceId: "device-desktop-001", leaseId: randomUUID(),
       generation: 1, issueId: scope.issueId };
     await request(app).patch(`/api/agents/me/local-runs/${scope.runId}/issue`)
       .send({ ...payload, status: "in_review", comment: "Review this" }).expect(403);
@@ -468,7 +654,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
 
   it("atomically hands an owned task to review and replays only the exact committed command", async () => {
     const scope = await fixture();
-    const deviceId = "device-desktop-review-001";
+    const deviceId = "device-desktop-001";
     const claimed = await localAgentRunLeaseService(db).claim({
       ...scope, deviceId, idempotencyKey: randomUUID(),
     });
@@ -483,7 +669,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const command = { ...owner, body: "Ready for acceptance", reviewInteractionId: confirmation.id,
       clientRequestId: randomUUID() };
     const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
-      companyId: scope.companyId } as const;
+      companyId: scope.companyId, keyId: scope.keyId } as const;
     const svc = localAgentRunLeaseService(db);
     const first = await svc.reviewFencedIssue(command, actor);
     expect(first.replayed).toBe(false);
@@ -514,7 +700,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
 
   it("exposes only the fenced review handoff over HTTP and rejects it after cancellation", async () => {
     const scope = await fixture();
-    const deviceId = "device-desktop-review-http-001";
+    const deviceId = "device-desktop-001";
     const claimed = await localAgentRunLeaseService(db).claim({
       ...scope, deviceId, idempotencyKey: randomUUID(),
     });
@@ -529,7 +715,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     app.use(express.json());
     app.use((req, _res, next) => {
       req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
-        companyId: scope.companyId };
+        companyId: scope.companyId, keyId: scope.keyId };
       next();
     });
     app.use(localAgentRunWriteGate(db));
@@ -552,8 +738,8 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   it("preserves deletion of a task and its run after a historical lease", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
-    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-011", idempotencyKey: randomUUID() });
-    await svc.finish({ ...scope, deviceId: "device-desktop-011", leaseId: claimed!.leaseId,
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
+    await svc.finish({ ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
       generation: claimed!.generation, outcome: "succeeded", exitCode: 0, processStopped: true });
     await db.delete(issues).where(eq(issues.id, scope.issueId));
     const [lease] = await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId));

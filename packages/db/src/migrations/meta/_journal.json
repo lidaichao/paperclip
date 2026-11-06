@@ -2066,6 +2066,13 @@
       "when": 1793902080255,
       "tag": "0296_exotic_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 297,
+      "version": "7",
+      "when": 1793980000000,
+      "tag": "0297_local_agent_device_bindings",
+      "breakpoints": true
     }
   ]
 }

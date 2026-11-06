@@ -25,6 +25,7 @@ export { agentRuntimeState } from "./agent_runtime_state.js";
 export { agentTaskSessions, agentSessionGoalActions } from "./agent_task_sessions.js";
 export { agentWakeupRequests } from "./agent_wakeup_requests.js";
 export { localAgentRunLeases } from "./local_agent_run_leases.js";
+export { localAgentDeviceBindings } from "./local_agent_device_bindings.js";
 export { projects } from "./projects.js";
 export { projectMemberships } from "./project_memberships.js";
 export { documentMemberships } from "./document_memberships.js";

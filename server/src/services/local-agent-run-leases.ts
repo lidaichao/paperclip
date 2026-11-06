@@ -13,6 +13,7 @@ import { and, asc, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
 import { badRequest, conflict, forbidden, notFound } from "../errors.js";
 import { redactCurrentUserText } from "../log-redaction.js";
 import { accessService } from "./access.js";
+import { assertBoundLocalDevice } from "./local-agent-device-bindings.js";
 import { logActivity, publishActivity, type ActivityPublication } from "./activity-log.js";
 import { getExecutionBlocker } from "./execution-blocker.js";
 import { issueService } from "./issues.js";
@@ -27,6 +28,7 @@ export type LocalRunOwner = {
   companyId: string;
   agentId: string;
   deviceId: string;
+  keyId: string;
   leaseId: string;
   generation: number;
   runId: string;
@@ -44,9 +46,16 @@ function requireDeviceId(deviceId: string) {
 
 function requireOwner(input: LocalRunOwner) {
   requireDeviceId(input.deviceId);
-  if (!UUID.test(input.runId) || !UUID.test(input.leaseId) || !Number.isSafeInteger(input.generation) || input.generation < 1) {
+  if (!UUID.test(input.runId) || !UUID.test(input.leaseId) || !UUID.test(input.keyId) ||
+    !Number.isSafeInteger(input.generation) || input.generation < 1) {
     throw badRequest("Invalid local run lease identity");
   }
+}
+
+async function assertLeaseDevice(tx: Db, lease: typeof localAgentRunLeases.$inferSelect,
+  input: LocalRunOwner, allowRevoked = false) {
+  if (lease.deviceKeyId !== input.keyId) throw forbidden("Lease belongs to another device credential");
+  return assertBoundLocalDevice(tx, input, { allowRevoked });
 }
 
 function issueIdFromRun(run: typeof heartbeatRuns.$inferSelect) {
@@ -74,6 +83,7 @@ export function localAgentRunLeaseService(
     companyId: string;
     agentId: string;
     deviceId: string;
+    keyId: string;
     idempotencyKey: string;
   }) {
     requireDeviceId(input.deviceId);
@@ -88,6 +98,7 @@ export function localAgentRunLeaseService(
       if (!agent) throw notFound("Agent not found");
       if (!isClientPullRuntimeConfig(agent.runtimeConfig)) throw forbidden("Client-pull execution is not enabled for this agent");
       if (["terminated", "pending_approval", "paused"].includes(agent.status)) throw forbidden("Agent is not available for execution");
+      await assertBoundLocalDevice(tx as unknown as Db, input);
 
       const [sameClaim] = await tx.select().from(localAgentRunLeases).where(and(
         eq(localAgentRunLeases.companyId, input.companyId),
@@ -95,7 +106,8 @@ export function localAgentRunLeaseService(
         eq(localAgentRunLeases.idempotencyKey, input.idempotencyKey),
       )).limit(1);
       if (sameClaim) {
-        if (sameClaim.deviceId !== input.deviceId || sameClaim.releasedAt) throw conflict("Claim key belongs to another or completed lease");
+        if (sameClaim.deviceId !== input.deviceId || sameClaim.deviceKeyId !== input.keyId ||
+          sameClaim.releasedAt) throw conflict("Claim key belongs to another or completed lease");
         const [run] = await tx.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, sameClaim.runId)).limit(1);
         const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
           .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, sameClaim.runId));
@@ -200,7 +212,8 @@ export function localAgentRunLeaseService(
         }
         const [lease] = await tx.insert(localAgentRunLeases).values({
           runId: run.id, companyId: input.companyId, agentId: input.agentId,
-          issueId, deviceId: input.deviceId, idempotencyKey: input.idempotencyKey,
+          issueId, deviceId: input.deviceId, deviceKeyId: input.keyId,
+          idempotencyKey: input.idempotencyKey,
           expiresAt: sql`now() + interval '90 seconds'`,
         }).returning();
         return {
@@ -227,9 +240,11 @@ export function localAgentRunLeaseService(
         lease.deviceId !== input.deviceId || lease.leaseId !== input.leaseId || lease.generation !== input.generation) {
         throw forbidden("Local run lease owner mismatch");
       }
+      const binding = await assertLeaseDevice(tx as unknown as Db, lease, input, true);
       const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
         .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
-      const shouldStop = run.status !== "running" || !live?.live || Boolean(lease.cancelRequestedAt) || Boolean(lease.releasedAt);
+      const shouldStop = run.status !== "running" || !live?.live || Boolean(lease.cancelRequestedAt) ||
+        Boolean(lease.releasedAt) || Boolean(binding.revokedAt);
       const currentLease = shouldStop && !lease.cancelRequestedAt && !lease.releasedAt
         ? (await tx.update(localAgentRunLeases).set({
             cancelRequestedAt: sql`now()`, updatedAt: sql`now()`,
@@ -251,8 +266,9 @@ export function localAgentRunLeaseService(
         lease.deviceId !== input.deviceId || lease.leaseId !== input.leaseId || lease.generation !== input.generation) {
         throw forbidden("Local run lease owner mismatch");
       }
+      const binding = await assertLeaseDevice(tx as unknown as Db, lease, input, true);
       if (lease.releasedAt) throw conflict("Local run already finished");
-      if (run.status !== "running" || lease.cancelRequestedAt) {
+      if (run.status !== "running" || lease.cancelRequestedAt || binding.revokedAt) {
         if (!lease.cancelRequestedAt) await tx.update(localAgentRunLeases)
           .set({ cancelRequestedAt: sql`now()`, updatedAt: sql`now()` }).where(eq(localAgentRunLeases.runId, input.runId));
         return { leaseExpiresAt: lease.expiresAt, cancelRequested: true };
@@ -305,6 +321,10 @@ export function localAgentRunLeaseService(
         lease.deviceId !== input.deviceId || lease.leaseId !== input.leaseId || lease.generation !== input.generation) {
         throw forbidden("Local run lease owner mismatch");
       }
+      const binding = await assertLeaseDevice(tx as unknown as Db, lease, input, true);
+      if (binding.revokedAt && input.outcome !== "cancelled") {
+        throw conflict("Revoked device can only acknowledge cancellation");
+      }
       if (lease.releasedAt) {
         if (lease.outcome !== input.outcome) throw conflict("Run already finished with another outcome");
         if (input.clientRequestId) {
@@ -321,7 +341,7 @@ export function localAgentRunLeaseService(
       }
       const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
         .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
-      const cancelled = run.status !== "running" || lease.cancelRequestedAt || !live?.live;
+      const cancelled = run.status !== "running" || lease.cancelRequestedAt || !live?.live || Boolean(binding.revokedAt);
       if (cancelled && input.outcome !== "cancelled") throw conflict("Cancelled or expired run cannot report success");
       const status = cancelled ? "cancelled" : input.outcome;
       await tx.update(localAgentRunLeases).set({
@@ -373,6 +393,7 @@ export function localAgentRunLeaseService(
     if (!UUID.test(input.issueId)) throw badRequest("Invalid issueId");
     if (actor.type !== "agent" || actor.source !== "agent_key" ||
       actor.agentId !== input.agentId || actor.companyId !== input.companyId ||
+      actor.keyId !== input.keyId ||
       (actor.runId && actor.runId !== input.runId)) {
       throw forbidden("An agent's own run and API key are required");
     }
@@ -389,6 +410,7 @@ export function localAgentRunLeaseService(
         issueIdFromRun(run) !== input.issueId) {
         throw forbidden("Local run event owner mismatch");
       }
+      await assertLeaseDevice(tx as unknown as Db, lease, input);
       const [existing] = await tx.select().from(heartbeatRunEvents).where(and(
         eq(heartbeatRunEvents.runId, input.runId),
         eq(heartbeatRunEvents.sourceEventId, input.clientRequestId),
@@ -436,6 +458,7 @@ export function localAgentRunLeaseService(
     if (!UUID.test(input.issueId)) throw badRequest("Invalid issueId");
     if (actor.type !== "agent" || actor.source !== "agent_key" ||
       actor.agentId !== input.agentId || actor.companyId !== input.companyId ||
+      actor.keyId !== input.keyId ||
       (actor.runId && actor.runId !== input.runId)) {
       throw forbidden("An agent's own run and API key are required");
     }
@@ -457,6 +480,7 @@ export function localAgentRunLeaseService(
         lease.cancelRequestedAt || lease.releasedAt || issueIdFromRun(run) !== input.issueId) {
         throw forbidden("Local run write lease is no longer valid");
       }
+      await assertLeaseDevice(tx as unknown as Db, lease, input);
       const [issue] = await tx.select().from(issues).where(and(
         eq(issues.id, input.issueId), eq(issues.companyId, input.companyId),
       )).for("update");

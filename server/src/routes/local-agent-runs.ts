@@ -1,8 +1,13 @@
-import { Router, type Request } from "express";
+import { Router, type Request, type Response } from "express";
 import type { Db } from "@paperclipai/db";
+import { agents } from "@paperclipai/db";
+import { eq } from "drizzle-orm";
 import { addIssueCommentSchema, updateIssueSchema } from "@paperclipai/shared";
 import { badRequest, forbidden } from "../errors.js";
 import { localAgentRunLeaseService, type LocalRunOwner } from "../services/local-agent-run-leases.js";
+import { localAgentDeviceBindingService } from "../services/local-agent-device-bindings.js";
+import { accessService } from "../services/access.js";
+import { assertBoard, getAccessibleResource } from "./authz.js";
 
 function objectBody(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw badRequest("JSON object required");
@@ -19,12 +24,69 @@ const ownerFields = ["deviceId", "leaseId", "generation", "issueId"] as const;
 export function localAgentRunRoutes(db: Db) {
   const router = Router();
   const leases = localAgentRunLeaseService(db);
+  const bindings = localAgentDeviceBindingService(db);
+
+  async function managedAgent(req: Request, res: Response) {
+    assertBoard(req);
+    const agentId = String(req.params.agentId ?? "");
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(agentId)) {
+      res.status(404).json({ error: "Agent not found" });
+      return null;
+    }
+    const [candidate] = await db.select().from(agents).where(eq(agents.id, agentId)).limit(1);
+    const agent = await getAccessibleResource(req, res, candidate, "Agent not found");
+    if (!agent) return null;
+    const membership = req.actor.memberships?.find((item) =>
+      item.companyId === agent.companyId && item.status === "active");
+    if (!req.actor.isInstanceAdmin &&
+      membership?.membershipRole !== "owner" && membership?.membershipRole !== "admin") {
+      throw forbidden("Company owner or admin is required to manage local devices");
+    }
+    const decision = await accessService(db).decide({
+      actor: req.actor, action: "agents:create",
+      resource: { type: "company", companyId: agent.companyId },
+    });
+    if (!decision.allowed) throw forbidden("Agent management permission is required");
+    return agent;
+  }
+
+  router.get("/agents/:agentId/local-devices", async (req, res) => {
+    const agent = await managedAgent(req, res);
+    if (!agent) return;
+    res.set("Cache-Control", "no-store");
+    res.json(await bindings.list(agent.companyId, agent.id));
+  });
+
+  router.post("/agents/:agentId/local-devices", async (req, res) => {
+    const agent = await managedAgent(req, res);
+    if (!agent) return;
+    const body = objectBody(req.body);
+    onlyFields(body, ["keyId", "deviceId"]);
+    res.set("Cache-Control", "no-store");
+    res.status(201).json(await bindings.bind({
+      companyId: agent.companyId, agentId: agent.id,
+      keyId: String(body.keyId ?? ""), deviceId: String(body.deviceId ?? ""),
+      createdByUserId: req.actor.userId ?? null,
+    }));
+  });
+
+  router.delete("/agents/:agentId/local-devices/:bindingId", async (req, res) => {
+    const agent = await managedAgent(req, res);
+    if (!agent) return;
+    res.set("Cache-Control", "no-store");
+    res.json(await bindings.revoke({
+      companyId: agent.companyId, agentId: agent.id,
+      bindingId: String(req.params.bindingId ?? ""),
+      revokedByUserId: req.actor.userId ?? null,
+    }));
+  });
 
   function actorScope(req: Request) {
-    if (req.actor.type !== "agent" || req.actor.source !== "agent_key" || !req.actor.agentId || !req.actor.companyId) {
+    if (req.actor.type !== "agent" || req.actor.source !== "agent_key" || !req.actor.agentId ||
+      !req.actor.companyId || !req.actor.keyId) {
       throw forbidden("An agent's own API key is required");
     }
-    return { companyId: req.actor.companyId, agentId: req.actor.agentId };
+    return { companyId: req.actor.companyId, agentId: req.actor.agentId, keyId: req.actor.keyId };
   }
 
   function owner(req: Request, body: Record<string, unknown>): LocalRunOwner {
