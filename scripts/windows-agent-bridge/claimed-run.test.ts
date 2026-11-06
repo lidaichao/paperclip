@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { executeClaimedRun } from "./claimed-run.js";
+import { executeClaimedRun, stopWindowsProcessTree } from "./claimed-run.js";
 import { AliceClient, type LocalRunClaim } from "./paperclip-client.js";
 import type { LocalAgentRunInput } from "./adapter-runtime.js";
 import { mkdtemp } from "node:fs/promises";
@@ -27,6 +27,23 @@ const localAgent = { id: AGENT_ID, companyId: COMPANY_ID, name: "Luna",
   adapterType: "codex_local" as const, adapterConfig: agent.localAdapterConfig };
 
 describe("claimed local run", () => {
+  it("never kills a PID reused by a different Windows process", async () => {
+    const kill = vi.fn(async () => undefined);
+    await stopWindowsProcessTree(12345, "2026-11-06T10:00:00.000Z", {
+      platform: "win32", alive: () => true, kill,
+      inspect: async () => ({ parentPid: process.pid, createdAt: "2026-11-06T10:00:05.000Z" }),
+    });
+    expect(kill).not.toHaveBeenCalled();
+  });
+
+  it("refuses an ambiguous same-millisecond PID identity without killing it", async () => {
+    const kill = vi.fn(async () => undefined);
+    await expect(stopWindowsProcessTree(12345, "2026-11-06T10:00:00.000Z", {
+      platform: "win32", alive: () => true, kill,
+      inspect: async () => ({ parentPid: process.pid, createdAt: "2026-11-06T10:00:00.500Z" }),
+    })).rejects.toThrow("ambiguous");
+    expect(kill).not.toHaveBeenCalled();
+  });
   it("passes the true server run ID into the local adapter and then finishes", async () => {
     const calls: string[] = [];
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async (url) => {
@@ -35,6 +52,8 @@ describe("claimed local run", () => {
       if (String(url).endsWith(`/api/issues/${ISSUE_ID}`)) return Response.json({ id: ISSUE_ID, companyId: COMPANY_ID,
         assigneeAgentId: AGENT_ID, executionRunId: RUN_ID, identifier: "PAP-20", title: "只读验收", status: "in_progress", priority: "medium",
         updatedAt: "2026-11-06T03:00:00Z" });
+      if (String(url).includes(`/local-runs/${RUN_ID}/control`)) return Response.json({ action: "continue", generation: 1,
+        leaseExpiresAt: new Date(Date.now() + 60_000).toISOString() });
       return Response.json({ runId: RUN_ID, status: "succeeded" });
     } });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);

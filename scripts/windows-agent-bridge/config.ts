@@ -1,12 +1,14 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { BridgeAdapterType, BridgeAgentConfig, BridgeConfig } from "./types.js";
+import { expectedGbrainIdentity } from "./gbrain-identity.js";
 
 const ROOT_KEYS = new Set([
   "schemaVersion",
   "deviceId",
   "workerHome",
   "apiBase",
+  "gbrainMcpUrl",
   "companyId",
   "credentialsFile",
   "pollIntervalMs",
@@ -179,6 +181,7 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
   }
   const agents = record.agents.map(parseAgent);
   assertUniqueAgents(agents);
+  expectedGbrainIdentity(agents[0]);
   const configDir = path.dirname(absoluteConfigPath);
   const workerHomeRaw = requiredString(record, "workerHome", "config");
   if (!path.isAbsolute(workerHomeRaw) && !path.win32.isAbsolute(workerHomeRaw)) {
@@ -197,6 +200,8 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
     deviceId: requiredUuid(record, "deviceId", "config"),
     workerHome,
     apiBase,
+    gbrainMcpUrl: typeof record.gbrainMcpUrl === "string"
+      ? normalizeApiBase(record.gbrainMcpUrl) : undefined,
     companyId: requiredUuid(record, "companyId", "config"),
     credentialsFile: resolveConfigPath(configDir, requiredString(record, "credentialsFile", "config"), "credentialsFile"),
     stateFile: path.join(workerHome, "claim-state.json"),

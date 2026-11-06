@@ -61,6 +61,12 @@ describe("AliceClient", () => {
     await expect(client.verifyIdentity(AGENT_ID, COMPANY_ID)).rejects.toThrow("identity mismatch");
   });
 
+  it("rejects a configured member name that belongs to a different Paperclip agent", async () => {
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key",
+      fetch: async () => jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Rabbit" }) });
+    await expect(client.verifyIdentity(AGENT_ID, COMPANY_ID, "Luna")).rejects.toThrow("identity mismatch");
+  });
+
   it("derives the task scope from verified identity for the real inbox-lite shape", async () => {
     const client = new AliceClient({
       apiBase: "http://alice.test",

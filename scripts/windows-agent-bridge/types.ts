@@ -15,6 +15,7 @@ export interface BridgeConfig {
   deviceId: string;
   workerHome: string;
   apiBase: string;
+  gbrainMcpUrl?: string;
   companyId: string;
   credentialsFile: string;
   stateFile: string;

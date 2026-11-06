@@ -369,10 +369,11 @@ export class AliceClient {
     if (!Number.isInteger(lease.generation) || lease.generation < 1) throw new Error("generation is invalid");
   }
 
-  async verifyIdentity(expectedAgentId: string, expectedCompanyId: string): Promise<RemoteAgentIdentity> {
+  async verifyIdentity(expectedAgentId: string, expectedCompanyId: string, expectedName?: string): Promise<RemoteAgentIdentity> {
     this.#verifiedIdentity = null;
     const identity = parseIdentity(await this.#getJson("/api/agents/me"));
-    if (identity.id !== expectedAgentId || identity.companyId !== expectedCompanyId) {
+    if (identity.id !== expectedAgentId || identity.companyId !== expectedCompanyId ||
+      (expectedName && identity.name !== expectedName)) {
       throw new Error("Alice agent identity mismatch");
     }
     this.#verifiedIdentity = identity;

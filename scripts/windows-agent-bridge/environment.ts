@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { BridgeConfig } from "./types.js";
+import { expectedGbrainIdentity } from "./gbrain-identity.js";
 
 const OS_KEYS = new Set([
   "PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP",
@@ -16,6 +17,7 @@ function nonEmpty(source: NodeJS.ProcessEnv, key: string): string | null {
 /** The launcher keeps a source token only long enough to build one child env. */
 export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: BridgeConfig): NodeJS.ProcessEnv {
   if (config.agents.length !== 1) throw new Error("one worker requires exactly one agent");
+  expectedGbrainIdentity(config.agents[0]);
   const ref = config.agents[0].gbrainEnvRef;
   const token = nonEmpty(source, ref);
   if (!token) throw new Error(`configured GBrain credential reference ${ref} is unavailable`);
@@ -34,6 +36,8 @@ export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: Bridge
 /** A direct launch with the inherited user environment must fail closed. */
 export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeConfig): void {
   const ref = config.agents[0]?.gbrainEnvRef;
+  if (config.agents.length !== 1) throw new Error("one worker requires exactly one agent");
+  expectedGbrainIdentity(config.agents[0]);
   const allowed = new Set([...OS_KEYS, "GBRAIN_AGENT_TOKEN", ref, "HOME", "CODEX_HOME", "PAPERCLIP_HOME"]);
   if (!ref || !nonEmpty(env, ref) || nonEmpty(env, ref) !== nonEmpty(env, "GBRAIN_AGENT_TOKEN")) {
     throw new Error("worker GBrain identity is missing or mismatched");

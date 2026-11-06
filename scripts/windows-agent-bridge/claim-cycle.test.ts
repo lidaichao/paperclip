@@ -50,6 +50,8 @@ describe("single-agent claim cycle", () => {
       if (pathname === `/api/issues/${issueId}`) return reply({ id: issueId, companyId,
         assigneeAgentId: agentId, executionRunId: runId, identifier: "PAP-1", title: "只读验收", status: "in_progress",
         priority: "medium", updatedAt: "2026-11-06T03:00:00Z" });
+      if (pathname.endsWith("/control")) return reply({ action: "continue", generation: 1,
+        leaseExpiresAt: new Date(Date.now() + 60_000).toISOString() });
       if (pathname.endsWith("/finish")) {
         expect(JSON.parse(await readFile(file, "utf8")).activeClaim.runId).toBe(runId);
         return reply({ runId, status: "succeeded" });
@@ -62,6 +64,7 @@ describe("single-agent claim cycle", () => {
     expect(await claimAndRunOnce({ client, state, deviceId, companyId, agent, localAgent,
       token: "secret", intentFile, signal: new AbortController().signal, runner })).toBe("finished");
     expect(paths).toEqual(["/api/agents/me", "/api/agents/me/local-runs/claim", `/api/issues/${issueId}`,
+      `/api/agents/me/local-runs/${runId}/control`,
       `/api/agents/me/local-runs/${runId}/finish`]);
     expect(runner).toHaveBeenCalledWith(expect.objectContaining({ runId }));
     expect(JSON.parse(await readFile(file, "utf8")).idempotencyKey).not.toBe(claimKey);
@@ -120,7 +123,7 @@ describe("single-agent claim cycle", () => {
       token: "secret", intentFile, signal: new AbortController().signal, runner,
       stopProcessTree, renewIntervalMs: 5 })).toBe("finished");
     expect(events).toEqual(["tree-stop", "abort", "stopped", "finish"]);
-    expect(stopProcessTree).toHaveBeenCalledWith(12345);
+    expect(stopProcessTree).toHaveBeenCalledWith(12345, expect.any(String));
     expect(JSON.parse(await readFile(file, "utf8")).activeClaim).toBeNull();
   });
 
@@ -150,5 +153,34 @@ describe("single-agent claim cycle", () => {
     expect(finish).not.toHaveBeenCalled();
     expect(JSON.parse(await readFile(file, "utf8")).activeClaim.runId).toBe(runId);
     await expect(new ClaimStateStore(file, deviceId, agentId).claimKey()).rejects.toThrow("manual recovery required");
+  });
+
+  it("stops every spawned child, including an adapter retry after cancellation", async () => {
+    const { state, intentFile } = await fixture();
+    const stops: number[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async (url) => {
+      const pathname = new URL(String(url)).pathname;
+      if (pathname === "/api/agents/me") return reply({ id: agentId, companyId, name: "Luna" });
+      if (pathname.endsWith("/claim")) return reply(claimResponse());
+      if (pathname === `/api/issues/${issueId}`) return reply({ id: issueId, companyId,
+        assigneeAgentId: agentId, executionRunId: runId, identifier: "PAP-1", title: "Task", status: "in_progress",
+        priority: "medium", updatedAt: "2026-11-06T03:00:00Z" });
+      if (pathname.endsWith("/renew")) return reply({ leaseExpiresAt: new Date(Date.now() + 60_000).toISOString(), cancelRequested: true });
+      if (pathname.endsWith("/finish")) return reply({ runId, status: "cancelled" });
+      throw new Error(`unexpected path ${pathname}`);
+    } });
+    await client.verifyIdentity(agentId, companyId);
+    const runner = vi.fn(async ({ signal, onSpawn }: LocalAgentRunInput) => {
+      await onSpawn?.({ pid: 12345, processGroupId: null, startedAt: "now" });
+      await new Promise<void>((resolve) => signal?.addEventListener("abort", () => resolve(), { once: true }));
+      await onSpawn?.({ pid: 12346, processGroupId: null, startedAt: "retry" });
+      return { runId, exitCode: null, signal: null, timedOut: false, succeeded: false,
+        errorCode: null, sessionParams: null, sessionDisplayId: null };
+    });
+    const result = await claimAndRunOnce({ client, state, deviceId, companyId, agent, localAgent,
+      token: "secret", intentFile, signal: new AbortController().signal, runner,
+      stopProcessTree: async (pid) => { stops.push(pid); }, renewIntervalMs: 5 });
+    expect(result).toBe("finished");
+    expect(stops.sort()).toEqual([12345, 12346]);
   });
 });

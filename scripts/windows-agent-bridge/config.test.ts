@@ -90,6 +90,12 @@ describe("loadBridgeConfig", () => {
     await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("gbrainEnvRef");
   });
 
+  it("refuses a valid but different member's GBrain reference", async () => {
+    const input = validConfig();
+    input.agents[0].gbrainEnvRef = "GBRAIN_RABBIT_TOKEN";
+    await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("gbrainEnvRef does not match");
+  });
+
   it("rejects obsolete 127 Paperclip settings", async () => {
     const input = { ...validConfig(), localApiBase: "http://127.0.0.1:3100" };
     await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("unknown keys: localApiBase");

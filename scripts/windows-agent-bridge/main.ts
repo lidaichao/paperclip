@@ -9,6 +9,7 @@ import { ClaimStateStore } from "./claim-state.js";
 import { assertWorkerEnvironment } from "./environment.js";
 import { executeClaimedRun } from "./claimed-run.js";
 import { runLocalAgent } from "./adapter-runtime.js";
+import { verifyGbrainIdentity } from "./gbrain-identity.js";
 import type { BridgeAgentConfig, LocalAgentRuntimeConfig } from "./types.js";
 
 interface LockDocument { pid: number; startedAt: string; token: string }
@@ -50,15 +51,16 @@ export async function acquireSingleInstanceLock(
     finally { await handle.close(); }
   };
 
-  try {
-    await create();
-  } catch (error) {
+  try { await create(); }
+  catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
     let existing: Partial<LockDocument> = {};
-    try { existing = JSON.parse(await readFile(resolved, "utf8")); } catch { /* stale or corrupt */ }
+    try { existing = JSON.parse(await readFile(resolved, "utf8")); }
+    catch { throw new Error("corrupt bridge lock requires manual recovery"); }
     if (typeof existing.pid === "number" && alive(existing.pid)) return null;
-    await rm(resolved, { force: true });
-    await create();
+    // Never unlink and recreate a stale lock here. Two processes can both
+    // observe the old owner and each remove the other's newly created lock.
+    throw new Error("stale bridge lock requires manual recovery");
   }
 
   return {
@@ -110,7 +112,7 @@ export async function claimAndRunOnce(input: {
   intentFile: string;
   signal: AbortSignal;
   runner?: typeof runLocalAgent;
-  stopProcessTree?: (pid: number) => Promise<void>;
+  stopProcessTree?: (pid: number, startedAt: string) => Promise<void>;
   renewIntervalMs?: number;
   stopTimeoutMs?: number;
 }): Promise<"idle" | "finished"> {
@@ -152,8 +154,9 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
     const tokens = await loadAgentTokens(config.credentialsFile, [agent.remoteAgentId]);
     const token = tokens.get(agent.remoteAgentId);
     if (!token) throw new Error(`缺少 ${agent.remoteAgentName} 的凭据`);
+    await verifyGbrainIdentity({ agent, endpoint: config.gbrainMcpUrl, token: process.env[agent.gbrainEnvRef] });
     const client = new AliceClient({ apiBase: config.apiBase, token });
-    await client.verifyIdentity(agent.remoteAgentId, config.companyId);
+    await client.verifyIdentity(agent.remoteAgentId, config.companyId, agent.remoteAgentName);
     const state = new ClaimStateStore(config.stateFile, config.deviceId, agent.remoteAgentId);
     const localAgent: LocalAgentRuntimeConfig = {
       id: agent.remoteAgentId, companyId: config.companyId, name: agent.localAgentName,

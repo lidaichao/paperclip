@@ -31,18 +31,36 @@ describe("bridge lifecycle", () => {
     await expect(stat(`${stateFile}.lock`)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
-  it("allows only one healthy lock owner and safely replaces a stale lock", async () => {
+  it("allows only one healthy lock owner and refuses stale-lock auto takeover", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "alice-lock-"));
     const lockPath = path.join(dir, "bridge.lock");
     const first = await acquireSingleInstanceLock(lockPath, { pid: 101, alive: (pid) => pid === 101 });
     expect(first).not.toBeNull();
     expect(await acquireSingleInstanceLock(lockPath, { pid: 202, alive: (pid) => pid === 101 })).toBeNull();
     await writeFile(lockPath, JSON.stringify({ pid: 303, startedAt: "old", token: "stale" }));
-    const replacement = await acquireSingleInstanceLock(lockPath, { pid: 202, alive: () => false });
-    expect(replacement?.document.pid).toBe(202);
+    await expect(acquireSingleInstanceLock(lockPath, { pid: 202, alive: () => false }))
+      .rejects.toThrow("manual recovery");
     await first?.release();
-    expect(JSON.parse(await readFile(lockPath, "utf8")).pid).toBe(202);
-    await replacement?.release();
+    expect(JSON.parse(await readFile(lockPath, "utf8")).pid).toBe(303);
+  });
+
+  it("keeps a stale lock under two simultaneous takeover attempts", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "alice-lock-race-"));
+    const lockPath = path.join(dir, "bridge.lock");
+    await writeFile(lockPath, JSON.stringify({ pid: 303, startedAt: "old", token: "stale" }));
+    const contenders = await Promise.allSettled([101, 202].map((pid) =>
+      acquireSingleInstanceLock(lockPath, { pid, alive: () => false })));
+    expect(contenders.map((result) => result.status)).toEqual(["rejected", "rejected"]);
+    expect(JSON.parse(await readFile(lockPath, "utf8")).pid).toBe(303);
+  });
+
+  it("grants one atomic owner when two processes race for an absent lock", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "alice-lock-create-"));
+    const lockPath = path.join(dir, "bridge.lock");
+    const contenders = await Promise.all([101, 202].map((pid) =>
+      acquireSingleInstanceLock(lockPath, { pid, alive: () => true })));
+    expect(contenders.filter(Boolean)).toHaveLength(1);
+    await contenders.find(Boolean)?.release();
   });
 
   it("cancels a pending poll wait immediately", async () => {

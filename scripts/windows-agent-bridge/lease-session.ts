@@ -6,6 +6,7 @@ export interface LeaseSessionClient {
     { leaseExpiresAt: string; cancelRequested: true } |
     { leaseExpiresAt: string; cancelRequested: false; leaseDeadlineMonotonicMs: number }
   >;
+  controlLocalRun(lease: LocalRunLease): Promise<{ action: "continue" | "cancel"; generation: number; leaseExpiresAt: string }>;
   finishLocalRun(lease: LocalRunLease, outcome: "succeeded" | "failed" | "cancelled", exitCode: number | null): Promise<string>;
 }
 
@@ -106,8 +107,20 @@ export async function runLeaseSession(input: {
       result = stopped.value;
     }
     if (reason === "lease_lost") throw new Error("server lease was lost; local process stopped without stale finish");
-    const outcome = reason === "cancelled" ? "cancelled" : result?.succeeded ? "succeeded" : "failed";
-    const status = await input.client.finishLocalRun(lease, outcome, result?.exitCode ?? null);
+    let outcome: LeaseSessionResult["outcome"] = reason === "cancelled" ? "cancelled" : result?.succeeded ? "succeeded" : "failed";
+    if (outcome !== "cancelled") {
+      const control = await input.client.controlLocalRun(lease);
+      if (control.action === "cancel") outcome = "cancelled";
+    }
+    let status: string;
+    try { status = await input.client.finishLocalRun(lease, outcome, result?.exitCode ?? null); }
+    catch (error) {
+      if (outcome === "cancelled" || !(error instanceof Error) || !error.message.includes("HTTP 409")) throw error;
+      const control = await input.client.controlLocalRun(lease);
+      if (control.action !== "cancel") throw error;
+      outcome = "cancelled";
+      status = await input.client.finishLocalRun(lease, outcome, result?.exitCode ?? null);
+    }
     return { outcome, status };
   } finally {
     finished = true;
