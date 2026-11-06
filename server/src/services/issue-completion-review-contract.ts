@@ -17,6 +17,11 @@ type ExistingReview = ReviewRequest & { id: string; state: string };
 /** Reserved for the future shared review command; generic interaction routes must reject it. */
 export const ISSUE_COMPLETION_REVIEW_TARGET_KEY = "issue_completion_review";
 
+/** One source retry run per rejected review, regardless of wake receipt status. */
+export function completionReviewRejectedWakeKey(reviewId: string) {
+  return `completion-review-rejected:${reviewId}`;
+}
+
 /**
  * Pure facts validation. It neither creates a review nor claims a runtime.
  * The caller must load evidence under its write locks and pass database time.
