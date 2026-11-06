@@ -45,17 +45,29 @@ describe("fenced local run write capability", () => {
     } finally { await f.proxy.close(); }
   });
 
-  it("persists one comment UUID through a lost response and rejects workflow fields", async () => {
+  it("retries a lost response by ID while treating repeated text as a new comment", async () => {
     const f = await fixture();
     try {
       f.addLocalRunComment.mockRejectedValueOnce(new Error("response lost"));
-      expect((await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Progress" })).status).toBe(409);
+      const lost = await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Progress" });
+      expect(lost.status).toBe(409);
       const persisted = JSON.parse(await readFile(f.intentFile, "utf8")) as { intents: Array<{ clientRequestId: string }> };
       expect(persisted.intents[0].clientRequestId).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(await lost.json()).toMatchObject({ clientRequestId: persisted.intents[0].clientRequestId });
+      const unresolved = await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Progress" });
+      expect(unresolved.status).toBe(409);
+      expect(await unresolved.json()).toMatchObject({ clientRequestId: persisted.intents[0].clientRequestId });
+      expect((await f.request(`/api/issues/${issueId}/comments`, "POST", {
+        body: "Progress", clientRequestId: persisted.intents[0].clientRequestId,
+      })).status).toBe(201);
+      expect((await f.request(`/api/issues/${issueId}/comments`, "POST", {
+        body: "Different", clientRequestId: persisted.intents[0].clientRequestId,
+      })).status).toBe(409);
       expect((await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Progress" })).status).toBe(201);
-      expect((await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Progress" })).status).toBe(201);
-      expect(f.addLocalRunComment.mock.calls.slice(0, 3).map((call) => call[3]))
-        .toEqual([persisted.intents[0].clientRequestId, persisted.intents[0].clientRequestId, persisted.intents[0].clientRequestId]);
+      expect(f.addLocalRunComment.mock.calls).toHaveLength(3);
+      expect(f.addLocalRunComment.mock.calls.slice(0, 2).map((call) => call[3]))
+        .toEqual([persisted.intents[0].clientRequestId, persisted.intents[0].clientRequestId]);
+      expect(f.addLocalRunComment.mock.calls[2][3]).not.toBe(persisted.intents[0].clientRequestId);
       expect((await f.request(`/api/issues/${issueId}`, "PATCH", { status: "done" })).status).toBe(400);
       expect((await f.request(`/api/issues/${issueId}`, "PATCH", { assigneeAgentId: agentId })).status).toBe(400);
       expect((await f.request(`/api/issues/${issueId}`, "PATCH", { priority: "high" })).status).toBe(200);

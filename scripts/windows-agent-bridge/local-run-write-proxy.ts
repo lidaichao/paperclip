@@ -8,6 +8,13 @@ import type { AliceClient, LocalRunClaim, LocalRunLease } from "./paperclip-clie
 interface PendingComment { runId: string; issueId: string; body: string; clientRequestId: string; confirmed: boolean }
 interface CommentIntentDocument { runId: string; issueId: string; intents: PendingComment[] }
 const MAX_BODY_BYTES = 64 * 1024;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+class UnresolvedCommentIntentError extends Error {
+  constructor(readonly clientRequestId: string) {
+    super("unresolved comment intent requires an explicit retry ID");
+  }
+}
 
 function json(res: ServerResponse, status: number, value: unknown): void {
   res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
@@ -46,7 +53,8 @@ export class LocalCommentIntentStore {
     await rename(temporary, this.filePath);
   }
 
-  async pending(runId: string, issueId: string, body: string): Promise<PendingComment> {
+  async pending(runId: string, issueId: string, body: string, requestId?: string): Promise<PendingComment> {
+    if (requestId !== undefined && !UUID.test(requestId)) throw new Error("invalid comment request ID");
     const saved = await this.read();
     if (saved && (saved.runId !== runId || saved.issueId !== issueId)) {
       if (saved.intents.some((intent) => !intent.confirmed)) {
@@ -55,15 +63,16 @@ export class LocalCommentIntentStore {
     }
     const document: CommentIntentDocument = saved?.runId === runId && saved.issueId === issueId
       ? saved : { runId, issueId, intents: [] };
-    const existing = document.intents.find((intent) => intent.body === body);
+    const existing = requestId === undefined ? undefined
+      : document.intents.find((intent) => intent.clientRequestId === requestId);
     if (existing) {
-      if (!/^[0-9a-f-]{36}$/i.test(existing.clientRequestId)) throw new Error("invalid saved comment intent");
+      if (existing.body !== body) throw new Error("comment request ID reused with different body");
       return existing;
     }
-    if (document.intents.some((intent) => !intent.confirmed) || document.intents.length >= 200) {
-      throw new Error("unresolved comment intent must be reconciled before another write");
-    }
-    const intent = { runId, issueId, body, clientRequestId: randomUUID(), confirmed: false };
+    const unresolved = document.intents.find((intent) => !intent.confirmed);
+    if (unresolved) throw new UnresolvedCommentIntentError(unresolved.clientRequestId);
+    if (document.intents.length >= 200) throw new Error("comment intent limit reached");
+    const intent = { runId, issueId, body, clientRequestId: requestId ?? randomUUID(), confirmed: false };
     document.intents.push(intent);
     await this.save(document);
     return intent;
@@ -120,15 +129,23 @@ export async function startLocalRunWriteProxy(input: {
       }
       if (req.method === "POST" && pathname === `${issuePath}/comments`) {
         const body = await bodyOf(req);
-        if (Object.keys(body).some((key) => key !== "body") || typeof body.body !== "string" || !body.body.trim()) {
+        if (Object.keys(body).some((key) => key !== "body" && key !== "clientRequestId")
+          || typeof body.body !== "string" || !body.body.trim()
+          || (body.clientRequestId !== undefined && (typeof body.clientRequestId !== "string" || !UUID.test(body.clientRequestId)))) {
           json(res, 400, { error: "unsupported comment payload" }); return;
         }
         const perform = async () => {
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
-          const intent = await input.intentStore.pending(input.claim.runId, input.claim.issueId, body.body as string);
+          const intent = await input.intentStore.pending(input.claim.runId, input.claim.issueId,
+            body.body as string, body.clientRequestId as string | undefined);
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
-          const saved = await input.client.addLocalRunComment(lease, input.claim.issueId, intent.body,
-            intent.clientRequestId, input.signal);
+          let saved: unknown;
+          try {
+            saved = await input.client.addLocalRunComment(lease, input.claim.issueId, intent.body,
+              intent.clientRequestId, input.signal);
+          } catch {
+            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          }
           await input.intentStore.confirmed(intent);
           return saved;
         };
@@ -145,7 +162,10 @@ export async function startLocalRunWriteProxy(input: {
         json(res, 200, await input.client.patchLocalRunIssue(lease, input.claim.issueId, patch, input.signal)); return;
       }
       json(res, 403, { error: "operation unavailable for local run" });
-    } catch {
+    } catch (error) {
+      if (error instanceof UnresolvedCommentIntentError) {
+        json(res, 409, { error: error.message, clientRequestId: error.clientRequestId }); return;
+      }
       json(res, 409, { error: "local run write unavailable" });
     }
   });
