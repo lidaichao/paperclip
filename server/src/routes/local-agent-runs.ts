@@ -220,6 +220,31 @@ export function localAgentRunRoutes(db: Db) {
     return res.status(result.replayed ? 200 : 201).json(result);
   });
 
+  router.post("/agents/me/local-runs/:runId/issue/completion-review-handoff", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "reviewerAgentId", "prompt", "body", "clientRequestId"]);
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuid.test(String(body.issueId ?? "")) ||
+      !uuid.test(String(body.reviewerAgentId ?? "")) ||
+      !uuid.test(String(body.clientRequestId ?? "")) ||
+      typeof body.prompt !== "string" || typeof body.body !== "string") {
+      throw badRequest("Issue, reviewer, request, prompt and handoff summary are required");
+    }
+    const result = await leases.createFencedCompletionReviewHandoff({
+      ...owner(req, body), issueId: String(body.issueId),
+      reviewerAgentId: String(body.reviewerAgentId),
+      prompt: body.prompt, body: body.body,
+      clientRequestId: String(body.clientRequestId),
+    }, req.actor);
+    return res.status(result.replayed ? 200 : 201).json({
+      issueId: result.issue.id, status: result.issue.status,
+      statusVersion: result.issue.statusVersion,
+      reviewId: result.review.id, interactionId: result.interaction.id,
+      deliveryId: result.delivery.id, replayed: result.replayed,
+    });
+  });
+
   router.patch("/agents/me/local-runs/:runId/issue", async (req, res) => {
     res.set("Cache-Control", "no-store");
     const body = objectBody(req.body);

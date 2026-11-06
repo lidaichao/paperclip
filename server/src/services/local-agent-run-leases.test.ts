@@ -963,6 +963,46 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await request(app).post(path).send({ ...payload, reviewerAgentId: reviewerId }).expect(403);
   }, 30_000);
 
+  it("exposes only the atomic completion-review handoff to the source lease", async () => {
+    const scope = await fixture();
+    const reviewerAgentId = randomUUID();
+    await db.insert(agents).values({ id: reviewerAgentId, companyId: scope.companyId,
+      name: "Review recipient", adapterType: "codex_local",
+      runtimeConfig: { executionMode: "client_pull" } });
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
+    });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+        companyId: scope.companyId, keyId: scope.keyId };
+      next();
+    });
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string }, _req: Request,
+      res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message });
+    });
+    const path = `/api/agents/me/local-runs/${scope.runId}/issue/completion-review-handoff`;
+    const payload = { deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, issueId: scope.issueId, reviewerAgentId,
+      prompt: "Verify delivered result", body: "Ready for acceptance",
+      clientRequestId: randomUUID() };
+    await request(app).post(path).send({ ...payload, generation: 99 }).expect(403);
+    const first = await request(app).post(path).send(payload).expect(201);
+    expect(first.body).toMatchObject({ issueId: scope.issueId,
+      status: "in_review", replayed: false });
+    expect(first.body).not.toHaveProperty("body");
+    const replay = await request(app).post(path).send(payload).expect(200);
+    expect(replay.body).toMatchObject({ reviewId: first.body.reviewId,
+      interactionId: first.body.interactionId, replayed: true });
+    await request(app).post(path).send({ ...payload, body: "Changed" }).expect(409);
+    expect(await db.select().from(issueCompletionReviews)
+      .where(eq(issueCompletionReviews.issueId, scope.issueId))).toHaveLength(1);
+  }, 30_000);
+
   it("atomically creates a dedicated completion review and replays only the exact request", async () => {
     const scope = await fixture();
     const reviewerAgentId = randomUUID();
