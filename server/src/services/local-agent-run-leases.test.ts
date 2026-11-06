@@ -980,6 +980,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
         companyId: scope.companyId, keyId: scope.keyId };
       next();
     });
+    app.use(localAgentRunWriteGate(db));
     app.use("/api", localAgentRunRoutes(db));
     app.use((err: { status?: number; message?: string }, _req: Request,
       res: Response, _next: NextFunction) => {

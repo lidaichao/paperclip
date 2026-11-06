@@ -9,6 +9,7 @@ import {
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
 import { localAgentRunRoutes } from "../routes/local-agent-runs.js";
+import { localAgentRunWriteGate } from "../middleware/local-agent-run-write-gate.js";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
 import { localAgentReviewDeliveryService } from "./local-agent-review-delivery.js";
 import { localAgentReviewContextService } from "./local-agent-review-context.js";
@@ -117,6 +118,7 @@ suite("local reviewer context (PostgreSQL)", () => {
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => { req.actor = f.actor; next(); });
+    app.use(localAgentRunWriteGate(db));
     app.use("/api", localAgentRunRoutes(db));
     app.use((error: { status?: number; message?: string }, _req: Request,
       res: Response, _next: NextFunction) => {
