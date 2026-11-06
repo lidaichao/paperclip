@@ -81,4 +81,6 @@ Luna 按本手册执行一次私有 `-Login` 后，Codex app CLI 退出 1，报 
 
 **尚不能确定：** EOF 发生在 mihomo、其选中的上游节点、边缘防护还是请求体/HTTP 协议处理。现有只读 GET/HEAD 无法证明具体一层。下一次排障应先用**独立网络路径**核对 DNS 不再返回 Clash 假地址，再在受控窗口对同一设备授权流程只尝试一次；失败保留退出码与脱敏网络日志即停。不要循环登录、复制共享认证、改系统代理或把 192 服务器当作成员运行位置。
 
+随后只读检查找到一条**仅供 curl 验证的物理路径**：DoH 返回真实 IP `172.64.146.15`；本机以太网为 `192.168.72.214`、默认网关 `192.168.72.1`。用 `curl --interface 192.168.72.214 --noproxy '*' --resolve auth.openai.com:443:172.64.146.15` 对同一接口发无凭据 HEAD，返回 HTTP 403、TLS 校验 0，curl 的 `local_ip` 为物理源地址，`remote_ip` 为真实 IP。带 `-LocalIPAddress 192.168.72.214` 的 `Find-NetRoute` 也选择以太网默认路由，而非 Meta TUN。与 TUN 路径的 405 不同，说明出口确实改变；403 仍不能证明 POST 或设备登录可用。Codex CLI 没有已核实的源接口绑定参数，不能把 curl 的这条路径直接套用到 CLI。下一步留在人工网络窗口评估 CLI 可用的独立出口，本轮停止网络探测。
+
 源码证据：`packages/adapters/codex-local/src/server/codex-home.ts` 的 `resolveSharedCodexHomeDir`、`ensureSymlink` 和 `seedManagedCodexHome`；`packages/adapters/cursor-local/src/server/test.ts` 的 `cursorConfigPath`；本目录的 `environment.ts`、`model-readiness.ts` 与 `model-login-once.ps1`。
