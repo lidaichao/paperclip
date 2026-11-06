@@ -73,6 +73,8 @@ export const issueThreadInteractions = pgTable(
     companyIssueIdempotencyUq: uniqueIndex("issue_thread_interactions_company_issue_idempotency_uq")
       .on(table.companyId, table.issueId, table.idempotencyKey)
       .where(sql`${table.idempotencyKey} IS NOT NULL`),
+    companyIssueIdUq: uniqueIndex("issue_thread_interactions_company_issue_id_uq")
+      .on(table.companyId, table.issueId, table.id),
     sourceCommentIdx: index("issue_thread_interactions_source_comment_idx").on(table.sourceCommentId),
     addresseeAgentIdx: index("issue_thread_interactions_addressee_agent_idx").on(table.addresseeAgentId),
     addresseeUserIdx: index("issue_thread_interactions_addressee_user_idx").on(table.addresseeUserId),
