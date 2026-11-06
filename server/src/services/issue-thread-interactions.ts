@@ -4618,9 +4618,8 @@ export function issueThreadInteractionService(
             // same savepoint. A missing review aborts the status transition.
             if (initialReviewTarget) {
               // Existing delivery paths that enqueue or claim first own the
-              // issue lock. The service currently handles only the persisted
-              // interaction_pending kind. A future dedicated review kind must
-              // join this transaction before its producer can be enabled.
+              // issue lock. Cancel both persisted delivery kinds before
+              // locking the review and card.
               // A delivered wake remains a historical receipt.
               await issueCommandDeliveryService(tx as unknown as Db).cancel(tx as unknown as Db, {
                 companyId: issue.companyId, interactionId: row.id,

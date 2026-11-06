@@ -159,6 +159,7 @@ export function issueCommandDeliveryService(db: Db) {
         nextAttemptAt: issueCommandDeliveries.nextAttemptAt })
         .from(issueCommandDeliveries).where(and(
           input.companyId ? eq(issueCommandDeliveries.companyId, input.companyId) : undefined,
+          eq(issueCommandDeliveries.kind, "interaction_pending"),
           inArray(issueCommandDeliveries.status, ["ready", "deferred"]),
           lte(issueCommandDeliveries.nextAttemptAt, sql`now()`),
           cursor ? or(gt(issueCommandDeliveries.nextAttemptAt, cursor.nextAttemptAt),
@@ -176,7 +177,8 @@ export function issueCommandDeliveryService(db: Db) {
         const [intent] = await tx.select().from(issueCommandDeliveries)
           .where(eq(issueCommandDeliveries.id, candidate.id))
           .for("update", { skipLocked: true });
-        if (!intent || !["ready", "deferred"].includes(intent.status)) return null;
+        if (!intent || intent.kind !== "interaction_pending" ||
+          !["ready", "deferred"].includes(intent.status)) return null;
         const [due] = await tx.select({ due: sql<boolean>`${issueCommandDeliveries.nextAttemptAt} <= now()` })
           .from(issueCommandDeliveries).where(eq(issueCommandDeliveries.id, intent.id));
         if (!due?.due) return null;
@@ -226,7 +228,8 @@ export function issueCommandDeliveryService(db: Db) {
     const [live] = intent ? await tx.select({ live: sql<boolean>`
       ${issueCommandDeliveries.claimExpiresAt} > now()` }).from(issueCommandDeliveries)
       .where(eq(issueCommandDeliveries.id, intent.id)) : [];
-    if (!intent || intent.status !== "claimed" || intent.claimToken !== input.claimToken || !live?.live) {
+    if (!intent || intent.kind !== "interaction_pending" || intent.status !== "claimed" ||
+      intent.claimToken !== input.claimToken || !live?.live) {
       throw conflict("Review delivery claim is stale");
     }
     return intent;
@@ -263,16 +266,22 @@ export function issueCommandDeliveryService(db: Db) {
 
   /** Caller holds the issue lock; delivered wakes are historical facts and cannot be unsent. */
   async function cancel(tx: Db, input: { companyId: string; interactionId: string }) {
-    const [intent] = await tx.select().from(issueCommandDeliveries).where(and(
+    const intents = await tx.select().from(issueCommandDeliveries).where(and(
       eq(issueCommandDeliveries.companyId, input.companyId),
       eq(issueCommandDeliveries.interactionId, input.interactionId),
-      eq(issueCommandDeliveries.kind, "interaction_pending"),
-    )).for("update");
-    if (!intent || ["cancelled", "delivered"].includes(intent.status)) return intent ?? null;
-    const [updated] = await tx.update(issueCommandDeliveries).set({
-      status: "cancelled", claimToken: null, claimExpiresAt: null, updatedAt: sql`now()`,
-    }).where(eq(issueCommandDeliveries.id, intent.id)).returning();
-    return updated;
+    )).orderBy(asc(issueCommandDeliveries.kind)).for("update");
+    const result = [];
+    for (const intent of intents) {
+      if (["cancelled", "delivered"].includes(intent.status)) {
+        result.push(intent);
+        continue;
+      }
+      const [updated] = await tx.update(issueCommandDeliveries).set({
+        status: "cancelled", claimToken: null, claimExpiresAt: null, updatedAt: sql`now()`,
+      }).where(eq(issueCommandDeliveries.id, intent.id)).returning();
+      result.push(updated);
+    }
+    return result;
   }
 
   /** Recover one expired claim after a process crash, before any new dispatch. */
@@ -287,6 +296,9 @@ export function issueCommandDeliveryService(db: Db) {
       )).for("update");
       const [intent] = await tx.select().from(issueCommandDeliveries)
         .where(eq(issueCommandDeliveries.id, id)).for("update");
+      if (intent && intent.kind !== "interaction_pending") {
+        throw conflict("Dedicated completion review deliveries require their own dispatcher");
+      }
       const [expired] = intent ? await tx.select({ expired: sql<boolean>`
         ${issueCommandDeliveries.claimExpiresAt} <= now()` }).from(issueCommandDeliveries)
         .where(eq(issueCommandDeliveries.id, id)) : [];

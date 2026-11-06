@@ -164,4 +164,28 @@ describe.runIf(support.supported)("inert completion review decision receipts (Po
       .where(eq(issueCompletionReviews.id, review.reviewId));
     expect(stillPending.state).toBe("pending");
   });
+
+  it("applies 0301 in FK-safe order and rejects legacy string receipt versions before DDL", async () => {
+    const migration = await readFile(new URL(
+      "../../../packages/db/src/migrations/0301_colossal_susan_delgado.sql", import.meta.url,
+    ), "utf8");
+    const preflight = migration.split("--> statement-breakpoint")[0];
+    expect(migration.indexOf("CREATE UNIQUE INDEX \"issue_completion_reviews_delivery_scope_uq\""))
+      .toBeLessThan(migration.indexOf("ADD CONSTRAINT \"issue_command_deliveries_review_scope_fk\""));
+    expect(migration.indexOf("DO $$")).toBeLessThan(migration.indexOf("DROP CONSTRAINT"));
+    const review = await fixture();
+    const valid = decision(review.reviewId, "accepted");
+    await expect(db.transaction(async (tx) => {
+      await tx.execute(sql.raw(`ALTER TABLE issue_completion_reviews
+        DROP CONSTRAINT issue_completion_reviews_decision_receipt_check`));
+      await tx.update(issueCompletionReviews).set({ ...valid,
+        decisionReceipt: { ...valid.decisionReceipt, schemaVersion: "1" },
+      }).where(eq(issueCompletionReviews.id, review.reviewId));
+      let cause: unknown;
+      try { await tx.execute(sql.raw(preflight)); } catch (error) { cause = error; }
+      expect(String((cause as { cause?: Error } | undefined)?.cause?.message))
+        .toContain("nonnumeric decision receipt version");
+      throw new Error("roll back legacy receipt fixture");
+    })).rejects.toThrow("roll back legacy receipt fixture");
+  });
 });

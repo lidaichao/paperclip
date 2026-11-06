@@ -2094,6 +2094,13 @@
       "when": 1793980292476,
       "tag": "0300_medical_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 301,
+      "version": "7",
+      "when": 1793991102846,
+      "tag": "0301_colossal_susan_delgado",
+      "breakpoints": true
     }
   ]
 }

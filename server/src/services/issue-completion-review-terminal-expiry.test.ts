@@ -10,6 +10,7 @@ import {
   getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase,
 } from "../__tests__/helpers/embedded-postgres.js";
 import { issueThreadInteractionService } from "./issue-thread-interactions.js";
+import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { issueService } from "./issues.js";
 
 const external = process.env.PAPERCLIP_TEST_DATABASE_URL;
@@ -64,7 +65,18 @@ describe.runIf(support.supported)("terminal issue expiry of shared completion re
         interactionId: interaction.id, sourceRunId, targetAgentId: reviewerAgentId,
         kind: "interaction_pending", status: "ready" });
     }
-    return { companyId, issueId, interactionId: interaction.id, reviewId };
+    return { companyId, issueId, interactionId: interaction.id, reviewId,
+      sourceRunId, reviewerAgentId };
+  }
+
+  async function dedicatedDelivery(f: Awaited<ReturnType<typeof fixture>>) {
+    const [intent] = await db.insert(issueCommandDeliveries).values({
+      companyId: f.companyId, issueId: f.issueId,
+      interactionId: f.interactionId, reviewId: f.reviewId,
+      sourceRunId: f.sourceRunId, targetAgentId: f.reviewerAgentId,
+      kind: "completion_review", status: "ready",
+    }).returning();
+    return intent;
   }
 
   async function state(f: Awaited<ReturnType<typeof fixture>>) {
@@ -143,6 +155,52 @@ describe.runIf(support.supported)("terminal issue expiry of shared completion re
     expect(result.delivery?.status).toBe("cancelled");
     expect(result.delivery?.claimToken).toBeNull();
     expect(result.delivery?.claimExpiresAt).toBeNull();
+  });
+
+  it("cancels both legacy and dedicated unsent intents for the same review card", async () => {
+    const f = await fixture(true, true);
+    const dedicated = await dedicatedDelivery(f);
+    await issueService(db).update(f.issueId, { status: "todo", companyGuard: f.companyId });
+    const intents = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.interactionId, f.interactionId));
+    expect(intents).toHaveLength(2);
+    expect(intents.map((intent) => intent.status)).toEqual(["cancelled", "cancelled"]);
+    expect(intents.find((intent) => intent.id === dedicated.id)?.reviewId).toBe(f.reviewId);
+  });
+
+  it("keeps the dedicated review intent outside the legacy dispatcher", async () => {
+    const f = await fixture();
+    const dedicated = await dedicatedDelivery(f);
+    const service = issueCommandDeliveryService(db as unknown as Db);
+    expect(await service.claim({ companyId: f.companyId })).toBeNull();
+    await expect(service.recover(dedicated.id)).rejects.toMatchObject({ status: 409 });
+    await db.update(issueCommandDeliveries).set({ status: "claimed",
+      claimToken: randomUUID(), claimExpiresAt: new Date(Date.now() + 60_000) })
+      .where(eq(issueCommandDeliveries.id, dedicated.id));
+    const [claimed] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, dedicated.id));
+    await expect(service.ack({ id: dedicated.id, claimToken: claimed.claimToken!,
+      wakeupRequestId: randomUUID() })).rejects.toMatchObject({ status: 409 });
+    await expect(service.defer({ id: dedicated.id, claimToken: claimed.claimToken!,
+      errorCode: "retry", delayMs: 1000 })).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("enforces a dedicated intent's exact review card and kind", async () => {
+    const f = await fixture();
+    const [other] = await db.insert(issueThreadInteractions).values({
+      companyId: f.companyId, issueId: f.issueId, kind: "request_confirmation",
+      status: "pending", payload: { version: 1, prompt: "Another card" },
+    }).returning();
+    const base = { companyId: f.companyId, issueId: f.issueId,
+      sourceRunId: f.sourceRunId, targetAgentId: f.reviewerAgentId };
+    await expect(db.insert(issueCommandDeliveries).values({ ...base,
+      interactionId: other.id, reviewId: f.reviewId,
+      kind: "completion_review" })).rejects.toThrow();
+    await expect(db.insert(issueCommandDeliveries).values({ ...base,
+      interactionId: f.interactionId, kind: "completion_review" })).rejects.toThrow();
+    await expect(db.insert(issueCommandDeliveries).values({ ...base,
+      interactionId: f.interactionId, reviewId: f.reviewId,
+      kind: "interaction_pending" })).rejects.toThrow();
   });
 
   it("rolls back issue, delivery, review and card when a nonterminal card update fails", async () => {

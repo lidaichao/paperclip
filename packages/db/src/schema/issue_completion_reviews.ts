@@ -71,6 +71,8 @@ export const issueCompletionReviews = pgTable("issue_completion_reviews", {
     .on(table.companyId, table.sourceRunId, table.requestId),
   interactionUq: uniqueIndex("issue_completion_reviews_interaction_uq")
     .on(table.companyId, table.interactionId),
+  deliveryScopeUq: uniqueIndex("issue_completion_reviews_delivery_scope_uq")
+    .on(table.companyId, table.issueId, table.interactionId, table.id),
   decisionRequestUq: uniqueIndex("issue_completion_reviews_decision_request_uq")
     .on(table.companyId, table.decisionRequestId)
     .where(sql`${table.decisionRequestId} is not null`),

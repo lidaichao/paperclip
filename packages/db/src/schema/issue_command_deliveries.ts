@@ -5,6 +5,7 @@ import {
 import { agents } from "./agents.js";
 import { companies } from "./companies.js";
 import { issueThreadInteractions } from "./issue_thread_interactions.js";
+import { issueCompletionReviews } from "./issue_completion_reviews.js";
 
 /**
  * Durable intent to notify a named reviewer after a fenced issue handoff.
@@ -15,6 +16,7 @@ export const issueCommandDeliveries = pgTable("issue_command_deliveries", {
   companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   issueId: uuid("issue_id").notNull(),
   interactionId: uuid("interaction_id").notNull(),
+  reviewId: uuid("review_id"),
   sourceRunId: uuid("source_run_id").notNull(),
   targetAgentId: uuid("target_agent_id").notNull(),
   kind: text("kind").notNull(),
@@ -41,6 +43,12 @@ export const issueCommandDeliveries = pgTable("issue_command_deliveries", {
     foreignColumns: [agents.companyId, agents.id],
     name: "issue_command_deliveries_target_agent_scope_fk",
   }).onDelete("cascade"),
+  reviewScopeFk: foreignKey({
+    columns: [table.companyId, table.issueId, table.interactionId, table.reviewId],
+    foreignColumns: [issueCompletionReviews.companyId, issueCompletionReviews.issueId,
+      issueCompletionReviews.interactionId, issueCompletionReviews.id],
+    name: "issue_command_deliveries_review_scope_fk",
+  }),
   interactionKindUq: uniqueIndex("issue_command_deliveries_interaction_kind_uq")
     .on(table.companyId, table.interactionId, table.kind),
   wakeupReceiptUq: uniqueIndex("issue_command_deliveries_wakeup_receipt_uq")
@@ -50,7 +58,8 @@ export const issueCommandDeliveries = pgTable("issue_command_deliveries", {
   agentStatusIdx: index("issue_command_deliveries_agent_status_idx")
     .on(table.companyId, table.targetAgentId, table.status),
   kindCheck: check("issue_command_deliveries_kind_check",
-    sql`${table.kind} = 'interaction_pending'`),
+    sql`(${table.kind} = 'interaction_pending' and ${table.reviewId} is null)
+      or (${table.kind} = 'completion_review' and ${table.reviewId} is not null)`),
   statusCheck: check("issue_command_deliveries_status_check",
     sql`${table.status} in ('awaiting_handoff','ready','claimed','delivered','deferred','cancelled')`),
   attemptsCheck: check("issue_command_deliveries_attempts_check",
