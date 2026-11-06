@@ -12,6 +12,7 @@ import {
   createDb,
   heartbeatRuns,
   issueComments,
+  issueThreadInteractions,
   issues,
 } from "@paperclipai/db";
 import {
@@ -65,6 +66,7 @@ describeEmbeddedPostgres("issue comment attribution and patch audit routes", () 
   afterEach(async () => {
     await db.delete(activityLog);
     await db.delete(issueComments);
+    await db.delete(issueThreadInteractions);
     await db.delete(heartbeatRuns);
     await db.delete(issues);
     await db.delete(companyMemberships);
@@ -143,7 +145,7 @@ describeEmbeddedPostgres("issue comment attribution and patch audit routes", () 
       contextSnapshot: { issueId: sourceIssue.id },
     }).returning().then((rows) => rows[0]!);
 
-    return { company, actorAgent, responsibleUserId, boardUserId, run, issue };
+    return { company, actorAgent, responsibleUserId, boardUserId, run, sourceIssue, issue };
   }
 
   function agentActor(input: Awaited<ReturnType<typeof seed>>): Express.Request["actor"] {
@@ -276,5 +278,52 @@ describeEmbeddedPostgres("issue comment attribution and patch audit routes", () 
         derivedFrom: "authenticated_actor",
       },
     });
+  }, 30_000);
+
+  it("baselines an ordinary agent's in-progress to review update with a comment", async () => {
+    const fixture = await seed();
+    const app = await createApp(db, agentActor(fixture));
+    const missingPath = await request(app)
+      .patch(`/api/issues/${fixture.sourceIssue.id}`)
+      .send({ status: "in_review", comment: "Ready for review" });
+    expect(missingPath.status).toBe(422);
+    expect(missingPath.body.error).toContain("real review path");
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, fixture.sourceIssue.id)))
+      .toHaveLength(0);
+
+    await db.insert(issueThreadInteractions).values({
+      companyId: fixture.company.id, issueId: fixture.sourceIssue.id,
+      kind: "request_confirmation", status: "pending", continuationPolicy: "wake_assignee",
+      payload: { version: 1, prompt: "Review the result" },
+    });
+    const response = await request(app)
+      .patch(`/api/issues/${fixture.sourceIssue.id}`)
+      .send({ status: "in_review", comment: "Ready for review" });
+
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.body.status).toBe("in_review");
+    const [stored] = await db.select().from(issues).where(eq(issues.id, fixture.sourceIssue.id));
+    expect(stored.status).toBe("in_review");
+    const comments = await db.select().from(issueComments).where(eq(issueComments.issueId, fixture.sourceIssue.id));
+    expect(comments).toEqual([expect.objectContaining({
+      body: "Ready for review", authorAgentId: fixture.actorAgent.id,
+      createdByRunId: fixture.run.id,
+    })]);
+    const events = await db.select().from(activityLog).where(eq(activityLog.entityId, fixture.sourceIssue.id));
+    expect(events).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: "issue.updated", runId: fixture.run.id }),
+      expect.objectContaining({ action: "issue.comment_added", runId: fixture.run.id }),
+    ]));
+
+    await db.update(issues).set({ reviewPolicy: "human_only" })
+      .where(eq(issues.id, fixture.sourceIssue.id));
+    const deniedVerdict = await request(app)
+      .patch(`/api/issues/${fixture.sourceIssue.id}`)
+      .send({ status: "done", comment: "Agent approved its own work" });
+    expect(deniedVerdict.status).toBe(403);
+    const [stillReview] = await db.select().from(issues).where(eq(issues.id, fixture.sourceIssue.id));
+    expect(stillReview.status).toBe("in_review");
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, fixture.sourceIssue.id)))
+      .toHaveLength(1);
   }, 30_000);
 });
