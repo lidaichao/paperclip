@@ -220,6 +220,13 @@ export class AliceClient {
       });
       if (!response.ok) {
         this.#logger.warn(`Alice API ${pathname} returned HTTP ${response.status}`);
+        if (response.status === 409 && pathname.endsWith("/finish")) {
+          const body = await response.json().catch(() => null);
+          if (body && typeof body === "object" && "error" in body &&
+            body.error === "Cancelled or expired run cannot report success") {
+            throw new Error("Alice API finish rejected: Cancelled or expired run cannot report success (HTTP 409)");
+          }
+        }
         throw new Error(`Alice API request failed with HTTP ${response.status}`);
       }
       return { status: response.status, body: response.status === 204 ? null : await response.json() };
@@ -324,17 +331,48 @@ export class AliceClient {
     return { action: record.action, generation: lease.generation, leaseExpiresAt };
   }
 
-  async finishLocalRun(lease: LocalRunLease, outcome: "succeeded" | "failed" | "cancelled", exitCode: number | null): Promise<string> {
+  async finishLocalRun(lease: LocalRunLease, outcome: "succeeded" | "failed" | "cancelled", exitCode: number | null,
+    report?: { clientRequestId: string; summary?: string }): Promise<string> {
     this.#requireVerifiedIdentity();
     this.#validateLease(lease);
     if (exitCode !== null && !Number.isInteger(exitCode)) throw new Error("exitCode must be an integer or null");
-    const response = await this.#postJson(`/api/agents/me/local-runs/${lease.runId}/finish`, {
+    if (report) {
+      requireUuid(report.clientRequestId, "finish clientRequestId");
+      if (report.summary && Buffer.byteLength(report.summary, "utf8") > 4 * 1024) throw new Error("finish summary is too large");
+    }
+    const payload = {
       deviceId: lease.deviceId, leaseId: lease.leaseId, generation: lease.generation,
-      outcome, exitCode, processStopped: true,
-    });
+      outcome, exitCode, processStopped: true, ...report,
+    };
+    const pathname = `/api/agents/me/local-runs/${lease.runId}/finish`;
+    let response: { status: number; body: unknown };
+    try { response = await this.#postJson(pathname, payload); }
+    catch (error) {
+      if (!report || (error instanceof Error && error.message.includes("HTTP "))) throw error;
+      // A lost response may hide a committed finish. Replay the same UUID and
+      // identical payload exactly once; the server resolves it idempotently.
+      response = await this.#postJson(pathname, payload);
+    }
     const record = asRecord(response.body, "local run finish");
     if (record.runId !== lease.runId) throw new Error("local run finish identity mismatch");
     return requiredString(record, "status", "local run finish");
+  }
+
+  async postLocalRunEvent(lease: LocalRunLease, issueId: string, event: {
+    clientRequestId: string; stream: "stdout" | "stderr" | "system";
+    level: "info" | "warn" | "error"; message: string;
+  }, signal?: AbortSignal): Promise<unknown> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(issueId, "issueId");
+    requireUuid(event.clientRequestId, "event clientRequestId");
+    if (!["stdout", "stderr", "system"].includes(event.stream) ||
+      !["info", "warn", "error"].includes(event.level) || !event.message.trim() ||
+      Buffer.byteLength(event.message, "utf8") > 8 * 1024) throw new Error("invalid local run event");
+    const response = await this.#writeJson("POST", `/api/agents/me/local-runs/${lease.runId}/events`, {
+      ...lease, issueId, ...event,
+    }, {}, signal);
+    return response.body;
   }
 
   async addLocalRunComment(lease: LocalRunLease, issueId: string, body: string, clientRequestId: string, signal?: AbortSignal): Promise<unknown> {

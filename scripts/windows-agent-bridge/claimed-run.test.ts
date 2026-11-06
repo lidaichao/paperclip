@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { executeClaimedRun, stopWindowsProcessTree } from "./claimed-run.js";
 import { AliceClient, type LocalRunClaim } from "./paperclip-client.js";
 import type { LocalAgentRunInput } from "./adapter-runtime.js";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -46,8 +46,10 @@ describe("claimed local run", () => {
   });
   it("passes the true server run ID into the local adapter and then finishes", async () => {
     const calls: string[] = [];
-    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret", fetch: async (url) => {
+    const bodies: unknown[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key-123456", fetch: async (url, init) => {
       calls.push(String(url));
+      if (init?.body) bodies.push(JSON.parse(String(init.body)));
       if (String(url).endsWith("/api/agents/me")) return Response.json({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
       if (String(url).endsWith(`/api/issues/${ISSUE_ID}`)) return Response.json({ id: ISSUE_ID, companyId: COMPANY_ID,
         assigneeAgentId: AGENT_ID, executionRunId: RUN_ID, identifier: "PAP-20", title: "只读验收", status: "in_progress", priority: "medium",
@@ -57,17 +59,27 @@ describe("claimed local run", () => {
       return Response.json({ runId: RUN_ID, status: "succeeded" });
     } });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
-    const runner = vi.fn(async (_input: LocalAgentRunInput) => ({ runId: RUN_ID, exitCode: 0, signal: null, timedOut: false,
-      succeeded: true, errorCode: null, sessionParams: null, sessionDisplayId: null }));
+    const runner = vi.fn(async (_input: LocalAgentRunInput) => {
+      await _input.onLog?.("stdout", `started ${_input.token}\n`);
+      await _input.onEvent?.({ eventType: "work", message: "step complete" });
+      return { runId: RUN_ID, exitCode: 0, signal: null, timedOut: false,
+        succeeded: true, errorCode: null, sessionParams: null, sessionDisplayId: null,
+        summary: `finished ${_input.token}` };
+    });
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-write-")), "intent.json");
     const result = await executeClaimedRun({ claim, client, deviceId: DEVICE_ID, companyId: COMPANY_ID,
-      agent, localAgent, token: "secret", intentFile: path.join(await mkdtemp(path.join(os.tmpdir(), "alice-write-")), "intent.json"), runner });
+      agent, localAgent, token: "server-only-key-123456", intentFile, runner });
     expect(result.outcome).toBe("succeeded");
     expect(runner).toHaveBeenCalledWith(expect.objectContaining({ runId: RUN_ID, issue: expect.objectContaining({ id: ISSUE_ID }) }));
     const adapterInput = runner.mock.calls[0]?.[0] as { token: string; apiBase: string };
-    expect(adapterInput.token).not.toBe("secret");
+    expect(adapterInput.token).not.toBe("server-only-key-123456");
     expect(adapterInput.apiBase).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
     expect(JSON.stringify(adapterInput)).not.toContain(claim.leaseId);
     expect(calls.some((url) => url.endsWith(`/api/agents/me/local-runs/${RUN_ID}/finish`))).toBe(true);
+    expect(calls.filter((url) => url.endsWith(`/api/agents/me/local-runs/${RUN_ID}/events`))).toHaveLength(2);
+    expect(JSON.stringify(bodies)).not.toContain(adapterInput.token);
+    expect(JSON.stringify(bodies)).not.toContain("server-only-key-123456");
+    expect((await readFile(`${intentFile}.${RUN_ID}.events.json`, "utf8"))).not.toContain(adapterInput.token);
   });
 
   it("rejects a claim for another agent without running a model", async () => {

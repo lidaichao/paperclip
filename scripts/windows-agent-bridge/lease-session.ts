@@ -115,7 +115,8 @@ export async function runLeaseSession(input: {
     let status: string;
     try { status = await input.client.finishLocalRun(lease, outcome, result?.exitCode ?? null); }
     catch (error) {
-      if (outcome === "cancelled" || !(error instanceof Error) || !error.message.includes("HTTP 409")) throw error;
+      if (outcome === "cancelled" || !(error instanceof Error) ||
+        !error.message.includes("Cancelled or expired run cannot report success (HTTP 409)")) throw error;
       const control = await input.client.controlLocalRun(lease);
       if (control.action !== "cancel") throw error;
       outcome = "cancelled";

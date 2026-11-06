@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { runLocalAgent } from "./adapter-runtime.js";
 import { runLeaseSession } from "./lease-session.js";
 import { LocalCommentIntentStore, startLocalRunWriteProxy } from "./local-run-write-proxy.js";
+import { RunTelemetryStore, summarizeRunText } from "./run-telemetry.js";
 import type { AliceClient, LocalRunClaim } from "./paperclip-client.js";
 import type { BridgeAgentConfig, BridgeInboxItem, LocalAgentRuntimeConfig } from "./types.js";
 
@@ -92,8 +93,21 @@ export async function executeClaimedRun(input: {
   }
   const runner = input.runner ?? runLocalAgent;
   const stopProcessTree = input.stopProcessTree ?? stopWindowsProcessTree;
+  let telemetry: RunTelemetryStore | undefined;
+  let summary: string | undefined;
   return await runLeaseSession({
-    client: input.client,
+    client: {
+      renewLocalRun: (lease) => input.client.renewLocalRun(lease),
+      controlLocalRun: (lease) => input.client.controlLocalRun(lease),
+      finishLocalRun: async (lease, outcome, exitCode) => {
+        if (!telemetry) throw new Error("local run telemetry was not initialized");
+        if (outcome !== "cancelled") await telemetry.flush(input.client, lease);
+        return input.client.finishLocalRun(lease, outcome, exitCode, {
+          clientRequestId: await telemetry.finishRequestId(),
+          ...(outcome !== "cancelled" && summary ? { summary } : {}),
+        });
+      },
+    },
     claim: input.claim,
     deviceId: input.deviceId,
     signal: input.signal,
@@ -104,6 +118,16 @@ export async function executeClaimedRun(input: {
         client: input.client, claim: input.claim, deviceId: input.deviceId, signal,
         intentStore: new LocalCommentIntentStore(input.intentFile),
       });
+      const secrets = [input.token, proxy.token, process.env[input.agent.gbrainEnvRef]];
+      try {
+        telemetry = new RunTelemetryStore(`${input.intentFile}.${input.claim.runId}.events.json`,
+          input.claim.runId, input.claim.issueId, secrets);
+        // Persist the finish identity before any model process is allowed to start.
+        await telemetry.finishRequestId();
+      } catch (error) {
+        await proxy.close();
+        throw error;
+      }
       const pids = new Map<number, string>();
       const stopPromises = new Map<number, Promise<void>>();
       const stopPid = (pid: number) => {
@@ -117,6 +141,7 @@ export async function executeClaimedRun(input: {
       const stop = () => { for (const pid of pids.keys()) stopPid(pid); };
       signal.addEventListener("abort", stop, { once: true });
       try {
+        let telemetryError: unknown;
         const result = await runner({
           signal,
           runId: input.claim.runId,
@@ -128,12 +153,45 @@ export async function executeClaimedRun(input: {
           issue,
           token: proxy.token,
           localAgent: input.localAgent,
+          onLog: async (stream, chunk) => {
+            if (signal.aborted) return;
+            try {
+              await telemetry!.appendLogChunk(stream, chunk);
+              await telemetry!.flush(input.client, {
+                deviceId: input.deviceId, runId: input.claim.runId, leaseId: input.claim.leaseId,
+                generation: input.claim.generation,
+              }, signal);
+            } catch (error) {
+              if (signal.aborted) return;
+              telemetryError ??= error;
+              stop();
+              throw error;
+            }
+          },
+          onEvent: async (event) => {
+            if (signal.aborted) return;
+            try {
+              await telemetry!.append("system", event.level ?? "info", event.message ?? event.eventType);
+              await telemetry!.flush(input.client, {
+                deviceId: input.deviceId, runId: input.claim.runId, leaseId: input.claim.leaseId,
+                generation: input.claim.generation,
+              }, signal);
+            } catch (error) {
+              if (signal.aborted) return;
+              telemetryError ??= error;
+              stop();
+              throw error;
+            }
+          },
           onSpawn: async (meta) => {
             if (!Number.isSafeInteger(meta.pid) || meta.pid <= 0) throw new Error("local adapter reported an invalid process");
             pids.set(meta.pid, meta.startedAt);
             if (signal.aborted) stopPid(meta.pid);
           },
         });
+        if (telemetryError) throw telemetryError;
+        await telemetry.flushTails();
+        summary = summarizeRunText(result.summary, secrets);
         if (signal.aborted) {
           if (pids.size === 0) throw new Error("cancelled run has no reported process identity");
           stop();

@@ -224,5 +224,27 @@ describe("AliceClient", () => {
     expect(JSON.parse(String(calls[3]?.init?.body))).toMatchObject({ deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1, processStopped: true });
     expect(logs.join("\n")).not.toContain(LEASE_ID);
   });
+
+  it("uses fenced event and idempotent finish contracts", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key", fetch: async (url, init) => {
+      calls.push({ url: String(url), init });
+      return String(url).endsWith("/api/agents/me")
+        ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+        : jsonResponse({ runId: RUN_ID, status: "succeeded" });
+    } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const lease = { runId: RUN_ID, deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1 };
+    await client.postLocalRunEvent(lease, ISSUE_ID, { clientRequestId: KEY_ID, stream: "system", level: "info", message: "started" });
+    await client.finishLocalRun(lease, "succeeded", 0, { clientRequestId: KEY_ID, summary: "done" });
+    expect(calls.slice(1).map((call) => [new URL(call.url).pathname, call.init?.method])).toEqual([
+      [`/api/agents/me/local-runs/${RUN_ID}/events`, "POST"],
+      [`/api/agents/me/local-runs/${RUN_ID}/finish`, "POST"],
+    ]);
+    expect(JSON.parse(String(calls[1]?.init?.body))).toMatchObject({ issueId: ISSUE_ID, leaseId: LEASE_ID,
+      clientRequestId: KEY_ID, message: "started" });
+    expect(JSON.parse(String(calls[2]?.init?.body))).toMatchObject({ leaseId: LEASE_ID,
+      clientRequestId: KEY_ID, summary: "done" });
+  });
 });
 

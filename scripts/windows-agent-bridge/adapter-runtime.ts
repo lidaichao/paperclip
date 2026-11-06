@@ -30,6 +30,8 @@ export interface LocalAgentRunInput {
   token: string;
   localAgent: LocalAgentRuntimeConfig;
   onLog?: (stream: "stdout" | "stderr", chunk: string) => Promise<void>;
+  onEvent?: (event: { eventType: string; stream?: "stdout" | "stderr" | "system";
+    level?: "info" | "warn" | "error"; message?: string }) => Promise<void>;
   onSpawn?: (meta: { pid: number; processGroupId: number | null; startedAt: string }) => Promise<void>;
   dependencies?: AdapterRuntimeDependencies;
 }
@@ -43,6 +45,7 @@ export interface LocalAgentRunResult {
   errorCode: string | null;
   sessionParams: Record<string, unknown> | null;
   sessionDisplayId: string | null;
+  summary?: string | null;
 }
 
 function requiredString(record: Record<string, unknown>, key: string, label: string): string {
@@ -115,7 +118,8 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
       },
       onLog,
       onMeta: async () => undefined,
-      onEvent: async () => undefined,
+      onEvent: async (event) => input.onEvent?.({ eventType: event.eventType, stream: event.stream,
+        level: event.level, message: event.message ? redactToken(event.message, input.token) : undefined }),
       onSpawn: input.onSpawn,
       authToken: input.token,
     });
@@ -135,6 +139,7 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
     errorCode: result.errorCode ?? null,
     sessionParams: result.sessionParams ?? null,
     sessionDisplayId: result.sessionDisplayId ?? null,
+    summary: typeof result.summary === "string" ? redactToken(result.summary, input.token) : null,
   };
 }
 

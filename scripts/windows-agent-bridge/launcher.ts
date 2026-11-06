@@ -6,6 +6,7 @@ import { loadBridgeConfig } from "./config.js";
 import { buildWorkerEnvironment } from "./environment.js";
 import { loadMemberGbrainToken } from "./member-credential.js";
 import { verifyGbrainIdentity } from "./gbrain-identity.js";
+import { assertPrivateModelAuthReady } from "./model-readiness.js";
 
 async function main(): Promise<void> {
   const configPath = process.argv[2];
@@ -14,9 +15,11 @@ async function main(): Promise<void> {
   const memberToken = await loadMemberGbrainToken(config.agents[0], process.env);
   await verifyGbrainIdentity({ agent: config.agents[0], endpoint: config.gbrainMcpUrl, token: memberToken });
   const env = buildWorkerEnvironment(process.env, config, memberToken);
-  for (const folder of [config.workerHome, env.HOME!, env.CODEX_HOME!, env.PAPERCLIP_HOME!]) {
+  for (const folder of [config.workerHome, env.HOME!, env.CODEX_HOME!, env.PAPERCLIP_HOME!, env.APPDATA!,
+    env.LOCALAPPDATA!, env.TEMP!, env.XDG_CONFIG_HOME!]) {
     await mkdir(folder, { recursive: true });
   }
+  await assertPrivateModelAuthReady(config, config.agents[0]);
   const runtime = path.join(path.dirname(fileURLToPath(import.meta.url)), "bridge.bundle.mjs");
   const code = await new Promise<number>((resolve, reject) => {
     const child = spawn(process.execPath, [runtime, path.resolve(configPath)], {

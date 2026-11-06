@@ -40,7 +40,7 @@ describe("local run lease session", () => {
   });
 
   it("rechecks cancellation after a success finish loses the race; uncertain state stays latched", async () => {
-    const finish = vi.fn().mockRejectedValueOnce(new Error("Alice API request failed with HTTP 409"))
+    const finish = vi.fn().mockRejectedValueOnce(new Error("Cancelled or expired run cannot report success (HTTP 409)"))
       .mockResolvedValueOnce("cancelled");
     const controlLocalRun = vi.fn().mockResolvedValueOnce({ action: "continue", generation: 1,
       leaseExpiresAt: new Date(Date.now() + 60_000).toISOString() })

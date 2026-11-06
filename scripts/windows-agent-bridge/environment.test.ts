@@ -26,12 +26,15 @@ describe("single-member worker environment", () => {
     };
     const worker = buildWorkerEnvironment(source, config);
     expect(Object.keys(worker).sort()).toEqual([
-      "CODEX_HOME", "GBRAIN_AGENT_TOKEN", "GBRAIN_LUNA_TOKEN", "HOME", "PAPERCLIP_HOME", "Path", "SystemRoot",
+      "APPDATA", "CODEX_HOME", "GBRAIN_AGENT_TOKEN", "GBRAIN_LUNA_TOKEN", "HOME", "LOCALAPPDATA",
+      "PAPERCLIP_HOME", "Path", "SystemRoot", "TEMP", "TMP", "USERPROFILE", "XDG_CONFIG_HOME",
     ].sort());
     expect(() => assertWorkerEnvironment(worker, config)).not.toThrow();
     expect(() => assertWorkerEnvironment(source, config)).toThrow("mismatched");
     expect(() => assertWorkerEnvironment({ ...worker, GBRAIN_RABBIT_TOKEN: "placeholder" }, config))
       .toThrow("unapproved key GBRAIN_RABBIT_TOKEN");
+    expect(() => assertWorkerEnvironment({ ...worker, USERPROFILE: "C:/Users/Shared" }, config))
+      .toThrow("worker home identity is mismatched");
   });
 
   it("refuses to build an environment when the member reference is absent", () => {

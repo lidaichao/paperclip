@@ -44,6 +44,7 @@ describe("runLocalAgent", () => {
     const token = "pc_agent_secret_1234567890";
     let captured: AdapterExecutionContext | null = null;
     const lines: string[] = [];
+    const events: string[] = [];
     try {
       const result = await runLocalAgent({
         runId: SERVER_RUN_ID,
@@ -55,11 +56,13 @@ describe("runLocalAgent", () => {
         token,
         localAgent: localAgent(),
         onLog: async (_stream, chunk) => { lines.push(chunk); },
+        onEvent: async (event) => { events.push(event.message ?? ""); },
         dependencies: {
           codexExecute: async (ctx) => {
             captured = ctx;
             await ctx.onLog("stdout", `safe ${token} text`);
-            return { exitCode: 0, signal: null, timedOut: false };
+            await ctx.onEvent?.({ eventType: "progress", message: `event ${token}` });
+            return { exitCode: 0, signal: null, timedOut: false, summary: `summary ${token}` };
           },
         },
       });
@@ -74,6 +77,8 @@ describe("runLocalAgent", () => {
       expect(JSON.stringify(invocation.config)).not.toContain(token);
       expect(lines.join("\n")).not.toContain(token);
       expect(lines.join("\n")).toContain("[redacted]");
+      expect(events.join("\n")).not.toContain(token);
+      expect(result.summary).not.toContain(token);
     } finally {
       if (previousApiBase === undefined) delete process.env.PAPERCLIP_API_URL;
       else process.env.PAPERCLIP_API_URL = previousApiBase;
