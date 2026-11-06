@@ -176,6 +176,45 @@ describe("WorkPackageConsole", () => {
     expect(container.textContent).toContain("2 records");
   });
 
+  it("localizes confirmed delivery and wake states from their persisted codes", async () => {
+    const withStates = (deliveryState: string, wakeStatus: string) => records.map((item) => item.id === ROOT_ID ? {
+      ...item,
+      delivery: { ...item.delivery, deliveryState, wakeStatus, deliveredAt: null, acknowledgedAt: null },
+    } : item);
+
+    await render(withStates("processing", "deferred_issue_execution"));
+    expect(container.textContent).toContain("送达：投递中");
+    expect(container.textContent).toContain("确认：等待当前任务执行结束");
+    await render(withStates("dead_letter", "failed"));
+    expect(container.textContent).toContain("送达：重试后仍投递失败");
+    expect(container.textContent).toContain("确认：失败");
+    expect(container.querySelector("details")).toBeNull();
+  });
+
+  it("keeps unknown delivery codes behind a localized expandable diagnostic", async () => {
+    const unknown = records.map((item) => item.id === ROOT_ID ? {
+      ...item,
+      delivery: { ...item.delivery, deliveryState: "future_delivery", wakeStatus: "future_wake", deliveredAt: null, acknowledgedAt: null },
+    } : item);
+    await render(unknown);
+    expect(container.textContent).toContain("送达：状态未知");
+    expect(container.textContent).toContain("确认：状态未知");
+    const details = container.querySelector("details") as HTMLDetailsElement;
+    expect(details).not.toBeNull();
+    expect(details.open).toBe(false);
+    expect(details.querySelector("summary")?.textContent).toBe("查看原始状态代码");
+    expect(details.textContent).toContain("送达状态代码：future_delivery");
+    expect(details.textContent).toContain("唤醒状态代码：future_wake");
+    await render(unknown.map((item) => item.id === ROOT_ID ? {
+      ...item,
+      delivery: { ...item.delivery, deliveryState: "constructor", wakeStatus: "__proto__" },
+    } : item));
+    expect(container.textContent).toContain("送达：状态未知");
+    expect(container.textContent).toContain("确认：状态未知");
+    expect(container.querySelector("details")?.textContent).toContain("送达状态代码：constructor");
+    expect(container.querySelector("details")?.textContent).toContain("唤醒状态代码：__proto__");
+  });
+
   it("shows complete empty messages for each work record view", async () => {
     await i18n.changeLanguage("en");
     await render([], "plan");
