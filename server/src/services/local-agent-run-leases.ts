@@ -5,6 +5,7 @@ import {
   agents,
   heartbeatRuns,
   heartbeatRunEvents,
+  issueCommandDeliveries,
   issueComments,
   issueThreadInteractions,
   issues,
@@ -21,6 +22,7 @@ import { issueService } from "./issues.js";
 import { issueReferenceService } from "./issue-references.js";
 import { issueThreadInteractionService } from "./issue-thread-interactions.js";
 import { executeReviewHandoff } from "./issue-review-handoff.js";
+import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
 
@@ -678,6 +680,147 @@ export function localAgentRunLeaseService(
     return result;
   }
 
+  /** Internal-only candidate. The public reviewerAgentId route remains fail-closed. */
+  async function createFencedAgentReviewHandoff(
+    input: LocalRunOwner & { issueId: string; reviewerAgentId: string; prompt: string;
+      body: string; clientRequestId: string },
+    actor: Express.Request["actor"],
+  ) {
+    if (!UUID.test(input.reviewerAgentId) || !UUID.test(input.clientRequestId)) {
+      throw badRequest("Reviewer and client request IDs must be UUIDs");
+    }
+    if (!input.prompt.trim() || input.prompt.length > 1000) {
+      throw badRequest("A review prompt of at most 1000 characters is required");
+    }
+    if (!input.body.trim() || /@|https?:\/\//i.test(input.body)) {
+      throw badRequest("Review handoff requires a plain comment without mentions or external links");
+    }
+    const publications: ActivityPublication[] = [];
+    const result = await withFencedIssueWrite(input, actor, "issue:mutate",
+      async (tx, issue, authorizationReason) => {
+        const deliveryService = issueCommandDeliveryService(db);
+        if (issue.status === "in_review") {
+          // A response lost after commit may only read back the exact command.
+          // Never recreate a card or transition the task on this branch.
+          const [interaction] = await tx.select().from(issueThreadInteractions).where(and(
+            eq(issueThreadInteractions.companyId, input.companyId),
+            eq(issueThreadInteractions.issueId, input.issueId),
+            eq(issueThreadInteractions.idempotencyKey, input.clientRequestId),
+          )).limit(1);
+          const [comment] = await tx.select().from(issueComments).where(and(
+            eq(issueComments.issueId, input.issueId),
+            eq(issueComments.authorAgentId, input.agentId),
+            eq(issueComments.createdByRunId, input.runId),
+            eq(issueComments.clientRequestId, input.clientRequestId),
+          )).limit(1);
+          const [delivery] = interaction ? await tx.select().from(issueCommandDeliveries).where(and(
+            eq(issueCommandDeliveries.companyId, input.companyId),
+            eq(issueCommandDeliveries.interactionId, interaction.id),
+            eq(issueCommandDeliveries.kind, "interaction_pending"),
+          )).limit(1) : [];
+          const [interactionAudit] = interaction ? await tx.select({ id: activityLog.id })
+            .from(activityLog).where(and(
+              eq(activityLog.companyId, input.companyId),
+              eq(activityLog.entityId, input.issueId),
+              eq(activityLog.runId, input.runId),
+              eq(activityLog.action, "issue.thread_interaction_created"),
+              sql`${activityLog.details}->>'interactionId' = ${interaction.id}`,
+            )).limit(1) : [];
+          const [statusAudit] = interaction ? await tx.select({ id: activityLog.id })
+            .from(activityLog).where(and(
+              eq(activityLog.companyId, input.companyId),
+              eq(activityLog.entityId, input.issueId),
+              eq(activityLog.runId, input.runId),
+              eq(activityLog.action, "issue.updated"),
+              sql`${activityLog.details}->>'clientRequestId' = ${input.clientRequestId}`,
+              sql`${activityLog.details}->>'reviewInteractionId' = ${interaction.id}`,
+            )).limit(1) : [];
+          const [commentAudit] = comment ? await tx.select({ id: activityLog.id })
+            .from(activityLog).where(and(
+              eq(activityLog.companyId, input.companyId),
+              eq(activityLog.entityId, input.issueId),
+              eq(activityLog.runId, input.runId),
+              eq(activityLog.action, "issue.comment_added"),
+              sql`${activityLog.details}->>'commentId' = ${comment.id}`,
+            )).limit(1) : [];
+          const enabled = (await instanceSettingsService(tx).getGeneral()).censorUsernameInLogs;
+          if (!interaction || !comment || !delivery || !interactionAudit || !statusAudit || !commentAudit ||
+            interaction.kind !== "request_confirmation" ||
+            interaction.createdByAgentId !== input.agentId || interaction.sourceRunId !== input.runId ||
+            interaction.addresseeAgentId !== input.reviewerAgentId ||
+            interaction.continuationPolicy !== "wake_assignee" ||
+            interaction.requestedResolverPolicy !== "not_creator" ||
+            interaction.effectiveResolverPolicy === "human_only" ||
+            !("prompt" in interaction.payload) || interaction.payload.prompt !== input.prompt ||
+            comment.body !== redactCurrentUserText(input.body, { enabled }) ||
+            delivery.issueId !== input.issueId || delivery.sourceRunId !== input.runId ||
+            delivery.targetAgentId !== input.reviewerAgentId ||
+            delivery.status === "awaiting_handoff") {
+            throw conflict("Agent review handoff request differs from the committed command");
+          }
+          return { issue, comment, interaction, delivery, replayed: true };
+        }
+        if (issue.status !== "in_progress") throw conflict("Review handoff requires an in-progress task");
+        if (input.reviewerAgentId === input.agentId) throw unprocessable("An agent cannot review its own work");
+        const [reviewer] = await tx.select({ companyId: agents.companyId,
+          runtimeConfig: agents.runtimeConfig }).from(agents)
+          .where(eq(agents.id, input.reviewerAgentId));
+        if (!reviewer || reviewer.companyId !== input.companyId ||
+          !isClientPullRuntimeConfig(reviewer.runtimeConfig)) {
+          throw unprocessable("Reviewer must be a local client-pull agent in the same company");
+        }
+        const [sibling] = await tx.select({ id: issueThreadInteractions.id })
+          .from(issueThreadInteractions).where(and(
+            eq(issueThreadInteractions.companyId, input.companyId),
+            eq(issueThreadInteractions.issueId, input.issueId),
+            eq(issueThreadInteractions.kind, "request_confirmation"),
+            eq(issueThreadInteractions.status, "pending"),
+            eq(issueThreadInteractions.createdByAgentId, input.agentId),
+          )).limit(1);
+        if (sibling) throw conflict("Resolve the existing review confirmation before creating another");
+        const interaction = await issueThreadInteractionService(tx).create(issue, {
+          kind: "request_confirmation", idempotencyKey: input.clientRequestId,
+          sourceRunId: input.runId, addresseeAgentId: input.reviewerAgentId,
+          continuationPolicy: "wake_assignee", resolverPolicy: "not_creator",
+          payload: { version: 1, prompt: input.prompt, allowDeclineReason: true },
+        }, { agentId: input.agentId, identityContextId: actor.identityContextId ?? null },
+        { supersedePendingSiblingInteractions: false });
+        if (interaction.effectiveResolverPolicy === "human_only") {
+          throw unprocessable("Company governance requires a human reviewer");
+        }
+        await logActivity(tx, {
+          companyId: issue.companyId, actorType: "agent", actorId: input.agentId,
+          agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
+          action: "issue.thread_interaction_created", entityType: "issue", entityId: issue.id,
+          details: { interactionId: interaction.id, interactionKind: interaction.kind,
+            interactionStatus: interaction.status, continuationPolicy: interaction.continuationPolicy,
+            addresseeAgentId: input.reviewerAgentId,
+            requestedResolverPolicy: interaction.requestedResolverPolicy,
+            effectiveResolverPolicy: interaction.effectiveResolverPolicy },
+        }, publications);
+        const intentScope = { companyId: input.companyId, issueId: input.issueId,
+          interactionId: interaction.id, sourceRunId: input.runId,
+          targetAgentId: input.reviewerAgentId };
+        await deliveryService.enqueue(tx, intentScope);
+        const lockedIssue = await issueService(db).getByIdForUpdate(input.issueId, tx);
+        if (!lockedIssue) throw notFound("Issue not found");
+        const handoff = await executeReviewHandoff({
+          db, tx, existing: lockedIssue,
+          patch: { status: "in_review", actorAgentId: input.agentId,
+            companyGuard: input.companyId },
+          commentBody: input.body, clientRequestId: input.clientRequestId,
+          reviewInteractionId: interaction.id,
+          actor: { agentId: input.agentId, runId: input.runId,
+            agentApiKeyId: actor.keyId, responsibleUserId: actor.onBehalfOfUserId },
+          authorizationReason, publications,
+        });
+        const delivery = await deliveryService.ready(tx, intentScope);
+        return { ...handoff, interaction, delivery, replayed: false };
+      }, { allowReviewReplay: true });
+    for (const publication of publications) publishActivity(publication);
+    return result;
+  }
+
   async function patchFencedIssue(
     input: LocalRunOwner & { issueId: string; title?: string; description?: string | null; priority?: string },
     actor: Express.Request["actor"],
@@ -708,5 +851,6 @@ export function localAgentRunLeaseService(
   }
 
   return { claim, renew, control, finish, appendFencedEvent,
-    addFencedComment, createFencedReviewConfirmation, reviewFencedIssue, patchFencedIssue };
+    addFencedComment, createFencedReviewConfirmation, reviewFencedIssue,
+    createFencedAgentReviewHandoff, patchFencedIssue };
 }
