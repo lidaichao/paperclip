@@ -9,11 +9,13 @@ import {
 } from "@paperclipai/db";
 import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
 import { badRequest, conflict, forbidden, notFound } from "../errors.js";
+import { redactCurrentUserText } from "../log-redaction.js";
 import { accessService } from "./access.js";
 import { logActivity, publishActivity, type ActivityPublication } from "./activity-log.js";
 import { getExecutionBlocker } from "./execution-blocker.js";
 import { issueService } from "./issues.js";
 import { issueReferenceService } from "./issue-references.js";
+import { instanceSettingsService } from "./instance-settings.js";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -54,7 +56,10 @@ function wakeReasonFromRun(run: typeof heartbeatRuns.$inferSelect) {
   return typeof value === "string" && value.trim() ? value : "assignment";
 }
 
-export function localAgentRunLeaseService(db: Db) {
+export function localAgentRunLeaseService(
+  db: Db,
+  deps: { syncCommentReferences?: (commentId: string) => Promise<void> } = {},
+) {
   async function leaseTtlMs(tx: Db, runId: string) {
     const [row] = await tx.select({
       value: sql<number>`greatest(0, floor(extract(epoch from (${localAgentRunLeases.expiresAt} - now())) * 1000))::integer`,
@@ -376,7 +381,13 @@ export function localAgentRunLeaseService(db: Db) {
         eq(issueComments.issueId, issue.id), eq(issueComments.createdByRunId, input.runId),
         eq(issueComments.authorAgentId, input.agentId), eq(issueComments.clientRequestId, input.clientRequestId),
       )).limit(1);
-      if (existing) return { comment: existing, inserted: false };
+      if (existing) {
+        const enabled = (await instanceSettingsService(tx).getGeneral()).censorUsernameInLogs;
+        if (existing.body !== redactCurrentUserText(input.body, { enabled })) {
+          throw conflict("clientRequestId already belongs to different comment content");
+        }
+        return { comment: existing, inserted: false };
+      }
       const sourceTrust = await resolveActorSourceTrustForIssue({
         db: tx, issue,
         actor: { actorType: "agent", actorId: input.agentId, agentId: input.agentId, runId: input.runId },
@@ -395,7 +406,9 @@ export function localAgentRunLeaseService(db: Db) {
       return { comment: saved, inserted: true };
     });
     for (const publication of publications) publishActivity(publication);
-    if (result.inserted) await issueReferenceService(db).syncComment(result.comment.id);
+    // Retry the idempotent projection even when the content command already
+    // committed. A previous post-commit failure must not strand references.
+    await (deps.syncCommentReferences ?? issueReferenceService(db).syncComment)(result.comment.id);
     return result.comment;
   }
 

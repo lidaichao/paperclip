@@ -211,9 +211,30 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(comment.authorAgentId).toBe(scope.agentId);
     const replay = await svc.addFencedComment({ ...owner, body: "Local execution progress" }, actor);
     expect(replay.id).toBe(comment.id);
+    await expect(svc.addFencedComment({ ...owner, body: "Different content" }, actor))
+      .rejects.toMatchObject({ status: 409 });
     const updated = await svc.patchFencedIssue({ ...owner, title: "Edited from desktop" }, actor);
     expect(updated.title).toBe("Edited from desktop");
     expect((await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).length).toBe(1);
+  });
+
+  it("retries reference projection after a committed comment's first post-commit failure", async () => {
+    const scope = await fixture();
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-015", idempotencyKey: randomUUID(),
+    });
+    const owner = { ...scope, deviceId: "device-desktop-015", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, clientRequestId: randomUUID(), body: "Reference retry" };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId, companyId: scope.companyId } as const;
+    const sync = vi.fn().mockRejectedValueOnce(new Error("projection unavailable")).mockResolvedValue(undefined);
+    const svc = localAgentRunLeaseService(db, { syncCommentReferences: sync });
+    await expect(svc.addFencedComment(owner, actor)).rejects.toThrow("projection unavailable");
+    const [stored] = await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId));
+    expect(stored.body).toBe("Reference retry");
+    const replay = await svc.addFencedComment(owner, actor);
+    expect(replay.id).toBe(stored.id);
+    expect(sync).toHaveBeenCalledTimes(2);
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).toHaveLength(1);
   });
 
   it("rejects other issues, companies, generations, and writes after cancellation", async () => {
