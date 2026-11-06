@@ -5,6 +5,7 @@ export interface BridgeAgentConfig {
   remoteAgentName: string;
   localAgentName: string;
   gbrainEnvRef: string;
+  gbrainCredentialFile?: string;
   adapterType: BridgeAdapterType;
   localAdapterConfig: Record<string, unknown>;
   maxConcurrentRuns: 1;

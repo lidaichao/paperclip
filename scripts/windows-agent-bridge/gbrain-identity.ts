@@ -33,7 +33,7 @@ export async function verifyGbrainIdentity(input: {
   token: string | undefined;
   fetch?: typeof globalThis.fetch;
   timeoutMs?: number;
-}): Promise<void> {
+}): Promise<{ clientName: string; sourceId: string }> {
   const expected = expectedGbrainIdentity(input.agent);
   if (!input.token || !input.endpoint) throw new Error("GBrain identity endpoint or credential is missing");
   let endpoint: URL;
@@ -68,6 +68,7 @@ export async function verifyGbrainIdentity(input: {
     if (identity.client_name !== expected.clientName || identity.source_id !== expected.sourceId) {
       throw new Error("GBrain whoami identity mismatch");
     }
+    return { clientName: identity.client_name, sourceId: identity.source_id };
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("GBrain ")) throw error;
     throw new Error("GBrain whoami verification failed");

@@ -15,11 +15,11 @@ function nonEmpty(source: NodeJS.ProcessEnv, key: string): string | null {
 }
 
 /** The launcher keeps a source token only long enough to build one child env. */
-export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: BridgeConfig): NodeJS.ProcessEnv {
+export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: BridgeConfig, loadedToken?: string): NodeJS.ProcessEnv {
   if (config.agents.length !== 1) throw new Error("one worker requires exactly one agent");
   expectedGbrainIdentity(config.agents[0]);
   const ref = config.agents[0].gbrainEnvRef;
-  const token = nonEmpty(source, ref);
+  const token = config.agents[0].gbrainCredentialFile ? loadedToken : nonEmpty(source, ref);
   if (!token) throw new Error(`configured GBrain credential reference ${ref} is unavailable`);
   const env: NodeJS.ProcessEnv = {};
   for (const [key, value] of Object.entries(source)) {

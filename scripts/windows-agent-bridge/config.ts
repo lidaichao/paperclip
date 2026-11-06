@@ -20,6 +20,7 @@ const AGENT_KEYS = new Set([
   "remoteAgentName",
   "localAgentName",
   "gbrainEnvRef",
+  "gbrainCredentialFile",
   "adapterType",
   "localAdapterConfig",
   "maxConcurrentRuns",
@@ -138,6 +139,9 @@ function parseAgent(value: unknown, index: number): BridgeAgentConfig {
     remoteAgentName: requiredString(record, "remoteAgentName", label),
     localAgentName: requiredString(record, "localAgentName", label),
     gbrainEnvRef: requiredString(record, "gbrainEnvRef", label),
+    ...(record.gbrainCredentialFile === undefined ? {} : {
+      gbrainCredentialFile: requiredString(record, "gbrainCredentialFile", label),
+    }),
     adapterType: adapterType as BridgeAdapterType,
     localAdapterConfig: parseLocalAdapterConfig(record.localAdapterConfig, adapterType as BridgeAdapterType, `${label}.localAdapterConfig`),
     maxConcurrentRuns: 1,
@@ -183,6 +187,13 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
   assertUniqueAgents(agents);
   expectedGbrainIdentity(agents[0]);
   const configDir = path.dirname(absoluteConfigPath);
+  if (agents[0].gbrainCredentialFile) {
+    const candidate = agents[0].gbrainCredentialFile;
+    if (!path.isAbsolute(candidate) && !path.win32.isAbsolute(candidate)) {
+      throw new Error("gbrainCredentialFile must be an absolute member-local path");
+    }
+    agents[0].gbrainCredentialFile = path.resolve(candidate);
+  }
   const workerHomeRaw = requiredString(record, "workerHome", "config");
   if (!path.isAbsolute(workerHomeRaw) && !path.win32.isAbsolute(workerHomeRaw)) {
     throw new Error("workerHome must be an absolute local path");

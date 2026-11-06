@@ -4,12 +4,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadBridgeConfig } from "./config.js";
 import { buildWorkerEnvironment } from "./environment.js";
+import { loadMemberGbrainToken } from "./member-credential.js";
+import { verifyGbrainIdentity } from "./gbrain-identity.js";
 
 async function main(): Promise<void> {
   const configPath = process.argv[2];
   if (!configPath) throw new Error("usage: launcher <config.json>");
   const config = await loadBridgeConfig(configPath);
-  const env = buildWorkerEnvironment(process.env, config);
+  const memberToken = await loadMemberGbrainToken(config.agents[0], process.env);
+  await verifyGbrainIdentity({ agent: config.agents[0], endpoint: config.gbrainMcpUrl, token: memberToken });
+  const env = buildWorkerEnvironment(process.env, config, memberToken);
   for (const folder of [config.workerHome, env.HOME!, env.CODEX_HOME!, env.PAPERCLIP_HOME!]) {
     await mkdir(folder, { recursive: true });
   }

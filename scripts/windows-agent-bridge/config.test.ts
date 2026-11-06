@@ -96,6 +96,13 @@ describe("loadBridgeConfig", () => {
     await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("gbrainEnvRef does not match");
   });
 
+  it("accepts an absolute private credential file reference without inlining its token", async () => {
+    const input = validConfig();
+    Object.assign(input.agents[0], { gbrainCredentialFile: "H:/AIagent/Luna/.paperclip/gbrain-luna-192.json" });
+    const config = await loadBridgeConfig(await fixture(input));
+    expect(config.agents[0].gbrainCredentialFile).toContain("gbrain-luna-192.json");
+  });
+
   it("rejects obsolete 127 Paperclip settings", async () => {
     const input = { ...validConfig(), localApiBase: "http://127.0.0.1:3100" };
     await expect(loadBridgeConfig(await fixture(input))).rejects.toThrow("unknown keys: localApiBase");
