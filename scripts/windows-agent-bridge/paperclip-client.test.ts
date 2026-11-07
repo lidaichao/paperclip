@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { AliceClient } from "./paperclip-client.js";
 
 const AGENT_ID = "38a5808c-47f3-4029-bdfe-0d84504bdc8a";
@@ -484,7 +485,13 @@ describe("AliceClient", () => {
     expect(query.searchParams.get("clientRequestId")).toBe(KEY_ID);
     expect(query.searchParams.get("issueId")).toBe(ISSUE_ID);
     expect(query.searchParams.get("leaseId")).toBe(LEASE_ID);
-    expect(query.searchParams.get("requestDigest")).toMatch(/^[a-f0-9]{64}$/);
+    const canonicalContent = JSON.stringify({ outcome: "succeeded", exitCode: 0,
+      processStopped: true, summary: "completed" });
+    const exactDigest = createHash("sha256").update(JSON.stringify({
+      kind: "finish", runId: RUN_ID, issueId: ISSUE_ID,
+      agentId: AGENT_ID, deviceId: DEVICE_ID, canonicalContent,
+    })).digest("hex");
+    expect(query.searchParams.get("requestDigest")).toBe(exactDigest);
   });
 
   it("sends the current lease on renew, control and finish without printing it", async () => {
