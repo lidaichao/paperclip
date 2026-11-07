@@ -1,10 +1,10 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq, sql } from "drizzle-orm";
 import {
   activityLog, agentApiKeys, agentWakeupRequests, agents, companies, createDb, heartbeatRuns,
   issueComments, issueCompletionReviews, issueThreadInteractions, issues,
-  localAgentDeviceBindings, localAgentRunLeases,
+  localAgentDeviceBindings, localAgentRunLeases, localRunWriteReceipts,
 } from "@paperclipai/db";
 import {
   getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase,
@@ -73,6 +73,19 @@ describe.runIf(support.supported)("shared completion review decisions (PostgreSQ
     return { companyId: f.companyId, issueId: f.issueId, reviewId: f.reviewId,
       actorAgentId: f.reviewerAgentId, actorRunId: f.reviewerRunId,
       requestId: randomUUID(), summary: "The work meets the requirement" };
+  }
+
+  function writeLookup(input: ReturnType<typeof request>,
+    proof: Awaited<ReturnType<typeof clientPullProof>>,
+    outcome: "accepted" | "rejected") {
+    const { owner } = proof;
+    const requestDigest = createHash("sha256").update(JSON.stringify({
+      kind: "review_decision", runId: input.actorRunId, issueId: input.issueId,
+      agentId: input.actorAgentId, deviceId: owner.deviceId,
+      canonicalContent: JSON.stringify({ outcome, summary: input.summary }),
+    })).digest("hex");
+    return { ...owner, issueId: input.issueId, kind: "review_decision",
+      clientRequestId: input.requestId, requestDigest };
   }
 
   async function clientPullProof(f: Awaited<ReturnType<typeof fixture>>) {
@@ -270,6 +283,9 @@ describe.runIf(support.supported)("shared completion review decisions (PostgreSQ
     const f = await fixture(), proof = await clientPullProof(f);
     const svc = issueCompletionReviewDecisionService(db);
     const input = request(f);
+    const lookup = writeLookup(input, proof, "accepted");
+    expect((await localAgentRunLeaseService(db).readFencedWriteReceipt(lookup)).state)
+      .toBe("unknown");
     await expect(svc.accept({ ...input, clientPullProof: {
       ...proof, owner: { ...proof.owner, generation: proof.owner.generation + 1 },
     } })).rejects.toMatchObject({ status: 409 });
@@ -282,6 +298,11 @@ describe.runIf(support.supported)("shared completion review decisions (PostgreSQ
     expect((await state(f)).review?.state).toBe("pending");
     const receipt = await svc.accept({ ...input, clientPullProof: proof });
     expect(receipt).toMatchObject({ outcome: "accepted", reviewId: f.reviewId });
+    expect(await localAgentRunLeaseService(db).readFencedWriteReceipt(lookup))
+      .toMatchObject({ state: "committed", kind: "review_decision",
+        sourceReceiptId: f.reviewId });
+    await expect(localAgentRunLeaseService(db).readFencedWriteReceipt({ ...lookup,
+      requestDigest: "a".repeat(64) })).rejects.toMatchObject({ status: 409 });
     expect((await state(f)).issue?.status).toBe("done");
     await expect(svc.accept(input)).rejects.toMatchObject({ status: 422 });
     await expect(svc.accept({ ...input, clientPullProof: {
@@ -294,8 +315,14 @@ describe.runIf(support.supported)("shared completion review decisions (PostgreSQ
     await db.update(localAgentRunLeases).set({ releasedAt: new Date(),
       stopAcknowledgedAt: new Date(), outcome: "succeeded" })
       .where(eq(localAgentRunLeases.runId, f.reviewerRunId));
+    expect((await localAgentRunLeaseService(db).readFencedWriteReceipt(lookup)).state)
+      .toBe("committed");
     await expect(svc.accept({ ...input, clientPullProof: proof }))
       .rejects.toMatchObject({ status: 409 });
+    await db.update(localAgentDeviceBindings).set({ revokedAt: new Date() })
+      .where(eq(localAgentDeviceBindings.keyId, proof.owner.keyId));
+    await expect(localAgentRunLeaseService(db).readFencedWriteReceipt(lookup))
+      .rejects.toMatchObject({ status: 403 });
   });
 
   it("rejects expired, cancelled, revoked-device and revoked-key client-pull proofs", async () => {
@@ -469,6 +496,9 @@ describe.runIf(support.supported)("shared completion review decisions (PostgreSQ
     const first = await service.reject(input);
     expect(first).toMatchObject({ reviewId: f.reviewId, outcome: "rejected",
       requestId: input.requestId });
+    const lookup = writeLookup(input, proof, "rejected");
+    expect((await localAgentRunLeaseService(db).readFencedWriteReceipt(lookup)).state)
+      .toBe("committed");
     const result = await state(f);
     expect(result.issue?.status).toBe("todo");
     expect(result.issue?.statusVersion).toBe(5);
@@ -496,6 +526,7 @@ describe.runIf(support.supported)("shared completion review decisions (PostgreSQ
     expect(await leases.finish({ ...proof.owner, outcome: "succeeded",
       exitCode: 0, processStopped: true, clientRequestId: randomUUID(),
       summary: "Reviewer decision committed" })).toMatchObject({ status: "succeeded" });
+    expect((await leases.readFencedWriteReceipt(lookup)).state).toBe("committed");
     expect((await db.select().from(heartbeatRuns)
       .where(eq(heartbeatRuns.id, run.id)))[0]?.status).toBe("queued");
     await expect(service.reject(input)).rejects.toMatchObject({ status: 409 });
@@ -538,6 +569,8 @@ describe.runIf(support.supported)("shared completion review decisions (PostgreSQ
       expect(unchanged.card?.status).toBe("pending");
       expect(await db.select().from(issueComments)
         .where(eq(issueComments.issueId, f.issueId))).toHaveLength(0);
+      expect(await db.select().from(localRunWriteReceipts)
+        .where(eq(localRunWriteReceipts.runId, f.reviewerRunId))).toHaveLength(0);
     } finally {
       await db.execute(sql.raw(`DROP TRIGGER ${triggerName} ON agent_wakeup_requests`));
       await db.execute(sql.raw(`DROP FUNCTION ${functionName}()`));

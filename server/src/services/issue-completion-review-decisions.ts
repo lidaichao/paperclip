@@ -3,6 +3,7 @@ import type { Db } from "@paperclipai/db";
 import {
   agentApiKeys, agentWakeupRequests, agents, heartbeatRuns, issueCompletionReviews, issues,
   issueThreadInteractions, localAgentDeviceBindings, localAgentRunLeases,
+  localRunWriteReceipts,
 } from "@paperclipai/db";
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { badRequest, conflict, forbidden, unprocessable } from "../errors.js";
@@ -43,6 +44,23 @@ function normalizedRequest(input: DecisionInput, outcome: "accepted" | "rejected
     `issue_completion_review_${outcome}_v1`, input.reviewId, summary,
   ])).digest("hex");
   return { summary, digest };
+}
+
+async function recordLocalReviewDecisionReceipt(tx: Db, input: DecisionInput,
+  outcome: "accepted" | "rejected") {
+  const owner = input.clientPullProof?.owner;
+  if (!owner) return;
+  const requestDigest = createHash("sha256").update(JSON.stringify({
+    kind: "review_decision", runId: input.actorRunId, issueId: input.issueId,
+    agentId: input.actorAgentId, deviceId: owner.deviceId,
+    canonicalContent: JSON.stringify({ outcome, summary: input.summary }),
+  })).digest("hex");
+  await tx.insert(localRunWriteReceipts).values({
+    companyId: input.companyId, runId: input.actorRunId, issueId: input.issueId,
+    agentId: input.actorAgentId, deviceId: owner.deviceId,
+    clientRequestId: input.requestId, kind: "review_decision", requestDigest,
+    sourceReceiptId: input.reviewId,
+  });
 }
 
 async function assertClientPullReviewProof(tx: Db, input: DecisionInput,
@@ -232,6 +250,7 @@ export function issueCompletionReviewDecisionService(db: Db, testHooks: {
       if (postCommitActions.length > 0) {
         throw unprocessable("Completion review requires an unsupported post-commit action");
       }
+      await recordLocalReviewDecisionReceipt(tx as unknown as Db, input, "accepted");
       return stableReceipt;
     });
     for (const publication of publications) publishActivity(publication);
@@ -409,6 +428,7 @@ export function issueCompletionReviewDecisionService(db: Db, testHooks: {
       if (postCommitActions.length > 0) {
         throw unprocessable("Completion review requires an unsupported post-commit action");
       }
+      await recordLocalReviewDecisionReceipt(tx as unknown as Db, input, "rejected");
       return savedReview.decisionReceipt;
     });
     for (const publication of publications) publishActivity(publication);

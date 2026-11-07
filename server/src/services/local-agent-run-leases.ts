@@ -2063,7 +2063,7 @@ export function localAgentRunLeaseService(
           sourceReceiptId: preparedReceipt.sourceReceiptId };
       }
       if (["child_complete", "defect_repair_handoff", "po_verdict",
-        "defect_qa_verdict", "completion_review_handoff"].includes(input.kind)) {
+        "defect_qa_verdict", "completion_review_handoff", "review_decision"].includes(input.kind)) {
         return { state: "unknown" as const, kind: input.kind,
           runStatus: run.status, leaseReleased: lease.releasedAt !== null };
       }
