@@ -2143,6 +2143,13 @@
       "when": 1794050621627,
       "tag": "0307_local_defect_repair_handoff",
       "breakpoints": true
+    },
+    {
+      "idx": 308,
+      "version": "7",
+      "when": 1794051613654,
+      "tag": "0308_local_defect_qa_delivery",
+      "breakpoints": true
     }
   ]
 }

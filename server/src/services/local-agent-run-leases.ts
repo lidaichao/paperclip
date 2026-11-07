@@ -40,6 +40,8 @@ import { assertClientPullAcceptedReviewContext, assertClientPullRejectedReviewCo
   assertClientPullReviewClaimCandidate,
   assertClientPullReviewEventContext,
   CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
+import { assertDefectQaClaimCandidate, CLIENT_PULL_DEFECT_QA_WAKE_REASON,
+  defectQaRunChanged, deliverPendingDefectQaForAgent } from "./local-agent-defect-qa.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { lockWorkRecordQualityAggregate, workRecordQualityService } from "./work-record-quality.js";
 import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-rollout.js";
@@ -186,6 +188,9 @@ export function localAgentRunLeaseService(
         if (!run || run.status !== "running" || sameClaim.cancelRequestedAt || !live?.live) {
           throw conflict("The original claim is no longer executable");
         }
+        if (await defectQaRunChanged(tx as unknown as Db, run, sameClaim)) {
+          throw conflict("Independent defect QA claim changed after its first receipt");
+        }
         return {
           runId: run.id, issueId: sameClaim.issueId, agentId: input.agentId,
           leaseId: sameClaim.leaseId, generation: sameClaim.generation,
@@ -212,6 +217,8 @@ export function localAgentRunLeaseService(
       )).limit(1);
       if (serverRun) throw conflict("Agent already has a running server run");
 
+      await deliverPendingDefectQaForAgent(tx as unknown as Db, agent);
+
       async function* queuedCandidates() {
         let cursor: { createdAt: Date; id: string } | null = null;
         while (true) {
@@ -236,6 +243,41 @@ export function localAgentRunLeaseService(
       for await (const run of queuedCandidates()) {
         const issueId = issueIdFromRun(run);
         if (!issueId || run.runtimeMode === "native") continue;
+        if (wakeReasonFromRun(run) === CLIENT_PULL_DEFECT_QA_WAKE_REASON) {
+          const { issue, wake } = await assertDefectQaClaimCandidate(db,
+            tx as unknown as Db, { agent, run });
+          if (issue.id !== issueId) throw conflict("Independent defect QA issue changed");
+          const [claimed] = await tx.update(heartbeatRuns).set({
+            status: "running", startedAt: sql`now()`, updatedAt: sql`now()`,
+          }).where(and(eq(heartbeatRuns.id, run.id),
+            eq(heartbeatRuns.status, "queued"),
+            eq(heartbeatRuns.runtimeMode, "client_pull"))).returning();
+          if (!claimed) throw conflict("Independent defect QA run changed before claim");
+          const [claimedWake] = await tx.update(agentWakeupRequests).set({
+            status: "claimed", claimedAt: sql`now()`, updatedAt: sql`now()`,
+          }).where(and(eq(agentWakeupRequests.id, wake.id),
+            eq(agentWakeupRequests.status, "queued"))).returning();
+          if (!claimedWake || claimedWake.runId !== run.id) {
+            throw conflict("Independent defect QA wake changed before claim");
+          }
+          const [owned] = await tx.update(issues).set({
+            executionRunId: run.id, executionLockedAt: sql`now()`, updatedAt: sql`now()`,
+          }).where(and(eq(issues.id, issue.id), eq(issues.companyId, input.companyId),
+            eq(issues.status, "in_review"), eq(issues.statusVersion, issue.statusVersion),
+            eq(issues.assigneeAgentId, agent.id), isNull(issues.executionRunId))).returning();
+          if (!owned) throw conflict("Independent defect QA ownership changed before claim");
+          const [lease] = await tx.insert(localAgentRunLeases).values({
+            runId: run.id, companyId: input.companyId, agentId: input.agentId,
+            issueId, deviceId: input.deviceId, deviceKeyId: input.keyId,
+            idempotencyKey: input.idempotencyKey,
+            expiresAt: sql`now() + interval '90 seconds'`,
+          }).returning();
+          return { runId: run.id, issueId, agentId: input.agentId,
+            leaseId: lease.leaseId, generation: lease.generation,
+            leaseExpiresAt: lease.expiresAt, wakeReason: CLIENT_PULL_DEFECT_QA_WAKE_REASON,
+            leaseTtlMs: await leaseTtlMs(tx as unknown as Db, run.id),
+            workspacePolicy: "agent_home" as const };
+        }
         const [issue] = await tx.select().from(issues).where(and(
           eq(issues.id, issueId), eq(issues.companyId, input.companyId),
         )).for("update");
@@ -369,7 +411,8 @@ export function localAgentRunLeaseService(
         .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
       const shouldStop = run.status !== "running" || !live?.live || Boolean(lease.cancelRequestedAt) ||
         Boolean(lease.releasedAt) || Boolean(binding.revokedAt) ||
-        await dedicatedReviewChanged(tx as unknown as Db, run, lease);
+        await dedicatedReviewChanged(tx as unknown as Db, run, lease) ||
+        await defectQaRunChanged(tx as unknown as Db, run, lease);
       const currentLease = shouldStop && !lease.cancelRequestedAt && !lease.releasedAt
         ? (await tx.update(localAgentRunLeases).set({
             cancelRequestedAt: sql`now()`, updatedAt: sql`now()`,
@@ -401,7 +444,8 @@ export function localAgentRunLeaseService(
       const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
         .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
       if (!live?.live) throw conflict("Local run lease expired; stop the process and acknowledge it");
-      if (await dedicatedReviewChanged(tx as unknown as Db, run, lease)) {
+      if (await dedicatedReviewChanged(tx as unknown as Db, run, lease) ||
+        await defectQaRunChanged(tx as unknown as Db, run, lease)) {
         await tx.update(localAgentRunLeases).set({
           cancelRequestedAt: sql`now()`, updatedAt: sql`now()`,
         }).where(eq(localAgentRunLeases.runId, input.runId));
@@ -497,6 +541,10 @@ export function localAgentRunLeaseService(
       }
       const defectHandoff = defectHandoffs[0] ?? null;
       const reviewerRun = wakeReasonFromRun(run) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON;
+      if (wakeReasonFromRun(run) === CLIENT_PULL_DEFECT_QA_WAKE_REASON &&
+        input.outcome === "succeeded") {
+        throw conflict("Independent defect QA cannot finish successfully without a fenced verdict");
+      }
       const reviewerReviewId = reviewerRun ? run.contextSnapshot?.reviewId : null;
       if (reviewerRun && typeof reviewerReviewId !== "string") {
         throw conflict("Dedicated reviewer run lacks a review identity");
@@ -1114,6 +1162,9 @@ export function localAgentRunLeaseService(
         .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
       if (run.status !== "running" || lease.cancelRequestedAt || lease.releasedAt || !live?.live) {
         throw conflict("Run event lease is cancelled, expired, or released");
+      }
+      if (await defectQaRunChanged(tx as unknown as Db, run, lease)) {
+        throw conflict("Independent defect QA event context changed");
       }
       const [issue] = await tx.select().from(issues)
         .where(and(eq(issues.id, input.issueId), eq(issues.companyId, input.companyId)))

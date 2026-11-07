@@ -1,6 +1,7 @@
 import { check, index, pgTable, text, timestamp, uniqueIndex, uuid, bigint } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { agents } from "./agents.js";
+import { agentWakeupRequests } from "./agent_wakeup_requests.js";
 import { companies } from "./companies.js";
 import { heartbeatRuns } from "./heartbeat_runs.js";
 import { issueComments } from "./issue_comments.js";
@@ -25,6 +26,8 @@ export const localDefectRepairHandoffs = pgTable("local_defect_repair_handoffs",
   preparedStatusVersion: bigint("prepared_status_version", { mode: "number" }).notNull(),
   preparedCycleRevision: bigint("prepared_cycle_revision", { mode: "number" }).notNull(),
   submittedStatusVersion: bigint("submitted_status_version", { mode: "number" }),
+  qaWakeupRequestId: uuid("qa_wakeup_request_id").references(() => agentWakeupRequests.id),
+  qaDeliveredAt: timestamp("qa_delivered_at", { withTimezone: true }),
   state: text("state").$type<"prepared" | "submitted" | "aborted">().notNull().default("prepared"),
   commentId: uuid("comment_id").notNull().references(() => issueComments.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -34,6 +37,11 @@ export const localDefectRepairHandoffs = pgTable("local_defect_repair_handoffs",
     .on(table.companyId, table.runId, table.clientRequestId),
   recordIdx: index("local_defect_repair_handoffs_record_idx")
     .on(table.companyId, table.recordId, table.createdAt),
+  qaWakeupUq: uniqueIndex("local_defect_repair_handoffs_qa_wakeup_uq")
+    .on(table.qaWakeupRequestId).where(sql`${table.qaWakeupRequestId} IS NOT NULL`),
+  qaDeliveryCheck: check("local_defect_repair_handoffs_qa_delivery_check", sql`
+    (${table.qaWakeupRequestId} IS NULL AND ${table.qaDeliveredAt} IS NULL) OR
+    (${table.state} = 'submitted' AND ${table.qaWakeupRequestId} IS NOT NULL AND ${table.qaDeliveredAt} IS NOT NULL)`),
   stateCheck: check("local_defect_repair_handoffs_state_check", sql`
     (${table.state} = 'prepared' AND ${table.submittedStatusVersion} IS NULL) OR
     (${table.state} = 'submitted' AND ${table.submittedStatusVersion} IS NOT NULL) OR

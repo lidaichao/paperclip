@@ -85,6 +85,10 @@ export const agentWakeupRequests = pgTable(
     )
       .on(table.companyId, table.idempotencyKey)
       .where(sql`${table.idempotencyKey} LIKE 'completion-review-rejected:%'`),
+    independentDefectQaWakeIdempotencyUq: uniqueIndex(
+      "agent_wakeup_requests_independent_defect_qa_uq",
+    ).on(table.companyId, table.idempotencyKey)
+      .where(sql`${table.idempotencyKey} LIKE 'defect-qa:%'`),
     connectionIntentDeliveryIdempotencyUq: uniqueIndex("agent_wakeup_requests_connection_intent_delivery_idempotency_uq")
       .on(table.companyId, table.idempotencyKey)
       .where(sql`${table.idempotencyKey} LIKE 'connection-intent:%' AND ${table.status} NOT IN ('skipped', 'failed', 'cancelled')`),

@@ -95,6 +95,177 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
     return { command, receipt: await f.service.prepareFencedDefectRepairHandoff(command, f.actor) };
   }
 
+  async function qaIdentity(f: Awaited<ReturnType<typeof fixture>>) {
+    const keyId = randomUUID(), deviceId = "defect-qa-device-001";
+    await db.insert(agentApiKeys).values({ id: keyId, companyId: f.companyId,
+      agentId: f.qaAgentId, name: "QA key", keyHash: randomUUID() });
+    await db.insert(localAgentDeviceBindings).values({ companyId: f.companyId,
+      agentId: f.qaAgentId, keyId, deviceId });
+    return { companyId: f.companyId, agentId: f.qaAgentId, keyId, deviceId };
+  }
+
+  it("delivers only after source stop and lets the designated QA claim the original issue", async () => {
+    const f = await fixture(), qa = await qaIdentity(f);
+    await prepare(f);
+    expect(await f.service.claim({ ...qa, idempotencyKey: randomUUID() })).toBeNull();
+    expect(await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.companyId))).toHaveLength(0);
+    await f.service.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const key = randomUUID();
+    const claim = await f.service.claim({ ...qa, idempotencyKey: key });
+    expect(claim).toMatchObject({ issueId: f.issueId, agentId: f.qaAgentId,
+      wakeReason: "independent_defect_qa" });
+    expect(await f.service.claim({ ...qa, idempotencyKey: key }))
+      .toMatchObject({ runId: claim!.runId, leaseId: claim!.leaseId });
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.issueId));
+    expect(issue).toMatchObject({ status: "in_review", assigneeAgentId: f.qaAgentId,
+      executionRunId: claim!.runId, executionState: { status: "pending",
+        currentParticipant: { agentId: f.qaAgentId } } });
+    const [handoff] = await db.select().from(localDefectRepairHandoffs)
+      .where(eq(localDefectRepairHandoffs.runId, f.runId));
+    const [wake] = await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, handoff.qaWakeupRequestId!));
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, claim!.runId));
+    expect(handoff.qaDeliveredAt).not.toBeNull();
+    expect(wake).toMatchObject({ agentId: f.qaAgentId, status: "claimed",
+      runId: claim!.runId, reason: "independent_defect_qa" });
+    expect(run).toMatchObject({ status: "running", runtimeMode: "client_pull",
+      contextSnapshot: { issueId: f.issueId, qaItemId: f.qaItemId,
+        cycleId: f.cycleId, handoffId: handoff.id } });
+    expect(await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, claim!.runId))).toHaveLength(1);
+    await expect(db.insert(agentWakeupRequests).values({
+      companyId: f.companyId, agentId: f.qaAgentId,
+      source: "automation", reason: "independent_defect_qa",
+      status: "cancelled", idempotencyKey: wake.idempotencyKey,
+    })).rejects.toThrow();
+    await expect(f.service.finish({ ...qa, runId: claim!.runId,
+      leaseId: claim!.leaseId, generation: claim!.generation,
+      outcome: "succeeded", exitCode: 0, processStopped: true,
+      clientRequestId: randomUUID() })).rejects.toMatchObject({ status: 409 });
+    expect((await db.select().from(workRecordQualityItems)
+      .where(eq(workRecordQualityItems.id, f.qaItemId)))[0]?.state).toBe("active");
+  }, 30_000);
+
+  it("does not deliver when the native QA participant drifts", async () => {
+    const f = await fixture(), qa = await qaIdentity(f);
+    await prepare(f);
+    await f.service.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const [before] = await db.select().from(issues).where(eq(issues.id, f.issueId));
+    await db.update(issues).set({ executionState: {
+      ...before.executionState!, currentParticipant: { type: "agent", agentId: f.repairAgentId },
+    } }).where(eq(issues.id, f.issueId));
+    expect(await f.service.claim({ ...qa, idempotencyKey: randomUUID() })).toBeNull();
+    expect(await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.companyId))).toHaveLength(0);
+    expect((await db.select().from(localDefectRepairHandoffs)
+      .where(eq(localDefectRepairHandoffs.runId, f.runId)))[0]?.qaWakeupRequestId).toBeNull();
+  }, 30_000);
+
+  it("does not deliver an old completion-review card or a changed source receipt", async () => {
+    const oldCard = await fixture(), qa = await qaIdentity(oldCard);
+    await prepare(oldCard);
+    await oldCard.service.finish({ ...oldCard.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    await db.insert(issueThreadInteractions).values({ companyId: oldCard.companyId,
+      issueId: oldCard.issueId, sourceRunId: oldCard.runId,
+      kind: "request_confirmation", status: "pending",
+      createdByAgentId: oldCard.repairAgentId, addresseeAgentId: oldCard.qaAgentId,
+      payload: { version: 1, prompt: "Old review", target: {
+        type: "custom", key: "issue_completion_review", revisionId: randomUUID(),
+      } },
+    });
+    expect(await oldCard.service.claim({ ...qa, idempotencyKey: randomUUID() })).toBeNull();
+    expect(await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, oldCard.companyId))).toHaveLength(0);
+
+    const changedReceipt = await fixture(), qa2 = await qaIdentity(changedReceipt);
+    await prepare(changedReceipt);
+    await changedReceipt.service.finish({ ...changedReceipt.owner, outcome: "succeeded",
+      exitCode: 0, processStopped: true, clientRequestId: randomUUID() });
+    const [source] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, changedReceipt.runId));
+    await db.update(heartbeatRuns).set({ resultJson: { ...source.resultJson,
+      localWorkerFinish: { ...(source.resultJson?.localWorkerFinish as Record<string, unknown>),
+        defectHandoffId: randomUUID() },
+    } }).where(eq(heartbeatRuns.id, changedReceipt.runId));
+    expect(await changedReceipt.service.claim({ ...qa2, idempotencyKey: randomUUID() }))
+      .toBeNull();
+    expect(await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, changedReceipt.companyId))).toHaveLength(0);
+  }, 30_000);
+
+  it("rolls back wake, run, ownership and delivery receipt when QA lease insertion fails", async () => {
+    const f = await fixture(), qa = await qaIdentity(f);
+    await prepare(f);
+    await f.service.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    await db.execute(sql`ALTER TABLE local_agent_run_leases
+      ADD CONSTRAINT defect_qa_claim_rollback_check
+      CHECK (device_id <> 'defect-qa-device-001') NOT VALID`);
+    try {
+      await expect(f.service.claim({ ...qa, idempotencyKey: randomUUID() })).rejects.toThrow();
+      expect(await db.select().from(agentWakeupRequests)
+        .where(eq(agentWakeupRequests.companyId, f.companyId))).toHaveLength(0);
+      expect(await db.select().from(heartbeatRuns)
+        .where(eq(heartbeatRuns.companyId, f.companyId))).toHaveLength(1);
+      expect((await db.select().from(localDefectRepairHandoffs)
+        .where(eq(localDefectRepairHandoffs.runId, f.runId)))[0]?.qaWakeupRequestId).toBeNull();
+      expect((await db.select().from(issues).where(eq(issues.id, f.issueId)))[0])
+        .toMatchObject({ status: "in_review", executionRunId: null });
+    } finally {
+      await db.execute(sql`ALTER TABLE local_agent_run_leases
+        DROP CONSTRAINT defect_qa_claim_rollback_check`);
+    }
+  }, 30_000);
+
+  it("serializes simultaneous QA claims to one wake and one lease", async () => {
+    const f = await fixture(), qa = await qaIdentity(f);
+    await prepare(f);
+    await f.service.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const results = await Promise.allSettled([
+      f.service.claim({ ...qa, idempotencyKey: randomUUID() }),
+      f.service.claim({ ...qa, idempotencyKey: randomUUID() }),
+    ]);
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
+    expect(await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.companyId))).toHaveLength(1);
+    expect(await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.agentId, f.qaAgentId))).toHaveLength(1);
+  }, 30_000);
+
+  it("cancels control on QA quality drift without reopening delivery", async () => {
+    const f = await fixture(), qa = await qaIdentity(f);
+    await prepare(f);
+    await f.service.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const claimKey = randomUUID();
+    const claim = await f.service.claim({ ...qa, idempotencyKey: claimKey });
+    const owner = { ...qa, runId: claim!.runId, leaseId: claim!.leaseId,
+      generation: claim!.generation };
+    await db.update(workRecordQualityItems).set({ revision: sql`${workRecordQualityItems.revision} + 1` })
+      .where(eq(workRecordQualityItems.id, f.qaItemId));
+    await expect(f.service.claim({ ...qa, idempotencyKey: claimKey }))
+      .rejects.toMatchObject({ status: 409 });
+    await expect(f.service.appendFencedEvent({ ...owner, issueId: f.issueId,
+      clientRequestId: randomUUID(), stream: "system", level: "info",
+      message: "stale QA event" }, { type: "agent", source: "agent_key",
+      companyId: f.companyId, agentId: f.qaAgentId, keyId: qa.keyId,
+      runId: claim!.runId })).rejects.toMatchObject({ status: 409 });
+    expect(await f.service.control(owner)).toMatchObject({ action: "cancel" });
+    expect(await f.service.renew(owner)).toMatchObject({ cancelRequested: true });
+    await f.service.finish({ ...owner, outcome: "cancelled", exitCode: null,
+      processStopped: true, clientRequestId: randomUUID() });
+    expect(await f.service.claim({ ...qa, idempotencyKey: randomUUID() })).toBeNull();
+    expect(await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.companyId))).toHaveLength(1);
+  }, 30_000);
+
   it("prepares without QA wake and transfers the native stage only after stopped finish", async () => {
     const f = await fixture();
     const { command, receipt } = await prepare(f);
