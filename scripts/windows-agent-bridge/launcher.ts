@@ -17,7 +17,10 @@ export function assertModelAuthLaunchReady(config: BridgeConfig): void {
 
 async function main(): Promise<void> {
   const configPath = process.argv[2];
-  if (!configPath) throw new Error("usage: launcher <config.json>");
+  const pilotOnce = process.argv[3] === "--pilot-once" && process.argv.length === 4;
+  if (!configPath || (process.argv.length > 3 && !pilotOnce)) {
+    throw new Error("usage: launcher <config.json> [--pilot-once]");
+  }
   const config = await loadBridgeConfig(configPath);
   assertModelAuthLaunchReady(config);
   const memberToken = await loadMemberGbrainToken(config.agents[0], process.env);
@@ -32,7 +35,8 @@ async function main(): Promise<void> {
   await assertPrivateModelAuthReady(config, config.agents[0]);
   const runtime = path.join(path.dirname(fileURLToPath(import.meta.url)), "bridge.bundle.mjs");
   const code = await new Promise<number>((resolve, reject) => {
-    const child = spawn(process.execPath, [runtime, path.resolve(configPath)], {
+    const child = spawn(process.execPath,
+      [runtime, path.resolve(configPath), ...(pilotOnce ? ["--pilot-once"] : [])], {
       env, shell: false, windowsHide: true, stdio: "inherit",
     });
     child.once("error", () => reject(new Error("isolated worker could not start")));

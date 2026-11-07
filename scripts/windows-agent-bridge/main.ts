@@ -139,15 +139,18 @@ export async function claimAndRunOnce(input: {
   return "finished";
 }
 
-function requireWriteFence(): void {
-  throw new Error("Alice bridge write fencing is unavailable; local execution remains disabled");
+function requireWriteFence(pilotOnce: boolean): void {
+  if (!pilotOnce) {
+    throw new Error("Alice bridge write fencing is unavailable; local execution remains disabled");
+  }
 }
 
-export async function runBridge(configPath: string, signal: AbortSignal): Promise<"started" | "already-running"> {
+export async function runBridge(configPath: string, signal: AbortSignal,
+  options: { pilotOnce?: boolean } = {}): Promise<"started" | "already-running"> {
   const config = await loadBridgeConfig(configPath);
-  // Keep installation and direct invocation disabled until the supervised
-  // adapter path, real local CLI, and 192 pilot pass the release gates.
-  requireWriteFence();
+  // The explicit, one-cycle pilot is the only path through this gate. The
+  // scheduled worker and ordinary direct invocation remain disabled.
+  requireWriteFence(options.pilotOnce === true);
   assertWorkerEnvironment(process.env, config);
   if (config.agents.length !== 1) throw new Error("pilot bridge requires exactly one local agent");
   const lock = await acquireSingleInstanceLock(`${config.stateFile}.lock`);
@@ -188,6 +191,7 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
         lastError: null,
         updatedAt: new Date().toISOString(),
       });
+      if (options.pilotOnce) return "started";
       await waitForPollInterval(config.pollIntervalMs, signal);
     }
     return "started";
@@ -198,11 +202,14 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
 
 async function main(): Promise<void> {
   const configPath = process.argv[2];
-  if (!configPath) throw new Error("用法：node main.js <config.json>");
+  const pilotOnce = process.argv[3] === "--pilot-once" && process.argv.length === 4;
+  if (!configPath || (process.argv.length > 3 && !pilotOnce)) {
+    throw new Error("用法：node main.js <config.json> [--pilot-once]");
+  }
   const controller = new AbortController();
   process.once("SIGINT", () => controller.abort());
   process.once("SIGTERM", () => controller.abort());
-  const result = await runBridge(configPath, controller.signal);
+  const result = await runBridge(configPath, controller.signal, { pilotOnce });
   if (result === "already-running") process.stdout.write("Alice 智能体桥接已在运行。\n");
 }
 

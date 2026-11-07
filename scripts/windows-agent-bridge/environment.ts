@@ -7,7 +7,8 @@ import { normalizeLocalProxyUrl } from "./config.js";
 const OS_KEYS = new Set([
   "PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP",
   "PROGRAMDATA", "OS", "PROCESSOR_ARCHITECTURE", "NUMBER_OF_PROCESSORS",
-  "USERNAME", "USERDOMAIN",
+  "USERNAME", "USERDOMAIN", "HOMEDRIVE", "HOMEPATH",
+  "LOGONSERVER", "SYSTEMDRIVE",
 ]);
 
 function nonEmpty(source: NodeJS.ProcessEnv, key: string): string | null {
@@ -61,6 +62,9 @@ export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: Bridge
   env[ref] = token;
   env.HOME = path.join(config.workerHome, "home");
   env.USERPROFILE = env.HOME;
+  const homeRoot = path.parse(env.HOME).root;
+  env.HOMEDRIVE = homeRoot.replace(/[\\/]$/, "");
+  env.HOMEPATH = env.HOME.slice(env.HOMEDRIVE.length);
   env.CODEX_HOME = codexHome(config);
   env.CURSOR_HOME = cursorConfigDir(config);
   if (config.modelAuthMode === "shared_user_cursor") env.CURSOR_CONFIG_DIR = env.CURSOR_HOME;
@@ -119,5 +123,10 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
     nonEmpty(env, "TMP") !== path.join(config.workerHome, "temp") ||
     nonEmpty(env, "XDG_CONFIG_HOME") !== path.join(config.workerHome, "config")) {
     throw new Error("worker home identity is mismatched");
+  }
+  const homeRoot = path.parse(path.join(config.workerHome, "home")).root;
+  if (nonEmpty(env, "HOMEDRIVE") !== homeRoot.replace(/[\\/]$/, "") ||
+    nonEmpty(env, "HOMEPATH") !== path.join(config.workerHome, "home").slice(homeRoot.replace(/[\\/]$/, "").length)) {
+    throw new Error("worker Windows home identity is mismatched");
   }
 }
