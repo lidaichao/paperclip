@@ -7,13 +7,17 @@ import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   agentWakeupRequests,
+  agentApiKeys,
   agents,
+  authUsers,
   budgetPolicies,
   companies,
   costEvents,
   createDb,
   heartbeatRuns,
   issues,
+  localAgentDeviceBindings,
+  localIssueCompletionCommands,
   projects,
   workRecords,
   workRecordAssignmentGapEscalations,
@@ -30,6 +34,7 @@ import type { PreviewWorkPackageDispatch } from "@paperclipai/shared";
 import { getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase } from "./helpers/embedded-postgres.js";
 import { workPackageDispatchService, type WorkPackageFailpoint } from "../services/work-package-dispatch.js";
 import { heartbeatService } from "../services/heartbeat.js";
+import { localAgentRunLeaseService } from "../services/local-agent-run-leases.js";
 import { issueService } from "../services/issues.js";
 import { workRecordService } from "../services/work-records.js";
 import { createWorkRecordWorkflowTick } from "../services/work-record-workflow-tick.js";
@@ -758,6 +763,98 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
       linkByRecord.get(root.id)!.issueId,
     ]);
   }, 30_000);
+
+  it("releases the successor only after a local predecessor process stops and completes", async () => {
+    const context = await seed();
+    await db.insert(authUsers).values({ id: "local-package-owner",
+      name: "Local package owner", email: `local-${randomUUID()}@example.test`,
+      createdAt: new Date(), updatedAt: new Date() });
+    await isolatePendingV2Outbox(context.company.id);
+    await db.update(agents).set({ adapterType: "codex_local",
+      adapterConfig: {}, runtimeConfig: { executionMode: "client_pull",
+        heartbeat: { enabled: true, intervalSec: 60, wakeOnDemand: true } } })
+      .where(eq(agents.id, context.agent.id));
+    const keyId = randomUUID();
+    await db.insert(agentApiKeys).values({ id: keyId,
+      companyId: context.company.id, agentId: context.agent.id,
+      name: "Local package test", keyHash: randomUUID() });
+    await db.insert(localAgentDeviceBindings).values({ companyId: context.company.id,
+      agentId: context.agent.id, keyId, deviceId: "package-desktop" });
+    const root = await record(context, "Local PO package");
+    const predecessor = await record(context, "Local predecessor", { parentRecordId: root.id });
+    const successor = await record(context, "Local successor", {
+      parentRecordId: root.id, predecessorRecordIds: [predecessor.id],
+    });
+    const service = workPackageDispatchService(db, { writesEnabled: true });
+    const prepared = await prepare(service, context, scopeInput(context, {
+      scopeKind: "whole_package", rootRecordId: root.id, selectedRecordIds: [],
+    }), "local-predecessor-release");
+    const links = await db.select().from(workRecordIssueLinks).where(and(
+      eq(workRecordIssueLinks.companyId, context.company.id),
+      inArray(workRecordIssueLinks.recordId, [predecessor.id, successor.id]),
+    ));
+    await db.update(issues).set({ responsibleUserId: "local-package-owner" })
+      .where(and(eq(issues.companyId, context.company.id),
+        inArray(issues.id, links.map((link) => link.issueId))));
+    const issueByRecord = new Map(links.map((link) => [link.recordId, link.issueId]));
+    const predecessorIssueId = issueByRecord.get(predecessor.id)!;
+    const successorIssueId = issueByRecord.get(successor.id)!;
+    const heartbeat = heartbeatService(db, { runtimeEnv: { ...process.env, PAPERCLIP_IN_WORKTREE: "false" } });
+    await service.processOutbox(heartbeat.wakeup, 25);
+    await heartbeat.drainActiveRunExecutions();
+    const [queued] = await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, context.company.id),
+      sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${predecessorIssueId}`,
+    ));
+    expect(queued?.status).toBe("queued");
+    const leaseService = localAgentRunLeaseService(db);
+    const claimed = await leaseService.claim({ companyId: context.company.id,
+      agentId: context.agent.id, keyId, deviceId: "package-desktop",
+      idempotencyKey: randomUUID() });
+    expect(claimed?.runId).toBe(queued.id);
+    expect(claimed?.issueId).toBe(predecessorIssueId);
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, predecessorIssueId));
+    const [source] = await db.select().from(issues).where(eq(issues.id, predecessorIssueId));
+    const owner = { companyId: context.company.id, agentId: context.agent.id,
+      keyId, deviceId: "package-desktop", runId: queued.id,
+      leaseId: claimed!.leaseId, generation: claimed!.generation };
+    await leaseService.completeFencedChildWorkRecord({ ...owner,
+      issueId: predecessorIssueId, expectedStatusVersion: source.statusVersion,
+      summary: "Predecessor delivery ready for dependent task",
+      clientRequestId: randomUUID() }, {
+        type: "agent", source: "agent_key", agentId: context.agent.id,
+        companyId: context.company.id, keyId,
+      });
+    await service.reconcile(context.company.id, context.project.id, prepared.batch.id,
+      { actorType: "system", actorId: "test" });
+    await service.processOutbox(heartbeat.wakeup, 25);
+    expect((await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, context.company.id),
+      sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${successorIssueId}`,
+    )))).toHaveLength(0);
+    await leaseService.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    expect((await db.select().from(localIssueCompletionCommands).where(and(
+      eq(localIssueCompletionCommands.companyId, context.company.id),
+      eq(localIssueCompletionCommands.issueId, predecessorIssueId),
+    )))[0]?.state).toBe("completed");
+    await context.records.reconcileRecord(context.company.id, context.project.id,
+      successor.id);
+    await service.reconcile(context.company.id, context.project.id, prepared.batch.id,
+      { actorType: "system", actorId: "test" });
+    await service.processOutbox(heartbeat.wakeup, 25);
+    await heartbeat.drainActiveRunExecutions();
+    const successorRuns = await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, context.company.id),
+      sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${successorIssueId}`,
+    ));
+    expect(successorRuns).toHaveLength(1);
+    expect(successorRuns[0]?.status).toBe("queued");
+    const successorClaim = await leaseService.claim({ companyId: context.company.id,
+      agentId: context.agent.id, keyId, deviceId: "package-desktop",
+      idempotencyKey: randomUUID() });
+    expect(successorClaim?.runId).toBe(successorRuns[0]?.id);
+  }, 60_000);
 
   it("D02 previews every missing owner, preserves named owners, and rejects prepare without side effects", async () => {
     const context = await seed();
