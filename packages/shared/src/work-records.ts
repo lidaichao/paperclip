@@ -55,9 +55,6 @@ const workRecordDateFields = {
 
 const workRecordDefectFields = {
   defectSeverity: z.enum(WORK_RECORD_DEFECT_SEVERITIES).optional().nullable(),
-  defectReproductionSteps: z.string().max(20_000).optional().nullable(),
-  defectExpectedResult: z.string().max(20_000).optional().nullable(),
-  defectActualResult: z.string().max(20_000).optional().nullable(),
 };
 
 export const createWorkRecordSchema = z.object({
@@ -224,9 +221,6 @@ export interface WorkRecord {
   plannedStartDate: string | null;
   plannedCompletionDate: string | null;
   defectSeverity: WorkRecordDefectSeverity | null;
-  defectReproductionSteps: string | null;
-  defectExpectedResult: string | null;
-  defectActualResult: string | null;
   assigneeAgentId: string | null;
   qaAssigneeAgentId: string | null;
   packageQaRole: "execution" | "qa" | null;

@@ -95,9 +95,6 @@ export const workRecords = pgTable(
     plannedStartDate: date("planned_start_date"),
     plannedCompletionDate: date("planned_completion_date"),
     defectSeverity: text("defect_severity").$type<"critical" | "high" | "medium" | "low">(),
-    defectReproductionSteps: text("defect_reproduction_steps"),
-    defectExpectedResult: text("defect_expected_result"),
-    defectActualResult: text("defect_actual_result"),
     assigneeAgentId: uuid("assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
     qaAssigneeAgentId: uuid("qa_assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
     // Null denotes a record created before explicit package QA coverage existed.
@@ -148,7 +145,7 @@ export const workRecords = pgTable(
     parentCheck: check("work_records_parent_not_self", sql`${table.parentRecordId} IS NULL OR ${table.parentRecordId} <> ${table.id}`),
     plannedDatesCheck: check("work_records_planned_dates_check", sql`${table.plannedStartDate} IS NULL OR ${table.plannedCompletionDate} IS NULL OR ${table.plannedStartDate} <= ${table.plannedCompletionDate}`),
     defectSeverityCheck: check("work_records_defect_severity_check", sql`${table.defectSeverity} IS NULL OR ${table.defectSeverity} IN ('critical', 'high', 'medium', 'low')`),
-    defectFieldsCheck: check("work_records_defect_fields_check", sql`${table.kind} = 'defect' OR (${table.defectSeverity} IS NULL AND ${table.defectReproductionSteps} IS NULL AND ${table.defectExpectedResult} IS NULL AND ${table.defectActualResult} IS NULL)`),
+    defectFieldsCheck: check("work_records_defect_fields_check", sql`${table.kind} = 'defect' OR ${table.defectSeverity} IS NULL`),
     packageQaRoleCheck: check("work_records_package_qa_role_check", sql`${table.packageQaRole} IS NULL OR ${table.packageQaRole} IN ('execution', 'qa')`),
     qaExemptionCheck: check("work_records_qa_exemption_check", sql`${table.qaRetestExemptionReason} IS NULL OR (${table.packageQaRole} = 'execution' AND ${table.parentRecordId} IS NOT NULL)`),
   }),

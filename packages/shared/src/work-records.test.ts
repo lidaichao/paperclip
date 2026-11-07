@@ -4,7 +4,7 @@ import { createWorkRecordSchema, updateWorkRecordSchema } from "./work-records.j
 describe("G1 work-record planning and defect fields", () => {
   const projectId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
-  it("accepts ordered planned dates and defect details on defect records", () => {
+  it("accepts ordered planned dates, one description, and severity on defect records", () => {
     expect(createWorkRecordSchema.parse({
       projectId,
       kind: "defect",
@@ -12,9 +12,7 @@ describe("G1 work-record planning and defect fields", () => {
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
       defectSeverity: "high",
-      defectReproductionSteps: "Open checkout and submit a valid cart.",
-      defectExpectedResult: "Order is created.",
-      defectActualResult: "The request returns 500.",
+      description: "Custom defect template content.",
     })).toMatchObject({
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
@@ -39,9 +37,6 @@ describe("G1 work-record planning and defect fields", () => {
       plannedStartDate: null,
       plannedCompletionDate: "2026-11-20",
       defectSeverity: null,
-      defectReproductionSteps: null,
-      defectExpectedResult: null,
-      defectActualResult: null,
     })).toMatchObject({ expectedRevision: 2, plannedStartDate: null, defectSeverity: null });
   });
 });

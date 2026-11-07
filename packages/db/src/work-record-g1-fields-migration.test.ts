@@ -31,8 +31,7 @@ async function g1FieldContract(sql: postgres.Sql) {
     WHERE table_schema = 'public'
       AND table_name = 'work_records'
       AND column_name IN (
-        'planned_start_date', 'planned_completion_date', 'defect_severity',
-        'defect_reproduction_steps', 'defect_expected_result', 'defect_actual_result'
+        'planned_start_date', 'planned_completion_date', 'defect_severity'
       )
     ORDER BY column_name
   `;
@@ -63,9 +62,6 @@ async function g1FieldContract(sql: postgres.Sql) {
 
 const expectedContract = {
   columns: [
-    "defect_actual_result",
-    "defect_expected_result",
-    "defect_reproduction_steps",
     "defect_severity",
     "planned_completion_date",
     "planned_start_date",

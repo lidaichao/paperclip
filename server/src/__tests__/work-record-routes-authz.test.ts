@@ -220,9 +220,7 @@ describe("work-record route authorization", () => {
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
       defectSeverity: "high",
-      defectReproductionSteps: "Submit a valid cart.",
-      defectExpectedResult: "Order is created.",
-      defectActualResult: "The request returns 500.",
+      description: "Custom defect template content.",
     };
     await request(app).post("/api/companies/company-1/work-records").send(valid).expect(201);
     expect(service.create).toHaveBeenCalledWith("company-1", expect.objectContaining(valid), expect.anything());

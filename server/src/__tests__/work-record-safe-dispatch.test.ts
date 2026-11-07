@@ -78,7 +78,7 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
   });
 
-  it("G1 persists planned dates and defect details without dispatch side effects", async () => {
+  it("G1 persists planned dates, one defect description, and severity without dispatch side effects", async () => {
     const context = await seed();
     const defect = await context.service.create(context.company.id, {
       projectId: context.project.id,
@@ -87,9 +87,7 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
       defectSeverity: "high",
-      defectReproductionSteps: "Open checkout and submit a valid cart.",
-      defectExpectedResult: "Order is created.",
-      defectActualResult: "The request returns 500.",
+      description: "Custom defect template content.",
       predecessorRecordIds: [],
     }, { actorType: "system", actorId: "test" });
 
@@ -97,9 +95,7 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
       defectSeverity: "high",
-      defectReproductionSteps: "Open checkout and submit a valid cart.",
-      defectExpectedResult: "Order is created.",
-      defectActualResult: "The request returns 500.",
+      description: "Custom defect template content.",
     });
     await expect(context.service.create(context.company.id, {
       projectId: context.project.id,

@@ -56343,24 +56343,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "defect_reproduction_steps": {
-          "name": "defect_reproduction_steps",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "defect_expected_result": {
-          "name": "defect_expected_result",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "defect_actual_result": {
-          "name": "defect_actual_result",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "assignee_agent_id": {
           "name": "assignee_agent_id",
           "type": "uuid",
@@ -56737,7 +56719,7 @@
         },
         "work_records_defect_fields_check": {
           "name": "work_records_defect_fields_check",
-          "value": "\"work_records\".\"kind\" = 'defect' OR (\"work_records\".\"defect_severity\" IS NULL AND \"work_records\".\"defect_reproduction_steps\" IS NULL AND \"work_records\".\"defect_expected_result\" IS NULL AND \"work_records\".\"defect_actual_result\" IS NULL)"
+          "value": "\"work_records\".\"kind\" = 'defect' OR \"work_records\".\"defect_severity\" IS NULL"
         },
         "work_records_package_qa_role_check": {
           "name": "work_records_package_qa_role_check",

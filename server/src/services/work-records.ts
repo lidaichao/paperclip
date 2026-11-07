@@ -565,8 +565,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   }
 
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
-    const hasDefectDetails = input.defectSeverity != null || input.defectReproductionSteps != null ||
-      input.defectExpectedResult != null || input.defectActualResult != null;
+    const hasDefectDetails = input.defectSeverity != null;
     if (input.kind !== "defect" && hasDefectDetails) {
       throw unprocessable("Defect fields require a defect record");
     }
@@ -590,8 +589,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
         parentRecordId: input.parentRecordId ?? null, iterationId: input.iterationId ?? null,
         plannedStartDate: input.plannedStartDate ?? null, plannedCompletionDate: input.plannedCompletionDate ?? null,
-        defectSeverity: input.defectSeverity ?? null, defectReproductionSteps: input.defectReproductionSteps ?? null,
-        defectExpectedResult: input.defectExpectedResult ?? null, defectActualResult: input.defectActualResult ?? null,
+        defectSeverity: input.defectSeverity ?? null,
         assigneeAgentId: input.assigneeAgentId ?? null, qaAssigneeAgentId: input.qaAssigneeAgentId ?? null,
         packageQaRole: input.kind === "plan" && input.parentRecordId ? input.packageQaRole ?? "execution" : null,
         qaRetestExemptionReason: input.qaRetestExemptionReason ?? null,
@@ -628,12 +626,8 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       if (plannedStartDate && plannedCompletionDate && plannedStartDate > plannedCompletionDate) {
         throw unprocessable("Planned start date must not be after planned completion date");
       }
-      const updatesDefectDetails = input.defectSeverity !== undefined || input.defectReproductionSteps !== undefined ||
-        input.defectExpectedResult !== undefined || input.defectActualResult !== undefined;
-      const leavesDefectDetails = (input.defectSeverity === undefined ? locked.defectSeverity : input.defectSeverity) != null ||
-        (input.defectReproductionSteps === undefined ? locked.defectReproductionSteps : input.defectReproductionSteps) != null ||
-        (input.defectExpectedResult === undefined ? locked.defectExpectedResult : input.defectExpectedResult) != null ||
-        (input.defectActualResult === undefined ? locked.defectActualResult : input.defectActualResult) != null;
+      const updatesDefectDetails = input.defectSeverity !== undefined;
+      const leavesDefectDetails = (input.defectSeverity === undefined ? locked.defectSeverity : input.defectSeverity) != null;
       if (locked.kind !== "defect" && updatesDefectDetails && leavesDefectDetails) {
         throw unprocessable("Defect fields require a defect record");
       }
@@ -709,9 +703,6 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(input.plannedStartDate !== undefined ? { plannedStartDate: input.plannedStartDate } : {}),
         ...(input.plannedCompletionDate !== undefined ? { plannedCompletionDate: input.plannedCompletionDate } : {}),
         ...(input.defectSeverity !== undefined ? { defectSeverity: input.defectSeverity } : {}),
-        ...(input.defectReproductionSteps !== undefined ? { defectReproductionSteps: input.defectReproductionSteps } : {}),
-        ...(input.defectExpectedResult !== undefined ? { defectExpectedResult: input.defectExpectedResult } : {}),
-        ...(input.defectActualResult !== undefined ? { defectActualResult: input.defectActualResult } : {}),
         ...(input.assigneeAgentId !== undefined ? { assigneeAgentId: input.assigneeAgentId } : {}),
         ...(input.qaAssigneeAgentId !== undefined ? { qaAssigneeAgentId: input.qaAssigneeAgentId } : {}),
         ...(input.packageQaRole !== undefined ? { packageQaRole: input.packageQaRole } : {}),
