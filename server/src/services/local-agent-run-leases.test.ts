@@ -23,6 +23,7 @@ import {
   localAgentRunLeases,
   localIssueCompletionCommands,
   localRunWriteReceipts,
+  localRunFinishReceipts,
   localAgentDeviceBindings,
   projects,
   workRecords,
@@ -552,13 +553,114 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await expect(svc.appendFencedEvent({ ...event, clientRequestId: randomUUID() }, actor))
       .rejects.toMatchObject({ status: 409 });
     const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
-    expect(run.resultJson?.localWorkerFinish).toEqual({
+    expect(run.resultJson?.localWorkerFinish).toMatchObject({
       clientRequestId: finish.clientRequestId, outcome: "succeeded", exitCode: 0,
       summary: "Finished test work",
     });
     expect(await db.select().from(heartbeatRunEvents).where(eq(heartbeatRunEvents.runId, scope.runId)))
       .toHaveLength(1);
   });
+
+  it("reconciles a lost finish response only from its immutable scoped receipt", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const requestId = randomUUID();
+    const finish = { ...owner, outcome: "failed" as const, exitCode: 1,
+      processStopped: true as const, clientRequestId: requestId, summary: "Local failure" };
+    const digest = createHash("sha256").update(JSON.stringify({ kind: "finish",
+      runId: scope.runId, issueId: scope.issueId, agentId: scope.agentId,
+      deviceId: owner.deviceId, canonicalContent: JSON.stringify({ outcome: "failed",
+        exitCode: 1, processStopped: true, summary: "Local failure" }),
+    })).digest("hex");
+    const lookup = { ...owner, clientRequestId: requestId, requestDigest: digest };
+    expect((await svc.readFencedFinishReceipt(lookup)).state).toBe("unknown");
+    expect((await svc.finish(finish)).status).toBe("failed");
+    const receipt = await svc.readFencedFinishReceipt(lookup);
+    expect(receipt).toMatchObject({ state: "committed", outcome: "failed", runStatus: "failed" });
+    const app = express();
+    app.use((req, _res, next) => {
+      req.actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+        companyId: scope.companyId, keyId: scope.keyId };
+      next();
+    });
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string }, _req: Request,
+      res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message });
+    });
+    const response = await request(app).get(`/api/agents/me/local-runs/${scope.runId}/finish-receipt`)
+      .query({ deviceId: owner.deviceId, leaseId: owner.leaseId,
+        generation: owner.generation, issueId: scope.issueId,
+        clientRequestId: requestId, requestDigest: digest }).expect(200);
+    expect(response.headers["cache-control"]).toBe("no-store");
+    expect(response.body).toMatchObject({ state: "committed", receiptId: expect.any(String) });
+    expect(await db.select().from(localRunFinishReceipts)
+      .where(eq(localRunFinishReceipts.runId, scope.runId))).toHaveLength(1);
+    await expect(svc.readFencedFinishReceipt({ ...lookup, requestDigest: "a".repeat(64) }))
+      .rejects.toMatchObject({ status: 409 });
+    expect((await svc.readFencedFinishReceipt({ ...lookup, clientRequestId: randomUUID() }))
+      .state).toBe("not_committed");
+    await expect(svc.readFencedFinishReceipt({ ...lookup, issueId: randomUUID() }))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(svc.readFencedFinishReceipt({ ...lookup, generation: owner.generation + 1 }))
+      .rejects.toMatchObject({ status: 403 });
+    await db.update(localAgentDeviceBindings).set({ revokedAt: new Date() })
+      .where(eq(localAgentDeviceBindings.keyId, scope.keyId));
+    await expect(svc.readFencedFinishReceipt(lookup)).rejects.toMatchObject({ status: 403 });
+  }, 30_000);
+
+  it("does not expose a finish receipt after the finish transaction rolls back", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation };
+    const requestId = randomUUID();
+    const digest = createHash("sha256").update(JSON.stringify({ kind: "finish",
+      runId: scope.runId, issueId: scope.issueId, agentId: scope.agentId,
+      deviceId: owner.deviceId, canonicalContent: JSON.stringify({ outcome: "failed",
+        exitCode: 1, processStopped: true, summary: null }),
+    })).digest("hex");
+    await db.execute(sql`create function reject_finish_receipt_test() returns trigger language plpgsql as $$
+      begin
+        raise exception 'injected finish update failure';
+      end $$`);
+    await db.execute(sql`create trigger reject_finish_receipt_test_trigger before update on local_agent_run_leases
+      for each row execute function reject_finish_receipt_test()`);
+    try {
+      await expect(svc.finish({ ...owner, outcome: "failed", exitCode: 1,
+        processStopped: true, clientRequestId: requestId })).rejects.toThrow();
+    } finally {
+      await db.execute(sql`drop trigger reject_finish_receipt_test_trigger on local_agent_run_leases`);
+      await db.execute(sql`drop function reject_finish_receipt_test()`);
+    }
+    expect(await db.select().from(localRunFinishReceipts)
+      .where(eq(localRunFinishReceipts.runId, scope.runId))).toHaveLength(0);
+    expect((await svc.readFencedFinishReceipt({ ...owner, clientRequestId: requestId,
+      requestDigest: digest })).state).toBe("unknown");
+  }, 30_000);
+
+  it("leaves pre-migration finished runs without immutable receipts unknown", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation };
+    await db.update(localAgentRunLeases).set({ releasedAt: new Date(),
+      stopAcknowledgedAt: new Date(), outcome: "failed" })
+      .where(eq(localAgentRunLeases.runId, scope.runId));
+    await db.update(heartbeatRuns).set({ status: "failed", exitCode: 1,
+      finishedAt: new Date() }).where(eq(heartbeatRuns.id, scope.runId));
+    expect((await svc.readFencedFinishReceipt({ ...owner,
+      clientRequestId: randomUUID(), requestDigest: "a".repeat(64) })).state)
+      .toBe("unknown");
+  }, 30_000);
 
   it("recovers a successful source process that never made a business handoff", async () => {
     const scope = await fixture();

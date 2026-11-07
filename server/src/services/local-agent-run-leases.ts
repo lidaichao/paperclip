@@ -13,6 +13,7 @@ import {
   issues,
   localAgentRunLeases,
   localRunWriteReceipts,
+  localRunFinishReceipts,
   localIssueCompletionCommands,
   localDefectRepairHandoffs,
   localDefectQaVerdictCommands,
@@ -107,6 +108,18 @@ function localCommentIntentDigest(input: { runId: string; issueId: string;
     kind: "comment", runId: input.runId, issueId: input.issueId,
     agentId: input.agentId, deviceId: input.deviceId,
     canonicalContent: input.body,
+  })).digest("hex");
+}
+
+function localFinishRequestDigest(input: LocalRunOwner & { issueId: string;
+  outcome: "succeeded" | "failed" | "cancelled"; exitCode: number | null;
+  summary?: string }) {
+  return createHash("sha256").update(JSON.stringify({
+    kind: "finish", runId: input.runId, issueId: input.issueId,
+    agentId: input.agentId, deviceId: input.deviceId,
+    canonicalContent: JSON.stringify({ outcome: input.outcome,
+      exitCode: input.exitCode, processStopped: true,
+      summary: input.summary ?? null }),
   })).digest("hex");
 }
 
@@ -608,6 +621,9 @@ export function localAgentRunLeaseService(
             (saved as Record<string, unknown>).outcome !== input.outcome ||
             (saved as Record<string, unknown>).exitCode !== input.exitCode ||
             (saved as Record<string, unknown>).summary !== (input.summary ?? null) ||
+            ((saved as Record<string, unknown>).requestDigest !== undefined &&
+              (saved as Record<string, unknown>).requestDigest !== localFinishRequestDigest({
+                ...input, issueId: lease.issueId })) ||
             (reviewerRun && ((saved as Record<string, unknown>).reviewerReviewId !== reviewerReviewId ||
               (input.outcome === "succeeded"
                 ? !["accepted", "rejected"].includes(String(
@@ -1219,6 +1235,15 @@ export function localAgentRunLeaseService(
           }, publications);
         }
       }
+      await tx.insert(localRunFinishReceipts).values({
+        companyId: input.companyId, runId: input.runId, issueId: lease.issueId,
+        agentId: input.agentId, deviceId: input.deviceId,
+        leaseId: input.leaseId, generation: input.generation,
+        clientRequestId: input.clientRequestId ?? null,
+        requestDigest: input.clientRequestId
+          ? localFinishRequestDigest({ ...input, issueId: lease.issueId }) : null,
+        outcome: input.outcome, exitCode: input.exitCode,
+      });
       await tx.update(localAgentRunLeases).set({
         stopAcknowledgedAt: sql`now()`, releasedAt: sql`now()`, outcome: input.outcome,
         updatedAt: sql`now()`,
@@ -1234,6 +1259,7 @@ export function localAgentRunLeaseService(
             localWorkerFinish: {
               clientRequestId: input.clientRequestId, outcome: input.outcome,
               exitCode: input.exitCode, summary: input.summary ?? null,
+              requestDigest: localFinishRequestDigest({ ...input, issueId: lease.issueId }),
               ...(reviewReceipt ?? {}),
               ...(reviewerReceipt ?? {}),
               ...(childReceipt ?? {}),
@@ -2091,6 +2117,64 @@ export function localAgentRunLeaseService(
     });
   }
 
+  /** Lock in finish's run→lease order before declaring a request absent. */
+  async function readFencedFinishReceipt(input: LocalRunOwner & {
+    issueId: string; clientRequestId: string; requestDigest: string;
+  }) {
+    requireOwner(input);
+    if (!UUID.test(input.issueId) || !UUID.test(input.clientRequestId) ||
+      !/^[a-f0-9]{64}$/.test(input.requestDigest)) {
+      throw badRequest("Invalid local finish receipt identity");
+    }
+    return db.transaction(async (tx) => {
+      const [run] = await tx.select().from(heartbeatRuns).where(and(
+        eq(heartbeatRuns.id, input.runId),
+        eq(heartbeatRuns.companyId, input.companyId),
+        eq(heartbeatRuns.agentId, input.agentId),
+        eq(heartbeatRuns.runtimeMode, "client_pull"),
+      )).for("update");
+      const [lease] = await tx.select().from(localAgentRunLeases).where(and(
+        eq(localAgentRunLeases.runId, input.runId),
+        eq(localAgentRunLeases.companyId, input.companyId),
+        eq(localAgentRunLeases.agentId, input.agentId),
+        eq(localAgentRunLeases.issueId, input.issueId),
+      )).for("update");
+      if (!run || !lease || lease.deviceId !== input.deviceId ||
+        lease.deviceKeyId !== input.keyId || lease.leaseId !== input.leaseId ||
+        lease.generation !== input.generation) {
+        throw forbidden("Local finish receipt owner mismatch");
+      }
+      await assertLeaseDevice(tx as unknown as Db, lease, input);
+      const [receipt] = await tx.select().from(localRunFinishReceipts).where(and(
+        eq(localRunFinishReceipts.companyId, input.companyId),
+        eq(localRunFinishReceipts.runId, input.runId),
+      ));
+      if (receipt) {
+        if (receipt.issueId !== input.issueId || receipt.agentId !== input.agentId ||
+          receipt.deviceId !== input.deviceId || receipt.leaseId !== input.leaseId ||
+          receipt.generation !== input.generation) {
+          throw conflict("Local finish receipt owner changed");
+        }
+        if (!lease.releasedAt || !lease.stopAcknowledgedAt ||
+          !["succeeded", "failed", "cancelled"].includes(run.status)) {
+          return { state: "unknown" as const, runStatus: run.status,
+            leaseReleased: lease.releasedAt !== null };
+        }
+        if (receipt.clientRequestId !== input.clientRequestId) {
+          return { state: "not_committed" as const, runStatus: run.status,
+            leaseReleased: lease.releasedAt !== null };
+        }
+        if (receipt.requestDigest !== input.requestDigest) {
+          throw conflict("Local finish receipt digest mismatch");
+        }
+        return { state: "committed" as const, runStatus: run.status,
+          leaseReleased: true, outcome: receipt.outcome, receiptId: receipt.id };
+      }
+      return { state: "unknown" as const, runStatus: run.status,
+        leaseReleased: lease.releasedAt !== null };
+    });
+  }
+
   async function createFencedReviewConfirmation(
     input: LocalRunOwner & { issueId: string; prompt: string; clientRequestId: string;
       reviewerAgentId?: string },
@@ -2579,6 +2663,7 @@ export function localAgentRunLeaseService(
     addFencedComment, completeFencedChildWorkRecord, prepareFencedPoVerdict,
     prepareFencedDefectRepairHandoff, readFencedDefectQaContext,
     prepareFencedDefectQaVerdict,
-    readFencedWriteReceipt, createFencedReviewConfirmation, reviewFencedIssue,
+    readFencedWriteReceipt, readFencedFinishReceipt,
+    createFencedReviewConfirmation, reviewFencedIssue,
     createFencedAgentReviewHandoff, createFencedCompletionReviewHandoff, patchFencedIssue };
 }
