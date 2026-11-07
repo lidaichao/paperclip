@@ -87,16 +87,48 @@ export const createProjectVersionSchema = z.object({
   targetDate: z.string().date().optional().nullable(),
 });
 
+export const updateProjectVersionSchema = z.object({
+  expectedRevision: z.number().int().positive(),
+  name: z.string().trim().min(1).max(255).optional(),
+  targetDate: z.string().date().optional().nullable(),
+}).refine((value) => value.name !== undefined || value.targetDate !== undefined, {
+  message: "At least one field must be updated",
+});
+
+export const mutateProjectContainerSchema = z.object({
+  expectedRevision: z.number().int().positive(),
+});
+
 export const createProjectIterationSchema = z.object({
   versionId: z.string().guid().optional().nullable(),
   name: z.string().trim().min(1).max(255),
   startsOn: z.string().date().optional().nullable(),
   endsOn: z.string().date().optional().nullable(),
+}).refine((value) => !value.startsOn || !value.endsOn || value.startsOn <= value.endsOn, {
+  message: "Iteration start date must not be after its end date",
+  path: ["endsOn"],
+});
+
+export const updateProjectIterationSchema = z.object({
+  expectedRevision: z.number().int().positive(),
+  versionId: z.string().guid().optional().nullable(),
+  name: z.string().trim().min(1).max(255).optional(),
+  startsOn: z.string().date().optional().nullable(),
+  endsOn: z.string().date().optional().nullable(),
+}).refine((value) => Object.keys(value).some((key) => key !== "expectedRevision"), {
+  message: "At least one field must be updated",
+}).refine((value) => !value.startsOn || !value.endsOn || value.startsOn <= value.endsOn, {
+  message: "Iteration start date must not be after its end date",
+  path: ["endsOn"],
 });
 
 export type CreateWorkRecord = z.infer<typeof createWorkRecordSchema>;
 export type UpdateWorkRecord = z.infer<typeof updateWorkRecordSchema>;
 export type DispatchWorkRecord = z.infer<typeof dispatchWorkRecordSchema>;
+export type CreateProjectVersion = z.infer<typeof createProjectVersionSchema>;
+export type UpdateProjectVersion = z.infer<typeof updateProjectVersionSchema>;
+export type CreateProjectIteration = z.infer<typeof createProjectIterationSchema>;
+export type UpdateProjectIteration = z.infer<typeof updateProjectIterationSchema>;
 
 export interface WorkRecordDependencyView {
   predecessorRecordId: string;

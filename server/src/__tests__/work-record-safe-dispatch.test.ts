@@ -11,6 +11,8 @@ import {
   executionWorkspaces,
   heartbeatRuns,
   issues,
+  projectIterations,
+  projectVersions,
   projects,
   workspaceOperations,
   workRecordDispatchCommands,
@@ -74,6 +76,143 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
+  });
+
+  it("G1 keeps version and iteration history, rejects stale writers, and only deletes empty containers", async () => {
+    const context = await seed();
+    const version = await context.service.createVersion(context.company.id, context.project.id, {
+      name: "1.0",
+      targetDate: "2026-12-31",
+    });
+    const iteration = await context.service.createIteration(context.company.id, context.project.id, {
+      versionId: version.id,
+      name: "Iteration 1",
+      startsOn: "2026-11-01",
+      endsOn: "2026-11-14",
+    });
+    const record = await context.service.create(context.company.id, {
+      projectId: context.project.id,
+      iterationId: iteration.id,
+      kind: "plan",
+      title: "Bound record",
+      predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "test" });
+
+    await expect(context.service.updateVersion(context.company.id, context.project.id, version.id, {
+      expectedRevision: 999,
+      name: "stale writer",
+    })).rejects.toMatchObject({ status: 409, message: "Project version changed" });
+
+    const archivedIteration = await context.service.archiveIteration(
+      context.company.id,
+      context.project.id,
+      iteration.id,
+      iteration.revision,
+    );
+    await expect(context.service.create(context.company.id, {
+      projectId: context.project.id,
+      iterationId: iteration.id,
+      kind: "plan",
+      title: "Rejected historical write",
+      predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "test" })).rejects.toMatchObject({ status: 409 });
+    await expect(context.service.deleteIteration(
+      context.company.id,
+      context.project.id,
+      iteration.id,
+      archivedIteration.revision,
+    )).rejects.toMatchObject({ status: 409, message: "Only an empty iteration can be deleted" });
+
+    const restoredIteration = await context.service.restoreIteration(
+      context.company.id,
+      context.project.id,
+      iteration.id,
+      archivedIteration.revision,
+    );
+    const archivedVersion = await context.service.archiveVersion(
+      context.company.id,
+      context.project.id,
+      version.id,
+      version.revision,
+    );
+    await expect(context.service.createIteration(context.company.id, context.project.id, {
+      versionId: version.id,
+      name: "Rejected iteration",
+    })).rejects.toMatchObject({ status: 409, message: "Archived version cannot accept iterations" });
+    await expect(context.service.create(context.company.id, {
+      projectId: context.project.id,
+      iterationId: restoredIteration.id,
+      kind: "plan",
+      title: "Rejected record under archived version",
+      predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "test" })).rejects.toMatchObject({
+      status: 409,
+      message: "Iteration belongs to an archived version",
+    });
+    const restoredVersion = await context.service.restoreVersion(
+      context.company.id,
+      context.project.id,
+      version.id,
+      archivedVersion.revision,
+    );
+
+    expect((await context.service.listVersions(context.company.id, context.project.id))[0]).toMatchObject({ id: version.id });
+    expect((await context.service.listIterations(context.company.id, context.project.id))[0]).toMatchObject({
+      id: iteration.id,
+      archivedAt: null,
+      revision: restoredIteration.revision,
+    });
+    expect((await context.service.list(context.company.id, context.project.id))[0]).toMatchObject({ id: record.id, iterationId: iteration.id });
+
+    const emptyVersion = await context.service.createVersion(context.company.id, context.project.id, { name: "empty" });
+    await expect(context.service.deleteVersion(
+      context.company.id,
+      context.project.id,
+      version.id,
+      restoredVersion.revision,
+    )).rejects.toMatchObject({ status: 409, message: "Only an empty version can be deleted" });
+    await expect(context.service.deleteVersion(
+      context.company.id,
+      context.project.id,
+      emptyVersion.id,
+      emptyVersion.revision,
+    )).resolves.toEqual({ id: emptyVersion.id, deleted: true });
+
+    expect(await db.select().from(projectVersions).where(eq(projectVersions.companyId, context.company.id))).toHaveLength(1);
+    expect(await db.select().from(projectIterations).where(eq(projectIterations.companyId, context.company.id))).toHaveLength(1);
+    expect(await db.select().from(issues).where(eq(issues.companyId, context.company.id))).toHaveLength(0);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, context.company.id))).toHaveLength(0);
+    expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
+    expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
+  });
+
+  it("G1 preserves every predecessor when unrelated fields change and conflicts stale concurrent edits", async () => {
+    const context = await seed();
+    const first = await createRecord(context, "A");
+    const second = await createRecord(context, "B");
+    const dependent = await createRecord(context, "C", [first.id, second.id]);
+
+    const results = await Promise.allSettled([
+      context.service.update(context.company.id, context.project.id, dependent.id, {
+        expectedRevision: dependent.revision,
+        title: "C title",
+      }),
+      context.service.update(context.company.id, context.project.id, dependent.id, {
+        expectedRevision: dependent.revision,
+        description: "C description",
+      }),
+    ]);
+
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
+    expect(results.find((result) => result.status === "rejected")).toMatchObject({
+      reason: { status: 409, message: "Work record revision changed" },
+    });
+    const edges = await db.select().from(workRecordDependencies).where(and(
+      eq(workRecordDependencies.companyId, context.company.id),
+      eq(workRecordDependencies.successorRecordId, dependent.id),
+    ));
+    expect(new Set(edges.map((edge) => edge.predecessorRecordId))).toEqual(new Set([first.id, second.id]));
   });
 
   it("serializes concurrent dependency writers per project so two valid prechecks cannot commit a cycle", async () => {

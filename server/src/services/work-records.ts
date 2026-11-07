@@ -8,6 +8,8 @@ import {
   heartbeatRuns,
   issues,
   issueRelations,
+  projectIterations,
+  projectVersions,
   projects,
   workRecords,
   workRecordAssignmentCommands,
@@ -27,9 +29,13 @@ import {
 import { reconcileCandidatesIndependently } from "./work-record-candidate-scan.js";
 import type {
   CreateWorkRecord,
+  CreateProjectIteration,
+  CreateProjectVersion,
   DispatchWorkRecord,
   FillWorkRecordAssignmentGap,
   UpdateWorkRecord,
+  UpdateProjectIteration,
+  UpdateProjectVersion,
   WorkRecord,
   WorkRecordDispatchResult,
   WorkRecordDispatchRequestResult,
@@ -92,6 +98,206 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   async function assertProject(companyId: string, projectId: string) {
     const row = await db.select({ id: projects.id }).from(projects).where(and(eq(projects.companyId, companyId), eq(projects.id, projectId))).then((rows) => rows[0]);
     if (!row) throw notFound("Project not found");
+  }
+
+  async function assertActiveVersion(
+    tx: DbTransaction,
+    companyId: string,
+    projectId: string,
+    versionId?: string | null,
+  ) {
+    if (!versionId) return;
+    const version = await tx.select().from(projectVersions).where(and(
+      eq(projectVersions.companyId, companyId),
+      eq(projectVersions.projectId, projectId),
+      eq(projectVersions.id, versionId),
+    )).then((rows) => rows[0]);
+    if (!version) throw unprocessable("Version must belong to the same company and project");
+    if (version.archivedAt) throw conflict("Archived version cannot accept iterations");
+  }
+
+  async function assertActiveIteration(
+    tx: DbTransaction,
+    companyId: string,
+    projectId: string,
+    iterationId?: string | null,
+  ) {
+    if (!iterationId) return;
+    const iteration = await tx.select().from(projectIterations).where(and(
+      eq(projectIterations.companyId, companyId),
+      eq(projectIterations.projectId, projectId),
+      eq(projectIterations.id, iterationId),
+    )).then((rows) => rows[0]);
+    if (!iteration) throw unprocessable("Iteration must belong to the same company and project");
+    if (iteration.archivedAt) throw conflict("Archived iteration cannot accept records");
+    if (iteration.versionId) {
+      const version = await tx.select({ archivedAt: projectVersions.archivedAt }).from(projectVersions).where(and(
+        eq(projectVersions.companyId, companyId),
+        eq(projectVersions.projectId, projectId),
+        eq(projectVersions.id, iteration.versionId),
+      )).then((rows) => rows[0]);
+      if (!version || version.archivedAt) throw conflict("Iteration belongs to an archived version");
+    }
+  }
+
+  async function listVersions(companyId: string, projectId: string) {
+    await assertProject(companyId, projectId);
+    return db.select().from(projectVersions).where(and(
+      eq(projectVersions.companyId, companyId),
+      eq(projectVersions.projectId, projectId),
+    )).orderBy(asc(projectVersions.createdAt), asc(projectVersions.id));
+  }
+
+  async function createVersion(companyId: string, projectId: string, input: CreateProjectVersion) {
+    await assertProject(companyId, projectId);
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      return tx.insert(projectVersions).values({
+        companyId,
+        projectId,
+        name: input.name,
+        targetDate: input.targetDate ?? null,
+      }).returning().then((rows) => rows[0]);
+    });
+  }
+
+  async function updateVersion(companyId: string, projectId: string, versionId: string, input: UpdateProjectVersion) {
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      const [updated] = await tx.update(projectVersions).set({
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.targetDate !== undefined ? { targetDate: input.targetDate } : {}),
+        revision: sql`${projectVersions.revision} + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(projectVersions.companyId, companyId),
+        eq(projectVersions.projectId, projectId),
+        eq(projectVersions.id, versionId),
+        eq(projectVersions.revision, input.expectedRevision),
+      )).returning();
+      if (updated) return updated;
+      const exists = await tx.select({ id: projectVersions.id }).from(projectVersions).where(and(
+        eq(projectVersions.companyId, companyId), eq(projectVersions.projectId, projectId), eq(projectVersions.id, versionId),
+      )).then((rows) => rows[0]);
+      if (!exists) throw notFound("Project version not found");
+      throw conflict("Project version changed", { versionId });
+    });
+  }
+
+  async function setVersionArchived(companyId: string, projectId: string, versionId: string, expectedRevision: number, archived: boolean) {
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      const [updated] = await tx.update(projectVersions).set({
+        archivedAt: archived ? new Date() : null,
+        revision: sql`${projectVersions.revision} + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(projectVersions.companyId, companyId), eq(projectVersions.projectId, projectId), eq(projectVersions.id, versionId),
+        eq(projectVersions.revision, expectedRevision),
+      )).returning();
+      if (updated) return updated;
+      const exists = await tx.select({ id: projectVersions.id }).from(projectVersions).where(and(
+        eq(projectVersions.companyId, companyId), eq(projectVersions.projectId, projectId), eq(projectVersions.id, versionId),
+      )).then((rows) => rows[0]);
+      if (!exists) throw notFound("Project version not found");
+      throw conflict("Project version changed", { versionId });
+    });
+  }
+
+  async function deleteVersion(companyId: string, projectId: string, versionId: string, expectedRevision: number) {
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      const version = await tx.select().from(projectVersions).where(and(
+        eq(projectVersions.companyId, companyId), eq(projectVersions.projectId, projectId), eq(projectVersions.id, versionId),
+      )).then((rows) => rows[0]);
+      if (!version) throw notFound("Project version not found");
+      if (version.revision !== expectedRevision) throw conflict("Project version changed", { versionId, currentRevision: version.revision });
+      const child = await tx.select({ id: projectIterations.id }).from(projectIterations).where(and(
+        eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId), eq(projectIterations.versionId, versionId),
+      )).limit(1).then((rows) => rows[0]);
+      if (child) throw conflict("Only an empty version can be deleted");
+      await tx.delete(projectVersions).where(eq(projectVersions.id, versionId));
+      return { id: versionId, deleted: true as const };
+    });
+  }
+
+  async function listIterations(companyId: string, projectId: string) {
+    await assertProject(companyId, projectId);
+    return db.select().from(projectIterations).where(and(
+      eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId),
+    )).orderBy(asc(projectIterations.createdAt), asc(projectIterations.id));
+  }
+
+  async function createIteration(companyId: string, projectId: string, input: CreateProjectIteration) {
+    await assertProject(companyId, projectId);
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      await assertActiveVersion(tx, companyId, projectId, input.versionId);
+      return tx.insert(projectIterations).values({
+        companyId, projectId, versionId: input.versionId ?? null, name: input.name,
+        startsOn: input.startsOn ?? null, endsOn: input.endsOn ?? null,
+      }).returning().then((rows) => rows[0]);
+    });
+  }
+
+  async function updateIteration(companyId: string, projectId: string, iterationId: string, input: UpdateProjectIteration) {
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      const current = await tx.select().from(projectIterations).where(and(
+        eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId), eq(projectIterations.id, iterationId),
+      )).then((rows) => rows[0]);
+      if (!current) throw notFound("Project iteration not found");
+      if (current.revision !== input.expectedRevision) throw conflict("Project iteration changed", { iterationId, currentRevision: current.revision });
+      await assertActiveVersion(tx, companyId, projectId, input.versionId);
+      const startsOn = input.startsOn === undefined ? current.startsOn : input.startsOn;
+      const endsOn = input.endsOn === undefined ? current.endsOn : input.endsOn;
+      if (startsOn && endsOn && startsOn > endsOn) throw unprocessable("Iteration start date must not be after its end date");
+      return tx.update(projectIterations).set({
+        ...(input.versionId !== undefined ? { versionId: input.versionId } : {}),
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.startsOn !== undefined ? { startsOn: input.startsOn } : {}),
+        ...(input.endsOn !== undefined ? { endsOn: input.endsOn } : {}),
+        revision: current.revision + 1,
+        updatedAt: new Date(),
+      }).where(eq(projectIterations.id, iterationId)).returning().then((rows) => rows[0]);
+    });
+  }
+
+  async function setIterationArchived(companyId: string, projectId: string, iterationId: string, expectedRevision: number, archived: boolean) {
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      const [updated] = await tx.update(projectIterations).set({
+        archivedAt: archived ? new Date() : null,
+        revision: sql`${projectIterations.revision} + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId), eq(projectIterations.id, iterationId),
+        eq(projectIterations.revision, expectedRevision),
+      )).returning();
+      if (updated) return updated;
+      const exists = await tx.select({ id: projectIterations.id }).from(projectIterations).where(and(
+        eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId), eq(projectIterations.id, iterationId),
+      )).then((rows) => rows[0]);
+      if (!exists) throw notFound("Project iteration not found");
+      throw conflict("Project iteration changed", { iterationId });
+    });
+  }
+
+  async function deleteIteration(companyId: string, projectId: string, iterationId: string, expectedRevision: number) {
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      const iteration = await tx.select().from(projectIterations).where(and(
+        eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId), eq(projectIterations.id, iterationId),
+      )).then((rows) => rows[0]);
+      if (!iteration) throw notFound("Project iteration not found");
+      if (iteration.revision !== expectedRevision) throw conflict("Project iteration changed", { iterationId, currentRevision: iteration.revision });
+      const record = await tx.select({ id: workRecords.id }).from(workRecords).where(and(
+        eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.iterationId, iterationId),
+      )).limit(1).then((rows) => rows[0]);
+      if (record) throw conflict("Only an empty iteration can be deleted");
+      await tx.delete(projectIterations).where(eq(projectIterations.id, iterationId));
+      return { id: iterationId, deleted: true as const };
+    });
   }
 
   async function assertAssignee(companyId: string, agentId?: string | null) {
@@ -370,6 +576,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     await assertAssignee(companyId, input.qaAssigneeAgentId);
     const created = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, input.projectId)}, 0))`);
+      await assertActiveIteration(tx, companyId, input.projectId, input.iterationId);
       const predecessorIds = await assertDependencies(tx, companyId, input.projectId, null, input.predecessorRecordIds);
       const [record] = await tx.insert(workRecords).values({
         companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
@@ -405,6 +612,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       const locked = await tx.select().from(workRecords).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, recordId))).then((rows) => rows[0]);
       if (!locked) throw notFound("Work record not found");
       if (locked.revision !== input.expectedRevision) throw conflict("Work record revision changed", { currentRevision: locked.revision });
+      if (input.iterationId !== undefined) await assertActiveIteration(tx, companyId, projectId, input.iterationId);
       if (input.packageQaRole !== undefined || input.qaRetestExemptionReason !== undefined) {
         if (locked.kind !== "plan" || !locked.parentRecordId) throw unprocessable("Package QA settings require a plan child");
         if ((input.qaRetestExemptionReason ?? locked.qaRetestExemptionReason) &&
@@ -1271,6 +1479,18 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   }
 
   return {
+    listVersions,
+    createVersion,
+    updateVersion,
+    archiveVersion: (companyId: string, projectId: string, versionId: string, expectedRevision: number) => setVersionArchived(companyId, projectId, versionId, expectedRevision, true),
+    restoreVersion: (companyId: string, projectId: string, versionId: string, expectedRevision: number) => setVersionArchived(companyId, projectId, versionId, expectedRevision, false),
+    deleteVersion,
+    listIterations,
+    createIteration,
+    updateIteration,
+    archiveIteration: (companyId: string, projectId: string, iterationId: string, expectedRevision: number) => setIterationArchived(companyId, projectId, iterationId, expectedRevision, true),
+    restoreIteration: (companyId: string, projectId: string, iterationId: string, expectedRevision: number) => setIterationArchived(companyId, projectId, iterationId, expectedRevision, false),
+    deleteIteration,
     list,
     listPage,
     create,

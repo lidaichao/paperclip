@@ -3,6 +3,8 @@ import { agentWakeupRequests, type Db } from "@paperclipai/db";
 import { and, eq } from "drizzle-orm";
 import {
   createWorkRecordSchema,
+  createProjectIterationSchema,
+  createProjectVersionSchema,
   dispatchWorkRecordSchema,
   escalateWorkPackageAssignmentGapsSchema,
   fillWorkRecordAssignmentGapSchema,
@@ -12,6 +14,9 @@ import {
   recordPoQualityVerdictSchema,
   recordQaQualityVerdictSchema,
   recoverWorkRecordOutboxSchema,
+  mutateProjectContainerSchema,
+  updateProjectIterationSchema,
+  updateProjectVersionSchema,
   updateWorkRecordSchema,
 } from "@paperclipai/shared";
 import { validate } from "../middleware/validate.js";
@@ -422,6 +427,150 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       details: { projectId, state: result.batch.state, itemCount: result.items.length },
     });
     await logPackageRunEvent(req, "work_package_dispatch_reconciled", { batchId: result.batch.id, state: result.batch.state });
+    res.json(result);
+  });
+
+  router.get("/companies/:companyId/projects/:projectId/versions", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyReadAccess(req, companyId);
+    res.json(await service.listVersions(companyId, projectId));
+  });
+
+  router.post("/companies/:companyId/projects/:projectId/versions", validate(createProjectVersionSchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyAccess(req, companyId);
+    const version = await service.createVersion(companyId, projectId, req.body);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+      runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+      action: "project_version.created", entityType: "project_version", entityId: version.id,
+      details: { projectId },
+    });
+    res.status(201).json(version);
+  });
+
+  router.patch("/companies/:companyId/projects/:projectId/versions/:versionId", validate(updateProjectVersionSchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyAccess(req, companyId);
+    const version = await service.updateVersion(companyId, projectId, req.params.versionId as string, req.body);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+      runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+      action: "project_version.updated", entityType: "project_version", entityId: version.id,
+      details: { projectId, expectedRevision: req.body.expectedRevision, revision: version.revision },
+    });
+    res.json(version);
+  });
+
+  for (const [operation, execute] of [
+    ["archive", service.archiveVersion],
+    ["restore", service.restoreVersion],
+  ] as const) {
+    router.post(`/companies/:companyId/projects/:projectId/versions/:versionId/${operation}`, validate(mutateProjectContainerSchema), async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const projectId = req.params.projectId as string;
+      assertCompanyAccess(req, companyId);
+      const version = await execute(companyId, projectId, req.params.versionId as string, req.body.expectedRevision);
+      const actor = getActorInfo(req);
+      await logActivity(db, {
+        companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+        runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+        action: `project_version.${operation}d`, entityType: "project_version", entityId: version.id,
+        details: { projectId, expectedRevision: req.body.expectedRevision, revision: version.revision },
+      });
+      res.json(version);
+    });
+  }
+
+  router.delete("/companies/:companyId/projects/:projectId/versions/:versionId", validate(mutateProjectContainerSchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyAccess(req, companyId);
+    const result = await service.deleteVersion(companyId, projectId, req.params.versionId as string, req.body.expectedRevision);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+      runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+      action: "project_version.deleted", entityType: "project_version", entityId: result.id,
+      details: { projectId },
+    });
+    res.json(result);
+  });
+
+  router.get("/companies/:companyId/projects/:projectId/iterations", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyReadAccess(req, companyId);
+    res.json(await service.listIterations(companyId, projectId));
+  });
+
+  router.post("/companies/:companyId/projects/:projectId/iterations", validate(createProjectIterationSchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyAccess(req, companyId);
+    const iteration = await service.createIteration(companyId, projectId, req.body);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+      runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+      action: "project_iteration.created", entityType: "project_iteration", entityId: iteration.id,
+      details: { projectId, versionId: iteration.versionId },
+    });
+    res.status(201).json(iteration);
+  });
+
+  router.patch("/companies/:companyId/projects/:projectId/iterations/:iterationId", validate(updateProjectIterationSchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyAccess(req, companyId);
+    const iteration = await service.updateIteration(companyId, projectId, req.params.iterationId as string, req.body);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+      runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+      action: "project_iteration.updated", entityType: "project_iteration", entityId: iteration.id,
+      details: { projectId, expectedRevision: req.body.expectedRevision, revision: iteration.revision },
+    });
+    res.json(iteration);
+  });
+
+  for (const [operation, execute] of [
+    ["archive", service.archiveIteration],
+    ["restore", service.restoreIteration],
+  ] as const) {
+    router.post(`/companies/:companyId/projects/:projectId/iterations/:iterationId/${operation}`, validate(mutateProjectContainerSchema), async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const projectId = req.params.projectId as string;
+      assertCompanyAccess(req, companyId);
+      const iteration = await execute(companyId, projectId, req.params.iterationId as string, req.body.expectedRevision);
+      const actor = getActorInfo(req);
+      await logActivity(db, {
+        companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+        runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+        action: `project_iteration.${operation}d`, entityType: "project_iteration", entityId: iteration.id,
+        details: { projectId, expectedRevision: req.body.expectedRevision, revision: iteration.revision },
+      });
+      res.json(iteration);
+    });
+  }
+
+  router.delete("/companies/:companyId/projects/:projectId/iterations/:iterationId", validate(mutateProjectContainerSchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyAccess(req, companyId);
+    const result = await service.deleteIteration(companyId, projectId, req.params.iterationId as string, req.body.expectedRevision);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+      runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+      action: "project_iteration.deleted", entityType: "project_iteration", entityId: result.id,
+      details: { projectId },
+    });
     res.json(result);
   });
 

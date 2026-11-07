@@ -8,6 +8,18 @@ import { errorHandler } from "../middleware/error-handler.js";
 import { workRecordRoutes } from "../routes/work-records.js";
 
 const service = vi.hoisted(() => ({
+  listVersions: vi.fn(),
+  createVersion: vi.fn(),
+  updateVersion: vi.fn(),
+  archiveVersion: vi.fn(),
+  restoreVersion: vi.fn(),
+  deleteVersion: vi.fn(),
+  listIterations: vi.fn(),
+  createIteration: vi.fn(),
+  updateIteration: vi.fn(),
+  archiveIteration: vi.fn(),
+  restoreIteration: vi.fn(),
+  deleteIteration: vi.fn(),
   list: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
@@ -107,6 +119,8 @@ describe("work-record route authorization", () => {
     access.decide.mockReset();
     access.decide.mockResolvedValue({ allowed: true });
     service.list.mockResolvedValue([]);
+    service.listVersions.mockResolvedValue([]);
+    service.listIterations.mockResolvedValue([]);
     service.getDispatchRequest.mockResolvedValue({ state: "linked" });
     packageService.preview.mockResolvedValue({
       scopeDigest: "viewer-scope",
@@ -166,6 +180,19 @@ describe("work-record route authorization", () => {
     const app = createApp(viewer);
     await request(app).get("/api/companies/company-2/projects/project-2/work-records").expect(403, { error: "用户无权访问此公司" });
     expect(service.list).not.toHaveBeenCalled();
+  });
+
+  it("allows container history reads but rejects viewer and cross-company writes", async () => {
+    const app = createApp(viewer);
+    const projectId = "11111111-1111-4111-8111-111111111111";
+    await request(app).get(`/api/companies/company-1/projects/${projectId}/versions`).expect(200, []);
+    await request(app).get(`/api/companies/company-1/projects/${projectId}/iterations`).expect(200, []);
+    await request(app).post(`/api/companies/company-1/projects/${projectId}/versions`).send({ name: "1.0" })
+      .expect(403, { error: "只读成员只能查看，不能修改" });
+    await request(app).post(`/api/companies/company-2/projects/${projectId}/iterations`).send({ name: "Iteration 1" })
+      .expect(403, { error: "用户无权访问此公司" });
+    expect(service.createVersion).not.toHaveBeenCalled();
+    expect(service.createIteration).not.toHaveBeenCalled();
   });
 
   it("keeps workflow-v2 prepare behind company write authorization", async () => {
