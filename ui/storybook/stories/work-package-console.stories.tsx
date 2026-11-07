@@ -18,6 +18,7 @@ function record(input: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title">): 
     id, companyId: COMPANY_ID, projectId: PROJECT_ID, kind: "plan", title,
     description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null,
     assigneeAgentId: "agent-developer", qaAssigneeAgentId: "agent-qa", businessStatus: "in_review",
+    packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     statusVersion: 2, revision: 2, dispatchState: "linked", dispatchRound: 1, dependencySetRevision: 1, blockedCycle: 0, dependencies: [],
     execution: { issueId: null, issueIdentifier: null, issueStatus: null, issueStatusVersion: null, lastRunId: null, lastRunStatus: null, lastRunAgentId: null, lastRunStartedAt: null, lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: new Date("2026-10-28T08:00:00Z") },
     recovery: { code: null, message: null, canReconcile: false, lastConfirmedAt: new Date("2026-10-28T08:00:00Z") },
@@ -30,8 +31,8 @@ function record(input: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title">): 
 
 const records: WorkRecord[] = [
   record({ id: ROOT_ID, title: "LUN-302 工作包与质量证据界面", assigneeAgentId: "agent-po", execution: { issueId: "issue-root", issueIdentifier: "LUN-302", issueStatus: "in_review", issueStatusVersion: 6, lastRunId: "run-po", lastRunStatus: "succeeded", lastRunAgentId: "agent-po", lastRunStartedAt: new Date("2026-10-28T07:20:00Z"), lastRunEndedAt: new Date("2026-10-28T07:25:00Z"), projectionState: "stale", projectionError: null, projectedAt: new Date("2026-10-28T08:00:00Z") }, recovery: { code: "projection_stale", message: "上次派发结果未确认，请原位核对后安全重试。", canReconcile: true, lastConfirmedAt: new Date("2026-10-28T07:19:00Z") }, delivery: { eventKey: "event-root", deliveryState: "delivered", deliveredAt: new Date("2026-10-28T07:18:00Z"), attemptCount: 1, lastError: null, wakeRequestId: "wake-root", wakeStatus: "completed", acknowledgedAt: new Date("2026-10-28T07:19:00Z"), runId: "run-po", recoveryCount: 0, deadLetteredAt: null, lastRecoveredAt: null } }),
-  record({ id: REPAIR_ID, title: "实现固定工作包行", parentRecordId: ROOT_ID, businessStatus: "in_progress", quality: { cycleId: CYCLE_ID, cycleNumber: 2, cycleRevision: 4, phase: "waiting_fix", defectCount: 1 }, execution: { issueId: "issue-repair", issueIdentifier: "LUN-302-A", issueStatus: "in_progress", issueStatusVersion: 3, lastRunId: "run-repair", lastRunStatus: null, lastRunAgentId: "agent-developer", lastRunStartedAt: new Date("2026-10-28T08:00:00Z"), lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: new Date("2026-10-28T08:00:00Z") } }),
-  record({ id: QA_ID, title: "窄屏与离线独立验收：验证刷新、多标签同步、断线恢复与键盘路径", parentRecordId: ROOT_ID, businessStatus: "blocked", dispatchState: "blocked", dependencies: [{ predecessorRecordId: REPAIR_ID, title: "实现固定工作包行", businessStatus: "in_progress", dispatchState: "linked", holdReason: "prerequisite_not_completed" }] }),
+  record({ id: REPAIR_ID, title: "实现固定工作包行", parentRecordId: ROOT_ID, packageQaRole: "execution", qaCoverageRecordIds: [QA_ID], businessStatus: "in_progress", quality: { cycleId: CYCLE_ID, cycleNumber: 2, cycleRevision: 4, phase: "waiting_fix", defectCount: 1 }, execution: { issueId: "issue-repair", issueIdentifier: "LUN-302-A", issueStatus: "in_progress", issueStatusVersion: 3, lastRunId: "run-repair", lastRunStatus: null, lastRunAgentId: "agent-developer", lastRunStartedAt: new Date("2026-10-28T08:00:00Z"), lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: new Date("2026-10-28T08:00:00Z") } }),
+  record({ id: QA_ID, title: "窄屏与离线独立验收：验证刷新、多标签同步、断线恢复与键盘路径", parentRecordId: ROOT_ID, packageQaRole: "qa", businessStatus: "blocked", dispatchState: "blocked", dependencies: [{ predecessorRecordId: REPAIR_ID, title: "实现固定工作包行", businessStatus: "in_progress", dispatchState: "linked", holdReason: "prerequisite_not_completed" }] }),
   record({ id: DEFECT_ID, title: "窄屏详情挤压列表", kind: "defect", parentRecordId: ROOT_ID, businessStatus: "in_review", assigneeAgentId: "agent-developer", qaAssigneeAgentId: "agent-qa" }),
 ];
 
@@ -82,8 +83,9 @@ function Harness({ scenario = "success" }: { scenario?: Scenario }) {
         workflowVersion: 2, projectId: PROJECT_ID, rootRecordId: ROOT_ID, scopeKind: "whole_package",
         scopeDigest: "storybook-scope-digest", rootRevision: 2, dependencySetRevision: 1,
         recordCount: records.length, edgeCount: 1, maxDepth: 1,
-        records: records.map((item, index) => ({ id: item.id, title: item.title, revision: item.revision, dependencySetRevision: 1, parentRecordId: item.parentRecordId, assigneeAgentId: item.assigneeAgentId, qaAssigneeAgentId: item.qaAssigneeAgentId, depth: index === 0 ? 0 : 1 })),
+        records: records.map((item, index) => ({ id: item.id, title: item.title, revision: item.revision, dependencySetRevision: 1, parentRecordId: item.parentRecordId, assigneeAgentId: item.assigneeAgentId, qaAssigneeAgentId: item.qaAssigneeAgentId, packageQaRole: item.packageQaRole, qaRetestExemptionReason: item.qaRetestExemptionReason, qaCoverageRecordIds: item.qaCoverageRecordIds, depth: index === 0 ? 0 : 1 })),
         edges: [{ predecessorRecordId: REPAIR_ID, successorRecordId: QA_ID }],
+        qaCoverage: [{ executionRecordId: REPAIR_ID, qaRecordId: QA_ID }], qaCoverageIssues: [],
         eligibility: { canPrepare: true, blockers: [] },
       }));
       return fixtureFetch(input, init);
