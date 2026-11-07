@@ -67,7 +67,22 @@ export async function claimAndRunOnce(input: {
   // A prior write with an unknown server result must be reconciled before any
   // new claim. Otherwise a fresh model process may start only to hit the old
   // unresolved request ID on its first mutation.
-  await new LocalCommentIntentStore(input.intentFile).assertNoPending();
+  const intentStore = new LocalCommentIntentStore(input.intentFile);
+  await intentStore.reconcileCommitted(async (intent) => {
+    const prior = await input.state.currentClaim();
+    if (!prior || prior.runId !== intent.runId || prior.agentId !== intent.agentId ||
+      prior.issueId !== intent.issueId || input.deviceId !== intent.deviceId) {
+      throw new Error("prior local write has no matching claimed run; manual reconciliation required");
+    }
+    return input.client.readLocalWriteReceipt({
+      runId: intent.runId, issueId: intent.issueId, agentId: intent.agentId,
+      deviceId: intent.deviceId, leaseId: prior.leaseId,
+      generation: prior.generation, kind: intent.kind,
+      clientRequestId: intent.clientRequestId,
+      requestDigest: intent.requestDigest,
+    });
+  });
+  await intentStore.assertNoPending();
   // The key must reach disk before POST. A lost response reuses the same key.
   const key = await input.state.claimKey();
   const claim = await input.client.claimLocalRun(input.deviceId, key);

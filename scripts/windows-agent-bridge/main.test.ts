@@ -20,9 +20,16 @@ describe("bridge lifecycle", () => {
     });
     const claimLocalRun = vi.fn();
     const claimKey = vi.fn();
+    const currentClaim = vi.fn(async () => ({
+      runId: "f2c991f1-b53d-4bb5-b134-8e29d43815d0",
+      issueId: "1b9c2019-b811-40a0-bd21-0365977a0001",
+      agentId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a",
+      leaseId: "784d88a1-7a05-42d2-a7d8-e714d70f2d0b", generation: 1,
+    }));
+    const readLocalWriteReceipt = vi.fn(async () => "unknown" as const);
     await expect(claimAndRunOnce({
-      client: { claimLocalRun } as unknown as AliceClient,
-      state: { claimKey } as unknown as ClaimStateStore,
+      client: { claimLocalRun, readLocalWriteReceipt } as unknown as AliceClient,
+      state: { claimKey, currentClaim } as unknown as ClaimStateStore,
       deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
       companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6",
       agent: { remoteAgentId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a",
@@ -33,7 +40,42 @@ describe("bridge lifecycle", () => {
         adapterType: "codex_local", adapterConfig: {} },
       token: "never-used", intentFile, signal: new AbortController().signal,
     })).rejects.toThrow("manual reconciliation");
+    expect(readLocalWriteReceipt).toHaveBeenCalledTimes(1);
     expect(claimKey).not.toHaveBeenCalled();
+    expect(claimLocalRun).not.toHaveBeenCalled();
+  });
+
+  it("confirms an exact committed comment receipt but preserves the prior run latch", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "alice-receipt-"));
+    const intentFile = path.join(dir, "intent.json");
+    const prior = { runId: "f2c991f1-b53d-4bb5-b134-8e29d43815d0",
+      issueId: "1b9c2019-b811-40a0-bd21-0365977a0001",
+      agentId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a",
+      leaseId: "784d88a1-7a05-42d2-a7d8-e714d70f2d0b", generation: 1 };
+    await new LocalCommentIntentStore(intentFile).pending({
+      kind: "comment", runId: prior.runId, issueId: prior.issueId,
+      agentId: prior.agentId,
+      deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+      canonicalContent: "committed before response was lost",
+    });
+    const claimLocalRun = vi.fn();
+    const readLocalWriteReceipt = vi.fn(async () => "committed" as const);
+    const state = { currentClaim: vi.fn(async () => prior),
+      claimKey: vi.fn(async () => { throw new Error("prior run remains latched"); }) } as unknown as ClaimStateStore;
+    await expect(claimAndRunOnce({
+      client: { claimLocalRun, readLocalWriteReceipt } as unknown as AliceClient,
+      state,
+      deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+      companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6",
+      agent: { remoteAgentId: prior.agentId, remoteAgentName: "Luna",
+        localAgentName: "Luna", gbrainEnvRef: "GBRAIN_LUNA_TOKEN",
+        adapterType: "codex_local", localAdapterConfig: {}, maxConcurrentRuns: 1 },
+      localAgent: { id: prior.agentId,
+        companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6", name: "Luna",
+        adapterType: "codex_local", adapterConfig: {} },
+      token: "never-used", intentFile, signal: new AbortController().signal,
+    })).rejects.toThrow("prior run remains latched");
+    expect(JSON.parse(await readFile(intentFile, "utf8")).intents[0].confirmed).toBe(true);
     expect(claimLocalRun).not.toHaveBeenCalled();
   });
 

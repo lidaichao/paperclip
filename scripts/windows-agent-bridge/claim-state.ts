@@ -57,6 +57,11 @@ export class ClaimStateStore {
     return this.#state!.idempotencyKey;
   }
 
+  async currentClaim(): Promise<LocalRunClaim | null> {
+    await this.load();
+    return this.#state!.activeClaim ? structuredClone(this.#state!.activeClaim) : null;
+  }
+
   async markClaimed(claim: LocalRunClaim): Promise<void> {
     await this.claimKey();
     if (claim.agentId !== this.#agentId) throw new Error("claim agent identity mismatch");

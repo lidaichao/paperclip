@@ -156,6 +156,25 @@ export class LocalCommentIntentStore {
       throw new Error("unresolved local write intent requires manual reconciliation");
     }
   }
+
+  async reconcileCommitted(readReceipt: (intent: Readonly<PendingLocalWriteIntent>) =>
+    Promise<"committed" | "unknown" | "unsupported">): Promise<void> {
+    const saved = await this.read();
+    if (!saved) return;
+    if (!("schemaVersion" in saved)) {
+      await this.assertNoPending();
+      return;
+    }
+    const pending = saved.intents.filter((intent) => !intent.confirmed);
+    if (pending.length === 0) return;
+    if (pending.length !== 1) throw new Error("multiple unresolved local write intents require manual reconciliation");
+    const intent = pending[0]!;
+    const state = await readReceipt(intent);
+    if (state !== "committed") {
+      throw new Error("unresolved local write intent requires manual reconciliation");
+    }
+    await this.confirmed(intent);
+  }
 }
 
 /** Per-run loopback capability. It never exposes the agent key or lease to the model. */

@@ -266,6 +266,36 @@ export class AliceClient {
     return response.status === 204 ? null : parseClaim(response.body, identity.id, requestStartedAt);
   }
 
+  async readLocalWriteReceipt(input: {
+    runId: string; issueId: string; agentId: string; deviceId: string;
+    leaseId: string; generation: number; kind: string;
+    clientRequestId: string; requestDigest: string;
+  }): Promise<"committed" | "unknown" | "unsupported"> {
+    const identity = this.#requireVerifiedIdentity();
+    if (input.agentId !== identity.id) throw new Error("local write receipt agent mismatch");
+    requireUuid(input.runId, "runId");
+    requireUuid(input.issueId, "issueId");
+    requireUuid(input.clientRequestId, "clientRequestId");
+    if (!/^[a-f0-9]{64}$/.test(input.requestDigest)) {
+      throw new Error("invalid local write receipt digest");
+    }
+    this.#validateLease(input);
+    const query = new URLSearchParams({ deviceId: input.deviceId,
+      leaseId: input.leaseId, generation: String(input.generation),
+      issueId: input.issueId, kind: input.kind,
+      clientRequestId: input.clientRequestId,
+      requestDigest: input.requestDigest });
+    const record = asRecord(await this.#getJson(
+      `/api/agents/me/local-runs/${input.runId}/write-receipt?${query}`),
+    "local write receipt");
+    if (!["committed", "unknown", "unsupported"].includes(String(record.state)) ||
+      (record.state === "committed" &&
+        (record.kind !== input.kind || typeof record.receiptId !== "string"))) {
+      throw new Error("local write receipt identity or state mismatch");
+    }
+    return record.state as "committed" | "unknown" | "unsupported";
+  }
+
   async getClaimedIssue(claim: LocalRunClaim): Promise<BridgeInboxItem> {
     const identity = this.#requireVerifiedIdentity();
     if (claim.agentId !== identity.id) throw new Error("claimed issue agent identity mismatch");

@@ -401,6 +401,27 @@ describe("AliceClient", () => {
       issueId: ISSUE_ID, expectedStatusVersion: 3, clientRequestId: KEY_ID });
   });
 
+  it("reads only the exact scoped local write receipt", async () => {
+    const calls: string[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url) => {
+        calls.push(String(url));
+        return String(url).endsWith("/api/agents/me")
+          ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+          : jsonResponse({ state: "committed", kind: "comment", receiptId: KEY_ID });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const digest = "a".repeat(64);
+    expect(await client.readLocalWriteReceipt({ runId: RUN_ID,
+      issueId: ISSUE_ID, agentId: AGENT_ID, deviceId: DEVICE_ID,
+      leaseId: LEASE_ID, generation: 1, kind: "comment",
+      clientRequestId: KEY_ID, requestDigest: digest })).toBe("committed");
+    const query = new URL(calls[1]);
+    expect(query.pathname).toBe(`/api/agents/me/local-runs/${RUN_ID}/write-receipt`);
+    expect(query.searchParams.get("requestDigest")).toBe(digest);
+    expect(query.searchParams.get("leaseId")).toBe(LEASE_ID);
+  });
+
   it("sends the current lease on renew, control and finish without printing it", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const logs: string[] = [];
