@@ -21,6 +21,8 @@ async function fixture() {
     async () => ({ reviewId: "807c65f2-11aa-4e37-a6f8-ae5896363e88" }));
   const completeLocalChildWorkRecord = vi.fn<(...args: unknown[]) => Promise<unknown>>(
     async () => ({ receiptId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a", statusVersion: 4 }));
+  const prepareLocalDefectRepairHandoff = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+    async () => ({ receiptId: "9d0467e8-2929-46a5-b8aa-9759972a2445", statusVersion: 3 }));
   const readLocalWorkPackageContext = vi.fn<(...args: unknown[]) => Promise<unknown>>(
     async () => ({ issue: { id: issueId }, cycle: { id: "cycle-1" }, members: [] }));
   const prepareLocalPoVerdict = vi.fn<(...args: unknown[]) => Promise<unknown>>(
@@ -32,7 +34,8 @@ async function fixture() {
       readLocalRunIdentity: () => ({ id: agentId, companyId: "company-1", name: "Luna" }),
       readLocalRunIssue: async () => ({ id: issueId, title: "Task" }),
       addLocalRunComment, patchLocalRunIssue, createLocalCompletionReviewHandoff,
-      completeLocalChildWorkRecord, readLocalWorkPackageContext, prepareLocalPoVerdict,
+      completeLocalChildWorkRecord, prepareLocalDefectRepairHandoff,
+      readLocalWorkPackageContext, prepareLocalPoVerdict,
     },
   });
   const request = (route: string, method = "GET", body?: unknown, bearer = proxy.token) =>
@@ -41,6 +44,7 @@ async function fixture() {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   return { proxy, controller, request, addLocalRunComment, patchLocalRunIssue,
     createLocalCompletionReviewHandoff, completeLocalChildWorkRecord,
+    prepareLocalDefectRepairHandoff,
     readLocalWorkPackageContext, prepareLocalPoVerdict, intentFile };
 }
 
@@ -97,6 +101,28 @@ describe("fenced local run write capability", () => {
       expect((await f.request(`/api/issues/${issueId}/completion-review-handoff`, "POST", {
         reviewerAgentId: agentId, prompt: "Review", body: "Late",
       })).status).toBe(409);
+    } finally { await f.proxy.close(); }
+  });
+  it("prepares one independent defect repair handoff with a durable typed intent", async () => {
+    const f = await fixture();
+    try {
+      const response = await f.request(`/api/issues/${issueId}/defect-repair-handoff`, "POST", {
+        expectedStatusVersion: 3, summary: "Repair is ready for QA retest",
+      });
+      expect(response.status).toBe(201);
+      expect(f.prepareLocalDefectRepairHandoff).toHaveBeenCalledTimes(1);
+      expect(f.prepareLocalDefectRepairHandoff.mock.calls[0]?.[1]).toMatchObject({
+        issueId, expectedStatusVersion: 3, summary: "Repair is ready for QA retest",
+        clientRequestId: expect.any(String),
+      });
+      const saved = JSON.parse(await readFile(f.intentFile, "utf8"));
+      expect(saved.intents[0]).toMatchObject({
+        kind: "defect_repair_handoff", confirmed: true,
+        canonicalContent: JSON.stringify({ expectedStatusVersion: 3,
+          summary: "Repair is ready for QA retest" }),
+      });
+      expect((await f.request(`/api/issues/${issueId}/comments`, "POST",
+        { body: "Late edit" })).status).toBe(409);
     } finally { await f.proxy.close(); }
   });
   it("hands source work to one named reviewer and blocks later source edits", async () => {

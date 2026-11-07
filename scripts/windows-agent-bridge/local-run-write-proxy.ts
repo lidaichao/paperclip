@@ -5,7 +5,7 @@ import path from "node:path";
 import type { AddressInfo } from "node:net";
 import type { AliceClient, LocalReviewContext, LocalRunClaim, LocalRunLease } from "./paperclip-client.js";
 
-type LocalWriteKind = "comment" | "child_complete" | "po_verdict" |
+type LocalWriteKind = "comment" | "child_complete" | "defect_repair_handoff" | "po_verdict" |
   "completion_review_handoff" | "review_decision";
 interface PendingLocalWriteIntent {
   schemaVersion: 2; kind: LocalWriteKind; runId: string; issueId: string;
@@ -80,7 +80,8 @@ export class LocalCommentIntentStore {
       typeof document.deviceId !== "string" || !document.intents.every((item) => {
         const intent = item as PendingLocalWriteIntent;
         return intent.schemaVersion === 2 &&
-          ["comment", "child_complete", "po_verdict", "completion_review_handoff", "review_decision"]
+          ["comment", "child_complete", "defect_repair_handoff", "po_verdict",
+            "completion_review_handoff", "review_decision"]
             .includes(intent.kind) &&
           intent.runId === document.runId && intent.issueId === document.issueId &&
           intent.agentId === document.agentId && intent.deviceId === document.deviceId &&
@@ -162,7 +163,8 @@ export async function startLocalRunWriteProxy(input: {
   client: Pick<AliceClient, "readLocalRunIdentity" | "readLocalRunIssue" | "addLocalRunComment" | "patchLocalRunIssue"> &
     Partial<Pick<AliceClient, "acceptLocalCompletionReview" | "rejectLocalCompletionReview" |
       "createLocalCompletionReviewHandoff" | "completeLocalChildWorkRecord" |
-      "readLocalWorkPackageContext" | "prepareLocalPoVerdict">>;
+      "readLocalWorkPackageContext" | "prepareLocalPoVerdict" |
+      "prepareLocalDefectRepairHandoff">>;
   claim: LocalRunClaim;
   deviceId: string;
   signal: AbortSignal;
@@ -346,6 +348,49 @@ export async function startLocalRunWriteProxy(input: {
               issueId: input.claim.issueId,
               expectedStatusVersion: Number(completion.expectedStatusVersion),
               summary: completion.summary as string,
+              clientRequestId: intent.clientRequestId,
+            }, input.signal);
+          } catch {
+            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          }
+          await input.intentStore.confirmed(intent);
+          sourceDispositionConfirmed = true;
+          return saved;
+        };
+        const next = writeQueue.then(perform);
+        writeQueue = next.then(() => undefined, () => undefined);
+        json(res, 201, await next); return;
+      }
+      if (req.method === "POST" && pathname === `${issuePath}/defect-repair-handoff`) {
+        const handoff = await bodyOf(req);
+        if (Object.keys(handoff).some((key) =>
+          !["summary", "expectedStatusVersion", "clientRequestId"].includes(key)) ||
+          typeof handoff.summary !== "string" || !handoff.summary.trim() ||
+          Buffer.byteLength(handoff.summary, "utf8") > 4096 ||
+          /@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\./i.test(handoff.summary) ||
+          !Number.isSafeInteger(handoff.expectedStatusVersion) ||
+          Number(handoff.expectedStatusVersion) < 0 ||
+          (handoff.clientRequestId !== undefined &&
+            (typeof handoff.clientRequestId !== "string" || !UUID.test(handoff.clientRequestId)))) {
+          json(res, 400, { error: "unsupported defect repair handoff" }); return;
+        }
+        const perform = async () => {
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          if (sourceDispositionConfirmed) throw new Error("source run already completed or handed off");
+          if (!input.client.prepareLocalDefectRepairHandoff) {
+            throw new Error("defect repair handoff is unavailable");
+          }
+          const canonical = JSON.stringify({ expectedStatusVersion: handoff.expectedStatusVersion,
+            summary: handoff.summary });
+          const intent = await pending("defect_repair_handoff", canonical,
+            handoff.clientRequestId as string | undefined);
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          let saved: unknown;
+          try {
+            saved = await input.client.prepareLocalDefectRepairHandoff(lease, {
+              issueId: input.claim.issueId,
+              expectedStatusVersion: Number(handoff.expectedStatusVersion),
+              summary: handoff.summary as string,
               clientRequestId: intent.clientRequestId,
             }, input.signal);
           } catch {

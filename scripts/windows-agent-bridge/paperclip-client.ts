@@ -553,6 +553,33 @@ export class AliceClient {
       statusVersion: Number(record.statusVersion) };
   }
 
+  async prepareLocalDefectRepairHandoff(lease: LocalRunLease, input: {
+    issueId: string; expectedStatusVersion: number;
+    summary: string; clientRequestId: string;
+  }, signal?: AbortSignal): Promise<{ receiptId: string; statusVersion: number }> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(input.issueId, "issueId");
+    requireUuid(input.clientRequestId, "clientRequestId");
+    if (!Number.isSafeInteger(input.expectedStatusVersion) ||
+      input.expectedStatusVersion < 0 || !input.summary.trim() ||
+      Buffer.byteLength(input.summary, "utf8") > 4096 ||
+      /@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\./i.test(input.summary)) {
+      throw new Error("defect repair handoff requires a plain summary and valid revision");
+    }
+    const response = await this.#writeJson("POST",
+      `/api/agents/me/local-runs/${lease.runId}/issue/defect-repair-handoff`,
+      { ...lease, ...input }, {}, signal);
+    const record = asRecord(response.body, "defect repair handoff");
+    if (record.issueId !== input.issueId || record.status !== "in_progress" ||
+      record.disposition !== "prepared" ||
+      Number(record.statusVersion) !== input.expectedStatusVersion) {
+      throw new Error("defect repair handoff receipt changed");
+    }
+    return { receiptId: requireUuid(record.receiptId, "receiptId"),
+      statusVersion: Number(record.statusVersion) };
+  }
+
   async prepareLocalPoVerdict(lease: LocalRunLease, input: {
     issueId: string; expectedStatusVersion: number; clientRequestId: string;
     cycleId: string; itemId: string; expectedCycleRevision: number;

@@ -78,6 +78,8 @@ describe("runLocalAgent", () => {
         "only to ordinary native tasks");
       expect(String(invocation.config.promptTemplate)).toContain(
         "child-complete");
+      expect(String(invocation.config.promptTemplate)).toContain(
+        "defect-repair-handoff");
       expect(JSON.stringify(invocation.context)).not.toContain(token);
       expect(JSON.stringify(invocation.config)).not.toContain(token);
       expect(lines.join("\n")).not.toContain(token);
