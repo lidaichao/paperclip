@@ -565,6 +565,14 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   }
 
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
+    const hasDefectDetails = input.defectSeverity != null || input.defectReproductionSteps != null ||
+      input.defectExpectedResult != null || input.defectActualResult != null;
+    if (input.kind !== "defect" && hasDefectDetails) {
+      throw unprocessable("Defect fields require a defect record");
+    }
+    if (input.plannedStartDate && input.plannedCompletionDate && input.plannedStartDate > input.plannedCompletionDate) {
+      throw unprocessable("Planned start date must not be after planned completion date");
+    }
     if (input.packageQaRole && (!input.parentRecordId || input.kind !== "plan")) {
       throw unprocessable("Package QA role requires a plan child");
     }
@@ -581,6 +589,9 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       const [record] = await tx.insert(workRecords).values({
         companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
         parentRecordId: input.parentRecordId ?? null, iterationId: input.iterationId ?? null,
+        plannedStartDate: input.plannedStartDate ?? null, plannedCompletionDate: input.plannedCompletionDate ?? null,
+        defectSeverity: input.defectSeverity ?? null, defectReproductionSteps: input.defectReproductionSteps ?? null,
+        defectExpectedResult: input.defectExpectedResult ?? null, defectActualResult: input.defectActualResult ?? null,
         assigneeAgentId: input.assigneeAgentId ?? null, qaAssigneeAgentId: input.qaAssigneeAgentId ?? null,
         packageQaRole: input.kind === "plan" && input.parentRecordId ? input.packageQaRole ?? "execution" : null,
         qaRetestExemptionReason: input.qaRetestExemptionReason ?? null,
@@ -612,6 +623,20 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       const locked = await tx.select().from(workRecords).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, recordId))).then((rows) => rows[0]);
       if (!locked) throw notFound("Work record not found");
       if (locked.revision !== input.expectedRevision) throw conflict("Work record revision changed", { currentRevision: locked.revision });
+      const plannedStartDate = input.plannedStartDate === undefined ? locked.plannedStartDate : input.plannedStartDate;
+      const plannedCompletionDate = input.plannedCompletionDate === undefined ? locked.plannedCompletionDate : input.plannedCompletionDate;
+      if (plannedStartDate && plannedCompletionDate && plannedStartDate > plannedCompletionDate) {
+        throw unprocessable("Planned start date must not be after planned completion date");
+      }
+      const updatesDefectDetails = input.defectSeverity !== undefined || input.defectReproductionSteps !== undefined ||
+        input.defectExpectedResult !== undefined || input.defectActualResult !== undefined;
+      const leavesDefectDetails = (input.defectSeverity === undefined ? locked.defectSeverity : input.defectSeverity) != null ||
+        (input.defectReproductionSteps === undefined ? locked.defectReproductionSteps : input.defectReproductionSteps) != null ||
+        (input.defectExpectedResult === undefined ? locked.defectExpectedResult : input.defectExpectedResult) != null ||
+        (input.defectActualResult === undefined ? locked.defectActualResult : input.defectActualResult) != null;
+      if (locked.kind !== "defect" && updatesDefectDetails && leavesDefectDetails) {
+        throw unprocessable("Defect fields require a defect record");
+      }
       if (input.iterationId !== undefined) await assertActiveIteration(tx, companyId, projectId, input.iterationId);
       if (input.packageQaRole !== undefined || input.qaRetestExemptionReason !== undefined) {
         if (locked.kind !== "plan" || !locked.parentRecordId) throw unprocessable("Package QA settings require a plan child");
@@ -681,6 +706,12 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(input.businessStatus !== undefined ? { businessStatus: input.businessStatus, statusVersion: locked.statusVersion + 1 } : {}),
         ...(input.parentRecordId !== undefined ? { parentRecordId: input.parentRecordId } : {}),
         ...(input.iterationId !== undefined ? { iterationId: input.iterationId } : {}),
+        ...(input.plannedStartDate !== undefined ? { plannedStartDate: input.plannedStartDate } : {}),
+        ...(input.plannedCompletionDate !== undefined ? { plannedCompletionDate: input.plannedCompletionDate } : {}),
+        ...(input.defectSeverity !== undefined ? { defectSeverity: input.defectSeverity } : {}),
+        ...(input.defectReproductionSteps !== undefined ? { defectReproductionSteps: input.defectReproductionSteps } : {}),
+        ...(input.defectExpectedResult !== undefined ? { defectExpectedResult: input.defectExpectedResult } : {}),
+        ...(input.defectActualResult !== undefined ? { defectActualResult: input.defectActualResult } : {}),
         ...(input.assigneeAgentId !== undefined ? { assigneeAgentId: input.assigneeAgentId } : {}),
         ...(input.qaAssigneeAgentId !== undefined ? { qaAssigneeAgentId: input.qaAssigneeAgentId } : {}),
         ...(input.packageQaRole !== undefined ? { packageQaRole: input.packageQaRole } : {}),

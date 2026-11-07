@@ -10,6 +10,7 @@ import type {
 } from "./work-record-workflows.js";
 
 export const WORK_RECORD_KINDS = ["plan", "defect"] as const;
+export const WORK_RECORD_DEFECT_SEVERITIES = ["critical", "high", "medium", "low"] as const;
 export const WORK_RECORD_BUSINESS_STATUSES = [
   "backlog",
   "todo",
@@ -42,9 +43,22 @@ export const WORK_RECORD_HOLD_REASONS = [
 ] as const;
 
 export type WorkRecordKind = (typeof WORK_RECORD_KINDS)[number];
+export type WorkRecordDefectSeverity = (typeof WORK_RECORD_DEFECT_SEVERITIES)[number];
 export type WorkRecordBusinessStatus = (typeof WORK_RECORD_BUSINESS_STATUSES)[number];
 export type WorkRecordDispatchState = (typeof WORK_RECORD_DISPATCH_STATES)[number];
 export type WorkRecordHoldReason = (typeof WORK_RECORD_HOLD_REASONS)[number];
+
+const workRecordDateFields = {
+  plannedStartDate: z.string().date().optional().nullable(),
+  plannedCompletionDate: z.string().date().optional().nullable(),
+};
+
+const workRecordDefectFields = {
+  defectSeverity: z.enum(WORK_RECORD_DEFECT_SEVERITIES).optional().nullable(),
+  defectReproductionSteps: z.string().max(20_000).optional().nullable(),
+  defectExpectedResult: z.string().max(20_000).optional().nullable(),
+  defectActualResult: z.string().max(20_000).optional().nullable(),
+};
 
 export const createWorkRecordSchema = z.object({
   projectId: z.string().guid(),
@@ -58,6 +72,15 @@ export const createWorkRecordSchema = z.object({
   packageQaRole: z.enum(["execution", "qa"]).optional(),
   qaRetestExemptionReason: z.string().trim().min(1).max(2_000).optional().nullable(),
   predecessorRecordIds: z.array(z.string().guid()).max(100).optional().default([]),
+  ...workRecordDateFields,
+  ...workRecordDefectFields,
+}).superRefine((value, context) => {
+  if (value.plannedStartDate && value.plannedCompletionDate && value.plannedStartDate > value.plannedCompletionDate) {
+    context.addIssue({ code: "custom", message: "Planned start date must not be after planned completion date", path: ["plannedCompletionDate"] });
+  }
+  if (value.kind !== "defect" && Object.keys(workRecordDefectFields).some((field) => value[field as keyof typeof value] != null)) {
+    context.addIssue({ code: "custom", message: "Defect fields require a defect record", path: ["kind"] });
+  }
 });
 
 export const updateWorkRecordSchema = z.object({
@@ -73,8 +96,13 @@ export const updateWorkRecordSchema = z.object({
   qaRetestExemptionReason: z.string().trim().min(1).max(2_000).optional().nullable(),
   qaCoverageRecordIds: z.array(z.string().guid()).max(100).optional(),
   predecessorRecordIds: z.array(z.string().guid()).max(100).optional(),
+  ...workRecordDateFields,
+  ...workRecordDefectFields,
 }).refine((value) => Object.keys(value).some((key) => key !== "expectedRevision"), {
   message: "At least one field must be updated",
+}).refine((value) => !value.plannedStartDate || !value.plannedCompletionDate || value.plannedStartDate <= value.plannedCompletionDate, {
+  message: "Planned start date must not be after planned completion date",
+  path: ["plannedCompletionDate"],
 });
 
 export const dispatchWorkRecordSchema = z.object({
@@ -193,6 +221,12 @@ export interface WorkRecord {
   descriptionRevision: number;
   parentRecordId: string | null;
   iterationId: string | null;
+  plannedStartDate: string | null;
+  plannedCompletionDate: string | null;
+  defectSeverity: WorkRecordDefectSeverity | null;
+  defectReproductionSteps: string | null;
+  defectExpectedResult: string | null;
+  defectActualResult: string | null;
   assigneeAgentId: string | null;
   qaAssigneeAgentId: string | null;
   packageQaRole: "execution" | "qa" | null;

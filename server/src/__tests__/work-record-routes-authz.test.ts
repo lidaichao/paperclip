@@ -195,6 +195,52 @@ describe("work-record route authorization", () => {
     expect(service.createIteration).not.toHaveBeenCalled();
   });
 
+  it("validates G1 planned dates and defect-only fields before creating a record", async () => {
+    const admin = {
+      ...viewer,
+      userId: "admin-1",
+      memberships: [{ companyId: "company-1", membershipRole: "admin", status: "active" }],
+      isInstanceAdmin: true,
+    } as Express.Request["actor"];
+    service.create.mockResolvedValueOnce({
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      projectId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      kind: "defect",
+      plannedStartDate: "2026-11-10",
+      plannedCompletionDate: "2026-11-12",
+      defectSeverity: "high",
+      packageQaRole: null,
+      qaRetestExemptionReason: null,
+    });
+    const app = createApp(admin);
+    const valid = {
+      projectId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      kind: "defect",
+      title: "Checkout fails",
+      plannedStartDate: "2026-11-10",
+      plannedCompletionDate: "2026-11-12",
+      defectSeverity: "high",
+      defectReproductionSteps: "Submit a valid cart.",
+      defectExpectedResult: "Order is created.",
+      defectActualResult: "The request returns 500.",
+    };
+    await request(app).post("/api/companies/company-1/work-records").send(valid).expect(201);
+    expect(service.create).toHaveBeenCalledWith("company-1", expect.objectContaining(valid), expect.anything());
+
+    await request(app).post("/api/companies/company-1/work-records").send({
+      projectId: valid.projectId,
+      kind: "plan",
+      title: "Invalid plan",
+      defectSeverity: "critical",
+    }).expect(400);
+    await request(app).post("/api/companies/company-1/work-records").send({
+      ...valid,
+      plannedStartDate: "2026-11-13",
+      plannedCompletionDate: "2026-11-12",
+    }).expect(400);
+    expect(service.create).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps workflow-v2 prepare behind company write authorization", async () => {
     const app = createApp(viewer);
     await request(app)

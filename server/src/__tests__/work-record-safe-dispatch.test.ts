@@ -78,6 +78,48 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
   });
 
+  it("G1 persists planned dates and defect details without dispatch side effects", async () => {
+    const context = await seed();
+    const defect = await context.service.create(context.company.id, {
+      projectId: context.project.id,
+      kind: "defect",
+      title: "Checkout fails",
+      plannedStartDate: "2026-11-10",
+      plannedCompletionDate: "2026-11-12",
+      defectSeverity: "high",
+      defectReproductionSteps: "Open checkout and submit a valid cart.",
+      defectExpectedResult: "Order is created.",
+      defectActualResult: "The request returns 500.",
+      predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "test" });
+
+    expect(defect).toMatchObject({
+      plannedStartDate: "2026-11-10",
+      plannedCompletionDate: "2026-11-12",
+      defectSeverity: "high",
+      defectReproductionSteps: "Open checkout and submit a valid cart.",
+      defectExpectedResult: "Order is created.",
+      defectActualResult: "The request returns 500.",
+    });
+    await expect(context.service.create(context.company.id, {
+      projectId: context.project.id,
+      kind: "plan",
+      title: "Plan cannot carry defect details",
+      defectSeverity: "critical",
+      predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "test" })).rejects.toMatchObject({ status: 422 });
+    await expect(context.service.update(context.company.id, context.project.id, defect.id, {
+      expectedRevision: defect.revision,
+      plannedStartDate: "2026-11-20",
+      plannedCompletionDate: "2026-11-19",
+    })).rejects.toMatchObject({ status: 422 });
+
+    expect(await db.select().from(issues).where(eq(issues.companyId, context.company.id))).toHaveLength(0);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, context.company.id))).toHaveLength(0);
+    expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
+    expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
+  });
+
   it("G1 keeps version and iteration history, rejects stale writers, and only deletes empty containers", async () => {
     const context = await seed();
     const version = await context.service.createVersion(context.company.id, context.project.id, {
