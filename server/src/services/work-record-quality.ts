@@ -456,9 +456,15 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     return { cycle, poItem, repairItems, qaItems };
   }
 
-  async function recordPoVerdict(companyId: string, projectId: string, aggregateRecordId: string, input: RecordPoQualityVerdict, actor: Actor) {
+  async function commitPoVerdictInTransaction(
+    tx: DbTransaction,
+    companyId: string,
+    projectId: string,
+    aggregateRecordId: string,
+    input: RecordPoQualityVerdict,
+    actor: Actor,
+  ) {
     assertWritesEnabled(companyId, projectId);
-    const result = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${aggregateLockKey(companyId, aggregateRecordId)}, 0))`);
       const replay = await replayVerdict(tx, companyId, input.clientRequestId, input.requestPayloadDigest);
       if (replay) {
@@ -542,7 +548,11 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
         businessStatus: "blocked", statusVersion: sql`${workRecords.statusVersion} + 1`, updatedAt: now,
       }).where(eq(workRecords.id, aggregateRecordId));
       return { verdict, replayed: false, nextCycleId: next.cycle.id };
-    });
+  }
+
+  async function recordPoVerdict(companyId: string, projectId: string, aggregateRecordId: string, input: RecordPoQualityVerdict, actor: Actor) {
+    const result = await db.transaction((tx) => commitPoVerdictInTransaction(
+      tx, companyId, projectId, aggregateRecordId, input, actor));
     return { ...result, quality: await currentView(companyId, projectId, aggregateRecordId) };
   }
 
@@ -1193,6 +1203,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
   return {
     get: currentView,
     auditSnapshot,
+    commitPoVerdictInTransaction,
     recordPoVerdict,
     recordQaVerdict,
     linkPackageDefect,

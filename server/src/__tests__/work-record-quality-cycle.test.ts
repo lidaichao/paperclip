@@ -175,6 +175,48 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     });
   }
 
+  it("keeps a caller-owned PO verdict transaction atomic with run finalization", async () => {
+    const context = await seed();
+    const root = await createRecord(context, { title: "PO transaction package",
+      assigneeAgentId: context.po.id });
+    const child = await createRecord(context, { title: "PO transaction child",
+      parentRecordId: root.id, assigneeAgentId: context.developer.id });
+    const prepared = await prepare(context, {
+      scopeKind: "whole_package", rootRecordId: root.id, selectedRecordIds: [],
+    }, `po-external-tx-${randomUUID()}`);
+    const childPrimary = await primaryIssue(context.company.id, child.id);
+    await markIssueDone(childPrimary.issue.id);
+    await context.packages.reconcile(context.company.id, context.project.id,
+      prepared.batch.id, { actorType: "system", actorId: "m2c-test" });
+    const waiting = await context.quality.get(context.company.id, context.project.id, root.id);
+    await context.quality.reconcileCycle(context.company.id, context.project.id,
+      waiting.cycle!.id);
+    const ready = await context.quality.get(context.company.id, context.project.id, root.id);
+    const poItem = ready.items.find((item) => item.role === "po")!;
+    const request = { workflowVersion: 2 as const, clientRequestId: randomUUID(),
+      requestPayloadDigest: randomUUID(), cycleId: ready.cycle!.id,
+      itemId: poItem.id, expectedCycleRevision: ready.cycle!.revision,
+      outcome: "approve" as const, targetRecordIds: [],
+      reason: "All child work accepted", evidenceRefs: [] };
+    const actor = { actorType: "agent" as const, actorId: context.po.id,
+      agentId: context.po.id };
+    await expect(db.transaction(async (tx) => {
+      await context.quality.commitPoVerdictInTransaction(tx,
+        context.company.id, context.project.id, root.id, request, actor);
+      throw new Error("simulated run finish failure");
+    })).rejects.toThrow("simulated run finish failure");
+    expect(await db.select().from(workRecordQualityVerdicts).where(and(
+      eq(workRecordQualityVerdicts.companyId, context.company.id),
+      eq(workRecordQualityVerdicts.clientRequestId, request.clientRequestId),
+    ))).toHaveLength(0);
+    expect((await context.quality.get(context.company.id, context.project.id, root.id))
+      .cycle?.state).toBe("open");
+    expect((await primaryIssue(context.company.id, root.id)).issue.status).not.toBe("done");
+    await context.quality.recordPoVerdict(context.company.id,
+      context.project.id, root.id, request, actor);
+    expect((await primaryIssue(context.company.id, root.id)).issue.status).toBe("done");
+  }, 30_000);
+
   it("C07-C11 reuses original package tasks, deduplicates PO return, and gates PO on per-defect QA", async () => {
     const context = await seed();
     const root = await createRecord(context, { title: "Package", assigneeAgentId: context.po.id });
