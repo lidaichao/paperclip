@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { l10n } from "@/i18n";
+import { displayLocale } from "@/i18n/display";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deriveWorkRecordDisplayState, type WakeupRequestStatus, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordKind, type WorkRecordQualityView } from "@paperclipai/shared";
 import { CheckCircle2, ChevronRight, PackageCheck, RefreshCw, WifiOff } from "lucide-react";
@@ -56,7 +57,7 @@ function useConnectivity() {
 function time(value: Date | string | null | undefined) {
   if (!value) return l10n("local.work_record_not_confirmed_yet");
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? l10n("local.work_record_time_unknown") : parsed.toLocaleString();
+  return Number.isNaN(parsed.getTime()) ? l10n("local.work_record_time_unknown") : parsed.toLocaleString(displayLocale());
 }
 
 function sessionRequest(key: string) {
