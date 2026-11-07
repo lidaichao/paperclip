@@ -401,6 +401,45 @@ describe("AliceClient", () => {
       issueId: ISSUE_ID, expectedStatusVersion: 3, clientRequestId: KEY_ID });
   });
 
+  it("reads the exact QA context and prepares a fenced QA verdict", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const cycleId = "e30c8ff4-9301-4e30-8e8b-8096ca4ea8ce";
+    const itemId = "bd1b48c3-8e60-4882-91b2-82b8f68c3cc8";
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url, init) => {
+        calls.push({ url: String(url), init });
+        if (String(url).endsWith("/api/agents/me")) {
+          return jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
+        }
+        if (String(url).includes("/defect-qa-context?")) {
+          return jsonResponse({ issueId: ISSUE_ID, cycleId, itemId,
+            defectRecordId: ISSUE_ID, repairRecordId: ISSUE_ID, handoffId: KEY_ID,
+            expectedStatusVersion: 3, expectedCycleRevision: 2,
+            expectedItemRevision: 1 });
+        }
+        return jsonResponse({ issueId: ISSUE_ID, status: "in_review",
+          statusVersion: 3, disposition: "prepared", receiptId: KEY_ID }, 201);
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const claim = { runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID,
+      leaseId: LEASE_ID, generation: 1, leaseExpiresAt: "2026-11-07T12:00:00Z",
+      leaseDeadlineMonotonicMs: 60_000, wakeReason: "independent_defect_qa",
+      workspacePolicy: "agent_home" as const };
+    expect(await client.readLocalDefectQaContext(claim, DEVICE_ID)).toMatchObject({
+      issueId: ISSUE_ID, cycleId, itemId });
+    expect(new URL(calls[1].url).searchParams.get("leaseId")).toBe(LEASE_ID);
+    const lease = { runId: RUN_ID, deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1 };
+    expect(await client.prepareLocalDefectQaVerdict(lease, { issueId: ISSUE_ID,
+      expectedStatusVersion: 3, cycleId, itemId, expectedCycleRevision: 2,
+      expectedItemRevision: 1, outcome: "return", summary: "Regression still reproduces",
+      evidenceRefs: [], clientRequestId: KEY_ID })).toEqual({
+      receiptId: KEY_ID, disposition: "prepared" });
+    expect(new URL(calls[2].url).pathname)
+      .toBe(`/api/agents/me/local-runs/${RUN_ID}/issue/defect-qa-verdict`);
+    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...lease,
+      issueId: ISSUE_ID, cycleId, itemId, clientRequestId: KEY_ID });
+  });
+
   it("reads only the exact scoped local write receipt", async () => {
     const calls: string[] = [];
     const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",

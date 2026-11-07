@@ -93,6 +93,13 @@ export async function executeClaimedRun(input: {
   if (issue.companyId !== input.companyId || issue.id !== input.claim.issueId) {
     throw new Error("claimed run is for a different company or issue");
   }
+  const defectQaRun = input.claim.wakeReason === "independent_defect_qa";
+  if (defectQaRun) {
+    if (issue.status !== "in_review" || issue.assigneeAgentId !== input.claim.agentId) {
+      throw new Error("claimed defect QA task is no longer in the assigned review stage");
+    }
+    await input.client.readLocalDefectQaContext(input.claim, input.deviceId);
+  }
   const runner = input.runner ?? runLocalAgent;
   const stopProcessTree = input.stopProcessTree ?? stopWindowsProcessTree;
   let telemetry: RunTelemetryStore | undefined;
@@ -215,10 +222,13 @@ export async function executeClaimedRun(input: {
           return { succeeded: false, exitCode: 1 };
         }
         const succeeded = result.succeeded && !proxy.writeFailed() &&
-          (!reviewContext || proxy.decisionConfirmed());
+          (!reviewContext || proxy.decisionConfirmed()) &&
+          (!defectQaRun || proxy.qaDecisionConfirmed());
         summary = succeeded ? "Local adapter completed successfully"
           : reviewContext && !proxy.decisionConfirmed()
             ? "Reviewer stopped without a committed decision"
+            : defectQaRun && !proxy.qaDecisionConfirmed()
+              ? "Defect QA stopped without a prepared verdict"
             : proxy.writeFailed() ? "Local field write failed"
             : "Local adapter finished with an error";
         if (signal.aborted) {

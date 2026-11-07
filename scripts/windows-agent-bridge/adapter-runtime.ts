@@ -67,6 +67,7 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
     throw new Error("valid server-issued Paperclip run id is required before local execution");
   }
   const reviewerRun = input.wakeReason === "issue_completion_review";
+  const defectQaRun = input.wakeReason === "independent_defect_qa";
   if (input.issue.companyId !== input.remoteCompanyId ||
     (reviewerRun ? !input.reviewContext ||
       input.reviewContext.issue.id !== input.issue.id ||
@@ -141,11 +142,28 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
     "If no authorized reviewer is identified or work is incomplete, report the blocker;",
     "a run without an accepted handoff is returned to a recoverable blocked state.",
   ].join("\n");
+  const defectQaPrompt = [
+    "You are the designated QA agent for this one independently dispatched defect.",
+    "Read GET /api/issues/$PAPERCLIP_TASK_ID and",
+    "GET /api/issues/$PAPERCLIP_TASK_ID/defect-qa-context on PAPERCLIP_API_URL.",
+    "Retest the original defect and the repair evidence in your local workspace.",
+    "Submit exactly one decision with POST",
+    "/api/issues/$PAPERCLIP_TASK_ID/defect-qa-verdict and JSON",
+    "{\"expectedStatusVersion\":number,\"cycleId\":\"UUID\",\"itemId\":\"UUID\",",
+    "\"expectedCycleRevision\":number,\"expectedItemRevision\":number,",
+    "\"outcome\":\"pass\"|\"return\",\"summary\":\"specific retest evidence\",",
+    "\"evidenceRefs\":[]}.",
+    "Copy the IDs and revisions from the QA context; do not invent or edit them.",
+    "This run cannot edit the issue or send an ordinary task completion.",
+    "Stop only after the preparation receipt is confirmed. The final decision",
+    "is committed only after the local model process has stopped.",
+  ].join("\n");
   const existingPrompt = typeof input.localAgent.adapterConfig.promptTemplate === "string"
     ? input.localAgent.adapterConfig.promptTemplate.trim() : "";
   const adapterConfig = {
     ...input.localAgent.adapterConfig,
-    promptTemplate: [existingPrompt, reviewerRun ? reviewerPrompt : sourcePrompt]
+    promptTemplate: [existingPrompt, reviewerRun ? reviewerPrompt
+      : defectQaRun ? defectQaPrompt : sourcePrompt]
       .filter(Boolean).join("\n\n"),
   };
 

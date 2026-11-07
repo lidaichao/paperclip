@@ -5,7 +5,7 @@ import path from "node:path";
 import type { AddressInfo } from "node:net";
 import type { AliceClient, LocalReviewContext, LocalRunClaim, LocalRunLease } from "./paperclip-client.js";
 
-type LocalWriteKind = "comment" | "child_complete" | "defect_repair_handoff" | "po_verdict" |
+type LocalWriteKind = "comment" | "child_complete" | "defect_repair_handoff" | "defect_qa_verdict" | "po_verdict" |
   "completion_review_handoff" | "review_decision";
 interface PendingLocalWriteIntent {
   schemaVersion: 2; kind: LocalWriteKind; runId: string; issueId: string;
@@ -80,7 +80,7 @@ export class LocalCommentIntentStore {
       typeof document.deviceId !== "string" || !document.intents.every((item) => {
         const intent = item as PendingLocalWriteIntent;
         return intent.schemaVersion === 2 &&
-          ["comment", "child_complete", "defect_repair_handoff", "po_verdict",
+          ["comment", "child_complete", "defect_repair_handoff", "defect_qa_verdict", "po_verdict",
             "completion_review_handoff", "review_decision"]
             .includes(intent.kind) &&
           intent.runId === document.runId && intent.issueId === document.issueId &&
@@ -183,17 +183,20 @@ export async function startLocalRunWriteProxy(input: {
     Partial<Pick<AliceClient, "acceptLocalCompletionReview" | "rejectLocalCompletionReview" |
       "createLocalCompletionReviewHandoff" | "completeLocalChildWorkRecord" |
       "readLocalWorkPackageContext" | "prepareLocalPoVerdict" |
-      "prepareLocalDefectRepairHandoff">>;
+      "prepareLocalDefectRepairHandoff" | "readLocalDefectQaContext" |
+      "prepareLocalDefectQaVerdict">>;
   claim: LocalRunClaim;
   deviceId: string;
   signal: AbortSignal;
   intentStore: LocalCommentIntentStore;
   reviewContext?: LocalReviewContext;
 }): Promise<{ apiBase: string; token: string; decisionConfirmed(): boolean;
+  qaDecisionConfirmed(): boolean;
   writeFailed(): boolean;
   close(): Promise<void> }> {
   if (input.signal.aborted) throw new Error("local run already cancelled");
   const review = input.claim.wakeReason === "issue_completion_review";
+  const defectQa = input.claim.wakeReason === "independent_defect_qa";
   if (review !== Boolean(input.reviewContext) ||
     (review && (input.reviewContext?.issue.id !== input.claim.issueId ||
       input.reviewContext?.review.reviewerAgentId !== input.claim.agentId ||
@@ -209,6 +212,7 @@ export async function startLocalRunWriteProxy(input: {
   let closed = false;
   let closing = false;
   let reviewDecisionConfirmed = false;
+  let defectQaDecisionConfirmed = false;
   let sourceDispositionConfirmed = false;
   let writeQueue = Promise.resolve();
   const pending = (kind: LocalWriteKind, canonicalContent: string, requestId?: string) =>
@@ -232,7 +236,14 @@ export async function startLocalRunWriteProxy(input: {
           completionReview: input.reviewContext!.review,
         } : await input.client.readLocalRunIssue(input.claim)); return;
       }
-      if (!review && req.method === "GET" && pathname === `${issuePath}/work-package-context`) {
+      if (defectQa && req.method === "GET" && pathname === `${issuePath}/defect-qa-context`) {
+        if (!input.client.readLocalDefectQaContext) {
+          json(res, 503, { error: "defect QA context unavailable" }); return;
+        }
+        json(res, 200, await input.client.readLocalDefectQaContext(input.claim, input.deviceId));
+        return;
+      }
+      if (!review && !defectQa && req.method === "GET" && pathname === `${issuePath}/work-package-context`) {
         if (!input.client.readLocalWorkPackageContext) {
           json(res, 503, { error: "work package context unavailable" }); return;
         }
@@ -280,6 +291,69 @@ export async function startLocalRunWriteProxy(input: {
         json(res, 200, await next); return;
       }
       if (review) { json(res, 403, { error: "operation unavailable for reviewer" }); return; }
+      if (defectQa && req.method === "POST" && pathname === `${issuePath}/defect-qa-verdict`) {
+        const decision = await bodyOf(req);
+        if (Object.keys(decision).some((key) => ![
+          "expectedStatusVersion", "cycleId", "itemId", "expectedCycleRevision",
+          "expectedItemRevision", "outcome", "summary", "evidenceRefs", "clientRequestId",
+        ].includes(key)) ||
+          ![decision.expectedStatusVersion, decision.expectedCycleRevision,
+            decision.expectedItemRevision].every((value) => Number.isSafeInteger(value) && Number(value) >= 0) ||
+          typeof decision.cycleId !== "string" || !UUID.test(decision.cycleId) ||
+          typeof decision.itemId !== "string" || !UUID.test(decision.itemId) ||
+          !["pass", "return"].includes(String(decision.outcome)) ||
+          typeof decision.summary !== "string" || !decision.summary.trim() ||
+          Buffer.byteLength(decision.summary, "utf8") > 4096 ||
+          /@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\./i.test(decision.summary) ||
+          !Array.isArray(decision.evidenceRefs) || decision.evidenceRefs.length > 20 ||
+          !decision.evidenceRefs.every((value) => typeof value === "string" &&
+            value.trim() && value.length <= 512) ||
+          (decision.clientRequestId !== undefined &&
+            (typeof decision.clientRequestId !== "string" || !UUID.test(decision.clientRequestId)))) {
+          json(res, 400, { error: "unsupported defect QA verdict" }); return;
+        }
+        const perform = async () => {
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          if (defectQaDecisionConfirmed) throw new Error("defect QA already decided");
+          if (!input.client.prepareLocalDefectQaVerdict) {
+            throw new Error("defect QA verdict unavailable");
+          }
+          const canonical = JSON.stringify({
+            expectedStatusVersion: decision.expectedStatusVersion,
+            cycleId: decision.cycleId, itemId: decision.itemId,
+            expectedCycleRevision: decision.expectedCycleRevision,
+            expectedItemRevision: decision.expectedItemRevision,
+            outcome: decision.outcome, summary: decision.summary,
+            evidenceRefs: decision.evidenceRefs,
+          });
+          const intent = await pending("defect_qa_verdict", canonical,
+            decision.clientRequestId as string | undefined);
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          let saved: unknown;
+          try {
+            saved = await input.client.prepareLocalDefectQaVerdict(lease, {
+              issueId: input.claim.issueId,
+              expectedStatusVersion: Number(decision.expectedStatusVersion),
+              cycleId: decision.cycleId as string, itemId: decision.itemId as string,
+              expectedCycleRevision: Number(decision.expectedCycleRevision),
+              expectedItemRevision: Number(decision.expectedItemRevision),
+              outcome: decision.outcome as "pass" | "return",
+              summary: decision.summary as string,
+              evidenceRefs: decision.evidenceRefs as string[],
+              clientRequestId: intent.clientRequestId,
+            }, input.signal);
+          } catch {
+            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          }
+          await input.intentStore.confirmed(intent);
+          defectQaDecisionConfirmed = true;
+          return saved;
+        };
+        const next = writeQueue.then(perform);
+        writeQueue = next.then(() => undefined, () => undefined);
+        json(res, 201, await next); return;
+      }
+      if (defectQa) { json(res, 403, { error: "operation unavailable for defect QA" }); return; }
       if (req.method === "POST" && pathname === `${issuePath}/po-verdict`) {
         const decision = await bodyOf(req);
         if (Object.keys(decision).some((key) => ![
@@ -511,6 +585,7 @@ export async function startLocalRunWriteProxy(input: {
     apiBase: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     token,
     decisionConfirmed: () => reviewDecisionConfirmed,
+    qaDecisionConfirmed: () => defectQaDecisionConfirmed,
     writeFailed: () => false,
     async close() {
       closing = true;

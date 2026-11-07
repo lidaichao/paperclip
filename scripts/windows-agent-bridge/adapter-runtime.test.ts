@@ -139,6 +139,26 @@ describe("runLocalAgent", () => {
     })).rejects.toThrow("review lease");
   });
 
+  it("uses a dedicated independent defect QA prompt", async () => {
+    const task = issue();
+    task.status = "in_review";
+    let captured: AdapterExecutionContext | undefined;
+    await runLocalAgent({ runId: SERVER_RUN_ID,
+      wakeReason: "independent_defect_qa", apiBase: "http://127.0.0.1:43123",
+      remoteCompanyId: REMOTE_COMPANY_ID, remoteAgentId: REMOTE_AGENT_ID,
+      remoteAgentName: "Luna", issue: task,
+      token: "qa-capability", localAgent: localAgent(),
+      dependencies: { codexExecute: async (ctx) => {
+        captured = ctx;
+        return { exitCode: 0, signal: null, timedOut: false };
+      } },
+    });
+    const prompt = String(captured?.config.promptTemplate);
+    expect(prompt).toContain("defect-qa-context");
+    expect(prompt).toContain("defect-qa-verdict");
+    expect(prompt).not.toContain("child-complete");
+  });
+
   it("never launches an adapter without a server-issued run id", async () => {
     let launched = false;
     await expect(runLocalAgent({

@@ -23,6 +23,12 @@ async function fixture() {
     async () => ({ receiptId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a", statusVersion: 4 }));
   const prepareLocalDefectRepairHandoff = vi.fn<(...args: unknown[]) => Promise<unknown>>(
     async () => ({ receiptId: "9d0467e8-2929-46a5-b8aa-9759972a2445", statusVersion: 3 }));
+  const readLocalDefectQaContext = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+    async () => ({ issueId, cycleId: "e30c8ff4-9301-4e30-8e8b-8096ca4ea8ce",
+      itemId: "bd1b48c3-8e60-4882-91b2-82b8f68c3cc8" }));
+  const prepareLocalDefectQaVerdict = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+    async () => ({ receiptId: "9d0467e8-2929-46a5-b8aa-9759972a2445",
+      disposition: "prepared" }));
   const readLocalWorkPackageContext = vi.fn<(...args: unknown[]) => Promise<unknown>>(
     async () => ({ issue: { id: issueId }, cycle: { id: "cycle-1" }, members: [] }));
   const prepareLocalPoVerdict = vi.fn<(...args: unknown[]) => Promise<unknown>>(
@@ -35,6 +41,7 @@ async function fixture() {
       readLocalRunIssue: async () => ({ id: issueId, title: "Task" }),
       addLocalRunComment, patchLocalRunIssue, createLocalCompletionReviewHandoff,
       completeLocalChildWorkRecord, prepareLocalDefectRepairHandoff,
+      readLocalDefectQaContext, prepareLocalDefectQaVerdict,
       readLocalWorkPackageContext, prepareLocalPoVerdict,
     },
   });
@@ -45,6 +52,7 @@ async function fixture() {
   return { proxy, controller, request, addLocalRunComment, patchLocalRunIssue,
     createLocalCompletionReviewHandoff, completeLocalChildWorkRecord,
     prepareLocalDefectRepairHandoff,
+    readLocalDefectQaContext, prepareLocalDefectQaVerdict,
     readLocalWorkPackageContext, prepareLocalPoVerdict, intentFile };
 }
 
@@ -124,6 +132,54 @@ describe("fenced local run write capability", () => {
       expect((await f.request(`/api/issues/${issueId}/comments`, "POST",
         { body: "Late edit" })).status).toBe(409);
     } finally { await f.proxy.close(); }
+  });
+  it("limits an independent defect QA run to its context and one prepared verdict", async () => {
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-defect-qa-proxy-")), "intent.json");
+    const qaClaim = { ...claim, wakeReason: "independent_defect_qa" };
+    const readLocalDefectQaContext = vi.fn(async () => ({ issueId, cycleId:
+      "e30c8ff4-9301-4e30-8e8b-8096ca4ea8ce" }));
+    const prepareLocalDefectQaVerdict = vi.fn(async () => ({
+      receiptId: "9d0467e8-2929-46a5-b8aa-9759972a2445", disposition: "prepared" as const }));
+    const proxy = await startLocalRunWriteProxy({ claim: qaClaim,
+      deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+      signal: new AbortController().signal,
+      intentStore: new LocalCommentIntentStore(intentFile),
+      client: {
+        readLocalRunIdentity: () => ({ id: agentId, companyId: "company-1", name: "QA" }),
+        readLocalRunIssue: async () => ({ id: issueId, status: "in_review" }),
+        addLocalRunComment: vi.fn(), patchLocalRunIssue: vi.fn(),
+        readLocalDefectQaContext, prepareLocalDefectQaVerdict,
+      },
+    });
+    const request = (route: string, method = "GET", body?: unknown) =>
+      fetch(`${proxy.apiBase}${route}`, { method,
+        headers: { authorization: `Bearer ${proxy.token}`, "content-type": "application/json" },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    try {
+      const context = await request(`/api/issues/${issueId}/defect-qa-context`);
+      expect(context.status).toBe(200);
+      expect(readLocalDefectQaContext).toHaveBeenCalledWith(qaClaim,
+        "8da47d3b-0a6e-49d4-9c26-17bc76de470f");
+      expect((await request(`/api/issues/${issueId}/comments`, "POST", { body: "wrong" })).status)
+        .toBe(403);
+      expect((await request(`/api/issues/${issueId}/child-complete`, "POST", {
+        expectedStatusVersion: 3, summary: "wrong" })).status).toBe(403);
+      const decision = { expectedStatusVersion: 3,
+        cycleId: "e30c8ff4-9301-4e30-8e8b-8096ca4ea8ce",
+        itemId: "bd1b48c3-8e60-4882-91b2-82b8f68c3cc8",
+        expectedCycleRevision: 2, expectedItemRevision: 1,
+        outcome: "return", summary: "Regression still reproduces", evidenceRefs: [] };
+      expect((await request(`/api/issues/${issueId}/defect-qa-verdict`,
+        "POST", decision)).status).toBe(201);
+      expect(prepareLocalDefectQaVerdict).toHaveBeenCalledWith(expect.objectContaining({
+        runId }), expect.objectContaining({ issueId, ...decision,
+        clientRequestId: expect.any(String) }), expect.anything());
+      expect(proxy.qaDecisionConfirmed()).toBe(true);
+      expect(JSON.parse(await readFile(intentFile, "utf8")).intents[0].kind)
+        .toBe("defect_qa_verdict");
+      expect((await request(`/api/issues/${issueId}/defect-qa-verdict`,
+        "POST", decision)).status).toBe(409);
+    } finally { await proxy.close(); }
   });
   it("hands source work to one named reviewer and blocks later source edits", async () => {
     const f = await fixture();

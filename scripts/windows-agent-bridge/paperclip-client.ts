@@ -359,6 +359,32 @@ export class AliceClient {
     return record;
   }
 
+  /** Independent defect QA can inspect only the quality item tied to this lease. */
+  async readLocalDefectQaContext(claim: LocalRunClaim, deviceId: string): Promise<unknown> {
+    const identity = this.#requireVerifiedIdentity();
+    if (claim.agentId !== identity.id || claim.wakeReason !== "independent_defect_qa") {
+      throw new Error("local defect QA claim identity mismatch");
+    }
+    const lease = { runId: claim.runId, leaseId: claim.leaseId,
+      generation: claim.generation, deviceId };
+    this.#validateLease(lease);
+    const query = new URLSearchParams({ deviceId, leaseId: claim.leaseId,
+      generation: String(claim.generation) });
+    const record = asRecord(await this.#getJson(
+      `/api/agents/me/local-runs/${claim.runId}/defect-qa-context?${query}`),
+    "local defect QA context");
+    if (record.issueId !== claim.issueId ||
+      !Number.isSafeInteger(record.expectedStatusVersion) ||
+      !Number.isSafeInteger(record.expectedCycleRevision) ||
+      !Number.isSafeInteger(record.expectedItemRevision)) {
+      throw new Error("local defect QA context identity or revision mismatch");
+    }
+    for (const key of ["cycleId", "itemId", "defectRecordId", "repairRecordId", "handoffId"] as const) {
+      requireUuid(record[key], `local defect QA context.${key}`);
+    }
+    return record;
+  }
+
   /** Dedicated review is read with the current device lease, never via generic issue ownership. */
   async readLocalReviewContext(claim: LocalRunClaim, deviceId: string): Promise<LocalReviewContext> {
     const identity = this.#requireVerifiedIdentity();
@@ -608,6 +634,39 @@ export class AliceClient {
     }
     return { receiptId: requireUuid(record.receiptId, "receiptId"),
       statusVersion: Number(record.statusVersion) };
+  }
+
+  async prepareLocalDefectQaVerdict(lease: LocalRunLease, input: {
+    issueId: string; expectedStatusVersion: number; cycleId: string; itemId: string;
+    expectedCycleRevision: number; expectedItemRevision: number;
+    outcome: "pass" | "return"; summary: string; evidenceRefs: string[];
+    clientRequestId: string;
+  }, signal?: AbortSignal): Promise<{ receiptId: string; disposition: "prepared" }> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    for (const key of ["issueId", "cycleId", "itemId", "clientRequestId"] as const) {
+      requireUuid(input[key], key);
+    }
+    if (![input.expectedStatusVersion, input.expectedCycleRevision,
+      input.expectedItemRevision].every((value) => Number.isSafeInteger(value) && value >= 0) ||
+      !["pass", "return"].includes(input.outcome) ||
+      !input.summary.trim() || Buffer.byteLength(input.summary, "utf8") > 4096 ||
+      /@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\./i.test(input.summary) ||
+      !Array.isArray(input.evidenceRefs) || input.evidenceRefs.length > 20 ||
+      !input.evidenceRefs.every((value) => typeof value === "string" &&
+        value.trim() && value.length <= 512)) {
+      throw new Error("local defect QA verdict requires a valid quality item and plain evidence");
+    }
+    const response = await this.#writeJson("POST",
+      `/api/agents/me/local-runs/${lease.runId}/issue/defect-qa-verdict`,
+      { ...lease, ...input }, {}, signal);
+    const record = asRecord(response.body, "local defect QA verdict preparation");
+    if (record.issueId !== input.issueId || record.status !== "in_review" ||
+      Number(record.statusVersion) !== input.expectedStatusVersion ||
+      record.disposition !== "prepared") {
+      throw new Error("local defect QA verdict receipt changed");
+    }
+    return { receiptId: requireUuid(record.receiptId, "receiptId"), disposition: "prepared" };
   }
 
   async prepareLocalPoVerdict(lease: LocalRunLease, input: {
