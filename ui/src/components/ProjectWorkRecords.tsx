@@ -36,7 +36,7 @@ interface RecordDraft {
   assigneeAgentId: string;
   qaAssigneeAgentId: string;
   parentRecordId: string;
-  predecessorRecordId: string;
+  predecessorRecordIds: string[];
 }
 
 function blankDraft(): RecordDraft {
@@ -47,7 +47,7 @@ function blankDraft(): RecordDraft {
     assigneeAgentId: "",
     qaAssigneeAgentId: "",
     parentRecordId: "",
-    predecessorRecordId: "",
+    predecessorRecordIds: [],
   };
 }
 
@@ -59,7 +59,7 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
     assigneeAgentId: record.assigneeAgentId ?? "",
     qaAssigneeAgentId: record.qaAssigneeAgentId ?? "",
     parentRecordId: record.parentRecordId ?? "",
-    predecessorRecordId: record.dependencies[0]?.predecessorRecordId ?? "",
+    predecessorRecordIds: record.dependencies.map((dependency) => dependency.predecessorRecordId),
   };
 }
 
@@ -103,7 +103,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
         parentRecordId: draft.parentRecordId || null,
         assigneeAgentId: draft.assigneeAgentId || null,
         qaAssigneeAgentId: draft.qaAssigneeAgentId || null,
-        predecessorRecordIds: draft.predecessorRecordId ? [draft.predecessorRecordId] : [],
+        predecessorRecordIds: draft.predecessorRecordIds,
       };
       if (editingRecord) {
         return workRecordsApi.update(companyId, projectId, editingRecord.id, {
@@ -232,13 +232,21 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
               </select>
             </label>
 
-            <label className="space-y-1 text-sm font-medium">
-              <span>{l10n("local.work_record_predecessor_record")}</span>
-              <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.predecessorRecordId} onChange={(event) => setDraft((current) => ({ ...current, predecessorRecordId: event.target.value }))}>
-                <option value="">{l10n("local.work_record_no_predecessor")}</option>
-                {selectableRecords.map((record) => <option key={record.id} value={record.id}>{record.title}</option>)}
-              </select>
-            </label>
+            <fieldset className="space-y-1 text-sm font-medium">
+              <legend>{l10n("local.work_record_predecessor_record")}</legend>
+              <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border border-input p-2">
+                {selectableRecords.length === 0 ? <p className="text-muted-foreground">{l10n("local.work_record_no_predecessor")}</p> : null}
+                {selectableRecords.map((record) => <label key={record.id} className="flex min-h-8 cursor-pointer items-center gap-2 font-normal">
+                  <input type="checkbox" className="size-4 accent-primary" checked={draft.predecessorRecordIds.includes(record.id)} onChange={(event) => setDraft((current) => ({
+                    ...current,
+                    predecessorRecordIds: event.target.checked
+                      ? [...new Set([...current.predecessorRecordIds, record.id])]
+                      : current.predecessorRecordIds.filter((id) => id !== record.id),
+                  }))} />
+                  <span className="truncate" title={record.title}>{record.title}</span>
+                </label>)}
+              </div>
+            </fieldset>
 
             <label className="space-y-1 text-sm font-medium md:col-span-2">
               <span>{l10n("local.work_record_description")}</span>

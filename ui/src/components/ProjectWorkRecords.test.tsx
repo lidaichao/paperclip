@@ -44,7 +44,9 @@ function record(kind: "plan" | "defect", overrides: Partial<WorkRecord> = {}): W
     id: `${kind}-1`, companyId: "company-1", projectId: "project-1", kind,
     title: kind === "plan" ? "发布计划" : "窄屏缺陷", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null,
-    assigneeAgentId: null, qaAssigneeAgentId: null, businessStatus: kind === "plan" ? "backlog" : "done",
+    assigneeAgentId: null, qaAssigneeAgentId: null, packageQaRole: null,
+    qaRetestExemptionReason: null, qaCoverageRecordIds: [],
+    businessStatus: kind === "plan" ? "backlog" : "done",
     statusVersion: 1, revision: 1, dispatchState: "not_dispatched", dispatchRound: 0,
     dependencySetRevision: 1, blockedCycle: 0, dependencies: [],
     execution: { issueId: null, issueIdentifier: null, issueStatus: null, issueStatusVersion: null, lastRunId: null, lastRunStatus: null, lastRunAgentId: null, lastRunStartedAt: null, lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: now },
@@ -146,6 +148,26 @@ describe("ProjectWorkRecords", () => {
       businessStatus: "todo",
     });
     expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("preserves all existing predecessors when editing another field", async () => {
+    const first = record("plan", { id: "plan-a", title: "策划" });
+    const second = record("plan", { id: "plan-b", title: "程序" });
+    const dependent = record("plan", { id: "plan-c", title: "验收", dependencies: [
+      { predecessorRecordId: first.id, title: first.title, businessStatus: "done", dispatchState: "linked", holdReason: null },
+      { predecessorRecordId: second.id, title: second.title, businessStatus: "done", dispatchState: "linked", holdReason: null },
+    ] });
+    listMock.mockResolvedValue([dependent, first, second]);
+    await render("plan");
+    await act(async () => button("编辑测试").click());
+    const predecessorGroup = [...document.body.querySelectorAll("fieldset")].find((node) => node.textContent?.includes("前置"));
+    expect(predecessorGroup).toBeTruthy();
+    expect([...predecessorGroup!.querySelectorAll('input[type="checkbox"]')].map((node) => (node as HTMLInputElement).checked)).toEqual([true, true]);
+    await act(async () => button("保存计划").click());
+    await flush();
+    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", dependent.id, expect.objectContaining({
+      predecessorRecordIds: [first.id, second.id],
+    }));
   });
 
   it("switches fixed form and status copy to English while preserving record titles", async () => {
