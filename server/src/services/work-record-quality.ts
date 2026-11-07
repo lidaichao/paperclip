@@ -455,7 +455,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     for (const pair of coverage) {
       const execution = targetById.get(pair.executionRecordId);
       const qa = qaById.get(pair.qaRecordId);
-      if (!execution || !qa || qa.packageQaRole !== "qa" || qa.parentRecordId !== execution.parentRecordId) {
+      if (!execution || execution.packageQaRole !== "execution" || !qa || qa.packageQaRole !== "qa" || qa.parentRecordId !== execution.parentRecordId) {
         throw unprocessable("Original QA coverage no longer points to the same package", details("work_record_quality_target_invalid", { recordId: pair.executionRecordId, qaRecordId: pair.qaRecordId }));
       }
     }

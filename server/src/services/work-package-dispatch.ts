@@ -294,7 +294,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       const execution = byId.get(coverage.executionRecordId);
       const qa = byId.get(coverage.qaRecordId);
       let reason: string | null = null;
-      if (!execution || !qa || !selectedIds.has(coverage.qaRecordId) || qa.parentRecordId !== execution.parentRecordId) reason = "qa_outside_package";
+      if (!execution || execution.packageQaRole !== "execution" || !qa || !selectedIds.has(coverage.qaRecordId) || qa.parentRecordId !== execution.parentRecordId) reason = "qa_outside_package";
       else if (qa.packageQaRole !== "qa" || !qa.assigneeAgentId || qa.businessStatus === "cancelled") reason = "qa_unavailable";
       else {
         const reachable = new Set<string>();
