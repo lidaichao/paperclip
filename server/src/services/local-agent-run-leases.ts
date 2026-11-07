@@ -93,6 +93,15 @@ function wakeReasonFromRun(run: typeof heartbeatRuns.$inferSelect) {
   return typeof value === "string" && value.trim() ? value : "assignment";
 }
 
+function localCommentIntentDigest(input: { runId: string; issueId: string;
+  agentId: string; deviceId: string; body: string }) {
+  return createHash("sha256").update(JSON.stringify({
+    kind: "comment", runId: input.runId, issueId: input.issueId,
+    agentId: input.agentId, deviceId: input.deviceId,
+    canonicalContent: input.body,
+  })).digest("hex");
+}
+
 export function localAgentRunLeaseService(
   db: Db,
   deps: {
@@ -1625,6 +1634,9 @@ export function localAgentRunLeaseService(
         agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
         action: "issue.comment_added", entityType: "issue", entityId: issue.id,
         details: { commentId: saved.id, bodySnippet: saved.body.slice(0, 120),
+          clientRequestId: input.clientRequestId,
+          requestDigest: localCommentIntentDigest(input),
+          deviceId: input.deviceId,
           identifier: issue.identifier, issueTitle: issue.title, authorizationReason },
       }, publications);
       await (deps.syncCommentReferences ?? ((id, currentTx) => issueReferenceService(db).syncComment(id, currentTx)))(saved.id, tx);
@@ -1635,6 +1647,60 @@ export function localAgentRunLeaseService(
     }, { allowReviewReplay: true });
     for (const publication of publications) publishActivity(publication);
     return result.comment;
+  }
+
+  /** A positive receipt is sourced only from the original committed audit row.
+   * Absence is deliberately unknown, even when the old run has ended. */
+  async function readFencedWriteReceipt(input: LocalRunOwner & {
+    issueId: string; kind: string; clientRequestId: string; requestDigest: string;
+  }) {
+    requireOwner(input);
+    if (!UUID.test(input.issueId) || !UUID.test(input.clientRequestId) ||
+      !/^[a-f0-9]{64}$/.test(input.requestDigest)) {
+      throw badRequest("Invalid local write receipt identity");
+    }
+    return db.transaction(async (tx) => {
+      const [run] = await tx.select({ id: heartbeatRuns.id, status: heartbeatRuns.status })
+        .from(heartbeatRuns).where(and(
+          eq(heartbeatRuns.id, input.runId),
+          eq(heartbeatRuns.companyId, input.companyId),
+          eq(heartbeatRuns.agentId, input.agentId),
+          eq(heartbeatRuns.runtimeMode, "client_pull"),
+        ));
+      const [lease] = await tx.select().from(localAgentRunLeases).where(and(
+        eq(localAgentRunLeases.runId, input.runId),
+        eq(localAgentRunLeases.companyId, input.companyId),
+        eq(localAgentRunLeases.agentId, input.agentId),
+        eq(localAgentRunLeases.issueId, input.issueId),
+      ));
+      if (!run || !lease || lease.deviceId !== input.deviceId ||
+        lease.deviceKeyId !== input.keyId || lease.leaseId !== input.leaseId ||
+        lease.generation !== input.generation) {
+        throw forbidden("Local run receipt owner mismatch");
+      }
+      await assertLeaseDevice(tx as unknown as Db, lease, input);
+      if (input.kind !== "comment") return { state: "unsupported" as const };
+      const matches = await tx.select({ id: activityLog.id, details: activityLog.details })
+        .from(activityLog).where(and(
+          eq(activityLog.companyId, input.companyId),
+          eq(activityLog.agentId, input.agentId),
+          eq(activityLog.runId, input.runId),
+          eq(activityLog.entityType, "issue"),
+          eq(activityLog.entityId, input.issueId),
+          eq(activityLog.action, "issue.comment_added"),
+          sql`${activityLog.details}->>'clientRequestId' = ${input.clientRequestId}`,
+          sql`${activityLog.details}->>'deviceId' = ${input.deviceId}`,
+        )).limit(2);
+      if (matches.length > 1) throw conflict("Duplicate local write receipts require review");
+      const savedDigest = matches[0]?.details?.requestDigest;
+      if (matches.length && savedDigest !== input.requestDigest) {
+        throw conflict("Local write receipt digest mismatch");
+      }
+      return { state: matches.length ? "committed" as const : "unknown" as const,
+        kind: "comment" as const, runStatus: run.status,
+        leaseReleased: lease.releasedAt !== null,
+        ...(matches.length ? { receiptId: matches[0]!.id } : {}) };
+    });
   }
 
   async function createFencedReviewConfirmation(
@@ -2120,6 +2186,6 @@ export function localAgentRunLeaseService(
   return { claim, renew, control, finish, appendFencedEvent,
     addFencedComment, completeFencedChildWorkRecord, prepareFencedPoVerdict,
     prepareFencedDefectRepairHandoff,
-    createFencedReviewConfirmation, reviewFencedIssue,
+    readFencedWriteReceipt, createFencedReviewConfirmation, reviewFencedIssue,
     createFencedAgentReviewHandoff, createFencedCompletionReviewHandoff, patchFencedIssue };
 }

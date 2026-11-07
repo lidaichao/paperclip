@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 import express from "express";
@@ -732,6 +732,39 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await expect(svc.addFencedComment({ ...owner, clientRequestId: randomUUID(),
       body: "Another progress update" }, actor)).rejects.toMatchObject({ status: 409 });
     expect((await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId))).length).toBe(1);
+  });
+
+  it("reads only the original scoped comment receipt after the visible comment changes", async () => {
+    const scope = await fixture();
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
+    const owner = { ...scope, deviceId: "device-desktop-001", leaseId: claimed!.leaseId,
+      generation: claimed!.generation, issueId: scope.issueId };
+    const body = "Progress before response loss";
+    const digest = createHash("sha256").update(JSON.stringify({
+      kind: "comment", runId: owner.runId, issueId: owner.issueId,
+      agentId: owner.agentId, deviceId: owner.deviceId, canonicalContent: body,
+    })).digest("hex");
+    const clientRequestId = randomUUID();
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    expect((await svc.readFencedWriteReceipt({ ...owner, kind: "comment",
+      clientRequestId, requestDigest: digest })).state).toBe("unknown");
+    const comment = await svc.addFencedComment({ ...owner, body, clientRequestId }, actor);
+    await db.update(issueComments).set({ body: "Changed visible comment" })
+      .where(eq(issueComments.id, comment.id));
+    const receipt = await svc.readFencedWriteReceipt({ ...owner, kind: "comment",
+      clientRequestId, requestDigest: digest });
+    expect(receipt).toMatchObject({ state: "committed", kind: "comment" });
+    await expect(svc.readFencedWriteReceipt({ ...owner, kind: "comment",
+      clientRequestId, requestDigest: "a".repeat(64) })).rejects.toMatchObject({ status: 409 });
+    await expect(svc.readFencedWriteReceipt({ ...owner, deviceId: "other-desktop-001",
+      kind: "comment", clientRequestId, requestDigest: digest })).rejects.toMatchObject({ status: 403 });
+    await expect(svc.readFencedWriteReceipt({ ...owner, issueId: randomUUID(),
+      kind: "comment", clientRequestId, requestDigest: digest })).rejects.toMatchObject({ status: 403 });
+    expect((await svc.readFencedWriteReceipt({ ...owner, kind: "child_complete",
+      clientRequestId, requestDigest: digest })).state).toBe("unsupported");
   });
 
   it("rolls back comment and audit when reference projection fails, then retries the same request", async () => {

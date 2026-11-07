@@ -129,6 +129,17 @@ export function localAgentRunRoutes(db: Db) {
     return res.json(await leases.control(owner(req, req.query as Record<string, unknown>)));
   });
 
+  router.get("/agents/me/local-runs/:runId/write-receipt", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const query = req.query as Record<string, unknown>;
+    return res.json(await leases.readFencedWriteReceipt({
+      ...owner(req, query), issueId: String(query.issueId ?? ""),
+      kind: String(query.kind ?? ""),
+      clientRequestId: String(query.clientRequestId ?? ""),
+      requestDigest: String(query.requestDigest ?? ""),
+    }));
+  });
+
   router.get("/agents/me/local-runs/:runId/review-context", async (req, res) => {
     res.set("Cache-Control", "no-store");
     return res.json(await reviewContext.read(
