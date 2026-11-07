@@ -9,6 +9,7 @@ import {
   issueCommandDeliveries,
   issueCompletionReviews,
   issueComments,
+  issueRelations,
   issueThreadInteractions,
   issues,
   localAgentRunLeases,
@@ -2102,6 +2103,14 @@ export function localAgentRunLeaseService(
         actorRunId: input.runId, originRunId: input.runId,
         idempotencyKey: `local-subtask:${input.runId}:${input.clientRequestId}`,
       }, tx);
+      // The parent is the coordinator's work package. Keep it waiting on this
+      // exact delivery after the source run ends, so child completion wakes the
+      // same parent instead of leaving a prose-only blocked task.
+      await tx.insert(issueRelations).values({
+        companyId: input.companyId, issueId: child.id,
+        relatedIssueId: parent.id, type: "blocks",
+        createdByAgentId: input.agentId,
+      });
       await recordPreparedWriteReceipt(tx, input, "subtask_create", canonical, child.id);
       await logActivity(tx, {
         companyId: input.companyId, actorType: "agent", actorId: input.agentId,

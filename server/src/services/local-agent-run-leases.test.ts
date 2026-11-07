@@ -174,6 +174,13 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const children = await db.select({ id: issues.id }).from(issues)
       .where(eq(issues.parentId, scope.issueId));
     expect(children).toHaveLength(1);
+    const blockers = await db.select().from(issueRelations).where(and(
+      eq(issueRelations.issueId, first.child.id),
+      eq(issueRelations.relatedIssueId, scope.issueId),
+      eq(issueRelations.type, "blocks"),
+    ));
+    expect(blockers).toHaveLength(1);
+    expect(blockers[0]?.createdByAgentId).toBe(scope.agentId);
     await db.update(localAgentRunLeases).set({ expiresAt: new Date(0) })
       .where(eq(localAgentRunLeases.runId, scope.runId));
     await expect(svc.createFencedSubtask({ ...command, clientRequestId: randomUUID() }, actor))
