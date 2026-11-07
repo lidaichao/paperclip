@@ -1,12 +1,28 @@
-import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdir, open, readFile, rename } from "node:fs/promises";
 import path from "node:path";
 import type { AddressInfo } from "node:net";
 import type { AliceClient, LocalReviewContext, LocalRunClaim, LocalRunLease } from "./paperclip-client.js";
 
-interface PendingComment { runId: string; issueId: string; body: string; clientRequestId: string; confirmed: boolean }
-interface CommentIntentDocument { runId: string; issueId: string; intents: PendingComment[] }
+type LocalWriteKind = "comment" | "child_complete" | "po_verdict" |
+  "completion_review_handoff" | "review_decision";
+interface PendingLocalWriteIntent {
+  schemaVersion: 2; kind: LocalWriteKind; runId: string; issueId: string;
+  agentId: string; deviceId: string; canonicalContent: string; requestDigest: string;
+  clientRequestId: string; createdAt: string; confirmed: boolean;
+}
+interface LocalWriteIntentDocument {
+  schemaVersion: 2; runId: string; issueId: string; agentId: string; deviceId: string;
+  intents: PendingLocalWriteIntent[];
+}
+interface LegacyIntentDocument {
+  runId: string; issueId: string; intents: Array<{ confirmed: boolean }>;
+}
+interface NewIntent {
+  kind: LocalWriteKind; runId: string; issueId: string; agentId: string;
+  deviceId: string; canonicalContent: string; requestId?: string;
+}
 const MAX_BODY_BYTES = 64 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -35,16 +51,49 @@ async function bodyOf(req: IncomingMessage): Promise<Record<string, unknown>> {
   return value as Record<string, unknown>;
 }
 
-/** Durable per-run comment intentions. A lost response always replays the original UUID. */
+function intentDigest(input: Omit<NewIntent, "requestId">): string {
+  return createHash("sha256").update(JSON.stringify({
+    kind: input.kind, runId: input.runId, issueId: input.issueId,
+    agentId: input.agentId, deviceId: input.deviceId,
+    canonicalContent: input.canonicalContent,
+  })).digest("hex");
+}
+
+/** Durable per-run write intentions. A lost response must not mint a replacement UUID. */
 export class LocalCommentIntentStore {
   constructor(private readonly filePath: string) {}
 
-  private async read(): Promise<CommentIntentDocument | null> {
-    try { return JSON.parse(await readFile(this.filePath, "utf8")) as CommentIntentDocument; }
+  private async read(): Promise<LocalWriteIntentDocument | LegacyIntentDocument | null> {
+    let raw: unknown;
+    try { raw = JSON.parse(await readFile(this.filePath, "utf8")) as unknown; }
     catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; }
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("invalid local write intent file");
+    const document = raw as Record<string, unknown>;
+    if (typeof document.runId !== "string" || typeof document.issueId !== "string" ||
+      !Array.isArray(document.intents) ||
+      !document.intents.every((item) => item && typeof item === "object" &&
+        typeof (item as Record<string, unknown>).confirmed === "boolean")) {
+      throw new Error("invalid local write intent file");
+    }
+    if (document.schemaVersion === undefined) return document as unknown as LegacyIntentDocument;
+    if (document.schemaVersion !== 2 || typeof document.agentId !== "string" ||
+      typeof document.deviceId !== "string" || !document.intents.every((item) => {
+        const intent = item as PendingLocalWriteIntent;
+        return intent.schemaVersion === 2 &&
+          ["comment", "child_complete", "po_verdict", "completion_review_handoff", "review_decision"]
+            .includes(intent.kind) &&
+          intent.runId === document.runId && intent.issueId === document.issueId &&
+          intent.agentId === document.agentId && intent.deviceId === document.deviceId &&
+          typeof intent.canonicalContent === "string" && UUID.test(intent.clientRequestId) &&
+          typeof intent.createdAt === "string" && !Number.isNaN(Date.parse(intent.createdAt)) &&
+          intent.requestDigest === intentDigest(intent);
+      })) {
+      throw new Error("invalid local write intent file");
+    }
+    return document as unknown as LocalWriteIntentDocument;
   }
 
-  private async save(document: CommentIntentDocument): Promise<void> {
+  private async save(document: LocalWriteIntentDocument): Promise<void> {
     await mkdir(path.dirname(this.filePath), { recursive: true });
     const temporary = `${this.filePath}.${process.pid}.${randomUUID()}.tmp`;
     const handle = await open(temporary, "wx", 0o600);
@@ -53,36 +102,48 @@ export class LocalCommentIntentStore {
     await rename(temporary, this.filePath);
   }
 
-  async pending(runId: string, issueId: string, body: string, requestId?: string): Promise<PendingComment> {
-    if (requestId !== undefined && !UUID.test(requestId)) throw new Error("invalid comment request ID");
+  async pending(input: NewIntent): Promise<PendingLocalWriteIntent> {
+    const { kind, runId, issueId, agentId, deviceId, canonicalContent, requestId } = input;
+    if (requestId !== undefined && !UUID.test(requestId)) throw new Error("invalid local write request ID");
     const saved = await this.read();
-    if (saved && (saved.runId !== runId || saved.issueId !== issueId)) {
-      if (saved.intents.some((intent) => !intent.confirmed)) {
-        throw new Error("unresolved comment intent must be reconciled before another run");
+    if (saved?.intents.some((intent) => !intent.confirmed)) {
+      if (!("schemaVersion" in saved) || saved.runId !== runId || saved.issueId !== issueId ||
+        saved.agentId !== agentId || saved.deviceId !== deviceId) {
+        throw new Error("unresolved local write intent requires manual reconciliation");
       }
     }
-    const document: CommentIntentDocument = saved?.runId === runId && saved.issueId === issueId
-      ? saved : { runId, issueId, intents: [] };
+    const document: LocalWriteIntentDocument = saved && "schemaVersion" in saved &&
+      saved.runId === runId && saved.issueId === issueId &&
+      saved.agentId === agentId && saved.deviceId === deviceId
+      ? saved : { schemaVersion: 2, runId, issueId, agentId, deviceId, intents: [] };
     const existing = requestId === undefined ? undefined
       : document.intents.find((intent) => intent.clientRequestId === requestId);
     if (existing) {
-      if (existing.body !== body) throw new Error("comment request ID reused with different body");
+      if (existing.kind !== kind || existing.requestDigest !== intentDigest(input)) {
+        throw new Error("local write request ID reused with different command");
+      }
       return existing;
     }
     const unresolved = document.intents.find((intent) => !intent.confirmed);
     if (unresolved) throw new UnresolvedCommentIntentError(unresolved.clientRequestId);
     if (document.intents.length >= 200) throw new Error("comment intent limit reached");
-    const intent = { runId, issueId, body, clientRequestId: requestId ?? randomUUID(), confirmed: false };
+    const intent: PendingLocalWriteIntent = { schemaVersion: 2, kind, runId, issueId,
+      agentId, deviceId, canonicalContent, requestDigest: intentDigest(input),
+      clientRequestId: requestId ?? randomUUID(), createdAt: new Date().toISOString(), confirmed: false };
     document.intents.push(intent);
     await this.save(document);
     return intent;
   }
 
-  async confirmed(intent: PendingComment): Promise<void> {
+  async confirmed(intent: PendingLocalWriteIntent): Promise<void> {
     const current = await this.read();
-    const saved = current?.intents.find((entry) => entry.clientRequestId === intent.clientRequestId);
-    if (!saved || current?.runId !== intent.runId || current.issueId !== intent.issueId || saved.body !== intent.body) {
-      throw new Error("comment intent changed before confirmation");
+    if (!current || !("schemaVersion" in current)) throw new Error("local write intent changed before confirmation");
+    const saved = current.intents.find((entry) => entry.clientRequestId === intent.clientRequestId);
+    if (!saved || current.runId !== intent.runId || current.issueId !== intent.issueId ||
+      current.agentId !== intent.agentId || current.deviceId !== intent.deviceId ||
+      saved.kind !== intent.kind || saved.requestDigest !== intent.requestDigest ||
+      saved.canonicalContent !== intent.canonicalContent) {
+      throw new Error("local write intent changed before confirmation");
     }
     if (!saved.confirmed) { saved.confirmed = true; await this.save(current); }
   }
@@ -91,7 +152,7 @@ export class LocalCommentIntentStore {
     const saved = await this.read();
     if (!saved) return;
     if (saved.intents.some((intent) => !intent.confirmed)) {
-      throw new Error("unresolved comment intent requires manual reconciliation");
+      throw new Error("unresolved local write intent requires manual reconciliation");
     }
   }
 }
@@ -126,10 +187,12 @@ export async function startLocalRunWriteProxy(input: {
     leaseId: input.claim.leaseId, generation: input.claim.generation };
   let closed = false;
   let closing = false;
-  let failedFieldWrite = false;
   let reviewDecisionConfirmed = false;
   let sourceDispositionConfirmed = false;
   let writeQueue = Promise.resolve();
+  const pending = (kind: LocalWriteKind, canonicalContent: string, requestId?: string) =>
+    input.intentStore.pending({ kind, runId: input.claim.runId, issueId: input.claim.issueId,
+      agentId: input.claim.agentId, deviceId: input.deviceId, canonicalContent, requestId });
   const server = createServer(async (req, res) => {
     const bearer = req.headers.authorization?.replace(/^Bearer /i, "") ?? "";
     const supplied = Buffer.from(bearer);
@@ -172,8 +235,8 @@ export async function startLocalRunWriteProxy(input: {
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
           if (reviewDecisionConfirmed) throw new Error("review already decided in this run");
           const canonical = JSON.stringify({ outcome: decision.outcome, summary: decision.summary });
-          const intent = await input.intentStore.pending(input.claim.runId, input.claim.issueId,
-            canonical, decision.clientRequestId as string | undefined);
+          const intent = await pending("review_decision", canonical,
+            decision.clientRequestId as string | undefined);
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
           let saved: unknown;
           try {
@@ -226,8 +289,8 @@ export async function startLocalRunWriteProxy(input: {
             evidenceRefs: decision.evidenceRefs,
             targetRecordIds: decision.targetRecordIds,
           });
-          const intent = await input.intentStore.pending(input.claim.runId,
-            input.claim.issueId, canonical, decision.clientRequestId as string | undefined);
+          const intent = await pending("po_verdict", canonical,
+            decision.clientRequestId as string | undefined);
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
           let saved: unknown;
           try {
@@ -274,8 +337,8 @@ export async function startLocalRunWriteProxy(input: {
           }
           const canonical = JSON.stringify({ expectedStatusVersion: completion.expectedStatusVersion,
             summary: completion.summary });
-          const intent = await input.intentStore.pending(input.claim.runId,
-            input.claim.issueId, canonical, completion.clientRequestId as string | undefined);
+          const intent = await pending("child_complete", canonical,
+            completion.clientRequestId as string | undefined);
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
           let saved: unknown;
           try {
@@ -315,8 +378,8 @@ export async function startLocalRunWriteProxy(input: {
           }
           const canonical = JSON.stringify({ reviewerAgentId: handoff.reviewerAgentId,
             prompt: handoff.prompt, body: handoff.body });
-          const intent = await input.intentStore.pending(input.claim.runId, input.claim.issueId,
-            canonical, handoff.clientRequestId as string | undefined);
+          const intent = await pending("completion_review_handoff", canonical,
+            handoff.clientRequestId as string | undefined);
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
           let saved: unknown;
           try {
@@ -346,12 +409,12 @@ export async function startLocalRunWriteProxy(input: {
         const perform = async () => {
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
           if (sourceDispositionConfirmed) throw new Error("source run already completed or handed off");
-          const intent = await input.intentStore.pending(input.claim.runId, input.claim.issueId,
-            body.body as string, body.clientRequestId as string | undefined);
+          const intent = await pending("comment", body.body as string,
+            body.clientRequestId as string | undefined);
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
           let saved: unknown;
           try {
-            saved = await input.client.addLocalRunComment(lease, input.claim.issueId, intent.body,
+            saved = await input.client.addLocalRunComment(lease, input.claim.issueId, intent.canonicalContent,
               intent.clientRequestId, input.signal);
           } catch {
             throw new UnresolvedCommentIntentError(intent.clientRequestId);
@@ -364,19 +427,7 @@ export async function startLocalRunWriteProxy(input: {
         json(res, 201, await next); return;
       }
       if (req.method === "PATCH" && pathname === issuePath) {
-        const patch = await bodyOf(req);
-        if (!Object.keys(patch).length || Object.keys(patch).some((key) => !["title", "description", "priority"].includes(key))) {
-          json(res, 400, { error: "unsupported issue field" }); return;
-        }
-        const perform = async () => {
-          if (closed || input.signal.aborted) throw new Error("local run cancelled");
-          if (sourceDispositionConfirmed) throw new Error("source run already completed or handed off");
-          return input.client.patchLocalRunIssue(lease, input.claim.issueId, patch, input.signal);
-        };
-        const next = writeQueue.then(perform);
-        void next.catch(() => { failedFieldWrite = true; });
-        writeQueue = next.then(() => undefined, () => undefined);
-        json(res, 200, await next); return;
+        json(res, 403, { error: "local field edits require a durable server receipt" }); return;
       }
       json(res, 403, { error: "operation unavailable for local run" });
     } catch (error) {
@@ -396,7 +447,7 @@ export async function startLocalRunWriteProxy(input: {
     apiBase: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     token,
     decisionConfirmed: () => reviewDecisionConfirmed,
-    writeFailed: () => failedFieldWrite,
+    writeFailed: () => false,
     async close() {
       closing = true;
       try {

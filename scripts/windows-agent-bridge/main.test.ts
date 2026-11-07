@@ -11,9 +11,13 @@ describe("bridge lifecycle", () => {
   it("does not claim or start another model while an earlier write intent is unresolved", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "alice-unresolved-"));
     const intentFile = path.join(dir, "intent.json");
-    await new LocalCommentIntentStore(intentFile).pending(
-      "f2c991f1-b53d-4bb5-b134-8e29d43815d0",
-      "1b9c2019-b811-40a0-bd21-0365977a0001", "possibly committed comment");
+    await new LocalCommentIntentStore(intentFile).pending({
+      kind: "comment", runId: "f2c991f1-b53d-4bb5-b134-8e29d43815d0",
+      issueId: "1b9c2019-b811-40a0-bd21-0365977a0001",
+      agentId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a",
+      deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+      canonicalContent: "possibly committed comment",
+    });
     const claimLocalRun = vi.fn();
     const claimKey = vi.fn();
     await expect(claimAndRunOnce({

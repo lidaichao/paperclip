@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -72,6 +72,7 @@ describe("fenced local run write capability", () => {
       expect(f.prepareLocalPoVerdict.mock.calls[0]?.[1]).toMatchObject({
         issueId, ...decision, clientRequestId: expect.any(String),
       });
+      expect(JSON.parse(await readFile(f.intentFile, "utf8")).intents[0].kind).toBe("po_verdict");
       expect((await f.request(`/api/issues/${issueId}`, "PATCH", { title: "Late" })).status)
         .toBe(409);
       expect((await f.request(`/api/issues/${issueId}/child-complete`, "POST", {
@@ -90,6 +91,7 @@ describe("fenced local run write capability", () => {
         issueId, expectedStatusVersion: 3, summary: "Child delivery verified",
         clientRequestId: expect.any(String),
       });
+      expect(JSON.parse(await readFile(f.intentFile, "utf8")).intents[0].kind).toBe("child_complete");
       expect((await f.request(`/api/issues/${issueId}/comments`, "POST",
         { body: "Late edit" })).status).toBe(409);
       expect((await f.request(`/api/issues/${issueId}/completion-review-handoff`, "POST", {
@@ -110,6 +112,8 @@ describe("fenced local run write capability", () => {
         issueId, reviewerAgentId, prompt: "Verify acceptance criteria",
         body: "Work is ready", clientRequestId: expect.any(String),
       });
+      expect(JSON.parse(await readFile(f.intentFile, "utf8")).intents[0].kind)
+        .toBe("completion_review_handoff");
       expect((await f.request(`/api/issues/${issueId}/comments`, "POST",
         { body: "Late comment" })).status).toBe(409);
       expect((await f.request(`/api/issues/${issueId}`, "PATCH",
@@ -166,6 +170,7 @@ describe("fenced local run write capability", () => {
       expect(accept).not.toHaveBeenCalled();
       expect(reject.mock.calls[0]?.[1]).toMatchObject({ issueId, reviewId,
         summary: "Missing acceptance criterion", clientRequestId: expect.any(String) });
+      expect(JSON.parse(await readFile(intentFile, "utf8")).intents[0].kind).toBe("review_decision");
       expect((await request(`/api/issues/${issueId}/review-decision`, "POST",
         { outcome: "accepted", summary: "Changed mind" })).status).toBe(409);
     } finally { await proxy.close(); }
@@ -212,7 +217,15 @@ describe("fenced local run write capability", () => {
       f.addLocalRunComment.mockRejectedValueOnce(new Error("response lost"));
       const lost = await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Progress" });
       expect(lost.status).toBe(409);
-      const persisted = JSON.parse(await readFile(f.intentFile, "utf8")) as { intents: Array<{ clientRequestId: string }> };
+      const persisted = JSON.parse(await readFile(f.intentFile, "utf8")) as {
+        schemaVersion: number; agentId: string; deviceId: string;
+        intents: Array<{ schemaVersion: number; kind: string; clientRequestId: string;
+          requestDigest: string }>;
+      };
+      expect(persisted).toMatchObject({ schemaVersion: 2, agentId,
+        deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f" });
+      expect(persisted.intents[0]).toMatchObject({ schemaVersion: 2, kind: "comment",
+        requestDigest: expect.stringMatching(/^[0-9a-f]{64}$/) });
       expect(persisted.intents[0].clientRequestId).toMatch(/^[0-9a-f-]{36}$/i);
       expect(await lost.json()).toMatchObject({ clientRequestId: persisted.intents[0].clientRequestId });
       const unresolved = await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Progress" });
@@ -229,10 +242,10 @@ describe("fenced local run write capability", () => {
       expect(f.addLocalRunComment.mock.calls.slice(0, 2).map((call) => call[3]))
         .toEqual([persisted.intents[0].clientRequestId, persisted.intents[0].clientRequestId]);
       expect(f.addLocalRunComment.mock.calls[2][3]).not.toBe(persisted.intents[0].clientRequestId);
-      expect((await f.request(`/api/issues/${issueId}`, "PATCH", { status: "done" })).status).toBe(400);
-      expect((await f.request(`/api/issues/${issueId}`, "PATCH", { assigneeAgentId: agentId })).status).toBe(400);
-      expect((await f.request(`/api/issues/${issueId}`, "PATCH", { priority: "high" })).status).toBe(200);
-      expect(f.patchLocalRunIssue).toHaveBeenCalledTimes(1);
+      expect((await f.request(`/api/issues/${issueId}`, "PATCH", { status: "done" })).status).toBe(403);
+      expect((await f.request(`/api/issues/${issueId}`, "PATCH", { assigneeAgentId: agentId })).status).toBe(403);
+      expect((await f.request(`/api/issues/${issueId}`, "PATCH", { priority: "high" })).status).toBe(403);
+      expect(f.patchLocalRunIssue).not.toHaveBeenCalled();
     } finally { await f.proxy.close(); }
   });
 
@@ -242,9 +255,9 @@ describe("fenced local run write capability", () => {
     expect((await f.request(`/api/issues/${issueId}/comments`, "POST", { body: "Final result" })).status).toBe(409);
     await expect(f.proxy.close()).rejects.toThrow("manual reconciliation");
     const persisted = JSON.parse(await readFile(f.intentFile, "utf8")) as {
-      intents: Array<{ body: string; confirmed: boolean }>;
+      intents: Array<{ canonicalContent: string; confirmed: boolean }>;
     };
-    expect(persisted.intents).toEqual([expect.objectContaining({ body: "Final result", confirmed: false })]);
+    expect(persisted.intents).toEqual([expect.objectContaining({ canonicalContent: "Final result", confirmed: false })]);
   });
 
   it("waits for an accepted comment write before closing a successful run", async () => {
@@ -268,41 +281,85 @@ describe("fenced local run write capability", () => {
     await response;
   });
 
-  it("waits for an in-flight field edit before closing a successful run", async () => {
+  it("rejects field edits without writing or creating an intent", async () => {
     const f = await fixture();
-    let entered!: () => void;
-    let finishWrite!: (value: unknown) => void;
-    const enteredWrite = new Promise<void>((resolve) => { entered = resolve; });
-    f.patchLocalRunIssue.mockImplementationOnce(() => {
-      entered();
-      return new Promise((resolve) => { finishWrite = resolve; });
-    });
-    const response = f.request(`/api/issues/${issueId}`, "PATCH", { priority: "high" }).catch(() => null);
-    await enteredWrite;
-    let settled = false;
-    const close = f.proxy.close().then(() => { settled = true; });
-    await Promise.resolve();
-    expect(settled).toBe(false);
-    finishWrite({ id: issueId, priority: "high" });
-    await close;
-    expect(f.patchLocalRunIssue).toHaveBeenCalledTimes(1);
-    await response;
-  });
-
-  it("refuses a successful finish after a field edit failed", async () => {
-    const f = await fixture();
-    f.patchLocalRunIssue.mockRejectedValueOnce(new Error("server rejected edit"));
-    expect((await f.request(`/api/issues/${issueId}`, "PATCH", { priority: "high" })).status).toBe(409);
-    expect(f.proxy.writeFailed()).toBe(true);
-    await expect(f.proxy.close()).resolves.toBeUndefined();
+    try {
+      for (const patch of [{ title: "Changed" }, { description: "Changed" }, { priority: "high" }]) {
+        const response = await f.request(`/api/issues/${issueId}`, "PATCH", patch);
+        expect(response.status).toBe(403);
+        expect(await response.json()).toMatchObject({ error: expect.stringContaining("durable server receipt") });
+      }
+      expect(f.patchLocalRunIssue).not.toHaveBeenCalled();
+      expect(f.proxy.writeFailed()).toBe(false);
+    } finally { await f.proxy.close(); }
   });
 
   it("accepts a completed prior-run intent when the current run has no comment", async () => {
     const f = await fixture();
     const store = new LocalCommentIntentStore(f.intentFile);
-    const previous = await store.pending("e154778a-02bb-45d0-8391-d8a1b2a24112", issueId, "Previous result");
+    const previous = await store.pending({ kind: "comment",
+      runId: "e154778a-02bb-45d0-8391-d8a1b2a24112", issueId, agentId,
+      deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f", canonicalContent: "Previous result" });
     await store.confirmed(previous);
     await expect(f.proxy.close()).resolves.toBeUndefined();
+  });
+
+  it("binds each durable intent to command kind, agent, device and canonical content", async () => {
+    const f = await fixture();
+    try {
+      const store = new LocalCommentIntentStore(f.intentFile);
+      const base = { runId, issueId, agentId,
+        deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f", canonicalContent: "same payload" };
+      const first = await store.pending({ ...base, kind: "comment" });
+      await expect(store.pending({ ...base, kind: "child_complete",
+        requestId: first.clientRequestId })).rejects.toThrow("different command");
+      await expect(store.pending({ ...base, kind: "comment", deviceId: "another-device",
+        requestId: first.clientRequestId })).rejects.toThrow("manual reconciliation");
+      await store.confirmed(first);
+      const second = await store.pending({ ...base, kind: "child_complete" });
+      expect(second.requestDigest).not.toBe(first.requestDigest);
+      await store.confirmed(second);
+      const persisted = JSON.parse(await readFile(f.intentFile, "utf8"));
+      expect(persisted.intents.map((item: { kind: string }) => item.kind))
+        .toEqual(["comment", "child_complete"]);
+      expect(persisted.intents.every((item: { schemaVersion: number; agentId: string;
+        deviceId: string; requestDigest: string; confirmed: boolean }) =>
+        item.schemaVersion === 2 && item.agentId === agentId &&
+        item.deviceId === base.deviceId && /^[0-9a-f]{64}$/.test(item.requestDigest) &&
+        item.confirmed)).toBe(true);
+    } finally { await f.proxy.close(); }
+  });
+
+  it("quarantines an unresolved legacy file without guessing its command kind", async () => {
+    const f = await fixture();
+    const store = new LocalCommentIntentStore(f.intentFile);
+    try {
+      await writeFile(f.intentFile, JSON.stringify({ runId, issueId,
+        intents: [{ runId, issueId, body: "could be a command",
+          clientRequestId: "88ff6583-5051-48aa-8bd4-2666899036b2", confirmed: false }] }));
+      await expect(store.assertNoPending()).rejects.toThrow("manual reconciliation");
+      await expect(store.pending({ kind: "comment", runId, issueId, agentId,
+        deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
+        canonicalContent: "could be a command", requestId: "88ff6583-5051-48aa-8bd4-2666899036b2" }))
+        .rejects.toThrow("manual reconciliation");
+      expect(JSON.parse(await readFile(f.intentFile, "utf8")).schemaVersion).toBeUndefined();
+    } finally { await f.proxy.close().catch(() => undefined); }
+  });
+
+  it("replaces a fully confirmed legacy file with versioned intents on the next write", async () => {
+    const f = await fixture();
+    try {
+      await writeFile(f.intentFile, JSON.stringify({ runId, issueId,
+        intents: [{ runId, issueId, body: "old result",
+          clientRequestId: "88ff6583-5051-48aa-8bd4-2666899036b2", confirmed: true }] }));
+      const store = new LocalCommentIntentStore(f.intentFile);
+      await expect(store.assertNoPending()).resolves.toBeUndefined();
+      const intent = await store.pending({ kind: "comment", runId, issueId, agentId,
+        deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f", canonicalContent: "new result" });
+      expect(intent.schemaVersion).toBe(2);
+      await store.confirmed(intent);
+      expect(JSON.parse(await readFile(f.intentFile, "utf8")).intents).toHaveLength(1);
+    } finally { await f.proxy.close(); }
   });
 
   it("closes the write capability on cancellation before another write", async () => {
