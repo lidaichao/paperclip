@@ -78,6 +78,22 @@ describe("single-agent claim cycle", () => {
     expect(client.claimLocalRun).not.toHaveBeenCalled();
   });
 
+  it("does not unlock a preflight-only run when the server cannot prove its finish", async () => {
+    const { state, intentFile } = await fixture();
+    await state.markClaimed({ ...claimResponse(), leaseDeadlineMonotonicMs: performance.now() + 60_000 });
+    await state.markFinishIntent(runId, { clientRequestId: "c1d46789-26c2-433d-bf7f-7a21f8bd30d6",
+      outcome: "failed", exitCode: 1 });
+    const client = { claimLocalRun: vi.fn(),
+      readLocalFinishReceipt: vi.fn(async () => "unknown" as const) } as unknown as AliceClient;
+    const runner = vi.fn();
+    await expect(claimAndRunOnce({ client, state, deviceId, companyId, agent,
+      localAgent, token: "secret", intentFile, signal: new AbortController().signal,
+      runner })).rejects.toThrow("finish is unconfirmed");
+    expect(await state.currentClaim()).toMatchObject({ runId });
+    expect(client.claimLocalRun).not.toHaveBeenCalled();
+    expect(runner).not.toHaveBeenCalled();
+  });
+
   it("persists the key before claim and rotates it only after the server confirms finish", async () => {
     const { file, intentFile, state } = await fixture();
     let claimKey = "";
