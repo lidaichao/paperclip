@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { executeClaimedRun, stopWindowsProcessTree } from "./claimed-run.js";
 import { AliceClient, type LocalRunClaim } from "./paperclip-client.js";
 import type { LocalAgentRunInput } from "./adapter-runtime.js";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -157,6 +157,41 @@ describe("claimed local run", () => {
     expect(result.outcome).toBe("failed");
     expect(stop).toHaveBeenCalledWith(12345, startedAt);
     expect(calls.some((url) => url.endsWith(`/local-runs/${RUN_ID}/finish`))).toBe(true);
+  });
+
+  it("refuses server finish when a supervised model has no durable Job stop receipt", async () => {
+    const calls: string[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key-123456",
+      fetch: async (url) => {
+        const pathname = new URL(String(url)).pathname;
+        calls.push(pathname);
+        if (pathname === "/api/agents/me") return Response.json({
+          id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
+        if (pathname === `/api/issues/${ISSUE_ID}`) return Response.json({
+          id: ISSUE_ID, companyId: COMPANY_ID, assigneeAgentId: AGENT_ID,
+          executionRunId: RUN_ID, identifier: "PAP-20", title: "Work",
+          status: "in_progress", priority: "medium", updatedAt: "2026-11-07T00:00:00Z" });
+        return Response.json({ runId: RUN_ID, status: "succeeded" });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const receiptBaseDir = await mkdtemp(path.join(os.tmpdir(), "alice-missing-job-proof-"));
+    const nonce = "7c6b4410-0c4c-4384-b36a-127fb015d7fd";
+    const receiptDir = path.join(receiptBaseDir, RUN_ID, nonce);
+    await mkdir(receiptDir, { recursive: true });
+    const runner = vi.fn(async (input: LocalAgentRunInput) => {
+      await input.onSpawn?.({ pid: 12345, processGroupId: null,
+        startedAt: new Date().toISOString(), supervisor: { nonce, receiptDir } });
+      return { runId: RUN_ID, exitCode: 0, signal: null, timedOut: false,
+        succeeded: true, errorCode: null, sessionParams: null, sessionDisplayId: null };
+    });
+    const intentFile = path.join(receiptBaseDir, "intent.json");
+    await expect(executeClaimedRun({ claim, client, deviceId: DEVICE_ID,
+      companyId: COMPANY_ID, agent, localAgent, token: "server-only-key-123456",
+      intentFile, runner, supervisorBinding: { executable: "C:\\tools\\PaperclipRunSupervisor.exe",
+        receiptBaseDir, runId: RUN_ID, leaseId: claim.leaseId, deviceId: DEVICE_ID,
+        bridgeCreationFileTime: "134071200000000000", bridgeSessionId: 1 } }))
+      .rejects.toThrow();
+    expect(calls.some((pathname) => pathname.endsWith("/finish"))).toBe(false);
   });
 
   it("keeps the claim latched when an adapter throws without a reported child identity", async () => {
