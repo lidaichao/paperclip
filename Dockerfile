@@ -126,7 +126,8 @@ FROM runner-build AS build
 WORKDIR /app
 COPY --from=deps /app /app
 COPY . .
-RUN find packages/paperclip-runner/runner packages/paperclip-runner/protocol -type f -exec touch -d @0 {} + \
+RUN find packages/paperclip-runner/runner packages/paperclip-runner/protocol \
+  -type d -name target -prune -o -type f -exec touch -d @0 {} + \
   && touch -d @0 packages/paperclip-runner/rust-toolchain.toml
 # Both the browser bundle and server stamp need the source commit. Declare it
 # after the stable dependency layers, before either application build.
