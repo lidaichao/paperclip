@@ -302,6 +302,33 @@ export class AliceClient {
     return record;
   }
 
+  /** PO evidence is scoped by the server to this exact local run and device. */
+  async readLocalWorkPackageContext(claim: LocalRunClaim, deviceId: string): Promise<unknown> {
+    const identity = this.#requireVerifiedIdentity();
+    if (claim.agentId !== identity.id) throw new Error("local PO claim identity mismatch");
+    const lease = { runId: claim.runId, leaseId: claim.leaseId,
+      generation: claim.generation, deviceId };
+    this.#validateLease(lease);
+    const query = new URLSearchParams({ deviceId, leaseId: claim.leaseId,
+      generation: String(claim.generation) });
+    const record = asRecord(await this.#getJson(
+      `/api/agents/me/local-runs/${claim.runId}/work-package-context?${query}`),
+    "local work package context");
+    const issue = asRecord(record.issue, "local PO issue");
+    const parent = asRecord(record.package, "local PO package");
+    const cycle = asRecord(record.cycle, "local PO cycle");
+    if (issue.id !== claim.issueId || issue.status !== "in_progress" ||
+      !Number.isSafeInteger(issue.statusVersion) ||
+      !Array.isArray(record.members) ||
+      !Array.isArray(record.verdicts) ||
+      typeof parent.id !== "string" ||
+      typeof cycle.id !== "string" ||
+      typeof cycle.poItemId !== "string") {
+      throw new Error("local work package context identity or shape mismatch");
+    }
+    return record;
+  }
+
   /** Dedicated review is read with the current device lease, never via generic issue ownership. */
   async readLocalReviewContext(claim: LocalRunClaim, deviceId: string): Promise<LocalReviewContext> {
     const identity = this.#requireVerifiedIdentity();

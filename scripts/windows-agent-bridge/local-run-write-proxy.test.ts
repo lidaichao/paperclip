@@ -21,6 +21,8 @@ async function fixture() {
     async () => ({ reviewId: "807c65f2-11aa-4e37-a6f8-ae5896363e88" }));
   const completeLocalChildWorkRecord = vi.fn<(...args: unknown[]) => Promise<unknown>>(
     async () => ({ receiptId: "38a5808c-47f3-4029-bdfe-0d84504bdc8a", statusVersion: 4 }));
+  const readLocalWorkPackageContext = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+    async () => ({ issue: { id: issueId }, cycle: { id: "cycle-1" }, members: [] }));
   const controller = new AbortController();
   const proxy = await startLocalRunWriteProxy({ claim, deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
     signal: controller.signal, intentStore: new LocalCommentIntentStore(intentFile),
@@ -28,7 +30,7 @@ async function fixture() {
       readLocalRunIdentity: () => ({ id: agentId, companyId: "company-1", name: "Luna" }),
       readLocalRunIssue: async () => ({ id: issueId, title: "Task" }),
       addLocalRunComment, patchLocalRunIssue, createLocalCompletionReviewHandoff,
-      completeLocalChildWorkRecord,
+      completeLocalChildWorkRecord, readLocalWorkPackageContext,
     },
   });
   const request = (route: string, method = "GET", body?: unknown, bearer = proxy.token) =>
@@ -36,10 +38,24 @@ async function fixture() {
       headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   return { proxy, controller, request, addLocalRunComment, patchLocalRunIssue,
-    createLocalCompletionReviewHandoff, completeLocalChildWorkRecord, intentFile };
+    createLocalCompletionReviewHandoff, completeLocalChildWorkRecord,
+    readLocalWorkPackageContext, intentFile };
 }
 
 describe("fenced local run write capability", () => {
+  it("exposes only this task's PO context through the loopback lease", async () => {
+    const f = await fixture();
+    try {
+      const response = await f.request(`/api/issues/${issueId}/work-package-context`);
+      expect(response.status).toBe(200);
+      expect((await response.json()).cycle.id).toBe("cycle-1");
+      expect(f.readLocalWorkPackageContext).toHaveBeenCalledWith(claim,
+        "8da47d3b-0a6e-49d4-9c26-17bc76de470f");
+      expect((await f.request(`/api/issues/${agentId}/work-package-context`)).status).toBe(403);
+      expect((await f.request(`/api/issues/${issueId}/work-package-context`,
+        "GET", undefined, "wrong-token")).status).toBe(401);
+    } finally { await f.proxy.close(); }
+  });
   it("completes a child once and rejects a second source mutation", async () => {
     const f = await fixture();
     try {

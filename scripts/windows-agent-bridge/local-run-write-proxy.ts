@@ -100,7 +100,8 @@ export class LocalCommentIntentStore {
 export async function startLocalRunWriteProxy(input: {
   client: Pick<AliceClient, "readLocalRunIdentity" | "readLocalRunIssue" | "addLocalRunComment" | "patchLocalRunIssue"> &
     Partial<Pick<AliceClient, "acceptLocalCompletionReview" | "rejectLocalCompletionReview" |
-      "createLocalCompletionReviewHandoff" | "completeLocalChildWorkRecord">>;
+      "createLocalCompletionReviewHandoff" | "completeLocalChildWorkRecord" |
+      "readLocalWorkPackageContext">>;
   claim: LocalRunClaim;
   deviceId: string;
   signal: AbortSignal;
@@ -146,6 +147,13 @@ export async function startLocalRunWriteProxy(input: {
           ...input.reviewContext!.issue,
           completionReview: input.reviewContext!.review,
         } : await input.client.readLocalRunIssue(input.claim)); return;
+      }
+      if (!review && req.method === "GET" && pathname === `${issuePath}/work-package-context`) {
+        if (!input.client.readLocalWorkPackageContext) {
+          json(res, 503, { error: "work package context unavailable" }); return;
+        }
+        json(res, 200, await input.client.readLocalWorkPackageContext(input.claim, input.deviceId));
+        return;
       }
       if (!review && sourceDispositionConfirmed && req.method !== "GET") {
         json(res, 409, { error: "source run already completed or handed off" }); return;

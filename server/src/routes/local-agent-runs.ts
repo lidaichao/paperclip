@@ -6,6 +6,7 @@ import { addIssueCommentSchema, updateIssueSchema } from "@paperclipai/shared";
 import { badRequest, forbidden } from "../errors.js";
 import { localAgentRunLeaseService, type LocalRunOwner } from "../services/local-agent-run-leases.js";
 import { localAgentReviewContextService } from "../services/local-agent-review-context.js";
+import { localWorkPackageContextService } from "../services/local-work-package-context.js";
 import { issueCompletionReviewDecisionService } from "../services/issue-completion-review-decisions.js";
 import { localAgentDeviceBindingService } from "../services/local-agent-device-bindings.js";
 import { accessService } from "../services/access.js";
@@ -27,6 +28,7 @@ export function localAgentRunRoutes(db: Db) {
   const router = Router();
   const leases = localAgentRunLeaseService(db);
   const reviewContext = localAgentReviewContextService(db);
+  const workPackageContext = localWorkPackageContextService(db);
   const reviewDecisions = issueCompletionReviewDecisionService(db);
   const bindings = localAgentDeviceBindingService(db);
 
@@ -130,6 +132,12 @@ export function localAgentRunRoutes(db: Db) {
   router.get("/agents/me/local-runs/:runId/review-context", async (req, res) => {
     res.set("Cache-Control", "no-store");
     return res.json(await reviewContext.read(
+      owner(req, req.query as Record<string, unknown>), req.actor));
+  });
+
+  router.get("/agents/me/local-runs/:runId/work-package-context", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    return res.json(await workPackageContext.read(
       owner(req, req.query as Record<string, unknown>), req.actor));
   });
 

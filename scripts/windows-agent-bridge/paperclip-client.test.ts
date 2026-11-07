@@ -15,6 +15,30 @@ function jsonResponse(value: unknown, status = 200): Response {
 }
 
 describe("AliceClient", () => {
+  it("reads PO package evidence only with the exact claimed lease", async () => {
+    const calls: string[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key",
+      fetch: async (url) => {
+        calls.push(String(url));
+        return String(url).endsWith("/api/agents/me")
+          ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+          : jsonResponse({ issue: { id: ISSUE_ID, status: "in_progress", statusVersion: 2 },
+            package: { id: KEY_ID }, cycle: { id: LEASE_ID, poItemId: KEY_ID },
+            members: [], verdicts: [] });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const claim = { runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID,
+      leaseId: LEASE_ID, generation: 1, leaseExpiresAt: "2026-11-07T05:00:00Z",
+      leaseDeadlineMonotonicMs: performance.now() + 60_000,
+      wakeReason: "assignment", workspacePolicy: "agent_home" as const };
+    const context = await client.readLocalWorkPackageContext(claim, DEVICE_ID) as {
+      package: { id: string } };
+    expect(context.package.id).toBe(KEY_ID);
+    expect(calls[1]).toContain(`/api/agents/me/local-runs/${RUN_ID}/work-package-context?`);
+    expect(calls[1]).toContain(`leaseId=${LEASE_ID}`);
+    await expect(client.readLocalWorkPackageContext({ ...claim, agentId: KEY_ID }, DEVICE_ID))
+      .rejects.toThrow("identity mismatch");
+  });
   it("sends local writes only to the lease-fenced endpoints with the stable comment request ID", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key", fetch: async (url, init) => {
