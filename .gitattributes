@@ -1,9 +1,12 @@
 patches/*.patch whitespace=-space-before-tab
 packages/paperclip-runner/generated/capability/* text eol=lf
+packages/paperclip-runner/generated/semantic-action-catalog.json text eol=lf
+packages/paperclip-runner/protocol/fixtures/replay/golden/* text eol=lf
 packages/paperclip-runner/src/protocol/generated/** text eol=lf
 packages/paperclip-runner/src/drivers/acpx/generated-sidecar-contract.ts text eol=lf
 packages/paperclip-runner/runner/crates/runner-core/src/generated_acpx_sidecar_contract.rs text eol=lf
 packages/paperclip-runner/protocol/manifest.json text eol=lf
 packages/paperclip-runner/spec/capability/*.yaml text eol=lf
+packages/paperclip-runner/spec/capability/protocol-coverage.json text eol=lf
 packages/paperclip-runner/src/generated/capability-contract.ts text eol=lf
 packages/paperclip-runner/docs/capability-contract.md text eol=lf
