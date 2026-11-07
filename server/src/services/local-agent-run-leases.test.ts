@@ -336,6 +336,8 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(run.status).toBe("running");
     expect(run.runtimeMode).toBe("client_pull");
     expect(issue.executionRunId).toBe(scope.runId);
+    expect(issue.status).toBe("in_progress");
+    expect(issue.statusVersion).toBe(1);
     const secondService = localAgentRunLeaseService(db);
     const replay = await secondService.claim(raced[0].status === "fulfilled" ? input : otherInput);
     expect(replay?.leaseId).toBe(winner.value.leaseId);
@@ -496,13 +498,14 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       idempotencyKey: randomUUID() });
     await db.update(issues).set({ status: "todo", statusVersion: 9 })
       .where(eq(issues.id, human.issueId));
+    const [humanChanged] = await db.select().from(issues).where(eq(issues.id, human.issueId));
     await svc.finish({ ...human, deviceId: "device-desktop-001",
       leaseId: humanClaim!.leaseId, generation: humanClaim!.generation,
       outcome: "succeeded", exitCode: 0, processStopped: true,
       clientRequestId: randomUUID() });
     const [preserved] = await db.select().from(issues).where(eq(issues.id, human.issueId));
     expect(preserved.status).toBe("todo");
-    expect(preserved.statusVersion).toBe(9);
+    expect(preserved.statusVersion).toBe(humanChanged.statusVersion);
   }, 30_000);
 
   it.each(["failed", "cancelled"] as const)(
@@ -688,7 +691,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .filter((event) => event.action === "issue.comment_added")).toHaveLength(0);
   });
 
-  it("rejects mentions, links and progress comments on an unstarted task", async () => {
+  it("starts the claimed task and rejects mentions or links in progress comments", async () => {
     const scope = await fixture();
     const claimed = await localAgentRunLeaseService(db).claim({
       ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
@@ -698,16 +701,16 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
       companyId: scope.companyId, keyId: scope.keyId } as const;
     const svc = localAgentRunLeaseService(db);
-    await expect(svc.addFencedComment({ ...owner, body: "I started" }, actor))
-      .rejects.toMatchObject({ status: 409 });
-    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    expect((await db.select().from(issues).where(eq(issues.id, scope.issueId)))[0].status)
+      .toBe("in_progress");
+    await svc.addFencedComment({ ...owner, body: "I started" }, actor);
     for (const body of ["@Luna please see", "https://example.com", "www.example.com",
       "example.com", "mailto:team@example.com"]) {
       await expect(svc.addFencedComment({ ...owner, body }, actor))
         .rejects.toMatchObject({ status: 400 });
     }
     expect(await db.select().from(issueComments).where(eq(issueComments.issueId, scope.issueId)))
-      .toHaveLength(0);
+      .toHaveLength(1);
   });
 
   it("rejects other issues, companies, generations, and writes after cancellation", async () => {
@@ -1550,6 +1553,9 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await db.delete(issues).where(eq(issues.id, scope.issueId));
     const [lease] = await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId));
     expect(lease.issueId).toBe(scope.issueId);
+    // Audit rows retain their run FK; remove the fixture's audit before testing
+    // the historical lease's cascade behavior in isolation.
+    await db.delete(activityLog).where(eq(activityLog.runId, scope.runId));
     await db.delete(heartbeatRuns).where(eq(heartbeatRuns.id, scope.runId));
     expect(await db.select().from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, scope.runId))).toHaveLength(0);
   });

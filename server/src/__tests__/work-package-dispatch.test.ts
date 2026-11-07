@@ -813,8 +813,8 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
       idempotencyKey: randomUUID() });
     expect(claimed?.runId).toBe(queued.id);
     expect(claimed?.issueId).toBe(predecessorIssueId);
-    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, predecessorIssueId));
     const [source] = await db.select().from(issues).where(eq(issues.id, predecessorIssueId));
+    expect(source.status).toBe("in_progress");
     const owner = { companyId: context.company.id, agentId: context.agent.id,
       keyId, deviceId: "package-desktop", runId: queued.id,
       leaseId: claimed!.leaseId, generation: claimed!.generation };

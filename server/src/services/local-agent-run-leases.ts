@@ -143,7 +143,8 @@ export function localAgentRunLeaseService(
     if (!/^[a-zA-Z0-9._:-]{8,128}$/.test(input.idempotencyKey)) {
       throw badRequest("Idempotency-Key must be 8–128 safe characters");
     }
-    return db.transaction(async (tx) => {
+    const publications: ActivityPublication[] = [];
+    const claimedRun = await db.transaction(async (tx) => {
       // The agent lock serializes all claims for this agent across server replicas.
       const [agent] = await tx.select().from(agents).where(and(
         eq(agents.id, input.agentId), eq(agents.companyId, input.companyId),
@@ -296,6 +297,18 @@ export function localAgentRunLeaseService(
         await tx.update(issues).set({
           executionRunId: run.id, executionLockedAt: sql`now()`, updatedAt: sql`now()`,
         }).where(eq(issues.id, issueId));
+        if (issue.status === "todo") {
+          const postCommitActions: IssuePostCommitAction[] = [];
+          const started = await issueService(db).update(issue.id, {
+            companyGuard: input.companyId, actorAgentId: input.agentId,
+            status: "in_progress",
+          }, tx, publications, postCommitActions);
+          if (!started || started.status !== "in_progress" ||
+            started.statusVersion !== issue.statusVersion + 1 ||
+            postCommitActions.length > 0) {
+            throw conflict("Could not safely start the claimed local task");
+          }
+        }
         if (run.wakeupRequestId) {
           await tx.update(agentWakeupRequests).set({
             status: "claimed", claimedAt: sql`now()`, updatedAt: sql`now()`,
@@ -317,6 +330,8 @@ export function localAgentRunLeaseService(
       }
       return null;
     });
+    for (const publication of publications) publishActivity(publication);
+    return claimedRun;
   }
 
   async function lockedOwner(input: LocalRunOwner) {
