@@ -87,19 +87,7 @@ export async function executeClaimedRun(input: {
   if (input.claim.agentId !== input.agent.remoteAgentId || input.localAgent.id !== input.agent.remoteAgentId) {
     throw new Error("claimed run is for a different agent");
   }
-  const reviewContext = input.claim.wakeReason === "issue_completion_review"
-    ? await input.client.readLocalReviewContext(input.claim, input.deviceId) : undefined;
-  const issue: BridgeInboxItem = reviewContext?.issue ?? await input.client.getClaimedIssue(input.claim);
-  if (issue.companyId !== input.companyId || issue.id !== input.claim.issueId) {
-    throw new Error("claimed run is for a different company or issue");
-  }
   const defectQaRun = input.claim.wakeReason === "independent_defect_qa";
-  if (defectQaRun) {
-    if (issue.status !== "in_review" || issue.assigneeAgentId !== input.claim.agentId) {
-      throw new Error("claimed defect QA task is no longer in the assigned review stage");
-    }
-    await input.client.readLocalDefectQaContext(input.claim, input.deviceId);
-  }
   const runner = input.runner ?? runLocalAgent;
   const stopProcessTree = input.stopProcessTree ?? stopWindowsProcessTree;
   let telemetry: RunTelemetryStore | undefined;
@@ -123,21 +111,42 @@ export async function executeClaimedRun(input: {
     renewIntervalMs: input.renewIntervalMs,
     stopTimeoutMs: input.stopTimeoutMs,
     execute: async (signal) => {
-      const proxy = await startLocalRunWriteProxy({
-        client: input.client, claim: input.claim, deviceId: input.deviceId, signal,
-        intentStore: new LocalCommentIntentStore(input.intentFile),
-        reviewContext,
-      });
-      const secrets = [input.token, proxy.token, process.env[input.agent.gbrainEnvRef]];
+      const secrets = [input.token, process.env[input.agent.gbrainEnvRef]];
+      telemetry = new RunTelemetryStore(`${input.intentFile}.${input.claim.runId}.events.json`,
+        input.claim.runId, input.claim.issueId, secrets);
+      // Persist the finish identity before any model process is allowed to start.
+      await telemetry.finishRequestId();
+      let reviewContext: Awaited<ReturnType<AliceClient["readLocalReviewContext"]>> | undefined;
+      let issue: BridgeInboxItem;
       try {
-        telemetry = new RunTelemetryStore(`${input.intentFile}.${input.claim.runId}.events.json`,
-          input.claim.runId, input.claim.issueId, secrets);
-        // Persist the finish identity before any model process is allowed to start.
-        await telemetry.finishRequestId();
-      } catch (error) {
-        await proxy.close();
-        throw error;
+        reviewContext = input.claim.wakeReason === "issue_completion_review"
+          ? await input.client.readLocalReviewContext(input.claim, input.deviceId) : undefined;
+        issue = reviewContext?.issue ?? await input.client.getClaimedIssue(input.claim);
+        if (issue.companyId !== input.companyId || issue.id !== input.claim.issueId ||
+          (defectQaRun && (issue.status !== "in_review" ||
+            issue.assigneeAgentId !== input.claim.agentId))) {
+          throw new Error("claimed run issue identity or stage changed");
+        }
+        if (defectQaRun) {
+          await input.client.readLocalDefectQaContext(input.claim, input.deviceId);
+        }
+      } catch {
+        // A claimed lease already exists. No local process has started, so
+        // settle the run as failed instead of leaving an expired occupied slot.
+        summary = "Claimed task context was unavailable before local execution";
+        return { succeeded: false, exitCode: 1 };
       }
+      let proxy: Awaited<ReturnType<typeof startLocalRunWriteProxy>>;
+      try {
+        proxy = await startLocalRunWriteProxy({
+          client: input.client, claim: input.claim, deviceId: input.deviceId, signal,
+          intentStore: new LocalCommentIntentStore(input.intentFile), reviewContext,
+        });
+      } catch {
+        summary = "Local write capability was unavailable before local execution";
+        return { succeeded: false, exitCode: 1 };
+      }
+      secrets.push(proxy.token);
       const pids = new Map<number, string>();
       const stopPromises = new Map<number, Promise<void>>();
       const stopPid = (pid: number) => {

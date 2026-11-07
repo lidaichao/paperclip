@@ -250,4 +250,43 @@ describe("claimed local run", () => {
     expect(finishBodies).toHaveLength(1);
     expect(finishBodies[0]).toMatchObject({ outcome: "failed" });
   });
+
+  it("finishes a claimed lease when QA context fails before any model starts", async () => {
+    const qaClaim = { ...claim, wakeReason: "independent_defect_qa" };
+    const finishBodies: Array<Record<string, unknown>> = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key-123456",
+      fetch: async (url, init) => {
+        const path = String(url);
+        if (path.endsWith("/api/agents/me")) {
+          return Response.json({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
+        }
+        if (path.endsWith(`/api/issues/${ISSUE_ID}`)) {
+          return Response.json({ id: ISSUE_ID, companyId: COMPANY_ID,
+            assigneeAgentId: AGENT_ID, executionRunId: RUN_ID, identifier: "PAP-20",
+            title: "Retest defect", status: "in_review", priority: "medium",
+            updatedAt: "2026-11-07T00:00:00Z" });
+        }
+        if (path.includes("/defect-qa-context?")) {
+          return Response.json({ error: "quality revision changed" }, { status: 409 });
+        }
+        if (path.includes(`/local-runs/${RUN_ID}/control`)) {
+          return Response.json({ action: "continue", generation: 1,
+            leaseExpiresAt: new Date(Date.now() + 60_000).toISOString() });
+        }
+        if (path.endsWith(`/local-runs/${RUN_ID}/finish`)) {
+          finishBodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+        }
+        return Response.json({ runId: RUN_ID, status: "failed" });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const runner = vi.fn();
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-qa-preread-")), "intent.json");
+    const result = await executeClaimedRun({ claim: qaClaim, client, deviceId: DEVICE_ID,
+      companyId: COMPANY_ID, agent, localAgent, token: "server-only-key-123456",
+      intentFile, runner });
+    expect(result.outcome).toBe("failed");
+    expect(runner).not.toHaveBeenCalled();
+    expect(finishBodies).toHaveLength(1);
+    expect(finishBodies[0]).toMatchObject({ outcome: "failed" });
+  });
 });
