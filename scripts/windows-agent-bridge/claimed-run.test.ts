@@ -122,6 +122,43 @@ describe("claimed local run", () => {
     expect(calls.some((url) => url.endsWith(`/local-runs/${RUN_ID}/finish`))).toBe(true);
   });
 
+  it("stops a spawned process and fails when its durable identity report cannot be saved", async () => {
+    const calls: string[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key-123456",
+      fetch: async (url) => {
+        calls.push(String(url));
+        if (String(url).endsWith("/api/agents/me")) return Response.json({
+          id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
+        if (String(url).endsWith(`/api/issues/${ISSUE_ID}`)) return Response.json({
+          id: ISSUE_ID, companyId: COMPANY_ID, assigneeAgentId: AGENT_ID,
+          executionRunId: RUN_ID, identifier: "PAP-20", title: "Work",
+          status: "in_progress", priority: "medium", updatedAt: "2026-11-07T00:00:00Z" });
+        if (String(url).includes(`/local-runs/${RUN_ID}/control`)) return Response.json({
+          action: "continue", generation: 1,
+          leaseExpiresAt: new Date(Date.now() + 60_000).toISOString() });
+        return Response.json({ runId: RUN_ID, status: "failed" });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const startedAt = new Date().toISOString();
+    const stop = vi.fn(async () => undefined);
+    const runner = vi.fn(async (input: LocalAgentRunInput) => {
+      // Mirrors the shared adapter's current behavior: it swallows onSpawn
+      // rejection and may otherwise report a successful model exit.
+      try { await input.onSpawn?.({ pid: 12345, processGroupId: null, startedAt }); }
+      catch { /* adapter logging */ }
+      return { runId: RUN_ID, exitCode: 0, signal: null, timedOut: false,
+        succeeded: true, errorCode: null, sessionParams: null, sessionDisplayId: null };
+    });
+    const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-spawn-journal-")), "intent.json");
+    const result = await executeClaimedRun({ claim, client, deviceId: DEVICE_ID,
+      companyId: COMPANY_ID, agent, localAgent, token: "server-only-key-123456",
+      intentFile, runner, stopProcessTree: stop,
+      onProcessReported: async () => { throw new Error("disk unavailable"); } });
+    expect(result.outcome).toBe("failed");
+    expect(stop).toHaveBeenCalledWith(12345, startedAt);
+    expect(calls.some((url) => url.endsWith(`/local-runs/${RUN_ID}/finish`))).toBe(true);
+  });
+
   it("keeps the claim latched when an adapter throws without a reported child identity", async () => {
     const calls: string[] = [];
     const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key-123456",

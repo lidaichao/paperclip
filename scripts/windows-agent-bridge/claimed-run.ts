@@ -225,7 +225,16 @@ export async function executeClaimedRun(input: {
           onSpawn: async (meta) => {
             if (!Number.isSafeInteger(meta.pid) || meta.pid <= 0) throw new Error("local adapter reported an invalid process");
             pids.set(meta.pid, meta.startedAt);
-            await input.onProcessReported?.({ pid: meta.pid, startedAt: meta.startedAt });
+            try {
+              await input.onProcessReported?.({ pid: meta.pid, startedAt: meta.startedAt });
+            } catch (error) {
+              // The shared adapter currently logs and swallows onSpawn errors.
+              // Stop its known process immediately and force a failed run even
+              // if the adapter later returns success.
+              telemetryError ??= error;
+              stopPid(meta.pid);
+              throw error;
+            }
             if (signal.aborted) stopPid(meta.pid);
           },
           });
