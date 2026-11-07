@@ -12,6 +12,8 @@ import { LocalCommentIntentStore } from "./local-run-write-proxy.js";
 import { runLocalAgent } from "./adapter-runtime.js";
 import { verifyGbrainIdentity } from "./gbrain-identity.js";
 import { acquireSingleInstanceLock } from "./single-instance-lock.js";
+import { assertNoUnreportedSupervisors, bindingForClaim, readSupervisorBridgeIdentity, verifySupervisorStopped,
+  type SupervisorBinding } from "./supervisor-client.js";
 export { acquireSingleInstanceLock } from "./single-instance-lock.js";
 import type { BridgeAgentConfig, LocalAgentRuntimeConfig } from "./types.js";
 
@@ -62,6 +64,8 @@ export async function claimAndRunOnce(input: {
   stopProcessTree?: (pid: number, startedAt: string) => Promise<void>;
   renewIntervalMs?: number;
   stopTimeoutMs?: number;
+  supervisor?: Pick<SupervisorBinding, "executable" | "receiptBaseDir" |
+    "bridgeCreationFileTime" | "bridgeSessionId">;
 }): Promise<"idle" | "finished"> {
   if (input.signal.aborted) return "idle";
   // A prior write with an unknown server result must be reconciled before any
@@ -88,8 +92,21 @@ export async function claimAndRunOnce(input: {
     // Without a durable Windows process-tree stop proof, even a committed
     // server finish cannot authorize another model after execution may have
     // started. A preflight-only run has no model process to recover.
-    if (recovery.executionMayHaveStarted || recovery.reportedProcesses.length > 0 || !recovery.finishIntent) {
+    if (!recovery.finishIntent) {
       throw new Error("prior local execution has no confirmed process stop; manual recovery required");
+    }
+    if (recovery.executionMayHaveStarted) {
+      if (!input.supervisor || recovery.reportedProcesses.length === 0 ||
+        recovery.reportedProcesses.some((process) => !process.supervisor)) {
+        throw new Error("prior local execution has no confirmed process stop; manual recovery required");
+      }
+      const binding = bindingForClaim(input.supervisor, recovery.activeClaim, input.deviceId);
+      await assertNoUnreportedSupervisors(binding, recovery.reportedProcesses);
+      for (const process of recovery.reportedProcesses) {
+        await verifySupervisorStopped(binding, process);
+      }
+    } else if (recovery.reportedProcesses.length > 0) {
+      throw new Error("prior local execution has contradictory process evidence; manual recovery required");
     }
     const receipt = await input.client.readLocalFinishReceipt(
       recovery.activeClaim, input.deviceId, recovery.finishIntent);
@@ -105,6 +122,8 @@ export async function claimAndRunOnce(input: {
   // An interrupted or unconfirmed run stays latched on restart. Never spawn
   // another process merely because the server lease expired.
   await input.state.markClaimed(claim);
+  const supervisorBinding = input.supervisor
+    ? bindingForClaim(input.supervisor, claim, input.deviceId) : undefined;
   await executeClaimedRun({
     claim, client: input.client, deviceId: input.deviceId,
     companyId: input.companyId, agent: input.agent, localAgent: input.localAgent,
@@ -114,6 +133,7 @@ export async function claimAndRunOnce(input: {
     onExecutionStarting: () => input.state.markExecutionStarting(claim.runId),
     onProcessReported: (process) => input.state.markProcessReported(claim.runId, process),
     onFinishIntent: (intent) => input.state.markFinishIntent(claim.runId, intent),
+    supervisorBinding,
   });
   await input.state.markFinished(claim.runId);
   return "finished";
@@ -146,13 +166,17 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
       id: agent.remoteAgentId, companyId: config.companyId, name: agent.localAgentName,
       adapterType: agent.adapterType, adapterConfig: buildLocalAdapterConfig(agent, config, process.env),
     };
+    if (!config.supervisorExecutable) throw new Error("Windows Job supervisor executable is required");
+    const bridgeIdentity = await readSupervisorBridgeIdentity(config.supervisorExecutable);
+    const supervisor = { executable: config.supervisorExecutable,
+      receiptBaseDir: path.join(config.workerHome, "supervisor-runs"), ...bridgeIdentity };
     let lastSuccessfulPollAt: string | null = null;
     while (!signal.aborted) {
       // A failed cycle exits. The scheduled task must not repeatedly relaunch
       // an uncertain claim or a process whose stop was not confirmed.
       await claimAndRunOnce({ client, state, deviceId: config.deviceId,
         companyId: config.companyId, agent, localAgent, token, signal,
-        intentFile: `${config.stateFile}.comment-intent.json` });
+        intentFile: `${config.stateFile}.comment-intent.json`, supervisor });
       lastSuccessfulPollAt = new Date().toISOString();
       await writeHealth(healthPath, {
         schemaVersion: 1,

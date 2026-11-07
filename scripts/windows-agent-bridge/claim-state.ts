@@ -6,6 +6,7 @@ import type { LocalRunClaim } from "./paperclip-client.js";
 export interface ReportedLocalProcess {
   pid: number;
   startedAt: string;
+  supervisor?: { nonce: string; receiptDir: string };
 }
 
 export interface LocalFinishIntent {
@@ -60,7 +61,9 @@ export class ClaimStateStore {
           state.activeClaim.agentId !== this.#agentId)) ||
         typeof state.executionMayHaveStarted !== "boolean" || !Array.isArray(state.reportedProcesses) ||
         !state.reportedProcesses.every((process) => Number.isSafeInteger(process.pid) && process.pid > 0 &&
-          typeof process.startedAt === "string" && !Number.isNaN(Date.parse(process.startedAt))) ||
+          typeof process.startedAt === "string" && !Number.isNaN(Date.parse(process.startedAt)) &&
+          (process.supervisor === undefined ||
+            (UUID.test(process.supervisor.nonce) && path.isAbsolute(process.supervisor.receiptDir)))) ||
         (!state.executionMayHaveStarted && state.reportedProcesses.length > 0) ||
         (state.finishIntent !== null && (!state.finishIntent ||
           !UUID.test(state.finishIntent.clientRequestId) ||
@@ -111,7 +114,11 @@ export class ClaimStateStore {
   async markProcessReported(runId: string, process: ReportedLocalProcess): Promise<void> {
     await this.#assertActiveRun(runId);
     if (!this.#state!.executionMayHaveStarted || !Number.isSafeInteger(process.pid) || process.pid <= 0 ||
-      Number.isNaN(Date.parse(process.startedAt))) throw new Error("invalid local process report");
+      Number.isNaN(Date.parse(process.startedAt)) ||
+      (process.supervisor !== undefined &&
+        (!UUID.test(process.supervisor.nonce) || !path.isAbsolute(process.supervisor.receiptDir)))) {
+      throw new Error("invalid local process report");
+    }
     this.#state!.reportedProcesses.push({ ...process });
     await this.#persist();
   }

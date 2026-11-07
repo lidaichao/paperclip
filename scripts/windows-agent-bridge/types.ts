@@ -21,6 +21,7 @@ export interface BridgeConfig {
   gbrainMcpUrl?: string;
   companyId: string;
   credentialsFile: string;
+  supervisorExecutable?: string;
   stateFile: string;
   pollIntervalMs: number;
   agents: BridgeAgentConfig[];

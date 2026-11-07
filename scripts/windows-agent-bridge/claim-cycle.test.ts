@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -76,6 +76,48 @@ describe("single-agent claim cycle", () => {
       runner: vi.fn() })).rejects.toThrow("process stop");
     expect(client.readLocalFinishReceipt).not.toHaveBeenCalled();
     expect(client.claimLocalRun).not.toHaveBeenCalled();
+  });
+
+  it("reconciles a prior execution only after every Job stop receipt and exact finish receipt", async () => {
+    const { state, intentFile } = await fixture();
+    const claim = { ...claimResponse(), leaseDeadlineMonotonicMs: performance.now() + 60_000 };
+    const receiptBaseDir = await mkdtemp(path.join(os.tmpdir(), "alice-supervised-recovery-"));
+    const nonce = "7c6b4410-0c4c-4384-b36a-127fb015d7fd";
+    const receiptDir = path.join(receiptBaseDir, runId, nonce);
+    await mkdir(receiptDir, { recursive: true });
+    const supervisor = { executable: "C:\\tools\\PaperclipRunSupervisor.exe", receiptBaseDir,
+      bridgeCreationFileTime: "134071200000000000", bridgeSessionId: 1 };
+    await state.markClaimed(claim);
+    await state.markExecutionStarting(runId);
+    await state.markProcessReported(runId, { pid: 9001, startedAt: "2026-11-07T12:00:00Z",
+      supervisor: { nonce, receiptDir } });
+    await state.markFinishIntent(runId, { clientRequestId: "c1d46789-26c2-433d-bf7f-7a21f8bd30d6",
+      outcome: "succeeded", exitCode: 0 });
+    const shared = { runId, leaseId, deviceId, nonce, bridgePid: process.pid,
+      bridgeCreationFileTime: supervisor.bridgeCreationFileTime, bridgeSessionId: 1,
+      modelPid: 9002, modelCreationFileTime: "134071200000000001" };
+    await writeFile(path.join(receiptDir, `${runId}.ready.json`), JSON.stringify({
+      ...shared, cancelEvent: "Local\\PaperclipCancel-test" }));
+    await writeFile(path.join(receiptDir, `${runId}.stopped.json`), JSON.stringify({
+      ...shared, cause: "model_exit", modelExitCode: 0, activeProcesses: 0,
+      completedAtUtc: "2026-11-07T12:01:00Z" }));
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url) => {
+        const pathname = new URL(String(url)).pathname;
+        if (pathname === "/api/agents/me") return reply({ id: agentId, companyId, name: "Luna" });
+        if (pathname.endsWith("/finish-receipt")) return reply({ state: "committed",
+          runStatus: "succeeded", leaseReleased: true, outcome: "succeeded",
+          receiptId: "c1d46789-26c2-433d-bf7f-7a21f8bd30d6" });
+        if (pathname.endsWith("/claim")) return new Response(null, { status: 204 });
+        throw new Error(`unexpected path ${pathname}`);
+      } });
+    await client.verifyIdentity(agentId, companyId);
+    const runner = vi.fn();
+    expect(await claimAndRunOnce({ client, state, deviceId, companyId, agent,
+      localAgent, token: "secret", intentFile, signal: new AbortController().signal,
+      runner, supervisor })).toBe("idle");
+    expect(await state.currentClaim()).toBeNull();
+    expect(runner).not.toHaveBeenCalled();
   });
 
   it("does not unlock a preflight-only run when the server cannot prove its finish", async () => {

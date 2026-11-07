@@ -1,4 +1,5 @@
 import type { LocalReviewContext } from "./paperclip-client.js";
+import type { SupervisorBinding } from "./supervisor-client.js";
 import type {
   AdapterExecutionContext,
   AdapterExecutionResult,
@@ -30,11 +31,13 @@ export interface LocalAgentRunInput {
   issue: BridgeInboxItem;
   reviewContext?: LocalReviewContext;
   token: string;
+  supervisorBinding?: SupervisorBinding;
   localAgent: LocalAgentRuntimeConfig;
   onLog?: (stream: "stdout" | "stderr", chunk: string) => Promise<void>;
   onEvent?: (event: { eventType: string; stream?: "stdout" | "stderr" | "system";
     level?: "info" | "warn" | "error"; message?: string }) => Promise<void>;
-  onSpawn?: (meta: { pid: number; processGroupId: number | null; startedAt: string }) => Promise<void>;
+  onSpawn?: (meta: { pid: number; processGroupId: number | null; startedAt: string;
+    supervisor?: { nonce: string; receiptDir: string } }) => Promise<void>;
   dependencies?: AdapterRuntimeDependencies;
 }
 
@@ -86,8 +89,12 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
   if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(requestedApiBase)) {
     throw new Error("local run API must be a loopback capability");
   }
+  if (input.supervisorBinding && (input.supervisorBinding.runId !== input.runId ||
+    input.supervisorBinding.deviceId.length === 0)) {
+    throw new Error("local supervisor binding does not match run");
+  }
   const previousApiBase = process.env.PAPERCLIP_API_URL;
-  process.env.PAPERCLIP_API_URL = requestedApiBase;
+  const previousSupervisor = process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR;
 
   const execute = input.localAgent.adapterType === "codex_local"
     ? input.dependencies?.codexExecute ?? executeCodex
@@ -169,6 +176,10 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
 
   let result: AdapterExecutionResult;
   try {
+    process.env.PAPERCLIP_API_URL = requestedApiBase;
+    if (input.supervisorBinding) {
+      process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR = JSON.stringify(input.supervisorBinding);
+    }
     result = await execute({
       signal: input.signal,
       runId: input.runId,
@@ -215,6 +226,8 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
   } finally {
     if (previousApiBase === undefined) delete process.env.PAPERCLIP_API_URL;
     else process.env.PAPERCLIP_API_URL = previousApiBase;
+    if (previousSupervisor === undefined) delete process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR;
+    else process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR = previousSupervisor;
   }
 
   return {

@@ -13,6 +13,7 @@ const ROOT_KEYS = new Set([
   "gbrainMcpUrl",
   "companyId",
   "credentialsFile",
+  "supervisorExecutable",
   "pollIntervalMs",
   "agents",
 ]);
@@ -242,6 +243,8 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
       ? normalizeApiBase(record.gbrainMcpUrl) : undefined,
     companyId: requiredUuid(record, "companyId", "config"),
     credentialsFile: resolveConfigPath(configDir, requiredString(record, "credentialsFile", "config"), "credentialsFile"),
+    supervisorExecutable: record.supervisorExecutable === undefined ? undefined :
+      resolveConfigPath(configDir, requiredString(record, "supervisorExecutable", "config"), "supervisorExecutable"),
     stateFile: path.join(workerHome, "claim-state.json"),
     pollIntervalMs: Number(record.pollIntervalMs),
     agents,

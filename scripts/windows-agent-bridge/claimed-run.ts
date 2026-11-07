@@ -7,6 +7,8 @@ import { RunTelemetryStore } from "./run-telemetry.js";
 import type { AliceClient, LocalRunClaim } from "./paperclip-client.js";
 import type { BridgeAgentConfig, BridgeInboxItem, LocalAgentRuntimeConfig } from "./types.js";
 import type { LocalFinishIntent, ReportedLocalProcess } from "./claim-state.js";
+import { assertNoUnreportedSupervisors, cancelSupervisor, verifySupervisorStopped,
+  type SupervisorBinding } from "./supervisor-client.js";
 
 type LocalRunner = typeof runLocalAgent;
 type StopProcessTree = (pid: number, startedAt: string) => Promise<void>;
@@ -87,6 +89,7 @@ export async function executeClaimedRun(input: {
   onExecutionStarting?: () => Promise<void>;
   onProcessReported?: (process: ReportedLocalProcess) => Promise<void>;
   onFinishIntent?: (intent: LocalFinishIntent) => Promise<void>;
+  supervisorBinding?: SupervisorBinding;
 }): Promise<{ outcome: "succeeded" | "failed" | "cancelled"; status: string }> {
   if (input.claim.agentId !== input.agent.remoteAgentId || input.localAgent.id !== input.agent.remoteAgentId) {
     throw new Error("claimed run is for a different agent");
@@ -155,11 +158,28 @@ export async function executeClaimedRun(input: {
         return { succeeded: false, exitCode: 1 };
       }
       secrets.push(proxy.token);
-      const pids = new Map<number, string>();
+      const pids = new Map<number, ReportedLocalProcess>();
       const stopPromises = new Map<number, Promise<void>>();
       const stopPid = (pid: number) => {
         if (!stopPromises.has(pid)) {
-          const stopping = stopProcessTree(pid, pids.get(pid)!);
+          const process = pids.get(pid)!;
+          const stopping = input.supervisorBinding ? (async () => {
+            try { await verifySupervisorStopped(input.supervisorBinding!, process); return; }
+            catch { /* The supervisor may still be running. */ }
+            try {
+              await cancelSupervisor(input.supervisorBinding!, process);
+              for (let attempt = 0; attempt < 200; attempt++) {
+                try { await verifySupervisorStopped(input.supervisorBinding!, process); return; }
+                catch { await new Promise((resolve) => setTimeout(resolve, 100)); }
+              }
+              throw new Error("Windows supervisor stop receipt was not confirmed");
+            } catch (error) {
+              // Kill the verified wrapper as a last safety action. Without a
+              // durable Job receipt, the old claim remains latched.
+              await stopProcessTree(pid, process.startedAt);
+              throw error;
+            }
+          })() : stopProcessTree(pid, process.startedAt);
           stopPromises.set(pid, stopping);
           // Keep rejection attached until we explicitly await all stop results.
           void stopping.catch(() => undefined);
@@ -224,9 +244,10 @@ export async function executeClaimedRun(input: {
           },
           onSpawn: async (meta) => {
             if (!Number.isSafeInteger(meta.pid) || meta.pid <= 0) throw new Error("local adapter reported an invalid process");
-            pids.set(meta.pid, meta.startedAt);
+            pids.set(meta.pid, { pid: meta.pid, startedAt: meta.startedAt,
+              ...(meta.supervisor ? { supervisor: meta.supervisor } : {}) });
             try {
-              await input.onProcessReported?.({ pid: meta.pid, startedAt: meta.startedAt });
+              await input.onProcessReported?.(pids.get(meta.pid)!);
             } catch (error) {
               // The shared adapter currently logs and swallows onSpawn errors.
               // Stop its known process immediately and force a failed run even
@@ -237,6 +258,7 @@ export async function executeClaimedRun(input: {
             }
             if (signal.aborted) stopPid(meta.pid);
           },
+          supervisorBinding: input.supervisorBinding,
           });
           if (telemetryError) throw telemetryError;
         } catch (error) {
@@ -246,8 +268,23 @@ export async function executeClaimedRun(input: {
           if (pids.size === 0) throw error;
           stop();
           await Promise.all(stopPromises.values());
+          if (input.supervisorBinding) {
+            if (pids.size === 0) throw new Error("supervised model process was not reported");
+            await assertNoUnreportedSupervisors(input.supervisorBinding, [...pids.values()]);
+            for (const process of pids.values()) {
+              await verifySupervisorStopped(input.supervisorBinding, process);
+            }
+          }
           summary = "Local adapter failed after its reported process stopped";
           return { succeeded: false, exitCode: 1 };
+        }
+        if (input.supervisorBinding) {
+          if (pids.size === 0) throw new Error("supervised model process was not reported");
+          await Promise.all(stopPromises.values());
+          await assertNoUnreportedSupervisors(input.supervisorBinding, [...pids.values()]);
+          for (const process of pids.values()) {
+            await verifySupervisorStopped(input.supervisorBinding, process);
+          }
         }
         const succeeded = result.succeeded && !proxy.writeFailed() &&
           (!reviewContext || proxy.decisionConfirmed()) &&
