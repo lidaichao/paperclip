@@ -92,6 +92,9 @@ export const workRecords = pgTable(
     descriptionRevision: integer("description_revision").notNull().default(1),
     assigneeAgentId: uuid("assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
     qaAssigneeAgentId: uuid("qa_assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    // Null denotes a record created before explicit package QA coverage existed.
+    packageQaRole: text("package_qa_role").$type<"execution" | "qa">(),
+    qaRetestExemptionReason: text("qa_retest_exemption_reason"),
     businessStatus: text("business_status").notNull().default("backlog"),
     statusVersion: bigint("status_version", { mode: "number" }).notNull().default(0),
     revision: integer("revision").notNull().default(1),
@@ -133,6 +136,8 @@ export const workRecords = pgTable(
     }),
     companyProjectIdx: index("work_records_company_project_idx").on(table.companyId, table.projectId, table.createdAt),
     parentCheck: check("work_records_parent_not_self", sql`${table.parentRecordId} IS NULL OR ${table.parentRecordId} <> ${table.id}`),
+    packageQaRoleCheck: check("work_records_package_qa_role_check", sql`${table.packageQaRole} IS NULL OR ${table.packageQaRole} IN ('execution', 'qa')`),
+    qaExemptionCheck: check("work_records_qa_exemption_check", sql`${table.qaRetestExemptionReason} IS NULL OR (${table.packageQaRole} = 'execution' AND ${table.parentRecordId} IS NOT NULL)`),
   }),
 );
 
@@ -162,6 +167,22 @@ export const workRecordDependencies = pgTable(
     noSelf: check("work_record_dependencies_not_self", sql`${table.predecessorRecordId} <> ${table.successorRecordId}`),
   }),
 );
+
+/** A declared original QA task covers an original execution child in one package. */
+export const workRecordQaCoverage = pgTable("work_record_qa_coverage", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  executionRecordId: uuid("execution_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+  qaRecordId: uuid("qa_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  executionScopeFk: foreignKey({ columns: [table.companyId, table.projectId, table.executionRecordId], foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id], name: "work_record_qa_coverage_execution_scope_fk" }).onDelete("cascade"),
+  qaScopeFk: foreignKey({ columns: [table.companyId, table.projectId, table.qaRecordId], foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id], name: "work_record_qa_coverage_qa_scope_fk" }).onDelete("cascade"),
+  pairUq: uniqueIndex("work_record_qa_coverage_pair_uq").on(table.companyId, table.projectId, table.executionRecordId, table.qaRecordId),
+  qaIdx: index("work_record_qa_coverage_qa_idx").on(table.companyId, table.projectId, table.qaRecordId),
+  notSelf: check("work_record_qa_coverage_not_self", sql`${table.executionRecordId} <> ${table.qaRecordId}`),
+}));
 
 export const workRecordDispatchCommands = pgTable(
   "work_record_dispatch_commands",
@@ -507,6 +528,24 @@ export const workRecordDependencySnapshots = pgTable(
     ),
   }),
 );
+
+/** Immutable coverage selected by a prepared whole-package dispatch. */
+export const workRecordQaCoverageSnapshots = pgTable("work_record_qa_coverage_snapshots", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  batchId: uuid("batch_id").notNull().references(() => workRecordDispatchBatches.id, { onDelete: "cascade" }),
+  executionRecordId: uuid("execution_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+  qaRecordId: uuid("qa_record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  batchScopeFk: foreignKey({ columns: [table.companyId, table.projectId, table.batchId], foreignColumns: [workRecordDispatchBatches.companyId, workRecordDispatchBatches.projectId, workRecordDispatchBatches.id], name: "work_record_qa_coverage_snapshots_batch_scope_fk" }).onDelete("cascade"),
+  executionScopeFk: foreignKey({ columns: [table.companyId, table.projectId, table.executionRecordId], foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id], name: "work_record_qa_coverage_snapshots_execution_scope_fk" }).onDelete("cascade"),
+  qaScopeFk: foreignKey({ columns: [table.companyId, table.projectId, table.qaRecordId], foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id], name: "work_record_qa_coverage_snapshots_qa_scope_fk" }).onDelete("cascade"),
+  pairUq: uniqueIndex("work_record_qa_coverage_snapshots_pair_uq").on(table.companyId, table.projectId, table.batchId, table.executionRecordId, table.qaRecordId),
+  executionIdx: index("work_record_qa_coverage_snapshots_execution_idx").on(table.companyId, table.projectId, table.executionRecordId),
+  notSelf: check("work_record_qa_coverage_snapshots_not_self", sql`${table.executionRecordId} <> ${table.qaRecordId}`),
+}));
 
 export const workRecordQualityCycles = pgTable(
   "work_record_quality_cycles",

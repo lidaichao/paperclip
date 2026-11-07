@@ -579,7 +579,7 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       action: "work_record.created",
       entityType: "work_record",
       entityId: record.id,
-      details: { projectId: record.projectId, kind: record.kind },
+      details: { projectId: record.projectId, kind: record.kind, packageQaRole: record.packageQaRole, qaRetestExemptionReason: record.qaRetestExemptionReason },
     });
     res.status(201).json(record);
   });
@@ -692,7 +692,11 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       action: "work_record.updated",
       entityType: "work_record",
       entityId: record.id,
-      details: { projectId, revision: record.revision },
+      details: { projectId, expectedRevision: req.body.expectedRevision, revision: record.revision,
+        ...(req.body.packageQaRole !== undefined ? { packageQaRole: record.packageQaRole } : {}),
+        ...(req.body.qaRetestExemptionReason !== undefined ? { qaRetestExemptionReason: record.qaRetestExemptionReason } : {}),
+        ...(req.body.qaCoverageRecordIds !== undefined ? { qaCoverageRecordIds: record.qaCoverageRecordIds } : {}),
+      },
     });
     res.json(record);
   });

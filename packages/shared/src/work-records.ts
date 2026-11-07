@@ -55,6 +55,8 @@ export const createWorkRecordSchema = z.object({
   iterationId: z.string().guid().optional().nullable(),
   assigneeAgentId: z.string().guid().optional().nullable(),
   qaAssigneeAgentId: z.string().guid().optional().nullable(),
+  packageQaRole: z.enum(["execution", "qa"]).optional(),
+  qaRetestExemptionReason: z.string().trim().min(1).max(2_000).optional().nullable(),
   predecessorRecordIds: z.array(z.string().guid()).max(100).optional().default([]),
 });
 
@@ -67,6 +69,9 @@ export const updateWorkRecordSchema = z.object({
   iterationId: z.string().guid().optional().nullable(),
   assigneeAgentId: z.string().guid().optional().nullable(),
   qaAssigneeAgentId: z.string().guid().optional().nullable(),
+  packageQaRole: z.enum(["execution", "qa"]).optional(),
+  qaRetestExemptionReason: z.string().trim().min(1).max(2_000).optional().nullable(),
+  qaCoverageRecordIds: z.array(z.string().guid()).max(100).optional(),
   predecessorRecordIds: z.array(z.string().guid()).max(100).optional(),
 }).refine((value) => Object.keys(value).some((key) => key !== "expectedRevision"), {
   message: "At least one field must be updated",
@@ -158,6 +163,9 @@ export interface WorkRecord {
   iterationId: string | null;
   assigneeAgentId: string | null;
   qaAssigneeAgentId: string | null;
+  packageQaRole: "execution" | "qa" | null;
+  qaRetestExemptionReason: string | null;
+  qaCoverageRecordIds: string[];
   businessStatus: WorkRecordBusinessStatus;
   statusVersion: number;
   revision: number;
@@ -193,12 +201,17 @@ export interface WorkPackageDispatchPreview {
     parentRecordId: string | null;
     assigneeAgentId: string | null;
     qaAssigneeAgentId: string | null;
+    packageQaRole: "execution" | "qa" | null;
+    qaRetestExemptionReason: string | null;
+    qaCoverageRecordIds: string[];
     depth: number;
   }>;
   edges: Array<{
     predecessorRecordId: string;
     successorRecordId: string;
   }>;
+  qaCoverage: Array<{ executionRecordId: string; qaRecordId: string }>;
+  qaCoverageIssues: Array<{ recordId: string; qaRecordId: string | null; reason: string }>;
   eligibility: {
     canPrepare: boolean;
     blockers: Array<{

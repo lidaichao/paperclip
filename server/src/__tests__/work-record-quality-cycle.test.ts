@@ -21,6 +21,8 @@ import {
   workRecordQualityItems,
   workRecordQualityLinks,
   workRecordQualityVerdicts,
+  workRecordQaCoverageSnapshots,
+  workRecordQaCoverage,
 } from "@paperclipai/db";
 import type { PreviewWorkPackageDispatch } from "@paperclipai/shared";
 import { getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase } from "./helpers/embedded-postgres.js";
@@ -94,6 +96,8 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
       assigneeAgentId: string | null;
       qaAssigneeAgentId?: string | null;
       parentRecordId?: string | null;
+      packageQaRole?: "execution" | "qa";
+      qaRetestExemptionReason?: string;
     },
   ) {
     return context.records.create(context.company.id, {
@@ -103,6 +107,10 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
       assigneeAgentId: input.assigneeAgentId,
       qaAssigneeAgentId: input.qaAssigneeAgentId,
       parentRecordId: input.parentRecordId,
+      packageQaRole: input.packageQaRole,
+      qaRetestExemptionReason: input.parentRecordId && !input.packageQaRole
+        ? input.qaRetestExemptionReason ?? "Existing defect-link scenario has no declared package QA coverage"
+        : input.qaRetestExemptionReason,
       predecessorRecordIds: [],
     }, { actorType: "system", actorId: "m2c-test" });
   }
@@ -215,6 +223,163 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     await context.quality.recordPoVerdict(context.company.id,
       context.project.id, root.id, request, actor);
     expect((await primaryIssue(context.company.id, root.id)).issue.status).toBe("done");
+  }, 30_000);
+
+  it("returns original B, reruns original Q, and lets PO accept on the second cycle", async () => {
+    const context = await seed();
+    const root = await createRecord(context, { title: "P", assigneeAgentId: context.po.id });
+    const a = await context.records.create(context.company.id, {
+      projectId: context.project.id, kind: "plan", title: "A", parentRecordId: root.id,
+      assigneeAgentId: context.po.id, predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "m2c-test" });
+    const b = await context.records.create(context.company.id, {
+      projectId: context.project.id, kind: "plan", title: "B", parentRecordId: root.id,
+      assigneeAgentId: context.developer.id, predecessorRecordIds: [a.id],
+    }, { actorType: "system", actorId: "m2c-test" });
+    const q = await context.records.create(context.company.id, {
+      projectId: context.project.id, kind: "plan", title: "Q", parentRecordId: root.id,
+      packageQaRole: "qa", assigneeAgentId: context.qa.id, predecessorRecordIds: [b.id],
+    }, { actorType: "system", actorId: "m2c-test" });
+    const scope = { workflowVersion: 2 as const, projectId: context.project.id,
+      scopeKind: "whole_package" as const, rootRecordId: root.id, selectedRecordIds: [] };
+    const missing = await context.packages.preview(context.company.id, context.project.id, scope);
+    expect(missing.eligibility.canPrepare).toBe(false);
+    expect(missing.qaCoverageIssues.map((issue) => issue.recordId).sort()).toEqual([a.id, b.id].sort());
+    await expect(prepare(context, { scopeKind: "whole_package", rootRecordId: root.id, selectedRecordIds: [] }, `missing-qa-${randomUUID()}`))
+      .rejects.toMatchObject({ status: 422, details: expect.objectContaining({ code: "work_package_qa_coverage_required" }) });
+    const outsideRoot = await createRecord(context, { title: "Other package", assigneeAgentId: context.po.id });
+    const outsideQa = await context.records.create(context.company.id, {
+      projectId: context.project.id, kind: "plan", title: "Other QA", parentRecordId: outsideRoot.id,
+      packageQaRole: "qa", assigneeAgentId: context.qa.id, predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "m2c-test" });
+    await expect(context.records.update(context.company.id, context.project.id, a.id,
+      { expectedRevision: a.revision, qaCoverageRecordIds: [outsideQa.id] }))
+      .rejects.toMatchObject({ status: 422 });
+    const aCovered = await context.records.update(context.company.id, context.project.id, a.id,
+      { expectedRevision: a.revision, qaCoverageRecordIds: [q.id] });
+    await context.records.update(context.company.id, context.project.id, b.id,
+      { expectedRevision: b.revision, qaCoverageRecordIds: [q.id] });
+    expect(aCovered.qaCoverageRecordIds).toEqual([q.id]);
+    const prepared = await prepare(context,
+      { scopeKind: "whole_package", rootRecordId: root.id, selectedRecordIds: [] }, `qa-covered-${randomUUID()}`);
+    expect(await db.select().from(workRecordQaCoverageSnapshots).where(and(
+      eq(workRecordQaCoverageSnapshots.companyId, context.company.id),
+      eq(workRecordQaCoverageSnapshots.batchId, prepared.batch.id),
+    ))).toMatchObject([
+      expect.objectContaining({ qaRecordId: q.id }),
+      expect.objectContaining({ qaRecordId: q.id }),
+    ]);
+    const currentA = (await context.records.list(context.company.id, context.project.id)).find((record) => record.id === a.id)!;
+    await expect(context.records.update(context.company.id, context.project.id, a.id,
+      { expectedRevision: currentA.revision, qaCoverageRecordIds: [] })).rejects.toMatchObject({ status: 409 });
+    const currentQ = (await context.records.list(context.company.id, context.project.id)).find((record) => record.id === q.id)!;
+    await expect(context.records.update(context.company.id, context.project.id, q.id,
+      { expectedRevision: currentQ.revision, parentRecordId: a.id })).rejects.toMatchObject({ status: 409 });
+    const original = await Promise.all([a, b, q, root].map((record) => primaryIssue(context.company.id, record.id)));
+    await markIssueDone(original[0].issue.id);
+    await markIssueDone(original[1].issue.id);
+    await markIssueDone(original[2].issue.id);
+    await context.packages.reconcile(context.company.id, context.project.id, prepared.batch.id,
+      { actorType: "system", actorId: "m2c-test" });
+    const first = await context.quality.get(context.company.id, context.project.id, root.id);
+    await context.quality.reconcileCycle(context.company.id, context.project.id, first.cycle!.id);
+    const ready = await context.quality.get(context.company.id, context.project.id, root.id);
+    expect(ready.cycle!.qualityPhase).toBe("po_acceptance");
+    await db.update(issues).set({ status: "cancelled", statusVersion: sql`${issues.statusVersion} + 1` })
+      .where(eq(issues.id, original[2].issue.id));
+    await expect(context.quality.recordPoVerdict(context.company.id, context.project.id, root.id, {
+      workflowVersion: 2, clientRequestId: randomUUID(), requestPayloadDigest: randomUUID(),
+      cycleId: ready.cycle!.id, itemId: ready.items.find((item) => item.role === "po")!.id,
+      expectedCycleRevision: ready.cycle!.revision, outcome: "return", targetRecordIds: [b.id],
+      reason: "QA issue was cancelled", evidenceRefs: [],
+    }, { actorType: "agent", actorId: context.po.id, agentId: context.po.id }))
+      .rejects.toMatchObject({ status: 422 });
+    expect((await context.quality.get(context.company.id, context.project.id, root.id)).cycle!.cycleNumber).toBe(1);
+    await markIssueDone(original[2].issue.id);
+    const returned = await context.quality.recordPoVerdict(context.company.id, context.project.id, root.id, {
+      workflowVersion: 2, clientRequestId: randomUUID(), requestPayloadDigest: randomUUID(),
+      cycleId: ready.cycle!.id, itemId: ready.items.find((item) => item.role === "po")!.id,
+      expectedCycleRevision: ready.cycle!.revision, outcome: "return", targetRecordIds: [b.id],
+      reason: "B needs another pass", evidenceRefs: [],
+    }, { actorType: "agent", actorId: context.po.id, agentId: context.po.id });
+    const rework = returned.quality;
+    expect(rework.cycle).toMatchObject({ cycleNumber: 2, qualityPhase: "waiting_fix" });
+    expect(rework.items.filter((item) => item.role === "repair").map((item) => item.recordId)).toEqual([b.id]);
+    expect(rework.items.filter((item) => item.role === "qa").map((item) => item.recordId)).toEqual([q.id]);
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.qualityItemId, rework.items.find((item) => item.role === "qa")!.id),
+    ))).toHaveLength(0);
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.qualityItemId, rework.items.find((item) => item.role === "po")!.id),
+    ))).toHaveLength(0);
+    expect((await primaryIssue(context.company.id, b.id)).issue.id).toBe(original[1].issue.id);
+    expect((await primaryIssue(context.company.id, q.id)).issue.id).toBe(original[2].issue.id);
+    await markIssueDone(original[1].issue.id);
+    await context.quality.reconcileCycle(context.company.id, context.project.id, rework.cycle!.id);
+    const testing = await context.quality.get(context.company.id, context.project.id, root.id);
+    expect(testing.cycle!.qualityPhase).toBe("qa_retest");
+    expect(testing.items.find((item) => item.role === "qa")!.state).toBe("ready");
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.qualityItemId, testing.items.find((item) => item.role === "qa")!.id),
+      eq(workRecordExecutionIntents.kind, "qa_retest_release"),
+    ))).toHaveLength(1);
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.qualityItemId, testing.items.find((item) => item.role === "po")!.id),
+    ))).toHaveLength(0);
+    await markIssueDone(original[2].issue.id);
+    await context.quality.reconcileCycle(context.company.id, context.project.id, rework.cycle!.id);
+    const second = await context.quality.get(context.company.id, context.project.id, root.id);
+    expect(second.items.find((item) => item.role === "qa")!.state).toBe("accepted");
+    expect(second.cycle!.qualityPhase).toBe("po_acceptance");
+    expect(await db.select().from(workRecordExecutionIntents).where(and(
+      eq(workRecordExecutionIntents.companyId, context.company.id),
+      eq(workRecordExecutionIntents.qualityItemId, second.items.find((item) => item.role === "po")!.id),
+      eq(workRecordExecutionIntents.kind, "po_acceptance_release"),
+    ))).toHaveLength(1);
+    await context.quality.recordPoVerdict(context.company.id, context.project.id, root.id, {
+      workflowVersion: 2, clientRequestId: randomUUID(), requestPayloadDigest: randomUUID(),
+      cycleId: second.cycle!.id, itemId: second.items.find((item) => item.role === "po")!.id,
+      expectedCycleRevision: second.cycle!.revision, outcome: "approve", targetRecordIds: [],
+      reason: "Retest accepted", evidenceRefs: [],
+    }, { actorType: "agent", actorId: context.po.id, agentId: context.po.id });
+    expect((await primaryIssue(context.company.id, root.id)).issue.status).toBe("done");
+  }, 30_000);
+
+  it("rejects a QA dependency path that leaves the dispatched package", async () => {
+    const context = await seed();
+    const root = await createRecord(context, { title: "P", assigneeAgentId: context.po.id });
+    const otherRoot = await createRecord(context, { title: "Outside P", assigneeAgentId: context.po.id });
+    const a = await context.records.create(context.company.id, {
+      projectId: context.project.id, kind: "plan", title: "A", parentRecordId: root.id,
+      assigneeAgentId: context.developer.id, predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "m2c-test" });
+    const outside = await context.records.create(context.company.id, {
+      projectId: context.project.id, kind: "plan", title: "Outside route", parentRecordId: otherRoot.id,
+      assigneeAgentId: context.developer.id, predecessorRecordIds: [a.id],
+      qaRetestExemptionReason: "Outside package fixture",
+    }, { actorType: "system", actorId: "m2c-test" });
+    const q = await context.records.create(context.company.id, {
+      projectId: context.project.id, kind: "plan", title: "Q", parentRecordId: root.id,
+      packageQaRole: "qa", assigneeAgentId: context.qa.id, predecessorRecordIds: [outside.id],
+    }, { actorType: "system", actorId: "m2c-test" });
+    await expect(context.records.update(context.company.id, context.project.id, a.id,
+      { expectedRevision: a.revision, qaCoverageRecordIds: [q.id] })).rejects.toMatchObject({ status: 422 });
+    await db.insert(workRecordQaCoverage).values({
+      companyId: context.company.id, projectId: context.project.id,
+      executionRecordId: a.id, qaRecordId: q.id,
+    });
+    const preview = await context.packages.preview(context.company.id, context.project.id, {
+      workflowVersion: 2, scopeKind: "whole_package", rootRecordId: root.id,
+      projectId: context.project.id, selectedRecordIds: [],
+    });
+    expect(preview.eligibility.canPrepare).toBe(false);
+    expect(preview.qaCoverageIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ recordId: a.id, qaRecordId: q.id, reason: "qa_dependency_missing" }),
+    ]));
   }, 30_000);
 
   it("C07-C11 reuses original package tasks, deduplicates PO return, and gates PO on per-defect QA", async () => {

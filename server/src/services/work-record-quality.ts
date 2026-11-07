@@ -5,6 +5,7 @@ import {
   workRecords,
   workRecordDispatchBatchItems,
   workRecordDispatchBatches,
+  workRecordQaCoverageSnapshots,
   workRecordExecutionHolds,
   workRecordExecutionIntents,
   workRecordIssueLinks,
@@ -406,6 +407,27 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
       eq(workRecordQualityLinks.packageRecordId, cycle.aggregateRecordId),
       inArray(workRecordQualityLinks.repairRecordId, targetIds),
     ));
+    const dispatchedBatch = await tx.select().from(workRecordDispatchBatches).where(and(
+      eq(workRecordDispatchBatches.companyId, input.companyId),
+      eq(workRecordDispatchBatches.projectId, input.projectId),
+      eq(workRecordDispatchBatches.rootRecordId, cycle.aggregateRecordId),
+      eq(workRecordDispatchBatches.scopeKind, "whole_package"),
+      eq(workRecordDispatchBatches.scopeDigest, cycle.scopeDigest),
+      eq(workRecordDispatchBatches.state, "prepared"),
+    )).orderBy(desc(workRecordDispatchBatches.createdAt)).then((rows) => rows[0] ?? null);
+    if (!dispatchedBatch) throw unprocessable("Original package dispatch snapshot is unavailable", details("work_record_quality_target_invalid"));
+    const coverage = await tx.select().from(workRecordQaCoverageSnapshots).where(and(
+      eq(workRecordQaCoverageSnapshots.companyId, input.companyId),
+      eq(workRecordQaCoverageSnapshots.projectId, input.projectId),
+      eq(workRecordQaCoverageSnapshots.batchId, dispatchedBatch.id),
+      inArray(workRecordQaCoverageSnapshots.executionRecordId, targetIds),
+    ));
+    for (const target of targets) {
+      if (target.packageQaRole === "execution" && !target.qaRetestExemptionReason &&
+        !coverage.some((row) => row.executionRecordId === target.id)) {
+        throw unprocessable("Original QA coverage snapshot is unavailable", details("work_record_quality_target_invalid", { recordId: target.id }));
+      }
+    }
     const defectRecordIds = [...new Set(links.map((link) => link.defectRecordId))];
     if (defectRecordIds.length > 0) {
       await tx.update(workRecords).set({
@@ -419,12 +441,42 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
         ne(workRecords.businessStatus, "in_progress"),
       ));
     }
-    const qaRecordIds = [...new Set(links.map((link) => link.qaRecordId).filter((id): id is string => Boolean(id)))];
+    const qaRecordIds = [...new Set([
+      ...coverage.map((row) => row.qaRecordId),
+      ...links.map((link) => link.qaRecordId).filter((id): id is string => Boolean(id)),
+    ])];
     const qaRecords = qaRecordIds.length > 0 ? await tx.select().from(workRecords).where(and(
       eq(workRecords.companyId, input.companyId),
       eq(workRecords.projectId, input.projectId),
       inArray(workRecords.id, qaRecordIds),
     )) : [];
+    const qaById = new Map(qaRecords.map((record) => [record.id, record]));
+    const targetById = new Map(targets.map((record) => [record.id, record]));
+    for (const pair of coverage) {
+      const execution = targetById.get(pair.executionRecordId);
+      const qa = qaById.get(pair.qaRecordId);
+      if (!execution || !qa || qa.packageQaRole !== "qa" || qa.parentRecordId !== execution.parentRecordId) {
+        throw unprocessable("Original QA coverage no longer points to the same package", details("work_record_quality_target_invalid", { recordId: pair.executionRecordId, qaRecordId: pair.qaRecordId }));
+      }
+    }
+    await assertPackageMembers(tx, input.companyId, input.projectId, cycle.aggregateRecordId, qaRecordIds);
+    if (qaRecords.length !== qaRecordIds.length || qaRecords.some((record) =>
+      record.businessStatus === "cancelled" || !record.assigneeAgentId
+    )) throw unprocessable("Original QA task is unavailable for retest", details("work_record_quality_target_invalid", { qaRecordIds }));
+    const qaPrimaries = await Promise.all(qaRecords.map((record) => primaryIssueForRecord(
+      tx, input.companyId, input.projectId, record.id,
+    )));
+    if (qaPrimaries.some((row) => !row)) throw unprocessable("Original QA issue is unavailable for retest", details("work_record_quality_target_invalid", { qaRecordIds }));
+    const originalBatchItems = await tx.select().from(workRecordDispatchBatchItems).where(and(
+      eq(workRecordDispatchBatchItems.companyId, input.companyId),
+      eq(workRecordDispatchBatchItems.projectId, input.projectId),
+      eq(workRecordDispatchBatchItems.batchId, dispatchedBatch.id),
+      inArray(workRecordDispatchBatchItems.recordId, [...new Set([...targetIds, ...qaRecordIds])]),
+    ));
+    const originalLinkByRecord = new Map(originalBatchItems.map((item) => [item.recordId, item.primaryIssueLinkId]));
+    if ([...targetIssues, ...qaPrimaries].some((row) =>
+      !row || row.issue.status === "cancelled" || originalLinkByRecord.get(row.link.recordId) !== row.link.id
+    )) throw unprocessable("Original quality issue link changed or was cancelled", details("work_record_quality_target_invalid"));
     const repairItems = await tx.insert(workRecordQualityItems).values(targets.map((record) => ({
       companyId: input.companyId,
       projectId: input.projectId,
@@ -1041,6 +1093,38 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
       }
       const qaItems = refreshed.filter((item) => item.role === "qa" && item.required);
       if (qaItems.length > 0) {
+        const sourceBatch = await tx.select({ id: workRecordDispatchBatches.id }).from(workRecordDispatchBatches).where(and(
+          eq(workRecordDispatchBatches.companyId, companyId),
+          eq(workRecordDispatchBatches.projectId, projectId),
+          eq(workRecordDispatchBatches.rootRecordId, cycle.aggregateRecordId),
+          eq(workRecordDispatchBatches.scopeKind, "whole_package"),
+          eq(workRecordDispatchBatches.scopeDigest, cycle.scopeDigest),
+          eq(workRecordDispatchBatches.state, "prepared"),
+        )).orderBy(desc(workRecordDispatchBatches.createdAt)).then((rows) => rows[0] ?? null);
+        const coveredQaIds = new Set(sourceBatch && repairRecordIds.length ? (await tx.select({ qaRecordId: workRecordQaCoverageSnapshots.qaRecordId })
+          .from(workRecordQaCoverageSnapshots).where(and(
+            eq(workRecordQaCoverageSnapshots.companyId, companyId),
+            eq(workRecordQaCoverageSnapshots.projectId, projectId),
+            eq(workRecordQaCoverageSnapshots.batchId, sourceBatch.id),
+            inArray(workRecordQaCoverageSnapshots.executionRecordId, repairRecordIds),
+          ))).map((row) => row.qaRecordId) : []);
+        const defectQaIds = new Set((await tx.select({ qaRecordId: workRecordQualityLinks.qaRecordId })
+          .from(workRecordQualityLinks).where(and(
+            eq(workRecordQualityLinks.companyId, companyId),
+            eq(workRecordQualityLinks.projectId, projectId),
+            eq(workRecordQualityLinks.packageRecordId, cycle.aggregateRecordId),
+            inArray(workRecordQualityLinks.repairRecordId, repairRecordIds),
+          ))).map((link) => link.qaRecordId));
+        for (const item of qaItems) {
+          if (item.state === "accepted" || !coveredQaIds.has(item.recordId) || defectQaIds.has(item.recordId) || !item.issueLinkId) continue;
+          const issue = byLink.get(item.issueLinkId);
+          if (issue?.status !== "done" || (issue.executionWorkspaceId && unfinalizedWorkspaces.has(issue.executionWorkspaceId))) continue;
+          await tx.update(workRecordQualityItems).set({ state: "accepted", revision: sql`${workRecordQualityItems.revision} + 1`, updatedAt: now })
+            .where(eq(workRecordQualityItems.id, item.id));
+          await retireActiveIntents(tx, companyId, issue.id, "quality_qa_completed");
+          item.state = "accepted";
+          changed = true;
+        }
         const pendingQaItems = qaItems.filter((candidate) => candidate.state !== "accepted");
         for (const item of pendingQaItems.filter((candidate) => !["active", "ready"].includes(candidate.state))) {
           const qaPrimary = await primaryIssueForRecord(tx, companyId, projectId, item.recordId);

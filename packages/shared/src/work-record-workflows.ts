@@ -143,6 +143,7 @@ export const WORK_RECORD_WORKFLOW_ERROR_CODES = [
   "work_record_outbox_not_dead_letter",
   "work_record_outbox_attempt_conflict",
   "work_package_assignment_required",
+  "work_package_qa_coverage_required",
   "work_package_dependency_cycle",
 ] as const;
 

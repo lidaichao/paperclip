@@ -12,6 +12,8 @@ import {
   workRecords,
   workRecordAssignmentGapEscalations,
   workRecordDependencies,
+  workRecordQaCoverage,
+  workRecordQaCoverageSnapshots,
   workRecordDependencySnapshots,
   workRecordDispatchBatchItems,
   workRecordDispatchBatches,
@@ -256,13 +258,23 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       .orderBy(asc(workRecordDependencies.predecessorRecordId), asc(workRecordDependencies.successorRecordId));
     const selectedIds = new Set(recordIds);
     const edges = allEdges.filter((edge) => selectedIds.has(edge.successorRecordId));
+    const declaredQaCoverage = input.scopeKind === "whole_package" ? await database.select().from(workRecordQaCoverage).where(and(
+      eq(workRecordQaCoverage.companyId, companyId), eq(workRecordQaCoverage.projectId, projectId),
+      inArray(workRecordQaCoverage.executionRecordId, recordIds),
+    )).orderBy(asc(workRecordQaCoverage.executionRecordId), asc(workRecordQaCoverage.qaRecordId)) : [];
 
     const color = new Map<string, 0 | 1 | 2>();
     const outgoing = new Map<string, string[]>();
+    const coverageOutgoing = new Map<string, string[]>();
     for (const edge of allEdges) {
       const list = outgoing.get(edge.predecessorRecordId) ?? [];
       list.push(edge.successorRecordId);
       outgoing.set(edge.predecessorRecordId, list);
+      if (selectedIds.has(edge.predecessorRecordId) && selectedIds.has(edge.successorRecordId)) {
+        coverageOutgoing.set(edge.predecessorRecordId, [
+          ...(coverageOutgoing.get(edge.predecessorRecordId) ?? []), edge.successorRecordId,
+        ]);
+      }
     }
     const visit = (id: string): boolean => {
       if (color.get(id) === 1) return false;
@@ -275,6 +287,33 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
     for (const record of allRecords) {
       if (!visit(record.id)) {
         throw unprocessable("Work-record dependencies contain a cycle", details("work_package_dependency_cycle"));
+      }
+    }
+    const qaCoverageIssues: Array<{ recordId: string; qaRecordId: string | null; reason: string }> = [];
+    const qaCoverage = declaredQaCoverage.filter((coverage) => {
+      const execution = byId.get(coverage.executionRecordId);
+      const qa = byId.get(coverage.qaRecordId);
+      let reason: string | null = null;
+      if (!execution || !qa || !selectedIds.has(coverage.qaRecordId) || qa.parentRecordId !== execution.parentRecordId) reason = "qa_outside_package";
+      else if (qa.packageQaRole !== "qa" || !qa.assigneeAgentId || qa.businessStatus === "cancelled") reason = "qa_unavailable";
+      else {
+        const reachable = new Set<string>();
+        const pending = [execution.id];
+        while (pending.length) {
+          const id = pending.pop()!;
+          for (const next of coverageOutgoing.get(id) ?? []) if (!reachable.has(next)) { reachable.add(next); pending.push(next); }
+        }
+        if (!reachable.has(qa.id)) reason = "qa_dependency_missing";
+      }
+      if (reason) qaCoverageIssues.push({ recordId: coverage.executionRecordId, qaRecordId: coverage.qaRecordId, reason });
+      return !reason;
+    });
+    if (input.scopeKind === "whole_package") {
+      for (const record of scoped) {
+        if (record.packageQaRole === "execution" && !record.qaRetestExemptionReason &&
+          !qaCoverage.some((coverage) => coverage.executionRecordId === record.id)) {
+          qaCoverageIssues.push({ recordId: record.id, qaRecordId: null, reason: "qa_coverage_missing" });
+        }
       }
     }
 
@@ -335,8 +374,12 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         record.parentRecordId,
         record.assigneeAgentId,
         record.qaAssigneeAgentId,
+        record.packageQaRole,
+        record.qaRetestExemptionReason,
       ]),
       edges: edges.map((edge) => [edge.predecessorRecordId, edge.successorRecordId]),
+      qaCoverage: qaCoverage.map((coverage) => [coverage.executionRecordId, coverage.qaRecordId]),
+      qaCoverageIssues,
     });
     const root = input.rootRecordId ? byId.get(input.rootRecordId) ?? null : scoped[0] ?? null;
     const dependencySetRevision = Math.max(1, ...scoped.map((record) => record.dependencySetRevision));
@@ -353,7 +396,9 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       maxDepth: Math.min(maxDepth, WORK_PACKAGE_MAX_DEPTH),
       records: scoped,
       edges,
-      eligibility: { canPrepare: blockers.length === 0, blockers },
+      qaCoverage,
+      qaCoverageIssues,
+      eligibility: { canPrepare: blockers.length === 0 && qaCoverageIssues.length === 0, blockers },
     };
   }
 
@@ -377,12 +422,17 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
         parentRecordId: record.parentRecordId,
         assigneeAgentId: record.assigneeAgentId,
         qaAssigneeAgentId: record.qaAssigneeAgentId,
+        packageQaRole: record.packageQaRole,
+        qaRetestExemptionReason: record.qaRetestExemptionReason,
+        qaCoverageRecordIds: scope.qaCoverage.filter((coverage) => coverage.executionRecordId === record.id).map((coverage) => coverage.qaRecordId),
         depth: record.depth,
       })),
       edges: scope.edges.map((edge) => ({
         predecessorRecordId: edge.predecessorRecordId,
         successorRecordId: edge.successorRecordId,
       })),
+      qaCoverage: scope.qaCoverage.map((coverage) => ({ executionRecordId: coverage.executionRecordId, qaRecordId: coverage.qaRecordId })),
+      qaCoverageIssues: scope.qaCoverageIssues,
       eligibility: {
         ...scope.eligibility,
         escalation: escalation ? assignmentEscalationReceipt(escalation, false) : null,
@@ -560,7 +610,7 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
           currentScopeDigest: scope.scopeDigest,
         }));
       }
-      if (scope.eligibility.canPrepare) {
+      if (scope.eligibility.blockers.length === 0) {
         throw unprocessable("Work-package has no ownership gaps to escalate", details("work_package_assignment_gap_missing"));
       }
       const existingScope = await tx.select().from(workRecordAssignmentGapEscalations).where(and(
@@ -704,6 +754,11 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
       }
 
       const scope = await computeScope(tx, companyId, projectId, input, true);
+      if (scope.qaCoverageIssues.length > 0) {
+        throw unprocessable("Whole-package QA coverage must be repaired before dispatch", details(
+          "work_package_qa_coverage_required", { issues: scope.qaCoverageIssues },
+        ));
+      }
       if (!scope.eligibility.canPrepare) {
         throw unprocessable("Work-package ownership gaps must be resolved before dispatch", details(
           "work_package_assignment_required",
@@ -772,6 +827,10 @@ export function workPackageDispatchService(db: Db, options: WorkPackageDispatchO
           successorRevision: byId.get(edge.successorRecordId)!.revision,
         })));
       }
+      if (scope.qaCoverage.length > 0) await tx.insert(workRecordQaCoverageSnapshots).values(scope.qaCoverage.map((coverage) => ({
+        companyId, projectId, batchId: batch.id,
+        executionRecordId: coverage.executionRecordId, qaRecordId: coverage.qaRecordId,
+      })));
 
       const itemByRecord = new Map(items.map((item) => [item.recordId, item]));
       const rootId = input.scopeKind === "whole_package" ? input.rootRecordId : null;

@@ -2129,6 +2129,13 @@
       "when": 1794074400000,
       "tag": "0305_local_po_verdict",
       "breakpoints": true
+    },
+    {
+      "idx": 306,
+      "version": "7",
+      "when": 1794078000000,
+      "tag": "0306_qa_coverage",
+      "breakpoints": true
     }
   ]
 }

@@ -12,6 +12,7 @@ import {
   workRecords,
   workRecordAssignmentCommands,
   workRecordDependencies,
+  workRecordQaCoverage,
   workRecordDispatchBatchItems,
   workRecordDispatchBatches,
   workRecordDispatchCommands,
@@ -213,6 +214,13 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       eq(workRecordQualityLinks.companyId, companyId),
       inArray(workRecordQualityLinks.packageRecordId, recordIds),
     ));
+    const qaCoverage = await db.select({
+      executionRecordId: workRecordQaCoverage.executionRecordId,
+      qaRecordId: workRecordQaCoverage.qaRecordId,
+    }).from(workRecordQaCoverage).where(and(
+      eq(workRecordQaCoverage.companyId, companyId),
+      inArray(workRecordQaCoverage.executionRecordId, recordIds),
+    ));
     const holdMap = new Map(holds.map((hold) => [`${hold.dependentId}:${hold.blockingId}`, hold.reason]));
     const projectionMap = new Map(projections.map((projection) => [projection.recordId, projection]));
     const outboxMap = new Map<string, (typeof outboxRows)[number]>();
@@ -277,6 +285,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         kind: row.kind as WorkRecord["kind"],
         businessStatus: row.businessStatus as WorkRecord["businessStatus"],
         dispatchState: row.dispatchState as WorkRecord["dispatchState"],
+        qaCoverageRecordIds: qaCoverage.filter((coverage) => coverage.executionRecordId === row.id).map((coverage) => coverage.qaRecordId),
         dependencies: deps.filter((dependency) => dependency.successorId === row.id).map((dependency) => ({
           predecessorRecordId: dependency.predecessorId,
           title: dependency.title,
@@ -350,6 +359,12 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   }
 
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
+    if (input.packageQaRole && (!input.parentRecordId || input.kind !== "plan")) {
+      throw unprocessable("Package QA role requires a plan child");
+    }
+    if (input.qaRetestExemptionReason && (!input.parentRecordId || input.kind !== "plan" || input.packageQaRole === "qa")) {
+      throw unprocessable("QA retest exemption requires an execution child");
+    }
     await assertProject(companyId, input.projectId);
     await assertAssignee(companyId, input.assigneeAgentId);
     await assertAssignee(companyId, input.qaAssigneeAgentId);
@@ -360,6 +375,8 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
         parentRecordId: input.parentRecordId ?? null, iterationId: input.iterationId ?? null,
         assigneeAgentId: input.assigneeAgentId ?? null, qaAssigneeAgentId: input.qaAssigneeAgentId ?? null,
+        packageQaRole: input.kind === "plan" && input.parentRecordId ? input.packageQaRole ?? "execution" : null,
+        qaRetestExemptionReason: input.qaRetestExemptionReason ?? null,
         createdByAgentId: actor.agentId ?? null, createdByUserId: actor.userId ?? null,
       }).returning();
       if (predecessorIds.length) await tx.insert(workRecordDependencies).values(predecessorIds.map((predecessorRecordId) => ({
@@ -381,20 +398,70 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     if (input.assigneeAgentId !== undefined) await assertAssignee(companyId, input.assigneeAgentId);
     if (input.qaAssigneeAgentId !== undefined) await assertAssignee(companyId, input.qaAssigneeAgentId);
     const updated = await db.transaction(async (tx) => {
-      if (input.predecessorRecordIds !== undefined) {
+      if (input.predecessorRecordIds !== undefined || input.qaCoverageRecordIds !== undefined) {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
       }
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
       const locked = await tx.select().from(workRecords).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, recordId))).then((rows) => rows[0]);
       if (!locked) throw notFound("Work record not found");
       if (locked.revision !== input.expectedRevision) throw conflict("Work record revision changed", { currentRevision: locked.revision });
+      if (input.packageQaRole !== undefined || input.qaRetestExemptionReason !== undefined) {
+        if (locked.kind !== "plan" || !locked.parentRecordId) throw unprocessable("Package QA settings require a plan child");
+        if ((input.qaRetestExemptionReason ?? locked.qaRetestExemptionReason) &&
+          (input.packageQaRole ?? locked.packageQaRole) === "qa" && input.qaRetestExemptionReason !== null) {
+          throw unprocessable("QA task cannot have a retest exemption");
+        }
+      }
+      if (input.qaCoverageRecordIds !== undefined && input.predecessorRecordIds !== undefined) {
+        throw unprocessable("Update QA coverage and dependencies in separate revisions");
+      }
       const predecessorIds = input.predecessorRecordIds === undefined
         ? null
         : await assertDependencies(tx, companyId, projectId, recordId, input.predecessorRecordIds);
       if (
         locked.dispatchState !== "not_dispatched" &&
-        ((!workflowV2WritesEnabled && predecessorIds !== null) || input.assigneeAgentId !== undefined || input.qaAssigneeAgentId !== undefined || input.businessStatus !== undefined)
+        ((!workflowV2WritesEnabled && predecessorIds !== null) || input.assigneeAgentId !== undefined || input.qaAssigneeAgentId !== undefined || input.businessStatus !== undefined || input.parentRecordId !== undefined || input.packageQaRole !== undefined || input.qaRetestExemptionReason !== undefined || input.qaCoverageRecordIds !== undefined)
       ) throw conflict("Dispatched record routing and business status are controlled by execution");
+      if (input.qaCoverageRecordIds !== undefined) {
+        if (locked.packageQaRole !== "execution" || !locked.parentRecordId) {
+          throw unprocessable("QA coverage requires an execution child");
+        }
+        const qaIds = [...new Set(input.qaCoverageRecordIds)];
+        const qaRecords = qaIds.length ? await tx.select().from(workRecords).where(and(
+          eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), inArray(workRecords.id, qaIds),
+        )) : [];
+        if (qaRecords.length !== qaIds.length || qaRecords.some((qa) =>
+          qa.id === recordId || qa.parentRecordId !== locked.parentRecordId || qa.packageQaRole !== "qa" || !qa.assigneeAgentId
+        )) throw unprocessable("QA coverage must point to assigned original QA children in the same package");
+        if (qaIds.length) {
+          const sameParent = await tx.select({ id: workRecords.id }).from(workRecords).where(and(
+            eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId),
+            eq(workRecords.parentRecordId, locked.parentRecordId),
+          ));
+          const inPackage = new Set(sameParent.map((record) => record.id));
+          const edges = await tx.select().from(workRecordDependencies).where(and(
+            eq(workRecordDependencies.companyId, companyId), eq(workRecordDependencies.projectId, projectId),
+          ));
+          const outgoing = new Map<string, string[]>();
+          for (const edge of edges) if (inPackage.has(edge.predecessorRecordId) && inPackage.has(edge.successorRecordId)) {
+            outgoing.set(edge.predecessorRecordId, [...(outgoing.get(edge.predecessorRecordId) ?? []), edge.successorRecordId]);
+          }
+          const reachable = new Set<string>();
+          const pending = [recordId];
+          while (pending.length) {
+            const id = pending.pop()!;
+            for (const next of outgoing.get(id) ?? []) if (!reachable.has(next)) { reachable.add(next); pending.push(next); }
+          }
+          if (qaIds.some((id) => !reachable.has(id))) throw unprocessable("QA coverage requires a dependency path from execution to QA");
+        }
+        await tx.delete(workRecordQaCoverage).where(and(
+          eq(workRecordQaCoverage.companyId, companyId), eq(workRecordQaCoverage.projectId, projectId),
+          eq(workRecordQaCoverage.executionRecordId, recordId),
+        ));
+        if (qaIds.length) await tx.insert(workRecordQaCoverage).values(qaIds.map((qaRecordId) => ({
+          companyId, projectId, executionRecordId: recordId, qaRecordId,
+        })));
+      }
       if (predecessorIds) {
         await tx.delete(workRecordDependencies).where(and(eq(workRecordDependencies.companyId, companyId), eq(workRecordDependencies.successorRecordId, recordId)));
         if (predecessorIds.length) await tx.insert(workRecordDependencies).values(predecessorIds.map((predecessorRecordId) => ({ companyId, projectId, predecessorRecordId, successorRecordId: recordId })));
@@ -408,6 +475,8 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(input.iterationId !== undefined ? { iterationId: input.iterationId } : {}),
         ...(input.assigneeAgentId !== undefined ? { assigneeAgentId: input.assigneeAgentId } : {}),
         ...(input.qaAssigneeAgentId !== undefined ? { qaAssigneeAgentId: input.qaAssigneeAgentId } : {}),
+        ...(input.packageQaRole !== undefined ? { packageQaRole: input.packageQaRole } : {}),
+        ...(input.qaRetestExemptionReason !== undefined ? { qaRetestExemptionReason: input.qaRetestExemptionReason } : {}),
         ...(predecessorIds ? { dependencySetRevision: locked.dependencySetRevision + 1 } : {}),
         revision: locked.revision + 1, updatedAt: new Date(),
       }).where(eq(workRecords.id, recordId)).returning();

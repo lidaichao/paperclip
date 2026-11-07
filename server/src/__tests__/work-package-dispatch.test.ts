@@ -80,6 +80,9 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     return context.records.create(context.company.id, {
       projectId: context.project.id,
       parentRecordId: options.parentRecordId,
+      qaRetestExemptionReason: options.parentRecordId
+        ? "Existing dispatch scenario has no declared QA retest"
+        : undefined,
       kind: "plan",
       title,
       assigneeAgentId: options.assigned === false ? null : context.agent.id,
