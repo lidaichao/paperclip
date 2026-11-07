@@ -37,6 +37,8 @@ interface RecordDraft {
   qaAssigneeAgentId: string;
   parentRecordId: string;
   predecessorRecordIds: string[];
+  packageQaRole: "execution" | "qa";
+  qaRetestExemptionReason: string;
 }
 
 function blankDraft(): RecordDraft {
@@ -48,6 +50,8 @@ function blankDraft(): RecordDraft {
     qaAssigneeAgentId: "",
     parentRecordId: "",
     predecessorRecordIds: [],
+    packageQaRole: "execution",
+    qaRetestExemptionReason: "",
   };
 }
 
@@ -60,6 +64,8 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
     qaAssigneeAgentId: record.qaAssigneeAgentId ?? "",
     parentRecordId: record.parentRecordId ?? "",
     predecessorRecordIds: record.dependencies.map((dependency) => dependency.predecessorRecordId),
+    packageQaRole: record.packageQaRole ?? "execution",
+    qaRetestExemptionReason: record.qaRetestExemptionReason ?? "",
   };
 }
 
@@ -71,6 +77,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<WorkRecord | null>(null);
+  const [coverageRecord, setCoverageRecord] = useState<WorkRecord | null>(null);
+  const [coverageIds, setCoverageIds] = useState<string[]>([]);
   const [draft, setDraft] = useState<RecordDraft>(blankDraft);
   const recordsKey = queryKeys.workRecords.list(companyId, projectId);
   const records = useQuery({
@@ -104,6 +112,10 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
         assigneeAgentId: draft.assigneeAgentId || null,
         qaAssigneeAgentId: draft.qaAssigneeAgentId || null,
         predecessorRecordIds: draft.predecessorRecordIds,
+        ...(kind === "plan" && draft.parentRecordId ? {
+          packageQaRole: draft.packageQaRole,
+          qaRetestExemptionReason: draft.packageQaRole === "execution" ? draft.qaRetestExemptionReason.trim() || null : null,
+        } : {}),
       };
       if (editingRecord) {
         return workRecordsApi.update(companyId, projectId, editingRecord.id, {
@@ -130,6 +142,21 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
     },
   });
 
+  const saveCoverage = useMutation({
+    mutationFn: () => {
+      if (!coverageRecord) throw new Error("No coverage record selected");
+      return workRecordsApi.update(companyId, projectId, coverageRecord.id, {
+        expectedRevision: coverageRecord.revision,
+        qaCoverageRecordIds: coverageIds,
+      });
+    },
+    onSuccess: async () => {
+      setCoverageRecord(null);
+      setCoverageIds([]);
+      await queryClient.invalidateQueries({ queryKey: recordsKey });
+    },
+  });
+
   const beginCreate = () => {
     save.reset();
     setEditingRecord(null);
@@ -142,6 +169,12 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
     setEditingRecord(record);
     setDraft(draftFromRecord(record));
     setDialogOpen(true);
+  };
+
+  const beginCoverage = (record: WorkRecord) => {
+    saveCoverage.reset();
+    setCoverageRecord(record);
+    setCoverageIds(record.qaCoverageRecordIds);
   };
 
   const selectableRecords = allRecords.filter((record) => record.id !== editingRecord?.id);
@@ -176,6 +209,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
         recordsError={records.error}
         onRetryRecords={() => records.refetch()}
         onEditRecord={beginEdit}
+        onEditCoverage={kind === "plan" ? beginCoverage : undefined}
         onReopenRecord={kind === "defect" ? (record) => reopen.mutate(record) : undefined}
         reopeningRecordId={reopen.isPending ? reopen.variables?.id ?? null : null}
       />
@@ -215,6 +249,19 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
                 {parentRecords.map((record) => <option key={record.id} value={record.id}>{record.title}</option>)}
               </select>
             </label>
+
+            {kind === "plan" && draft.parentRecordId ? <label className="space-y-1 text-sm font-medium">
+              <span>{l10n("local.work_record_package_qa_role")}</span>
+              <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.packageQaRole} onChange={(event) => setDraft((current) => ({ ...current, packageQaRole: event.target.value as "execution" | "qa" }))}>
+                <option value="execution">{l10n("local.work_record_package_execution_role")}</option>
+                <option value="qa">{l10n("local.work_record_package_qa_task_role")}</option>
+              </select>
+            </label> : null}
+
+            {kind === "plan" && draft.parentRecordId && draft.packageQaRole === "execution" ? <label className="space-y-1 text-sm font-medium md:col-span-2">
+              <span>{l10n("local.work_record_qa_retest_exemption_reason")}</span>
+              <Input maxLength={2000} value={draft.qaRetestExemptionReason} onChange={(event) => setDraft((current) => ({ ...current, qaRetestExemptionReason: event.target.value }))} placeholder={l10n("local.work_record_qa_retest_exemption_optional")} />
+            </label> : null}
 
             <label className="space-y-1 text-sm font-medium">
               <span>{l10n("local.work_record_assignee")}</span>
@@ -261,6 +308,27 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
             <Button disabled={!draft.title.trim() || save.isPending} onClick={() => save.mutate()}>
               {save.isPending ? l10n("local.work_record_saving") : l10n("local.work_record_save_kind", { kind: kindLabel })}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(coverageRecord)} onOpenChange={(open) => { if (!open) { setCoverageRecord(null); setCoverageIds([]); } }}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{l10n("local.work_record_edit_qa_coverage")}</DialogTitle>
+            <DialogDescription>{coverageRecord?.title} · {l10n("local.work_record_qa_coverage_help")}</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border p-2">
+            {allRecords.filter((record) => record.id !== coverageRecord?.id && record.parentRecordId === coverageRecord?.parentRecordId && record.packageQaRole === "qa").length === 0 ? <p className="text-sm text-muted-foreground">{l10n("local.work_record_no_qa_children")}</p> : null}
+            {allRecords.filter((record) => record.id !== coverageRecord?.id && record.parentRecordId === coverageRecord?.parentRecordId && record.packageQaRole === "qa").map((record) => <label key={record.id} className="flex min-h-9 cursor-pointer items-center gap-2 text-sm">
+              <input type="checkbox" className="size-4 accent-primary" checked={coverageIds.includes(record.id)} onChange={(event) => setCoverageIds((current) => event.target.checked ? [...new Set([...current, record.id])] : current.filter((id) => id !== record.id))} />
+              <span>{record.title}</span>
+            </label>)}
+          </div>
+          {saveCoverage.error ? <p role="alert" className="text-sm text-destructive">{saveCoverage.error.message}</p> : null}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setCoverageRecord(null); setCoverageIds([]); }}>{l10n("local.work_record_cancel")}</Button>
+            <Button disabled={saveCoverage.isPending} onClick={() => saveCoverage.mutate()}>{l10n("local.work_record_save_qa_coverage")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

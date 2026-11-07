@@ -18,11 +18,12 @@ vi.mock("@/api/work-records", () => ({
 }));
 vi.mock("@/api/agents", () => ({ agentsApi: { list: agentsMock } }));
 vi.mock("@/components/WorkPackageConsole", () => ({
-  WorkPackageConsole: ({ visibleKind, records, onReopenRecord, onEditRecord }: {
+  WorkPackageConsole: ({ visibleKind, records, onReopenRecord, onEditRecord, onEditCoverage }: {
     visibleKind: "plan" | "defect";
     records: WorkRecord[];
     onReopenRecord?: (record: WorkRecord) => void;
     onEditRecord?: (record: WorkRecord) => void;
+    onEditCoverage?: (record: WorkRecord) => void;
   }) => (
     <div data-testid="console" data-kind={visibleKind}>
       {records.filter((record) => record.kind === visibleKind).map((record) => (
@@ -30,6 +31,7 @@ vi.mock("@/components/WorkPackageConsole", () => ({
           {record.title}
           {onReopenRecord ? <button onClick={() => onReopenRecord(record)}>重新打开测试</button> : null}
           {onEditRecord ? <button onClick={() => onEditRecord(record)}>编辑测试</button> : null}
+          {onEditCoverage && record.packageQaRole === "execution" ? <button onClick={() => onEditCoverage(record)}>QA 覆盖测试</button> : null}
         </div>
       ))}
     </div>
@@ -168,6 +170,24 @@ describe("ProjectWorkRecords", () => {
     expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", dependent.id, expect.objectContaining({
       predecessorRecordIds: [first.id, second.id],
     }));
+  });
+
+  it("updates QA coverage separately from the dependency form", async () => {
+    const parent = record("plan", { id: "package-p", title: "工作包" });
+    const execution = record("plan", { id: "task-b", title: "程序开发", parentRecordId: parent.id, packageQaRole: "execution" });
+    const qa = record("plan", { id: "task-q", title: "QA 复测", parentRecordId: parent.id, packageQaRole: "qa", assigneeAgentId: "agent-q" });
+    listMock.mockResolvedValue([execution, qa, parent]);
+    await render("plan");
+    await act(async () => button("QA 覆盖测试").click());
+    const qaCheckbox = [...document.body.querySelectorAll('input[type="checkbox"]')].find((node) => node.parentElement?.textContent?.includes("QA 复测")) as HTMLInputElement;
+    expect(qaCheckbox).toBeTruthy();
+    await act(async () => qaCheckbox.click());
+    await act(async () => button("保存 QA 覆盖").click());
+    await flush();
+    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", execution.id, {
+      expectedRevision: execution.revision,
+      qaCoverageRecordIds: [qa.id],
+    });
   });
 
   it("switches fixed form and status copy to English while preserving record titles", async () => {

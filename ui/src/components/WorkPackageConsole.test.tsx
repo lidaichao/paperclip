@@ -53,6 +53,7 @@ function record(overrides: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title"
   return {
     id, title, companyId: "company-1", projectId: "project-1", kind: "plan", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null, assigneeAgentId: "agent-po", qaAssigneeAgentId: "agent-qa",
+    packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     businessStatus: "in_review", statusVersion: 1, revision: 1, dispatchState: "linked", dispatchRound: 1, dependencySetRevision: 1,
     blockedCycle: 0, dependencies: [],
     execution: { issueId: "issue-1", issueIdentifier: "LUN-1", issueStatus: "in_progress", issueStatusVersion: 1, lastRunId: "run-1", lastRunStatus: null, lastRunAgentId: "agent-po", lastRunStartedAt: new Date(), lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: new Date() },
@@ -84,8 +85,9 @@ const quality: WorkRecordQualityView = {
 const preview: WorkPackageDispatchPreview = {
   workflowVersion: 2, projectId: "project-1", rootRecordId: ROOT_ID, scopeKind: "whole_package", scopeDigest: "scope-digest", rootRevision: 1, dependencySetRevision: 1,
   recordCount: 3, edgeCount: 1, maxDepth: 1,
-  records: records.map((item, index) => ({ id: item.id, title: item.title, revision: item.revision, dependencySetRevision: item.dependencySetRevision, parentRecordId: item.parentRecordId, assigneeAgentId: item.assigneeAgentId, qaAssigneeAgentId: item.qaAssigneeAgentId, depth: index === 0 ? 0 : 1 })),
+  records: records.map((item, index) => ({ id: item.id, title: item.title, revision: item.revision, dependencySetRevision: item.dependencySetRevision, parentRecordId: item.parentRecordId, assigneeAgentId: item.assigneeAgentId, qaAssigneeAgentId: item.qaAssigneeAgentId, packageQaRole: item.packageQaRole, qaRetestExemptionReason: item.qaRetestExemptionReason, qaCoverageRecordIds: item.qaCoverageRecordIds, depth: index === 0 ? 0 : 1 })),
   edges: [{ predecessorRecordId: ROOT_ID, successorRecordId: CHILD_ID }],
+  qaCoverage: [], qaCoverageIssues: [],
   eligibility: { canPrepare: true, blockers: [], escalation: null },
 };
 
@@ -319,6 +321,35 @@ describe("WorkPackageConsole", () => {
     expect(escalateMock).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain("不会覆盖已有负责人");
     expect(container.textContent).toContain("协调通知已入队，尚未送达");
+  });
+
+  it("shows QA coverage blockers without offering the owner-gap CEO action", async () => {
+    previewMock.mockResolvedValueOnce({
+      ...preview,
+      qaCoverageIssues: [{ recordId: CHILD_ID, qaRecordId: null, reason: "qa_coverage_missing" }],
+      eligibility: { canPrepare: false, blockers: [], escalation: null },
+    });
+    await render();
+    const previewButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("预览整个工作包")) as HTMLButtonElement;
+    await act(async () => previewButton.click()); await flush();
+    expect(container.textContent).toContain("实现子项 · 未指定覆盖该任务的 QA 子任务");
+    expect(container.textContent).not.toContain("负责人缺口会阻断整包派发");
+    expect(container.textContent).not.toContain("上报 CEO 协调");
+    const prepareButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认范围并准备派发")) as HTMLButtonElement;
+    expect(prepareButton.disabled).toBe(true);
+  });
+
+  it("shows the explicit QA retest waiver reason in dispatch preview", async () => {
+    previewMock.mockResolvedValueOnce({
+      ...preview,
+      records: preview.records.map((item) => item.id === CHILD_ID ? {
+        ...item, packageQaRole: "execution" as const, qaRetestExemptionReason: "仅调整文案，无执行逻辑变更",
+      } : item),
+    });
+    await render();
+    const previewButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("预览整个工作包")) as HTMLButtonElement;
+    await act(async () => previewButton.click()); await flush();
+    expect(container.textContent).toContain("实现子项 · 免于复测，原因：仅调整文案，无执行逻辑变更");
   });
 
   it("restores the persisted CEO coordination state after a fresh render", async () => {
