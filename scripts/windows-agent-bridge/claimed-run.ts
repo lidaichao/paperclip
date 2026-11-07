@@ -174,6 +174,10 @@ export async function executeClaimedRun(input: {
               }
               throw new Error("Windows supervisor stop receipt was not confirmed");
             } catch (error) {
+              // The supervisor may have completed between the initial proof
+              // read and cancellation. A valid durable receipt wins the race.
+              try { await verifySupervisorStopped(input.supervisorBinding!, process); return; }
+              catch { /* Stop proof remains absent. */ }
               // Kill the verified wrapper as a last safety action. Without a
               // durable Job receipt, the old claim remains latched.
               await stopProcessTree(pid, process.startedAt);
