@@ -1052,19 +1052,34 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     await context.quality.reconcileAll(25);
     const quality = await context.quality.get(context.company.id, context.project.id, defect.id);
     const qaItem = quality.items.find((item) => item.role === "qa")!;
-    const result = await context.quality.recordQaVerdict(context.company.id, context.project.id, defect.id, {
-      workflowVersion: 2,
+    const request = {
+      workflowVersion: 2 as const,
       clientRequestId: "qa-return-review-limit",
       requestPayloadDigest: "qa-return-review-limit",
       cycleId: quality.cycle!.id,
       itemId: qaItem.id,
       expectedCycleRevision: quality.cycle!.revision,
-      outcome: "return",
+      outcome: "return" as const,
       defectRecordId: defect.id,
       repairRecordId: defect.id,
       reason: "Maximum review round reached",
       evidenceRefs: ["evidence://independent/review-limit"],
-    }, { actorType: "agent", actorId: context.qa.id, agentId: context.qa.id });
+    };
+    const actor = { actorType: "agent" as const,
+      actorId: context.qa.id, agentId: context.qa.id };
+    await expect(db.transaction(async (tx) => {
+      await context.quality.commitQaVerdictInTransaction(tx,
+        context.company.id, context.project.id, defect.id, request, actor);
+      throw new Error("simulated QA run finish failure");
+    })).rejects.toThrow("simulated QA run finish failure");
+    expect(await db.select().from(workRecordQualityVerdicts).where(and(
+      eq(workRecordQualityVerdicts.companyId, context.company.id),
+      eq(workRecordQualityVerdicts.clientRequestId, request.clientRequestId),
+    ))).toHaveLength(0);
+    expect((await context.quality.get(context.company.id, context.project.id, defect.id))
+      .cycle?.qualityPhase).toBe("qa_retest");
+    const result = await context.quality.recordQaVerdict(context.company.id,
+      context.project.id, defect.id, request, actor);
     expect(result.escalated).toBe(true);
     expect(result.quality.cycle).toMatchObject({
       id: quality.cycle!.id,
