@@ -4,8 +4,8 @@ import {
   agentWakeupRequests, agents, companies, heartbeatRuns, issueCommandDeliveries,
   issueCompletionReviews, issues, issueThreadInteractions, localAgentRunLeases,
 } from "@paperclipai/db";
-import { and, eq, sql } from "drizzle-orm";
-import { conflict, notFound } from "../errors.js";
+import { and, asc, eq, lte, sql } from "drizzle-orm";
+import { HttpError, conflict, notFound } from "../errors.js";
 import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
 import { CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON,
   clientPullCompletionReviewWakeKey } from "./local-agent-review-claim.js";
@@ -16,9 +16,9 @@ function object(value: unknown): Record<string, unknown> {
 }
 
 /**
- * Inert dedicated producer. No timer, HTTP route or heartbeat dispatcher calls
- * this yet. The wake receipt and queued client-pull run commit with the intent;
- * there is no network call or server-side model launch in this transaction.
+ * Dedicated producer. The bounded execution-control sweep calls sweepReady();
+ * the wake receipt and queued client-pull run commit with the intent. This
+ * service never launches a model process on the control-plane server.
  */
 export function localAgentReviewDeliveryService(db: Db) {
   async function deliver(id: string) {
@@ -175,5 +175,37 @@ export function localAgentReviewDeliveryService(db: Db) {
       return { delivery: delivered, wake: { ...wake, runId: run.id }, run, replayed: false };
     });
   }
-  return { deliver };
+
+  /** Dispatch only source-finished reviews; the transaction in deliver owns deduplication. */
+  async function sweepReady(limit = 50): Promise<{ scanned: number; delivered: number; deferred: number }> {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error("Invalid review sweep limit");
+    const candidates = await db.select({ id: issueCommandDeliveries.id })
+      .from(issueCommandDeliveries).where(and(
+        eq(issueCommandDeliveries.kind, "completion_review"),
+        eq(issueCommandDeliveries.status, "ready"),
+        lte(issueCommandDeliveries.nextAttemptAt, sql`now()`),
+      )).orderBy(asc(issueCommandDeliveries.nextAttemptAt), asc(issueCommandDeliveries.id))
+      .limit(limit);
+    let delivered = 0;
+    let deferred = 0;
+    for (const candidate of candidates) {
+      try {
+        const result = await deliver(candidate.id);
+        if (!result.replayed) delivered++;
+      } catch (error) {
+        if (!(error instanceof HttpError) || ![404, 409].includes(error.status)) throw error;
+        // A concurrent dispatcher may have committed first. Stale or temporarily
+        // ineligible reviews back off without blocking later ready deliveries.
+        await db.update(issueCommandDeliveries).set({
+          nextAttemptAt: sql`now() + interval '1 minute'`,
+          attempts: sql`${issueCommandDeliveries.attempts} + 1`,
+          lastError: error.message.slice(0, 300), updatedAt: sql`now()`,
+        }).where(and(eq(issueCommandDeliveries.id, candidate.id),
+          eq(issueCommandDeliveries.status, "ready")));
+        deferred++;
+      }
+    }
+    return { scanned: candidates.length, delivered, deferred };
+  }
+  return { deliver, sweepReady };
 }

@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 import express from "express";
 import request from "supertest";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   activityLog,
   agentWakeupRequests,
@@ -1844,6 +1844,23 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await db.update(heartbeatRuns).set({ runtimeMode: "legacy" })
       .where(eq(heartbeatRuns.id, first.run.id));
     await expect(producer.deliver(handoff.delivery.id)).rejects.toMatchObject({ status: 409 });
+  }, 30_000);
+
+  it("sweeps a committed dedicated review into one local reviewer run", async () => {
+    const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
+    await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const producer = localAgentReviewDeliveryService(db);
+    expect(await producer.sweepReady()).toMatchObject({ scanned: 1, delivered: 1 });
+    expect(await producer.sweepReady()).toMatchObject({ scanned: 0, delivered: 0 });
+    const [intent] = await db.select().from(issueCommandDeliveries)
+      .where(eq(issueCommandDeliveries.id, handoff.delivery.id));
+    expect(intent.status).toBe("delivered");
+    const runs = await db.select().from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, scope.companyId),
+      eq(heartbeatRuns.agentId, handoff.review.reviewerAgentId),
+    ));
+    expect(runs.filter((run) => run.contextSnapshot?.reviewId === handoff.review.id)).toHaveLength(1);
   }, 30_000);
 
   it("rolls back wake and run when dedicated intent delivery fails", async () => {
