@@ -6,7 +6,7 @@ import type { AddressInfo } from "node:net";
 import type { AliceClient, LocalReviewContext, LocalRunClaim, LocalRunLease } from "./paperclip-client.js";
 
 type LocalWriteKind = "comment" | "child_complete" | "defect_repair_handoff" | "defect_qa_verdict" | "po_verdict" |
-  "completion_review_handoff" | "review_decision";
+  "completion_review_handoff" | "review_decision" | "subtask_create";
 interface PendingLocalWriteIntent {
   schemaVersion: 2; kind: LocalWriteKind; runId: string; issueId: string;
   agentId: string; deviceId: string; canonicalContent: string; requestDigest: string;
@@ -81,7 +81,7 @@ export class LocalCommentIntentStore {
         const intent = item as PendingLocalWriteIntent;
         return intent.schemaVersion === 2 &&
           ["comment", "child_complete", "defect_repair_handoff", "defect_qa_verdict", "po_verdict",
-            "completion_review_handoff", "review_decision"]
+            "completion_review_handoff", "review_decision", "subtask_create"]
             .includes(intent.kind) &&
           intent.runId === document.runId && intent.issueId === document.issueId &&
           intent.agentId === document.agentId && intent.deviceId === document.deviceId &&
@@ -554,6 +554,45 @@ export async function startLocalRunWriteProxy(input: {
           try {
             saved = await input.client.addLocalRunComment(lease, input.claim.issueId, intent.canonicalContent,
               intent.clientRequestId, input.signal);
+          } catch {
+            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          }
+          await input.intentStore.confirmed(intent);
+          return saved;
+        };
+        const next = writeQueue.then(perform);
+        writeQueue = next.then(() => undefined, () => undefined);
+        json(res, 201, await next); return;
+      }
+      if (!review && !defectQa && req.method === "POST" && pathname === `${issuePath}/children`) {
+        const body = await bodyOf(req);
+        if (Object.keys(body).some((key) =>
+          !["title", "description", "assigneeAgentId", "clientRequestId"].includes(key)) ||
+          typeof body.title !== "string" || !body.title.trim() || body.title.length > 500 ||
+          typeof body.description !== "string" || !body.description.trim() ||
+          body.description.length > 20_000 ||
+          typeof body.assigneeAgentId !== "string" || !UUID.test(body.assigneeAgentId) ||
+          (body.clientRequestId !== undefined &&
+            (typeof body.clientRequestId !== "string" || !UUID.test(body.clientRequestId)))) {
+          json(res, 400, { error: "unsupported subtask payload" }); return;
+        }
+        const perform = async () => {
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          if (sourceDispositionConfirmed) throw new Error("source run already completed or handed off");
+          const command = {
+            title: (body.title as string).trim(),
+            description: (body.description as string).trim(),
+            assigneeAgentId: body.assigneeAgentId as string,
+          };
+          const intent = await pending("subtask_create", JSON.stringify(command),
+            body.clientRequestId as string | undefined);
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          let saved: unknown;
+          try {
+            saved = await input.client.createLocalRunSubtask(lease, {
+              issueId: input.claim.issueId, ...command,
+              clientRequestId: intent.clientRequestId,
+            }, input.signal);
           } catch {
             throw new UnresolvedCommentIntentError(intent.clientRequestId);
           }

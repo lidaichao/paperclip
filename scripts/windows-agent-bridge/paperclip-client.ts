@@ -567,6 +567,33 @@ export class AliceClient {
     return response.body;
   }
 
+  async createLocalRunSubtask(lease: LocalRunLease, input: {
+    issueId: string; title: string; description: string;
+    assigneeAgentId: string; clientRequestId: string;
+  }, signal?: AbortSignal): Promise<unknown> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(input.issueId, "issueId");
+    requireUuid(input.assigneeAgentId, "assigneeAgentId");
+    requireUuid(input.clientRequestId, "clientRequestId");
+    if (!input.title.trim() || !input.description.trim()) {
+      throw new Error("subtask title and description are required");
+    }
+    const response = await this.#writeJson("POST",
+      `/api/agents/me/local-runs/${lease.runId}/subtasks`, {
+        ...leaseOwnerBody(lease), ...input,
+      }, { "X-Paperclip-Run-Id": lease.runId }, signal);
+    const result = asRecord(response.body, "local subtask creation");
+    const child = asRecord(result.child, "created child");
+    if (child.parentId !== input.issueId ||
+      child.assigneeAgentId !== input.assigneeAgentId ||
+      child.createdByAgentId !== this.#verifiedIdentity?.id) {
+      throw new Error("created subtask did not match the verified delegation");
+    }
+    requireUuid(child.id, "created child ID");
+    return result;
+  }
+
   /** Narrow human confirmation only. Agent reviewer handoff remains gated. */
   async createLocalReviewConfirmation(lease: LocalRunLease, issueId: string, prompt: string,
     clientRequestId: string, signal?: AbortSignal): Promise<unknown> {

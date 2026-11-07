@@ -16,6 +16,11 @@ const claim: LocalRunClaim = { agentId, issueId, runId,
 async function fixture() {
   const intentFile = path.join(await mkdtemp(path.join(os.tmpdir(), "alice-local-write-")), "intent.json");
   const addLocalRunComment = vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({ id: "comment-1" }));
+  const createLocalRunSubtask = vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({
+    child: { id: "a1f9212d-097b-4c66-9d19-d7706d075ad5", parentId: issueId,
+      assigneeAgentId: "28579d24-f759-4eef-b145-e42d652ecce2", createdByAgentId: agentId },
+    replayed: false,
+  }));
   const patchLocalRunIssue = vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({ id: issueId }));
   const createLocalCompletionReviewHandoff = vi.fn<(...args: unknown[]) => Promise<unknown>>(
     async () => ({ reviewId: "807c65f2-11aa-4e37-a6f8-ae5896363e88" }));
@@ -39,7 +44,7 @@ async function fixture() {
     client: {
       readLocalRunIdentity: () => ({ id: agentId, companyId: "company-1", name: "Luna" }),
       readLocalRunIssue: async () => ({ id: issueId, title: "Task" }),
-      addLocalRunComment, patchLocalRunIssue, createLocalCompletionReviewHandoff,
+      addLocalRunComment, createLocalRunSubtask, patchLocalRunIssue, createLocalCompletionReviewHandoff,
       completeLocalChildWorkRecord, prepareLocalDefectRepairHandoff,
       readLocalDefectQaContext, prepareLocalDefectQaVerdict,
       readLocalWorkPackageContext, prepareLocalPoVerdict,
@@ -49,7 +54,7 @@ async function fixture() {
     fetch(`${proxy.apiBase}${route}`, { method,
       headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
-  return { proxy, controller, request, addLocalRunComment, patchLocalRunIssue,
+  return { proxy, controller, request, addLocalRunComment, createLocalRunSubtask, patchLocalRunIssue,
     createLocalCompletionReviewHandoff, completeLocalChildWorkRecord,
     prepareLocalDefectRepairHandoff,
     readLocalDefectQaContext, prepareLocalDefectQaVerdict,
@@ -57,6 +62,26 @@ async function fixture() {
 }
 
 describe("fenced local run write capability", () => {
+  it("delegates only from the claimed issue and keeps retry identity", async () => {
+    const f = await fixture();
+    const delegate = { title: "G0 baseline", description: "Inspect and report the source baseline",
+      assigneeAgentId: "28579d24-f759-4eef-b145-e42d652ecce2",
+      clientRequestId: "92452957-2c0f-4877-a448-ae350e295beb" };
+    try {
+      expect((await f.request(`/api/issues/${agentId}/children`, "POST", delegate)).status).toBe(403);
+      const first = await f.request(`/api/issues/${issueId}/children`, "POST", delegate);
+      expect(first.status).toBe(201);
+      expect(f.createLocalRunSubtask).toHaveBeenCalledWith(expect.objectContaining({ runId }),
+        expect.objectContaining({ ...delegate, issueId }), expect.anything());
+      const again = await f.request(`/api/issues/${issueId}/children`, "POST", delegate);
+      expect(again.status).toBe(201);
+      expect(f.createLocalRunSubtask).toHaveBeenCalledTimes(2);
+      const changed = await f.request(`/api/issues/${issueId}/children`, "POST",
+        { ...delegate, title: "Different task" });
+      expect(changed.status).toBe(409);
+      expect(f.createLocalRunSubtask).toHaveBeenCalledTimes(2);
+    } finally { await f.proxy.close(); }
+  });
   it("exposes only this task's PO context through the loopback lease", async () => {
     const f = await fixture();
     try {

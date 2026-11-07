@@ -124,7 +124,7 @@ function localFinishRequestDigest(input: LocalRunOwner & { issueId: string;
 }
 
 type PreparedWriteKind = "child_complete" | "defect_repair_handoff" |
-  "po_verdict" | "defect_qa_verdict" | "completion_review_handoff";
+  "po_verdict" | "defect_qa_verdict" | "completion_review_handoff" | "subtask_create";
 
 async function recordPreparedWriteReceipt(tx: Db, input: LocalRunOwner & {
   issueId: string; clientRequestId: string }, kind: PreparedWriteKind,
@@ -2040,6 +2040,83 @@ export function localAgentRunLeaseService(
     return result.comment;
   }
 
+  async function createFencedSubtask(input: LocalRunOwner & {
+    issueId: string; title: string; description: string;
+    assigneeAgentId: string; clientRequestId: string;
+  }, actor: Express.Request["actor"]) {
+    const title = input.title.trim();
+    const description = input.description.trim();
+    if (!title || title.length > 500 || !description || description.length > 20_000 ||
+      !UUID.test(input.assigneeAgentId) || !UUID.test(input.clientRequestId)) {
+      throw badRequest("A title, description, assignee and request ID are required");
+    }
+    if (input.assigneeAgentId === input.agentId) {
+      throw forbidden("Local subtask cannot be assigned back to its parent owner");
+    }
+    const canonical = JSON.stringify({ title, description, assigneeAgentId: input.assigneeAgentId });
+    const digest = createHash("sha256").update(JSON.stringify({
+      kind: "subtask_create", runId: input.runId, issueId: input.issueId,
+      agentId: input.agentId, deviceId: input.deviceId, canonicalContent: canonical,
+    })).digest("hex");
+    const publications: ActivityPublication[] = [];
+    const result = await withFencedIssueWrite(input, actor, "issue:mutate", async (tx, parent) => {
+      if (parent.status !== "in_progress" || !parent.projectId) {
+        throw conflict("Only an active project task may delegate a subtask");
+      }
+      const assignment = await accessService(tx).decide({
+        actor: { ...actor, runId: input.runId }, action: "tasks:assign",
+        resource: { type: "issue", companyId: input.companyId,
+          projectId: parent.projectId, parentIssueId: parent.id,
+          assigneeAgentId: input.assigneeAgentId, assigneeUserId: null },
+        scope: { projectId: parent.projectId, parentIssueId: parent.id,
+          assigneeAgentId: input.assigneeAgentId, assigneeUserId: null },
+      });
+      if (!assignment.allowed) throw forbidden("Subtask assignment permission denied");
+      const [assignee] = await tx.select({ id: agents.id, status: agents.status })
+        .from(agents).where(and(eq(agents.id, input.assigneeAgentId),
+          eq(agents.companyId, input.companyId))).limit(1);
+      if (!assignee || ["terminated", "archived"].includes(assignee.status)) {
+        throw forbidden("Subtask assignee is not available in this company");
+      }
+      const [existing] = await tx.select().from(localRunWriteReceipts).where(and(
+        eq(localRunWriteReceipts.companyId, input.companyId),
+        eq(localRunWriteReceipts.runId, input.runId),
+        eq(localRunWriteReceipts.clientRequestId, input.clientRequestId),
+      )).limit(1);
+      if (existing) {
+        if (existing.kind !== "subtask_create" || existing.issueId !== parent.id ||
+          existing.requestDigest !== digest || existing.agentId !== input.agentId ||
+          existing.deviceId !== input.deviceId) {
+          throw conflict("Subtask request ID belongs to different content");
+        }
+        const [child] = await tx.select().from(issues).where(and(
+          eq(issues.id, existing.sourceReceiptId), eq(issues.parentId, parent.id),
+          eq(issues.companyId, input.companyId))).limit(1);
+        if (!child) throw conflict("Committed subtask receipt has no child issue");
+        return { child, replayed: true as const };
+      }
+      const child = await issueService(db).create(input.companyId, {
+        title, description, parentId: parent.id, projectId: parent.projectId,
+        goalId: parent.goalId, status: "todo", priority: parent.priority,
+        assigneeAgentId: input.assigneeAgentId, createdByAgentId: input.agentId,
+        actorRunId: input.runId, originRunId: input.runId,
+        idempotencyKey: `local-subtask:${input.runId}:${input.clientRequestId}`,
+      }, tx);
+      await recordPreparedWriteReceipt(tx, input, "subtask_create", canonical, child.id);
+      await logActivity(tx, {
+        companyId: input.companyId, actorType: "agent", actorId: input.agentId,
+        agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
+        action: "issue.child_created", entityType: "issue", entityId: child.id,
+        details: { parentId: parent.id, identifier: child.identifier,
+          title: child.title, clientRequestId: input.clientRequestId,
+          authorizationReason: assignment.reason ?? "local_run_delegation" },
+      }, publications);
+      return { child, replayed: false as const };
+    });
+    for (const publication of publications) publishActivity(publication);
+    return result;
+  }
+
   /** A positive receipt is sourced only from the original committed audit row.
    * Absence is deliberately unknown, even when the old run has ended. */
   async function readFencedWriteReceipt(input: LocalRunOwner & {
@@ -2089,7 +2166,8 @@ export function localAgentRunLeaseService(
           sourceReceiptId: preparedReceipt.sourceReceiptId };
       }
       if (["child_complete", "defect_repair_handoff", "po_verdict",
-        "defect_qa_verdict", "completion_review_handoff", "review_decision"].includes(input.kind)) {
+        "defect_qa_verdict", "completion_review_handoff", "review_decision",
+        "subtask_create"].includes(input.kind)) {
         return { state: "unknown" as const, kind: input.kind,
           runStatus: run.status, leaseReleased: lease.releasedAt !== null };
       }
@@ -2660,7 +2738,7 @@ export function localAgentRunLeaseService(
   }
 
   return { claim, renew, control, finish, appendFencedEvent,
-    addFencedComment, completeFencedChildWorkRecord, prepareFencedPoVerdict,
+    addFencedComment, createFencedSubtask, completeFencedChildWorkRecord, prepareFencedPoVerdict,
     prepareFencedDefectRepairHandoff, readFencedDefectQaContext,
     prepareFencedDefectQaVerdict,
     readFencedWriteReceipt, readFencedFinishReceipt,

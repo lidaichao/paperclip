@@ -110,6 +110,76 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     return { companyId, agentId, issueId, runId, keyId };
   }
 
+  it("creates one run-fenced child and rejects a changed retry or expired lease", async () => {
+    const scope = await fixture();
+    const projectId = randomUUID();
+    const childAgentId = randomUUID();
+    await db.insert(projects).values({ id: projectId, companyId: scope.companyId,
+      name: "Delegation project" });
+    await db.update(agents).set({ role: "ceo" }).where(eq(agents.id, scope.agentId));
+    await db.insert(agents).values({ id: childAgentId, companyId: scope.companyId,
+      name: "Rabbit", reportsTo: scope.agentId, adapterType: "codex_local",
+      runtimeConfig: { executionMode: "client_pull" } });
+    await db.update(issues).set({ projectId }).where(eq(issues.id, scope.issueId));
+    const svc = localAgentRunLeaseService(db);
+    const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, scope.issueId));
+    const command = { ...scope, deviceId: "device-desktop-001",
+      leaseId: claimed!.leaseId, generation: claimed!.generation,
+      title: "G0 baseline", description: "Inspect the current source and report evidence",
+      assigneeAgentId: childAgentId, clientRequestId: randomUUID() };
+    const actor = { type: "agent", source: "agent_key", agentId: scope.agentId,
+      companyId: scope.companyId, keyId: scope.keyId } as const;
+    await expect(svc.createFencedSubtask({ ...command,
+      assigneeAgentId: scope.agentId, clientRequestId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(svc.createFencedSubtask({ ...command,
+      assigneeAgentId: randomUUID(), clientRequestId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 403 });
+    const [first, concurrent] = await Promise.all([
+      svc.createFencedSubtask(command, actor),
+      svc.createFencedSubtask(command, actor),
+    ]);
+    expect([first.replayed, concurrent.replayed].sort()).toEqual([false, true]);
+    expect(concurrent.child.id).toBe(first.child.id);
+    expect(first.child).toMatchObject({ parentId: scope.issueId, projectId,
+      assigneeAgentId: childAgentId, createdByAgentId: scope.agentId });
+    const replay = await svc.createFencedSubtask(command, actor);
+    expect(replay).toMatchObject({ replayed: true,
+      child: { id: first.child.id } });
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.actor = { ...actor, runId: scope.runId };
+      next();
+    });
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", localAgentRunRoutes(db));
+    app.use((err: { status?: number; message?: string }, _req: Request,
+      res: Response, _next: NextFunction) => {
+      res.status(err.status ?? 500).json({ error: err.message });
+    });
+    const route = `/api/agents/me/local-runs/${scope.runId}/subtasks`;
+    const payload = { deviceId: command.deviceId, leaseId: command.leaseId,
+      generation: command.generation, issueId: scope.issueId,
+      title: command.title, description: command.description,
+      assigneeAgentId: childAgentId, clientRequestId: command.clientRequestId };
+    await request(app).post(route).send(payload).expect(403);
+    const routed = await request(app).post(route)
+      .set("X-Paperclip-Run-Id", scope.runId).send(payload).expect(200);
+    expect(routed.body).toMatchObject({ replayed: true, child: { id: first.child.id } });
+    await expect(svc.createFencedSubtask({ ...command, title: "Changed" }, actor))
+      .rejects.toMatchObject({ status: 409 });
+    const children = await db.select({ id: issues.id }).from(issues)
+      .where(eq(issues.parentId, scope.issueId));
+    expect(children).toHaveLength(1);
+    await db.update(localAgentRunLeases).set({ expiresAt: new Date(0) })
+      .where(eq(localAgentRunLeases.runId, scope.runId));
+    await expect(svc.createFencedSubtask({ ...command, clientRequestId: randomUUID() }, actor))
+      .rejects.toMatchObject({ status: 403 });
+  });
+
   async function dedicatedReviewFixture() {
     const scope = await fixture();
     const reviewerAgentId = randomUUID();

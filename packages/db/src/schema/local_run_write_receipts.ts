@@ -23,7 +23,8 @@ export const localRunWriteReceipts = pgTable("local_run_write_receipts", {
     .on(table.companyId, table.runId, table.clientRequestId),
   kindCheck: check("local_run_write_receipts_kind_check", sql`${table.kind} in (
     'child_complete', 'defect_repair_handoff', 'po_verdict',
-    'defect_qa_verdict', 'completion_review_handoff', 'review_decision')`),
+    'defect_qa_verdict', 'completion_review_handoff', 'review_decision',
+    'subtask_create')`),
   digestCheck: check("local_run_write_receipts_digest_check",
     sql`${table.requestDigest} ~ '^[a-f0-9]{64}$'`),
 }));

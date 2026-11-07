@@ -85,6 +85,29 @@ describe("AliceClient", () => {
     await expect(client.patchLocalRunIssue(lease, ISSUE_ID, { status: "done" })).rejects.toThrow("unsupported");
     expect(calls).toHaveLength(3);
   });
+  it("verifies a created child against its parent, assignee and agent run", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const assigneeAgentId = "28579d24-f759-4eef-b145-e42d652ecce2";
+    const childId = "a1f9212d-097b-4c66-9d19-d7706d075ad5";
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key",
+      fetch: async (url, init) => {
+        calls.push({ url: String(url), init });
+        return String(url).endsWith("/api/agents/me")
+          ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+          : jsonResponse({ child: { id: childId, parentId: ISSUE_ID,
+            assigneeAgentId, createdByAgentId: AGENT_ID }, replayed: false }, 201);
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const lease = { runId: RUN_ID, deviceId: DEVICE_ID, leaseId: LEASE_ID, generation: 1 };
+    const input = { issueId: ISSUE_ID, title: "G0 baseline",
+      description: "Inspect the source baseline", assigneeAgentId,
+      clientRequestId: KEY_ID };
+    const result = await client.createLocalRunSubtask(lease, input) as { child: { id: string } };
+    expect(result.child.id).toBe(childId);
+    expect(new URL(calls[1]!.url).pathname).toBe(`/api/agents/me/local-runs/${RUN_ID}/subtasks`);
+    expect(JSON.parse(String(calls[1]!.init?.body))).toMatchObject({ ...leaseOwner(lease), ...input });
+    expect((calls[1]!.init?.headers as Record<string, string>)["X-Paperclip-Run-Id"]).toBe(RUN_ID);
+  });
   it("sends bearer auth but never logs it", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const lines: string[] = [];

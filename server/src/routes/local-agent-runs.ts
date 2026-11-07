@@ -9,6 +9,8 @@ import { localAgentReviewContextService } from "../services/local-agent-review-c
 import { localWorkPackageContextService } from "../services/local-work-package-context.js";
 import { issueCompletionReviewDecisionService } from "../services/issue-completion-review-decisions.js";
 import { localAgentDeviceBindingService } from "../services/local-agent-device-bindings.js";
+import { heartbeatService } from "../services/heartbeat.js";
+import { queueIssueAssignmentWakeup } from "../services/issue-assignment-wakeup.js";
 import { accessService } from "../services/access.js";
 import { assertBoard, getAccessibleResource } from "./authz.js";
 
@@ -31,6 +33,7 @@ export function localAgentRunRoutes(db: Db) {
   const workPackageContext = localWorkPackageContextService(db);
   const reviewDecisions = issueCompletionReviewDecisionService(db);
   const bindings = localAgentDeviceBindingService(db);
+  const heartbeat = heartbeatService(db);
 
   async function managedAgent(req: Request, res: Response) {
     assertBoard(req);
@@ -245,6 +248,29 @@ export function localAgentRunRoutes(db: Db) {
       clientRequestId: parsed.clientRequestId,
     }, req.actor);
     return res.status(201).json(comment);
+  });
+
+  router.post("/agents/me/local-runs/:runId/subtasks", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    if (req.header("X-Paperclip-Run-Id") !== String(req.params.runId)) {
+      throw forbidden("Subtask creation requires the claimed run header");
+    }
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "title", "description", "assigneeAgentId", "clientRequestId"]);
+    const result = await leases.createFencedSubtask({
+      ...owner(req, body), issueId: String(body.issueId ?? ""),
+      title: String(body.title ?? ""), description: String(body.description ?? ""),
+      assigneeAgentId: String(body.assigneeAgentId ?? ""),
+      clientRequestId: String(body.clientRequestId ?? ""),
+    }, req.actor);
+    if (!result.replayed) {
+      void queueIssueAssignmentWakeup({
+        heartbeat, issue: result.child, reason: "issue_assigned",
+        mutation: "create", contextSource: "local_run.subtask_create",
+        requestedByActorType: "agent", requestedByActorId: req.actor.agentId,
+      });
+    }
+    return res.status(result.replayed ? 200 : 201).json(result);
   });
 
   router.post("/agents/me/local-runs/:runId/issue/review-handoff", async (req, res) => {
