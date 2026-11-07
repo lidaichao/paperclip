@@ -86,6 +86,20 @@ suite("Windows local run supervisor launch", () => {
     expect(reported[1]?.supervisor?.receiptDir).not.toBe(firstDir);
   }, 30_000);
 
+  it("supervises a Windows .cmd launcher without opening an unmanaged model process", async () => {
+    const runId = randomUUID();
+    configure(runId);
+    const launcher = path.join(root, "model-launcher.cmd");
+    const marker = path.join(root, "cmd-launcher-marker.txt");
+    await fs.writeFile(launcher, '@echo off\r\n"%~dp0TestChild.exe" stdin-marker "%~dp0cmd-launcher-marker.txt"\r\n');
+    const result = await runChildProcess(runId, launcher, [], {
+      cwd: root, env: {}, stdin: "cmd launcher input", timeoutSec: 10, graceSec: 1,
+      onLog: async () => {}, onSpawn: async () => {},
+    });
+    expect(result.exitCode).toBe(0);
+    expect(await fs.readFile(marker, "utf8")).toBe("cmd launcher input");
+  }, 30_000);
+
   it("rejects missing stop proof and never treats wrapper output as success", async () => {
     const runId = randomUUID();
     configure(runId, path.join(windowsRoot, "System32", "whoami.exe"));
