@@ -61,6 +61,7 @@ export class ClaimStateStore {
         typeof state.executionMayHaveStarted !== "boolean" || !Array.isArray(state.reportedProcesses) ||
         !state.reportedProcesses.every((process) => Number.isSafeInteger(process.pid) && process.pid > 0 &&
           typeof process.startedAt === "string" && !Number.isNaN(Date.parse(process.startedAt))) ||
+        (!state.executionMayHaveStarted && state.reportedProcesses.length > 0) ||
         (state.finishIntent !== null && (!state.finishIntent ||
           !UUID.test(state.finishIntent.clientRequestId) ||
           !["succeeded", "failed", "cancelled"].includes(state.finishIntent.outcome) ||

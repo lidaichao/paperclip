@@ -88,7 +88,7 @@ export async function claimAndRunOnce(input: {
     // Without a durable Windows process-tree stop proof, even a committed
     // server finish cannot authorize another model after execution may have
     // started. A preflight-only run has no model process to recover.
-    if (recovery.executionMayHaveStarted || !recovery.finishIntent) {
+    if (recovery.executionMayHaveStarted || recovery.reportedProcesses.length > 0 || !recovery.finishIntent) {
       throw new Error("prior local execution has no confirmed process stop; manual recovery required");
     }
     const receipt = await input.client.readLocalFinishReceipt(

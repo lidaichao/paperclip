@@ -70,4 +70,19 @@ describe("durable local claim state", () => {
     await expect(new ClaimStateStore(file, deviceId, agentId).recoveryState())
       .rejects.toThrow("manual recovery required");
   });
+
+  it("rejects a contradictory recovery journal that hides a reported process", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "alice-contradictory-recovery-"));
+    const file = path.join(dir, "claim.json");
+    const state = new ClaimStateStore(file, deviceId, agentId);
+    await state.markClaimed(claim);
+    await state.markExecutionStarting(claim.runId);
+    await state.markProcessReported(claim.runId, { pid: 1441,
+      startedAt: "2026-11-07T12:00:00Z" });
+    const journal = JSON.parse(await readFile(file, "utf8"));
+    journal.executionMayHaveStarted = false;
+    await writeFile(file, JSON.stringify(journal));
+    await expect(new ClaimStateStore(file, deviceId, agentId).recoveryState())
+      .rejects.toThrow("manual recovery required");
+  });
 });
