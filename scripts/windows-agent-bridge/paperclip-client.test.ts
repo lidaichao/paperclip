@@ -39,6 +39,27 @@ describe("AliceClient", () => {
     await expect(client.readLocalWorkPackageContext({ ...claim, agentId: KEY_ID }, DEVICE_ID))
       .rejects.toThrow("identity mismatch");
   });
+  it("prepares a PO decision through the run lease endpoint", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key",
+      fetch: async (url, init) => {
+        calls.push({ url: String(url), init });
+        return String(url).endsWith("/api/agents/me")
+          ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+          : jsonResponse({ receiptId: KEY_ID, disposition: "prepared" }, 201);
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const lease = { runId: RUN_ID, deviceId: DEVICE_ID,
+      leaseId: LEASE_ID, generation: 1 };
+    const input = { issueId: ISSUE_ID, expectedStatusVersion: 3,
+      clientRequestId: KEY_ID, cycleId: LEASE_ID, itemId: KEY_ID,
+      expectedCycleRevision: 2, outcome: "approve" as const,
+      reason: "Accepted", evidenceRefs: [], targetRecordIds: [] };
+    expect((await client.prepareLocalPoVerdict(lease, input)).disposition).toBe("prepared");
+    expect(new URL(calls[1]!.url).pathname)
+      .toBe(`/api/agents/me/local-runs/${RUN_ID}/issue/po-verdict`);
+    expect(JSON.parse(String(calls[1]!.init?.body))).toMatchObject({ ...lease, ...input });
+  });
   it("sends local writes only to the lease-fenced endpoints with the stable comment request ID", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const client = new AliceClient({ apiBase: "http://alice.test", token: "server-only-key", fetch: async (url, init) => {

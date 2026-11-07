@@ -72,7 +72,7 @@ export function localWorkPackageContextService(db: Db) {
         eq(workRecordQualityCycles.companyId, input.companyId),
         eq(workRecordQualityCycles.projectId, linked.record.projectId),
         eq(workRecordQualityCycles.aggregateRecordId, linked.record.id),
-        eq(workRecordQualityCycles.kind, "package_acceptance"),
+        inArray(workRecordQualityCycles.kind, ["package_acceptance", "package_rework"]),
         eq(workRecordQualityCycles.state, "open"),
       )).limit(1);
       if (!cycle) throw conflict("No open package acceptance cycle");

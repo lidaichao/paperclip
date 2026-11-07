@@ -284,6 +284,26 @@ export function localAgentRunRoutes(db: Db) {
     return res.status(result.replayed ? 200 : 201).json(result);
   });
 
+  router.post("/agents/me/local-runs/:runId/issue/po-verdict", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "expectedStatusVersion", "clientRequestId",
+      "cycleId", "itemId", "expectedCycleRevision", "outcome", "reason",
+      "evidenceRefs", "targetRecordIds"]);
+    const result = await leases.prepareFencedPoVerdict({
+      ...owner(req, body), issueId: String(body.issueId ?? ""),
+      expectedStatusVersion: Number(body.expectedStatusVersion),
+      clientRequestId: String(body.clientRequestId ?? ""),
+      cycleId: String(body.cycleId ?? ""), itemId: String(body.itemId ?? ""),
+      expectedCycleRevision: Number(body.expectedCycleRevision),
+      outcome: body.outcome as "approve" | "return",
+      reason: body.reason as string,
+      evidenceRefs: body.evidenceRefs as string[],
+      targetRecordIds: body.targetRecordIds as string[],
+    }, req.actor);
+    return res.status(result.replayed ? 200 : 201).json(result);
+  });
+
   router.patch("/agents/me/local-runs/:runId/issue", async (req, res) => {
     res.set("Cache-Control", "no-store");
     const body = objectBody(req.body);

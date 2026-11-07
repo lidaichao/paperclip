@@ -51,6 +51,11 @@ function aggregateLockKey(companyId: string, aggregateRecordId: string) {
   return `work-record-quality:${companyId}:${aggregateRecordId}`;
 }
 
+export async function lockWorkRecordQualityAggregate(tx: DbTransaction,
+  companyId: string, aggregateRecordId: string) {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${aggregateLockKey(companyId, aggregateRecordId)}, 0))`);
+}
+
 export function workRecordQualityService(db: Db, options: WorkRecordQualityOptions = {}) {
   const issueSvc = issueService(db);
   const rollout = resolveWorkRecordWorkflowV2Rollout({ writesEnabled: options.writesEnabled });
@@ -465,7 +470,7 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
     actor: Actor,
   ) {
     assertWritesEnabled(companyId, projectId);
-      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${aggregateLockKey(companyId, aggregateRecordId)}, 0))`);
+      await lockWorkRecordQualityAggregate(tx, companyId, aggregateRecordId);
       const replay = await replayVerdict(tx, companyId, input.clientRequestId, input.requestPayloadDigest);
       if (replay) {
         const activeCycle = replay.outcome === "return"

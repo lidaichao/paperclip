@@ -553,6 +553,36 @@ export class AliceClient {
       statusVersion: Number(record.statusVersion) };
   }
 
+  async prepareLocalPoVerdict(lease: LocalRunLease, input: {
+    issueId: string; expectedStatusVersion: number; clientRequestId: string;
+    cycleId: string; itemId: string; expectedCycleRevision: number;
+    outcome: "approve" | "return"; reason: string;
+    evidenceRefs: string[]; targetRecordIds: string[];
+  }, signal?: AbortSignal): Promise<{ receiptId: string; disposition: "prepared" }> {
+    this.#requireVerifiedIdentity();
+    this.#validateLease(lease);
+    requireUuid(input.issueId, "issueId");
+    requireUuid(input.clientRequestId, "clientRequestId");
+    requireUuid(input.cycleId, "cycleId");
+    requireUuid(input.itemId, "itemId");
+    if (!Number.isSafeInteger(input.expectedStatusVersion) ||
+      !Number.isSafeInteger(input.expectedCycleRevision) ||
+      !["approve", "return"].includes(input.outcome) ||
+      !input.reason?.trim() || !Array.isArray(input.evidenceRefs) ||
+      !Array.isArray(input.targetRecordIds)) {
+      throw new Error("local PO verdict requires a valid cycle and decision");
+    }
+    const response = await this.#writeJson("POST",
+      `/api/agents/me/local-runs/${lease.runId}/issue/po-verdict`,
+      { ...lease, ...input }, {}, signal);
+    const record = asRecord(response.body, "local PO verdict preparation");
+    if (record.disposition !== "prepared") {
+      throw new Error("local PO verdict preparation was not confirmed");
+    }
+    return { receiptId: requireUuid(record.receiptId, "PO receiptId"),
+      disposition: "prepared" };
+  }
+
   async acceptLocalCompletionReview(lease: LocalRunLease, input: {
     issueId: string; reviewId: string; summary: string; clientRequestId: string;
   }, signal?: AbortSignal): Promise<{ reviewId: string; requestId: string; outcome: "accepted" }> {

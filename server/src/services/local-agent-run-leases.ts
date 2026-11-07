@@ -13,12 +13,15 @@ import {
   issues,
   localAgentRunLeases,
   localIssueCompletionCommands,
+  localPoVerdictCommands,
   workRecordIssueLinks,
+  workRecordDispatchBatches,
+  workRecordDispatchBatchItems,
   workRecordQualityCycles,
   workRecordQualityItems,
   workRecords,
 } from "@paperclipai/db";
-import { and, asc, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { HttpError, badRequest, conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { redactCurrentUserText } from "../log-redaction.js";
 import { accessService } from "./access.js";
@@ -37,6 +40,9 @@ import { assertClientPullAcceptedReviewContext, assertClientPullRejectedReviewCo
   assertClientPullReviewEventContext,
   CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
 import { instanceSettingsService } from "./instance-settings.js";
+import { lockWorkRecordQualityAggregate, workRecordQualityService } from "./work-record-quality.js";
+import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-rollout.js";
+import { recordPoQualityVerdictSchema, type RecordPoQualityVerdict } from "@paperclipai/shared";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -90,6 +96,7 @@ export function localAgentRunLeaseService(
   deps: {
     syncCommentReferences?: (commentId: string, tx: Db) => Promise<void>;
     syncCommentExternalObjects?: (commentId: string, tx: Db) => Promise<void>;
+    workRecordWorkflowV2WritesEnabled?: boolean;
   } = {},
 ) {
   async function leaseTtlMs(tx: Db, runId: string) {
@@ -458,17 +465,27 @@ export function localAgentRunLeaseService(
         throw conflict("Run has conflicting completion dispositions");
       }
       const childCompletion = childCompletions[0] ?? null;
+      const poCommands = await tx.select().from(localPoVerdictCommands).where(and(
+        eq(localPoVerdictCommands.companyId, input.companyId),
+        eq(localPoVerdictCommands.issueId, lease.issueId),
+        eq(localPoVerdictCommands.runId, input.runId),
+      )).limit(2);
+      if (poCommands.length > 1 || (poCommands.length > 0 &&
+        (reviewHint || childCompletion))) {
+        throw conflict("Run has conflicting quality dispositions");
+      }
+      const poCommand = poCommands[0] ?? null;
       const reviewerRun = wakeReasonFromRun(run) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON;
       const reviewerReviewId = reviewerRun ? run.contextSnapshot?.reviewId : null;
       if (reviewerRun && typeof reviewerReviewId !== "string") {
         throw conflict("Dedicated reviewer run lacks a review identity");
       }
-      if ((reviewHint || reviewerRun || childCompletion) && !input.clientRequestId) {
+      if ((reviewHint || reviewerRun || childCompletion || poCommand) && !input.clientRequestId) {
         throw badRequest("Completion finish requires clientRequestId");
       }
       if (lease.releasedAt) {
         if (lease.outcome !== input.outcome) throw conflict("Run already finished with another outcome");
-        if (input.clientRequestId || reviewHint || reviewerRun || childCompletion) {
+        if (input.clientRequestId || reviewHint || reviewerRun || childCompletion || poCommand) {
           const saved = run.resultJson?.localWorkerFinish;
           const [savedDelivery] = reviewHint ? await tx.select({ id: issueCommandDeliveries.id })
             .from(issueCommandDeliveries).where(and(
@@ -489,6 +506,10 @@ export function localAgentRunLeaseService(
                     (saved as Record<string, unknown>).reviewerDisposition))))) ||
             (childCompletion && ((saved as Record<string, unknown>).childCompletionId !== childCompletion.id ||
               (saved as Record<string, unknown>).childCompletionDisposition !== childCompletion.state)) ||
+            (poCommand && ((saved as Record<string, unknown>).poCommandId !== poCommand.id ||
+              (saved as Record<string, unknown>).poDisposition !== poCommand.state ||
+              (poCommand.state === "committed" &&
+                (saved as Record<string, unknown>).poVerdictId !== poCommand.verdictId))) ||
             (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
               (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
               !["ready", "blocked", "preserved"].includes(String((saved as Record<string, unknown>).disposition))))) {
@@ -510,6 +531,8 @@ export function localAgentRunLeaseService(
       let childReceipt: { childCompletionId: string;
         childCompletionDisposition: "completed" | "aborted";
         childCompletedStatusVersion?: number } | null = null;
+      let poReceipt: { poCommandId: string; poDisposition: "committed" | "aborted";
+        poVerdictId?: string; poNextCycleId?: string | null } | null = null;
       if (reviewerRun) {
         const [issue] = await tx.select().from(issues).where(and(
           eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
@@ -752,6 +775,56 @@ export function localAgentRunLeaseService(
             childCompletionDisposition: "aborted" };
         }
       }
+      if (poCommand) {
+        if (poCommand.state !== "prepared" || reviewerRun ||
+          poCommand.companyId !== input.companyId || poCommand.issueId !== lease.issueId) {
+          throw conflict("PO decision receipt is no longer prepared");
+        }
+        if (status === "succeeded") {
+          // The quality domain takes its advisory lock before cycle, item and
+          // issue locks. Keep that order here; it rechecks every revision.
+          await lockWorkRecordQualityAggregate(tx, input.companyId, poCommand.recordId);
+          await tx.select({ id: workRecordQualityCycles.id })
+            .from(workRecordQualityCycles).where(and(
+              eq(workRecordQualityCycles.companyId, input.companyId),
+              eq(workRecordQualityCycles.id, poCommand.payload.cycleId),
+            )).for("update");
+          await tx.select({ id: workRecordQualityItems.id })
+            .from(workRecordQualityItems).where(and(
+              eq(workRecordQualityItems.companyId, input.companyId),
+              eq(workRecordQualityItems.id, poCommand.payload.itemId),
+            )).for("update");
+          const [current] = await tx.select({
+            status: issues.status, statusVersion: issues.statusVersion,
+            executionRunId: issues.executionRunId,
+            assigneeAgentId: issues.assigneeAgentId,
+          }).from(issues).where(and(
+            eq(issues.id, poCommand.issueId), eq(issues.companyId, input.companyId),
+          )).for("update");
+          if (!current || current.status !== "in_progress" ||
+            current.statusVersion !== poCommand.preparedStatusVersion ||
+            current.executionRunId !== input.runId ||
+            current.assigneeAgentId !== input.agentId) {
+            throw conflict("PO package task changed before its process stopped");
+          }
+          const decided = await workRecordQualityService(db, {
+            writesEnabled: deps.workRecordWorkflowV2WritesEnabled,
+          }).commitPoVerdictInTransaction(tx, input.companyId,
+            poCommand.projectId, poCommand.recordId, poCommand.payload,
+            { actorType: "agent", actorId: input.agentId,
+              agentId: input.agentId, runId: input.runId });
+          if (decided.replayed) throw conflict("PO verdict was already committed outside this run");
+          await tx.update(localPoVerdictCommands).set({ state: "committed",
+            verdictId: decided.verdict.id, committedAt: sql`now()` })
+            .where(eq(localPoVerdictCommands.id, poCommand.id));
+          poReceipt = { poCommandId: poCommand.id, poDisposition: "committed",
+            poVerdictId: decided.verdict.id, poNextCycleId: decided.nextCycleId };
+        } else {
+          await tx.update(localPoVerdictCommands).set({ state: "aborted" })
+            .where(eq(localPoVerdictCommands.id, poCommand.id));
+          poReceipt = { poCommandId: poCommand.id, poDisposition: "aborted" };
+        }
+      }
       // A local process result is not a business completion. Without an atomic
       // handoff, releasing any source run would strand an in_progress task.
       // Preserve a human's newer state if they changed it.
@@ -796,6 +869,7 @@ export function localAgentRunLeaseService(
               ...(reviewReceipt ?? {}),
               ...(reviewerReceipt ?? {}),
               ...(childReceipt ?? {}),
+              ...(poReceipt ?? {}),
             },
           } } : {}),
         }).where(eq(heartbeatRuns.id, input.runId));
@@ -902,7 +976,7 @@ export function localAgentRunLeaseService(
     actor: Express.Request["actor"],
     action: "issue:comment" | "issue:mutate",
     write: (tx: Db, issue: typeof issues.$inferSelect, authorizationReason: string) => Promise<T>,
-    options: { allowReviewReplay?: boolean } = {},
+    options: { allowReviewReplay?: boolean; allowPoPreparedReplay?: boolean } = {},
   ) {
     requireOwner(input);
     if (!UUID.test(input.issueId)) throw badRequest("Invalid issueId");
@@ -942,6 +1016,15 @@ export function localAgentRunLeaseService(
         issue.conversationAgentId) {
         throw forbidden("Local run no longer owns this open task");
       }
+      const [preparedPo] = await tx.select({ id: localPoVerdictCommands.id })
+        .from(localPoVerdictCommands).where(and(
+          eq(localPoVerdictCommands.companyId, input.companyId),
+          eq(localPoVerdictCommands.runId, input.runId),
+          eq(localPoVerdictCommands.state, "prepared"),
+        )).limit(1);
+      if (preparedPo && !options.allowPoPreparedReplay) {
+        throw conflict("This local PO run already prepared its final decision");
+      }
       if (reviewReplay) return write(tx as unknown as Db, issue, "review_handoff_replay");
       const decision = await accessService(tx as unknown as Db).decide({
         actor: { ...actor, runId: input.runId }, action,
@@ -959,6 +1042,142 @@ export function localAgentRunLeaseService(
       if (!decision.allowed) throw forbidden("Issue write permission denied");
       return write(tx as unknown as Db, issue, decision.reason ?? "local_run_assignee");
     });
+  }
+
+  async function prepareFencedPoVerdict(input: LocalRunOwner & {
+    issueId: string;
+    expectedStatusVersion: number;
+    clientRequestId: string;
+    cycleId: string;
+    itemId: string;
+    expectedCycleRevision: number;
+    outcome: "approve" | "return";
+    reason: string;
+    evidenceRefs: string[];
+    targetRecordIds: string[];
+  }, actor: Express.Request["actor"]) {
+    if (!Number.isSafeInteger(input.expectedStatusVersion) || input.expectedStatusVersion < 0) {
+      throw badRequest("PO decision requires the current task status revision");
+    }
+    const canonical = {
+      issueId: input.issueId, expectedStatusVersion: input.expectedStatusVersion,
+      cycleId: input.cycleId, itemId: input.itemId,
+      expectedCycleRevision: input.expectedCycleRevision, outcome: input.outcome,
+      reason: input.reason, evidenceRefs: input.evidenceRefs,
+      targetRecordIds: input.targetRecordIds,
+    };
+    const digest = createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
+    const parsed = recordPoQualityVerdictSchema.safeParse({
+      workflowVersion: 2, clientRequestId: input.clientRequestId,
+      requestPayloadDigest: digest, cycleId: input.cycleId, itemId: input.itemId,
+      expectedCycleRevision: input.expectedCycleRevision,
+      outcome: input.outcome, reason: input.reason,
+      evidenceRefs: input.evidenceRefs, targetRecordIds: input.targetRecordIds,
+    });
+    if (!parsed.success) throw badRequest("Invalid local PO verdict payload", parsed.error.flatten());
+    const payload = parsed.data;
+    return withFencedIssueWrite(input, actor, "issue:mutate", async (tx, issue) => {
+      if (issue.status !== "in_progress" ||
+        issue.statusVersion !== input.expectedStatusVersion) {
+        throw conflict("PO package task changed before decision preparation");
+      }
+      const [existing] = await tx.select().from(localPoVerdictCommands).where(and(
+        eq(localPoVerdictCommands.companyId, input.companyId),
+        eq(localPoVerdictCommands.runId, input.runId),
+      )).limit(1);
+      if (existing) {
+        if (existing.issueId !== issue.id || existing.clientRequestId !== input.clientRequestId ||
+          existing.requestDigest !== digest || existing.state !== "prepared" ||
+          existing.preparedStatusVersion !== issue.statusVersion) {
+          throw conflict("PO decision request differs from its committed preparation");
+        }
+        return { receiptId: existing.id, disposition: "prepared" as const, replayed: true };
+      }
+      const [linked] = await tx.select({ link: workRecordIssueLinks, record: workRecords })
+        .from(workRecordIssueLinks).innerJoin(workRecords, and(
+          eq(workRecords.companyId, workRecordIssueLinks.companyId),
+          eq(workRecords.id, workRecordIssueLinks.recordId),
+        )).where(and(
+          eq(workRecordIssueLinks.companyId, input.companyId),
+          eq(workRecordIssueLinks.issueId, issue.id),
+          eq(workRecordIssueLinks.purpose, "primary"),
+        )).limit(1);
+      if (!linked || linked.record.kind !== "plan" || linked.record.parentRecordId ||
+        linked.record.assigneeAgentId !== input.agentId ||
+        linked.record.projectId !== issue.projectId ||
+        linked.record.dispatchState === "not_dispatched") {
+        throw unprocessable("Only the assigned, dispatched parent PO can prepare a verdict",
+          { code: "work_record_po_scope_invalid" });
+      }
+      const rollout = resolveWorkRecordWorkflowV2Rollout({
+        writesEnabled: deps.workRecordWorkflowV2WritesEnabled,
+      }).decision(input.companyId, linked.record.projectId);
+      if (!rollout.scopeEnabled) throw forbidden("Work-record quality writes are not enabled for this project");
+      // Plain reads avoid the cycle -> issue lock inversion against the board
+      // command. finish rechecks the revision under the quality advisory lock.
+      const [cycle] = await tx.select().from(workRecordQualityCycles).where(and(
+        eq(workRecordQualityCycles.companyId, input.companyId),
+        eq(workRecordQualityCycles.projectId, linked.record.projectId),
+        eq(workRecordQualityCycles.id, payload.cycleId),
+        eq(workRecordQualityCycles.aggregateRecordId, linked.record.id),
+        inArray(workRecordQualityCycles.kind, ["package_acceptance", "package_rework"]),
+      )).limit(1);
+      const [item] = await tx.select().from(workRecordQualityItems).where(and(
+        eq(workRecordQualityItems.companyId, input.companyId),
+        eq(workRecordQualityItems.projectId, linked.record.projectId),
+        eq(workRecordQualityItems.id, payload.itemId),
+        eq(workRecordQualityItems.cycleId, payload.cycleId),
+        eq(workRecordQualityItems.recordId, linked.record.id),
+        eq(workRecordQualityItems.role, "po"),
+      )).limit(1);
+      if (!cycle || cycle.state !== "open" ||
+        cycle.revision !== payload.expectedCycleRevision || !item ||
+        !["ready", "active", "submitted"].includes(item.state)) {
+        throw conflict("PO quality cycle is no longer ready for this decision");
+      }
+      if (payload.outcome === "approve") {
+        const [unfinished] = await tx.select({ id: workRecordQualityItems.id })
+          .from(workRecordQualityItems).where(and(
+            eq(workRecordQualityItems.companyId, input.companyId),
+            eq(workRecordQualityItems.cycleId, cycle.id),
+            eq(workRecordQualityItems.required, true),
+            ne(workRecordQualityItems.role, "po"),
+            ne(workRecordQualityItems.state, "accepted"),
+          )).limit(1);
+        if (unfinished) throw conflict("Required child or QA acceptance is incomplete");
+      } else {
+        const targets = [...new Set(payload.targetRecordIds)];
+        if (targets.includes(linked.record.id)) {
+          throw unprocessable("PO return must select original child tasks");
+        }
+        const [batch] = await tx.select({ id: workRecordDispatchBatches.id })
+          .from(workRecordDispatchBatches).where(and(
+            eq(workRecordDispatchBatches.companyId, input.companyId),
+            eq(workRecordDispatchBatches.projectId, linked.record.projectId),
+            eq(workRecordDispatchBatches.rootRecordId, linked.record.id),
+            eq(workRecordDispatchBatches.scopeKind, "whole_package"),
+            eq(workRecordDispatchBatches.state, "prepared"),
+          )).orderBy(desc(workRecordDispatchBatches.createdAt),
+            desc(workRecordDispatchBatches.id)).limit(1);
+        const members = batch ? await tx.select({ recordId: workRecordDispatchBatchItems.recordId })
+          .from(workRecordDispatchBatchItems).where(and(
+            eq(workRecordDispatchBatchItems.companyId, input.companyId),
+            eq(workRecordDispatchBatchItems.projectId, linked.record.projectId),
+            eq(workRecordDispatchBatchItems.batchId, batch.id),
+            inArray(workRecordDispatchBatchItems.recordId, targets),
+          )) : [];
+        if (!batch || members.length !== targets.length) {
+          throw unprocessable("PO return target is outside the original package");
+        }
+      }
+      const [receipt] = await tx.insert(localPoVerdictCommands).values({
+        companyId: input.companyId, projectId: linked.record.projectId,
+        issueId: issue.id, recordId: linked.record.id, runId: input.runId,
+        clientRequestId: input.clientRequestId, requestDigest: digest,
+        payload, preparedStatusVersion: issue.statusVersion,
+      }).returning({ id: localPoVerdictCommands.id });
+      return { receiptId: receipt.id, disposition: "prepared" as const, replayed: false };
+    }, { allowPoPreparedReplay: true });
   }
 
   async function completeFencedChildWorkRecord(
@@ -1601,7 +1820,7 @@ export function localAgentRunLeaseService(
   }
 
   return { claim, renew, control, finish, appendFencedEvent,
-    addFencedComment, completeFencedChildWorkRecord,
+    addFencedComment, completeFencedChildWorkRecord, prepareFencedPoVerdict,
     createFencedReviewConfirmation, reviewFencedIssue,
     createFencedAgentReviewHandoff, createFencedCompletionReviewHandoff, patchFencedIssue };
 }

@@ -101,7 +101,7 @@ export async function startLocalRunWriteProxy(input: {
   client: Pick<AliceClient, "readLocalRunIdentity" | "readLocalRunIssue" | "addLocalRunComment" | "patchLocalRunIssue"> &
     Partial<Pick<AliceClient, "acceptLocalCompletionReview" | "rejectLocalCompletionReview" |
       "createLocalCompletionReviewHandoff" | "completeLocalChildWorkRecord" |
-      "readLocalWorkPackageContext">>;
+      "readLocalWorkPackageContext" | "prepareLocalPoVerdict">>;
   claim: LocalRunClaim;
   deviceId: string;
   signal: AbortSignal;
@@ -196,6 +196,63 @@ export async function startLocalRunWriteProxy(input: {
         json(res, 200, await next); return;
       }
       if (review) { json(res, 403, { error: "operation unavailable for reviewer" }); return; }
+      if (req.method === "POST" && pathname === `${issuePath}/po-verdict`) {
+        const decision = await bodyOf(req);
+        if (Object.keys(decision).some((key) => ![
+          "expectedStatusVersion", "cycleId", "itemId", "expectedCycleRevision",
+          "outcome", "reason", "evidenceRefs", "targetRecordIds", "clientRequestId",
+        ].includes(key)) ||
+          !Number.isSafeInteger(decision.expectedStatusVersion) ||
+          !Number.isSafeInteger(decision.expectedCycleRevision) ||
+          typeof decision.cycleId !== "string" || !UUID.test(decision.cycleId) ||
+          typeof decision.itemId !== "string" || !UUID.test(decision.itemId) ||
+          !["approve", "return"].includes(String(decision.outcome)) ||
+          typeof decision.reason !== "string" || !decision.reason.trim() ||
+          !Array.isArray(decision.evidenceRefs) ||
+          !Array.isArray(decision.targetRecordIds) ||
+          (decision.clientRequestId !== undefined &&
+            (typeof decision.clientRequestId !== "string" || !UUID.test(decision.clientRequestId)))) {
+          json(res, 400, { error: "unsupported PO verdict" }); return;
+        }
+        const perform = async () => {
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          if (sourceDispositionConfirmed) throw new Error("source run already decided");
+          if (!input.client.prepareLocalPoVerdict) throw new Error("PO verdict unavailable");
+          const canonical = JSON.stringify({
+            expectedStatusVersion: decision.expectedStatusVersion,
+            cycleId: decision.cycleId, itemId: decision.itemId,
+            expectedCycleRevision: decision.expectedCycleRevision,
+            outcome: decision.outcome, reason: decision.reason,
+            evidenceRefs: decision.evidenceRefs,
+            targetRecordIds: decision.targetRecordIds,
+          });
+          const intent = await input.intentStore.pending(input.claim.runId,
+            input.claim.issueId, canonical, decision.clientRequestId as string | undefined);
+          if (closed || input.signal.aborted) throw new Error("local run cancelled");
+          let saved: unknown;
+          try {
+            saved = await input.client.prepareLocalPoVerdict(lease, {
+              issueId: input.claim.issueId,
+              expectedStatusVersion: Number(decision.expectedStatusVersion),
+              cycleId: decision.cycleId as string, itemId: decision.itemId as string,
+              expectedCycleRevision: Number(decision.expectedCycleRevision),
+              outcome: decision.outcome as "approve" | "return",
+              reason: decision.reason as string,
+              evidenceRefs: decision.evidenceRefs as string[],
+              targetRecordIds: decision.targetRecordIds as string[],
+              clientRequestId: intent.clientRequestId,
+            }, input.signal);
+          } catch {
+            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          }
+          await input.intentStore.confirmed(intent);
+          sourceDispositionConfirmed = true;
+          return saved;
+        };
+        const next = writeQueue.then(perform);
+        writeQueue = next.then(() => undefined, () => undefined);
+        json(res, 201, await next); return;
+      }
       if (req.method === "POST" && pathname === `${issuePath}/child-complete`) {
         const completion = await bodyOf(req);
         if (Object.keys(completion).some((key) =>

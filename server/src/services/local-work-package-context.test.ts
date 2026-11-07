@@ -5,10 +5,13 @@ import {
   agentApiKeys, agents, companies, createDb, getEmbeddedPostgresTestSupport,
   heartbeatRuns, issueComments, issues, localAgentDeviceBindings,
   localAgentRunLeases, localIssueCompletionCommands, projects,
+  localPoVerdictCommands,
   startEmbeddedPostgresTestDatabase, workRecordIssueLinks,
+  workRecordDispatchBatches, workRecordDispatchBatchItems,
   workRecordQualityCycles, workRecordQualityItems, workRecords,
 } from "@paperclipai/db";
 import { localWorkPackageContextService } from "./local-work-package-context.js";
+import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
 
 const support = await getEmbeddedPostgresTestSupport();
 const suite = support.supported ? describe : describe.skip;
@@ -78,6 +81,19 @@ suite("local PO package context (PostgreSQL)", () => {
       { companyId, projectId, recordId: childRecordId, issueId: childIssueId,
         purpose: "primary", dispatchRound: 1 },
     ]);
+    const [batch] = await db.insert(workRecordDispatchBatches).values({
+      companyId, projectId, rootRecordId: parentRecordId,
+      clientRequestId: randomUUID(), requestPayloadDigest: randomUUID(),
+      scopeKind: "whole_package", scopeDigest: randomUUID(),
+      rootRecordRevision: 1, dependencySetRevision: 1,
+      state: "prepared",
+    }).returning();
+    await db.insert(workRecordDispatchBatchItems).values([
+      { companyId, projectId, batchId: batch.id, recordId: parentRecordId,
+        recordRevision: 1, inclusionReason: "root", materializationState: "linked" },
+      { companyId, projectId, batchId: batch.id, recordId: childRecordId,
+        recordRevision: 1, inclusionReason: "descendant", materializationState: "linked" },
+    ]);
     await db.insert(workRecordQualityCycles).values({ id: cycleId,
       companyId, projectId, aggregateRecordId: parentRecordId,
       cycleNumber: 1, kind: "package_acceptance", state: "open",
@@ -115,6 +131,28 @@ suite("local PO package context (PostgreSQL)", () => {
     })]);
   });
 
+  it("reads the rework cycle without reusing last round's delivery summary", async () => {
+    const f = await fixture();
+    await db.update(workRecordQualityCycles).set({ state: "superseded" })
+      .where(eq(workRecordQualityCycles.id, f.cycleId));
+    const [rework] = await db.insert(workRecordQualityCycles).values({
+      companyId: f.owner.companyId, projectId: (await db.select().from(workRecords)
+        .where(eq(workRecords.id, f.parentRecordId)))[0]!.projectId,
+      aggregateRecordId: f.parentRecordId, cycleNumber: 2,
+      kind: "package_rework", state: "open", qualityPhase: "po_acceptance",
+      scopeDigest: randomUUID(),
+    }).returning();
+    await db.insert(workRecordQualityItems).values([
+      { companyId: f.owner.companyId, projectId: rework.projectId,
+        cycleId: rework.id, recordId: f.parentRecordId, role: "po", state: "ready" },
+      { companyId: f.owner.companyId, projectId: rework.projectId,
+        cycleId: rework.id, recordId: f.childRecordId, role: "repair", state: "accepted" },
+    ]);
+    const context = await localWorkPackageContextService(db).read(f.owner, f.actor);
+    expect(context.cycle.id).toBe(rework.id);
+    expect(context.members[0]?.completionSummary).toBeNull();
+  });
+
   it("rejects a foreign key, a stale lease and a released PO item", async () => {
     const f = await fixture();
     const service = localWorkPackageContextService(db);
@@ -125,5 +163,125 @@ suite("local PO package context (PostgreSQL)", () => {
     await db.update(localAgentRunLeases).set({ releasedAt: new Date() })
       .where(eq(localAgentRunLeases.runId, f.owner.runId));
     await expect(service.read(f.owner, f.actor)).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("prepares the PO decision without completing the parent, then commits on stopped finish", async () => {
+    const f = await fixture();
+    const lease = localAgentRunLeaseService(db, { workRecordWorkflowV2WritesEnabled: true });
+    const [parent] = await db.select().from(issues).where(eq(issues.id, f.parentIssueId));
+    const [cycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId));
+    const command = { ...f.owner, issueId: f.parentIssueId,
+      expectedStatusVersion: parent.statusVersion,
+      clientRequestId: randomUUID(), cycleId: f.cycleId, itemId: f.poItemId,
+      expectedCycleRevision: cycle.revision, outcome: "approve" as const,
+      reason: "Child delivery matches the acceptance objective",
+      evidenceRefs: [], targetRecordIds: [] };
+    const prepared = await lease.prepareFencedPoVerdict(command, f.actor);
+    expect(prepared.disposition).toBe("prepared");
+    expect((await lease.prepareFencedPoVerdict(command, f.actor)).replayed).toBe(true);
+    await expect(lease.prepareFencedPoVerdict({ ...command,
+      reason: "Changed acceptance reason" }, f.actor)).rejects.toMatchObject({ status: 409 });
+    expect((await db.select().from(issues).where(eq(issues.id, f.parentIssueId)))[0]?.status)
+      .toBe("in_progress");
+    expect((await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId)))[0]?.state).toBe("open");
+    const finishId = randomUUID();
+    await lease.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: finishId });
+    expect((await db.select().from(issues).where(eq(issues.id, f.parentIssueId)))[0]?.status)
+      .toBe("done");
+    expect((await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId)))[0]?.state).toBe("accepted");
+    expect((await db.select().from(localPoVerdictCommands)
+      .where(eq(localPoVerdictCommands.runId, f.owner.runId)))[0]?.state).toBe("committed");
+    expect((await lease.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: finishId })).status).toBe("succeeded");
+  });
+
+  it("rolls back a stale PO finish without releasing the local run", async () => {
+    const f = await fixture();
+    const lease = localAgentRunLeaseService(db, { workRecordWorkflowV2WritesEnabled: true });
+    const [parent] = await db.select().from(issues).where(eq(issues.id, f.parentIssueId));
+    const [cycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId));
+    await lease.prepareFencedPoVerdict({ ...f.owner, issueId: f.parentIssueId,
+      expectedStatusVersion: parent.statusVersion,
+      clientRequestId: randomUUID(), cycleId: f.cycleId, itemId: f.poItemId,
+      expectedCycleRevision: cycle.revision, outcome: "approve",
+      reason: "Ready for acceptance", evidenceRefs: [], targetRecordIds: [] }, f.actor);
+    await db.update(issues).set({ statusVersion: parent.statusVersion + 1 })
+      .where(eq(issues.id, f.parentIssueId));
+    await expect(lease.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    expect((await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, f.owner.runId)))[0]?.releasedAt).toBeNull();
+    expect((await db.select().from(localPoVerdictCommands)
+      .where(eq(localPoVerdictCommands.runId, f.owner.runId)))[0]?.state).toBe("prepared");
+  });
+
+  it("returns the original child task and blocks the parent after the PO stops", async () => {
+    const f = await fixture();
+    const lease = localAgentRunLeaseService(db, { workRecordWorkflowV2WritesEnabled: true });
+    const [parent] = await db.select().from(issues).where(eq(issues.id, f.parentIssueId));
+    const [cycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId));
+    await lease.prepareFencedPoVerdict({ ...f.owner, issueId: f.parentIssueId,
+      expectedStatusVersion: parent.statusVersion,
+      clientRequestId: randomUUID(), cycleId: f.cycleId, itemId: f.poItemId,
+      expectedCycleRevision: cycle.revision, outcome: "return",
+      reason: "Original child requires correction", evidenceRefs: [],
+      targetRecordIds: [f.childRecordId] }, f.actor);
+    await lease.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    expect((await db.select().from(issues).where(eq(issues.id, f.parentIssueId)))[0]?.status)
+      .toBe("blocked");
+    expect((await db.select().from(issues).where(eq(issues.id, f.childIssueId)))[0]?.status)
+      .toBe("todo");
+    const childLinks = await db.select().from(workRecordIssueLinks)
+      .where(eq(workRecordIssueLinks.recordId, f.childRecordId));
+    expect(childLinks).toHaveLength(1);
+    expect(childLinks[0]?.issueId).toBe(f.childIssueId);
+    const cycles = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.aggregateRecordId, f.parentRecordId));
+    expect(cycles.map((row) => row.state).sort()).toEqual(["open", "superseded"]);
+  });
+
+  it("rejects an unrelated rework target before the PO model stops", async () => {
+    const f = await fixture();
+    const lease = localAgentRunLeaseService(db, { workRecordWorkflowV2WritesEnabled: true });
+    const [parent] = await db.select().from(issues).where(eq(issues.id, f.parentIssueId));
+    const [cycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId));
+    await expect(lease.prepareFencedPoVerdict({ ...f.owner,
+      issueId: f.parentIssueId, expectedStatusVersion: parent.statusVersion,
+      clientRequestId: randomUUID(), cycleId: f.cycleId, itemId: f.poItemId,
+      expectedCycleRevision: cycle.revision, outcome: "return",
+      reason: "Invalid target", evidenceRefs: [],
+      targetRecordIds: [randomUUID()] }, f.actor)).rejects.toMatchObject({ status: 422 });
+    expect(await db.select().from(localPoVerdictCommands)
+      .where(eq(localPoVerdictCommands.runId, f.owner.runId))).toHaveLength(0);
+  });
+
+  it("aborts a prepared PO verdict when the model process fails", async () => {
+    const f = await fixture();
+    const lease = localAgentRunLeaseService(db, { workRecordWorkflowV2WritesEnabled: true });
+    const [parent] = await db.select().from(issues).where(eq(issues.id, f.parentIssueId));
+    const [cycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId));
+    await lease.prepareFencedPoVerdict({ ...f.owner, issueId: f.parentIssueId,
+      expectedStatusVersion: parent.statusVersion,
+      clientRequestId: randomUUID(), cycleId: f.cycleId, itemId: f.poItemId,
+      expectedCycleRevision: cycle.revision, outcome: "approve",
+      reason: "Tentative approval", evidenceRefs: [], targetRecordIds: [] }, f.actor);
+    await lease.finish({ ...f.owner, outcome: "failed", exitCode: 1,
+      processStopped: true, clientRequestId: randomUUID() });
+    expect((await db.select().from(localPoVerdictCommands)
+      .where(eq(localPoVerdictCommands.runId, f.owner.runId)))[0]?.state).toBe("aborted");
+    expect((await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId)))[0]?.state).toBe("open");
+    expect((await db.select().from(issues).where(eq(issues.id, f.parentIssueId)))[0]?.status)
+      .toBe("blocked");
   });
 });
