@@ -461,6 +461,32 @@ describe("AliceClient", () => {
     expect(query.searchParams.get("leaseId")).toBe(LEASE_ID);
   });
 
+  it("queries an original finish receipt using the durable request identity", async () => {
+    const calls: string[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url) => {
+        calls.push(String(url));
+        return String(url).endsWith("/api/agents/me")
+          ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+          : jsonResponse({ state: "committed", runStatus: "succeeded", leaseReleased: true,
+            outcome: "succeeded", receiptId: KEY_ID });
+      } });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    const claim = { runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID,
+      leaseId: LEASE_ID, generation: 1, leaseExpiresAt: "2026-11-07T12:00:00Z",
+      leaseDeadlineMonotonicMs: 60_000, wakeReason: "assignment",
+      workspacePolicy: "agent_home" as const };
+    expect(await client.readLocalFinishReceipt(claim, DEVICE_ID, {
+      clientRequestId: KEY_ID, outcome: "succeeded", exitCode: 0,
+      summary: "completed" })).toBe("committed");
+    const query = new URL(calls[1]!);
+    expect(query.pathname).toBe(`/api/agents/me/local-runs/${RUN_ID}/finish-receipt`);
+    expect(query.searchParams.get("clientRequestId")).toBe(KEY_ID);
+    expect(query.searchParams.get("issueId")).toBe(ISSUE_ID);
+    expect(query.searchParams.get("leaseId")).toBe(LEASE_ID);
+    expect(query.searchParams.get("requestDigest")).toMatch(/^[a-f0-9]{64}$/);
+  });
+
   it("sends the current lease on renew, control and finish without printing it", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const logs: string[] = [];

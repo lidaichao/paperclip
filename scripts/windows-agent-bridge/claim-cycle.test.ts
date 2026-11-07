@@ -34,6 +34,50 @@ async function fixture() {
 }
 
 describe("single-agent claim cycle", () => {
+  it("clears a preflight-only run after its exact finish receipt is committed", async () => {
+    const { state, intentFile } = await fixture();
+    const claim = { ...claimResponse(), leaseDeadlineMonotonicMs: performance.now() + 60_000 };
+    await state.markClaimed(claim);
+    await state.markFinishIntent(runId, { clientRequestId: "c1d46789-26c2-433d-bf7f-7a21f8bd30d6",
+      outcome: "failed", exitCode: 1, summary: "preflight unavailable" });
+    const paths: string[] = [];
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url) => {
+        const pathname = new URL(String(url)).pathname;
+        paths.push(pathname);
+        if (pathname === "/api/agents/me") return reply({ id: agentId, companyId, name: "Luna" });
+        if (pathname.endsWith("/finish-receipt")) return reply({ state: "committed",
+          runStatus: "failed", leaseReleased: true, outcome: "failed",
+          receiptId: "c1d46789-26c2-433d-bf7f-7a21f8bd30d6" });
+        if (pathname.endsWith("/claim")) return new Response(null, { status: 204 });
+        throw new Error(`unexpected path ${pathname}`);
+      } });
+    await client.verifyIdentity(agentId, companyId);
+    const runner = vi.fn();
+    expect(await claimAndRunOnce({ client, state, deviceId, companyId, agent,
+      localAgent, token: "secret", intentFile, signal: new AbortController().signal,
+      runner })).toBe("idle");
+    expect(paths.slice(1)).toEqual([
+      `/api/agents/me/local-runs/${runId}/finish-receipt`,
+      "/api/agents/me/local-runs/claim"]);
+    expect(await state.currentClaim()).toBeNull();
+    expect(runner).not.toHaveBeenCalled();
+  });
+
+  it("keeps an execution-capable old run locked even if a finish may be committed", async () => {
+    const { state, intentFile } = await fixture();
+    await state.markClaimed({ ...claimResponse(), leaseDeadlineMonotonicMs: performance.now() + 60_000 });
+    await state.markExecutionStarting(runId);
+    await state.markFinishIntent(runId, { clientRequestId: "c1d46789-26c2-433d-bf7f-7a21f8bd30d6",
+      outcome: "succeeded", exitCode: 0 });
+    const client = { claimLocalRun: vi.fn(), readLocalFinishReceipt: vi.fn() } as unknown as AliceClient;
+    await expect(claimAndRunOnce({ client, state, deviceId, companyId, agent,
+      localAgent, token: "secret", intentFile, signal: new AbortController().signal,
+      runner: vi.fn() })).rejects.toThrow("process stop");
+    expect(client.readLocalFinishReceipt).not.toHaveBeenCalled();
+    expect(client.claimLocalRun).not.toHaveBeenCalled();
+  });
+
   it("persists the key before claim and rotates it only after the server confirms finish", async () => {
     const { file, intentFile, state } = await fixture();
     let claimKey = "";

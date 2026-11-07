@@ -4,6 +4,8 @@ import type {
   BridgeIssueStatus,
 } from "./types.js";
 import { performance } from "node:perf_hooks";
+import { createHash } from "node:crypto";
+import type { LocalFinishIntent } from "./claim-state.js";
 
 const ISSUE_STATUSES = new Set<BridgeIssueStatus>([
   "backlog",
@@ -294,6 +296,38 @@ export class AliceClient {
       throw new Error("local write receipt identity or state mismatch");
     }
     return record.state as "committed" | "unknown" | "unsupported";
+  }
+
+  async readLocalFinishReceipt(claim: LocalRunClaim, deviceId: string,
+    intent: LocalFinishIntent): Promise<"committed" | "not_committed" | "unknown"> {
+    const identity = this.#requireVerifiedIdentity();
+    if (claim.agentId !== identity.id) throw new Error("local finish receipt agent mismatch");
+    requireUuid(claim.runId, "runId");
+    requireUuid(claim.issueId, "issueId");
+    requireUuid(intent.clientRequestId, "finish clientRequestId");
+    const lease = { runId: claim.runId, deviceId, leaseId: claim.leaseId,
+      generation: claim.generation };
+    this.#validateLease(lease);
+    const canonicalContent = JSON.stringify({ outcome: intent.outcome,
+      exitCode: intent.exitCode, processStopped: true, summary: intent.summary ?? null });
+    const requestDigest = createHash("sha256").update(JSON.stringify({
+      kind: "finish", runId: claim.runId, issueId: claim.issueId,
+      agentId: claim.agentId, deviceId, canonicalContent,
+    })).digest("hex");
+    const query = new URLSearchParams({ deviceId, leaseId: claim.leaseId,
+      generation: String(claim.generation), issueId: claim.issueId,
+      clientRequestId: intent.clientRequestId, requestDigest });
+    const record = asRecord(await this.#getJson(
+      `/api/agents/me/local-runs/${claim.runId}/finish-receipt?${query}`),
+    "local finish receipt");
+    if (!["committed", "not_committed", "unknown"].includes(String(record.state)) ||
+      typeof record.leaseReleased !== "boolean" ||
+      (record.state === "committed" &&
+        (record.outcome !== intent.outcome || record.leaseReleased !== true ||
+          typeof record.receiptId !== "string" || typeof record.runStatus !== "string"))) {
+      throw new Error("local finish receipt identity or state mismatch");
+    }
+    return record.state as "committed" | "not_committed" | "unknown";
   }
 
   async getClaimedIssue(claim: LocalRunClaim): Promise<BridgeInboxItem> {

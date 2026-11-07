@@ -61,6 +61,8 @@ describe("bridge lifecycle", () => {
     const claimLocalRun = vi.fn();
     const readLocalWriteReceipt = vi.fn(async () => "committed" as const);
     const state = { currentClaim: vi.fn(async () => prior),
+      recoveryState: vi.fn(async () => ({ activeClaim: prior, executionMayHaveStarted: true,
+        finishIntent: null })),
       claimKey: vi.fn(async () => { throw new Error("prior run remains latched"); }) } as unknown as ClaimStateStore;
     await expect(claimAndRunOnce({
       client: { claimLocalRun, readLocalWriteReceipt } as unknown as AliceClient,
@@ -74,7 +76,7 @@ describe("bridge lifecycle", () => {
         companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6", name: "Luna",
         adapterType: "codex_local", adapterConfig: {} },
       token: "never-used", intentFile, signal: new AbortController().signal,
-    })).rejects.toThrow("prior run remains latched");
+    })).rejects.toThrow("process stop");
     expect(JSON.parse(await readFile(intentFile, "utf8")).intents[0].confirmed).toBe(true);
     expect(claimLocalRun).not.toHaveBeenCalled();
   });

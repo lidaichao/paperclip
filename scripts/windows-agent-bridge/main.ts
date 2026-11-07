@@ -83,6 +83,21 @@ export async function claimAndRunOnce(input: {
     });
   });
   await intentStore.assertNoPending();
+  const recovery = await input.state.recoveryState();
+  if (recovery.activeClaim) {
+    // Without a durable Windows process-tree stop proof, even a committed
+    // server finish cannot authorize another model after execution may have
+    // started. A preflight-only run has no model process to recover.
+    if (recovery.executionMayHaveStarted || !recovery.finishIntent) {
+      throw new Error("prior local execution has no confirmed process stop; manual recovery required");
+    }
+    const receipt = await input.client.readLocalFinishReceipt(
+      recovery.activeClaim, input.deviceId, recovery.finishIntent);
+    if (receipt !== "committed") {
+      throw new Error("prior local finish is unconfirmed; manual recovery required");
+    }
+    await input.state.markFinished(recovery.activeClaim.runId);
+  }
   // The key must reach disk before POST. A lost response reuses the same key.
   const key = await input.state.claimKey();
   const claim = await input.client.claimLocalRun(input.deviceId, key);
