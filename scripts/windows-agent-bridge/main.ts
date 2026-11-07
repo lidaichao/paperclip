@@ -145,8 +145,8 @@ function requireWriteFence(): void {
 
 export async function runBridge(configPath: string, signal: AbortSignal): Promise<"started" | "already-running"> {
   const config = await loadBridgeConfig(configPath);
-  // Ordinary agent writes still lack a transaction-bound lease fence. Keep
-  // installation and direct invocation disabled even though claim is wired.
+  // Keep installation and direct invocation disabled until the supervised
+  // adapter path, real local CLI, and 192 pilot pass the release gates.
   requireWriteFence();
   assertWorkerEnvironment(process.env, config);
   if (config.agents.length !== 1) throw new Error("pilot bridge requires exactly one local agent");
