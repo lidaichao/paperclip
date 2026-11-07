@@ -89,6 +89,7 @@ import {
 import type { RuntimeProgressSink, RuntimeStatusSink } from "./runtime-progress.js";
 import type { LocalProcessSandboxOptions } from "./local-process-sandbox.js";
 import type { RunnerIngressEndpoint } from "./runner-connectivity.js";
+import type { LocalRunSpawnMetadata } from "./types.js";
 
 export type { RuntimeProgressSink } from "./runtime-progress.js";
 
@@ -278,7 +279,7 @@ export interface AdapterExecutionTargetProcessOptions {
   graceSec: number;
   onLog: (stream: "stdout" | "stderr", chunk: string) => Promise<void>;
   onRuntimeProgress?: RuntimeStatusSink;
-  onSpawn?: (meta: { pid: number; processGroupId: number | null; startedAt: string }) => Promise<void>;
+  onSpawn?: (meta: LocalRunSpawnMetadata) => Promise<void>;
   terminalResultCleanup?: TerminalResultCleanupOptions;
   /**
    * Sandbox-only: factory from the Paperclip bridge handle that streams the
@@ -858,6 +859,9 @@ export async function runAdapterExecutionTargetProcess(
   args: string[],
   options: AdapterExecutionTargetProcessOptions,
 ): Promise<RunProcessResult> {
+  if (process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR !== undefined && target?.kind === "remote") {
+    throw new Error("Local run supervision cannot execute on a remote target");
+  }
   if (target?.kind === "remote" && target.transport === "sandbox") {
     const runner = requireSandboxRunner(target);
     const env = sanitizeRemoteExecutionEnv(options.env);

@@ -22,6 +22,7 @@ import type {
   AdapterRuntimeToolAccess,
   AdapterSkillEntry,
   AdapterSkillSnapshot,
+  LocalRunSpawnMetadata,
 } from "./types.js";
 
 export function buildRuntimeToolsEnv(
@@ -4588,6 +4589,143 @@ export function buildChildProcessSpawnOptions(input: {
   };
 }
 
+interface LocalRunSupervisorConfig {
+  executable: string;
+  runId: string;
+  leaseId: string;
+  deviceId: string;
+  bridgeCreationFileTime: string;
+  bridgeSessionId: number;
+  receiptBaseDir: string;
+}
+
+interface LocalRunSupervisorLaunch {
+  command: string;
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  frame: Buffer;
+  nonce: string;
+  receiptDir: string;
+  expected: LocalRunSupervisorConfig;
+}
+
+const LOCAL_RUN_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const LOCAL_DRIVE_PATH = /^[A-Za-z]:[\\/](?![\\/])/;
+
+function localDrivePath(value: unknown): value is string {
+  return typeof value === "string" && LOCAL_DRIVE_PATH.test(value) && path.win32.isAbsolute(value);
+}
+
+function parseLocalRunSupervisorConfig(raw: string, runId: string): LocalRunSupervisorConfig {
+  let value: unknown;
+  try { value = JSON.parse(raw); }
+  catch { throw new Error("Invalid local run supervisor configuration JSON"); }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Invalid local run supervisor configuration");
+  }
+  const config = value as Partial<LocalRunSupervisorConfig>;
+  if (!localDrivePath(config.executable) || !config.executable.toLowerCase().endsWith(".exe") ||
+    !localDrivePath(config.receiptBaseDir) || !LOCAL_RUN_UUID.test(runId) ||
+    config.runId !== runId || !LOCAL_RUN_UUID.test(config.leaseId ?? "") ||
+    typeof config.deviceId !== "string" || !/^[a-zA-Z0-9._:-]{8,128}$/.test(config.deviceId) ||
+    typeof config.bridgeCreationFileTime !== "string" ||
+    !/^[1-9][0-9]*$/.test(config.bridgeCreationFileTime) ||
+    !Number.isSafeInteger(config.bridgeSessionId) || config.bridgeSessionId! < 0) {
+    throw new Error("Invalid local run supervisor identity or paths");
+  }
+  return config as LocalRunSupervisorConfig;
+}
+
+async function prepareLocalRunSupervisor(
+  config: LocalRunSupervisorConfig, target: SpawnTarget, modelEnv: NodeJS.ProcessEnv,
+  modelStdin: string | undefined,
+): Promise<LocalRunSupervisorLaunch> {
+  if (!localDrivePath(target.command) || !target.command.toLowerCase().endsWith(".exe") ||
+    !localDrivePath(target.cwd) || !Array.isArray(target.args)) {
+    throw new Error("Local run supervision requires an absolute local Windows executable and cwd");
+  }
+  const [supervisor, model, cwd, base] = await Promise.all([
+    fs.realpath(config.executable), fs.realpath(target.command),
+    fs.realpath(target.cwd), fs.realpath(config.receiptBaseDir),
+  ]);
+  if (![supervisor, model, cwd, base].every(localDrivePath) ||
+    !supervisor.toLowerCase().endsWith(".exe") || !model.toLowerCase().endsWith(".exe") ||
+    !(await fs.stat(supervisor)).isFile() || !(await fs.stat(model)).isFile() ||
+    !(await fs.stat(cwd)).isDirectory() || !(await fs.stat(base)).isDirectory()) {
+    throw new Error("Local run supervision paths must resolve to local Windows files and directories");
+  }
+  const nonce = randomUUID();
+  const receiptDir = path.join(base, config.runId, nonce);
+  const env = Object.fromEntries(Object.entries(modelEnv).filter((entry): entry is [string, string] =>
+    typeof entry[1] === "string" && entry[0].toUpperCase() !== "PAPERCLIP_LOCAL_RUN_SUPERVISOR"));
+  const header = Buffer.from(JSON.stringify({
+    runId: config.runId, leaseId: config.leaseId, deviceId: config.deviceId,
+    nonce, bridgePid: process.pid,
+    bridgeCreationFileTime: config.bridgeCreationFileTime,
+    bridgeSessionId: config.bridgeSessionId, receiptDir,
+    cwd, executable: model, args: target.args, env,
+  }), "utf8");
+  const stdin = Buffer.from(modelStdin ?? "", "utf8");
+  if (header.length < 1 || header.length > 4 * 1024 * 1024 || stdin.length > 64 * 1024 * 1024) {
+    throw new Error("Local run supervisor input exceeds protocol limits");
+  }
+  const size = Buffer.alloc(4);
+  size.writeInt32LE(header.length);
+  const systemRoot = process.env.SystemRoot || process.env.WINDIR || "C:\\Windows";
+  if (!localDrivePath(systemRoot)) throw new Error("Invalid Windows system root for local supervisor");
+  await fs.mkdir(path.join(base, config.runId), { recursive: true });
+  await fs.mkdir(receiptDir);
+  return {
+    command: supervisor, cwd, nonce, receiptDir, expected: config,
+    env: { SystemRoot: systemRoot, WINDIR: systemRoot, PATH: defaultPathForPlatform() },
+    frame: Buffer.concat([size, header, stdin]),
+  };
+}
+
+async function verifyLocalRunSupervisorStop(
+  launch: LocalRunSupervisorLaunch, wrapperExitCode: number | null, wrapperSignal: NodeJS.Signals | null,
+): Promise<void> {
+  const read = async (suffix: "ready" | "stopped") => {
+    const file = path.join(launch.receiptDir, `${launch.expected.runId}.${suffix}.json`);
+    const value: unknown = JSON.parse(await fs.readFile(file, "utf8"));
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid local supervisor receipt");
+    return value as Record<string, unknown>;
+  };
+  try {
+    const [ready, stopped] = await Promise.all([read("ready"), read("stopped")]);
+    for (const receipt of [ready, stopped]) {
+      if (receipt.runId !== launch.expected.runId || receipt.leaseId !== launch.expected.leaseId ||
+        receipt.deviceId !== launch.expected.deviceId || receipt.nonce !== launch.nonce ||
+        receipt.bridgePid !== process.pid ||
+        receipt.bridgeCreationFileTime !== launch.expected.bridgeCreationFileTime ||
+        receipt.bridgeSessionId !== launch.expected.bridgeSessionId ||
+        !Number.isSafeInteger(receipt.modelPid) || Number(receipt.modelPid) <= 0 ||
+        typeof receipt.modelCreationFileTime !== "string" ||
+        !/^[1-9][0-9]*$/.test(receipt.modelCreationFileTime)) {
+        throw new Error("Local supervisor receipt identity mismatch");
+      }
+    }
+    if (ready.modelPid !== stopped.modelPid ||
+      ready.modelCreationFileTime !== stopped.modelCreationFileTime ||
+      stopped.activeProcesses !== 0 ||
+      !Number.isSafeInteger(stopped.modelExitCode) || Number(stopped.modelExitCode) < 0 ||
+      !["model_exit", "cancelled", "bridge_exit", "descendant_timeout", "input_failure"]
+        .includes(String(stopped.cause)) ||
+      typeof stopped.completedAtUtc !== "string" ||
+      Number.isNaN(Date.parse(stopped.completedAtUtc))) {
+      throw new Error("Local supervisor stopped receipt is incomplete");
+    }
+    const expectedExitCode = stopped.cause === "model_exit"
+      ? Number(stopped.modelExitCode) <= 255 ? Number(stopped.modelExitCode) : 1
+      : 2;
+    if (wrapperSignal !== null || wrapperExitCode !== expectedExitCode) {
+      throw new Error("Local supervisor exit does not match the stopped receipt");
+    }
+  } catch (error) {
+    throw new Error("Local process stop is unproven; supervisor receipt verification failed", { cause: error });
+  }
+}
+
 export async function runChildProcess(
   runId: string,
   command: string,
@@ -4599,17 +4737,23 @@ export async function runChildProcess(
     graceSec: number;
     onLog: (stream: "stdout" | "stderr", chunk: string) => Promise<void>;
     onLogError?: (err: unknown, runId: string, message: string) => void;
-    onSpawn?: (meta: {
-      pid: number;
-      processGroupId: number | null;
-      startedAt: string;
-    }) => Promise<void>;
+    onSpawn?: (meta: LocalRunSpawnMetadata) => Promise<void>;
     terminalResultCleanup?: TerminalResultCleanupOptions;
     stdin?: string;
     remoteExecution?: RemoteExecutionSpec | null;
     localProcessSandbox?: LocalProcessSandboxOptions | null;
   },
 ): Promise<RunProcessResult> {
+  const supervisorRaw = process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR;
+  if (supervisorRaw !== undefined &&
+    (process.platform !== "win32" || opts.remoteExecution || opts.localProcessSandbox)) {
+    throw new Error("Local run supervision requires a direct local Windows execution target");
+  }
+  if (supervisorRaw !== undefined && !opts.onSpawn) {
+    throw new Error("Local run supervision requires a durable onSpawn callback");
+  }
+  const supervisorConfig = supervisorRaw === undefined ? null
+    : parseLocalRunSupervisorConfig(supervisorRaw, runId);
   const onLogError =
     opts.onLogError ??
     ((err, id, msg) => console.warn({ err, runId: id }, msg));
@@ -4643,35 +4787,52 @@ export async function runChildProcess(
       remoteEnv: opts.remoteExecution ? opts.env : null,
       localProcessSandbox: opts.localProcessSandbox ?? null,
     })
-      .then((target) => {
+      .then(async (target) => {
         const childEnv = { ...mergedEnv, ...target.env };
         for (const [key, value] of Object.entries(childEnv)) {
           if (value === undefined) delete childEnv[key];
         }
+        const supervised = supervisorConfig
+          ? await prepareLocalRunSupervisor(supervisorConfig, {
+            ...target, cwd: target.cwd ?? opts.cwd,
+          }, childEnv, opts.stdin)
+          : null;
         const child = spawn(
-          target.command,
-          target.args,
+          supervised?.command ?? target.command,
+          supervised ? ["run"] : target.args,
           buildChildProcessSpawnOptions({
-            cwd: target.cwd ?? opts.cwd,
-            env: childEnv,
-            hasStdin: opts.stdin != null,
+            cwd: supervised?.cwd ?? target.cwd ?? opts.cwd,
+            env: supervised?.env ?? childEnv,
+            hasStdin: supervised !== null || opts.stdin != null,
           }),
         ) as ChildProcessWithEvents;
         const startedAt = new Date().toISOString();
         const processGroupId = resolveProcessGroupId(child);
 
+        let spawnMetadataError: unknown = null;
+        let frameError: unknown = null;
         const spawnPersistPromise =
           typeof child.pid === "number" && child.pid > 0 && opts.onSpawn
-            ? opts
-                .onSpawn({ pid: child.pid, processGroupId, startedAt })
+            ? Promise.resolve().then(() => opts.onSpawn!({ pid: child.pid!, processGroupId, startedAt,
+                  ...(supervised ? { supervisor: {
+                    nonce: supervised.nonce, receiptDir: supervised.receiptDir,
+                  } } : {}) }))
                 .catch((err) => {
+                  if (supervised) {
+                    spawnMetadataError = err;
+                    signalRunningProcess({ child, processGroupId }, "SIGKILL");
+                    throw err;
+                  }
                   onLogError(
                     err,
                     runId,
                     "failed to record child process metadata",
                   );
                 })
-            : Promise.resolve();
+            : supervised
+              ? Promise.reject(new Error("Supervisor process has no reportable PID"))
+              : Promise.resolve();
+        void spawnPersistPromise.catch(() => undefined);
 
         runningProcesses.set(runId, {
           child,
@@ -4809,12 +4970,26 @@ export async function runChildProcess(
         });
 
         const stdin = child.stdin;
-        if (opts.stdin != null && stdin) {
-          void spawnPersistPromise.finally(() => {
+        if (supervised && !stdin) {
+          frameError = new Error("Supervisor stdin pipe is unavailable");
+          signalRunningProcess({ child, processGroupId }, "SIGKILL");
+        }
+        if (supervised && stdin) {
+          stdin.on("error", (error) => {
+            frameError = error;
+            signalRunningProcess({ child, processGroupId }, "SIGKILL");
+          });
+          void spawnPersistPromise.then(() => {
+            if (child.killed || stdin.destroyed) return;
+            stdin.write(supervised.frame);
+            stdin.end();
+          }).catch(() => undefined);
+        } else if (opts.stdin != null && stdin) {
+          void spawnPersistPromise.then(() => {
             if (child.killed || stdin.destroyed) return;
             stdin.write(opts.stdin as string);
             stdin.end();
-          });
+          }).catch(() => undefined);
         }
 
         child.on("error", (err: Error) => {
@@ -4841,32 +5016,34 @@ export async function runChildProcess(
             if (timeout) clearTimeout(timeout);
             clearTerminalCleanupTimers();
             runningProcesses.delete(runId);
-            void logChain.finally(() => {
-              void Promise.resolve()
-                .then(() => target.cleanup?.())
-                .finally(() => {
-                  resolve({
-                    exitCode: code,
-                    signal,
-                    timedOut,
-                    stdout,
-                    stderr,
-                    pid: child.pid ?? null,
-                    startedAt,
-                    terminalResultCleanup: terminalCleanupStarted
-                      ? {
-                          kind: "terminal_result_cleanup",
-                          stopped: true,
-                          stopReason: UNMANAGED_BACKGROUND_TASK_STOP_REASON,
-                          reason: UNMANAGED_BACKGROUND_TASK_LIVENESS_REASON,
-                          terminalResultSeen,
-                          signal: terminalCleanupSignal,
-                          forceKilled: terminalCleanupForceKilled,
-                        }
-                      : null,
-                  });
-                });
-            });
+            void logChain.then(async () => {
+              await target.cleanup?.();
+              if (spawnMetadataError) throw new Error("Local supervisor spawn metadata was not persisted", {
+                cause: spawnMetadataError,
+              });
+              if (frameError) throw new Error("Local supervisor launch frame failed", { cause: frameError });
+              if (supervised) await verifyLocalRunSupervisorStop(supervised, code, signal);
+              resolve({
+                exitCode: code,
+                signal,
+                timedOut,
+                stdout,
+                stderr,
+                pid: child.pid ?? null,
+                startedAt,
+                terminalResultCleanup: terminalCleanupStarted
+                  ? {
+                      kind: "terminal_result_cleanup",
+                      stopped: true,
+                      stopReason: UNMANAGED_BACKGROUND_TASK_STOP_REASON,
+                      reason: UNMANAGED_BACKGROUND_TASK_LIVENESS_REASON,
+                      terminalResultSeen,
+                      signal: terminalCleanupSignal,
+                      forceKilled: terminalCleanupForceKilled,
+                    }
+                  : null,
+              });
+            }).catch(reject);
           },
         );
       })

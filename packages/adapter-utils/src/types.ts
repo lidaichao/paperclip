@@ -25,6 +25,13 @@ export interface AdapterRuntime {
   taskKey: string | null;
 }
 
+export interface LocalRunSpawnMetadata {
+  pid: number;
+  processGroupId: number | null;
+  startedAt: string;
+  supervisor?: { nonce: string; receiptDir: string };
+}
+
 // ---------------------------------------------------------------------------
 // Execution types (moved from server/src/adapters/types.ts)
 // ---------------------------------------------------------------------------
@@ -231,7 +238,7 @@ export interface AdapterExecutionContext {
    * remote operation.
    */
   onDispatch?: () => void;
-  onSpawn?: (meta: { pid: number; processGroupId: number | null; startedAt: string }) => Promise<void>;
+  onSpawn?: (meta: LocalRunSpawnMetadata) => Promise<void>;
   authToken?: string;
   /**
    * The injected OpenTelemetry startup trace context (tracer + root

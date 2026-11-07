@@ -95,6 +95,49 @@ describe("cursor remote execution", () => {
     }
   });
 
+  it("rejects remote execution in supervised local runs before starting a model", async () => {
+    const previous = process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR;
+    process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR = "{}";
+    try {
+      await expect(execute({
+        runId: "run-1",
+        agent: {
+          id: "agent-1",
+          companyId: "company-1",
+          name: "Cursor Builder",
+          adapterType: "cursor",
+          adapterConfig: {},
+        },
+        runtime: {
+          sessionId: null,
+          sessionParams: null,
+          sessionDisplayId: null,
+          taskKey: null,
+        },
+        config: { command: "agent" },
+        context: {},
+        executionTransport: {
+          remoteExecution: {
+            host: "127.0.0.1",
+            port: 2222,
+            username: "fixture",
+            remoteWorkspacePath: "/remote/workspace",
+            remoteCwd: "/remote/workspace",
+            privateKey: "PRIVATE KEY",
+            knownHosts: "[127.0.0.1]:2222 ssh-ed25519 AAAA",
+            strictHostKeyChecking: true,
+          },
+        },
+        onLog: async () => {},
+      } as never)).rejects.toThrow("remote target");
+      expect(runChildProcess).not.toHaveBeenCalled();
+      expect(prepareWorkspaceForSshExecution).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR;
+      else process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR = previous;
+    }
+  });
+
   it("prepares the workspace, syncs Cursor skills, and restores workspace changes for remote SSH execution", async () => {
     const rootDir = await mkdtemp(path.join(os.tmpdir(), "paperclip-cursor-remote-"));
     cleanupDirs.push(rootDir);

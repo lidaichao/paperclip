@@ -146,4 +146,19 @@ describe("codex_local ACP startup fallback", () => {
 
     expect(runAdapterExecutionTargetProcess).not.toHaveBeenCalled();
   });
+
+  it("rejects ACP in supervised local runs before starting a model", async () => {
+    const previous = process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR;
+    process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR = "{}";
+    try {
+      await expect(execute(buildContext({ engine: "acp" }) as never)).rejects.toThrow(
+        "native Codex CLI",
+      );
+      expect(executeCodexAcp).not.toHaveBeenCalled();
+      expect(runAdapterExecutionTargetProcess).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR;
+      else process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR = previous;
+    }
+  });
 });

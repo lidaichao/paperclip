@@ -581,6 +581,9 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     };
   }
   if (engineSelection.engine === "acp") {
+    if (process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR !== undefined) {
+      throw new Error("Local run supervision requires the native Codex CLI execution engine");
+    }
     return executeCodexAcp(ctx);
   }
 
@@ -634,6 +637,9 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const cwd = effectiveWorkspaceCwd || configuredCwd || process.cwd();
   const envConfig = parseObject(config.env);
   const executionTargetIsRemote = adapterExecutionTargetIsRemote(executionTarget);
+  if (process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR !== undefined && executionTargetIsRemote) {
+    throw new Error("Local run supervision cannot execute Codex on a remote target");
+  }
   let configuredCodexHome =
     typeof envConfig.CODEX_HOME === "string" && envConfig.CODEX_HOME.trim().length > 0
       ? path.resolve(envConfig.CODEX_HOME.trim())
@@ -1320,7 +1326,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
               },
             });
 
-      const wrappedOnSpawn = async (meta: { pid: number; processGroupId: number | null; startedAt: string }) => {
+      const wrappedOnSpawn = async (meta: Parameters<NonNullable<AdapterExecutionContext["onSpawn"]>>[0]) => {
         killTarget = { pid: meta.pid ?? null, processGroupId: meta.processGroupId };
         if (monitor && resolvedMonitorTimeoutMs !== null && !executionTargetIsRemote) {
           processActivityMonitor.current = createCodexProcessActivityMonitor({

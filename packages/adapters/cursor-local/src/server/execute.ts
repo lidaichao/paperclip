@@ -205,6 +205,9 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     legacyRemoteExecution: ctx.executionTransport?.remoteExecution,
   });
   const executionTargetIsRemote = adapterExecutionTargetIsRemote(executionTarget);
+  if (process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR !== undefined && executionTargetIsRemote) {
+    throw new Error("Local run supervision cannot execute Cursor on a remote target");
+  }
 
   const promptTemplate = asString(
     config.promptTemplate,
