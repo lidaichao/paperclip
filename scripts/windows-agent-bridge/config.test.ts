@@ -148,7 +148,15 @@ describe("loadBridgeConfig", () => {
       ...withArgs.agents[0].localAdapterConfig,
       extraArgs: ["--api-key=inline-secret"],
     };
-    await expect(loadBridgeConfig(await fixture(withArgs))).rejects.toThrow("unknown keys: extraArgs");
+    await expect(loadBridgeConfig(await fixture(withArgs))).rejects.toThrow("only supports Cursor --trust");
+    const cursor = validConfig();
+    cursor.agents[0].adapterType = "cursor";
+    cursor.agents[0].localAdapterConfig.extraArgs = ["--trust"];
+    expect((await loadBridgeConfig(await fixture(cursor))).agents[0].localAdapterConfig.extraArgs)
+      .toEqual(["--trust"]);
+    cursor.agents[0].localAdapterConfig.extraArgs = ["--trust", "--auto-review"];
+    expect((await loadBridgeConfig(await fixture(cursor))).agents[0].localAdapterConfig.extraArgs)
+      .toEqual(["--trust", "--auto-review"]);
   });
 
   it("requires absolute local workspace and executable paths", async () => {

@@ -28,7 +28,8 @@ async function main(): Promise<void> {
   const env = buildWorkerEnvironment(process.env, config, memberToken);
   for (const folder of [config.workerHome, env.HOME!,
     ...(config.modelAuthMode === "shared_user_codex" ? [] : [env.CODEX_HOME!]),
-    env.CURSOR_HOME!, env.PAPERCLIP_HOME!, env.APPDATA!,
+    env.CURSOR_HOME!, ...(env.CURSOR_DATA_DIR ? [env.CURSOR_DATA_DIR] : []),
+    env.PAPERCLIP_HOME!, env.APPDATA!,
     env.LOCALAPPDATA!, env.TEMP!, env.XDG_CONFIG_HOME!]) {
     await mkdir(folder, { recursive: true });
   }

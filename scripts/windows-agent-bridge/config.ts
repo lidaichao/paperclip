@@ -35,6 +35,7 @@ const LOCAL_ADAPTER_KEYS = new Set([
   "instructionsFilePath", "instructionsRootPath", "instructionsEntryFile",
   "instructionsBundleMode", "modelReasoningEffort",
   "dangerouslyBypassApprovalsAndSandbox",
+  "extraArgs",
 ]);
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -134,6 +135,12 @@ function parseLocalAdapterConfig(value: unknown, adapterType: BridgeAdapterType,
     }
   }
   if (adapterType === "cursor") requiredString(config, "model", label);
+  const extraArgs = config.extraArgs;
+  if (extraArgs !== undefined &&
+    (adapterType !== "cursor" || !Array.isArray(extraArgs) ||
+      !(["--trust", "--trust,--auto-review"].includes(extraArgs.join(","))))) {
+    throw new Error(`${label}.extraArgs only supports Cursor --trust with optional --auto-review`);
+  }
   return structuredClone(config);
 }
 

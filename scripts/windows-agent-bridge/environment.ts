@@ -36,11 +36,13 @@ function cursorConfigDir(config: BridgeConfig): string {
 export function buildLocalAdapterConfig(agent: BridgeAgentConfig, config: BridgeConfig,
   env: NodeJS.ProcessEnv): Record<string, unknown> {
   if (agent.adapterType === "cursor") {
-    if (env.HOME !== path.join(config.workerHome, "home") || env.CURSOR_HOME !== cursorConfigDir(config)) {
+    if (env.HOME !== path.join(config.workerHome, "home") || env.CURSOR_HOME !== cursorConfigDir(config) ||
+      env.CURSOR_CONFIG_DIR !== env.CURSOR_HOME ||
+      env.CURSOR_DATA_DIR !== path.join(config.workerHome, "cursor-data")) {
       throw new Error("Cursor home identity is mismatched");
     }
     return { ...agent.localAdapterConfig, env: { HOME: env.HOME, CURSOR_HOME: env.CURSOR_HOME,
-      ...(config.modelAuthMode === "shared_user_cursor" ? { CURSOR_CONFIG_DIR: env.CURSOR_CONFIG_DIR } : {}) } };
+      CURSOR_CONFIG_DIR: env.CURSOR_CONFIG_DIR, CURSOR_DATA_DIR: env.CURSOR_DATA_DIR } };
   }
   if (env.CODEX_HOME !== codexHome(config)) throw new Error("Codex home identity is mismatched");
   return { ...agent.localAdapterConfig, env: { CODEX_HOME: env.CODEX_HOME },
@@ -67,7 +69,10 @@ export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: Bridge
   env.HOMEPATH = env.HOME.slice(env.HOMEDRIVE.length);
   env.CODEX_HOME = codexHome(config);
   env.CURSOR_HOME = cursorConfigDir(config);
-  if (config.modelAuthMode === "shared_user_cursor") env.CURSOR_CONFIG_DIR = env.CURSOR_HOME;
+  if (config.agents[0].adapterType === "cursor") {
+    env.CURSOR_CONFIG_DIR = env.CURSOR_HOME;
+    env.CURSOR_DATA_DIR = path.join(config.workerHome, "cursor-data");
+  }
   env.PAPERCLIP_HOME = path.join(config.workerHome, "paperclip-home");
   env.APPDATA = path.join(config.workerHome, "appdata");
   env.LOCALAPPDATA = path.join(config.workerHome, "localappdata");
@@ -90,7 +95,7 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
   if (config.agents.length !== 1) throw new Error("one worker requires exactly one agent");
   expectedGbrainIdentity(config.agents[0]);
   const allowed = new Set([...OS_KEYS, "GBRAIN_AGENT_TOKEN", ref, "HOME", "USERPROFILE", "CODEX_HOME", "CURSOR_HOME", "PAPERCLIP_HOME",
-    "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "XDG_CONFIG_HOME", "CURSOR_CONFIG_DIR",
+    "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "XDG_CONFIG_HOME", "CURSOR_CONFIG_DIR", "CURSOR_DATA_DIR",
     "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"]);
   if (!ref || !nonEmpty(env, ref) || nonEmpty(env, ref) !== nonEmpty(env, "GBRAIN_AGENT_TOKEN")) {
     throw new Error("worker GBrain identity is missing or mismatched");
@@ -109,7 +114,8 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
   } else if (["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"].some((key) => nonEmpty(env, key))) {
     throw new Error("worker proxy was not explicitly configured");
   }
-  if (nonEmpty(env, "CURSOR_CONFIG_DIR") !== (config.modelAuthMode === "shared_user_cursor" ? cursorConfigDir(config) : null)) {
+  if (nonEmpty(env, "CURSOR_CONFIG_DIR") !== (config.agents[0].adapterType === "cursor" ? cursorConfigDir(config) : null) ||
+    nonEmpty(env, "CURSOR_DATA_DIR") !== (config.agents[0].adapterType === "cursor" ? path.join(config.workerHome, "cursor-data") : null)) {
     throw new Error("Cursor config directory is mismatched");
   }
   if (nonEmpty(env, "CODEX_HOME") !== codexHome(config) ||

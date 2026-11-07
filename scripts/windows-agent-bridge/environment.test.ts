@@ -94,9 +94,23 @@ describe("single-member worker environment", () => {
     expect(() => assertWorkerEnvironment(worker, shared)).not.toThrow();
     const localConfig = buildLocalAdapterConfig(cursorAgent, shared, worker);
     expect(localConfig.env).toEqual({ HOME: worker.HOME, CURSOR_HOME: worker.CURSOR_HOME,
-      CURSOR_CONFIG_DIR: worker.CURSOR_CONFIG_DIR });
+      CURSOR_CONFIG_DIR: worker.CURSOR_CONFIG_DIR, CURSOR_DATA_DIR: worker.CURSOR_DATA_DIR });
     expect(resolveCursorSkillsHome(localConfig)).toBe(path.join(workerHome, "home", ".cursor", "skills"));
     expect(() => assertWorkerEnvironment({ ...worker, CURSOR_CONFIG_DIR: path.join(workerHome, "home") }, shared))
       .toThrow("Cursor config directory is mismatched");
+  });
+
+  it("keeps a privately logged-in Cursor agent's auth and session data inside its worker home", () => {
+    const cursorAgent = { ...config.agents[0], adapterType: "cursor" as const,
+      localAdapterConfig: { cwd: "H:/AIagent/Belle", command: "C:/tools/agent.exe", model: "auto" } };
+    const privateConfig: BridgeConfig = { ...config, modelAuthMode: "private", agents: [cursorAgent] };
+    const worker = buildWorkerEnvironment({ GBRAIN_LUNA_TOKEN: "own-only" }, privateConfig);
+    expect(worker.CURSOR_CONFIG_DIR).toBe(path.join(workerHome, "home", ".cursor"));
+    expect(worker.CURSOR_DATA_DIR).toBe(path.join(workerHome, "cursor-data"));
+    expect(() => assertWorkerEnvironment(worker, privateConfig)).not.toThrow();
+    expect(buildLocalAdapterConfig(cursorAgent, privateConfig, worker).env).toEqual({
+      HOME: worker.HOME, CURSOR_HOME: worker.CURSOR_HOME,
+      CURSOR_CONFIG_DIR: worker.CURSOR_CONFIG_DIR, CURSOR_DATA_DIR: worker.CURSOR_DATA_DIR,
+    });
   });
 });

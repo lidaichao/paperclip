@@ -1,5 +1,15 @@
 # 本机模型登录与成员身份隔离验收
 
+## 2026-11-08 当前 Belle 运行路径
+
+Belle 的 Cursor 已在自己的 Windows 工作器目录完成官方登录，`modelAuthMode=private`；`CURSOR_CONFIG_DIR` 指向私有 `home/.cursor`，`CURSOR_DATA_DIR` 指向私有 `cursor-data`。CLI 程序仍从这台电脑的官方 Cursor 安装读取，模型登录文件、Paperclip/GBrain 凭据和进程不在 192 测试服务器。共享 Cursor 登录模式继续禁止启动，因为 CLI 会改写共享配置。
+
+首次准备新电脑时，在**该成员电脑现有 PowerShell 窗口**运行一次 `prepare-private-cursor-runtime.ps1 -WorkerHome <成员私有工作器目录> -CursorInstallRoot <本机官方 Cursor 安装目录>`。此脚本只生成无凭据的本机转发程序及官方 `node.exe/index.js` 路径，不登录、不注册计划任务。然后在成员私有环境执行官方 Cursor `agent login`；把成员配置的 `localAdapterConfig.command` 指向该转发程序，设置 `modelAuthMode=private`，`extraArgs=["--trust","--auto-review"]`。`--auto-review` 只用于受控任务运行；不得换成 `--yolo`。CLI 升级后重新运行准备脚本以刷新官方路径。
+
+2026-11-08 单次验收：Belle 原任务 PAP-11 来源运行 `8a265f2f-da56-4eb2-a2b1-8130d85c5f44`、本人评论 `fe0bb398-e388-4678-93d2-dbcfaa81838a`、Luna 审核运行 `59f0a532-17be-4c16-b108-15d50a351c25` 均成功，任务 `done`。第一次 ask 模式没有任务写入；第二次 agent 模式只用 `--trust` 时 Shell 审核卡住并已取消；最终 `--auto-review` 允许完成身份、只读回读、证据写回与审核交接。审核人被暂停时交接会拒绝，须先用正式 `resume` 清除 `pausedAt`；不得绕过审核。单次运行成功不等于常驻自动启动或零可见终端已验收。
+
+## 历史调研与候选方案（以下状态以本页顶部最新结论为准）
+
 目标：Paperclip 与 GBrain 凭据按成员独立。模型订阅可以由同一台电脑的同一 Windows 用户共享，**不要求七人各登录一次**。下方私有登录步骤仅是现有桥接代码支持的候选路径，不是已放行的运行流程。192 只作为控制面和测试环境。
 
 2026-11-06 的只读核对显示，本机共享 Codex 与 Cursor 登录均有效；七名成员的 GBrain 本人变量和项目级 Codex 配置已分别核对。真实桥接启动门仍关闭，不运行下方登录或探针来解决共享认证问题。

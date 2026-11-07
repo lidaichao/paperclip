@@ -10,17 +10,10 @@ if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) {
 
 & (Join-Path $PSScriptRoot 'doctor.ps1') -Config $configPath -DryRun | Out-Host
 
-$root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $dist = Join-Path $PSScriptRoot 'dist'
 New-Item -ItemType Directory -Path $dist -Force | Out-Null
-& node.exe (Join-Path $root 'node_modules\esbuild\bin\esbuild') `
-  (Join-Path $PSScriptRoot 'main.ts') --bundle --platform=node --format=esm `
-  --packages=external --outfile=(Join-Path $dist 'bridge.bundle.mjs')
+& node.exe (Join-Path $PSScriptRoot 'build.mjs')
 if ($LASTEXITCODE -ne 0) { throw '桥接程序构建失败。' }
-& node.exe (Join-Path $root 'node_modules\esbuild\bin\esbuild') `
-  (Join-Path $PSScriptRoot 'launcher.ts') --bundle --platform=node --format=esm `
-  --packages=external --outfile=(Join-Path $dist 'launcher.bundle.mjs')
-if ($LASTEXITCODE -ne 0) { throw '隔离启动程序构建失败。' }
 
 $runner = Join-Path $PSScriptRoot 'run-hidden.ps1'
 $argument = "-NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runner`" -Config `"$configPath`""
