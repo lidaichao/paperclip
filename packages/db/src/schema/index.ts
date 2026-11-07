@@ -28,6 +28,7 @@ export { localAgentRunLeases } from "./local_agent_run_leases.js";
 export { localIssueCompletionCommands } from "./local_issue_completion_commands.js";
 export { localPoVerdictCommands } from "./local_po_verdict_commands.js";
 export { localDefectRepairHandoffs } from "./local_defect_repair_handoffs.js";
+export { localDefectQaVerdictCommands } from "./local_defect_qa_verdict_commands.js";
 export { localAgentDeviceBindings } from "./local_agent_device_bindings.js";
 export { issueCommandDeliveries } from "./issue_command_deliveries.js";
 export { issueCompletionReviews } from "./issue_completion_reviews.js";

@@ -1,4 +1,4 @@
-import { check, index, pgTable, text, timestamp, uniqueIndex, uuid, bigint } from "drizzle-orm/pg-core";
+import { check, index, pgTable, text, timestamp, uniqueIndex, uuid, bigint, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { agents } from "./agents.js";
 import { agentWakeupRequests } from "./agent_wakeup_requests.js";
@@ -28,6 +28,7 @@ export const localDefectRepairHandoffs = pgTable("local_defect_repair_handoffs",
   submittedStatusVersion: bigint("submitted_status_version", { mode: "number" }),
   qaWakeupRequestId: uuid("qa_wakeup_request_id").references(() => agentWakeupRequests.id),
   qaDeliveredAt: timestamp("qa_delivered_at", { withTimezone: true }),
+  qaDeliveryGeneration: integer("qa_delivery_generation").notNull().default(1),
   state: text("state").$type<"prepared" | "submitted" | "aborted">().notNull().default("prepared"),
   commentId: uuid("comment_id").notNull().references(() => issueComments.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -42,6 +43,8 @@ export const localDefectRepairHandoffs = pgTable("local_defect_repair_handoffs",
   qaDeliveryCheck: check("local_defect_repair_handoffs_qa_delivery_check", sql`
     (${table.qaWakeupRequestId} IS NULL AND ${table.qaDeliveredAt} IS NULL) OR
     (${table.state} = 'submitted' AND ${table.qaWakeupRequestId} IS NOT NULL AND ${table.qaDeliveredAt} IS NOT NULL)`),
+  qaGenerationCheck: check("local_defect_repair_handoffs_qa_generation_check", sql`
+    ${table.qaDeliveryGeneration} BETWEEN 1 AND 2`),
   stateCheck: check("local_defect_repair_handoffs_state_check", sql`
     (${table.state} = 'prepared' AND ${table.submittedStatusVersion} IS NULL) OR
     (${table.state} = 'submitted' AND ${table.submittedStatusVersion} IS NOT NULL) OR

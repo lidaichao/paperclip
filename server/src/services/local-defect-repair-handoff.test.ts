@@ -1,14 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   agentApiKeys, agentWakeupRequests, agents, companies, createDb,
   getEmbeddedPostgresTestSupport, heartbeatRuns, issueThreadInteractions, issues,
   localAgentDeviceBindings, localAgentRunLeases, localDefectRepairHandoffs,
+  localDefectQaVerdictCommands,
   projects, startEmbeddedPostgresTestDatabase, workRecordExecutionIntents,
-  workRecordIssueLinks, workRecordQualityCycles, workRecordQualityItems, workRecords,
+  workRecordIssueLinks, workRecordQualityCycles, workRecordQualityItems,
+  workRecordQualityVerdicts, workRecords,
 } from "@paperclipai/db";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
+import { deliverPendingDefectQaForAgent } from "./local-agent-defect-qa.js";
 
 const support = await getEmbeddedPostgresTestSupport();
 const suite = support.supported ? describe.sequential : describe.skip;
@@ -25,7 +28,7 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
     await temporary?.cleanup();
   });
 
-  async function fixture() {
+  async function fixture(cycleNumber = 1) {
     const companyId = randomUUID(), projectId = randomUUID();
     const repairAgentId = randomUUID(), qaAgentId = randomUUID();
     const issueId = randomUUID(), recordId = randomUUID(), runId = randomUUID();
@@ -67,7 +70,7 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
       companyId, projectId, recordId, issueId, purpose: "primary", dispatchRound: 1,
     }).returning();
     await db.insert(workRecordQualityCycles).values({ id: cycleId,
-      companyId, projectId, aggregateRecordId: recordId, cycleNumber: 1,
+       companyId, projectId, aggregateRecordId: recordId, cycleNumber,
       kind: "independent_defect", state: "open", qualityPhase: "waiting_fix",
       scopeDigest: randomUUID() });
     await db.insert(workRecordQualityItems).values([
@@ -103,6 +106,277 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
       agentId: f.qaAgentId, keyId, deviceId });
     return { companyId: f.companyId, agentId: f.qaAgentId, keyId, deviceId };
   }
+
+  async function claimedQaFixture(cycleNumber = 1) {
+    const f = await fixture(cycleNumber), qa = await qaIdentity(f);
+    await prepare(f);
+    await f.service.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const service = localAgentRunLeaseService(db, {
+      workRecordWorkflowV2WritesEnabled: true,
+    });
+    const claim = await service.claim({ ...qa, idempotencyKey: randomUUID() });
+    const owner = { ...qa, runId: claim!.runId, leaseId: claim!.leaseId,
+      generation: claim!.generation };
+    const actor = { type: "agent" as const, source: "agent_key" as const,
+      companyId: f.companyId, agentId: f.qaAgentId,
+      keyId: qa.keyId, runId: claim!.runId };
+    const context = await service.readFencedDefectQaContext(owner, actor);
+    return { f, qa, service, claim: claim!, owner, actor, context };
+  }
+
+  async function prepareQaVerdict(f: Awaited<ReturnType<typeof claimedQaFixture>>,
+    outcome: "pass" | "return", clientRequestId = randomUUID()) {
+    const command = { ...f.owner, ...f.context, outcome,
+      summary: outcome === "pass" ? "QA verified the repair" : "QA found a regression",
+      evidenceRefs: ["https://evidence.example/qa-check"], clientRequestId };
+    return { command, receipt: await f.service.prepareFencedDefectQaVerdict(command, f.actor) };
+  }
+
+  it("commits QA pass only in stopped finish and replays the same receipt", async () => {
+    const q = await claimedQaFixture();
+    const { command, receipt } = await prepareQaVerdict(q, "pass");
+    expect(receipt).toMatchObject({ disposition: "prepared", replayed: false });
+    expect(await q.service.prepareFencedDefectQaVerdict(command, q.actor))
+      .toMatchObject({ receiptId: receipt.receiptId, replayed: true });
+    await expect(q.service.prepareFencedDefectQaVerdict({ ...command,
+      summary: "Changed decision" }, q.actor)).rejects.toMatchObject({ status: 409 });
+    expect((await db.select().from(issues).where(eq(issues.id, q.f.issueId)))[0]?.status)
+      .toBe("in_review");
+    expect(await db.select().from(workRecordQualityVerdicts)
+      .where(eq(workRecordQualityVerdicts.cycleId, q.f.cycleId))).toHaveLength(0);
+    const finish = { ...q.owner, outcome: "succeeded" as const, exitCode: 0,
+      processStopped: true as const, clientRequestId: randomUUID() };
+    expect((await q.service.finish(finish)).status).toBe("succeeded");
+    expect((await q.service.finish(finish)).status).toBe("succeeded");
+    await expect(q.service.finish({ ...finish, clientRequestId: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    const [issue] = await db.select().from(issues).where(eq(issues.id, q.f.issueId));
+    const [cycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, q.f.cycleId));
+    const [item] = await db.select().from(workRecordQualityItems)
+      .where(eq(workRecordQualityItems.id, q.f.qaItemId));
+    const [qaCommand] = await db.select().from(localDefectQaVerdictCommands)
+      .where(eq(localDefectQaVerdictCommands.runId, q.claim.runId));
+    expect(issue).toMatchObject({ id: q.f.issueId, status: "done", executionRunId: null });
+    expect(cycle).toMatchObject({ state: "accepted", qualityPhase: "accepted" });
+    expect(item.state).toBe("accepted");
+    expect(qaCommand).toMatchObject({ state: "committed", id: receipt.receiptId });
+    expect(qaCommand.verdictId).not.toBeNull();
+    expect((await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, q.claim.runId)))[0]?.releasedAt).not.toBeNull();
+    expect(await db.select().from(workRecordQualityVerdicts)
+      .where(eq(workRecordQualityVerdicts.cycleId, q.f.cycleId))).toHaveLength(1);
+  }, 30_000);
+
+  it("returns QA to the original repairer with a durable rework intent", async () => {
+    const q = await claimedQaFixture();
+    await prepareQaVerdict(q, "return");
+    const finish = { ...q.owner, outcome: "succeeded" as const, exitCode: 0,
+      processStopped: true as const, clientRequestId: randomUUID() };
+    await q.service.finish(finish);
+    const [issue] = await db.select().from(issues).where(eq(issues.id, q.f.issueId));
+    const [oldCycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, q.f.cycleId));
+    const cycles = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.aggregateRecordId, q.f.recordId));
+    const next = cycles.find((cycle) => cycle.state === "open");
+    const [repairItem] = await db.select().from(workRecordQualityItems)
+      .where(and(eq(workRecordQualityItems.cycleId, next!.id),
+        eq(workRecordQualityItems.role, "repair")));
+    const [intent] = await db.select().from(workRecordExecutionIntents)
+      .where(eq(workRecordExecutionIntents.qualityItemId, repairItem.id));
+    expect(issue).toMatchObject({ id: q.f.issueId, status: "in_progress",
+      assigneeAgentId: q.f.repairAgentId, executionRunId: null });
+    expect(oldCycle.state).toBe("superseded");
+    expect(next).toMatchObject({ qualityPhase: "waiting_fix", cycleNumber: 2 });
+    expect(intent).toMatchObject({ issueId: q.f.issueId,
+      kind: "rework_release", state: "waiting_dependencies",
+      expectedIssueStatusVersion: issue.statusVersion });
+    expect((await db.select().from(localDefectQaVerdictCommands)
+      .where(eq(localDefectQaVerdictCommands.runId, q.claim.runId)))[0]?.state)
+      .toBe("committed");
+    expect((await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, q.claim.runId)))[0]?.releasedAt).not.toBeNull();
+  }, 30_000);
+
+  it("rolls back a stopped QA verdict if policy, issue or quality revisions drift", async () => {
+    const q = await claimedQaFixture();
+    await prepareQaVerdict(q, "pass");
+    const [before] = await db.select().from(issues).where(eq(issues.id, q.f.issueId));
+    await db.update(workRecordQualityItems)
+      .set({ revision: sql`${workRecordQualityItems.revision} + 1` })
+      .where(eq(workRecordQualityItems.id, q.f.qaItemId));
+    await expect(q.service.finish({ ...q.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() }))
+      .rejects.toMatchObject({ status: 409 });
+    const [after] = await db.select().from(issues).where(eq(issues.id, q.f.issueId));
+    expect(after).toMatchObject({ status: before.status,
+      statusVersion: before.statusVersion, executionRunId: before.executionRunId });
+    expect((await db.select().from(localDefectQaVerdictCommands)
+      .where(eq(localDefectQaVerdictCommands.runId, q.claim.runId)))[0]?.state)
+      .toBe("prepared");
+    expect((await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, q.claim.runId)))[0]?.releasedAt).toBeNull();
+    expect(await db.select().from(workRecordQualityVerdicts)
+      .where(eq(workRecordQualityVerdicts.cycleId, q.f.cycleId))).toHaveLength(0);
+  }, 30_000);
+
+  it("refuses an old QA lease and rolls back after a quality verdict write failure", async () => {
+    const q = await claimedQaFixture();
+    const command = { ...q.owner, ...q.context, outcome: "pass" as const,
+      summary: "QA verified repair", evidenceRefs: [], clientRequestId: randomUUID() };
+    await expect(q.service.prepareFencedDefectQaVerdict({ ...command,
+      generation: q.owner.generation + 1 }, q.actor)).rejects.toMatchObject({ status: 403 });
+    expect(await db.select().from(localDefectQaVerdictCommands)
+      .where(eq(localDefectQaVerdictCommands.runId, q.claim.runId))).toHaveLength(0);
+    await q.service.prepareFencedDefectQaVerdict(command, q.actor);
+    await db.execute(sql`ALTER TABLE work_record_quality_verdicts
+      ADD CONSTRAINT local_defect_qa_verdict_rollback_check
+      CHECK (outcome <> 'pass') NOT VALID`);
+    try {
+      await expect(q.service.finish({ ...q.owner, outcome: "succeeded", exitCode: 0,
+        processStopped: true, clientRequestId: randomUUID() })).rejects.toThrow();
+      expect((await db.select().from(issues).where(eq(issues.id, q.f.issueId)))[0])
+        .toMatchObject({ status: "in_review", executionRunId: q.claim.runId });
+      expect((await db.select().from(workRecordQualityCycles)
+        .where(eq(workRecordQualityCycles.id, q.f.cycleId)))[0]?.qualityPhase)
+        .toBe("qa_retest");
+      expect((await db.select().from(localDefectQaVerdictCommands)
+        .where(eq(localDefectQaVerdictCommands.runId, q.claim.runId)))[0]?.state)
+        .toBe("prepared");
+      expect((await db.select().from(localAgentRunLeases)
+        .where(eq(localAgentRunLeases.runId, q.claim.runId)))[0]?.releasedAt).toBeNull();
+    } finally {
+      await db.execute(sql`ALTER TABLE work_record_quality_verdicts
+        DROP CONSTRAINT local_defect_qa_verdict_rollback_check`);
+    }
+  }, 30_000);
+
+  it("reissues one stopped failed QA run, then exposes cancellation for manual attention", async () => {
+    const q = await claimedQaFixture();
+    await prepareQaVerdict(q, "pass");
+    const first = { ...q.owner, outcome: "failed" as const, exitCode: 1,
+      processStopped: true as const, clientRequestId: randomUUID() };
+    await q.service.finish(first);
+    await q.service.finish(first);
+    const [handoffAfterFirst] = await db.select().from(localDefectRepairHandoffs)
+      .where(eq(localDefectRepairHandoffs.issueId, q.f.issueId));
+    expect(handoffAfterFirst).toMatchObject({ qaWakeupRequestId: null,
+      qaDeliveryGeneration: 2 });
+    expect((await db.select().from(localDefectQaVerdictCommands)
+      .where(eq(localDefectQaVerdictCommands.runId, q.claim.runId)))[0]?.state)
+      .toBe("aborted");
+    expect((await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, q.f.cycleId)))[0]?.qualityPhase)
+      .toBe("qa_retest");
+    const retry = await q.service.claim({ ...q.qa, idempotencyKey: randomUUID() });
+    expect(retry).toMatchObject({ issueId: q.f.issueId,
+      wakeReason: "independent_defect_qa" });
+    expect(retry!.runId).not.toBe(q.claim.runId);
+    await q.service.finish({ ...q.qa, runId: retry!.runId,
+      leaseId: retry!.leaseId, generation: retry!.generation,
+      outcome: "cancelled", exitCode: 1, processStopped: true,
+      clientRequestId: randomUUID() });
+    const [cycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, q.f.cycleId));
+    expect(cycle).toMatchObject({ state: "open", qualityPhase: "attention_required",
+      reason: "qa_local_retry_exhausted" });
+    expect(await q.service.claim({ ...q.qa, idempotencyKey: randomUUID() }))
+      .toBeNull();
+    expect(await db.select().from(workRecordQualityVerdicts)
+      .where(eq(workRecordQualityVerdicts.cycleId, q.f.cycleId))).toHaveLength(0);
+  }, 30_000);
+
+  it("commits a return at the review limit as visible attention without reviving QA", async () => {
+    const q = await claimedQaFixture(3);
+    await prepareQaVerdict(q, "return");
+    const finish = { ...q.owner, outcome: "succeeded" as const, exitCode: 0,
+      processStopped: true as const, clientRequestId: randomUUID() };
+    await q.service.finish(finish);
+    await q.service.finish(finish);
+    const [issue] = await db.select().from(issues).where(eq(issues.id, q.f.issueId));
+    const [cycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, q.f.cycleId));
+    const [command] = await db.select().from(localDefectQaVerdictCommands)
+      .where(eq(localDefectQaVerdictCommands.runId, q.claim.runId));
+    expect(issue).toMatchObject({ status: "in_review", executionRunId: null });
+    expect(cycle).toMatchObject({ state: "open", qualityPhase: "attention_required",
+      reason: "review_round_limit_reached" });
+    expect(command).toMatchObject({ state: "committed", escalated: true });
+    expect(await db.select().from(workRecordQualityVerdicts)
+      .where(eq(workRecordQualityVerdicts.cycleId, q.f.cycleId))).toHaveLength(1);
+    expect((await db.select().from(localAgentRunLeases)
+      .where(eq(localAgentRunLeases.runId, q.claim.runId)))[0]?.releasedAt)
+      .not.toBeNull();
+    expect(await q.service.claim({ ...q.qa, idempotencyKey: randomUUID() }))
+      .toBeNull();
+  }, 30_000);
+
+  it("retires a stale queued QA run and still claims the next ordinary task", async () => {
+    const f = await fixture(), qa = await qaIdentity(f);
+    await prepare(f);
+    await f.service.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const [agent] = await db.select().from(agents).where(eq(agents.id, qa.agentId));
+    await db.transaction((tx) => deliverPendingDefectQaForAgent(tx as unknown as typeof db, agent));
+    const [handoff] = await db.select().from(localDefectRepairHandoffs)
+      .where(eq(localDefectRepairHandoffs.issueId, f.issueId));
+    const [wake] = await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, handoff.qaWakeupRequestId!));
+    const [staleRun] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, wake.runId!));
+    await db.update(workRecordQualityItems)
+      .set({ revision: sql`${workRecordQualityItems.revision} + 1` })
+      .where(eq(workRecordQualityItems.id, f.qaItemId));
+    const ordinaryIssueId = randomUUID(), ordinaryRunId = randomUUID();
+    await db.insert(issues).values({ id: ordinaryIssueId, companyId: f.companyId,
+      projectId: f.projectId, title: "Next ordinary task", status: "in_progress",
+      assigneeAgentId: qa.agentId });
+    await db.insert(heartbeatRuns).values({ id: ordinaryRunId,
+      companyId: f.companyId, agentId: qa.agentId, status: "queued",
+      runtimeMode: "client_pull", contextSnapshot: { issueId: ordinaryIssueId } });
+    const claim = await f.service.claim({ ...qa, idempotencyKey: randomUUID() });
+    expect(claim).toMatchObject({ runId: ordinaryRunId, issueId: ordinaryIssueId });
+    expect((await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, staleRun.id)))[0]?.status).toBe("cancelled");
+    expect((await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, wake.id)))[0]?.status).toBe("cancelled");
+    expect((await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, f.cycleId)))[0]?.qualityPhase)
+      .toBe("attention_required");
+  }, 30_000);
+
+  it("pages past twenty stale handoffs to deliver the next eligible QA task", async () => {
+    const f = await fixture();
+    await prepare(f);
+    await f.service.finish({ ...f.owner, outcome: "succeeded", exitCode: 0,
+      processStopped: true, clientRequestId: randomUUID() });
+    const [valid] = await db.select().from(localDefectRepairHandoffs)
+      .where(eq(localDefectRepairHandoffs.issueId, f.issueId));
+    const fakeRunIds = Array.from({ length: 20 }, () => randomUUID());
+    await db.insert(heartbeatRuns).values(fakeRunIds.map((id) => ({ id,
+      companyId: f.companyId, agentId: f.repairAgentId, status: "queued" as const,
+      runtimeMode: "client_pull" as const, contextSnapshot: { issueId: f.issueId } })));
+    await db.insert(localDefectRepairHandoffs).values(fakeRunIds.map((runId) => ({
+      id: randomUUID(), companyId: valid.companyId, projectId: valid.projectId,
+      issueId: valid.issueId, recordId: valid.recordId, cycleId: valid.cycleId,
+      repairItemId: valid.repairItemId, qaItemId: valid.qaItemId,
+      qaAgentId: valid.qaAgentId, runId, clientRequestId: randomUUID(),
+      requestDigest: randomUUID(), preparedStatusVersion: valid.preparedStatusVersion,
+      preparedCycleRevision: valid.preparedCycleRevision,
+      submittedStatusVersion: valid.submittedStatusVersion, state: "submitted" as const,
+      commentId: valid.commentId, createdAt: new Date(valid.createdAt.getTime() - 60_000),
+    })));
+    const [agent] = await db.select().from(agents).where(eq(agents.id, f.qaAgentId));
+    await db.transaction((tx) => deliverPendingDefectQaForAgent(tx as unknown as typeof db, agent));
+    const [delivered] = await db.select().from(localDefectRepairHandoffs)
+      .where(eq(localDefectRepairHandoffs.id, valid.id));
+    expect(delivered.qaWakeupRequestId).not.toBeNull();
+    const wakes = await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.companyId, f.companyId));
+    expect(wakes).toHaveLength(1);
+  }, 30_000);
 
   it("delivers only after source stop and lets the designated QA claim the original issue", async () => {
     const f = await fixture(), qa = await qaIdentity(f);

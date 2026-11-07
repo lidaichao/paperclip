@@ -14,12 +14,14 @@ import {
   localAgentRunLeases,
   localIssueCompletionCommands,
   localDefectRepairHandoffs,
+  localDefectQaVerdictCommands,
   localPoVerdictCommands,
   workRecordIssueLinks,
   workRecordDispatchBatches,
   workRecordDispatchBatchItems,
   workRecordQualityCycles,
   workRecordQualityItems,
+  workRecordExecutionIntents,
   workRecords,
 } from "@paperclipai/db";
 import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
@@ -41,11 +43,14 @@ import { assertClientPullAcceptedReviewContext, assertClientPullRejectedReviewCo
   assertClientPullReviewEventContext,
   CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
 import { assertDefectQaClaimCandidate, CLIENT_PULL_DEFECT_QA_WAKE_REASON,
-  defectQaRunChanged, deliverPendingDefectQaForAgent } from "./local-agent-defect-qa.js";
+  defectQaRunChanged, deliverPendingDefectQaForAgent,
+  readClaimedDefectQaContext, retireStaleDefectQaQueuedRun,
+  settleFailedDefectQaRun } from "./local-agent-defect-qa.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { lockWorkRecordQualityAggregate, workRecordQualityService } from "./work-record-quality.js";
 import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-rollout.js";
-import { recordPoQualityVerdictSchema, type RecordPoQualityVerdict } from "@paperclipai/shared";
+import { recordPoQualityVerdictSchema, recordQaQualityVerdictSchema,
+  type RecordPoQualityVerdict } from "@paperclipai/shared";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
 import { applyIssueExecutionPolicyTransition, normalizeIssueExecutionPolicy } from "./issue-execution-policy.js";
 
@@ -244,8 +249,14 @@ export function localAgentRunLeaseService(
         const issueId = issueIdFromRun(run);
         if (!issueId || run.runtimeMode === "native") continue;
         if (wakeReasonFromRun(run) === CLIENT_PULL_DEFECT_QA_WAKE_REASON) {
-          const { issue, wake } = await assertDefectQaClaimCandidate(db,
+          const candidate = await assertDefectQaClaimCandidate(db,
             tx as unknown as Db, { agent, run });
+          if (candidate.kind === "stale") {
+            await retireStaleDefectQaQueuedRun(tx as unknown as Db, run);
+            continue;
+          }
+          if (candidate.kind === "blocked") continue;
+          const { issue, wake } = candidate;
           if (issue.id !== issueId) throw conflict("Independent defect QA issue changed");
           const [claimed] = await tx.update(heartbeatRuns).set({
             status: "running", startedAt: sql`now()`, updatedAt: sql`now()`,
@@ -540,21 +551,33 @@ export function localAgentRunLeaseService(
         throw conflict("Run has conflicting defect repair dispositions");
       }
       const defectHandoff = defectHandoffs[0] ?? null;
+      const qaCommands = await tx.select().from(localDefectQaVerdictCommands).where(and(
+        eq(localDefectQaVerdictCommands.companyId, input.companyId),
+        eq(localDefectQaVerdictCommands.issueId, lease.issueId),
+        eq(localDefectQaVerdictCommands.runId, input.runId),
+      )).limit(2);
+      if (qaCommands.length > 1 || (qaCommands.length > 0 &&
+        (reviewHint || childCompletion || poCommand || defectHandoff))) {
+        throw conflict("Run has conflicting QA dispositions");
+      }
+      const qaCommand = qaCommands[0] ?? null;
       const reviewerRun = wakeReasonFromRun(run) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON;
-      if (wakeReasonFromRun(run) === CLIENT_PULL_DEFECT_QA_WAKE_REASON &&
-        input.outcome === "succeeded") {
+      const qaRun = wakeReasonFromRun(run) === CLIENT_PULL_DEFECT_QA_WAKE_REASON;
+      if ((qaRun && input.outcome === "succeeded" && !qaCommand) ||
+        (qaCommand && !qaRun)) {
         throw conflict("Independent defect QA cannot finish successfully without a fenced verdict");
       }
       const reviewerReviewId = reviewerRun ? run.contextSnapshot?.reviewId : null;
       if (reviewerRun && typeof reviewerReviewId !== "string") {
         throw conflict("Dedicated reviewer run lacks a review identity");
       }
-      if ((reviewHint || reviewerRun || childCompletion || poCommand || defectHandoff) && !input.clientRequestId) {
+      if ((reviewHint || reviewerRun || childCompletion || poCommand || defectHandoff || qaCommand || qaRun) &&
+        !input.clientRequestId) {
         throw badRequest("Completion finish requires clientRequestId");
       }
       if (lease.releasedAt) {
         if (lease.outcome !== input.outcome) throw conflict("Run already finished with another outcome");
-        if (input.clientRequestId || reviewHint || reviewerRun || childCompletion || poCommand || defectHandoff) {
+        if (input.clientRequestId || reviewHint || reviewerRun || childCompletion || poCommand || defectHandoff || qaCommand || qaRun) {
           const saved = run.resultJson?.localWorkerFinish;
           const [savedDelivery] = reviewHint ? await tx.select({ id: issueCommandDeliveries.id })
             .from(issueCommandDeliveries).where(and(
@@ -583,6 +606,11 @@ export function localAgentRunLeaseService(
               (saved as Record<string, unknown>).defectHandoffDisposition !== defectHandoff.state ||
               (defectHandoff.state === "submitted" &&
                 (saved as Record<string, unknown>).defectSubmittedStatusVersion !== defectHandoff.submittedStatusVersion))) ||
+            (qaCommand && ((saved as Record<string, unknown>).qaCommandId !== qaCommand.id ||
+              (saved as Record<string, unknown>).qaDisposition !== qaCommand.state ||
+              (qaCommand.state === "committed" &&
+                ((saved as Record<string, unknown>).qaVerdictId !== qaCommand.verdictId ||
+                  (saved as Record<string, unknown>).qaEscalated !== qaCommand.escalated)))) ||
             (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
               (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
               !["ready", "blocked", "preserved"].includes(String((saved as Record<string, unknown>).disposition))))) {
@@ -609,6 +637,9 @@ export function localAgentRunLeaseService(
       let defectReceipt: { defectHandoffId: string;
         defectHandoffDisposition: "submitted" | "aborted";
         defectSubmittedStatusVersion?: number } | null = null;
+      let qaReceipt: { qaCommandId: string; qaDisposition: "committed" | "aborted";
+        qaVerdictId?: string; qaNextCycleId?: string | null; qaEscalated?: boolean } | null = null;
+      let qaDeliveryDisposition: "retry_ready" | "attention_required" | null = null;
       if (reviewerRun) {
         const [issue] = await tx.select().from(issues).where(and(
           eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
@@ -1038,6 +1069,112 @@ export function localAgentRunLeaseService(
             defectHandoffDisposition: "aborted" };
         }
       }
+      if (qaCommand) {
+        if (qaCommand.state !== "prepared" || !qaRun ||
+          qaCommand.companyId !== input.companyId ||
+          qaCommand.issueId !== lease.issueId ||
+          qaCommand.qaAgentId !== input.agentId ||
+          qaCommand.payload.clientRequestId !== qaCommand.clientRequestId ||
+          qaCommand.payload.requestPayloadDigest !== qaCommand.requestDigest ||
+          qaCommand.payload.cycleId !== qaCommand.cycleId ||
+          qaCommand.payload.itemId !== qaCommand.itemId ||
+          qaCommand.payload.expectedCycleRevision !== qaCommand.preparedCycleRevision ||
+          qaCommand.payload.defectRecordId !== qaCommand.recordId ||
+          qaCommand.payload.repairRecordId !==
+            (qaCommand.payload.outcome === "return" ? qaCommand.recordId : null)) {
+          throw conflict("Independent defect QA decision receipt changed");
+        }
+        if (status === "succeeded") {
+          const ready = await readClaimedDefectQaContext(tx as unknown as Db, run, lease);
+          if (!ready || ready.issue.id !== qaCommand.issueId ||
+            ready.handoff.id !== qaCommand.handoffId ||
+            ready.handoff.projectId !== qaCommand.projectId ||
+            ready.handoff.recordId !== qaCommand.recordId ||
+            ready.cycle.id !== qaCommand.cycleId ||
+            ready.qa.id !== qaCommand.itemId ||
+            ready.issue.statusVersion !== qaCommand.preparedStatusVersion ||
+            ready.cycle.revision !== qaCommand.preparedCycleRevision ||
+            ready.qa.revision !== qaCommand.preparedItemRevision) {
+            throw conflict("Independent defect QA changed before its process stopped");
+          }
+          const decided = await workRecordQualityService(db, {
+            writesEnabled: deps.workRecordWorkflowV2WritesEnabled,
+          }).commitQaVerdictInTransaction(tx, input.companyId,
+            qaCommand.projectId, qaCommand.recordId, qaCommand.payload,
+            { actorType: "agent", actorId: input.agentId,
+              agentId: input.agentId, runId: input.runId });
+          if (decided.replayed ||
+            (decided.escalated && qaCommand.payload.outcome !== "return")) {
+            throw conflict("Independent defect QA could not complete its native decision");
+          }
+          const [afterIssue] = await tx.select().from(issues).where(and(
+            eq(issues.id, qaCommand.issueId), eq(issues.companyId, input.companyId),
+          ));
+          const expectedStatus = decided.escalated ? "in_review" :
+            qaCommand.payload.outcome === "pass" ? "done" : "in_progress";
+          const expectedVersion = ready.issue.statusVersion + (decided.escalated ? 0 : 1);
+          if (!afterIssue || afterIssue.statusVersion !== expectedVersion ||
+            afterIssue.status !== expectedStatus) {
+            throw conflict("Independent defect QA native issue did not commit");
+          }
+          let nextCycleId: string | null = null;
+          if (decided.escalated) {
+            const [attention] = await tx.select().from(workRecordQualityCycles)
+              .where(eq(workRecordQualityCycles.id, qaCommand.cycleId));
+            if (!attention || attention.qualityPhase !== "attention_required" ||
+              attention.reason !== "review_round_limit_reached") {
+              throw conflict("Independent defect QA review limit did not become visible");
+            }
+          } else if (qaCommand.payload.outcome === "return") {
+            const [record] = await tx.select({ repairAgentId: workRecords.assigneeAgentId })
+              .from(workRecords).where(eq(workRecords.id, qaCommand.recordId));
+            const [next] = await tx.select().from(workRecordQualityCycles).where(and(
+              eq(workRecordQualityCycles.companyId, input.companyId),
+              eq(workRecordQualityCycles.aggregateRecordId, qaCommand.recordId),
+              eq(workRecordQualityCycles.kind, "independent_defect"),
+              eq(workRecordQualityCycles.state, "open"),
+              eq(workRecordQualityCycles.cycleNumber, ready.cycle.cycleNumber + 1),
+            )).limit(1);
+            const [repairItem] = next ? await tx.select().from(workRecordQualityItems)
+              .where(and(eq(workRecordQualityItems.cycleId, next.id),
+                eq(workRecordQualityItems.role, "repair"))).limit(1) : [];
+            const [intent] = repairItem ? await tx.select().from(workRecordExecutionIntents)
+              .where(and(eq(workRecordExecutionIntents.companyId, input.companyId),
+                eq(workRecordExecutionIntents.issueId, qaCommand.issueId),
+                eq(workRecordExecutionIntents.qualityItemId, repairItem.id),
+                eq(workRecordExecutionIntents.kind, "rework_release"))).limit(1) : [];
+            if (!record?.repairAgentId || afterIssue.assigneeAgentId !== record.repairAgentId ||
+              !next || next.qualityPhase !== "waiting_fix" || !repairItem ||
+              repairItem.state !== "ready" || !intent ||
+              intent.state !== "waiting_dependencies" ||
+              intent.expectedIssueStatusVersion !== afterIssue.statusVersion) {
+              throw conflict("Independent defect QA return did not prepare original repairer wake");
+            }
+            nextCycleId = next.id;
+          }
+          const [committed] = await tx.update(localDefectQaVerdictCommands).set({
+            state: "committed", verdictId: decided.verdict.id,
+            escalated: decided.escalated, committedAt: sql`now()`,
+          }).where(and(eq(localDefectQaVerdictCommands.id, qaCommand.id),
+            eq(localDefectQaVerdictCommands.state, "prepared"))).returning();
+          if (!committed) throw conflict("Independent defect QA receipt changed before commit");
+          qaReceipt = { qaCommandId: qaCommand.id, qaDisposition: "committed",
+            qaVerdictId: decided.verdict.id, qaNextCycleId: nextCycleId,
+            qaEscalated: decided.escalated };
+        } else {
+          const [aborted] = await tx.update(localDefectQaVerdictCommands)
+            .set({ state: "aborted" }).where(and(
+              eq(localDefectQaVerdictCommands.id, qaCommand.id),
+              eq(localDefectQaVerdictCommands.state, "prepared"),
+            )).returning();
+          if (!aborted) throw conflict("Independent defect QA receipt changed before abort");
+          qaReceipt = { qaCommandId: qaCommand.id, qaDisposition: "aborted" };
+        }
+      }
+      if (qaRun && status !== "succeeded") {
+        qaDeliveryDisposition = (await settleFailedDefectQaRun(
+          tx as unknown as Db, run, lease)).disposition;
+      }
       // A local process result is not a business completion. Without an atomic
       // handoff, releasing any source run would strand an in_progress task.
       // Preserve a human's newer state if they changed it.
@@ -1084,6 +1221,8 @@ export function localAgentRunLeaseService(
               ...(childReceipt ?? {}),
               ...(poReceipt ?? {}),
               ...(defectReceipt ?? {}),
+               ...(qaReceipt ?? {}),
+               ...(qaDeliveryDisposition ? { qaDeliveryDisposition } : {}),
             },
           } } : {}),
         }).where(eq(heartbeatRuns.id, input.runId));
@@ -1268,6 +1407,141 @@ export function localAgentRunLeaseService(
       });
       if (!decision.allowed) throw forbidden("Issue write permission denied");
       return write(tx as unknown as Db, issue, decision.reason ?? "local_run_assignee");
+    });
+  }
+
+  async function withFencedDefectQaRun<T>(input: LocalRunOwner,
+    actor: Express.Request["actor"], write: (tx: Db,
+      context: NonNullable<Awaited<ReturnType<typeof readClaimedDefectQaContext>>>) => Promise<T>) {
+    requireOwner(input);
+    if (actor.type !== "agent" || actor.source !== "agent_key" ||
+      actor.agentId !== input.agentId || actor.companyId !== input.companyId ||
+      actor.keyId !== input.keyId ||
+      (actor.runId && actor.runId !== input.runId)) {
+      throw forbidden("Independent defect QA requires its own run and API key");
+    }
+    return db.transaction(async (tx) => {
+      const [run] = await tx.select().from(heartbeatRuns).where(and(
+        eq(heartbeatRuns.id, input.runId), eq(heartbeatRuns.companyId, input.companyId),
+        eq(heartbeatRuns.agentId, input.agentId), eq(heartbeatRuns.runtimeMode, "client_pull"),
+      )).for("update");
+      const [lease] = await tx.select().from(localAgentRunLeases)
+        .where(eq(localAgentRunLeases.runId, input.runId)).for("update");
+      if (!run || !lease || lease.companyId !== input.companyId ||
+        lease.agentId !== input.agentId || lease.deviceId !== input.deviceId ||
+        lease.deviceKeyId !== input.keyId || lease.leaseId !== input.leaseId ||
+        lease.generation !== input.generation || lease.releasedAt ||
+        lease.cancelRequestedAt || run.status !== "running" ||
+        wakeReasonFromRun(run) !== CLIENT_PULL_DEFECT_QA_WAKE_REASON) {
+        throw forbidden("Independent defect QA lease is no longer owned by this device");
+      }
+      await assertLeaseDevice(tx as unknown as Db, lease, input);
+      const [live] = await tx.select({ live: sql<boolean>`${localAgentRunLeases.expiresAt} > now()` })
+        .from(localAgentRunLeases).where(eq(localAgentRunLeases.runId, input.runId));
+      if (!live?.live) throw conflict("Independent defect QA lease expired; stop the process");
+      const context = await readClaimedDefectQaContext(tx as unknown as Db, run, lease);
+      if (!context) throw conflict("Independent defect QA context changed");
+      return write(tx as unknown as Db, context);
+    });
+  }
+
+  async function readFencedDefectQaContext(input: LocalRunOwner,
+    actor: Express.Request["actor"]) {
+    return withFencedDefectQaRun(input, actor, async (_tx, context) => ({
+      issueId: context.issue.id, cycleId: context.cycle.id,
+      itemId: context.qa.id, defectRecordId: context.handoff.recordId,
+      repairRecordId: context.handoff.recordId,
+      handoffId: context.handoff.id,
+      expectedStatusVersion: context.issue.statusVersion,
+      expectedCycleRevision: context.cycle.revision,
+      expectedItemRevision: context.qa.revision,
+    }));
+  }
+
+  async function prepareFencedDefectQaVerdict(input: LocalRunOwner & {
+    issueId: string; expectedStatusVersion: number;
+    cycleId: string; itemId: string; expectedCycleRevision: number;
+    expectedItemRevision: number; outcome: "pass" | "return";
+    summary: string; evidenceRefs: string[]; clientRequestId: string;
+  }, actor: Express.Request["actor"]) {
+    if (!UUID.test(input.issueId) || !UUID.test(input.cycleId) ||
+      !UUID.test(input.itemId) || !UUID.test(input.clientRequestId) ||
+      !Number.isSafeInteger(input.expectedStatusVersion) ||
+      input.expectedStatusVersion < 0 ||
+      !Number.isSafeInteger(input.expectedCycleRevision) ||
+      input.expectedCycleRevision < 1 ||
+      !Number.isSafeInteger(input.expectedItemRevision) ||
+      input.expectedItemRevision < 1 ||
+      typeof input.summary !== "string" || !input.summary.trim() ||
+      Buffer.byteLength(input.summary, "utf8") > 4096 ||
+      /@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\./i.test(input.summary) ||
+      !Array.isArray(input.evidenceRefs) ||
+      !["pass", "return"].includes(input.outcome)) {
+      throw badRequest("Independent defect QA requires a valid decision, summary, evidence and revisions");
+    }
+    const digest = createHash("sha256").update(JSON.stringify({
+      companyId: input.companyId, agentId: input.agentId, runId: input.runId,
+      issueId: input.issueId, expectedStatusVersion: input.expectedStatusVersion,
+      cycleId: input.cycleId, itemId: input.itemId,
+      expectedCycleRevision: input.expectedCycleRevision,
+      expectedItemRevision: input.expectedItemRevision,
+      outcome: input.outcome, summary: input.summary,
+      evidenceRefs: input.evidenceRefs,
+    })).digest("hex");
+    return withFencedDefectQaRun(input, actor, async (tx, context) => {
+      if (input.issueId !== context.issue.id ||
+        input.expectedStatusVersion !== context.issue.statusVersion ||
+        input.cycleId !== context.cycle.id ||
+        input.itemId !== context.qa.id ||
+        input.expectedCycleRevision !== context.cycle.revision ||
+        input.expectedItemRevision !== context.qa.revision) {
+        throw conflict("Independent defect QA revision changed before preparation");
+      }
+      const [existing] = await tx.select().from(localDefectQaVerdictCommands).where(and(
+        eq(localDefectQaVerdictCommands.companyId, input.companyId),
+        eq(localDefectQaVerdictCommands.runId, input.runId),
+      )).limit(1);
+      if (existing) {
+        if (existing.clientRequestId !== input.clientRequestId ||
+          existing.requestDigest !== digest || existing.state !== "prepared" ||
+          existing.handoffId !== context.handoff.id) {
+          throw conflict("Independent defect QA decision differs from its preparation");
+        }
+        return { issueId: context.issue.id, status: "in_review" as const,
+          statusVersion: context.issue.statusVersion,
+          receiptId: existing.id, disposition: "prepared" as const,
+          replayed: true };
+      }
+      const payload = recordQaQualityVerdictSchema.safeParse({
+        workflowVersion: 2, clientRequestId: input.clientRequestId,
+        requestPayloadDigest: digest, cycleId: context.cycle.id,
+        itemId: context.qa.id,
+        expectedCycleRevision: context.cycle.revision,
+        outcome: input.outcome, reason: input.summary,
+        evidenceRefs: input.evidenceRefs,
+        defectRecordId: context.handoff.recordId,
+        repairRecordId: input.outcome === "return" ? context.handoff.recordId : null,
+      });
+      if (!payload.success) throw badRequest("Invalid independent defect QA verdict", payload.error.flatten());
+      const rollout = resolveWorkRecordWorkflowV2Rollout({
+        writesEnabled: deps.workRecordWorkflowV2WritesEnabled,
+      }).decision(input.companyId, context.handoff.projectId);
+      if (!rollout.scopeEnabled) throw forbidden("Work-record quality writes are not enabled for this project");
+      const [receipt] = await tx.insert(localDefectQaVerdictCommands).values({
+        companyId: input.companyId, projectId: context.handoff.projectId,
+        issueId: context.issue.id, recordId: context.handoff.recordId,
+        cycleId: context.cycle.id, itemId: context.qa.id,
+        handoffId: context.handoff.id, qaAgentId: input.agentId,
+        runId: input.runId, clientRequestId: input.clientRequestId,
+        requestDigest: digest, payload: payload.data,
+        preparedStatusVersion: context.issue.statusVersion,
+        preparedCycleRevision: context.cycle.revision,
+        preparedItemRevision: context.qa.revision,
+      }).returning({ id: localDefectQaVerdictCommands.id });
+      return { issueId: context.issue.id, status: "in_review" as const,
+        statusVersion: context.issue.statusVersion,
+        receiptId: receipt.id, disposition: "prepared" as const,
+        replayed: false };
     });
   }
 
@@ -2236,7 +2510,8 @@ export function localAgentRunLeaseService(
 
   return { claim, renew, control, finish, appendFencedEvent,
     addFencedComment, completeFencedChildWorkRecord, prepareFencedPoVerdict,
-    prepareFencedDefectRepairHandoff,
+    prepareFencedDefectRepairHandoff, readFencedDefectQaContext,
+    prepareFencedDefectQaVerdict,
     readFencedWriteReceipt, createFencedReviewConfirmation, reviewFencedIssue,
     createFencedAgentReviewHandoff, createFencedCompletionReviewHandoff, patchFencedIssue };
 }

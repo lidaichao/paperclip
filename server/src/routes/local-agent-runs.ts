@@ -152,6 +152,12 @@ export function localAgentRunRoutes(db: Db) {
       owner(req, req.query as Record<string, unknown>), req.actor));
   });
 
+  router.get("/agents/me/local-runs/:runId/defect-qa-context", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    return res.json(await leases.readFencedDefectQaContext(
+      owner(req, req.query as Record<string, unknown>), req.actor));
+  });
+
   router.post("/agents/me/local-runs/:runId/review-accept", async (req, res) => {
     res.set("Cache-Control", "no-store");
     const body = objectBody(req.body);
@@ -304,6 +310,26 @@ export function localAgentRunRoutes(db: Db) {
       summary: body.summary as string,
       expectedStatusVersion: Number(body.expectedStatusVersion),
       clientRequestId: String(body.clientRequestId ?? ""),
+    }, req.actor);
+    return res.status(result.replayed ? 200 : 201).json(result);
+  });
+
+  router.post("/agents/me/local-runs/:runId/issue/defect-qa-verdict", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "expectedStatusVersion", "clientRequestId",
+      "cycleId", "itemId", "expectedCycleRevision", "expectedItemRevision",
+      "outcome", "summary", "evidenceRefs"]);
+    const result = await leases.prepareFencedDefectQaVerdict({
+      ...owner(req, body), issueId: String(body.issueId ?? ""),
+      expectedStatusVersion: Number(body.expectedStatusVersion),
+      clientRequestId: String(body.clientRequestId ?? ""),
+      cycleId: String(body.cycleId ?? ""), itemId: String(body.itemId ?? ""),
+      expectedCycleRevision: Number(body.expectedCycleRevision),
+      expectedItemRevision: Number(body.expectedItemRevision),
+      outcome: body.outcome as "pass" | "return",
+      summary: body.summary as string,
+      evidenceRefs: body.evidenceRefs as string[],
     }, req.actor);
     return res.status(result.replayed ? 200 : 201).json(result);
   });

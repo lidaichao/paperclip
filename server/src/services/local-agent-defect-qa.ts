@@ -5,8 +5,8 @@ import {
   issueThreadInteractions, issues, localAgentRunLeases, localDefectRepairHandoffs,
   workRecordIssueLinks, workRecordQualityCycles, workRecordQualityItems, workRecords,
 } from "@paperclipai/db";
-import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
-import { conflict } from "../errors.js";
+import { and, asc, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
+import { HttpError, conflict } from "../errors.js";
 import { getExecutionBlocker } from "./execution-blocker.js";
 import { issueService } from "./issues.js";
 import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
@@ -18,7 +18,9 @@ function object(value: unknown): Record<string, unknown> {
     ? value as Record<string, unknown> : {};
 }
 
-export function defectQaWakeKey(handoffId: string) { return `defect-qa:${handoffId}`; }
+export function defectQaWakeKey(handoffId: string, generation = 1) {
+  return `defect-qa:${handoffId}${generation === 1 ? "" : `:${generation}`}`;
+}
 
 type Agent = typeof agents.$inferSelect;
 type Run = typeof heartbeatRuns.$inferSelect;
@@ -118,17 +120,26 @@ async function loadLockedQa(tx: Db, companyId: string, handoffId: string,
 
 /** The QA bridge's normal claim poll is the durable delivery trigger. */
 export async function deliverPendingDefectQaForAgent(tx: Db, agent: Agent) {
-  const candidates = await tx.select({ id: localDefectRepairHandoffs.id })
-    .from(localDefectRepairHandoffs).where(and(
+  let cursor: { createdAt: Date; id: string } | null = null;
+  while (true) {
+    const candidates: Array<{ id: string; createdAt: Date }> = await tx.select({
+      id: localDefectRepairHandoffs.id,
+      createdAt: localDefectRepairHandoffs.createdAt,
+    }).from(localDefectRepairHandoffs).where(and(
       eq(localDefectRepairHandoffs.companyId, agent.companyId),
       eq(localDefectRepairHandoffs.qaAgentId, agent.id),
       eq(localDefectRepairHandoffs.state, "submitted"),
       isNull(localDefectRepairHandoffs.qaWakeupRequestId),
-    )).orderBy(asc(localDefectRepairHandoffs.createdAt)).limit(20);
-  for (const candidate of candidates) {
+      cursor ? or(gt(localDefectRepairHandoffs.createdAt, cursor.createdAt),
+        and(eq(localDefectRepairHandoffs.createdAt, cursor.createdAt),
+          gt(localDefectRepairHandoffs.id, cursor.id))) : undefined,
+    )).orderBy(asc(localDefectRepairHandoffs.createdAt),
+      asc(localDefectRepairHandoffs.id)).limit(20);
+    if (candidates.length === 0) return;
+    for (const candidate of candidates) {
     const ready = await loadLockedQa(tx, agent.companyId, candidate.id, agent.id, null);
     if (!ready || ready.handoff.qaWakeupRequestId || ready.handoff.qaDeliveredAt) continue;
-    const key = defectQaWakeKey(ready.handoff.id);
+    const key = defectQaWakeKey(ready.handoff.id, ready.handoff.qaDeliveryGeneration);
     const [occupied] = await tx.select({ id: agentWakeupRequests.id }).from(agentWakeupRequests)
       .where(and(eq(agentWakeupRequests.companyId, agent.companyId),
         eq(agentWakeupRequests.idempotencyKey, key))).limit(1);
@@ -137,7 +148,8 @@ export async function deliverPendingDefectQaForAgent(tx: Db, agent: Agent) {
       cycleId: ready.cycle.id, qaItemId: ready.qa.id,
       sourceRunId: ready.sourceRun.id,
       issueStatusVersion: ready.issue.statusVersion,
-      cycleRevision: ready.cycle.revision, qaItemRevision: ready.qa.revision };
+      cycleRevision: ready.cycle.revision, qaItemRevision: ready.qa.revision,
+      deliveryGeneration: ready.handoff.qaDeliveryGeneration };
     const [wake] = await tx.insert(agentWakeupRequests).values({
       id: randomUUID(), companyId: agent.companyId, agentId: agent.id,
       source: "automation", triggerDetail: "system",
@@ -162,6 +174,10 @@ export async function deliverPendingDefectQaForAgent(tx: Db, agent: Agent) {
     }).where(and(eq(localDefectRepairHandoffs.id, ready.handoff.id),
       isNull(localDefectRepairHandoffs.qaWakeupRequestId))).returning();
     if (!delivered) throw conflict("Independent defect QA delivery changed");
+    }
+    const last = candidates[candidates.length - 1]!;
+    cursor = { createdAt: last.createdAt, id: last.id };
+    if (candidates.length < 20) return;
   }
 }
 
@@ -174,35 +190,39 @@ export async function assertDefectQaClaimCandidate(db: Db, tx: Db, input: {
     run.companyId !== agent.companyId || run.agentId !== agent.id ||
     context.wakeReason !== CLIENT_PULL_DEFECT_QA_WAKE_REASON ||
     typeof context.handoffId !== "string" || !run.wakeupRequestId) {
-    throw conflict("Independent defect QA run identity changed");
+    return { kind: "stale" as const };
   }
   const ready = await loadLockedQa(tx, agent.companyId, context.handoffId, agent.id, null);
+  if (!ready) return { kind: "stale" as const };
   const [wake] = await tx.select().from(agentWakeupRequests)
     .where(eq(agentWakeupRequests.id, run.wakeupRequestId)).for("update");
   const payload = object(wake?.payload);
-  if (!ready || !wake || !ready.handoff.qaDeliveredAt ||
+  if (!wake || !ready.handoff.qaDeliveredAt ||
     ready.handoff.qaWakeupRequestId !== wake.id ||
     wake.companyId !== agent.companyId || wake.agentId !== agent.id ||
     wake.runId !== run.id || wake.status !== "queued" ||
     wake.reason !== CLIENT_PULL_DEFECT_QA_WAKE_REASON ||
-    wake.idempotencyKey !== defectQaWakeKey(ready.handoff.id) ||
+    wake.idempotencyKey !== defectQaWakeKey(ready.handoff.id,
+      ready.handoff.qaDeliveryGeneration) ||
     context.issueId !== ready.issue.id || context.cycleId !== ready.cycle.id ||
     context.qaItemId !== ready.qa.id || context.sourceRunId !== ready.sourceRun.id ||
     context.issueStatusVersion !== ready.issue.statusVersion ||
     context.cycleRevision !== ready.cycle.revision ||
     context.qaItemRevision !== ready.qa.revision ||
+    (context.deliveryGeneration ?? 1) !== ready.handoff.qaDeliveryGeneration ||
     payload.issueId !== context.issueId || payload.handoffId !== context.handoffId ||
     payload.cycleId !== context.cycleId || payload.qaItemId !== context.qaItemId ||
     payload.sourceRunId !== context.sourceRunId ||
     payload.issueStatusVersion !== context.issueStatusVersion ||
     payload.cycleRevision !== context.cycleRevision ||
-    payload.qaItemRevision !== context.qaItemRevision) {
-    throw conflict("Independent defect QA delivery or quality state changed");
+    payload.qaItemRevision !== context.qaItemRevision ||
+    (payload.deliveryGeneration ?? 1) !== (context.deliveryGeneration ?? 1)) {
+    return { kind: "stale" as const };
   }
   const [otherRunning] = await tx.select({ id: heartbeatRuns.id }).from(heartbeatRuns)
     .where(and(eq(heartbeatRuns.companyId, agent.companyId),
       eq(heartbeatRuns.status, "running"), ne(heartbeatRuns.id, run.id),
-      sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${ready.issue.id}`)).limit(1);
+       sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${ready.issue.id}`)).limit(1);
   const [otherLease] = await tx.select({ runId: localAgentRunLeases.runId })
     .from(localAgentRunLeases).where(and(
       eq(localAgentRunLeases.companyId, agent.companyId),
@@ -212,40 +232,122 @@ export async function assertDefectQaClaimCandidate(db: Db, tx: Db, input: {
   const dependency = await issueService(db).getDependencyReadiness(ready.issue.id, tx);
   if (otherRunning || otherLease || !dependency.isDependencyReady ||
     await getExecutionBlocker(tx, agent.companyId, ready.issue.id)) {
-    throw conflict("Independent defect QA is blocked");
+    return { kind: "blocked" as const };
   }
   const { heartbeatService } = await import("./heartbeat.js");
-  await heartbeatService(db).assertClientPullClaimAdmission(run, agent, ready.issue, tx);
-  return { issue: ready.issue, wake };
+  try {
+    await heartbeatService(db).assertClientPullClaimAdmission(run, agent, ready.issue, tx);
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 409) return { kind: "blocked" as const };
+    throw error;
+  }
+  return { kind: "ready" as const, issue: ready.issue, wake };
 }
 
-export async function defectQaRunChanged(tx: Db, run: Run,
+async function markDefectQaAttention(tx: Db, run: Run, reason: string) {
+  const handoffId = object(run.contextSnapshot).handoffId;
+  if (typeof handoffId !== "string") return false;
+  const [scope] = await tx.select().from(localDefectRepairHandoffs).where(and(
+    eq(localDefectRepairHandoffs.id, handoffId),
+    eq(localDefectRepairHandoffs.companyId, run.companyId),
+  ));
+  if (!scope || scope.qaAgentId !== run.agentId) return false;
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(
+    ${`work-record-quality:${run.companyId}:${scope.recordId}`}, 0))`);
+  const [cycle] = await tx.select().from(workRecordQualityCycles)
+    .where(eq(workRecordQualityCycles.id, scope.cycleId)).for("update");
+  const [issue] = await tx.select().from(issues)
+    .where(eq(issues.id, scope.issueId)).for("update");
+  const [handoff] = await tx.select().from(localDefectRepairHandoffs)
+    .where(eq(localDefectRepairHandoffs.id, scope.id)).for("update");
+  if (!handoff || handoff.qaWakeupRequestId !== run.wakeupRequestId ||
+    handoff.qaAgentId !== run.agentId || handoff.issueId !== scope.issueId) return false;
+  if (issue?.status === "in_review" && cycle?.state === "open" &&
+    cycle.kind === "independent_defect" && cycle.aggregateRecordId === scope.recordId &&
+    cycle.qualityPhase !== "attention_required") {
+    await tx.update(workRecordQualityCycles).set({
+      qualityPhase: "attention_required", reason,
+      revision: cycle.revision + 1, updatedAt: new Date(),
+    }).where(eq(workRecordQualityCycles.id, cycle.id));
+    return true;
+  }
+  return cycle?.qualityPhase === "attention_required";
+}
+
+/** A stopped failed QA run gets one replacement; a second failure becomes visible. */
+export async function settleFailedDefectQaRun(tx: Db, run: Run,
+  lease: typeof localAgentRunLeases.$inferSelect) {
+  const ready = await readClaimedDefectQaContext(tx, run, lease);
+  if (ready && ready.handoff.qaDeliveryGeneration === 1) {
+    const [retry] = await tx.update(localDefectRepairHandoffs).set({
+      qaWakeupRequestId: null, qaDeliveredAt: null, qaDeliveryGeneration: 2,
+    }).where(and(eq(localDefectRepairHandoffs.id, ready.handoff.id),
+      eq(localDefectRepairHandoffs.qaWakeupRequestId, run.wakeupRequestId!)))
+      .returning({ id: localDefectRepairHandoffs.id });
+    if (!retry) throw conflict("Independent defect QA retry gate changed");
+    return { disposition: "retry_ready" as const };
+  }
+  if (!await markDefectQaAttention(tx, run, ready
+    ? "qa_local_retry_exhausted" : "qa_local_context_changed")) {
+    throw conflict("Independent defect QA failure cannot be reconciled to a visible quality state");
+  }
+  return { disposition: "attention_required" as const };
+}
+
+/** Retire a permanently stale queued run so it cannot monopolize the inbox. */
+export async function retireStaleDefectQaQueuedRun(tx: Db, run: Run) {
+  await markDefectQaAttention(tx, run, "qa_local_queue_stale");
+  const [retired] = await tx.update(heartbeatRuns).set({
+    status: "cancelled", finishedAt: sql`now()`, updatedAt: sql`now()`,
+  }).where(and(eq(heartbeatRuns.id, run.id), eq(heartbeatRuns.status, "queued")))
+    .returning({ id: heartbeatRuns.id });
+  if (!retired) throw conflict("Independent defect QA queued run changed before retirement");
+  if (run.wakeupRequestId) {
+    await tx.update(agentWakeupRequests).set({
+      status: "cancelled", finishedAt: sql`now()`,
+      error: "independent_defect_qa_stale", updatedAt: sql`now()`,
+    }).where(and(eq(agentWakeupRequests.id, run.wakeupRequestId),
+      eq(agentWakeupRequests.status, "queued")));
+  }
+}
+
+export async function readClaimedDefectQaContext(tx: Db, run: Run,
   lease: typeof localAgentRunLeases.$inferSelect) {
   const context = object(run.contextSnapshot);
-  if (context.wakeReason !== CLIENT_PULL_DEFECT_QA_WAKE_REASON) return false;
-  if (typeof context.handoffId !== "string" || !run.wakeupRequestId) return true;
+  if (context.wakeReason !== CLIENT_PULL_DEFECT_QA_WAKE_REASON ||
+    typeof context.handoffId !== "string" || !run.wakeupRequestId) return null;
   const ready = await loadLockedQa(tx, run.companyId, context.handoffId,
     run.agentId, run.id);
   const [wake] = await tx.select().from(agentWakeupRequests)
     .where(eq(agentWakeupRequests.id, run.wakeupRequestId)).for("update");
   const payload = object(wake?.payload);
-  return !ready || !wake || lease.issueId !== ready.issue.id ||
+  if (!ready || !wake || lease.issueId !== ready.issue.id ||
     ready.handoff.qaWakeupRequestId !== wake.id ||
     wake.runId !== run.id || wake.status !== "claimed" ||
     wake.agentId !== run.agentId ||
     wake.companyId !== run.companyId || wake.source !== "automation" ||
     wake.triggerDetail !== "system" ||
     wake.reason !== CLIENT_PULL_DEFECT_QA_WAKE_REASON ||
-    wake.idempotencyKey !== defectQaWakeKey(ready.handoff.id) ||
+    wake.idempotencyKey !== defectQaWakeKey(ready.handoff.id,
+      ready.handoff.qaDeliveryGeneration) ||
     context.issueId !== ready.issue.id || context.cycleId !== ready.cycle.id ||
     context.qaItemId !== ready.qa.id || context.sourceRunId !== ready.sourceRun.id ||
     context.issueStatusVersion !== ready.issue.statusVersion ||
     context.cycleRevision !== ready.cycle.revision ||
     context.qaItemRevision !== ready.qa.revision ||
+    (context.deliveryGeneration ?? 1) !== ready.handoff.qaDeliveryGeneration ||
     payload.issueId !== context.issueId || payload.handoffId !== context.handoffId ||
     payload.cycleId !== context.cycleId || payload.qaItemId !== context.qaItemId ||
     payload.sourceRunId !== context.sourceRunId ||
     payload.issueStatusVersion !== context.issueStatusVersion ||
     payload.cycleRevision !== context.cycleRevision ||
-    payload.qaItemRevision !== context.qaItemRevision;
+    payload.qaItemRevision !== context.qaItemRevision ||
+    (payload.deliveryGeneration ?? 1) !== (context.deliveryGeneration ?? 1)) return null;
+  return ready;
+}
+
+export async function defectQaRunChanged(tx: Db, run: Run,
+  lease: typeof localAgentRunLeases.$inferSelect) {
+  if (object(run.contextSnapshot).wakeReason !== CLIENT_PULL_DEFECT_QA_WAKE_REASON) return false;
+  return !(await readClaimedDefectQaContext(tx, run, lease));
 }
