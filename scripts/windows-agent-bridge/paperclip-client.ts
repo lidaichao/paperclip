@@ -56,6 +56,10 @@ export interface LocalRunLease {
   generation: number;
 }
 
+function leaseOwnerBody(lease: LocalRunLease) {
+  return { deviceId: lease.deviceId, leaseId: lease.leaseId, generation: lease.generation };
+}
+
 export interface LocalReviewContext {
   issue: BridgeInboxItem & { description: string | null; statusVersion: number };
   review: { id: string; interactionId: string; sourceRunId: string;
@@ -546,7 +550,7 @@ export class AliceClient {
       !["info", "warn", "error"].includes(event.level) || !event.message.trim() ||
       Buffer.byteLength(event.message, "utf8") > 8 * 1024) throw new Error("invalid local run event");
     const response = await this.#writeJson("POST", `/api/agents/me/local-runs/${lease.runId}/events`, {
-      ...lease, issueId, ...event,
+      ...leaseOwnerBody(lease), issueId, ...event,
     }, {}, signal);
     return response.body;
   }
@@ -558,7 +562,7 @@ export class AliceClient {
     requireUuid(clientRequestId, "clientRequestId");
     if (!body.trim()) throw new Error("comment body is required");
     const response = await this.#writeJson("POST", `/api/agents/me/local-runs/${lease.runId}/comments`, {
-      ...lease, issueId, body, clientRequestId,
+      ...leaseOwnerBody(lease), issueId, body, clientRequestId,
     }, {}, signal);
     return response.body;
   }
@@ -572,7 +576,7 @@ export class AliceClient {
     requireUuid(clientRequestId, "clientRequestId");
     if (!prompt.trim() || prompt.length > 1000) throw new Error("review prompt must be 1–1000 characters");
     const response = await this.#writeJson("POST", `/api/agents/me/local-runs/${lease.runId}/issue/review-confirmation`, {
-      ...lease, issueId, prompt, clientRequestId,
+      ...leaseOwnerBody(lease), issueId, prompt, clientRequestId,
     }, {}, signal);
     return response.body;
   }
@@ -586,7 +590,7 @@ export class AliceClient {
     requireUuid(clientRequestId, "clientRequestId");
     if (!body.trim() || /@|https?:\/\//i.test(body)) throw new Error("review handoff requires plain text");
     const response = await this.#writeJson("POST", `/api/agents/me/local-runs/${lease.runId}/issue/review-handoff`, {
-      ...lease, issueId, body, reviewInteractionId, clientRequestId,
+      ...leaseOwnerBody(lease), issueId, body, reviewInteractionId, clientRequestId,
     }, {}, signal);
     return response.body;
   }
@@ -606,7 +610,7 @@ export class AliceClient {
     }
     const response = await this.#writeJson("POST",
       `/api/agents/me/local-runs/${lease.runId}/issue/completion-review-handoff`,
-      { ...lease, ...input }, {}, signal);
+      { ...leaseOwnerBody(lease), ...input }, {}, signal);
     const record = asRecord(response.body, "completion review handoff");
     if (record.issueId !== input.issueId || record.status !== "in_review") {
       throw new Error("completion review handoff identity mismatch");
@@ -631,7 +635,7 @@ export class AliceClient {
     }
     const response = await this.#writeJson("POST",
       `/api/agents/me/local-runs/${lease.runId}/issue/child-complete`,
-      { ...lease, ...input }, {}, signal);
+      { ...leaseOwnerBody(lease), ...input }, {}, signal);
     const record = asRecord(response.body, "child completion");
     if (record.issueId !== input.issueId || record.status !== "in_progress" ||
       record.disposition !== "prepared" ||
@@ -659,7 +663,7 @@ export class AliceClient {
     }
     const response = await this.#writeJson("POST",
       `/api/agents/me/local-runs/${lease.runId}/issue/defect-repair-handoff`,
-      { ...lease, ...input }, {}, signal);
+      { ...leaseOwnerBody(lease), ...input }, {}, signal);
     const record = asRecord(response.body, "defect repair handoff");
     if (record.issueId !== input.issueId || record.status !== "in_progress" ||
       record.disposition !== "prepared" ||
@@ -693,7 +697,7 @@ export class AliceClient {
     }
     const response = await this.#writeJson("POST",
       `/api/agents/me/local-runs/${lease.runId}/issue/defect-qa-verdict`,
-      { ...lease, ...input }, {}, signal);
+      { ...leaseOwnerBody(lease), ...input }, {}, signal);
     const record = asRecord(response.body, "local defect QA verdict preparation");
     if (record.issueId !== input.issueId || record.status !== "in_review" ||
       Number(record.statusVersion) !== input.expectedStatusVersion ||
@@ -724,7 +728,7 @@ export class AliceClient {
     }
     const response = await this.#writeJson("POST",
       `/api/agents/me/local-runs/${lease.runId}/issue/po-verdict`,
-      { ...lease, ...input }, {}, signal);
+      { ...leaseOwnerBody(lease), ...input }, {}, signal);
     const record = asRecord(response.body, "local PO verdict preparation");
     if (record.disposition !== "prepared") {
       throw new Error("local PO verdict preparation was not confirmed");
@@ -746,7 +750,7 @@ export class AliceClient {
     }
     const response = await this.#writeJson("POST",
       `/api/agents/me/local-runs/${lease.runId}/review-accept`,
-      { ...lease, ...input }, {}, signal);
+      { ...leaseOwnerBody(lease), ...input }, {}, signal);
     const record = asRecord(response.body, "completion review acceptance");
     if (record.issueId !== input.issueId || record.reviewId !== input.reviewId ||
       record.requestId !== input.clientRequestId || record.outcome !== "accepted") {
@@ -768,7 +772,7 @@ export class AliceClient {
     }
     const response = await this.#writeJson("POST",
       `/api/agents/me/local-runs/${lease.runId}/review-reject`,
-      { ...lease, ...input }, {}, signal);
+      { ...leaseOwnerBody(lease), ...input }, {}, signal);
     const record = asRecord(response.body, "completion review rejection");
     if (record.issueId !== input.issueId || record.reviewId !== input.reviewId ||
       record.requestId !== input.clientRequestId || record.outcome !== "rejected") {
@@ -785,7 +789,7 @@ export class AliceClient {
       throw new Error("unsupported local run issue field");
     }
     const response = await this.#writeJson("PATCH", `/api/agents/me/local-runs/${lease.runId}/issue`, {
-      ...lease, issueId, ...patch,
+      ...leaseOwnerBody(lease), issueId, ...patch,
     }, {}, signal);
     return response.body;
   }

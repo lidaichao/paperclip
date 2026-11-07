@@ -11,6 +11,10 @@ const DEVICE_ID = "8da47d3b-0a6e-49d4-9c26-17bc76de470f";
 const KEY_ID = "fd7a78df-9781-4070-9974-7f7a7e051330";
 const INTERACTION_ID = "52c1a882-34da-4cd9-a408-38d03c02f457";
 
+function leaseOwner(lease: { deviceId: string; leaseId: string; generation: number }) {
+  return { deviceId: lease.deviceId, leaseId: lease.leaseId, generation: lease.generation };
+}
+
 function jsonResponse(value: unknown, status = 200): Response {
   return new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json" } });
 }
@@ -59,7 +63,7 @@ describe("AliceClient", () => {
     expect((await client.prepareLocalPoVerdict(lease, input)).disposition).toBe("prepared");
     expect(new URL(calls[1]!.url).pathname)
       .toBe(`/api/agents/me/local-runs/${RUN_ID}/issue/po-verdict`);
-    expect(JSON.parse(String(calls[1]!.init?.body))).toMatchObject({ ...lease, ...input });
+    expect(JSON.parse(String(calls[1]!.init?.body))).toMatchObject({ ...leaseOwner(lease), ...input });
   });
   it("sends local writes only to the lease-fenced endpoints with the stable comment request ID", async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
@@ -77,7 +81,7 @@ describe("AliceClient", () => {
       [`/api/agents/me/local-runs/${RUN_ID}/comments`, "POST"],
       [`/api/agents/me/local-runs/${RUN_ID}/issue`, "PATCH"],
     ]);
-    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease, issueId: ISSUE_ID, clientRequestId: KEY_ID });
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...leaseOwner(lease), issueId: ISSUE_ID, clientRequestId: KEY_ID });
     await expect(client.patchLocalRunIssue(lease, ISSUE_ID, { status: "done" })).rejects.toThrow("unsupported");
     expect(calls).toHaveLength(3);
   });
@@ -115,9 +119,9 @@ describe("AliceClient", () => {
       [`/api/agents/me/local-runs/${RUN_ID}/issue/review-confirmation`, "POST"],
       [`/api/agents/me/local-runs/${RUN_ID}/issue/review-handoff`, "POST"],
     ]);
-    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease, issueId: ISSUE_ID,
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...leaseOwner(lease), issueId: ISSUE_ID,
       prompt: "Please verify", clientRequestId: KEY_ID });
-    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...lease, issueId: ISSUE_ID,
+    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...leaseOwner(lease), issueId: ISSUE_ID,
       body: "Ready for acceptance", reviewInteractionId: INTERACTION_ID, clientRequestId: KEY_ID });
     await expect(client.createLocalReviewConfirmation(lease, ISSUE_ID, " ", KEY_ID)).rejects.toThrow("prompt");
     await expect(client.handoffLocalReview(lease, ISSUE_ID, "@someone", INTERACTION_ID, KEY_ID))
@@ -347,15 +351,15 @@ describe("AliceClient", () => {
         [`/api/agents/me/local-runs/${RUN_ID}/review-accept`, "POST"],
         [`/api/agents/me/local-runs/${RUN_ID}/review-reject`, "POST"],
       ]);
-    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease,
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...leaseOwner(lease),
       issueId: ISSUE_ID, reviewerAgentId: DEVICE_ID, clientRequestId: KEY_ID });
-    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...lease,
+    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...leaseOwner(lease),
       issueId: ISSUE_ID, reviewId: KEY_ID, clientRequestId: INTERACTION_ID });
     await expect(client.acceptLocalCompletionReview(lease, {
       issueId: ISSUE_ID, reviewId: KEY_ID, summary: " ",
       clientRequestId: INTERACTION_ID,
     })).rejects.toThrow("summary");
-    expect(JSON.parse(String(calls[3].init?.body))).toMatchObject({ ...lease,
+    expect(JSON.parse(String(calls[3].init?.body))).toMatchObject({ ...leaseOwner(lease),
       issueId: ISSUE_ID, reviewId: KEY_ID, clientRequestId: INTERACTION_ID });
     expect(calls).toHaveLength(4);
   });
@@ -377,7 +381,7 @@ describe("AliceClient", () => {
       .toEqual({ receiptId: KEY_ID, statusVersion: 3 });
     expect(new URL(calls[1].url).pathname)
       .toBe(`/api/agents/me/local-runs/${RUN_ID}/issue/child-complete`);
-    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease,
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...leaseOwner(lease),
       issueId: ISSUE_ID, expectedStatusVersion: 3, clientRequestId: KEY_ID });
   });
 
@@ -398,7 +402,7 @@ describe("AliceClient", () => {
       .toEqual({ receiptId: KEY_ID, statusVersion: 3 });
     expect(new URL(calls[1].url).pathname)
       .toBe(`/api/agents/me/local-runs/${RUN_ID}/issue/defect-repair-handoff`);
-    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...lease,
+    expect(JSON.parse(String(calls[1].init?.body))).toMatchObject({ ...leaseOwner(lease),
       issueId: ISSUE_ID, expectedStatusVersion: 3, clientRequestId: KEY_ID });
   });
 
@@ -437,7 +441,7 @@ describe("AliceClient", () => {
       receiptId: KEY_ID, disposition: "prepared" });
     expect(new URL(calls[2].url).pathname)
       .toBe(`/api/agents/me/local-runs/${RUN_ID}/issue/defect-qa-verdict`);
-    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...lease,
+    expect(JSON.parse(String(calls[2].init?.body))).toMatchObject({ ...leaseOwner(lease),
       issueId: ISSUE_ID, cycleId, itemId, clientRequestId: KEY_ID });
   });
 
@@ -537,6 +541,9 @@ describe("AliceClient", () => {
     ]);
     expect(JSON.parse(String(calls[1]?.init?.body))).toMatchObject({ issueId: ISSUE_ID, leaseId: LEASE_ID,
       clientRequestId: KEY_ID, message: "started" });
+    expect(Object.keys(JSON.parse(String(calls[1]?.init?.body))).sort()).toEqual([
+      "clientRequestId", "deviceId", "generation", "issueId", "leaseId", "level", "message", "stream",
+    ]);
     expect(JSON.parse(String(calls[2]?.init?.body))).toMatchObject({ leaseId: LEASE_ID,
       clientRequestId: KEY_ID, summary: "done" });
   });
