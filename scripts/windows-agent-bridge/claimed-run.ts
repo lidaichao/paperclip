@@ -6,6 +6,7 @@ import { LocalCommentIntentStore, startLocalRunWriteProxy } from "./local-run-wr
 import { RunTelemetryStore } from "./run-telemetry.js";
 import type { AliceClient, LocalRunClaim } from "./paperclip-client.js";
 import type { BridgeAgentConfig, BridgeInboxItem, LocalAgentRuntimeConfig } from "./types.js";
+import type { LocalFinishIntent, ReportedLocalProcess } from "./claim-state.js";
 
 type LocalRunner = typeof runLocalAgent;
 type StopProcessTree = (pid: number, startedAt: string) => Promise<void>;
@@ -83,6 +84,9 @@ export async function executeClaimedRun(input: {
   stopProcessTree?: StopProcessTree;
   renewIntervalMs?: number;
   stopTimeoutMs?: number;
+  onExecutionStarting?: () => Promise<void>;
+  onProcessReported?: (process: ReportedLocalProcess) => Promise<void>;
+  onFinishIntent?: (intent: LocalFinishIntent) => Promise<void>;
 }): Promise<{ outcome: "succeeded" | "failed" | "cancelled"; status: string }> {
   if (input.claim.agentId !== input.agent.remoteAgentId || input.localAgent.id !== input.agent.remoteAgentId) {
     throw new Error("claimed run is for a different agent");
@@ -99,9 +103,13 @@ export async function executeClaimedRun(input: {
       finishLocalRun: async (lease, outcome, exitCode) => {
         if (!telemetry) throw new Error("local run telemetry was not initialized");
         if (outcome !== "cancelled") await telemetry.flush(input.client, lease);
+        const clientRequestId = await telemetry.finishRequestId();
+        const finishSummary = outcome !== "cancelled" && summary ? summary : undefined;
+        await input.onFinishIntent?.({ clientRequestId, outcome, exitCode,
+          ...(finishSummary ? { summary: finishSummary } : {}) });
         return input.client.finishLocalRun(lease, outcome, exitCode, {
-          clientRequestId: await telemetry.finishRequestId(),
-          ...(outcome !== "cancelled" && summary ? { summary } : {}),
+          clientRequestId,
+          ...(finishSummary ? { summary: finishSummary } : {}),
         });
       },
     },
@@ -163,6 +171,7 @@ export async function executeClaimedRun(input: {
         let telemetryError: unknown;
         await telemetry.append("system", "info", "local adapter started");
         if (signal.aborted) return { succeeded: false, exitCode: null };
+        await input.onExecutionStarting?.();
         let outputObserved = false;
         let result: Awaited<ReturnType<LocalRunner>>;
         try {
@@ -216,6 +225,7 @@ export async function executeClaimedRun(input: {
           onSpawn: async (meta) => {
             if (!Number.isSafeInteger(meta.pid) || meta.pid <= 0) throw new Error("local adapter reported an invalid process");
             pids.set(meta.pid, meta.startedAt);
+            await input.onProcessReported?.({ pid: meta.pid, startedAt: meta.startedAt });
             if (signal.aborted) stopPid(meta.pid);
           },
           });

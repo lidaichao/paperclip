@@ -54,7 +54,11 @@ describe("single-agent claim cycle", () => {
       if (pathname.endsWith("/control")) return reply({ action: "continue", generation: 1,
         leaseExpiresAt: new Date(Date.now() + 60_000).toISOString() });
       if (pathname.endsWith("/finish")) {
-        expect(JSON.parse(await readFile(file, "utf8")).activeClaim.runId).toBe(runId);
+        const persisted = JSON.parse(await readFile(file, "utf8"));
+        expect(persisted.activeClaim.runId).toBe(runId);
+        expect(persisted.executionMayHaveStarted).toBe(true);
+        expect(persisted.finishIntent).toMatchObject({ outcome: "succeeded", exitCode: 0,
+          clientRequestId: expect.any(String) });
         return reply({ runId, status: "succeeded" });
       }
       throw new Error(`unexpected path ${pathname}`);
@@ -176,9 +180,9 @@ describe("single-agent claim cycle", () => {
     } });
     await client.verifyIdentity(agentId, companyId);
     const runner = vi.fn(async ({ signal, onSpawn }: LocalAgentRunInput) => {
-      await onSpawn?.({ pid: 12345, processGroupId: null, startedAt: "now" });
+      await onSpawn?.({ pid: 12345, processGroupId: null, startedAt: new Date().toISOString() });
       await new Promise<void>((resolve) => signal?.addEventListener("abort", () => resolve(), { once: true }));
-      await onSpawn?.({ pid: 12346, processGroupId: null, startedAt: "retry" });
+      await onSpawn?.({ pid: 12346, processGroupId: null, startedAt: new Date().toISOString() });
       return { runId, exitCode: null, signal: null, timedOut: false, succeeded: false,
         errorCode: null, sessionParams: null, sessionDisplayId: null };
     });

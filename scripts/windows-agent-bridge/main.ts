@@ -96,6 +96,9 @@ export async function claimAndRunOnce(input: {
     token: input.token, intentFile: input.intentFile, signal: input.signal, runner: input.runner,
     stopProcessTree: input.stopProcessTree,
     renewIntervalMs: input.renewIntervalMs, stopTimeoutMs: input.stopTimeoutMs,
+    onExecutionStarting: () => input.state.markExecutionStarting(claim.runId),
+    onProcessReported: (process) => input.state.markProcessReported(claim.runId, process),
+    onFinishIntent: (intent) => input.state.markFinishIntent(claim.runId, intent),
   });
   await input.state.markFinished(claim.runId);
   return "finished";
