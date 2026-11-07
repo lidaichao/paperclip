@@ -53,11 +53,14 @@ import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-ro
 
 type Actor = { actorType: "agent" | "user" | "system" | "plugin"; actorId: string; agentId?: string | null; userId?: string | null; runId?: string | null };
 type DbTransaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
-type Wakeup = (agentId: string, options: {
+type WorkRecordWakeupOptions = {
   source: "assignment" | "automation"; triggerDetail: "system"; reason: string; payload: Record<string, unknown>;
   idempotencyKey: string; allowRunCoalescing: boolean; requestedByActorType: "user" | "agent" | "system";
   requestedByActorId: string | null; contextSnapshot: Record<string, unknown>;
-}) => Promise<unknown>;
+};
+type Wakeup = (agentId: string, options: WorkRecordWakeupOptions) => Promise<unknown>;
+type DescriptionRevisionAdmission = (agentId: string, options: WorkRecordWakeupOptions) =>
+  Promise<{ sourceRunId: string | null; successorRunId: string; wakeupRequestId: string; stopConfirmedAt: Date | null }>;
 const ACTIVE_WAKE_STATUSES = ["queued", "claimed", "running", "completed"];
 
 function descriptionIntentKey(recordId: string, descriptionRevision: number) {
@@ -71,6 +74,13 @@ function descriptionDeliveryView(row: typeof workRecordDescriptionDeliveries.$in
     state: (row?.state ?? null) as WorkRecord["descriptionDelivery"]["state"],
     commentId: row?.commentId ?? null,
     attemptCount: row?.attemptCount ?? 0,
+    sourceRunId: row?.sourceRunId ?? null,
+    successorRunId: row?.successorRunId ?? null,
+    wakeupRequestId: row?.wakeupRequestId ?? null,
+    stopConfirmedAt: row?.stopConfirmedAt ?? null,
+    queuedAt: row?.queuedAt ?? null,
+    modelVisibleAt: row?.modelVisibleAt ?? null,
+    confirmedAt: row?.confirmedAt ?? null,
     deliveredAt: row?.deliveredAt ?? null,
     acknowledgedAt: row?.acknowledgedAt ?? null,
     acknowledgedByAgentId: row?.acknowledgedByAgentId ?? null,
@@ -863,7 +873,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     projectId: string,
     recordId: string,
     descriptionRevision: number,
-    wakeup: Wakeup,
+    admit: DescriptionRevisionAdmission,
   ) {
     const claimed = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
@@ -874,16 +884,16 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         eq(workRecordDescriptionDeliveries.descriptionRevision, descriptionRevision),
       )).then((rows) => rows[0]);
       if (!row) throw notFound("Description delivery not found");
-      if (row.state === "delivered" || row.state === "acknowledged") return row;
+      if (row.state === "queued" || row.state === "confirmed") return row;
       return tx.update(workRecordDescriptionDeliveries).set({
-        state: "delivering",
+        state: "stopping",
         attemptCount: row.attemptCount + 1,
         lastAttemptAt: new Date(),
         lastError: null,
         updatedAt: new Date(),
       }).where(eq(workRecordDescriptionDeliveries.id, row.id)).returning().then((rows) => rows[0]);
     });
-    if (claimed.state === "delivered" || claimed.state === "acknowledged") return descriptionDeliveryView(claimed);
+    if (claimed.state === "queued" || claimed.state === "confirmed") return descriptionDeliveryView(claimed);
 
     const linked = await db.select({ assigneeAgentId: issues.assigneeAgentId }).from(issues).where(and(
       eq(issues.companyId, companyId),
@@ -901,10 +911,11 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     )).orderBy(desc(agentWakeupRequests.requestedAt)).then((rows) => rows.find((row) => !["skipped", "failed", "cancelled"].includes(row.status)) ?? null);
     try {
       let winner = await findWinner();
+      let admission: Awaited<ReturnType<DescriptionRevisionAdmission>> | null = null;
       if (!winner) {
         try {
-          await wakeup(linked.assigneeAgentId, {
-            source: "automation",
+          admission = await admit(linked.assigneeAgentId, {
+            source: "assignment",
             triggerDetail: "system",
             reason: "work_record_description_updated",
             payload: {
@@ -915,7 +926,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
               intentKey: claimed.intentKey,
             },
             idempotencyKey: claimed.intentKey,
-            allowRunCoalescing: true,
+            allowRunCoalescing: false,
             requestedByActorType: "system",
             requestedByActorId: "work-record-description-delivery",
             contextSnapshot: {
@@ -937,13 +948,21 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         winner ??= await findWinner();
       }
       if (!winner) throw new Error("Description delivery was not durably admitted");
-      const [delivered] = await db.update(workRecordDescriptionDeliveries).set({
-        state: "delivered",
-        deliveredAt: claimed.deliveredAt ?? new Date(),
+      if (!winner.runId) throw new Error("Description continuation has no successor run");
+      if (admission && (admission.successorRunId !== winner.runId || admission.wakeupRequestId !== winner.id)) {
+        throw new Error("Description continuation receipt does not match durable admission");
+      }
+      const [queued] = await db.update(workRecordDescriptionDeliveries).set({
+        state: "queued",
+        sourceRunId: admission?.sourceRunId ?? claimed.sourceRunId,
+        successorRunId: winner.runId,
+        wakeupRequestId: winner.id,
+        stopConfirmedAt: admission?.stopConfirmedAt ?? claimed.stopConfirmedAt,
+        queuedAt: claimed.queuedAt ?? new Date(),
         lastError: null,
         updatedAt: new Date(),
       }).where(eq(workRecordDescriptionDeliveries.id, claimed.id)).returning();
-      return descriptionDeliveryView(delivered);
+      return descriptionDeliveryView(queued);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const [failed] = await db.update(workRecordDescriptionDeliveries).set({
@@ -980,25 +999,60 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         eq(issues.companyId, companyId), eq(issues.id, delivery.issueId),
       )).then((rows) => rows[0]);
       if (issue?.assigneeAgentId !== actor.agentId) throw forbidden("Only the current native issue agent can acknowledge description delivery");
-      const run = await tx.select({ id: heartbeatRuns.id }).from(heartbeatRuns).where(and(
+      const run = await tx.select({
+        id: heartbeatRuns.id,
+        status: heartbeatRuns.status,
+        wakeupRequestId: heartbeatRuns.wakeupRequestId,
+        contextSnapshot: heartbeatRuns.contextSnapshot,
+      }).from(heartbeatRuns).where(and(
         eq(heartbeatRuns.companyId, companyId),
         eq(heartbeatRuns.id, runId),
         eq(heartbeatRuns.agentId, actor.agentId),
       )).then((rows) => rows[0]);
-      if (!run || issue.executionRunId !== runId) throw forbidden("Acknowledgement run is not bound to the linked native issue");
-      if (delivery.state === "acknowledged") {
+      if (!run || run.status !== "running" || issue.executionRunId !== runId) {
+        throw forbidden("Acknowledgement requires the currently running linked native issue run");
+      }
+      const context = run.contextSnapshot && typeof run.contextSnapshot === "object"
+        ? run.contextSnapshot as Record<string, unknown>
+        : {};
+      if (
+        delivery.successorRunId !== runId ||
+        delivery.wakeupRequestId !== run.wakeupRequestId ||
+        context.issueId !== delivery.issueId ||
+        context.recordId !== recordId ||
+        context.descriptionRevision !== descriptionRevision ||
+        context.intentKey !== intentKey
+      ) {
+        throw forbidden("Acknowledgement run did not receive this description revision intent");
+      }
+      const wake = run.wakeupRequestId ? await tx.select({
+        id: agentWakeupRequests.id,
+        idempotencyKey: agentWakeupRequests.idempotencyKey,
+      }).from(agentWakeupRequests).where(and(
+        eq(agentWakeupRequests.companyId, companyId),
+        eq(agentWakeupRequests.id, run.wakeupRequestId),
+        eq(agentWakeupRequests.agentId, actor.agentId),
+      )).then((rows) => rows[0]) : null;
+      if (!wake || wake.idempotencyKey !== intentKey) {
+        throw forbidden("Acknowledgement wake did not carry this description revision intent");
+      }
+      if (delivery.state === "confirmed") {
         if (delivery.acknowledgedByAgentId !== actor.agentId) throw conflict("Description delivery was acknowledged by another agent");
         return descriptionDeliveryView(delivery);
       }
-      if (delivery.state !== "delivered") throw conflict("Description delivery has not reached the native agent");
-      const [acknowledged] = await tx.update(workRecordDescriptionDeliveries).set({
-        state: "acknowledged",
-        acknowledgedAt: new Date(),
+      if (delivery.state !== "queued") throw conflict("Description revision is not queued for model confirmation");
+      const now = new Date();
+      const [confirmed] = await tx.update(workRecordDescriptionDeliveries).set({
+        state: "confirmed",
+        modelVisibleAt: now,
+        confirmedAt: now,
+        deliveredAt: now,
+        acknowledgedAt: now,
         acknowledgedByAgentId: actor.agentId,
         acknowledgedByRunId: runId,
-        updatedAt: new Date(),
+        updatedAt: now,
       }).where(eq(workRecordDescriptionDeliveries.id, delivery.id)).returning();
-      return descriptionDeliveryView(acknowledged);
+      return descriptionDeliveryView(confirmed);
     });
   }
 

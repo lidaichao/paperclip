@@ -333,7 +333,7 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     const [nativeIssue] = await db.select().from(issues).where(eq(issues.id, dispatched.issueId));
     const [delivery] = await db.select().from(workRecordDescriptionDeliveries).where(eq(workRecordDescriptionDeliveries.recordId, record.id));
     const comments = await db.select().from(issueComments).where(eq(issueComments.issueId, dispatched.issueId));
-    expect(nativeIssue.description).toMatch(/^Authoritative revision [AB]$/);
+    expect(["Authoritative revision A", "Conflicting revision B"]).toContain(nativeIssue.description);
     expect(delivery).toMatchObject({
       descriptionRevision: 2,
       state: "pending",
@@ -371,15 +371,28 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(timedOut).toMatchObject({ state: "retry", intentKey, attemptCount: 1, lastError: "simulated timeout" });
 
     let wakeCalls = 0;
-    const lostReceiptWake = async (agentId: string, options: { idempotencyKey: string }) => {
+    let successorRunId: string | null = null;
+    const lostReceiptWake = async (agentId: string, options: {
+      idempotencyKey: string;
+      contextSnapshot: Record<string, unknown>;
+    }) => {
       wakeCalls += 1;
-      await db.insert(agentWakeupRequests).values({
+      const wake = await db.insert(agentWakeupRequests).values({
         companyId: context.company.id,
         agentId,
         source: "automation",
         status: "queued",
         idempotencyKey: options.idempotencyKey,
-      });
+      }).returning().then((rows) => rows[0]);
+      const successor = await db.insert(heartbeatRuns).values({
+        companyId: context.company.id,
+        agentId,
+        status: "queued",
+        wakeupRequestId: wake.id,
+        contextSnapshot: options.contextSnapshot,
+      }).returning().then((rows) => rows[0]);
+      successorRunId = successor.id;
+      await db.update(agentWakeupRequests).set({ runId: successor.id }).where(eq(agentWakeupRequests.id, wake.id));
       throw new Error("receipt lost after commit");
     };
     const delivered = await context.service.deliverDescriptionRevision(
@@ -396,26 +409,42 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       2,
       lostReceiptWake as never,
     );
-    expect(delivered).toMatchObject({ state: "delivered", intentKey, attemptCount: 2, lastError: null });
-    expect(replayed).toMatchObject({ state: "delivered", intentKey, attemptCount: 2 });
+    expect(delivered).toMatchObject({ state: "queued", intentKey, attemptCount: 2, lastError: null });
+    expect(replayed).toMatchObject({ state: "queued", intentKey, attemptCount: 2 });
     expect(wakeCalls).toBe(1);
     expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.idempotencyKey, intentKey))).toHaveLength(1);
     expect(await db.select().from(issueComments).where(eq(issueComments.issueId, dispatched.issueId))).toHaveLength(1);
 
-    const run = await db.insert(heartbeatRuns).values({
+    expect(successorRunId).not.toBeNull();
+    await db.update(heartbeatRuns).set({ status: "running" }).where(eq(heartbeatRuns.id, successorRunId!));
+    await db.update(issues).set({ status: "in_progress", executionRunId: successorRunId }).where(eq(issues.id, dispatched.issueId));
+    const reassignedAgent = await db.insert(agents).values({
       companyId: context.company.id,
-      agentId: context.agent.id,
-      status: "running",
-      contextSnapshot: { issueId: dispatched.issueId, wakeReason: "work_record_description_updated" },
+      name: "Reassigned executor",
+      role: "engineer",
+      status: "idle",
+      adapterType: "process",
+      adapterConfig: {},
+      runtimeConfig: {},
+      permissions: {},
     }).returning().then((rows) => rows[0]);
-    await db.update(issues).set({ status: "in_progress", executionRunId: run.id }).where(eq(issues.id, dispatched.issueId));
+    await db.update(issues).set({ assigneeAgentId: reassignedAgent.id }).where(eq(issues.id, dispatched.issueId));
+    await expect(context.service.acknowledgeDescriptionRevision(
+      context.company.id,
+      context.project.id,
+      record.id,
+      2,
+      intentKey,
+      { agentId: context.agent.id, runId: successorRunId! },
+    )).rejects.toMatchObject({ status: 403 });
+    await db.update(issues).set({ assigneeAgentId: context.agent.id }).where(eq(issues.id, dispatched.issueId));
     const acknowledged = await context.service.acknowledgeDescriptionRevision(
       context.company.id,
       context.project.id,
       record.id,
       2,
       intentKey,
-      { agentId: context.agent.id, runId: run.id },
+      { agentId: context.agent.id, runId: successorRunId! },
     );
     const duplicateAck = await context.service.acknowledgeDescriptionRevision(
       context.company.id,
@@ -423,10 +452,10 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       record.id,
       2,
       intentKey,
-      { agentId: context.agent.id, runId: run.id },
+      { agentId: context.agent.id, runId: successorRunId! },
     );
-    expect(acknowledged).toMatchObject({ state: "acknowledged", acknowledgedByAgentId: context.agent.id, acknowledgedByRunId: run.id });
-    expect(duplicateAck).toMatchObject({ state: "acknowledged", acknowledgedByAgentId: context.agent.id, acknowledgedByRunId: run.id });
+    expect(acknowledged).toMatchObject({ state: "confirmed", acknowledgedByAgentId: context.agent.id, acknowledgedByRunId: successorRunId });
+    expect(duplicateAck).toMatchObject({ state: "confirmed", acknowledgedByAgentId: context.agent.id, acknowledgedByRunId: successorRunId });
   });
 
   it("SD-04 blocks both central admission and status-dropdown bypass while a source hold exists", async () => {

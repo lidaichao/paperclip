@@ -3,6 +3,7 @@ import { instanceSettingsService } from "../services/instance-settings.js";
 import { randomUUID } from "node:crypto";
 import { terminalizeLegacyExecution } from "../services/legacy-execution-recovery.js";
 import { issueService } from "../services/issues.js";
+import { workRecordService } from "../services/work-records.js";
 import { getExecutionBlocker } from "../services/execution-blocker.js";
 import { adapterExecutionControls, createAdapterExecutionControl } from "../services/adapter-execution-control.js";
 import { spawn, type ChildProcess } from "node:child_process";
@@ -73,6 +74,8 @@ import {
   statusDecisions,
   toolApplications,
   toolConnections,
+  workRecordDescriptionDeliveries,
+  workRecords,
   workAssessments,
   workspaceOperations,
 } from "@paperclipai/db";
@@ -772,19 +775,25 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     provider?: string;
     driver?: string;
   }) {
-    const environmentId = randomUUID();
+    const existingEnvironment = await db.select({ id: environments.id }).from(environments)
+      .where(eq(environments.driver, input.driver ?? "local"))
+      .limit(1)
+      .then((rows) => rows[0] ?? null);
+    const environmentId = existingEnvironment?.id ?? randomUUID();
     const leaseId = randomUUID();
     const now = new Date("2026-03-19T00:00:00.000Z");
 
-    await db.insert(environments).values({
-      id: environmentId,
-      companyId: input.companyId,
-      name: "Local test environment",
-      driver: input.driver ?? "local",
-      status: "active",
-      config: {},
-      metadata: null,
-    });
+    if (!existingEnvironment) {
+      await db.insert(environments).values({
+        id: environmentId,
+        companyId: input.companyId,
+        name: "Local test environment",
+        driver: input.driver ?? "local",
+        status: "active",
+        config: {},
+        metadata: null,
+      });
+    }
 
     await db.insert(environmentLeases).values({
       id: leaseId,
@@ -4064,7 +4073,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     await db
       .update(agentWakeupRequests)
       .set({
-        source: "automation",
+        source: "assignment",
         reason: "issue_commented",
         payload: {
           issueId,
@@ -5426,7 +5435,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       id: randomUUID(),
       companyId,
       agentId,
-      source: "automation",
+      source: "assignment",
       triggerDetail: "system",
       reason: "finish_successful_run_handoff",
       payload: {
@@ -7965,6 +7974,196 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       }
     },
   );
+
+  it("stops a live process adapter and releases its lease before admitting the same-task description revision successor", async () => {
+    const actualProcess = await vi.importActual<
+      typeof import("../adapters/process/execute.js")
+    >("../adapters/process/execute.js");
+    const markerDir = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-description-revision-"));
+    const staleWriteMarker = path.join(markerDir, "stale-write.txt");
+    let sourceReady!: () => void;
+    const sourceStarted = new Promise<void>((resolve) => { sourceReady = resolve; });
+    let releaseSuccessor!: () => void;
+    const successorStarted = new Promise<void>((resolve) => {
+      mockAdapterExecute
+        .mockImplementationOnce((async (input: unknown) => actualProcess.execute({
+          ...(input as Parameters<typeof actualProcess.execute>[0]),
+          onLog: async (stream, text) => {
+            await (input as Parameters<typeof actualProcess.execute>[0]).onLog(stream, text);
+            if (text.includes("description source ready")) sourceReady();
+          },
+        })) as typeof mockAdapterExecute)
+        .mockImplementationOnce(async () => {
+          resolve();
+          await new Promise<void>((release) => { releaseSuccessor = release; });
+          return {
+            exitCode: 0,
+            signal: null,
+            timedOut: false,
+            errorMessage: null,
+            summary: "Description revision confirmed.",
+            provider: "test",
+            model: "test-model",
+          };
+        });
+    });
+    const { companyId, agentId, runId, issueId } = await seedRunFixture({
+      adapterType: "process",
+      agentStatus: "idle",
+      runStatus: "queued",
+      includeIssue: true,
+    });
+    const projectId = await db.insert(projects).values({ companyId, name: "Description revision adapter test" })
+      .returning({ id: projects.id }).then((rows) => rows[0]!.id);
+    const recordId = await db.insert(workRecords).values({
+      companyId, projectId, kind: "plan", title: "Live description revision", descriptionRevision: 2,
+      assigneeAgentId: agentId, dispatchState: "dispatched",
+    }).returning({ id: workRecords.id }).then((rows) => rows[0]!.id);
+    const { leaseId } = await seedEnvironmentLeaseFixture({ companyId, runId, issueId });
+    await db.update(agents).set({
+      adapterConfig: {
+        command: process.execPath,
+        args: [
+          "-e",
+          `console.log('description source ready'); setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(staleWriteMarker)}, 'stale'), 1500); setInterval(() => {}, 1000);`,
+        ],
+        graceSec: 1,
+      },
+    }).where(eq(agents.id, agentId));
+    const heartbeat = heartbeatService(db, { runtimeEnv: {} });
+    try {
+      await heartbeat.resumeQueuedRuns();
+      await sourceStarted;
+      const intentKey = `work-record-description:${recordId}:2`;
+      await db.insert(workRecordDescriptionDeliveries).values({
+        companyId, projectId, recordId, issueId, commentId: randomUUID(), descriptionRevision: 2,
+        intentKey, payloadDigest: "adapter-test", state: "stopping", sourceRunId: runId,
+      });
+      const receipt = await heartbeat.admitWorkRecordDescriptionRevision(agentId, {
+        source: "assignment",
+        triggerDetail: "system",
+        reason: "work_record_description_updated",
+        payload: { issueId, recordId, descriptionRevision: 2, intentKey },
+        idempotencyKey: intentKey,
+        allowRunCoalescing: false,
+        requestedByActorType: "system",
+        requestedByActorId: "work-record-description-delivery",
+        contextSnapshot: { issueId, taskId: issueId, recordId, descriptionRevision: 2, intentKey },
+      }).catch((error: unknown) => {
+        const details = error && typeof error === "object" && "details" in error
+          ? (error as { details?: unknown }).details
+          : null;
+        throw new Error(`description admission failed: ${JSON.stringify(details)}`, { cause: error });
+      });
+      await successorStarted;
+
+      expect(receipt).toMatchObject({ sourceRunId: runId });
+      expect(receipt.stopConfirmedAt).toBeInstanceOf(Date);
+      expect((await heartbeat.getRun(runId))?.status).toBe("cancelled");
+      expect(await db.select().from(environmentLeases).where(eq(environmentLeases.id, leaseId)).then((rows) => rows[0])).toMatchObject({
+        releasedAt: expect.any(Date),
+      });
+      const successor = await heartbeat.getRun(receipt.successorRunId);
+      expect(successor).toMatchObject({
+        agentId,
+        status: "running",
+        contextSnapshot: expect.objectContaining({ issueId, recordId, descriptionRevision: 2, intentKey }),
+      });
+      expect(await db.select().from(issues).where(eq(issues.id, issueId)).then((rows) => rows[0])).toMatchObject({
+        assigneeAgentId: agentId,
+        executionRunId: receipt.successorRunId,
+      });
+      expect(await db.select().from(issues).where(eq(issues.companyId, companyId))).toHaveLength(1);
+      await db.update(workRecordDescriptionDeliveries).set({
+        state: "queued", successorRunId: receipt.successorRunId,
+        wakeupRequestId: receipt.wakeupRequestId, stopConfirmedAt: receipt.stopConfirmedAt, queuedAt: new Date(),
+      }).where(eq(workRecordDescriptionDeliveries.intentKey, intentKey));
+      const [ackRun] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, receipt.successorRunId));
+      const [ackDelivery] = await db.select().from(workRecordDescriptionDeliveries)
+        .where(eq(workRecordDescriptionDeliveries.intentKey, intentKey));
+      expect({ ackRun, ackDelivery }).toMatchObject({
+        ackRun: { status: "running", wakeupRequestId: receipt.wakeupRequestId,
+          contextSnapshot: { issueId, recordId, descriptionRevision: 2, intentKey } },
+        ackDelivery: { state: "queued", issueId, recordId, descriptionRevision: 2, intentKey,
+          successorRunId: receipt.successorRunId, wakeupRequestId: receipt.wakeupRequestId },
+      });
+      const confirmation = await workRecordService(db).acknowledgeDescriptionRevision(
+        companyId, projectId, recordId, 2, intentKey,
+        { agentId, runId: receipt.successorRunId },
+      );
+      expect(confirmation).toMatchObject({
+        state: "confirmed", successorRunId: receipt.successorRunId,
+        wakeupRequestId: receipt.wakeupRequestId, modelVisibleAt: expect.any(Date), confirmedAt: expect.any(Date),
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1_700));
+      await expect(fs.stat(staleWriteMarker)).rejects.toMatchObject({ code: "ENOENT" });
+    } finally {
+      releaseSuccessor?.();
+      await fs.rm(markerDir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("does not admit a description successor when adapter cancellation fails", async () => {
+    const { companyId, agentId, runId, issueId } = await seedRunFixture({
+      adapterType: "process",
+      agentStatus: "running",
+      runStatus: "running",
+      includeIssue: true,
+    });
+    runningProcesses.set(runId, {
+      child: { pid: 91_001 } as ChildProcess,
+      graceSec: 1,
+      processGroupId: null,
+    });
+    mockTerminateLocalService.mockRejectedValueOnce(new Error("description stop failed"));
+    const heartbeat = heartbeatService(db);
+    await expect(heartbeat.admitWorkRecordDescriptionRevision(agentId, {
+      source: "assignment",
+      triggerDetail: "system",
+      reason: "work_record_description_updated",
+      payload: { issueId },
+      idempotencyKey: "work-record-description:record-1:2",
+      allowRunCoalescing: false,
+      requestedByActorType: "system",
+      requestedByActorId: "work-record-description-delivery",
+      contextSnapshot: { issueId, recordId: "record-1", descriptionRevision: 2, intentKey: "work-record-description:record-1:2" },
+    })).rejects.toThrow("description stop failed");
+    expect(await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, companyId),
+      eq(agentWakeupRequests.idempotencyKey, "work-record-description:record-1:2"),
+    ))).toHaveLength(0);
+    mockTerminateLocalService.mockResolvedValueOnce(undefined);
+    await heartbeat.cancelRun(runId).catch(() => undefined);
+  });
+
+  it("times out without admitting a successor when the old run lease is not released", async () => {
+    const { companyId, agentId, runId, issueId } = await seedRunFixture({
+      adapterType: "process",
+      agentStatus: "running",
+      runStatus: "running",
+      includeIssue: true,
+    });
+    await seedEnvironmentLeaseFixture({ companyId, runId, issueId });
+    const heartbeat = heartbeatService(db, { descriptionRevisionStopTimeoutMs: 20 });
+    await expect(heartbeat.admitWorkRecordDescriptionRevision(agentId, {
+      source: "automation",
+      triggerDetail: "system",
+      reason: "work_record_description_updated",
+      payload: { issueId },
+      idempotencyKey: "work-record-description:record-1:timeout",
+      allowRunCoalescing: false,
+      requestedByActorType: "system",
+      requestedByActorId: "work-record-description-delivery",
+      contextSnapshot: { issueId, recordId: "record-1", descriptionRevision: 2, intentKey: "work-record-description:record-1:timeout" },
+    })).rejects.toMatchObject({
+      status: 409,
+      details: expect.objectContaining({ code: "work_record_description_stop_timeout", sourceRunId: runId }),
+    });
+    expect(await db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, companyId),
+      eq(agentWakeupRequests.idempotencyKey, "work-record-description:record-1:timeout"),
+    ))).toHaveLength(0);
+  });
 
   it("retries a settled failed Stop while its exact active process remains alive", async () => {
     const actualProcess = await vi.importActual<

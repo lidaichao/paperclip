@@ -41,7 +41,10 @@ const packageService = vi.hoisted(() => ({
   getBatch: vi.fn(),
   reconcile: vi.fn(),
 }));
-const heartbeat = vi.hoisted(() => ({ wakeup: vi.fn() }));
+const heartbeat = vi.hoisted(() => ({
+  wakeup: vi.fn(),
+  admitWorkRecordDescriptionRevision: vi.fn(),
+}));
 const qualityService = vi.hoisted(() => ({
   get: vi.fn(),
   auditSnapshot: vi.fn(),
@@ -125,9 +128,9 @@ describe("work-record route authorization", () => {
     service.listVersions.mockResolvedValue([]);
     service.listIterations.mockResolvedValue([]);
     service.getDispatchRequest.mockResolvedValue({ state: "linked" });
-    service.getDescriptionDelivery.mockResolvedValue({ descriptionRevision: 2, state: "delivered" });
-    service.deliverDescriptionRevision.mockResolvedValue({ descriptionRevision: 2, state: "delivered" });
-    service.acknowledgeDescriptionRevision.mockResolvedValue({ descriptionRevision: 2, state: "acknowledged" });
+    service.getDescriptionDelivery.mockResolvedValue({ descriptionRevision: 2, state: "queued" });
+    service.deliverDescriptionRevision.mockResolvedValue({ descriptionRevision: 2, state: "queued" });
+    service.acknowledgeDescriptionRevision.mockResolvedValue({ descriptionRevision: 2, state: "confirmed" });
     packageService.preview.mockResolvedValue({
       scopeDigest: "viewer-scope",
       records: [],
@@ -180,7 +183,7 @@ describe("work-record route authorization", () => {
     const app = createApp(viewer);
     await request(app)
       .get("/api/companies/company-1/projects/project-1/work-records/record-1/description-deliveries/2")
-      .expect(200, { descriptionRevision: 2, state: "delivered" });
+      .expect(200, { descriptionRevision: 2, state: "queued" });
     await request(app)
       .post("/api/companies/company-1/projects/project-1/work-records/record-1/description-deliveries/2/retry")
       .send({})
@@ -211,21 +214,21 @@ describe("work-record route authorization", () => {
     service.deliverDescriptionRevision.mockResolvedValue({
       descriptionRevision: 2,
       intentKey: "work-record-description:record-1:2",
-      state: "delivered",
+      state: "queued",
     });
 
     await request(createApp(actor))
       .patch("/api/companies/company-1/projects/project-1/work-records/record-1")
       .send({ expectedRevision: 3, description: "Updated while the native task is running" })
       .expect(200)
-      .expect(({ body }) => expect(body.descriptionDelivery.state).toBe("delivered"));
+      .expect(({ body }) => expect(body.descriptionDelivery.state).toBe("queued"));
 
     expect(service.deliverDescriptionRevision).toHaveBeenCalledWith(
       "company-1",
       "project-1",
       "record-1",
       2,
-      heartbeat.wakeup,
+      heartbeat.admitWorkRecordDescriptionRevision,
     );
   });
 
@@ -238,7 +241,7 @@ describe("work-record route authorization", () => {
     await request(app)
       .post(`/api/companies/${companyId}/projects/project-1/work-records/record-1/description-deliveries/acknowledge`)
       .send({ descriptionRevision: 2, intentKey: "work-record-description:record-1:2" })
-      .expect(200, { descriptionRevision: 2, state: "acknowledged" });
+      .expect(200, { descriptionRevision: 2, state: "confirmed" });
     expect(service.acknowledgeDescriptionRevision).toHaveBeenCalledWith(
       companyId,
       "project-1",

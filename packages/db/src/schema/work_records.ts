@@ -377,6 +377,13 @@ export const workRecordDescriptionDeliveries = pgTable(
     state: text("state").notNull().default("pending"),
     attemptCount: integer("attempt_count").notNull().default(0),
     lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    sourceRunId: uuid("source_run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
+    successorRunId: uuid("successor_run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
+    wakeupRequestId: uuid("wakeup_request_id").references(() => agentWakeupRequests.id, { onDelete: "set null" }),
+    stopConfirmedAt: timestamp("stop_confirmed_at", { withTimezone: true }),
+    queuedAt: timestamp("queued_at", { withTimezone: true }),
+    modelVisibleAt: timestamp("model_visible_at", { withTimezone: true }),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
     acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
     acknowledgedByAgentId: uuid("acknowledged_by_agent_id").references(() => agents.id, { onDelete: "set null" }),
@@ -404,7 +411,7 @@ export const workRecordDescriptionDeliveries = pgTable(
       .on(table.state, table.updatedAt),
     stateCheck: check(
       "work_record_description_deliveries_state_check",
-      sql`${table.state} IN ('pending', 'delivering', 'delivered', 'retry', 'acknowledged')`,
+      sql`${table.state} IN ('pending', 'stopping', 'queued', 'retry', 'confirmed')`,
     ),
     revisionCheck: check(
       "work_record_description_deliveries_revision_check",

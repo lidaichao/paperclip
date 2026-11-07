@@ -156,8 +156,11 @@ export async function buildExecutionContinuation(input: {
   );
   const explicitContinuation = object(input.context.explicitUserContinuation);
   const explicitUserSource = string(explicitContinuation.previousRunId);
+  const descriptionContinuation = object(input.context.descriptionRevisionContinuation);
+  const descriptionRevisionSource = string(descriptionContinuation.previousRunId);
   const resumeSourceRunId =
     explicitUserSource ??
+    descriptionRevisionSource ??
     string(input.context.retryOfRunId) ??
     string(input.context.previousRunId) ??
     string(input.context.interruptedRunId);
@@ -173,7 +176,8 @@ export async function buildExecutionContinuation(input: {
   // belong to this task, and only task-scoped content can enter the envelope.
   const sourceRun = object(candidate?.context).issueId === issueId ? candidate : null;
   if ((sourceRunId && !candidate) || (resumeSourceRunId && !sourceRun))
-    throw new Error(explicitUserSource ? "continuation_user_authorization_missing" : "continuation_source_context_missing");
+    throw new Error(explicitUserSource ? "continuation_user_authorization_missing" :
+      descriptionRevisionSource ? "description_revision_authorization_missing" : "continuation_source_context_missing");
   const producer = producerRunId === sourceRunId ? candidate
     : producerRunId ? await loadRun(producerRunId) : null;
   if (producerRunId && !producer) throw new Error("continuation_source_context_missing");
@@ -361,7 +365,18 @@ export async function buildExecutionContinuation(input: {
     if (!predecessor || !authorization || explicitUserSource !== sourceRunId)
       throw new Error("continuation_user_authorization_missing");
   }
-  const interruptedRunId = explicitUserSource ?? string(input.context.interruptedRunId) ?? (lastTerminal && lastTerminal.status !== "succeeded" &&
+  if (descriptionRevisionSource) {
+    const intentKey = string(descriptionContinuation.intentKey);
+    const authorizations = reconciliations.map(row => object(row.evidence.descriptionRevisionContinuation));
+    const authorization = authorizations.find(value =>
+      value.sourceRunId === descriptionRevisionSource && value.intentKey === intentKey &&
+      (!input.runId || value.successorRunId === input.runId));
+    const predecessor = priorRuns.find(run => run.id === descriptionRevisionSource &&
+      run.status === "cancelled" && run.errorCode === "work_record_description_superseded");
+    if (!intentKey || !authorization || !predecessor || descriptionRevisionSource !== sourceRunId)
+      throw new Error("description_revision_authorization_missing");
+  }
+  const interruptedRunId = explicitUserSource ?? descriptionRevisionSource ?? string(input.context.interruptedRunId) ?? (lastTerminal && lastTerminal.status !== "succeeded" &&
     (hasConversationContinuationPolicy(lastTerminal.result) ||
       lastTerminal.status === "interrupted" || lastTerminal.errorCode === "process_lost")
     ? lastTerminal.id : undefined);

@@ -35,7 +35,7 @@ import {
 import { assertAuthenticated, assertCompanyAccess, getActorInfo, hasCompanyAccess } from "./authz.js";
 
 export interface WorkRecordRouteOptions {
-  heartbeat?: Pick<ReturnType<typeof heartbeatService>, "wakeup">;
+  heartbeat?: Pick<ReturnType<typeof heartbeatService>, "wakeup" | "admitWorkRecordDescriptionRevision">;
   /** Explicit isolated-test override; production routes resolve the environment cohort. */
   workflowV2WritesEnabled?: boolean;
 }
@@ -839,7 +839,7 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
         projectId,
         recordId,
         record.descriptionDelivery.descriptionRevision,
-        heartbeat.wakeup,
+        heartbeat.admitWorkRecordDescriptionRevision,
       );
       record = { ...record, descriptionDelivery };
     }
@@ -885,7 +885,13 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     assertCompanyAccess(req, companyId);
     if (isReadOnlyViewer(req, companyId)) throw forbidden("只读成员只能查看，不能修改");
     if (!Number.isInteger(descriptionRevision) || descriptionRevision < 1) throw unprocessable("Description revision must be a positive integer");
-    res.json(await service.deliverDescriptionRevision(companyId, projectId, recordId, descriptionRevision, heartbeat.wakeup));
+    res.json(await service.deliverDescriptionRevision(
+      companyId,
+      projectId,
+      recordId,
+      descriptionRevision,
+      heartbeat.admitWorkRecordDescriptionRevision,
+    ));
   });
 
   router.post(

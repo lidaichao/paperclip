@@ -11,7 +11,7 @@ import { legacyControllerBootId, legacyControllerClaim, renewLegacyControllerLea
 import { completeTerminatedRemoteNativeSessionCleanup } from "../vendor/paperclip-runner/index.js";
 import { hasRemoteTerminationReceipt, remoteExecutionHasStopped, remoteTerminationReceipt, stoppedRemoteCleanupScopes } from "./remote-execution-termination.js";
 import { applyConnectorSkills, prepareConnectorSkillDelivery, resolveConnectorAssignments } from "./connector-runtime.js";
-import { admitExplicitNativeContinuation, undeliveredLegacyUserCommentIds } from "./explicit-native-continuation.js";
+import { admitDescriptionRevisionContinuation, admitExplicitNativeContinuation, undeliveredLegacyUserCommentIds } from "./explicit-native-continuation.js";
 import { connectionIntentService } from "./connection-intents.js";
 import { managedAiSessionFingerprintConfig, prepareManagedAiRuntime, assertManagedAiProjectAuth, stripAiAuthBindings, isAiConnectionBusy, AI_AUTH_ENV_KEYS } from "./ai-connection-runtime.js";
 import { aiConnectionBindingSchema } from "@paperclipai/shared";
@@ -3642,6 +3642,8 @@ interface WakeupOptions {
   queuedCommentInterruptId?: string;
   /** Internal delivery of an existing undelivered user comment. */
   queuedCommentRequestId?: string;
+  /** Exact stopped run and intent authorized by description-revision delivery. */
+  descriptionRevisionContinuation?: { sourceRunId: string; intentKey: string };
   /** Exact failed run selected by an authenticated board Retry request. */
   failedRunId?: string | null;
   durableChatRequest?: DurableChatWakeupRequest;
@@ -9368,6 +9370,8 @@ export interface HeartbeatServiceOptions {
     runId: string;
     issueId: string;
   }) => Promise<void>;
+  /** Test seam for the bounded stop-and-release confirmation window. */
+  descriptionRevisionStopTimeoutMs?: number;
 }
 
 export async function cancelHeartbeatNativeRun(input: {
@@ -27411,7 +27415,15 @@ export function heartbeatService(
           // A bound chat request has already rechecked its current principal
           // above. Treat its new user message like a board comment, but keep
           // failed-run retry actions on their separate exact-request path.
-          if (executionBlocker && !(await admitExplicitNativeContinuation({
+          const proveExplicitContinuation = () => opts.descriptionRevisionContinuation
+            ? admitDescriptionRevisionContinuation({
+                db: tx as unknown as Db, companyId: issue.companyId, issueId: issue.id,
+                agentId, sourceRunId: opts.descriptionRevisionContinuation.sourceRunId,
+                intentKey: opts.descriptionRevisionContinuation.intentKey,
+                actorType: opts.requestedByActorType, actorId: opts.requestedByActorId,
+                reason, successorRunId: explicitContinuationRunId, dryRun: true,
+              })
+            : admitExplicitNativeContinuation({
             db: tx as unknown as Db, companyId: issue.companyId, issueId: issue.id,
             agentId, actorType: opts.requestedByActorType, actorId: opts.requestedByActorId,
             reason: durableRequest && !failedChatRetry ? "issue_commented" : reason,
@@ -27420,7 +27432,8 @@ export function heartbeatService(
             queuedCommentRequestId: opts.queuedCommentRequestId,
             dryRun: true,
             onBlocked: (reason, message) => { continuationWait = { reason, message }; },
-          }))) return deferBlockedExecution(executionBlocker);
+          });
+          if (executionBlocker && !(await proveExplicitContinuation())) return deferBlockedExecution(executionBlocker);
 
           const issueStateGuard = opts.issueStateGuard;
           if (
@@ -28178,7 +28191,15 @@ export function heartbeatService(
             return { kind: "skipped" as const };
           }
 
-          const explicitContinuation = await admitExplicitNativeContinuation({
+          const explicitContinuation = opts.descriptionRevisionContinuation
+            ? await admitDescriptionRevisionContinuation({
+                db: tx as unknown as Db, companyId: issue.companyId, issueId: issue.id,
+                agentId, sourceRunId: opts.descriptionRevisionContinuation.sourceRunId,
+                intentKey: opts.descriptionRevisionContinuation.intentKey,
+                actorType: opts.requestedByActorType, actorId: opts.requestedByActorId,
+                reason, successorRunId: explicitContinuationRunId,
+              })
+            : await admitExplicitNativeContinuation({
             db: tx as unknown as Db, companyId: issue.companyId, issueId: issue.id,
             agentId, actorType: opts.requestedByActorType, actorId: opts.requestedByActorId,
             reason: durableRequest && !failedChatRetry ? "issue_commented" : reason,
@@ -28190,7 +28211,11 @@ export function heartbeatService(
           if (explicitContinuation) {
             enrichedContextSnapshot.forceFreshSession = true;
             enrichedContextSnapshot.previousRunId = explicitContinuation.previousRunId;
-            enrichedContextSnapshot.explicitUserContinuation = explicitContinuation;
+            if (opts.descriptionRevisionContinuation) {
+              enrichedContextSnapshot.descriptionRevisionContinuation = explicitContinuation;
+            } else {
+              enrichedContextSnapshot.explicitUserContinuation = explicitContinuation;
+            }
           }
 
           const wakeupRequest = executionStageWaitResume
@@ -29352,6 +29377,140 @@ export function heartbeatService(
     }
   }
 
+  async function admitWorkRecordDescriptionRevision(
+    agentId: string,
+    wakeupOptions: WakeupOptions,
+  ): Promise<{
+    sourceRunId: string | null;
+    successorRunId: string;
+    wakeupRequestId: string;
+    stopConfirmedAt: Date | null;
+  }> {
+    const issueId = readNonEmptyString(wakeupOptions.contextSnapshot?.issueId);
+    const intentKey = wakeupOptions.idempotencyKey?.trim();
+    if (!issueId || !intentKey || wakeupOptions.reason !== "work_record_description_updated") {
+      throw conflict("Description revision continuation context is invalid");
+    }
+    let issue = await issuesSvc.getById(issueId);
+    if (!issue || issue.assigneeAgentId !== agentId || ["done", "cancelled"].includes(issue.status)) {
+      throw conflict("Linked native issue is not executable by the description assignee");
+    }
+
+    const sourceRunId = issue.executionRunId;
+    let stopConfirmedAt: Date | null = null;
+    if (sourceRunId) {
+      const sourceRun = await getRun(sourceRunId);
+      if (
+        sourceRun &&
+        sourceRun.companyId === issue.companyId &&
+        sourceRun.agentId === agentId &&
+        ["running", "queued", "scheduled_retry"].includes(sourceRun.status)
+      ) {
+        await cancelRunInternal(sourceRun.id, "Description revision requires a fresh model turn", {
+          errorCode: "work_record_description_superseded",
+          suppressImmediateRecovery: true,
+          resultJson: {
+            descriptionRevisionSuperseded: true,
+            descriptionRevisionIntentKey: intentKey,
+            interruptedIssueId: issueId,
+          },
+          eventMessage: "run stopped for work-record description revision",
+          eventPayload: { issueId, intentKey },
+        });
+
+        const deadline = Date.now() + Math.max(1, options.descriptionRevisionStopTimeoutMs ?? 30_000);
+        for (;;) {
+          const [currentRun, currentIssue, unreleasedLease] = await Promise.all([
+            getRun(sourceRun.id),
+            issuesSvc.getById(issueId),
+            db.select({ id: environmentLeases.id }).from(environmentLeases).where(and(
+              eq(environmentLeases.companyId, issue.companyId),
+              eq(environmentLeases.heartbeatRunId, sourceRun.id),
+              isNull(environmentLeases.releasedAt),
+            )).limit(1).then((rows) => rows[0] ?? null),
+          ]);
+          const processGroupAlive = Boolean(
+            currentRun?.processGroupId && isProcessGroupAlive(currentRun.processGroupId),
+          );
+          if (
+            currentRun &&
+            isHeartbeatRunTerminalStatus(currentRun.status) &&
+            currentIssue?.executionRunId !== sourceRun.id &&
+            !runningProcesses.has(sourceRun.id) &&
+            !activeRunExecutions.has(sourceRun.id) &&
+            !adapterExecutionControls.has(sourceRun.id) &&
+            !processGroupAlive &&
+            !unreleasedLease
+          ) {
+            stopConfirmedAt = new Date();
+            break;
+          }
+          if (Date.now() >= deadline) {
+            throw conflict("Previous description run did not fully stop before continuation", {
+              code: "work_record_description_stop_timeout",
+              sourceRunId: sourceRun.id,
+            });
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+    }
+
+    issue = await issuesSvc.getById(issueId);
+    if (!issue || issue.assigneeAgentId !== agentId || ["done", "cancelled"].includes(issue.status)) {
+      throw conflict("Linked native issue changed before description continuation admission");
+    }
+    const [otherActiveRun] = await db.select({ id: heartbeatRuns.id }).from(heartbeatRuns).where(and(
+      eq(heartbeatRuns.companyId, issue.companyId),
+      eq(heartbeatRuns.agentId, agentId),
+      sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${issueId}`,
+      inArray(heartbeatRuns.status, ["running", "queued", "scheduled_retry"]),
+    )).limit(1);
+    if (otherActiveRun) {
+      throw conflict("Another run already owns the description continuation", {
+        code: "work_record_description_concurrent_run",
+        runId: otherActiveRun.id,
+      });
+    }
+
+    const successor = await enqueueWakeup(agentId, {
+      ...wakeupOptions,
+      allowRunCoalescing: false,
+      ...(sourceRunId ? { descriptionRevisionContinuation: { sourceRunId, intentKey } } : {}),
+    });
+    if (!successor?.id || !successor.wakeupRequestId) {
+      const [receipt, currentAgent, currentIssue, schedulingSuppression] = await Promise.all([
+        db.select({
+        id: agentWakeupRequests.id,
+        status: agentWakeupRequests.status,
+        reason: agentWakeupRequests.reason,
+        error: agentWakeupRequests.error,
+      }).from(agentWakeupRequests).where(and(
+        eq(agentWakeupRequests.companyId, issue.companyId),
+        eq(agentWakeupRequests.agentId, agentId),
+        eq(agentWakeupRequests.idempotencyKey, intentKey),
+        )).orderBy(desc(agentWakeupRequests.requestedAt)).limit(1).then((rows) => rows[0] ?? null),
+        getAgent(agentId),
+        issuesSvc.getById(issueId),
+        getSchedulingSuppression(),
+      ]);
+      throw conflict("Description continuation was not admitted", {
+        code: "work_record_description_admission_failed",
+        receipt,
+        agentStatus: currentAgent?.status ?? null,
+        issueStatus: currentIssue?.status ?? null,
+        issueExecutionRunId: currentIssue?.executionRunId ?? null,
+        schedulingSuppression,
+      });
+    }
+    return {
+      sourceRunId: sourceRunId ?? null,
+      successorRunId: successor.id,
+      wakeupRequestId: successor.wakeupRequestId,
+      stopConfirmedAt,
+    };
+  }
+
   async function cancelActiveForAgentInternal(
     agentId: string,
     reason = "Cancelled due to agent pause",
@@ -30013,6 +30172,8 @@ export function heartbeatService(
 
     cancelRun: (runId: string, reason?: string, options?: CancelRunOptions) =>
       cancelRunInternal(runId, reason, options),
+
+    admitWorkRecordDescriptionRevision,
 
     /**
      * Pause-only. Emits errorCode "agent_paused" unconditionally; its sole caller is the

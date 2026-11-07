@@ -64,6 +64,77 @@ export async function undeliveredLegacyUserCommentIds(
   return commentIds.filter(id => valid.has(id));
 }
 
+/** Admit the one fresh turn authorized by a persisted work-record description
+ * revision. This is deliberately narrower than a user continuation: it can
+ * only retire the hold created by cancelling the exact superseded run, after
+ * that run and its local lease/process have stopped.
+ */
+export async function admitDescriptionRevisionContinuation(input: {
+  db: Db; companyId: string; issueId: string; agentId: string;
+  sourceRunId: string; intentKey: string; successorRunId: string;
+  actorType: string | null | undefined; actorId: string | null | undefined;
+  reason: string | null; dryRun?: boolean;
+}): Promise<{ previousRunId: string; intentKey: string } | null> {
+  const { db, companyId, issueId, agentId, sourceRunId, intentKey } = input;
+  if (input.actorType !== "system" || input.actorId !== "work-record-description-delivery" ||
+      input.reason !== "work_record_description_updated" || !intentKey.trim()) return null;
+  const [task] = await db.select().from(issues).where(and(
+    eq(issues.companyId, companyId), eq(issues.id, issueId),
+  ));
+  if (!task || task.assigneeAgentId !== agentId || ["done", "cancelled"].includes(task.status)) return null;
+  const actions = await db.select().from(issueRecoveryActions).where(and(
+    eq(issueRecoveryActions.companyId, companyId), eq(issueRecoveryActions.sourceIssueId, issueId),
+    executionBlockerPredicate(),
+  )).for("update");
+  if (!actions.length || actions.some(action => {
+    const runId = action.evidence.runId ?? action.evidence.sourceRunId;
+    return typeof runId !== "string" || runId !== sourceRunId;
+  })) return null;
+  const [run] = await db.select().from(heartbeatRuns).where(and(
+    eq(heartbeatRuns.companyId, companyId), eq(heartbeatRuns.id, sourceRunId),
+  )).for("update");
+  const result = run?.resultJson && typeof run.resultJson === "object"
+    ? run.resultJson as Record<string, unknown> : {};
+  if (!run || run.agentId !== agentId || run.status !== "cancelled" || !run.finishedAt ||
+      run.errorCode !== "work_record_description_superseded" ||
+      (run.nativeIssueId ?? run.contextSnapshot?.issueId) !== issueId ||
+      result.descriptionRevisionSuperseded !== true ||
+      result.descriptionRevisionIntentKey !== intentKey ||
+      result.interruptedIssueId !== issueId) return null;
+  const leases = await db.select().from(environmentLeases).where(and(
+    eq(environmentLeases.companyId, companyId), eq(environmentLeases.heartbeatRunId, sourceRunId),
+  ));
+  if (leases.some(lease => !lease.releasedAt || lease.cleanupStatus === "failed")) return null;
+  if (run.processPid && !processStopped(run.processPid)) return null;
+  if (run.processGroupId && !processStopped(-run.processGroupId)) return null;
+  const [active] = await db.select({ id: heartbeatRuns.id }).from(heartbeatRuns).where(and(
+    eq(heartbeatRuns.companyId, companyId),
+    or(eq(heartbeatRuns.nativeIssueId, issueId), sql`${heartbeatRuns.contextSnapshot}->>'issueId' = ${issueId}`),
+    inArray(heartbeatRuns.status, ["running", "queued", "scheduled_retry"]),
+    ne(heartbeatRuns.id, input.successorRunId),
+  )).limit(1);
+  if (active) return null;
+  await buildExecutionContinuation({ db, companyId, issueId, agentId,
+    context: { previousRunId: sourceRunId }, summary: null, exposeLowTrustRaw: false });
+  if (input.dryRun) return { previousRunId: sourceRunId, intentKey };
+  const authorization = { sourceRunId, successorRunId: input.successorRunId, intentKey,
+    recordedAt: new Date().toISOString() };
+  for (const action of actions) {
+    await db.update(issueRecoveryActions).set({
+      status: "resolved", outcome: "cancelled", resolvedAt: new Date(), updatedAt: new Date(),
+      nextAction: "The superseding description revision started a fresh run after the old run stopped.",
+      resolutionNote: "Exact description-revision continuation admitted; no prior action outcome was inferred.",
+      wakePolicy: null, monitorPolicy: null,
+      evidence: { ...action.evidence, descriptionRevisionContinuation: authorization },
+    }).where(eq(issueRecoveryActions.id, action.id));
+  }
+  await persistActivity(db, { companyId, actorType: "system", actorId: "work-record-description-delivery",
+    action: "issue.description_revision_continuation_admitted", entityType: "issue", entityId: issueId,
+    details: { ...authorization, recoveryActionIds: actions.map(action => action.id) },
+  });
+  return { previousRunId: sourceRunId, intentKey };
+}
+
 /** Called under the issue lock, in the transaction that creates the new turn.
  * A user request authorizes a new conversation, not replay of the failed run.
  * Unknown action outcomes and all prior records stay intact.

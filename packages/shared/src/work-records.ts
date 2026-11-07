@@ -209,9 +209,16 @@ export interface WorkRecordDeliveryView {
 export interface WorkRecordDescriptionDeliveryView {
   descriptionRevision: number | null;
   intentKey: string | null;
-  state: "pending" | "delivering" | "delivered" | "retry" | "acknowledged" | null;
+  state: "pending" | "stopping" | "queued" | "retry" | "confirmed" | null;
   commentId: string | null;
   attemptCount: number;
+  sourceRunId: string | null;
+  successorRunId: string | null;
+  wakeupRequestId: string | null;
+  stopConfirmedAt: Date | null;
+  queuedAt: Date | null;
+  modelVisibleAt: Date | null;
+  confirmedAt: Date | null;
   deliveredAt: Date | null;
   acknowledgedAt: Date | null;
   acknowledgedByAgentId: string | null;
