@@ -23,6 +23,9 @@ const service = vi.hoisted(() => ({
   list: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
+  getDescriptionDelivery: vi.fn(),
+  deliverDescriptionRevision: vi.fn(),
+  acknowledgeDescriptionRevision: vi.fn(),
   fillAssignmentGap: vi.fn(),
   dispatch: vi.fn(),
   getDispatchRequest: vi.fn(),
@@ -122,6 +125,9 @@ describe("work-record route authorization", () => {
     service.listVersions.mockResolvedValue([]);
     service.listIterations.mockResolvedValue([]);
     service.getDispatchRequest.mockResolvedValue({ state: "linked" });
+    service.getDescriptionDelivery.mockResolvedValue({ descriptionRevision: 2, state: "delivered" });
+    service.deliverDescriptionRevision.mockResolvedValue({ descriptionRevision: 2, state: "delivered" });
+    service.acknowledgeDescriptionRevision.mockResolvedValue({ descriptionRevision: 2, state: "acknowledged" });
     packageService.preview.mockResolvedValue({
       scopeDigest: "viewer-scope",
       records: [],
@@ -168,6 +174,79 @@ describe("work-record route authorization", () => {
     await request(app).get("/api/companies/company-1/projects/project-1/work-records/record-1/dispatch-requests/request-1").expect(200, { state: "linked" });
     expect(service.list).toHaveBeenCalledWith("company-1", "project-1");
     expect(service.getDispatchRequest).toHaveBeenCalledWith("company-1", "project-1", "record-1", "request-1");
+  });
+
+  it("allows delivery inspection but keeps retry read-only for a viewer", async () => {
+    const app = createApp(viewer);
+    await request(app)
+      .get("/api/companies/company-1/projects/project-1/work-records/record-1/description-deliveries/2")
+      .expect(200, { descriptionRevision: 2, state: "delivered" });
+    await request(app)
+      .post("/api/companies/company-1/projects/project-1/work-records/record-1/description-deliveries/2/retry")
+      .send({})
+      .expect(403, { error: "只读成员只能查看，不能修改" });
+    expect(service.getDescriptionDelivery).toHaveBeenCalledWith("company-1", "project-1", "record-1", 2);
+    expect(service.deliverDescriptionRevision).not.toHaveBeenCalled();
+  });
+
+  it("delivers a pending description revision after the work-record update commits", async () => {
+    const actor = {
+      type: "board",
+      userId: "admin-1",
+      companyIds: ["company-1"],
+      memberships: [{ companyId: "company-1", membershipRole: "admin", status: "active" }],
+      source: "session",
+      isInstanceAdmin: true,
+    } as Express.Request["actor"];
+    service.update.mockResolvedValue({
+      id: "record-1",
+      revision: 4,
+      descriptionRevision: 2,
+      descriptionDelivery: {
+        descriptionRevision: 2,
+        intentKey: "work-record-description:record-1:2",
+        state: "pending",
+      },
+    });
+    service.deliverDescriptionRevision.mockResolvedValue({
+      descriptionRevision: 2,
+      intentKey: "work-record-description:record-1:2",
+      state: "delivered",
+    });
+
+    await request(createApp(actor))
+      .patch("/api/companies/company-1/projects/project-1/work-records/record-1")
+      .send({ expectedRevision: 3, description: "Updated while the native task is running" })
+      .expect(200)
+      .expect(({ body }) => expect(body.descriptionDelivery.state).toBe("delivered"));
+
+    expect(service.deliverDescriptionRevision).toHaveBeenCalledWith(
+      "company-1",
+      "project-1",
+      "record-1",
+      2,
+      heartbeat.wakeup,
+    );
+  });
+
+  it("binds an agent acknowledgement to its current run and immutable intent", async () => {
+    const companyId = "11111111-1111-4111-8111-111111111111";
+    const agentId = "22222222-2222-4222-8222-222222222222";
+    const runId = "33333333-3333-4333-8333-333333333333";
+    const actor = { type: "agent", agentId, companyId, runId, keyId: null, source: "agent_jwt" } as Express.Request["actor"];
+    const app = createApp(actor);
+    await request(app)
+      .post(`/api/companies/${companyId}/projects/project-1/work-records/record-1/description-deliveries/acknowledge`)
+      .send({ descriptionRevision: 2, intentKey: "work-record-description:record-1:2" })
+      .expect(200, { descriptionRevision: 2, state: "acknowledged" });
+    expect(service.acknowledgeDescriptionRevision).toHaveBeenCalledWith(
+      companyId,
+      "project-1",
+      "record-1",
+      2,
+      "work-record-description:record-1:2",
+      { agentId, runId },
+    );
   });
 
   it("keeps viewer access read-only for reconcile/recovery", async () => {

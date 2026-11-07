@@ -18,6 +18,7 @@ import {
   workRecordDispatchBatchItems,
   workRecordDispatchBatches,
   workRecordDispatchCommands,
+  workRecordDescriptionDeliveries,
   workRecordExecutionHolds,
   workRecordExecutionIntents,
   workRecordExecutionProjections,
@@ -53,11 +54,30 @@ import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-ro
 type Actor = { actorType: "agent" | "user" | "system" | "plugin"; actorId: string; agentId?: string | null; userId?: string | null; runId?: string | null };
 type DbTransaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
 type Wakeup = (agentId: string, options: {
-  source: "assignment"; triggerDetail: "system"; reason: string; payload: Record<string, unknown>;
+  source: "assignment" | "automation"; triggerDetail: "system"; reason: string; payload: Record<string, unknown>;
   idempotencyKey: string; allowRunCoalescing: boolean; requestedByActorType: "user" | "agent" | "system";
   requestedByActorId: string | null; contextSnapshot: Record<string, unknown>;
 }) => Promise<unknown>;
 const ACTIVE_WAKE_STATUSES = ["queued", "claimed", "running", "completed"];
+
+function descriptionIntentKey(recordId: string, descriptionRevision: number) {
+  return `work-record-description:${recordId}:${descriptionRevision}`;
+}
+
+function descriptionDeliveryView(row: typeof workRecordDescriptionDeliveries.$inferSelect | null | undefined) {
+  return {
+    descriptionRevision: row?.descriptionRevision ?? null,
+    intentKey: row?.intentKey ?? null,
+    state: (row?.state ?? null) as WorkRecord["descriptionDelivery"]["state"],
+    commentId: row?.commentId ?? null,
+    attemptCount: row?.attemptCount ?? 0,
+    deliveredAt: row?.deliveredAt ?? null,
+    acknowledgedAt: row?.acknowledgedAt ?? null,
+    acknowledgedByAgentId: row?.acknowledgedByAgentId ?? null,
+    acknowledgedByRunId: row?.acknowledgedByRunId ?? null,
+    lastError: row?.lastError ?? null,
+  };
+}
 
 export interface WorkRecordServiceOptions {
   writesEnabled?: boolean;
@@ -396,6 +416,10 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     }).from(workRecordOutbox).where(and(
       eq(workRecordOutbox.companyId, companyId), inArray(workRecordOutbox.recordId, recordIds),
     )).orderBy(desc(workRecordOutbox.createdAt));
+    const descriptionDeliveryRows = await db.select().from(workRecordDescriptionDeliveries).where(and(
+      eq(workRecordDescriptionDeliveries.companyId, companyId),
+      inArray(workRecordDescriptionDeliveries.recordId, recordIds),
+    )).orderBy(desc(workRecordDescriptionDeliveries.descriptionRevision));
     const commandRows = await db.select({
       recordId: workRecordDispatchCommands.recordId,
       state: workRecordDispatchCommands.state,
@@ -461,6 +485,8 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     }
     const commandMap = new Map<string, (typeof commandRows)[number]>();
     for (const row of commandRows) if (!commandMap.has(row.recordId)) commandMap.set(row.recordId, row);
+    const descriptionDeliveryMap = new Map<string, (typeof descriptionDeliveryRows)[number]>();
+    for (const row of descriptionDeliveryRows) if (!descriptionDeliveryMap.has(row.recordId)) descriptionDeliveryMap.set(row.recordId, row);
     const qualityCycleMap = new Map<string, (typeof qualityCycles)[number]>();
     for (const cycle of qualityCycles) if (!qualityCycleMap.has(cycle.aggregateRecordId)) qualityCycleMap.set(cycle.aggregateRecordId, cycle);
     const defectCountMap = new Map<string, number>();
@@ -526,6 +552,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
           acknowledgedAt: wake?.claimedAt ?? null,
           runId: wake?.runId ?? null,
         },
+        descriptionDelivery: descriptionDeliveryView(descriptionDeliveryMap.get(row.id)),
         quality: {
           cycleId: qualityCycleMap.get(row.id)?.id ?? null,
           cycleNumber: qualityCycleMap.get(row.id)?.cycleNumber ?? null,
@@ -694,9 +721,18 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         if (predecessorIds.length) await tx.insert(workRecordDependencies).values(predecessorIds.map((predecessorRecordId) => ({ companyId, projectId, predecessorRecordId, successorRecordId: recordId })));
       }
       const descriptionChanged = input.description !== undefined && input.description !== locked.description;
+      const nextDescriptionRevision = locked.descriptionRevision + (descriptionChanged ? 1 : 0);
+      const primaryLink = descriptionChanged && locked.dispatchState !== "not_dispatched"
+        ? await tx.select().from(workRecordIssueLinks).where(and(
+            eq(workRecordIssueLinks.companyId, companyId),
+            eq(workRecordIssueLinks.projectId, projectId),
+            eq(workRecordIssueLinks.recordId, recordId),
+            eq(workRecordIssueLinks.purpose, "primary"),
+          )).then((rows) => rows[0] ?? null)
+        : null;
       const [row] = await tx.update(workRecords).set({
         ...(input.title !== undefined ? { title: input.title } : {}),
-        ...(input.description !== undefined ? { description: input.description, descriptionRevision: locked.descriptionRevision + (descriptionChanged ? 1 : 0) } : {}),
+        ...(input.description !== undefined ? { description: input.description, descriptionRevision: nextDescriptionRevision } : {}),
         ...(input.businessStatus !== undefined ? { businessStatus: input.businessStatus, statusVersion: locked.statusVersion + 1 } : {}),
         ...(input.parentRecordId !== undefined ? { parentRecordId: input.parentRecordId } : {}),
         ...(input.iterationId !== undefined ? { iterationId: input.iterationId } : {}),
@@ -710,6 +746,39 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(predecessorIds ? { dependencySetRevision: locked.dependencySetRevision + 1 } : {}),
         revision: locked.revision + 1, updatedAt: new Date(),
       }).where(eq(workRecords.id, recordId)).returning();
+      if (descriptionChanged && primaryLink) {
+        const issue = await issuesSvc.update(primaryLink.issueId, {
+          description: input.description ?? null,
+          companyGuard: companyId,
+        }, tx);
+        if (!issue) throw notFound("Linked native issue not found");
+        const intentKey = descriptionIntentKey(recordId, nextDescriptionRevision);
+        const body = [
+          `Work-record description updated to revision ${nextDescriptionRevision}.`,
+          "",
+          input.description?.length ? input.description : "(description cleared)",
+          "",
+          `Receipt intent: ${intentKey}`,
+        ].join("\n");
+        const comment = await issuesSvc.addComment(primaryLink.issueId, body, {}, { authorType: "system" }, tx);
+        const payloadDigest = createHash("sha256").update(JSON.stringify({
+          issueId: primaryLink.issueId,
+          commentId: comment.id,
+          recordId,
+          descriptionRevision: nextDescriptionRevision,
+          description: input.description ?? null,
+        })).digest("hex");
+        await tx.insert(workRecordDescriptionDeliveries).values({
+          companyId,
+          projectId,
+          recordId,
+          issueId: primaryLink.issueId,
+          commentId: comment.id,
+          descriptionRevision: nextDescriptionRevision,
+          intentKey,
+          payloadDigest,
+        });
+      }
       if (locked.dispatchState !== "not_dispatched" && workflowV2WritesEnabled && predecessorIds !== null) {
         const activeIntents = await tx.select({ id: workRecordExecutionIntents.id }).from(workRecordExecutionIntents).where(and(
           eq(workRecordExecutionIntents.companyId, companyId),
@@ -770,6 +839,167 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       return row;
     });
     return hydrate(companyId, [updated]).then((result) => result[0]);
+  }
+
+  async function getDescriptionDelivery(
+    companyId: string,
+    projectId: string,
+    recordId: string,
+    descriptionRevision: number,
+  ) {
+    await raw(companyId, projectId, recordId);
+    const row = await db.select().from(workRecordDescriptionDeliveries).where(and(
+      eq(workRecordDescriptionDeliveries.companyId, companyId),
+      eq(workRecordDescriptionDeliveries.projectId, projectId),
+      eq(workRecordDescriptionDeliveries.recordId, recordId),
+      eq(workRecordDescriptionDeliveries.descriptionRevision, descriptionRevision),
+    )).then((rows) => rows[0]);
+    if (!row) throw notFound("Description delivery not found");
+    return descriptionDeliveryView(row);
+  }
+
+  async function deliverDescriptionRevision(
+    companyId: string,
+    projectId: string,
+    recordId: string,
+    descriptionRevision: number,
+    wakeup: Wakeup,
+  ) {
+    const claimed = await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
+      const row = await tx.select().from(workRecordDescriptionDeliveries).where(and(
+        eq(workRecordDescriptionDeliveries.companyId, companyId),
+        eq(workRecordDescriptionDeliveries.projectId, projectId),
+        eq(workRecordDescriptionDeliveries.recordId, recordId),
+        eq(workRecordDescriptionDeliveries.descriptionRevision, descriptionRevision),
+      )).then((rows) => rows[0]);
+      if (!row) throw notFound("Description delivery not found");
+      if (row.state === "delivered" || row.state === "acknowledged") return row;
+      return tx.update(workRecordDescriptionDeliveries).set({
+        state: "delivering",
+        attemptCount: row.attemptCount + 1,
+        lastAttemptAt: new Date(),
+        lastError: null,
+        updatedAt: new Date(),
+      }).where(eq(workRecordDescriptionDeliveries.id, row.id)).returning().then((rows) => rows[0]);
+    });
+    if (claimed.state === "delivered" || claimed.state === "acknowledged") return descriptionDeliveryView(claimed);
+
+    const linked = await db.select({ assigneeAgentId: issues.assigneeAgentId }).from(issues).where(and(
+      eq(issues.companyId, companyId),
+      eq(issues.id, claimed.issueId),
+    )).then((rows) => rows[0]);
+    if (!linked?.assigneeAgentId) {
+      const [failed] = await db.update(workRecordDescriptionDeliveries).set({
+        state: "retry", lastError: "Linked native issue has no assignee", updatedAt: new Date(),
+      }).where(eq(workRecordDescriptionDeliveries.id, claimed.id)).returning();
+      return descriptionDeliveryView(failed);
+    }
+    const findWinner = () => db.select().from(agentWakeupRequests).where(and(
+      eq(agentWakeupRequests.companyId, companyId),
+      eq(agentWakeupRequests.idempotencyKey, claimed.intentKey),
+    )).orderBy(desc(agentWakeupRequests.requestedAt)).then((rows) => rows.find((row) => !["skipped", "failed", "cancelled"].includes(row.status)) ?? null);
+    try {
+      let winner = await findWinner();
+      if (!winner) {
+        try {
+          await wakeup(linked.assigneeAgentId, {
+            source: "automation",
+            triggerDetail: "system",
+            reason: "work_record_description_updated",
+            payload: {
+              issueId: claimed.issueId,
+              commentId: claimed.commentId,
+              recordId,
+              descriptionRevision,
+              intentKey: claimed.intentKey,
+            },
+            idempotencyKey: claimed.intentKey,
+            allowRunCoalescing: true,
+            requestedByActorType: "system",
+            requestedByActorId: "work-record-description-delivery",
+            contextSnapshot: {
+              issueId: claimed.issueId,
+              taskId: claimed.issueId,
+              commentId: claimed.commentId,
+              wakeCommentId: claimed.commentId,
+              wakeReason: "work_record_description_updated",
+              source: "work_record.description",
+              recordId,
+              descriptionRevision,
+              intentKey: claimed.intentKey,
+            },
+          });
+        } catch (error) {
+          winner = await findWinner();
+          if (!winner) throw error;
+        }
+        winner ??= await findWinner();
+      }
+      if (!winner) throw new Error("Description delivery was not durably admitted");
+      const [delivered] = await db.update(workRecordDescriptionDeliveries).set({
+        state: "delivered",
+        deliveredAt: claimed.deliveredAt ?? new Date(),
+        lastError: null,
+        updatedAt: new Date(),
+      }).where(eq(workRecordDescriptionDeliveries.id, claimed.id)).returning();
+      return descriptionDeliveryView(delivered);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const [failed] = await db.update(workRecordDescriptionDeliveries).set({
+        state: "retry", lastError: message, updatedAt: new Date(),
+      }).where(eq(workRecordDescriptionDeliveries.id, claimed.id)).returning();
+      return descriptionDeliveryView(failed);
+    }
+  }
+
+  async function acknowledgeDescriptionRevision(
+    companyId: string,
+    projectId: string,
+    recordId: string,
+    descriptionRevision: number,
+    intentKey: string,
+    actor: { agentId: string; runId: string | null },
+  ) {
+    if (!actor.runId) throw forbidden("A running agent is required to acknowledge description delivery");
+    const runId = actor.runId;
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
+      const delivery = await tx.select().from(workRecordDescriptionDeliveries).where(and(
+        eq(workRecordDescriptionDeliveries.companyId, companyId),
+        eq(workRecordDescriptionDeliveries.projectId, projectId),
+        eq(workRecordDescriptionDeliveries.recordId, recordId),
+        eq(workRecordDescriptionDeliveries.descriptionRevision, descriptionRevision),
+      )).then((rows) => rows[0]);
+      if (!delivery) throw notFound("Description delivery not found");
+      if (delivery.intentKey !== intentKey) throw conflict("Description delivery intent changed");
+      const issue = await tx.select({
+        assigneeAgentId: issues.assigneeAgentId,
+        executionRunId: issues.executionRunId,
+      }).from(issues).where(and(
+        eq(issues.companyId, companyId), eq(issues.id, delivery.issueId),
+      )).then((rows) => rows[0]);
+      if (issue?.assigneeAgentId !== actor.agentId) throw forbidden("Only the current native issue agent can acknowledge description delivery");
+      const run = await tx.select({ id: heartbeatRuns.id }).from(heartbeatRuns).where(and(
+        eq(heartbeatRuns.companyId, companyId),
+        eq(heartbeatRuns.id, runId),
+        eq(heartbeatRuns.agentId, actor.agentId),
+      )).then((rows) => rows[0]);
+      if (!run || issue.executionRunId !== runId) throw forbidden("Acknowledgement run is not bound to the linked native issue");
+      if (delivery.state === "acknowledged") {
+        if (delivery.acknowledgedByAgentId !== actor.agentId) throw conflict("Description delivery was acknowledged by another agent");
+        return descriptionDeliveryView(delivery);
+      }
+      if (delivery.state !== "delivered") throw conflict("Description delivery has not reached the native agent");
+      const [acknowledged] = await tx.update(workRecordDescriptionDeliveries).set({
+        state: "acknowledged",
+        acknowledgedAt: new Date(),
+        acknowledgedByAgentId: actor.agentId,
+        acknowledgedByRunId: runId,
+        updatedAt: new Date(),
+      }).where(eq(workRecordDescriptionDeliveries.id, delivery.id)).returning();
+      return descriptionDeliveryView(acknowledged);
+    });
   }
 
   async function fillAssignmentGap(
@@ -1517,6 +1747,9 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     listPage,
     create,
     update,
+    getDescriptionDelivery,
+    deliverDescriptionRevision,
+    acknowledgeDescriptionRevision,
     fillAssignmentGap,
     dispatch,
     getDispatchRequest,

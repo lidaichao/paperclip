@@ -356,6 +356,64 @@ export const workRecordIssueLinks = pgTable(
 );
 
 /**
+ * Durable delivery intent for a dispatched record description revision.
+ *
+ * The linked native issue is updated in the same transaction that creates this
+ * row and its system comment.  Delivery may then be retried with the immutable
+ * intent key without creating another issue, comment, or active agent run.
+ */
+export const workRecordDescriptionDeliveries = pgTable(
+  "work_record_description_deliveries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    recordId: uuid("record_id").notNull().references(() => workRecords.id, { onDelete: "cascade" }),
+    issueId: uuid("issue_id").notNull().references(() => issues.id, { onDelete: "cascade" }),
+    commentId: uuid("comment_id").notNull(),
+    descriptionRevision: integer("description_revision").notNull(),
+    intentKey: text("intent_key").notNull(),
+    payloadDigest: text("payload_digest").notNull(),
+    state: text("state").notNull().default("pending"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
+    acknowledgedByAgentId: uuid("acknowledged_by_agent_id").references(() => agents.id, { onDelete: "set null" }),
+    acknowledgedByRunId: uuid("acknowledged_by_run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    recordScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.recordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_description_deliveries_record_scope_fk",
+    }).onDelete("cascade"),
+    issueScopeFk: foreignKey({
+      columns: [table.companyId, table.issueId],
+      foreignColumns: [issues.companyId, issues.id],
+      name: "work_record_description_deliveries_issue_scope_fk",
+    }).onDelete("cascade"),
+    revisionUq: uniqueIndex("work_record_description_deliveries_revision_uq")
+      .on(table.companyId, table.recordId, table.descriptionRevision),
+    intentUq: uniqueIndex("work_record_description_deliveries_intent_uq")
+      .on(table.companyId, table.intentKey),
+    pendingIdx: index("work_record_description_deliveries_pending_idx")
+      .on(table.state, table.updatedAt),
+    stateCheck: check(
+      "work_record_description_deliveries_state_check",
+      sql`${table.state} IN ('pending', 'delivering', 'delivered', 'retry', 'acknowledged')`,
+    ),
+    revisionCheck: check(
+      "work_record_description_deliveries_revision_check",
+      sql`${table.descriptionRevision} > 0`,
+    ),
+  }),
+);
+
+/**
  * Workflow-v2 sidecars are additive planning and quality facts. They never
  * replace native issues, heartbeat runs, or their execution locks.
  */

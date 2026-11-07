@@ -2,6 +2,7 @@ import { Router } from "express";
 import { agentWakeupRequests, type Db } from "@paperclipai/db";
 import { and, eq } from "drizzle-orm";
 import {
+  acknowledgeWorkRecordDescriptionSchema,
   createWorkRecordSchema,
   createProjectIterationSchema,
   createProjectVersionSchema,
@@ -829,8 +830,19 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     const projectId = req.params.projectId as string;
     const recordId = req.params.recordId as string;
     assertCompanyAccess(req, companyId);
-    const record = await service.update(companyId, projectId, recordId, req.body);
     const actor = getActorInfo(req);
+    let record = await service.update(companyId, projectId, recordId, req.body);
+    if (req.body.description !== undefined && record.descriptionDelivery.descriptionRevision !== null &&
+      ["pending", "retry"].includes(record.descriptionDelivery.state ?? "")) {
+      const descriptionDelivery = await service.deliverDescriptionRevision(
+        companyId,
+        projectId,
+        recordId,
+        record.descriptionDelivery.descriptionRevision,
+        heartbeat.wakeup,
+      );
+      record = { ...record, descriptionDelivery };
+    }
     await logActivity(db, {
       companyId,
       actorType: actor.actorType,
@@ -842,6 +854,11 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       entityType: "work_record",
       entityId: record.id,
       details: { projectId, expectedRevision: req.body.expectedRevision, revision: record.revision,
+        ...(req.body.description !== undefined ? {
+          descriptionRevision: record.descriptionRevision,
+          descriptionDeliveryState: record.descriptionDelivery.state,
+          descriptionDeliveryIntentKey: record.descriptionDelivery.intentKey,
+        } : {}),
         ...(req.body.packageQaRole !== undefined ? { packageQaRole: record.packageQaRole } : {}),
         ...(req.body.qaRetestExemptionReason !== undefined ? { qaRetestExemptionReason: record.qaRetestExemptionReason } : {}),
         ...(req.body.qaCoverageRecordIds !== undefined ? { qaCoverageRecordIds: record.qaCoverageRecordIds } : {}),
@@ -849,6 +866,48 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     });
     res.json(record);
   });
+
+  router.get("/companies/:companyId/projects/:projectId/work-records/:recordId/description-deliveries/:descriptionRevision", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    const recordId = req.params.recordId as string;
+    const descriptionRevision = Number(req.params.descriptionRevision);
+    assertCompanyAccess(req, companyId);
+    if (!Number.isInteger(descriptionRevision) || descriptionRevision < 1) throw unprocessable("Description revision must be a positive integer");
+    res.json(await service.getDescriptionDelivery(companyId, projectId, recordId, descriptionRevision));
+  });
+
+  router.post("/companies/:companyId/projects/:projectId/work-records/:recordId/description-deliveries/:descriptionRevision/retry", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    const recordId = req.params.recordId as string;
+    const descriptionRevision = Number(req.params.descriptionRevision);
+    assertCompanyAccess(req, companyId);
+    if (isReadOnlyViewer(req, companyId)) throw forbidden("只读成员只能查看，不能修改");
+    if (!Number.isInteger(descriptionRevision) || descriptionRevision < 1) throw unprocessable("Description revision must be a positive integer");
+    res.json(await service.deliverDescriptionRevision(companyId, projectId, recordId, descriptionRevision, heartbeat.wakeup));
+  });
+
+  router.post(
+    "/companies/:companyId/projects/:projectId/work-records/:recordId/description-deliveries/acknowledge",
+    validate(acknowledgeWorkRecordDescriptionSchema),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const projectId = req.params.projectId as string;
+      const recordId = req.params.recordId as string;
+      assertCompanyAccess(req, companyId);
+      const actor = getActorInfo(req);
+      if (actor.actorType !== "agent" || !actor.agentId) throw forbidden("Only an agent can acknowledge description delivery");
+      res.json(await service.acknowledgeDescriptionRevision(
+        companyId,
+        projectId,
+        recordId,
+        req.body.descriptionRevision,
+        req.body.intentKey,
+        { agentId: actor.agentId, runId: actor.runId ?? null },
+      ));
+    },
+  );
 
   router.post("/companies/:companyId/projects/:projectId/work-records/:recordId/dispatch", validate(dispatchWorkRecordSchema), async (req, res) => {
     const companyId = req.params.companyId as string;

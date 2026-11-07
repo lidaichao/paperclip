@@ -2206,6 +2206,13 @@
       "when": 1794086777643,
       "tag": "0316_work_record_g1_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 317,
+      "version": "7",
+      "when": 1794089154927,
+      "tag": "0317_work_record_description_deliveries",
+      "breakpoints": true
     }
   ]
 }

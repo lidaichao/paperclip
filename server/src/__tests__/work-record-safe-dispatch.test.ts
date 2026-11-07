@@ -10,6 +10,7 @@ import {
   createDb,
   executionWorkspaces,
   heartbeatRuns,
+  issueComments,
   issues,
   projectIterations,
   projectVersions,
@@ -17,6 +18,7 @@ import {
   workspaceOperations,
   workRecordDispatchCommands,
   workRecordDependencies,
+  workRecordDescriptionDeliveries,
   workRecordExecutionHolds,
   workRecordExecutionProjections,
   workRecordIssueLinks,
@@ -302,6 +304,129 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(first.issueId).toBe(second.issueId);
     expect(await db.select().from(workRecordDispatchCommands).where(eq(workRecordDispatchCommands.recordId, record.id))).toHaveLength(1);
     expect(await db.select().from(workRecordIssueLinks).where(eq(workRecordIssueLinks.recordId, record.id))).toHaveLength(1);
+  });
+
+  it("G1 atomically mirrors a dispatched description revision to the native issue and its conversation", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "Description sync");
+    const dispatched = await context.service.dispatch(
+      context.company.id,
+      context.project.id,
+      record.id,
+      { clientRequestId: "dispatch-description", expectedRevision: record.revision },
+      { actorType: "system", actorId: "test" },
+    );
+
+    const results = await Promise.allSettled([
+      context.service.update(context.company.id, context.project.id, record.id, {
+        expectedRevision: dispatched.record.revision,
+        description: "Authoritative revision A",
+      }),
+      context.service.update(context.company.id, context.project.id, record.id, {
+        expectedRevision: dispatched.record.revision,
+        description: "Conflicting revision B",
+      }),
+    ]);
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
+
+    const [nativeIssue] = await db.select().from(issues).where(eq(issues.id, dispatched.issueId));
+    const [delivery] = await db.select().from(workRecordDescriptionDeliveries).where(eq(workRecordDescriptionDeliveries.recordId, record.id));
+    const comments = await db.select().from(issueComments).where(eq(issueComments.issueId, dispatched.issueId));
+    expect(nativeIssue.description).toMatch(/^Authoritative revision [AB]$/);
+    expect(delivery).toMatchObject({
+      descriptionRevision: 2,
+      state: "pending",
+      intentKey: `work-record-description:${record.id}:2`,
+    });
+    expect(comments).toHaveLength(1);
+    expect(comments[0].body).toContain("revision 2");
+    expect(comments[0].body).toContain(nativeIssue.description);
+    expect(await db.select().from(issues).where(eq(issues.companyId, context.company.id))).toHaveLength(1);
+  });
+
+  it("G1 preserves one description intent across timeout, unknown receipt, replay, and agent acknowledgement", async () => {
+    const context = await seed();
+    const record = await createRecord(context, "Description delivery");
+    const dispatched = await context.service.dispatch(
+      context.company.id,
+      context.project.id,
+      record.id,
+      { clientRequestId: "dispatch-description", expectedRevision: record.revision },
+      { actorType: "system", actorId: "test" },
+    );
+    const updated = await context.service.update(context.company.id, context.project.id, record.id, {
+      expectedRevision: dispatched.record.revision,
+      description: "Deliver this revision",
+    });
+    const intentKey = updated.descriptionDelivery.intentKey!;
+
+    const timedOut = await context.service.deliverDescriptionRevision(
+      context.company.id,
+      context.project.id,
+      record.id,
+      2,
+      async () => { throw new Error("simulated timeout"); },
+    );
+    expect(timedOut).toMatchObject({ state: "retry", intentKey, attemptCount: 1, lastError: "simulated timeout" });
+
+    let wakeCalls = 0;
+    const lostReceiptWake = async (agentId: string, options: { idempotencyKey: string }) => {
+      wakeCalls += 1;
+      await db.insert(agentWakeupRequests).values({
+        companyId: context.company.id,
+        agentId,
+        source: "automation",
+        status: "queued",
+        idempotencyKey: options.idempotencyKey,
+      });
+      throw new Error("receipt lost after commit");
+    };
+    const delivered = await context.service.deliverDescriptionRevision(
+      context.company.id,
+      context.project.id,
+      record.id,
+      2,
+      lostReceiptWake as never,
+    );
+    const replayed = await context.service.deliverDescriptionRevision(
+      context.company.id,
+      context.project.id,
+      record.id,
+      2,
+      lostReceiptWake as never,
+    );
+    expect(delivered).toMatchObject({ state: "delivered", intentKey, attemptCount: 2, lastError: null });
+    expect(replayed).toMatchObject({ state: "delivered", intentKey, attemptCount: 2 });
+    expect(wakeCalls).toBe(1);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.idempotencyKey, intentKey))).toHaveLength(1);
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, dispatched.issueId))).toHaveLength(1);
+
+    const run = await db.insert(heartbeatRuns).values({
+      companyId: context.company.id,
+      agentId: context.agent.id,
+      status: "running",
+      contextSnapshot: { issueId: dispatched.issueId, wakeReason: "work_record_description_updated" },
+    }).returning().then((rows) => rows[0]);
+    await db.update(issues).set({ status: "in_progress", executionRunId: run.id }).where(eq(issues.id, dispatched.issueId));
+    const acknowledged = await context.service.acknowledgeDescriptionRevision(
+      context.company.id,
+      context.project.id,
+      record.id,
+      2,
+      intentKey,
+      { agentId: context.agent.id, runId: run.id },
+    );
+    const duplicateAck = await context.service.acknowledgeDescriptionRevision(
+      context.company.id,
+      context.project.id,
+      record.id,
+      2,
+      intentKey,
+      { agentId: context.agent.id, runId: run.id },
+    );
+    expect(acknowledged).toMatchObject({ state: "acknowledged", acknowledgedByAgentId: context.agent.id, acknowledgedByRunId: run.id });
+    expect(duplicateAck).toMatchObject({ state: "acknowledged", acknowledgedByAgentId: context.agent.id, acknowledgedByRunId: run.id });
   });
 
   it("SD-04 blocks both central admission and status-dropdown bypass while a source hold exists", async () => {

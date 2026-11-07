@@ -107,6 +107,11 @@ export const dispatchWorkRecordSchema = z.object({
   expectedRevision: z.number().int().positive(),
 });
 
+export const acknowledgeWorkRecordDescriptionSchema = z.object({
+  descriptionRevision: z.number().int().positive(),
+  intentKey: z.string().trim().min(1).max(255),
+});
+
 export const createProjectVersionSchema = z.object({
   name: z.string().trim().min(1).max(255),
   targetDate: z.string().date().optional().nullable(),
@@ -150,6 +155,7 @@ export const updateProjectIterationSchema = z.object({
 export type CreateWorkRecord = z.infer<typeof createWorkRecordSchema>;
 export type UpdateWorkRecord = z.infer<typeof updateWorkRecordSchema>;
 export type DispatchWorkRecord = z.infer<typeof dispatchWorkRecordSchema>;
+export type AcknowledgeWorkRecordDescription = z.infer<typeof acknowledgeWorkRecordDescriptionSchema>;
 export type CreateProjectVersion = z.infer<typeof createProjectVersionSchema>;
 export type UpdateProjectVersion = z.infer<typeof updateProjectVersionSchema>;
 export type CreateProjectIteration = z.infer<typeof createProjectIterationSchema>;
@@ -200,6 +206,19 @@ export interface WorkRecordDeliveryView {
   runId: string | null;
 }
 
+export interface WorkRecordDescriptionDeliveryView {
+  descriptionRevision: number | null;
+  intentKey: string | null;
+  state: "pending" | "delivering" | "delivered" | "retry" | "acknowledged" | null;
+  commentId: string | null;
+  attemptCount: number;
+  deliveredAt: Date | null;
+  acknowledgedAt: Date | null;
+  acknowledgedByAgentId: string | null;
+  acknowledgedByRunId: string | null;
+  lastError: string | null;
+}
+
 export interface WorkRecordQualitySummaryView {
   cycleId: string | null;
   cycleNumber: number | null;
@@ -237,6 +256,7 @@ export interface WorkRecord {
   execution: WorkRecordExecutionView;
   recovery: WorkRecordRecoveryView;
   delivery: WorkRecordDeliveryView;
+  descriptionDelivery: WorkRecordDescriptionDeliveryView;
   quality: WorkRecordQualitySummaryView;
   createdAt: Date;
   updatedAt: Date;
