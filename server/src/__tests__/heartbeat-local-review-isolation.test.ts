@@ -105,4 +105,22 @@ suite("local completion review heartbeat isolation (PostgreSQL)", () => {
     expect((await heartbeat.getRun(scope.runId))?.status).toBe("queued");
     expect(execute).not.toHaveBeenCalled();
   }, 30_000);
+
+  it("rejects an issue-less manual wake for a client-pull agent without queuing a run", async () => {
+    const companyId = randomUUID();
+    const agentId = randomUUID();
+    await db.insert(companies).values({ id: companyId, name: "Local wake scope",
+      issuePrefix: `W${companyId.slice(0, 7)}`, defaultResponsibleUserId: "owner" });
+    await db.insert(agents).values({ id: agentId, companyId, name: "Local worker",
+      adapterType: "process", status: "idle",
+      runtimeConfig: { executionMode: "client_pull" } });
+
+    const heartbeat = heartbeatService(db);
+    await expect(heartbeat.wakeup(agentId, { source: "on_demand",
+      triggerDetail: "manual" })).rejects.toThrow("本机领取智能体必须指定任务后再唤醒");
+    expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.agentId, agentId)))
+      .toHaveLength(0);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.agentId, agentId)))
+      .toHaveLength(0);
+  }, 30_000);
 });

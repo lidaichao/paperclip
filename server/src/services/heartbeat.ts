@@ -26727,6 +26727,13 @@ export function heartbeatService(
     if (projectId && !readNonEmptyString(enrichedContextSnapshot.projectId)) {
       enrichedContextSnapshot.projectId = projectId;
     }
+    // A client-pull worker can claim only an issue-backed run. A generic manual
+    // wake would otherwise persist an unclaimable legacy run indefinitely.
+    if (isClientPullRuntimeConfig(agent.runtimeConfig) && !issueId) {
+      throw new HttpError(409, "本机领取智能体必须指定任务后再唤醒", {
+        code: "client_pull_issue_required",
+      });
+    }
     const isolatedWorkspacesEnabled = issueId
       ? (await instanceSettings.getExperimental()).enableIsolatedWorkspaces
       : false;
