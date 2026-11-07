@@ -2136,6 +2136,13 @@
       "when": 1794078000000,
       "tag": "0306_qa_coverage",
       "breakpoints": true
+    },
+    {
+      "idx": 307,
+      "version": "7",
+      "when": 1794050621627,
+      "tag": "0307_local_defect_repair_handoff",
+      "breakpoints": true
     }
   ]
 }

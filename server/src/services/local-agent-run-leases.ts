@@ -13,6 +13,7 @@ import {
   issues,
   localAgentRunLeases,
   localIssueCompletionCommands,
+  localDefectRepairHandoffs,
   localPoVerdictCommands,
   workRecordIssueLinks,
   workRecordDispatchBatches,
@@ -44,6 +45,7 @@ import { lockWorkRecordQualityAggregate, workRecordQualityService } from "./work
 import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-rollout.js";
 import { recordPoQualityVerdictSchema, type RecordPoQualityVerdict } from "@paperclipai/shared";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
+import { applyIssueExecutionPolicyTransition, normalizeIssueExecutionPolicy } from "./issue-execution-policy.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -475,17 +477,27 @@ export function localAgentRunLeaseService(
         throw conflict("Run has conflicting quality dispositions");
       }
       const poCommand = poCommands[0] ?? null;
+      const defectHandoffs = await tx.select().from(localDefectRepairHandoffs).where(and(
+        eq(localDefectRepairHandoffs.companyId, input.companyId),
+        eq(localDefectRepairHandoffs.issueId, lease.issueId),
+        eq(localDefectRepairHandoffs.runId, input.runId),
+      )).limit(2);
+      if (defectHandoffs.length > 1 || (defectHandoffs.length > 0 &&
+        (reviewHint || childCompletion || poCommand))) {
+        throw conflict("Run has conflicting defect repair dispositions");
+      }
+      const defectHandoff = defectHandoffs[0] ?? null;
       const reviewerRun = wakeReasonFromRun(run) === CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON;
       const reviewerReviewId = reviewerRun ? run.contextSnapshot?.reviewId : null;
       if (reviewerRun && typeof reviewerReviewId !== "string") {
         throw conflict("Dedicated reviewer run lacks a review identity");
       }
-      if ((reviewHint || reviewerRun || childCompletion || poCommand) && !input.clientRequestId) {
+      if ((reviewHint || reviewerRun || childCompletion || poCommand || defectHandoff) && !input.clientRequestId) {
         throw badRequest("Completion finish requires clientRequestId");
       }
       if (lease.releasedAt) {
         if (lease.outcome !== input.outcome) throw conflict("Run already finished with another outcome");
-        if (input.clientRequestId || reviewHint || reviewerRun || childCompletion || poCommand) {
+        if (input.clientRequestId || reviewHint || reviewerRun || childCompletion || poCommand || defectHandoff) {
           const saved = run.resultJson?.localWorkerFinish;
           const [savedDelivery] = reviewHint ? await tx.select({ id: issueCommandDeliveries.id })
             .from(issueCommandDeliveries).where(and(
@@ -510,6 +522,10 @@ export function localAgentRunLeaseService(
               (saved as Record<string, unknown>).poDisposition !== poCommand.state ||
               (poCommand.state === "committed" &&
                 (saved as Record<string, unknown>).poVerdictId !== poCommand.verdictId))) ||
+            (defectHandoff && ((saved as Record<string, unknown>).defectHandoffId !== defectHandoff.id ||
+              (saved as Record<string, unknown>).defectHandoffDisposition !== defectHandoff.state ||
+              (defectHandoff.state === "submitted" &&
+                (saved as Record<string, unknown>).defectSubmittedStatusVersion !== defectHandoff.submittedStatusVersion))) ||
             (reviewHint && ((saved as Record<string, unknown>).reviewId !== reviewHint.id ||
               (saved as Record<string, unknown>).deliveryId !== savedDelivery?.id ||
               !["ready", "blocked", "preserved"].includes(String((saved as Record<string, unknown>).disposition))))) {
@@ -533,6 +549,9 @@ export function localAgentRunLeaseService(
         childCompletedStatusVersion?: number } | null = null;
       let poReceipt: { poCommandId: string; poDisposition: "committed" | "aborted";
         poVerdictId?: string; poNextCycleId?: string | null } | null = null;
+      let defectReceipt: { defectHandoffId: string;
+        defectHandoffDisposition: "submitted" | "aborted";
+        defectSubmittedStatusVersion?: number } | null = null;
       if (reviewerRun) {
         const [issue] = await tx.select().from(issues).where(and(
           eq(issues.id, lease.issueId), eq(issues.companyId, input.companyId),
@@ -825,6 +844,143 @@ export function localAgentRunLeaseService(
           poReceipt = { poCommandId: poCommand.id, poDisposition: "aborted" };
         }
       }
+      if (defectHandoff) {
+        if (defectHandoff.state !== "prepared" || reviewerRun ||
+          defectHandoff.companyId !== input.companyId ||
+          defectHandoff.issueId !== lease.issueId) {
+          throw conflict("Defect repair handoff is no longer prepared");
+        }
+        if (status === "succeeded") {
+          await lockWorkRecordQualityAggregate(tx, input.companyId, defectHandoff.recordId);
+          const [cycle] = await tx.select().from(workRecordQualityCycles).where(and(
+            eq(workRecordQualityCycles.companyId, input.companyId),
+            eq(workRecordQualityCycles.id, defectHandoff.cycleId),
+          )).for("update");
+          const items = await tx.select().from(workRecordQualityItems).where(and(
+            eq(workRecordQualityItems.companyId, input.companyId),
+            inArray(workRecordQualityItems.id,
+              [defectHandoff.repairItemId, defectHandoff.qaItemId]),
+          )).orderBy(asc(workRecordQualityItems.id)).for("update");
+          const repair = items.find((item) => item.id === defectHandoff.repairItemId);
+          const qa = items.find((item) => item.id === defectHandoff.qaItemId);
+          const [record] = await tx.select().from(workRecords).where(and(
+            eq(workRecords.companyId, input.companyId),
+            eq(workRecords.id, defectHandoff.recordId),
+          )).for("update");
+          const [link] = await tx.select().from(workRecordIssueLinks).where(and(
+            eq(workRecordIssueLinks.companyId, input.companyId),
+            eq(workRecordIssueLinks.projectId, defectHandoff.projectId),
+            eq(workRecordIssueLinks.recordId, defectHandoff.recordId),
+            eq(workRecordIssueLinks.issueId, defectHandoff.issueId),
+            eq(workRecordIssueLinks.purpose, "primary"),
+          )).for("update");
+          const [issue] = await tx.select().from(issues).where(and(
+            eq(issues.companyId, input.companyId),
+            eq(issues.id, defectHandoff.issueId),
+          )).for("update");
+          const [comment] = await tx.select().from(issueComments).where(and(
+            eq(issueComments.id, defectHandoff.commentId),
+            eq(issueComments.companyId, input.companyId),
+            eq(issueComments.issueId, defectHandoff.issueId),
+            eq(issueComments.authorAgentId, input.agentId),
+            eq(issueComments.createdByRunId, input.runId),
+          ));
+          const [oldReview] = await tx.select({ id: issueCompletionReviews.id })
+            .from(issueCompletionReviews).where(and(
+              eq(issueCompletionReviews.companyId, input.companyId),
+              eq(issueCompletionReviews.issueId, defectHandoff.issueId),
+              eq(issueCompletionReviews.state, "pending"),
+            )).limit(1);
+          if (!cycle || cycle.projectId !== defectHandoff.projectId ||
+            cycle.kind !== "independent_defect" || cycle.state !== "open" ||
+            cycle.qualityPhase !== "waiting_fix" ||
+            cycle.aggregateRecordId !== defectHandoff.recordId ||
+            cycle.revision !== defectHandoff.preparedCycleRevision ||
+            !repair || repair.cycleId !== cycle.id || repair.projectId !== cycle.projectId ||
+            repair.recordId !== defectHandoff.recordId ||
+            repair.defectRecordId !== defectHandoff.recordId || repair.role !== "repair" ||
+            !repair.required || repair.issueLinkId !== link?.id ||
+            !["ready", "active"].includes(repair.state) ||
+            !qa || qa.cycleId !== cycle.id || qa.projectId !== cycle.projectId ||
+            qa.recordId !== defectHandoff.recordId ||
+            qa.defectRecordId !== defectHandoff.recordId || qa.role !== "qa" ||
+            !qa.required || qa.issueLinkId !== link?.id ||
+            !["blocked", "waiting"].includes(qa.state) ||
+            !record || record.kind !== "defect" || record.parentRecordId ||
+            record.projectId !== defectHandoff.projectId ||
+            record.assigneeAgentId !== input.agentId ||
+            record.qaAssigneeAgentId !== defectHandoff.qaAgentId ||
+            record.dispatchState === "not_dispatched" || !link ||
+            !issue || issue.projectId !== defectHandoff.projectId ||
+            issue.status !== "in_progress" ||
+            issue.statusVersion !== defectHandoff.preparedStatusVersion ||
+            issue.assigneeAgentId !== input.agentId ||
+            issue.executionRunId !== input.runId ||
+            !comment || oldReview) {
+            throw conflict("Defect repair or QA assignment changed before process stop");
+          }
+          const [oldCard] = await tx.select({ id: issueThreadInteractions.id })
+            .from(issueThreadInteractions).where(and(
+              eq(issueThreadInteractions.companyId, input.companyId),
+              eq(issueThreadInteractions.issueId, issue.id),
+              eq(issueThreadInteractions.status, "pending"),
+              sql`${issueThreadInteractions.payload}->'target'->>'key' = ${ISSUE_COMPLETION_REVIEW_TARGET_KEY}`,
+            )).limit(1);
+          if (oldCard) throw conflict("Old completion review card blocks defect QA handoff");
+          const transition = applyIssueExecutionPolicyTransition({
+            issue, policy: normalizeIssueExecutionPolicy(issue.executionPolicy),
+            requestedStatus: "done", requestedAssigneePatch: {},
+            actor: { agentId: input.agentId, userId: null },
+            allowBoardOverride: false, commentBody: comment.body,
+          });
+          const pending = transition.patch.executionState as Record<string, unknown> | null | undefined;
+          const participant = pending?.currentParticipant as Record<string, unknown> | undefined;
+          if (transition.patch.status !== "in_review" ||
+            transition.patch.assigneeAgentId !== defectHandoff.qaAgentId ||
+            pending?.status !== "pending" || participant?.agentId !== defectHandoff.qaAgentId) {
+            throw conflict("Native execution policy did not assign the QA stage");
+          }
+          const postCommitActions: IssuePostCommitAction[] = [];
+          const submitted = await issueService(db).update(issue.id, {
+            companyGuard: input.companyId, status: "done", ...transition.patch,
+            actorAgentId: input.agentId,
+          }, tx, publications, postCommitActions);
+          const submittedParticipant = submitted?.executionState?.currentParticipant as
+            Record<string, unknown> | null | undefined;
+          if (!submitted || submitted.status !== "in_review" ||
+            submitted.statusVersion !== issue.statusVersion + 1 ||
+            submitted.assigneeAgentId !== defectHandoff.qaAgentId ||
+            submitted.executionState?.status !== "pending" ||
+            submittedParticipant?.agentId !== defectHandoff.qaAgentId ||
+            postCommitActions.length > 0) {
+            throw conflict("Native defect QA handoff did not commit after process stop");
+          }
+          const now = new Date();
+          await tx.update(workRecordQualityItems).set({ state: "accepted",
+            revision: sql`${workRecordQualityItems.revision} + 1`, updatedAt: now })
+            .where(eq(workRecordQualityItems.id, repair.id));
+          await tx.update(workRecordQualityItems).set({ state: "active",
+            revision: sql`${workRecordQualityItems.revision} + 1`, updatedAt: now })
+            .where(eq(workRecordQualityItems.id, qa.id));
+          await tx.update(workRecordQualityCycles).set({ qualityPhase: "qa_retest",
+            revision: cycle.revision + 1, updatedAt: now })
+            .where(eq(workRecordQualityCycles.id, cycle.id));
+          await tx.update(workRecords).set({ businessStatus: "in_review",
+            statusVersion: sql`${workRecords.statusVersion} + 1`, updatedAt: now })
+            .where(eq(workRecords.id, record.id));
+          await tx.update(localDefectRepairHandoffs).set({ state: "submitted",
+            submittedStatusVersion: submitted.statusVersion })
+            .where(eq(localDefectRepairHandoffs.id, defectHandoff.id));
+          defectReceipt = { defectHandoffId: defectHandoff.id,
+            defectHandoffDisposition: "submitted",
+            defectSubmittedStatusVersion: submitted.statusVersion };
+        } else {
+          await tx.update(localDefectRepairHandoffs).set({ state: "aborted" })
+            .where(eq(localDefectRepairHandoffs.id, defectHandoff.id));
+          defectReceipt = { defectHandoffId: defectHandoff.id,
+            defectHandoffDisposition: "aborted" };
+        }
+      }
       // A local process result is not a business completion. Without an atomic
       // handoff, releasing any source run would strand an in_progress task.
       // Preserve a human's newer state if they changed it.
@@ -870,6 +1026,7 @@ export function localAgentRunLeaseService(
               ...(reviewerReceipt ?? {}),
               ...(childReceipt ?? {}),
               ...(poReceipt ?? {}),
+              ...(defectReceipt ?? {}),
             },
           } } : {}),
         }).where(eq(heartbeatRuns.id, input.runId));
@@ -976,7 +1133,8 @@ export function localAgentRunLeaseService(
     actor: Express.Request["actor"],
     action: "issue:comment" | "issue:mutate",
     write: (tx: Db, issue: typeof issues.$inferSelect, authorizationReason: string) => Promise<T>,
-    options: { allowReviewReplay?: boolean; allowPoPreparedReplay?: boolean } = {},
+    options: { allowReviewReplay?: boolean; allowPoPreparedReplay?: boolean;
+      allowDefectPreparedReplay?: boolean } = {},
   ) {
     requireOwner(input);
     if (!UUID.test(input.issueId)) throw badRequest("Invalid issueId");
@@ -1024,6 +1182,15 @@ export function localAgentRunLeaseService(
         )).limit(1);
       if (preparedPo && !options.allowPoPreparedReplay) {
         throw conflict("This local PO run already prepared its final decision");
+      }
+      const [preparedDefect] = await tx.select({ id: localDefectRepairHandoffs.id })
+        .from(localDefectRepairHandoffs).where(and(
+          eq(localDefectRepairHandoffs.companyId, input.companyId),
+          eq(localDefectRepairHandoffs.runId, input.runId),
+          eq(localDefectRepairHandoffs.state, "prepared"),
+        )).limit(1);
+      if (preparedDefect && !options.allowDefectPreparedReplay) {
+        throw conflict("This local defect run already prepared its final handoff");
       }
       if (reviewReplay) return write(tx as unknown as Db, issue, "review_handoff_replay");
       const decision = await accessService(tx as unknown as Db).decide({
@@ -1285,6 +1452,137 @@ export function localAgentRunLeaseService(
           statusVersion: issue.statusVersion, receiptId: receipt.id,
           disposition: "prepared" as const, replayed: false };
       });
+    for (const publication of publications) publishActivity(publication);
+    return result;
+  }
+
+  async function prepareFencedDefectRepairHandoff(
+    input: LocalRunOwner & { issueId: string; summary: string;
+      expectedStatusVersion: number; clientRequestId: string },
+    actor: Express.Request["actor"],
+  ) {
+    if (!UUID.test(input.clientRequestId) || typeof input.summary !== "string" ||
+      !input.summary.trim() || Buffer.byteLength(input.summary, "utf8") > 4096 ||
+      /@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\./i.test(input.summary) ||
+      !Number.isSafeInteger(input.expectedStatusVersion) || input.expectedStatusVersion < 0) {
+      throw badRequest("Defect repair handoff requires a request ID, plain summary and status revision");
+    }
+    const digest = createHash("sha256").update(JSON.stringify({
+      companyId: input.companyId, issueId: input.issueId, runId: input.runId,
+      agentId: input.agentId, summary: input.summary,
+      expectedStatusVersion: input.expectedStatusVersion,
+    })).digest("hex");
+    const publications: ActivityPublication[] = [];
+    const result = await withFencedIssueWrite(input, actor, "issue:mutate",
+      async (tx, issue, authorizationReason) => {
+        const [existing] = await tx.select().from(localDefectRepairHandoffs).where(and(
+          eq(localDefectRepairHandoffs.companyId, input.companyId),
+          eq(localDefectRepairHandoffs.runId, input.runId),
+        )).limit(1);
+        if (existing) {
+          if (existing.issueId !== issue.id || existing.clientRequestId !== input.clientRequestId ||
+            existing.requestDigest !== digest || existing.state !== "prepared" ||
+            issue.status !== "in_progress" || issue.statusVersion !== existing.preparedStatusVersion) {
+            throw conflict("Defect repair handoff differs from its preparation");
+          }
+          return { issueId: issue.id, status: issue.status,
+            statusVersion: issue.statusVersion, receiptId: existing.id,
+            disposition: "prepared" as const, replayed: true };
+        }
+        if (issue.status !== "in_progress" || issue.statusVersion !== input.expectedStatusVersion) {
+          throw conflict("Defect repair task revision changed");
+        }
+        const [linked] = await tx.select({ link: workRecordIssueLinks, record: workRecords })
+          .from(workRecordIssueLinks).innerJoin(workRecords, and(
+            eq(workRecords.companyId, workRecordIssueLinks.companyId),
+            eq(workRecords.id, workRecordIssueLinks.recordId),
+          )).where(and(
+            eq(workRecordIssueLinks.companyId, input.companyId),
+            eq(workRecordIssueLinks.issueId, issue.id),
+            eq(workRecordIssueLinks.purpose, "primary"),
+          )).limit(1);
+        const record = linked?.record;
+        if (!record || record.kind !== "defect" || record.parentRecordId ||
+          record.assigneeAgentId !== input.agentId ||
+          record.projectId !== issue.projectId ||
+          record.dispatchState === "not_dispatched" ||
+          !record.qaAssigneeAgentId || record.qaAssigneeAgentId === input.agentId) {
+          throw unprocessable("Only a dispatched independent defect repairer can prepare QA handoff",
+            { code: "work_record_defect_repair_scope_invalid" });
+        }
+        const [qaAgent] = await tx.select({ id: agents.id,
+          runtimeConfig: agents.runtimeConfig }).from(agents).where(and(
+            eq(agents.id, record.qaAssigneeAgentId),
+            eq(agents.companyId, input.companyId),
+          ));
+        if (!qaAgent || !isClientPullRuntimeConfig(qaAgent.runtimeConfig)) {
+          throw conflict("Defect QA must be a local client-pull agent");
+        }
+        const [oldReview] = await tx.select({ id: issueCompletionReviews.id })
+          .from(issueCompletionReviews).where(and(
+            eq(issueCompletionReviews.companyId, input.companyId),
+            eq(issueCompletionReviews.issueId, issue.id),
+            eq(issueCompletionReviews.state, "pending"),
+          )).limit(1);
+        const [oldCard] = await tx.select({ id: issueThreadInteractions.id })
+          .from(issueThreadInteractions).where(and(
+            eq(issueThreadInteractions.companyId, input.companyId),
+            eq(issueThreadInteractions.issueId, issue.id),
+            eq(issueThreadInteractions.status, "pending"),
+            sql`${issueThreadInteractions.payload}->'target'->>'key' = ${ISSUE_COMPLETION_REVIEW_TARGET_KEY}`,
+          )).limit(1);
+        if (oldReview || oldCard) throw conflict("Resolve the old completion review before defect QA handoff");
+        const [cycle] = await tx.select().from(workRecordQualityCycles).where(and(
+          eq(workRecordQualityCycles.companyId, input.companyId),
+          eq(workRecordQualityCycles.projectId, record.projectId),
+          eq(workRecordQualityCycles.aggregateRecordId, record.id),
+          eq(workRecordQualityCycles.kind, "independent_defect"),
+          eq(workRecordQualityCycles.state, "open"),
+          eq(workRecordQualityCycles.qualityPhase, "waiting_fix"),
+        )).limit(1);
+        const items = cycle ? await tx.select().from(workRecordQualityItems).where(and(
+          eq(workRecordQualityItems.companyId, input.companyId),
+          eq(workRecordQualityItems.cycleId, cycle.id),
+          eq(workRecordQualityItems.recordId, record.id),
+          eq(workRecordQualityItems.issueLinkId, linked.link.id),
+          eq(workRecordQualityItems.required, true),
+        )) : [];
+        const repair = items.find((item) => item.role === "repair");
+        const qa = items.find((item) => item.role === "qa");
+        if (!cycle || !repair || !qa || !["ready", "active"].includes(repair.state) ||
+          !["blocked", "waiting"].includes(qa.state)) {
+          throw conflict("Independent defect quality cycle is not ready for repair handoff");
+        }
+        const sourceTrust = await resolveActorSourceTrustForIssue({ db: tx, issue,
+          actor: { actorType: "agent", actorId: input.agentId,
+            agentId: input.agentId, runId: input.runId } });
+        const comment = await issueService(db).addComment(issue.id, input.summary,
+          { agentId: input.agentId, runId: input.runId,
+            onBehalfOfUserId: actor.onBehalfOfUserId },
+          { authorType: "agent", authorizationReason, sourceTrust,
+            clientRequestId: input.clientRequestId }, tx);
+        const [receipt] = await tx.insert(localDefectRepairHandoffs).values({
+          companyId: input.companyId, projectId: record.projectId,
+          issueId: issue.id, recordId: record.id, cycleId: cycle.id,
+          repairItemId: repair.id, qaItemId: qa.id,
+          qaAgentId: qaAgent.id, runId: input.runId,
+          clientRequestId: input.clientRequestId, requestDigest: digest,
+          preparedStatusVersion: issue.statusVersion,
+          preparedCycleRevision: cycle.revision, commentId: comment.id,
+        }).returning({ id: localDefectRepairHandoffs.id });
+        await logActivity(tx, {
+          companyId: input.companyId, actorType: "agent", actorId: input.agentId,
+          agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
+          action: "work_record.defect_repair_handoff_prepared", entityType: "issue",
+          entityId: issue.id, issueId: issue.id,
+          details: { recordId: record.id, cycleId: cycle.id, receiptId: receipt.id,
+            commentId: comment.id, clientRequestId: input.clientRequestId,
+            statusVersion: issue.statusVersion },
+        }, publications);
+        return { issueId: issue.id, status: issue.status,
+          statusVersion: issue.statusVersion, receiptId: receipt.id,
+          disposition: "prepared" as const, replayed: false };
+      }, { allowDefectPreparedReplay: true });
     for (const publication of publications) publishActivity(publication);
     return result;
   }
@@ -1821,6 +2119,7 @@ export function localAgentRunLeaseService(
 
   return { claim, renew, control, finish, appendFencedEvent,
     addFencedComment, completeFencedChildWorkRecord, prepareFencedPoVerdict,
+    prepareFencedDefectRepairHandoff,
     createFencedReviewConfirmation, reviewFencedIssue,
     createFencedAgentReviewHandoff, createFencedCompletionReviewHandoff, patchFencedIssue };
 }

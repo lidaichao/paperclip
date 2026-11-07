@@ -284,6 +284,19 @@ export function localAgentRunRoutes(db: Db) {
     return res.status(result.replayed ? 200 : 201).json(result);
   });
 
+  router.post("/agents/me/local-runs/:runId/issue/defect-repair-handoff", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const body = objectBody(req.body);
+    onlyFields(body, [...ownerFields, "summary", "expectedStatusVersion", "clientRequestId"]);
+    const result = await leases.prepareFencedDefectRepairHandoff({
+      ...owner(req, body), issueId: String(body.issueId ?? ""),
+      summary: body.summary as string,
+      expectedStatusVersion: Number(body.expectedStatusVersion),
+      clientRequestId: String(body.clientRequestId ?? ""),
+    }, req.actor);
+    return res.status(result.replayed ? 200 : 201).json(result);
+  });
+
   router.post("/agents/me/local-runs/:runId/issue/po-verdict", async (req, res) => {
     res.set("Cache-Control", "no-store");
     const body = objectBody(req.body);
