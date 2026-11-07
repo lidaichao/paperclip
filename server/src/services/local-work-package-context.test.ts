@@ -37,6 +37,7 @@ suite("local PO package context (PostgreSQL)", () => {
     const runId = randomUUID(), childRunId = randomUUID();
     const keyId = randomUUID(), leaseId = randomUUID();
     const cycleId = randomUUID(), poItemId = randomUUID(), childItemId = randomUUID();
+    const scopeDigest = randomUUID();
     const commentId = randomUUID();
     await db.insert(companies).values({ id: companyId, name: "PO context",
       issuePrefix: `P${companyId.slice(0, 7)}` });
@@ -76,29 +77,31 @@ suite("local PO package context (PostgreSQL)", () => {
         parentRecordId, title: "Implementation", description: "Implement feature",
         assigneeAgentId: childAgentId, dispatchState: "dispatched" },
     ]);
-    await db.insert(workRecordIssueLinks).values([
+    const linkedIssues = await db.insert(workRecordIssueLinks).values([
       { companyId, projectId, recordId: parentRecordId, issueId: parentIssueId,
         purpose: "primary", dispatchRound: 1 },
       { companyId, projectId, recordId: childRecordId, issueId: childIssueId,
         purpose: "primary", dispatchRound: 1 },
-    ]);
+    ]).returning();
     const [batch] = await db.insert(workRecordDispatchBatches).values({
       companyId, projectId, rootRecordId: parentRecordId,
       clientRequestId: randomUUID(), requestPayloadDigest: randomUUID(),
-      scopeKind: "whole_package", scopeDigest: randomUUID(),
+      scopeKind: "whole_package", scopeDigest,
       rootRecordRevision: 1, dependencySetRevision: 1,
       state: "prepared",
     }).returning();
     await db.insert(workRecordDispatchBatchItems).values([
       { companyId, projectId, batchId: batch.id, recordId: parentRecordId,
-        recordRevision: 1, inclusionReason: "root", materializationState: "linked" },
+        recordRevision: 1, inclusionReason: "root", materializationState: "linked",
+        primaryIssueLinkId: linkedIssues[0]!.id },
       { companyId, projectId, batchId: batch.id, recordId: childRecordId,
-        recordRevision: 1, inclusionReason: "descendant", materializationState: "linked" },
+        recordRevision: 1, inclusionReason: "descendant", materializationState: "linked",
+        primaryIssueLinkId: linkedIssues[1]!.id },
     ]);
     await db.insert(workRecordQualityCycles).values({ id: cycleId,
       companyId, projectId, aggregateRecordId: parentRecordId,
       cycleNumber: 1, kind: "package_acceptance", state: "open",
-      qualityPhase: "po_acceptance", scopeDigest: randomUUID() });
+      qualityPhase: "po_acceptance", scopeDigest });
     await db.insert(workRecordQualityItems).values([
       { id: poItemId, companyId, projectId, cycleId, recordId: parentRecordId,
         role: "po", state: "ready" },
