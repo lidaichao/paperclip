@@ -544,6 +544,12 @@ export async function startLocalRunWriteProxy(input: {
           || (body.clientRequestId !== undefined && (typeof body.clientRequestId !== "string" || !UUID.test(body.clientRequestId)))) {
           json(res, 400, { error: "unsupported comment payload" }); return;
         }
+        // Match the server's deterministic comment policy before recording an
+        // intent. Otherwise a rejected comment (for example, pnpm@9.15.4)
+        // looks like a lost response and fences the next local run.
+        if (/@|(?:[a-z][a-z0-9+.-]*:\/\/)|\bwww\.|\bmailto:|\b\S+\.(?:com|net|org|cn|io|dev|ai|co|xyz)(?:\b|\/)/i.test(body.body)) {
+          json(res, 400, { error: "local progress comments cannot contain @ or external links; rephrase before sending" }); return;
+        }
         const perform = async () => {
           if (closed || input.signal.aborted) throw new Error("local run cancelled");
           if (sourceDispositionConfirmed) throw new Error("source run already completed or handed off");

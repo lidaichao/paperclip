@@ -62,6 +62,19 @@ async function fixture() {
 }
 
 describe("fenced local run write capability", () => {
+  it("rejects deterministic comment policy failures before saving a write intent", async () => {
+    const f = await fixture();
+    try {
+      const response = await f.request(`/api/issues/${issueId}/comments`, "POST",
+        { body: "Run corepack pnpm@9.15.4" });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: expect.stringContaining("rephrase before sending"),
+      });
+      expect(f.addLocalRunComment).not.toHaveBeenCalled();
+      await expect(readFile(f.intentFile, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    } finally { await f.proxy.close(); }
+  });
   it("delegates only from the claimed issue and keeps retry identity", async () => {
     const f = await fixture();
     const delegate = { title: "G0 baseline", description: "Inspect and report the source baseline",
