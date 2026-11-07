@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { assertNoUnreportedSupervisors, verifySupervisorStopped,
+import { assertNoUnreportedSupervisors, cancelSupervisor, verifySupervisorStopped,
   type SupervisorBinding } from "./supervisor-client.js";
 
 const runId = "f2c991f1-b53d-4bb5-b134-8e29d43815d0";
@@ -29,6 +29,7 @@ describe("supervised model stop proof", () => {
     await writeFile(stoppedFile, JSON.stringify({ ...shared, cause: "model_exit",
       modelExitCode: 0, activeProcesses: 0, completedAtUtc: "2026-11-07T12:01:00Z" }));
     await expect(verifySupervisorStopped(binding, reported)).resolves.toBeUndefined();
+    await expect(cancelSupervisor(binding, reported)).rejects.toThrow("cancel identity is invalid");
     await expect(assertNoUnreportedSupervisors(binding, [reported])).resolves.toBeUndefined();
     await mkdir(path.join(receiptBaseDir, runId, "fbb60174-4ed8-4302-85ac-12ca356cc02e"));
     await expect(assertNoUnreportedSupervisors(binding, [reported]))

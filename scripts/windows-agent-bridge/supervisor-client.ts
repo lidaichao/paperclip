@@ -91,7 +91,7 @@ export async function verifySupervisorStopped(binding: SupervisorBinding,
     ready.bridgeSessionId !== binding.bridgeSessionId ||
     !Number.isSafeInteger(ready.modelPid) || Number(ready.modelPid) <= 0 ||
     typeof ready.modelCreationFileTime !== "string" ||
-    !["model_exit", "cancelled", "bridge_exit", "descendant_timeout"].includes(String(stopped.cause)) ||
+    !["model_exit", "cancelled", "bridge_exit", "descendant_timeout", "input_failure"].includes(String(stopped.cause)) ||
     !Number.isSafeInteger(stopped.modelExitCode) ||
     stopped.activeProcesses !== 0 || typeof stopped.completedAtUtc !== "string" ||
     Number.isNaN(Date.parse(stopped.completedAtUtc))) {
@@ -113,10 +113,13 @@ export async function cancelSupervisor(binding: SupervisorBinding,
     }
   }
   if (!ready) throw new Error("Windows supervisor launch marker was not confirmed");
+  const expectedCancelEvent = `Local\\PaperclipCancel-${binding.runId.replace(/-/g, "")}-${process.supervisor!.nonce.replace(/-/g, "")}`;
   if (ready.runId !== binding.runId || ready.leaseId !== binding.leaseId ||
     ready.deviceId !== binding.deviceId || ready.nonce !== process.supervisor!.nonce ||
-    typeof ready.cancelEvent !== "string" ||
-    !ready.cancelEvent.startsWith("Local\\PaperclipCancel-")) {
+    ready.bridgePid !== globalThis.process.pid ||
+    ready.bridgeCreationFileTime !== binding.bridgeCreationFileTime ||
+    ready.bridgeSessionId !== binding.bridgeSessionId ||
+    ready.cancelEvent !== expectedCancelEvent) {
     throw new Error("Windows supervisor cancel identity is invalid");
   }
   await command(binding.executable, ["cancel", ready.cancelEvent]);
