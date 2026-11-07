@@ -1,4 +1,5 @@
 patches/*.patch whitespace=-space-before-tab
+*.sh text eol=lf
 packages/paperclip-runner/generated/capability/* text eol=lf
 packages/paperclip-runner/generated/semantic-action-catalog.json text eol=lf
 packages/paperclip-runner/protocol/fixtures/replay/golden/* text eol=lf
