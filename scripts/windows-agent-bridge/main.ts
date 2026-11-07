@@ -168,8 +168,10 @@ export async function runBridge(configPath: string, signal: AbortSignal): Promis
     };
     if (!config.supervisorExecutable) throw new Error("Windows Job supervisor executable is required");
     const bridgeIdentity = await readSupervisorBridgeIdentity(config.supervisorExecutable);
+    const receiptBaseDir = path.join(config.workerHome, "supervisor-runs");
+    await mkdir(receiptBaseDir, { recursive: true, mode: 0o700 });
     const supervisor = { executable: config.supervisorExecutable,
-      receiptBaseDir: path.join(config.workerHome, "supervisor-runs"), ...bridgeIdentity };
+      receiptBaseDir, ...bridgeIdentity };
     let lastSuccessfulPollAt: string | null = null;
     while (!signal.aborted) {
       // A failed cycle exits. The scheduled task must not repeatedly relaunch
