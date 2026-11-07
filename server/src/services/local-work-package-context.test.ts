@@ -6,6 +6,7 @@ import {
   heartbeatRuns, issueComments, issues, localAgentDeviceBindings,
   localAgentRunLeases, localIssueCompletionCommands, projects,
   localPoVerdictCommands,
+  localRunWriteReceipts,
   startEmbeddedPostgresTestDatabase, workRecordIssueLinks,
   workRecordDispatchBatches, workRecordDispatchBatchItems,
   workRecordQualityCycles, workRecordQualityItems, workRecords,
@@ -179,6 +180,10 @@ suite("local PO package context (PostgreSQL)", () => {
       evidenceRefs: [], targetRecordIds: [] };
     const prepared = await lease.prepareFencedPoVerdict(command, f.actor);
     expect(prepared.disposition).toBe("prepared");
+    expect((await db.select().from(localRunWriteReceipts).where(eq(
+      localRunWriteReceipts.clientRequestId, command.clientRequestId)))[0])
+      .toMatchObject({ kind: "po_verdict", sourceReceiptId: prepared.receiptId,
+        deviceId: command.deviceId });
     expect((await lease.prepareFencedPoVerdict(command, f.actor)).replayed).toBe(true);
     await expect(lease.prepareFencedPoVerdict({ ...command,
       reason: "Changed acceptance reason" }, f.actor)).rejects.toMatchObject({ status: 409 });

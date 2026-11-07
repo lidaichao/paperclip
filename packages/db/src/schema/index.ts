@@ -29,6 +29,7 @@ export { localIssueCompletionCommands } from "./local_issue_completion_commands.
 export { localPoVerdictCommands } from "./local_po_verdict_commands.js";
 export { localDefectRepairHandoffs } from "./local_defect_repair_handoffs.js";
 export { localDefectQaVerdictCommands } from "./local_defect_qa_verdict_commands.js";
+export { localRunWriteReceipts } from "./local_run_write_receipts.js";
 export { localAgentDeviceBindings } from "./local_agent_device_bindings.js";
 export { issueCommandDeliveries } from "./issue_command_deliveries.js";
 export { issueCompletionReviews } from "./issue_completion_reviews.js";

@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { and, eq, sql } from "drizzle-orm";
 import {
@@ -6,6 +6,7 @@ import {
   getEmbeddedPostgresTestSupport, heartbeatRuns, issueThreadInteractions, issues,
   localAgentDeviceBindings, localAgentRunLeases, localDefectRepairHandoffs,
   localDefectQaVerdictCommands,
+  localRunWriteReceipts,
   projects, startEmbeddedPostgresTestDatabase, workRecordExecutionIntents,
   workRecordIssueLinks, workRecordQualityCycles, workRecordQualityItems,
   workRecordQualityVerdicts, workRecords,
@@ -137,6 +138,22 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
     const q = await claimedQaFixture();
     const { command, receipt } = await prepareQaVerdict(q, "pass");
     expect(receipt).toMatchObject({ disposition: "prepared", replayed: false });
+    const requestDigest = createHash("sha256").update(JSON.stringify({
+      kind: "defect_qa_verdict", runId: command.runId, issueId: command.issueId,
+      agentId: command.agentId, deviceId: command.deviceId,
+      canonicalContent: JSON.stringify({
+        expectedStatusVersion: command.expectedStatusVersion,
+        cycleId: command.cycleId, itemId: command.itemId,
+        expectedCycleRevision: command.expectedCycleRevision,
+        expectedItemRevision: command.expectedItemRevision,
+        outcome: command.outcome, summary: command.summary,
+        evidenceRefs: command.evidenceRefs,
+      }),
+    })).digest("hex");
+    const lookup = { ...command, kind: "defect_qa_verdict", requestDigest };
+    expect(await q.service.readFencedWriteReceipt(lookup)).toMatchObject({
+      state: "committed", sourceReceiptId: receipt.receiptId,
+    });
     expect(await q.service.prepareFencedDefectQaVerdict(command, q.actor))
       .toMatchObject({ receiptId: receipt.receiptId, replayed: true });
     await expect(q.service.prepareFencedDefectQaVerdict({ ...command,
@@ -163,6 +180,7 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
     expect(item.state).toBe("accepted");
     expect(qaCommand).toMatchObject({ state: "committed", id: receipt.receiptId });
     expect(qaCommand.verdictId).not.toBeNull();
+    expect((await q.service.readFencedWriteReceipt(lookup)).state).toBe("committed");
     expect((await db.select().from(localAgentRunLeases)
       .where(eq(localAgentRunLeases.runId, q.claim.runId)))[0]?.releasedAt).not.toBeNull();
     expect(await db.select().from(workRecordQualityVerdicts)
@@ -230,7 +248,11 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
       generation: q.owner.generation + 1 }, q.actor)).rejects.toMatchObject({ status: 403 });
     expect(await db.select().from(localDefectQaVerdictCommands)
       .where(eq(localDefectQaVerdictCommands.runId, q.claim.runId))).toHaveLength(0);
+    expect(await db.select().from(localRunWriteReceipts)
+      .where(eq(localRunWriteReceipts.runId, q.claim.runId))).toHaveLength(0);
     await q.service.prepareFencedDefectQaVerdict(command, q.actor);
+    expect(await db.select().from(localRunWriteReceipts)
+      .where(eq(localRunWriteReceipts.runId, q.claim.runId))).toHaveLength(1);
     await db.execute(sql`ALTER TABLE work_record_quality_verdicts
       ADD CONSTRAINT local_defect_qa_verdict_rollback_check
       CHECK (outcome <> 'pass') NOT VALID`);
@@ -544,6 +566,10 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
     const f = await fixture();
     const { command, receipt } = await prepare(f);
     expect(receipt.disposition).toBe("prepared");
+    expect((await db.select().from(localRunWriteReceipts).where(eq(
+      localRunWriteReceipts.clientRequestId, command.clientRequestId)))[0])
+      .toMatchObject({ kind: "defect_repair_handoff", sourceReceiptId: receipt.receiptId,
+        deviceId: command.deviceId });
     expect((await f.service.prepareFencedDefectRepairHandoff(command, f.actor)).replayed).toBe(true);
     await expect(f.service.prepareFencedDefectRepairHandoff({ ...command,
       summary: "Changed summary" }, f.actor)).rejects.toMatchObject({ status: 409 });

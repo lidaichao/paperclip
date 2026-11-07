@@ -12,6 +12,7 @@ import {
   issueThreadInteractions,
   issues,
   localAgentRunLeases,
+  localRunWriteReceipts,
   localIssueCompletionCommands,
   localDefectRepairHandoffs,
   localDefectQaVerdictCommands,
@@ -107,6 +108,23 @@ function localCommentIntentDigest(input: { runId: string; issueId: string;
     agentId: input.agentId, deviceId: input.deviceId,
     canonicalContent: input.body,
   })).digest("hex");
+}
+
+type PreparedWriteKind = "child_complete" | "defect_repair_handoff" |
+  "po_verdict" | "defect_qa_verdict" | "completion_review_handoff";
+
+async function recordPreparedWriteReceipt(tx: Db, input: LocalRunOwner & {
+  issueId: string; clientRequestId: string }, kind: PreparedWriteKind,
+  canonicalContent: string, sourceReceiptId: string) {
+  const requestDigest = createHash("sha256").update(JSON.stringify({
+    kind, runId: input.runId, issueId: input.issueId,
+    agentId: input.agentId, deviceId: input.deviceId, canonicalContent,
+  })).digest("hex");
+  await tx.insert(localRunWriteReceipts).values({
+    companyId: input.companyId, runId: input.runId, issueId: input.issueId,
+    agentId: input.agentId, deviceId: input.deviceId,
+    clientRequestId: input.clientRequestId, kind, requestDigest, sourceReceiptId,
+  });
 }
 
 export function localAgentRunLeaseService(
@@ -1538,6 +1556,14 @@ export function localAgentRunLeaseService(
         preparedCycleRevision: context.cycle.revision,
         preparedItemRevision: context.qa.revision,
       }).returning({ id: localDefectQaVerdictCommands.id });
+      await recordPreparedWriteReceipt(tx, input, "defect_qa_verdict", JSON.stringify({
+        expectedStatusVersion: input.expectedStatusVersion,
+        cycleId: input.cycleId, itemId: input.itemId,
+        expectedCycleRevision: input.expectedCycleRevision,
+        expectedItemRevision: input.expectedItemRevision,
+        outcome: input.outcome, summary: input.summary,
+        evidenceRefs: input.evidenceRefs,
+      }), receipt.id);
       return { issueId: context.issue.id, status: "in_review" as const,
         statusVersion: context.issue.statusVersion,
         receiptId: receipt.id, disposition: "prepared" as const,
@@ -1677,6 +1703,14 @@ export function localAgentRunLeaseService(
         clientRequestId: input.clientRequestId, requestDigest: digest,
         payload, preparedStatusVersion: issue.statusVersion,
       }).returning({ id: localPoVerdictCommands.id });
+      await recordPreparedWriteReceipt(tx, input, "po_verdict", JSON.stringify({
+        expectedStatusVersion: input.expectedStatusVersion,
+        cycleId: input.cycleId, itemId: input.itemId,
+        expectedCycleRevision: input.expectedCycleRevision,
+        outcome: input.outcome, reason: input.reason,
+        evidenceRefs: input.evidenceRefs,
+        targetRecordIds: input.targetRecordIds,
+      }), receipt.id);
       return { receiptId: receipt.id, disposition: "prepared" as const, replayed: false };
     }, { allowPoPreparedReplay: true });
   }
@@ -1773,6 +1807,9 @@ export function localAgentRunLeaseService(
           clientRequestId: input.clientRequestId, requestDigest: digest,
           preparedStatusVersion: issue.statusVersion, commentId: comment.id,
         }).returning({ id: localIssueCompletionCommands.id });
+        await recordPreparedWriteReceipt(tx, input, "child_complete", JSON.stringify({
+          expectedStatusVersion: input.expectedStatusVersion, summary: input.summary,
+        }), receipt.id);
         await logActivity(tx, {
           companyId: input.companyId, actorType: "agent", actorId: input.agentId,
           agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
@@ -1904,6 +1941,9 @@ export function localAgentRunLeaseService(
           preparedStatusVersion: issue.statusVersion,
           preparedCycleRevision: cycle.revision, commentId: comment.id,
         }).returning({ id: localDefectRepairHandoffs.id });
+        await recordPreparedWriteReceipt(tx, input, "defect_repair_handoff", JSON.stringify({
+          expectedStatusVersion: input.expectedStatusVersion, summary: input.summary,
+        }), receipt.id);
         await logActivity(tx, {
           companyId: input.companyId, actorType: "agent", actorId: input.agentId,
           agentId: input.agentId, runId: input.runId, agentApiKeyId: actor.keyId,
@@ -2004,6 +2044,29 @@ export function localAgentRunLeaseService(
         throw forbidden("Local run receipt owner mismatch");
       }
       await assertLeaseDevice(tx as unknown as Db, lease, input);
+      const [preparedReceipt] = await tx.select().from(localRunWriteReceipts).where(and(
+        eq(localRunWriteReceipts.companyId, input.companyId),
+        eq(localRunWriteReceipts.runId, input.runId),
+        eq(localRunWriteReceipts.clientRequestId, input.clientRequestId),
+      ));
+      if (preparedReceipt) {
+        if (preparedReceipt.issueId !== input.issueId ||
+          preparedReceipt.agentId !== input.agentId ||
+          preparedReceipt.deviceId !== input.deviceId ||
+          preparedReceipt.kind !== input.kind ||
+          preparedReceipt.requestDigest !== input.requestDigest) {
+          throw conflict("Local write receipt identity or digest mismatch");
+        }
+        return { state: "committed" as const, kind: preparedReceipt.kind,
+          runStatus: run.status, leaseReleased: lease.releasedAt !== null,
+          receiptId: preparedReceipt.id,
+          sourceReceiptId: preparedReceipt.sourceReceiptId };
+      }
+      if (["child_complete", "defect_repair_handoff", "po_verdict",
+        "defect_qa_verdict", "completion_review_handoff"].includes(input.kind)) {
+        return { state: "unknown" as const, kind: input.kind,
+          runStatus: run.status, leaseReleased: lease.releasedAt !== null };
+      }
       if (input.kind !== "comment") return { state: "unsupported" as const };
       const matches = await tx.select({ id: activityLog.id, details: activityLog.details })
         .from(activityLog).where(and(
@@ -2467,6 +2530,10 @@ export function localAgentRunLeaseService(
           requestId: input.clientRequestId, requestDigest: digest,
           issueStatusVersion: handoff.issue.statusVersion,
         }).returning();
+        await recordPreparedWriteReceipt(tx, input, "completion_review_handoff", JSON.stringify({
+          reviewerAgentId: input.reviewerAgentId, prompt: input.prompt,
+          body: input.body,
+        }), review.id);
         const [delivery] = await tx.insert(issueCommandDeliveries).values({
           companyId: input.companyId, issueId: input.issueId,
           interactionId: interaction.id, reviewId,

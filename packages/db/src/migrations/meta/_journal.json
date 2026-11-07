@@ -2164,6 +2164,13 @@
       "when": 1794052966365,
       "tag": "0310_local_defect_qa_retry",
       "breakpoints": true
+    },
+    {
+      "idx": 311,
+      "version": "7",
+      "when": 1794053803631,
+      "tag": "0311_local_run_write_receipts",
+      "breakpoints": true
     }
   ]
 }

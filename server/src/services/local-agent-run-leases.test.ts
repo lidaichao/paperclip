@@ -22,6 +22,7 @@ import {
   issues,
   localAgentRunLeases,
   localIssueCompletionCommands,
+  localRunWriteReceipts,
   localAgentDeviceBindings,
   projects,
   workRecords,
@@ -764,7 +765,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await expect(svc.readFencedWriteReceipt({ ...owner, issueId: randomUUID(),
       kind: "comment", clientRequestId, requestDigest: digest })).rejects.toMatchObject({ status: 403 });
     expect((await svc.readFencedWriteReceipt({ ...owner, kind: "child_complete",
-      clientRequestId, requestDigest: digest })).state).toBe("unsupported");
+      clientRequestId, requestDigest: digest })).state).toBe("unknown");
   });
 
   it("rolls back comment and audit when reference projection fails, then retries the same request", async () => {
@@ -1228,6 +1229,8 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(issue.status).toBe("in_progress");
     expect(await db.select().from(issueCompletionReviews)
       .where(eq(issueCompletionReviews.issueId, scope.issueId))).toHaveLength(0);
+    expect(await db.select().from(localRunWriteReceipts)
+      .where(eq(localRunWriteReceipts.runId, scope.runId))).toHaveLength(0);
     expect(await db.select().from(issueThreadInteractions)
       .where(eq(issueThreadInteractions.issueId, scope.issueId))).toHaveLength(0);
   }, 30_000);
@@ -1292,11 +1295,34 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       generation: command.generation, issueId: scope.issueId,
       expectedStatusVersion: command.expectedStatusVersion,
       summary: command.summary, clientRequestId: command.clientRequestId };
+    const requestDigest = createHash("sha256").update(JSON.stringify({
+      kind: "child_complete", runId: scope.runId, issueId: scope.issueId,
+      agentId: scope.agentId, deviceId: command.deviceId,
+      canonicalContent: JSON.stringify({ expectedStatusVersion: command.expectedStatusVersion,
+        summary: command.summary }),
+    })).digest("hex");
+    const lookup = { ...command, issueId: scope.issueId,
+      kind: "child_complete", requestDigest };
+    expect((await svc.readFencedWriteReceipt({ ...lookup,
+      clientRequestId: command.clientRequestId })).state).toBe("unknown");
     await request(app).post(endpoint).send({ ...body, generation: 99 }).expect(403);
     const completedResponse = await request(app).post(endpoint).send(body).expect(201);
     const completed = completedResponse.body;
     expect(completed).toMatchObject({ issueId: scope.issueId, status: "in_progress",
       statusVersion: before.statusVersion, disposition: "prepared", replayed: false });
+    expect(await svc.readFencedWriteReceipt(lookup)).toMatchObject({
+      state: "committed", kind: "child_complete", sourceReceiptId: completed.receiptId,
+    });
+    await expect(svc.readFencedWriteReceipt({ ...lookup,
+      requestDigest: "a".repeat(64) })).rejects.toMatchObject({ status: 409 });
+    await expect(svc.readFencedWriteReceipt({ ...lookup,
+      kind: "po_verdict" })).rejects.toMatchObject({ status: 409 });
+    await expect(db.insert(localRunWriteReceipts).values({
+      companyId: scope.companyId, runId: scope.runId, issueId: scope.issueId,
+      agentId: scope.agentId, deviceId: command.deviceId,
+      clientRequestId: command.clientRequestId, kind: "po_verdict",
+      requestDigest, sourceReceiptId: completed.receiptId,
+    })).rejects.toThrow();
     const replay = (await request(app).post(endpoint).send(body).expect(200)).body;
     expect(replay).toMatchObject({ ...completed, replayed: true });
     await expect(svc.completeFencedChildWorkRecord({ ...command,
@@ -1321,6 +1347,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .where(eq(localIssueCompletionCommands.issueId, scope.issueId));
     expect(receipt.state).toBe("completed");
     expect(receipt.completedStatusVersion).toBe(before.statusVersion + 1);
+    expect((await svc.readFencedWriteReceipt(lookup)).state).toBe("committed");
+    await db.update(localAgentDeviceBindings).set({ revokedAt: new Date() })
+      .where(eq(localAgentDeviceBindings.keyId, scope.keyId));
+    await expect(svc.readFencedWriteReceipt(lookup)).rejects.toMatchObject({ status: 403 });
   }, 30_000);
 
   it("aborts a prepared child completion when its local process fails", async () => {
@@ -1386,6 +1416,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       companyId: scope.companyId, keyId: scope.keyId } as const;
     const first = await svc.createFencedCompletionReviewHandoff(owner, actor);
     expect(first.replayed).toBe(false);
+    expect((await db.select().from(localRunWriteReceipts).where(eq(
+      localRunWriteReceipts.clientRequestId, owner.clientRequestId)))[0])
+      .toMatchObject({ kind: "completion_review_handoff", sourceReceiptId: first.review.id,
+        deviceId: owner.deviceId });
     expect(first.issue.status).toBe("in_review");
     expect(first.issue.statusVersion).toBe(before.statusVersion + 1);
     expect(first.issue.assigneeAgentId).toBe(scope.agentId);
@@ -1441,6 +1475,8 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       await db.execute(sql`drop trigger reject_dedicated_review_intent_trigger on issue_command_deliveries`);
       await db.execute(sql`drop function reject_dedicated_review_intent()`);
     }
+    expect(await db.select().from(localRunWriteReceipts)
+      .where(eq(localRunWriteReceipts.runId, scope.runId))).toHaveLength(0);
     const [issue] = await db.select().from(issues).where(eq(issues.id, scope.issueId));
     expect(issue.status).toBe("in_progress");
     expect(issue.statusVersion).toBe(before.statusVersion);
