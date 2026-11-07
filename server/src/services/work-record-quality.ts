@@ -812,6 +812,11 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
         ));
       }
       assertRole(actor, independent ? defect.qaAssigneeAgentId : qaRecord.assigneeAgentId, "QA");
+      if (independent && qaPrimary.issue.executionState?.status === "pending" &&
+        qaPrimary.issue.assigneeAgentId !== actor.agentId) {
+        throw conflict("Independent defect QA cannot advance a native review owned by another agent",
+          details("work_record_quality_native_review_pending"));
+      }
       if (item.state !== "ready" && item.state !== "active" && item.state !== "submitted") {
         throw conflict("QA item is not ready for a verdict", details("work_record_quality_not_ready", { itemState: item.state }));
       }
@@ -861,6 +866,10 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
             actorAgentId: actor.agentId ?? null, actorUserId: actor.userId ?? null,
           }, tx);
           if (!updated) throw notFound("Independent defect issue not found");
+          if (updated.status !== "done") {
+            throw conflict("Independent defect QA pass did not complete the native review stage",
+              details("work_record_quality_native_review_pending"));
+          }
           await retireActiveIntents(tx, companyId, updated.id, "qa_passed");
           await tx.update(workRecordQualityCycles).set({
             state: "accepted", qualityPhase: "accepted", revision: cycle.revision + 1,
@@ -902,13 +911,9 @@ export function workRecordQualityService(db: Db, options: WorkRecordQualityOptio
           actorAgentId: actor.agentId ?? null, actorUserId: actor.userId ?? null,
         }, tx);
         if (!updated) throw notFound("Independent defect issue not found");
-        const escalated = updated.status === "in_review";
-        if (escalated) {
-          await tx.update(workRecordQualityCycles).set({
-            qualityPhase: "attention_required", reason: "review_round_limit_reached",
-            revision: cycle.revision + 1, updatedAt: now,
-          }).where(eq(workRecordQualityCycles.id, cycle.id));
-          return { verdict, replayed: false, escalated: true };
+        if (updated.status !== "in_progress") {
+          throw conflict("Independent defect QA return did not reopen the native repair task",
+            details("work_record_quality_native_review_pending"));
         }
         await tx.update(workRecordQualityCycles).set({
           state: "superseded", reason: input.reason, revision: cycle.revision + 1,

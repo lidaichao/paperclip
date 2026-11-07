@@ -28,9 +28,12 @@ import {
   workRecordIssueLinks,
   workRecordQualityCycles,
   workRecordQualityItems,
+  workRecordQualityVerdicts,
   startEmbeddedPostgresTestDatabase,
 } from "@paperclipai/db";
 import { localAgentRunLeaseService } from "./local-agent-run-leases.js";
+import { workRecordQualityService } from "./work-record-quality.js";
+import { applyIssueExecutionPolicyTransition, normalizeIssueExecutionPolicy } from "./issue-execution-policy.js";
 import { localAgentReviewDeliveryService } from "./local-agent-review-delivery.js";
 import { issueCompletionReviewDecisionService } from "./issue-completion-review-decisions.js";
 import { clientPullCompletionReviewWakeKey } from "./local-agent-review-claim.js";
@@ -124,6 +127,88 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       clientRequestId: randomUUID() }, actor);
     return { scope, owner, svc, handoff };
   }
+
+  it("keeps the quality cycle, issue and review card unchanged when native policy re-pends defect QA", async () => {
+    const f = await dedicatedReviewFixture();
+    const projectId = randomUUID(), defectId = randomUUID(), cycleId = randomUUID();
+    await db.insert(projects).values({ id: projectId, companyId: f.scope.companyId,
+      name: "Native QA policy mismatch" });
+    const [issue] = await db.select().from(issues).where(eq(issues.id, f.scope.issueId));
+    const policy = normalizeIssueExecutionPolicy({ mode: "normal",
+      commentRequired: true, maxReviewRounds: 3,
+      stages: [{ id: randomUUID(), type: "review", approvalsNeeded: 1,
+        participants: [{ id: randomUUID(), type: "agent",
+          agentId: f.handoff.review.reviewerAgentId }] }],
+    });
+    const staged = applyIssueExecutionPolicyTransition({
+      issue: { ...issue, status: "in_progress" }, policy,
+      requestedStatus: "done", requestedAssigneePatch: {},
+      actor: { agentId: f.scope.agentId, userId: null },
+      allowBoardOverride: false, commentBody: "Repair ready for QA",
+    });
+    expect(staged.patch.status).toBe("in_review");
+    // Completion-review handoff retains the source assignee while the native
+    // execution policy names QA as the pending stage participant.
+    await db.update(issues).set({ projectId,
+      executionPolicy: policy as unknown as Record<string, unknown>,
+      executionState: staged.patch.executionState as Record<string, unknown>,
+    }).where(eq(issues.id, issue.id));
+    await db.insert(workRecords).values({ id: defectId,
+      companyId: f.scope.companyId, projectId, kind: "defect",
+      title: "QA must not close early", assigneeAgentId: f.scope.agentId,
+      qaAssigneeAgentId: f.handoff.review.reviewerAgentId,
+      dispatchState: "dispatched" });
+    const [link] = await db.insert(workRecordIssueLinks).values({
+      companyId: f.scope.companyId, projectId, recordId: defectId,
+      issueId: issue.id, purpose: "primary", dispatchRound: 1,
+    }).returning();
+    await db.insert(workRecordQualityCycles).values({ id: cycleId,
+      companyId: f.scope.companyId, projectId, aggregateRecordId: defectId,
+      cycleNumber: 1, kind: "independent_defect", state: "open",
+      qualityPhase: "qa_retest", scopeDigest: randomUUID() });
+    const [qaItem] = await db.insert(workRecordQualityItems).values({
+      companyId: f.scope.companyId, projectId, cycleId,
+      recordId: defectId, defectRecordId: defectId,
+      issueLinkId: link.id, role: "qa", state: "active",
+    }).returning();
+    const [beforeIssue] = await db.select().from(issues).where(eq(issues.id, issue.id));
+    expect(beforeIssue.executionState).toMatchObject({ status: "pending",
+      currentParticipant: { agentId: f.handoff.review.reviewerAgentId } });
+    expect(beforeIssue.assigneeAgentId).toBe(f.scope.agentId);
+    const [beforeCycle] = await db.select().from(workRecordQualityCycles)
+      .where(eq(workRecordQualityCycles.id, cycleId));
+    const quality = workRecordQualityService(db, { writesEnabled: true });
+    for (const outcome of ["pass", "return"] as const) {
+      await expect(quality.recordQaVerdict(f.scope.companyId, projectId, defectId, {
+        workflowVersion: 2, clientRequestId: randomUUID(),
+        requestPayloadDigest: randomUUID(), cycleId, itemId: qaItem.id,
+        expectedCycleRevision: beforeCycle.revision, outcome,
+        defectRecordId: defectId, repairRecordId: outcome === "return" ? defectId : null,
+        reason: "Native stage has not finished", evidenceRefs: [],
+      }, { actorType: "agent", actorId: f.handoff.review.reviewerAgentId,
+        agentId: f.handoff.review.reviewerAgentId })).rejects.toMatchObject({
+          status: 409, details: { code: "work_record_quality_native_review_pending" },
+        });
+      const [afterIssue] = await db.select().from(issues).where(eq(issues.id, issue.id));
+      const [afterCycle] = await db.select().from(workRecordQualityCycles)
+        .where(eq(workRecordQualityCycles.id, cycleId));
+      const [afterItem] = await db.select().from(workRecordQualityItems)
+        .where(eq(workRecordQualityItems.id, qaItem.id));
+      expect(afterIssue).toMatchObject({ status: beforeIssue.status,
+        statusVersion: beforeIssue.statusVersion,
+        assigneeAgentId: beforeIssue.assigneeAgentId,
+        executionState: beforeIssue.executionState });
+      expect(afterCycle).toMatchObject({ state: beforeCycle.state,
+        qualityPhase: beforeCycle.qualityPhase, revision: beforeCycle.revision });
+      expect(afterItem.state).toBe("active");
+      expect((await db.select().from(issueCompletionReviews)
+        .where(eq(issueCompletionReviews.id, f.handoff.review.id)))[0]?.state).toBe("pending");
+      expect((await db.select().from(issueThreadInteractions)
+        .where(eq(issueThreadInteractions.id, f.handoff.interaction.id)))[0]?.status).toBe("pending");
+      expect(await db.select().from(workRecordQualityVerdicts)
+        .where(eq(workRecordQualityVerdicts.cycleId, cycleId))).toHaveLength(0);
+    }
+  }, 30_000);
 
   async function claimedReviewerFixture() {
     const f = await dedicatedReviewFixture();
