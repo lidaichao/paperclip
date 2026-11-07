@@ -875,7 +875,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     descriptionRevision: number,
     admit: DescriptionRevisionAdmission,
   ) {
-    const claimed = await db.transaction(async (tx) => {
+    let claimed = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
       const row = await tx.select().from(workRecordDescriptionDeliveries).where(and(
         eq(workRecordDescriptionDeliveries.companyId, companyId),
@@ -895,7 +895,10 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     });
     if (claimed.state === "queued" || claimed.state === "confirmed") return descriptionDeliveryView(claimed);
 
-    const linked = await db.select({ assigneeAgentId: issues.assigneeAgentId }).from(issues).where(and(
+    const linked = await db.select({
+      assigneeAgentId: issues.assigneeAgentId,
+      executionRunId: issues.executionRunId,
+    }).from(issues).where(and(
       eq(issues.companyId, companyId),
       eq(issues.id, claimed.issueId),
     )).then((rows) => rows[0]);
@@ -904,6 +907,15 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         state: "retry", lastError: "Linked native issue has no assignee", updatedAt: new Date(),
       }).where(eq(workRecordDescriptionDeliveries.id, claimed.id)).returning();
       return descriptionDeliveryView(failed);
+    }
+    if (!claimed.sourceRunId && linked.executionRunId) {
+      claimed = await db.update(workRecordDescriptionDeliveries).set({
+        sourceRunId: linked.executionRunId,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(workRecordDescriptionDeliveries.id, claimed.id),
+        isNull(workRecordDescriptionDeliveries.sourceRunId),
+      )).returning().then((rows) => rows[0] ?? claimed);
     }
     const findWinner = () => db.select().from(agentWakeupRequests).where(and(
       eq(agentWakeupRequests.companyId, companyId),
@@ -924,6 +936,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
               recordId,
               descriptionRevision,
               intentKey: claimed.intentKey,
+              sourceRunId: claimed.sourceRunId,
             },
             idempotencyKey: claimed.intentKey,
             allowRunCoalescing: false,
@@ -939,6 +952,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
               recordId,
               descriptionRevision,
               intentKey: claimed.intentKey,
+              sourceRunId: claimed.sourceRunId,
             },
           });
         } catch (error) {

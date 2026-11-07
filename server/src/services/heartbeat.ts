@@ -27406,6 +27406,14 @@ export function heartbeatService(
             return { kind: "deferred" as const };
           };
           const explicitContinuationRunId = randomUUID();
+          const descriptionRevisionContinuation = opts.descriptionRevisionContinuation ?? (() => {
+            if (reason !== "work_record_description_updated") return undefined;
+            const sourceRunId = readNonEmptyString(enrichedContextSnapshot.sourceRunId) ??
+              readNonEmptyString(payload?.sourceRunId);
+            const intentKey = readNonEmptyString(enrichedContextSnapshot.intentKey) ??
+              readNonEmptyString(payload?.intentKey);
+            return sourceRunId && intentKey ? { sourceRunId, intentKey } : undefined;
+          })();
           const executionBlocker = await getExecutionBlocker(
             tx as unknown as Db, issue.companyId, issue.id,
             { conversationResetCommentId: opts.requestedByActorType === "user" ? wakeCommentId : null },
@@ -27415,11 +27423,11 @@ export function heartbeatService(
           // A bound chat request has already rechecked its current principal
           // above. Treat its new user message like a board comment, but keep
           // failed-run retry actions on their separate exact-request path.
-          const proveExplicitContinuation = () => opts.descriptionRevisionContinuation
+          const proveExplicitContinuation = () => descriptionRevisionContinuation
             ? admitDescriptionRevisionContinuation({
                 db: tx as unknown as Db, companyId: issue.companyId, issueId: issue.id,
-                agentId, sourceRunId: opts.descriptionRevisionContinuation.sourceRunId,
-                intentKey: opts.descriptionRevisionContinuation.intentKey,
+                agentId, sourceRunId: descriptionRevisionContinuation.sourceRunId,
+                intentKey: descriptionRevisionContinuation.intentKey,
                 actorType: opts.requestedByActorType, actorId: opts.requestedByActorId,
                 reason, successorRunId: explicitContinuationRunId, dryRun: true,
               })
@@ -28191,11 +28199,11 @@ export function heartbeatService(
             return { kind: "skipped" as const };
           }
 
-          const explicitContinuation = opts.descriptionRevisionContinuation
+          const explicitContinuation = descriptionRevisionContinuation
             ? await admitDescriptionRevisionContinuation({
                 db: tx as unknown as Db, companyId: issue.companyId, issueId: issue.id,
-                agentId, sourceRunId: opts.descriptionRevisionContinuation.sourceRunId,
-                intentKey: opts.descriptionRevisionContinuation.intentKey,
+                agentId, sourceRunId: descriptionRevisionContinuation.sourceRunId,
+                intentKey: descriptionRevisionContinuation.intentKey,
                 actorType: opts.requestedByActorType, actorId: opts.requestedByActorId,
                 reason, successorRunId: explicitContinuationRunId,
               })
@@ -28211,7 +28219,7 @@ export function heartbeatService(
           if (explicitContinuation) {
             enrichedContextSnapshot.forceFreshSession = true;
             enrichedContextSnapshot.previousRunId = explicitContinuation.previousRunId;
-            if (opts.descriptionRevisionContinuation) {
+            if (descriptionRevisionContinuation) {
               enrichedContextSnapshot.descriptionRevisionContinuation = explicitContinuation;
             } else {
               enrichedContextSnapshot.explicitUserContinuation = explicitContinuation;
@@ -29396,16 +29404,39 @@ export function heartbeatService(
       throw conflict("Linked native issue is not executable by the description assignee");
     }
 
-    const sourceRunId = issue.executionRunId;
+    const persistedSourceRunId = readNonEmptyString(wakeupOptions.contextSnapshot?.sourceRunId);
+    const sourceRunId = persistedSourceRunId ?? issue.executionRunId;
     let stopConfirmedAt: Date | null = null;
     if (sourceRunId) {
       const sourceRun = await getRun(sourceRunId);
-      if (
-        sourceRun &&
-        sourceRun.companyId === issue.companyId &&
-        sourceRun.agentId === agentId &&
-        ["running", "queued", "scheduled_retry"].includes(sourceRun.status)
-      ) {
+      const sourceContext = parseObject(sourceRun?.contextSnapshot);
+      if (!sourceRun || sourceRun.companyId !== issue.companyId || sourceRun.agentId !== agentId ||
+        sourceContext.issueId !== issueId) {
+        throw conflict("Description revision source run does not match the linked native issue", {
+          code: "work_record_description_source_mismatch",
+          sourceRunId,
+        });
+      }
+      const initialLocalLease = await db.select({
+        releasedAt: localAgentRunLeases.releasedAt,
+        stopAcknowledgedAt: localAgentRunLeases.stopAcknowledgedAt,
+      }).from(localAgentRunLeases).where(and(
+        eq(localAgentRunLeases.companyId, issue.companyId),
+        eq(localAgentRunLeases.runId, sourceRun.id),
+      )).limit(1).then((rows) => rows[0] ?? null);
+      const requiresLocalStopReceipt = sourceRun.runtimeMode === "client_pull" &&
+        (sourceRun.status === "running" || initialLocalLease !== null);
+      if (["running", "queued", "scheduled_retry"].includes(sourceRun.status)) {
+        if (requiresLocalStopReceipt && !initialLocalLease?.releasedAt) {
+          await db.update(localAgentRunLeases).set({
+            cancelRequestedAt: sql`coalesce(${localAgentRunLeases.cancelRequestedAt}, now())`,
+            updatedAt: new Date(),
+          }).where(and(
+            eq(localAgentRunLeases.companyId, issue.companyId),
+            eq(localAgentRunLeases.runId, sourceRun.id),
+            isNull(localAgentRunLeases.releasedAt),
+          ));
+        }
         await cancelRunInternal(sourceRun.id, "Description revision requires a fresh model turn", {
           errorCode: "work_record_description_superseded",
           suppressImmediateRecovery: true,
@@ -29418,41 +29449,52 @@ export function heartbeatService(
           eventPayload: { issueId, intentKey },
         });
 
-        const deadline = Date.now() + Math.max(1, options.descriptionRevisionStopTimeoutMs ?? 30_000);
-        for (;;) {
-          const [currentRun, currentIssue, unreleasedLease] = await Promise.all([
-            getRun(sourceRun.id),
-            issuesSvc.getById(issueId),
-            db.select({ id: environmentLeases.id }).from(environmentLeases).where(and(
-              eq(environmentLeases.companyId, issue.companyId),
-              eq(environmentLeases.heartbeatRunId, sourceRun.id),
-              isNull(environmentLeases.releasedAt),
-            )).limit(1).then((rows) => rows[0] ?? null),
-          ]);
-          const processGroupAlive = Boolean(
-            currentRun?.processGroupId && isProcessGroupAlive(currentRun.processGroupId),
-          );
-          if (
-            currentRun &&
-            isHeartbeatRunTerminalStatus(currentRun.status) &&
-            currentIssue?.executionRunId !== sourceRun.id &&
-            !runningProcesses.has(sourceRun.id) &&
-            !activeRunExecutions.has(sourceRun.id) &&
-            !adapterExecutionControls.has(sourceRun.id) &&
-            !processGroupAlive &&
-            !unreleasedLease
-          ) {
-            stopConfirmedAt = new Date();
-            break;
-          }
-          if (Date.now() >= deadline) {
-            throw conflict("Previous description run did not fully stop before continuation", {
-              code: "work_record_description_stop_timeout",
-              sourceRunId: sourceRun.id,
-            });
-          }
-          await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const deadline = Date.now() + Math.max(1, options.descriptionRevisionStopTimeoutMs ?? 30_000);
+      for (;;) {
+        const [currentRun, currentIssue, unreleasedLease, localLease] = await Promise.all([
+          getRun(sourceRun.id),
+          issuesSvc.getById(issueId),
+          db.select({ id: environmentLeases.id }).from(environmentLeases).where(and(
+            eq(environmentLeases.companyId, issue.companyId),
+            eq(environmentLeases.heartbeatRunId, sourceRun.id),
+            isNull(environmentLeases.releasedAt),
+          )).limit(1).then((rows) => rows[0] ?? null),
+          db.select({
+            releasedAt: localAgentRunLeases.releasedAt,
+            stopAcknowledgedAt: localAgentRunLeases.stopAcknowledgedAt,
+          }).from(localAgentRunLeases).where(and(
+            eq(localAgentRunLeases.companyId, issue.companyId),
+            eq(localAgentRunLeases.runId, sourceRun.id),
+          )).limit(1).then((rows) => rows[0] ?? null),
+        ]);
+        const processGroupAlive = Boolean(
+          currentRun?.processGroupId && isProcessGroupAlive(currentRun.processGroupId),
+        );
+        const localStopConfirmed = !requiresLocalStopReceipt || Boolean(
+          localLease?.releasedAt && localLease.stopAcknowledgedAt,
+        );
+        if (
+          currentRun &&
+          isHeartbeatRunTerminalStatus(currentRun.status) &&
+          currentIssue?.executionRunId !== sourceRun.id &&
+          !runningProcesses.has(sourceRun.id) &&
+          !activeRunExecutions.has(sourceRun.id) &&
+          !adapterExecutionControls.has(sourceRun.id) &&
+          !processGroupAlive &&
+          !unreleasedLease &&
+          localStopConfirmed
+        ) {
+          stopConfirmedAt = new Date();
+          break;
         }
+        if (Date.now() >= deadline) {
+          throw conflict("Previous description run did not fully stop before continuation", {
+            code: "work_record_description_stop_timeout",
+            sourceRunId: sourceRun.id,
+          });
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
 
