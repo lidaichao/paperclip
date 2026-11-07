@@ -1,8 +1,9 @@
 # Windows local run supervisor
 
-This directory contains a standalone Windows-subsystem executable. It is not
-connected to the TypeScript bridge yet. The bridge must continue to fail closed
-until it verifies a matching stopped receipt. Build with `./build.ps1` and run
+This directory contains a standalone Windows-subsystem executable. The TypeScript
+bridge and local adapter path now verify matching stopped receipts. The bridge's
+installation and direct-run hard gate remains closed pending real CLI and 192
+pilot validation. Build with `./build.ps1` and run
 the fake-process checks with `./test.ps1`. Both scripts require Windows and the
 64-bit .NET Framework 4 `csc.exe`; the runtime does not require the .NET SDK.
 
@@ -66,10 +67,9 @@ stopped receipt. Missing or mismatched receipts must never become
   Microsoft explicitly excludes children created with `Win32_Process.Create`.
   Actual Codex/Cursor behavior must be checked before claiming complete tree
   coverage. The stopped receipt proves only the Job population drained.
-- The TypeScript bridge must verify the run, lease, device, nonce, bridge and
-  model identities in both receipts, propagate the wrapper's nonzero result,
-  and preserve the existing server lease fence. A ready file alone is not stop
-  proof. No bridge or server changes are part of this directory.
+- The TypeScript bridge verifies the run, lease, device, nonce, bridge and model
+  identities in both receipts, checks the wrapper result, and preserves the
+  existing server lease fence. A ready file alone is not stop proof.
 
 Microsoft references: [Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects),
 [atomic Job assignment](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute),
