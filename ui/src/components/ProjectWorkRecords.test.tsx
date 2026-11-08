@@ -46,6 +46,7 @@ function record(kind: "plan" | "defect", overrides: Partial<WorkRecord> = {}): W
     id: `${kind}-1`, companyId: "company-1", projectId: "project-1", kind,
     title: kind === "plan" ? "发布计划" : "窄屏缺陷", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null,
+    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     assigneeAgentId: null, qaAssigneeAgentId: null, packageQaRole: null,
     qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     businessStatus: kind === "plan" ? "backlog" : "done",
@@ -54,6 +55,7 @@ function record(kind: "plan" | "defect", overrides: Partial<WorkRecord> = {}): W
     execution: { issueId: null, issueIdentifier: null, issueStatus: null, issueStatusVersion: null, lastRunId: null, lastRunStatus: null, lastRunAgentId: null, lastRunStartedAt: null, lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: now },
     recovery: { code: null, message: null, canReconcile: false, lastConfirmedAt: now },
     delivery: { eventKey: null, deliveryState: null, deliveredAt: null, attemptCount: 0, lastError: null, wakeRequestId: null, wakeStatus: null, acknowledgedAt: null, runId: null, recoveryCount: 0, deadLetteredAt: null, lastRecoveredAt: null },
+    descriptionDelivery: { descriptionRevision: null, intentKey: null, state: null, commentId: null, attemptCount: 0, sourceRunId: null, successorRunId: null, wakeupRequestId: null, stopConfirmedAt: null, queuedAt: null, modelVisibleAt: null, confirmedAt: null, deliveredAt: null, acknowledgedAt: null, acknowledgedByAgentId: null, acknowledgedByRunId: null, lastError: null },
     quality: { cycleId: null, cycleNumber: null, cycleRevision: null, phase: "not_started", defectCount: 0 },
     createdAt: now, updatedAt: now, ...overrides,
   };

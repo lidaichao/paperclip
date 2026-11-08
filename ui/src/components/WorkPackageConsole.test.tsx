@@ -53,12 +53,14 @@ function record(overrides: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title"
   return {
     id, title, companyId: "company-1", projectId: "project-1", kind: "plan", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null, assigneeAgentId: "agent-po", qaAssigneeAgentId: "agent-qa",
+    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     businessStatus: "in_review", statusVersion: 1, revision: 1, dispatchState: "linked", dispatchRound: 1, dependencySetRevision: 1,
     blockedCycle: 0, dependencies: [],
     execution: { issueId: "issue-1", issueIdentifier: "LUN-1", issueStatus: "in_progress", issueStatusVersion: 1, lastRunId: "run-1", lastRunStatus: null, lastRunAgentId: "agent-po", lastRunStartedAt: new Date(), lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: new Date() },
     recovery: { code: null, message: null, canReconcile: false, lastConfirmedAt: new Date() },
     delivery: { eventKey: "event-1", deliveryState: "delivered", deliveredAt: new Date(), attemptCount: 1, lastError: null, wakeRequestId: "wake-1", wakeStatus: "completed", acknowledgedAt: new Date(), runId: "run-1", recoveryCount: 0, deadLetteredAt: null, lastRecoveredAt: null },
+    descriptionDelivery: { descriptionRevision: null, intentKey: null, state: null, commentId: null, attemptCount: 0, sourceRunId: null, successorRunId: null, wakeupRequestId: null, stopConfirmedAt: null, queuedAt: null, modelVisibleAt: null, confirmedAt: null, deliveredAt: null, acknowledgedAt: null, acknowledgedByAgentId: null, acknowledgedByRunId: null, lastError: null },
     quality: { cycleId: CYCLE_ID, cycleNumber: 1, cycleRevision: 1, phase: "po_acceptance", defectCount: 1 },
     createdAt: new Date(), updatedAt: new Date(), ...rest,
   };
