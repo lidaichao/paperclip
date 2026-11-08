@@ -29,6 +29,12 @@ function Assert-PortFree([int]$Port) {
 Assert-PortFree $ServerPort
 Assert-PortFree $DatabasePort
 
+$utf8NoBom = [Text.UTF8Encoding]::new($false)
+
+function Write-JsonFile([string]$Path, [object]$Value, [int]$Depth = 8) {
+  [IO.File]::WriteAllText($Path, ($Value | ConvertTo-Json -Depth $Depth), $utf8NoBom)
+}
+
 $instanceId = 'pap17-g2-formal'
 $instanceRoot = Join-Path $fixtureRootPath "paperclip-home\instances\$instanceId"
 $configPath = Join-Path $instanceRoot 'config.json'
@@ -56,7 +62,7 @@ New-Item -ItemType Directory -Path $instanceRoot, $logDir -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'repair-work.ps1') -Destination $fixtureRootPath
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa-work.ps1') -Destination $fixtureRootPath
 
-[ordered]@{
+$serviceConfig = [ordered]@{
   '$meta' = [ordered]@{
     version = 1
     updatedAt = [DateTimeOffset]::UtcNow.ToString('o')
@@ -78,7 +84,8 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa-work.ps1') -Destination $fix
   }
   telemetry = [ordered]@{ enabled = $false }
   logging = [ordered]@{ mode = 'file' }
-} | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $configPath -Encoding utf8
+}
+Write-JsonFile -Path $configPath -Value $serviceConfig
 
 $savedEnvironment = @{}
 $environmentNames = @(
@@ -172,7 +179,7 @@ try {
     [string]$InstructionsFile
   ) {
     $workerHome = Join-Path $fixtureRootPath "workers\$AgentId"
-    [ordered]@{
+    $bridgeConfig = [ordered]@{
       schemaVersion = 3
       modelAuthMode = 'shared_user_codex'
       deviceId = $DeviceId
@@ -198,7 +205,8 @@ try {
         maxConcurrentRuns = 1
       })
       supervisorExecutable = $supervisor
-    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $Path -Encoding utf8
+    }
+    Write-JsonFile -Path $Path -Value $bridgeConfig -Depth 10
   }
 
   $repairConfig = Join-Path $fixtureRootPath 'bridge-repair-rabbit.json'
@@ -213,7 +221,7 @@ try {
   $stopScript = Join-Path $PSScriptRoot 'stop-pap17-g2-fixture.ps1'
   $cleanupScript = Join-Path $PSScriptRoot 'remove-pap17-g2-fixture.ps1'
   $manifestPath = Join-Path $fixtureRootPath 'fixture-manifest.json'
-  [ordered]@{
+  $fixtureManifest = [ordered]@{
     schemaVersion = 1
     fixtureId = 'PAP-17-G2'
     candidateCommit = $candidateCommit
@@ -279,13 +287,16 @@ try {
       bridgeStartedByPrepare = $false
       modelStartedByPrepare = $false
     }
-  } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+  }
+  Write-JsonFile -Path $manifestPath -Value $fixtureManifest -Depth 12
 
   Get-Content -Raw -LiteralPath $manifestPath
 } catch {
   if ($null -ne $serviceProcess -and -not $serviceProcess.HasExited) {
-    @{ reason = 'prepare_failed'; requestedAt = [DateTimeOffset]::UtcNow.ToString('o') } |
-      ConvertTo-Json | Set-Content -LiteralPath (Join-Path $fixtureRootPath 'stop-request.json') -Encoding utf8
+    Write-JsonFile -Path (Join-Path $fixtureRootPath 'stop-request.json') -Value @{
+      reason = 'prepare_failed'
+      requestedAt = [DateTimeOffset]::UtcNow.ToString('o')
+    }
     [void]$serviceProcess.WaitForExit(30000)
   }
   throw
