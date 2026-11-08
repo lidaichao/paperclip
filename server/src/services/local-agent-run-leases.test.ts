@@ -1739,6 +1739,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       clientRequestId: finish.clientRequestId, reviewId: review.id,
       deliveryId: delivery.id, disposition: "ready", issueStatus: "in_review",
     });
+    // This suite intentionally shares one PostgreSQL database. The global
+    // delivery sweep in the next test must not consume this test's ready row.
+    await db.update(issueCommandDeliveries).set({ status: "cancelled" })
+      .where(eq(issueCommandDeliveries.id, delivery.id));
   }, 30_000);
 
   it("blocks a failed handoff and atomically cancels the review card and intent", async () => {
