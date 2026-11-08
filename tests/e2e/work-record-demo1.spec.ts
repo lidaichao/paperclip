@@ -1,4 +1,4 @@
-import { expect, test, type APIResponse, type Dialog, type Page } from "@playwright/test";
+import { expect, test, type APIResponse, type Dialog, type Locator, type Page } from "@playwright/test";
 
 async function json<T>(response: APIResponse, label: string): Promise<T> {
   const body = await response.text();
@@ -26,6 +26,49 @@ async function answerDialogs(page: Page, answers: boolean[], action: () => Promi
   return messages;
 }
 
+async function chooseNativeOptionWithKeyboard(locator: Locator, arrowDownCount: number) {
+  await locator.focus();
+  await expect(locator).toBeFocused();
+  await locator.press("Home");
+  for (let index = 0; index < arrowDownCount; index += 1) await locator.press("ArrowDown");
+  await locator.press("Enter");
+  await expect(locator).toBeFocused();
+}
+
+async function expectKeyboardFocusVisible(locator: Locator) {
+  await expect(locator).toBeFocused();
+  expect(await locator.evaluate((element) => element.matches(":focus-visible"))).toBe(true);
+}
+
+async function expectRowValues(row: Locator, values: string[]) {
+  await expect(row).toHaveCount(1);
+  for (const value of values) await expect(row).toContainText(value);
+}
+
+async function readNarrowAnchors(page: Page, projectName: string) {
+  const [title, tab, main] = await Promise.all([
+    page.getByRole("heading", { name: projectName, exact: true }).boundingBox(),
+    page.getByLabel("页面分区").boundingBox(),
+    page.getByTestId("work-records-main").boundingBox(),
+  ]);
+  expect(title).not.toBeNull();
+  expect(tab).not.toBeNull();
+  expect(main).not.toBeNull();
+  return { title, tab, main, scrollY: await page.evaluate(() => window.scrollY) };
+}
+
+function expectAnchorsStable(
+  actual: Awaited<ReturnType<typeof readNarrowAnchors>>,
+  expected: Awaited<ReturnType<typeof readNarrowAnchors>>,
+) {
+  for (const key of ["title", "tab", "main"] as const) {
+    expect(actual[key]?.x).toBe(expected[key]?.x);
+    expect(actual[key]?.y).toBe(expected[key]?.y);
+  }
+  expect(actual.scrollY).toBe(expected.scrollY);
+  expect(actual.scrollY).toBeGreaterThan(0);
+}
+
 test("G3B1 keeps dense plan and defect views stable while saves remain non-executing", async ({ page, request }, testInfo) => {
   await page.setViewportSize({ width: 1319, height: 1012 });
   const company = await json<{ id: string; issuePrefix: string }>(
@@ -37,15 +80,63 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
     "create project",
   );
 
+  const owners = await Promise.all([
+    { name: "Ada 开发", role: "engineer" },
+    { name: "Belle 质检", role: "qa" },
+  ].map(async ({ name, role }) => json<{ id: string; name: string }>(
+    await request.post(`/api/companies/${company.id}/agents`, {
+      data: {
+        name,
+        role,
+        adapterType: "process",
+        adapterConfig: { command: process.execPath, args: ["-e", "process.exit(0)"] },
+        runtimeConfig: { heartbeat: { enabled: false, wakeOnDemand: false } },
+      },
+    }),
+    `create ${name}`,
+  )));
+  const statuses = ["backlog", "todo", "in_progress", "in_review", "blocked", "done", "cancelled"] as const;
+
   for (let index = 1; index <= 20; index += 1) {
-    await json(await request.post(`/api/companies/${company.id}/work-records`, {
-      data: { projectId: project.id, kind: "plan", title: `计划 ${String(index).padStart(2, "0")}`, predecessorRecordIds: [] },
-    }), `create plan ${index}`);
+    const record = await json<{ id: string; revision: number }>(
+      await request.post(`/api/companies/${company.id}/work-records`, {
+        data: {
+          projectId: project.id,
+          kind: "plan",
+          title: `计划 ${String(index).padStart(2, "0")}`,
+          assigneeAgentId: owners[(index - 1) % owners.length].id,
+          qaAssigneeAgentId: owners[1].id,
+          plannedStartDate: `2026-11-${String(index).padStart(2, "0")}`,
+          plannedCompletionDate: `2026-11-${String(index + 5).padStart(2, "0")}`,
+          predecessorRecordIds: [],
+        },
+      }),
+      `create plan ${index}`,
+    );
+    await json(await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`, {
+      data: { expectedRevision: record.revision, businessStatus: statuses[(index - 1) % statuses.length] },
+    }), `set plan ${index} status`);
   }
-  for (let index = 1; index <= 2; index += 1) {
-    await json(await request.post(`/api/companies/${company.id}/work-records`, {
-      data: { projectId: project.id, kind: "defect", title: `缺陷 ${String(index).padStart(2, "0")}`, predecessorRecordIds: [] },
-    }), `create defect ${index}`);
+  for (let index = 1; index <= 20; index += 1) {
+    const record = await json<{ id: string; revision: number }>(
+      await request.post(`/api/companies/${company.id}/work-records`, {
+        data: {
+          projectId: project.id,
+          kind: "defect",
+          title: `缺陷 ${String(index).padStart(2, "0")}`,
+          defectSeverity: (["critical", "high", "medium", "low"] as const)[(index - 1) % 4],
+          assigneeAgentId: owners[index % owners.length].id,
+          qaAssigneeAgentId: owners[1].id,
+          plannedStartDate: `2026-11-${String(index).padStart(2, "0")}`,
+          plannedCompletionDate: `2026-11-${String(index + 5).padStart(2, "0")}`,
+          predecessorRecordIds: [],
+        },
+      }),
+      `create defect ${index}`,
+    );
+    await json(await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`, {
+      data: { expectedRevision: record.revision, businessStatus: statuses[(20 - index) % statuses.length] },
+    }), `set defect ${index} status`);
   }
 
   const issuesBaseline = await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "read issue baseline");
@@ -58,14 +149,35 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   await expect(page.getByText("缺陷 01", { exact: true })).toHaveCount(0);
   await denseTable.getByLabel("搜索记录").fill("计划");
   await denseTable.getByLabel("密度").selectOption("compact");
-  await denseTable.getByLabel("排序字段").selectOption("title");
-  await denseTable.getByRole("button", { name: "升序", exact: true }).click();
+  const sortField = denseTable.getByLabel("排序字段");
+  await chooseNativeOptionWithKeyboard(sortField, 2);
+  await expect(sortField).toHaveValue("title");
+  await expect(rows.first()).toContainText("计划 01");
+  const sortDirection = denseTable.getByRole("button", { name: "升序", exact: true });
+  await sortDirection.focus();
+  await sortDirection.press("Enter");
+  await expectKeyboardFocusVisible(denseTable.getByRole("button", { name: "降序", exact: true }));
+  await expect(rows.first()).toContainText("计划 20");
   await denseTable.getByLabel("分组字段").selectOption("businessStatus");
-  await denseTable.getByLabel("业务状态筛选").selectOption("backlog");
+  await denseTable.getByLabel("分组字段").selectOption("");
+  const statusFilter = denseTable.getByLabel("业务状态筛选");
+  await chooseNativeOptionWithKeyboard(statusFilter, 6);
+  await expect(statusFilter).toHaveValue("done");
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(0)).toContainText("计划 20");
+  await expect(rows.nth(1)).toContainText("计划 13");
+  await expect(rows.nth(2)).toContainText("计划 06");
+  await chooseNativeOptionWithKeyboard(statusFilter, 0);
+  await expect(statusFilter).toHaveValue("");
+  await expect(rows).toHaveCount(20);
   await expect(denseTable).toHaveAttribute("data-density", "compact");
   expect((await rows.first().boundingBox())?.height).toBeLessThanOrEqual(32);
-  await page.getByText("列设置", { exact: true }).click();
-  await page.getByRole("checkbox", { name: "描述", exact: true }).uncheck();
+  const columnSettings = page.getByText("列设置", { exact: true });
+  await columnSettings.focus();
+  await columnSettings.press("Enter");
+  for (const column of ["描述", "迭代", "QA", "派发状态", "前置"]) {
+    await page.getByRole("checkbox", { name: column, exact: true }).uncheck();
+  }
   await expect(page.getByRole("columnheader", { name: "描述", exact: true })).toHaveCount(0);
   const ownerWidthBefore = (await page.getByRole("columnheader", { name: "负责人", exact: true }).boundingBox())?.width ?? 0;
   await page.getByRole("button", { name: "负责人加宽", exact: true }).focus();
@@ -74,7 +186,12 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   expect(ownerWidthAfter).toBeGreaterThan(ownerWidthBefore);
   await page.getByRole("button", { name: "负责人上移", exact: true }).focus();
   await page.keyboard.press("Alt+ArrowUp");
-  await page.getByRole("checkbox", { name: "业务状态冻结", exact: true }).check();
+  const statusFreeze = page.getByRole("checkbox", { name: "业务状态冻结", exact: true });
+  await statusFreeze.focus();
+  await statusFreeze.press("Space");
+  await expect(statusFreeze).toBeChecked();
+  await expectKeyboardFocusVisible(statusFreeze);
+  await expect(page.getByRole("columnheader", { name: "业务状态", exact: true })).toHaveClass(/sticky/);
 
   page.once("dialog", async (dialog) => {
     expect(dialog.type()).toBe("prompt");
@@ -92,14 +209,14 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
     config: {
       schemaVersion: 2,
       containerId: null,
-      visibleFields: ["id", "title", "iteration", "plannedStartDate", "plannedCompletionDate", "assignee", "qaAssignee", "businessStatus", "dispatchState", "dependencies"],
+      visibleFields: ["id", "title", "plannedStartDate", "plannedCompletionDate", "assignee", "businessStatus"],
       columnOrder: ["id", "title", "description", "iteration", "plannedStartDate", "assignee", "plannedCompletionDate", "qaAssignee", "businessStatus", "dispatchState", "dependencies"],
       columnWidths: { assignee: 176 },
       density: "compact",
-      filters: [{ field: "businessStatus", operator: "is", value: "backlog" }],
+      filters: [],
       search: "计划",
       sort: [{ field: "title", direction: "desc" }],
-      groupBy: "businessStatus",
+      groupBy: null,
       frozenFields: ["id", "title", "businessStatus"],
     },
   });
@@ -111,12 +228,14 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   await expect(denseTable.getByLabel("搜索记录")).toHaveValue("计划");
   await expect(denseTable.getByLabel("排序字段")).toHaveValue("title");
   await expect(denseTable.getByRole("button", { name: "降序", exact: true })).toBeVisible();
-  await expect(denseTable.getByLabel("分组字段")).toHaveValue("businessStatus");
-  await expect(denseTable.getByLabel("业务状态筛选")).toHaveValue("backlog");
+  await expect(denseTable.getByLabel("分组字段")).toHaveValue("");
+  await expect(denseTable.getByLabel("业务状态筛选")).toHaveValue("");
   await expect(page.getByRole("columnheader", { name: "描述", exact: true })).toHaveCount(0);
   await expect(rows).toHaveCount(20);
+  await expectRowValues(rows.filter({ hasText: "计划 20" }), ["计划 20", "Belle 质检", "2026-11-20", "2026-11-25", "done"]);
+  await expectRowValues(rows.filter({ hasText: "计划 19" }), ["计划 19", "Ada 开发", "2026-11-19", "2026-11-24", "blocked"]);
 
-  await page.setViewportSize({ width: 1319, height: 1600 });
+  await page.setViewportSize({ width: 1800, height: 1600 });
   await rows.last().scrollIntoViewIfNeeded();
   await expect(rows.last()).toBeInViewport();
   await denseTable.screenshot({ path: testInfo.outputPath("g3b1-20-row-readable.png") });
@@ -127,7 +246,7 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   const mainBefore = await page.getByTestId("work-records-main").boundingBox();
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
   await expect(page).toHaveURL(/\/projects\/[^/]+\/defects$/);
-  await expect(rows).toHaveCount(2);
+  await expect(rows).toHaveCount(20);
   await expect(page.getByText("计划 01", { exact: true })).toHaveCount(0);
   await expect(denseTable.getByLabel("搜索记录")).toHaveValue("");
   await expect(denseTable.getByLabel("业务状态筛选")).toHaveValue("");
@@ -144,6 +263,12 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   expect(mainAfter?.y).toBe(mainBefore?.y);
 
   await page.getByRole("tab", { name: "计划", exact: true }).click();
+  await expectRowValues(rows.filter({ hasText: "计划 20" }), ["计划 20", "Belle 质检", "2026-11-20", "2026-11-25", "done"]);
+  await page.reload();
+  await denseTable.getByLabel("视图").selectOption({ label: "个人 · 扫描视图" });
+  await expectRowValues(rows.filter({ hasText: "计划 20" }), ["计划 20", "Belle 质检", "2026-11-20", "2026-11-25", "done"]);
+  await denseTable.getByLabel("视图").selectOption({ label: "内置 · 全部计划" });
+
   await page.getByRole("button", { name: "新建计划", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("浏览器安全保存");
   await page.getByPlaceholder("写明范围、约束和验收标准").fill("保存时不得产生执行对象");
@@ -163,20 +288,50 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto(`/${company.issuePrefix}/projects/${project.id}/defects`);
-  await expect(page.getByText("缺陷 01", { exact: true })).toBeVisible();
+  await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
+  await expectRowValues(page.getByTestId("work-record-table-row").filter({ hasText: "计划 20" }), ["计划 20", "Belle 质检"]);
   await expect(page.getByRole("navigation", { name: "移动端导航" })).toHaveClass(/translate-y-full/);
   const narrowTable = page.getByTestId("work-record-dense-table");
   await expect(narrowTable.getByLabel("业务状态筛选")).toBeVisible();
-  await narrowTable.getByLabel("业务状态筛选").scrollIntoViewIfNeeded();
-  await page.getByText("列设置", { exact: true }).click();
+  await expect.poll(async () => {
+    try {
+      await narrowTable.getByText("列设置", { exact: true }).scrollIntoViewIfNeeded();
+      return true;
+    } catch {
+      return false;
+    }
+  }).toBe(true);
+  const narrowColumnSettings = narrowTable.getByText("列设置", { exact: true });
+  await expect(narrowColumnSettings).toBeVisible();
   const filterBox = await narrowTable.getByLabel("业务状态筛选").boundingBox();
-  const columnSettingsBox = await page.getByText("列设置", { exact: true }).boundingBox();
+  const columnSettingsBox = await narrowColumnSettings.boundingBox();
   expect(filterBox?.y ?? 844).toBeLessThan(844);
   expect((columnSettingsBox?.y ?? 844) + (columnSettingsBox?.height ?? 0)).toBeLessThanOrEqual(844);
+  const mobileNavigationBox = await page.getByRole("navigation", { name: "移动端导航" }).boundingBox();
+  expect(mobileNavigationBox === null || (mobileNavigationBox.y >= 844 && mobileNavigationBox.y >= (columnSettingsBox?.y ?? 0) + (columnSettingsBox?.height ?? 0))).toBe(true);
+  await page.evaluate(() => window.scrollTo(0, 48));
+  const pageSection = page.getByLabel("页面分区");
+  const planAnchors = await readNarrowAnchors(page, "Demo 1 路由与密度");
+  await pageSection.focus();
+  await pageSection.press("ArrowDown");
+  await pageSection.press("Enter");
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/defects$/);
+  await expect(rows).toHaveCount(20);
+  await expect(pageSection).toHaveValue("defects");
+  const defectAnchors = await readNarrowAnchors(page, "Demo 1 路由与密度");
+  expectAnchorsStable(defectAnchors, planAnchors);
+  await expectRowValues(rows.filter({ hasText: "缺陷 01" }), ["缺陷 01", "Belle 质检", "2026-11-01", "2026-11-06"]);
+  await page.screenshot({ path: testInfo.outputPath("g3b1-narrow-defects.png") });
+  await pageSection.focus();
+  await pageSection.press("ArrowUp");
+  await pageSection.press("Enter");
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/plans$/);
+  await expect(pageSection).toHaveValue("plans");
+  const returnedPlanAnchors = await readNarrowAnchors(page, "Demo 1 路由与密度");
+  expectAnchorsStable(returnedPlanAnchors, planAnchors);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath("g3b1-narrow-defects.png"), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath("g3b1-narrow-plans-returned.png") });
 });
 
 test("G3B1 resolves business and view drafts independently in all four states", async ({ page, request }) => {
