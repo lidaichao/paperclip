@@ -57,6 +57,16 @@ async function readNarrowAnchors(page: Page, projectName: string) {
   return { title, tab, main, scrollY: await page.evaluate(() => window.scrollY) };
 }
 
+async function expectMobileNavigationOffscreen(page: Page) {
+  const navigation = page.getByRole("navigation", { name: "移动端导航" });
+  await expect(navigation).toHaveClass(/translate-y-full/);
+  const [box, viewportHeight] = await Promise.all([
+    navigation.boundingBox(),
+    page.evaluate(() => window.innerHeight),
+  ]);
+  expect(box === null || box.y >= viewportHeight).toBe(true);
+}
+
 function expectAnchorsStable(
   actual: Awaited<ReturnType<typeof readNarrowAnchors>>,
   expected: Awaited<ReturnType<typeof readNarrowAnchors>>,
@@ -312,23 +322,24 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   await page.evaluate(() => window.scrollTo(0, 48));
   const pageSection = page.getByLabel("页面分区");
   const planAnchors = await readNarrowAnchors(page, "Demo 1 路由与密度");
+  await expectMobileNavigationOffscreen(page);
   await pageSection.focus();
   await pageSection.press("ArrowDown");
-  await pageSection.press("Enter");
   await expect(page).toHaveURL(/\/projects\/[^/]+\/defects$/);
   await expect(rows).toHaveCount(20);
   await expect(pageSection).toHaveValue("defects");
   const defectAnchors = await readNarrowAnchors(page, "Demo 1 路由与密度");
   expectAnchorsStable(defectAnchors, planAnchors);
+  await expectMobileNavigationOffscreen(page);
   await expectRowValues(rows.filter({ hasText: "缺陷 01" }), ["缺陷 01", "Belle 质检", "2026-11-01", "2026-11-06"]);
   await page.screenshot({ path: testInfo.outputPath("g3b1-narrow-defects.png") });
   await pageSection.focus();
   await pageSection.press("ArrowUp");
-  await pageSection.press("Enter");
   await expect(page).toHaveURL(/\/projects\/[^/]+\/plans$/);
   await expect(pageSection).toHaveValue("plans");
   const returnedPlanAnchors = await readNarrowAnchors(page, "Demo 1 路由与密度");
   expectAnchorsStable(returnedPlanAnchors, planAnchors);
+  await expectMobileNavigationOffscreen(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("g3b1-narrow-plans-returned.png") });
