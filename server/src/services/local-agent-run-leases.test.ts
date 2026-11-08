@@ -873,6 +873,20 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(response.json).toHaveBeenCalledWith(expect.objectContaining({ code: "CLIENT_PULL_WRITE_FENCED" }));
     expect(next).not.toHaveBeenCalled();
 
+    for (const contract of ["defect-repair-handoff", "defect-qa-verdict", "po-verdict"]) {
+      vi.mocked(response.status).mockClear();
+      vi.mocked(response.json).mockClear();
+      vi.mocked(next).mockClear();
+      const contractRequest = {
+        method: "POST",
+        path: `/api/agents/me/local-runs/${scope.runId}/issue/${contract}`,
+        actor: request.actor,
+      } as unknown as Request;
+      await gate(contractRequest, response, next);
+      expect(next, `${contract} must reach its transaction-fenced route`).toHaveBeenCalledOnce();
+      expect(response.status).not.toHaveBeenCalled();
+    }
+
     const svc = localAgentRunLeaseService(db);
     const claimed = await svc.claim({ ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID() });
     await svc.finish({
@@ -883,6 +897,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await db.update(agents).set({ runtimeConfig: {} }).where(eq(agents.id, scope.agentId));
     vi.mocked(response.status).mockClear();
     vi.mocked(response.json).mockClear();
+    vi.mocked(next).mockClear();
     await gate(request, response, next);
     expect(response.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
