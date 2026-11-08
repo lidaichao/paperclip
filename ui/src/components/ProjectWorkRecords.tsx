@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { agentsApi } from "@/api/agents";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
+import { registerNavigationLeaveGuard } from "@/lib/navigation-leave-guard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -83,6 +84,9 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
   const [draft, setDraft] = useState<RecordDraft>(blankDraft);
   const [viewDraftDirty, setViewDraftDirty] = useState(false);
   const viewLeaveGuardRef = useRef<(() => Promise<boolean>) | null>(null);
+  const navigationGuardPromiseRef = useRef<Promise<boolean> | null>(null);
+  const latestNavigationGuardRef = useRef<() => Promise<boolean>>(async () => true);
+  const confirmedDialogCloseRef = useRef(false);
   const recordsKey = queryKeys.workRecords.list(companyId, projectId);
   const records = useQuery({
     queryKey: recordsKey,
@@ -108,11 +112,15 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
     return () => window.removeEventListener("beforeunload", protect);
   }, [businessDraftDirty]);
 
-  const closeDialog = () => {
+  const closeDialog = (confirmed = false) => {
+    confirmedDialogCloseRef.current = confirmed;
     setDialogOpen(false);
     setEditingRecord(null);
     setDraft(blankDraft());
   };
+  useEffect(() => {
+    if (!dialogOpen) confirmedDialogCloseRef.current = false;
+  }, [dialogOpen]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -138,7 +146,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
       return workRecordsApi.create(companyId, { projectId, kind, ...shared });
     },
     onSuccess: async () => {
-      closeDialog();
+      closeDialog(true);
       await queryClient.invalidateQueries({ queryKey: recordsKey });
     },
   });
@@ -148,13 +156,21 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
     if (window.confirm("有未保存的业务记录草稿。确定先保存记录并继续切换视图吗？")) {
       try { await save.mutateAsync(); return true; } catch { return false; }
     }
-    if (window.confirm("确定放弃业务记录草稿并继续切换视图吗？视图草稿不会被改动。")) { closeDialog(); return true; }
+    if (window.confirm("确定放弃业务记录草稿并继续切换视图吗？视图草稿不会被改动。")) { closeDialog(true); return true; }
     return false;
   };
-  const guardNavigation = useCallback(
-    () => viewLeaveGuardRef.current?.() ?? beforeViewSwitch(),
-    [businessDraftDirty, draft, editingRecord, save],
-  );
+  const guardNavigation = useCallback(() => {
+    if (navigationGuardPromiseRef.current) return navigationGuardPromiseRef.current;
+    const pending = (viewLeaveGuardRef.current?.() ?? beforeViewSwitch())
+      .finally(() => { navigationGuardPromiseRef.current = null; });
+    navigationGuardPromiseRef.current = pending;
+    return pending;
+  }, [businessDraftDirty, draft, editingRecord, save]);
+  latestNavigationGuardRef.current = guardNavigation;
+  useEffect(() => {
+    if (!businessDraftDirty && !viewDraftDirty) return;
+    return registerNavigationLeaveGuard(() => latestNavigationGuardRef.current());
+  }, [businessDraftDirty, viewDraftDirty]);
   useEffect(() => {
     onNavigationGuardChange?.({ dirty: businessDraftDirty || viewDraftDirty, guard: guardNavigation });
     return () => onNavigationGuardChange?.(null);
@@ -199,6 +215,12 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
     setDialogOpen(true);
   };
 
+  const selectRecord = async (record: WorkRecord) => {
+    if (record.id === editingRecord?.id) return;
+    if (!(await beforeViewSwitch())) return;
+    beginEdit(record);
+  };
+
   const beginCoverage = (record: WorkRecord) => {
     saveCoverage.reset();
     setCoverageRecord(record);
@@ -236,7 +258,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
         recordsLoading={records.isLoading}
         recordsError={records.error}
         onRetryRecords={() => records.refetch()}
-        onEditRecord={beginEdit}
+        onEditRecord={(record) => { void selectRecord(record); }}
         onEditCoverage={kind === "plan" ? beginCoverage : undefined}
         onReopenRecord={kind === "defect" ? (record) => reopen.mutate(record) : undefined}
         reopeningRecordId={reopen.isPending ? reopen.variables?.id ?? null : null}
@@ -245,8 +267,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
         registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
       />
 
-      <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (!businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(); }}>
-        <DialogContent className="sm:max-w-2xl">
+      <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(true); }}>
+        <DialogContent className="sm:max-w-2xl" onInteractOutside={(event) => event.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{editingRecord ? l10n("local.work_record_edit_kind", { kind: kindLabel }) : l10n("local.work_record_new_kind", { kind: kindLabel })}</DialogTitle>
             <DialogDescription>{l10n("local.work_record_this_saves_a_business_record_only_it")}</DialogDescription>
@@ -335,7 +357,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
           {save.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_kind_save_failed", { kind: kindLabel })}{save.error.message}</p> : null}
 
           <DialogFooter className="items-center justify-between sm:justify-between">
-            <Button variant="ghost" onClick={() => { if (!businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(); }}>{l10n("local.work_record_cancel")}</Button>
+            <Button variant="ghost" onClick={() => { if (!businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(true); }}>{l10n("local.work_record_cancel")}</Button>
             <Button disabled={!draft.title.trim() || save.isPending} onClick={() => save.mutate()}>
               {save.isPending ? l10n("local.work_record_saving") : l10n("local.work_record_save_kind", { kind: kindLabel })}
             </Button>

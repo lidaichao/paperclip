@@ -341,6 +341,7 @@ export function ProjectDetail() {
   const [fieldSaveStates, setFieldSaveStates] = useState<Partial<Record<ProjectConfigFieldKey, ProjectFieldSaveState>>>({});
   const [dismissedLeftProjectIds, setDismissedLeftProjectIds] = useState<Set<string>>(() => new Set());
   const workRecordNavigationRef = useRef<{ dirty: boolean; guard: () => Promise<boolean> } | null>(null);
+  const tabNavigationPromiseRef = useRef<Promise<void> | null>(null);
   const fieldSaveRequestIds = useRef<Partial<Record<ProjectConfigFieldKey, number>>>({});
   const fieldSaveTimers = useRef<Partial<Record<ProjectConfigFieldKey, ReturnType<typeof setTimeout>>>>({});
   const routeProjectRef = projectId ?? "";
@@ -389,64 +390,6 @@ export function ProjectDetail() {
 
     document.addEventListener("click", handleDocumentClick, true);
     return () => document.removeEventListener("click", handleDocumentClick, true);
-  }, [location.key, navigate, workRecordRouteActive]);
-
-  useEffect(() => {
-    if (!workRecordRouteActive) return;
-    const currentEntry = {
-      index: window.history.state?.idx,
-      state: window.history.state,
-      url: window.location.href,
-    };
-    let restoring = false;
-    let allowing = false;
-    let attemptedDelta: number | null = null;
-    let attemptedUrl = "";
-
-    function continueNavigation() {
-      const guard = workRecordNavigationRef.current;
-      if (!guard?.dirty) {
-        allowing = true;
-        if (attemptedDelta !== null) window.history.go(attemptedDelta);
-        else navigate(attemptedUrl, { replace: true });
-        return;
-      }
-      void guard.guard().then((allowed) => {
-        if (!allowed) return;
-        allowing = true;
-        if (attemptedDelta !== null) window.history.go(attemptedDelta);
-        else navigate(attemptedUrl, { replace: true });
-      });
-    }
-
-    function handlePopState(event: PopStateEvent) {
-      if (allowing) return;
-      if (!workRecordNavigationRef.current?.dirty) return;
-      event.stopImmediatePropagation();
-
-      if (restoring) {
-        restoring = false;
-        continueNavigation();
-        return;
-      }
-
-      attemptedUrl = window.location.href;
-      const nextIndex = event.state?.idx;
-      if (typeof currentEntry.index === "number" && typeof nextIndex === "number") {
-        attemptedDelta = nextIndex - currentEntry.index;
-        const restoreDelta = currentEntry.index - nextIndex;
-        if (restoreDelta !== 0) {
-          restoring = true;
-          window.history.go(restoreDelta);
-          return;
-        }
-      }
-      window.history.pushState(currentEntry.state, "", currentEntry.url);
-      continueNavigation();
-    }
-
-    window.addEventListener("popstate", handlePopState, true);
-    return () => window.removeEventListener("popstate", handlePopState, true);
   }, [location.key, navigate, workRecordRouteActive]);
 
   const { data: project, isLoading, error } = useQuery({
@@ -800,7 +743,8 @@ export function ProjectDetail() {
   const projectJoinLeavePending = projectMembershipPending && membershipMutation.variables?.starred === undefined;
 
   const handleTabChange = (tab: ProjectTab) => {
-    void (async () => {
+    if (tabNavigationPromiseRef.current) return;
+    const pending = (async () => {
     if (tab !== activeTab && workRecordNavigationRef.current?.dirty) {
       if (!(await workRecordNavigationRef.current.guard())) return;
     }
@@ -827,7 +771,11 @@ export function ProjectDetail() {
     } else {
       navigate(`/projects/${canonicalProjectRef}/issues`);
     }
-    })();
+    })().finally(() => {
+      window.setTimeout(() => { tabNavigationPromiseRef.current = null; }, 0);
+    });
+    tabNavigationPromiseRef.current = pending;
+    void pending;
   };
 
   return (

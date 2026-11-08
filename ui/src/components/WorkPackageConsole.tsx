@@ -205,6 +205,11 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   }, [companyId, online, projectId, queryClient]);
 
   const selected = visibleRecords.find((record) => record.id === selectedId) ?? null;
+  const selectRecord = async (recordId: string) => {
+    if (recordId === selectedId) return;
+    if (beforeViewSwitch && !(await beforeViewSwitch())) return;
+    setSelectedId(recordId);
+  };
   const qualityDraftKey = selected ? `work-package-quality-draft:${companyId}:${projectId}:${selected.id}` : null;
   useEffect(() => {
     if (!qualityDraftKey) return;
@@ -359,7 +364,7 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
         <Card className={cn("self-start", selected && "xl:col-span-2")}>
           <CardHeader className="py-3"><CardTitle>{l10n("local.work_record_kind_list", { kind: surfaceLabel })}</CardTitle><CardDescription>{l10n("local.work_record_business_dispatch_quality_and_live_r")}</CardDescription></CardHeader>
           <CardContent>
-            {visibleKind ? <WorkRecordDenseTable companyId={companyId} projectId={projectId} kind={visibleKind} records={visibleRecords} agentNames={agentNames} selectedId={selectedId} checked={checked} onSelect={setSelectedId} onChecked={setChecked} beforeViewSwitch={beforeViewSwitch ?? (async () => true)} onViewDraftDirtyChange={onViewDraftDirtyChange} registerLeaveGuard={registerLeaveGuard} /> : null}
+            {visibleKind ? <WorkRecordDenseTable companyId={companyId} projectId={projectId} kind={visibleKind} records={visibleRecords} agentNames={agentNames} selectedId={selectedId} checked={checked} onSelect={(recordId) => { void selectRecord(recordId); }} onChecked={setChecked} beforeViewSwitch={beforeViewSwitch ?? (async () => true)} onViewDraftDirtyChange={onViewDraftDirtyChange} registerLeaveGuard={registerLeaveGuard} /> : null}
           </CardContent>
         </Card>
 

@@ -1,9 +1,29 @@
-import { expect, test, type APIResponse } from "@playwright/test";
+import { expect, test, type APIResponse, type Dialog, type Page } from "@playwright/test";
 
 async function json<T>(response: APIResponse, label: string): Promise<T> {
   const body = await response.text();
   expect(response.ok(), `${label}: ${response.status()} ${body}`).toBe(true);
   return JSON.parse(body) as T;
+}
+
+async function answerDialogs(page: Page, answers: boolean[], action: () => Promise<unknown>) {
+  const messages: string[] = [];
+  const handler = async (dialog: Dialog) => {
+    const answer = answers[messages.length];
+    messages.push(dialog.message());
+    if (answer) await dialog.accept();
+    else await dialog.dismiss();
+  };
+  page.on("dialog", handler);
+  try {
+    await action();
+    await expect.poll(() => messages.length).toBeGreaterThanOrEqual(answers.length);
+    await page.waitForTimeout(200);
+    if (messages.length !== answers.length) throw new Error(`Unexpected dialogs: ${JSON.stringify(messages)}`);
+  } finally {
+    page.off("dialog", handler);
+  }
+  return messages;
 }
 
 test("G3B1 keeps dense plan and defect views stable while saves remain non-executing", async ({ page, request }, testInfo) => {
@@ -28,12 +48,20 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
     }), `create defect ${index}`);
   }
 
+  const issuesBaseline = await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "read issue baseline");
+  const runsBaseline = await json<unknown[]>(await request.get(`/api/companies/${company.id}/heartbeat-runs`), "read run baseline");
+
   await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
   const rows = page.getByTestId("work-record-table-row");
   const denseTable = page.getByTestId("work-record-dense-table");
   await expect(rows).toHaveCount(20);
   await expect(page.getByText("缺陷 01", { exact: true })).toHaveCount(0);
+  await denseTable.getByLabel("搜索记录").fill("计划");
   await denseTable.getByLabel("密度").selectOption("compact");
+  await denseTable.getByLabel("排序字段").selectOption("title");
+  await denseTable.getByRole("button", { name: "升序", exact: true }).click();
+  await denseTable.getByLabel("分组字段").selectOption("businessStatus");
+  await denseTable.getByLabel("业务状态筛选").selectOption("backlog");
   await expect(denseTable).toHaveAttribute("data-density", "compact");
   expect((await rows.first().boundingBox())?.height).toBeLessThanOrEqual(32);
   await page.getByText("列设置", { exact: true }).click();
@@ -55,10 +83,45 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   await page.getByRole("button", { name: "另存为", exact: true }).first().click();
   await expect(denseTable.getByLabel("视图")).toHaveValue(/^[0-9a-f-]{36}$/);
   await expect(denseTable.getByLabel("视图").locator("option:checked")).toHaveText("个人 · 扫描视图");
+  const savedViews = await json<Array<{ name: string; revision: number; config: Record<string, unknown> }>>(
+    await request.get(`/api/companies/${company.id}/projects/${project.id}/work-record-views/plan`),
+    "read saved plan views",
+  );
+  expect(savedViews.find((view) => view.name === "扫描视图")).toMatchObject({
+    revision: 1,
+    config: {
+      schemaVersion: 2,
+      containerId: null,
+      visibleFields: ["id", "title", "iteration", "plannedStartDate", "plannedCompletionDate", "assignee", "qaAssignee", "businessStatus", "dispatchState", "dependencies"],
+      columnOrder: ["id", "title", "description", "iteration", "plannedStartDate", "assignee", "plannedCompletionDate", "qaAssignee", "businessStatus", "dispatchState", "dependencies"],
+      columnWidths: { assignee: 176 },
+      density: "compact",
+      filters: [{ field: "businessStatus", operator: "is", value: "backlog" }],
+      search: "计划",
+      sort: [{ field: "title", direction: "desc" }],
+      groupBy: "businessStatus",
+      frozenFields: ["id", "title", "businessStatus"],
+    },
+  });
+  expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "issues after view save")).toHaveLength(issuesBaseline.length);
+  expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/heartbeat-runs`), "runs after view save")).toHaveLength(runsBaseline.length);
   await page.reload();
   await denseTable.getByLabel("视图").selectOption({ label: "个人 · 扫描视图" });
   await expect(denseTable).toHaveAttribute("data-density", "compact");
+  await expect(denseTable.getByLabel("搜索记录")).toHaveValue("计划");
+  await expect(denseTable.getByLabel("排序字段")).toHaveValue("title");
+  await expect(denseTable.getByRole("button", { name: "降序", exact: true })).toBeVisible();
+  await expect(denseTable.getByLabel("分组字段")).toHaveValue("businessStatus");
+  await expect(denseTable.getByLabel("业务状态筛选")).toHaveValue("backlog");
   await expect(page.getByRole("columnheader", { name: "描述", exact: true })).toHaveCount(0);
+  await expect(rows).toHaveCount(20);
+
+  await page.setViewportSize({ width: 1319, height: 1600 });
+  await rows.last().scrollIntoViewIfNeeded();
+  await expect(rows.last()).toBeInViewport();
+  await denseTable.screenshot({ path: testInfo.outputPath("g3b1-20-row-readable.png") });
+  await page.setViewportSize({ width: 1319, height: 1012 });
+  await page.evaluate(() => window.scrollTo(0, 0));
   const projectTitleBefore = await page.getByRole("heading", { name: "Demo 1 路由与密度", exact: true }).boundingBox();
   const tabsBefore = await page.getByRole("tab", { name: "计划", exact: true }).boundingBox();
   const mainBefore = await page.getByTestId("work-records-main").boundingBox();
@@ -66,6 +129,13 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   await expect(page).toHaveURL(/\/projects\/[^/]+\/defects$/);
   await expect(rows).toHaveCount(2);
   await expect(page.getByText("计划 01", { exact: true })).toHaveCount(0);
+  await expect(denseTable.getByLabel("搜索记录")).toHaveValue("");
+  await expect(denseTable.getByLabel("业务状态筛选")).toHaveValue("");
+  const defectViews = await json<Array<{ isBuiltin: boolean; config: { search: string; filters: unknown[] } }>>(
+    await request.get(`/api/companies/${company.id}/projects/${project.id}/work-record-views/defect`),
+    "read isolated defect views",
+  );
+  expect(defectViews).toEqual([expect.objectContaining({ isBuiltin: true, config: expect.objectContaining({ search: "", filters: [] }) })]);
   const projectTitleAfter = await page.getByRole("heading", { name: "Demo 1 路由与密度", exact: true }).boundingBox();
   const tabsAfter = await page.getByRole("tab", { name: "缺陷", exact: true }).boundingBox();
   const mainAfter = await page.getByTestId("work-records-main").boundingBox();
@@ -74,30 +144,36 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   expect(mainAfter?.y).toBe(mainBefore?.y);
 
   await page.getByRole("tab", { name: "计划", exact: true }).click();
-  const issuesBefore = await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "read issues before save");
-  const runsBefore = await json<unknown[]>(await request.get(`/api/companies/${company.id}/live-runs`), "read runs before save");
   await page.getByRole("button", { name: "新建计划", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("浏览器安全保存");
   await page.getByPlaceholder("写明范围、约束和验收标准").fill("保存时不得产生执行对象");
   await page.getByRole("button", { name: "保存计划", exact: true }).click();
   await expect(page.getByText("浏览器安全保存", { exact: true })).toBeVisible();
   const issuesAfter = await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "read issues after save");
-  const runsAfter = await json<unknown[]>(await request.get(`/api/companies/${company.id}/live-runs`), "read runs after save");
-  expect(issuesAfter).toHaveLength(issuesBefore.length);
-  expect(runsAfter).toHaveLength(runsBefore.length);
+  const runsAfter = await json<unknown[]>(await request.get(`/api/companies/${company.id}/heartbeat-runs`), "read runs after save");
+  expect(issuesAfter).toHaveLength(issuesBaseline.length);
+  expect(runsAfter).toHaveLength(runsBaseline.length);
 
   const stored = await json<Array<{ title: string; execution: { issueId: string | null; lastRunId: string | null } }>>(
     await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
     "read saved work records",
   );
   expect(stored.find((record) => record.title === "浏览器安全保存")?.execution).toEqual(expect.objectContaining({ issueId: null, lastRunId: null }));
-  await denseTable.screenshot({ path: testInfo.outputPath("g3b1-20-row-table.png") });
   await page.screenshot({ path: testInfo.outputPath("g3b1-20-row-compact.png"), fullPage: true });
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(`/${company.issuePrefix}/projects/${project.id}/defects`);
   await expect(page.getByText("缺陷 01", { exact: true })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "移动端导航" })).toHaveClass(/translate-y-full/);
+  const narrowTable = page.getByTestId("work-record-dense-table");
+  await expect(narrowTable.getByLabel("业务状态筛选")).toBeVisible();
+  await narrowTable.getByLabel("业务状态筛选").scrollIntoViewIfNeeded();
+  await page.getByText("列设置", { exact: true }).click();
+  const filterBox = await narrowTable.getByLabel("业务状态筛选").boundingBox();
+  const columnSettingsBox = await page.getByText("列设置", { exact: true }).boundingBox();
+  expect(filterBox?.y ?? 844).toBeLessThan(844);
+  expect((columnSettingsBox?.y ?? 844) + (columnSettingsBox?.height ?? 0)).toBeLessThanOrEqual(844);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("g3b1-narrow-defects.png"), fullPage: true });
@@ -120,58 +196,114 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   await expect(page.getByText("四态计划", { exact: true })).toBeVisible();
   const denseTable = page.getByTestId("work-record-dense-table");
 
-  // clean / clean
+  // clean / clean: navigation has no decision dialog.
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
   await expect(page).toHaveURL(/\/defects$/);
   await page.getByRole("tab", { name: "计划", exact: true }).click();
 
-  // business dirty / view clean: discard business and continue.
+  // business dirty / view clean: save business, then continue without a view decision.
   await page.getByRole("button", { name: "新建计划", exact: true }).click();
-  await page.getByPlaceholder("例如：完成发布说明").fill("只脏业务");
-  const businessOnlyMessages: string[] = [];
-  page.on("dialog", async function businessOnly(dialog) {
-    businessOnlyMessages.push(dialog.message());
-    if (businessOnlyMessages.length === 1) await dialog.dismiss();
-    else { page.off("dialog", businessOnly); await dialog.accept(); }
-  });
-  await page.getByRole("tab", { name: "缺陷", exact: true }).click();
+  await page.getByPlaceholder("例如：完成发布说明").fill("只脏业务已保存");
+  const businessOnlyMessages = await answerDialogs(page, [true], () => page.getByRole("tab", { name: "缺陷", exact: true }).click());
   await expect(page).toHaveURL(/\/defects$/);
-  expect(businessOnlyMessages).toHaveLength(2);
+  expect(businessOnlyMessages[0]).toContain("业务记录草稿");
+  const afterBusinessSave = await json<Array<{ title: string }>>(
+    await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
+    "business-only save",
+  );
+  expect(afterBusinessSave.map((record) => record.title)).toContain("只脏业务已保存");
   await page.getByRole("tab", { name: "计划", exact: true }).click();
 
-  // Save a personal view used by the remaining two combinations.
+  // Create a personal view used by the remaining combinations.
   await denseTable.getByLabel("密度").selectOption("compact");
   page.once("dialog", (dialog) => dialog.accept("四态视图"));
   await page.getByRole("button", { name: "另存为", exact: true }).first().click();
   await expect(denseTable.getByLabel("视图").locator("option:checked")).toHaveText("个人 · 四态视图");
 
-  // view dirty / business clean: discard view only and switch to builtin.
+  // view dirty / business clean: save, then separately discard, without touching records.
   await denseTable.getByLabel("密度").selectOption("comfortable");
-  const viewOnlyMessages: string[] = [];
-  page.on("dialog", async function viewOnly(dialog) {
-    viewOnlyMessages.push(dialog.message());
-    if (viewOnlyMessages.length === 1) await dialog.dismiss();
-    else { page.off("dialog", viewOnly); await dialog.accept(); }
-  });
-  await denseTable.getByLabel("视图").selectOption({ label: "内置 · 全部计划" });
+  const savedViewMessages = await answerDialogs(page, [true], () => denseTable.getByLabel("视图").selectOption({ label: "内置 · 全部计划" }));
+  expect(savedViewMessages[0]).toContain("视图配置");
   await expect(denseTable.getByLabel("视图").locator("option:checked")).toHaveText("内置 · 全部计划");
+  await denseTable.getByLabel("视图").selectOption({ label: "个人 · 四态视图" });
+  await expect(denseTable).toHaveAttribute("data-density", "comfortable");
+  await denseTable.getByLabel("密度").selectOption("compact");
+  const discardedViewMessages = await answerDialogs(page, [false, true], () => denseTable.getByLabel("视图").selectOption({ label: "内置 · 全部计划" }));
+  expect(discardedViewMessages[1]).toContain("放弃视图调整");
+  await denseTable.getByLabel("视图").selectOption({ label: "个人 · 四态视图" });
+  await expect(denseTable).toHaveAttribute("data-density", "comfortable");
 
-  // business dirty / view dirty: business prompts are resolved before view prompts.
+  // both dirty: saving business leaves the view draft intact when view resolution is cancelled.
   await denseTable.getByLabel("密度").selectOption("compact");
   await page.getByRole("button", { name: "新建计划", exact: true }).click();
-  await page.getByPlaceholder("例如：完成发布说明").fill("双脏仍保留");
-  const bothMessages: string[] = [];
-  page.on("dialog", async function both(dialog) {
-    bothMessages.push(dialog.message());
-    if (bothMessages.length === 1) await dialog.dismiss();
-    else if (bothMessages.length === 2) await dialog.accept();
-    else if (bothMessages.length === 3) await dialog.dismiss();
-    else { page.off("dialog", both); await dialog.dismiss(); }
-  });
-  await page.getByRole("tab", { name: "缺陷", exact: true }).click();
+  await page.getByPlaceholder("例如：完成发布说明").fill("双脏先存业务");
+  const bothSaveMessages = await answerDialogs(page, [true, false, false], () => page.getByRole("tab", { name: "缺陷", exact: true }).click());
   await expect(page).toHaveURL(/\/plans$/);
-  expect(bothMessages[0]).toContain("业务记录草稿");
-  expect(bothMessages[1]).toContain("放弃业务记录草稿");
-  expect(bothMessages[2]).toContain("视图配置");
-  expect(bothMessages[3]).toContain("放弃视图调整");
+  expect(bothSaveMessages[0]).toContain("业务记录草稿");
+  expect(bothSaveMessages[1]).toContain("视图配置");
+  await expect(page.getByText("未保存配置", { exact: true })).toBeVisible();
+  expect((await json<Array<{ title: string }>>(
+    await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
+    "both-dirty business save",
+  )).map((record) => record.title)).toContain("双脏先存业务");
+
+  // both dirty: discarding business also leaves the view draft intact when view resolution is cancelled.
+  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await page.getByPlaceholder("例如：完成发布说明").fill("双脏放弃业务");
+  const bothDiscardMessages = await answerDialogs(page, [false, true, false, false], () => page.getByRole("tab", { name: "缺陷", exact: true }).click());
+  await expect(page).toHaveURL(/\/plans$/);
+  expect(bothDiscardMessages[1]).toContain("放弃业务记录草稿");
+  expect(bothDiscardMessages[2]).toContain("视图配置");
+  await expect(page.getByText("未保存配置", { exact: true })).toBeVisible();
+  expect((await json<Array<{ title: string }>>(
+    await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
+    "both-dirty business discard",
+  )).map((record) => record.title)).not.toContain("双脏放弃业务");
+
+  // Saving the view directly must not close or rewrite the business draft.
+  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  const titleInput = page.getByPlaceholder("例如：完成发布说明");
+  await titleInput.fill("保存视图后业务仍在");
+  await page.getByRole("button", { name: "保存修改", exact: true }).evaluate((button) => (button as HTMLButtonElement).click());
+  await expect(page.getByText("未保存配置", { exact: true })).toHaveCount(0);
+  await expect(titleInput).toHaveValue("保存视图后业务仍在");
+  await answerDialogs(page, [true], () => page.getByRole("button", { name: "取消", exact: true }).click());
+
+  // Switching records asks about the business draft and does not overwrite it when cancelled.
+  await page.getByRole("button", { name: "四态计划", exact: true }).click();
+  await page.getByRole("button", { name: "编辑", exact: true }).click();
+  await titleInput.fill("切记录草稿");
+  const otherRecordButton = page.getByRole("button", { name: "双脏先存业务", exact: true });
+  const recordCancelMessages = await answerDialogs(page, [false, false], () => otherRecordButton.evaluate((button) => (button as HTMLButtonElement).click()));
+  expect(recordCancelMessages[0]).toContain("业务记录草稿");
+  await expect(titleInput).toHaveValue("切记录草稿");
+  await answerDialogs(page, [false, true], () => otherRecordButton.evaluate((button) => (button as HTMLButtonElement).click()));
+  await expect(page.getByRole("heading", { name: "双脏先存业务", level: 3 })).toBeVisible();
+  await page.getByRole("button", { name: "编辑", exact: true }).click();
+  await expect(titleInput).toHaveValue("双脏先存业务");
+  await page.getByRole("button", { name: "取消", exact: true }).click();
+
+  // Refresh protection keeps an unsaved business draft when the native leave is cancelled.
+  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await titleInput.fill("刷新仍保留");
+  const reloadMessages = await answerDialogs(page, [false], () => {
+    void page.reload().catch(() => null);
+    return Promise.resolve();
+  });
+  expect(reloadMessages).toHaveLength(1);
+  await expect(titleInput).toHaveValue("刷新仍保留");
+  await answerDialogs(page, [true], () => page.getByRole("button", { name: "取消", exact: true }).click());
+
+  // Back navigation uses the same business-first guard; cancel keeps the draft, discard allows leaving.
+  await page.getByRole("tab", { name: "缺陷", exact: true }).click();
+  await expect(page).toHaveURL(/\/defects$/);
+  await page.getByRole("tab", { name: "计划", exact: true }).click();
+  await expect(page).toHaveURL(/\/plans$/);
+  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await titleInput.fill("后退仍保留");
+  await answerDialogs(page, [false, false], () => page.goBack());
+  await expect(page).toHaveURL(/\/plans$/);
+  await expect(titleInput).toHaveValue("后退仍保留");
+  await answerDialogs(page, [false, true], () => page.goBack());
+  await expect(page).toHaveURL(/\/defects$/);
 });

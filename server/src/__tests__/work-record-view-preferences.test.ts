@@ -96,6 +96,22 @@ describeDb("G1 work-record view preference persistence", () => {
     ]);
     expect(concurrent.every((receipt) => receipt.deleted)).toBe(true);
 
+    const duplicateCreates = await Promise.allSettled([
+      context.service.create(context.company.id, context.projectA.id, "user-a", "plan", "Concurrent", config),
+      context.service.create(context.company.id, context.projectA.id, "user-a", "plan", "Concurrent", config),
+    ]);
+    expect(duplicateCreates.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(duplicateCreates.filter((result) => result.status === "rejected")).toHaveLength(1);
+    const concurrentView = duplicateCreates.find((result) => result.status === "fulfilled")?.value;
+    expect(concurrentView).toBeDefined();
+    const duplicateSaves = await Promise.allSettled([
+      context.service.update(context.company.id, context.projectA.id, "user-a", "plan", concurrentView!.id, 1, { config: { ...config, search: "first" } }),
+      context.service.update(context.company.id, context.projectA.id, "user-a", "plan", concurrentView!.id, 1, { config: { ...config, search: "second" } }),
+    ]);
+    expect(duplicateSaves.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(duplicateSaves.filter((result) => result.status === "rejected")).toHaveLength(1);
+    expect(duplicateSaves.find((result) => result.status === "rejected")).toMatchObject({ reason: { status: 409 } });
+
     expect(await db.select().from(issues)).toHaveLength(0);
     expect(await db.select().from(heartbeatRuns)).toHaveLength(0);
     expect(await db.select().from(agentWakeupRequests)).toHaveLength(0);

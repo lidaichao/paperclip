@@ -122,6 +122,10 @@ export function Layout({ sidebarSections }: { sidebarSections?: ReactNode }) {
   const isCompanySettingsRoute = shellRoute.builtInContextualSurface === "settings";
   const companyPathSegments = shellRoute.companySegments;
   const isTaskDetailRoute = shellRoute.isTaskDetail;
+  const rawPathSegments = location.pathname.split("/").filter(Boolean);
+  const projectsSegmentIndex = rawPathSegments.findIndex((segment) => segment.toLowerCase() === "projects");
+  const isWorkRecordRoute = projectsSegmentIndex >= 0
+    && ["plans", "defects"].includes(rawPathSegments[projectsSegmentIndex + 2]?.toLowerCase() ?? "");
   const useStreamlinedTaskDetailShell = streamlinedUiEnabled && isTaskDetailRoute;
   const isToolsRoute = companyPathSegments[0]?.toLowerCase() === "tools";
   const isAppsRoute = companyPathSegments[0]?.toLowerCase() === "apps";
@@ -780,7 +784,7 @@ export function Layout({ sidebarSections }: { sidebarSections?: ReactNode }) {
           </div>
         </div>
       </div>
-      {isMobile && <MobileBottomNav visible={mobileNavVisible} />}
+      {isMobile && <MobileBottomNav visible={mobileNavVisible && !isWorkRecordRoute} />}
       <CommandPalette />
       <NewIssueDialog />
       <NewProjectDialog />
