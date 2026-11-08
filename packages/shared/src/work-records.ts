@@ -48,6 +48,37 @@ export type WorkRecordBusinessStatus = (typeof WORK_RECORD_BUSINESS_STATUSES)[nu
 export type WorkRecordDispatchState = (typeof WORK_RECORD_DISPATCH_STATES)[number];
 export type WorkRecordHoldReason = (typeof WORK_RECORD_HOLD_REASONS)[number];
 
+export interface ProjectVersion {
+  id: string;
+  companyId: string;
+  projectId: string;
+  name: string;
+  targetDate: string | null;
+  revision: number;
+  archivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProjectIteration {
+  id: string;
+  companyId: string;
+  projectId: string;
+  versionId: string | null;
+  name: string;
+  startsOn: string | null;
+  endsOn: string | null;
+  revision: number;
+  archivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  progress: {
+    completed: number;
+    total: number;
+    percent: number;
+  };
+}
+
 export const WORK_RECORD_VIEW_KINDS = ["plan", "defect"] as const;
 export const WORK_RECORD_VIEW_DENSITIES = ["compact", "comfortable", "spacious"] as const;
 export const WORK_RECORD_PLAN_VIEW_FIELDS = [
@@ -449,6 +480,8 @@ export interface WorkRecordActionCapability {
 }
 
 export interface WorkRecordConsoleCapabilities {
+  manageContainers: WorkRecordActionCapability;
+  editRecords: WorkRecordActionCapability;
   preparePackage: WorkRecordActionCapability;
   escalateAssignmentGaps: WorkRecordActionCapability;
   recordPoVerdict: WorkRecordActionCapability;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { l10n } from "@/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordKind } from "@paperclipai/shared";
+import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordKind } from "@paperclipai/shared";
 import { Plus } from "lucide-react";
 import { agentsApi } from "@/api/agents";
 import { workRecordsApi } from "@/api/work-records";
@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { WorkPackageConsole } from "@/components/WorkPackageConsole";
+import { WorkRecordContainerTree } from "@/components/WorkRecordContainerTree";
 
 const BUSINESS_STATUS_OPTIONS: Array<{ value: WorkRecordBusinessStatus; labelKey: string }> = [
   { value: "backlog", labelKey: "local.backlog_bf986e9a" },
@@ -40,6 +41,10 @@ interface RecordDraft {
   predecessorRecordIds: string[];
   packageQaRole: "execution" | "qa";
   qaRetestExemptionReason: string;
+  iterationId: string;
+  plannedStartDate: string;
+  plannedCompletionDate: string;
+  defectSeverity: WorkRecordDefectSeverity | "";
 }
 
 function blankDraft(): RecordDraft {
@@ -53,6 +58,10 @@ function blankDraft(): RecordDraft {
     predecessorRecordIds: [],
     packageQaRole: "execution",
     qaRetestExemptionReason: "",
+    iterationId: "",
+    plannedStartDate: "",
+    plannedCompletionDate: "",
+    defectSeverity: "",
   };
 }
 
@@ -67,13 +76,18 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
     predecessorRecordIds: record.dependencies.map((dependency) => dependency.predecessorRecordId),
     packageQaRole: record.packageQaRole ?? "execution",
     qaRetestExemptionReason: record.qaRetestExemptionReason ?? "",
+    iterationId: record.iterationId ?? "",
+    plannedStartDate: record.plannedStartDate ?? "",
+    plannedCompletionDate: record.plannedCompletionDate ?? "",
+    defectSeverity: record.defectSeverity ?? "",
   };
 }
 
-export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGuardChange }: {
+export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "table", onNavigationGuardChange }: {
   companyId: string;
   projectId: string;
   kind: WorkRecordKind;
+  viewMode?: "table" | "gantt";
   onNavigationGuardChange?: (state: { dirty: boolean; guard: () => Promise<boolean> } | null) => void;
 }) {
   const queryClient = useQueryClient();
@@ -96,6 +110,14 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
   const agents = useQuery({
     queryKey: queryKeys.agents.list(companyId),
     queryFn: () => agentsApi.list(companyId),
+  });
+  const capabilities = useQuery({
+    queryKey: queryKeys.workRecords.capabilities(companyId, projectId),
+    queryFn: () => workRecordsApi.capabilities(companyId, projectId),
+  });
+  const iterations = useQuery({
+    queryKey: queryKeys.workRecords.iterations(companyId, projectId),
+    queryFn: () => workRecordsApi.iterations(companyId, projectId),
   });
   const allRecords = records.data ?? [];
   const visibleRecords = useMemo(
@@ -131,6 +153,10 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
         assigneeAgentId: draft.assigneeAgentId || null,
         qaAssigneeAgentId: draft.qaAssigneeAgentId || null,
         predecessorRecordIds: draft.predecessorRecordIds,
+        iterationId: draft.iterationId || null,
+        plannedStartDate: draft.plannedStartDate || null,
+        plannedCompletionDate: draft.plannedCompletionDate || null,
+        ...(kind === "defect" ? { defectSeverity: draft.defectSeverity || null } : {}),
         ...(kind === "plan" && draft.parentRecordId ? {
           packageQaRole: draft.packageQaRole,
           qaRetestExemptionReason: draft.packageQaRole === "execution" ? draft.qaRetestExemptionReason.trim() || null : null,
@@ -231,7 +257,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
   const parentRecords = selectableRecords.filter((record) => record.kind === "plan");
 
   return (
-    <section className="space-y-3" data-testid="work-records-main" data-kind={kind}>
+    <section className="space-y-3" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
       <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{kindLabel}</h2>
@@ -241,7 +267,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
               : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
           </p>
         </div>
-        <Button onClick={beginCreate}>
+        <Button disabled={capabilities.data?.editRecords.allowed === false} onClick={beginCreate}>
           <Plus className="size-4" />
           {l10n("local.work_record_new_kind", { kind: kindLabel })}
         </Button>
@@ -249,6 +275,11 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
 
       {reopen.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
 
+      {viewMode === "gantt" ? <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">甘特视图沿用同一版本、迭代和计划数据；日期字段为空的记录仍保留在下方表格中。</p> : null}
+
+      <div className="grid items-start gap-3 lg:grid-cols-3">
+      <WorkRecordContainerTree companyId={companyId} projectId={projectId} writable={capabilities.data?.manageContainers.allowed !== false} />
+      <div className="min-w-0 lg:col-span-2">
       <WorkPackageConsole
         companyId={companyId}
         projectId={projectId}
@@ -266,6 +297,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
         onViewDraftDirtyChange={setViewDraftDirty}
         registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
       />
+      </div>
+      </div>
 
       <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(true); }}>
         <DialogContent className="sm:max-w-2xl" onInteractOutside={(event) => event.preventDefault()}>
@@ -302,6 +335,24 @@ export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGua
                 {parentRecords.map((record) => <option key={record.id} value={record.id}>{record.title}</option>)}
               </select>
             </label>
+
+            <label className="space-y-1 text-sm font-medium">
+              <span>迭代</span>
+              <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.iterationId} onChange={(event) => setDraft((current) => ({ ...current, iterationId: event.target.value }))}>
+                <option value="">未归属迭代</option>
+                {(iterations.data ?? []).filter((iteration) => !iteration.archivedAt).map((iteration) => <option key={iteration.id} value={iteration.id}>{iteration.name}</option>)}
+              </select>
+            </label>
+
+            {kind === "defect" ? <label className="space-y-1 text-sm font-medium">
+              <span>严重程度</span>
+              <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.defectSeverity} onChange={(event) => setDraft((current) => ({ ...current, defectSeverity: event.target.value as WorkRecordDefectSeverity | "" }))}>
+                <option value="">未指定</option><option value="critical">严重</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option>
+              </select>
+            </label> : null}
+
+            <label className="space-y-1 text-sm font-medium"><span>计划开始</span><Input type="date" value={draft.plannedStartDate} onChange={(event) => setDraft((current) => ({ ...current, plannedStartDate: event.target.value }))} /></label>
+            <label className="space-y-1 text-sm font-medium"><span>计划完成</span><Input type="date" value={draft.plannedCompletionDate} onChange={(event) => setDraft((current) => ({ ...current, plannedCompletionDate: event.target.value }))} /></label>
 
             {kind === "plan" && draft.parentRecordId ? <label className="space-y-1 text-sm font-medium">
               <span>{l10n("local.work_record_package_qa_role")}</span>

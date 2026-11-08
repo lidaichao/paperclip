@@ -50,7 +50,7 @@ import {
 
 /* ── Top-level tab types ── */
 
-type ProjectBaseTab = "list" | "plans" | "defects" | "plugin-operations" | "workspaces" | "configuration" | "budget";
+type ProjectBaseTab = "list" | "plans" | "gantt" | "defects" | "plugin-operations" | "workspaces" | "configuration" | "budget";
 type ProjectPluginTab = `plugin:${string}`;
 type ProjectTab = ProjectBaseTab | ProjectPluginTab;
 
@@ -68,6 +68,7 @@ function resolveProjectTab(pathname: string, projectId: string): ProjectTab | nu
   if (tab === "budget") return "budget";
   if (tab === "issues") return "list";
   if (tab === "plans" || tab === "records") return "plans";
+  if (tab === "gantt") return "gantt";
   if (tab === "defects") return "defects";
   if (tab === "plugin-operations") return "plugin-operations";
   if (tab === "workspaces") return "workspaces";
@@ -358,7 +359,7 @@ export function ProjectDetail() {
     return isProjectPluginTab(tab) ? tab : null;
   }, [location.search]);
   const activeTab = activeRouteTab ?? pluginTabFromSearch;
-  const workRecordRouteActive = activeTab === "plans" || activeTab === "defects";
+  const workRecordRouteActive = activeTab === "plans" || activeTab === "gantt" || activeTab === "defects";
 
   useEffect(() => {
     if (!workRecordRouteActive) return;
@@ -554,6 +555,10 @@ export function ProjectDetail() {
       navigate(`/projects/${canonicalProjectRef}/plans`, { replace: true });
       return;
     }
+    if (activeTab === "gantt") {
+      navigate(`/projects/${canonicalProjectRef}/gantt`, { replace: true });
+      return;
+    }
     if (activeTab === "defects") {
       navigate(`/projects/${canonicalProjectRef}/defects`, { replace: true });
       return;
@@ -714,6 +719,9 @@ export function ProjectDetail() {
     if (cachedTab === "records" || cachedTab === "plans") {
       return <Navigate to={`/projects/${canonicalProjectRef}/plans`} replace />;
     }
+    if (cachedTab === "gantt") {
+      return <Navigate to={`/projects/${canonicalProjectRef}/gantt`} replace />;
+    }
     if (cachedTab === "defects") {
       return <Navigate to={`/projects/${canonicalProjectRef}/defects`} replace />;
     }
@@ -760,6 +768,8 @@ export function ProjectDetail() {
       navigate(`/projects/${canonicalProjectRef}/workspaces`);
     } else if (tab === "plans") {
       navigate(`/projects/${canonicalProjectRef}/plans`);
+    } else if (tab === "gantt") {
+      navigate(`/projects/${canonicalProjectRef}/gantt`);
     } else if (tab === "defects") {
       navigate(`/projects/${canonicalProjectRef}/defects`);
     } else if (tab === "budget") {
@@ -901,6 +911,7 @@ export function ProjectDetail() {
           items={[
             { value: "list", label: l10n("local.tasks_b3a60e61") },
             { value: "plans", label: "计划" },
+            { value: "gantt", label: "甘特" },
             { value: "defects", label: "缺陷" },
 
             ...(project.managedByPlugin ? [{ value: "plugin-operations", label: l10n("local.plugin_operations_5d078940") }] : []),
@@ -926,6 +937,10 @@ export function ProjectDetail() {
 
       {activeTab === "plans" && project?.id && resolvedCompanyId && (
         <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
+      )}
+
+      {activeTab === "gantt" && project?.id && resolvedCompanyId && (
+        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" viewMode="gantt" onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
       )}
 
       {activeTab === "defects" && project?.id && resolvedCompanyId && (

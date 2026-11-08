@@ -245,6 +245,8 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     assertCompanyAccess(req, companyId);
     const writable = !isReadOnlyViewer(req, companyId);
     res.json({
+      manageContainers: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
+      editRecords: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
       preparePackage: actionCapability(writable, "公司 Operator、Admin、Owner，或具 tasks:assign 权限的 Agent"),
       escalateAssignmentGaps: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
       recordPoVerdict: actionCapability(writable, "PO，或公司 Operator、Admin、Owner"),

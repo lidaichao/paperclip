@@ -518,6 +518,8 @@ export const queryKeys = {
   },
   workRecords: {
     list: (companyId: string, projectId: string) => ["work-records", companyId, projectId] as const,
+    versions: (companyId: string, projectId: string) => ["work-records", companyId, projectId, "versions"] as const,
+    iterations: (companyId: string, projectId: string) => ["work-records", companyId, projectId, "iterations"] as const,
     views: (companyId: string, projectId: string, viewKind: string) => ["work-records", companyId, projectId, "views", viewKind] as const,
     capabilities: (companyId: string, projectId: string) => ["work-records", companyId, projectId, "capabilities"] as const,
     assignmentGapEscalation: (companyId: string, projectId: string, rootRecordId: string) =>

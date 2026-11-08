@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
   agentWakeupRequests,
@@ -253,9 +253,35 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
 
   async function listIterations(companyId: string, projectId: string) {
     await assertProject(companyId, projectId);
-    return db.select().from(projectIterations).where(and(
+    const [iterations, progressRows] = await Promise.all([
+      db.select().from(projectIterations).where(and(
       eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId),
-    )).orderBy(asc(projectIterations.createdAt), asc(projectIterations.id));
+      )).orderBy(asc(projectIterations.createdAt), asc(projectIterations.id)),
+      db.select({
+        iterationId: workRecords.iterationId,
+        completed: sql<number>`count(*) filter (where ${workRecords.businessStatus} = 'done')::int`,
+        total: sql<number>`count(*)::int`,
+      }).from(workRecords).where(and(
+        eq(workRecords.companyId, companyId),
+        eq(workRecords.projectId, projectId),
+        eq(workRecords.kind, "plan"),
+        isNotNull(workRecords.iterationId),
+      )).groupBy(workRecords.iterationId),
+    ]);
+    const progressByIteration = new Map(progressRows.map((row) => [row.iterationId, row]));
+    return iterations.map((iteration) => {
+      const progress = progressByIteration.get(iteration.id);
+      const completed = progress?.completed ?? 0;
+      const total = progress?.total ?? 0;
+      return {
+        ...iteration,
+        progress: {
+          completed,
+          total,
+          percent: total === 0 ? 0 : Math.round((completed / total) * 100),
+        },
+      };
+    });
   }
 
   async function createIteration(companyId: string, projectId: string, input: CreateProjectIteration) {
@@ -296,6 +322,16 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   async function setIterationArchived(companyId: string, projectId: string, iterationId: string, expectedRevision: number, archived: boolean) {
     return db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      const current = await tx.select().from(projectIterations).where(and(
+        eq(projectIterations.companyId, companyId),
+        eq(projectIterations.projectId, projectId),
+        eq(projectIterations.id, iterationId),
+      )).then((rows) => rows[0]);
+      if (!current) throw notFound("Project iteration not found");
+      if (current.revision !== expectedRevision) {
+        throw conflict("Project iteration changed", { iterationId, currentRevision: current.revision });
+      }
+      if (!archived) await assertActiveVersion(tx, companyId, projectId, current.versionId);
       const [updated] = await tx.update(projectIterations).set({
         archivedAt: archived ? new Date() : null,
         revision: sql`${projectIterations.revision} + 1`,
@@ -305,10 +341,6 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         eq(projectIterations.revision, expectedRevision),
       )).returning();
       if (updated) return updated;
-      const exists = await tx.select({ id: projectIterations.id }).from(projectIterations).where(and(
-        eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId), eq(projectIterations.id, iterationId),
-      )).then((rows) => rows[0]);
-      if (!exists) throw notFound("Project iteration not found");
       throw conflict("Project iteration changed", { iterationId });
     });
   }
@@ -1586,7 +1618,16 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         return { issueId: existingLink.issueId, issueIdentifier: linked?.identifier ?? null, issueLinkId: existingLink.id, commandId: command.id, replayed: true };
       }
       if (record.revision !== input.expectedRevision) throw conflict("Work record revision changed", { currentRevision: record.revision });
-      if (!record.assigneeAgentId) throw unprocessable("Choose an assignee before dispatching");
+      const missingFields = [
+        ...(!record.assigneeAgentId ? [{ field: "assigneeAgentId", label: record.kind === "defect" ? "修复人" : "执行人" }] : []),
+        ...(record.kind === "defect" && !record.qaAssigneeAgentId ? [{ field: "qaAssigneeAgentId", label: "QA" }] : []),
+      ];
+      if (missingFields.length > 0) {
+        throw unprocessable(`派发前需补齐：${missingFields.map((item) => item.label).join("、")}`, {
+          code: "work_record_dispatch_assignments_missing",
+          missingFields,
+        });
+      }
       const round = record.dispatchRound + 1;
       const command = existingCommand ?? await tx.insert(workRecordDispatchCommands).values({
         companyId, projectId, recordId, clientRequestId: input.clientRequestId, recordRevision: record.revision, dispatchRound: round,

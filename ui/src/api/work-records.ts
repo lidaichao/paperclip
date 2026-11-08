@@ -20,10 +20,22 @@ import type {
   WorkRecordDispatchResult,
   WorkRecordQualityCommandResult,
   WorkRecordQualityView,
+  ProjectVersion,
+  ProjectIteration,
 } from "@paperclipai/shared";
 import { api } from "./client";
 
 export const workRecordsApi = {
+  versions: (companyId: string, projectId: string) => api.get<ProjectVersion[]>(`/companies/${companyId}/projects/${projectId}/versions`),
+  createVersion: (companyId: string, projectId: string, input: { name: string; targetDate?: string | null }) => api.post<ProjectVersion>(`/companies/${companyId}/projects/${projectId}/versions`, input),
+  updateVersion: (companyId: string, projectId: string, versionId: string, input: { expectedRevision: number; name?: string; targetDate?: string | null }) => api.patch<ProjectVersion>(`/companies/${companyId}/projects/${projectId}/versions/${versionId}`, input),
+  mutateVersion: (companyId: string, projectId: string, versionId: string, operation: "archive" | "restore", expectedRevision: number) => api.post<ProjectVersion>(`/companies/${companyId}/projects/${projectId}/versions/${versionId}/${operation}`, { expectedRevision }),
+  deleteVersion: (companyId: string, projectId: string, versionId: string, expectedRevision: number) => api.delete<{ id: string; deleted: true }>(`/companies/${companyId}/projects/${projectId}/versions/${versionId}`, { expectedRevision }),
+  iterations: (companyId: string, projectId: string) => api.get<ProjectIteration[]>(`/companies/${companyId}/projects/${projectId}/iterations`),
+  createIteration: (companyId: string, projectId: string, input: { versionId: string; name: string; startsOn?: string | null; endsOn?: string | null }) => api.post<ProjectIteration>(`/companies/${companyId}/projects/${projectId}/iterations`, input),
+  updateIteration: (companyId: string, projectId: string, iterationId: string, input: { expectedRevision: number; versionId?: string; name?: string; startsOn?: string | null; endsOn?: string | null }) => api.patch<ProjectIteration>(`/companies/${companyId}/projects/${projectId}/iterations/${iterationId}`, input),
+  mutateIteration: (companyId: string, projectId: string, iterationId: string, operation: "archive" | "restore", expectedRevision: number) => api.post<ProjectIteration>(`/companies/${companyId}/projects/${projectId}/iterations/${iterationId}/${operation}`, { expectedRevision }),
+  deleteIteration: (companyId: string, projectId: string, iterationId: string, expectedRevision: number) => api.delete<{ id: string; deleted: true }>(`/companies/${companyId}/projects/${projectId}/iterations/${iterationId}`, { expectedRevision }),
   views: (companyId: string, projectId: string, viewKind: WorkRecordViewKind) =>
     api.get<WorkRecordViewPreference[]>(`/companies/${companyId}/projects/${projectId}/work-record-views/${viewKind}`),
   createView: (companyId: string, projectId: string, viewKind: WorkRecordViewKind, input: { name: string; config: WorkRecordViewConfig }) =>

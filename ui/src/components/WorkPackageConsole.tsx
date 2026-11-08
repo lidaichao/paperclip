@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { l10n } from "@/i18n";
 import { displayLocale } from "@/i18n/display";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deriveWorkRecordDisplayState, type WakeupRequestStatus, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordKind, type WorkRecordQualityView } from "@paperclipai/shared";
-import { CheckCircle2, PackageCheck, RefreshCw, WifiOff } from "lucide-react";
+import { CheckCircle2, PackageCheck, RefreshCw, WifiOff, X } from "lucide-react";
 import { heartbeatsApi } from "@/api/heartbeats";
 import { workRecordsApi } from "@/api/work-records";
 import { Link } from "@/lib/router";
@@ -170,6 +170,7 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   const queryClient = useQueryClient();
   const online = useConnectivity();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedTriggerRef = useRef<HTMLElement | null>(null);
   const [checked, setChecked] = useState<string[]>([]);
   const [preview, setPreview] = useState<WorkPackageDispatchPreview | null>(null);
   const [previewMode, setPreviewMode] = useState<"whole_package" | "selected_records">("whole_package");
@@ -177,6 +178,11 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   const [evidenceRefs, setEvidenceRefs] = useState("");
   const [defectRecordId, setDefectRecordId] = useState("");
   const [repairRecordId, setRepairRecordId] = useState("");
+  const closeDetails = () => {
+    const previousId = selectedId;
+    setSelectedId(null);
+    window.setTimeout(() => (selectedTriggerRef.current ?? document.querySelector<HTMLElement>(`[data-record-id="${previousId}"] button`))?.focus(), 0);
+  };
   const batchStorageKey = `work-package-batch:${companyId}:${projectId}`;
   const [batchId, setBatchId] = useState(() => localStorage.getItem(batchStorageKey) ?? "");
 
@@ -207,7 +213,9 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   const selected = visibleRecords.find((record) => record.id === selectedId) ?? null;
   const selectRecord = async (recordId: string) => {
     if (recordId === selectedId) return;
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (beforeViewSwitch && !(await beforeViewSwitch())) return;
+    selectedTriggerRef.current = trigger;
     setSelectedId(recordId);
   };
   const qualityDraftKey = selected ? `work-package-quality-draft:${companyId}:${projectId}:${selected.id}` : null;
@@ -362,19 +370,20 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
       </div>
       <div className={cn("items-start gap-4", selected && "grid xl:grid-cols-3")}>
         <Card className={cn("self-start", selected && "xl:col-span-2")}>
-          <CardHeader className="py-3"><CardTitle>{l10n("local.work_record_kind_list", { kind: surfaceLabel })}</CardTitle><CardDescription>{l10n("local.work_record_business_dispatch_quality_and_live_r")}</CardDescription></CardHeader>
+          <CardHeader className="py-3"><CardTitle>{l10n("local.work_record_kind_list", { kind: surfaceLabel })}</CardTitle><CardDescription>{l10n("local.work_record_business_dispatch_quality_and_live_r")}</CardDescription>{visibleRecords[0] ? <StatusBadge record={visibleRecords[0]} liveStatus={liveAvailable ? liveByIssue.get(visibleRecords[0].execution.issueId ?? "") : undefined} liveUnknown={!liveAvailable} /> : null}</CardHeader>
           <CardContent>
             {visibleKind ? <WorkRecordDenseTable companyId={companyId} projectId={projectId} kind={visibleKind} records={visibleRecords} agentNames={agentNames} selectedId={selectedId} checked={checked} onSelect={(recordId) => { void selectRecord(recordId); }} onChecked={setChecked} beforeViewSwitch={beforeViewSwitch ?? (async () => true)} onViewDraftDirtyChange={onViewDraftDirtyChange} registerLeaveGuard={registerLeaveGuard} /> : null}
           </CardContent>
         </Card>
 
-        {selected ? <Card className="self-start xl:col-span-1">
-          <CardHeader><CardTitle>{l10n("local.work_record_details")}</CardTitle><CardDescription>{l10n("local.work_record_selecting_another_row_will_not_move_")}</CardDescription></CardHeader>
+        {selected ? <Card className="self-start xl:col-span-1" data-testid="work-record-detail-drawer" role="region" aria-label="记录完整详情" aria-current="true" tabIndex={-1} onKeyDown={(event) => { if (event.key === "Escape") closeDetails(); }}>
+          <CardHeader><div className="flex items-start justify-between gap-2"><div><CardTitle>{l10n("local.work_record_details")}</CardTitle><CardDescription>{l10n("local.work_record_selecting_another_row_will_not_move_")}</CardDescription></div><Button size="icon" variant="ghost" aria-label="关闭详情" onClick={closeDetails}><X className="size-4" /></Button></div></CardHeader>
           <CardContent className="space-y-4">
             {selected ? <>
               <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{selected.title}</h3><p className="text-xs text-muted-foreground">{l10n("local.work_record_revision")} {selected.revision} {l10n("local.work_record_dispatch_cycle")} {selected.dispatchRound}</p></div>{onEditRecord ? <Button size="sm" variant="outline" onClick={() => onEditRecord(selected)}>{l10n("local.work_record_edit")}</Button> : null}</div>
               {onEditCoverage && selected.kind === "plan" && selected.parentRecordId && selected.packageQaRole === "execution" ? <Button size="sm" variant="outline" onClick={() => onEditCoverage(selected)}>{l10n("local.work_record_edit_qa_coverage")}</Button> : null}
               <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Stat label={l10n("local.work_record_business_status")}>{mappedLabel(BUSINESS, selected.businessStatus)}</Stat><Stat label={l10n("local.work_record_dispatch_status")}>{mappedLabel(DISPATCH, selected.dispatchState)}</Stat><Stat label={l10n("local.work_record_quality_phase")}>{l10n("local.work_record_quality_cycle", { phase: mappedLabel(QUALITY, selected.quality.phase), count: selected.quality.cycleNumber ?? 0 })}</Stat><Stat label={l10n("local.work_record_next_owner")}>{nextOwner(selected, quality.data, agentNames)}</Stat><Stat label={l10n("local.work_record_live_run")}>{!liveAvailable ? l10n("local.work_record_cannot_confirm_yet") : selected.execution.issueId && liveByIssue.get(selected.execution.issueId) ? l10n("local.work_record_live_state", { state: liveByIssue.get(selected.execution.issueId) === "running" ? l10n("local.work_record_running") : l10n("local.work_record_queue_in_progress") }) : selected.execution.lastRunStatus ? mappedLabel(RUN, selected.execution.lastRunStatus) ?? l10n("local.work_record_ended_state", { state: selected.execution.lastRunStatus }) : l10n("local.work_record_no_live_run")}</Stat><Stat label={l10n("local.work_record_execution_projection")}>{mappedLabel(PROJECTION, selected.execution.projectionState) ?? selected.execution.projectionState}{selected.execution.projectionError ? ` · ${selected.execution.projectionError}` : ""}</Stat><Stat label={l10n("local.work_record_defect_evidence")}>{l10n("local.work_record_defect_evidence_count", { count: selected.quality.defectCount })}</Stat></dl>
+              <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Stat label="说明">{selected.description || "未填写"}</Stat><Stat label="严重程度">{selected.defectSeverity ?? "未指定"}</Stat><Stat label={selected.kind === "defect" ? "修复人" : "执行人"}>{selected.assigneeAgentId ? agentNames[selected.assigneeAgentId] ?? selected.assigneeAgentId : "待分配"}</Stat><Stat label="QA">{selected.qaAssigneeAgentId ? agentNames[selected.qaAssigneeAgentId] ?? selected.qaAssigneeAgentId : "待分配"}</Stat><Stat label="迭代">{selected.iterationId ?? "未归属"}</Stat><Stat label="计划日期">{selected.plannedStartDate ?? "未定"} 至 {selected.plannedCompletionDate ?? "未定"}</Stat></dl>
               {selected.dependencies.length ? <div><h4 className="text-sm font-medium">{l10n("local.work_record_dependencies_and_blockers")}</h4><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{selected.dependencies.map((item) => <li key={item.predecessorRecordId}>{item.title}{item.holdReason ? ` · ${mappedLabel(HOLD, item.holdReason) ?? item.holdReason}` : l10n("local.work_record_dependency_satisfied_spaced")}</li>)}</ul></div> : <p className="text-sm text-muted-foreground">{l10n("local.work_record_no_predecessor_dependencies")}</p>}
               <div><h4 className="text-sm font-medium">{l10n("local.work_record_notification_evidence")}</h4><p className="text-sm text-muted-foreground">{notification?.delivered}</p><p className="text-sm text-muted-foreground">{notification?.acknowledged}</p>{notification?.unknownDeliveryState || notification?.unknownWakeStatus ? <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer">{l10n("local.work_record_view_raw_delivery_status")}</summary>{notification.unknownDeliveryState ? <p>{l10n("local.work_record_raw_delivery_state", { code: notification.unknownDeliveryState })}</p> : null}{notification.unknownWakeStatus ? <p>{l10n("local.work_record_raw_wake_status", { code: notification.unknownWakeStatus })}</p> : null}</details> : null}</div>
               {selected.recovery.canReconcile ? <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"><p className="text-destructive">{localizeWorkRecordRecoveryMessage(selected.recovery.message)}</p><Button className="mt-2 min-h-11" variant="outline" size="sm" disabled={!online || reconcileCapability?.allowed !== true || reconcileRecord.isPending} onClick={() => reconcileRecord.mutate(selected.id)}><RefreshCw className="mr-2 size-4" />{l10n("local.work_record_reconcile_current_record")}</Button>{reconcileCapability?.allowed === false ? <p className="mt-2 text-xs text-muted-foreground">{reconcileCapability.reason}</p> : null}</div> : null}
