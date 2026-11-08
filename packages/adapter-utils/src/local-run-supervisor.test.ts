@@ -58,6 +58,18 @@ suite("Windows local run supervisor launch", () => {
     });
   }
 
+  async function configureLongReceiptPath(runId: string) {
+    const targetBaseLength = 130;
+    const suffixLength = targetBaseLength - root.length - 1;
+    expect(suffixLength).toBeGreaterThan(0);
+    const receiptBaseDir = path.join(root, "r".repeat(suffixLength));
+    await fs.mkdir(receiptBaseDir);
+    process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR = JSON.stringify({
+      executable: supervisor, runId, leaseId: randomUUID(), deviceId: "device-test-001",
+      bridgeCreationFileTime, bridgeSessionId, receiptBaseDir,
+    });
+  }
+
   it("frames model input through a minimal-env wrapper and verifies a stopped receipt for each spawn", async () => {
     const runId = randomUUID();
     configure(runId);
@@ -84,6 +96,38 @@ suite("Windows local run supervisor launch", () => {
     expect(second.exitCode).toBe(5);
     expect(reported[1]?.supervisor?.nonce).not.toBe(reported[0]?.supervisor?.nonce);
     expect(reported[1]?.supervisor?.receiptDir).not.toBe(firstDir);
+  }, 30_000);
+
+  it("writes durable receipts when the final Windows paths fit but an expanded atomic temp name would not", async () => {
+    const runId = randomUUID();
+    await configureLongReceiptPath(runId);
+    const reported: Array<{ supervisor?: { nonce: string; receiptDir: string } }> = [];
+    const result = await runChildProcess(runId, model, ["exit", "0"], {
+      cwd: root, env: {}, timeoutSec: 10, graceSec: 1, onLog: async () => {},
+      onSpawn: async (meta) => {
+        reported.push(meta);
+        const receiptDir = meta.supervisor!.receiptDir;
+        const finalPath = path.join(receiptDir, `${runId}.ready.json`);
+        const legacyTempPath = path.join(receiptDir,
+          `.${runId}.ready.json.${randomUUID().replace(/-/g, "")}.tmp`);
+        expect(finalPath.length).toBeLessThan(260);
+        expect(legacyTempPath.length).toBeGreaterThanOrEqual(260);
+      },
+    });
+    expect(result.exitCode).toBe(0);
+    expect(reported[0]?.supervisor).toBeDefined();
+  }, 30_000);
+
+  it("surfaces the supervisor's original startup error", async () => {
+    const runId = randomUUID();
+    configure(runId);
+    const config = JSON.parse(process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR!);
+    config.bridgeCreationFileTime = (BigInt(config.bridgeCreationFileTime) + 1n).toString();
+    process.env.PAPERCLIP_LOCAL_RUN_SUPERVISOR = JSON.stringify(config);
+    await expect(runChildProcess(runId, model, ["exit", "0"], {
+      cwd: root, env: {}, timeoutSec: 10, graceSec: 1, onLog: async () => {},
+      onSpawn: async () => {},
+    })).rejects.toThrow("bridge process identity changed or stopped");
   }, 30_000);
 
   it("supervises a Windows .cmd launcher without opening an unmanaged model process", async () => {

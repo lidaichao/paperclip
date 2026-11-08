@@ -4684,6 +4684,7 @@ async function prepareLocalRunSupervisor(
 
 async function verifyLocalRunSupervisorStop(
   launch: LocalRunSupervisorLaunch, wrapperExitCode: number | null, wrapperSignal: NodeJS.Signals | null,
+  wrapperStderr: string,
 ): Promise<void> {
   const read = async (suffix: "ready" | "stopped") => {
     const file = path.join(launch.receiptDir, `${launch.expected.runId}.${suffix}.json`);
@@ -4722,7 +4723,12 @@ async function verifyLocalRunSupervisorStop(
       throw new Error("Local supervisor exit does not match the stopped receipt");
     }
   } catch (error) {
-    throw new Error("Local process stop is unproven; supervisor receipt verification failed", { cause: error });
+    const supervisorDiagnostic = wrapperStderr.split(/\r?\n/)
+      .find((line) => line.startsWith("PaperclipRunSupervisor: "));
+    const message = supervisorDiagnostic
+      ? `Local process stop is unproven; supervisor receipt verification failed: ${supervisorDiagnostic}`
+      : "Local process stop is unproven; supervisor receipt verification failed";
+    throw new Error(message, { cause: error });
   }
 }
 
@@ -5022,7 +5028,7 @@ export async function runChildProcess(
                 cause: spawnMetadataError,
               });
               if (frameError) throw new Error("Local supervisor launch frame failed", { cause: frameError });
-              if (supervised) await verifyLocalRunSupervisorStop(supervised, code, signal);
+              if (supervised) await verifyLocalRunSupervisorStop(supervised, code, signal, stderr);
               resolve({
                 exitCode: code,
                 signal,

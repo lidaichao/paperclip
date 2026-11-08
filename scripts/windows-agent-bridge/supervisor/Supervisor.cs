@@ -163,7 +163,11 @@ internal static class Supervisor
     }
     static void DurableJson(string directory, string name, string json) {
         string final = Path.Combine(directory, name);
-        string temporary = Path.Combine(directory, "." + name + "." + Guid.NewGuid().ToString("N") + ".tmp");
+        // Keep the atomic file in the receipt directory without repeating the
+        // long receipt name. The legacy shape could cross MAX_PATH even when
+        // the final ready/stopped receipt itself still fit.
+        string temporary = Path.Combine(directory,
+            ".tmp-" + Guid.NewGuid().ToString("N").Substring(0, 16));
         byte[] bytes = Encoding.UTF8.GetBytes(json + "\n");
         using (FileStream stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write,
             FileShare.None, 4096, FileOptions.WriteThrough)) {
@@ -446,9 +450,12 @@ internal static class Supervisor
             }
             if (args.Length == 1 && args[0] == "run") return Run();
             return 64;
-        } catch (Exception) {
+        } catch (Exception error) {
             // An error never produces a stopped receipt. The job's last handle
             // closes during stack unwind, and the caller must fail closed.
+            Console.Error.WriteLine("PaperclipRunSupervisor: " +
+                error.GetType().FullName + ": " + error.Message);
+            Console.Error.Flush();
             return 70;
         }
     }
