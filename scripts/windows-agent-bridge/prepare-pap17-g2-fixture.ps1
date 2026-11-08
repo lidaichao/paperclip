@@ -59,7 +59,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa-work.ps1') -Destination $fix
   '$meta' = [ordered]@{
     version = 1
     updatedAt = [DateTimeOffset]::UtcNow.ToString('o')
-    source = 'pap17-g2-fixture'
+    source = 'onboard'
   }
   server = [ordered]@{
     deploymentMode = 'local_trusted'
