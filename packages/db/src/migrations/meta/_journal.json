@@ -2227,6 +2227,13 @@
       "when": 1794098186897,
       "tag": "0319_ambitious_lady_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 320,
+      "version": "7",
+      "when": 1794100000000,
+      "tag": "0320_personal_named_work_record_views",
+      "breakpoints": true
     }
   ]
 }

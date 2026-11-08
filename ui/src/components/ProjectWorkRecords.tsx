@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { l10n } from "@/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordKind } from "@paperclipai/shared";
@@ -69,10 +69,11 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
   };
 }
 
-export function ProjectWorkRecords({ companyId, projectId, kind }: {
+export function ProjectWorkRecords({ companyId, projectId, kind, onNavigationGuardChange }: {
   companyId: string;
   projectId: string;
   kind: WorkRecordKind;
+  onNavigationGuardChange?: (state: { dirty: boolean; guard: () => Promise<boolean> } | null) => void;
 }) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -80,6 +81,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
   const [coverageRecord, setCoverageRecord] = useState<WorkRecord | null>(null);
   const [coverageIds, setCoverageIds] = useState<string[]>([]);
   const [draft, setDraft] = useState<RecordDraft>(blankDraft);
+  const [viewDraftDirty, setViewDraftDirty] = useState(false);
+  const viewLeaveGuardRef = useRef<(() => Promise<boolean>) | null>(null);
   const recordsKey = queryKeys.workRecords.list(companyId, projectId);
   const records = useQuery({
     queryKey: recordsKey,
@@ -96,6 +99,14 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
     [allRecords, kind],
   );
   const kindLabel = kind === "plan" ? l10n("local.work_record_plan") : l10n("local.work_record_defect");
+  const businessDraftDirty = dialogOpen && JSON.stringify(draft) !== JSON.stringify(editingRecord ? draftFromRecord(editingRecord) : blankDraft());
+
+  useEffect(() => {
+    if (!businessDraftDirty) return;
+    const protect = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", protect);
+    return () => window.removeEventListener("beforeunload", protect);
+  }, [businessDraftDirty]);
 
   const closeDialog = () => {
     setDialogOpen(false);
@@ -131,6 +142,23 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
       await queryClient.invalidateQueries({ queryKey: recordsKey });
     },
   });
+
+  const beforeViewSwitch = async () => {
+    if (!businessDraftDirty) return true;
+    if (window.confirm("有未保存的业务记录草稿。确定先保存记录并继续切换视图吗？")) {
+      try { await save.mutateAsync(); return true; } catch { return false; }
+    }
+    if (window.confirm("确定放弃业务记录草稿并继续切换视图吗？视图草稿不会被改动。")) { closeDialog(); return true; }
+    return false;
+  };
+  const guardNavigation = useCallback(
+    () => viewLeaveGuardRef.current?.() ?? beforeViewSwitch(),
+    [businessDraftDirty, draft, editingRecord, save],
+  );
+  useEffect(() => {
+    onNavigationGuardChange?.({ dirty: businessDraftDirty || viewDraftDirty, guard: guardNavigation });
+    return () => onNavigationGuardChange?.(null);
+  }, [businessDraftDirty, guardNavigation, onNavigationGuardChange, viewDraftDirty]);
 
   const reopen = useMutation({
     mutationFn: (record: WorkRecord) => workRecordsApi.update(companyId, projectId, record.id, {
@@ -212,9 +240,12 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
         onEditCoverage={kind === "plan" ? beginCoverage : undefined}
         onReopenRecord={kind === "defect" ? (record) => reopen.mutate(record) : undefined}
         reopeningRecordId={reopen.isPending ? reopen.variables?.id ?? null : null}
+        beforeViewSwitch={beforeViewSwitch}
+        onViewDraftDirtyChange={setViewDraftDirty}
+        registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
       />
 
-      <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
+      <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (!businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(); }}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingRecord ? l10n("local.work_record_edit_kind", { kind: kindLabel }) : l10n("local.work_record_new_kind", { kind: kindLabel })}</DialogTitle>
@@ -304,7 +335,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind }: {
           {save.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_kind_save_failed", { kind: kindLabel })}{save.error.message}</p> : null}
 
           <DialogFooter className="items-center justify-between sm:justify-between">
-            <Button variant="ghost" onClick={closeDialog}>{l10n("local.work_record_cancel")}</Button>
+            <Button variant="ghost" onClick={() => { if (!businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(); }}>{l10n("local.work_record_cancel")}</Button>
             <Button disabled={!draft.title.trim() || save.isPending} onClick={() => save.mutate()}>
               {save.isPending ? l10n("local.work_record_saving") : l10n("local.work_record_save_kind", { kind: kindLabel })}
             </Button>

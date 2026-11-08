@@ -51,8 +51,8 @@ export type WorkRecordHoldReason = (typeof WORK_RECORD_HOLD_REASONS)[number];
 export const WORK_RECORD_VIEW_KINDS = ["plan", "defect"] as const;
 export const WORK_RECORD_VIEW_DENSITIES = ["compact", "comfortable", "spacious"] as const;
 export const WORK_RECORD_PLAN_VIEW_FIELDS = [
-  "title", "description", "iteration", "plannedStartDate", "plannedCompletionDate",
-  "assignee", "businessStatus", "dependencies",
+  "id", "title", "description", "iteration", "plannedStartDate", "plannedCompletionDate",
+  "assignee", "qaAssignee", "businessStatus", "dispatchState", "dependencies",
 ] as const;
 export const WORK_RECORD_DEFECT_VIEW_FIELDS = [
   ...WORK_RECORD_PLAN_VIEW_FIELDS,
@@ -62,20 +62,30 @@ export const WORK_RECORD_DEFECT_VIEW_FIELDS = [
 export type WorkRecordViewKind = (typeof WORK_RECORD_VIEW_KINDS)[number];
 export type WorkRecordViewDensity = (typeof WORK_RECORD_VIEW_DENSITIES)[number];
 export type WorkRecordViewField = (typeof WORK_RECORD_DEFECT_VIEW_FIELDS)[number];
+export type WorkRecordViewFilterOperator = "is" | "is_not" | "contains" | "before" | "after";
 
 export interface WorkRecordViewConfig {
-  schemaVersion: 1;
+  schemaVersion: 2;
+  containerId: string | null;
   visibleFields: WorkRecordViewField[];
   columnOrder: WorkRecordViewField[];
   columnWidths: Partial<Record<WorkRecordViewField, number>>;
   density: WorkRecordViewDensity;
+  filters: Array<{ field: WorkRecordViewField; operator: WorkRecordViewFilterOperator; value: string }>;
+  search: string;
+  sort: Array<{ field: WorkRecordViewField; direction: "asc" | "desc" }>;
+  groupBy: WorkRecordViewField | null;
+  frozenFields: WorkRecordViewField[];
 }
 
 export interface WorkRecordViewPreference {
+  id: string;
   companyId: string;
   projectId: string;
   userId: string;
   viewKind: WorkRecordViewKind;
+  name: string;
+  isBuiltin: boolean;
   config: WorkRecordViewConfig;
   revision: number;
   updatedAt: Date | null;
@@ -83,11 +93,21 @@ export interface WorkRecordViewPreference {
 
 const workRecordViewFieldSchema = z.enum(WORK_RECORD_DEFECT_VIEW_FIELDS);
 export const workRecordViewConfigSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
+  containerId: z.string().guid().nullable(),
   visibleFields: z.array(workRecordViewFieldSchema).max(WORK_RECORD_DEFECT_VIEW_FIELDS.length),
   columnOrder: z.array(workRecordViewFieldSchema).max(WORK_RECORD_DEFECT_VIEW_FIELDS.length),
   columnWidths: z.partialRecord(workRecordViewFieldSchema, z.number().int().min(64).max(1200)),
   density: z.enum(WORK_RECORD_VIEW_DENSITIES),
+  filters: z.array(z.object({
+    field: workRecordViewFieldSchema,
+    operator: z.enum(["is", "is_not", "contains", "before", "after"]),
+    value: z.string().max(500),
+  }).strict()).max(20),
+  search: z.string().max(500),
+  sort: z.array(z.object({ field: workRecordViewFieldSchema, direction: z.enum(["asc", "desc"]) }).strict()).max(5),
+  groupBy: workRecordViewFieldSchema.nullable(),
+  frozenFields: z.array(workRecordViewFieldSchema).max(WORK_RECORD_DEFECT_VIEW_FIELDS.length),
 }).strict();
 
 export const putWorkRecordViewPreferenceSchema = z.object({
@@ -95,14 +115,35 @@ export const putWorkRecordViewPreferenceSchema = z.object({
   config: workRecordViewConfigSchema,
 }).strict();
 
+export const createWorkRecordViewSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  config: workRecordViewConfigSchema,
+}).strict();
+
+export const updateWorkRecordViewSchema = z.object({
+  expectedRevision: z.number().int().positive(),
+  name: z.string().trim().min(1).max(80).optional(),
+  config: workRecordViewConfigSchema.optional(),
+}).strict().refine((value) => value.name !== undefined || value.config !== undefined, {
+  message: "At least one field must be updated",
+});
+
+export const deleteWorkRecordViewSchema = z.object({ expectedRevision: z.coerce.number().int().positive() }).strict();
+
 export function defaultWorkRecordViewConfig(viewKind: WorkRecordViewKind): WorkRecordViewConfig {
   const fields = viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS;
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    containerId: null,
     visibleFields: [...fields],
     columnOrder: [...fields],
     columnWidths: {},
     density: "comfortable",
+    filters: [],
+    search: "",
+    sort: [],
+    groupBy: null,
+    frozenFields: ["id", "title"],
   };
 }
 
@@ -117,8 +158,23 @@ export function validateWorkRecordViewConfig(viewKind: WorkRecordViewKind, confi
   };
   assertUniqueAllowed(config.visibleFields, "visibleFields");
   assertUniqueAllowed(config.columnOrder, "columnOrder");
+  assertUniqueAllowed(config.frozenFields, "frozenFields");
+  if (!config.visibleFields.includes("id") || !config.visibleFields.includes("title")) {
+    throw new Error("Desktop views must keep id and title visible");
+  }
+  if (!config.columnOrder.includes("id") || !config.columnOrder.includes("title")) {
+    throw new Error("columnOrder must contain id and title");
+  }
+  if (!config.frozenFields.includes("id") || !config.frozenFields.includes("title")) {
+    throw new Error("Desktop views must keep id and title frozen");
+  }
   if (Object.keys(config.columnWidths).some((field) => !allowed.has(field as WorkRecordViewField))) {
     throw new Error(`columnWidths must contain only fields allowed for the ${viewKind} view`);
+  }
+  if (config.filters.some((filter) => !allowed.has(filter.field))
+    || config.sort.some((sort) => !allowed.has(sort.field))
+    || (config.groupBy !== null && !allowed.has(config.groupBy))) {
+    throw new Error(`filters, sort and groupBy must contain only fields allowed for the ${viewKind} view`);
   }
   return config;
 }

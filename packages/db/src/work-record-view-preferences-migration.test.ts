@@ -9,11 +9,11 @@ import {
   startEmbeddedPostgresTestDatabase,
 } from "./test-embedded-postgres.js";
 
-const migrationFile = "0319_ambitious_lady_mastermind.sql";
+const migrationFile = "0320_personal_named_work_record_views.sql";
 const migrationSql = await readFile(new URL(`./migrations/${migrationFile}`, import.meta.url), "utf8");
 const migrationHash = createHash("sha256").update(migrationSql).digest("hex");
 const rollbackSql = await readFile(
-  new URL("./migrations/rollback/0319_ambitious_lady_mastermind.down.sql", import.meta.url),
+  new URL("./migrations/rollback/0320_personal_named_work_record_views.down.sql", import.meta.url),
   "utf8",
 );
 const cleanups: Array<() => Promise<void>> = [];
@@ -53,7 +53,7 @@ async function contract(sql: postgres.Sql) {
 }
 
 const expected = {
-  columns: ["id", "company_id", "project_id", "user_id", "view_kind", "config", "revision", "created_at", "updated_at"],
+  columns: ["id", "company_id", "project_id", "user_id", "view_kind", "config", "revision", "created_at", "updated_at", "name"],
   constraints: [
     "work_record_view_preferences_project_scope_fk",
     "work_record_view_preferences_revision_check",
@@ -65,7 +65,9 @@ const expected = {
   ],
 };
 
-describePostgres("G1 work-record view preference migration", () => {
+const legacyExpected = { ...expected, columns: expected.columns.filter((column) => column !== "name") };
+
+describePostgres("G3B1 personal named work-record view migration", () => {
   it("applies, rolls back, and reapplies the contract on a real database", async () => {
     const database = await startEmbeddedPostgresTestDatabase("paperclip-work-record-view-pref-");
     cleanups.push(database.cleanup);
@@ -74,7 +76,7 @@ describePostgres("G1 work-record view preference migration", () => {
       expect(await contract(sql)).toEqual(expected);
       await sql.unsafe(rollbackSql);
       await sql`DELETE FROM drizzle.__drizzle_migrations WHERE hash = ${migrationHash}`;
-      expect(await contract(sql)).toEqual({ columns: [], constraints: [], indexes: [] });
+      expect(await contract(sql)).toEqual(legacyExpected);
       expect(await inspectMigrations(database.connectionString)).toMatchObject({
         status: "needsMigrations",
         pendingMigrations: [migrationFile],

@@ -13,6 +13,9 @@ import type {
   WorkPackageAssignmentEscalationReceipt,
   WorkRecordConsoleCapabilities,
   WorkRecord,
+  WorkRecordViewConfig,
+  WorkRecordViewKind,
+  WorkRecordViewPreference,
   WorkRecordDispatchRequestResult,
   WorkRecordDispatchResult,
   WorkRecordQualityCommandResult,
@@ -21,6 +24,14 @@ import type {
 import { api } from "./client";
 
 export const workRecordsApi = {
+  views: (companyId: string, projectId: string, viewKind: WorkRecordViewKind) =>
+    api.get<WorkRecordViewPreference[]>(`/companies/${companyId}/projects/${projectId}/work-record-views/${viewKind}`),
+  createView: (companyId: string, projectId: string, viewKind: WorkRecordViewKind, input: { name: string; config: WorkRecordViewConfig }) =>
+    api.post<WorkRecordViewPreference>(`/companies/${companyId}/projects/${projectId}/work-record-views/${viewKind}`, input),
+  updateView: (companyId: string, projectId: string, viewKind: WorkRecordViewKind, viewId: string, input: { expectedRevision: number; name?: string; config?: WorkRecordViewConfig }) =>
+    api.patch<WorkRecordViewPreference>(`/companies/${companyId}/projects/${projectId}/work-record-views/${viewKind}/${viewId}`, input),
+  deleteView: (companyId: string, projectId: string, viewKind: WorkRecordViewKind, viewId: string, expectedRevision: number) =>
+    api.delete<{ id: string; deleted: true }>(`/companies/${companyId}/projects/${projectId}/work-record-views/${viewKind}/${viewId}`, { expectedRevision }),
   list: (companyId: string, projectId: string) =>
     api.get<WorkRecord[]>(`/companies/${companyId}/projects/${projectId}/work-records`),
   create: (companyId: string, input: CreateWorkRecord) =>

@@ -3,7 +3,7 @@ import { l10n } from "@/i18n";
 import { displayLocale } from "@/i18n/display";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deriveWorkRecordDisplayState, type WakeupRequestStatus, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordKind, type WorkRecordQualityView } from "@paperclipai/shared";
-import { CheckCircle2, ChevronRight, PackageCheck, RefreshCw, WifiOff } from "lucide-react";
+import { CheckCircle2, PackageCheck, RefreshCw, WifiOff } from "lucide-react";
 import { heartbeatsApi } from "@/api/heartbeats";
 import { workRecordsApi } from "@/api/work-records";
 import { Link } from "@/lib/router";
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { WorkRecordDenseTable } from "@/components/WorkRecordDenseTable";
 
 const BUSINESS: Record<string, string> = { backlog: "local.backlog_bf986e9a", todo: "local.todo_4ff402d7", in_progress: "local.in_progress_c1f88e9d", in_review: "local.in_review_c3905914", blocked: "local.blocked_18f2a094", done: "local.done_11a6767d", cancelled: "local.cancelled_d353a99e" };
 const DISPATCH: Record<string, string> = { not_dispatched: "local.work_record_not_dispatched", preparing: "local.work_record_preparing", blocked: "local.work_record_waiting_for_predecessor", linked: "local.work_record_linked", queued: "local.work_record_dispatch_queued", failed: "local.work_record_failed" };
@@ -149,7 +150,7 @@ function assignmentEscalationRetryable(receipt: WorkPackageAssignmentEscalationR
   return receipt?.state === "ceo_unavailable" || receipt?.state === "delivery_failed";
 }
 
-export function WorkPackageConsole({ companyId, projectId, records, visibleKind, agentNames, recordsLoading, recordsError, onRetryRecords, onEditRecord, onEditCoverage, onReopenRecord, reopeningRecordId }: {
+export function WorkPackageConsole({ companyId, projectId, records, visibleKind, agentNames, recordsLoading, recordsError, onRetryRecords, onEditRecord, onEditCoverage, onReopenRecord, reopeningRecordId, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard }: {
   companyId: string;
   projectId: string;
   records: WorkRecord[];
@@ -162,6 +163,9 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   onEditCoverage?: (record: WorkRecord) => void;
   onReopenRecord?: (record: WorkRecord) => void;
   reopeningRecordId?: string | null;
+  beforeViewSwitch?: () => Promise<boolean>;
+  onViewDraftDirtyChange?: (dirty: boolean) => void;
+  registerLeaveGuard?: (guard: (() => Promise<boolean>) | null) => void;
 }) {
   const queryClient = useQueryClient();
   const online = useConnectivity();
@@ -217,19 +221,6 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
     try { current = JSON.parse(sessionStorage.getItem(qualityDraftKey) ?? "{}"); } catch { current = {}; }
     sessionStorage.setItem(qualityDraftKey, JSON.stringify({ ...current, ...next }));
   };
-  const childrenByParent = useMemo(() => {
-    const map = new Map<string, WorkRecord[]>();
-    for (const record of records) { if (!record.parentRecordId) continue; const list = map.get(record.parentRecordId) ?? []; list.push(record); map.set(record.parentRecordId, list); }
-    return map;
-  }, [records]);
-  const ordered = useMemo(() => {
-    const result: Array<{ record: WorkRecord; depth: number }> = []; const seen = new Set<string>();
-    const visit = (record: WorkRecord, depth: number) => { if (seen.has(record.id)) return; seen.add(record.id); result.push({ record, depth }); for (const child of childrenByParent.get(record.id) ?? []) visit(child, depth + 1); };
-    for (const root of records.filter((record) => !record.parentRecordId)) visit(root, 0);
-    for (const record of records) visit(record, 0);
-    return visibleKind ? result.filter(({ record }) => record.kind === visibleKind) : result;
-  }, [childrenByParent, records, visibleKind]);
-
   const selectedRoot = useMemo(() => {
     if (!selected) return null;
     const byId = new Map(records.map((record) => [record.id, record]));
@@ -367,22 +358,8 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
       <div className={cn("items-start gap-4", selected && "grid xl:grid-cols-3")}>
         <Card className={cn("self-start", selected && "xl:col-span-2")}>
           <CardHeader className="py-3"><CardTitle>{l10n("local.work_record_kind_list", { kind: surfaceLabel })}</CardTitle><CardDescription>{l10n("local.work_record_business_dispatch_quality_and_live_r")}</CardDescription></CardHeader>
-          <CardContent className="divide-y p-0">
-            {ordered.map(({ record, depth }) => {
-              const childRecords = childrenByParent.get(record.id) ?? [];
-              const completeChildren = childRecords.filter((child) => child.businessStatus === "done").length;
-              const firstHold = record.dependencies.find((item) => item.holdReason)?.holdReason;
-              return <div key={record.id} className={cn("flex min-h-10 items-center gap-1 px-1", record.id === selectedId && "bg-muted/50")} data-testid="work-record-row" data-kind={record.kind} data-selected={record.id === selectedId ? "true" : "false"}>
-                {packageActionsEnabled ? <label className="flex size-10 shrink-0 cursor-pointer items-center justify-center focus-within:ring-2 focus-within:ring-ring"><span className="sr-only">{l10n("local.work_record_select_action")} {record.title}</span><input aria-label={l10n("local.work_record_select_title", { title: record.title })} type="checkbox" className="size-4 accent-primary" checked={checked.includes(record.id)} onChange={(event) => setChecked((current) => event.target.checked ? [...new Set([...current, record.id])] : current.filter((id) => id !== record.id))} /></label> : null}
-                <button type="button" aria-current={record.id === selectedId ? "true" : undefined} className="grid min-h-10 min-w-0 flex-1 items-center gap-1 px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-6" onClick={() => setSelectedId(record.id)}>
-                  <span className="min-w-0 truncate text-sm font-medium sm:col-span-2">{depth > 0 ? l10n("local.work_record_child_prefix_spaced") : ""}{record.title}</span>
-                  <span className="text-xs text-muted-foreground">{mappedLabel(BUSINESS, record.businessStatus)}</span>
-                  <span className="text-xs text-muted-foreground">{record.assigneeAgentId ? agentNames[record.assigneeAgentId] ?? l10n("local.work_record_unknown") : l10n("local.work_record_unassigned_owner")}</span>
-                  <span className="hidden text-xs text-muted-foreground sm:block">{mappedLabel(QUALITY, record.quality.phase)}</span>
-                  <span className="flex items-center justify-end gap-2"><StatusBadge record={record} liveStatus={liveAvailable && record.execution.issueId ? liveByIssue.get(record.execution.issueId) : undefined} liveUnknown={!liveAvailable} />{firstHold ? <span className="sr-only">{mappedLabel(HOLD, firstHold) ?? firstHold}</span> : null}{childRecords.length ? <span className="sr-only">{l10n("local.work_record_children")} {completeChildren}/{childRecords.length}</span> : null}</span>
-                </button><ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </div>;
-            })}
+          <CardContent>
+            {visibleKind ? <WorkRecordDenseTable companyId={companyId} projectId={projectId} kind={visibleKind} records={visibleRecords} agentNames={agentNames} selectedId={selectedId} checked={checked} onSelect={setSelectedId} onChecked={setChecked} beforeViewSwitch={beforeViewSwitch ?? (async () => true)} onViewDraftDirtyChange={onViewDraftDirtyChange} registerLeaveGuard={registerLeaveGuard} /> : null}
           </CardContent>
         </Card>
 
