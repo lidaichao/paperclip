@@ -58,6 +58,10 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
     predecessorRecordIds: [],
   } }), "create defect");
 
+  await page.goto(`/${company.issuePrefix}/projects/${project.id}/gantt`);
+  await expect(page).toHaveURL(/\/gantt$/);
+  await expect(page.getByTestId("work-records-main")).toHaveAttribute("data-view-mode", "gantt");
+
   await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
   await expect(page.getByRole("tab", { name: "计划", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "甘特", exact: true })).toBeVisible();
@@ -94,5 +98,17 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.evaluate(() => { document.documentElement.style.zoom = "200%"; });
   await expect(page.getByRole("tab", { name: "计划", exact: true })).toBeVisible();
+  const [treeBox, recordsBox] = await Promise.all([
+    page.getByTestId("version-iteration-tree").boundingBox(),
+    page.locator('section[aria-labelledby="work-package-title"]').boundingBox(),
+  ]);
+  expect(treeBox).not.toBeNull();
+  expect(recordsBox).not.toBeNull();
+  expect(
+    treeBox!.x + treeBox!.width <= recordsBox!.x
+      || recordsBox!.x + recordsBox!.width <= treeBox!.x
+      || treeBox!.y + treeBox!.height <= recordsBox!.y
+      || recordsBox!.y + recordsBox!.height <= treeBox!.y,
+  ).toBe(true);
   await screenshot(page, info, "g3b2-200-percent");
 });

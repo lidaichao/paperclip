@@ -257,7 +257,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   const parentRecords = selectableRecords.filter((record) => record.kind === "plan");
 
   return (
-    <section className="space-y-3" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
+    <section className="@container space-y-3" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
       <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{kindLabel}</h2>
@@ -277,9 +277,9 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
       {viewMode === "gantt" ? <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">甘特视图沿用同一版本、迭代和计划数据；日期字段为空的记录仍保留在下方表格中。</p> : null}
 
-      <div className="grid items-start gap-3 lg:grid-cols-3">
+      <div className="grid items-start gap-3 @2xl:grid-cols-3">
       <WorkRecordContainerTree companyId={companyId} projectId={projectId} writable={capabilities.data?.manageContainers.allowed !== false} />
-      <div className="min-w-0 lg:col-span-2">
+      <div className="min-w-0 @2xl:col-span-2">
       <WorkPackageConsole
         companyId={companyId}
         projectId={projectId}
