@@ -35,6 +35,13 @@ function Write-JsonFile([string]$Path, [object]$Value, [int]$Depth = 8) {
   [IO.File]::WriteAllText($Path, ($Value | ConvertTo-Json -Depth $Depth), $utf8NoBom)
 }
 
+function New-SecureToken() {
+  $bytes = [byte[]]::new(32)
+  $generator = [Security.Cryptography.RandomNumberGenerator]::Create()
+  try { $generator.GetBytes($bytes) } finally { $generator.Dispose() }
+  'pcp_' + [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+}
+
 $instanceId = 'pap17-g2-formal'
 $instanceRoot = Join-Path $fixtureRootPath "paperclip-home\instances\$instanceId"
 $configPath = Join-Path $instanceRoot 'config.json'
@@ -135,8 +142,8 @@ try {
   $health = Invoke-RestMethod -Uri "$($runtime.apiUrl)/api/health" -Method Get -TimeoutSec 10
   if ($health.status -ne 'ok') { throw 'Fixture service health check did not return status=ok.' }
 
-  $repairToken = 'pcp_' + [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
-  $qaToken = 'pcp_' + [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+  $repairToken = New-SecureToken
+  $qaToken = New-SecureToken
   $env:DATABASE_URL = [string]$runtime.databaseUrl
   $env:PAP17_REPAIR_TOKEN = $repairToken
   $env:PAP17_QA_TOKEN = $qaToken
