@@ -44,3 +44,4 @@ await writeJson("service-stopped.json", {
   stoppedAt: new Date().toISOString(),
   apiUrl: started.apiUrl,
 });
+process.exit(0);

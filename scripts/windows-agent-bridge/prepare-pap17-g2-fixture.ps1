@@ -1,5 +1,5 @@
 param(
-  [string]$FixtureRoot = 'H:\AIagent\Rabbit\.paperclip\evidence\PAP-17\g2-live-fixture',
+  [string]$FixtureRoot = 'H:\AIagent\Rabbit\.paperclip\evidence\PAP-17\g2-formal-dispatch-fixture',
   [int]$ServerPort = 32117,
   [int]$DatabasePort = 55117
 )
@@ -15,8 +15,8 @@ $status = @(& git -C $repoRoot status --porcelain=v1)
 if ($LASTEXITCODE -ne 0 -or $status.Count -ne 0) {
   throw 'Candidate worktree must be clean before preparing the live fixture.'
 }
-& git -C $repoRoot merge-base --is-ancestor c94051492d9772a4ccb106c199fbcb9f42eb5ea5 HEAD
-if ($LASTEXITCODE -ne 0) { throw 'Candidate does not descend from the fixed c9405149 baseline.' }
+& git -C $repoRoot merge-base --is-ancestor 8a45b24e8302d3f7bdc113eeb1f85c483e71ed8e HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Candidate does not descend from the fixed 8a45b24e baseline.' }
 if (Test-Path -LiteralPath $fixtureRootPath) {
   throw "Fixture root already exists: $fixtureRootPath. Stop and clean it explicitly before rebuilding."
 }
@@ -29,7 +29,7 @@ function Assert-PortFree([int]$Port) {
 Assert-PortFree $ServerPort
 Assert-PortFree $DatabasePort
 
-$instanceId = 'pap17-g2'
+$instanceId = 'pap17-g2-formal'
 $instanceRoot = Join-Path $fixtureRootPath "paperclip-home\instances\$instanceId"
 $configPath = Join-Path $instanceRoot 'config.json'
 $logDir = Join-Path $fixtureRootPath 'logs'
@@ -42,11 +42,12 @@ $codex = (Get-Command codex.exe -ErrorAction Stop).Source
 $tsx = Join-Path $repoRoot 'server\node_modules\tsx\dist\cli.mjs'
 $serverHost = Join-Path $PSScriptRoot 'pap17-g2-fixture-server.ts'
 $seeder = Join-Path $PSScriptRoot 'seed-pap17-g2-fixture.ts'
+$dispatcher = Join-Path $PSScriptRoot 'prepare-pap17-g2-dispatch.ts'
 $credentialHelper = Join-Path $PSScriptRoot 'credential-helper.ps1'
 $supervisor = Join-Path $PSScriptRoot 'supervisor\out\PaperclipRunSupervisor.exe'
 $rabbitGbrain = 'H:\AIagent\Rabbit\.paperclip\gbrain-rabbit-192.json'
 $lunaGbrain = 'H:\AIagent\Luna\.paperclip\gbrain-luna-192.json'
-foreach ($required in @($tsx, $serverHost, $seeder, $credentialHelper, $supervisor,
+foreach ($required in @($tsx, $serverHost, $seeder, $dispatcher, $credentialHelper, $supervisor,
     $rabbitGbrain, $lunaGbrain, 'H:\AIagent\Rabbit\AGENTS.md', 'H:\AIagent\Luna\AGENTS.md')) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required fixture dependency is missing: $required" }
 }
@@ -87,7 +88,8 @@ $environmentNames = @(
   'PAPERCLIP_WORK_RECORD_WORKFLOW_V2_WRITES_ENABLED',
   'PAPERCLIP_WORK_RECORD_WORKFLOW_V2_COHORTS', 'DATABASE_URL',
   'PAPERCLIP_API_URL', 'PAPERCLIP_API_KEY', 'PAPERCLIP_RUN_ID',
-  'PAPERCLIP_TASK_ID', 'PAPERCLIP_AGENT_ID', 'PAPERCLIP_COMPANY_ID'
+  'PAPERCLIP_TASK_ID', 'PAPERCLIP_AGENT_ID', 'PAPERCLIP_COMPANY_ID',
+  'PAP17_API_BASE'
 )
 foreach ($name in $environmentNames) {
   $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
@@ -137,6 +139,12 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "Fixture seeder exited $LASTEXITCODE." }
 
   $ids = Get-Content -Raw -LiteralPath $idsPath | ConvertFrom-Json
+  $env:PAP17_API_BASE = [string]$runtime.apiUrl
+  & $node $tsx $dispatcher
+  if ($LASTEXITCODE -ne 0) { throw "Formal dispatch preparation exited $LASTEXITCODE." }
+  $dispatch = Get-Content -Raw -LiteralPath (Join-Path $fixtureRootPath 'http-receipts\fixture-dispatch.json') | ConvertFrom-Json
+  $preflight = Get-Content -Raw -LiteralPath (Join-Path $fixtureRootPath 'http-receipts\fixture-preflight.json') | ConvertFrom-Json
+  if ($preflight.ready -ne $true) { throw 'Fixture service preflight did not declare ready.' }
   $repairCredentials = Join-Path $fixtureRootPath 'repair-member.dpapi'
   $qaCredentials = Join-Path $fixtureRootPath 'qa-member.dpapi'
   $repairDocument = @{ schemaVersion = 1; agents = @{ $ids.ids.repairAgentId = $repairToken } } | ConvertTo-Json -Compress
@@ -209,7 +217,7 @@ try {
     schemaVersion = 1
     fixtureId = 'PAP-17-G2'
     candidateCommit = $candidateCommit
-    fixedBaseline = 'c94051492d9772a4ccb106c199fbcb9f42eb5ea5'
+    fixedBaseline = '8a45b24e8302d3f7bdc113eeb1f85c483e71ed8e'
     createdAt = [DateTimeOffset]::UtcNow.ToString('o')
     service = [ordered]@{
       pid = [int]$runtime.pid
@@ -235,8 +243,36 @@ try {
       cleanupCommand = "& '$cleanupScript' -FixtureRoot '$fixtureRootPath' -ConfirmFixtureId 'PAP-17-G2'"
     }
     idsPath = $idsPath
-    ids = $ids.ids
-    queue = $ids.queue
+    ids = [ordered]@{
+      companyId = $ids.ids.companyId
+      projectId = $ids.ids.projectId
+      responsibleUserId = $ids.ids.responsibleUserId
+      repairAgentId = $ids.ids.repairAgentId
+      qaAgentId = $ids.ids.qaAgentId
+      repairKeyId = $ids.ids.repairKeyId
+      qaKeyId = $ids.ids.qaKeyId
+      recordId = $dispatch.recordId
+      issueId = $dispatch.issueId
+      issueIdentifier = $dispatch.issueIdentifier
+      issueLinkId = $dispatch.issueLinkId
+      dispatchBatchId = $dispatch.dispatchBatchId
+      repairWakeRequestId = $dispatch.repairWakeRequestId
+      repairRunId = $dispatch.repairRunId
+      cycleId = $dispatch.cycleId
+      repairItemId = $dispatch.repairItemId
+      qaItemId = $dispatch.qaItemId
+    }
+    queue = [ordered]@{
+      repairRunId = $dispatch.repairRunId
+      repairState = $dispatch.repairRunState
+      qaRunId = $dispatch.qaRunId
+      qaState = $dispatch.qaState
+    }
+    formalDispatch = [ordered]@{
+      clientRequestId = $dispatch.dispatchClientRequestId
+      receiptsDirectory = (Join-Path $fixtureRootPath 'http-receipts')
+      preflightReceipt = (Join-Path $fixtureRootPath 'http-receipts\fixture-preflight.json')
+    }
     isolation = [ordered]@{
       paperclip192Written = $false
       mainEngineeringWritten = $false

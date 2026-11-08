@@ -12,7 +12,7 @@ $stopped = Get-Content -Raw -LiteralPath (Join-Path $root 'stop-confirmation.jso
 if ($manifest.fixtureId -ne 'PAP-17-G2' -or $stopped.confirmed -ne $true) {
   throw 'Refusing cleanup without the exact manifest and confirmed stop evidence.'
 }
-if ([IO.Path]::GetPathRoot($root) -eq $root -or (Split-Path -Leaf $root) -ne 'g2-live-fixture') {
+if ([IO.Path]::GetPathRoot($root) -eq $root -or (Split-Path -Leaf $root) -ne 'g2-formal-dispatch-fixture') {
   throw "Refusing broad or unexpected cleanup target: $root"
 }
 Remove-Item -LiteralPath $root -Recurse -Force
