@@ -11,6 +11,7 @@ import { executeClaimedRun } from "./claimed-run.js";
 import { LocalCommentIntentStore } from "./local-run-write-proxy.js";
 import { runLocalAgent } from "./adapter-runtime.js";
 import { verifyGbrainIdentity } from "./gbrain-identity.js";
+import { loadMemberGbrainToken } from "./member-credential.js";
 import { acquireSingleInstanceLock } from "./single-instance-lock.js";
 import { assertNoUnreportedSupervisors, bindingForClaim, readSupervisorBridgeIdentity, verifySupervisorStopped,
   type SupervisorBinding } from "./supervisor-client.js";
@@ -161,7 +162,8 @@ export async function runBridge(configPath: string, signal: AbortSignal,
     const tokens = await loadAgentTokens(config.credentialsFile, [agent.remoteAgentId]);
     const token = tokens.get(agent.remoteAgentId);
     if (!token) throw new Error(`缺少 ${agent.remoteAgentName} 的凭据`);
-    await verifyGbrainIdentity({ agent, endpoint: config.gbrainMcpUrl, token: process.env[agent.gbrainEnvRef] });
+    const gbrainToken = await loadMemberGbrainToken(agent, process.env);
+    await verifyGbrainIdentity({ agent, endpoint: config.gbrainMcpUrl, token: gbrainToken });
     const client = new AliceClient({ apiBase: config.apiBase, token });
     await client.verifyIdentity(agent.remoteAgentId, config.companyId, agent.remoteAgentName);
     const state = new ClaimStateStore(config.stateFile, config.deviceId, agent.remoteAgentId);
