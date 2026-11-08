@@ -1,6 +1,7 @@
 export interface Pap17FixtureReadinessSnapshot {
   responsibleUserId: string;
   repairAgentId: string;
+  repairAgentExecutionMode: string | null;
   membership: { principalId: string; status: string } | null;
   repairKey: { responsibleUserId: string | null } | null;
   draftReceipt: {
@@ -64,8 +65,12 @@ export function assessPap17FixtureReadiness(input: Pap17FixtureReadinessSnapshot
     input.queued.issueId !== input.dispatchReceipt.issueId) {
     failures.push("dispatch_identity_mismatch");
   }
-  if (input.queued.runStatus !== "queued" || input.queued.runtimeMode !== "client_pull") {
-    failures.push("repair_run_not_queued_client_pull");
+  if (input.repairAgentExecutionMode !== "client_pull") {
+    failures.push("repair_agent_not_client_pull");
+  }
+  if (input.queued.runStatus !== "queued" ||
+    !["legacy", "client_pull"].includes(input.queued.runtimeMode ?? "")) {
+    failures.push("repair_run_not_claimable_queued");
   }
   if (input.queued.runResponsibleUserId !== input.responsibleUserId ||
     input.queued.issueResponsibleUserId !== input.responsibleUserId) {

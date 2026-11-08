@@ -152,6 +152,7 @@ const qaItem = quality.items?.find((item: { role: string }) => item.role === "qa
 const snapshot = {
   responsibleUserId: PAP17_G2_IDS.responsibleUserId,
   repairAgentId: PAP17_G2_IDS.repairAgentId,
+  repairAgentExecutionMode: repairIdentity.runtimeConfig?.executionMode ?? null,
   membership: identity.identity?.membership ?? null,
   repairKey: identity.identity?.repairKey ?? null,
   draftReceipt: {

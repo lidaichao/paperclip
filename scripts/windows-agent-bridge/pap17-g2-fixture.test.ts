@@ -22,6 +22,7 @@ describe("PAP-17 G2 live fixture", () => {
   const readySnapshot = {
     responsibleUserId: PAP17_G2_IDS.responsibleUserId,
     repairAgentId: PAP17_G2_IDS.repairAgentId,
+    repairAgentExecutionMode: "client_pull",
     membership: { principalId: PAP17_G2_IDS.responsibleUserId, status: "active" },
     repairKey: { responsibleUserId: PAP17_G2_IDS.responsibleUserId },
     draftReceipt: {
@@ -43,7 +44,7 @@ describe("PAP-17 G2 live fixture", () => {
       wakeRequestId: evidenceIds.repairWakeRequestId,
       runId: evidenceIds.repairRunId,
       runStatus: "queued",
-      runtimeMode: "client_pull",
+      runtimeMode: "legacy",
       runAgentId: PAP17_G2_IDS.repairAgentId,
       runResponsibleUserId: PAP17_G2_IDS.responsibleUserId,
       issueResponsibleUserId: PAP17_G2_IDS.responsibleUserId,
@@ -77,8 +78,18 @@ describe("PAP-17 G2 live fixture", () => {
     expect(result.failures).toContain("dispatch_event_chain_incomplete");
   });
 
-  it("accepts only a draft followed by formal dispatch, queued client-pull run and defect QA chain", () => {
+  it("accepts a formally queued run for a configured client-pull member", () => {
     expect(assessPap17FixtureReadiness(readySnapshot)).toEqual({ ready: true, failures: [] });
+  });
+
+  it("refuses readiness when the repair member is not configured for client pull", () => {
+    const result = assessPap17FixtureReadiness({
+      ...readySnapshot,
+      repairAgentExecutionMode: "server",
+    });
+
+    expect(result.ready).toBe(false);
+    expect(result.failures).toContain("repair_agent_not_client_pull");
   });
 
   it("uses stable native IDs for evidence rebinding", () => {
@@ -116,6 +127,6 @@ describe("PAP-17 G2 live fixture", () => {
     expect(stop).toContain("databasePortClosed");
     expect(stop).toContain("serviceProcessAbsent");
     expect(remove).toContain("$stopped.confirmed -ne $true");
-    expect(remove).toContain("(Split-Path -Leaf $root) -ne 'g2-formal-dispatch-fixture'");
+    expect(remove).toContain("^g2-formal-dispatch-fixture(?:-v\\d+)?$");
   });
 });
