@@ -9,7 +9,7 @@ import { and, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import {
   agents, agentWakeupRequests, approvals, issueApprovals, issueThreadInteractions,
   environmentLeases, heartbeatRuns, issueComments, issueRecoveryActions,
-  issues, nativeRunFinalizations, nativeRunResults, type Db,
+  issues, localAgentRunLeases, nativeRunFinalizations, nativeRunResults, type Db,
 } from "@paperclipai/db";
 import { executionBlockerPredicate, getExecutionBlocker } from "./execution-blocker.js";
 import { buildExecutionContinuation } from "./execution-continuation.js";
@@ -101,6 +101,14 @@ export async function admitDescriptionRevisionContinuation(input: {
       result.descriptionRevisionSuperseded !== true ||
       result.descriptionRevisionIntentKey !== intentKey ||
       result.interruptedIssueId !== issueId) return null;
+  if (run.runtimeMode === "client_pull") {
+    const [localLease] = await db.select().from(localAgentRunLeases).where(and(
+      eq(localAgentRunLeases.companyId, companyId),
+      eq(localAgentRunLeases.runId, sourceRunId),
+    )).for("update");
+    if (!localLease || localLease.issueId !== issueId || localLease.agentId !== agentId ||
+        !localLease.releasedAt || !localLease.stopAcknowledgedAt) return null;
+  }
   const leases = await db.select().from(environmentLeases).where(and(
     eq(environmentLeases.companyId, companyId), eq(environmentLeases.heartbeatRunId, sourceRunId),
   ));
