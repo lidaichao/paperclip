@@ -56,6 +56,11 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'repair-work.ps1') -Destination 
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa-work.ps1') -Destination $fixtureRootPath
 
 [ordered]@{
+  '$meta' = [ordered]@{
+    version = 1
+    updatedAt = [DateTimeOffset]::UtcNow.ToString('o')
+    source = 'pap17-g2-fixture'
+  }
   server = [ordered]@{
     deploymentMode = 'local_trusted'
     exposure = 'private'
@@ -71,6 +76,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa-work.ps1') -Destination $fix
     backup = [ordered]@{ enabled = $false }
   }
   telemetry = [ordered]@{ enabled = $false }
+  logging = [ordered]@{ mode = 'file' }
 } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $configPath -Encoding utf8
 
 $savedEnvironment = @{}
