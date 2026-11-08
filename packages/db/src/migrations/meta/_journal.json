@@ -2220,6 +2220,13 @@
       "when": 1794091979826,
       "tag": "0318_open_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 319,
+      "version": "7",
+      "when": 1794098186897,
+      "tag": "0319_ambitious_lady_mastermind",
+      "breakpoints": true
     }
   ]
 }

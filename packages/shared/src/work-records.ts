@@ -48,6 +48,81 @@ export type WorkRecordBusinessStatus = (typeof WORK_RECORD_BUSINESS_STATUSES)[nu
 export type WorkRecordDispatchState = (typeof WORK_RECORD_DISPATCH_STATES)[number];
 export type WorkRecordHoldReason = (typeof WORK_RECORD_HOLD_REASONS)[number];
 
+export const WORK_RECORD_VIEW_KINDS = ["plan", "defect"] as const;
+export const WORK_RECORD_VIEW_DENSITIES = ["compact", "comfortable", "spacious"] as const;
+export const WORK_RECORD_PLAN_VIEW_FIELDS = [
+  "title", "description", "iteration", "plannedStartDate", "plannedCompletionDate",
+  "assignee", "businessStatus", "dependencies",
+] as const;
+export const WORK_RECORD_DEFECT_VIEW_FIELDS = [
+  ...WORK_RECORD_PLAN_VIEW_FIELDS,
+  "defectSeverity",
+] as const;
+
+export type WorkRecordViewKind = (typeof WORK_RECORD_VIEW_KINDS)[number];
+export type WorkRecordViewDensity = (typeof WORK_RECORD_VIEW_DENSITIES)[number];
+export type WorkRecordViewField = (typeof WORK_RECORD_DEFECT_VIEW_FIELDS)[number];
+
+export interface WorkRecordViewConfig {
+  schemaVersion: 1;
+  visibleFields: WorkRecordViewField[];
+  columnOrder: WorkRecordViewField[];
+  columnWidths: Partial<Record<WorkRecordViewField, number>>;
+  density: WorkRecordViewDensity;
+}
+
+export interface WorkRecordViewPreference {
+  companyId: string;
+  projectId: string;
+  userId: string;
+  viewKind: WorkRecordViewKind;
+  config: WorkRecordViewConfig;
+  revision: number;
+  updatedAt: Date | null;
+}
+
+const workRecordViewFieldSchema = z.enum(WORK_RECORD_DEFECT_VIEW_FIELDS);
+export const workRecordViewConfigSchema = z.object({
+  schemaVersion: z.literal(1),
+  visibleFields: z.array(workRecordViewFieldSchema).max(WORK_RECORD_DEFECT_VIEW_FIELDS.length),
+  columnOrder: z.array(workRecordViewFieldSchema).max(WORK_RECORD_DEFECT_VIEW_FIELDS.length),
+  columnWidths: z.partialRecord(workRecordViewFieldSchema, z.number().int().min(64).max(1200)),
+  density: z.enum(WORK_RECORD_VIEW_DENSITIES),
+}).strict();
+
+export const putWorkRecordViewPreferenceSchema = z.object({
+  expectedRevision: z.number().int().min(0),
+  config: workRecordViewConfigSchema,
+}).strict();
+
+export function defaultWorkRecordViewConfig(viewKind: WorkRecordViewKind): WorkRecordViewConfig {
+  const fields = viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS;
+  return {
+    schemaVersion: 1,
+    visibleFields: [...fields],
+    columnOrder: [...fields],
+    columnWidths: {},
+    density: "comfortable",
+  };
+}
+
+export function validateWorkRecordViewConfig(viewKind: WorkRecordViewKind, config: WorkRecordViewConfig): WorkRecordViewConfig {
+  const allowed = new Set<WorkRecordViewField>(
+    viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS,
+  );
+  const assertUniqueAllowed = (values: WorkRecordViewField[], path: string) => {
+    if (new Set(values).size !== values.length || values.some((field) => !allowed.has(field))) {
+      throw new Error(`${path} must contain unique fields allowed for the ${viewKind} view`);
+    }
+  };
+  assertUniqueAllowed(config.visibleFields, "visibleFields");
+  assertUniqueAllowed(config.columnOrder, "columnOrder");
+  if (Object.keys(config.columnWidths).some((field) => !allowed.has(field as WorkRecordViewField))) {
+    throw new Error(`columnWidths must contain only fields allowed for the ${viewKind} view`);
+  }
+  return config;
+}
+
 const workRecordDateFields = {
   plannedStartDate: z.string().date().optional().nullable(),
   plannedCompletionDate: z.string().date().optional().nullable(),

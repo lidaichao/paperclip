@@ -66,6 +66,7 @@ import { environmentService } from "./services/environments.js";
 import { environmentRuntimeService } from "./services/environment-runtime.js";
 import { projectRoutes } from "./routes/projects.js";
 import { workRecordRoutes } from "./routes/work-records.js";
+import { workRecordViewPreferenceRoutes } from "./routes/work-record-view-preferences.js";
 import { issueRoutes } from "./routes/issues.js";
 import { createNonOverlappingWorkRecordTick, workRecordService } from "./services/work-records.js";
 import { createWorkRecordWorkflowTick } from "./services/work-record-workflow-tick.js";
@@ -757,6 +758,7 @@ export async function createApp(
   api.use(projectToolRoutes(db));
   api.use(projectRoutes(db));
   api.use(workRecordRoutes(db));
+  api.use(workRecordViewPreferenceRoutes(db));
   api.use(caseRoutes(db, opts.storageService));
   api.use(issueTreeControlRoutes(db, { pluginWorkerManager: workerManager }));
   api.use(fileResourceRoutes(db));
