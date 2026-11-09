@@ -56,4 +56,23 @@ test("dashboard keeps task and defect filters separate and opens the source reco
   await page.goto(`/${company.issuePrefix}/dashboard`);
   await page.getByRole("tab", { name: "我的待办" }).click();
   await expect(page.getByTestId("my-todos-plan").getByRole("listitem")).toHaveCount(20);
+  await page.getByRole("button", { name: "编辑视图" }).click();
+  const settings = page.getByTestId("my-todo-settings");
+  await settings.getByRole("checkbox", { name: "项目" }).uncheck();
+  await settings.getByRole("combobox", { name: "行密度" }).selectOption("comfortable");
+  await settings.getByRole("combobox", { name: "默认项目" }).selectOption(project.id);
+  await settings.getByRole("button", { name: "计划完成上移" }).click();
+  await settings.getByRole("button", { name: "保存视图" }).click();
+  await expect(settings).toHaveCount(0);
+  const preference = await body<{ revision: number; config: { visibleFields: string[]; columnOrder: string[]; density: string; defaultProjectId: string | null } }>(
+    await request.get(`/api/companies/${company.id}/work-records/my-todo-preference`), "saved preference",
+  );
+  expect(preference.revision).toBe(1);
+  expect(preference.config).toMatchObject({ visibleFields: ["roles", "status", "due"], density: "comfortable", defaultProjectId: project.id });
+  expect(preference.config.columnOrder).toEqual(["project", "roles", "due", "status"]);
+  await page.reload();
+  await page.getByRole("tab", { name: "我的待办" }).click();
+  await expect(page.getByRole("combobox", { name: "待办项目" })).toHaveValue(project.id);
+  await expect(page.getByTestId("my-todos-plan").getByRole("listitem")).toHaveCount(20);
+  await expect(page.getByTestId("my-todos-plan").getByText("项目：Todo project")).toHaveCount(0);
 });

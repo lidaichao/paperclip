@@ -15,6 +15,8 @@ import type {
   WorkRecordConsoleCapabilities,
   WorkRecord,
   WorkRecordMyTodo,
+  MyTodoViewConfig,
+  MyTodoViewPreference,
   WorkRecordBusinessStatus,
   WorkRecordViewConfig,
   WorkRecordViewKind,
@@ -63,6 +65,10 @@ export const workRecordsApi = {
     for (const [key, value] of Object.entries(filter)) if (value !== undefined && value !== "") query.set(key, String(value));
     return api.get<{ items: WorkRecordMyTodo[]; nextCursor: string | null }>(`/companies/${companyId}/work-records/my-todos?${query}`);
   },
+  myTodoPreference: (companyId: string) =>
+    api.get<MyTodoViewPreference>(`/companies/${companyId}/work-records/my-todo-preference`),
+  putMyTodoPreference: (companyId: string, input: { expectedRevision: number; config: MyTodoViewConfig }) =>
+    api.put<MyTodoViewPreference>(`/companies/${companyId}/work-records/my-todo-preference`, input),
   create: (companyId: string, input: CreateWorkRecord) =>
     api.post<WorkRecord>(`/companies/${companyId}/work-records`, input),
   update: (companyId: string, projectId: string, recordId: string, input: UpdateWorkRecord) =>

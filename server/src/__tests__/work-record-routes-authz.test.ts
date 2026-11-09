@@ -32,6 +32,7 @@ const service = vi.hoisted(() => ({
   recoverRecord: vi.fn(),
 }));
 const myTodoService = vi.hoisted(() => ({ list: vi.fn() }));
+const myTodoPreferences = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn() }));
 const logActivity = vi.hoisted(() => vi.fn());
 const packageService = vi.hoisted(() => ({
   preview: vi.fn(),
@@ -81,6 +82,7 @@ vi.mock("../services/index.js", () => ({
   logActivity,
 }));
 vi.mock("../services/work-record-my-todos.js", () => ({ workRecordMyTodoService: () => myTodoService }));
+vi.mock("../services/my-todo-preferences.js", () => ({ myTodoPreferenceService: () => myTodoPreferences }));
 
 function createApp(actor: Express.Request["actor"]) {
   const app = express();
@@ -123,6 +125,10 @@ describe("work-record route authorization", () => {
     for (const mock of Object.values(service)) mock.mockReset();
     myTodoService.list.mockReset();
     myTodoService.list.mockResolvedValue({ items: [], nextCursor: null });
+    myTodoPreferences.get.mockReset();
+    myTodoPreferences.put.mockReset();
+    myTodoPreferences.get.mockResolvedValue({ config: { visibleFields: [], columnOrder: ["project", "roles", "status", "due"], density: "compact", sort: "due", defaultProjectId: null }, revision: 0, updatedAt: null });
+    myTodoPreferences.put.mockResolvedValue({ config: { visibleFields: [], columnOrder: ["project", "roles", "status", "due"], density: "compact", sort: "due", defaultProjectId: null }, revision: 1, updatedAt: new Date() });
     logActivity.mockReset();
     for (const mock of Object.values(packageService)) mock.mockReset();
     for (const mock of Object.values(qualityService)) mock.mockReset();
@@ -183,8 +189,9 @@ describe("work-record route authorization", () => {
       q: undefined, dueBefore: undefined, sort: undefined,
     });
     await request(app).get("/api/companies/company-1/work-records/my-todos?kind=unknown").expect(422);
+    await request(app).get("/api/companies/company-1/work-records/my-todos?projectId=e854dafa-b19d-49c7-ad40-6e5ea1957711").expect(200);
     await request(app).get("/api/companies/other-company/work-records/my-todos").expect(403);
-    expect(myTodoService.list).toHaveBeenCalledTimes(1);
+    expect(myTodoService.list).toHaveBeenCalledTimes(2);
   });
 
   it("does not allow an agent or userless board token to impersonate a personal inbox", async () => {
@@ -193,6 +200,20 @@ describe("work-record route authorization", () => {
     await request(agent).get("/api/companies/company-1/work-records/my-todos").expect(403);
     await request(userless).get("/api/companies/company-1/work-records/my-todos").expect(403);
     expect(myTodoService.list).not.toHaveBeenCalled();
+  });
+
+  it("binds personal view configuration to the board user and validates updates", async () => {
+    const app = createApp(viewer);
+    const config = { visibleFields: ["project", "due"], columnOrder: ["project", "roles", "status", "due"], density: "compact", sort: "due", defaultProjectId: null };
+    await request(app).get("/api/companies/company-1/work-records/my-todo-preference").expect(200);
+    expect(myTodoPreferences.get).toHaveBeenCalledWith("company-1", "viewer-1");
+    await request(app).put("/api/companies/company-1/work-records/my-todo-preference").send({ expectedRevision: 0, config }).expect(200);
+    expect(myTodoPreferences.put).toHaveBeenCalledWith("company-1", "viewer-1", 0, config);
+    await request(app).put("/api/companies/company-1/work-records/my-todo-preference").send({ expectedRevision: 0, config, userId: "other-user" }).expect(400);
+    await request(app).get("/api/companies/other-company/work-records/my-todo-preference").expect(403);
+    const agent = createApp({ type: "agent", companyId: "company-1", agentId: "agent-1", source: "agent_key" } as Express.Request["actor"]);
+    await request(agent).get("/api/companies/company-1/work-records/my-todo-preference").expect(403);
+    await request(agent).put("/api/companies/company-1/work-records/my-todo-preference").send({ expectedRevision: 0, config }).expect(403);
   });
 
   it("allows a viewer to read records and inspect the same dispatch request", async () => {

@@ -26,6 +26,33 @@ export interface WorkRecordMyTodo {
   executionState: "active" | "idle" | "unknown";
   updatedAt: Date;
 }
+export const MY_TODO_OPTIONAL_FIELDS = ["project", "roles", "status", "due"] as const;
+export type MyTodoOptionalField = (typeof MY_TODO_OPTIONAL_FIELDS)[number];
+export interface MyTodoViewConfig {
+  visibleFields: MyTodoOptionalField[];
+  columnOrder: MyTodoOptionalField[];
+  density: "compact" | "comfortable";
+  sort: "due" | "updated";
+  defaultProjectId: string | null;
+}
+export interface MyTodoViewPreference { config: MyTodoViewConfig; revision: number; updatedAt: Date | null }
+export const DEFAULT_MY_TODO_VIEW_CONFIG: MyTodoViewConfig = {
+  visibleFields: [...MY_TODO_OPTIONAL_FIELDS], columnOrder: [...MY_TODO_OPTIONAL_FIELDS],
+  density: "compact", sort: "due", defaultProjectId: null,
+};
+const myTodoFieldsSchema = z.array(z.enum(MY_TODO_OPTIONAL_FIELDS)).max(MY_TODO_OPTIONAL_FIELDS.length)
+  .refine((fields) => new Set(fields).size === fields.length, "字段不能重复");
+export const myTodoViewConfigSchema = z.object({
+  visibleFields: myTodoFieldsSchema,
+  columnOrder: myTodoFieldsSchema.refine((fields) => fields.length === MY_TODO_OPTIONAL_FIELDS.length, "排序必须包含全部字段"),
+  density: z.enum(["compact", "comfortable"]),
+  sort: z.enum(["due", "updated"]),
+  defaultProjectId: z.string().uuid().nullable(),
+}).strict();
+export const putMyTodoViewPreferenceSchema = z.object({
+  expectedRevision: z.number().int().nonnegative(),
+  config: myTodoViewConfigSchema,
+}).strict();
 const workRecordUserResponsibilitySchema = z.object({
   userId: z.string().trim().min(1).max(255),
   role: z.enum(WORK_RECORD_USER_ROLES),

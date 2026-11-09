@@ -22,6 +22,7 @@ import {
   updateWorkRecordSchema,
   WORK_RECORD_BUSINESS_STATUSES,
   WORK_RECORD_KINDS,
+  putMyTodoViewPreferenceSchema,
 } from "@paperclipai/shared";
 import { validate } from "../middleware/validate.js";
 import { HttpError, forbidden, unprocessable } from "../errors.js";
@@ -37,6 +38,7 @@ import {
 } from "../services/index.js";
 import { assertAuthenticated, assertCompanyAccess, getActorInfo, hasCompanyAccess } from "./authz.js";
 import { workRecordMyTodoService } from "../services/work-record-my-todos.js";
+import { myTodoPreferenceService } from "../services/my-todo-preferences.js";
 
 export interface WorkRecordRouteOptions {
   heartbeat?: Pick<ReturnType<typeof heartbeatService>, "wakeup" | "admitWorkRecordDescriptionRevision">;
@@ -48,6 +50,7 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
   const router = Router();
   const service = workRecordService(db, { writesEnabled: options.workflowV2WritesEnabled });
   const myTodos = workRecordMyTodoService(db);
+  const myTodoPreferences = myTodoPreferenceService(db);
   const packages = workPackageDispatchService(db, { writesEnabled: options.workflowV2WritesEnabled });
   const quality = workRecordQualityService(db, { writesEnabled: options.workflowV2WritesEnabled });
   const access = accessService(db);
@@ -618,7 +621,7 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     const limit = req.query.limit === undefined ? undefined : Number(req.query.limit);
     if (kind && !WORK_RECORD_KINDS.includes(kind as (typeof WORK_RECORD_KINDS)[number])) throw unprocessable("Invalid kind");
     if (status && status !== "all" && !WORK_RECORD_BUSINESS_STATUSES.includes(status as (typeof WORK_RECORD_BUSINESS_STATUSES)[number])) throw unprocessable("Invalid status");
-    if (projectId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(projectId)) throw unprocessable("Invalid projectId");
+    if (projectId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(projectId)) throw unprocessable("Invalid projectId");
     if (cursor && cursor.length > 256) throw unprocessable("Invalid cursor");
     if (q && q.length > 200) throw unprocessable("Search is too long");
     if (dueBefore && (!/^\d{4}-\d{2}-\d{2}$/.test(dueBefore) || Number.isNaN(Date.parse(dueBefore)))) throw unprocessable("Invalid dueBefore");
@@ -633,6 +636,21 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       dueBefore,
       sort: sort as "updated" | "due" | undefined,
     }));
+  });
+
+  router.get("/companies/:companyId/work-records/my-todo-preference", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    assertCompanyReadAccess(req, companyId);
+    if (req.actor.type !== "board" || !req.actor.userId?.trim()) throw forbidden("需要已登录的用户身份");
+    res.json(await myTodoPreferences.get(companyId, req.actor.userId));
+  });
+
+  router.put("/companies/:companyId/work-records/my-todo-preference", validate(putMyTodoViewPreferenceSchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    // A viewer may change only their own display preference; this never changes records.
+    assertCompanyReadAccess(req, companyId);
+    if (req.actor.type !== "board" || !req.actor.userId?.trim()) throw forbidden("需要已登录的用户身份");
+    res.json(await myTodoPreferences.put(companyId, req.actor.userId, req.body.expectedRevision, req.body.config));
   });
 
   router.get("/companies/:companyId/projects/:projectId/work-record-workflow/operations", async (req, res) => {
