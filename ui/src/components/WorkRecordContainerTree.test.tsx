@@ -146,9 +146,40 @@ describe("WorkRecordContainerTree", () => {
 
     await act(async () => (dialog.querySelector('[data-slot="dialog-close"]') as HTMLButtonElement).click());
     await flush();
+    expect(document.body.querySelector('[data-testid="container-edit-form"]')).not.toBeNull();
+    expect(document.body.querySelector('[data-testid="container-discard-confirmation"]')).not.toBeNull();
+    await act(async () => button("放弃修改").click());
+    await flush();
     expect(document.body.querySelector('[data-testid="container-edit-form"]')).toBeNull();
     expect(updateVersionMock).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(editButton);
+  });
+
+  it("protects a dirty edit from Escape and returns Escape in the confirmation to editing", async () => {
+    await render();
+    await act(async () => button("编辑版本 V1").click());
+    const dialog = document.body.querySelector('[data-testid="container-edit-form"]') as HTMLElement;
+    const name = dialog.querySelector('input:not([type="date"])') as HTMLInputElement;
+    await act(async () => setNativeValue(name, "V1 未保存草稿"));
+
+    await act(async () => dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true })));
+    await flush();
+    expect(document.body.querySelector('[data-testid="container-discard-confirmation"]')).not.toBeNull();
+    expect(name.value).toBe("V1 未保存草稿");
+    expect(document.activeElement).toBe(button("继续编辑"));
+
+    const confirmation = document.body.querySelector('[data-testid="container-discard-confirmation"]') as HTMLElement;
+    await act(async () => confirmation.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true })));
+    await flush();
+    expect(document.body.querySelector('[data-testid="container-discard-confirmation"]')).toBeNull();
+    expect(document.body.querySelector('[data-testid="container-edit-form"]')).not.toBeNull();
+    expect(name.value).toBe("V1 未保存草稿");
+
+    await act(async () => dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true })));
+    await flush();
+    await act(async () => button("放弃修改").click());
+    await flush();
+    expect(document.body.querySelector('[data-testid="container-edit-form"]')).toBeNull();
   });
 
   it("archives and restores from the lifecycle action in the edit dialog", async () => {

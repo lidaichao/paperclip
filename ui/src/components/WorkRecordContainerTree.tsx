@@ -47,6 +47,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
   writable?: boolean;
 }) {
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
+  const discardCancelRef = useRef<HTMLButtonElement>(null);
   const editReturnFocusRef = useRef<HTMLElement | null>(null);
   const client = useQueryClient();
   const versionsKey = queryKeys.workRecords.versions(companyId, projectId);
@@ -60,6 +61,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
   const [editDraft, setEditDraft] = useState<ContainerDraft>(EMPTY_DRAFT);
   const [deleteTarget, setDeleteTarget] = useState<ContainerTarget | null>(null);
   const [deleteName, setDeleteName] = useState("");
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
 
   const versionRows = versions.data ?? [];
   const iterationRows = iterations.data ?? [];
@@ -151,6 +153,21 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
   const editDraftDirty = editTarget
     ? JSON.stringify(editDraft) !== JSON.stringify(draftFromTarget(editTarget))
     : false;
+  const requestEditClose = () => {
+    if (update.isPending || lifecycle.isPending) return;
+    if (editDraftDirty) {
+      setDiscardConfirmOpen(true);
+      return;
+    }
+    setEditTarget(null);
+  };
+  const discardEdit = () => {
+    setDiscardConfirmOpen(false);
+    setEditTarget(null);
+    setEditDraft(EMPTY_DRAFT);
+    update.reset();
+    lifecycle.reset();
+  };
 
   const actions = (target: ContainerTarget, row: "version" | "iteration") => {
     if (!writable) return null;
@@ -211,7 +228,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
       </div> : null}
       {error ? <div role="alert" className="mt-3 text-xs text-destructive"><p>{error.message}</p><Button className="mt-1" size="sm" variant="outline" onClick={() => { void versions.refetch(); void iterations.refetch(); }}>重新载入，保留输入草稿</Button></div> : null}
 
-      <Dialog open={Boolean(editTarget)} onOpenChange={(open) => { if (!open && !update.isPending && !lifecycle.isPending) setEditTarget(null); }}>
+      <Dialog open={Boolean(editTarget)} onOpenChange={(open) => { if (!open) requestEditClose(); }}>
         <DialogContent className="sm:max-w-lg" data-testid="container-edit-form" onCloseAutoFocus={(event) => {
           if (!editReturnFocusRef.current?.isConnected) return;
           event.preventDefault();
@@ -234,6 +251,32 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
           <DialogFooter className="items-center justify-between sm:justify-between">
             <Button data-testid="container-lifecycle-action" variant={editTarget?.item.archivedAt ? "outline" : "destructive"} disabled={editDraftDirty || lifecycle.isPending || update.isPending} onClick={() => editTarget && lifecycle.mutate({ target: editTarget, operation: editTarget.item.archivedAt ? "restore" : "archive" })}>{editTarget?.item.archivedAt ? "恢复" : "归档"}</Button>
             <Button disabled={!editDraft.name.trim() || update.isPending || lifecycle.isPending} onClick={() => update.mutate(undefined)}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={discardConfirmOpen} onOpenChange={(open) => {
+        setDiscardConfirmOpen(open);
+        if (!open) window.setTimeout(() => editReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : editReturnFocusRef.current, 0);
+      }}>
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={false}
+          data-testid="container-discard-confirmation"
+          onOpenAutoFocus={(event) => { event.preventDefault(); discardCancelRef.current?.focus(); }}
+          onCloseAutoFocus={(event) => {
+            if (!editTarget) return;
+            event.preventDefault();
+            window.setTimeout(() => document.querySelector<HTMLElement>('[data-testid="container-edit-form"] input')?.focus(), 0);
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>放弃未保存修改？</DialogTitle>
+            <DialogDescription>当前版本或迭代的修改尚未保存。继续编辑可保留全部输入。</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button ref={discardCancelRef} variant="outline" onClick={() => setDiscardConfirmOpen(false)}>继续编辑</Button>
+            <Button variant="destructive" onClick={discardEdit}>放弃修改</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
