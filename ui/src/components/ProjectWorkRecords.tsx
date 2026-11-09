@@ -99,8 +99,12 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   const [viewDraftDirty, setViewDraftDirty] = useState(false);
   const viewLeaveGuardRef = useRef<(() => Promise<boolean>) | null>(null);
   const navigationGuardPromiseRef = useRef<Promise<boolean> | null>(null);
+  const businessDecisionPromiseRef = useRef<Promise<boolean> | null>(null);
+  const businessDecisionResolveRef = useRef<((allowed: boolean) => void) | null>(null);
+  const lastEditorFocusRef = useRef<HTMLElement | null>(null);
   const latestNavigationGuardRef = useRef<() => Promise<boolean>>(async () => true);
   const confirmedDialogCloseRef = useRef(false);
+  const [businessDecisionOpen, setBusinessDecisionOpen] = useState(false);
   const recordsKey = queryKeys.workRecords.list(companyId, projectId);
   const records = useQuery({
     queryKey: recordsKey,
@@ -177,13 +181,31 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     },
   });
 
-  const beforeViewSwitch = async () => {
+  const restoreEditorFocus = () => window.setTimeout(() => lastEditorFocusRef.current?.focus(), 0);
+  const finishBusinessDecision = (allowed: boolean) => {
+    setBusinessDecisionOpen(false);
+    businessDecisionResolveRef.current?.(allowed);
+    businessDecisionResolveRef.current = null;
+    businessDecisionPromiseRef.current = null;
+    if (!allowed) restoreEditorFocus();
+  };
+  const beforeViewSwitch = useCallback(async () => {
     if (!businessDraftDirty) return true;
-    if (window.confirm("有未保存的业务记录草稿。确定先保存记录并继续切换视图吗？")) {
-      try { await save.mutateAsync(); return true; } catch { return false; }
+    if (businessDecisionPromiseRef.current) return businessDecisionPromiseRef.current;
+    const pending = new Promise<boolean>((resolve) => {
+      businessDecisionResolveRef.current = resolve;
+      setBusinessDecisionOpen(true);
+    });
+    businessDecisionPromiseRef.current = pending;
+    return pending;
+  }, [businessDraftDirty]);
+  const saveAndContinue = async () => {
+    try {
+      await save.mutateAsync();
+      finishBusinessDecision(true);
+    } catch {
+      finishBusinessDecision(false);
     }
-    if (window.confirm("确定放弃业务记录草稿并继续切换视图吗？视图草稿不会被改动。")) { closeDialog(true); return true; }
-    return false;
   };
   const guardNavigation = useCallback(() => {
     if (navigationGuardPromiseRef.current) return navigationGuardPromiseRef.current;
@@ -277,9 +299,9 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
       {viewMode === "gantt" ? <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">甘特视图沿用同一版本、迭代和计划数据；日期字段为空的记录仍保留在下方表格中。</p> : null}
 
-      <div className="grid items-start gap-3 @2xl:grid-cols-3">
+      <div className="grid items-start gap-3 @2xl:grid-cols-4">
       <WorkRecordContainerTree companyId={companyId} projectId={projectId} writable={capabilities.data?.manageContainers.allowed !== false} />
-      <div className="min-w-0 @2xl:col-span-2">
+      <div className="min-w-0 @2xl:col-span-3">
       <WorkPackageConsole
         companyId={companyId}
         projectId={projectId}
@@ -300,8 +322,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       </div>
       </div>
 
-      <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(true); }}>
-        <DialogContent className="sm:max-w-2xl" onInteractOutside={(event) => event.preventDefault()}>
+      <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>
+        <DialogContent className="left-auto right-0 top-0 h-dvh w-2/5 max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none md:top-0 md:translate-y-0" overlayClassName="hidden" onInteractOutside={(event) => event.preventDefault()} onFocusCapture={(event) => { if (event.target instanceof HTMLElement) lastEditorFocusRef.current = event.target; }}>
           <DialogHeader>
             <DialogTitle>{editingRecord ? l10n("local.work_record_edit_kind", { kind: kindLabel }) : l10n("local.work_record_new_kind", { kind: kindLabel })}</DialogTitle>
             <DialogDescription>{l10n("local.work_record_this_saves_a_business_record_only_it")}</DialogDescription>
@@ -408,10 +430,25 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
           {save.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_kind_save_failed", { kind: kindLabel })}{save.error.message}</p> : null}
 
           <DialogFooter className="items-center justify-between sm:justify-between">
-            <Button variant="ghost" onClick={() => { if (!businessDraftDirty || window.confirm("放弃未保存的业务记录草稿？")) closeDialog(true); }}>{l10n("local.work_record_cancel")}</Button>
+            <Button variant="ghost" onClick={() => { if (!businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>{l10n("local.work_record_cancel")}</Button>
             <Button disabled={!draft.title.trim() || save.isPending} onClick={() => save.mutate()}>
               {save.isPending ? l10n("local.work_record_saving") : l10n("local.work_record_save_kind", { kind: kindLabel })}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={businessDecisionOpen} onOpenChange={(open) => { if (!open && businessDecisionOpen) finishBusinessDecision(false); }}>
+        <DialogContent className="sm:max-w-lg" showCloseButton={false} data-testid="business-draft-decision">
+          <DialogHeader>
+            <DialogTitle>有未保存的业务记录</DialogTitle>
+            <DialogDescription>先决定如何处理当前输入，再继续关闭、切换记录或切换页签。视图草稿不会被改动。</DialogDescription>
+          </DialogHeader>
+          {save.error ? <p role="alert" className="text-sm text-destructive">保存失败，已留在原处，输入没有丢失：{save.error.message}</p> : null}
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button onClick={() => void saveAndContinue()} disabled={save.isPending}>{save.isPending ? "正在保存" : "保存并继续"}</Button>
+            <Button variant="destructive" onClick={() => { closeDialog(true); finishBusinessDecision(true); }}>放弃并继续</Button>
+            <Button autoFocus variant="outline" onClick={() => finishBusinessDecision(false)}>留在此处</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

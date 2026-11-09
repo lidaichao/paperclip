@@ -37,6 +37,9 @@ vi.mock("@/components/WorkPackageConsole", () => ({
     </div>
   ),
 }));
+vi.mock("@/components/WorkRecordContainerTree", () => ({
+  WorkRecordContainerTree: () => <aside data-testid="version-iteration-tree" />,
+}));
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -190,6 +193,37 @@ describe("ProjectWorkRecords", () => {
       expectedRevision: execution.revision,
       qaCoverageRecordIds: [qa.id],
     });
+  });
+
+  it("uses the three-way decision and keeps a failed-save draft in place", async () => {
+    await render("plan");
+    await act(async () => button("编辑测试").click());
+    const title = document.body.querySelector('input[maxlength="500"]') as HTMLInputElement;
+    await act(async () => setNativeValue(title, "未保存标题"));
+
+    await act(async () => button("取消").click());
+    await flush();
+    expect(document.body.textContent).toContain("保存并继续");
+    expect(document.body.textContent).toContain("放弃并继续");
+    expect(button("留在此处")).toBe(document.activeElement);
+
+    await act(async () => button("留在此处").click());
+    await flush();
+    expect((document.body.querySelector('input[maxlength="500"]') as HTMLInputElement).value).toBe("未保存标题");
+
+    updateMock.mockRejectedValueOnce(new Error("数据库暂不可用"));
+    await act(async () => button("取消").click());
+    await flush();
+    await act(async () => button("保存并继续").click());
+    await flush();
+    expect((document.body.querySelector('input[maxlength="500"]') as HTMLInputElement).value).toBe("未保存标题");
+    expect(document.body.textContent).toContain("数据库暂不可用");
+
+    await act(async () => button("取消").click());
+    await flush();
+    await act(async () => button("放弃并继续").click());
+    await flush();
+    expect(document.body.querySelector('input[maxlength="500"]')).toBeNull();
   });
 
   it("switches fixed form and status copy to English while preserving record titles", async () => {

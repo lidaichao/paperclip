@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deriveWorkRecordDisplayState, type WakeupRequestStatus, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordKind, type WorkRecordQualityView } from "@paperclipai/shared";
 import { CheckCircle2, PackageCheck, RefreshCw, WifiOff, X } from "lucide-react";
 import { heartbeatsApi } from "@/api/heartbeats";
+import { ApiError } from "@/api/client";
 import { workRecordsApi } from "@/api/work-records";
 import { Link } from "@/lib/router";
 import { queryKeys } from "@/lib/queryKeys";
@@ -303,6 +304,13 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   });
   const reconcile = useMutation({ mutationFn: () => workRecordsApi.reconcilePackage(companyId, projectId, batchId), onSuccess: async () => { await batch.refetch(); await queryClient.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }); } });
   const reconcileRecord = useMutation({ mutationFn: (recordId: string) => workRecordsApi.reconcile(companyId, projectId, recordId), onSuccess: async () => queryClient.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }) });
+  const dispatchRecord = useMutation({
+    mutationFn: (record: WorkRecord) => workRecordsApi.dispatch(companyId, projectId, record.id, {
+      expectedRevision: record.revision,
+      clientRequestId: crypto.randomUUID(),
+    }),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }),
+  });
 
   const activeCycle = quality.data?.cycle ?? null;
   const poItem = quality.data?.items.find((item) => item.role === "po") ?? null;
@@ -330,7 +338,10 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
       return workRecordsApi.linkDefect(companyId, projectId, { workflowVersion: 2, clientRequestId: sessionRequest(key), requestPayloadDigest: key, cycleId: activeCycle.id, expectedCycleRevision: activeCycle.revision, defectRecordId, packageRecordId: selected.id, repairRecordId: repairRecordId || null, qaRecordId, reason: reason.trim(), evidenceRefs: evidence(evidenceRefs) });
     }, onSuccess: commandDone,
   });
-  const commandError = previewScope.error ?? prepare.error ?? escalateAssignmentGaps.error ?? reconcile.error ?? reconcileRecord.error ?? poVerdict.error ?? qaVerdict.error ?? linkDefect.error;
+  const commandError = previewScope.error ?? prepare.error ?? escalateAssignmentGaps.error ?? reconcile.error ?? reconcileRecord.error ?? dispatchRecord.error ?? poVerdict.error ?? qaVerdict.error ?? linkDefect.error;
+  const dispatchMissingFields = dispatchRecord.error instanceof ApiError
+    ? ((dispatchRecord.error.body as { details?: { missingFields?: Array<{ field: string; label: string }> } } | null)?.details?.missingFields ?? [])
+    : [];
   const previewCounts = preview?.records.reduce<Record<PreviewCategory, number>>((counts, item) => {
     counts[previewCategory(records.find((record) => record.id === item.id))] += 1;
     return counts;
@@ -380,7 +391,8 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
           <CardHeader><div className="flex items-start justify-between gap-2"><div><CardTitle>{l10n("local.work_record_details")}</CardTitle><CardDescription>{l10n("local.work_record_selecting_another_row_will_not_move_")}</CardDescription></div><Button size="icon" variant="ghost" aria-label="关闭详情" onClick={closeDetails}><X className="size-4" /></Button></div></CardHeader>
           <CardContent className="space-y-4">
             {selected ? <>
-              <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{selected.title}</h3><p className="text-xs text-muted-foreground">{l10n("local.work_record_revision")} {selected.revision} {l10n("local.work_record_dispatch_cycle")} {selected.dispatchRound}</p></div>{onEditRecord ? <Button size="sm" variant="outline" onClick={() => onEditRecord(selected)}>{l10n("local.work_record_edit")}</Button> : null}</div>
+              <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{selected.title}</h3><p className="text-xs text-muted-foreground">{l10n("local.work_record_revision")} {selected.revision} {l10n("local.work_record_dispatch_cycle")} {selected.dispatchRound}</p></div><div className="flex flex-wrap justify-end gap-2">{selected.kind === "defect" ? <Button size="sm" disabled={!online || prepareCapability?.allowed !== true || dispatchRecord.isPending} onClick={() => dispatchRecord.mutate(selected)}>派发缺陷</Button> : null}{onEditRecord ? <Button size="sm" variant="outline" onClick={() => onEditRecord(selected)}>{l10n("local.work_record_edit")}</Button> : null}</div></div>
+              {dispatchMissingFields.length > 0 ? <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"><p>派发前需补齐：</p><ul className="mt-1 list-disc pl-5">{dispatchMissingFields.map((item) => <li key={item.field}>{item.label}</li>)}</ul></div> : null}
               {onEditCoverage && selected.kind === "plan" && selected.parentRecordId && selected.packageQaRole === "execution" ? <Button size="sm" variant="outline" onClick={() => onEditCoverage(selected)}>{l10n("local.work_record_edit_qa_coverage")}</Button> : null}
               <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Stat label={l10n("local.work_record_business_status")}>{mappedLabel(BUSINESS, selected.businessStatus)}</Stat><Stat label={l10n("local.work_record_dispatch_status")}>{mappedLabel(DISPATCH, selected.dispatchState)}</Stat><Stat label={l10n("local.work_record_quality_phase")}>{l10n("local.work_record_quality_cycle", { phase: mappedLabel(QUALITY, selected.quality.phase), count: selected.quality.cycleNumber ?? 0 })}</Stat><Stat label={l10n("local.work_record_next_owner")}>{nextOwner(selected, quality.data, agentNames)}</Stat><Stat label={l10n("local.work_record_live_run")}>{!liveAvailable ? l10n("local.work_record_cannot_confirm_yet") : selected.execution.issueId && liveByIssue.get(selected.execution.issueId) ? l10n("local.work_record_live_state", { state: liveByIssue.get(selected.execution.issueId) === "running" ? l10n("local.work_record_running") : l10n("local.work_record_queue_in_progress") }) : selected.execution.lastRunStatus ? mappedLabel(RUN, selected.execution.lastRunStatus) ?? l10n("local.work_record_ended_state", { state: selected.execution.lastRunStatus }) : l10n("local.work_record_no_live_run")}</Stat><Stat label={l10n("local.work_record_execution_projection")}>{mappedLabel(PROJECTION, selected.execution.projectionState) ?? selected.execution.projectionState}{selected.execution.projectionError ? ` · ${selected.execution.projectionError}` : ""}</Stat><Stat label={l10n("local.work_record_defect_evidence")}>{l10n("local.work_record_defect_evidence_count", { count: selected.quality.defectCount })}</Stat></dl>
               <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Stat label="说明">{selected.description || "未填写"}</Stat><Stat label="严重程度">{selected.defectSeverity ?? "未指定"}</Stat><Stat label={selected.kind === "defect" ? "修复人" : "执行人"}>{selected.assigneeAgentId ? agentNames[selected.assigneeAgentId] ?? selected.assigneeAgentId : "待分配"}</Stat><Stat label="QA">{selected.qaAssigneeAgentId ? agentNames[selected.qaAssigneeAgentId] ?? selected.qaAssigneeAgentId : "待分配"}</Stat><Stat label="迭代">{selected.iterationId ?? "未归属"}</Stat><Stat label="计划日期">{selected.plannedStartDate ?? "未定"} 至 {selected.plannedCompletionDate ?? "未定"}</Stat></dl>

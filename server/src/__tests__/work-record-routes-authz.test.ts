@@ -267,14 +267,28 @@ describe("work-record route authorization", () => {
   it("allows container history reads but rejects viewer and cross-company writes", async () => {
     const app = createApp(viewer);
     const projectId = "11111111-1111-4111-8111-111111111111";
+    const versionId = "22222222-2222-4222-8222-222222222222";
+    const iterationId = "33333333-3333-4333-8333-333333333333";
     await request(app).get(`/api/companies/company-1/projects/${projectId}/versions`).expect(200, []);
     await request(app).get(`/api/companies/company-1/projects/${projectId}/iterations`).expect(200, []);
     await request(app).post(`/api/companies/company-1/projects/${projectId}/versions`).send({ name: "1.0" })
+      .expect(403, { error: "只读成员只能查看，不能修改" });
+    await request(app).patch(`/api/companies/company-1/projects/${projectId}/versions/${versionId}`).send({ expectedRevision: 1, name: "2.0" })
+      .expect(403, { error: "只读成员只能查看，不能修改" });
+    await request(app).delete(`/api/companies/company-1/projects/${projectId}/versions/${versionId}`).send({ expectedRevision: 1 })
+      .expect(403, { error: "只读成员只能查看，不能修改" });
+    await request(app).patch(`/api/companies/company-1/projects/${projectId}/iterations/${iterationId}`).send({ expectedRevision: 1, name: "Iteration 2" })
+      .expect(403, { error: "只读成员只能查看，不能修改" });
+    await request(app).delete(`/api/companies/company-1/projects/${projectId}/iterations/${iterationId}`).send({ expectedRevision: 1 })
       .expect(403, { error: "只读成员只能查看，不能修改" });
     await request(app).post(`/api/companies/company-2/projects/${projectId}/iterations`).send({ name: "Iteration 1" })
       .expect(403, { error: "用户无权访问此公司" });
     expect(service.createVersion).not.toHaveBeenCalled();
     expect(service.createIteration).not.toHaveBeenCalled();
+    expect(service.updateVersion).not.toHaveBeenCalled();
+    expect(service.updateIteration).not.toHaveBeenCalled();
+    expect(service.deleteVersion).not.toHaveBeenCalled();
+    expect(service.deleteIteration).not.toHaveBeenCalled();
   });
 
   it("validates G1 planned dates and defect-only fields before creating a record", async () => {
