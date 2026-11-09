@@ -1,20 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { defaultWorkRecordViewConfig, type MutateWorkRecordDependency, type WorkRecord, type WorkRecordViewConfig, type WorkRecordViewField } from "@paperclipai/shared";
+import { defaultWorkRecordViewConfig, type MutateWorkRecordDependency, type WorkRecord, type WorkRecordBusinessStatus, type WorkRecordViewConfig, type WorkRecordViewField } from "@paperclipai/shared";
 import { Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
 import { Button } from "@/components/ui/button";
+import { l10n } from "@/i18n";
 
 const DAY = 86_400_000;
 export const ganttToDay = (value: string) => Math.floor(new Date(`${value}T00:00:00Z`).getTime() / DAY);
 export const ganttFromDay = (value: number) => new Date(value * DAY).toISOString().slice(0, 10);
 export const shiftGanttDate = (value: string, days: number) => ganttFromDay(ganttToDay(value) + days);
 const GANTT_LABELS: Partial<Record<WorkRecordViewField, string>> = { title: "标题", assignee: "负责人", businessStatus: "状态", plannedStartDate: "开始", plannedCompletionDate: "完成", dependencies: "前置" };
+const BUSINESS_STATUS_LABEL_KEYS: Record<WorkRecordBusinessStatus, string> = {
+  backlog: "local.backlog_bf986e9a",
+  todo: "local.todo_4ff402d7",
+  in_progress: "local.in_progress_c1f88e9d",
+  in_review: "local.in_review_c3905914",
+  blocked: "local.blocked_18f2a094",
+  done: "local.done_11a6767d",
+  cancelled: "local.cancelled_d353a99e",
+};
 function ganttValue(record: WorkRecord, field: WorkRecordViewField, agentNames: Record<string, string>) {
   if (field === "title") return record.title;
   if (field === "assignee") return record.assigneeAgentId ? agentNames[record.assigneeAgentId] ?? "未知" : "未分配";
-  if (field === "businessStatus") return record.businessStatus;
+  if (field === "businessStatus") return l10n(BUSINESS_STATUS_LABEL_KEYS[record.businessStatus]);
   if (field === "plannedStartDate") return record.plannedStartDate ?? "—";
   if (field === "plannedCompletionDate") return record.plannedCompletionDate ?? "—";
   return field === "dependencies" ? String(record.dependencies.length) : "";
@@ -65,6 +75,7 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
   const [viewConfig, setViewConfig] = useState<WorkRecordViewConfig>(() => defaultWorkRecordViewConfig("gantt"));
   const activeView = (views.data ?? []).find((view) => view.id === viewId) ?? null;
   const columns = viewConfig.columnOrder.filter((field) => viewConfig.visibleFields.includes(field));
+  const rowHeight = viewConfig.density === "compact" ? 40 : viewConfig.density === "comfortable" ? 48 : 56;
   const labelWidth = columns.reduce((sum, field) => sum + (viewConfig.columnWidths[field] ?? (field === "title" ? 220 : 104)), 0);
   const changeView = (fn: (next: WorkRecordViewConfig) => void) => setViewConfig((current) => { const next = structuredClone(current); fn(next); return next; });
   const saveView = useMutation({ mutationFn: async () => {
@@ -200,18 +211,17 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
 
   return <section className={focus ? "fixed inset-0 z-50 overflow-auto bg-background p-4" : "rounded-lg border bg-card"} data-testid="work-record-gantt">
     <div className="flex min-h-11 items-center justify-between gap-2 border-b px-3">
-      <div><h3 className="font-semibold">计划甘特</h3><p className="text-xs text-muted-foreground">拖空轨建日期；拖条体移动，拖两端缩放。</p></div>
+      <div className="flex min-w-0 items-center gap-3"><div><h3 className="font-semibold">计划甘特 · {ganttFromDay(minDay).slice(0, 7)}{ganttFromDay(minDay).slice(0, 7) === ganttFromDay(minDay + days - 1).slice(0, 7) ? "" : `—${ganttFromDay(minDay + days - 1).slice(0, 7)}`}</h3><p className="text-xs text-muted-foreground">拖空轨建日期；拖条体移动，拖两端缩放。</p></div><Button size="sm" variant="outline" className="shrink-0" aria-pressed={focus} onClick={toggleFocus}>{focus ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}{focus ? "退出专注" : "专注"}</Button></div>
       <div className="flex gap-1">
         <details className="relative"><summary className="flex h-8 cursor-pointer list-none items-center rounded-md border px-2 text-sm">字段</summary><div className="absolute right-0 z-30 mt-1 w-80 space-y-2 rounded-md border bg-popover p-3 shadow-lg"><select aria-label="甘特字段视图" className="h-8 w-full rounded border bg-background px-2" value={viewId} onChange={(event) => { const next = (views.data ?? []).find((item) => item.id === event.target.value); if (next) { setViewId(next.id); setViewConfig(structuredClone(next.config)); } }}>{(views.data ?? [{ id: "builtin:gantt", name: "甘特默认" }]).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><select aria-label="甘特行密度" className="h-8 w-full rounded border bg-background px-2" value={viewConfig.density} onChange={(event) => changeView((next) => { next.density = event.target.value as WorkRecordViewConfig["density"]; })}><option value="compact">紧凑</option><option value="comfortable">舒适</option><option value="spacious">宽松</option></select>{viewConfig.columnOrder.map((field) => <div key={field} className="flex items-center gap-1 text-sm"><label className="flex flex-1 items-center gap-2"><input type="checkbox" checked={viewConfig.visibleFields.includes(field)} disabled={field === "title"} onChange={(event) => changeView((next) => { next.visibleFields = event.target.checked ? [...next.visibleFields, field] : next.visibleFields.filter((item) => item !== field); })} />{GANTT_LABELS[field]}</label><Button size="icon-sm" variant="ghost" aria-label={`${GANTT_LABELS[field]}左移`} onClick={() => changeView((next) => { const i = next.columnOrder.indexOf(field); if (i > 0) [next.columnOrder[i - 1], next.columnOrder[i]] = [next.columnOrder[i], next.columnOrder[i - 1]]; })}>←</Button><Button size="icon-sm" variant="ghost" aria-label={`${GANTT_LABELS[field]}右移`} onClick={() => changeView((next) => { const i = next.columnOrder.indexOf(field); if (i < next.columnOrder.length - 1) [next.columnOrder[i + 1], next.columnOrder[i]] = [next.columnOrder[i], next.columnOrder[i + 1]]; })}>→</Button><input aria-label={`${GANTT_LABELS[field]}列宽`} type="number" min="64" max="1200" className="h-8 w-16 rounded border bg-background px-1" value={viewConfig.columnWidths[field] ?? (field === "title" ? 220 : 104)} onChange={(event) => changeView((next) => { next.columnWidths[field] = Number(event.target.value); })} /></div>)}<Button size="sm" className="w-full" disabled={saveView.isPending} onClick={() => saveView.mutate()}>{activeView?.isBuiltin === false ? "保存字段配置" : "另存字段配置"}</Button>{saveView.error ? <p role="alert" className="text-xs text-destructive">字段配置保存失败：{saveView.error.message}</p> : null}</div></details>
         <Button size="sm" variant="outline" disabled={!undo || mutation.isPending || !writable} onClick={() => { if (!undo) return; if (undo.kind === "dates") void mutation.mutateAsync({ record: records.find((item) => item.id === undo.record.id) ?? undo.record, start: undo.start, end: undo.end, predecessors: undo.predecessors }).then(() => setUndo(null)); else void workRecordsApi.mutateDependency(companyId, projectId, undo.input).then(async () => { setUndo(null); setError(null); await client.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }); }).catch((cause) => setError(cause instanceof Error ? cause.message : "撤销失败；请打开详情对比")); }}><RotateCcw className="size-4" />撤销</Button>
-        <Button size="sm" variant="outline" aria-pressed={focus} onClick={toggleFocus}>{focus ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}{focus ? "退出专注" : "专注"}</Button>
       </div>
     </div>
     {error ? <div role="alert" className="flex items-center gap-2 border-b bg-destructive/10 px-3 py-2 text-sm text-destructive"><span>{error}；候选修改已保留。</span><Button size="sm" variant="outline" disabled={(!candidate && !dependencyCandidate) || mutation.isPending} onClick={() => { if (candidate) void save(candidate); else if (dependencyCandidate) void workRecordsApi.mutateDependency(companyId, projectId, dependencyCandidate).then(async () => { setDependencyCandidate(null); setError(null); await client.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }); }); }}>重试</Button></div> : null}
     <div ref={scrollRef} className="overflow-auto">
       <div className="relative grid" style={{ gridTemplateColumns: `${labelWidth}px minmax(${days * 32}px, 1fr)`, minWidth: labelWidth + days * 32 }} onPointerMove={(event) => { if (!dragRef.current) return; const next = { ...dragRef.current, currentX: event.clientX }; suppressDragClickRef.current ||= Math.abs(next.currentX - next.originX) > 2; dragRef.current = next; setDrag(next); }} onPointerUp={finishDrag} onPointerCancel={() => { dragRef.current = null; dependencyDragRef.current = null; suppressDragClickRef.current = false; setDrag(null); setDependencyDrag(null); }}>
-        <div className="flex border-b border-r bg-muted/30 text-xs font-medium">{columns.map((field) => <span key={field} className="truncate border-r px-2 py-2" style={{ width: viewConfig.columnWidths[field] ?? (field === "title" ? 220 : 104) }}>{GANTT_LABELS[field]}</span>)}</div>
-        <div className="grid border-b bg-muted/30" style={{ gridTemplateColumns: `repeat(${days}, minmax(32px, 1fr))` }}>{Array.from({ length: days }, (_, i) => <span key={i} className="border-r px-1 py-2 text-center text-xs text-muted-foreground">{ganttFromDay(minDay + i).slice(5)}</span>)}</div>
+        <div className="flex h-10 items-center border-b border-r bg-muted/30 text-xs font-medium">{columns.map((field) => <span key={field} className="truncate border-r px-2 py-2" style={{ width: viewConfig.columnWidths[field] ?? (field === "title" ? 220 : 104) }}>{GANTT_LABELS[field]}</span>)}</div>
+        <div className="grid h-10 border-b bg-muted/30" style={{ gridTemplateColumns: `repeat(${days}, minmax(32px, 1fr))` }}>{Array.from({ length: days }, (_, i) => { const date = ganttFromDay(minDay + i); return <span key={i} title={date} aria-label={date} className="flex items-center justify-center whitespace-nowrap border-r text-xs text-muted-foreground">{date.slice(8)}</span>; })}</div>
         {records.map((record) => {
           const shownStart = drag?.record.id === record.id && preview ? preview.start : record.plannedStartDate;
           const shownEnd = drag?.record.id === record.id && preview ? preview.end : record.plannedCompletionDate;
@@ -219,9 +229,9 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
           const end = shownEnd ? ganttToDay(shownEnd) - minDay : start;
           return <div key={record.id} className="contents">
             <button className="flex truncate border-b border-r text-left text-sm hover:bg-muted/50" onClick={(event) => { setSelectedId(record.id); onOpen(record, event.currentTarget); }}>{columns.map((field) => <span key={field} className="truncate border-r px-2 py-2" style={{ width: viewConfig.columnWidths[field] ?? (field === "title" ? 220 : 104) }} title={ganttValue(record, field, agentNames)}>{ganttValue(record, field, agentNames)}</span>)}</button>
-            <div data-gantt-timeline={record.id} className="relative grid min-h-10 border-b" style={{ gridTemplateColumns: `repeat(${days}, minmax(32px, 1fr))` }} onPointerUp={() => void finishDependencyDrag(record.id)}>
+            <div data-gantt-timeline={record.id} className="relative grid border-b" style={{ gridTemplateColumns: `repeat(${days}, minmax(32px, 1fr))`, minHeight: rowHeight }} onPointerUp={() => void finishDependencyDrag(record.id)}>
               {Array.from({ length: days }, (_, i) => <span key={i} className="border-r" />)}
-              {shownStart && shownEnd ? <div role="button" tabIndex={0} aria-disabled={!writable} aria-label={`${record.title}，${shownStart} 至 ${shownEnd}`} className="absolute top-2 z-20 flex h-6 items-center rounded bg-primary text-primary-foreground shadow-sm" style={{ left: `${start / days * 100}%`, width: `${Math.max(1, end - start + 1) / days * 100}%`, opacity: drag?.record.id === record.id ? 0.7 : 1 }} onClick={(event) => { if (suppressDragClickRef.current) { suppressDragClickRef.current = false; return; } if (!drag) { setSelectedId(record.id); onOpen(record, event.currentTarget); } }} onKeyDown={(event) => { const amount = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") { event.preventDefault(); adjust(record, "move", -amount); } if (event.key === "ArrowRight") { event.preventDefault(); adjust(record, "move", amount); } }} onPointerDown={(event) => beginDrag(event, record, "move")}>
+              {shownStart && shownEnd ? <div role="button" tabIndex={0} aria-disabled={!writable} aria-label={`${record.title}，${shownStart} 至 ${shownEnd}`} className="absolute z-20 flex h-6 items-center rounded bg-primary text-primary-foreground shadow-sm" style={{ top: (rowHeight - 24) / 2, left: `${start / days * 100}%`, width: `${Math.max(1, end - start + 1) / days * 100}%`, opacity: drag?.record.id === record.id ? 0.7 : 1 }} onClick={(event) => { if (suppressDragClickRef.current) { suppressDragClickRef.current = false; return; } if (!drag) { setSelectedId(record.id); onOpen(record, event.currentTarget); } }} onKeyDown={(event) => { const amount = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") { event.preventDefault(); adjust(record, "move", -amount); } if (event.key === "ArrowRight") { event.preventDefault(); adjust(record, "move", amount); } }} onPointerDown={(event) => beginDrag(event, record, "move")}>
                 <span role="button" tabIndex={writable ? 0 : -1} aria-disabled={!writable} aria-label="调整开始日期" className="h-full w-2 cursor-ew-resize border-r border-primary-foreground/40" onKeyDown={(event) => { const n = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") adjust(record, "start", -n); if (event.key === "ArrowRight") adjust(record, "start", n); }} onPointerDown={(event) => { event.stopPropagation(); beginDrag(event, record, "start"); }} />
                 <span className="min-w-0 flex-1 truncate px-2 text-xs">{record.title}</span>
                 <span role="button" tabIndex={writable ? 0 : -1} aria-disabled={!writable} aria-label="调整完成日期" className="h-full w-2 cursor-ew-resize border-l border-primary-foreground/40" onKeyDown={(event) => { const n = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") adjust(record, "end", -n); if (event.key === "ArrowRight") adjust(record, "end", n); }} onPointerDown={(event) => { event.stopPropagation(); beginDrag(event, record, "end"); }} />
@@ -230,7 +240,7 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
             </div>
           </div>;
         })}
-        <svg aria-label="依赖连线层" className="pointer-events-none absolute right-0 top-9 z-10 overflow-visible" style={{ left: labelWidth, height: records.length * 40, width: `calc(100% - ${labelWidth}px)` }} viewBox={`0 0 1000 ${Math.max(1, records.length * 40)}`} preserveAspectRatio="none">
+        <svg aria-label="依赖连线层" className="pointer-events-none absolute right-0 top-10 z-30 overflow-visible" style={{ left: labelWidth, height: records.length * rowHeight, width: `calc(100% - ${labelWidth}px)` }} viewBox={`0 0 1000 ${Math.max(1, records.length * rowHeight)}`} preserveAspectRatio="none">
           <defs><marker id="gantt-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" className="fill-foreground" /></marker></defs>
           {records.flatMap((successor, successorIndex) => successor.dependencies.map((edge) => {
             const predecessorIndex = records.findIndex((item) => item.id === edge.predecessorRecordId);
@@ -238,10 +248,17 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
             if (!predecessor) return null;
             const x1 = predecessor.plannedCompletionDate ? Math.max(0, Math.min(1000, ((ganttToDay(predecessor.plannedCompletionDate) - minDay + 1) / days) * 1000)) : 940;
             const x2 = successor.plannedStartDate ? Math.max(0, Math.min(1000, ((ganttToDay(successor.plannedStartDate) - minDay) / days) * 1000)) : 60;
-            const y1 = predecessorIndex * 40 + 20; const y2 = successorIndex * 40 + 20; const bend = x1 + Math.max(20, (x2 - x1) / 2);
+            const y1 = predecessorIndex * rowHeight + rowHeight / 2;
+            const y2 = successorIndex * rowHeight + rowHeight / 2;
+            const bend = x1 + Math.max(20, (x2 - x1) / 2);
+            // Approach the target above its bar, then enter at the left edge.
+            // Backward dates can otherwise put the selectable stroke across the
+            // middle of the target bar and steal its drag gesture.
+            const clearanceY = successorIndex * rowHeight + 4;
+            const approachX = x2 - 12;
             const active = selectedEdge?.predecessorId === predecessor.id && selectedEdge.successorId === successor.id;
             return <g key={`${predecessor.id}:${successor.id}`}>
-              <path d={`M ${x1} ${y1} H ${bend} V ${y2} H ${x2}`} fill="none" markerEnd="url(#gantt-arrow)" className="pointer-events-auto cursor-pointer stroke-foreground" style={{ strokeWidth: active ? 3 : 2 }} vectorEffect="non-scaling-stroke" tabIndex={0} role="button" aria-label={`${predecessor.title} 到 ${successor.title} 的依赖线`} onClick={() => { setSelectedEdge({ predecessorId: predecessor.id, successorId: successor.id }); setSelectedId(successor.id); }} onDoubleClick={(event) => onOpen(successor, event.currentTarget)} onKeyDown={(event) => { if (event.key === "Enter" && event.shiftKey) onOpen(successor, event.currentTarget); else if (event.key === "Enter") { setSelectedEdge({ predecessorId: predecessor.id, successorId: successor.id }); setSelectedId(successor.id); } if (event.key === "Delete") void removeDependency(predecessor, successor); }} />
+              <path d={`M ${x1} ${y1} H ${bend} V ${clearanceY} H ${approachX} V ${y2} H ${x2}`} fill="none" markerEnd="url(#gantt-arrow)" className="pointer-events-auto cursor-pointer stroke-foreground" style={{ strokeWidth: active ? 3 : 2 }} vectorEffect="non-scaling-stroke" tabIndex={0} role="button" aria-label={`${predecessor.title} 到 ${successor.title} 的依赖线`} onClick={() => { setSelectedEdge({ predecessorId: predecessor.id, successorId: successor.id }); setSelectedId(successor.id); }} onDoubleClick={(event) => onOpen(successor, event.currentTarget)} onKeyDown={(event) => { if (event.key === "Enter" && event.shiftKey) onOpen(successor, event.currentTarget); else if (event.key === "Enter") { setSelectedEdge({ predecessorId: predecessor.id, successorId: successor.id }); setSelectedId(successor.id); } if (event.key === "Delete") void removeDependency(predecessor, successor); }} />
               {active ? <><circle cx={x1} cy={y1} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖源端改连" onPointerDown={() => beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "source" })} onKeyDown={(event) => { if (event.key === "Enter") beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "source" }); }} /><circle cx={x2} cy={y2} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖目标端改连" onPointerDown={() => beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "target" })} onKeyDown={(event) => { if (event.key === "Enter") beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "target" }); }} /></> : null}
             </g>;
           }))}

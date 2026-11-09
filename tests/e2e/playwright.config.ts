@@ -8,7 +8,10 @@ import { defineConfig } from "@playwright/test";
 // even when the dev server is running on :3100 in authenticated mode.
 const PORT = Number(process.env.PAPERCLIP_E2E_PORT ?? 3199);
 const BASE_URL = `http://127.0.0.1:${PORT}`;
-const PAPERCLIP_HOME = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-e2e-home-"));
+// Allow a caller to reuse an already initialized, isolated local test home.
+// This avoids repeating hundreds of embedded PostgreSQL migrations while
+// debugging a browser-only failure; the default still creates a fresh home.
+const PAPERCLIP_HOME = process.env.PAPERCLIP_E2E_HOME ?? fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-e2e-home-"));
 const PAPERCLIP_INSTANCE_ID = "playwright-e2e";
 const PAPERCLIP_CONFIG = path.join(PAPERCLIP_HOME, "instances", PAPERCLIP_INSTANCE_ID, "config.json");
 const PAPERCLIP_AGENT_JWT_SECRET = process.env.PAPERCLIP_AGENT_JWT_SECRET ?? "playwright-e2e-agent-jwt-secret";

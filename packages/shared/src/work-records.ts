@@ -170,7 +170,7 @@ export function defaultWorkRecordViewConfig(viewKind: WorkRecordViewKind): WorkR
   return {
     schemaVersion: 2,
     containerId: null,
-    visibleFields: [...fields],
+    visibleFields: viewKind === "gantt" ? ["title", "assignee", "businessStatus"] : [...fields],
     columnOrder: [...fields],
     columnWidths: {},
     density: viewKind === "gantt" ? "compact" : "comfortable",

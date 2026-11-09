@@ -46,6 +46,7 @@ describe("Gantt personal view configuration", () => {
     const config = defaultWorkRecordViewConfig("gantt");
     expect(validateWorkRecordViewConfig("gantt", config)).toEqual(config);
     expect(config.frozenFields).toEqual(["title"]);
+    expect(config.visibleFields).toEqual(["title", "assignee", "businessStatus"]);
   });
 
   it("rejects a Gantt view that hides the required title column", () => {

@@ -255,19 +255,18 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={discardConfirmOpen} onOpenChange={(open) => {
-        setDiscardConfirmOpen(open);
-        if (!open) window.setTimeout(() => editReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : editReturnFocusRef.current, 0);
-      }}>
+      <Dialog open={discardConfirmOpen} onOpenChange={setDiscardConfirmOpen}>
         <DialogContent
           className="sm:max-w-md"
           showCloseButton={false}
           data-testid="container-discard-confirmation"
           onOpenAutoFocus={(event) => { event.preventDefault(); discardCancelRef.current?.focus(); }}
           onCloseAutoFocus={(event) => {
-            if (!editTarget) return;
             event.preventDefault();
-            window.setTimeout(() => document.querySelector<HTMLElement>('[data-testid="container-edit-form"] input')?.focus(), 0);
+            window.setTimeout(() => {
+              if (editTarget) document.querySelector<HTMLElement>('[data-testid="container-edit-form"] input')?.focus();
+              else editReturnFocusRef.current?.focus();
+            }, 0);
           }}
         >
           <DialogHeader>

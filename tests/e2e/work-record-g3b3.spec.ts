@@ -182,9 +182,9 @@ test("G3B3 validates real gantt drags, dependency rewires, undo and dirty-contai
   await gantt.getByRole("button", { name: "专注" }).click();
   await expect(gantt.getByRole("button", { name: "退出专注" })).toHaveAttribute("aria-pressed", "true");
   await gantt.getByRole("button", { name: /后置 B，/ }).click();
-  await expect(page.getByTestId("work-record-detail-drawer")).toContainText("后置 B");
+  await expect(page.getByTestId("work-record-detail-drawer").getByRole("textbox", { name: "标题" })).toHaveValue("后置 B");
   await gantt.getByRole("button", { name: "退出专注" }).click();
-  await expect(page.getByTestId("work-record-detail-drawer")).toContainText("后置 B");
+  await expect(page.getByTestId("work-record-detail-drawer").getByRole("textbox", { name: "标题" })).toHaveValue("后置 B");
 
   await page.getByRole("tab", { name: "计划", exact: true }).click();
   const editVersion = page.getByRole("button", { name: "编辑版本 V1" });
@@ -199,7 +199,7 @@ test("G3B3 validates real gantt drags, dependency rewires, undo and dirty-contai
   await expect(confirm).toHaveCount(0);
   await expect(edit.getByLabel("名称")).toHaveValue("V1 脏草稿");
   await expect(edit.getByLabel("名称")).toBeFocused();
-  await edit.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "关闭" }).click();
   await confirm.getByRole("button", { name: "放弃修改" }).click();
   await expect(editVersion).toBeFocused();
 
