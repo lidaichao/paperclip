@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createWorkRecordSchema, updateWorkRecordSchema } from "./work-records.js";
+import { createWorkRecordSchema, defaultWorkRecordViewConfig, updateWorkRecordSchema, validateWorkRecordViewConfig } from "./work-records.js";
 
 describe("G1 work-record planning and defect fields", () => {
   const projectId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -38,5 +38,19 @@ describe("G1 work-record planning and defect fields", () => {
       plannedCompletionDate: "2026-11-20",
       defectSeverity: null,
     })).toMatchObject({ expectedRevision: 2, plannedStartDate: null, defectSeverity: null });
+  });
+});
+
+describe("Gantt personal view configuration", () => {
+  it("accepts its own title-frozen default without an id column", () => {
+    const config = defaultWorkRecordViewConfig("gantt");
+    expect(validateWorkRecordViewConfig("gantt", config)).toEqual(config);
+    expect(config.frozenFields).toEqual(["title"]);
+  });
+
+  it("rejects a Gantt view that hides the required title column", () => {
+    const config = defaultWorkRecordViewConfig("gantt");
+    config.visibleFields = config.visibleFields.filter((field) => field !== "title");
+    expect(() => validateWorkRecordViewConfig("gantt", config)).toThrow(/title visible/);
   });
 });

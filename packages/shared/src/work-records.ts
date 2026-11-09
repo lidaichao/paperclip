@@ -201,8 +201,8 @@ export function validateWorkRecordViewConfig(viewKind: WorkRecordViewKind, confi
   if (!config.columnOrder.includes("title") || (viewKind !== "gantt" && !config.columnOrder.includes("id"))) {
     throw new Error(viewKind === "gantt" ? "columnOrder must contain title" : "columnOrder must contain id and title");
   }
-  if (!config.frozenFields.includes("id") || !config.frozenFields.includes("title")) {
-    throw new Error("Desktop views must keep id and title frozen");
+  if (!config.frozenFields.includes("title") || (viewKind !== "gantt" && !config.frozenFields.includes("id"))) {
+    throw new Error(viewKind === "gantt" ? "Gantt views must keep title frozen" : "Desktop views must keep id and title frozen");
   }
   if (Object.keys(config.columnWidths).some((field) => !allowed.has(field as WorkRecordViewField))) {
     throw new Error(`columnWidths must contain only fields allowed for the ${viewKind} view`);
