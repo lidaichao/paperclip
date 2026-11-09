@@ -296,7 +296,6 @@ describe("WorkPackageConsole", () => {
     capabilitiesMock.mockResolvedValueOnce(Object.fromEntries(Object.entries(writableCapabilities).map(([key, value]) => [key, { ...value, allowed: false, reason: `需要 ${value.requiredRole}；当前 Viewer 仅可读取事实。` }])));
     await render();
     expect(container.textContent).toContain("发布工作包");
-    expect(container.textContent).toContain("当前为只读权限");
     expect(container.textContent).toContain("当前 Viewer 仅可读取事实");
     expect([...container.querySelectorAll("button")].find((node) => node.textContent?.includes("PO 验收通过"))?.disabled).toBe(true);
   });

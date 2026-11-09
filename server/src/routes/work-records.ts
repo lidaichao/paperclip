@@ -39,6 +39,7 @@ import {
 import { assertAuthenticated, assertCompanyAccess, getActorInfo, hasCompanyAccess } from "./authz.js";
 import { workRecordMyTodoService } from "../services/work-record-my-todos.js";
 import { myTodoPreferenceService } from "../services/my-todo-preferences.js";
+import { resolveWorkRecordWorkflowV2Rollout } from "../services/work-record-workflow-v2-rollout.js";
 
 export interface WorkRecordRouteOptions {
   heartbeat?: Pick<ReturnType<typeof heartbeatService>, "wakeup" | "admitWorkRecordDescriptionRevision">;
@@ -87,8 +88,8 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     return false;
   }
 
-  function actionCapability(allowed: boolean, requiredRole: string) {
-    return { allowed, requiredRole, reason: allowed ? null : `需要 ${requiredRole}；当前 Viewer 仅可读取事实。` };
+  function actionCapability(allowed: boolean, requiredRole: string, denialReason?: string) {
+    return { allowed, requiredRole, reason: allowed ? null : denialReason ?? `需要 ${requiredRole}；当前 Viewer 仅可读取事实。` };
   }
 
   async function logPackageRunEvent(req: Parameters<typeof getActorInfo>[0], action: string, payload: Record<string, unknown>) {
@@ -250,17 +251,23 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
 
   router.get("/companies/:companyId/projects/:projectId/work-record-capabilities", async (req, res) => {
     const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
     assertCompanyAccess(req, companyId);
     const writable = !isReadOnlyViewer(req, companyId);
+    const rollout = resolveWorkRecordWorkflowV2Rollout({ writesEnabled: options.workflowV2WritesEnabled }).decision(companyId, projectId);
+    const workflowWritable = writable && rollout.scopeEnabled;
+    const workflowDenial = writable && !rollout.scopeEnabled
+      ? "当前项目尚未开放工作包派发与验收；记录和范围预览仍可使用。"
+      : undefined;
     res.json({
       manageContainers: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
       editRecords: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
-      preparePackage: actionCapability(writable, "公司 Operator、Admin、Owner，或具 tasks:assign 权限的 Agent"),
-      escalateAssignmentGaps: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
-      recordPoVerdict: actionCapability(writable, "PO，或公司 Operator、Admin、Owner"),
-      recordQaVerdict: actionCapability(writable, "QA，或公司 Operator、Admin、Owner"),
-      linkDefect: actionCapability(writable, "PO/QA，或公司 Operator、Admin、Owner"),
-      reconcile: actionCapability(writable, "公司 Operator、Admin 或 Owner"),
+      preparePackage: actionCapability(workflowWritable, "公司 Operator、Admin、Owner，或具 tasks:assign 权限的 Agent", workflowDenial),
+      escalateAssignmentGaps: actionCapability(workflowWritable, "公司 Operator、Admin 或 Owner", workflowDenial),
+      recordPoVerdict: actionCapability(workflowWritable, "PO，或公司 Operator、Admin、Owner", workflowDenial),
+      recordQaVerdict: actionCapability(workflowWritable, "QA，或公司 Operator、Admin、Owner", workflowDenial),
+      linkDefect: actionCapability(workflowWritable, "PO/QA，或公司 Operator、Admin、Owner", workflowDenial),
+      reconcile: actionCapability(workflowWritable, "公司 Operator、Admin 或 Owner", workflowDenial),
     });
   });
 

@@ -84,14 +84,14 @@ vi.mock("../services/index.js", () => ({
 vi.mock("../services/work-record-my-todos.js", () => ({ workRecordMyTodoService: () => myTodoService }));
 vi.mock("../services/my-todo-preferences.js", () => ({ myTodoPreferenceService: () => myTodoPreferences }));
 
-function createApp(actor: Express.Request["actor"]) {
+function createApp(actor: Express.Request["actor"], workflowV2WritesEnabled?: boolean) {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
     req.actor = actor;
     next();
   });
-  app.use("/api", workRecordRoutes({} as never));
+  app.use("/api", workRecordRoutes({} as never, { workflowV2WritesEnabled }));
   app.use(errorHandler);
   return app;
 }
@@ -429,6 +429,25 @@ describe("work-record route authorization", () => {
       .send({ ...previewBody, clientRequestId: "viewer-gap", requestPayloadDigest: "viewer-gap", expectedScopeDigest: "viewer-scope" })
       .expect(403, { error: "只读成员只能查看，不能修改" });
     expect(logActivity).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "work_record.assignment_gap_escalated" }));
+  });
+
+  it("pre-disables workflow actions outside the approved rollout while preserving record editing", async () => {
+    const admin = {
+      ...viewer,
+      userId: "admin-1",
+      memberships: [{ companyId: "company-1", membershipRole: "admin", status: "active" }],
+      isInstanceAdmin: true,
+    } as Express.Request["actor"];
+    const path = "/api/companies/company-1/projects/11111111-1111-4111-8111-111111111111/work-record-capabilities";
+    const closed = await request(createApp(admin, false)).get(path).expect(200);
+    expect(closed.body).toMatchObject({
+      editRecords: { allowed: true },
+      preparePackage: { allowed: false, reason: expect.stringContaining("尚未开放") },
+      recordPoVerdict: { allowed: false },
+      recordQaVerdict: { allowed: false },
+    });
+    const open = await request(createApp(admin, true)).get(path).expect(200);
+    expect(open.body.preparePackage).toMatchObject({ allowed: true, reason: null });
   });
 
   it("records an authorized CEO ownership-gap escalation without changing assignments", async () => {

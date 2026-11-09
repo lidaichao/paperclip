@@ -374,7 +374,7 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
       <div className="h-20 overflow-y-auto sm:h-11" aria-live="polite">
         {!online ? <div role="status" className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"><WifiOff className="size-4" />{l10n("local.work_record_offline_the_last_confirmed_state_is_")}</div> : commandError ? <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{l10n("local.work_record_operation_incomplete")}{commandError.message}{l10n("local.work_record_the_request_key_is_retained_check_he")}</p> : null}
       </div>
-      {permissionExplanation ? <p role="note" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">{l10n("local.work_record_read_only_access_facts_and_scope_pre")}{permissionExplanation}</p> : null}
+      {permissionExplanation ? <p role="note" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">{permissionExplanation}</p> : null}
       {persistedEscalation ? <p role="status" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">{assignmentEscalationMessage(persistedEscalation)}{l10n("local.work_record_the_work_package_stays_blocked_and_e")}</p> : null}
       <div className="flex min-h-11 flex-wrap items-end justify-between gap-3">
         <div><h2 id="work-package-title" className="text-base font-semibold">{visibleKind === "defect" ? l10n("local.work_record_defects_and_quality_evidence") : l10n("local.work_record_work_packages_and_quality_evidence")}</h2><p className="text-sm text-muted-foreground">{l10n("local.work_record_select_a_row_to_view_details_the_lis")}</p></div>
