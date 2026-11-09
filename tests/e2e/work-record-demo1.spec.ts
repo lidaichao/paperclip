@@ -26,6 +26,14 @@ async function answerDialogs(page: Page, answers: boolean[], action: () => Promi
   return messages;
 }
 
+async function resolveBusinessDraft(page: Page, action: "save" | "discard" | "stay") {
+  const decision = page.getByTestId("business-draft-decision");
+  await expect(decision).toBeVisible();
+  const name = action === "save" ? "保存并继续" : action === "discard" ? "放弃并继续" : "留在此处";
+  await decision.getByRole("button", { name, exact: true }).click();
+  await expect(decision).toHaveCount(0);
+}
+
 async function chooseNativeOptionWithKeyboard(locator: Locator, arrowDownCount: number) {
   await locator.focus();
   await expect(locator).toBeFocused();
@@ -323,8 +331,7 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   const pageSection = page.getByLabel("页面分区");
   const planAnchors = await readNarrowAnchors(page, "Demo 1 路由与密度");
   await expectMobileNavigationOffscreen(page);
-  await pageSection.focus();
-  await pageSection.press("ArrowDown");
+  await pageSection.selectOption("defects");
   await expect(page).toHaveURL(/\/projects\/[^/]+\/defects$/);
   await expect(rows).toHaveCount(20);
   await expect(pageSection).toHaveValue("defects");
@@ -333,8 +340,7 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   await expectMobileNavigationOffscreen(page);
   await expectRowValues(rows.filter({ hasText: "缺陷 01" }), ["缺陷 01", "Belle 质检", "2026-11-01", "2026-11-06"]);
   await page.screenshot({ path: testInfo.outputPath("g3b1-narrow-defects.png") });
-  await pageSection.focus();
-  await pageSection.press("ArrowUp");
+  await pageSection.selectOption("plans");
   await expect(page).toHaveURL(/\/projects\/[^/]+\/plans$/);
   await expect(pageSection).toHaveValue("plans");
   const returnedPlanAnchors = await readNarrowAnchors(page, "Demo 1 路由与密度");
@@ -370,9 +376,9 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   // business dirty / view clean: save business, then continue without a view decision.
   await page.getByRole("button", { name: "新建计划", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("只脏业务已保存");
-  const businessOnlyMessages = await answerDialogs(page, [true], () => page.getByRole("tab", { name: "缺陷", exact: true }).click());
+  await page.getByRole("tab", { name: "缺陷", exact: true }).click();
+  await resolveBusinessDraft(page, "save");
   await expect(page).toHaveURL(/\/defects$/);
-  expect(businessOnlyMessages[0]).toContain("业务记录草稿");
   const afterBusinessSave = await json<Array<{ title: string }>>(
     await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
     "business-only save",
@@ -403,10 +409,10 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   await denseTable.getByLabel("密度").selectOption("compact");
   await page.getByRole("button", { name: "新建计划", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("双脏先存业务");
-  const bothSaveMessages = await answerDialogs(page, [true, false, false], () => page.getByRole("tab", { name: "缺陷", exact: true }).click());
+  await page.getByRole("tab", { name: "缺陷", exact: true }).click();
+  const bothSaveMessages = await answerDialogs(page, [false, false], () => resolveBusinessDraft(page, "save"));
   await expect(page).toHaveURL(/\/plans$/);
-  expect(bothSaveMessages[0]).toContain("业务记录草稿");
-  expect(bothSaveMessages[1]).toContain("视图配置");
+  expect(bothSaveMessages[0]).toContain("视图配置");
   await expect(page.getByText("未保存配置", { exact: true })).toBeVisible();
   expect((await json<Array<{ title: string }>>(
     await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
@@ -416,10 +422,10 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   // both dirty: discarding business also leaves the view draft intact when view resolution is cancelled.
   await page.getByRole("button", { name: "新建计划", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("双脏放弃业务");
-  const bothDiscardMessages = await answerDialogs(page, [false, true, false, false], () => page.getByRole("tab", { name: "缺陷", exact: true }).click());
+  await page.getByRole("tab", { name: "缺陷", exact: true }).click();
+  const bothDiscardMessages = await answerDialogs(page, [false, false], () => resolveBusinessDraft(page, "discard"));
   await expect(page).toHaveURL(/\/plans$/);
-  expect(bothDiscardMessages[1]).toContain("放弃业务记录草稿");
-  expect(bothDiscardMessages[2]).toContain("视图配置");
+  expect(bothDiscardMessages[0]).toContain("视图配置");
   await expect(page.getByText("未保存配置", { exact: true })).toBeVisible();
   expect((await json<Array<{ title: string }>>(
     await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
@@ -433,17 +439,19 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   await page.getByRole("button", { name: "保存修改", exact: true }).evaluate((button) => (button as HTMLButtonElement).click());
   await expect(page.getByText("未保存配置", { exact: true })).toHaveCount(0);
   await expect(titleInput).toHaveValue("保存视图后业务仍在");
-  await answerDialogs(page, [true], () => page.getByRole("button", { name: "取消", exact: true }).click());
+  await page.getByRole("button", { name: "取消", exact: true }).click();
+  await resolveBusinessDraft(page, "discard");
 
   // Switching records asks about the business draft and does not overwrite it when cancelled.
   await page.getByRole("button", { name: "四态计划", exact: true }).click();
   await page.getByRole("button", { name: "编辑", exact: true }).click();
   await titleInput.fill("切记录草稿");
   const otherRecordButton = page.getByRole("button", { name: "双脏先存业务", exact: true });
-  const recordCancelMessages = await answerDialogs(page, [false, false], () => otherRecordButton.evaluate((button) => (button as HTMLButtonElement).click()));
-  expect(recordCancelMessages[0]).toContain("业务记录草稿");
+  await otherRecordButton.evaluate((button) => (button as HTMLButtonElement).click());
+  await resolveBusinessDraft(page, "stay");
   await expect(titleInput).toHaveValue("切记录草稿");
-  await answerDialogs(page, [false, true], () => otherRecordButton.evaluate((button) => (button as HTMLButtonElement).click()));
+  await otherRecordButton.evaluate((button) => (button as HTMLButtonElement).click());
+  await resolveBusinessDraft(page, "discard");
   await expect(page.getByRole("heading", { name: "双脏先存业务", level: 3 })).toBeVisible();
   await page.getByRole("button", { name: "编辑", exact: true }).click();
   await expect(titleInput).toHaveValue("双脏先存业务");
@@ -458,7 +466,8 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   });
   expect(reloadMessages).toHaveLength(1);
   await expect(titleInput).toHaveValue("刷新仍保留");
-  await answerDialogs(page, [true], () => page.getByRole("button", { name: "取消", exact: true }).click());
+  await page.getByRole("button", { name: "取消", exact: true }).click();
+  await resolveBusinessDraft(page, "discard");
 
   // Back navigation uses the same business-first guard; cancel keeps the draft, discard allows leaving.
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
@@ -467,9 +476,11 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   await expect(page).toHaveURL(/\/plans$/);
   await page.getByRole("button", { name: "新建计划", exact: true }).click();
   await titleInput.fill("后退仍保留");
-  await answerDialogs(page, [false, false], () => page.goBack());
+  void page.goBack();
+  await resolveBusinessDraft(page, "stay");
   await expect(page).toHaveURL(/\/plans$/);
   await expect(titleInput).toHaveValue("后退仍保留");
-  await answerDialogs(page, [false, true], () => page.goBack());
+  void page.goBack();
+  await resolveBusinessDraft(page, "discard");
   await expect(page).toHaveURL(/\/defects$/);
 });

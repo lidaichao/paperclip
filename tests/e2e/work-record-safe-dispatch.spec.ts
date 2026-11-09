@@ -35,7 +35,7 @@ function evidenceDirectory(info: TestInfo, scenario: string) {
 
 async function captureBrowserEvidence(
   page: Page,
-  card: Locator,
+  status: Locator,
   info: TestInfo,
   scenario: string,
   extra: Record<string, unknown> = {},
@@ -44,17 +44,14 @@ async function captureBrowserEvidence(
   await mkdir(directory, { recursive: true });
   const screenshotPath = path.join(directory, "page.png");
   const domPath = path.join(directory, "dom.json");
-  const dom = await card.evaluate((root) => {
-    const status = root.querySelector<HTMLElement>('[data-testid="work-record-status"]');
-    const live = root.querySelector<HTMLElement>('[data-testid="work-record-live-run"]');
-    const animation = root.querySelector<HTMLElement>('[data-testid="work-record-running-animation"] > span');
-    const rect = status?.getBoundingClientRect();
+  const dom = await status.evaluate((root) => {
+    const animation = root.querySelector<HTMLElement>('span[aria-hidden="true"] > span');
+    const rect = root.getBoundingClientRect();
     return {
       online: navigator.onLine,
-      statusText: status?.textContent?.trim() ?? null,
-      state: status?.dataset.state ?? null,
-      animated: status?.dataset.animated ?? null,
-      liveText: live?.textContent?.trim() ?? null,
+      statusText: root.textContent?.trim() ?? null,
+      state: root.dataset.state ?? null,
+      animated: root.dataset.animated ?? null,
       animationName: animation ? getComputedStyle(animation).animationName : null,
       activeAnimations: animation?.getAnimations().length ?? 0,
       statusRect: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null,
@@ -67,13 +64,28 @@ async function captureBrowserEvidence(
   return dom;
 }
 
-function recordCard(page: Page, title: string) {
-  return page.locator('[data-slot="card"]', {
-    has: page.locator('[data-slot="card-title"]', { hasText: title }),
-  }).last();
+function recordRow(page: Page, title: string) {
+  return page.getByTestId("work-record-table-row").filter({
+    has: page.getByRole("button", { name: title, exact: true }),
+  });
 }
 
-test("work record shows four trustworthy layers and clears queued after the real run ends", async ({ page, request }, info) => {
+async function openRecord(page: Page, title: string) {
+  const row = recordRow(page, title);
+  await expect(row).toHaveCount(1);
+  await row.getByRole("button", { name: title, exact: true }).click();
+  const detail = page.getByTestId("work-record-detail-drawer").filter({
+    has: page.getByRole("heading", { name: title, level: 3, exact: true }),
+  });
+  await expect(detail).toBeVisible();
+  return detail;
+}
+
+function statValue(detail: Locator, label: string) {
+  return detail.getByText(label, { exact: true }).locator("..").locator("dd");
+}
+
+test("work record preview stays non-executing and the non-cohort gate creates no work", async ({ page, request }, info) => {
   const company = await json<{ id: string; issuePrefix: string }>(
     await request.post("/api/companies", { data: { name: `Work record E2E ${Date.now()}` } }),
     "create company",
@@ -100,44 +112,33 @@ test("work record shows four trustworthy layers and clears queued after the real
         kind: "plan",
         title: "Browser status truth",
         assigneeAgentId: agent.id,
+        qaAssigneeAgentId: agent.id,
         predecessorRecordIds: [],
       },
     }),
     "create work record",
   );
 
-  await page.goto(`/${company.issuePrefix}/projects/${project.id}/records`);
-  await expect(page.locator('[data-slot="card-title"]', { hasText: "Browser status truth" })).toBeVisible();
-  for (const label of ["业务状态", "派发状态", "执行投影", "实时运行"]) {
-    await expect(page.getByText(label, { exact: true })).toBeVisible();
-  }
-  await page.getByRole("button", { name: "明确派发", exact: true }).click();
-  await expect(page.getByText("已派发，等待调度", { exact: true }).first()).toBeVisible();
+  await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
+  const detail = await openRecord(page, "Browser status truth");
+  for (const label of ["业务状态", "派发状态", "执行投影", "真实运行"]) await expect(detail.getByText(label, { exact: true })).toBeVisible();
 
-  await expect.poll(async () => {
-    const records = await json<Array<{ id: string; execution: { lastRunStatus: string | null } }>>(
-      await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
-      "poll work records",
-    );
-    return records.find((item) => item.id === record.id)?.execution.lastRunStatus ?? null;
-  }, { timeout: 20_000 }).toBe("succeeded");
-
-  await page.reload();
-  const card = recordCard(page, "Browser status truth");
-  await expect(card.getByText("投影异常", { exact: true }).first()).toBeVisible();
-  await expect(card.getByTestId("work-record-live-run")).toHaveText("已结束 · 成功");
-  await expect(card.getByText("已排队", { exact: true })).toHaveCount(0);
-  await expect(card.getByText("运行中", { exact: true })).toHaveCount(0);
-  await expect(card.getByTestId("work-record-running-animation")).toHaveCount(0);
-  const emptyLiveRuns = await json<Array<{ id: string }>>(
-    await request.get(`/api/companies/${company.id}/live-runs`),
-    "read empty live runs",
-  );
-  expect(emptyLiveRuns).toEqual([]);
-  await captureBrowserEvidence(page, card, info, "01-empty-ended", { apiLiveRuns: emptyLiveRuns });
-  await page.getByText("记录详情", { exact: true }).click();
-  await expect(page.getByRole("link", { name: /打开原生任务/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: "打开最近一次运行" })).toBeVisible();
+  const issuesBefore = await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "issues before preview");
+  const runsBefore = await json<unknown[]>(await request.get(`/api/companies/${company.id}/heartbeat-runs`), "runs before preview");
+  await page.getByRole("button", { name: "预览整个工作包", exact: true }).click();
+  await expect(page.getByText("派发前范围预览", { exact: true })).toBeVisible();
+  expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "issues after preview")).toHaveLength(issuesBefore.length);
+  expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/heartbeat-runs`), "runs after preview")).toHaveLength(runsBefore.length);
+  const confirm = page.getByRole("button", { name: /确认范围并准备派发/ });
+  await expect(confirm).toBeEnabled();
+  const deniedPrepare = page.waitForResponse((response) => response.url().includes("/work-package-dispatch/prepare") && response.status() === 403);
+  await confirm.click();
+  await deniedPrepare;
+  await expect(page.getByText(/not approved for this cohort/)).toBeVisible();
+  expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "issues after denied confirmation")).toHaveLength(issuesBefore.length);
+  expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/heartbeat-runs`), "runs after denied confirmation")).toHaveLength(runsBefore.length);
+  const status = page.getByTestId("work-record-status").first();
+  await captureBrowserEvidence(page, status, info, "01-non-cohort-gate", { issuesBefore: issuesBefore.length, runsBefore: runsBefore.length });
 
   const screenshotPath = process.env.LUN277_SCREENSHOT_PATH
     ? path.resolve(process.env.LUN277_SCREENSHOT_PATH)
@@ -197,18 +198,18 @@ test("live running, offline recovery, and reduced motion preserve truthful state
     }).returning().then((rows) => rows[0]);
     runId = run.id;
 
-    await page.goto(`/${company.issuePrefix}/projects/${project.id}/records`);
-    const card = recordCard(page, "Live resilience proof");
-    const status = card.getByTestId("work-record-status");
-    const live = card.getByTestId("work-record-live-run");
-    const animation = card.getByTestId("work-record-running-animation");
-    await expect(status).toHaveAttribute("data-state", "running");
+    await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
+    const detail = await openRecord(page, "Live resilience proof");
+    const status = page.getByTestId("work-record-status").first();
+    const live = statValue(detail, "真实运行");
+    const animation = status.locator('span[aria-hidden="true"]');
+    await expect(status).toHaveAttribute("data-state", "running", { timeout: 20_000 });
     await expect(status).toHaveText(/运行中/);
     await expect(live).toHaveText("真实运行中");
     await expect(animation).toHaveCount(1);
     const runningAnimation = animation.locator(":scope > span").first();
     await expect.poll(() => runningAnimation.evaluate((element) => getComputedStyle(element).animationName)).not.toBe("none");
-    await captureBrowserEvidence(page, card, info, "02-running", {
+    await captureBrowserEvidence(page, status, info, "02-running", {
       apiLiveRuns: await json(await request.get(`/api/companies/${company.id}/live-runs`), "read running live runs"),
       runId,
     });
@@ -223,7 +224,7 @@ test("live running, offline recovery, and reduced motion preserve truthful state
     }))).toEqual({ animationName: "none", activeAnimations: 0 });
     const afterReducedMotion = await status.boundingBox();
     expect(afterReducedMotion).toEqual(beforeReducedMotion);
-    await captureBrowserEvidence(page, card, info, "04-reduced-motion", {
+    await captureBrowserEvidence(page, status, info, "04-reduced-motion", {
       prefersReducedMotion: await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches),
       beforeReducedMotion,
       afterReducedMotion,
@@ -231,18 +232,17 @@ test("live running, offline recovery, and reduced motion preserve truthful state
     });
 
     await context.setOffline(true);
-    await expect(status).toHaveAttribute("data-state", "running");
-    await page.waitForTimeout(15_500);
+    // Going offline invalidates freshness immediately; cached "running" is not presented as current truth.
     await expect(status).toHaveAttribute("data-state", "unknown");
-    await expect(status).toHaveText("运行状态暂不可确认");
-    await expect(live).toHaveText("实时状态未知");
+    await expect(status).toHaveText("运行未知");
+    await expect(live).toHaveText("暂不可确认");
     await expect(animation).toHaveCount(0);
     const runningApiWhileOffline = await json<Array<{ id: string; status: string }>>(
       await request.get(`/api/companies/${company.id}/live-runs`),
       "read server live runs while browser is offline",
     );
     expect(runningApiWhileOffline).toEqual(expect.arrayContaining([expect.objectContaining({ id: runId, status: "running" })]));
-    await captureBrowserEvidence(page, card, info, "03-offline-reconnect", {
+    await captureBrowserEvidence(page, status, info, "03-offline-reconnect", {
       phase: "offline-after-threshold",
       apiLiveRuns: runningApiWhileOffline,
       runId,
@@ -255,7 +255,7 @@ test("live running, offline recovery, and reduced motion preserve truthful state
     await reconnectedResponse;
     await expect(status).toHaveAttribute("data-state", "running");
     await expect(live).toHaveText("真实运行中");
-    await captureBrowserEvidence(page, card, info, "03-offline-reconnect-restored", {
+    await captureBrowserEvidence(page, status, info, "03-offline-reconnect-restored", {
       phase: "online-restored",
       apiLiveRuns: await json(await request.get(`/api/companies/${company.id}/live-runs`), "read restored live runs"),
       runId,
@@ -271,7 +271,7 @@ test("live running, offline recovery, and reduced motion preserve truthful state
     await expect(live).toHaveText("无实时运行");
     await expect(status).not.toHaveAttribute("data-state", "running");
     await expect(animation).toHaveCount(0);
-    await captureBrowserEvidence(page, card, info, "02-running-cleared", {
+    await captureBrowserEvidence(page, status, info, "02-running-cleared", {
       apiLiveRuns: [],
       runId,
     });
@@ -337,6 +337,11 @@ test("stale and conflict records reconcile their existing association without cr
       syncError: null,
       projectedAt: new Date(Date.now() - 60_000),
     }).where(eq(workRecordExecutionProjections.recordId, staleRecord.id));
+    await db.update(workRecordExecutionProjections).set({
+      syncState: "error",
+      syncError: "状态冲突",
+      projectedAt: new Date(Date.now() - 60_000),
+    }).where(eq(workRecordExecutionProjections.recordId, conflictRecord.id));
     await db.update(issues).set({ status: "done" }).where(eq(issues.id, conflictDispatch.issueId));
     await db.update(workRecords).set({ businessStatus: "done" }).where(eq(workRecords.id, conflictRecord.id));
     const conflictRun = await db.insert(heartbeatRuns).values({
@@ -370,25 +375,38 @@ test("stale and conflict records reconcile their existing association without cr
       } : row);
       await route.fulfill({ response, json: browserSnapshot });
     });
-    await page.goto(`/${company.issuePrefix}/projects/${project.id}/records`);
-    const staleCard = recordCard(page, "Stale projection proof");
-    const conflictCard = recordCard(page, "Conflict projection proof");
-    await expect(staleCard.getByText("投影已过期", { exact: true })).toBeVisible();
-    await expect(conflictCard.getByText("状态冲突", { exact: true })).toBeVisible();
-    await expect(staleCard.getByRole("button", { name: "重新核对状态" })).toBeEnabled();
-    await expect(conflictCard.getByRole("button", { name: "重新核对状态" })).toBeEnabled();
-    await expect(staleCard.getByRole("button", { name: "核对同一请求" })).toHaveCount(0);
-    await expect(conflictCard.getByRole("button", { name: "核对同一请求" })).toHaveCount(0);
+    await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
+    const staleDetail = await openRecord(page, "Stale projection proof");
+    await expect(staleDetail.getByText("执行投影已过期，请重新核对。", { exact: true })).toBeVisible();
+    await expect(staleDetail.getByRole("button", { name: /重新核对/ })).toBeEnabled();
+    await expect(staleDetail.getByRole("button", { name: "核对同一请求" })).toHaveCount(0);
     await page.unroute(workRecordsUrl);
 
     await Promise.all([
       page.waitForResponse((response) => response.url().includes(`/work-records/${staleRecord.id}/reconcile`) && response.ok()),
-      staleCard.getByRole("button", { name: "重新核对状态" }).click(),
+      staleDetail.getByRole("button", { name: /重新核对/ }).click(),
     ]);
-    await expect(staleCard.getByText("投影已过期", { exact: true })).toHaveCount(0);
+    await expect(staleDetail.getByText("执行投影已过期，请重新核对。", { exact: true })).toHaveCount(0);
+    await page.route(workRecordsUrl, async (route) => {
+      const response = await route.fetch();
+      const rows = await response.json() as Array<Record<string, unknown> & {
+        id: string;
+        execution: Record<string, unknown>;
+        recovery: Record<string, unknown>;
+      }>;
+      await route.fulfill({ response, json: rows.map((row) => row.id === conflictRecord.id ? {
+        ...row,
+        execution: { ...row.execution, projectionState: "error", projectionError: "状态冲突" },
+        recovery: { ...row.recovery, code: "projection_error", message: "状态冲突", canReconcile: true },
+      } : row) });
+    });
+    const conflictDetail = await openRecord(page, "Conflict projection proof");
+    await expect(conflictDetail.getByText("状态冲突", { exact: true })).toBeVisible();
+    await expect(conflictDetail.getByRole("button", { name: /重新核对/ })).toBeEnabled();
+    await page.unroute(workRecordsUrl);
     await Promise.all([
       page.waitForResponse((response) => response.url().includes(`/work-records/${conflictRecord.id}/reconcile`) && response.ok()),
-      conflictCard.getByRole("button", { name: "重新核对状态" }).click(),
+      conflictDetail.getByRole("button", { name: /重新核对/ }).click(),
     ]);
 
     expect(await countAssociations()).toEqual(before);

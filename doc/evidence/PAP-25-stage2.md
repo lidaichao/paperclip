@@ -4,7 +4,7 @@
 
 - 基线：`919b0c9623dcc2d0d6783f10e44ec2f93e38f770`
 - 隔离候选：`H:\project\Papercilp\.worktrees\pap-25-stage2`
-- Paperclip 运行号：`24ef63e1-9155-4a6b-9ac9-31fcb7376d02`
+- Paperclip 运行号：`a4cc6ee9-6f68-4433-bd96-90c882cce9b5`
 - 192 控制面：`192.168.72.157:3100` TCP 可达，`/api/health` 返回 200；未部署、未上传源码、模型或凭据，未改变 workflow V2 cohort。
 - 浏览器：本机 Google Chrome；服务和内置 PostgreSQL 均位于隔离测试目录。
 
@@ -24,15 +24,22 @@
 
 结果：`8 passed | 1 skipped`，`50 passed | 44 skipped`，退出码 0。
 
-真实 Chrome 首轮定向结果：`work-record-g3b3.spec.ts` 通过，生成 `g3b3-wide.png`、`g3b3-narrow.png`；`work-record-demo1.spec.ts` 在失败点之前已完成业务保存、视图保存、回读及 issue/run 零增长断言。
+真实 Chrome 定向结果：
+
+- `work-record-g3b3.spec.ts` 通过，生成 `g3b3-wide.png`、`g3b3-narrow.png`。
+- `work-record-demo1.spec.ts` 两项均已分别通过：密集计划/缺陷视图保存不执行，以及业务草稿/视图草稿四态独立处理。
+- `work-record-safe-dispatch.spec.ts` 已验证预览前后 issue/run 零增长、非 cohort 确认返回 403、运行中/离线/重连/减少动态效果，以及 stale reconcile；仍有 3 个旧契约断言未收口，见下节。
+- Playwright 每轮启动前均完成 UI production build；构建成功，只有既有 CSS pseudo-element 与 chunk-size 警告。
 
 ## 本次修复
 
 - `ProjectWorkRecords.test.tsx` 补 `MemoryRouter`，与组件当前 `useLocation` 依赖一致。
 - `work-record-safe-dispatch.test.ts` 的两个并发依赖写请求补真实 `dependencySetRevision`，恢复“同一依赖版本下仅一个写入成功”的测试语义。
+- `work-record-demo1.spec.ts` 对齐当前表格/原位详情、自定义业务草稿决策框及移动端导航；两项真实 Chrome 用例已通过。
+- `work-record-safe-dispatch.spec.ts` 已对齐当前四层字段、预览/确认入口、离线立即降级和 stale 文案，并保留非 cohort 403 零副作用证据。
 
 ## 限制与待审核门禁
 
-- 旧浏览器脚本仍假设卡片 DOM、原生确认框和旧视图草稿时序；现 UI 已改为表格/抽屉和自定义决策对话框。`work-record-safe-dispatch.spec.ts` 3 项因此在定位阶段失败；`work-record-demo1.spec.ts` 的剩余旧交互也未全绿。未以放开 192 cohort 或改生产范围绕过。
+- `work-record-safe-dispatch.spec.ts` 连续三轮修复后仍有 3 个阻断：非 cohort 的 403 错误提示定位、完成运行后的 15 秒 live-runs 缓存刷新、冲突投影拦截后的显式刷新。按仓库规则停止继续试修；下一窗口应拆开这三个假设并各自单测，不能以放开 192 cohort 或改生产范围绕过。
 - 本机未能从 Playwright CDN 下载捆绑 Chromium（`ECONNRESET`），已改用已安装 Chrome 完成真实浏览器执行。
 - 192 的 Alice 开发项目不在 workflow V2 cohort；待 Luna 审核后，仍需由环境负责人按批准 cohort 执行测试环境门禁，不由 Rabbit 本次部署。
