@@ -714,6 +714,18 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       const predecessorIds = input.predecessorRecordIds === undefined
         ? null
         : await assertDependencies(tx, companyId, projectId, recordId, input.predecessorRecordIds);
+      if (predecessorIds !== null) {
+        const activeExecution = await tx.select({ id: workRecordExecutionIntents.id }).from(workRecordExecutionIntents).where(and(
+          eq(workRecordExecutionIntents.companyId, companyId),
+          eq(workRecordExecutionIntents.projectId, projectId),
+          eq(workRecordExecutionIntents.recordId, recordId),
+          eq(workRecordExecutionIntents.state, "running"),
+        )).limit(1).then((rows) => rows[0] ?? null);
+        if (activeExecution) throw conflict("Dependencies cannot change while the record is running", {
+          code: "work_record_dependency_running",
+          recordId,
+        });
+      }
       if (
         locked.dispatchState !== "not_dispatched" &&
         ((!workflowV2WritesEnabled && predecessorIds !== null) || input.assigneeAgentId !== undefined || input.qaAssigneeAgentId !== undefined || input.businessStatus !== undefined || input.parentRecordId !== undefined || input.packageQaRole !== undefined || input.qaRetestExemptionReason !== undefined || input.qaCoverageRecordIds !== undefined)

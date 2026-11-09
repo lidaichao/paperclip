@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { WorkPackageConsole } from "@/components/WorkPackageConsole";
 import { WorkRecordContainerTree } from "@/components/WorkRecordContainerTree";
+import { WorkRecordGantt } from "@/components/WorkRecordGantt";
 
 const BUSINESS_STATUS_OPTIONS: Array<{ value: WorkRecordBusinessStatus; labelKey: string }> = [
   { value: "backlog", labelKey: "local.backlog_bf986e9a" },
@@ -297,9 +298,9 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
       {reopen.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
 
-      {viewMode === "gantt" ? <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">甘特视图沿用同一版本、迭代和计划数据；日期字段为空的记录仍保留在下方表格中。</p> : null}
+      {viewMode === "gantt" ? <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} writable={capabilities.data?.editRecords.allowed !== false} onOpen={(record, source) => { lastEditorFocusRef.current = source; void selectRecord(record); }} /> : null}
 
-      <div className="grid items-start gap-3 @2xl:grid-cols-4">
+      <div className={viewMode === "gantt" ? "hidden" : "grid items-start gap-3 @2xl:grid-cols-4"}>
       <WorkRecordContainerTree companyId={companyId} projectId={projectId} writable={capabilities.data?.manageContainers.allowed !== false} />
       <div className="min-w-0 @2xl:col-span-3">
       <WorkPackageConsole
