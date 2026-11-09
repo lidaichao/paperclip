@@ -9,6 +9,7 @@ declare global {
         grantId: string;
         receiptId: string;
         requestDigest: string;
+        recovery: boolean;
       };
       actor: {
         type: "board" | "agent" | "none";

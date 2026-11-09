@@ -12168,9 +12168,14 @@ export function issueService(db: Db) {
           .censorUsernameInLogs,
       };
       const redactedBody = redactCurrentUserText(body, currentUserRedactionOptions);
-      if (actor.userId && options?.clientRequestId) {
-        const [existing] = await dbOrTx.select().from(issueComments).where(and(eq(issueComments.issueId, issueId),
-          eq(issueComments.authorUserId, actor.userId), eq(issueComments.clientRequestId, options.clientRequestId)));
+      if ((actor.userId || actor.agentId) && options?.clientRequestId) {
+        const [existing] = await dbOrTx.select().from(issueComments).where(and(
+          eq(issueComments.issueId, issueId),
+          actor.userId
+            ? eq(issueComments.authorUserId, actor.userId)
+            : eq(issueComments.authorAgentId, actor.agentId!),
+          eq(issueComments.clientRequestId, options.clientRequestId),
+        ));
         if (existing) {
           if (existing.body !== redactedBody) throw conflict("此消息请求 ID 已被其他内容使用");
           return existing;

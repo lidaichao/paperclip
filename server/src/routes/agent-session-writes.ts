@@ -19,13 +19,21 @@ export function agentSessionWriteRoutes(db: Db) {
     const unknown = Object.keys(body).find((key) => !["deviceId", "ttlMinutes"].includes(key));
     if (unknown) throw badRequest(`Unsupported session write grant field: ${unknown}`);
     res.set("Cache-Control", "no-store");
-    return res.status(201).json(await service.issue({
+    const grant = await service.issue({
       companyId: req.actor.companyId,
       agentId: req.actor.agentId,
       keyId: req.actor.keyId,
       deviceId: body.deviceId === undefined ? null : String(body.deviceId),
       ttlMinutes: body.ttlMinutes === undefined ? undefined : Number(body.ttlMinutes),
-    }));
+    });
+    return res.status(201).json({
+      ...grant,
+      securityBoundary: {
+        authority: "same_agent_api_key",
+        independentDeviceProof: false,
+        note: "This narrows time and operations; it does not protect against compromise of the issuing API key.",
+      },
+    });
   });
 
   return router;

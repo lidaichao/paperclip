@@ -3,6 +3,7 @@ import { companies } from "./companies.js";
 import { agents } from "./agents.js";
 import { documents } from "./documents.js";
 import { heartbeatRuns } from "./heartbeat_runs.js";
+import { agentSessionWriteReceipts } from "./agent_session_write_grants.js";
 
 export const documentRevisions = pgTable(
   "document_revisions",
@@ -18,6 +19,10 @@ export const documentRevisions = pgTable(
     createdByAgentId: uuid("created_by_agent_id").references(() => agents.id, { onDelete: "set null" }),
     createdByUserId: text("created_by_user_id"),
     createdByRunId: uuid("created_by_run_id").references(() => heartbeatRuns.id, { onDelete: "set null" }),
+    sessionWriteReceiptId: uuid("session_write_receipt_id").references(
+      () => agentSessionWriteReceipts.id,
+      { onDelete: "set null" },
+    ),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -30,5 +35,7 @@ export const documentRevisions = pgTable(
       table.documentId,
       table.createdAt,
     ),
+    sessionWriteReceiptUq: uniqueIndex("document_revisions_session_write_receipt_uq")
+      .on(table.sessionWriteReceiptId),
   }),
 );

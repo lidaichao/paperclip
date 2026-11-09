@@ -9980,11 +9980,16 @@ export function issueRoutes(
         createdByAgentId: actor.agentId ?? null,
         createdByUserId: actor.actorType === "user" ? actor.actorId : null,
         createdByRunId: actor.runId ?? null,
+        sessionWriteReceiptId: req.sessionWriteAuthorization?.receiptId ?? null,
         sourceTrust,
         lockedDocumentStrategy:
           req.actor.type === "agent" ? "create_new_document" : "conflict",
       });
       const doc = result.document;
+      if ("idempotentReplay" in result && result.idempotentReplay) {
+        res.status(result.created ? 201 : 200).json(doc);
+        return;
+      }
       const redirectedFromLockedDocument =
         "redirectedFromLockedDocument" in result
           ? result.redirectedFromLockedDocument
@@ -10064,7 +10069,7 @@ export function issueRoutes(
         });
       }
 
-      if (!result.created) {
+      if (!result.created && !req.sessionWriteAuthorization) {
         const expiredInteractions = await issueThreadInteractionService(
           db,
         ).expireStaleRequestConfirmationsForIssueDocument(
@@ -10094,12 +10099,14 @@ export function issueRoutes(
         });
       }
 
-      await revalidateActiveSourceRecoveryAfterCommittedWrite({
-        issue,
-        trigger: "document",
-        actor,
-        documentChanged: true,
-      });
+      if (!req.sessionWriteAuthorization) {
+        await revalidateActiveSourceRecoveryAfterCommittedWrite({
+          issue,
+          trigger: "document",
+          actor,
+          documentChanged: true,
+        });
+      }
 
       res.status(result.created ? 201 : 200).json(doc);
     },
@@ -11653,6 +11660,9 @@ export function issueRoutes(
         null;
       const createInput = {
         ...createBody,
+        ...(req.sessionWriteAuthorization
+          ? { idempotencyKey: req.sessionWriteAuthorization.receiptId }
+          : {}),
         ...(taskBridgeOriginForActor(req) ?? {}),
         id: issueId,
         originRunId: createBody.originRunId ?? actor.runId,
@@ -11858,7 +11868,7 @@ export function issueRoutes(
       // token should be spent until the user types: the greeting is posted above
       // (deterministic, no LLM) and the user's first comment wakes the assignee
       // through the normal comment path. Every other create path keeps its wake.
-      if (!isOnboardingFirstTask) {
+      if (!isOnboardingFirstTask && !req.sessionWriteAuthorization) {
         void queueIssueAssignmentWakeup({
           heartbeat,
           issue,
@@ -11869,7 +11879,8 @@ export function issueRoutes(
           requestedByActorId: actor.actorId,
         });
       }
-      await queueTaskWatchdogEvaluation(issue, actor.runId);
+      if (!req.sessionWriteAuthorization)
+        await queueTaskWatchdogEvaluation(issue, actor.runId);
 
       res.status(201).json({
         ...issue,
@@ -12644,6 +12655,20 @@ export function issueRoutes(
           req.body.assigneeAgentId as string | null | undefined,
           { actorType: req.actor.type },
         );
+      if (
+        req.sessionWriteAuthorization?.recovery &&
+        (req.body.title === undefined || req.body.title === existing.title) &&
+        (req.body.description === undefined ||
+          req.body.description === existing.description) &&
+        (req.body.priority === undefined ||
+          req.body.priority === existing.priority) &&
+        (req.body.assigneeAgentId === undefined ||
+          normalizedAssigneeAgentId === existing.assigneeAgentId) &&
+        (req.body.status === undefined || req.body.status === existing.status)
+      ) {
+        res.json({ ...existing, changes: {}, comment: null });
+        return;
+      }
       const titleOrDescriptionChanged =
         req.body.title !== undefined || req.body.description !== undefined;
       const existingRelations = Array.isArray(req.body.blockedByIssueIds)
@@ -12821,6 +12846,7 @@ export function issueRoutes(
           actorId: actor.actorId,
         });
       const effectiveMoveToTodoRequested =
+        !req.sessionWriteAuthorization &&
         !assigneeSelfCommentOnTerminal &&
         (explicitMoveToTodoRequested ||
           (!!commentBody &&
@@ -14426,7 +14452,7 @@ export function issueRoutes(
       });
 
       // Merge all wakeups from this update into one enqueue per agent to avoid duplicate runs.
-      void (async () => {
+      if (!req.sessionWriteAuthorization) void (async () => {
         type WakeupRequest = NonNullable<
           Parameters<typeof heartbeat.wakeup>[1]
         >;
@@ -14891,7 +14917,8 @@ export function issueRoutes(
         }
       })();
 
-      await queueTaskWatchdogEvaluation(issue, actor.runId);
+      if (!req.sessionWriteAuthorization)
+        await queueTaskWatchdogEvaluation(issue, actor.runId);
       const changes = issueResponse.changes ?? {};
       if (prefersMinimalIssueUpdateResponse(req)) {
         res.setHeader("Preference-Applied", "return=minimal");
@@ -17255,6 +17282,27 @@ export function issueRoutes(
         await getClosedIssueExecutionWorkspace(issue);
 
       const actor = getActorInfo(req);
+      if (req.sessionWriteAuthorization?.recovery && actor.agentId) {
+        const existingSessionComment = await db
+          .select()
+          .from(issueComments)
+          .where(
+            and(
+              eq(issueComments.issueId, issue.id),
+              eq(issueComments.authorAgentId, actor.agentId),
+              eq(
+                issueComments.clientRequestId,
+                req.sessionWriteAuthorization.receiptId,
+              ),
+            ),
+          )
+          .limit(1)
+          .then((rows) => rows[0] ?? null);
+        if (existingSessionComment) {
+          res.status(201).json(existingSessionComment);
+          return;
+        }
+      }
       const commentPresentation =
         req.body.presentation ??
         (await deriveRecoveryCommentPresentation(
@@ -17335,6 +17383,7 @@ export function issueRoutes(
           actorId: actor.actorId,
         });
       const effectiveMoveToTodoRequested =
+        !req.sessionWriteAuthorization &&
         !assigneeSelfCommentOnTerminal &&
         (explicitMoveToTodoRequested ||
           shouldImplicitlyMoveCommentedIssueToTodo({
@@ -17588,7 +17637,9 @@ export function issueRoutes(
           presentation: commentPresentation,
           metadata: req.body.metadata ?? null,
           attachmentIds: req.body.attachmentIds,
-          clientRequestId: actor.actorType === "user" ? req.body.clientRequestId : undefined,
+          clientRequestId: actor.actorType === "user"
+            ? req.body.clientRequestId
+            : req.sessionWriteAuthorization?.receiptId,
           sourceTrust,
         };
         let txResult: {
@@ -17700,7 +17751,9 @@ export function issueRoutes(
           presentation: commentPresentation,
           metadata: req.body.metadata ?? null,
           attachmentIds: req.body.attachmentIds,
-          clientRequestId: actor.actorType === "user" ? req.body.clientRequestId : undefined,
+          clientRequestId: actor.actorType === "user"
+            ? req.body.clientRequestId
+            : req.sessionWriteAuthorization?.receiptId,
           authorizationReason: commentAuthorizationReason,
           sourceTrust: await sourceTrustForActorWrite(currentIssue, actor),
         };
@@ -17725,6 +17778,7 @@ export function issueRoutes(
       await issueReferencesSvc.syncComment(comment.id);
       await externalObjectsSvc.syncCommentSafely(comment.id);
       if (
+        !req.sessionWriteAuthorization &&
         currentIssue.assigneeAgentId &&
         !(
           actor.actorType === "agent" &&
@@ -17878,21 +17932,23 @@ export function issueRoutes(
         currentIssue.assigneeAgentId,
       );
 
-      await revalidateActiveSourceRecoveryAfterCommittedWrite({
-        issue: currentIssue,
-        trigger: "comment",
-        actor,
-        statusChanged: reopened || scheduledRetrySupersededByComment,
-        resumeRequested: resumeRequested === true,
-        reopened,
-        blockedToTodoRecovery:
-          reopened &&
-          reopenFromStatus === "blocked" &&
-          currentIssue.status === "todo",
-      });
+      if (!req.sessionWriteAuthorization) {
+        await revalidateActiveSourceRecoveryAfterCommittedWrite({
+          issue: currentIssue,
+          trigger: "comment",
+          actor,
+          statusChanged: reopened || scheduledRetrySupersededByComment,
+          resumeRequested: resumeRequested === true,
+          reopened,
+          blockedToTodoRecovery:
+            reopened &&
+            reopenFromStatus === "blocked" &&
+            currentIssue.status === "todo",
+        });
+      }
 
       // Merge all wakeups from this comment into one enqueue per agent to avoid duplicate runs.
-      void (async () => {
+      if (!req.sessionWriteAuthorization) void (async () => {
         type WakeupRequest = NonNullable<
           Parameters<typeof heartbeat.wakeup>[1]
         >;
@@ -18237,7 +18293,8 @@ export function issueRoutes(
         }
       })();
 
-      await queueTaskWatchdogEvaluation(currentIssue, actor.runId);
+      if (!req.sessionWriteAuthorization)
+        await queueTaskWatchdogEvaluation(currentIssue, actor.runId);
       res.status(201).json(comment);
     },
   );

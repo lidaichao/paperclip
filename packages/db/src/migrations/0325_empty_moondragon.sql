@@ -1,0 +1,7 @@
+ALTER TABLE "agent_session_write_receipts" ADD COLUMN "processing_lease_expires_at" timestamp with time zone DEFAULT now() NOT NULL;--> statement-breakpoint
+ALTER TABLE "agent_session_write_receipts" ADD COLUMN "recovery_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "document_revisions" ADD COLUMN "session_write_receipt_id" uuid;--> statement-breakpoint
+ALTER TABLE "document_revisions" ADD CONSTRAINT "document_revisions_session_write_receipt_id_agent_session_write_receipts_id_fk" FOREIGN KEY ("session_write_receipt_id") REFERENCES "public"."agent_session_write_receipts"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "agent_session_write_receipts_pending_digest_uq" ON "agent_session_write_receipts" USING btree ("company_id","agent_id","key_id","request_digest") WHERE "agent_session_write_receipts"."completed_at" is null;--> statement-breakpoint
+CREATE UNIQUE INDEX "document_revisions_session_write_receipt_uq" ON "document_revisions" USING btree ("session_write_receipt_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "issue_comments_agent_client_request_uq" ON "issue_comments" USING btree ("issue_id","author_agent_id","client_request_id") WHERE "issue_comments"."author_agent_id" is not null and "issue_comments"."client_request_id" is not null;

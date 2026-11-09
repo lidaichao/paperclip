@@ -18,6 +18,27 @@ function isSessionWriteRoute(method: string, path: string) {
   return sessionWriteRoutes.some((route) => route.method === method && route.path.test(path));
 }
 
+function hasOnlyFields(body: unknown, fields: readonly string[]) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return false;
+  const keys = Object.keys(body as Record<string, unknown>);
+  return keys.length > 0 && keys.every((key) => fields.includes(key));
+}
+
+function isSafeIssueCreate(body: unknown) {
+  if (!hasOnlyFields(body, ["title", "description", "priority", "status", "assigneeAgentId",
+    "assigneeUserId", "projectId", "goalId", "parentId", "labelIds", "billingCode"])) return false;
+  const status = (body as Record<string, unknown>).status;
+  return status === undefined || ["backlog", "todo"].includes(String(status));
+}
+
+function isSafeCommentCreate(body: unknown) {
+  return hasOnlyFields(body, ["body"]) && typeof (body as Record<string, unknown>).body === "string";
+}
+
+function isSafeDocumentPut(body: unknown) {
+  return hasOnlyFields(body, ["title", "format", "body", "changeSummary", "baseRevisionId"]);
+}
+
 function isSafeIssuePatch(body: unknown) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return false;
   const record = body as Record<string, unknown>;
@@ -27,11 +48,13 @@ function isSafeIssuePatch(body: unknown) {
 }
 
 /**
- * Fail closed until each ordinary write endpoint can verify the lease inside
- * the same transaction as its business mutation. An auth-time lease check alone
- * would race a concurrent cancellation and permit a stale write.
+ * Ordinary keys stay fail-closed. A session grant admits only record mutations;
+ * route-native durable keys reconcile a committed mutation after a receipt crash.
+ * Execution dispatch remains a separate authority and is never inferred here.
  */
-export function localAgentRunWriteGate(db: Db): RequestHandler {
+export function localAgentRunWriteGate(db: Db, opts?: {
+  beforeReceiptComplete?: (receiptId: string) => Promise<void>;
+}): RequestHandler {
   const sessionWrites = agentSessionWriteService(db);
   return async (req, res, next) => {
     if (["GET", "HEAD", "OPTIONS"].includes(req.method) || req.actor.type !== "agent" ||
@@ -60,7 +83,10 @@ export function localAgentRunWriteGate(db: Db): RequestHandler {
         : "";
       if (req.actor.source === "agent_key" && req.actor.keyId && !req.actor.runId && token &&
         isSessionWriteRoute(req.method, req.path) &&
-        (req.method !== "PATCH" || isSafeIssuePatch(req.body))) {
+        (req.method !== "POST" || !/^\/api\/companies\//i.test(req.path) || isSafeIssueCreate(req.body)) &&
+        (req.method !== "POST" || !/\/comments\/?$/i.test(req.path) || isSafeCommentCreate(req.body)) &&
+        (req.method !== "PATCH" || isSafeIssuePatch(req.body)) &&
+        (req.method !== "PUT" || isSafeDocumentPut(req.body))) {
         const authorization = await sessionWrites.authorize({
           companyId: req.actor.companyId,
           agentId: req.actor.agentId,
@@ -79,13 +105,16 @@ export function localAgentRunWriteGate(db: Db): RequestHandler {
           grantId: authorization.grant.id,
           receiptId: authorization.receipt.id,
           requestDigest: authorization.receipt.requestDigest,
+          recovery: authorization.recovery,
         };
         const originalJson = res.json.bind(res);
         let finalizing = false;
         res.json = ((body: unknown) => {
           if (finalizing) return originalJson(body);
           finalizing = true;
-          void sessionWrites.complete(authorization.receipt.id, res.statusCode, body)
+          void Promise.resolve()
+            .then(() => opts?.beforeReceiptComplete?.(authorization.receipt.id))
+            .then(() => sessionWrites.complete(authorization.receipt.id, res.statusCode, body))
             .then(() => originalJson(body))
             .catch(next);
           return res;

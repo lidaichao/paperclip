@@ -33,11 +33,16 @@ export const agentSessionWriteReceipts = pgTable("agent_session_write_receipts",
   requestDigest: text("request_digest").notNull(),
   statusCode: integer("status_code"),
   responseBody: jsonb("response_body").$type<unknown>(),
+  processingLeaseExpiresAt: timestamp("processing_lease_expires_at", { withTimezone: true }).notNull().defaultNow(),
+  recoveryCount: integer("recovery_count").notNull().default(0),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   actorKeyUq: uniqueIndex("agent_session_write_receipts_actor_key_uq")
     .on(table.companyId, table.agentId, table.keyId, table.idempotencyKey),
+  pendingDigestUq: uniqueIndex("agent_session_write_receipts_pending_digest_uq")
+    .on(table.companyId, table.agentId, table.keyId, table.requestDigest)
+    .where(sql`${table.completedAt} is null`),
   grantIdx: index("agent_session_write_receipts_grant_idx").on(table.grantId, table.createdAt),
   digestCheck: check("agent_session_write_receipts_digest_check", sql`${table.requestDigest} ~ '^[a-f0-9]{64}$'`),
   statusCheck: check("agent_session_write_receipts_status_check", sql`${table.statusCode} is null or (${table.statusCode} >= 100 and ${table.statusCode} <= 599)`),

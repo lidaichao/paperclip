@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, lte, sql } from "drizzle-orm";
 import {
   agentSessionWriteGrants,
   agentSessionWriteReceipts,
@@ -13,6 +13,7 @@ import { logActivity } from "./activity-log.js";
 
 const MAX_TTL_MINUTES = 30;
 const DEFAULT_TTL_MINUTES = 15;
+const PROCESSING_LEASE_MS = 30_000;
 
 export function hashSessionWriteToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -129,6 +130,8 @@ export function agentSessionWriteService(db: Db) {
         code: "SESSION_WRITE_GRANT_INVALID",
       });
 
+        const now = new Date();
+        const processingLeaseExpiresAt = new Date(now.getTime() + PROCESSING_LEASE_MS);
         const [created] = await scoped.insert(agentSessionWriteReceipts).values({
         companyId: input.companyId,
         agentId: input.agentId,
@@ -136,23 +139,49 @@ export function agentSessionWriteService(db: Db) {
         grantId: grant.id,
         idempotencyKey: input.idempotencyKey,
         requestDigest: input.requestDigest,
+        processingLeaseExpiresAt,
       }).onConflictDoNothing().returning({ id: agentSessionWriteReceipts.id });
-      const receipt = created
+      let receipt = created
           ? await scoped.select().from(agentSessionWriteReceipts).where(eq(agentSessionWriteReceipts.id, created.id)).then((rows) => rows[0]!)
           : await scoped.select().from(agentSessionWriteReceipts).where(and(
             eq(agentSessionWriteReceipts.companyId, input.companyId),
             eq(agentSessionWriteReceipts.agentId, input.agentId),
             eq(agentSessionWriteReceipts.keyId, input.keyId),
             eq(agentSessionWriteReceipts.idempotencyKey, input.idempotencyKey),
-          )).limit(1).then((rows) => rows[0]!);
+          )).limit(1).then((rows) => rows[0] ?? null);
+      if (!receipt && !created) {
+        receipt = await scoped.select().from(agentSessionWriteReceipts).where(and(
+          eq(agentSessionWriteReceipts.companyId, input.companyId),
+          eq(agentSessionWriteReceipts.agentId, input.agentId),
+          eq(agentSessionWriteReceipts.keyId, input.keyId),
+          eq(agentSessionWriteReceipts.requestDigest, input.requestDigest),
+          isNull(agentSessionWriteReceipts.completedAt),
+        )).limit(1).then((rows) => rows[0] ?? null);
+      }
+      if (!receipt) throw new Error("Session write receipt conflict could not be resolved");
       if (receipt.requestDigest !== input.requestDigest) throw conflict("Idempotency-Key was already used for a different request", {
         code: "SESSION_WRITE_IDEMPOTENCY_CONFLICT",
       });
       if (!created) {
         if (receipt.completedAt && receipt.statusCode !== null) return { replay: true as const, receipt, grant };
-        throw conflict("The idempotent session write is still in progress", {
+        if (receipt.processingLeaseExpiresAt.getTime() > now.getTime()) {
+          throw conflict("The idempotent session write is still in progress", {
+            code: "SESSION_WRITE_IN_PROGRESS",
+            retryAfterMs: receipt.processingLeaseExpiresAt.getTime() - now.getTime(),
+          });
+        }
+        const [recovered] = await scoped.update(agentSessionWriteReceipts).set({
+          processingLeaseExpiresAt,
+          recoveryCount: sql`${agentSessionWriteReceipts.recoveryCount} + 1`,
+        }).where(and(
+          eq(agentSessionWriteReceipts.id, receipt.id),
+          isNull(agentSessionWriteReceipts.completedAt),
+          lte(agentSessionWriteReceipts.processingLeaseExpiresAt, now),
+        )).returning();
+        if (!recovered) throw conflict("The idempotent session write is still in progress", {
           code: "SESSION_WRITE_IN_PROGRESS",
         });
+        receipt = recovered;
       }
         await logActivity(scoped, {
         companyId: input.companyId,
@@ -169,9 +198,11 @@ export function agentSessionWriteService(db: Db) {
           requestDigest: input.requestDigest,
           method: input.method,
           path: input.path,
+          recovery: !created,
+          recoveryCount: receipt.recoveryCount,
         },
       });
-        return { replay: false as const, receipt, grant };
+        return { replay: false as const, recovery: !created, receipt, grant };
       });
     },
 

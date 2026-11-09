@@ -205,6 +205,7 @@ export function documentService(db: Db) {
       createdByAgentId?: string | null;
       createdByUserId?: string | null;
       createdByRunId?: string | null;
+      sessionWriteReceiptId?: string | null;
       sourceTrust?: typeof documents.$inferInsert.sourceTrust;
       lockedDocumentStrategy?: "conflict" | "create_new_document";
     }) => {
@@ -249,6 +250,27 @@ export function documentService(db: Db) {
             .then((rows) => rows[0] ?? null);
 
           if (existing) {
+            if (input.sessionWriteReceiptId && existing.latestRevisionId) {
+              const matchingRevision = await tx
+                .select({
+                  id: documentRevisions.id,
+                  revisionNumber: documentRevisions.revisionNumber,
+                  sessionWriteReceiptId: documentRevisions.sessionWriteReceiptId,
+                })
+                .from(documentRevisions)
+                .where(eq(documentRevisions.id, existing.latestRevisionId))
+                .then((rows) => rows[0] ?? null);
+              if (matchingRevision?.sessionWriteReceiptId === input.sessionWriteReceiptId) {
+                return {
+                  created: matchingRevision.revisionNumber === 1,
+                  idempotentReplay: true as const,
+                  document: {
+                    ...existing,
+                    body: existing.latestBody,
+                  },
+                };
+              }
+            }
             if (existing.lockedAt) {
               if (input.lockedDocumentStrategy === "create_new_document") {
                 const issueDocumentKeys = await tx
@@ -292,6 +314,7 @@ export function documentService(db: Db) {
                     createdByAgentId: input.createdByAgentId ?? null,
                     createdByUserId: input.createdByUserId ?? null,
                     createdByRunId: input.createdByRunId ?? null,
+                    sessionWriteReceiptId: input.sessionWriteReceiptId ?? null,
                     createdAt: now,
                   })
                   .returning();
@@ -372,6 +395,7 @@ export function documentService(db: Db) {
                 createdByAgentId: input.createdByAgentId ?? null,
                 createdByUserId: input.createdByUserId ?? null,
                 createdByRunId: input.createdByRunId ?? null,
+                sessionWriteReceiptId: input.sessionWriteReceiptId ?? null,
                 createdAt: now,
               })
               .returning();
@@ -455,6 +479,7 @@ export function documentService(db: Db) {
               createdByAgentId: input.createdByAgentId ?? null,
               createdByUserId: input.createdByUserId ?? null,
               createdByRunId: input.createdByRunId ?? null,
+              sessionWriteReceiptId: input.sessionWriteReceiptId ?? null,
               createdAt: now,
             })
             .returning();

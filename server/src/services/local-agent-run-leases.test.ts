@@ -1061,6 +1061,12 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     const auth = { Authorization: `Bearer ${apiToken}` };
     const grant = await request(app).post("/api/agents/me/session-writes")
       .set(auth).send({ ttlMinutes: 5 }).expect(201);
+    expect(grant.body.securityBoundary).toMatchObject({
+      authority: "same_agent_api_key",
+      independentDeviceProof: false,
+    });
+    const wakeupsBefore = await db.select({ id: agentWakeupRequests.id })
+      .from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, scope.companyId));
     const createKey = randomUUID();
     const created = await request(app).post(`/api/companies/${scope.companyId}/issues`)
       .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
@@ -1091,6 +1097,28 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(await db.select().from(issueComments).where(eq(issueComments.issueId, created.body.id)))
       .toHaveLength(1);
 
+    const assignedTodo = await request(app).post(`/api/companies/${scope.companyId}/issues`)
+      .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", randomUUID())
+      .send({ title: "Assigned todo record only", status: "todo",
+        assigneeAgentId: scope.agentId }).expect(201);
+    const otherAgentId = randomUUID();
+    await db.insert(agents).values({ id: otherAgentId, companyId: scope.companyId,
+      name: "Record-only reassignee" });
+    await request(app).patch(`/api/issues/${created.body.id}`)
+      .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", randomUUID())
+      .send({ assigneeAgentId: otherAgentId }).expect(200);
+    await request(app).patch(`/api/issues/${created.body.id}`)
+      .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", randomUUID())
+      .send({ status: "todo" }).expect(200);
+    expect(assignedTodo.body).toMatchObject({ status: "todo", assigneeAgentId: scope.agentId });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const wakeupsAfter = await db.select({ id: agentWakeupRequests.id })
+      .from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, scope.companyId));
+    expect(wakeupsAfter).toHaveLength(wakeupsBefore.length);
+
     const checkout = await request(app).post(`/api/issues/${created.body.id}/checkout`)
       .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
       .set("Idempotency-Key", randomUUID()).send({ agentId: scope.agentId }).expect(403);
@@ -1098,6 +1126,106 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await request(app).post(`/api/agents/me/local-runs/${scope.runId}/finish`)
       .set(auth).send({ deviceId: "device-desktop-001", leaseId: randomUUID(), generation: 1,
         outcome: "succeeded", exitCode: 0, processStopped: true }).expect(403);
+  });
+
+  it("recovers a committed HTTP mutation after receipt finalization fails", async () => {
+    const scope = await fixture();
+    const responsibleUserId = `user-${randomUUID()}`;
+    const apiToken = `pcp_test_${randomUUID()}`;
+    await db.update(agents).set({ role: "ceo" }).where(eq(agents.id, scope.agentId));
+    await db.update(agentApiKeys).set({
+      keyHash: createHash("sha256").update(apiToken).digest("hex"), responsibleUserId,
+    }).where(eq(agentApiKeys.id, scope.keyId));
+    await db.insert(companyMemberships).values({ companyId: scope.companyId,
+      principalType: "user", principalId: responsibleUserId, status: "active",
+      membershipRole: "owner" });
+    await db.insert(authUsers).values({ id: responsibleUserId, name: "Recovery owner",
+      email: `${responsibleUserId}@example.test`, emailVerified: true,
+      createdAt: new Date(), updatedAt: new Date() });
+
+    const buildApp = (failBeforeComplete: boolean) => {
+      const app = express();
+      app.use(express.json());
+      app.use(actorMiddleware(db, { deploymentMode: "authenticated", resolveSession: async () => null }));
+      app.use(localAgentRunWriteGate(db, failBeforeComplete ? {
+        beforeReceiptComplete: async () => { throw new Error("injected receipt finalization crash"); },
+      } : undefined));
+      app.use("/api", agentSessionWriteRoutes(db));
+      app.use("/api", issueRoutes(db, {} as StorageService));
+      app.use(errorHandler);
+      return app;
+    };
+    const auth = { Authorization: `Bearer ${apiToken}` };
+    const firstApp = buildApp(true);
+    const grant = await request(firstApp).post("/api/agents/me/session-writes")
+      .set(auth).send({ ttlMinutes: 5 }).expect(201);
+    const path = `/api/companies/${scope.companyId}/issues`;
+    const body = { title: "Crash-safe unique card", status: "backlog" };
+    const originalKey = randomUUID();
+    await request(firstApp).post(path).set(auth)
+      .set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", originalKey).send(body).expect(500);
+    expect(await db.select().from(issues).where(and(
+      eq(issues.companyId, scope.companyId), eq(issues.title, body.title),
+    ))).toHaveLength(1);
+    const [pending] = await db.select().from(agentSessionWriteReceipts).where(and(
+      eq(agentSessionWriteReceipts.agentId, scope.agentId),
+      eq(agentSessionWriteReceipts.idempotencyKey, originalKey),
+    ));
+    expect(pending).toMatchObject({ completedAt: null, recoveryCount: 0 });
+    await db.update(agentSessionWriteReceipts).set({
+      processingLeaseExpiresAt: new Date(Date.now() - 1_000),
+    }).where(eq(agentSessionWriteReceipts.id, pending!.id));
+
+    const restartedApp = buildApp(false);
+    const recovered = await request(restartedApp).post(path).set(auth)
+      .set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", randomUUID()).send(body).expect(200);
+    expect(recovered.body).toMatchObject({ deduplicated: true, id: expect.any(String) });
+    const replay = await request(restartedApp).post(path).set(auth)
+      .set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", originalKey).send(body).expect(200);
+    expect(replay.headers["x-paperclip-idempotent-replay"]).toBe("true");
+    expect(replay.body.id).toBe(recovered.body.id);
+    expect(await db.select().from(issues).where(and(
+      eq(issues.companyId, scope.companyId), eq(issues.title, body.title),
+    ))).toHaveLength(1);
+    const [completed] = await db.select().from(agentSessionWriteReceipts)
+      .where(eq(agentSessionWriteReceipts.id, pending!.id));
+    expect(completed).toMatchObject({ recoveryCount: 1, statusCode: 200 });
+    expect(completed!.completedAt).toBeInstanceOf(Date);
+
+    const patchKey = randomUUID();
+    await request(buildApp(true)).patch(`/api/issues/${recovered.body.id}`).set(auth)
+      .set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", patchKey).send({ priority: "critical" }).expect(500);
+    const [patchedBeforeRecovery] = await db.select().from(issues)
+      .where(eq(issues.id, recovered.body.id));
+    expect(patchedBeforeRecovery).toMatchObject({ priority: "critical" });
+    const activityBeforePatchRecovery = await db.select({ id: activityLog.id })
+      .from(activityLog).where(and(
+        eq(activityLog.action, "issue.updated"),
+        eq(activityLog.entityId, recovered.body.id),
+      ));
+    const [pendingPatch] = await db.select().from(agentSessionWriteReceipts).where(and(
+      eq(agentSessionWriteReceipts.agentId, scope.agentId),
+      eq(agentSessionWriteReceipts.idempotencyKey, patchKey),
+    ));
+    await db.update(agentSessionWriteReceipts).set({
+      processingLeaseExpiresAt: new Date(Date.now() - 1_000),
+    }).where(eq(agentSessionWriteReceipts.id, pendingPatch!.id));
+    await request(restartedApp).patch(`/api/issues/${recovered.body.id}`).set(auth)
+      .set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", patchKey).send({ priority: "critical" }).expect(200);
+    const [patchedAfterRecovery] = await db.select().from(issues)
+      .where(eq(issues.id, recovered.body.id));
+    expect(patchedAfterRecovery!.statusVersion).toBe(patchedBeforeRecovery!.statusVersion);
+    const activityAfterPatchRecovery = await db.select({ id: activityLog.id })
+      .from(activityLog).where(and(
+        eq(activityLog.action, "issue.updated"),
+        eq(activityLog.entityId, recovered.body.id),
+      ));
+    expect(activityAfterPatchRecovery).toHaveLength(activityBeforePatchRecovery.length);
   });
 
   it("writes a current-run comment and issue edit with the lease transaction", async () => {
