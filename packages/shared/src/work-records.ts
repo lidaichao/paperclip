@@ -10,6 +10,13 @@ import type {
 } from "./work-record-workflows.js";
 
 export const WORK_RECORD_KINDS = ["plan", "defect"] as const;
+export const WORK_RECORD_USER_ROLES = ["execution", "qa", "po"] as const;
+export type WorkRecordUserRole = (typeof WORK_RECORD_USER_ROLES)[number];
+export interface WorkRecordUserResponsibility { userId: string; role: WorkRecordUserRole }
+const workRecordUserResponsibilitySchema = z.object({
+  userId: z.string().trim().min(1).max(255),
+  role: z.enum(WORK_RECORD_USER_ROLES),
+}).strict();
 export const WORK_RECORD_DEFECT_SEVERITIES = ["critical", "high", "medium", "low"] as const;
 export const WORK_RECORD_BUSINESS_STATUSES = [
   "backlog",
@@ -233,6 +240,7 @@ export const createWorkRecordSchema = z.object({
   iterationId: z.string().guid().optional().nullable(),
   assigneeAgentId: z.string().guid().optional().nullable(),
   qaAssigneeAgentId: z.string().guid().optional().nullable(),
+  userResponsibilities: z.array(workRecordUserResponsibilitySchema).max(30).optional(),
   packageQaRole: z.enum(["execution", "qa"]).optional(),
   qaRetestExemptionReason: z.string().trim().min(1).max(2_000).optional().nullable(),
   predecessorRecordIds: z.array(z.string().guid()).max(100).optional().default([]),
@@ -257,6 +265,7 @@ export const updateWorkRecordSchema = z.object({
   iterationId: z.string().guid().optional().nullable(),
   assigneeAgentId: z.string().guid().optional().nullable(),
   qaAssigneeAgentId: z.string().guid().optional().nullable(),
+  userResponsibilities: z.array(workRecordUserResponsibilitySchema).max(30).optional(),
   packageQaRole: z.enum(["execution", "qa"]).optional(),
   qaRetestExemptionReason: z.string().trim().min(1).max(2_000).optional().nullable(),
   qaCoverageRecordIds: z.array(z.string().guid()).max(100).optional(),
@@ -448,6 +457,7 @@ export interface WorkRecord {
   defectSeverity: WorkRecordDefectSeverity | null;
   assigneeAgentId: string | null;
   qaAssigneeAgentId: string | null;
+  userResponsibilities: WorkRecordUserResponsibility[];
   packageQaRole: "execution" | "qa" | null;
   qaRetestExemptionReason: string | null;
   qaCoverageRecordIds: string[];

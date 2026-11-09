@@ -225,6 +225,7 @@ export {
   projectVersions,
   projectIterations,
   workRecords,
+  workRecordUserResponsibilities,
   workRecordDependencies,
   workRecordQaCoverage,
   workRecordDispatchCommands,

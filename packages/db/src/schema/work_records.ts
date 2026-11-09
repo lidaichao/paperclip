@@ -151,6 +151,31 @@ export const workRecords = pgTable(
   }),
 );
 
+// Human attention is explicit and independent of the agent execution route.
+// A creator or member of an agent is never implicitly responsible for its work.
+export const workRecordUserResponsibilities = pgTable(
+  "work_record_user_responsibilities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    recordId: uuid("record_id").notNull(),
+    userId: text("user_id").notNull(),
+    role: text("role").$type<"execution" | "qa" | "po">().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    recordScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.recordId],
+      foreignColumns: [workRecords.companyId, workRecords.projectId, workRecords.id],
+      name: "work_record_user_responsibilities_record_scope_fk",
+    }).onDelete("cascade"),
+    userRecordRoleUq: uniqueIndex("work_record_user_responsibilities_user_record_role_uq").on(table.companyId, table.recordId, table.userId, table.role),
+    userQueryIdx: index("work_record_user_responsibilities_user_query_idx").on(table.companyId, table.userId, table.recordId),
+    roleCheck: check("work_record_user_responsibilities_role_check", sql`${table.role} IN ('execution', 'qa', 'po')`),
+  }),
+);
+
 export const workRecordDependencies = pgTable(
   "work_record_dependencies",
   {

@@ -5,6 +5,7 @@ import {
   agentWakeupRequests,
   agents,
   approvals,
+  companyMemberships,
   heartbeatRuns,
   issues,
   issueRelations,
@@ -12,6 +13,7 @@ import {
   projectVersions,
   projects,
   workRecords,
+  workRecordUserResponsibilities,
   workRecordAssignmentCommands,
   workRecordDependencies,
   workRecordQaCoverage,
@@ -39,6 +41,7 @@ import type {
   UpdateProjectIteration,
   UpdateProjectVersion,
   WorkRecord,
+  WorkRecordUserResponsibility,
   WorkRecordDispatchResult,
   WorkRecordDispatchRequestResult,
   WorkRecordHoldReason,
@@ -369,6 +372,29 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     if (!row) throw unprocessable("Assignee is not available in this company");
   }
 
+  async function validateUserResponsibilities(
+    tx: DbTransaction,
+    companyId: string,
+    responsibilities: WorkRecordUserResponsibility[],
+  ) {
+    const pairs = responsibilities.map(({ userId, role }) => `${userId}\u0000${role}`);
+    if (new Set(pairs).size !== pairs.length) throw unprocessable("Duplicate user responsibility");
+    const userIds = [...new Set(responsibilities.map(({ userId }) => userId))];
+    if (!userIds.length) return;
+    const members = await tx.select({
+      principalId: companyMemberships.principalId,
+      membershipRole: companyMemberships.membershipRole,
+    }).from(companyMemberships).where(and(
+      eq(companyMemberships.companyId, companyId),
+      eq(companyMemberships.principalType, "user"),
+      eq(companyMemberships.status, "active"),
+      inArray(companyMemberships.principalId, userIds),
+    ));
+    if (members.length !== userIds.length || members.some((member) => member.membershipRole === "viewer")) {
+      throw unprocessable("Every responsible user must be an active, writable member of this company");
+    }
+  }
+
   async function assertDependencies(
     tx: DbTransaction,
     companyId: string,
@@ -409,6 +435,14 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   async function hydrate(companyId: string, rows: Array<typeof workRecords.$inferSelect>): Promise<WorkRecord[]> {
     if (rows.length === 0) return [];
     const recordIds = rows.map((row) => row.id);
+    const userResponsibilities = await db.select({
+      recordId: workRecordUserResponsibilities.recordId,
+      userId: workRecordUserResponsibilities.userId,
+      role: workRecordUserResponsibilities.role,
+    }).from(workRecordUserResponsibilities).where(and(
+      eq(workRecordUserResponsibilities.companyId, companyId),
+      inArray(workRecordUserResponsibilities.recordId, recordIds),
+    ));
     const deps = await db.select({
       successorId: workRecordDependencies.successorRecordId,
       predecessorId: workRecords.id,
@@ -560,6 +594,9 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         kind: row.kind as WorkRecord["kind"],
         businessStatus: row.businessStatus as WorkRecord["businessStatus"],
         dispatchState: row.dispatchState as WorkRecord["dispatchState"],
+        userResponsibilities: userResponsibilities.filter((item) => item.recordId === row.id)
+          .map(({ userId, role }) => ({ userId, role }))
+          .sort((a, b) => a.userId.localeCompare(b.userId) || ["execution", "qa", "po"].indexOf(a.role) - ["execution", "qa", "po"].indexOf(b.role)),
         qaCoverageRecordIds: qaCoverage.filter((coverage) => coverage.executionRecordId === row.id).map((coverage) => coverage.qaRecordId),
         dependencies: deps.filter((dependency) => dependency.successorId === row.id).map((dependency) => ({
           predecessorRecordId: dependency.predecessorId,
@@ -654,6 +691,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     const created = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, input.projectId)}, 0))`);
       await assertActiveIteration(tx, companyId, input.projectId, input.iterationId);
+      await validateUserResponsibilities(tx, companyId, input.userResponsibilities ?? []);
       const predecessorIds = await assertDependencies(tx, companyId, input.projectId, null, input.predecessorRecordIds);
       const [record] = await tx.insert(workRecords).values({
         companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
@@ -665,6 +703,9 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         qaRetestExemptionReason: input.qaRetestExemptionReason ?? null,
         createdByAgentId: actor.agentId ?? null, createdByUserId: actor.userId ?? null,
       }).returning();
+      if (input.userResponsibilities?.length) await tx.insert(workRecordUserResponsibilities).values(
+        input.userResponsibilities.map(({ userId, role }) => ({ companyId, projectId: input.projectId, recordId: record.id, userId, role })),
+      );
       if (predecessorIds.length) await tx.insert(workRecordDependencies).values(predecessorIds.map((predecessorRecordId) => ({
         companyId, projectId: input.projectId, predecessorRecordId, successorRecordId: record.id,
       })));
@@ -691,6 +732,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       const locked = await tx.select().from(workRecords).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, recordId))).then((rows) => rows[0]);
       if (!locked) throw notFound("Work record not found");
       if (locked.revision !== input.expectedRevision) throw conflict("Work record revision changed", { currentRevision: locked.revision });
+      if (input.userResponsibilities !== undefined) await validateUserResponsibilities(tx, companyId, input.userResponsibilities);
       if (input.predecessorRecordIds !== undefined && input.dependencySetRevision !== locked.dependencySetRevision) {
         throw conflict("Work record dependency set changed", {
           code: "work_record_dependency_revision_changed",
@@ -807,6 +849,16 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(predecessorIds ? { dependencySetRevision: locked.dependencySetRevision + 1 } : {}),
         revision: locked.revision + 1, updatedAt: new Date(),
       }).where(eq(workRecords.id, recordId)).returning();
+      if (input.userResponsibilities !== undefined) {
+        await tx.delete(workRecordUserResponsibilities).where(and(
+          eq(workRecordUserResponsibilities.companyId, companyId),
+          eq(workRecordUserResponsibilities.projectId, projectId),
+          eq(workRecordUserResponsibilities.recordId, recordId),
+        ));
+        if (input.userResponsibilities.length) await tx.insert(workRecordUserResponsibilities).values(
+          input.userResponsibilities.map(({ userId, role }) => ({ companyId, projectId, recordId, userId, role })),
+        );
+      }
       if (descriptionChanged && primaryLink) {
         const issue = await issuesSvc.update(primaryLink.issueId, {
           description: input.description ?? null,
