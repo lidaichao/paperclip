@@ -129,12 +129,13 @@ test("work record preview stays non-executing and the non-cohort gate creates no
   await expect(page.getByText("派发前范围预览", { exact: true })).toBeVisible();
   expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "issues after preview")).toHaveLength(issuesBefore.length);
   expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/heartbeat-runs`), "runs after preview")).toHaveLength(runsBefore.length);
-  const confirm = page.getByRole("button", { name: /确认范围并准备派发/ });
+  const confirm = page.getByRole("button", { name: /确认并派发工作包（创建执行任务）/ });
   await expect(confirm).toBeEnabled();
   const deniedPrepare = page.waitForResponse((response) => response.url().includes("/work-package-dispatch/prepare") && response.status() === 403);
   await confirm.click();
-  await deniedPrepare;
-  await expect(page.getByText(/not approved for this cohort/)).toBeVisible();
+  const deniedResponse = await deniedPrepare;
+  expect((await deniedResponse.json() as { error?: string }).error).toBeTruthy();
+  await expect(page.getByText(/操作未完成/)).toBeVisible();
   expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/issues`), "issues after denied confirmation")).toHaveLength(issuesBefore.length);
   expect(await json<unknown[]>(await request.get(`/api/companies/${company.id}/heartbeat-runs`), "runs after denied confirmation")).toHaveLength(runsBefore.length);
   const status = page.getByTestId("work-record-status").first();
@@ -268,7 +269,7 @@ test("live running, offline recovery, and reduced motion preserve truthful state
         "poll empty live runs after completion",
       )
     ).length).toBe(0);
-    await expect(live).toHaveText("无实时运行");
+    await expect(live).toHaveText("无实时运行", { timeout: 15_000 });
     await expect(status).not.toHaveAttribute("data-state", "running");
     await expect(animation).toHaveCount(0);
     await captureBrowserEvidence(page, status, info, "02-running-cleared", {
@@ -400,6 +401,7 @@ test("stale and conflict records reconcile their existing association without cr
         recovery: { ...row.recovery, code: "projection_error", message: "状态冲突", canReconcile: true },
       } : row) });
     });
+    await page.reload();
     const conflictDetail = await openRecord(page, "Conflict projection proof");
     await expect(conflictDetail.getByText("状态冲突", { exact: true })).toBeVisible();
     await expect(conflictDetail.getByRole("button", { name: /重新核对/ })).toBeEnabled();

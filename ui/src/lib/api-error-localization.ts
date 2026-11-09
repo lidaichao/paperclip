@@ -31,6 +31,10 @@ const DOMAIN_ERROR_KEYS: Record<string, string> = {
   "Selected revision is already the latest revision": "local.api_document_revision_latest_10301222",
   "This decision is already trained by this user": "local.api_decision_already_trained_10301223",
   "Skill policy revision is stale": "local.api_skill_policy_stale_10301224",
+  "Work-package workflow v2 writes are not approved for this cohort":
+    "local.work_record_workflow_not_approved_for_cohort",
+  "Work-package workflow v2 writes are disabled":
+    "local.work_record_workflow_not_approved_for_cohort",
 };
 
 function statusFallback(status: number): string {

@@ -246,7 +246,7 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
     return current;
   }, [records, selected]);
 
-  const liveRuns = useQuery({ queryKey: queryKeys.liveRuns(companyId), queryFn: () => heartbeatsApi.liveRunsForCompany(companyId), refetchInterval: online ? 15_000 : false });
+  const liveRuns = useQuery({ queryKey: queryKeys.liveRuns(companyId), queryFn: () => heartbeatsApi.liveRunsForCompany(companyId), refetchInterval: online ? 5_000 : false });
   const liveByIssue = useMemo(() => new Map((liveRuns.data ?? []).filter((run) => (run.status === "queued" || run.status === "running") && run.issueId).map((run) => [run.issueId!, run.status as "queued" | "running"])), [liveRuns.data]);
   const liveAvailable = online && !liveRuns.isError && liveRuns.isFetchedAfterMount;
   const capabilities = useQuery({ queryKey: queryKeys.workRecords.capabilities(companyId, projectId), queryFn: () => workRecordsApi.capabilities(companyId, projectId) });

@@ -29,6 +29,8 @@ describe("API error localization", () => {
     ["Selected revision is already the latest revision", 409, "所选修订已经是最新版本。"],
     ["This decision is already trained by this user", 409, "此用户已用该决策完成训练。"],
     ["Skill policy revision is stale", 409, "技能策略已更新，请刷新后重试。"],
+    ["Work-package workflow v2 writes are not approved for this cohort", 403, "当前项目尚未开放工作包派发，请联系管理员启用后重试。"],
+    ["Work-package workflow v2 writes are disabled", 403, "当前项目尚未开放工作包派发，请联系管理员启用后重试。"],
   ])("localizes generic server error %s", async (message, status, expected) => {
     await i18n.changeLanguage("zh-CN");
     expect(localizeApiErrorMessage(message, status)).toBe(expected);

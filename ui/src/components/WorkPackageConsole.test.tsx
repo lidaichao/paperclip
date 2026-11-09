@@ -286,7 +286,7 @@ describe("WorkPackageConsole", () => {
     await flush();
     expect(prepareMock).not.toHaveBeenCalled();
 
-    const confirmButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认范围并准备派发")) as HTMLButtonElement;
+    const confirmButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认并派发工作包")) as HTMLButtonElement;
     await act(async () => confirmButton.click());
     await flush();
     expect(prepareMock).toHaveBeenCalledTimes(1);
@@ -316,7 +316,7 @@ describe("WorkPackageConsole", () => {
     await act(async () => previewButton.click()); await flush();
     expect(container.textContent).toContain("发布工作包 · 缺少 PO");
     expect(container.textContent).toContain("实现子项 · 缺少 执行人");
-    const prepareButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认范围并准备派发")) as HTMLButtonElement;
+    const prepareButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认并派发工作包")) as HTMLButtonElement;
     expect(prepareButton.disabled).toBe(true);
     const escalationButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("上报 CEO 协调")) as HTMLButtonElement;
     await act(async () => escalationButton.click()); await flush();
@@ -337,7 +337,7 @@ describe("WorkPackageConsole", () => {
     expect(container.textContent).toContain("实现子项 · 未指定覆盖该任务的 QA 子任务");
     expect(container.textContent).not.toContain("负责人缺口会阻断整包派发");
     expect(container.textContent).not.toContain("上报 CEO 协调");
-    const prepareButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认范围并准备派发")) as HTMLButtonElement;
+    const prepareButton = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("确认并派发工作包")) as HTMLButtonElement;
     expect(prepareButton.disabled).toBe(true);
   });
 
