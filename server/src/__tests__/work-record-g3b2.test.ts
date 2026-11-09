@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
+  activityLog,
   companies,
   createDb,
   issues,
@@ -232,5 +233,45 @@ describeEmbeddedPostgres("work-record G3B2 containers", () => {
     const current = new Map((await service.list(companyId, projectId)).map((record) => [record.id, record]));
     expect(current.get(b.id)?.dependencies.map((edge) => edge.predecessorRecordId)).toEqual([c.id]);
     expect(current.get(d.id)?.dependencies.map((edge) => edge.predecessorRecordId)).toEqual([a.id]);
+  });
+
+  it("rolls back the dependency edge and its activity row when audit persistence fails", async () => {
+    const service = await seedProject();
+    const actor = { actorType: "user" as const, actorId: "board", userId: "board" };
+    const create = (title: string, predecessorRecordIds: string[] = []) => service.create(companyId, {
+      projectId, kind: "plan", title, predecessorRecordIds,
+    }, actor);
+    const predecessor = await create("前置");
+    const replacement = await create("替代前置");
+    const successor = await create("后置", [predecessor.id]);
+
+    await expect(service.mutateDependency(companyId, projectId, {
+      operation: "replace_source",
+      predecessorRecordId: predecessor.id,
+      successorRecordId: successor.id,
+      replacementPredecessorRecordId: replacement.id,
+      expectedRecords: [{
+        recordId: successor.id,
+        expectedRevision: successor.revision,
+        expectedDependencySetRevision: successor.dependencySetRevision,
+      }],
+    }, async (tx, affectedRecordIds) => {
+      await tx.insert(activityLog).values({
+        companyId,
+        actorType: "user",
+        actorId: "board",
+        action: "work_record.dependency_mutated",
+        entityType: "work_record_dependency",
+        entityId: `${predecessor.id}:${successor.id}`,
+        details: { affectedRecordIds },
+      });
+      throw new Error("injected audit persistence failure");
+    })).rejects.toThrow("injected audit persistence failure");
+
+    const current = (await service.list(companyId, projectId)).find((record) => record.id === successor.id)!;
+    expect(current.dependencies.map((edge) => edge.predecessorRecordId)).toEqual([predecessor.id]);
+    expect(current.revision).toBe(successor.revision);
+    expect(current.dependencySetRevision).toBe(successor.dependencySetRevision);
+    expect(await db.select().from(activityLog)).toHaveLength(0);
   });
 });
