@@ -1228,6 +1228,69 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(activityAfterPatchRecovery).toHaveLength(activityBeforePatchRecovery.length);
   });
 
+  it("keeps one issue when a live request resumes after its processing lease is recovered", async () => {
+    const scope = await fixture();
+    const userId = `user-${randomUUID()}`;
+    const apiToken = `pcp_test_${randomUUID()}`;
+    await db.update(agents).set({ role: "qa" }).where(eq(agents.id, scope.agentId));
+    await db.update(agentApiKeys).set({
+      keyHash: createHash("sha256").update(apiToken).digest("hex"), responsibleUserId: userId,
+    }).where(eq(agentApiKeys.id, scope.keyId));
+    await db.insert(companyMemberships).values({ companyId: scope.companyId,
+      principalType: "user", principalId: userId, status: "active", membershipRole: "member" });
+    await db.insert(authUsers).values({ id: userId, name: "Lease takeover owner",
+      email: `${userId}@example.test`, emailVerified: true, createdAt: new Date(), updatedAt: new Date() });
+
+    const path = `/api/companies/${scope.companyId}/issues`;
+    let enter!: () => void;
+    let release!: () => void;
+    const entered = new Promise<void>((resolve) => { enter = resolve; });
+    const hold = new Promise<void>((resolve) => { release = resolve; });
+    let holdFirst = true;
+    const app = express();
+    app.use(express.json());
+    app.use(actorMiddleware(db, { deploymentMode: "authenticated", resolveSession: async () => null }));
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", agentSessionWriteRoutes(db));
+    app.use((req, _res, next) => {
+      if (req.method === "POST" && req.path === path && holdFirst) {
+        holdFirst = false;
+        enter();
+        void hold.then(() => next());
+        return;
+      }
+      next();
+    });
+    app.use("/api", issueRoutes(db, {} as StorageService));
+    app.use(errorHandler);
+    const auth = { Authorization: `Bearer ${apiToken}` };
+    const grant = await request(app).post("/api/agents/me/session-writes")
+      .set(auth).send({ ttlMinutes: 5 }).expect(201);
+    const idempotencyKey = randomUUID();
+    const body = { title: "Live lease takeover card", status: "backlog" };
+    const send = () => request(app).post(path).set(auth)
+      .set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", idempotencyKey).send(body);
+    const first = send().then((response) => response);
+    await entered;
+    const [receipt] = await db.select().from(agentSessionWriteReceipts).where(and(
+      eq(agentSessionWriteReceipts.agentId, scope.agentId),
+      eq(agentSessionWriteReceipts.idempotencyKey, idempotencyKey),
+    ));
+    expect(receipt?.completedAt).toBeNull();
+    await db.update(agentSessionWriteReceipts).set({
+      processingLeaseExpiresAt: new Date(Date.now() - 1_000),
+    }).where(eq(agentSessionWriteReceipts.id, receipt!.id));
+    const recovered = await send();
+    release();
+    const original = await first;
+    expect([recovered.status, original.status].sort()).toEqual([200, 201]);
+    expect(original.body.id).toBe(recovered.body.id);
+    expect(await db.select().from(issues).where(and(
+      eq(issues.companyId, scope.companyId), eq(issues.title, body.title),
+    ))).toHaveLength(1);
+  });
+
   it("writes a current-run comment and issue edit with the lease transaction", async () => {
     const scope = await fixture();
     const svc = localAgentRunLeaseService(db);
