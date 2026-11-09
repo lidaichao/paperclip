@@ -6,6 +6,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "i18next";
+import { MemoryRouter } from "@/lib/router";
 import { ProjectWorkRecords } from "./ProjectWorkRecords";
 
 const listMock = vi.hoisted(() => vi.fn());
@@ -112,9 +113,11 @@ describe("ProjectWorkRecords", () => {
 
   async function render(kind: "plan" | "defect") {
     await act(async () => root.render(
-      <QueryClientProvider client={client}>
-        <ProjectWorkRecords companyId="company-1" projectId="project-1" kind={kind} />
-      </QueryClientProvider>,
+      <MemoryRouter initialEntries={[`/projects/project-1/${kind === "plan" ? "plans" : "defects"}`]}>
+        <QueryClientProvider client={client}>
+          <ProjectWorkRecords companyId="company-1" projectId="project-1" kind={kind} />
+        </QueryClientProvider>
+      </MemoryRouter>,
     ));
     await flush();
   }

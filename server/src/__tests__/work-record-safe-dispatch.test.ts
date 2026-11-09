@@ -263,10 +263,12 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     const results = await Promise.allSettled([
       context.service.update(context.company.id, context.project.id, first.id, {
         expectedRevision: first.revision,
+        dependencySetRevision: first.dependencySetRevision,
         predecessorRecordIds: [second.id],
       }),
       context.service.update(context.company.id, context.project.id, second.id, {
         expectedRevision: second.revision,
+        dependencySetRevision: second.dependencySetRevision,
         predecessorRecordIds: [first.id],
       }),
     ]);
