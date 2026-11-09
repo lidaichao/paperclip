@@ -24,6 +24,9 @@ describe("installation safety", () => {
     expect(install).toContain("-WindowStyle Hidden");
     expect(runner).toContain("launcher.bundle.mjs");
     expect(install).not.toContain("-RestartCount");
+    expect(install).toContain("GetFolderPath('Startup')");
+    expect(install).toContain("$shortcut.WindowStyle = 7");
+    expect(install).toContain("-ErrorAction Stop");
   });
 
   it("preflights the bridge before scheduled-task installation", async () => {

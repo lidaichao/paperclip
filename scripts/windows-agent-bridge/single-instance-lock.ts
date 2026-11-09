@@ -15,6 +15,17 @@ function isProcessAlive(pid: number): boolean {
   try { process.kill(pid, 0); return true; } catch { return false; }
 }
 
+async function readSettledLock(lockPath: string): Promise<Partial<LockDocument>> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try { return JSON.parse(await readFile(lockPath, "utf8")) as Partial<LockDocument>; }
+    catch {
+      if (attempt === 4) break;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }
+  throw new Error("corrupt bridge lock requires manual recovery");
+}
+
 /** Atomic wx acquisition. A stale lock is never auto-reaped by contenders. */
 export async function acquireSingleInstanceLock(
   lockPath: string,
@@ -33,9 +44,7 @@ export async function acquireSingleInstanceLock(
     finally { await handle.close(); }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-    let existing: Partial<LockDocument> = {};
-    try { existing = JSON.parse(await readFile(resolved, "utf8")); }
-    catch { throw new Error("corrupt bridge lock requires manual recovery"); }
+    const existing = await readSettledLock(resolved);
     if (typeof existing.pid === "number" && alive(existing.pid)) return null;
     throw new Error("stale bridge lock requires manual recovery");
   }
