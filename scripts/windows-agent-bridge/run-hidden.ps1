@@ -8,7 +8,7 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $stdout = Join-Path $logDir 'bridge.stdout.log'
 $stderr = Join-Path $logDir 'bridge.stderr.log'
 $process = Start-Process -FilePath (Get-Command node.exe).Source `
-  -ArgumentList @($runtime, (Resolve-Path $Config).Path) `
+  -ArgumentList @($runtime, (Resolve-Path $Config).Path, '--service') `
   -WindowStyle Hidden -PassThru -Wait `
   -RedirectStandardOutput $stdout -RedirectStandardError $stderr
 exit $process.ExitCode

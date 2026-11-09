@@ -17,9 +17,10 @@ export function assertModelAuthLaunchReady(config: BridgeConfig): void {
 
 async function main(): Promise<void> {
   const configPath = process.argv[2];
-  const pilotOnce = process.argv[3] === "--pilot-once" && process.argv.length === 4;
-  if (!configPath || (process.argv.length > 3 && !pilotOnce)) {
-    throw new Error("usage: launcher <config.json> [--pilot-once]");
+  const mode = process.argv[3];
+  const explicitMode = mode === "--pilot-once" || mode === "--service";
+  if (!configPath || process.argv.length !== 4 || !explicitMode) {
+    throw new Error("usage: launcher <config.json> <--pilot-once|--service>");
   }
   const config = await loadBridgeConfig(configPath);
   assertModelAuthLaunchReady(config);
@@ -37,7 +38,7 @@ async function main(): Promise<void> {
   const runtime = path.join(path.dirname(fileURLToPath(import.meta.url)), "bridge.bundle.mjs");
   const code = await new Promise<number>((resolve, reject) => {
     const child = spawn(process.execPath,
-      [runtime, path.resolve(configPath), ...(pilotOnce ? ["--pilot-once"] : [])], {
+      [runtime, path.resolve(configPath), mode], {
       env, shell: false, windowsHide: true, stdio: "inherit",
     });
     child.once("error", () => reject(new Error("isolated worker could not start")));

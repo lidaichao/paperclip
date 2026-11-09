@@ -1,4 +1,5 @@
 import { build } from "esbuild";
+import { copyFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,3 +28,9 @@ for (const [entry, output] of [["main.ts", "bridge.bundle.mjs"], ["launcher.ts",
     plugins: [workspacePackages],
   });
 }
+
+const codexServerDir = path.join(root, "packages", "adapters", "codex-local", "src", "server");
+for (const resource of ["codex-auth-merge-extract.sh", "codex-auth-merge-decision.cjs"]) {
+  await copyFile(path.join(codexServerDir, resource), path.join(bridgeDir, "dist", resource));
+}
+await copyFile(path.join(bridgeDir, "credential-helper.ps1"), path.join(bridgeDir, "dist", "credential-helper.ps1"));

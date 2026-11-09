@@ -101,7 +101,7 @@ describe("single-member local foreground acceptance", () => {
       agents: [agent] }), "utf8");
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async () => { throw new Error("network forbidden"); });
     try {
-      await expect(runBridge(configFile, new AbortController().signal)).rejects.toThrow("write fencing is unavailable");
+      await expect(runBridge(configFile, new AbortController().signal)).rejects.toThrow("explicit --pilot-once or --service mode");
       expect(fetchSpy).not.toHaveBeenCalled();
       await expect(readFile(path.join(dir, AGENT_ID, "claim-state.json"))).rejects.toMatchObject({ code: "ENOENT" });
     } finally { fetchSpy.mockRestore(); }

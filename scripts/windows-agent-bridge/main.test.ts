@@ -81,7 +81,7 @@ describe("bridge lifecycle", () => {
     expect(claimLocalRun).not.toHaveBeenCalled();
   });
 
-  it("refuses to start before any lock or poll while ordinary writes are fenced", async () => {
+  it("refuses to start before any lock or poll without an explicit mode", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "alice-run-binding-"));
     const stateFile = path.join(dir, "38a5808c-47f3-4029-bdfe-0d84504bdc8a", "claim-state.json");
     const configFile = path.join(dir, "bridge.json");
@@ -103,7 +103,7 @@ describe("bridge lifecycle", () => {
         maxConcurrentRuns: 1,
       }],
     }));
-    await expect(runBridge(configFile, new AbortController().signal)).rejects.toThrow("write fencing is unavailable");
+    await expect(runBridge(configFile, new AbortController().signal)).rejects.toThrow("explicit --pilot-once or --service mode");
     await expect(stat(`${stateFile}.lock`)).rejects.toMatchObject({ code: "ENOENT" });
   });
 

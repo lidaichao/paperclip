@@ -140,18 +140,21 @@ export async function claimAndRunOnce(input: {
   return "finished";
 }
 
-function requireWriteFence(pilotOnce: boolean): void {
-  if (!pilotOnce) {
-    throw new Error("Alice bridge write fencing is unavailable; local execution remains disabled");
+type BridgeMode = "pilot-once" | "service";
+
+function requireExplicitMode(mode: BridgeMode | undefined): asserts mode is BridgeMode {
+  if (!mode) {
+    throw new Error("Paperclip bridge requires an explicit --pilot-once or --service mode");
   }
 }
 
 export async function runBridge(configPath: string, signal: AbortSignal,
-  options: { pilotOnce?: boolean } = {}): Promise<"started" | "already-running"> {
+  options: { mode?: BridgeMode } = {}): Promise<"started" | "already-running"> {
   const config = await loadBridgeConfig(configPath);
-  // The explicit, one-cycle pilot is the only path through this gate. The
-  // scheduled worker and ordinary direct invocation remain disabled.
-  requireWriteFence(options.pilotOnce === true);
+  // Refuse ambiguous direct invocation. A one-shot pilot and the installed
+  // background service share the same lease, identity and single-instance
+  // fencing; only the service keeps polling after an idle cycle.
+  requireExplicitMode(options.mode);
   assertWorkerEnvironment(process.env, config);
   if (config.agents.length !== 1) throw new Error("pilot bridge requires exactly one local agent");
   const lock = await acquireSingleInstanceLock(`${config.stateFile}.lock`);
@@ -193,7 +196,7 @@ export async function runBridge(configPath: string, signal: AbortSignal,
         lastError: null,
         updatedAt: new Date().toISOString(),
       });
-      if (options.pilotOnce) return "started";
+      if (options.mode === "pilot-once") return "started";
       await waitForPollInterval(config.pollIntervalMs, signal);
     }
     return "started";
@@ -204,14 +207,16 @@ export async function runBridge(configPath: string, signal: AbortSignal,
 
 async function main(): Promise<void> {
   const configPath = process.argv[2];
-  const pilotOnce = process.argv[3] === "--pilot-once" && process.argv.length === 4;
-  if (!configPath || (process.argv.length > 3 && !pilotOnce)) {
-    throw new Error("用法：node main.js <config.json> [--pilot-once]");
+  const modeArg = process.argv[3];
+  const mode: BridgeMode | undefined = modeArg === "--pilot-once"
+    ? "pilot-once" : modeArg === "--service" ? "service" : undefined;
+  if (!configPath || process.argv.length !== 4 || !mode) {
+    throw new Error("用法：node main.js <config.json> <--pilot-once|--service>");
   }
   const controller = new AbortController();
   process.once("SIGINT", () => controller.abort());
   process.once("SIGTERM", () => controller.abort());
-  const result = await runBridge(configPath, controller.signal, { pilotOnce });
+  const result = await runBridge(configPath, controller.signal, { mode });
   if (result === "already-running") process.stdout.write("Alice 智能体桥接已在运行。\n");
 }
 

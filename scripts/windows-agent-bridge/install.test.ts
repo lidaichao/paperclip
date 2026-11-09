@@ -26,11 +26,17 @@ describe("installation safety", () => {
     expect(install).not.toContain("-RestartCount");
   });
 
-  it("blocks scheduled-task installation while the server run contract is missing", async () => {
+  it("preflights the bridge before scheduled-task installation", async () => {
     const doctor = await readFile(path.join(root, "doctor.ps1"), "utf8");
     const install = await readFile(path.join(root, "install.ps1"), "utf8");
-    expect(doctor).toContain("禁止安装");
+    expect(doctor).toContain("/api/health");
+    expect(doctor).toContain("supervisorExecutable");
     expect(install.indexOf("doctor.ps1")).toBeLessThan(install.indexOf("Register-ScheduledTask"));
+  });
+
+  it("starts only the explicit hidden service mode", async () => {
+    const runner = await readFile(path.join(root, "run-hidden.ps1"), "utf8");
+    expect(runner).toContain("'--service'");
   });
 
   it("does not start a private login for explicit shared Codex mode", async () => {
