@@ -148,7 +148,12 @@ describe("loadBridgeConfig", () => {
       ...withArgs.agents[0].localAdapterConfig,
       extraArgs: ["--api-key=inline-secret"],
     };
-    await expect(loadBridgeConfig(await fixture(withArgs))).rejects.toThrow("only supports Cursor --trust");
+    await expect(loadBridgeConfig(await fixture(withArgs))).rejects.toThrow("approved codex_local arguments");
+    withArgs.agents[0].localAdapterConfig.extraArgs = ["--ignore-user-config", "--ephemeral"];
+    expect((await loadBridgeConfig(await fixture(withArgs))).agents[0].localAdapterConfig.extraArgs)
+      .toEqual(["--ignore-user-config", "--ephemeral"]);
+    withArgs.agents[0].localAdapterConfig.extraArgs = ["--ignore-user-config", "--ephemeral", "--config=unsafe=true"];
+    await expect(loadBridgeConfig(await fixture(withArgs))).rejects.toThrow("approved codex_local arguments");
     const cursor = validConfig();
     cursor.agents[0].adapterType = "cursor";
     cursor.agents[0].localAdapterConfig.extraArgs = ["--trust"];

@@ -136,10 +136,12 @@ function parseLocalAdapterConfig(value: unknown, adapterType: BridgeAdapterType,
   }
   if (adapterType === "cursor") requiredString(config, "model", label);
   const extraArgs = config.extraArgs;
+  const permittedArgs = adapterType === "cursor"
+    ? ["--trust", "--trust,--auto-review"]
+    : ["--ignore-user-config,--ephemeral"];
   if (extraArgs !== undefined &&
-    (adapterType !== "cursor" || !Array.isArray(extraArgs) ||
-      !(["--trust", "--trust,--auto-review"].includes(extraArgs.join(","))))) {
-    throw new Error(`${label}.extraArgs only supports Cursor --trust with optional --auto-review`);
+    (!Array.isArray(extraArgs) || !permittedArgs.includes(extraArgs.join(",")))) {
+    throw new Error(`${label}.extraArgs must match the approved ${adapterType} arguments`);
   }
   return structuredClone(config);
 }
