@@ -19,7 +19,7 @@ function record(id: string, title: string, overrides: Partial<WorkRecord> = {}):
   return {
     id, title, companyId: "company-1", projectId: "project-1", kind: "plan", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null, plannedStartDate: null,
-    plannedCompletionDate: null, defectSeverity: null, assigneeAgentId: null, qaAssigneeAgentId: null,
+    plannedCompletionDate: null, defectSeverity: null, assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [],
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [], businessStatus: "backlog",
     statusVersion: 1, revision: 1, dispatchState: "not_dispatched", dispatchRound: 0,
     dependencySetRevision: 1, blockedCycle: 0, dependencies: [],

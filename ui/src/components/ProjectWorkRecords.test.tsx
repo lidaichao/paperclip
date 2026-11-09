@@ -50,7 +50,7 @@ function record(kind: "plan" | "defect", overrides: Partial<WorkRecord> = {}): W
     title: kind === "plan" ? "发布计划" : "窄屏缺陷", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null,
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
-    assigneeAgentId: null, qaAssigneeAgentId: null, packageQaRole: null,
+    assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [], packageQaRole: null,
     qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     businessStatus: kind === "plan" ? "backlog" : "done",
     statusVersion: 1, revision: 1, dispatchState: "not_dispatched", dispatchRound: 0,

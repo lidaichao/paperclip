@@ -52,7 +52,7 @@ function record(overrides: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title"
   const { id, title, ...rest } = overrides;
   return {
     id, title, companyId: "company-1", projectId: "project-1", kind: "plan", description: null,
-    descriptionRevision: 1, parentRecordId: null, iterationId: null, assigneeAgentId: "agent-po", qaAssigneeAgentId: "agent-qa",
+    descriptionRevision: 1, parentRecordId: null, iterationId: null, assigneeAgentId: "agent-po", qaAssigneeAgentId: "agent-qa", userResponsibilities: [],
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     businessStatus: "in_review", statusVersion: 1, revision: 1, dispatchState: "linked", dispatchRound: 1, dependencySetRevision: 1,

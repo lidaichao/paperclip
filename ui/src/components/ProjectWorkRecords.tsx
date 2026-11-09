@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { l10n } from "@/i18n";
+import { useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordKind } from "@paperclipai/shared";
+import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordKind, WorkRecordUserResponsibility, WorkRecordUserRole } from "@paperclipai/shared";
 import { Plus } from "lucide-react";
 import { agentsApi } from "@/api/agents";
+import { accessApi } from "@/api/access";
+import { buildCompanyUserLabelMap } from "@/lib/company-members";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
 import { registerNavigationLeaveGuard } from "@/lib/navigation-leave-guard";
@@ -38,6 +41,7 @@ interface RecordDraft {
   businessStatus: WorkRecordBusinessStatus;
   assigneeAgentId: string;
   qaAssigneeAgentId: string;
+  userResponsibilities: WorkRecordUserResponsibility[];
   parentRecordId: string;
   predecessorRecordIds: string[];
   packageQaRole: "execution" | "qa";
@@ -55,6 +59,7 @@ function blankDraft(): RecordDraft {
     businessStatus: "backlog",
     assigneeAgentId: "",
     qaAssigneeAgentId: "",
+    userResponsibilities: [],
     parentRecordId: "",
     predecessorRecordIds: [],
     packageQaRole: "execution",
@@ -73,6 +78,7 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
     businessStatus: record.businessStatus,
     assigneeAgentId: record.assigneeAgentId ?? "",
     qaAssigneeAgentId: record.qaAssigneeAgentId ?? "",
+    userResponsibilities: record.userResponsibilities,
     parentRecordId: record.parentRecordId ?? "",
     predecessorRecordIds: record.dependencies.map((dependency) => dependency.predecessorRecordId),
     packageQaRole: record.packageQaRole ?? "execution",
@@ -92,6 +98,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   onNavigationGuardChange?: (state: { dirty: boolean; guard: () => Promise<boolean> } | null) => void;
 }) {
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const deepLinkHandledRef = useRef<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<WorkRecord | null>(null);
   const [coverageRecord, setCoverageRecord] = useState<WorkRecord | null>(null);
@@ -115,6 +123,10 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   const agents = useQuery({
     queryKey: queryKeys.agents.list(companyId),
     queryFn: () => agentsApi.list(companyId),
+  });
+  const users = useQuery({
+    queryKey: queryKeys.access.companyUserDirectory(companyId),
+    queryFn: () => accessApi.listUserDirectory(companyId),
   });
   const capabilities = useQuery({
     queryKey: queryKeys.workRecords.capabilities(companyId, projectId),
@@ -159,6 +171,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
         parentRecordId: draft.parentRecordId || null,
         assigneeAgentId: draft.assigneeAgentId || null,
         qaAssigneeAgentId: draft.qaAssigneeAgentId || null,
+        userResponsibilities: draft.userResponsibilities,
         iterationId: draft.iterationId || null,
         plannedStartDate: draft.plannedStartDate || null,
         plannedCompletionDate: draft.plannedCompletionDate || null,
@@ -278,6 +291,15 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     beginEdit(record);
   };
 
+  const deepLinkRecordId = new URLSearchParams(location.search).get("record");
+  useEffect(() => {
+    if (!deepLinkRecordId || deepLinkHandledRef.current === deepLinkRecordId) return;
+    const record = visibleRecords.find((item) => item.id === deepLinkRecordId);
+    if (!record) return;
+    deepLinkHandledRef.current = deepLinkRecordId;
+    void selectRecord(record);
+  }, [deepLinkRecordId, visibleRecords]);
+
   const beginCoverage = (record: WorkRecord) => {
     saveCoverage.reset();
     setCoverageRecord(record);
@@ -286,6 +308,13 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
   const selectableRecords = allRecords.filter((record) => record.id !== editingRecord?.id);
   const parentRecords = selectableRecords.filter((record) => record.kind === "plan");
+  const userLabels = buildCompanyUserLabelMap(users.data?.users);
+  const toggleUserRole = (userId: string, role: WorkRecordUserRole, checked: boolean) => setDraft((current) => ({
+    ...current,
+    userResponsibilities: checked
+      ? [...current.userResponsibilities, { userId, role }]
+      : current.userResponsibilities.filter((responsibility) => responsibility.userId !== userId || responsibility.role !== role),
+  }));
 
   return (
     <section className="@container space-y-3" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
@@ -413,6 +442,22 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
                 {(agents.data ?? []).map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
               </select>
             </label>
+
+            <fieldset className="space-y-2 rounded-md border p-3 text-sm md:col-span-2">
+              <legend className="px-1 font-medium">人员责任</legend>
+              <p className="text-xs text-muted-foreground">只有明确指派的人会在“我的待办”看到此记录；Agent 执行负责人在上方单独设置。</p>
+              {users.isPending ? <p className="text-muted-foreground">正在读取公司成员…</p> : users.isError ? <p role="alert" className="text-destructive">成员读取失败，不能修改人员责任。</p> : null}
+              {([ ["execution", "执行"], ["qa", "QA"], ["po", "验收"] ] as const).map(([role, label]) => <div key={role} role="group" aria-label={label} className="grid gap-1 sm:grid-cols-[4rem_1fr]">
+                <span className="pt-1 font-medium">{label}</span>
+                <div className="flex max-h-24 flex-wrap gap-x-4 gap-y-1 overflow-y-auto">
+                  {(users.data?.users ?? []).map((user) => <label key={`${role}:${user.principalId}`} className="inline-flex min-h-7 items-center gap-1.5 font-normal">
+                    <input type="checkbox" className="size-4 accent-primary" checked={draft.userResponsibilities.some((responsibility) => responsibility.userId === user.principalId && responsibility.role === role)} onChange={(event) => toggleUserRole(user.principalId, role, event.target.checked)} />
+                    <span>{userLabels.get(user.principalId) ?? user.principalId}</span>
+                  </label>)}
+                  {users.data?.users.length === 0 ? <span className="text-muted-foreground">没有可指派的成员</span> : null}
+                </div>
+              </div>)}
+            </fieldset>
 
             <fieldset className="space-y-1 text-sm font-medium">
               <legend>{l10n("local.work_record_predecessor_record")}</legend>

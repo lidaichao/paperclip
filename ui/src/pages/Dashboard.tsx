@@ -39,8 +39,16 @@ import { InlineBanner } from "../components/InlineBanner";
 import type { Agent, Issue } from "@paperclipai/shared";
 import { PluginSlotOutlet } from "@/plugins/slots";
 import { SmokeLabDashboardCard } from "../components/SmokeLabDashboardCard";
+import { DashboardMyTodos } from "../components/DashboardMyTodos";
 
 const DASHBOARD_ACTIVITY_LIMIT = 10;
+
+function DashboardTabs({ value, onChange }: { value: "overview" | "mine"; onChange: (value: "overview" | "mine") => void }) {
+  return <div role="tablist" aria-label="仪表盘页签" className="flex h-11 items-stretch gap-5 border-b">
+    {([ ["overview", "总览"], ["mine", "我的待办"] ] as const).map(([tab, label]) =>
+      <button key={tab} role="tab" aria-selected={value === tab} className={cn("border-b-2 px-1 text-sm", value === tab ? "border-primary font-semibold text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")} onClick={() => onChange(tab)}>{label}</button>)}
+  </div>;
+}
 
 function getRecentIssues(issues: Issue[]): Issue[] {
   return [...issues]
@@ -77,6 +85,7 @@ export function Dashboard() {
   const location = useLocation();
   const { setBreadcrumbs } = useBreadcrumbs();
   const [animatedActivityIds, setAnimatedActivityIds] = useState<Set<string>>(new Set());
+  const [dashboardTab, setDashboardTab] = useState<"overview" | "mine">("overview");
   const seenActivityIdsRef = useRef<Set<string>>(new Set());
   const hydratedActivityRef = useRef(false);
   const activityAnimationTimersRef = useRef<number[]>([]);
@@ -309,6 +318,10 @@ export function Dashboard() {
     );
   }
 
+  if (dashboardTab === "mine") {
+    return <div className="space-y-6"><DashboardTabs value={dashboardTab} onChange={setDashboardTab} /><DashboardMyTodos key={selectedCompanyId} companyId={selectedCompanyId} /></div>;
+  }
+
   if (isLoading) {
     return <PageSkeleton variant="dashboard" />;
   }
@@ -323,6 +336,7 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <DashboardTabs value={dashboardTab} onChange={setDashboardTab} />
       {error && <p className="text-sm text-destructive">{error.message}</p>}
 
       {pausedBanner?.kind === "imported" ? (

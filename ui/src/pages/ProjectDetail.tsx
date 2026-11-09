@@ -552,7 +552,8 @@ export function ProjectDetail() {
       return;
     }
     if (activeTab === "plans") {
-      navigate(`/projects/${canonicalProjectRef}/plans`, { replace: true });
+      const record = new URLSearchParams(location.search).get("record");
+      navigate(`/projects/${canonicalProjectRef}/plans${record ? `?record=${encodeURIComponent(record)}` : ""}`, { replace: true });
       return;
     }
     if (activeTab === "gantt") {
@@ -560,7 +561,8 @@ export function ProjectDetail() {
       return;
     }
     if (activeTab === "defects") {
-      navigate(`/projects/${canonicalProjectRef}/defects`, { replace: true });
+      const record = new URLSearchParams(location.search).get("record");
+      navigate(`/projects/${canonicalProjectRef}/defects${record ? `?record=${encodeURIComponent(record)}` : ""}`, { replace: true });
       return;
     }
     if (activeTab === "workspaces") {

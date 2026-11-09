@@ -14,6 +14,8 @@ import type {
   WorkPackageAssignmentEscalationReceipt,
   WorkRecordConsoleCapabilities,
   WorkRecord,
+  WorkRecordMyTodo,
+  WorkRecordBusinessStatus,
   WorkRecordViewConfig,
   WorkRecordViewKind,
   WorkRecordViewPreference,
@@ -47,6 +49,20 @@ export const workRecordsApi = {
     api.delete<{ id: string; deleted: true }>(`/companies/${companyId}/projects/${projectId}/work-record-views/${viewKind}/${viewId}`, { expectedRevision }),
   list: (companyId: string, projectId: string) =>
     api.get<WorkRecord[]>(`/companies/${companyId}/projects/${projectId}/work-records`),
+  myTodos: (companyId: string, filter: {
+    kind: "plan" | "defect";
+    status?: WorkRecordBusinessStatus | "all";
+    projectId?: string;
+    q?: string;
+    dueBefore?: string;
+    sort?: "updated" | "due";
+    cursor?: string;
+    limit?: number;
+  }) => {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filter)) if (value !== undefined && value !== "") query.set(key, String(value));
+    return api.get<{ items: WorkRecordMyTodo[]; nextCursor: string | null }>(`/companies/${companyId}/work-records/my-todos?${query}`);
+  },
   create: (companyId: string, input: CreateWorkRecord) =>
     api.post<WorkRecord>(`/companies/${companyId}/work-records`, input),
   update: (companyId: string, projectId: string, recordId: string, input: UpdateWorkRecord) =>

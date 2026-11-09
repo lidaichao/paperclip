@@ -18,7 +18,7 @@ function record(input: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title">): 
     id, companyId: COMPANY_ID, projectId: PROJECT_ID, kind: "plan", title,
     description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null,
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
-    assigneeAgentId: "agent-developer", qaAssigneeAgentId: "agent-qa", businessStatus: "in_review",
+    assigneeAgentId: "agent-developer", qaAssigneeAgentId: "agent-qa", userResponsibilities: [], businessStatus: "in_review",
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     statusVersion: 2, revision: 2, dispatchState: "linked", dispatchRound: 1, dependencySetRevision: 1, blockedCycle: 0, dependencies: [],
     execution: { issueId: null, issueIdentifier: null, issueStatus: null, issueStatusVersion: null, lastRunId: null, lastRunStatus: null, lastRunAgentId: null, lastRunStartedAt: null, lastRunEndedAt: null, projectionState: "current", projectionError: null, projectedAt: new Date("2026-10-28T08:00:00Z") },
