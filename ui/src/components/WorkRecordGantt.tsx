@@ -52,9 +52,12 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
   const [undo, setUndo] = useState<Undo | null>(null);
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
+  const dragRef = useRef<Drag | null>(null);
+  const suppressDragClickRef = useRef(false);
   const [dependencyTarget, setDependencyTarget] = useState("");
   const [selectedEdge, setSelectedEdge] = useState<DependencyEdge | null>(null);
   const [dependencyDrag, setDependencyDrag] = useState<DependencyDrag | null>(null);
+  const dependencyDragRef = useRef<DependencyDrag | null>(null);
   const [dependencyCandidate, setDependencyCandidate] = useState<MutateWorkRecordDependency | null>(null);
   const viewsKey = queryKeys.workRecords.views(companyId, projectId, "gantt");
   const views = useQuery({ queryKey: viewsKey, queryFn: () => workRecordsApi.views(companyId, projectId, "gantt") });
@@ -96,6 +99,10 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
     await mutation.mutateAsync(next);
   };
   const predecessorIds = (record: WorkRecord) => record.dependencies.map((edge) => edge.predecessorRecordId);
+  const beginDependencyDrag = (next: DependencyDrag) => {
+    dependencyDragRef.current = next;
+    setDependencyDrag(next);
+  };
   const expected = (record: WorkRecord) => ({ recordId: record.id, expectedRevision: record.revision, expectedDependencySetRevision: record.dependencySetRevision });
   const mutateDependency = async (input: MutateWorkRecordDependency, inverse: (updated: WorkRecord[]) => MutateWorkRecordDependency) => {
     if (!writable) return;
@@ -117,7 +124,8 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
     operation: "remove", predecessorRecordId: predecessor.id, successorRecordId: successor.id, expectedRecords: [expected(successor)],
   }, (updated) => ({ operation: "add", predecessorRecordId: predecessor.id, successorRecordId: successor.id, expectedRecords: [expected(updated[0])] }));
   const finishDependencyDrag = async (targetId: string) => {
-    const operation = dependencyDrag;
+    const operation = dependencyDragRef.current;
+    dependencyDragRef.current = null;
     setDependencyDrag(null);
     if (!operation || !writable) return;
     const predecessor = records.find((item) => item.id === operation.predecessorId);
@@ -159,14 +167,20 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
     const pixelsPerDay = Math.max(1, (rect?.width ?? days * 24) / days);
     const anchorDay = minDay + Math.max(0, Math.min(days - 1, Math.floor((event.clientX - (rect?.left ?? 0)) / pixelsPerDay)));
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    setDrag({ record, mode, originX: event.clientX, currentX: event.clientX, anchorDay, pixelsPerDay });
+    const next = { record, mode, originX: event.clientX, currentX: event.clientX, anchorDay, pixelsPerDay };
+    suppressDragClickRef.current = false;
+    dragRef.current = next;
+    setDrag(next);
   };
   const finishDrag = () => {
-    if (!drag) return;
-    const next = dragDates(drag);
+    const activeDrag = dragRef.current;
+    if (!activeDrag) return;
+    const next = dragDates(activeDrag);
+    dragRef.current = null;
     setDrag(null);
+    window.setTimeout(() => { suppressDragClickRef.current = false; }, 0);
     if (!next || next.delta === 0 || next.start > next.end) return;
-    void save({ record: drag.record, start: next.start, end: next.end });
+    void save({ record: activeDrag.record, start: next.start, end: next.end });
   };
   const toggleFocus = () => {
     if (!focus) scrollAnchorRef.current = scrollRef.current?.scrollTop ?? 0;
@@ -176,8 +190,8 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (dependencyDrag) { event.preventDefault(); setDependencyDrag(null); }
-      else if (drag) { event.preventDefault(); setDrag(null); }
+      if (dependencyDrag) { event.preventDefault(); dependencyDragRef.current = null; setDependencyDrag(null); }
+      else if (drag) { event.preventDefault(); dragRef.current = null; suppressDragClickRef.current = true; setDrag(null); }
       else if (focus) { event.preventDefault(); toggleFocus(); }
     };
     window.addEventListener("keydown", onEscape);
@@ -195,7 +209,7 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
     </div>
     {error ? <div role="alert" className="flex items-center gap-2 border-b bg-destructive/10 px-3 py-2 text-sm text-destructive"><span>{error}；候选修改已保留。</span><Button size="sm" variant="outline" disabled={(!candidate && !dependencyCandidate) || mutation.isPending} onClick={() => { if (candidate) void save(candidate); else if (dependencyCandidate) void workRecordsApi.mutateDependency(companyId, projectId, dependencyCandidate).then(async () => { setDependencyCandidate(null); setError(null); await client.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }); }); }}>重试</Button></div> : null}
     <div ref={scrollRef} className="overflow-auto">
-      <div className="relative grid" style={{ gridTemplateColumns: `${labelWidth}px minmax(${days * 32}px, 1fr)`, minWidth: labelWidth + days * 32 }} onPointerMove={(event) => drag && setDrag((value) => value ? { ...value, currentX: event.clientX } : null)} onPointerUp={() => drag && finishDrag()} onPointerCancel={() => { setDrag(null); setDependencyDrag(null); }}>
+      <div className="relative grid" style={{ gridTemplateColumns: `${labelWidth}px minmax(${days * 32}px, 1fr)`, minWidth: labelWidth + days * 32 }} onPointerMove={(event) => { if (!dragRef.current) return; const next = { ...dragRef.current, currentX: event.clientX }; suppressDragClickRef.current ||= Math.abs(next.currentX - next.originX) > 2; dragRef.current = next; setDrag(next); }} onPointerUp={finishDrag} onPointerCancel={() => { dragRef.current = null; dependencyDragRef.current = null; suppressDragClickRef.current = false; setDrag(null); setDependencyDrag(null); }}>
         <div className="flex border-b border-r bg-muted/30 text-xs font-medium">{columns.map((field) => <span key={field} className="truncate border-r px-2 py-2" style={{ width: viewConfig.columnWidths[field] ?? (field === "title" ? 220 : 104) }}>{GANTT_LABELS[field]}</span>)}</div>
         <div className="grid border-b bg-muted/30" style={{ gridTemplateColumns: `repeat(${days}, minmax(32px, 1fr))` }}>{Array.from({ length: days }, (_, i) => <span key={i} className="border-r px-1 py-2 text-center text-xs text-muted-foreground">{ganttFromDay(minDay + i).slice(5)}</span>)}</div>
         {records.map((record) => {
@@ -205,14 +219,14 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
           const end = shownEnd ? ganttToDay(shownEnd) - minDay : start;
           return <div key={record.id} className="contents">
             <button className="flex truncate border-b border-r text-left text-sm hover:bg-muted/50" onClick={(event) => { setSelectedId(record.id); onOpen(record, event.currentTarget); }}>{columns.map((field) => <span key={field} className="truncate border-r px-2 py-2" style={{ width: viewConfig.columnWidths[field] ?? (field === "title" ? 220 : 104) }} title={ganttValue(record, field, agentNames)}>{ganttValue(record, field, agentNames)}</span>)}</button>
-            <div data-gantt-timeline={record.id} className="relative grid min-h-10 border-b" style={{ gridTemplateColumns: `repeat(${days}, minmax(32px, 1fr))` }} onPointerUp={() => dependencyDrag && void finishDependencyDrag(record.id)}>
+            <div data-gantt-timeline={record.id} className="relative grid min-h-10 border-b" style={{ gridTemplateColumns: `repeat(${days}, minmax(32px, 1fr))` }} onPointerUp={() => void finishDependencyDrag(record.id)}>
               {Array.from({ length: days }, (_, i) => <span key={i} className="border-r" />)}
-              {shownStart && shownEnd ? <div role="button" tabIndex={0} aria-disabled={!writable} aria-label={`${record.title}，${shownStart} 至 ${shownEnd}`} className="absolute top-2 flex h-6 items-center rounded bg-primary text-primary-foreground shadow-sm" style={{ left: `${start / days * 100}%`, width: `${Math.max(1, end - start + 1) / days * 100}%`, opacity: drag?.record.id === record.id ? 0.7 : 1 }} onClick={(event) => { if (!drag) { setSelectedId(record.id); onOpen(record, event.currentTarget); } }} onKeyDown={(event) => { const amount = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") { event.preventDefault(); adjust(record, "move", -amount); } if (event.key === "ArrowRight") { event.preventDefault(); adjust(record, "move", amount); } }} onPointerDown={(event) => beginDrag(event, record, "move")}>
-                <button disabled={!writable} aria-label="调整开始日期" className="h-full w-2 cursor-ew-resize border-r border-primary-foreground/40" onKeyDown={(event) => { const n = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") adjust(record, "start", -n); if (event.key === "ArrowRight") adjust(record, "start", n); }} onPointerDown={(event) => { event.stopPropagation(); beginDrag(event, record, "start"); }} />
+              {shownStart && shownEnd ? <div role="button" tabIndex={0} aria-disabled={!writable} aria-label={`${record.title}，${shownStart} 至 ${shownEnd}`} className="absolute top-2 z-20 flex h-6 items-center rounded bg-primary text-primary-foreground shadow-sm" style={{ left: `${start / days * 100}%`, width: `${Math.max(1, end - start + 1) / days * 100}%`, opacity: drag?.record.id === record.id ? 0.7 : 1 }} onClick={(event) => { if (suppressDragClickRef.current) { suppressDragClickRef.current = false; return; } if (!drag) { setSelectedId(record.id); onOpen(record, event.currentTarget); } }} onKeyDown={(event) => { const amount = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") { event.preventDefault(); adjust(record, "move", -amount); } if (event.key === "ArrowRight") { event.preventDefault(); adjust(record, "move", amount); } }} onPointerDown={(event) => beginDrag(event, record, "move")}>
+                <span role="button" tabIndex={writable ? 0 : -1} aria-disabled={!writable} aria-label="调整开始日期" className="h-full w-2 cursor-ew-resize border-r border-primary-foreground/40" onKeyDown={(event) => { const n = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") adjust(record, "start", -n); if (event.key === "ArrowRight") adjust(record, "start", n); }} onPointerDown={(event) => { event.stopPropagation(); beginDrag(event, record, "start"); }} />
                 <span className="min-w-0 flex-1 truncate px-2 text-xs">{record.title}</span>
-                <button disabled={!writable} aria-label="调整完成日期" className="h-full w-2 cursor-ew-resize border-l border-primary-foreground/40" onKeyDown={(event) => { const n = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") adjust(record, "end", -n); if (event.key === "ArrowRight") adjust(record, "end", n); }} onPointerDown={(event) => { event.stopPropagation(); beginDrag(event, record, "end"); }} />
-                <button disabled={!writable} aria-label={`从 ${record.title} 建立依赖`} className="absolute -right-2 top-1 size-4 rounded-full border bg-background text-foreground" onPointerDown={(event) => { event.stopPropagation(); setDependencyDrag({ predecessorId: record.id, successorId: record.id, endpoint: "create" }); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); setDependencyDrag({ predecessorId: record.id, successorId: record.id, endpoint: "create" }); } }} />
-              </div> : <button disabled={!writable} aria-label={`${record.title} 空日期轨道`} className="absolute inset-1 rounded border border-dashed text-xs text-muted-foreground hover:bg-muted/50" onClick={(event) => { if (!drag) { setSelectedId(record.id); onOpen(record, event.currentTarget); } }} onPointerDown={(event) => beginDrag(event, record, "create")} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); setSelectedId(record.id); onOpen(record, event.currentTarget); } }}>拖动建立日期（Enter：精确编辑）</button>}
+                <span role="button" tabIndex={writable ? 0 : -1} aria-disabled={!writable} aria-label="调整完成日期" className="h-full w-2 cursor-ew-resize border-l border-primary-foreground/40" onKeyDown={(event) => { const n = event.shiftKey ? 7 : 1; if (event.key === "ArrowLeft") adjust(record, "end", -n); if (event.key === "ArrowRight") adjust(record, "end", n); }} onPointerDown={(event) => { event.stopPropagation(); beginDrag(event, record, "end"); }} />
+                <span role="button" tabIndex={writable ? 0 : -1} aria-disabled={!writable} aria-label={`从 ${record.title} 建立依赖`} className="absolute -right-4 top-1 size-4 rounded-full border bg-background text-foreground" onPointerDown={(event) => { event.stopPropagation(); beginDependencyDrag({ predecessorId: record.id, successorId: record.id, endpoint: "create" }); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); beginDependencyDrag({ predecessorId: record.id, successorId: record.id, endpoint: "create" }); } }} />
+              </div> : <button disabled={!writable} aria-label={`${record.title} 空日期轨道`} className="absolute inset-1 rounded border border-dashed text-xs text-muted-foreground hover:bg-muted/50" onClick={(event) => { if (suppressDragClickRef.current) { suppressDragClickRef.current = false; return; } if (!drag) { setSelectedId(record.id); onOpen(record, event.currentTarget); } }} onPointerDown={(event) => beginDrag(event, record, "create")} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); setSelectedId(record.id); onOpen(record, event.currentTarget); } }}>拖动建立日期（Enter：精确编辑）</button>}
             </div>
           </div>;
         })}
@@ -228,7 +242,7 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
             const active = selectedEdge?.predecessorId === predecessor.id && selectedEdge.successorId === successor.id;
             return <g key={`${predecessor.id}:${successor.id}`}>
               <path d={`M ${x1} ${y1} H ${bend} V ${y2} H ${x2}`} fill="none" markerEnd="url(#gantt-arrow)" className="pointer-events-auto cursor-pointer stroke-foreground" style={{ strokeWidth: active ? 3 : 2 }} vectorEffect="non-scaling-stroke" tabIndex={0} role="button" aria-label={`${predecessor.title} 到 ${successor.title} 的依赖线`} onClick={() => { setSelectedEdge({ predecessorId: predecessor.id, successorId: successor.id }); setSelectedId(successor.id); }} onDoubleClick={(event) => onOpen(successor, event.currentTarget)} onKeyDown={(event) => { if (event.key === "Enter" && event.shiftKey) onOpen(successor, event.currentTarget); else if (event.key === "Enter") { setSelectedEdge({ predecessorId: predecessor.id, successorId: successor.id }); setSelectedId(successor.id); } if (event.key === "Delete") void removeDependency(predecessor, successor); }} />
-              {active ? <><circle cx={x1} cy={y1} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖源端改连" onPointerDown={() => setDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "source" })} onKeyDown={(event) => { if (event.key === "Enter") setDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "source" }); }} /><circle cx={x2} cy={y2} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖目标端改连" onPointerDown={() => setDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "target" })} onKeyDown={(event) => { if (event.key === "Enter") setDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "target" }); }} /></> : null}
+              {active ? <><circle cx={x1} cy={y1} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖源端改连" onPointerDown={() => beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "source" })} onKeyDown={(event) => { if (event.key === "Enter") beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "source" }); }} /><circle cx={x2} cy={y2} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖目标端改连" onPointerDown={() => beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "target" })} onKeyDown={(event) => { if (event.key === "Enter") beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "target" }); }} /></> : null}
             </g>;
           }))}
         </svg>

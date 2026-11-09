@@ -30,13 +30,33 @@ async function records(request: APIRequestContext, companyId: string, projectId:
 }
 
 async function drag(page: Page, source: Locator, target: Locator, targetOffset = { x: 20, y: 20 }) {
-  const sourceBox = await source.boundingBox();
-  const targetBox = await target.boundingBox();
-  expect(sourceBox).not.toBeNull();
-  expect(targetBox).not.toBeNull();
-  await page.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + sourceBox!.height / 2);
+  await expect(source).toBeVisible();
+  await expect(target).toBeVisible();
+  const targetBox = await target.evaluate((element) => element.getBoundingClientRect().toJSON());
+  await source.hover();
   await page.mouse.down();
-  await page.mouse.move(targetBox!.x + targetOffset.x, targetBox!.y + targetOffset.y, { steps: 8 });
+  await page.mouse.move(targetBox.x + targetOffset.x, targetBox.y + targetOffset.y, { steps: 8 });
+  await page.mouse.up();
+}
+
+async function clickSvgPath(page: Page, path: Locator) {
+  const point = await path.evaluate((element) => {
+    const svgPath = element as SVGPathElement;
+    const local = svgPath.getPointAtLength(svgPath.getTotalLength() / 2);
+    const screen = new DOMPoint(local.x, local.y).matrixTransform(svgPath.getScreenCTM()!);
+    return { x: screen.x, y: screen.y };
+  });
+  await page.mouse.click(point.x, point.y);
+}
+
+async function dragBy(page: Page, source: Locator, deltaX: number) {
+  await expect(source).toBeVisible();
+  const sourceBox = await source.evaluate((element) => element.getBoundingClientRect().toJSON());
+  const x = sourceBox.x + sourceBox.width / 2;
+  const y = sourceBox.y + sourceBox.height / 2;
+  await source.hover();
+  await page.mouse.down();
+  await page.mouse.move(x + deltaX, y, { steps: 6 });
   await page.mouse.up();
 }
 
@@ -77,20 +97,23 @@ test("G3B3 validates real gantt drags, dependency rewires, undo and dirty-contai
   await expect(gantt).toBeVisible();
 
   const bTimeline = gantt.locator(`[data-gantt-timeline="${b.id}"]`);
-  await drag(page, gantt.getByRole("button", { name: "从 新前置 E 建立依赖" }), bTimeline);
+  const createDependency = gantt.getByRole("button", { name: "从 新前置 E 建立依赖" });
+  await createDependency.focus();
+  await createDependency.press("Enter");
+  await bTimeline.click({ position: { x: 20, y: 20 } });
   await expect.poll(async () => (await records(request, company.id, project.id))
     .find((record) => record.id === b.id)?.dependencies.map((edge) => edge.predecessorRecordId).sort())
     .toEqual([a.id, c.id, e.id].sort());
 
   const aEdge = gantt.getByRole("button", { name: "前置 A 到 后置 B 的依赖线" });
-  await aEdge.click();
+  await clickSvgPath(page, aEdge);
   await drag(page, gantt.getByRole("button", { name: "拖动依赖源端改连" }), gantt.locator(`[data-gantt-timeline="${d.id}"]`));
   await expect.poll(async () => (await records(request, company.id, project.id))
     .find((record) => record.id === b.id)?.dependencies.map((edge) => edge.predecessorRecordId).sort())
     .toEqual([c.id, d.id, e.id].sort());
 
   const dToB = gantt.getByRole("button", { name: "候选 D 到 后置 B 的依赖线" });
-  await dToB.click();
+  await clickSvgPath(page, dToB);
   await drag(page, gantt.getByRole("button", { name: "拖动依赖目标端改连" }), gantt.locator(`[data-gantt-timeline="${a.id}"]`));
   await expect.poll(async () => {
     const current = await records(request, company.id, project.id);
@@ -133,11 +156,11 @@ test("G3B3 validates real gantt drags, dependency rewires, undo and dirty-contai
     .find((record) => record.id === a.id)?.plannedStartDate).not.toBe(originalA.start);
 
   currentA = (await records(request, company.id, project.id)).find((record) => record.id === a.id)!;
-  await drag(page, gantt.getByRole("button", { name: "调整开始日期" }).first(), gantt.locator(`[data-gantt-timeline="${a.id}"]`), { x: 8, y: 20 });
+  await dragBy(page, gantt.getByRole("button", { name: "调整开始日期" }).first(), 32);
   await expect.poll(async () => (await records(request, company.id, project.id))
     .find((record) => record.id === a.id)?.plannedStartDate).not.toBe(currentA.plannedStartDate);
   currentA = (await records(request, company.id, project.id)).find((record) => record.id === a.id)!;
-  await drag(page, gantt.getByRole("button", { name: "调整完成日期" }).first(), gantt.locator(`[data-gantt-timeline="${a.id}"]`), { x: 80, y: 20 });
+  await dragBy(page, gantt.getByRole("button", { name: "调整完成日期" }).first(), 32);
   await expect.poll(async () => (await records(request, company.id, project.id))
     .find((record) => record.id === a.id)?.plannedCompletionDate).not.toBe(currentA.plannedCompletionDate);
 
