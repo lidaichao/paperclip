@@ -102,7 +102,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   const navigationGuardPromiseRef = useRef<Promise<boolean> | null>(null);
   const businessDecisionPromiseRef = useRef<Promise<boolean> | null>(null);
   const businessDecisionResolveRef = useRef<((allowed: boolean) => void) | null>(null);
-  const lastEditorFocusRef = useRef<HTMLElement | null>(null);
+  const lastEditorFocusRef = useRef<HTMLElement | SVGElement | null>(null);
   const latestNavigationGuardRef = useRef<() => Promise<boolean>>(async () => true);
   const confirmedDialogCloseRef = useRef(false);
   const [businessDecisionOpen, setBusinessDecisionOpen] = useState(false);
@@ -140,10 +140,12 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   }, [businessDraftDirty]);
 
   const closeDialog = (confirmed = false) => {
+    const focusTarget = lastEditorFocusRef.current;
     confirmedDialogCloseRef.current = confirmed;
     setDialogOpen(false);
     setEditingRecord(null);
     setDraft(blankDraft());
+    window.setTimeout(() => focusTarget?.focus(), 0);
   };
   useEffect(() => {
     if (!dialogOpen) confirmedDialogCloseRef.current = false;
@@ -170,6 +172,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       if (editingRecord) {
         return workRecordsApi.update(companyId, projectId, editingRecord.id, {
           expectedRevision: editingRecord.revision,
+          dependencySetRevision: editingRecord.dependencySetRevision,
           ...shared,
           businessStatus: draft.businessStatus,
         });
@@ -324,7 +327,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       </div>
 
       <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>
-        <DialogContent className="left-auto right-0 top-0 h-dvh w-2/5 max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none md:top-0 md:translate-y-0" overlayClassName="hidden" onInteractOutside={(event) => event.preventDefault()} onFocusCapture={(event) => { if (event.target instanceof HTMLElement) lastEditorFocusRef.current = event.target; }}>
+        <DialogContent className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none sm:w-3/5 lg:w-2/5 md:top-0 md:translate-y-0" overlayClassName="hidden" onInteractOutside={(event) => event.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{editingRecord ? l10n("local.work_record_edit_kind", { kind: kindLabel }) : l10n("local.work_record_new_kind", { kind: kindLabel })}</DialogTitle>
             <DialogDescription>{l10n("local.work_record_this_saves_a_business_record_only_it")}</DialogDescription>

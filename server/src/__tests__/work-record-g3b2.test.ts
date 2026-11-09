@@ -170,4 +170,33 @@ describeEmbeddedPostgres("work-record G3B2 containers", () => {
     expect(await db.select().from(heartbeatRuns)).toHaveLength(0);
     expect(await db.select().from(agentWakeupRequests)).toHaveLength(0);
   });
+
+  it("rewires one dependency without dropping siblings and rejects stale sets and cycles", async () => {
+    const service = await seedProject();
+    const actor = { actorType: "user" as const, actorId: "board", userId: "board" };
+    const create = (title: string, predecessorRecordIds: string[] = []) => service.create(companyId, {
+      projectId, kind: "plan", title, predecessorRecordIds,
+    }, actor);
+    const a = await create("A");
+    const c = await create("C");
+    const d = await create("D");
+    const b = await create("B", [a.id, c.id]);
+
+    const rewired = await service.update(companyId, projectId, b.id, {
+      expectedRevision: b.revision,
+      dependencySetRevision: b.dependencySetRevision,
+      predecessorRecordIds: [d.id, c.id],
+    });
+    expect(rewired.dependencies.map((edge) => edge.predecessorRecordId).sort()).toEqual([c.id, d.id].sort());
+    await expect(service.update(companyId, projectId, b.id, {
+      expectedRevision: rewired.revision,
+      dependencySetRevision: b.dependencySetRevision,
+      predecessorRecordIds: [a.id, c.id],
+    })).rejects.toMatchObject({ status: 409, details: { code: "work_record_dependency_revision_changed" } });
+    await expect(service.update(companyId, projectId, d.id, {
+      expectedRevision: d.revision,
+      dependencySetRevision: d.dependencySetRevision,
+      predecessorRecordIds: [b.id],
+    })).rejects.toMatchObject({ status: 422 });
+  });
 });

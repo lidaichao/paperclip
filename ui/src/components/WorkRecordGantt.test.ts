@@ -109,10 +109,12 @@ describe("WorkRecordGantt interactions", () => {
       { predecessorRecordId: "c", title: "C", businessStatus: "backlog", dispatchState: "not_dispatched", holdReason: null },
     ] });
     await render([a, b, c, d]);
+    expect(host.querySelector('[aria-label="A 到 B 的依赖线"]')?.tagName.toLowerCase()).toBe("path");
+    expect(host.querySelector('[aria-label="C 到 B 的依赖线"]')?.tagName.toLowerCase()).toBe("path");
     const titleButton = [...host.querySelectorAll("button")].find((item) => item.textContent === "B") as HTMLButtonElement;
     await act(async () => titleButton.click());
     const reconnect = host.querySelector('[aria-label="改连 a"]') as HTMLSelectElement;
     await act(async () => { reconnect.value = "d"; reconnect.dispatchEvent(new Event("change", { bubbles: true })); });
-    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", "b", expect.objectContaining({ predecessorRecordIds: ["d", "c"] }));
+    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", "b", expect.objectContaining({ dependencySetRevision: 1, predecessorRecordIds: ["d", "c"] }));
   });
 });

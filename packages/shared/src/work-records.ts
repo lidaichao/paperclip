@@ -244,6 +244,7 @@ export const createWorkRecordSchema = z.object({
 
 export const updateWorkRecordSchema = z.object({
   expectedRevision: z.number().int().positive(),
+  dependencySetRevision: z.number().int().positive().optional(),
   title: z.string().trim().min(1).max(500).optional(),
   description: z.string().max(100_000).optional().nullable(),
   businessStatus: z.enum(WORK_RECORD_BUSINESS_STATUSES).optional(),
@@ -257,7 +258,7 @@ export const updateWorkRecordSchema = z.object({
   predecessorRecordIds: z.array(z.string().guid()).max(100).optional(),
   ...workRecordDateFields,
   ...workRecordDefectFields,
-}).refine((value) => Object.keys(value).some((key) => key !== "expectedRevision"), {
+}).refine((value) => Object.keys(value).some((key) => !["expectedRevision", "dependencySetRevision"].includes(key)), {
   message: "At least one field must be updated",
 }).refine((value) => !value.plannedStartDate || !value.plannedCompletionDate || value.plannedStartDate <= value.plannedCompletionDate, {
   message: "Planned start date must not be after planned completion date",

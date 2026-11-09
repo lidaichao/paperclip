@@ -690,6 +690,12 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       const locked = await tx.select().from(workRecords).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, recordId))).then((rows) => rows[0]);
       if (!locked) throw notFound("Work record not found");
       if (locked.revision !== input.expectedRevision) throw conflict("Work record revision changed", { currentRevision: locked.revision });
+      if (input.predecessorRecordIds !== undefined && input.dependencySetRevision !== locked.dependencySetRevision) {
+        throw conflict("Work record dependency set changed", {
+          code: "work_record_dependency_revision_changed",
+          currentDependencySetRevision: locked.dependencySetRevision,
+        });
+      }
       const plannedStartDate = input.plannedStartDate === undefined ? locked.plannedStartDate : input.plannedStartDate;
       const plannedCompletionDate = input.plannedCompletionDate === undefined ? locked.plannedCompletionDate : input.plannedCompletionDate;
       if (plannedStartDate && plannedCompletionDate && plannedStartDate > plannedCompletionDate) {
