@@ -444,17 +444,17 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
             </label>
 
             <fieldset className="space-y-2 rounded-md border p-3 text-sm md:col-span-2">
-              <legend className="px-1 font-medium">人员责任</legend>
-              <p className="text-xs text-muted-foreground">只有明确指派的人会在“我的待办”看到此记录；Agent 执行负责人在上方单独设置。</p>
-              {users.isPending ? <p className="text-muted-foreground">正在读取公司成员…</p> : users.isError ? <p role="alert" className="text-destructive">成员读取失败，不能修改人员责任。</p> : null}
-              {([ ["execution", "执行"], ["qa", "QA"], ["po", "验收"] ] as const).map(([role, label]) => <div key={role} role="group" aria-label={label} className="grid gap-1 sm:grid-cols-[4rem_1fr]">
-                <span className="pt-1 font-medium">{label}</span>
+              <legend className="px-1 font-medium">{l10n("local.my_todo_human_responsibility")}</legend>
+              <p className="text-xs text-muted-foreground">{l10n("local.my_todo_human_responsibility_help")}</p>
+              {users.isPending ? <p className="text-muted-foreground">{l10n("local.my_todo_members_loading")}</p> : users.isError ? <p role="alert" className="text-destructive">{l10n("local.my_todo_members_failed")}</p> : null}
+              {([ ["execution", "local.my_todo_role_execution"], ["qa", "local.my_todo_role_qa"], ["po", "local.my_todo_role_po"] ] as const).map(([role, labelKey]) => <div key={role} role="group" aria-label={l10n(labelKey)} className="grid gap-1 sm:grid-cols-[4rem_1fr]">
+                <span className="pt-1 font-medium">{l10n(labelKey)}</span>
                 <div className="flex max-h-24 flex-wrap gap-x-4 gap-y-1 overflow-y-auto">
                   {(users.data?.users ?? []).map((user) => <label key={`${role}:${user.principalId}`} className="inline-flex min-h-7 items-center gap-1.5 font-normal">
                     <input type="checkbox" className="size-4 accent-primary" checked={draft.userResponsibilities.some((responsibility) => responsibility.userId === user.principalId && responsibility.role === role)} onChange={(event) => toggleUserRole(user.principalId, role, event.target.checked)} />
                     <span>{userLabels.get(user.principalId) ?? user.principalId}</span>
                   </label>)}
-                  {users.data?.users.length === 0 ? <span className="text-muted-foreground">没有可指派的成员</span> : null}
+                  {users.data?.users.length === 0 ? <span className="text-muted-foreground">{l10n("local.my_todo_members_empty")}</span> : null}
                 </div>
               </div>)}
             </fieldset>

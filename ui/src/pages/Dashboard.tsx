@@ -44,9 +44,9 @@ import { DashboardMyTodos } from "../components/DashboardMyTodos";
 const DASHBOARD_ACTIVITY_LIMIT = 10;
 
 function DashboardTabs({ value, onChange }: { value: "overview" | "mine"; onChange: (value: "overview" | "mine") => void }) {
-  return <div role="tablist" aria-label="仪表盘页签" className="flex h-11 items-stretch gap-5 border-b">
-    {([ ["overview", "总览"], ["mine", "我的待办"] ] as const).map(([tab, label]) =>
-      <button key={tab} role="tab" aria-selected={value === tab} className={cn("border-b-2 px-1 text-sm", value === tab ? "border-primary font-semibold text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")} onClick={() => onChange(tab)}>{label}</button>)}
+  return <div role="tablist" aria-label={l10n("local.my_todo_dashboard_tabs")} className="flex h-11 items-stretch gap-5 border-b">
+    {([ ["overview", "local.my_todo_overview_tab"], ["mine", "local.my_todo_title"] ] as const).map(([tab, labelKey]) =>
+      <button key={tab} role="tab" aria-selected={value === tab} className={cn("border-b-2 px-1 text-sm", value === tab ? "border-primary font-semibold text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")} onClick={() => onChange(tab)}>{l10n(labelKey)}</button>)}
   </div>;
 }
 

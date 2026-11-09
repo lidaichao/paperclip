@@ -75,4 +75,15 @@ test("dashboard keeps task and defect filters separate and opens the source reco
   await expect(page.getByRole("combobox", { name: "待办项目" })).toHaveValue(project.id);
   await expect(page.getByTestId("my-todos-plan").getByRole("listitem")).toHaveCount(20);
   await expect(page.getByTestId("my-todos-plan").getByText("项目：Todo project")).toHaveCount(0);
+  await page.setViewportSize({ width: 640, height: 720 });
+  await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 640);
+  await page.screenshot({ path: info.outputPath("my-todos-640.png"), fullPage: true });
+
+  await page.evaluate(() => localStorage.setItem("paperclip.locale", "en"));
+  await page.reload();
+  await page.getByRole("tab", { name: "My to-dos" }).click();
+  await expect(page.getByRole("heading", { name: "My to-dos" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit view" })).toBeVisible();
+  await expect(page.getByTestId("my-todos-plan").getByRole("listitem")).toHaveCount(20);
+  await page.screenshot({ path: info.outputPath("my-todos-en.png"), fullPage: true });
 });
