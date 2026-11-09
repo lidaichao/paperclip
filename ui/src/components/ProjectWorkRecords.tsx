@@ -111,6 +111,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   const businessDecisionPromiseRef = useRef<Promise<boolean> | null>(null);
   const businessDecisionResolveRef = useRef<((allowed: boolean) => void) | null>(null);
   const lastEditorFocusRef = useRef<HTMLElement | SVGElement | null>(null);
+  const lastBusinessFieldRef = useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null>(null);
   const latestNavigationGuardRef = useRef<() => Promise<boolean>>(async () => true);
   const confirmedDialogCloseRef = useRef(false);
   const [businessDecisionOpen, setBusinessDecisionOpen] = useState(false);
@@ -203,13 +204,13 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     },
   });
 
-  const restoreEditorFocus = () => window.setTimeout(() => lastEditorFocusRef.current?.focus(), 0);
+  const restoreBusinessFieldFocus = () => window.setTimeout(() => lastBusinessFieldRef.current?.focus(), 0);
   const finishBusinessDecision = (allowed: boolean) => {
     setBusinessDecisionOpen(false);
     businessDecisionResolveRef.current?.(allowed);
     businessDecisionResolveRef.current = null;
     businessDecisionPromiseRef.current = null;
-    if (!allowed) restoreEditorFocus();
+    if (!allowed) restoreBusinessFieldFocus();
   };
   const beforeViewSwitch = useCallback(async () => {
     if (!businessDraftDirty) return true;
@@ -361,7 +362,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       </div>
 
       <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>
-        <DialogContent data-testid="work-record-detail-drawer" className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none sm:w-3/5 lg:w-2/5 md:top-0 md:translate-y-0" overlayClassName="hidden" onInteractOutside={(event) => event.preventDefault()}>
+        <DialogContent data-testid="work-record-detail-drawer" className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none sm:w-3/5 lg:w-2/5 md:top-0 md:translate-y-0" overlayClassName="hidden" onInteractOutside={(event) => event.preventDefault()} onFocusCapture={(event) => { if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) lastBusinessFieldRef.current = event.target; }}>
           <DialogHeader>
             <DialogTitle>{editingRecord ? l10n("local.work_record_edit_kind", { kind: kindLabel }) : l10n("local.work_record_new_kind", { kind: kindLabel })}</DialogTitle>
             <DialogDescription>{l10n("local.work_record_this_saves_a_business_record_only_it")}</DialogDescription>
@@ -397,22 +398,22 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
             </label>
 
             <label className="space-y-1 text-sm font-medium">
-              <span>迭代</span>
+              <span>{l10n("local.work_record_iteration")}</span>
               <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.iterationId} onChange={(event) => setDraft((current) => ({ ...current, iterationId: event.target.value }))}>
-                <option value="">未归属迭代</option>
+                <option value="">{l10n("local.work_record_unassigned_iteration")}</option>
                 {(iterations.data ?? []).filter((iteration) => !iteration.archivedAt).map((iteration) => <option key={iteration.id} value={iteration.id}>{iteration.name}</option>)}
               </select>
             </label>
 
             {kind === "defect" ? <label className="space-y-1 text-sm font-medium">
-              <span>严重程度</span>
+              <span>{l10n("local.work_record_severity")}</span>
               <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.defectSeverity} onChange={(event) => setDraft((current) => ({ ...current, defectSeverity: event.target.value as WorkRecordDefectSeverity | "" }))}>
-                <option value="">未指定</option><option value="critical">严重</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option>
+                <option value="">{l10n("local.work_record_severity_unspecified")}</option><option value="critical">{l10n("local.work_record_severity_critical")}</option><option value="high">{l10n("local.work_record_severity_high")}</option><option value="medium">{l10n("local.work_record_severity_medium")}</option><option value="low">{l10n("local.work_record_severity_low")}</option>
               </select>
             </label> : null}
 
-            <label className="space-y-1 text-sm font-medium"><span>计划开始</span><Input type="date" value={draft.plannedStartDate} onChange={(event) => setDraft((current) => ({ ...current, plannedStartDate: event.target.value }))} /></label>
-            <label className="space-y-1 text-sm font-medium"><span>计划完成</span><Input type="date" value={draft.plannedCompletionDate} onChange={(event) => setDraft((current) => ({ ...current, plannedCompletionDate: event.target.value }))} /></label>
+            <label className="space-y-1 text-sm font-medium"><span>{l10n("local.work_record_planned_start")}</span><Input type="date" value={draft.plannedStartDate} onChange={(event) => setDraft((current) => ({ ...current, plannedStartDate: event.target.value }))} /></label>
+            <label className="space-y-1 text-sm font-medium"><span>{l10n("local.work_record_planned_completion")}</span><Input type="date" value={draft.plannedCompletionDate} onChange={(event) => setDraft((current) => ({ ...current, plannedCompletionDate: event.target.value }))} /></label>
 
             {kind === "plan" && draft.parentRecordId ? <label className="space-y-1 text-sm font-medium">
               <span>{l10n("local.work_record_package_qa_role")}</span>
@@ -493,16 +494,16 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       </Dialog>
 
       <Dialog open={businessDecisionOpen} onOpenChange={(open) => { if (!open && businessDecisionOpen) finishBusinessDecision(false); }}>
-        <DialogContent className="sm:max-w-lg" showCloseButton={false} data-testid="business-draft-decision">
+        <DialogContent className="sm:max-w-lg" showCloseButton={false} data-testid="business-draft-decision" onCloseAutoFocus={(event) => event.preventDefault()}>
           <DialogHeader>
-            <DialogTitle>有未保存的业务记录</DialogTitle>
-            <DialogDescription>先决定如何处理当前输入，再继续关闭、切换记录或切换页签。视图草稿不会被改动。</DialogDescription>
+            <DialogTitle>{l10n("local.work_record_unsaved_record_title")}</DialogTitle>
+            <DialogDescription>{l10n("local.work_record_unsaved_record_help")}</DialogDescription>
           </DialogHeader>
-          {save.error ? <p role="alert" className="text-sm text-destructive">保存失败，已留在原处，输入没有丢失：{save.error.message}</p> : null}
+          {save.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_unsaved_save_failed", { reason: save.error.message })}</p> : null}
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button onClick={() => void saveAndContinue()} disabled={save.isPending}>{save.isPending ? "正在保存" : "保存并继续"}</Button>
-            <Button variant="destructive" onClick={() => { closeDialog(true); finishBusinessDecision(true); }}>放弃并继续</Button>
-            <Button autoFocus variant="outline" onClick={() => finishBusinessDecision(false)}>留在此处</Button>
+            <Button onClick={() => void saveAndContinue()} disabled={save.isPending}>{l10n(save.isPending ? "local.work_record_unsaved_saving" : "local.work_record_unsaved_save_continue")}</Button>
+            <Button variant="destructive" onClick={() => { closeDialog(true); finishBusinessDecision(true); }}>{l10n("local.work_record_unsaved_discard_continue")}</Button>
+            <Button autoFocus variant="outline" onClick={() => finishBusinessDecision(false)}>{l10n("local.work_record_unsaved_stay")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

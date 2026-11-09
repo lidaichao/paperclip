@@ -174,7 +174,7 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
   await expect(page).toHaveURL(/\/defects$/);
   await defectRow.click();
   await expect(page.getByTestId("work-record-detail-drawer")).toContainText("复现：键盘切页。预期：保留。实际：已修复。");
-  await expect(page.getByTestId("work-record-detail-drawer")).toContainText("critical");
+  await expect(page.getByTestId("work-record-detail-drawer")).toContainText("严重");
   await expect(page.getByTestId("work-record-detail-drawer")).toContainText("2026-11-09 至 2026-11-12");
 
   let rejectNextSave = true;
