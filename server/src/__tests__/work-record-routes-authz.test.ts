@@ -180,6 +180,7 @@ describe("work-record route authorization", () => {
     await request(app).get("/api/companies/company-1/work-records/my-todos?kind=plan&status=todo&limit=20").expect(200);
     expect(myTodoService.list).toHaveBeenCalledWith("company-1", "viewer-1", {
       kind: "plan", status: "todo", projectId: undefined, cursor: undefined, limit: 20,
+      q: undefined, dueBefore: undefined, sort: undefined,
     });
     await request(app).get("/api/companies/company-1/work-records/my-todos?kind=unknown").expect(422);
     await request(app).get("/api/companies/other-company/work-records/my-todos").expect(403);

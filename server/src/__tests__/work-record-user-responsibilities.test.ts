@@ -99,6 +99,11 @@ describeDb("explicit human work-record responsibility", () => {
     expect((await myTodos.list(companyId, "alice-user", { kind: "defect" })).items).toHaveLength(1);
     expect((await myTodos.list(companyId, "alice-user", { status: "done" })).items.map((item) => item.id)).toEqual([rows[22].id]);
     expect((await myTodos.list(companyId, "alice-user", { projectId: projectA })).items).toHaveLength(12);
+    expect((await myTodos.list(companyId, "alice-user", { q: "Record 1" })).items).toHaveLength(11);
+    expect((await myTodos.list(companyId, "alice-user", { dueBefore: "2026-11-10" })).items).toHaveLength(0);
+    const dueFirst = await myTodos.list(companyId, "alice-user", { sort: "due", limit: 10 });
+    const dueSecond = await myTodos.list(companyId, "alice-user", { sort: "due", limit: 20, cursor: dueFirst.nextCursor! });
+    expect(new Set([...dueFirst.items, ...dueSecond.items].map((item) => item.id)).size).toBe(23);
     expect((await myTodos.list(companyId, "other-user")).items).toHaveLength(0);
     await expect(myTodos.list(companyId, "alice-user", { cursor: "invalid" })).rejects.toMatchObject({ status: 422 });
   });

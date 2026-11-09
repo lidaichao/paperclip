@@ -612,17 +612,26 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     const status = typeof req.query.status === "string" ? req.query.status : undefined;
     const projectId = typeof req.query.projectId === "string" ? req.query.projectId : undefined;
     const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : undefined;
+    const dueBefore = typeof req.query.dueBefore === "string" ? req.query.dueBefore : undefined;
+    const sort = typeof req.query.sort === "string" ? req.query.sort : undefined;
     const limit = req.query.limit === undefined ? undefined : Number(req.query.limit);
     if (kind && !WORK_RECORD_KINDS.includes(kind as (typeof WORK_RECORD_KINDS)[number])) throw unprocessable("Invalid kind");
     if (status && status !== "all" && !WORK_RECORD_BUSINESS_STATUSES.includes(status as (typeof WORK_RECORD_BUSINESS_STATUSES)[number])) throw unprocessable("Invalid status");
     if (projectId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(projectId)) throw unprocessable("Invalid projectId");
     if (cursor && cursor.length > 256) throw unprocessable("Invalid cursor");
+    if (q && q.length > 200) throw unprocessable("Search is too long");
+    if (dueBefore && (!/^\d{4}-\d{2}-\d{2}$/.test(dueBefore) || Number.isNaN(Date.parse(dueBefore)))) throw unprocessable("Invalid dueBefore");
+    if (sort && !["updated", "due"].includes(sort)) throw unprocessable("Invalid sort");
     res.json(await myTodos.list(companyId, req.actor.userId, {
       kind: kind as (typeof WORK_RECORD_KINDS)[number] | undefined,
       status: status as (typeof WORK_RECORD_BUSINESS_STATUSES)[number] | "all" | undefined,
       projectId,
       cursor,
       limit,
+      q,
+      dueBefore,
+      sort: sort as "updated" | "due" | undefined,
     }));
   });
 
