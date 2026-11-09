@@ -47,6 +47,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
   writable?: boolean;
 }) {
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
+  const editReturnFocusRef = useRef<HTMLElement | null>(null);
   const client = useQueryClient();
   const versionsKey = queryKeys.workRecords.versions(companyId, projectId);
   const iterationsKey = queryKeys.workRecords.iterations(companyId, projectId);
@@ -116,6 +117,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
   });
 
   const openEdit = (target: ContainerTarget) => {
+    editReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     update.reset();
     lifecycle.reset();
     setEditTarget(target);
@@ -146,10 +148,12 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
   };
   const conflict = update.error instanceof ApiError && update.error.status === 409;
   const error = createVersion.error ?? createIteration.error ?? lifecycle.error;
+  const editDraftDirty = editTarget
+    ? JSON.stringify(editDraft) !== JSON.stringify(draftFromTarget(editTarget))
+    : false;
 
   const actions = (target: ContainerTarget, row: "version" | "iteration") => {
     if (!writable) return null;
-    const archived = Boolean(target.item.archivedAt);
     return <div className={row === "version"
       ? "flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/version:opacity-100 group-focus-within/version:opacity-100"
       : "flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/iteration:opacity-100 group-focus-within/iteration:opacity-100"}>
@@ -162,7 +166,6 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => openEdit(target)}><Pencil />编辑</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => lifecycle.mutate({ target, operation: archived ? "restore" : "archive" })}>{archived ? "恢复" : "归档"}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onSelect={() => openDelete(target)}>删除空容器</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -209,7 +212,11 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
       {error ? <div role="alert" className="mt-3 text-xs text-destructive"><p>{error.message}</p><Button className="mt-1" size="sm" variant="outline" onClick={() => { void versions.refetch(); void iterations.refetch(); }}>重新载入，保留输入草稿</Button></div> : null}
 
       <Dialog open={Boolean(editTarget)} onOpenChange={(open) => { if (!open && !update.isPending && !lifecycle.isPending) setEditTarget(null); }}>
-        <DialogContent className="sm:max-w-lg" data-testid="container-edit-form">
+        <DialogContent className="sm:max-w-lg" data-testid="container-edit-form" onCloseAutoFocus={(event) => {
+          if (!editReturnFocusRef.current?.isConnected) return;
+          event.preventDefault();
+          editReturnFocusRef.current.focus();
+        }}>
           <DialogHeader>
             <DialogTitle>编辑{editTarget?.kind === "version" ? "版本" : "迭代"}</DialogTitle>
             <DialogDescription>{editTarget?.kind === "iteration" ? `上级版本：${versionNames.get(editTarget.item.versionId ?? "") ?? "未归属"}` : "修改名称和目标日期。"}</DialogDescription>
@@ -223,9 +230,10 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
           </div>
           {update.error ? <div role="alert" className="space-y-2 text-sm text-destructive"><p>{conflict ? "远端版本已变化。你的输入仍保留，请选择恢复方式。" : update.error.message}</p>{conflict ? <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => void reloadRemote()}>重新载入远端</Button><Button size="sm" onClick={() => void retryMine()}>复制我的修改后重试</Button></div> : null}</div> : null}
           {lifecycle.error ? <p role="alert" className="text-sm text-destructive">{lifecycle.error.message}</p> : null}
+          {editDraftDirty ? <p role="status" className="text-sm text-muted-foreground">有未保存修改，请先保存后再{editTarget?.item.archivedAt ? "恢复" : "归档"}。</p> : null}
           <DialogFooter className="items-center justify-between sm:justify-between">
-            <Button variant={editTarget?.item.archivedAt ? "outline" : "destructive"} disabled={lifecycle.isPending} onClick={() => editTarget && lifecycle.mutate({ target: editTarget, operation: editTarget.item.archivedAt ? "restore" : "archive" })}>{editTarget?.item.archivedAt ? "恢复" : "归档"}</Button>
-            <div className="flex gap-2"><Button variant="ghost" onClick={() => setEditTarget(null)}>取消</Button><Button disabled={!editDraft.name.trim() || update.isPending} onClick={() => update.mutate(undefined)}>保存</Button></div>
+            <Button data-testid="container-lifecycle-action" variant={editTarget?.item.archivedAt ? "outline" : "destructive"} disabled={editDraftDirty || lifecycle.isPending || update.isPending} onClick={() => editTarget && lifecycle.mutate({ target: editTarget, operation: editTarget.item.archivedAt ? "restore" : "archive" })}>{editTarget?.item.archivedAt ? "恢复" : "归档"}</Button>
+            <Button disabled={!editDraft.name.trim() || update.isPending || lifecycle.isPending} onClick={() => update.mutate(undefined)}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -171,6 +171,7 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
   await decision.getByRole("button", { name: "保存并继续" }).click();
   await expect(page).toHaveURL(/\/plans$/);
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
+  await expect(page).toHaveURL(/\/defects$/);
   await defectRow.click();
   await expect(page.getByTestId("work-record-detail-drawer")).toContainText("复现：键盘切页。预期：保留。实际：已修复。");
   await expect(page.getByTestId("work-record-detail-drawer")).toContainText("critical");
@@ -253,6 +254,7 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
   await page.evaluate(() => { document.documentElement.style.zoom = "200%"; });
   await verifyAnchorsAcrossTabs();
   await expect(page.getByRole("tab", { name: "计划", exact: true })).toBeVisible();
+  await expect(page.getByTestId("version-iteration-tree")).toBeVisible();
   const [treeBox, recordsBox] = await Promise.all([
     page.getByTestId("version-iteration-tree").boundingBox(),
     page.locator('section[aria-labelledby="work-package-title"]').boundingBox(),

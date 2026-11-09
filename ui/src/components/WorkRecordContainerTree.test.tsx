@@ -11,6 +11,8 @@ import { WorkRecordContainerTree } from "./WorkRecordContainerTree";
 const versionsMock = vi.hoisted(() => vi.fn());
 const iterationsMock = vi.hoisted(() => vi.fn());
 const updateVersionMock = vi.hoisted(() => vi.fn());
+const mutateVersionMock = vi.hoisted(() => vi.fn());
+const mutateIterationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/api/work-records", () => ({
   workRecordsApi: {
@@ -20,8 +22,8 @@ vi.mock("@/api/work-records", () => ({
     createIteration: vi.fn(),
     updateVersion: updateVersionMock,
     updateIteration: vi.fn(),
-    mutateVersion: vi.fn(),
-    mutateIteration: vi.fn(),
+    mutateVersion: mutateVersionMock,
+    mutateIteration: mutateIterationMock,
     deleteVersion: vi.fn(),
     deleteIteration: vi.fn(),
   },
@@ -65,6 +67,9 @@ describe("WorkRecordContainerTree", () => {
   beforeEach(async () => {
     versionsMock.mockResolvedValue([version]);
     iterationsMock.mockResolvedValue([iteration]);
+    updateVersionMock.mockResolvedValue({ ...version, revision: 2 });
+    mutateVersionMock.mockResolvedValue({ ...version, revision: 2 });
+    mutateIterationMock.mockResolvedValue({ ...iteration, revision: 2 });
     host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
@@ -107,5 +112,62 @@ describe("WorkRecordContainerTree", () => {
     expect(host.querySelector('button[aria-label^="编辑"]')).toBeNull();
     expect(host.querySelector('button[aria-label$="操作菜单"]')).toBeNull();
     expect(host.querySelector('input[aria-label="新版本名称"]')).toBeNull();
+  });
+
+  it("keeps archive out of the row menu and places it in the edit dialog without a cancel button", async () => {
+    await render();
+    const menuTrigger = button("V1 操作菜单");
+    await act(async () => {
+      menuTrigger.focus();
+      menuTrigger.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true }));
+    });
+    await flush();
+
+    const menu = document.body.querySelector('[data-slot="dropdown-menu-content"]');
+    expect(menu?.textContent).toContain("编辑");
+    expect(menu?.textContent).toContain("删除空容器");
+    expect(menu?.textContent).not.toContain("归档");
+    await act(async () => menu?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true })));
+    await flush();
+
+    const editButton = button("编辑版本 V1");
+    editButton.focus();
+    await act(async () => editButton.click());
+    const dialog = document.body.querySelector('[data-testid="container-edit-form"]') as HTMLElement;
+    const footerButtons = [...dialog.querySelectorAll('[data-slot="dialog-footer"] button')];
+    expect(footerButtons.map((item) => item.textContent?.trim())).toEqual(["归档", "保存"]);
+    expect(footerButtons[0]?.getAttribute("data-variant")).toBe("destructive");
+    expect(dialog.textContent).not.toContain("取消");
+
+    const name = dialog.querySelector('input:not([type="date"])') as HTMLInputElement;
+    await act(async () => setNativeValue(name, "V1 未保存"));
+    expect(button("归档").disabled).toBe(true);
+    expect(dialog.textContent).toContain("有未保存修改，请先保存后再归档");
+
+    await act(async () => (dialog.querySelector('[data-slot="dialog-close"]') as HTMLButtonElement).click());
+    await flush();
+    expect(document.body.querySelector('[data-testid="container-edit-form"]')).toBeNull();
+    expect(updateVersionMock).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(editButton);
+  });
+
+  it("archives and restores from the lifecycle action in the edit dialog", async () => {
+    await render();
+    await act(async () => button("编辑版本 V1").click());
+    await act(async () => button("归档").click());
+    await flush();
+    expect(mutateVersionMock).toHaveBeenCalledWith("company-1", "project-1", version.id, "archive", version.revision);
+
+    versionsMock.mockResolvedValue([{ ...version, archivedAt: new Date("2026-11-09") }]);
+    await act(async () => root.unmount());
+    client.clear();
+    root = createRoot(host);
+    await render();
+    await act(async () => button("编辑版本 V1").click());
+    const restore = button("恢复");
+    expect(restore.getAttribute("data-testid")).toBe("container-lifecycle-action");
+    await act(async () => restore.click());
+    await flush();
+    expect(mutateVersionMock).toHaveBeenLastCalledWith("company-1", "project-1", version.id, "restore", version.revision);
   });
 });
