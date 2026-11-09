@@ -157,7 +157,7 @@ describe("ProjectWorkRecords", () => {
     expect(createMock).not.toHaveBeenCalled();
   });
 
-  it("preserves all existing predecessors when editing another field", async () => {
+  it("does not rewrite dependencies when editing another field", async () => {
     const first = record("plan", { id: "plan-a", title: "策划" });
     const second = record("plan", { id: "plan-b", title: "程序" });
     const dependent = record("plan", { id: "plan-c", title: "验收", dependencies: [
@@ -172,9 +172,9 @@ describe("ProjectWorkRecords", () => {
     expect([...predecessorGroup!.querySelectorAll('input[type="checkbox"]')].map((node) => (node as HTMLInputElement).checked)).toEqual([true, true]);
     await act(async () => button("保存计划").click());
     await flush();
-    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", dependent.id, expect.objectContaining({
-      predecessorRecordIds: [first.id, second.id],
-    }));
+    const payload = updateMock.mock.calls.at(-1)?.[3];
+    expect(payload).not.toHaveProperty("predecessorRecordIds");
+    expect(payload).not.toHaveProperty("dependencySetRevision");
   });
 
   it("updates QA coverage separately from the dependency form", async () => {

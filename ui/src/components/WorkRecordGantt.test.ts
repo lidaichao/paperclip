@@ -9,7 +9,8 @@ import { ganttFromDay, ganttToDay, shiftGanttDate } from "./WorkRecordGantt";
 import { WorkRecordGantt } from "./WorkRecordGantt";
 
 const updateMock = vi.hoisted(() => vi.fn());
-vi.mock("@/api/work-records", () => ({ workRecordsApi: { update: updateMock } }));
+const mutateDependencyMock = vi.hoisted(() => vi.fn());
+vi.mock("@/api/work-records", () => ({ workRecordsApi: { update: updateMock, mutateDependency: mutateDependencyMock } }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 function record(id: string, title: string, overrides: Partial<WorkRecord> = {}): WorkRecord {
@@ -59,6 +60,7 @@ describe("WorkRecordGantt interactions", () => {
     root = createRoot(host);
     client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
     updateMock.mockResolvedValue({});
+    mutateDependencyMock.mockImplementation(async (_companyId, _projectId, input) => input.expectedRecords.map((item: { recordId: string; expectedRevision: number; expectedDependencySetRevision: number }) => record(item.recordId, item.recordId, { revision: item.expectedRevision + 1, dependencySetRevision: item.expectedDependencySetRevision + 1 })));
   });
 
   afterEach(() => {
@@ -115,6 +117,10 @@ describe("WorkRecordGantt interactions", () => {
     await act(async () => titleButton.click());
     const reconnect = host.querySelector('[aria-label="改连 a"]') as HTMLSelectElement;
     await act(async () => { reconnect.value = "d"; reconnect.dispatchEvent(new Event("change", { bubbles: true })); });
-    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", "b", expect.objectContaining({ dependencySetRevision: 1, predecessorRecordIds: ["d", "c"] }));
+    expect(mutateDependencyMock).toHaveBeenCalledWith("company-1", "project-1", {
+      operation: "replace_source", predecessorRecordId: "a", successorRecordId: "b",
+      replacementPredecessorRecordId: "d",
+      expectedRecords: [{ recordId: "b", expectedRevision: 1, expectedDependencySetRevision: 1 }],
+    });
   });
 });

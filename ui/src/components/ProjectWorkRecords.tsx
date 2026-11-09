@@ -159,7 +159,6 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
         parentRecordId: draft.parentRecordId || null,
         assigneeAgentId: draft.assigneeAgentId || null,
         qaAssigneeAgentId: draft.qaAssigneeAgentId || null,
-        predecessorRecordIds: draft.predecessorRecordIds,
         iterationId: draft.iterationId || null,
         plannedStartDate: draft.plannedStartDate || null,
         plannedCompletionDate: draft.plannedCompletionDate || null,
@@ -170,14 +169,20 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
         } : {}),
       };
       if (editingRecord) {
+        const originalPredecessors = editingRecord.dependencies.map((dependency) => dependency.predecessorRecordId).sort();
+        const nextPredecessors = [...draft.predecessorRecordIds].sort();
+        const dependenciesChanged = JSON.stringify(originalPredecessors) !== JSON.stringify(nextPredecessors);
         return workRecordsApi.update(companyId, projectId, editingRecord.id, {
           expectedRevision: editingRecord.revision,
-          dependencySetRevision: editingRecord.dependencySetRevision,
           ...shared,
+          ...(dependenciesChanged ? {
+            predecessorRecordIds: draft.predecessorRecordIds,
+            dependencySetRevision: editingRecord.dependencySetRevision,
+          } : {}),
           businessStatus: draft.businessStatus,
         });
       }
-      return workRecordsApi.create(companyId, { projectId, kind, ...shared });
+      return workRecordsApi.create(companyId, { projectId, kind, ...shared, predecessorRecordIds: draft.predecessorRecordIds });
     },
     onSuccess: async () => {
       closeDialog(true);

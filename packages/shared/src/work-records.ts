@@ -265,6 +265,36 @@ export const updateWorkRecordSchema = z.object({
   path: ["plannedCompletionDate"],
 });
 
+const workRecordDependencyVersionSchema = z.object({
+  recordId: z.string().guid(),
+  expectedRevision: z.number().int().positive(),
+  expectedDependencySetRevision: z.number().int().positive(),
+}).strict();
+
+export const mutateWorkRecordDependencySchema = z.object({
+  operation: z.enum(["add", "remove", "replace_source", "replace_target"]),
+  predecessorRecordId: z.string().guid(),
+  successorRecordId: z.string().guid(),
+  replacementPredecessorRecordId: z.string().guid().optional(),
+  replacementSuccessorRecordId: z.string().guid().optional(),
+  expectedRecords: z.array(workRecordDependencyVersionSchema).min(1).max(2),
+}).strict().superRefine((value, context) => {
+  if (value.replacementPredecessorRecordId && value.replacementSuccessorRecordId) {
+    context.addIssue({ code: "custom", message: "Only one dependency endpoint can be replaced at a time" });
+  }
+  if ((value.operation === "replace_source") !== Boolean(value.replacementPredecessorRecordId)
+    || (value.operation === "replace_target") !== Boolean(value.replacementSuccessorRecordId)
+    || (["add", "remove"].includes(value.operation) && Boolean(value.replacementPredecessorRecordId || value.replacementSuccessorRecordId))) {
+    context.addIssue({ code: "custom", message: "Dependency operation and replacement endpoint do not match" });
+  }
+  const required = new Set([value.successorRecordId]);
+  if (value.replacementSuccessorRecordId) required.add(value.replacementSuccessorRecordId);
+  const supplied = value.expectedRecords.map((item) => item.recordId);
+  if (new Set(supplied).size !== supplied.length || supplied.length !== required.size || supplied.some((id) => !required.has(id))) {
+    context.addIssue({ code: "custom", message: "expectedRecords must exactly cover every affected successor" });
+  }
+});
+
 export const dispatchWorkRecordSchema = z.object({
   clientRequestId: z.string().trim().min(1).max(255),
   expectedRevision: z.number().int().positive(),
@@ -317,6 +347,7 @@ export const updateProjectIterationSchema = z.object({
 
 export type CreateWorkRecord = z.infer<typeof createWorkRecordSchema>;
 export type UpdateWorkRecord = z.infer<typeof updateWorkRecordSchema>;
+export type MutateWorkRecordDependency = z.infer<typeof mutateWorkRecordDependencySchema>;
 export type DispatchWorkRecord = z.infer<typeof dispatchWorkRecordSchema>;
 export type AcknowledgeWorkRecordDescription = z.infer<typeof acknowledgeWorkRecordDescriptionSchema>;
 export type CreateProjectVersion = z.infer<typeof createProjectVersionSchema>;

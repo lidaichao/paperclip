@@ -16,6 +16,7 @@ import {
   recordQaQualityVerdictSchema,
   recoverWorkRecordOutboxSchema,
   mutateProjectContainerSchema,
+  mutateWorkRecordDependencySchema,
   updateProjectIterationSchema,
   updateProjectVersionSchema,
   updateWorkRecordSchema,
@@ -867,6 +868,25 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       },
     });
     res.json(record);
+  });
+
+  router.post("/companies/:companyId/projects/:projectId/work-record-dependencies/mutate", validate(mutateWorkRecordDependencySchema), async (req, res) => {
+    const companyId = req.params.companyId as string;
+    const projectId = req.params.projectId as string;
+    assertCompanyAccess(req, companyId);
+    if (isReadOnlyViewer(req, companyId)) throw forbidden("只读成员只能查看，不能修改依赖");
+    const records = await service.mutateDependency(companyId, projectId, req.body);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
+      runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
+      action: "work_record.dependency_mutated", entityType: "work_record_dependency",
+      entityId: `${req.body.predecessorRecordId}:${req.body.successorRecordId}`,
+      details: { projectId, replacementPredecessorRecordId: req.body.replacementPredecessorRecordId ?? null,
+        replacementSuccessorRecordId: req.body.replacementSuccessorRecordId ?? null,
+        affectedRecordIds: records.map((record) => record.id) },
+    });
+    res.json(records);
   });
 
   router.get("/companies/:companyId/projects/:projectId/work-records/:recordId/description-deliveries/:descriptionRevision", async (req, res) => {

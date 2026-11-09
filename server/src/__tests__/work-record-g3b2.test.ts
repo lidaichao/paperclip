@@ -199,4 +199,38 @@ describeEmbeddedPostgres("work-record G3B2 containers", () => {
       predecessorRecordIds: [b.id],
     })).rejects.toMatchObject({ status: 422 });
   });
+
+  it("retargets the dependency successor in one transaction and rejects stale two-sided revisions without partial writes", async () => {
+    const service = await seedProject();
+    const actor = { actorType: "user" as const, actorId: "board", userId: "board" };
+    const create = (title: string, predecessorRecordIds: string[] = []) => service.create(companyId, {
+      projectId, kind: "plan", title, predecessorRecordIds,
+    }, actor);
+    const a = await create("A"); const c = await create("C");
+    const b = await create("B", [a.id, c.id]); const d = await create("D");
+
+    const changed = await service.mutateDependency(companyId, projectId, {
+      operation: "replace_target", predecessorRecordId: a.id, successorRecordId: b.id,
+      replacementSuccessorRecordId: d.id,
+      expectedRecords: [
+        { recordId: b.id, expectedRevision: b.revision, expectedDependencySetRevision: b.dependencySetRevision },
+        { recordId: d.id, expectedRevision: d.revision, expectedDependencySetRevision: d.dependencySetRevision },
+      ],
+    });
+    const byId = new Map(changed.map((record) => [record.id, record]));
+    expect(byId.get(b.id)?.dependencies.map((edge) => edge.predecessorRecordId)).toEqual([c.id]);
+    expect(byId.get(d.id)?.dependencies.map((edge) => edge.predecessorRecordId)).toEqual([a.id]);
+
+    await expect(service.mutateDependency(companyId, projectId, {
+      operation: "replace_target", predecessorRecordId: c.id, successorRecordId: b.id,
+      replacementSuccessorRecordId: d.id,
+      expectedRecords: [
+        { recordId: b.id, expectedRevision: b.revision, expectedDependencySetRevision: b.dependencySetRevision },
+        { recordId: d.id, expectedRevision: d.revision, expectedDependencySetRevision: d.dependencySetRevision },
+      ],
+    })).rejects.toMatchObject({ status: 409 });
+    const current = new Map((await service.list(companyId, projectId)).map((record) => [record.id, record]));
+    expect(current.get(b.id)?.dependencies.map((edge) => edge.predecessorRecordId)).toEqual([c.id]);
+    expect(current.get(d.id)?.dependencies.map((edge) => edge.predecessorRecordId)).toEqual([a.id]);
+  });
 });

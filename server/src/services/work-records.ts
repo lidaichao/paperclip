@@ -34,6 +34,7 @@ import type {
   CreateProjectVersion,
   DispatchWorkRecord,
   FillWorkRecordAssignmentGap,
+  MutateWorkRecordDependency,
   UpdateWorkRecord,
   UpdateProjectIteration,
   UpdateProjectVersion,
@@ -899,6 +900,100 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       return row;
     });
     return hydrate(companyId, [updated]).then((result) => result[0]);
+  }
+
+  async function mutateDependency(companyId: string, projectId: string, input: MutateWorkRecordDependency) {
+    const affectedSuccessorIds = [...new Set([
+      input.successorRecordId,
+      ...(input.replacementSuccessorRecordId ? [input.replacementSuccessorRecordId] : []),
+    ])].sort();
+    const expectedById = new Map(input.expectedRecords.map((item) => [item.recordId, item]));
+    const affected = await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+      const projectRecords = await tx.select().from(workRecords).where(and(
+        eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId),
+      ));
+      const byId = new Map(projectRecords.map((record) => [record.id, record]));
+      const referencedIds = [input.predecessorRecordId, input.successorRecordId,
+        input.replacementPredecessorRecordId, input.replacementSuccessorRecordId].filter((id): id is string => Boolean(id));
+      if (referencedIds.some((id) => !byId.has(id))) {
+        throw unprocessable("Every dependency endpoint must belong to the same company and project");
+      }
+      for (const successorId of affectedSuccessorIds) {
+        const record = byId.get(successorId)!;
+        const expected = expectedById.get(successorId)!;
+        if (record.revision !== expected.expectedRevision) {
+          throw conflict("Work record revision changed", { recordId: successorId, currentRevision: record.revision });
+        }
+        if (record.dependencySetRevision !== expected.expectedDependencySetRevision) {
+          throw conflict("Work record dependency set changed", {
+            code: "work_record_dependency_revision_changed", recordId: successorId,
+            currentDependencySetRevision: record.dependencySetRevision,
+          });
+        }
+        if (record.dispatchState !== "not_dispatched" && !isWorkflowV2WritesEnabled(companyId, projectId)) {
+          throw conflict("Dispatched record dependencies are controlled by execution");
+        }
+      }
+      const running = await tx.select({ recordId: workRecordExecutionIntents.recordId }).from(workRecordExecutionIntents).where(and(
+        eq(workRecordExecutionIntents.companyId, companyId), eq(workRecordExecutionIntents.projectId, projectId),
+        inArray(workRecordExecutionIntents.recordId, affectedSuccessorIds), eq(workRecordExecutionIntents.state, "running"),
+      )).limit(1).then((rows) => rows[0] ?? null);
+      if (running) throw conflict("Dependencies cannot change while the record is running", {
+        code: "work_record_dependency_running", recordId: running.recordId,
+      });
+
+      const edges = await tx.select().from(workRecordDependencies).where(and(
+        eq(workRecordDependencies.companyId, companyId), eq(workRecordDependencies.projectId, projectId),
+      ));
+      const edgeKey = (predecessorId: string, successorId: string) => `${predecessorId}:${successorId}`;
+      const finalEdges = new Map(edges.map((edge) => [edgeKey(edge.predecessorRecordId, edge.successorRecordId), {
+        predecessorRecordId: edge.predecessorRecordId, successorRecordId: edge.successorRecordId,
+      }]));
+      const originalKey = edgeKey(input.predecessorRecordId, input.successorRecordId);
+      const isCreate = input.operation === "add";
+      if (isCreate && finalEdges.has(originalKey)) throw unprocessable("Dependency already exists");
+      if (!isCreate && !finalEdges.has(originalKey)) throw conflict("Dependency edge no longer exists", { code: "work_record_dependency_missing" });
+      if (!isCreate) finalEdges.delete(originalKey);
+      const nextPredecessorId = input.replacementPredecessorRecordId ?? input.predecessorRecordId;
+      const nextSuccessorId = input.replacementSuccessorRecordId ?? input.successorRecordId;
+      const nextKey = edgeKey(nextPredecessorId, nextSuccessorId);
+      const isDelete = input.operation === "remove";
+      if (!isDelete) {
+        if (nextPredecessorId === nextSuccessorId) throw unprocessable("A record cannot depend on itself");
+        if (finalEdges.has(nextKey)) throw unprocessable("Dependency already exists");
+        finalEdges.set(nextKey, { predecessorRecordId: nextPredecessorId, successorRecordId: nextSuccessorId });
+      }
+      const outgoing = new Map<string, string[]>();
+      for (const edge of finalEdges.values()) outgoing.set(edge.predecessorRecordId, [...(outgoing.get(edge.predecessorRecordId) ?? []), edge.successorRecordId]);
+      const visiting = new Set<string>(); const visited = new Set<string>();
+      const hasCycle = (id: string): boolean => {
+        if (visiting.has(id)) return true;
+        if (visited.has(id)) return false;
+        visiting.add(id);
+        for (const next of outgoing.get(id) ?? []) if (hasCycle(next)) return true;
+        visiting.delete(id); visited.add(id); return false;
+      };
+      if (projectRecords.some((record) => hasCycle(record.id))) throw unprocessable("Dependency update would create a cycle");
+
+      await tx.delete(workRecordDependencies).where(and(
+        eq(workRecordDependencies.companyId, companyId), eq(workRecordDependencies.projectId, projectId),
+        inArray(workRecordDependencies.successorRecordId, affectedSuccessorIds),
+      ));
+      const replacementEdges = [...finalEdges.values()].filter((edge) => affectedSuccessorIds.includes(edge.successorRecordId));
+      if (replacementEdges.length) await tx.insert(workRecordDependencies).values(replacementEdges.map((edge) => ({ companyId, projectId, ...edge })));
+      const rows = [];
+      for (const successorId of affectedSuccessorIds) {
+        const [row] = await tx.update(workRecords).set({
+          revision: byId.get(successorId)!.revision + 1,
+          dependencySetRevision: byId.get(successorId)!.dependencySetRevision + 1,
+          updatedAt: new Date(),
+        }).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, successorId))).returning();
+        rows.push(row);
+      }
+      return rows;
+    });
+    return hydrate(companyId, affected);
   }
 
   async function getDescriptionDelivery(
@@ -1874,6 +1969,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     listPage,
     create,
     update,
+    mutateDependency,
     getDescriptionDelivery,
     deliverDescriptionRevision,
     acknowledgeDescriptionRevision,

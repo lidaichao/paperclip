@@ -3,6 +3,7 @@ import type {
   EscalateWorkPackageAssignmentGaps,
   DispatchWorkRecord,
   LinkWorkPackageDefect,
+  MutateWorkRecordDependency,
   PrepareWorkPackageDispatch,
   PreviewWorkPackageDispatch,
   RecordPoQualityVerdict,
@@ -50,6 +51,8 @@ export const workRecordsApi = {
     api.post<WorkRecord>(`/companies/${companyId}/work-records`, input),
   update: (companyId: string, projectId: string, recordId: string, input: UpdateWorkRecord) =>
     api.patch<WorkRecord>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}`, input),
+  mutateDependency: (companyId: string, projectId: string, input: MutateWorkRecordDependency) =>
+    api.post<WorkRecord[]>(`/companies/${companyId}/projects/${projectId}/work-record-dependencies/mutate`, input),
   dispatch: (companyId: string, projectId: string, recordId: string, input: DispatchWorkRecord) =>
     api.post<WorkRecordDispatchResult>(`/companies/${companyId}/projects/${projectId}/work-records/${recordId}/dispatch`, input),
   dispatchRequest: (companyId: string, projectId: string, recordId: string, clientRequestId: string) =>
