@@ -13,6 +13,19 @@ export const WORK_RECORD_KINDS = ["plan", "defect"] as const;
 export const WORK_RECORD_USER_ROLES = ["execution", "qa", "po"] as const;
 export type WorkRecordUserRole = (typeof WORK_RECORD_USER_ROLES)[number];
 export interface WorkRecordUserResponsibility { userId: string; role: WorkRecordUserRole }
+export interface WorkRecordMyTodo {
+  id: string;
+  companyId: string;
+  projectId: string;
+  projectName: string;
+  kind: WorkRecordKind;
+  title: string;
+  businessStatus: WorkRecordBusinessStatus;
+  plannedCompletionDate: string | null;
+  roles: WorkRecordUserRole[];
+  executionState: "active" | "idle" | "unknown";
+  updatedAt: Date;
+}
 const workRecordUserResponsibilitySchema = z.object({
   userId: z.string().trim().min(1).max(255),
   role: z.enum(WORK_RECORD_USER_ROLES),

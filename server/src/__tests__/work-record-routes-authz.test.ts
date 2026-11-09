@@ -31,6 +31,7 @@ const service = vi.hoisted(() => ({
   getDispatchRequest: vi.fn(),
   recoverRecord: vi.fn(),
 }));
+const myTodoService = vi.hoisted(() => ({ list: vi.fn() }));
 const logActivity = vi.hoisted(() => vi.fn());
 const packageService = vi.hoisted(() => ({
   preview: vi.fn(),
@@ -79,6 +80,7 @@ vi.mock("../services/index.js", () => ({
   heartbeatService: () => heartbeat,
   logActivity,
 }));
+vi.mock("../services/work-record-my-todos.js", () => ({ workRecordMyTodoService: () => myTodoService }));
 
 function createApp(actor: Express.Request["actor"]) {
   const app = express();
@@ -119,6 +121,8 @@ describe("work-record route authorization", () => {
 
   beforeEach(() => {
     for (const mock of Object.values(service)) mock.mockReset();
+    myTodoService.list.mockReset();
+    myTodoService.list.mockResolvedValue({ items: [], nextCursor: null });
     logActivity.mockReset();
     for (const mock of Object.values(packageService)) mock.mockReset();
     for (const mock of Object.values(qualityService)) mock.mockReset();
@@ -169,6 +173,25 @@ describe("work-record route authorization", () => {
     telemetrySink.capture.mockReset();
     trackErrorHandlerCrash.mockReset();
     captureException.mockReset();
+  });
+
+  it("binds my-todos to the logged-in board user and rejects invalid filters", async () => {
+    const app = createApp(viewer);
+    await request(app).get("/api/companies/company-1/work-records/my-todos?kind=plan&status=todo&limit=20").expect(200);
+    expect(myTodoService.list).toHaveBeenCalledWith("company-1", "viewer-1", {
+      kind: "plan", status: "todo", projectId: undefined, cursor: undefined, limit: 20,
+    });
+    await request(app).get("/api/companies/company-1/work-records/my-todos?kind=unknown").expect(422);
+    await request(app).get("/api/companies/other-company/work-records/my-todos").expect(403);
+    expect(myTodoService.list).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not allow an agent or userless board token to impersonate a personal inbox", async () => {
+    const agent = createApp({ type: "agent", companyId: "company-1", agentId: "agent-1", source: "agent_key" } as Express.Request["actor"]);
+    const userless = createApp({ ...viewer, userId: null } as Express.Request["actor"]);
+    await request(agent).get("/api/companies/company-1/work-records/my-todos").expect(403);
+    await request(userless).get("/api/companies/company-1/work-records/my-todos").expect(403);
+    expect(myTodoService.list).not.toHaveBeenCalled();
   });
 
   it("allows a viewer to read records and inspect the same dispatch request", async () => {

@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { companyMemberships, companies, createDb, projects, workRecords, workRecordUserResponsibilities } from "@paperclipai/db";
 import { getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase } from "./helpers/embedded-postgres.js";
 import { workRecordService } from "../services/work-records.js";
+import { workRecordMyTodoService } from "../services/work-record-my-todos.js";
 
 const support = await getEmbeddedPostgresTestSupport();
 const describeDb = support.supported ? describe : describe.skip;
@@ -64,5 +65,41 @@ describeDb("explicit human work-record responsibility", () => {
     expect(await db.select().from(workRecordUserResponsibilities)).toHaveLength(1);
     await db.delete(workRecords).where(eq(workRecords.id, assigned.id));
     expect(await db.select().from(workRecordUserResponsibilities)).toHaveLength(0);
+  });
+
+  it("paginates one row per record across projects with independent kind and status filters", async () => {
+    const companyId = randomUUID();
+    const projectA = randomUUID();
+    const projectB = randomUUID();
+    await db.insert(companies).values({ id: companyId, name: "Todo projection", issuePrefix: `T${companyId.slice(0, 6).toUpperCase()}` });
+    await db.insert(projects).values([
+      { id: projectA, companyId, name: "A" },
+      { id: projectB, companyId, name: "B" },
+    ]);
+    const rows = Array.from({ length: 24 }, (_, index) => ({
+      id: randomUUID(), companyId, projectId: index < 12 ? projectA : projectB,
+      kind: (index === 23 ? "defect" : "plan") as "plan" | "defect",
+      title: `Record ${index}`,
+      businessStatus: index === 22 ? "done" : "todo",
+      updatedAt: new Date(Date.UTC(2026, 10, 9, 0, index)),
+    }));
+    await db.insert(workRecords).values(rows);
+    await db.insert(workRecordUserResponsibilities).values(rows.flatMap((row, index) => [
+      { companyId, projectId: row.projectId, recordId: row.id, userId: "alice-user", role: "execution" as const },
+      ...(index === 0 ? [{ companyId, projectId: row.projectId, recordId: row.id, userId: "alice-user", role: "qa" as const }] : []),
+    ]));
+    const myTodos = workRecordMyTodoService(db);
+    const first = await myTodos.list(companyId, "alice-user", { limit: 20 });
+    expect(first.items).toHaveLength(20);
+    expect(first.nextCursor).not.toBeNull();
+    const second = await myTodos.list(companyId, "alice-user", { limit: 20, cursor: first.nextCursor! });
+    expect(second.items).toHaveLength(3);
+    expect(new Set([...first.items, ...second.items].map((item) => item.id)).size).toBe(23);
+    expect([...first.items, ...second.items].find((item) => item.id === rows[0].id)?.roles).toEqual(["execution", "qa"]);
+    expect((await myTodos.list(companyId, "alice-user", { kind: "defect" })).items).toHaveLength(1);
+    expect((await myTodos.list(companyId, "alice-user", { status: "done" })).items.map((item) => item.id)).toEqual([rows[22].id]);
+    expect((await myTodos.list(companyId, "alice-user", { projectId: projectA })).items).toHaveLength(12);
+    expect((await myTodos.list(companyId, "other-user")).items).toHaveLength(0);
+    await expect(myTodos.list(companyId, "alice-user", { cursor: "invalid" })).rejects.toMatchObject({ status: 422 });
   });
 });

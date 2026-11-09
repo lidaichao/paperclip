@@ -20,6 +20,8 @@ import {
   updateProjectIterationSchema,
   updateProjectVersionSchema,
   updateWorkRecordSchema,
+  WORK_RECORD_BUSINESS_STATUSES,
+  WORK_RECORD_KINDS,
 } from "@paperclipai/shared";
 import { validate } from "../middleware/validate.js";
 import { HttpError, forbidden, unprocessable } from "../errors.js";
@@ -34,6 +36,7 @@ import {
   workRecordService,
 } from "../services/index.js";
 import { assertAuthenticated, assertCompanyAccess, getActorInfo, hasCompanyAccess } from "./authz.js";
+import { workRecordMyTodoService } from "../services/work-record-my-todos.js";
 
 export interface WorkRecordRouteOptions {
   heartbeat?: Pick<ReturnType<typeof heartbeatService>, "wakeup" | "admitWorkRecordDescriptionRevision">;
@@ -44,6 +47,7 @@ export interface WorkRecordRouteOptions {
 export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
   const router = Router();
   const service = workRecordService(db, { writesEnabled: options.workflowV2WritesEnabled });
+  const myTodos = workRecordMyTodoService(db);
   const packages = workPackageDispatchService(db, { writesEnabled: options.workflowV2WritesEnabled });
   const quality = workRecordQualityService(db, { writesEnabled: options.workflowV2WritesEnabled });
   const access = accessService(db);
@@ -596,6 +600,30 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
       throw unprocessable("afterId must be a UUID cursor");
     }
     res.json(await service.listPage(companyId, projectId, { limit, afterId }));
+  });
+
+  router.get("/companies/:companyId/work-records/my-todos", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    assertCompanyAccess(req, companyId);
+    if (req.actor.type !== "board" || !req.actor.userId?.trim()) {
+      throw forbidden("我的待办需要已登录的用户身份");
+    }
+    const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const projectId = typeof req.query.projectId === "string" ? req.query.projectId : undefined;
+    const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+    const limit = req.query.limit === undefined ? undefined : Number(req.query.limit);
+    if (kind && !WORK_RECORD_KINDS.includes(kind as (typeof WORK_RECORD_KINDS)[number])) throw unprocessable("Invalid kind");
+    if (status && status !== "all" && !WORK_RECORD_BUSINESS_STATUSES.includes(status as (typeof WORK_RECORD_BUSINESS_STATUSES)[number])) throw unprocessable("Invalid status");
+    if (projectId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(projectId)) throw unprocessable("Invalid projectId");
+    if (cursor && cursor.length > 256) throw unprocessable("Invalid cursor");
+    res.json(await myTodos.list(companyId, req.actor.userId, {
+      kind: kind as (typeof WORK_RECORD_KINDS)[number] | undefined,
+      status: status as (typeof WORK_RECORD_BUSINESS_STATUSES)[number] | "all" | undefined,
+      projectId,
+      cursor,
+      limit,
+    }));
   });
 
   router.get("/companies/:companyId/projects/:projectId/work-record-workflow/operations", async (req, res) => {
