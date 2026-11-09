@@ -30,7 +30,7 @@ try {
     -Principal $principal -Description 'Paperclip 本机智能体安全桥接（显式安装）' -ErrorAction Stop | Out-Null
   Write-Output "已注册 $taskName；将在下次登录后隐藏运行。"
 } catch {
-  if ($_.Exception.HResult -ne [int]0x80070005) { throw }
+  if ($_.FullyQualifiedErrorId -notlike 'HRESULT 0x80070005,*') { throw }
   $shell = New-Object -ComObject WScript.Shell
   $shortcut = $shell.CreateShortcut($startupLink)
   $shortcut.TargetPath = (Get-Command powershell.exe).Source
