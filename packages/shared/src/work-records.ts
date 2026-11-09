@@ -79,7 +79,7 @@ export interface ProjectIteration {
   };
 }
 
-export const WORK_RECORD_VIEW_KINDS = ["plan", "defect"] as const;
+export const WORK_RECORD_VIEW_KINDS = ["plan", "defect", "gantt"] as const;
 export const WORK_RECORD_VIEW_DENSITIES = ["compact", "comfortable", "spacious"] as const;
 export const WORK_RECORD_PLAN_VIEW_FIELDS = [
   "id", "title", "description", "iteration", "plannedStartDate", "plannedCompletionDate",
@@ -88,6 +88,9 @@ export const WORK_RECORD_PLAN_VIEW_FIELDS = [
 export const WORK_RECORD_DEFECT_VIEW_FIELDS = [
   ...WORK_RECORD_PLAN_VIEW_FIELDS,
   "defectSeverity",
+] as const;
+export const WORK_RECORD_GANTT_VIEW_FIELDS = [
+  "title", "assignee", "businessStatus", "plannedStartDate", "plannedCompletionDate", "dependencies",
 ] as const;
 
 export type WorkRecordViewKind = (typeof WORK_RECORD_VIEW_KINDS)[number];
@@ -162,25 +165,27 @@ export const updateWorkRecordViewSchema = z.object({
 export const deleteWorkRecordViewSchema = z.object({ expectedRevision: z.coerce.number().int().positive() }).strict();
 
 export function defaultWorkRecordViewConfig(viewKind: WorkRecordViewKind): WorkRecordViewConfig {
-  const fields = viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS;
+  const fields = viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS
+    : viewKind === "gantt" ? WORK_RECORD_GANTT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS;
   return {
     schemaVersion: 2,
     containerId: null,
     visibleFields: [...fields],
     columnOrder: [...fields],
     columnWidths: {},
-    density: "comfortable",
+    density: viewKind === "gantt" ? "compact" : "comfortable",
     filters: [],
     search: "",
     sort: [],
     groupBy: null,
-    frozenFields: ["id", "title"],
+    frozenFields: viewKind === "gantt" ? ["title"] : ["id", "title"],
   };
 }
 
 export function validateWorkRecordViewConfig(viewKind: WorkRecordViewKind, config: WorkRecordViewConfig): WorkRecordViewConfig {
   const allowed = new Set<WorkRecordViewField>(
-    viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS,
+    viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS
+      : viewKind === "gantt" ? WORK_RECORD_GANTT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS,
   );
   const assertUniqueAllowed = (values: WorkRecordViewField[], path: string) => {
     if (new Set(values).size !== values.length || values.some((field) => !allowed.has(field))) {
@@ -190,11 +195,11 @@ export function validateWorkRecordViewConfig(viewKind: WorkRecordViewKind, confi
   assertUniqueAllowed(config.visibleFields, "visibleFields");
   assertUniqueAllowed(config.columnOrder, "columnOrder");
   assertUniqueAllowed(config.frozenFields, "frozenFields");
-  if (!config.visibleFields.includes("id") || !config.visibleFields.includes("title")) {
-    throw new Error("Desktop views must keep id and title visible");
+  if (!config.visibleFields.includes("title") || (viewKind !== "gantt" && !config.visibleFields.includes("id"))) {
+    throw new Error(viewKind === "gantt" ? "Gantt views must keep title visible" : "Desktop views must keep id and title visible");
   }
-  if (!config.columnOrder.includes("id") || !config.columnOrder.includes("title")) {
-    throw new Error("columnOrder must contain id and title");
+  if (!config.columnOrder.includes("title") || (viewKind !== "gantt" && !config.columnOrder.includes("id"))) {
+    throw new Error(viewKind === "gantt" ? "columnOrder must contain title" : "columnOrder must contain id and title");
   }
   if (!config.frozenFields.includes("id") || !config.frozenFields.includes("title")) {
     throw new Error("Desktop views must keep id and title frozen");

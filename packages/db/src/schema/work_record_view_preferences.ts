@@ -32,7 +32,7 @@ export const workRecordViewPreferences = pgTable(
       sql`lower(${table.name})`,
     ),
     userProjectIdx: index("work_record_view_preferences_user_project_idx").on(table.userId, table.projectId),
-    viewKindCheck: check("work_record_view_preferences_view_kind_check", sql`${table.viewKind} IN ('plan', 'defect')`),
+    viewKindCheck: check("work_record_view_preferences_view_kind_check", sql`${table.viewKind} IN ('plan', 'defect', 'gantt')`),
     revisionCheck: check("work_record_view_preferences_revision_check", sql`${table.revision} > 0`),
   }),
 );

@@ -902,7 +902,8 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     return hydrate(companyId, [updated]).then((result) => result[0]);
   }
 
-  async function mutateDependency(companyId: string, projectId: string, input: MutateWorkRecordDependency) {
+  async function mutateDependency(companyId: string, projectId: string, input: MutateWorkRecordDependency,
+    audit?: (tx: Db, affectedRecordIds: string[]) => Promise<void>) {
     const affectedSuccessorIds = [...new Set([
       input.successorRecordId,
       ...(input.replacementSuccessorRecordId ? [input.replacementSuccessorRecordId] : []),
@@ -991,6 +992,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         }).where(and(eq(workRecords.companyId, companyId), eq(workRecords.projectId, projectId), eq(workRecords.id, successorId))).returning();
         rows.push(row);
       }
+      await audit?.(tx as unknown as Db, rows.map((row) => row.id));
       return rows;
     });
     return hydrate(companyId, affected);

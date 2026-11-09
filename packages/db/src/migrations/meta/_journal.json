@@ -2234,6 +2234,13 @@
       "when": 1794100000000,
       "tag": "0320_personal_named_work_record_views",
       "breakpoints": true
+    },
+    {
+      "idx": 321,
+      "version": "7",
+      "when": 1794192000000,
+      "tag": "0321_gantt_work_record_views",
+      "breakpoints": true
     }
   ]
 }

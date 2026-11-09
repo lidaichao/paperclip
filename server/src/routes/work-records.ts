@@ -875,17 +875,16 @@ export function workRecordRoutes(db: Db, options: WorkRecordRouteOptions = {}) {
     const projectId = req.params.projectId as string;
     assertCompanyAccess(req, companyId);
     if (isReadOnlyViewer(req, companyId)) throw forbidden("只读成员只能查看，不能修改依赖");
-    const records = await service.mutateDependency(companyId, projectId, req.body);
     const actor = getActorInfo(req);
-    await logActivity(db, {
+    const records = await service.mutateDependency(companyId, projectId, req.body, async (tx, affectedRecordIds) => { await logActivity(tx, {
       companyId, actorType: actor.actorType, actorId: actor.actorId, agentId: actor.agentId,
       runId: actor.runId, agentApiKeyId: actor.agentApiKeyId,
       action: "work_record.dependency_mutated", entityType: "work_record_dependency",
       entityId: `${req.body.predecessorRecordId}:${req.body.successorRecordId}`,
       details: { projectId, replacementPredecessorRecordId: req.body.replacementPredecessorRecordId ?? null,
         replacementSuccessorRecordId: req.body.replacementSuccessorRecordId ?? null,
-        affectedRecordIds: records.map((record) => record.id) },
-    });
+        affectedRecordIds },
+    }); });
     res.json(records);
   });
 

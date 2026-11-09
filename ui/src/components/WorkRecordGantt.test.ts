@@ -10,7 +10,8 @@ import { WorkRecordGantt } from "./WorkRecordGantt";
 
 const updateMock = vi.hoisted(() => vi.fn());
 const mutateDependencyMock = vi.hoisted(() => vi.fn());
-vi.mock("@/api/work-records", () => ({ workRecordsApi: { update: updateMock, mutateDependency: mutateDependencyMock } }));
+const viewsMock = vi.hoisted(() => vi.fn());
+vi.mock("@/api/work-records", () => ({ workRecordsApi: { update: updateMock, mutateDependency: mutateDependencyMock, views: viewsMock, createView: vi.fn(), updateView: vi.fn() } }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 function record(id: string, title: string, overrides: Partial<WorkRecord> = {}): WorkRecord {
@@ -60,6 +61,7 @@ describe("WorkRecordGantt interactions", () => {
     root = createRoot(host);
     client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
     updateMock.mockResolvedValue({});
+    viewsMock.mockResolvedValue([]);
     mutateDependencyMock.mockImplementation(async (_companyId, _projectId, input) => input.expectedRecords.map((item: { recordId: string; expectedRevision: number; expectedDependencySetRevision: number }) => record(item.recordId, item.recordId, { revision: item.expectedRevision + 1, dependencySetRevision: item.expectedDependencySetRevision + 1 })));
   });
 
@@ -113,7 +115,7 @@ describe("WorkRecordGantt interactions", () => {
     await render([a, b, c, d]);
     expect(host.querySelector('[aria-label="A 到 B 的依赖线"]')?.tagName.toLowerCase()).toBe("path");
     expect(host.querySelector('[aria-label="C 到 B 的依赖线"]')?.tagName.toLowerCase()).toBe("path");
-    const titleButton = [...host.querySelectorAll("button")].find((item) => item.textContent === "B") as HTMLButtonElement;
+    const titleButton = [...host.querySelectorAll("button")].find((item) => [...item.querySelectorAll("span")].some((cell) => cell.textContent === "B")) as HTMLButtonElement;
     await act(async () => titleButton.click());
     const reconnect = host.querySelector('[aria-label="改连 a"]') as HTMLSelectElement;
     await act(async () => { reconnect.value = "d"; reconnect.dispatchEvent(new Event("change", { bubbles: true })); });

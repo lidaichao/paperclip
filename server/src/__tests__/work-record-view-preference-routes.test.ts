@@ -68,7 +68,7 @@ describe("work-record view preference routes", () => {
     await request(app(board)).get("/api/companies/company-2/projects/project-1/work-record-view-preferences/plan").expect(403);
     await request(app({ type: "agent", agentId: "agent-1", companyId: "company-1", keyId: null, source: "agent_key" } as Express.Request["actor"]))
       .get("/api/companies/company-1/projects/project-1/work-record-view-preferences/plan").expect(403);
-    await request(app(board)).get("/api/companies/company-1/projects/project-1/work-record-view-preferences/gantt").expect(400);
+    await request(app(board)).get("/api/companies/company-1/projects/project-1/work-record-view-preferences/calendar").expect(400);
     await request(app(board)).put("/api/companies/company-1/projects/project-1/work-record-view-preferences/plan")
       .send({ expectedRevision: 0, config: { ...defaultWorkRecordViewConfig("plan"), privilege: "admin" } }).expect(400);
     expect(service.put).not.toHaveBeenCalled();
