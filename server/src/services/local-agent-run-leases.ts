@@ -4,6 +4,8 @@ import {
   activityLog,
   agentWakeupRequests,
   agents,
+  agentSessionWriteGrants,
+  agentSessionWriteReceipts,
   heartbeatRuns,
   heartbeatRunEvents,
   issueCommandDeliveries,
@@ -246,6 +248,22 @@ export function localAgentRunLeaseService(
       // Even an expired lease reserves this slot until the old process reports
       // stopped. Expiration is a write fence, not proof of process death.
       if (active) throw conflict("Agent already has an unacknowledged local run", { runId: active.runId });
+
+      const [pendingSessionWrite] = await tx.select({ id: agentSessionWriteReceipts.id })
+        .from(agentSessionWriteReceipts)
+        .innerJoin(agentSessionWriteGrants, eq(agentSessionWriteReceipts.grantId, agentSessionWriteGrants.id))
+        .where(and(
+          eq(agentSessionWriteReceipts.companyId, input.companyId),
+          eq(agentSessionWriteReceipts.agentId, input.agentId),
+          isNull(agentSessionWriteReceipts.completedAt),
+          isNull(agentSessionWriteGrants.revokedAt),
+          sql`${agentSessionWriteGrants.expiresAt} > now()`,
+        )).limit(1);
+      if (pendingSessionWrite) {
+        throw conflict("An ordinary-session write is still in progress", {
+          code: "SESSION_WRITE_IN_PROGRESS",
+        });
+      }
 
       const [serverRun] = await tx.select({ id: heartbeatRuns.id }).from(heartbeatRuns).where(and(
         eq(heartbeatRuns.companyId, input.companyId),

@@ -54,6 +54,7 @@ import { statusCardRoutes } from "./routes/status-cards.js";
 import { teamsCatalogRoutes } from "./routes/teams-catalog.js";
 import { agentRoutes } from "./routes/agents.js";
 import { localAgentRunRoutes } from "./routes/local-agent-runs.js";
+import { agentSessionWriteRoutes } from "./routes/agent-session-writes.js";
 import type { SetupTokenSessionService } from "./services/setup-token-session.js";
 import {
   buildSetupTokenLoginTransport,
@@ -738,6 +739,7 @@ export async function createApp(
     log: (line) => logger.info(line),
   });
   api.use(localAgentRunRoutes(db));
+  api.use(agentSessionWriteRoutes(db));
   api.use(
     agentRoutes(db, {
       chatRunRetries: chatChannels,

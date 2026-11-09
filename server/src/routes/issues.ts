@@ -3851,6 +3851,9 @@ export function issueRoutes(
     kind: CrossIssueInfluenceKind,
   ) {
     if (req.actor.type !== "agent") return true;
+    // Ordinary-session writes have their own grant-bound, per-request receipt
+    // and therefore do not borrow or fabricate heartbeat-run attribution.
+    if (req.sessionWriteAuthorization) return true;
     if (!req.actor.agentId || !req.actor.runId)
       throw crossIssueInfluenceRunContextError();
 

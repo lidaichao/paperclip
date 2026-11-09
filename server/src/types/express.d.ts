@@ -5,6 +5,11 @@ import type { AgentApiKeyScope } from "@paperclipai/shared";
 declare global {
   namespace Express {
     interface Request {
+      sessionWriteAuthorization?: {
+        grantId: string;
+        receiptId: string;
+        requestDigest: string;
+      };
       actor: {
         type: "board" | "agent" | "none";
         userId?: string;

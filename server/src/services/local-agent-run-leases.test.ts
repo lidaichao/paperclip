@@ -6,10 +6,14 @@ import request from "supertest";
 import { and, eq, sql } from "drizzle-orm";
 import {
   activityLog,
+  authUsers,
+  agentSessionWriteGrants,
+  agentSessionWriteReceipts,
   agentWakeupRequests,
   agentApiKeys,
   agents,
   companies,
+  companyMemberships,
   createDb,
   getEmbeddedPostgresTestSupport,
   heartbeatRuns,
@@ -48,6 +52,12 @@ import { issueService } from "./issues.js";
 import { updateAgentSchema } from "@paperclipai/shared";
 import { localAgentRunWriteGate } from "../middleware/local-agent-run-write-gate.js";
 import { localAgentRunRoutes } from "../routes/local-agent-runs.js";
+import { agentSessionWriteRoutes } from "../routes/agent-session-writes.js";
+import { actorMiddleware } from "../middleware/auth.js";
+import { errorHandler } from "../middleware/error-handler.js";
+import { issueRoutes } from "../routes/issues.js";
+import type { StorageService } from "../storage/types.js";
+import { agentSessionWriteService, digestSessionWriteRequest } from "./agent-session-writes.js";
 
 const external = process.env.PAPERCLIP_TEST_DATABASE_URL;
 const support = external ? { supported: true } : await getEmbeddedPostgresTestSupport();
@@ -901,6 +911,193 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await gate(request, response, next);
     expect(response.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it("allows only grant-authorized non-execution session writes and replays them once", async () => {
+    const scope = await fixture();
+    let actor = { type: "agent", source: "agent_key", companyId: scope.companyId,
+      agentId: scope.agentId, keyId: scope.keyId } as const;
+    let mutations = 0;
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => { req.actor = actor; next(); });
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", agentSessionWriteRoutes(db));
+    app.use("/api", localAgentRunRoutes(db));
+    app.post("/api/companies/:companyId/issues", (req, res) => {
+      mutations += 1;
+      res.status(201).json({ id: "created-once", title: req.body.title });
+    });
+    app.post("/api/issues/:id/checkout", (_req, res) => res.json({ unsafe: true }));
+    app.use((err: { status?: number; message?: string; details?: unknown }, _req: Request,
+      res: Response, _next: NextFunction) => res.status(err.status ?? 500).json({
+        error: err.message, ...(err.details && typeof err.details === "object" ? err.details : {}),
+      }));
+
+    const issued = await request(app).post("/api/agents/me/session-writes")
+      .send({ deviceId: "device-desktop-001", ttlMinutes: 5 }).expect(201);
+    const headers = { "X-Paperclip-Session-Write": issued.body.token,
+      "Idempotency-Key": randomUUID() };
+    const first = await request(app).post(`/api/companies/${scope.companyId}/issues`)
+      .set(headers).send({ title: "Session-created task" }).expect(201);
+    expect(first.body).toEqual({ id: "created-once", title: "Session-created task" });
+    const replay = await request(app).post(`/api/companies/${scope.companyId}/issues`)
+      .set(headers).send({ title: "Session-created task" }).expect(201);
+    expect(replay.headers["x-paperclip-idempotent-replay"]).toBe("true");
+    expect(replay.body).toEqual(first.body);
+    expect(mutations).toBe(1);
+
+    const checkout = await request(app).post(`/api/issues/${scope.issueId}/checkout`)
+      .set(headers).send({}).expect(403);
+    expect(checkout.body).toMatchObject({ code: "CLIENT_PULL_WRITE_FENCED" });
+    await request(app).post(`/api/agents/me/local-runs/${scope.runId}/finish`)
+      .set(headers).send({ deviceId: "device-desktop-001", leaseId: randomUUID(), generation: 1,
+        outcome: "succeeded", exitCode: 0, processStopped: true }).expect(403);
+    const audit = await db.select().from(activityLog).where(and(
+      eq(activityLog.action, "agent_session_write_authorized"),
+      eq(activityLog.agentId, scope.agentId),
+    ));
+    expect(audit.at(-1)?.details).toMatchObject({
+      authorizationBasis: "session_write", grantId: issued.body.grantId,
+      requestDigest: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+    expect(await db.select().from(agentSessionWriteReceipts).where(
+      eq(agentSessionWriteReceipts.grantId, issued.body.grantId))).toHaveLength(1);
+  });
+
+  it("rejects expired grants, cross-agent replay, and grants while a lease exists", async () => {
+    const scope = await fixture();
+    let actor = { type: "agent", source: "agent_key", companyId: scope.companyId,
+      agentId: scope.agentId, keyId: scope.keyId } as const;
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => { req.actor = actor; next(); });
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", agentSessionWriteRoutes(db));
+    app.patch("/api/issues/:id", (_req, res) => res.json({ ok: true }));
+    app.use((err: { status?: number; message?: string; details?: unknown }, _req: Request,
+      res: Response, _next: NextFunction) => res.status(err.status ?? 500).json({
+        error: err.message, ...(err.details && typeof err.details === "object" ? err.details : {}),
+      }));
+    const issued = await request(app).post("/api/agents/me/session-writes").send({ ttlMinutes: 1 }).expect(201);
+
+    const otherAgentId = randomUUID();
+    const otherKeyId = randomUUID();
+    await db.insert(agents).values({ id: otherAgentId, companyId: scope.companyId, name: "Other desktop",
+      runtimeConfig: { executionMode: "client_pull" } });
+    await db.insert(agentApiKeys).values({ id: otherKeyId, companyId: scope.companyId,
+      agentId: otherAgentId, name: "Other key", keyHash: randomUUID() });
+    actor = { ...actor, agentId: otherAgentId, keyId: otherKeyId };
+    await request(app).patch(`/api/issues/${scope.issueId}`)
+      .set("X-Paperclip-Session-Write", issued.body.token).set("Idempotency-Key", randomUUID())
+      .send({ priority: "high" }).expect(403);
+
+    actor = { ...actor, agentId: scope.agentId, keyId: scope.keyId };
+    await db.update(agentSessionWriteGrants).set({ expiresAt: new Date(Date.now() - 1_000) })
+      .where(eq(agentSessionWriteGrants.id, issued.body.grantId));
+    await request(app).patch(`/api/issues/${scope.issueId}`)
+      .set("X-Paperclip-Session-Write", issued.body.token).set("Idempotency-Key", randomUUID())
+      .send({ priority: "high" }).expect(403);
+
+    await localAgentRunLeaseService(db).claim({ ...scope, deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID() });
+    await request(app).post("/api/agents/me/session-writes").send({ ttlMinutes: 5 }).expect(409);
+  });
+
+  it("serializes an in-flight session write against a client-pull lease claim", async () => {
+    const scope = await fixture();
+    const sessionWrites = agentSessionWriteService(db);
+    const grant = await sessionWrites.issue({ ...scope, ttlMinutes: 5 });
+    const path = `/api/issues/${scope.issueId}`;
+    const authorization = await sessionWrites.authorize({
+      ...scope,
+      token: grant.token,
+      idempotencyKey: randomUUID(),
+      requestDigest: digestSessionWriteRequest("PATCH", path, { priority: "high" }),
+      method: "PATCH",
+      path,
+    });
+    await expect(localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
+    })).rejects.toMatchObject({ status: 409, details: { code: "SESSION_WRITE_IN_PROGRESS" } });
+    await sessionWrites.complete(authorization.receipt.id, 200, { ok: true });
+    await expect(localAgentRunLeaseService(db).claim({
+      ...scope, deviceId: "device-desktop-001", idempotencyKey: randomUUID(),
+    })).resolves.toMatchObject({ runId: scope.runId });
+  });
+
+  it("uses an agent's real API key to create, comment, and reprioritize without a run", async () => {
+    const scope = await fixture();
+    const responsibleUserId = `user-${randomUUID()}`;
+    const apiToken = `pcp_test_${randomUUID()}`;
+    await db.update(agents).set({ role: "ceo" }).where(eq(agents.id, scope.agentId));
+    await db.update(agentApiKeys).set({
+      keyHash: createHash("sha256").update(apiToken).digest("hex"),
+      responsibleUserId,
+    }).where(eq(agentApiKeys.id, scope.keyId));
+    await db.insert(companyMemberships).values({
+      companyId: scope.companyId,
+      principalType: "user",
+      principalId: responsibleUserId,
+      status: "active",
+      membershipRole: "owner",
+    });
+    await db.insert(authUsers).values({
+      id: responsibleUserId,
+      name: "Session write owner",
+      email: `${responsibleUserId}@example.test`,
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const app = express();
+    app.use(express.json());
+    app.use(actorMiddleware(db, { deploymentMode: "authenticated", resolveSession: async () => null }));
+    app.use(localAgentRunWriteGate(db));
+    app.use("/api", agentSessionWriteRoutes(db));
+    app.use("/api", localAgentRunRoutes(db));
+    app.use("/api", issueRoutes(db, {} as StorageService));
+    app.use(errorHandler);
+    const auth = { Authorization: `Bearer ${apiToken}` };
+    const grant = await request(app).post("/api/agents/me/session-writes")
+      .set(auth).send({ ttlMinutes: 5 }).expect(201);
+    const createKey = randomUUID();
+    const created = await request(app).post(`/api/companies/${scope.companyId}/issues`)
+      .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", createKey)
+      .send({ title: "Ordinary-session acceptance card", status: "backlog",
+        assigneeAgentId: scope.agentId }).expect(201);
+    expect(created.body.createdByAgentId).toBe(scope.agentId);
+    const replay = await request(app).post(`/api/companies/${scope.companyId}/issues`)
+      .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", createKey)
+      .send({ title: "Ordinary-session acceptance card", status: "backlog",
+        assigneeAgentId: scope.agentId }).expect(201);
+    expect(replay.body.id).toBe(created.body.id);
+    expect(replay.headers["x-paperclip-idempotent-replay"]).toBe("true");
+    const comment = await request(app).post(`/api/issues/${created.body.id}/comments`)
+      .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", randomUUID()).send({ body: "Acceptance comment" });
+    expect(comment.status, JSON.stringify(comment.body)).toBe(201);
+    await request(app).patch(`/api/issues/${created.body.id}`)
+      .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", randomUUID()).send({ priority: "high" }).expect(200);
+    const stored = await db.select().from(issues).where(and(
+      eq(issues.companyId, scope.companyId),
+      eq(issues.title, "Ordinary-session acceptance card"),
+    ));
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toMatchObject({ priority: "high", createdByAgentId: scope.agentId });
+    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, created.body.id)))
+      .toHaveLength(1);
+
+    const checkout = await request(app).post(`/api/issues/${created.body.id}/checkout`)
+      .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
+      .set("Idempotency-Key", randomUUID()).send({ agentId: scope.agentId }).expect(403);
+    expect(checkout.body).toMatchObject({ code: "CLIENT_PULL_WRITE_FENCED" });
+    await request(app).post(`/api/agents/me/local-runs/${scope.runId}/finish`)
+      .set(auth).send({ deviceId: "device-desktop-001", leaseId: randomUUID(), generation: 1,
+        outcome: "succeeded", exitCode: 0, processStopped: true }).expect(403);
   });
 
   it("writes a current-run comment and issue edit with the lease transaction", async () => {

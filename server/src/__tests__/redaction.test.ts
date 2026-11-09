@@ -11,6 +11,15 @@ import {
 } from "../redaction.js";
 
 describe("redaction", () => {
+  it("keeps only the closed session-write authorization basis visible for audit", () => {
+    expect(sanitizeRecord({ authorizationBasis: "session_write" })).toEqual({
+      authorizationBasis: "session_write",
+    });
+    expect(sanitizeRecord({ authorizationBasis: "Bearer secret" })).toEqual({
+      authorizationBasis: REDACTED_EVENT_VALUE,
+    });
+  });
+
   it("keeps the discriminator allowlist in exact PRP v1 schema parity", () => {
     const schema = JSON.parse(
       readFileSync(
