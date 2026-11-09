@@ -11660,6 +11660,9 @@ export function issueRoutes(
         null;
       const createInput = {
         ...createBody,
+        // A short ordinary-session grant records the task, but does not
+        // authorize the assigned-todo liveness backstop to dispatch it.
+        sessionWriteDispatchDeferred: Boolean(req.sessionWriteAuthorization),
         ...(req.sessionWriteAuthorization
           ? { idempotencyKey: req.sessionWriteAuthorization.receiptId }
           : {}),
@@ -13386,6 +13389,9 @@ export function issueRoutes(
       const postCommitIssueActions: IssuePostCommitAction[] = [];
       const issueUpdateData = {
         ...updateFields,
+        ...((req.body.status !== undefined || req.body.assigneeAgentId !== undefined)
+          ? { sessionWriteDispatchDeferred: Boolean(req.sessionWriteAuthorization) }
+          : {}),
         actorAgentId: actor.agentId ?? null,
         actorUserId: actor.actorType === "user" ? actor.actorId : null,
       };

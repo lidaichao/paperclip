@@ -1074,6 +1074,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .send({ title: "Ordinary-session acceptance card", status: "backlog",
         assigneeAgentId: scope.agentId }).expect(201);
     expect(created.body.createdByAgentId).toBe(scope.agentId);
+    expect(created.body.sessionWriteDispatchDeferred).toBe(true);
     const replay = await request(app).post(`/api/companies/${scope.companyId}/issues`)
       .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
       .set("Idempotency-Key", createKey)
@@ -1113,8 +1114,13 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
       .set("Idempotency-Key", randomUUID())
       .send({ status: "todo" }).expect(200);
-    expect(assignedTodo.body).toMatchObject({ status: "todo", assigneeAgentId: scope.agentId });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(assignedTodo.body).toMatchObject({
+      status: "todo", assigneeAgentId: scope.agentId,
+      sessionWriteDispatchDeferred: true,
+    });
+    const updatedRecord = await db.select().from(issues).where(eq(issues.id, created.body.id));
+    expect(updatedRecord[0]?.sessionWriteDispatchDeferred).toBe(true);
+    await heartbeatService(db).reconcileStrandedAssignedIssues();
     const wakeupsAfter = await db.select({ id: agentWakeupRequests.id })
       .from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, scope.companyId));
     expect(wakeupsAfter).toHaveLength(wakeupsBefore.length);

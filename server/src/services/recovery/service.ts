@@ -4249,6 +4249,13 @@ export function recoveryService(
         continue;
       }
 
+      // Session-authored status and assignee changes only update the record.
+      // Do not let any generic recovery branch turn them into agent work.
+      if (issue.sessionWriteDispatchDeferred) {
+        result.skipped += 1;
+        continue;
+      }
+
       // An unfinished durable session goal owns its continuation lifecycle.
       // A paused goal waits for explicit resume; an active goal is handled by
       // dedicated goal recovery. Generic stranded-work recovery would race

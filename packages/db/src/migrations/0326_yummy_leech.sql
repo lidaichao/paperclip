@@ -1,0 +1,1 @@
+ALTER TABLE "issues" ADD COLUMN "session_write_dispatch_deferred" boolean DEFAULT false NOT NULL;

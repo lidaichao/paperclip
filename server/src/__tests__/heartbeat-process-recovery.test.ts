@@ -8601,6 +8601,53 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     }
   });
 
+  it("does not dispatch ordinary-session assigned todo records until an explicit control-plane transition", async () => {
+    const { agentId, issueId } = await seedAssignedTodoNoRunFixture();
+    await db.update(issues).set({ sessionWriteDispatchDeferred: true }).where(eq(issues.id, issueId));
+    const heartbeat = heartbeatService(db);
+
+    const deferred = await heartbeat.reconcileStrandedAssignedIssues();
+    expect(deferred.assignmentDispatched).toBe(0);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.agentId, agentId)))
+      .toHaveLength(0);
+    expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.agentId, agentId)))
+      .toHaveLength(0);
+
+    await db.update(issues).set({ sessionWriteDispatchDeferred: false }).where(eq(issues.id, issueId));
+    const explicitlyReleased = await heartbeat.reconcileStrandedAssignedIssues();
+    expect(explicitlyReleased.assignmentDispatched).toBe(1);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.agentId, agentId)))
+      .toHaveLength(1);
+  });
+
+  it("does not recover a prior run after an ordinary-session todo change", async () => {
+    const { agentId, issueId } = await seedStrandedIssueFixture({
+      status: "todo",
+      runStatus: "failed",
+    });
+    await db.update(issues).set({ sessionWriteDispatchDeferred: true }).where(eq(issues.id, issueId));
+
+    const result = await heartbeatService(db).reconcileStrandedAssignedIssues();
+    expect(result.dispatchRequeued).toBe(0);
+    expect(result.assignmentDispatched).toBe(0);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.agentId, agentId)))
+      .toHaveLength(1);
+  });
+
+  it("does not continue a prior run after an ordinary-session in-progress change", async () => {
+    const { agentId, issueId } = await seedStrandedIssueFixture({
+      status: "in_progress",
+      runStatus: "failed",
+    });
+    await db.update(issues).set({ sessionWriteDispatchDeferred: true }).where(eq(issues.id, issueId));
+
+    const result = await heartbeatService(db).reconcileStrandedAssignedIssues();
+    expect(result.continuationRequeued).toBe(0);
+    expect(result.escalated).toBe(0);
+    expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.agentId, agentId)))
+      .toHaveLength(1);
+  });
+
   it("leaves the onboarding first task idle until the user comments", async () => {
     const { companyId, agentId, issueId } =
       await seedAssignedTodoNoRunFixture();

@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   unique,
   bigint,
+  boolean,
   check,
 } from "drizzle-orm/pg-core";
 import { agents } from "./agents.js";
@@ -40,6 +41,9 @@ export const issues = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     status: text("status").notNull().default("backlog"),
+    // Ordinary-session record writes must never be promoted into execution by
+    // the assigned-todo liveness backstop before an explicit dispatch.
+    sessionWriteDispatchDeferred: boolean("session_write_dispatch_deferred").notNull().default(false),
     statusVersion: bigint("status_version", { mode: "number" }).notNull().default(0),
     lastStatusDecisionId: uuid("last_status_decision_id"),
     workMode: text("work_mode").notNull().default("standard"),
