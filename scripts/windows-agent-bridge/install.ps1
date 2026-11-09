@@ -1,7 +1,7 @@
 param([Parameter(Mandatory = $true)][string]$Config)
 $ErrorActionPreference = 'Stop'
 $configPath = (Resolve-Path $Config).Path
-$bridgeConfig = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+$bridgeConfig = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 if ($bridgeConfig.agents.Count -ne 1) { throw '每个本机工作器只能配置一名智能体。' }
 $taskName = 'AliceWorker_' + $bridgeConfig.agents[0].remoteAgentId
 $startupLink = Join-Path ([Environment]::GetFolderPath('Startup')) ($taskName + '.lnk')

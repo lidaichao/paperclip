@@ -4,7 +4,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $configPath = (Resolve-Path $Config).Path
-$settings = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+$settings = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 if ($settings.schemaVersion -ne 3) { throw '桥接配置版本必须为 3。' }
 if ($settings.agents.Count -ne 1) { throw '每个本机工作器只能配置一名智能体。' }
 if ($settings.PSObject.Properties.Name -contains 'localApiBase' -or

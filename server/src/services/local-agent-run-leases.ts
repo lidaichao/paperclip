@@ -46,7 +46,9 @@ import { ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-co
 import { assertClientPullAcceptedReviewContext, assertClientPullRejectedReviewContext,
   assertClientPullReviewClaimCandidate,
   assertClientPullReviewEventContext,
-  CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON } from "./local-agent-review-claim.js";
+  CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON,
+  retireStaleClientPullReviewQueuedRun,
+  STALE_REVIEW_CLAIM_CODE } from "./local-agent-review-claim.js";
 import { assertDefectQaClaimCandidate, CLIENT_PULL_DEFECT_QA_WAKE_REASON,
   defectQaRunChanged, deliverPendingDefectQaForAgent,
   readClaimedDefectQaContext, retireStaleDefectQaQueuedRun,
@@ -346,8 +348,17 @@ export function localAgentRunLeaseService(
           if (!issue) throw conflict("Dedicated reviewer task no longer exists");
           // A reviewer is deliberately not the issue assignee. Keep the source
           // issue's execution ownership untouched throughout this claim.
-          await assertClientPullReviewClaimCandidate(db, tx as unknown as Db,
-            { agent, run, issue });
+          try {
+            await assertClientPullReviewClaimCandidate(db, tx as unknown as Db,
+              { agent, run, issue });
+          } catch (error) {
+            if (error instanceof HttpError && error.status === 409 &&
+              (error.details as { code?: unknown } | undefined)?.code === STALE_REVIEW_CLAIM_CODE) {
+              await retireStaleClientPullReviewQueuedRun(tx as unknown as Db, run);
+              continue;
+            }
+            throw error;
+          }
           const dependency = await issueService(db).getDependencyReadiness(issueId, tx);
           if (!dependency.isDependencyReady ||
             await getExecutionBlocker(tx as unknown as Db, input.companyId, issueId)) {

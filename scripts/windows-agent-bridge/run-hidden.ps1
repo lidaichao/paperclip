@@ -2,7 +2,7 @@ param([Parameter(Mandatory = $true)][string]$Config)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $runtime = Join-Path $PSScriptRoot 'dist\launcher.bundle.mjs'
-$settings = Get-Content -LiteralPath (Resolve-Path $Config).Path -Raw | ConvertFrom-Json
+$settings = Get-Content -LiteralPath (Resolve-Path $Config).Path -Raw -Encoding UTF8 | ConvertFrom-Json
 $logDir = Join-Path $settings.workerHome 'logs'
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $stdout = Join-Path $logDir 'bridge.stdout.log'

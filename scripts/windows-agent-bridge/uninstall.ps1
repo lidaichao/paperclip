@@ -1,7 +1,7 @@
 param([Parameter(Mandatory = $true)][string]$Config)
 $ErrorActionPreference = 'Stop'
 $configPath = (Resolve-Path $Config).Path
-$settings = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+$settings = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $taskName = 'AliceWorker_' + $settings.agents[0].remoteAgentId
 $startupLink = Join-Path ([Environment]::GetFolderPath('Startup')) ($taskName + '.lnk')
 $lockPath = [System.IO.Path]::GetFullPath((Join-Path $settings.workerHome 'claim-state.json.lock'))

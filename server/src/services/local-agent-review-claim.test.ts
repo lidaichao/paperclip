@@ -11,7 +11,9 @@ import {
 } from "../__tests__/helpers/embedded-postgres.js";
 import { assertClientPullReviewClaimCandidate,
   CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON as reviewWake,
-  clientPullCompletionReviewWakeKey } from "./local-agent-review-claim.js";
+  clientPullCompletionReviewWakeKey,
+  retireStaleClientPullReviewQueuedRun,
+  STALE_REVIEW_CLAIM_CODE } from "./local-agent-review-claim.js";
 import type { Db } from "@paperclipai/db";
 
 const external = process.env.PAPERCLIP_TEST_DATABASE_URL;
@@ -58,6 +60,7 @@ describe.runIf(support.supported)("inert local completion reviewer claim candida
       releasedAt: new Date(), stopAcknowledgedAt: new Date(), outcome: "succeeded" });
     await db.insert(issueThreadInteractions).values({ id: interactionId,
       companyId, issueId, sourceRunId, kind: "request_confirmation", status: "pending",
+      continuationPolicy: "wake_assignee", requestedResolverPolicy: "not_creator",
       effectiveResolverPolicy: "not_creator", createdByAgentId: sourceAgentId,
       addresseeAgentId: reviewerAgentId, addresseeUserId: null,
       payload: { version: 1, prompt: "Verify delivery", target: {
@@ -76,7 +79,8 @@ describe.runIf(support.supported)("inert local completion reviewer claim candida
       idempotencyKey: clientPullCompletionReviewWakeKey(reviewId, interactionId),
       payload: { issueId, interactionId, reviewId, sourceRunId } });
     await db.insert(heartbeatRuns).values({ id: reviewerRunId, companyId,
-      agentId: reviewerAgentId, status: "queued", wakeupRequestId: wakeId,
+      agentId: reviewerAgentId, status: "queued", runtimeMode: "client_pull",
+      wakeupRequestId: wakeId,
       contextSnapshot: context });
     return { companyId, issueId, sourceAgentId, reviewerAgentId,
       sourceRunId, reviewerRunId, reviewId, interactionId, wakeId, keyId };
@@ -113,7 +117,8 @@ describe.runIf(support.supported)("inert local completion reviewer claim candida
   it("rejects stale review revisions and unrelated wake receipts", async () => {
     const stale = await fixture();
     await db.update(issues).set({ statusVersion: 5 }).where(eq(issues.id, stale.issueId));
-    await expect(validate(stale)).rejects.toMatchObject({ status: 409 });
+    await expect(validate(stale)).rejects.toMatchObject({ status: 409,
+      details: { code: STALE_REVIEW_CLAIM_CODE } });
     const wrongCard = await fixture();
     await db.update(issueThreadInteractions).set({ payload: {
       version: 1, prompt: "Verify delivery", target: { type: "custom", key: "issue_completion_review",
@@ -126,6 +131,20 @@ describe.runIf(support.supported)("inert local completion reviewer claim candida
       sourceRunId: wrongWake.sourceRunId } })
       .where(eq(agentWakeupRequests.id, wrongWake.wakeId));
     await expect(validate(wrongWake)).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("retires a permanently stale reviewer run and its wake receipt", async () => {
+    const f = await fixture();
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, f.reviewerRunId));
+    await db.transaction((tx) => retireStaleClientPullReviewQueuedRun(tx as unknown as Db, run));
+    const [retired] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, f.reviewerRunId));
+    const [wake] = await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, f.wakeId));
+    expect(retired.status).toBe("cancelled");
+    expect(wake.status).toBe("cancelled");
+    expect(wake.error).toBe("dedicated_review_stale");
   });
 
   it("refuses a still-running source or unreleased source lease", async () => {

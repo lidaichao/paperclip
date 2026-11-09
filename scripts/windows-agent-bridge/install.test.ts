@@ -40,6 +40,7 @@ describe("installation safety", () => {
   it("starts only the explicit hidden service mode", async () => {
     const runner = await readFile(path.join(root, "run-hidden.ps1"), "utf8");
     expect(runner).toContain("'--service'");
+    expect(runner).toMatch(/Get-Content[^\n]+-Encoding UTF8/);
   });
 
   it("does not start a private login for explicit shared Codex mode", async () => {

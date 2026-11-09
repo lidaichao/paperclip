@@ -9,6 +9,7 @@ import { completionReviewRejectedWakeKey,
   ISSUE_COMPLETION_REVIEW_TARGET_KEY } from "./issue-completion-review-contract.js";
 
 export const CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON = "issue_completion_review";
+export const STALE_REVIEW_CLAIM_CODE = "STALE_REVIEW_CLAIM";
 
 /** Stable receipt key for the future dedicated reviewer wake producer. */
 export function clientPullCompletionReviewWakeKey(reviewId: string, interactionId: string) {
@@ -45,15 +46,18 @@ export async function assertClientPullReviewClaimCandidate(
     run.companyId !== agent.companyId ||
     run.agentId !== agent.id || issue.companyId !== agent.companyId ||
     issue.id !== issueId || issue.status !== "in_review" ||
-    issue.executionRunId !== null || issue.assigneeAgentId === agent.id ||
+    issue.assigneeAgentId === agent.id ||
     typeof reviewId !== "string" || typeof interactionId !== "string" ||
     typeof sourceRunId !== "string" ||
     context.wakeReason !== CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON ||
-    !run.wakeupRequestId ||
+    !run.wakeupRequestId) {
+    throw conflict("Dedicated reviewer run is not claimable", { code: STALE_REVIEW_CLAIM_CODE });
+  }
+  if (issue.executionRunId !== null ||
     object(agent.runtimeConfig).executionMode !== "client_pull" ||
     ["terminated", "pending_approval", "paused"].includes(agent.status) ||
     agent.pausedAt) {
-    throw conflict("Dedicated reviewer run is not claimable");
+    throw conflict("Dedicated reviewer run is temporarily blocked");
   }
 
   const [review] = await tx.select().from(issueCompletionReviews).where(and(
@@ -88,7 +92,8 @@ export async function assertClientPullReviewClaimCandidate(
     target.revisionId !== review.id ||
     object(interaction.payload).toolAction !== undefined ||
     object(interaction.payload).secretProposal !== undefined) {
-    throw conflict("Dedicated completion review is stale or not addressed to this agent");
+    throw conflict("Dedicated completion review is stale or not addressed to this agent",
+      { code: STALE_REVIEW_CLAIM_CODE });
   }
 
   const [wake] = await tx.select().from(agentWakeupRequests)
@@ -101,7 +106,8 @@ export async function assertClientPullReviewClaimCandidate(
     wake.idempotencyKey !== clientPullCompletionReviewWakeKey(review.id, interaction.id) ||
     payload.issueId !== issue.id || payload.interactionId !== interaction.id ||
     payload.reviewId !== review.id || payload.sourceRunId !== sourceRunId) {
-    throw conflict("Reviewer wake receipt does not match the review revision");
+    throw conflict("Reviewer wake receipt does not match the review revision",
+      { code: STALE_REVIEW_CLAIM_CODE });
   }
 
   const [sourceRun] = await tx.select({ status: heartbeatRuns.status,
@@ -137,6 +143,25 @@ export async function assertClientPullReviewClaimCandidate(
   await heartbeatService(db).assertClientPullClaimAdmission(run, agent, issue, tx);
   return { issueId: issue.id, interactionId: interaction.id, reviewId: review.id,
     sourceRunId, wakeReason: CLIENT_PULL_COMPLETION_REVIEW_WAKE_REASON };
+}
+
+/** Retire a permanently stale queued reviewer run so later work can be claimed. */
+export async function retireStaleClientPullReviewQueuedRun(
+  tx: Db,
+  run: typeof heartbeatRuns.$inferSelect,
+) {
+  const [retired] = await tx.update(heartbeatRuns).set({
+    status: "cancelled", finishedAt: sql`now()`, updatedAt: sql`now()`,
+  }).where(and(eq(heartbeatRuns.id, run.id), eq(heartbeatRuns.status, "queued")))
+    .returning({ id: heartbeatRuns.id });
+  if (!retired) throw conflict("Dedicated reviewer queued run changed before retirement");
+  if (run.wakeupRequestId) {
+    await tx.update(agentWakeupRequests).set({
+      status: "cancelled", finishedAt: sql`now()`,
+      error: "dedicated_review_stale", updatedAt: sql`now()`,
+    }).where(and(eq(agentWakeupRequests.id, run.wakeupRequestId),
+      eq(agentWakeupRequests.status, "queued")));
+  }
 }
 
 /** The reviewer may write run telemetry while its exact review remains open. */

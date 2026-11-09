@@ -47,6 +47,7 @@ import { issueCommandDeliveryService } from "./issue-command-deliveries.js";
 import { localAgentDeviceBindingService } from "./local-agent-device-bindings.js";
 import { accessService } from "./access.js";
 import { heartbeatService } from "./heartbeat.js";
+import { recoveryService } from "./recovery/service.js";
 import { agentService } from "./agents.js";
 import { issueService } from "./issues.js";
 import { updateAgentSchema } from "@paperclipai/shared";
@@ -1027,6 +1028,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
   });
 
   it("uses an agent's real API key to create, comment, and reprioritize without a run", async () => {
+    const testStartedAt = new Date();
     const scope = await fixture();
     const responsibleUserId = `user-${randomUUID()}`;
     const apiToken = `pcp_test_${randomUUID()}`;
@@ -1120,7 +1122,14 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     });
     const updatedRecord = await db.select().from(issues).where(eq(issues.id, created.body.id));
     expect(updatedRecord[0]?.sessionWriteDispatchDeferred).toBe(true);
-    await heartbeatService(db).reconcileStrandedAssignedIssues();
+    // The generic fixture's pre-existing queued issue is unrelated to this
+    // session-write assertion and has no responsible-user seed.
+    await db.update(issues).set({ status: "done" }).where(eq(issues.id, scope.issueId));
+    const enqueueWakeup = vi.fn(async () => null);
+    await recoveryService(db, { enqueueWakeup }).reconcileStrandedAssignedIssues({
+      issueCreatedAtGte: testStartedAt,
+    });
+    expect(enqueueWakeup).not.toHaveBeenCalled();
     const wakeupsAfter = await db.select({ id: agentWakeupRequests.id })
       .from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, scope.companyId));
     expect(wakeupsAfter).toHaveLength(wakeupsBefore.length);
@@ -2482,7 +2491,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .rejects.toMatchObject({ status: 409 });
   }, 30_000);
 
-  it("rejects a stale reviewer card and leaves the queued run untouched", async () => {
+  it("retires a stale reviewer card so it cannot block later queued work", async () => {
     const { scope, owner, svc, handoff } = await dedicatedReviewFixture();
     await svc.finish({ ...owner, outcome: "succeeded", exitCode: 0,
       processStopped: true, clientRequestId: randomUUID() });
@@ -2497,13 +2506,16 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       deviceId: "reviewer-stale-001" });
     await db.update(issueThreadInteractions).set({ status: "cancelled" })
       .where(eq(issueThreadInteractions.id, handoff.interaction.id));
-    await expect(svc.claim({ companyId: scope.companyId,
+    expect(await svc.claim({ companyId: scope.companyId,
       agentId: handoff.review.reviewerAgentId, keyId: reviewerKeyId,
-      deviceId: "reviewer-stale-001", idempotencyKey: randomUUID() }))
-      .rejects.toMatchObject({ status: 409 });
+      deviceId: "reviewer-stale-001", idempotencyKey: randomUUID() })).toBeNull();
     const [queued] = await db.select().from(heartbeatRuns)
       .where(eq(heartbeatRuns.id, run.id));
-    expect(queued.status).toBe("queued");
+    expect(queued.status).toBe("cancelled");
+    const [wake] = await db.select().from(agentWakeupRequests)
+      .where(eq(agentWakeupRequests.id, run.wakeupRequestId!));
+    expect(wake.status).toBe("cancelled");
+    expect(wake.error).toBe("dedicated_review_stale");
     expect(await db.select().from(localAgentRunLeases)
       .where(eq(localAgentRunLeases.runId, run.id))).toHaveLength(0);
   }, 30_000);
