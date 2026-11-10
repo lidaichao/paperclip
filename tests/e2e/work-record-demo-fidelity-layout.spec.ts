@@ -343,12 +343,17 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
 
     const railToggle = page.getByTestId("work-record-rail-toggle");
     await expect(railToggle).toHaveAttribute("aria-expanded", "true");
-    await railToggle.click();
+    await railToggle.focus();
+    await expect(railToggle).toBeFocused();
+    await page.keyboard.press("Enter");
     await expect(page.getByTestId("work-record-workspace-grid")).toHaveAttribute("data-rail-open", "false");
     await expect(railToggle).toHaveAttribute("aria-expanded", "false");
     const collapsedPlanContent = await box(page.getByTestId("work-record-workspace-content"), "收起后的计划内容区");
 
-    await page.getByRole("tab", { name: "甘特", exact: true }).click();
+    const ganttTab = page.getByRole("tab", { name: "甘特", exact: true });
+    await ganttTab.focus();
+    await expect(ganttTab).toBeFocused();
+    await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/gantt$/);
     await expect(page.getByTestId("work-records-main")).toHaveAttribute("data-view-mode", "gantt");
     await expect(page.getByTestId("work-record-workspace-grid")).toHaveAttribute("data-rail-open", "false");
