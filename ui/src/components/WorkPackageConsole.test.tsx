@@ -274,6 +274,15 @@ describe("WorkPackageConsole", () => {
     expect(container.textContent).not.toContain("预览整个工作包");
   });
 
+  it("puts the dense table first when a plan view has no selected record", async () => {
+    await render(records, "plan");
+
+    expect(container.querySelector('[data-testid="work-record-list-surface"]')?.getAttribute("data-detail-open")).toBe("false");
+    expect(container.querySelector('[data-testid="work-record-context-toolbar"]')).toBeNull();
+    expect(container.querySelector('[data-testid="work-record-dense-table"]')).not.toBeNull();
+    expect(container.querySelector('[aria-current="true"]')).toBeNull();
+  });
+
   it("enters the dispatch chain only after explicit confirmation", async () => {
     prepareMock.mockResolvedValueOnce({ batch: { id: "batch-1" }, records });
     await render(records, "plan");

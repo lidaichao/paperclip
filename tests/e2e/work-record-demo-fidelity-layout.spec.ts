@@ -20,6 +20,12 @@ const viewports: Viewport[] = [
   { width: 1574, height: 1038, label: "1574x1038" },
 ];
 
+const minimumVisiblePlanRows: Record<string, number> = {
+  "1319x1012": 16,
+  "1540x1117": 19,
+  "1574x1038": 17,
+};
+
 async function json<T>(response: APIResponse, label: string): Promise<T> {
   const body = await response.text();
   expect(response.ok(), `${label}: ${response.status()} ${body}`).toBe(true);
@@ -208,6 +214,21 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     }),
     "create move target",
   );
+  for (let index = 0; index < 14; index += 1) {
+    await json<WorkRecord>(
+      await request.post(`/api/companies/${company.id}/work-records`, {
+        data: {
+          projectId: project.id,
+          kind: "plan",
+          title: `首屏密度任务 ${index + 1}`,
+          iterationAssignmentMode: "independent",
+          iterationId: iteration.id,
+          predecessorRecordIds: [],
+        },
+      }),
+      `create density record ${index + 1}`,
+    );
+  }
   await json(
     await request.post(`/api/companies/${company.id}/work-records`, {
       data: {
@@ -236,6 +257,17 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     await page.getByRole("button", { name: "展开 布局基线任务", exact: true }).click();
     await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toBeVisible();
     await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toBeVisible();
+    const planRows = page.getByTestId("work-record-table-row");
+    await expect(planRows).toHaveCount(20);
+    const table = await box(page.getByTestId("work-record-table-scroller"), "计划高密度表格");
+    expect(table.y - plan.content.y, `${viewport.label} 表格应在业务区首屏直接出现`).toBeLessThanOrEqual(250);
+    const firstRow = await box(planRows.first(), "计划首行");
+    expect(firstRow.height, `${viewport.label} 紧凑行高`).toBeLessThanOrEqual(33);
+    const visibleRowCount = await planRows.evaluateAll((rows) => rows.filter((row) => {
+      const rect = row.getBoundingClientRect();
+      return rect.top >= 0 && rect.bottom <= window.innerHeight;
+    }).length);
+    expect(visibleRowCount, `${viewport.label} 首屏任务容量应达到 Demo 实测基线`).toBeGreaterThanOrEqual(minimumVisiblePlanRows[viewport.label]);
     await screenshot(page, info, `demo-fidelity-plan-wbs-${viewport.label}`);
 
     const recordsBeforeDrawer = await json<unknown[]>(

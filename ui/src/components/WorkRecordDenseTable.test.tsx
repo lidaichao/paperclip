@@ -141,4 +141,15 @@ describe("WorkRecordDenseTable WBS", () => {
     expect(childRow?.textContent).toContain("继承 · V1 / 迭代 A");
     expect(childRow?.textContent).not.toContain("程序开发 · V1");
   });
+
+  it("keeps twenty plan records in compact rows without card-per-record chrome", async () => {
+    await render("plan", Array.from({ length: 20 }, (_, index) => record(`plan-${index + 1}`, `计划任务 ${index + 1}`)));
+
+    const rows = [...container.querySelectorAll('[data-testid="work-record-table-row"]')];
+    expect(rows).toHaveLength(20);
+    expect(rows.every((row) => row.classList.contains("h-8"))).toBe(true);
+    expect(container.querySelector('[data-testid="work-record-view-toolbar"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="work-record-filter-toolbar"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="work-record-table-scroller"]')).not.toBeNull();
+  });
 });

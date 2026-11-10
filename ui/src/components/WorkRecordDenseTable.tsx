@@ -5,9 +5,11 @@ import { defaultWorkRecordViewConfig } from "@paperclipai/shared";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Columns3, MoreHorizontal } from "lucide-react";
 import { buildWorkRecordTreeRows, type WorkRecordTreeRow } from "@/lib/work-record-tree";
 
 const LABELS: Record<WorkRecordViewField, string> = {
@@ -199,26 +201,36 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
     return next;
   });
 
-  return <div className="space-y-3" data-testid="work-record-dense-table" data-density={draft.density}>
-    <div className="flex min-h-11 flex-wrap items-center gap-2">
-      <label className="text-sm font-medium">视图 <select className="h-9 rounded-md border border-input bg-background px-3" value={activeId} onChange={(event) => void switchView(event.target.value)}>{(views.data ?? []).map((view) => <option key={view.id} value={view.id}>{view.isBuiltin ? "内置 · " : "个人 · "}{view.name}</option>)}</select></label>
-      <Button size="sm" onClick={save} disabled={!dirty || create.isPending || update.isPending}>{active?.isBuiltin ? "另存为" : "保存修改"}</Button>
-      <Button size="sm" variant="outline" onClick={saveAs}>另存为</Button>
-      <Button size="sm" variant="outline" disabled={!active || active.isBuiltin} onClick={rename}>重命名</Button>
-      <Button size="sm" variant="outline" disabled={!active || active.isBuiltin} onClick={deleteView}>删除</Button>
-      {dirty ? <span className="text-sm text-muted-foreground" role="status">未保存配置</span> : null}
+  return <div className="space-y-2" data-testid="work-record-dense-table" data-density={draft.density}>
+    <div className="flex min-h-9 items-center gap-2 overflow-x-auto" data-testid="work-record-view-toolbar">
+      <label className="flex shrink-0 items-center gap-2 text-sm font-medium">视图 <select className="h-9 rounded-md border border-input bg-background px-3" value={activeId} onChange={(event) => void switchView(event.target.value)}>{(views.data ?? []).map((view) => <option key={view.id} value={view.id}>{view.isBuiltin ? "内置 · " : "个人 · "}{view.name}</option>)}</select></label>
+      {dirty ? <Button className="shrink-0" size="sm" onClick={save} disabled={create.isPending || update.isPending}>{active?.isBuiltin ? "另存为" : "保存修改"}</Button> : null}
+      {dirty ? <span className="shrink-0 text-sm text-muted-foreground" role="status">未保存配置</span> : null}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild><Button className="ml-auto shrink-0" size="icon-sm" variant="outline" aria-label="视图操作"><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={saveAs}>另存为</DropdownMenuItem>
+          <DropdownMenuItem disabled={!active || active.isBuiltin} onSelect={rename}>重命名</DropdownMenuItem>
+          <DropdownMenuItem disabled={!active || active.isBuiltin} onSelect={deleteView}>删除</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
-    <div className="flex flex-wrap items-center gap-2">
-      <Input className="max-w-xs" aria-label="搜索记录" placeholder="搜索 ID、标题或描述" value={draft.search} onChange={(event) => mutate((next) => { next.search = event.target.value; })} />
+    <div className="flex min-h-9 items-center gap-2 overflow-x-auto" data-testid="work-record-filter-toolbar">
+      <Input className="w-64 shrink-0" aria-label="搜索记录" placeholder="搜索 ID、标题或描述" value={draft.search} onChange={(event) => mutate((next) => { next.search = event.target.value; })} />
       <select aria-label="密度" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.density} onChange={(event) => mutate((next) => { next.density = event.target.value as WorkRecordViewConfig["density"]; })}><option value="compact">紧凑</option><option value="comfortable">舒适</option><option value="spacious">宽松</option></select>
       <select aria-label="排序字段" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.sort[0]?.field ?? ""} onChange={(event) => mutate((next) => { next.sort = event.target.value ? [{ field: event.target.value as WorkRecordViewField, direction: next.sort[0]?.direction ?? "asc" }] : []; })}><option value="">不排序</option>{columns.map((field) => <option key={field} value={field}>按{fieldLabel(kind, field)}</option>)}</select>
       <Button size="sm" variant="outline" disabled={!draft.sort[0]} onClick={() => mutate((next) => { if (next.sort[0]) next.sort[0].direction = next.sort[0].direction === "asc" ? "desc" : "asc"; })}>{draft.sort[0]?.direction === "desc" ? "降序" : "升序"}</Button>
       <select aria-label="分组字段" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.groupBy ?? ""} onChange={(event) => mutate((next) => { next.groupBy = event.target.value as WorkRecordViewField || null; })}><option value="">不分组</option>{columns.map((field) => <option key={field} value={field}>按{fieldLabel(kind, field)}分组</option>)}</select>
-      <select aria-label="业务状态筛选" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.filters.find((item) => item.field === "businessStatus")?.value ?? ""} onChange={(event) => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== "businessStatus"); if (event.target.value) next.filters.push({ field: "businessStatus", operator: "is", value: event.target.value }); })}><option value="">全部状态</option>{["backlog","todo","in_progress","in_review","blocked","done","cancelled"].map((status) => <option key={status}>{status}</option>)}</select>
+      <select aria-label="业务状态筛选" className="h-9 shrink-0 rounded-md border border-input bg-background px-3 text-sm" value={draft.filters.find((item) => item.field === "businessStatus")?.value ?? ""} onChange={(event) => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== "businessStatus"); if (event.target.value) next.filters.push({ field: "businessStatus", operator: "is", value: event.target.value }); })}><option value="">全部状态</option>{["backlog","todo","in_progress","in_review","blocked","done","cancelled"].map((status) => <option key={status}>{status}</option>)}</select>
+      <Popover>
+        <PopoverTrigger asChild><Button className="shrink-0" size="sm" variant="outline"><Columns3 className="size-4" />列</Button></PopoverTrigger>
+        <PopoverContent align="end" className="w-[min(48rem,calc(100vw-2rem))] p-3">
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{draft.columnOrder.map((field) => { const locked = field === "id" || field === "title"; const label = fieldLabel(kind, field); return <div key={field} className="flex min-h-10 items-center gap-1 rounded-md border px-2" onKeyDown={(event) => { if (!event.altKey) return; if (event.key === "ArrowUp") move(field, -1); if (event.key === "ArrowDown") move(field, 1); if (event.key === "ArrowLeft") mutate((next) => { next.columnWidths[field] = Math.max(64, (next.columnWidths[field] ?? 160) - 16); }); if (event.key === "ArrowRight") mutate((next) => { next.columnWidths[field] = Math.min(1200, (next.columnWidths[field] ?? 160) + 16); }); }}><label className="flex flex-1 items-center gap-2 text-sm"><input type="checkbox" checked={draft.visibleFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.visibleFields = event.target.checked ? [...next.visibleFields, field] : next.visibleFields.filter((item) => item !== field); })} />{label}</label><Button size="sm" variant="ghost" aria-label={`${label}上移`} onClick={() => move(field, -1)}>↑</Button><Button size="sm" variant="ghost" aria-label={`${label}下移`} onClick={() => move(field, 1)}>↓</Button><Button size="sm" variant="ghost" aria-label={`${label}缩窄`} onClick={() => mutate((next) => { next.columnWidths[field] = Math.max(64, (next.columnWidths[field] ?? 160) - 16); })}>−</Button><Button size="sm" variant="ghost" aria-label={`${label}加宽`} onClick={() => mutate((next) => { next.columnWidths[field] = Math.min(1200, (next.columnWidths[field] ?? 160) + 16); })}>＋</Button><label className="text-xs"><input type="checkbox" aria-label={`${label}冻结`} checked={draft.frozenFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.frozenFields = event.target.checked ? [...next.frozenFields, field] : next.frozenFields.filter((item) => item !== field); })} />冻结</label></div>; })}</div>
+        </PopoverContent>
+      </Popover>
     </div>
-    <details className="rounded-md border p-3"><summary className="cursor-pointer font-medium">列设置</summary><div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">{draft.columnOrder.map((field) => { const locked = field === "id" || field === "title"; const label = fieldLabel(kind, field); return <div key={field} className="flex min-h-10 items-center gap-1 rounded-md border px-2" onKeyDown={(event) => { if (!event.altKey) return; if (event.key === "ArrowUp") move(field, -1); if (event.key === "ArrowDown") move(field, 1); if (event.key === "ArrowLeft") mutate((next) => { next.columnWidths[field] = Math.max(64, (next.columnWidths[field] ?? 160) - 16); }); if (event.key === "ArrowRight") mutate((next) => { next.columnWidths[field] = Math.min(1200, (next.columnWidths[field] ?? 160) + 16); }); }}><label className="flex flex-1 items-center gap-2 text-sm"><input type="checkbox" checked={draft.visibleFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.visibleFields = event.target.checked ? [...next.visibleFields, field] : next.visibleFields.filter((item) => item !== field); })} />{label}</label><Button size="sm" variant="ghost" aria-label={`${label}上移`} onClick={() => move(field, -1)}>↑</Button><Button size="sm" variant="ghost" aria-label={`${label}下移`} onClick={() => move(field, 1)}>↓</Button><Button size="sm" variant="ghost" aria-label={`${label}缩窄`} onClick={() => mutate((next) => { next.columnWidths[field] = Math.max(64, (next.columnWidths[field] ?? 160) - 16); })}>−</Button><Button size="sm" variant="ghost" aria-label={`${label}加宽`} onClick={() => mutate((next) => { next.columnWidths[field] = Math.min(1200, (next.columnWidths[field] ?? 160) + 16); })}>＋</Button><label className="text-xs"><input type="checkbox" aria-label={`${label}冻结`} checked={draft.frozenFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.frozenFields = event.target.checked ? [...next.frozenFields, field] : next.frozenFields.filter((item) => item !== field); })} />冻结</label></div>; })}</div></details>
     {error ? <p role="alert" className="text-sm text-destructive">视图操作失败：{error.message}</p> : null}
-    <div className="overflow-x-auto rounded-md border" tabIndex={0} aria-label={`${kind === "plan" ? "计划" : "缺陷"}密集表格`}>
+    <div className="overflow-x-auto rounded-md border" tabIndex={0} aria-label={`${kind === "plan" ? "计划" : "缺陷"}密集表格`} data-testid="work-record-table-scroller">
       <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: tableWidth }}><thead className="bg-muted/70"><tr><th className="w-10"><span className="sr-only">选择</span></th>{columns.map((field) => <th key={field} scope="col" className={cn("border-b px-2 text-left", draft.frozenFields.includes(field) && "sticky z-10 bg-muted")} style={{ width: draft.columnWidths[field] ?? (field === "title" ? 280 : 160), left: stickyLeft[field] }}>{fieldLabel(kind, field)}</th>)}</tr></thead>
       <tbody>{groups.map(([group, rows]) => <FragmentGroup key={group} label={draft.groupBy ? group || "未分组" : null} columnCount={columns.length + 1}>{rows.map((row) => {
         const record = row.record;
