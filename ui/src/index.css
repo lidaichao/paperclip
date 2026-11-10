@@ -221,6 +221,12 @@
   --gtc-folder-row-actions: 1rem minmax(0, 1fr) auto auto;
   --sz-folder-rail: 13.25rem;
   --sz-folder-sheet-max: 80dvh;
+  --sz-work-record-rail-wide: 13.125rem;
+  --sz-work-record-rail-medium: 10.625rem;
+  --sz-work-record-rail-narrow: 9.375rem;
+  --sz-work-record-rail-collapsed: 2.75rem;
+  --sz-work-record-rail-collapsed-narrow: 2rem;
+  --gap-work-record-workspace: 1.25rem;
   --sz-tweak-panel-max: 70vh; /* Task Chat Redesign dev tweak panel scroll cap. */
 
   /* New-task dialog geometry inputs and gap tokens. The derived top/height
@@ -472,6 +478,52 @@
 
 .paperclip-doc-annotation-highlight[data-status="resolved"]::before {
   background-color: var(--paperclip-doc-annotation-highlight-resolved);
+}
+
+.work-record-workspace {
+  --work-record-rail-expanded-width: var(--sz-work-record-rail-narrow);
+  --work-record-rail-collapsed-width: var(--sz-work-record-rail-collapsed-narrow);
+  display: grid;
+  grid-template-columns: var(--work-record-rail-expanded-width) minmax(0, 1fr);
+  column-gap: var(--gap-work-record-workspace);
+  align-items: start;
+}
+
+.work-record-workspace[data-rail-open="false"] {
+  grid-template-columns: var(--work-record-rail-collapsed-width) minmax(0, 1fr);
+}
+
+.work-record-rail-shell {
+  position: relative;
+  min-width: 0;
+  align-self: stretch;
+}
+
+.work-record-rail-panel {
+  height: 100%;
+  min-width: 0;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-out),
+    visibility var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.work-record-workspace[data-rail-open="false"] .work-record-rail-panel {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@container (min-width: 43.75rem) {
+  .work-record-workspace {
+    --work-record-rail-expanded-width: var(--sz-work-record-rail-medium);
+    --work-record-rail-collapsed-width: var(--sz-work-record-rail-collapsed);
+  }
+}
+
+@container (min-width: 62.5rem) {
+  .work-record-workspace {
+    --work-record-rail-expanded-width: var(--sz-work-record-rail-wide);
+  }
 }
 
 @layer base {

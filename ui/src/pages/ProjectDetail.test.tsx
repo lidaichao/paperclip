@@ -114,9 +114,14 @@ vi.mock("../components/IssuesList", () => ({
   },
 }));
 vi.mock("../components/ProjectWorkRecords", () => ({
-  ProjectWorkRecords: (props: { kind: "plan" | "defect" }) => {
+  ProjectWorkRecords: (props: {
+    kind: "plan" | "defect";
+    viewMode?: "table" | "gantt";
+    railOpen?: boolean;
+    onRailOpenChange?: (open: boolean) => void;
+  }) => {
     mockProjectWorkRecords(props);
-    return <div data-testid="project-work-records" data-kind={props.kind} />;
+    return <div data-testid="project-work-records" data-kind={props.kind} data-rail-open={String(props.railOpen)} />;
   },
 }));
 
@@ -294,6 +299,36 @@ describe("ProjectDetail", () => {
     expect(container.textContent).toContain("计划");
     expect(container.textContent).toContain("缺陷");
     expect(container.querySelector('[data-testid="project-work-records"]')?.getAttribute("data-kind")).toBe(kind);
+  });
+
+  it("keeps the version rail state stable across plan, gantt and defect tabs", async () => {
+    mockLocation.pathname = "/projects/project-1/plans";
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    await act(async () => {
+      root = createRoot(container);
+      root.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const planProps = mockProjectWorkRecords.mock.calls.at(-1)?.[0] as { railOpen: boolean; onRailOpenChange: (open: boolean) => void };
+    expect(planProps.railOpen).toBe(true);
+
+    await act(async () => planProps.onRailOpenChange(false));
+    expect((mockProjectWorkRecords.mock.calls.at(-1)?.[0] as { railOpen: boolean }).railOpen).toBe(false);
+
+    mockLocation.pathname = "/projects/project-1/gantt";
+    await act(async () => root?.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>));
+    const ganttProps = mockProjectWorkRecords.mock.calls.at(-1)?.[0] as { railOpen: boolean; viewMode?: string };
+    expect(ganttProps.railOpen).toBe(false);
+    expect(ganttProps.viewMode).toBe("gantt");
+
+    mockLocation.pathname = "/projects/project-1/defects";
+    await act(async () => root?.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>));
+    const defectProps = mockProjectWorkRecords.mock.calls.at(-1)?.[0] as { railOpen: boolean; kind: string };
+    expect(defectProps.railOpen).toBe(false);
+    expect(defectProps.kind).toBe("defect");
   });
 
   it("redirects the legacy records deep link to plans", async () => {

@@ -41,6 +41,9 @@ vi.mock("@/components/WorkPackageConsole", () => ({
 vi.mock("@/components/WorkRecordContainerTree", () => ({
   WorkRecordContainerTree: () => <aside data-testid="version-iteration-tree" />,
 }));
+vi.mock("@/components/WorkRecordGantt", () => ({
+  WorkRecordGantt: () => <div data-testid="work-record-gantt" />,
+}));
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -111,16 +114,55 @@ describe("ProjectWorkRecords", () => {
     await i18n.changeLanguage("zh-CN");
   });
 
-  async function render(kind: "plan" | "defect") {
+  async function render(kind: "plan" | "defect", viewMode: "table" | "gantt" = "table", railProps: {
+    railOpen?: boolean;
+    onRailOpenChange?: (open: boolean) => void;
+  } = {}) {
     await act(async () => root.render(
       <MemoryRouter initialEntries={[`/projects/project-1/${kind === "plan" ? "plans" : "defects"}`]}>
         <QueryClientProvider client={client}>
-          <ProjectWorkRecords companyId="company-1" projectId="project-1" kind={kind} />
+          <ProjectWorkRecords companyId="company-1" projectId="project-1" kind={kind} viewMode={viewMode} {...railProps} />
         </QueryClientProvider>
       </MemoryRouter>,
     ));
     await flush();
   }
+
+  it("keeps the version and iteration rail mounted in gantt mode", async () => {
+    await render("plan", "gantt");
+    expect(container.querySelector('[data-testid="version-iteration-tree"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="work-record-gantt"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="console"]')).toBeNull();
+    expect(container.querySelector('[data-testid="work-record-workspace-grid"]')).not.toBeNull();
+  });
+
+  it("collapses the rail without unmounting business content", async () => {
+    await render("plan");
+    const toggle = container.querySelector('[data-testid="work-record-rail-toggle"]') as HTMLButtonElement;
+    const workspace = container.querySelector('[data-testid="work-record-workspace-grid"]');
+    const panel = container.querySelector(".work-record-rail-panel");
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(workspace?.getAttribute("data-rail-open")).toBe("true");
+
+    await act(async () => toggle.click());
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(workspace?.getAttribute("data-rail-open")).toBe("false");
+    expect(panel?.getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelector('[data-testid="version-iteration-tree"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="console"]')).not.toBeNull();
+  });
+
+  it("reports rail state changes to a controlling project page", async () => {
+    const onRailOpenChange = vi.fn();
+    await render("plan", "table", { railOpen: false, onRailOpenChange });
+    const toggle = container.querySelector('[data-testid="work-record-rail-toggle"]') as HTMLButtonElement;
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+    await act(async () => toggle.click());
+
+    expect(onRailOpenChange).toHaveBeenCalledWith(true);
+  });
 
   it("saves a plan without creating any execution object", async () => {
     await render("plan");

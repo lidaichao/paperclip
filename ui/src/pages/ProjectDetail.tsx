@@ -341,6 +341,7 @@ export function ProjectDetail() {
   const location = useLocation();
   const [fieldSaveStates, setFieldSaveStates] = useState<Partial<Record<ProjectConfigFieldKey, ProjectFieldSaveState>>>({});
   const [dismissedLeftProjectIds, setDismissedLeftProjectIds] = useState<Set<string>>(() => new Set());
+  const [workRecordRailOpen, setWorkRecordRailOpen] = useState(true);
   const workRecordNavigationRef = useRef<{ dirty: boolean; guard: () => Promise<boolean> } | null>(null);
   const tabNavigationPromiseRef = useRef<Promise<void> | null>(null);
   const fieldSaveRequestIds = useRef<Partial<Record<ProjectConfigFieldKey, number>>>({});
@@ -360,6 +361,10 @@ export function ProjectDetail() {
   }, [location.search]);
   const activeTab = activeRouteTab ?? pluginTabFromSearch;
   const workRecordRouteActive = activeTab === "plans" || activeTab === "gantt" || activeTab === "defects";
+
+  useEffect(() => {
+    setWorkRecordRailOpen(true);
+  }, [routeProjectRef]);
 
   useEffect(() => {
     if (!workRecordRouteActive) return;
@@ -938,15 +943,15 @@ export function ProjectDetail() {
       )}
 
       {activeTab === "plans" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
+        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
       )}
 
       {activeTab === "gantt" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" viewMode="gantt" onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
+        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" viewMode="gantt" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
       )}
 
       {activeTab === "defects" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="defect" onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
+        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="defect" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
       )}
 
       {activeTab === "plugin-operations" && project?.id && resolvedCompanyId && project.managedByPlugin && (

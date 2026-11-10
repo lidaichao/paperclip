@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 type ContainerTarget =
   | { kind: "version"; item: ProjectVersion }
@@ -41,10 +42,11 @@ function draftFromTarget(target: ContainerTarget): ContainerDraft {
     : { ...EMPTY_DRAFT, name: target.item.name, startsOn: target.item.startsOn ?? "", endsOn: target.item.endsOn ?? "" };
 }
 
-export function WorkRecordContainerTree({ companyId, projectId, writable = true }: {
+export function WorkRecordContainerTree({ companyId, projectId, writable = true, className }: {
   companyId: string;
   projectId: string;
   writable?: boolean;
+  className?: string;
 }) {
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const discardCancelRef = useRef<HTMLButtonElement>(null);
@@ -190,7 +192,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true 
   };
 
   return (
-    <aside className="rounded-lg border bg-card p-3" data-testid="version-iteration-tree" aria-label="版本与迭代">
+    <aside className={cn("rounded-lg border bg-card p-3", className)} data-testid="version-iteration-tree" aria-label="版本与迭代">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">版本与迭代</h3>
         {!writable ? <span className="text-xs text-muted-foreground">只读</span> : null}

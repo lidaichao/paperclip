@@ -3,7 +3,7 @@ import { l10n } from "@/i18n";
 import { useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordKind, WorkRecordUserResponsibility, WorkRecordUserRole } from "@paperclipai/shared";
-import { Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { agentsApi } from "@/api/agents";
 import { accessApi } from "@/api/access";
 import { buildCompanyUserLabelMap } from "@/lib/company-members";
@@ -90,11 +90,13 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
   };
 }
 
-export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "table", onNavigationGuardChange }: {
+export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "table", railOpen, onRailOpenChange, onNavigationGuardChange }: {
   companyId: string;
   projectId: string;
   kind: WorkRecordKind;
   viewMode?: "table" | "gantt";
+  railOpen?: boolean;
+  onRailOpenChange?: (open: boolean) => void;
   onNavigationGuardChange?: (state: { dirty: boolean; guard: () => Promise<boolean> } | null) => void;
 }) {
   const queryClient = useQueryClient();
@@ -115,6 +117,12 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   const latestNavigationGuardRef = useRef<() => Promise<boolean>>(async () => true);
   const confirmedDialogCloseRef = useRef(false);
   const [businessDecisionOpen, setBusinessDecisionOpen] = useState(false);
+  const [internalRailOpen, setInternalRailOpen] = useState(true);
+  const resolvedRailOpen = railOpen ?? internalRailOpen;
+  const setRailOpen = (open: boolean) => {
+    if (onRailOpenChange) onRailOpenChange(open);
+    else setInternalRailOpen(open);
+  };
   const recordsKey = queryKeys.workRecords.list(companyId, projectId);
   const records = useQuery({
     queryKey: recordsKey,
@@ -318,47 +326,65 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   }));
 
   return (
-    <section className="@container space-y-3" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
-      <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{kindLabel}</h2>
-          <p className="text-sm text-muted-foreground">
-            {kind === "plan"
-              ? l10n("local.work_record_saving_editing_and_assigning_an_owne")
-              : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
-          </p>
+    <section className="@container" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
+      <div className="work-record-workspace" data-testid="work-record-workspace-grid" data-rail-open={resolvedRailOpen ? "true" : "false"}>
+        <div className="work-record-rail-shell" data-testid="work-record-rail-shell">
+          <div className="work-record-rail-panel" aria-hidden={!resolvedRailOpen}>
+            <WorkRecordContainerTree className="h-full" companyId={companyId} projectId={projectId} writable={capabilities.data?.manageContainers.allowed !== false} />
+          </div>
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="outline"
+            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2 rounded-full bg-background"
+            aria-label={resolvedRailOpen ? "收起版本与迭代导航" : "展开版本与迭代导航"}
+            aria-expanded={resolvedRailOpen}
+            onClick={() => setRailOpen(!resolvedRailOpen)}
+            data-testid="work-record-rail-toggle"
+          >
+            {resolvedRailOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+          </Button>
         </div>
-        <Button disabled={capabilities.data?.editRecords.allowed === false} onClick={beginCreate}>
-          <Plus className="size-4" />
-          {l10n("local.work_record_new_kind", { kind: kindLabel })}
-        </Button>
-      </div>
+        <div className="min-w-0 overflow-hidden" data-testid="work-record-workspace-content">
+          <div className="mb-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">{kindLabel}</h2>
+              <p className="text-sm text-muted-foreground">
+                {kind === "plan"
+                  ? l10n("local.work_record_saving_editing_and_assigning_an_owne")
+                  : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
+              </p>
+            </div>
+            <Button disabled={capabilities.data?.editRecords.allowed === false} onClick={beginCreate}>
+              <Plus className="size-4" />
+              {l10n("local.work_record_new_kind", { kind: kindLabel })}
+            </Button>
+          </div>
 
-      {reopen.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
+          {reopen.error ? <p role="alert" className="mb-3 text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
 
-      {viewMode === "gantt" ? <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} writable={capabilities.data?.editRecords.allowed !== false} onOpen={(record, source) => { lastEditorFocusRef.current = source; void selectRecord(record); }} /> : null}
-
-      <div className={viewMode === "gantt" ? "hidden" : "grid items-start gap-3 @2xl:grid-cols-4"}>
-      <WorkRecordContainerTree companyId={companyId} projectId={projectId} writable={capabilities.data?.manageContainers.allowed !== false} />
-      <div className="min-w-0 @2xl:col-span-3">
-      <WorkPackageConsole
-        companyId={companyId}
-        projectId={projectId}
-        records={allRecords}
-        visibleKind={kind}
-        agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))}
-        recordsLoading={records.isLoading}
-        recordsError={records.error}
-        onRetryRecords={() => records.refetch()}
-        onEditRecord={(record) => { void selectRecord(record); }}
-        onEditCoverage={kind === "plan" ? beginCoverage : undefined}
-        onReopenRecord={kind === "defect" ? (record) => reopen.mutate(record) : undefined}
-        reopeningRecordId={reopen.isPending ? reopen.variables?.id ?? null : null}
-        beforeViewSwitch={beforeViewSwitch}
-        onViewDraftDirtyChange={setViewDraftDirty}
-        registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
-      />
-      </div>
+          {viewMode === "gantt" ? (
+            <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} writable={capabilities.data?.editRecords.allowed !== false} onOpen={(record, source) => { lastEditorFocusRef.current = source; void selectRecord(record); }} />
+          ) : (
+            <WorkPackageConsole
+              companyId={companyId}
+              projectId={projectId}
+              records={allRecords}
+              visibleKind={kind}
+              agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))}
+              recordsLoading={records.isLoading}
+              recordsError={records.error}
+              onRetryRecords={() => records.refetch()}
+              onEditRecord={(record) => { void selectRecord(record); }}
+              onEditCoverage={kind === "plan" ? beginCoverage : undefined}
+              onReopenRecord={kind === "defect" ? (record) => reopen.mutate(record) : undefined}
+              reopeningRecordId={reopen.isPending ? reopen.variables?.id ?? null : null}
+              beforeViewSwitch={beforeViewSwitch}
+              onViewDraftDirtyChange={setViewDraftDirty}
+              registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
+            />
+          )}
+        </div>
       </div>
 
       <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>
