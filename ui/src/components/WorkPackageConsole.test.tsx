@@ -134,8 +134,8 @@ describe("WorkPackageConsole", () => {
     await i18n.changeLanguage("zh-CN");
   });
 
-  async function render(currentRecords = records, visibleKind?: "plan" | "defect") {
-    await act(async () => root.render(<QueryClientProvider client={client}><WorkPackageConsole companyId="company-1" projectId="project-1" records={currentRecords} visibleKind={visibleKind} agentNames={{ "agent-po": "卡罗尔", "agent-qa": "Belle" }} recordsLoading={false} recordsError={null} onRetryRecords={() => undefined} /></QueryClientProvider>));
+  async function render(currentRecords = records, visibleKind?: "plan" | "defect", onEditRecord?: (record: WorkRecord, source: HTMLElement) => void) {
+    await act(async () => root.render(<QueryClientProvider client={client}><WorkPackageConsole companyId="company-1" projectId="project-1" records={currentRecords} visibleKind={visibleKind} agentNames={{ "agent-po": "卡罗尔", "agent-qa": "Belle" }} recordsLoading={false} recordsError={null} onRetryRecords={() => undefined} onEditRecord={onEditRecord} /></QueryClientProvider>));
     await flush(); await flush();
   }
 
@@ -282,6 +282,21 @@ describe("WorkPackageConsole", () => {
     expect(container.querySelector('[data-testid="work-record-context-toolbar"]')).toBeNull();
     expect(container.querySelector('[data-testid="work-record-dense-table"]')).not.toBeNull();
     expect(container.querySelector('[aria-current="true"]')).toBeNull();
+  });
+
+  it("opens the selected record from one row activation without an embedded detail card or width-changing layout", async () => {
+    const onEditRecord = vi.fn();
+    await render(records, "plan", onEditRecord);
+    const trigger = [...container.querySelectorAll("button")].find((node) => node.textContent?.includes("发布工作包")) as HTMLButtonElement;
+    const table = container.querySelector('[data-testid="work-record-dense-table"]') as HTMLElement;
+
+    await act(async () => trigger.click());
+    await flush();
+
+    expect(onEditRecord).toHaveBeenCalledWith(records[0], trigger);
+    expect(container.querySelector('[data-testid="work-record-detail-drawer"]')).toBeNull();
+    expect(table.parentElement?.className).not.toContain("xl:col-span-2");
+    expect(table.parentElement?.parentElement?.className).not.toContain("xl:grid-cols-3");
   });
 
   it("enters the dispatch chain only after explicit confirmation", async () => {

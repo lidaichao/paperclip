@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { l10n } from "@/i18n";
 import { displayLocale } from "@/i18n/display";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deriveWorkRecordDisplayState, type WakeupRequestStatus, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordKind, type WorkRecordQualityView } from "@paperclipai/shared";
-import { CheckCircle2, PackageCheck, RefreshCw, WifiOff, X } from "lucide-react";
+import { deriveWorkRecordDisplayState, type WakeupRequestStatus, type WorkPackageAssignmentEscalationReceipt, type WorkPackageDispatchPreview, type WorkRecord, type WorkRecordKind } from "@paperclipai/shared";
+import { CheckCircle2, PackageCheck, RefreshCw, WifiOff } from "lucide-react";
 import { heartbeatsApi } from "@/api/heartbeats";
 import { ApiError } from "@/api/client";
 import { workRecordsApi } from "@/api/work-records";
-import { Link } from "@/lib/router";
 import { queryKeys } from "@/lib/queryKeys";
 import { statusBadge, statusBadgeDefault } from "@/lib/status-colors";
 import { localizeWorkRecordRecoveryMessage } from "@/lib/work-record-message-localization";
@@ -20,15 +19,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { WorkRecordDenseTable } from "@/components/WorkRecordDenseTable";
 
 const BUSINESS: Record<string, string> = { backlog: "local.backlog_bf986e9a", todo: "local.todo_4ff402d7", in_progress: "local.in_progress_c1f88e9d", in_review: "local.in_review_c3905914", blocked: "local.blocked_18f2a094", done: "local.done_11a6767d", cancelled: "local.cancelled_d353a99e" };
-const SEVERITY: Record<string, string> = { critical: "local.work_record_severity_critical", high: "local.work_record_severity_high", medium: "local.work_record_severity_medium", low: "local.work_record_severity_low" };
-const DISPATCH: Record<string, string> = { not_dispatched: "local.work_record_not_dispatched", preparing: "local.work_record_preparing", blocked: "local.work_record_waiting_for_predecessor", linked: "local.work_record_linked", queued: "local.work_record_dispatch_queued", failed: "local.work_record_failed" };
 const QUALITY: Record<string, string> = { not_started: "local.work_record_not_started", waiting_children: "local.work_record_waiting_for_children", qa_initial: "local.work_record_qa_initial_review", waiting_fix: "local.work_record_waiting_for_fix", qa_retest: "local.work_record_qa_retest", po_acceptance: "local.work_record_po_acceptance", impact_review: "local.work_record_impact_review", approval_wait: "local.work_record_waiting_for_approval", accepted: "local.work_record_accepted", attention_required: "local.work_record_needs_attention" };
 const DISPLAY: Record<string, string> = { running: "local.work_record_running", queued: "local.work_record_run_queued", unknown: "local.work_record_run_status_unknown", preparing: "local.work_record_preparing_dispatch", failed: "local.work_record_dispatch_failed", blocked: "local.work_record_waiting_for_predecessor", linked: "local.work_record_waiting_for_scheduling", not_dispatched: "local.work_record_not_dispatched", conflict: "local.work_record_status_conflict", done: "local.done_11a6767d", cancelled: "local.cancelled_d353a99e", ended: "local.work_record_run_ended", stale: "local.work_record_projection_stale", error: "local.work_record_projection_error" };
 const ITEM_STATE: Record<string, string> = { waiting: "local.work_record_waiting", blocked: "local.blocked_18f2a094", ready: "local.work_record_ready", active: "local.work_record_active", submitted: "local.work_record_awaiting_verdict", accepted: "local.work_record_approved", rejected: "local.work_record_returned", superseded: "local.work_record_superseded", cancelled: "local.cancelled_d353a99e" };
 const ROLE: Record<string, string> = { repair: "local.work_record_repair_role", qa: "QA", po: "PO" };
 const HOLD: Record<string, string> = { prerequisite_not_dispatched: "local.work_record_predecessor_not_dispatched", prerequisite_not_completed: "local.work_record_predecessor_not_complete", prerequisite_cancelled_impact_pending: "local.work_record_predecessor_cancelled_waiting_for_po", delivery_sync_pending: "local.work_record_waiting_for_delivery_sync", native_dependency_pending: "local.work_record_waiting_for_native_task_dependency", release_pending: "local.work_record_waiting_for_release", release_failed: "local.work_record_release_failed", quality_gate_pending: "local.work_record_waiting_for_quality_gate", approval_pending: "local.work_record_waiting_for_approval" };
-const PROJECTION: Record<string, string> = { none: "local.work_record_no_projection_yet", current: "local.work_record_reconciled", stale: "local.work_record_projection_stale", error: "local.work_record_projection_error" };
-const RUN: Record<string, string> = { succeeded: "local.work_record_completed_successfully", failed: "local.work_record_ended_with_failure", cancelled: "local.cancelled_d353a99e", timed_out: "local.work_record_timed_out", running: "local.work_record_running", queued: "local.work_record_queue_in_progress" };
 const CYCLE_KIND: Record<string, string> = { package_acceptance: "local.work_record_work_package_acceptance", package_rework: "local.work_record_work_package_rework", defect_rework: "local.work_record_defect_rework", standalone_defect: "local.work_record_standalone_defect" };
 const CYCLE_STATE: Record<string, string> = { open: "local.in_progress_c1f88e9d", accepted: "local.work_record_accepted", superseded: "local.work_record_superseded_by_next_cycle", cancelled: "local.cancelled_d353a99e" };
 const VERDICT: Record<string, string> = { approve: "local.work_record_po_approved_verdict", pass: "local.work_record_qa_passed_verdict", return: "local.work_record_return" };
@@ -96,17 +91,6 @@ function previewDisposition(record: WorkRecord | undefined) {
   return l10n("local.work_record_will_create");
 }
 
-function nextOwner(record: WorkRecord, quality: WorkRecordQualityView | undefined, agentNames: Record<string, string>) {
-  const phase = record.quality.phase;
-  if (phase === "po_acceptance" || phase === "impact_review") return record.assigneeAgentId ? l10n("local.work_record_role_owner", { role: "PO", name: agentNames[record.assigneeAgentId] ?? l10n("local.work_record_unknown") }) : l10n("local.work_record_po_unassigned");
-  if (phase === "qa_initial" || phase === "qa_retest") return record.qaAssigneeAgentId ? l10n("local.work_record_role_owner", { role: "QA", name: agentNames[record.qaAssigneeAgentId] ?? l10n("local.work_record_unknown") }) : l10n("local.work_record_qa_unassigned");
-  if (phase === "approval_wait") return "Jack / Board";
-  const active = quality?.items.find((item) => ["ready", "active", "submitted", "blocked"].includes(item.state));
-  if (active?.role === "po") return record.assigneeAgentId ? l10n("local.work_record_role_owner", { role: "PO", name: agentNames[record.assigneeAgentId] ?? l10n("local.work_record_unknown") }) : l10n("local.work_record_po_unassigned");
-  if (active?.role === "qa") return record.qaAssigneeAgentId ? l10n("local.work_record_role_owner", { role: "QA", name: agentNames[record.qaAssigneeAgentId] ?? l10n("local.work_record_unknown") }) : l10n("local.work_record_qa_unassigned");
-  return record.assigneeAgentId ? agentNames[record.assigneeAgentId] ?? l10n("local.work_record_unknown") : l10n("local.work_record_to_be_assigned");
-}
-
 function Stat({ label, children }: { label: string; children: ReactNode }) {
   return <div className="rounded-md bg-muted/50 p-3"><dt className="text-xs font-medium text-muted-foreground">{label}</dt><dd className="mt-1 break-words text-sm font-medium">{children}</dd></div>;
 }
@@ -162,7 +146,7 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   recordsLoading: boolean;
   recordsError: Error | null;
   onRetryRecords: () => unknown;
-  onEditRecord?: (record: WorkRecord) => void;
+  onEditRecord?: (record: WorkRecord, source: HTMLElement) => void;
   onEditCoverage?: (record: WorkRecord) => void;
   onReopenRecord?: (record: WorkRecord) => void;
   reopeningRecordId?: string | null;
@@ -173,7 +157,6 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   const queryClient = useQueryClient();
   const online = useConnectivity();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selectedTriggerRef = useRef<HTMLElement | null>(null);
   const [checked, setChecked] = useState<string[]>([]);
   const [preview, setPreview] = useState<WorkPackageDispatchPreview | null>(null);
   const [previewMode, setPreviewMode] = useState<"whole_package" | "selected_records">("whole_package");
@@ -181,11 +164,6 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   const [evidenceRefs, setEvidenceRefs] = useState("");
   const [defectRecordId, setDefectRecordId] = useState("");
   const [repairRecordId, setRepairRecordId] = useState("");
-  const closeDetails = () => {
-    const previousId = selectedId;
-    setSelectedId(null);
-    window.setTimeout(() => (selectedTriggerRef.current ?? document.querySelector<HTMLElement>(`[data-record-id="${previousId}"] button`))?.focus(), 0);
-  };
   const batchStorageKey = `work-package-batch:${companyId}:${projectId}`;
   const [batchId, setBatchId] = useState(() => localStorage.getItem(batchStorageKey) ?? "");
 
@@ -214,12 +192,12 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
   }, [companyId, online, projectId, queryClient]);
 
   const selected = visibleRecords.find((record) => record.id === selectedId) ?? null;
-  const selectRecord = async (recordId: string) => {
-    if (recordId === selectedId) return;
-    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const selectRecord = async (recordId: string, source: HTMLElement) => {
+    const record = visibleRecords.find((item) => item.id === recordId);
+    if (!record) return;
     if (beforeViewSwitch && !(await beforeViewSwitch())) return;
-    selectedTriggerRef.current = trigger;
     setSelectedId(recordId);
+    onEditRecord?.(record, source);
   };
   const qualityDraftKey = selected ? `work-package-quality-draft:${companyId}:${projectId}:${selected.id}` : null;
   useEffect(() => {
@@ -376,31 +354,13 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
       {!online ? <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"><WifiOff className="size-4" />{l10n("local.work_record_offline_the_last_confirmed_state_is_")}</div> : commandError ? <p role="alert" aria-live="polite" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">{l10n("local.work_record_operation_incomplete")}{commandError.message}{l10n("local.work_record_the_request_key_is_retained_check_he")}</p> : null}
       {permissionExplanation ? <p role="note" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">{permissionExplanation}</p> : null}
       {persistedEscalation ? <p role="status" className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">{assignmentEscalationMessage(persistedEscalation)}{l10n("local.work_record_the_work_package_stays_blocked_and_e")}</p> : null}
-      {packageActionsEnabled && selected ? <div className="flex min-h-9 flex-wrap items-center justify-between gap-2" data-testid="work-record-context-toolbar"><StatusBadge record={selected} liveStatus={liveAvailable ? liveByIssue.get(selected.execution.issueId ?? "") : undefined} liveUnknown={!liveAvailable} /><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={!online || checked.length === 0 || previewScope.isPending} onClick={() => previewScope.mutate("selected_records")}>{l10n("local.work_record_preview_selected")} {checked.length || ""}</Button><Button size="sm" disabled={!online || previewScope.isPending} onClick={() => previewScope.mutate("whole_package")}>{l10n("local.work_record_preview_whole_work_package")}</Button></div></div> : null}
-      <div className={cn("items-start gap-4", selected && "grid xl:grid-cols-3")}>
-        <div className={cn("min-w-0 self-start", selected && "xl:col-span-2")}>
-          {visibleKind ? <WorkRecordDenseTable companyId={companyId} projectId={projectId} kind={visibleKind} records={visibleRecords} agentNames={agentNames} iterationLabels={iterationLabels} selectedId={selectedId} checked={checked} onSelect={(recordId) => { void selectRecord(recordId); }} onChecked={setChecked} beforeViewSwitch={beforeViewSwitch ?? (async () => true)} onViewDraftDirtyChange={onViewDraftDirtyChange} registerLeaveGuard={registerLeaveGuard} /> : null}
-        </div>
-
-        {selected ? <Card className="self-start xl:col-span-1" data-testid="work-record-detail-drawer" role="region" aria-label={l10n("local.work_record_full_details")} aria-current="true" tabIndex={-1} onKeyDown={(event) => { if (event.key === "Escape") closeDetails(); }}>
-          <CardHeader><div className="flex items-start justify-between gap-2"><div><CardTitle>{l10n("local.work_record_details")}</CardTitle><CardDescription>{l10n("local.work_record_selecting_another_row_will_not_move_")}</CardDescription></div><Button size="icon" variant="ghost" aria-label={l10n("local.work_record_close_details")} onClick={closeDetails}><X className="size-4" /></Button></div></CardHeader>
-          <CardContent className="space-y-4">
-            {selected ? <>
-              <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{selected.title}</h3><p className="text-xs text-muted-foreground">{l10n("local.work_record_revision")} {selected.revision} {l10n("local.work_record_dispatch_cycle")} {selected.dispatchRound}</p></div><div className="flex flex-wrap justify-end gap-2">{selected.kind === "defect" ? <Button size="sm" disabled={!online || prepareCapability?.allowed !== true || dispatchRecord.isPending} onClick={() => dispatchRecord.mutate(selected)}>{l10n("local.work_record_dispatch_defect")}</Button> : null}{onEditRecord ? <Button size="sm" variant="outline" onClick={() => onEditRecord(selected)}>{l10n("local.work_record_edit")}</Button> : null}</div></div>
-              {dispatchMissingFields.length > 0 ? <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"><p>{l10n("local.work_record_dispatch_missing_fields")}</p><ul className="mt-1 list-disc pl-5">{dispatchMissingFields.map((item) => <li key={item.field}>{item.label}</li>)}</ul></div> : null}
-              {onEditCoverage && selected.kind === "plan" && selected.parentRecordId && selected.packageQaRole === "execution" ? <Button size="sm" variant="outline" onClick={() => onEditCoverage(selected)}>{l10n("local.work_record_edit_qa_coverage")}</Button> : null}
-              <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Stat label={l10n("local.work_record_business_status")}>{mappedLabel(BUSINESS, selected.businessStatus)}</Stat><Stat label={l10n("local.work_record_dispatch_status")}>{mappedLabel(DISPATCH, selected.dispatchState)}</Stat><Stat label={l10n("local.work_record_quality_phase")}>{l10n("local.work_record_quality_cycle", { phase: mappedLabel(QUALITY, selected.quality.phase), count: selected.quality.cycleNumber ?? 0 })}</Stat><Stat label={l10n("local.work_record_next_owner")}>{nextOwner(selected, quality.data, agentNames)}</Stat><Stat label={l10n("local.work_record_live_run")}>{!liveAvailable ? l10n("local.work_record_cannot_confirm_yet") : selected.execution.issueId && liveByIssue.get(selected.execution.issueId) ? l10n("local.work_record_live_state", { state: liveByIssue.get(selected.execution.issueId) === "running" ? l10n("local.work_record_running") : l10n("local.work_record_queue_in_progress") }) : selected.execution.lastRunStatus ? mappedLabel(RUN, selected.execution.lastRunStatus) ?? l10n("local.work_record_ended_state", { state: selected.execution.lastRunStatus }) : l10n("local.work_record_no_live_run")}</Stat><Stat label={l10n("local.work_record_execution_projection")}>{mappedLabel(PROJECTION, selected.execution.projectionState) ?? selected.execution.projectionState}{selected.execution.projectionError ? ` · ${selected.execution.projectionError}` : ""}</Stat><Stat label={l10n("local.work_record_defect_evidence")}>{l10n("local.work_record_defect_evidence_count", { count: selected.quality.defectCount })}</Stat></dl>
-              <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><Stat label={l10n("local.work_record_description")}>{selected.description || l10n("local.work_record_not_filled")}</Stat><Stat label={l10n("local.work_record_severity")}>{selected.defectSeverity ? mappedLabel(SEVERITY, selected.defectSeverity) ?? selected.defectSeverity : l10n("local.work_record_severity_unspecified")}</Stat><Stat label={l10n(selected.kind === "defect" ? "local.work_record_fixer" : "local.work_record_executor")}>{selected.assigneeAgentId ? agentNames[selected.assigneeAgentId] ?? selected.assigneeAgentId : l10n("local.work_record_pending_assignment")}</Stat><Stat label="QA">{selected.qaAssigneeAgentId ? agentNames[selected.qaAssigneeAgentId] ?? selected.qaAssigneeAgentId : l10n("local.work_record_pending_assignment")}</Stat><Stat label={l10n("local.work_record_iteration")}>{selected.iterationId ?? l10n("local.work_record_no_iteration")}</Stat><Stat label={l10n("local.work_record_plan_dates")}>{l10n("local.work_record_date_range", { start: selected.plannedStartDate ?? l10n("local.work_record_date_unset"), end: selected.plannedCompletionDate ?? l10n("local.work_record_date_unset") })}</Stat></dl>
-              {selected.dependencies.length ? <div><h4 className="text-sm font-medium">{l10n("local.work_record_dependencies_and_blockers")}</h4><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{selected.dependencies.map((item) => <li key={item.predecessorRecordId}>{item.title}{item.holdReason ? ` · ${mappedLabel(HOLD, item.holdReason) ?? item.holdReason}` : l10n("local.work_record_dependency_satisfied_spaced")}</li>)}</ul></div> : <p className="text-sm text-muted-foreground">{l10n("local.work_record_no_predecessor_dependencies")}</p>}
-              <div><h4 className="text-sm font-medium">{l10n("local.work_record_notification_evidence")}</h4><p className="text-sm text-muted-foreground">{notification?.delivered}</p><p className="text-sm text-muted-foreground">{notification?.acknowledged}</p>{notification?.unknownDeliveryState || notification?.unknownWakeStatus ? <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer">{l10n("local.work_record_view_raw_delivery_status")}</summary>{notification.unknownDeliveryState ? <p>{l10n("local.work_record_raw_delivery_state", { code: notification.unknownDeliveryState })}</p> : null}{notification.unknownWakeStatus ? <p>{l10n("local.work_record_raw_wake_status", { code: notification.unknownWakeStatus })}</p> : null}</details> : null}</div>
-              {selected.recovery.canReconcile ? <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"><p className="text-destructive">{localizeWorkRecordRecoveryMessage(selected.recovery.message)}</p><Button className="mt-2 min-h-11" variant="outline" size="sm" disabled={!online || reconcileCapability?.allowed !== true || reconcileRecord.isPending} onClick={() => reconcileRecord.mutate(selected.id)}><RefreshCw className="mr-2 size-4" />{l10n("local.work_record_reconcile_current_record")}</Button>{reconcileCapability?.allowed === false ? <p className="mt-2 text-xs text-muted-foreground">{reconcileCapability.reason}</p> : null}</div> : null}
-              {selected.execution.issueId ? <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to={`/issues/${selected.execution.issueIdentifier ?? selected.execution.issueId}`}>{l10n("local.work_record_open_linked_native_task")} {selected.execution.issueIdentifier ?? ""}</Link> : <p className="text-sm text-muted-foreground">{l10n("local.work_record_no_native_task_linked_yet")}</p>}
-              {selected.execution.lastRunId && selected.execution.lastRunAgentId ? <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to={`/agents/${selected.execution.lastRunAgentId}/runs/${selected.execution.lastRunId}`}>{l10n("local.work_record_open_latest_live_run")}</Link> : null}
-              {onReopenRecord && (selected.businessStatus === "done" || selected.businessStatus === "cancelled") ? <Button variant="outline" disabled={reopeningRecordId === selected.id} onClick={() => onReopenRecord(selected)}>{reopeningRecordId === selected.id ? l10n("local.work_record_reopening") : l10n("local.work_record_reopen_defect")}</Button> : null}
-            </> : null}
-          </CardContent>
-        </Card> : null}
+      {selected ? <div className="flex min-h-9 flex-wrap items-center justify-between gap-2" data-testid="work-record-context-toolbar" aria-current="true"><div className="flex flex-wrap items-center gap-2"><strong className="text-sm">{selected.title}</strong><Badge variant="outline">{mappedLabel(BUSINESS, selected.businessStatus)}</Badge><StatusBadge record={selected} liveStatus={liveAvailable ? liveByIssue.get(selected.execution.issueId ?? "") : undefined} liveUnknown={!liveAvailable} />{!liveAvailable ? <span className="text-xs text-muted-foreground">{l10n("local.work_record_cannot_confirm_yet")}</span> : null}<span className="text-xs text-muted-foreground">{l10n("local.work_record_defect_evidence_count", { count: selected.quality.defectCount })}</span></div><div className="flex flex-wrap gap-2">{packageActionsEnabled ? <><Button size="sm" variant="outline" disabled={!online || checked.length === 0 || previewScope.isPending} onClick={() => previewScope.mutate("selected_records")}>{l10n("local.work_record_preview_selected")} {checked.length || ""}</Button><Button size="sm" disabled={!online || previewScope.isPending} onClick={() => previewScope.mutate("whole_package")}>{l10n("local.work_record_preview_whole_work_package")}</Button></> : null}{selected.kind === "defect" ? <Button size="sm" disabled={!online || prepareCapability?.allowed !== true || dispatchRecord.isPending} onClick={() => dispatchRecord.mutate(selected)}>{l10n("local.work_record_dispatch_defect")}</Button> : null}{onEditCoverage && selected.kind === "plan" && selected.parentRecordId && selected.packageQaRole === "execution" ? <Button size="sm" variant="outline" onClick={() => onEditCoverage(selected)}>{l10n("local.work_record_edit_qa_coverage")}</Button> : null}{onReopenRecord && (selected.businessStatus === "done" || selected.businessStatus === "cancelled") ? <Button size="sm" variant="outline" disabled={reopeningRecordId === selected.id} onClick={() => onReopenRecord(selected)}>{reopeningRecordId === selected.id ? l10n("local.work_record_reopening") : l10n("local.work_record_reopen_defect")}</Button> : null}</div></div> : null}
+      <div className="min-w-0 self-start">
+        {visibleKind ? <WorkRecordDenseTable companyId={companyId} projectId={projectId} kind={visibleKind} records={visibleRecords} agentNames={agentNames} iterationLabels={iterationLabels} selectedId={selectedId} checked={checked} onSelect={(recordId, source) => { void selectRecord(recordId, source); }} onChecked={setChecked} beforeViewSwitch={beforeViewSwitch ?? (async () => true)} onViewDraftDirtyChange={onViewDraftDirtyChange} registerLeaveGuard={registerLeaveGuard} /> : null}
       </div>
+      {dispatchMissingFields.length > 0 ? <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"><p>{l10n("local.work_record_dispatch_missing_fields")}</p><ul className="mt-1 list-disc pl-5">{dispatchMissingFields.map((item) => <li key={item.field}>{item.label}</li>)}</ul></div> : null}
+      {selected?.recovery.canReconcile ? <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"><p className="text-destructive">{localizeWorkRecordRecoveryMessage(selected.recovery.message)}</p><Button className="mt-2 min-h-11" variant="outline" size="sm" disabled={!online || reconcileCapability?.allowed !== true || reconcileRecord.isPending} onClick={() => reconcileRecord.mutate(selected.id)}><RefreshCw className="mr-2 size-4" />{l10n("local.work_record_reconcile_current_record")}</Button>{reconcileCapability?.allowed === false ? <p className="mt-2 text-xs text-muted-foreground">{reconcileCapability.reason}</p> : null}</div> : null}
+      {selected && notification ? <div data-testid="work-record-delivery-diagnostics"><p className="text-sm text-muted-foreground">{notification.delivered}</p><p className="text-sm text-muted-foreground">{notification.acknowledged}</p>{notification.unknownDeliveryState || notification.unknownWakeStatus ? <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer">{l10n("local.work_record_view_raw_delivery_status")}</summary>{notification.unknownDeliveryState ? <p>{l10n("local.work_record_raw_delivery_state", { code: notification.unknownDeliveryState })}</p> : null}{notification.unknownWakeStatus ? <p>{l10n("local.work_record_raw_wake_status", { code: notification.unknownWakeStatus })}</p> : null}</details> : null}</div> : null}
 
       {packageActionsEnabled && preview ? <Card><CardHeader><CardTitle>{l10n("local.work_record_scope_preview_before_dispatch")}</CardTitle><CardDescription>{previewMode === "whole_package" ? l10n("local.work_record_whole_work_package") : l10n("local.work_record_selected_records_only")} · {preview.recordCount} {l10n("local.work_record_items")} {preview.edgeCount} {l10n("local.work_record_dependencies_maximum_depth")} {preview.maxDepth}</CardDescription></CardHeader><CardContent className="space-y-4">
         {previewMode === "selected_records" ? <p className="rounded-md bg-muted/50 p-3 text-sm">{l10n("local.work_record_only_the_selected_records_below_are_")}</p> : <p className="rounded-md bg-muted/50 p-3 text-sm">{l10n("local.work_record_scope_root")}{recordTitle(records, preview.rootRecordId)}{l10n("local.work_record_existing_links_are_reused_and_comple")}</p>}

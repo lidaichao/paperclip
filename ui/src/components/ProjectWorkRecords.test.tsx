@@ -33,7 +33,7 @@ vi.mock("@/components/WorkPackageConsole", () => ({
     visibleKind: "plan" | "defect";
     records: WorkRecord[];
     onReopenRecord?: (record: WorkRecord) => void;
-    onEditRecord?: (record: WorkRecord) => void;
+    onEditRecord?: (record: WorkRecord, source: HTMLElement) => void;
     onEditCoverage?: (record: WorkRecord) => void;
   }) => (
     <div data-testid="console" data-kind={visibleKind}>
@@ -41,7 +41,7 @@ vi.mock("@/components/WorkPackageConsole", () => ({
         <div key={record.id}>
           {record.title}
           {onReopenRecord ? <button onClick={() => onReopenRecord(record)}>重新打开测试</button> : null}
-          {onEditRecord ? <button onClick={() => onEditRecord(record)}>编辑测试</button> : null}
+          {onEditRecord ? <button onClick={(event) => onEditRecord(record, event.currentTarget)}>编辑测试</button> : null}
           {onEditCoverage && record.packageQaRole === "execution" ? <button onClick={() => onEditCoverage(record)}>QA 覆盖测试</button> : null}
         </div>
       ))}
@@ -404,6 +404,67 @@ describe("ProjectWorkRecords", () => {
     await act(async () => button("放弃并继续").click());
     await flush();
     expect(document.body.querySelector('input[maxlength="500"]')).toBeNull();
+  });
+
+  it.each(["plan", "defect"] as const)("uses one unified description field for %s records", async (kind) => {
+    await render(kind);
+    await act(async () => button("编辑测试").click());
+
+    const drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
+    expect(drawer.querySelectorAll("textarea")).toHaveLength(1);
+    expect(drawer.textContent).toContain("描述");
+    for (const legacyLabel of ["任务说明", "完成标准", "复现步骤", "预期结果", "实际结果", "环境信息"]) {
+      expect(drawer.textContent).not.toContain(legacyLabel);
+    }
+  });
+
+  it("opens records read-only for viewers and never exposes a save action", async () => {
+    capabilitiesMock.mockResolvedValue({
+      editRecords: { allowed: false, reason: "需要项目编辑权限；当前 Viewer 仅可查看。" },
+      manageContainers: { allowed: false, reason: "需要项目管理权限。" },
+    });
+    await render("plan");
+    await act(async () => button("编辑测试").click());
+
+    const drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
+    expect(drawer.textContent).toContain("需要项目编辑权限；当前 Viewer 仅可查看。");
+    expect([...drawer.querySelectorAll("input, select, textarea")].every((control) => control.matches(":disabled"))).toBe(true);
+    expect([...drawer.querySelectorAll("button")].some((node) => node.textContent?.trim() === "保存计划")).toBe(false);
+  });
+
+  it("supports save shortcut, dirty Escape, clean Escape, visible save state, and source focus restoration", async () => {
+    await render("plan");
+    const source = button("编辑测试");
+    await act(async () => source.click());
+    let drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
+    expect(drawer.querySelector('[data-testid="work-record-save-state"]')?.textContent).toContain("已保存");
+
+    const title = drawer.querySelector('input[maxlength="500"]') as HTMLInputElement;
+    await act(async () => setNativeValue(title, "未保存标题"));
+    expect(drawer.querySelector('[data-testid="work-record-save-state"]')?.textContent).toContain("未保存");
+
+    const dirtyEscape = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+    await act(async () => drawer.dispatchEvent(dirtyEscape));
+    await flush();
+    expect(document.body.querySelector('[data-testid="business-draft-decision"]')).not.toBeNull();
+    await act(async () => button("留在此处").click());
+
+    drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
+    const saveShortcut = new KeyboardEvent("keydown", { key: "s", ctrlKey: true, bubbles: true, cancelable: true });
+    await act(async () => drawer.dispatchEvent(saveShortcut));
+    await flush();
+    expect(saveShortcut.defaultPrevented).toBe(true);
+    expect(updateMock).toHaveBeenCalledTimes(1);
+    expect(document.body.querySelector('[data-testid="work-record-detail-drawer"]')).toBeNull();
+    expect(document.activeElement).toBe(source);
+
+    await act(async () => source.click());
+    drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
+    const cleanEscape = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+    await act(async () => drawer.dispatchEvent(cleanEscape));
+    await flush();
+    expect(document.body.querySelector('[data-testid="work-record-detail-drawer"]')).toBeNull();
+    expect(document.activeElement).toBe(source);
   });
 
   it("switches fixed form and status copy to English while preserving record titles", async () => {

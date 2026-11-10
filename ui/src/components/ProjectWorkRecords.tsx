@@ -171,6 +171,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   );
   const kindLabel = kind === "plan" ? l10n("local.work_record_plan") : l10n("local.work_record_defect");
   const businessDraftDirty = dialogOpen && JSON.stringify(draft) !== JSON.stringify(editingRecord ? draftFromRecord(editingRecord) : blankDraft());
+  const editCapability = capabilities.data?.editRecords;
+  const recordWritable = editCapability?.allowed !== false;
 
   useEffect(() => {
     setContainerScope("pool");
@@ -186,11 +188,12 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
   const closeDialog = (confirmed = false) => {
     const focusTarget = lastEditorFocusRef.current;
+    lastEditorFocusRef.current = null;
     confirmedDialogCloseRef.current = confirmed;
     setDialogOpen(false);
     setEditingRecord(null);
     setDraft(blankDraft());
-    window.setTimeout(() => focusTarget?.focus(), 0);
+    window.setTimeout(() => { if (focusTarget?.isConnected) focusTarget.focus(); }, 0);
   };
   useEffect(() => {
     if (!dialogOpen) confirmedDialogCloseRef.current = false;
@@ -236,6 +239,13 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       await queryClient.invalidateQueries({ queryKey: recordsKey });
     },
   });
+  const recordSaveState = save.isPending
+    ? "saving"
+    : save.isError
+      ? "failed"
+      : businessDraftDirty || !editingRecord
+        ? "unsaved"
+        : "saved";
 
   const restoreBusinessFieldFocus = () => window.setTimeout(() => lastBusinessFieldRef.current?.focus(), 0);
   const finishBusinessDecision = (allowed: boolean) => {
@@ -305,24 +315,26 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     },
   });
 
-  const beginCreate = () => {
+  const beginCreate = (source?: HTMLElement) => {
     save.reset();
+    lastEditorFocusRef.current = source ?? null;
     setEditingRecord(null);
     setDraft(blankDraft());
     setDialogOpen(true);
   };
 
-  const beginEdit = (record: WorkRecord) => {
+  const beginEdit = (record: WorkRecord, source?: HTMLElement | SVGElement | null) => {
     save.reset();
+    lastEditorFocusRef.current = source ?? null;
     setEditingRecord(record);
     setDraft(draftFromRecord(record));
     setDialogOpen(true);
   };
 
-  const selectRecord = async (record: WorkRecord) => {
+  const selectRecord = async (record: WorkRecord, source?: HTMLElement | SVGElement | null) => {
     if (record.id === editingRecord?.id) return;
     if (!(await beforeViewSwitch())) return;
-    beginEdit(record);
+    beginEdit(record, source);
   };
 
   const deepLinkRecordId = new URLSearchParams(location.search).get("record");
@@ -436,7 +448,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
                     : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
                 </p>
               </div>
-              <Button disabled={capabilities.data?.editRecords.allowed === false} onClick={beginCreate}>
+              <Button disabled={!recordWritable} onClick={(event) => beginCreate(event.currentTarget)}>
                 <Plus className="size-4" />
                 {l10n("local.work_record_new_kind", { kind: kindLabel })}
               </Button>
@@ -445,7 +457,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
             {reopen.error ? <p role="alert" className="mb-3 text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
 
             {viewMode === "gantt" ? (
-              <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} writable={capabilities.data?.editRecords.allowed !== false} onOpen={(record, source) => { lastEditorFocusRef.current = source; void selectRecord(record); }} />
+              <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} writable={recordWritable} onOpen={(record, source) => { void selectRecord(record, source); }} />
             ) : (
               <WorkPackageConsole
                 companyId={companyId}
@@ -457,7 +469,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
                 recordsLoading={records.isLoading}
                 recordsError={records.error}
                 onRetryRecords={() => records.refetch()}
-                onEditRecord={(record) => { void selectRecord(record); }}
+                onEditRecord={(record, source) => { beginEdit(record, source); }}
                 onEditCoverage={kind === "plan" ? beginCoverage : undefined}
                 onReopenRecord={kind === "defect" ? (record) => reopen.mutate(record) : undefined}
                 reopeningRecordId={reopen.isPending ? reopen.variables?.id ?? null : null}
@@ -471,12 +483,39 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       </div>
 
       <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>
-        <DialogContent data-testid="work-record-detail-drawer" className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none sm:w-3/5 lg:w-2/5 md:top-0 md:translate-y-0" overlayClassName="hidden" onInteractOutside={(event) => event.preventDefault()} onFocusCapture={(event) => { if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) lastBusinessFieldRef.current = event.target; }}>
+        <DialogContent
+          data-testid="work-record-detail-drawer"
+          className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none sm:w-3/5 lg:w-2/5 md:top-0 md:translate-y-0"
+          overlayClassName="hidden"
+          onInteractOutside={(event) => event.preventDefault()}
+          onKeyDown={(event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+              event.preventDefault();
+              if (recordWritable && draft.title.trim() && !save.isPending) save.mutate();
+              return;
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              if (businessDraftDirty) void beforeViewSwitch();
+              else closeDialog(true);
+            }
+          }}
+          onFocusCapture={(event) => { if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) lastBusinessFieldRef.current = event.target; }}
+        >
           <DialogHeader>
             <DialogTitle>{editingRecord ? l10n("local.work_record_edit_kind", { kind: kindLabel }) : l10n("local.work_record_new_kind", { kind: kindLabel })}</DialogTitle>
             <DialogDescription>{l10n("local.work_record_this_saves_a_business_record_only_it")}</DialogDescription>
           </DialogHeader>
 
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p role="status" aria-live="polite" data-testid="work-record-save-state" data-state={recordSaveState} className="text-sm text-muted-foreground">
+              {l10n(`local.work_record_save_state_${recordSaveState}`)}
+            </p>
+            {!recordWritable ? <p role="note" className="text-sm text-muted-foreground">{editCapability?.reason ?? l10n("local.work_record_read_only_editor")}</p> : null}
+          </div>
+
+          <fieldset disabled={!recordWritable} className="contents">
           <div className="grid gap-3 md:grid-cols-2">
             <label className="space-y-1 text-sm font-medium md:col-span-2">
               <span>{l10n("local.work_record_title")}</span>
@@ -615,14 +654,15 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
               <Textarea maxLength={100_000} value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder={l10n("local.work_record_describe_scope_constraints_and_accep")} />
             </label>
           </div>
+          </fieldset>
 
           {save.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_kind_save_failed", { kind: kindLabel })}{save.error.message}</p> : null}
 
           <DialogFooter className="items-center justify-between sm:justify-between">
             <Button variant="ghost" onClick={() => { if (!businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>{l10n("local.work_record_cancel")}</Button>
-            <Button disabled={!draft.title.trim() || save.isPending} onClick={() => save.mutate()}>
+            {recordWritable ? <Button disabled={!draft.title.trim() || save.isPending} onClick={() => save.mutate()}>
               {save.isPending ? l10n("local.work_record_saving") : l10n("local.work_record_save_kind", { kind: kindLabel })}
-            </Button>
+            </Button> : null}
           </DialogFooter>
         </DialogContent>
       </Dialog>
