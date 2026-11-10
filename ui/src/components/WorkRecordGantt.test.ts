@@ -18,9 +18,9 @@ function record(id: string, title: string, overrides: Partial<WorkRecord> = {}):
   const now = new Date("2026-11-02T00:00:00Z");
   return {
     id, recordNumber: 1, recordIdentifier: "PT-1", title,
-    companyId: "company-1", projectId: "project-1", kind: "plan", description: null,
+    companyId: "company-1", projectId: "project-1", kind: "plan", priority: "medium", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent", plannedStartDate: null,
-    plannedCompletionDate: null, defectSeverity: null, assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [],
+    plannedCompletionDate: null, defectSeverity: null, foundInVersionId: null, assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [],
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [], businessStatus: "backlog",
     statusVersion: 1, revision: 1, dispatchState: "not_dispatched", dispatchRound: 0,
     dependencySetRevision: 1, blockedCycle: 0, dependencies: [],

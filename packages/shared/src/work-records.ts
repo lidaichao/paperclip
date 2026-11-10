@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { ISSUE_PRIORITIES } from "./constants.js";
+import type { IssuePriority } from "./constants.js";
 import type {
   WorkPackageBatchState,
   WorkPackageScopeKind,
@@ -283,12 +285,14 @@ const workRecordDateFields = {
 
 const workRecordDefectFields = {
   defectSeverity: z.enum(WORK_RECORD_DEFECT_SEVERITIES).optional().nullable(),
+  foundInVersionId: z.string().guid().optional().nullable(),
 };
 
 const createWorkRecordObjectSchema = z.object({
   projectId: z.string().guid(),
   kind: z.enum(WORK_RECORD_KINDS),
   title: z.string().trim().min(1).max(500),
+  priority: z.enum(ISSUE_PRIORITIES).optional(),
   description: z.string().max(100_000).optional().nullable(),
   parentRecordId: z.string().guid().optional().nullable(),
   iterationId: z.string().guid().optional().nullable(),
@@ -328,6 +332,7 @@ export const updateWorkRecordSchema = z.object({
   expectedRevision: z.number().int().positive(),
   dependencySetRevision: z.number().int().positive().optional(),
   title: z.string().trim().min(1).max(500).optional(),
+  priority: z.enum(ISSUE_PRIORITIES).optional(),
   description: z.string().max(100_000).optional().nullable(),
   businessStatus: z.enum(WORK_RECORD_BUSINESS_STATUSES).optional(),
   parentRecordId: z.string().guid().optional().nullable(),
@@ -527,6 +532,7 @@ export interface WorkRecord {
   projectId: string;
   kind: WorkRecordKind;
   title: string;
+  priority: IssuePriority;
   description: string | null;
   descriptionRevision: number;
   parentRecordId: string | null;
@@ -535,6 +541,7 @@ export interface WorkRecord {
   plannedStartDate: string | null;
   plannedCompletionDate: string | null;
   defectSeverity: WorkRecordDefectSeverity | null;
+  foundInVersionId: string | null;
   assigneeAgentId: string | null;
   qaAssigneeAgentId: string | null;
   userResponsibilities: WorkRecordUserResponsibility[];

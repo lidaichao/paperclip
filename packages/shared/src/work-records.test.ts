@@ -25,20 +25,47 @@ describe("FID-03 work-record business identifiers", () => {
 describe("G1 work-record planning and defect fields", () => {
   const projectId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
-  it("accepts ordered planned dates, one description, and severity on defect records", () => {
+  it("accepts ordered planned dates, priority, discovery version, one description, and severity on defect records", () => {
+    const foundInVersionId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
     expect(createWorkRecordSchema.parse({
       projectId,
       kind: "defect",
       title: "Checkout fails",
+      priority: "critical",
+      foundInVersionId,
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
       defectSeverity: "high",
       description: "Custom defect template content.",
     })).toMatchObject({
+      priority: "critical",
+      foundInVersionId,
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
       defectSeverity: "high",
     });
+  });
+
+  it("keeps priority optional at the API boundary and rejects discovery versions on plan records", () => {
+    expect(createWorkRecordSchema.parse({
+      projectId,
+      kind: "defect",
+      title: "Default priority defect",
+    }).priority).toBeUndefined();
+
+    expect(() => createWorkRecordSchema.parse({
+      projectId,
+      kind: "plan",
+      title: "Plan cannot have a discovery version",
+      foundInVersionId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    })).toThrow(/Defect fields require a defect record/);
+
+    expect(() => createWorkRecordSchema.parse({
+      projectId,
+      kind: "defect",
+      title: "Invalid priority",
+      priority: "urgent",
+    })).toThrow();
   });
 
   it("rejects reversed planned dates and defect-only fields on plan records", () => {
@@ -58,7 +85,9 @@ describe("G1 work-record planning and defect fields", () => {
       plannedStartDate: null,
       plannedCompletionDate: "2026-11-20",
       defectSeverity: null,
-    })).toMatchObject({ expectedRevision: 2, plannedStartDate: null, defectSeverity: null });
+      priority: "low",
+      foundInVersionId: null,
+    })).toMatchObject({ expectedRevision: 2, plannedStartDate: null, defectSeverity: null, priority: "low", foundInVersionId: null });
   });
 });
 

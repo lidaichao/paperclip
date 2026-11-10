@@ -2297,6 +2297,13 @@
       "when": 1794312000000,
       "tag": "0329_work_record_iteration_version_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 330,
+      "version": "7",
+      "when": 1794312000001,
+      "tag": "0330_work_record_defect_fields",
+      "breakpoints": true
     }
   ]
 }

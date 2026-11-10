@@ -217,6 +217,21 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     if (version.archivedAt) throw conflict("Archived version cannot accept iterations");
   }
 
+  async function assertVersionScope(
+    tx: DbTransaction,
+    companyId: string,
+    projectId: string,
+    versionId?: string | null,
+  ) {
+    if (!versionId) return;
+    const version = await tx.select({ id: projectVersions.id }).from(projectVersions).where(and(
+      eq(projectVersions.companyId, companyId),
+      eq(projectVersions.projectId, projectId),
+      eq(projectVersions.id, versionId),
+    )).then((rows) => rows[0]);
+    if (!version) throw unprocessable("Discovery version must belong to the same company and project");
+  }
+
   async function assertIterationNameAvailable(
     tx: DbTransaction,
     companyId: string,
@@ -344,6 +359,12 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         eq(projectIterations.companyId, companyId), eq(projectIterations.projectId, projectId), eq(projectIterations.versionId, versionId),
       )).limit(1).then((rows) => rows[0]);
       if (child) throw conflict("Only an empty version can be deleted");
+      const discoveredDefect = await tx.select({ id: workRecords.id }).from(workRecords).where(and(
+        eq(workRecords.companyId, companyId),
+        eq(workRecords.projectId, projectId),
+        eq(workRecords.foundInVersionId, versionId),
+      )).limit(1).then((rows) => rows[0]);
+      if (discoveredDefect) throw conflict("A version referenced by defects cannot be deleted");
       await tx.delete(projectVersions).where(eq(projectVersions.id, versionId));
       return { id: versionId, deleted: true as const };
     });
@@ -770,7 +791,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
   }
 
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
-    const hasDefectDetails = input.defectSeverity != null;
+    const hasDefectDetails = input.defectSeverity != null || input.foundInVersionId != null;
     if (input.kind !== "defect" && hasDefectDetails) {
       throw unprocessable("Defect fields require a defect record");
     }
@@ -812,6 +833,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       if (iterationAssignmentMode === "independent") {
         await assertActiveIteration(tx, companyId, input.projectId, iterationId);
       }
+      await assertVersionScope(tx, companyId, input.projectId, input.foundInVersionId);
       await validateUserResponsibilities(tx, companyId, input.userResponsibilities ?? []);
       const predecessorIds = await assertDependencies(tx, companyId, input.projectId, null, input.predecessorRecordIds ?? []);
       const [allocated] = await tx.insert(workRecordCounters).values({
@@ -828,10 +850,10 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       }).returning({ recordNumber: sql<number>`${workRecordCounters.nextNumber} - 1` });
       const [record] = await tx.insert(workRecords).values({
         companyId, projectId: input.projectId, kind: input.kind, recordNumber: allocated.recordNumber,
-        title: input.title, description: input.description ?? null,
+        title: input.title, priority: input.priority ?? "medium", description: input.description ?? null,
         parentRecordId: input.parentRecordId ?? null, iterationId, iterationAssignmentMode,
         plannedStartDate: input.plannedStartDate ?? null, plannedCompletionDate: input.plannedCompletionDate ?? null,
-        defectSeverity: input.defectSeverity ?? null,
+        defectSeverity: input.defectSeverity ?? null, foundInVersionId: input.foundInVersionId ?? null,
         assigneeAgentId: input.assigneeAgentId ?? null, qaAssigneeAgentId: input.qaAssigneeAgentId ?? null,
         packageQaRole: input.kind === "plan" && input.parentRecordId ? input.packageQaRole ?? "execution" : null,
         qaRetestExemptionReason: input.qaRetestExemptionReason ?? null,
@@ -881,10 +903,14 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       if (plannedStartDate && plannedCompletionDate && plannedStartDate > plannedCompletionDate) {
         throw unprocessable("Planned start date must not be after planned completion date");
       }
-      const updatesDefectDetails = input.defectSeverity !== undefined;
-      const leavesDefectDetails = (input.defectSeverity === undefined ? locked.defectSeverity : input.defectSeverity) != null;
+      const updatesDefectDetails = input.defectSeverity !== undefined || input.foundInVersionId !== undefined;
+      const leavesDefectDetails = (input.defectSeverity === undefined ? locked.defectSeverity : input.defectSeverity) != null
+        || (input.foundInVersionId === undefined ? locked.foundInVersionId : input.foundInVersionId) != null;
       if (locked.kind !== "defect" && updatesDefectDetails && leavesDefectDetails) {
         throw unprocessable("Defect fields require a defect record");
+      }
+      if (input.foundInVersionId !== undefined) {
+        await assertVersionScope(tx, companyId, projectId, input.foundInVersionId);
       }
       let nextParentRecordId = locked.parentRecordId;
       let nextIterationAssignmentMode = locked.iterationAssignmentMode;
@@ -999,6 +1025,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         : null;
       const [row] = await tx.update(workRecords).set({
         ...(input.title !== undefined ? { title: input.title } : {}),
+        ...(input.priority !== undefined ? { priority: input.priority } : {}),
         ...(input.description !== undefined ? { description: input.description, descriptionRevision: nextDescriptionRevision } : {}),
         ...(input.businessStatus !== undefined ? { businessStatus: input.businessStatus, statusVersion: locked.statusVersion + 1 } : {}),
         ...(updatesHierarchy ? {
@@ -1009,6 +1036,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(input.plannedStartDate !== undefined ? { plannedStartDate: input.plannedStartDate } : {}),
         ...(input.plannedCompletionDate !== undefined ? { plannedCompletionDate: input.plannedCompletionDate } : {}),
         ...(input.defectSeverity !== undefined ? { defectSeverity: input.defectSeverity } : {}),
+        ...(input.foundInVersionId !== undefined ? { foundInVersionId: input.foundInVersionId } : {}),
         ...(input.assigneeAgentId !== undefined ? { assigneeAgentId: input.assigneeAgentId } : {}),
         ...(input.qaAssigneeAgentId !== undefined ? { qaAssigneeAgentId: input.qaAssigneeAgentId } : {}),
         ...(input.packageQaRole !== undefined ? { packageQaRole: input.packageQaRole } : {}),
@@ -1977,7 +2005,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         companyId, projectId, recordId, clientRequestId: input.clientRequestId, recordRevision: record.revision, dispatchRound: round,
       }).returning().then((rows) => rows[0]);
       const createdIssue = await issuesSvc.create(companyId, {
-        projectId, title: record.title, description: record.description, status: "todo", priority: "medium",
+        projectId, title: record.title, description: record.description, status: "todo", priority: record.priority,
         assigneeAgentId: record.assigneeAgentId, createdByAgentId: actor.agentId ?? null, createdByUserId: actor.userId ?? null,
         originKind: "work_record", originId: record.id, idempotencyKey: `work-record:${record.id}`, allowDuplicate: true,
       }, tx);

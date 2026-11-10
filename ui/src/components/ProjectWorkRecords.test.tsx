@@ -80,9 +80,9 @@ function record(kind: "plan" | "defect", overrides: Partial<WorkRecord> = {}): W
   return {
     id: `${kind}-1`, recordNumber: 1, recordIdentifier: kind === "plan" ? "PT-1" : "PC-1",
     companyId: "company-1", projectId: "project-1", kind,
-    title: kind === "plan" ? "发布计划" : "窄屏缺陷", description: null,
+    title: kind === "plan" ? "发布计划" : "窄屏缺陷", priority: "medium", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
-    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
+    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null, foundInVersionId: null,
     assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [], packageQaRole: null,
     qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     businessStatus: kind === "plan" ? "backlog" : "done",

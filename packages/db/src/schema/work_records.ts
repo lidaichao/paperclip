@@ -121,11 +121,13 @@ export const workRecords = pgTable(
     kind: text("kind").$type<"plan" | "defect">().notNull(),
     recordNumber: integer("record_number").notNull(),
     title: text("title").notNull(),
+    priority: text("priority").$type<"critical" | "high" | "medium" | "low">().notNull().default("medium"),
     description: text("description"),
     descriptionRevision: integer("description_revision").notNull().default(1),
     plannedStartDate: date("planned_start_date"),
     plannedCompletionDate: date("planned_completion_date"),
     defectSeverity: text("defect_severity").$type<"critical" | "high" | "medium" | "low">(),
+    foundInVersionId: uuid("found_in_version_id"),
     assigneeAgentId: uuid("assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
     qaAssigneeAgentId: uuid("qa_assignee_agent_id").references(() => agents.id, { onDelete: "set null" }),
     // Null denotes a record created before explicit package QA coverage existed.
@@ -157,6 +159,11 @@ export const workRecords = pgTable(
       foreignColumns: [projectIterations.companyId, projectIterations.projectId, projectIterations.id],
       name: "work_records_iteration_scope_fk",
     }),
+    foundInVersionScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId, table.foundInVersionId],
+      foreignColumns: [projectVersions.companyId, projectVersions.projectId, projectVersions.id],
+      name: "work_records_found_in_version_scope_fk",
+    }),
     assigneeScopeFk: foreignKey({
       columns: [table.companyId, table.assigneeAgentId],
       foreignColumns: [agents.companyId, agents.id],
@@ -175,6 +182,7 @@ export const workRecords = pgTable(
     companyProjectIdx: index("work_records_company_project_idx").on(table.companyId, table.projectId, table.createdAt),
     projectPlannedDatesIdx: index("work_records_project_planned_dates_idx").on(table.companyId, table.projectId, table.plannedStartDate, table.plannedCompletionDate),
     projectDefectSeverityIdx: index("work_records_project_defect_severity_idx").on(table.companyId, table.projectId, table.defectSeverity),
+    projectFoundInVersionIdx: index("work_records_project_found_in_version_idx").on(table.companyId, table.projectId, table.foundInVersionId),
     parentCheck: check("work_records_parent_not_self", sql`${table.parentRecordId} IS NULL OR ${table.parentRecordId} <> ${table.id}`),
     recordNumberPositiveCheck: check("work_records_record_number_positive_check", sql`${table.recordNumber} >= 1`),
     iterationAssignmentModeCheck: check(
@@ -187,7 +195,8 @@ export const workRecords = pgTable(
     ),
     plannedDatesCheck: check("work_records_planned_dates_check", sql`${table.plannedStartDate} IS NULL OR ${table.plannedCompletionDate} IS NULL OR ${table.plannedStartDate} <= ${table.plannedCompletionDate}`),
     defectSeverityCheck: check("work_records_defect_severity_check", sql`${table.defectSeverity} IS NULL OR ${table.defectSeverity} IN ('critical', 'high', 'medium', 'low')`),
-    defectFieldsCheck: check("work_records_defect_fields_check", sql`${table.kind} = 'defect' OR ${table.defectSeverity} IS NULL`),
+    priorityCheck: check("work_records_priority_check", sql`${table.priority} IN ('critical', 'high', 'medium', 'low')`),
+    defectFieldsCheck: check("work_records_defect_fields_check", sql`${table.kind} = 'defect' OR (${table.defectSeverity} IS NULL AND ${table.foundInVersionId} IS NULL)`),
     packageQaRoleCheck: check("work_records_package_qa_role_check", sql`${table.packageQaRole} IS NULL OR ${table.packageQaRole} IN ('execution', 'qa')`),
     qaExemptionCheck: check("work_records_qa_exemption_check", sql`${table.qaRetestExemptionReason} IS NULL OR (${table.packageQaRole} = 'execution' AND ${table.parentRecordId} IS NOT NULL)`),
   }),

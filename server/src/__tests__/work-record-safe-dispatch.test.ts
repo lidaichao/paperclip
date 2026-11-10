@@ -70,6 +70,7 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
   it("SD-01 saves and preassigns without issue, wake, run, or outbox side effects", async () => {
     const context = await seed();
     const record = await createRecord(context, "Saved only");
+    expect(record.priority).toBe("medium");
     await context.service.update(context.company.id, context.project.id, record.id, {
       expectedRevision: record.revision,
       description: "Edited without dispatch",
@@ -80,12 +81,15 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
   });
 
-  it("G1 persists planned dates, one defect description, and severity without dispatch side effects", async () => {
+  it("G1 persists priority, discovery version, planned dates, one defect description, and severity without dispatch side effects", async () => {
     const context = await seed();
+    const version = await context.service.createVersion(context.company.id, context.project.id, { name: "1.0" });
     const defect = await context.service.create(context.company.id, {
       projectId: context.project.id,
       kind: "defect",
       title: "Checkout fails",
+      priority: "high",
+      foundInVersionId: version.id,
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
       defectSeverity: "high",
@@ -94,6 +98,8 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     }, { actorType: "system", actorId: "test" });
 
     expect(defect).toMatchObject({
+      priority: "high",
+      foundInVersionId: version.id,
       plannedStartDate: "2026-11-10",
       plannedCompletionDate: "2026-11-12",
       defectSeverity: "high",
@@ -104,6 +110,7 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       kind: "plan",
       title: "Plan cannot carry defect details",
       defectSeverity: "critical",
+      foundInVersionId: version.id,
       predecessorRecordIds: [],
     }, { actorType: "system", actorId: "test" })).rejects.toMatchObject({ status: 422 });
     await expect(context.service.update(context.company.id, context.project.id, defect.id, {
@@ -112,10 +119,58 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       plannedCompletionDate: "2026-11-19",
     })).rejects.toMatchObject({ status: 422 });
 
+    const updatedDefect = await context.service.update(context.company.id, context.project.id, defect.id, {
+      expectedRevision: defect.revision,
+      priority: "low",
+      foundInVersionId: version.id,
+    });
+    expect(updatedDefect).toMatchObject({ priority: "low", foundInVersionId: version.id });
+
+    const otherProject = await db.insert(projects).values({ companyId: context.company.id, name: "Other project" }).returning().then((rows) => rows[0]);
+    const otherVersion = await context.service.createVersion(context.company.id, otherProject.id, { name: "Other 1.0" });
+    await expect(context.service.create(context.company.id, {
+      projectId: context.project.id,
+      kind: "defect",
+      title: "Cross-project discovery version",
+      foundInVersionId: otherVersion.id,
+      predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "test" })).rejects.toMatchObject({ status: 422 });
+
+    const archivedVersion = await context.service.archiveVersion(context.company.id, context.project.id, version.id, version.revision);
+    expect(archivedVersion.archivedAt).not.toBeNull();
+    expect((await context.service.list(context.company.id, context.project.id)).find((record) => record.id === defect.id))
+      .toMatchObject({ priority: "low", foundInVersionId: version.id });
+    await expect(context.service.deleteVersion(context.company.id, context.project.id, version.id, archivedVersion.revision))
+      .rejects.toMatchObject({ status: 409 });
+
     expect(await db.select().from(issues).where(eq(issues.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.companyId, context.company.id))).toHaveLength(0);
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
+  });
+
+  it("FID-13 maps work-record priority to the native issue only when a defect is dispatched", async () => {
+    const context = await seed();
+    const defect = await context.service.create(context.company.id, {
+      projectId: context.project.id,
+      kind: "defect",
+      title: "Critical checkout defect",
+      priority: "critical",
+      assigneeAgentId: context.agent.id,
+      qaAssigneeAgentId: context.agent.id,
+      predecessorRecordIds: [],
+    }, { actorType: "system", actorId: "test" });
+
+    expect(await db.select().from(issues).where(eq(issues.companyId, context.company.id))).toHaveLength(0);
+    const dispatched = await context.service.dispatch(
+      context.company.id,
+      context.project.id,
+      defect.id,
+      { clientRequestId: "fid-13-priority", expectedRevision: defect.revision },
+      { actorType: "system", actorId: "test" },
+    );
+    expect(await db.select({ priority: issues.priority }).from(issues).where(eq(issues.id, dispatched.issueId)).then((rows) => rows[0]))
+      .toEqual({ priority: "critical" });
   });
 
   it("G1 keeps version and iteration history, rejects stale writers, and only deletes empty containers", async () => {

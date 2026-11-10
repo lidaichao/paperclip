@@ -16,9 +16,9 @@ function record(input: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title">): 
   const { id, title, ...overrides } = input;
   return {
     id, recordNumber: 1, recordIdentifier: "PT-1",
-    companyId: COMPANY_ID, projectId: PROJECT_ID, kind: "plan", title,
+    companyId: COMPANY_ID, projectId: PROJECT_ID, kind: "plan", title, priority: "medium",
     description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
-    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
+    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null, foundInVersionId: null,
     assigneeAgentId: "agent-developer", qaAssigneeAgentId: "agent-qa", userResponsibilities: [], businessStatus: "in_review",
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     statusVersion: 2, revision: 2, dispatchState: "linked", dispatchRound: 1, dependencySetRevision: 1, blockedCycle: 0, dependencies: [],
