@@ -3020,7 +3020,7 @@ describe("IssueDetail", () => {
     });
   });
 
-  it("attributes an agent-created issue to the transitive responsible user with a via affordance", async () => {
+  it("attributes an agent-created issue to the actual agent creator when a responsible user exists", async () => {
     mockIssuesApi.get.mockResolvedValue(
       createIssue({
         assigneeAgentId: "agent-1",
@@ -3063,9 +3063,7 @@ describe("IssueDetail", () => {
       const originatingAvatar = container.querySelector(
         '[data-testid="issue-originating-avatar"]',
       );
-      expect(originatingAvatar?.getAttribute("aria-label")).toBe(
-        "Originating: Dotta · via CodexCoder",
-      );
+      expect(originatingAvatar?.getAttribute("aria-label")).toBe("Originating: CodexCoder");
     });
 
     const pointerEvent = window.PointerEvent ?? MouseEvent;
@@ -3081,8 +3079,9 @@ describe("IssueDetail", () => {
       const tooltip = document.body.querySelector(
         '[data-testid="issue-originating-tooltip"]',
       );
-      expect(tooltip?.textContent).toContain("Dotta");
-      expect(tooltip?.textContent).toContain("via CodexCoder");
+      expect(tooltip?.textContent).toContain("Originating");
+      expect(tooltip?.textContent).toContain("CodexCoder");
+      expect(tooltip?.textContent).not.toContain("Dotta");
     });
   });
 
