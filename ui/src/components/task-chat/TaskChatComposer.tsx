@@ -1235,6 +1235,18 @@ export function TaskChatComposer({
               />
               <Button
                 type="button"
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                disabled={takeoverBusy}
+                onClick={takeover.onDismiss}
+                data-testid="task-chat-composer-return-to-comment"
+                title={l10n("local.focus_comment_composer_a0f6da74")}
+              >
+                {l10n("local.add_a_comment_23c5f331")}
+              </Button>
+              <Button
+                type="button"
                 size="icon-xs"
                 variant="ghost"
                 className="text-muted-foreground hover:text-foreground"

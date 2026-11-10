@@ -2774,6 +2774,37 @@ describe("TaskChatComposer", () => {
       expect(onDismiss).toHaveBeenCalledTimes(1);
       expect(onSkip).not.toHaveBeenCalled();
     });
+
+    it("keeps an explicit path back to task comments while a decision takeover is open", async () => {
+      const onDismiss = vi.fn();
+      const onSkip = vi.fn();
+      render(
+        <TaskChatComposer
+          onAdd={vi.fn()}
+          workMode="standard"
+          takeover={{
+            id: "completion-review",
+            label: "Confirm completion",
+            pendingCount: 1,
+            content: <p>Approve or reject this work.</p>,
+            onDismiss,
+            onSkip,
+            hideSkip: true,
+          }}
+        />,
+      );
+
+      const returnToComment = container.querySelector<HTMLButtonElement>(
+        '[data-testid="task-chat-composer-return-to-comment"]',
+      );
+      expect(returnToComment?.textContent).toContain("Add a comment");
+
+      flushSync(() => returnToComment?.click());
+      await flushAsync();
+
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+      expect(onSkip).not.toHaveBeenCalled();
+    });
   });
 });
 
