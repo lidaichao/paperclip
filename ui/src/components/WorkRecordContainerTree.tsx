@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ProjectIteration, ProjectVersion } from "@paperclipai/shared";
-import { MoreHorizontal, Pencil } from "lucide-react";
+import { ChevronLeft, Pencil, Settings, Trash2 } from "lucide-react";
 import { ApiError } from "@/api/client";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
@@ -14,12 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +28,12 @@ interface ContainerDraft {
   endsOn: string;
 }
 
+interface CreateDraft extends ContainerDraft {
+  versionId: string;
+}
+
 const EMPTY_DRAFT: ContainerDraft = { name: "", targetDate: "", startsOn: "", endsOn: "" };
+const EMPTY_CREATE_DRAFT: CreateDraft = { ...EMPTY_DRAFT, versionId: "" };
 
 function draftFromTarget(target: ContainerTarget): ContainerDraft {
   return target.kind === "version"
@@ -42,11 +41,17 @@ function draftFromTarget(target: ContainerTarget): ContainerDraft {
     : { ...EMPTY_DRAFT, name: target.item.name, startsOn: target.item.startsOn ?? "", endsOn: target.item.endsOn ?? "" };
 }
 
-export function WorkRecordContainerTree({ companyId, projectId, writable = true, className }: {
+export function WorkRecordContainerTree({ companyId, projectId, writable = true, className, mode = "navigation", managementActive = false, selectedScope = "pool", onSelectScope, onManageContainers, onCloseManagement }: {
   companyId: string;
   projectId: string;
   writable?: boolean;
   className?: string;
+  mode?: "navigation" | "management";
+  managementActive?: boolean;
+  selectedScope?: string;
+  onSelectScope?: (scopeId: string) => void;
+  onManageContainers?: () => void;
+  onCloseManagement?: () => void;
 }) {
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const discardCancelRef = useRef<HTMLButtonElement>(null);
@@ -56,9 +61,10 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
   const iterationsKey = queryKeys.workRecords.iterations(companyId, projectId);
   const versions = useQuery({ queryKey: versionsKey, queryFn: () => workRecordsApi.versions(companyId, projectId) });
   const iterations = useQuery({ queryKey: iterationsKey, queryFn: () => workRecordsApi.iterations(companyId, projectId) });
-  const [versionName, setVersionName] = useState("");
-  const [iterationName, setIterationName] = useState("");
   const [selectedVersionId, setSelectedVersionId] = useState("");
+  const [managedVersionId, setManagedVersionId] = useState<string | null>(null);
+  const [createKind, setCreateKind] = useState<"version" | "iteration" | null>(null);
+  const [createDraft, setCreateDraft] = useState<CreateDraft>(EMPTY_CREATE_DRAFT);
   const [editTarget, setEditTarget] = useState<ContainerTarget | null>(null);
   const [editDraft, setEditDraft] = useState<ContainerDraft>(EMPTY_DRAFT);
   const [deleteTarget, setDeleteTarget] = useState<ContainerTarget | null>(null);
@@ -67,6 +73,9 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
 
   const versionRows = versions.data ?? [];
   const iterationRows = iterations.data ?? [];
+  const activeVersionRows = versionRows.filter((version) => !version.archivedAt);
+  const activeVersionIds = new Set(activeVersionRows.map((version) => version.id));
+  const activeIterationRows = iterationRows.filter((iteration) => !iteration.archivedAt && activeVersionIds.has(iteration.versionId ?? ""));
   const versionNames = useMemo(() => new Map(versionRows.map((version) => [version.id, version.name])), [versionRows]);
   const refresh = async () => Promise.all([
     client.invalidateQueries({ queryKey: versionsKey }),
@@ -74,12 +83,30 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
   ]);
 
   const createVersion = useMutation({
-    mutationFn: () => workRecordsApi.createVersion(companyId, projectId, { name: versionName.trim() }),
-    onSuccess: async (created) => { setVersionName(""); setSelectedVersionId(created.id); await refresh(); },
+    mutationFn: () => workRecordsApi.createVersion(companyId, projectId, {
+      name: createDraft.name.trim(),
+      targetDate: createDraft.targetDate || null,
+    }),
+    onSuccess: async (created) => {
+      setCreateKind(null);
+      setCreateDraft(EMPTY_CREATE_DRAFT);
+      setSelectedVersionId(created.id);
+      await refresh();
+    },
   });
   const createIteration = useMutation({
-    mutationFn: () => workRecordsApi.createIteration(companyId, projectId, { versionId: selectedVersionId, name: iterationName.trim() }),
-    onSuccess: async () => { setIterationName(""); await refresh(); },
+    mutationFn: () => workRecordsApi.createIteration(companyId, projectId, {
+      versionId: createDraft.versionId,
+      name: createDraft.name.trim(),
+      startsOn: createDraft.startsOn || null,
+      endsOn: createDraft.endsOn || null,
+    }),
+    onSuccess: async () => {
+      setSelectedVersionId(createDraft.versionId);
+      setCreateKind(null);
+      setCreateDraft(EMPTY_CREATE_DRAFT);
+      await refresh();
+    },
   });
   const lifecycle = useMutation({
     mutationFn: async (input: { target: ContainerTarget; operation: "archive" | "restore" | "delete" }) => {
@@ -127,6 +154,15 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
     setEditTarget(target);
     setEditDraft(draftFromTarget(target));
   };
+  const openCreate = (kind: "version" | "iteration") => {
+    createVersion.reset();
+    createIteration.reset();
+    const preferredVersionId = activeVersionIds.has(selectedVersionId)
+      ? selectedVersionId
+      : activeVersionRows[0]?.id ?? "";
+    setCreateDraft({ ...EMPTY_CREATE_DRAFT, versionId: kind === "iteration" ? preferredVersionId : "" });
+    setCreateKind(kind);
+  };
   const openDelete = (target: ContainerTarget) => {
     lifecycle.reset();
     setDeleteTarget(target);
@@ -151,7 +187,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
     await update.mutateAsync(remote.revision);
   };
   const conflict = update.error instanceof ApiError && update.error.status === 409;
-  const error = createVersion.error ?? createIteration.error ?? lifecycle.error;
+  const createError = createVersion.error ?? createIteration.error;
   const editDraftDirty = editTarget
     ? JSON.stringify(editDraft) !== JSON.stringify(draftFromTarget(editTarget))
     : false;
@@ -171,64 +207,134 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
     lifecycle.reset();
   };
 
-  const actions = (target: ContainerTarget, row: "version" | "iteration") => {
+  const editAction = (target: ContainerTarget, row: "version" | "iteration") => {
     if (!writable) return null;
     return <div className={row === "version"
-      ? "flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/version:opacity-100 group-focus-within/version:opacity-100"
-      : "flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/iteration:opacity-100 group-focus-within/iteration:opacity-100"}>
+      ? "shrink-0 opacity-0 transition-opacity group-hover/version:opacity-100 group-focus-within/version:opacity-100"
+      : "shrink-0 opacity-0 transition-opacity group-hover/iteration:opacity-100 group-focus-within/iteration:opacity-100"}>
       <Button size="icon-sm" variant="ghost" aria-label={`编辑${target.kind === "version" ? "版本" : "迭代"} ${target.item.name}`} onClick={() => openEdit(target)}>
         <Pencil className="size-3.5" />
       </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="icon-sm" variant="ghost" aria-label={`${target.item.name} 操作菜单`}><MoreHorizontal className="size-4" /></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => openEdit(target)}><Pencil />编辑</DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onSelect={() => openDelete(target)}>删除空容器</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>;
   };
 
-  return (
-    <aside className={cn("rounded-lg border bg-card p-3", className)} data-testid="version-iteration-tree" aria-label="版本与迭代">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">版本与迭代</h3>
-        {!writable ? <span className="text-xs text-muted-foreground">只读</span> : null}
+  const managementActions = (target: ContainerTarget) => {
+    if (!writable) return null;
+    const typeLabel = target.kind === "version" ? "版本" : "迭代";
+    return <div className="flex w-20 shrink-0 items-center justify-end gap-1">
+      <Button size="icon-sm" variant="ghost" aria-label={`编辑${typeLabel} ${target.item.name}`} onClick={() => openEdit(target)}><Pencil className="size-3.5" /></Button>
+      <Button size="icon-sm" variant="ghost" aria-label={`删除${typeLabel} ${target.item.name}`} onClick={() => openDelete(target)}><Trash2 className="size-3.5" /></Button>
+    </div>;
+  };
+
+  const managedVersion = managedVersionId
+    ? versionRows.find((version) => version.id === managedVersionId) ?? null
+    : null;
+
+  const navigation = (
+    <aside className={cn("px-3 py-2", className)} data-testid="version-iteration-tree" aria-label="版本与迭代">
+      <div className="mb-3 flex items-center gap-1 border-b pb-3" data-testid="container-toolbar">
+        {writable ? <>
+          <Button className="min-w-0 flex-1 px-1" size="sm" variant="outline" onClick={() => openCreate("version")}>+版本</Button>
+          <Button className="min-w-0 flex-1 px-1" size="sm" variant="outline" disabled={activeVersionRows.length === 0} onClick={() => openCreate("iteration")}>+迭代</Button>
+        </> : <span className="mr-auto text-xs text-muted-foreground">只读</span>}
+        <Button className="ml-auto" size="icon-sm" variant={managementActive ? "secondary" : "ghost"} aria-label="版本与迭代管理" aria-pressed={managementActive} onClick={onManageContainers}>
+          <Settings className="size-4" />
+        </Button>
       </div>
-      <div className="space-y-3">
-        {versionRows.map((version) => (
-          <section key={version.id} className="group/version rounded border p-2" data-version-id={version.id}>
-            <div className="flex min-h-8 items-center justify-between gap-2">
-              <button type="button" className="min-w-0 flex-1 truncate text-left text-sm font-medium" onClick={() => setSelectedVersionId(version.id)}>{version.name}{version.archivedAt ? "（已归档）" : ""}</button>
-              {actions({ kind: "version", item: version }, "version")}
+      <div data-testid="container-navigation">
+        <button type="button" className={cn("mb-2 flex min-h-9 w-full items-center rounded px-2 text-left text-sm hover:bg-muted", selectedScope === "pool" && "bg-muted text-primary")} aria-current={selectedScope === "pool" ? "page" : undefined} onClick={() => onSelectScope?.("pool")}>需求池</button>
+        {activeVersionRows.map((version) => (
+          <section key={version.id} className="group/version border-t py-1 first:border-t-0" data-version-id={version.id}>
+            <div className="flex min-h-9 items-center justify-between gap-1">
+              <button type="button" className={cn("min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-sm font-medium hover:bg-muted hover:text-primary", selectedScope === version.id && "bg-muted text-primary")} aria-current={selectedScope === version.id ? "page" : undefined} onClick={() => { setSelectedVersionId(version.id); onSelectScope?.(version.id); }}>{version.name}</button>
+              {editAction({ kind: "version", item: version }, "version")}
             </div>
-            <div className="mt-2 space-y-2 border-l pl-3">
-              {iterationRows.filter((iteration) => iteration.versionId === version.id).map((iteration) => (
-                <div key={iteration.id} className="group/iteration text-xs" data-iteration-id={iteration.id}>
-                  <div className="flex min-h-8 items-center justify-between gap-2">
-                    <span className="min-w-0 flex-1 truncate">{iteration.name}{iteration.archivedAt ? "（已归档）" : ""}</span>
-                    {actions({ kind: "iteration", item: iteration }, "iteration")}
+            <div className="ml-3 border-l pl-2">
+              {activeIterationRows.filter((iteration) => iteration.versionId === version.id).map((iteration) => (
+                <div key={iteration.id} className="group/iteration py-1 text-xs" data-iteration-id={iteration.id}>
+                  <div className="flex min-h-8 items-center justify-between gap-1">
+                    <button type="button" className={cn("min-w-0 flex-1 truncate rounded px-2 py-1 text-left hover:bg-muted hover:text-primary", selectedScope === iteration.id && "bg-muted text-primary")} aria-current={selectedScope === iteration.id ? "page" : undefined} onClick={() => { setSelectedVersionId(version.id); onSelectScope?.(iteration.id); }}>{iteration.name}</button>
+                    {editAction({ kind: "iteration", item: iteration }, "iteration")}
                   </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={iteration.progress.percent} aria-label={`${iteration.name} 进度 ${iteration.progress.percent}%`}><div className="h-full bg-primary" style={{ width: `${iteration.progress.percent}%` }} /></div>
-                  <p className="mt-1 text-muted-foreground">{iteration.progress.completed}/{iteration.progress.total} · {iteration.progress.percent}%</p>
+                  <p className="px-2 text-muted-foreground">{iteration.startsOn ?? "未设开始"} — {iteration.endsOn ?? "未设结束"}</p>
+                  <div className="mx-2 mt-1 h-1.5 overflow-hidden rounded bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={iteration.progress.percent} aria-label={`${iteration.name} 进度 ${iteration.progress.percent}%`}><div className="h-full bg-primary" style={{ width: `${iteration.progress.percent}%` }} /></div>
+                  <p className="mt-1 px-2 text-muted-foreground">{iteration.progress.completed}/{iteration.progress.total} · {iteration.progress.percent}%</p>
                 </div>
               ))}
+              {activeIterationRows.every((iteration) => iteration.versionId !== version.id) ? <p className="px-2 py-2 text-xs text-muted-foreground">暂无迭代</p> : null}
             </div>
           </section>
         ))}
-        {versionRows.length === 0 ? <p className="text-xs text-muted-foreground">尚无版本。先创建版本，再添加迭代。</p> : null}
+        {activeVersionRows.length === 0 ? <p className="px-2 py-3 text-xs text-muted-foreground">尚无版本。先创建版本，再添加迭代。</p> : null}
       </div>
-      {writable ? <div className="mt-3 space-y-2 border-t pt-3">
-        <div className="flex gap-2"><Input aria-label="新版本名称" value={versionName} onChange={(event) => setVersionName(event.target.value)} placeholder="新版本" /><Button size="sm" disabled={!versionName.trim() || createVersion.isPending} onClick={() => createVersion.mutate()}>创建</Button></div>
-        <div className="flex gap-2">
-          <select aria-label="迭代所属版本" className="h-9 min-w-0 flex-1 rounded-md border bg-background px-2 text-xs" value={selectedVersionId} onChange={(event) => setSelectedVersionId(event.target.value)}><option value="">选择版本</option>{versionRows.filter((item) => !item.archivedAt).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-          <Input aria-label="新迭代名称" value={iterationName} onChange={(event) => setIterationName(event.target.value)} placeholder="新迭代" />
-          <Button size="sm" disabled={!selectedVersionId || !iterationName.trim() || createIteration.isPending} onClick={() => createIteration.mutate()}>添加</Button>
+    </aside>
+  );
+
+  const management = (
+    <section className={cn("space-y-4", className)} data-testid="container-admin-view" aria-label="版本与迭代管理">
+      <header className="flex min-h-11 flex-wrap items-start justify-between gap-3 border-b pb-3">
+        <div>
+          <h2 className="text-lg font-semibold">版本与迭代管理</h2>
+          <p className="text-sm text-muted-foreground">版本是上级容器；进入版本后管理所属迭代。</p>
         </div>
-      </div> : null}
-      {error ? <div role="alert" className="mt-3 text-xs text-destructive"><p>{error.message}</p><Button className="mt-1" size="sm" variant="outline" onClick={() => { void versions.refetch(); void iterations.refetch(); }}>重新载入，保留输入草稿</Button></div> : null}
+        <Button variant="outline" onClick={onCloseManagement}>返回需求池</Button>
+      </header>
+      {writable ? <div className="flex items-center gap-2">
+        <Button size="sm" variant="outline" onClick={() => openCreate("version")}>+版本</Button>
+        <Button size="sm" variant="outline" disabled={activeVersionRows.length === 0} onClick={() => openCreate("iteration")}>+迭代</Button>
+      </div> : <p className="text-xs text-muted-foreground">只读</p>}
+      <div data-testid="container-manager" className="overflow-hidden rounded-lg border bg-card">
+        {managedVersion ? <>
+          <div className="flex min-h-11 items-center gap-2 border-b bg-muted/40 px-3 py-2">
+            <Button size="icon-sm" variant="ghost" aria-label="返回版本管理" onClick={() => setManagedVersionId(null)}><ChevronLeft className="size-4" /></Button>
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{managedVersion.name}</p><p className="text-xs text-muted-foreground">版本内迭代</p></div>
+            {managementActions({ kind: "version", item: managedVersion })}
+          </div>
+          <div className="flex min-h-10 items-center gap-3 border-b px-4 text-xs font-medium text-muted-foreground">
+            <span className="min-w-0 flex-1">迭代</span><span className="w-28 shrink-0">状态与进度</span><span className="w-20 shrink-0 text-right">操作</span>
+          </div>
+          {iterationRows.filter((iteration) => iteration.versionId === managedVersion.id).map((iteration) => <div key={iteration.id} className="flex min-h-11 items-center gap-3 border-b px-4 py-2 last:border-b-0" data-iteration-id={iteration.id}>
+            <div className="min-w-0 flex-1"><p className="truncate text-sm">{iteration.name}</p><p className="text-xs text-muted-foreground">{iteration.startsOn ?? "未设开始"} — {iteration.endsOn ?? "未设结束"}</p></div>
+            <p className="w-28 shrink-0 text-xs text-muted-foreground">{iteration.archivedAt ? "已归档" : `${iteration.progress.completed}/${iteration.progress.total} · ${iteration.progress.percent}%`}</p>
+            {managementActions({ kind: "iteration", item: iteration })}
+          </div>)}
+          {iterationRows.every((iteration) => iteration.versionId !== managedVersion.id) ? <p className="px-4 py-8 text-center text-sm text-muted-foreground">该版本还没有迭代。</p> : null}
+        </> : <>
+          <div className="flex min-h-10 items-center gap-3 border-b bg-muted/40 px-4 text-xs font-medium text-muted-foreground">
+            <span className="min-w-0 flex-1">版本管理</span><span className="w-28 shrink-0">状态</span><span className="w-20 shrink-0 text-right">操作</span>
+          </div>
+          {versionRows.map((version) => <div key={version.id} className="flex min-h-11 items-center gap-3 border-b px-4 py-2 last:border-b-0" data-version-id={version.id}>
+            <button type="button" className="min-w-0 flex-1 text-left" aria-label={`管理版本 ${version.name}`} onClick={() => { setSelectedVersionId(version.id); setManagedVersionId(version.id); }}><span className="block truncate text-sm font-medium">{version.name}</span><span className="text-xs text-muted-foreground">{iterationRows.filter((iteration) => iteration.versionId === version.id).length} 个迭代</span></button>
+            <span className="w-28 shrink-0 text-xs text-muted-foreground">{version.archivedAt ? "已归档" : "正常"}</span>
+            {managementActions({ kind: "version", item: version })}
+          </div>)}
+          {versionRows.length === 0 ? <p className="px-4 py-8 text-center text-sm text-muted-foreground">还没有版本。</p> : null}
+        </>}
+      </div>
+    </section>
+  );
+
+  return (
+    <>
+      {mode === "management" ? management : navigation}
+      {lifecycle.error && !editTarget && !deleteTarget ? <div role="alert" className="mt-3 text-xs text-destructive"><p>{lifecycle.error.message}</p><Button className="mt-1" size="sm" variant="outline" onClick={() => { void versions.refetch(); void iterations.refetch(); }}>重新载入</Button></div> : null}
+
+      <Dialog open={Boolean(createKind)} onOpenChange={(open) => { if (!open && !createVersion.isPending && !createIteration.isPending) { setCreateKind(null); setCreateDraft(EMPTY_CREATE_DRAFT); } }}>
+        <DialogContent className="sm:max-w-lg" data-testid="container-create-form">
+          <DialogHeader><DialogTitle>创建{createKind === "version" ? "版本" : "迭代"}</DialogTitle><DialogDescription>{createKind === "version" ? "版本用于组织其下的迭代。" : "迭代必须归属于一个版本。"}</DialogDescription></DialogHeader>
+          <div className="space-y-3">
+            {createKind === "iteration" ? <label className="space-y-1 text-sm font-medium"><span>所属版本</span><select aria-label="所属版本" className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={createDraft.versionId} onChange={(event) => setCreateDraft((current) => ({ ...current, versionId: event.target.value }))}>{activeVersionRows.map((version) => <option key={version.id} value={version.id}>{version.name}</option>)}</select></label> : null}
+            <label className="space-y-1 text-sm font-medium"><span>名称</span><Input aria-label="名称" autoFocus value={createDraft.name} onChange={(event) => setCreateDraft((current) => ({ ...current, name: event.target.value }))} /></label>
+            {createKind === "version" ? <label className="space-y-1 text-sm font-medium"><span>目标日期</span><Input aria-label="目标日期" type="date" value={createDraft.targetDate} onChange={(event) => setCreateDraft((current) => ({ ...current, targetDate: event.target.value }))} /></label> : <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm font-medium"><span>开始日期</span><Input aria-label="开始日期" type="date" value={createDraft.startsOn} onChange={(event) => setCreateDraft((current) => ({ ...current, startsOn: event.target.value }))} /></label>
+              <label className="space-y-1 text-sm font-medium"><span>结束日期</span><Input aria-label="结束日期" type="date" value={createDraft.endsOn} onChange={(event) => setCreateDraft((current) => ({ ...current, endsOn: event.target.value }))} /></label>
+            </div>}
+          </div>
+          {createError ? <p role="alert" className="text-sm text-destructive">{createError.message}</p> : null}
+          <DialogFooter><Button disabled={!createDraft.name.trim() || (createKind === "iteration" && !createDraft.versionId) || createVersion.isPending || createIteration.isPending} onClick={() => createKind === "version" ? createVersion.mutate() : createIteration.mutate()}>创建{createKind === "version" ? "版本" : "迭代"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(editTarget)} onOpenChange={(open) => { if (!open) requestEditClose(); }}>
         <DialogContent className="sm:max-w-lg" data-testid="container-edit-form" onCloseAutoFocus={(event) => {
@@ -290,6 +396,6 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
           <DialogFooter><Button ref={deleteCancelRef} variant="outline" onClick={() => { setDeleteTarget(null); setDeleteName(""); }}>取消</Button><Button variant="destructive" disabled={!deleteTarget || deleteName !== deleteTarget.item.name || lifecycle.isPending} onClick={() => deleteTarget && lifecycle.mutate({ target: deleteTarget, operation: "delete" })}>确认删除</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-    </aside>
+    </>
   );
 }

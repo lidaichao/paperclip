@@ -49,7 +49,25 @@ vi.mock("@/components/WorkPackageConsole", () => ({
   ),
 }));
 vi.mock("@/components/WorkRecordContainerTree", () => ({
-  WorkRecordContainerTree: () => <aside data-testid="version-iteration-tree" />,
+  WorkRecordContainerTree: ({ mode = "navigation", selectedScope = "pool", onSelectScope, onManageContainers, onCloseManagement }: {
+    mode?: "navigation" | "management";
+    selectedScope?: string;
+    onSelectScope?: (scopeId: string) => void;
+    onManageContainers?: () => void;
+    onCloseManagement?: () => void;
+  }) => mode === "management" ? (
+    <section data-testid="container-admin-view">
+      <h2>版本与迭代管理</h2>
+      <button onClick={onCloseManagement}>返回需求池</button>
+    </section>
+  ) : (
+    <aside data-testid="version-iteration-tree" data-selected-scope={selectedScope}>
+      <button onClick={() => onSelectScope?.("pool")}>需求池</button>
+      <button onClick={() => onSelectScope?.("version-1")}>V1</button>
+      <button onClick={() => onSelectScope?.("iteration-1")}>迭代一</button>
+      <button aria-label="版本与迭代管理" onClick={onManageContainers}>管理</button>
+    </aside>
+  ),
 }));
 vi.mock("@/components/WorkRecordGantt", () => ({
   WorkRecordGantt: () => <div data-testid="work-record-gantt" />,
@@ -183,6 +201,44 @@ describe("ProjectWorkRecords", () => {
     await act(async () => toggle.click());
 
     expect(onRailOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  it("keeps the rail navigation mounted while the gear replaces only the main content with the container admin", async () => {
+    await render("plan");
+
+    await act(async () => (container.querySelector('button[aria-label="版本与迭代管理"]') as HTMLButtonElement).click());
+    await flush();
+
+    expect(container.querySelector('[data-testid="version-iteration-tree"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="container-admin-view"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="console"]')).toBeNull();
+    expect(container.querySelector('[data-testid="work-record-workspace-content"]')?.textContent).toContain("版本与迭代管理");
+
+    await act(async () => button("返回需求池").click());
+    expect(container.querySelector('[data-testid="container-admin-view"]')).toBeNull();
+    expect(container.querySelector('[data-testid="console"]')).not.toBeNull();
+  });
+
+  it("filters plan records by the selected version or iteration without changing the record kind", async () => {
+    const inIteration = record("plan", { id: "plan-in", title: "迭代内任务", iterationId: "iteration-1" });
+    const outsideIteration = record("plan", { id: "plan-out", title: "其他迭代任务", iterationId: "iteration-2" });
+    listMock.mockResolvedValue([inIteration, outsideIteration, defect]);
+    iterationsMock.mockResolvedValue([
+      { id: "iteration-1", versionId: "version-1", name: "迭代一", progress: { completed: 0, total: 1, percent: 0 } },
+      { id: "iteration-2", versionId: "version-2", name: "迭代二", progress: { completed: 0, total: 1, percent: 0 } },
+    ]);
+    await render("plan");
+    expect(container.textContent).toContain("迭代内任务");
+    expect(container.textContent).toContain("其他迭代任务");
+
+    await act(async () => button("V1").click());
+    expect(container.querySelector('[data-testid="version-iteration-tree"]')?.getAttribute("data-selected-scope")).toBe("version-1");
+    expect(container.textContent).toContain("迭代内任务");
+    expect(container.textContent).not.toContain("其他迭代任务");
+
+    await act(async () => button("需求池").click());
+    expect(container.textContent).toContain("迭代内任务");
+    expect(container.textContent).toContain("其他迭代任务");
   });
 
   it("saves a plan without creating any execution object", async () => {

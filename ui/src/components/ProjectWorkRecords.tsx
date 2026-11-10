@@ -121,6 +121,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   const confirmedDialogCloseRef = useRef(false);
   const [businessDecisionOpen, setBusinessDecisionOpen] = useState(false);
   const [internalRailOpen, setInternalRailOpen] = useState(true);
+  const [containerAdminOpen, setContainerAdminOpen] = useState(false);
+  const [containerScope, setContainerScope] = useState("pool");
   const resolvedRailOpen = railOpen ?? internalRailOpen;
   const setRailOpen = (open: boolean) => {
     if (onRailOpenChange) onRailOpenChange(open);
@@ -153,12 +155,27 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     queryFn: () => workRecordsApi.versions(companyId, projectId),
   });
   const allRecords = records.data ?? [];
+  const scopedIterationIds = useMemo(() => {
+    if (containerScope === "pool") return null;
+    if ((iterations.data ?? []).some((iteration) => iteration.id === containerScope)) return new Set([containerScope]);
+    return new Set((iterations.data ?? []).filter((iteration) => iteration.versionId === containerScope).map((iteration) => iteration.id));
+  }, [containerScope, iterations.data]);
   const visibleRecords = useMemo(
-    () => allRecords.filter((record) => record.kind === kind),
-    [allRecords, kind],
+    () => allRecords.filter((record) => record.kind === kind && (!scopedIterationIds || (record.iterationId ? scopedIterationIds.has(record.iterationId) : false))),
+    [allRecords, kind, scopedIterationIds],
+  );
+  const visibleRecordIds = useMemo(() => new Set(visibleRecords.map((record) => record.id)), [visibleRecords]);
+  const scopedRecords = useMemo(
+    () => allRecords.filter((record) => record.kind !== kind || visibleRecordIds.has(record.id)),
+    [allRecords, kind, visibleRecordIds],
   );
   const kindLabel = kind === "plan" ? l10n("local.work_record_plan") : l10n("local.work_record_defect");
   const businessDraftDirty = dialogOpen && JSON.stringify(draft) !== JSON.stringify(editingRecord ? draftFromRecord(editingRecord) : blankDraft());
+
+  useEffect(() => {
+    setContainerScope("pool");
+    setContainerAdminOpen(false);
+  }, [projectId]);
 
   useEffect(() => {
     if (!businessDraftDirty) return;
@@ -365,7 +382,24 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       <div className="work-record-workspace" data-testid="work-record-workspace-grid" data-rail-open={resolvedRailOpen ? "true" : "false"}>
         <div className="work-record-rail-shell" data-testid="work-record-rail-shell">
           <div className="work-record-rail-panel" aria-hidden={!resolvedRailOpen}>
-            <WorkRecordContainerTree className="h-full" companyId={companyId} projectId={projectId} writable={capabilities.data?.manageContainers.allowed !== false} />
+            <WorkRecordContainerTree
+              className="h-full"
+              companyId={companyId}
+              projectId={projectId}
+              writable={capabilities.data?.manageContainers.allowed !== false}
+              mode="navigation"
+              managementActive={containerAdminOpen}
+              selectedScope={containerScope}
+              onSelectScope={(scopeId) => {
+                setContainerScope(scopeId);
+                setContainerAdminOpen(false);
+              }}
+              onManageContainers={() => {
+                void guardNavigation().then((allowed) => {
+                  if (allowed) setContainerAdminOpen(true);
+                });
+              }}
+            />
           </div>
           <Button
             type="button"
@@ -381,45 +415,58 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
           </Button>
         </div>
         <div className="min-w-0 overflow-hidden" data-testid="work-record-workspace-content">
-          <div className="mb-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">{kindLabel}</h2>
-              <p className="text-sm text-muted-foreground">
-                {kind === "plan"
-                  ? l10n("local.work_record_saving_editing_and_assigning_an_owne")
-                  : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
-              </p>
-            </div>
-            <Button disabled={capabilities.data?.editRecords.allowed === false} onClick={beginCreate}>
-              <Plus className="size-4" />
-              {l10n("local.work_record_new_kind", { kind: kindLabel })}
-            </Button>
-          </div>
-
-          {reopen.error ? <p role="alert" className="mb-3 text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
-
-          {viewMode === "gantt" ? (
-            <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} writable={capabilities.data?.editRecords.allowed !== false} onOpen={(record, source) => { lastEditorFocusRef.current = source; void selectRecord(record); }} />
-          ) : (
-            <WorkPackageConsole
+          {containerAdminOpen ? (
+            <WorkRecordContainerTree
               companyId={companyId}
               projectId={projectId}
-              records={allRecords}
-              visibleKind={kind}
-              agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))}
-              iterationLabels={iterationLabels}
-              recordsLoading={records.isLoading}
-              recordsError={records.error}
-              onRetryRecords={() => records.refetch()}
-              onEditRecord={(record) => { void selectRecord(record); }}
-              onEditCoverage={kind === "plan" ? beginCoverage : undefined}
-              onReopenRecord={kind === "defect" ? (record) => reopen.mutate(record) : undefined}
-              reopeningRecordId={reopen.isPending ? reopen.variables?.id ?? null : null}
-              beforeViewSwitch={beforeViewSwitch}
-              onViewDraftDirtyChange={setViewDraftDirty}
-              registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
+              writable={capabilities.data?.manageContainers.allowed !== false}
+              mode="management"
+              onCloseManagement={() => {
+                setContainerScope("pool");
+                setContainerAdminOpen(false);
+              }}
             />
-          )}
+          ) : <>
+            <div className="mb-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">{kindLabel}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {kind === "plan"
+                    ? l10n("local.work_record_saving_editing_and_assigning_an_owne")
+                    : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
+                </p>
+              </div>
+              <Button disabled={capabilities.data?.editRecords.allowed === false} onClick={beginCreate}>
+                <Plus className="size-4" />
+                {l10n("local.work_record_new_kind", { kind: kindLabel })}
+              </Button>
+            </div>
+
+            {reopen.error ? <p role="alert" className="mb-3 text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
+
+            {viewMode === "gantt" ? (
+              <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} writable={capabilities.data?.editRecords.allowed !== false} onOpen={(record, source) => { lastEditorFocusRef.current = source; void selectRecord(record); }} />
+            ) : (
+              <WorkPackageConsole
+                companyId={companyId}
+                projectId={projectId}
+                records={scopedRecords}
+                visibleKind={kind}
+                agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))}
+                iterationLabels={iterationLabels}
+                recordsLoading={records.isLoading}
+                recordsError={records.error}
+                onRetryRecords={() => records.refetch()}
+                onEditRecord={(record) => { void selectRecord(record); }}
+                onEditCoverage={kind === "plan" ? beginCoverage : undefined}
+                onReopenRecord={kind === "defect" ? (record) => reopen.mutate(record) : undefined}
+                reopeningRecordId={reopen.isPending ? reopen.variables?.id ?? null : null}
+                beforeViewSwitch={beforeViewSwitch}
+                onViewDraftDirtyChange={setViewDraftDirty}
+                registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
+              />
+            )}
+          </>}
         </div>
       </div>
 

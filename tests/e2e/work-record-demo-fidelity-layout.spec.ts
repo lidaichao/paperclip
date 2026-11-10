@@ -270,6 +270,18 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     expect(visibleRowCount, `${viewport.label} 首屏任务容量应达到 Demo 实测基线`).toBeGreaterThanOrEqual(minimumVisiblePlanRows[viewport.label]);
     await screenshot(page, info, `demo-fidelity-plan-wbs-${viewport.label}`);
 
+    await page.getByRole("button", { name: "版本与迭代管理", exact: true }).click();
+    await expect(page.getByTestId("version-iteration-tree")).toBeVisible();
+    const containerAdmin = page.getByTestId("container-admin-view");
+    await expect(containerAdmin).toBeVisible();
+    await expect(containerAdmin.getByText("11月", { exact: true })).toHaveCount(0);
+    await containerAdmin.getByRole("button", { name: "管理版本 V1", exact: true }).click();
+    await expect(containerAdmin.getByText("11月", { exact: true })).toBeVisible();
+    await screenshot(page, info, `demo-fidelity-container-admin-${viewport.label}`);
+    await containerAdmin.getByRole("button", { name: "返回版本管理", exact: true }).click();
+    await containerAdmin.getByRole("button", { name: "返回需求池", exact: true }).click();
+    await expect(planRows).toHaveCount(20);
+
     const recordsBeforeDrawer = await json<unknown[]>(
       await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
       "read records before opening drawer",
