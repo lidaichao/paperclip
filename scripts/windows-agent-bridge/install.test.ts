@@ -29,6 +29,16 @@ describe("installation safety", () => {
     expect(install).toContain("-ErrorAction Stop");
   });
 
+  it("installs a self-contained hashed runtime instead of pointing startup at a worktree", async () => {
+    const install = await readFile(path.join(root, "install.ps1"), "utf8");
+    expect(install).toContain("Get-FileHash");
+    expect(install).toContain("runtime-config.json");
+    expect(install).toContain("runtime");
+    expect(install).toContain("Copy-Item");
+    expect(install).toContain("RepairExisting");
+    expect(install).not.toContain("$shortcut.WorkingDirectory = $PSScriptRoot");
+  });
+
   it("preflights the bridge before scheduled-task installation", async () => {
     const doctor = await readFile(path.join(root, "doctor.ps1"), "utf8");
     const install = await readFile(path.join(root, "install.ps1"), "utf8");

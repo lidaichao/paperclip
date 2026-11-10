@@ -2,7 +2,8 @@ import { mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { acquireSingleInstanceLock, claimAndRunOnce, runBridge, waitForPollInterval, writeHealth } from "./main.js";
+import { acquireSingleInstanceLock, claimAndRunOnce, runBridge, shouldRetryIdleServiceFailure,
+  waitForPollInterval, writeHealth } from "./main.js";
 import { LocalCommentIntentStore } from "./local-run-write-proxy.js";
 import type { AliceClient } from "./paperclip-client.js";
 import type { ClaimStateStore } from "./claim-state.js";
@@ -146,6 +147,20 @@ describe("bridge lifecycle", () => {
     controller.abort();
     await pending;
     expect(Date.now() - started).toBeLessThan(500);
+  });
+
+  it("retries only transient service failures with no active claim or process evidence", () => {
+    const idle = { activeClaim: null, reportedProcesses: [] };
+    expect(shouldRetryIdleServiceFailure(new TypeError("fetch failed"), idle)).toBe(true);
+    expect(shouldRetryIdleServiceFailure(Object.assign(new Error("socket reset"), { code: "ECONNRESET" }), idle))
+      .toBe(true);
+    expect(shouldRetryIdleServiceFailure(new Error("invalid credentials"), idle)).toBe(false);
+    expect(shouldRetryIdleServiceFailure(new TypeError("fetch failed"), {
+      activeClaim: { runId: "run-1" }, reportedProcesses: [],
+    })).toBe(false);
+    expect(shouldRetryIdleServiceFailure(new TypeError("fetch failed"), {
+      activeClaim: null, reportedProcesses: [{ pid: 1234 }],
+    })).toBe(false);
   });
 
   it("writes redacted health data atomically", async () => {

@@ -51,6 +51,28 @@ function safeError(error: unknown): string {
   return error.message.replace(/Bearer\s+\S+/gi, "Bearer [redacted]").slice(0, 500);
 }
 
+function errorCode(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null;
+  const code = (error as { code?: unknown }).code;
+  if (typeof code === "string") return code.toUpperCase();
+  return errorCode((error as { cause?: unknown }).cause);
+}
+
+function isTransientTransportError(error: unknown): boolean {
+  const code = errorCode(error);
+  if (code && ["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "ENETUNREACH", "EHOSTUNREACH", "EAI_AGAIN"]
+    .includes(code)) return true;
+  return error instanceof TypeError && /fetch failed|network/i.test(error.message);
+}
+
+export function shouldRetryIdleServiceFailure(error: unknown, recovery: {
+  activeClaim: unknown | null;
+  reportedProcesses: unknown[];
+}): boolean {
+  return recovery.activeClaim === null && recovery.reportedProcesses.length === 0 &&
+    isTransientTransportError(error);
+}
+
 export async function claimAndRunOnce(input: {
   client: AliceClient;
   state: ClaimStateStore;
@@ -168,7 +190,6 @@ export async function runBridge(configPath: string, signal: AbortSignal,
     const gbrainToken = await loadMemberGbrainToken(agent, process.env);
     await verifyGbrainIdentity({ agent, endpoint: config.gbrainMcpUrl, token: gbrainToken });
     const client = new AliceClient({ apiBase: config.apiBase, token });
-    await client.verifyIdentity(agent.remoteAgentId, config.companyId, agent.remoteAgentName);
     const state = new ClaimStateStore(config.stateFile, config.deviceId, agent.remoteAgentId);
     const localAgent: LocalAgentRuntimeConfig = {
       id: agent.remoteAgentId, companyId: config.companyId, name: agent.localAgentName,
@@ -181,13 +202,39 @@ export async function runBridge(configPath: string, signal: AbortSignal,
     const supervisor = { executable: config.supervisorExecutable,
       receiptBaseDir, ...bridgeIdentity };
     let lastSuccessfulPollAt: string | null = null;
+    let identityVerified = false;
+    let retryDelayMs = Math.min(config.pollIntervalMs, 5_000);
     while (!signal.aborted) {
-      // A failed cycle exits. The scheduled task must not repeatedly relaunch
-      // an uncertain claim or a process whose stop was not confirmed.
-      await claimAndRunOnce({ client, state, deviceId: config.deviceId,
-        companyId: config.companyId, agent, localAgent, token, signal,
-        intentFile: `${config.stateFile}.comment-intent.json`, supervisor });
+      try {
+        if (!identityVerified) {
+          await client.verifyIdentity(agent.remoteAgentId, config.companyId, agent.remoteAgentName);
+          identityVerified = true;
+        }
+        await claimAndRunOnce({ client, state, deviceId: config.deviceId,
+          companyId: config.companyId, agent, localAgent, token, signal,
+          intentFile: `${config.stateFile}.comment-intent.json`, supervisor });
+      } catch (error) {
+        if (options.mode !== "service") throw error;
+        const recovery = await state.recoveryState();
+        // Retrying is permitted only before a run has been latched and before
+        // any model process evidence exists. Every uncertain execution still
+        // exits hard for manual reconciliation.
+        if (!shouldRetryIdleServiceFailure(error, recovery)) throw error;
+        identityVerified = false;
+        await writeHealth(healthPath, {
+          schemaVersion: 1,
+          connected: false,
+          lastSuccessfulPollAt,
+          agents: { [agent.remoteAgentId]: { state: "backoff", activeTask: null } },
+          lastError: safeError(error),
+          updatedAt: new Date().toISOString(),
+        });
+        await waitForPollInterval(retryDelayMs, signal);
+        retryDelayMs = Math.min(retryDelayMs * 2, 60_000);
+        continue;
+      }
       lastSuccessfulPollAt = new Date().toISOString();
+      retryDelayMs = Math.min(config.pollIntervalMs, 5_000);
       await writeHealth(healthPath, {
         schemaVersion: 1,
         connected: true,

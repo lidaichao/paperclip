@@ -5,12 +5,12 @@ $settings = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFr
 $taskName = 'AliceWorker_' + $settings.agents[0].remoteAgentId
 $startupLink = Join-Path ([Environment]::GetFolderPath('Startup')) ($taskName + '.lnk')
 $lockPath = [System.IO.Path]::GetFullPath((Join-Path $settings.workerHome 'claim-state.json.lock'))
-$bundlePath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'dist\bridge.bundle.mjs'))
+$runtimeRoot = [System.IO.Path]::GetFullPath((Join-Path $settings.workerHome 'runtime'))
 
 if (Test-Path -LiteralPath $lockPath) {
   $lock = Get-Content -LiteralPath $lockPath -Raw | ConvertFrom-Json
   $process = Get-CimInstance Win32_Process -Filter "ProcessId = $($lock.pid)" -ErrorAction SilentlyContinue
-  if ($process -and $process.CommandLine -like "*$bundlePath*" -and $process.CommandLine -like "*$configPath*") {
+  if ($process -and $process.CommandLine -like "*$runtimeRoot*" -and $process.CommandLine -like '*bridge.bundle.mjs*') {
     Stop-Process -Id $lock.pid -ErrorAction Stop
   }
 }
