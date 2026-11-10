@@ -15,7 +15,9 @@ describe("createBrowserUuid", () => {
 
   it("builds a valid v4 UUID from getRandomValues", () => {
     const getRandomValues: Crypto["getRandomValues"] = (array) => {
-      (array as Uint8Array).fill(0xab);
+      if (array) {
+        new Uint8Array(array.buffer, array.byteOffset, array.byteLength).fill(0xab);
+      }
       return array;
     };
 
