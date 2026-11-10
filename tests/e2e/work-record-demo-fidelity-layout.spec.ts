@@ -268,6 +268,45 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
       return rect.top >= 0 && rect.bottom <= window.innerHeight;
     }).length);
     expect(visibleRowCount, `${viewport.label} 首屏任务容量应达到 Demo 实测基线`).toBeGreaterThanOrEqual(minimumVisiblePlanRows[viewport.label]);
+
+    const filterToolbar = page.getByTestId("work-record-filter-toolbar");
+    const filterToolbarBox = await box(filterToolbar, "常规表格工具栏");
+    const firstRowBeforeSelection = await box(planRows.first(), "选择前计划首行");
+    await page.getByRole("checkbox", { name: "选择 布局基线任务", exact: true }).click();
+    await expect(filterToolbar).toHaveAttribute("data-batch-active", "true");
+    await expect(filterToolbar).toContainText("已选 1 项");
+    const batchToolbarBox = await box(filterToolbar, "批量表格工具栏");
+    const firstRowAfterSelection = await box(planRows.first(), "选择后计划首行");
+    expect(Math.abs(batchToolbarBox.y - filterToolbarBox.y), `${viewport.label} 批量工具栏必须原位替换`).toBeLessThanOrEqual(1);
+    expect(Math.abs(batchToolbarBox.height - filterToolbarBox.height), `${viewport.label} 批量工具栏不得新增行高`).toBeLessThanOrEqual(1);
+    expect(Math.abs(firstRowAfterSelection.y - firstRowBeforeSelection.y), `${viewport.label} 勾选不得推动首行`).toBeLessThanOrEqual(1);
+    const selectAll = page.getByRole("checkbox", { name: "选择当前可操作记录", exact: true });
+    expect(await selectAll.evaluate((element) => (element as HTMLInputElement).indeterminate), `${viewport.label} 单项选择后表头应为半选`).toBe(true);
+    await selectAll.click();
+    await expect(filterToolbar).toContainText("已选 20 项");
+    await page.getByRole("button", { name: "取消选择", exact: true }).click();
+    await expect(filterToolbar).toHaveAttribute("data-batch-active", "false");
+
+    const titleResize = page.getByRole("separator", { name: "任务调整列宽", exact: true });
+    const titleHeader = page.getByRole("columnheader", { name: /任务/ });
+    const titleWidthBefore = (await box(titleHeader, "任务列表头")).width;
+    const resizeBox = await box(titleResize, "任务列拖宽手柄");
+    await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(resizeBox.x + resizeBox.width / 2 + 32, resizeBox.y + resizeBox.height / 2);
+    await page.mouse.up();
+    expect((await box(titleHeader, "拖宽后的任务列表头")).width - titleWidthBefore, `${viewport.label} 列头手柄应真实改变列宽`).toBeGreaterThanOrEqual(24);
+
+    await page.getByRole("button", { name: "列", exact: true }).click();
+    const descriptionColumn = page.getByLabel("描述列配置", { exact: true });
+    const startColumn = page.getByLabel("开始日期列配置", { exact: true });
+    await descriptionColumn.dragTo(startColumn);
+    const configuredOrder = await page.locator('[aria-label$="列配置"]').evaluateAll((items) => items.map((item) => item.getAttribute("aria-label")));
+    expect(configuredOrder.indexOf("描述列配置"), `${viewport.label} 列面板拖动应更新排列`).toBeGreaterThan(configuredOrder.indexOf("版本 / 迭代列配置"));
+    await page.keyboard.press("Escape");
+    await page.reload();
+    await expect(page.getByTestId("work-records-main")).toHaveAttribute("data-kind", "plan");
+    await waitForOuterShellToSettle(page, projectName);
     await screenshot(page, info, `demo-fidelity-plan-wbs-${viewport.label}`);
 
     await page.getByRole("button", { name: "版本与迭代管理", exact: true }).click();

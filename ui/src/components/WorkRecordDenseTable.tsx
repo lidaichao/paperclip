@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { WorkRecord, WorkRecordViewConfig, WorkRecordViewField, WorkRecordViewKind, WorkRecordViewPreference } from "@paperclipai/shared";
 import { defaultWorkRecordViewConfig } from "@paperclipai/shared";
@@ -9,13 +9,26 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight, Columns3, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronRight, Columns3, Filter, MoreHorizontal } from "lucide-react";
 import { buildWorkRecordTreeRows, type WorkRecordTreeRow } from "@/lib/work-record-tree";
 
 const LABELS: Record<WorkRecordViewField, string> = {
   id: "ID", title: "标题", description: "描述", iteration: "迭代", plannedStartDate: "开始日期",
   plannedCompletionDate: "完成日期", assignee: "负责人", qaAssignee: "QA", businessStatus: "业务状态",
   dispatchState: "派发状态", dependencies: "前置", defectSeverity: "严重度",
+};
+
+type WorkRecordBatchAction = {
+  label: string;
+  onInvoke?: () => void;
+  disabled: boolean;
+  reason: string | null;
+  pending: boolean;
+};
+
+export type WorkRecordBatchActions = {
+  dispatch: WorkRecordBatchAction;
+  assignOwner: WorkRecordBatchAction;
 };
 
 function cloneConfig(config: WorkRecordViewConfig): WorkRecordViewConfig {
@@ -48,7 +61,7 @@ function value(record: WorkRecord, field: WorkRecordViewField, agentNames: Recor
   }
 }
 
-export function WorkRecordDenseTable({ companyId, projectId, kind, records, agentNames, iterationLabels = {}, selectedId, checked, onSelect, onChecked, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard }: {
+export function WorkRecordDenseTable({ companyId, projectId, kind, records, agentNames, iterationLabels = {}, selectedId, checked, onSelect, onChecked, batchActions, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard }: {
   companyId: string;
   projectId: string;
   kind: WorkRecordViewKind;
@@ -59,6 +72,7 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
   checked: string[];
   onSelect: (id: string, source: HTMLElement) => void;
   onChecked: (ids: string[]) => void;
+  batchActions?: WorkRecordBatchActions;
   beforeViewSwitch: () => Promise<boolean>;
   onViewDraftDirtyChange?: (dirty: boolean) => void;
   registerLeaveGuard?: (guard: (() => Promise<boolean>) | null) => void;
@@ -137,6 +151,30 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
   const deleteView = () => { if (active && !active.isBuiltin && window.confirm(`确认删除个人视图“${active.name}”？业务记录不会删除。`)) remove.mutate(active); };
   const mutate = (fn: (next: WorkRecordViewConfig) => void) => setDraft((current) => { const next = cloneConfig(current); fn(next); return next; });
   const move = (field: WorkRecordViewField, delta: number) => mutate((next) => { const from = next.columnOrder.indexOf(field); const to = Math.max(0, Math.min(next.columnOrder.length - 1, from + delta)); next.columnOrder.splice(from, 1); next.columnOrder.splice(to, 0, field); });
+  const moveBefore = (field: WorkRecordViewField, target: WorkRecordViewField) => mutate((next) => {
+    const from = next.columnOrder.indexOf(field);
+    const targetIndex = next.columnOrder.indexOf(target);
+    if (from < 0 || targetIndex < 0 || from === targetIndex) return;
+    next.columnOrder.splice(from, 1);
+    next.columnOrder.splice(from < targetIndex ? targetIndex - 1 : targetIndex, 0, field);
+  });
+  const resizeColumn = (field: WorkRecordViewField, delta: number) => mutate((next) => {
+    next.columnWidths[field] = Math.max(64, Math.min(1200, (next.columnWidths[field] ?? (field === "title" ? 280 : 160)) + delta));
+  });
+  const startColumnResize = (field: WorkRecordViewField, event: React.PointerEvent<HTMLElement>) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = draft.columnWidths[field] ?? (field === "title" ? 280 : 160);
+    const movePointer = (nextEvent: PointerEvent) => mutate((next) => {
+      next.columnWidths[field] = Math.max(64, Math.min(1200, startWidth + nextEvent.clientX - startX));
+    });
+    const stopPointer = () => {
+      window.removeEventListener("pointermove", movePointer);
+      window.removeEventListener("pointerup", stopPointer);
+    };
+    window.addEventListener("pointermove", movePointer);
+    window.addEventListener("pointerup", stopPointer, { once: true });
+  };
 
   const directMatches = useMemo(() => {
     const query = draft.search.trim().toLocaleLowerCase();
@@ -193,6 +231,8 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
     for (const row of treeRows) { const group = draft.groupBy ? value(row.record, draft.groupBy, agentNames, iterationLabels) : ""; map.set(group, [...(map.get(group) ?? []), row]); }
     return [...map.entries()];
   }, [agentNames, draft.groupBy, iterationLabels, treeRows]);
+  const selectableIds = treeRows.filter((row) => !row.contextOnly).map((row) => row.record.id);
+  const selectedSelectableCount = selectableIds.filter((id) => checked.includes(id)).length;
   const rowClass = draft.density === "compact" ? "h-8" : draft.density === "comfortable" ? "h-10" : "h-12";
   const toggleCollapsed = (recordId: string) => setCollapsedIds((current) => {
     const next = new Set(current);
@@ -215,23 +255,28 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-    <div className="flex min-h-9 items-center gap-2 overflow-x-auto" data-testid="work-record-filter-toolbar">
-      <Input className="w-64 shrink-0" aria-label="搜索记录" placeholder="搜索 ID、标题或描述" value={draft.search} onChange={(event) => mutate((next) => { next.search = event.target.value; })} />
-      <select aria-label="密度" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.density} onChange={(event) => mutate((next) => { next.density = event.target.value as WorkRecordViewConfig["density"]; })}><option value="compact">紧凑</option><option value="comfortable">舒适</option><option value="spacious">宽松</option></select>
-      <select aria-label="排序字段" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.sort[0]?.field ?? ""} onChange={(event) => mutate((next) => { next.sort = event.target.value ? [{ field: event.target.value as WorkRecordViewField, direction: next.sort[0]?.direction ?? "asc" }] : []; })}><option value="">不排序</option>{columns.map((field) => <option key={field} value={field}>按{fieldLabel(kind, field)}</option>)}</select>
-      <Button size="sm" variant="outline" disabled={!draft.sort[0]} onClick={() => mutate((next) => { if (next.sort[0]) next.sort[0].direction = next.sort[0].direction === "asc" ? "desc" : "asc"; })}>{draft.sort[0]?.direction === "desc" ? "降序" : "升序"}</Button>
-      <select aria-label="分组字段" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.groupBy ?? ""} onChange={(event) => mutate((next) => { next.groupBy = event.target.value as WorkRecordViewField || null; })}><option value="">不分组</option>{columns.map((field) => <option key={field} value={field}>按{fieldLabel(kind, field)}分组</option>)}</select>
-      <select aria-label="业务状态筛选" className="h-9 shrink-0 rounded-md border border-input bg-background px-3 text-sm" value={draft.filters.find((item) => item.field === "businessStatus")?.value ?? ""} onChange={(event) => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== "businessStatus"); if (event.target.value) next.filters.push({ field: "businessStatus", operator: "is", value: event.target.value }); })}><option value="">全部状态</option>{["backlog","todo","in_progress","in_review","blocked","done","cancelled"].map((status) => <option key={status}>{status}</option>)}</select>
-      <Popover>
-        <PopoverTrigger asChild><Button className="shrink-0" size="sm" variant="outline"><Columns3 className="size-4" />列</Button></PopoverTrigger>
-        <PopoverContent align="end" className="w-[min(48rem,calc(100vw-2rem))] p-3">
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{draft.columnOrder.map((field) => { const locked = field === "id" || field === "title"; const label = fieldLabel(kind, field); return <div key={field} className="flex min-h-10 items-center gap-1 rounded-md border px-2" onKeyDown={(event) => { if (!event.altKey) return; if (event.key === "ArrowUp") move(field, -1); if (event.key === "ArrowDown") move(field, 1); if (event.key === "ArrowLeft") mutate((next) => { next.columnWidths[field] = Math.max(64, (next.columnWidths[field] ?? 160) - 16); }); if (event.key === "ArrowRight") mutate((next) => { next.columnWidths[field] = Math.min(1200, (next.columnWidths[field] ?? 160) + 16); }); }}><label className="flex flex-1 items-center gap-2 text-sm"><input type="checkbox" checked={draft.visibleFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.visibleFields = event.target.checked ? [...next.visibleFields, field] : next.visibleFields.filter((item) => item !== field); })} />{label}</label><Button size="sm" variant="ghost" aria-label={`${label}上移`} onClick={() => move(field, -1)}>↑</Button><Button size="sm" variant="ghost" aria-label={`${label}下移`} onClick={() => move(field, 1)}>↓</Button><Button size="sm" variant="ghost" aria-label={`${label}缩窄`} onClick={() => mutate((next) => { next.columnWidths[field] = Math.max(64, (next.columnWidths[field] ?? 160) - 16); })}>−</Button><Button size="sm" variant="ghost" aria-label={`${label}加宽`} onClick={() => mutate((next) => { next.columnWidths[field] = Math.min(1200, (next.columnWidths[field] ?? 160) + 16); })}>＋</Button><label className="text-xs"><input type="checkbox" aria-label={`${label}冻结`} checked={draft.frozenFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.frozenFields = event.target.checked ? [...next.frozenFields, field] : next.frozenFields.filter((item) => item !== field); })} />冻结</label></div>; })}</div>
-        </PopoverContent>
-      </Popover>
+    <div className="flex min-h-9 items-center gap-2 overflow-x-auto" data-testid="work-record-filter-toolbar" data-batch-active={checked.length > 0 ? "true" : "false"}>
+      {checked.length > 0 ? <>
+        <strong className="shrink-0 text-sm">已选 {checked.length} 项</strong>
+        <span className="shrink-0" title={batchActions?.dispatch.reason ?? undefined}><Button size="sm" aria-label={batchActions?.dispatch.label ?? "派发"} title={batchActions?.dispatch.reason ?? undefined} disabled={!batchActions || batchActions.dispatch.disabled || batchActions.dispatch.pending} onClick={batchActions?.dispatch.onInvoke}>{batchActions?.dispatch.pending ? "校验中…" : batchActions?.dispatch.label ?? "派发"}</Button></span>
+        <span className="shrink-0" title={batchActions?.assignOwner.reason ?? undefined}><Button size="sm" variant="outline" aria-label={batchActions?.assignOwner.label ?? "设置负责人"} title={batchActions?.assignOwner.reason ?? undefined} disabled={!batchActions || batchActions.assignOwner.disabled || batchActions.assignOwner.pending} onClick={batchActions?.assignOwner.onInvoke}>{batchActions?.assignOwner.pending ? "处理中…" : batchActions?.assignOwner.label ?? "设置负责人"}</Button></span>
+        <Button className="shrink-0" size="sm" variant="ghost" aria-label="取消选择" onClick={() => onChecked([])}>取消选择</Button>
+      </> : <>
+        <Input className="w-64 shrink-0" aria-label="搜索记录" placeholder="搜索 ID、标题或描述" value={draft.search} onChange={(event) => mutate((next) => { next.search = event.target.value; })} />
+        <select aria-label="密度" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.density} onChange={(event) => mutate((next) => { next.density = event.target.value as WorkRecordViewConfig["density"]; })}><option value="compact">紧凑</option><option value="comfortable">舒适</option><option value="spacious">宽松</option></select>
+        <select aria-label="分组字段" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.groupBy ?? ""} onChange={(event) => mutate((next) => { next.groupBy = event.target.value as WorkRecordViewField || null; })}><option value="">不分组</option>{columns.map((field) => <option key={field} value={field}>按{fieldLabel(kind, field)}分组</option>)}</select>
+        <select aria-label="业务状态筛选" className="h-9 shrink-0 rounded-md border border-input bg-background px-3 text-sm" value={draft.filters.find((item) => item.field === "businessStatus")?.value ?? ""} onChange={(event) => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== "businessStatus"); if (event.target.value) next.filters.push({ field: "businessStatus", operator: "is", value: event.target.value }); })}><option value="">全部状态</option>{["backlog","todo","in_progress","in_review","blocked","done","cancelled"].map((status) => <option key={status}>{status}</option>)}</select>
+        <Popover>
+          <PopoverTrigger asChild><Button className="shrink-0" size="sm" variant="outline"><Columns3 className="size-4" />列</Button></PopoverTrigger>
+          <PopoverContent align="end" className="w-[min(48rem,calc(100vw-2rem))] p-3">
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{draft.columnOrder.map((field) => { const locked = field === "id" || field === "title"; const label = fieldLabel(kind, field); return <div key={field} draggable aria-label={`${label}列配置`} className="flex min-h-10 items-center gap-1 rounded-md border px-2" onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/work-record-field", field); }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={(event) => { event.preventDefault(); const dragged = event.dataTransfer.getData("text/work-record-field") as WorkRecordViewField; if (draft.columnOrder.includes(dragged)) moveBefore(dragged, field); }} onKeyDown={(event) => { if (!event.altKey) return; if (event.key === "ArrowUp") move(field, -1); if (event.key === "ArrowDown") move(field, 1); if (event.key === "ArrowLeft") resizeColumn(field, -16); if (event.key === "ArrowRight") resizeColumn(field, 16); }}><label className="flex flex-1 items-center gap-2 text-sm"><input type="checkbox" checked={draft.visibleFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.visibleFields = event.target.checked ? [...next.visibleFields, field] : next.visibleFields.filter((item) => item !== field); })} />{label}</label><Button size="sm" variant="ghost" aria-label={`${label}上移`} onClick={() => move(field, -1)}>↑</Button><Button size="sm" variant="ghost" aria-label={`${label}下移`} onClick={() => move(field, 1)}>↓</Button><Button size="sm" variant="ghost" aria-label={`${label}缩窄`} onClick={() => resizeColumn(field, -16)}>−</Button><Button size="sm" variant="ghost" aria-label={`${label}加宽`} onClick={() => resizeColumn(field, 16)}>＋</Button><label className="text-xs"><input type="checkbox" aria-label={`${label}冻结`} checked={draft.frozenFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.frozenFields = event.target.checked ? [...next.frozenFields, field] : next.frozenFields.filter((item) => item !== field); })} />冻结</label></div>; })}</div>
+          </PopoverContent>
+        </Popover>
+      </>}
     </div>
     {error ? <p role="alert" className="text-sm text-destructive">视图操作失败：{error.message}</p> : null}
     <div className="overflow-x-auto rounded-md border" tabIndex={0} aria-label={`${kind === "plan" ? "计划" : "缺陷"}密集表格`} data-testid="work-record-table-scroller">
-      <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: tableWidth }}><thead className="bg-muted/70"><tr><th className="w-10"><span className="sr-only">选择</span></th>{columns.map((field) => <th key={field} scope="col" className={cn("border-b px-2 text-left", draft.frozenFields.includes(field) && "sticky z-10 bg-muted")} style={{ width: draft.columnWidths[field] ?? (field === "title" ? 280 : 160), left: stickyLeft[field] }}>{fieldLabel(kind, field)}</th>)}</tr></thead>
+      <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: tableWidth }}><thead className="bg-muted/70"><tr><th className="w-10"><SelectAllCheckbox checked={selectableIds.length > 0 && selectedSelectableCount === selectableIds.length} indeterminate={selectedSelectableCount > 0 && selectedSelectableCount < selectableIds.length} disabled={selectableIds.length === 0} onChange={(nextChecked) => onChecked(nextChecked ? [...new Set([...checked, ...selectableIds])] : checked.filter((id) => !selectableIds.includes(id)))} /></th>{columns.map((field) => { const label = fieldLabel(kind, field); const sort = draft.sort.find((item) => item.field === field); const filter = draft.filters.find((item) => item.field === field); const locked = field === "id" || field === "title"; return <th key={field} scope="col" aria-sort={sort?.direction === "asc" ? "ascending" : sort?.direction === "desc" ? "descending" : "none"} className={cn("relative border-b px-1 text-left", draft.frozenFields.includes(field) && "sticky z-10 bg-muted")} style={{ width: draft.columnWidths[field] ?? (field === "title" ? 280 : 160), left: stickyLeft[field] }}><div className="flex min-w-0 items-center gap-1"><span className="min-w-0 flex-1 truncate px-1">{label}</span><button type="button" className="inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`按${label}排序`} title={sort ? `${sort.direction === "asc" ? "升序" : "降序"}；再次切换` : "排序"} onClick={() => mutate((next) => { const current = next.sort.find((item) => item.field === field); next.sort = !current ? [{ field, direction: "asc" }] : current.direction === "asc" ? [{ field, direction: "desc" }] : []; })}><ArrowUpDown className="size-3.5" /></button><Popover><PopoverTrigger asChild><button type="button" className={cn("inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", filter && "text-foreground")} aria-label={`筛选${label}`} title={filter ? `已筛选：${filter.value}` : "筛选"}><Filter className="size-3.5" /></button></PopoverTrigger><PopoverContent align="start" className="w-72 space-y-2 p-3"><p className="text-sm font-medium">筛选{label}</p><select aria-label={`${label}筛选条件`} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={filter?.operator ?? "contains"} onChange={(event) => mutate((next) => { const current = next.filters.find((item) => item.field === field); if (current) current.operator = event.target.value as WorkRecordViewConfig["filters"][number]["operator"]; else next.filters.push({ field, operator: event.target.value as WorkRecordViewConfig["filters"][number]["operator"], value: "" }); })}><option value="contains">包含</option><option value="is">等于</option><option value="is_not">不等于</option><option value="before">早于</option><option value="after">晚于</option></select><Input aria-label={`${label}筛选值`} value={filter?.value ?? ""} onChange={(event) => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== field); if (event.target.value) next.filters.push({ field, operator: filter?.operator ?? "contains", value: event.target.value }); })} /><Button size="sm" variant="ghost" disabled={!filter} onClick={() => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== field); })}>清除筛选</Button></PopoverContent></Popover><DropdownMenu><DropdownMenuTrigger asChild><button type="button" className="inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${label}列菜单`} title="列菜单"><MoreHorizontal className="size-3.5" /></button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem disabled={locked} onClick={() => mutate((next) => { next.visibleFields = next.visibleFields.filter((item) => item !== field); })}>隐藏{label}列</DropdownMenuItem><DropdownMenuItem onClick={() => mutate((next) => { next.frozenFields = next.frozenFields.includes(field) ? next.frozenFields.filter((item) => item !== field) : [...next.frozenFields, field]; })}>{draft.frozenFields.includes(field) ? "取消冻结" : "冻结此列"}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div><span role="separator" aria-orientation="vertical" aria-label={`${label}调整列宽`} tabIndex={0} className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none focus-visible:bg-ring" onPointerDown={(event) => startColumnResize(field, event)} onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); resizeColumn(field, -16); } if (event.key === "ArrowRight") { event.preventDefault(); resizeColumn(field, 16); } }} /></th>; })}</tr></thead>
       <tbody>{groups.map(([group, rows]) => <FragmentGroup key={group} label={draft.groupBy ? group || "未分组" : null} columnCount={columns.length + 1}>{rows.map((row) => {
         const record = row.record;
         return <tr key={record.id} className={cn(rowClass, row.hasChildren && "bg-muted/25 font-medium", row.contextOnly && "bg-muted/40 text-muted-foreground", record.id === selectedId && "bg-muted/50")} data-testid="work-record-table-row" data-record-id={record.id} data-tree-depth={row.depth} data-context-only={row.contextOnly ? "true" : "false"} aria-current={record.id === selectedId ? "true" : undefined}><td className="px-2 text-center"><input type="checkbox" aria-label={`选择 ${record.title}`} checked={checked.includes(record.id)} disabled={row.contextOnly} onChange={(event) => onChecked(event.target.checked ? [...new Set([...checked, record.id])] : checked.filter((id) => id !== record.id))} /></td>{columns.map((field) => <td key={field} className={cn("truncate border-b px-2", draft.frozenFields.includes(field) && "sticky bg-background")} style={{ left: stickyLeft[field] }} title={value(record, field, agentNames, iterationLabels)}>{field === "title" ? <div className="work-record-tree-cell flex min-w-0 items-center" style={{ "--work-record-tree-depth": Math.min(row.depth, 12) } as React.CSSProperties}>{row.hasChildren ? <button type="button" className="mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${row.expanded ? "收起" : "展开"} ${record.title}`} aria-expanded={row.expanded} onClick={() => toggleCollapsed(record.id)}>{row.expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</button> : <span className="mr-1 size-5 shrink-0" aria-hidden="true" />}<button className="min-w-0 flex-1 truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{value(record, field, agentNames, iterationLabels)}</button>{row.contextOnly ? <span className="ml-1 shrink-0 rounded-sm bg-muted px-1 text-xs font-normal">上下文</span> : null}{row.relationWarning ? <span className="ml-1 shrink-0 text-xs font-normal text-destructive" title={row.relationWarning === "cycle" ? "父子关系存在循环" : "父任务不存在"}>关系异常</span> : null}</div> : <button className="w-full truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{field === "id" ? record.recordIdentifier : value(record, field, agentNames, iterationLabels)}</button>}</td>)}</tr>;
@@ -243,4 +288,17 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
 
 function FragmentGroup({ label, columnCount, children }: { label: string | null; columnCount: number; children: React.ReactNode }) {
   return <>{label ? <tr><th colSpan={columnCount} className="bg-muted px-2 py-1 text-left text-xs font-medium">{label}</th></tr> : null}{children}</>;
+}
+
+function SelectAllCheckbox({ checked, indeterminate, disabled, onChange }: {
+  checked: boolean;
+  indeterminate: boolean;
+  disabled: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.indeterminate = indeterminate;
+  }, [indeterminate]);
+  return <input ref={inputRef} type="checkbox" aria-label="选择当前可操作记录" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />;
 }

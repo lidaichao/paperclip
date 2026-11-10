@@ -24,9 +24,9 @@ function record(id: string, title: string, overrides: Partial<WorkRecord> = {}):
   const now = new Date("2026-11-10T00:00:00Z");
   return {
     id, companyId: "company-1", projectId: "project-1", kind: "plan", recordNumber: 1,
-    recordIdentifier: "PT-1", title,
+    recordIdentifier: "PT-1", title, priority: "medium",
     description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
-    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
+    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null, foundInVersionId: null,
     assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [], packageQaRole: null,
     qaRetestExemptionReason: null, qaCoverageRecordIds: [], businessStatus: "backlog",
     statusVersion: 1, revision: 1, dispatchState: "not_dispatched", dispatchRound: 0,
@@ -75,10 +75,16 @@ describe("WorkRecordDenseTable WBS", () => {
     vi.clearAllMocks();
   });
 
-  async function render(kind: WorkRecordViewKind, records: WorkRecord[], onChecked = vi.fn(), iterationLabels: Record<string, string> = {}) {
+  async function render(kind: WorkRecordViewKind, records: WorkRecord[], onChecked = vi.fn(), iterationLabels: Record<string, string> = {}, options: {
+    checked?: string[];
+    batchActions?: {
+      dispatch: { label: string; onInvoke: () => void; disabled: boolean; reason: string | null; pending: boolean };
+      assignOwner: { label: string; onInvoke?: () => void; disabled: boolean; reason: string | null; pending: boolean };
+    };
+  } = {}) {
     await act(async () => root.render(
       <QueryClientProvider client={client}>
-        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} selectedId={null} checked={[]} onSelect={vi.fn()} onChecked={onChecked} beforeViewSwitch={async () => true} />
+        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
       </QueryClientProvider>,
     ));
     await flush();
@@ -179,5 +185,82 @@ describe("WorkRecordDenseTable WBS", () => {
     expect(container.querySelector('[data-testid="work-record-view-toolbar"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="work-record-filter-toolbar"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="work-record-table-scroller"]')).not.toBeNull();
+  });
+
+  it("sorts from the column header without removing saved-view controls", async () => {
+    await render("defect", [
+      record("defect-b", "B 缺陷", { kind: "defect" }),
+      record("defect-a", "A 缺陷", { kind: "defect" }),
+    ]);
+
+    const sort = container.querySelector('button[aria-label="按缺陷排序"]') as HTMLButtonElement;
+    expect(sort).not.toBeNull();
+    await act(async () => sort.click());
+
+    expect([...container.querySelectorAll('[data-testid="work-record-table-row"]')].map((row) => row.getAttribute("data-record-id"))).toEqual(["defect-a", "defect-b"]);
+    expect(sort.closest("th")?.getAttribute("aria-sort")).toBe("ascending");
+    expect(container.querySelector('[data-testid="work-record-view-toolbar"]')).not.toBeNull();
+  });
+
+  it("filters from its own column header", async () => {
+    await render("defect", [
+      record("todo", "待办缺陷", { kind: "defect", businessStatus: "todo" }),
+      record("done", "完成缺陷", { kind: "defect", businessStatus: "done" }),
+    ]);
+
+    await act(async () => (container.querySelector('button[aria-label="筛选业务状态"]') as HTMLButtonElement).click());
+    const filter = document.querySelector('input[aria-label="业务状态筛选值"]') as HTMLInputElement;
+    await act(async () => setNativeValue(filter, "done"));
+    expect([...container.querySelectorAll('[data-testid="work-record-table-row"]')].map((row) => row.getAttribute("data-record-id"))).toEqual(["done"]);
+  });
+
+  it("hides a column from its own header menu", async () => {
+    await render("defect", [record("defect", "缺陷", { kind: "defect" })]);
+
+    const menu = container.querySelector('button[aria-label="描述列菜单"]') as HTMLButtonElement;
+    await act(async () => menu.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, button: 0 })));
+    await flush();
+    const hide = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((item) => item.textContent?.includes("隐藏描述列"));
+    expect(hide).not.toBeUndefined();
+    await act(async () => hide?.click()); await flush();
+    expect([...container.querySelectorAll("th")].some((cell) => cell.textContent?.includes("描述"))).toBe(false);
+  });
+
+  it("replaces the filter toolbar in place for selection and exposes honest action boundaries", async () => {
+    const onChecked = vi.fn();
+    const onDispatch = vi.fn();
+    await render("plan", [record("selected", "已选任务")], onChecked, {}, {
+      checked: ["selected"],
+      batchActions: {
+        dispatch: { label: "派发", onInvoke: onDispatch, disabled: false, reason: null, pending: false },
+        assignOwner: { label: "设置负责人", disabled: true, reason: "当前后端没有批量设置负责人接口", pending: false },
+      },
+    });
+
+    const toolbar = container.querySelector('[data-testid="work-record-filter-toolbar"]') as HTMLElement;
+    expect(toolbar.getAttribute("data-batch-active")).toBe("true");
+    expect(toolbar.textContent).toContain("已选 1 项");
+    expect(container.querySelector('input[aria-label="搜索记录"]')).toBeNull();
+    expect((container.querySelector('button[aria-label="设置负责人"]') as HTMLButtonElement).disabled).toBe(true);
+    expect(container.querySelector('button[aria-label="设置负责人"]')?.getAttribute("title")).toContain("没有批量设置负责人接口");
+
+    await act(async () => (container.querySelector('button[aria-label="派发"]') as HTMLButtonElement).click());
+    expect(onDispatch).toHaveBeenCalledTimes(1);
+    await act(async () => (container.querySelector('button[aria-label="取消选择"]') as HTMLButtonElement).click());
+    expect(onChecked).toHaveBeenCalledWith([]);
+  });
+
+  it("selects only actionable rows from the header and supports keyboard column resizing", async () => {
+    const onChecked = vi.fn();
+    await render("plan", [record("one", "任务一"), record("two", "任务二")], onChecked);
+
+    await act(async () => (container.querySelector('input[aria-label="选择当前可操作记录"]') as HTMLInputElement).click());
+    expect(onChecked).toHaveBeenCalledWith(["one", "two"]);
+
+    const resize = container.querySelector('[role="separator"][aria-label="任务调整列宽"]') as HTMLElement;
+    const header = resize.closest("th") as HTMLTableCellElement;
+    const widthBefore = header.style.width;
+    await act(async () => resize.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })));
+    expect(header.style.width).not.toBe(widthBefore);
   });
 });

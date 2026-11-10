@@ -52,9 +52,9 @@ function record(overrides: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title"
   const { id, title, ...rest } = overrides;
   return {
     id, recordNumber: 1, recordIdentifier: "PT-1", title,
-    companyId: "company-1", projectId: "project-1", kind: "plan", description: null,
+    companyId: "company-1", projectId: "project-1", kind: "plan", priority: "medium", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent", assigneeAgentId: "agent-po", qaAssigneeAgentId: "agent-qa", userResponsibilities: [],
-    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
+    plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null, foundInVersionId: null,
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],
     businessStatus: "in_review", statusVersion: 1, revision: 1, dispatchState: "linked", dispatchRound: 1, dependencySetRevision: 1,
     blockedCycle: 0, dependencies: [],
@@ -315,6 +315,26 @@ describe("WorkPackageConsole", () => {
     await act(async () => confirmButton.click());
     await flush();
     expect(prepareMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the server-backed selected-record preview from the in-place batch toolbar", async () => {
+    await render(records, "plan");
+    const checkbox = container.querySelector('input[aria-label="选择 发布工作包"]') as HTMLInputElement;
+    await act(async () => checkbox.click());
+    await flush();
+
+    const dispatch = container.querySelector('button[aria-label="派发"]') as HTMLButtonElement;
+    expect(dispatch.disabled).toBe(false);
+    expect((container.querySelector('button[aria-label="设置负责人"]') as HTMLButtonElement).disabled).toBe(true);
+    expect(container.querySelector('button[aria-label="设置负责人"]')?.getAttribute("title")).toContain("批量设置负责人接口");
+
+    await act(async () => dispatch.click());
+    await flush();
+    expect(previewMock).toHaveBeenCalledWith("company-1", "project-1", expect.objectContaining({
+      scopeKind: "selected_records",
+      selectedRecordIds: [ROOT_ID],
+    }));
+    expect(prepareMock).not.toHaveBeenCalled();
   });
 
   it("keeps facts readable while pre-disabling viewer writes with role explanations", async () => {
