@@ -3,12 +3,67 @@ import { expect, test, type APIRequestContext, type APIResponse, type Locator, t
 type RecordView = {
   id: string;
   title: string;
+  kind: string;
+  priority: string;
+  description: string | null;
+  descriptionRevision: number;
+  parentRecordId: string | null;
+  iterationId: string | null;
+  iterationAssignmentMode: string;
   revision: number;
   dependencySetRevision: number;
   plannedStartDate: string | null;
   plannedCompletionDate: string | null;
+  defectSeverity: string | null;
+  foundInVersionId: string | null;
+  assigneeAgentId: string | null;
+  qaAssigneeAgentId: string | null;
+  userResponsibilities: unknown[];
+  packageQaRole: string | null;
+  qaRetestExemptionReason: string | null;
+  qaCoverageRecordIds: string[];
+  businessStatus: string;
+  statusVersion: number;
+  dispatchState: string;
+  dispatchRound: number;
   dependencies: Array<{ predecessorRecordId: string }>;
+  execution: unknown;
+  recovery: unknown;
+  delivery: unknown;
+  descriptionDelivery: unknown;
+  quality: unknown;
 };
+
+function ganttInvariant(record: RecordView) {
+  return {
+    id: record.id,
+    title: record.title,
+    kind: record.kind,
+    priority: record.priority,
+    description: record.description,
+    descriptionRevision: record.descriptionRevision,
+    parentRecordId: record.parentRecordId,
+    iterationId: record.iterationId,
+    iterationAssignmentMode: record.iterationAssignmentMode,
+    defectSeverity: record.defectSeverity,
+    foundInVersionId: record.foundInVersionId,
+    assigneeAgentId: record.assigneeAgentId,
+    qaAssigneeAgentId: record.qaAssigneeAgentId,
+    userResponsibilities: record.userResponsibilities,
+    packageQaRole: record.packageQaRole,
+    qaRetestExemptionReason: record.qaRetestExemptionReason,
+    qaCoverageRecordIds: record.qaCoverageRecordIds,
+    businessStatus: record.businessStatus,
+    statusVersion: record.statusVersion,
+    dispatchState: record.dispatchState,
+    dispatchRound: record.dispatchRound,
+    execution: record.execution,
+    recovery: record.recovery,
+    delivery: record.delivery,
+    descriptionDelivery: record.descriptionDelivery,
+    quality: record.quality,
+  };
+}
 
 async function json<T>(response: APIResponse, label: string): Promise<T> {
   const body = await response.text();
@@ -91,6 +146,8 @@ test("G3B3 validates real gantt drags, dependency rewires, undo and dirty-contai
   const e = await create("新前置 E", "2026-11-07", "2026-11-08");
   const b = await create("后置 B", "2026-11-12", "2026-11-14", [a.id, c.id]);
   const undated = await create("无日期任务", null, null);
+  const beforeGanttInvariants = Object.fromEntries((await records(request, company.id, project.id))
+    .map((record) => [record.id, ganttInvariant(record)]));
 
   await page.goto(`/${company.issuePrefix}/projects/${project.id}/gantt`);
   const gantt = page.getByTestId("work-record-gantt");
@@ -185,8 +242,37 @@ test("G3B3 validates real gantt drags, dependency rewires, undo and dirty-contai
   await expect(page.getByTestId("work-record-detail-drawer").getByRole("textbox", { name: "标题" })).toHaveValue("后置 B");
   await gantt.getByRole("button", { name: "退出专注" }).click();
   await expect(page.getByTestId("work-record-detail-drawer").getByRole("textbox", { name: "标题" })).toHaveValue("后置 B");
+  const afterGanttInvariants = Object.fromEntries((await records(request, company.id, project.id))
+    .map((record) => [record.id, ganttInvariant(record)]));
+  expect(afterGanttInvariants).toEqual(beforeGanttInvariants);
 
   await page.getByRole("tab", { name: "计划", exact: true }).click();
+  const bDependencyTrigger = page.getByRole("button", { name: "编辑 后置 B 的前置记录" });
+  await bDependencyTrigger.click();
+  const dependencyEditor = page.getByTestId("dependency-cell-editor");
+  const cDependency = dependencyEditor.locator(`[data-dependency-predecessor-id="${c.id}"]`);
+  await cDependency.getByRole("button", { name: "替换" }).click();
+  await dependencyEditor.getByRole("textbox", { name: "搜索 后置 B 的前置记录" }).fill("候选 D");
+  await dependencyEditor.getByRole("option", { name: /替换为：.*候选 D/ }).click();
+  await expect.poll(async () => (await records(request, company.id, project.id))
+    .find((record) => record.id === b.id)?.dependencies.map((edge) => edge.predecessorRecordId).sort())
+    .toEqual([d.id, e.id].sort());
+  await dependencyEditor.getByRole("button", { name: "撤销" }).click();
+  await expect.poll(async () => (await records(request, company.id, project.id))
+    .find((record) => record.id === b.id)?.dependencies.map((edge) => edge.predecessorRecordId).sort())
+    .toEqual([c.id, e.id].sort());
+  await dependencyEditor.locator(`[data-dependency-predecessor-id="${c.id}"]`).getByRole("button", { name: "删除" }).click();
+  await expect.poll(async () => (await records(request, company.id, project.id))
+    .find((record) => record.id === b.id)?.dependencies.map((edge) => edge.predecessorRecordId))
+    .toEqual([e.id]);
+  await dependencyEditor.getByRole("button", { name: "撤销" }).click();
+  await expect.poll(async () => (await records(request, company.id, project.id))
+    .find((record) => record.id === b.id)?.dependencies.map((edge) => edge.predecessorRecordId).sort())
+    .toEqual([c.id, e.id].sort());
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "编辑 候选 D 的前置记录" }).click();
+  await expect(page.getByTestId("dependency-cell-editor")).toContainText("· 前置 A");
+  await page.keyboard.press("Escape");
   const editVersion = page.getByRole("button", { name: "编辑版本 V1" });
   await editVersion.click();
   const edit = page.getByTestId("container-edit-form");
