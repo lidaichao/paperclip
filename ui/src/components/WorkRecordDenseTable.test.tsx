@@ -91,10 +91,12 @@ describe("WorkRecordDenseTable WBS", () => {
       assignOwner: { label: string; onInvoke?: () => void; disabled: boolean; reason: string | null; pending: boolean };
     };
     writable?: boolean;
+    liveRunStatusByIssue?: ReadonlyMap<string, "queued" | "running">;
+    liveRunQueryFailed?: boolean;
   } = {}) {
     await act(async () => root.render(
       <QueryClientProvider client={client}>
-        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} writable={options.writable} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
+        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} liveRunStatusByIssue={options.liveRunStatusByIssue} liveRunQueryFailed={options.liveRunQueryFailed} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} writable={options.writable} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
       </QueryClientProvider>,
     ));
     await flush();
@@ -205,6 +207,23 @@ describe("WorkRecordDenseTable WBS", () => {
       expectedRecords: [{ recordId: successor.id, expectedRevision: 1, expectedDependencySetRevision: 1 }],
     });
     expect(document.body.textContent).toContain("撤销");
+  });
+
+  it("shows authoritative live execution in the plan row and never animates stale data", async () => {
+    const running = record("run", "程序开发", {
+      dispatchState: "linked",
+      execution: { ...record("seed", "seed").execution, issueId: "issue-1", lastRunStatus: "running" },
+    });
+    await render("plan", [running], vi.fn(), {}, { liveRunStatusByIssue: new Map([["issue-1", "running"]]) });
+    const indicator = container.querySelector('[data-testid="work-record-live-state"]');
+    expect(indicator?.getAttribute("data-state")).toBe("running");
+    expect(indicator?.getAttribute("data-animated")).toBe("true");
+    expect(indicator?.getAttribute("aria-label")).toBe("程序开发：处理中");
+
+    await render("plan", [running], vi.fn(), {}, { liveRunStatusByIssue: new Map(), liveRunQueryFailed: true });
+    const unknown = container.querySelector('[data-testid="work-record-live-state"]');
+    expect(unknown?.getAttribute("data-state")).toBe("unknown");
+    expect(unknown?.getAttribute("data-animated")).toBe("false");
   });
 
   it("marks inherited iteration values without combining them with other fields", async () => {
