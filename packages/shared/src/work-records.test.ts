@@ -55,3 +55,9 @@ describe("Gantt personal view configuration", () => {
     expect(() => validateWorkRecordViewConfig("gantt", config)).toThrow(/title visible/);
   });
 });
+
+describe("dense work-record defaults", () => {
+  it.each(["plan", "defect"] as const)("uses compact rows for the built-in %s view", (kind) => {
+    expect(defaultWorkRecordViewConfig(kind).density).toBe("compact");
+  });
+});

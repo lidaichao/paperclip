@@ -152,12 +152,13 @@ function assignmentEscalationRetryable(receipt: WorkPackageAssignmentEscalationR
   return receipt?.state === "ceo_unavailable" || receipt?.state === "delivery_failed";
 }
 
-export function WorkPackageConsole({ companyId, projectId, records, visibleKind, agentNames, recordsLoading, recordsError, onRetryRecords, onEditRecord, onEditCoverage, onReopenRecord, reopeningRecordId, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard }: {
+export function WorkPackageConsole({ companyId, projectId, records, visibleKind, agentNames, iterationLabels = {}, recordsLoading, recordsError, onRetryRecords, onEditRecord, onEditCoverage, onReopenRecord, reopeningRecordId, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard }: {
   companyId: string;
   projectId: string;
   records: WorkRecord[];
   visibleKind?: WorkRecordKind;
   agentNames: Record<string, string>;
+  iterationLabels?: Record<string, string>;
   recordsLoading: boolean;
   recordsError: Error | null;
   onRetryRecords: () => unknown;
@@ -384,7 +385,7 @@ export function WorkPackageConsole({ companyId, projectId, records, visibleKind,
         <Card className={cn("self-start", selected && "xl:col-span-2")}>
           <CardHeader className="py-3"><CardTitle>{l10n("local.work_record_kind_list", { kind: surfaceLabel })}</CardTitle><CardDescription>{l10n("local.work_record_business_dispatch_quality_and_live_r")}</CardDescription>{visibleRecords[0] ? <StatusBadge record={visibleRecords[0]} liveStatus={liveAvailable ? liveByIssue.get(visibleRecords[0].execution.issueId ?? "") : undefined} liveUnknown={!liveAvailable} /> : null}</CardHeader>
           <CardContent>
-            {visibleKind ? <WorkRecordDenseTable companyId={companyId} projectId={projectId} kind={visibleKind} records={visibleRecords} agentNames={agentNames} selectedId={selectedId} checked={checked} onSelect={(recordId) => { void selectRecord(recordId); }} onChecked={setChecked} beforeViewSwitch={beforeViewSwitch ?? (async () => true)} onViewDraftDirtyChange={onViewDraftDirtyChange} registerLeaveGuard={registerLeaveGuard} /> : null}
+            {visibleKind ? <WorkRecordDenseTable companyId={companyId} projectId={projectId} kind={visibleKind} records={visibleRecords} agentNames={agentNames} iterationLabels={iterationLabels} selectedId={selectedId} checked={checked} onSelect={(recordId) => { void selectRecord(recordId); }} onChecked={setChecked} beforeViewSwitch={beforeViewSwitch ?? (async () => true)} onViewDraftDirtyChange={onViewDraftDirtyChange} registerLeaveGuard={registerLeaveGuard} /> : null}
           </CardContent>
         </Card>
 

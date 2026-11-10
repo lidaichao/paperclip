@@ -145,6 +145,10 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     queryKey: queryKeys.workRecords.iterations(companyId, projectId),
     queryFn: () => workRecordsApi.iterations(companyId, projectId),
   });
+  const versions = useQuery({
+    queryKey: queryKeys.workRecords.versions(companyId, projectId),
+    queryFn: () => workRecordsApi.versions(companyId, projectId),
+  });
   const allRecords = records.data ?? [];
   const visibleRecords = useMemo(
     () => allRecords.filter((record) => record.kind === kind),
@@ -372,6 +376,10 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
               records={allRecords}
               visibleKind={kind}
               agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))}
+              iterationLabels={Object.fromEntries((iterations.data ?? []).map((iteration) => {
+                const versionName = (versions.data ?? []).find((version) => version.id === iteration.versionId)?.name;
+                return [iteration.id, versionName ? `${versionName} / ${iteration.name}` : iteration.name];
+              }))}
               recordsLoading={records.isLoading}
               recordsError={records.error}
               onRetryRecords={() => records.refetch()}

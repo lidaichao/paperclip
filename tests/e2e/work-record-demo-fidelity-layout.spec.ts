@@ -73,7 +73,7 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     }),
     "create iteration",
   );
-  await json(
+  const planRecord = await json<{ id: string }>(
     await request.post(`/api/companies/${company.id}/work-records`, {
       data: {
         projectId: project.id,
@@ -86,6 +86,19 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
       },
     }),
     "create plan record",
+  );
+  const childPlanRecord = await json<{ id: string }>(
+    await request.post(`/api/companies/${company.id}/work-records`, {
+      data: {
+        projectId: project.id,
+        kind: "plan",
+        title: "布局子任务",
+        parentRecordId: planRecord.id,
+        iterationId: iteration.id,
+        predecessorRecordIds: [],
+      },
+    }),
+    "create child plan record",
   );
   await json(
     await request.post(`/api/companies/${company.id}/work-records`, {
@@ -106,6 +119,13 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     await expect(page.getByTestId("work-records-main")).toHaveAttribute("data-kind", "plan");
     const plan = await readWorkspaceAnchors(page, projectName);
     expect(Math.abs(plan.rail.width - 210), `${viewport.label} 展开侧栏应为 210px`).toBeLessThanOrEqual(1);
+    await expect(page.locator(`[data-record-id="${planRecord.id}"]`)).toHaveAttribute("data-tree-depth", "0");
+    await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toHaveAttribute("data-tree-depth", "1");
+    await page.getByRole("button", { name: "收起 布局基线任务", exact: true }).click();
+    await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toHaveCount(0);
+    await page.getByRole("button", { name: "展开 布局基线任务", exact: true }).click();
+    await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toBeVisible();
+    await screenshot(page, info, `demo-fidelity-plan-wbs-${viewport.label}`);
 
     const recordsBeforeDrawer = await json<unknown[]>(
       await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
