@@ -483,6 +483,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
                 iterationLabels={iterationLabels}
                 versionLabels={versionLabels}
                 iterationVersionIds={iterationVersionIds}
+                currentUserId={accountIdentity.settled ? accountIdentity.userId : null}
                 recordsLoading={records.isLoading}
                 recordsError={records.error}
                 onRetryRecords={() => records.refetch()}

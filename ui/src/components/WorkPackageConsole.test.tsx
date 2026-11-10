@@ -323,7 +323,7 @@ describe("WorkPackageConsole", () => {
     await act(async () => checkbox.click());
     await flush();
 
-    const dispatch = container.querySelector('button[aria-label="派发"]') as HTMLButtonElement;
+    const dispatch = container.querySelector('button[aria-label="派发到待办"]') as HTMLButtonElement;
     expect(dispatch.disabled).toBe(false);
     expect((container.querySelector('button[aria-label="设置负责人"]') as HTMLButtonElement).disabled).toBe(true);
     expect(container.querySelector('button[aria-label="设置负责人"]')?.getAttribute("title")).toContain("批量设置负责人接口");

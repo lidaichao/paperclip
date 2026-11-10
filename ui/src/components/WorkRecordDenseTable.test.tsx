@@ -91,12 +91,13 @@ describe("WorkRecordDenseTable WBS", () => {
       assignOwner: { label: string; onInvoke?: () => void; disabled: boolean; reason: string | null; pending: boolean };
     };
     writable?: boolean;
+    currentUserId?: string | null;
     liveRunStatusByIssue?: ReadonlyMap<string, "queued" | "running">;
     liveRunQueryFailed?: boolean;
   } = {}) {
     await act(async () => root.render(
       <QueryClientProvider client={client}>
-        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} liveRunStatusByIssue={options.liveRunStatusByIssue} liveRunQueryFailed={options.liveRunQueryFailed} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} writable={options.writable} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
+        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} liveRunStatusByIssue={options.liveRunStatusByIssue} liveRunQueryFailed={options.liveRunQueryFailed} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} writable={options.writable} currentUserId={options.currentUserId} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
       </QueryClientProvider>,
     ));
     await flush();
@@ -307,7 +308,8 @@ describe("WorkRecordDenseTable WBS", () => {
       versionLabels: { "version-1": "V1" },
       iterationVersionIds: { "iteration-a": "version-1" },
     });
-    await act(async () => setSelectValue(container.querySelector('[data-testid="work-record-view-toolbar"] select') as HTMLSelectElement, "legacy-filter"));
+    const legacyView = [...container.querySelectorAll<HTMLButtonElement>('[data-testid="work-record-view-toolbar"] button')].find((button) => button.textContent === "旧迭代筛选")!;
+    await act(async () => legacyView.click());
     await flush();
 
     expect(container.querySelector('[data-record-id="match"]')).not.toBeNull();
@@ -329,7 +331,6 @@ describe("WorkRecordDenseTable WBS", () => {
     await flush();
 
     expect([...container.querySelectorAll('[role="tab"]')].every((tab) => tab.getAttribute("aria-selected") === "false")).toBe(true);
-    expect((container.querySelector('select[aria-label="业务状态筛选"]') as HTMLSelectElement).value).toBe("");
     expect(container.querySelector('[role="status"]')?.textContent).toContain("复杂状态筛选");
     expect(container.querySelector('[data-record-id="todo"]')).not.toBeNull();
     expect(container.querySelector('[data-record-id="done"]')).toBeNull();
@@ -349,6 +350,39 @@ describe("WorkRecordDenseTable WBS", () => {
     expect(container.querySelector('[data-testid="work-record-view-toolbar"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="work-record-filter-toolbar"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="work-record-table-scroller"]')).not.toBeNull();
+  });
+
+  it("switches plan presets as tabs and limits 我的任务 to the signed-in human", async () => {
+    const onChecked = vi.fn();
+    await render("plan", [
+      record("backlog", "待规划任务", { businessStatus: "backlog" }),
+      record("active", "进行中任务", { businessStatus: "in_progress" }),
+      record("review", "待审查任务", { businessStatus: "in_review" }),
+      record("mine", "我的任务", { businessStatus: "todo", userResponsibilities: [{ userId: "user-1", role: "execution" }] }),
+    ], onChecked, {}, { checked: ["backlog"], currentUserId: "user-1" });
+
+    expect([...container.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent)).toEqual([
+      "全部任务", "待规划", "进行中", "待审查", "我的任务",
+    ]);
+    const activeTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "进行中")!;
+    await act(async () => activeTab.click());
+    expect([...container.querySelectorAll('[data-testid="work-record-table-row"]')].map((row) => row.getAttribute("data-record-id"))).toEqual(["active"]);
+    expect(onChecked).toHaveBeenCalledWith([]);
+
+    const mineTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "我的任务")!;
+    await act(async () => mineTab.click());
+    expect([...container.querySelectorAll('[data-testid="work-record-table-row"]')].map((row) => row.getAttribute("data-record-id"))).toEqual(["mine"]);
+  });
+
+  it("matches the compact plan toolbar contract", async () => {
+    await render("plan", [record("one", "任务一")]);
+
+    const group = container.querySelector('select[aria-label="分组字段"]') as HTMLSelectElement;
+    expect(group.options[0].textContent).toBe("任务层级");
+    expect(container.querySelector('button[aria-label="展开或收起任务层级"]')).not.toBeNull();
+    expect((container.querySelector('input[aria-label="搜索记录"]') as HTMLInputElement).placeholder).toBe("搜索名称或编号");
+    expect(container.querySelector('select[aria-label="业务状态筛选"]')).toBeNull();
+    expect([...container.querySelectorAll('select[aria-label="密度"] option')].map((option) => option.textContent)).toEqual(["紧凑", "舒适"]);
   });
 
   it("sorts from the column header without removing saved-view controls", async () => {
@@ -396,7 +430,7 @@ describe("WorkRecordDenseTable WBS", () => {
     await render("plan", [record("selected", "已选任务")], onChecked, {}, {
       checked: ["selected"],
       batchActions: {
-        dispatch: { label: "派发", onInvoke: onDispatch, disabled: false, reason: null, pending: false },
+        dispatch: { label: "派发到待办", onInvoke: onDispatch, disabled: false, reason: null, pending: false },
         assignOwner: { label: "设置负责人", disabled: true, reason: "当前后端没有批量设置负责人接口", pending: false },
       },
     });
@@ -408,7 +442,8 @@ describe("WorkRecordDenseTable WBS", () => {
     expect((container.querySelector('button[aria-label="设置负责人"]') as HTMLButtonElement).disabled).toBe(true);
     expect(container.querySelector('button[aria-label="设置负责人"]')?.getAttribute("title")).toContain("没有批量设置负责人接口");
 
-    await act(async () => (container.querySelector('button[aria-label="派发"]') as HTMLButtonElement).click());
+    expect(container.querySelector('[data-record-id="selected"]')?.classList.contains("bg-primary/5")).toBe(true);
+    await act(async () => (container.querySelector('button[aria-label="派发到待办"]') as HTMLButtonElement).click());
     expect(onDispatch).toHaveBeenCalledTimes(1);
     await act(async () => (container.querySelector('button[aria-label="取消选择"]') as HTMLButtonElement).click());
     expect(onChecked).toHaveBeenCalledWith([]);
