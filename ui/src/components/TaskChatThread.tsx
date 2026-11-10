@@ -545,6 +545,9 @@ export function TaskChatThread(props: TaskChatThreadProps) {
     resumeAssigneePending = false,
     onOpenSkill,
   } = props;
+  const currentBrowserSenderLabel = currentUserId
+    ? userLabelMap?.get(currentUserId) ?? l10n("local.you_08b04193")
+    : null;
   const retryFailedRunHandler =
     isTerminalIssueStatus(issueStatus) ||
     interactions?.some((interaction) => interaction.status === "pending") ||
@@ -2994,6 +2997,16 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                     "bg-background/80 pt-1 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:bg-transparent dark:backdrop-blur-none dark:supports-[backdrop-filter]:bg-transparent",
                 )}
               >
+                {currentBrowserSenderLabel ? (
+                  <div
+                    data-testid="task-chat-sender-identity"
+                    className="px-1 text-xs text-muted-foreground"
+                  >
+                    {l10n("local.task_chat_browser_sender_identity", {
+                      v0: currentBrowserSenderLabel,
+                    })}
+                  </div>
+                ) : null}
                 {composerAccessory}
                 {tailTurnStatus ? (
                   <TaskChatTurnStatusIsland model={tailTurnStatus} />

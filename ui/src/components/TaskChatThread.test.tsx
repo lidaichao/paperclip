@@ -447,6 +447,23 @@ function createLongThreadComments() {
 }
 
 describe("TaskChatThread draft pass-through", () => {
+  it("shows the browser account used by the production composer", () => {
+    render(
+      <TaskChatThread
+        comments={[]}
+        onAdd={async () => {}}
+        currentUserId="user-jack"
+        userLabelMap={new Map([["user-jack", "Jack"]])}
+      />,
+    );
+
+    const identity = container.querySelector(
+      '[data-testid="task-chat-sender-identity"]',
+    );
+    expect(identity?.textContent).toContain("Jack");
+    expect(identity?.textContent).toContain("browser account");
+  });
+
   it("aligns the desktop thread header with the side-panel tab row", () => {
     render(
       <TaskChatThread
