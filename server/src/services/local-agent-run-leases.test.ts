@@ -948,6 +948,17 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     expect(replay.body).toEqual(first.body);
     expect(mutations).toBe(1);
 
+    const rejected = await request(app).post(`/api/companies/${scope.companyId}/issues`)
+      .set({ ...headers, "Idempotency-Key": randomUUID() })
+      .send({ title: "Unsafe execution override", assigneeAdapterOverrides: {
+        useProjectWorkspace: false,
+      } }).expect(403);
+    expect(rejected.body).toMatchObject({
+      code: "SESSION_WRITE_BODY_NOT_ALLOWED",
+      allowedFields: expect.arrayContaining(["title", "assigneeAgentId"]),
+    });
+    expect(mutations).toBe(1);
+
     const checkout = await request(app).post(`/api/issues/${scope.issueId}/checkout`)
       .set(headers).send({}).expect(403);
     expect(checkout.body).toMatchObject({ code: "CLIENT_PULL_WRITE_FENCED" });

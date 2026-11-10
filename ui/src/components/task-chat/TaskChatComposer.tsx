@@ -962,6 +962,7 @@ export function TaskChatComposer({
       else clearDraft(draftKey);
     }
     setBody("");
+    setActionError(null);
     setSubmitting(true);
     let attemptId: string | null = null;
     try {
@@ -1032,6 +1033,13 @@ export function TaskChatComposer({
           saveDraftSubmission(draftKey, uncertain);
       } else if (draftKey && attemptId)
         clearDraftSubmission(draftKey, attemptId);
+      if (!(error instanceof CommentSubmissionUnknownError)) {
+        setActionError(
+          error instanceof Error
+            ? error.message
+            : l10n("local.unable_to_post_comment_181529d8"),
+        );
+      }
       // Restore the failed message for retry without discarding a next draft
       // that was entered while the request was pending.
       const restoredBody = nextDraft

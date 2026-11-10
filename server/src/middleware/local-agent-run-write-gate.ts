@@ -4,6 +4,7 @@ import { agents, heartbeatRuns, localAgentRunLeases } from "@paperclipai/db";
 import { and, eq } from "drizzle-orm";
 import { isClientPullRuntimeConfig } from "../services/local-agent-run-leases.js";
 import { agentSessionWriteService, digestSessionWriteRequest } from "../services/agent-session-writes.js";
+import { sessionWriteBodyPolicy } from "./session-write-body-policy.js";
 
 const localRunMutation = /^\/api\/agents\/me\/local-runs\/(?:claim|[0-9a-f-]{36}\/(?:renew|finish|events|comments|subtasks|review-accept|review-reject|issue\/(?:review-handoff|review-confirmation|completion-review-handoff|child-complete|defect-repair-handoff|defect-qa-verdict|po-verdict)))\/?$/i;
 const sessionGrantMutation = /^\/api\/agents\/me\/session-writes\/?$/i;
@@ -16,35 +17,6 @@ const sessionWriteRoutes = [
 
 function isSessionWriteRoute(method: string, path: string) {
   return sessionWriteRoutes.some((route) => route.method === method && route.path.test(path));
-}
-
-function hasOnlyFields(body: unknown, fields: readonly string[]) {
-  if (!body || typeof body !== "object" || Array.isArray(body)) return false;
-  const keys = Object.keys(body as Record<string, unknown>);
-  return keys.length > 0 && keys.every((key) => fields.includes(key));
-}
-
-function isSafeIssueCreate(body: unknown) {
-  if (!hasOnlyFields(body, ["title", "description", "priority", "status", "assigneeAgentId",
-    "assigneeUserId", "projectId", "goalId", "parentId", "labelIds", "billingCode"])) return false;
-  const status = (body as Record<string, unknown>).status;
-  return status === undefined || ["backlog", "todo"].includes(String(status));
-}
-
-function isSafeCommentCreate(body: unknown) {
-  return hasOnlyFields(body, ["body"]) && typeof (body as Record<string, unknown>).body === "string";
-}
-
-function isSafeDocumentPut(body: unknown) {
-  return hasOnlyFields(body, ["title", "format", "body", "changeSummary", "baseRevisionId"]);
-}
-
-function isSafeIssuePatch(body: unknown) {
-  if (!body || typeof body !== "object" || Array.isArray(body)) return false;
-  const record = body as Record<string, unknown>;
-  const allowed = new Set(["title", "description", "priority", "assigneeAgentId", "status"]);
-  if (Object.keys(record).length === 0 || Object.keys(record).some((key) => !allowed.has(key))) return false;
-  return record.status === undefined || ["backlog", "todo"].includes(String(record.status));
 }
 
 /**
@@ -81,12 +53,18 @@ export function localAgentRunWriteGate(db: Db, opts?: {
       const token = typeof req.header === "function"
         ? (req.header("X-Paperclip-Session-Write") ?? "")
         : "";
+      const bodyPolicy = sessionWriteBodyPolicy(req.method, req.path, req.body);
       if (req.actor.source === "agent_key" && req.actor.keyId && !req.actor.runId && token &&
-        isSessionWriteRoute(req.method, req.path) &&
-        (req.method !== "POST" || !/^\/api\/companies\//i.test(req.path) || isSafeIssueCreate(req.body)) &&
-        (req.method !== "POST" || !/\/comments\/?$/i.test(req.path) || isSafeCommentCreate(req.body)) &&
-        (req.method !== "PATCH" || isSafeIssuePatch(req.body)) &&
-        (req.method !== "PUT" || isSafeDocumentPut(req.body))) {
+        isSessionWriteRoute(req.method, req.path) && !bodyPolicy.safe) {
+        res.status(403).json({
+          error: "Session-write request body contains unsupported fields or values",
+          code: "SESSION_WRITE_BODY_NOT_ALLOWED",
+          allowedFields: bodyPolicy.allowedFields,
+        });
+        return;
+      }
+      if (req.actor.source === "agent_key" && req.actor.keyId && !req.actor.runId && token &&
+        isSessionWriteRoute(req.method, req.path) && bodyPolicy.safe) {
         const authorization = await sessionWrites.authorize({
           companyId: req.actor.companyId,
           agentId: req.actor.agentId,

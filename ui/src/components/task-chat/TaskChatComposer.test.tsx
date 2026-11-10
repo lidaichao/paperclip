@@ -1805,6 +1805,9 @@ describe("TaskChatComposer", () => {
         expect(localStorage.getItem(draftKey)).toBe(
           "do not lose this\n\nnext draft",
         );
+        expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+          "network down",
+        );
       } finally {
         vi.useRealTimers();
       }
