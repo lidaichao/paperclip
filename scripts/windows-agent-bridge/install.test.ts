@@ -39,6 +39,13 @@ describe("installation safety", () => {
     expect(install).not.toContain("$shortcut.WorkingDirectory = $PSScriptRoot");
   });
 
+  it("copies every runtime resource required by the bundled bridge", async () => {
+    const install = await readFile(path.join(root, "install.ps1"), "utf8");
+    expect(install).toContain("codex-auth-merge-extract.sh");
+    expect(install).toContain("codex-auth-merge-decision.cjs");
+    expect(install).toContain("credential-helper.ps1");
+  });
+
   it("preflights the bridge before scheduled-task installation", async () => {
     const doctor = await readFile(path.join(root, "doctor.ps1"), "utf8");
     const install = await readFile(path.join(root, "install.ps1"), "utf8");

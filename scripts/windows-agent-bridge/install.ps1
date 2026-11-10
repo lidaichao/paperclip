@@ -33,8 +33,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Windows 进程监管器构建失败。' }
 
 $launcherSource = Join-Path $dist 'launcher.bundle.mjs'
 $bridgeSource = Join-Path $dist 'bridge.bundle.mjs'
+$runtimeResources = @(
+  'codex-auth-merge-extract.sh',
+  'codex-auth-merge-decision.cjs',
+  'credential-helper.ps1'
+)
 $supervisorSource = Join-Path $PSScriptRoot 'supervisor\out\PaperclipRunSupervisor.exe'
-foreach ($required in @($launcherSource, $bridgeSource, $supervisorSource)) {
+foreach ($required in @($launcherSource, $bridgeSource, $supervisorSource) + ($runtimeResources | ForEach-Object { Join-Path $dist $_ })) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "运行文件缺失：$required" }
 }
 
@@ -46,6 +51,9 @@ New-Item -ItemType Directory -Path $runtimeDist -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run-hidden.ps1') -Destination (Join-Path $runtimeDir 'run-hidden.ps1') -Force
 Copy-Item -LiteralPath $launcherSource -Destination (Join-Path $runtimeDist 'launcher.bundle.mjs') -Force
 Copy-Item -LiteralPath $bridgeSource -Destination (Join-Path $runtimeDist 'bridge.bundle.mjs') -Force
+foreach ($resource in $runtimeResources) {
+  Copy-Item -LiteralPath (Join-Path $dist $resource) -Destination (Join-Path $runtimeDist $resource) -Force
+}
 $runtimeSupervisor = Join-Path $runtimeDir 'PaperclipRunSupervisor.exe'
 Copy-Item -LiteralPath $supervisorSource -Destination $runtimeSupervisor -Force
 
