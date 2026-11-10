@@ -1,6 +1,7 @@
 import { getPageVisibility, getVisibilityHeaderValue } from "@/lib/page-visibility";
 import { localizeApiErrorMessage } from "@/lib/api-error-localization";
 import { tenantSessionRecovery } from "@/lib/tenant-session-recovery";
+import { boardSessionRecovery } from "@/lib/board-session-recovery";
 import { l10n } from "@/i18n";
 
 const BASE = "/api";
@@ -80,6 +81,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const errorBody = await res.json().catch(() => null);
     const recovery = tenantSessionRecovery.recoverIfNeeded(res.status, errorBody);
     if (recovery) return recovery;
+    const boardRecovery = boardSessionRecovery.recoverIfNeeded(res.status, errorBody);
+    if (boardRecovery) return boardRecovery;
     const rawMessage = (errorBody as { error?: string } | null)?.error
       ?? l10n("local.api_request_failed_10301181", { v0: res.status });
     throw createApiError(rawMessage, res.status, errorBody);

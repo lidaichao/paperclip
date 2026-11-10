@@ -3,6 +3,10 @@ import {
   createTenantSessionRecoveryCoordinator,
   tenantSessionRecovery,
 } from "@/lib/tenant-session-recovery";
+import {
+  boardSessionRecovery,
+  createBoardSessionRecoveryCoordinator,
+} from "@/lib/board-session-recovery";
 import { i18n } from "../i18n";
 import { __inflightGetCount, api, ApiError, detachInflightGet } from "./client";
 
@@ -68,13 +72,34 @@ describe("tenant-session recovery", () => {
     expect(settled).toBe(false);
   });
 
-  it("preserves ApiError handling for an unrelated 401", async () => {
+  it("reloads once when an authenticated board session expires", async () => {
+    const reload = vi.fn();
+    const recovery = createBoardSessionRecoveryCoordinator(reload);
+    vi.spyOn(boardSessionRecovery, "recoverIfNeeded").mockImplementation(recovery.recoverIfNeeded);
     fetchMock.mockResolvedValue(errorResponse({ error: "unauthorized" }));
 
-    await expect(api.get("/ordinary-401")).rejects.toMatchObject({
+    const request = api.post("/issues/issue-1/comments", { body: "kept draft" });
+
+    await vi.waitFor(() => {
+      expect(boardSessionRecovery.recoverIfNeeded).toHaveBeenCalledTimes(1);
+      expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    let settled = false;
+    void request.then(
+      () => { settled = true; },
+      () => { settled = true; },
+    );
+    await Promise.resolve();
+    expect(settled).toBe(false);
+  });
+
+  it("preserves ApiError handling for an unrelated 403", async () => {
+    fetchMock.mockResolvedValue(errorResponse({ error: "forbidden" }, 403));
+
+    await expect(api.get("/ordinary-403")).rejects.toMatchObject({
       name: "ApiError",
-      status: 401,
-      message: "Your sign-in is no longer valid. Sign in again.",
+      status: 403,
     });
   });
 
