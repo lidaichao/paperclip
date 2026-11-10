@@ -71,6 +71,7 @@ import {
   type ComposerDraftSubmission,
 } from "../lib/composer-draft";
 import { CommentSubmissionUnknownError } from "../lib/comment-submit-result";
+import { createBrowserUuid } from "../lib/browser-uuid";
 import {
   buildIssueChatMessages,
   formatDurationWords,
@@ -4936,7 +4937,7 @@ const IssueChatComposer = forwardRef<
         setBody(trimmed);
         return;
       }
-      attemptId = crypto.randomUUID();
+      attemptId = createBrowserUuid();
       if (draftKey) {
         saveDraft(draftKey, trimmed);
         saveDraftSubmission(draftKey, { attemptId, reviewed: false });
