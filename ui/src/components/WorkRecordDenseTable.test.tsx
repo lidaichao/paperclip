@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkRecordDenseTable } from "./WorkRecordDenseTable";
 
 const viewsMock = vi.hoisted(() => vi.fn());
+const mutateDependencyMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/api/work-records", () => ({
   workRecordsApi: {
@@ -15,6 +16,7 @@ vi.mock("@/api/work-records", () => ({
     createView: vi.fn(),
     updateView: vi.fn(),
     deleteView: vi.fn(),
+    mutateDependency: mutateDependencyMock,
   },
 }));
 
@@ -88,10 +90,11 @@ describe("WorkRecordDenseTable WBS", () => {
       dispatch: { label: string; onInvoke: () => void; disabled: boolean; reason: string | null; pending: boolean };
       assignOwner: { label: string; onInvoke?: () => void; disabled: boolean; reason: string | null; pending: boolean };
     };
+    writable?: boolean;
   } = {}) {
     await act(async () => root.render(
       <QueryClientProvider client={client}>
-        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
+        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} writable={options.writable} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
       </QueryClientProvider>,
     ));
     await flush();
@@ -167,6 +170,41 @@ describe("WorkRecordDenseTable WBS", () => {
     expect(row?.textContent).toContain("PT-42");
     expect(row?.textContent).not.toContain("PAP-999");
     expect(row?.textContent).not.toContain("record-u");
+  });
+
+  it("searches, atomically replaces and reverse-lists dependencies from the table cell", async () => {
+    const predecessor = record("pred", "策划设计", { recordIdentifier: "PT-10" });
+    const replacement = record("next", "程序开发", { recordIdentifier: "PT-20" });
+    const successor = record("succ", "QA 测试", {
+      recordIdentifier: "PT-30",
+      dependencies: [{ predecessorRecordId: predecessor.id, title: predecessor.title, businessStatus: "done", dispatchState: "not_dispatched", holdReason: null }],
+    });
+    const downstream = record("down", "上线验收", {
+      recordIdentifier: "PT-40",
+      dependencies: [{ predecessorRecordId: successor.id, title: successor.title, businessStatus: "todo", dispatchState: "not_dispatched", holdReason: null }],
+    });
+    mutateDependencyMock.mockResolvedValueOnce([{ ...successor, revision: 2, dependencySetRevision: 2, dependencies: [{ predecessorRecordId: replacement.id, title: replacement.title, businessStatus: "backlog", dispatchState: "not_dispatched", holdReason: null }] }]);
+    await render("plan", [predecessor, replacement, successor, downstream], vi.fn(), {}, { writable: true });
+
+    await act(async () => (container.querySelector('button[aria-label="编辑 QA 测试 的前置记录"]') as HTMLButtonElement).click());
+    await flush();
+    expect(document.body.textContent).toContain("PT-40 · 上线验收");
+    const replace = [...document.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent === "替换")!;
+    await act(async () => replace.click());
+    const search = document.querySelector('input[aria-label="搜索 QA 测试 的前置记录"]') as HTMLInputElement;
+    await act(async () => setNativeValue(search, "PT-20"));
+    const option = [...document.querySelectorAll<HTMLButtonElement>('[role="option"]')].find((button) => button.textContent?.includes("PT-20"))!;
+    await act(async () => option.click());
+    await flush();
+
+    expect(mutateDependencyMock).toHaveBeenCalledWith("company-1", "project-1", {
+      operation: "replace_source",
+      predecessorRecordId: predecessor.id,
+      successorRecordId: successor.id,
+      replacementPredecessorRecordId: replacement.id,
+      expectedRecords: [{ recordId: successor.id, expectedRevision: 1, expectedDependencySetRevision: 1 }],
+    });
+    expect(document.body.textContent).toContain("撤销");
   });
 
   it("marks inherited iteration values without combining them with other fields", async () => {

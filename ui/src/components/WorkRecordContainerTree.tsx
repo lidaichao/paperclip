@@ -337,7 +337,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(editTarget)} onOpenChange={(open) => { if (!open) requestEditClose(); }}>
+      <Dialog open={Boolean(editTarget)} onOpenChange={(open) => { if (!open && !discardConfirmOpen) requestEditClose(); }}>
         <DialogContent className="sm:max-w-lg" data-testid="container-edit-form" onCloseAutoFocus={(event) => {
           if (!editReturnFocusRef.current?.isConnected) return;
           event.preventDefault();
@@ -369,6 +369,11 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
           className="sm:max-w-md"
           showCloseButton={false}
           data-testid="container-discard-confirmation"
+          onEscapeKeyDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDiscardConfirmOpen(false);
+          }}
           onOpenAutoFocus={(event) => { event.preventDefault(); discardCancelRef.current?.focus(); }}
           onCloseAutoFocus={(event) => {
             event.preventDefault();

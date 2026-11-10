@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WorkRecord, WorkRecordViewConfig, WorkRecordViewField, WorkRecordViewKind, WorkRecordViewPreference } from "@paperclipai/shared";
+import type { MutateWorkRecordDependency, WorkRecord, WorkRecordViewConfig, WorkRecordViewField, WorkRecordViewKind, WorkRecordViewPreference } from "@paperclipai/shared";
 import { defaultWorkRecordViewConfig } from "@paperclipai/shared";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
@@ -117,7 +117,7 @@ function filterCandidates(record: WorkRecord, field: WorkRecordViewField, agentN
   return [...new Set(values)];
 }
 
-export function WorkRecordDenseTable({ companyId, projectId, kind, records, agentNames, iterationLabels = {}, versionLabels = {}, iterationVersionIds = {}, selectedId, checked, onSelect, onChecked, batchActions, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard }: {
+export function WorkRecordDenseTable({ companyId, projectId, kind, records, agentNames, iterationLabels = {}, versionLabels = {}, iterationVersionIds = {}, selectedId, checked, onSelect, onChecked, writable = false, batchActions, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard }: {
   companyId: string;
   projectId: string;
   kind: WorkRecordViewKind;
@@ -128,6 +128,7 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
   iterationVersionIds?: Record<string, string>;
   selectedId: string | null;
   checked: string[];
+  writable?: boolean;
   onSelect: (id: string, source: HTMLElement) => void;
   onChecked: (ids: string[]) => void;
   batchActions?: WorkRecordBatchActions;
@@ -355,11 +356,92 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
       <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: tableWidth }}><thead className="bg-muted/70"><tr><th className="w-10"><SelectAllCheckbox checked={selectableIds.length > 0 && selectedSelectableCount === selectableIds.length} indeterminate={selectedSelectableCount > 0 && selectedSelectableCount < selectableIds.length} disabled={selectableIds.length === 0} onChange={(nextChecked) => onChecked(nextChecked ? [...new Set([...checked, ...selectableIds])] : checked.filter((id) => !selectableIds.includes(id)))} /></th>{columns.map((field) => { const label = fieldLabel(kind, field); const sort = draft.sort.find((item) => item.field === field); const filter = draft.filters.find((item) => item.field === field); const locked = field === "id" || field === "title"; return <th key={field} scope="col" aria-sort={sort?.direction === "asc" ? "ascending" : sort?.direction === "desc" ? "descending" : "none"} className={cn("relative border-b px-1 text-left", draft.frozenFields.includes(field) && "sticky z-10 bg-muted")} style={{ width: draft.columnWidths[field] ?? (field === "title" ? 280 : 160), left: stickyLeft[field] }}><div className="flex min-w-0 items-center gap-1"><span className="min-w-0 flex-1 truncate px-1">{label}</span><button type="button" className="inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`按${label}排序`} title={sort ? `${sort.direction === "asc" ? "升序" : "降序"}；再次切换` : "排序"} onClick={() => mutate((next) => { const current = next.sort.find((item) => item.field === field); next.sort = !current ? [{ field, direction: "asc" }] : current.direction === "asc" ? [{ field, direction: "desc" }] : []; })}><ArrowUpDown className="size-3.5" /></button><Popover><PopoverTrigger asChild><button type="button" className={cn("inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", filter && "text-foreground")} aria-label={`筛选${label}`} title={filter ? `已筛选：${filter.value}` : "筛选"}><Filter className="size-3.5" /></button></PopoverTrigger><PopoverContent align="start" className="w-72 space-y-2 p-3"><p className="text-sm font-medium">筛选{label}</p><select aria-label={`${label}筛选条件`} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={filter?.operator ?? "contains"} onChange={(event) => mutate((next) => { const current = next.filters.find((item) => item.field === field); if (current) current.operator = event.target.value as WorkRecordViewConfig["filters"][number]["operator"]; else next.filters.push({ field, operator: event.target.value as WorkRecordViewConfig["filters"][number]["operator"], value: "" }); })}><option value="contains">包含</option><option value="is">等于</option><option value="is_not">不等于</option><option value="before">早于</option><option value="after">晚于</option></select><Input aria-label={`${label}筛选值`} value={filter?.value ?? ""} onChange={(event) => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== field); if (event.target.value) next.filters.push({ field, operator: filter?.operator ?? "contains", value: event.target.value }); })} /><Button size="sm" variant="ghost" disabled={!filter} onClick={() => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== field); })}>清除筛选</Button></PopoverContent></Popover><DropdownMenu><DropdownMenuTrigger asChild><button type="button" className="inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${label}列菜单`} title="列菜单"><MoreHorizontal className="size-3.5" /></button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem disabled={locked} onClick={() => mutate((next) => { next.visibleFields = next.visibleFields.filter((item) => item !== field); })}>隐藏{label}列</DropdownMenuItem><DropdownMenuItem onClick={() => mutate((next) => { next.frozenFields = next.frozenFields.includes(field) ? next.frozenFields.filter((item) => item !== field) : [...next.frozenFields, field]; })}>{draft.frozenFields.includes(field) ? "取消冻结" : "冻结此列"}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div><span role="separator" aria-orientation="vertical" aria-label={`${label}调整列宽`} tabIndex={0} className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none focus-visible:bg-ring" onPointerDown={(event) => startColumnResize(field, event)} onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); resizeColumn(field, -16); } if (event.key === "ArrowRight") { event.preventDefault(); resizeColumn(field, 16); } }} /></th>; })}</tr></thead>
       <tbody>{groups.map(([group, rows]) => <FragmentGroup key={group} label={draft.groupBy ? group || "未分组" : null} columnCount={columns.length + 1}>{rows.map((row) => {
         const record = row.record;
-        return <tr key={record.id} className={cn(rowClass, row.hasChildren && "bg-muted/25 font-medium", row.contextOnly && "bg-muted/40 text-muted-foreground", record.id === selectedId && "bg-muted/50")} data-testid="work-record-table-row" data-record-id={record.id} data-tree-depth={row.depth} data-context-only={row.contextOnly ? "true" : "false"} aria-current={record.id === selectedId ? "true" : undefined}><td className="px-2 text-center"><input type="checkbox" aria-label={`选择 ${record.title}`} checked={checked.includes(record.id)} disabled={row.contextOnly} onChange={(event) => onChecked(event.target.checked ? [...new Set([...checked, record.id])] : checked.filter((id) => id !== record.id))} /></td>{columns.map((field) => { const cellValue = displayValue(record, field, agentNames, iterationLabels, versionLabels, iterationVersionIds); return <td key={field} className={cn("truncate border-b px-2", draft.frozenFields.includes(field) && "sticky bg-background")} style={{ left: stickyLeft[field] }} title={cellValue}>{field === "title" ? <div className="work-record-tree-cell flex min-w-0 items-center" style={{ "--work-record-tree-depth": Math.min(row.depth, 12) } as React.CSSProperties}>{row.hasChildren ? <button type="button" className="mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${row.expanded ? "收起" : "展开"} ${record.title}`} aria-expanded={row.expanded} onClick={() => toggleCollapsed(record.id)}>{row.expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</button> : <span className="mr-1 size-5 shrink-0" aria-hidden="true" />}<button className="min-w-0 flex-1 truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{cellValue}</button>{row.contextOnly ? <span className="ml-1 shrink-0 rounded-sm bg-muted px-1 text-xs font-normal">上下文</span> : null}{row.relationWarning ? <span className="ml-1 shrink-0 text-xs font-normal text-destructive" title={row.relationWarning === "cycle" ? "父子关系存在循环" : "父任务不存在"}>关系异常</span> : null}</div> : <button className="w-full truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{field === "id" ? record.recordIdentifier : cellValue}</button>}</td>; })}</tr>;
+        return <tr key={record.id} className={cn(rowClass, row.hasChildren && "bg-muted/25 font-medium", row.contextOnly && "bg-muted/40 text-muted-foreground", record.id === selectedId && "bg-muted/50")} data-testid="work-record-table-row" data-record-id={record.id} data-tree-depth={row.depth} data-context-only={row.contextOnly ? "true" : "false"} aria-current={record.id === selectedId ? "true" : undefined}><td className="px-2 text-center"><input type="checkbox" aria-label={`选择 ${record.title}`} checked={checked.includes(record.id)} disabled={row.contextOnly} onChange={(event) => onChecked(event.target.checked ? [...new Set([...checked, record.id])] : checked.filter((id) => id !== record.id))} /></td>{columns.map((field) => { const cellValue = displayValue(record, field, agentNames, iterationLabels, versionLabels, iterationVersionIds); return <td key={field} className={cn("truncate border-b px-2", draft.frozenFields.includes(field) && "sticky bg-background")} style={{ left: stickyLeft[field] }} title={cellValue}>{field === "title" ? <div className="work-record-tree-cell flex min-w-0 items-center" style={{ "--work-record-tree-depth": Math.min(row.depth, 12) } as React.CSSProperties}>{row.hasChildren ? <button type="button" className="mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${row.expanded ? "收起" : "展开"} ${record.title}`} aria-expanded={row.expanded} onClick={() => toggleCollapsed(record.id)}>{row.expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</button> : <span className="mr-1 size-5 shrink-0" aria-hidden="true" />}<button className="min-w-0 flex-1 truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{cellValue}</button>{row.contextOnly ? <span className="ml-1 shrink-0 rounded-sm bg-muted px-1 text-xs font-normal">上下文</span> : null}{row.relationWarning ? <span className="ml-1 shrink-0 text-xs font-normal text-destructive" title={row.relationWarning === "cycle" ? "父子关系存在循环" : "父任务不存在"}>关系异常</span> : null}</div> : field === "dependencies" && kind === "plan" ? <DependencyCellEditor companyId={companyId} projectId={projectId} record={record} records={records} writable={writable && !row.contextOnly} /> : <button className="w-full truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{field === "id" ? record.recordIdentifier : cellValue}</button>}</td>; })}</tr>;
       })}</FragmentGroup>)}</tbody></table>
     </div>
     <p className="text-xs text-muted-foreground" aria-live="polite">显示 {directMatches.length} 条{treeRows.length > directMatches.length ? `，另含 ${treeRows.length - directMatches.length} 条父级上下文` : ""}；保存视图只保存配置，不保存勾选、详情、滚动位置或业务草稿。</p>
   </div>;
+}
+
+type DependencyMutationRequest = {
+  input: MutateWorkRecordDependency;
+  inverse: (updatedSuccessor: WorkRecord) => MutateWorkRecordDependency | null;
+};
+
+function expectedDependencyRecord(record: WorkRecord) {
+  return { recordId: record.id, expectedRevision: record.revision, expectedDependencySetRevision: record.dependencySetRevision };
+}
+
+function DependencyCellEditor({ companyId, projectId, record, records, writable }: {
+  companyId: string;
+  projectId: string;
+  record: WorkRecord;
+  records: WorkRecord[];
+  writable: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [replaceId, setReplaceId] = useState<string | null>(null);
+  const [undo, setUndo] = useState<MutateWorkRecordDependency | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const predecessorIds = new Set(record.dependencies.map((dependency) => dependency.predecessorRecordId));
+  const predecessors = records.filter((candidate) => predecessorIds.has(candidate.id));
+  const successors = records.filter((candidate) => candidate.dependencies.some((dependency) => dependency.predecessorRecordId === record.id));
+  const normalizedSearch = search.trim().toLocaleLowerCase();
+  const candidates = records.filter((candidate) => candidate.id !== record.id
+    && !predecessorIds.has(candidate.id)
+    && (!normalizedSearch || `${candidate.recordIdentifier} ${candidate.title}`.toLocaleLowerCase().includes(normalizedSearch)));
+  const mutation = useMutation({
+    mutationFn: async ({ input, inverse }: DependencyMutationRequest) => {
+      const updated = await workRecordsApi.mutateDependency(companyId, projectId, input);
+      const updatedSuccessor = updated.find((candidate) => candidate.id === record.id);
+      if (!updatedSuccessor) throw new Error("服务未返回更新后的后置记录");
+      return { updated, inverse: inverse(updatedSuccessor) };
+    },
+    onSuccess: ({ updated, inverse }) => {
+      queryClient.setQueryData<WorkRecord[] | undefined>(queryKeys.workRecords.list(companyId, projectId), (current) => current?.map((candidate) => updated.find((next) => next.id === candidate.id) ?? candidate));
+      setUndo(inverse);
+      setReplaceId(null);
+      setSearch("");
+      setError(null);
+    },
+    onError: (cause) => setError(cause instanceof Error ? cause.message : "依赖修改失败"),
+  });
+  const run = (request: DependencyMutationRequest) => {
+    if (!writable || mutation.isPending) return;
+    mutation.mutate(request);
+  };
+  const addOrReplace = (candidate: WorkRecord) => {
+    if (replaceId) {
+      const previous = predecessors.find((item) => item.id === replaceId);
+      if (!previous) return;
+      run({
+        input: { operation: "replace_source", predecessorRecordId: previous.id, successorRecordId: record.id, replacementPredecessorRecordId: candidate.id, expectedRecords: [expectedDependencyRecord(record)] },
+        inverse: (updated) => ({ operation: "replace_source", predecessorRecordId: candidate.id, successorRecordId: record.id, replacementPredecessorRecordId: previous.id, expectedRecords: [expectedDependencyRecord(updated)] }),
+      });
+      return;
+    }
+    run({
+      input: { operation: "add", predecessorRecordId: candidate.id, successorRecordId: record.id, expectedRecords: [expectedDependencyRecord(record)] },
+      inverse: (updated) => ({ operation: "remove", predecessorRecordId: candidate.id, successorRecordId: record.id, expectedRecords: [expectedDependencyRecord(updated)] }),
+    });
+  };
+  const remove = (predecessor: WorkRecord) => run({
+    input: { operation: "remove", predecessorRecordId: predecessor.id, successorRecordId: record.id, expectedRecords: [expectedDependencyRecord(record)] },
+    inverse: (updated) => ({ operation: "add", predecessorRecordId: predecessor.id, successorRecordId: record.id, expectedRecords: [expectedDependencyRecord(updated)] }),
+  });
+
+  return <Popover onOpenChange={(open) => { if (!open) { setSearch(""); setReplaceId(null); setError(null); } }}>
+    <PopoverTrigger asChild><button type="button" className="w-full truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`编辑 ${record.title} 的前置记录`}>{record.dependencies.length ? `${record.dependencies.length} 个前置` : "无前置"}</button></PopoverTrigger>
+    <PopoverContent align="start" className="w-[min(30rem,calc(100vw-2rem))] space-y-3 p-3" data-testid="dependency-cell-editor">
+      <div className="flex items-center justify-between gap-2"><div><p className="text-sm font-medium">{record.recordIdentifier} · 前置关系</p><p className="text-xs text-muted-foreground">搜索后添加；“替换”会原子改连，不会先断开旧关系。</p></div>{undo ? <Button size="sm" variant="outline" disabled={!writable || mutation.isPending} onClick={() => run({ input: undo, inverse: () => null })}>撤销</Button> : null}</div>
+      {predecessors.length ? <div className="space-y-1"><p className="text-xs font-medium text-muted-foreground">当前前置</p>{predecessors.map((predecessor) => <div key={predecessor.id} className="flex min-h-8 items-center gap-2 rounded-md border px-2 text-sm"><span className="min-w-0 flex-1 truncate" title={`${predecessor.recordIdentifier} ${predecessor.title}`}>{predecessor.recordIdentifier} · {predecessor.title}</span><Button size="sm" variant={replaceId === predecessor.id ? "secondary" : "ghost"} disabled={!writable || mutation.isPending} onClick={() => setReplaceId((current) => current === predecessor.id ? null : predecessor.id)}>{replaceId === predecessor.id ? "取消替换" : "替换"}</Button><Button size="sm" variant="ghost" disabled={!writable || mutation.isPending} onClick={() => remove(predecessor)}>删除</Button></div>)}</div> : <p className="text-xs text-muted-foreground">当前没有前置记录。</p>}
+      <Input aria-label={`搜索 ${record.title} 的前置记录`} placeholder="输入记录编号或名称" value={search} disabled={!writable || mutation.isPending} onChange={(event) => setSearch(event.target.value)} />
+      {search ? <div className="max-h-36 space-y-1 overflow-y-auto" role="listbox" aria-label="可选前置记录">{candidates.length ? candidates.map((candidate) => <button key={candidate.id} type="button" role="option" className="flex min-h-8 w-full items-center rounded-md px-2 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" disabled={!writable || mutation.isPending} onClick={() => addOrReplace(candidate)}>{replaceId ? "替换为" : "添加"}：{candidate.recordIdentifier} · {candidate.title}</button>) : <p className="px-2 text-xs text-muted-foreground">没有可用记录。</p>}</div> : null}
+      <div className="space-y-1 border-t pt-2"><p className="text-xs font-medium text-muted-foreground">后置记录（只读反查）</p><p className="text-xs text-muted-foreground">{successors.length ? successors.map((successor) => `${successor.recordIdentifier} · ${successor.title}`).join("；") : "无"}</p></div>
+      {error ? <p role="alert" className="text-xs text-destructive">{error}；原关系保持不变。</p> : null}
+    </PopoverContent>
+  </Popover>;
 }
 
 function FragmentGroup({ label, columnCount, children }: { label: string | null; columnCount: number; children: React.ReactNode }) {
