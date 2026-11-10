@@ -201,6 +201,7 @@ afterEach(() => {
   container.remove();
   Range.prototype.getBoundingClientRect = originalRangeRect;
   window.getSelection()?.removeAllRanges();
+  vi.unstubAllGlobals();
 });
 
 function render(ui: ReactElement) {
@@ -290,6 +291,21 @@ function autocompleteOption(matchText: string) {
 }
 
 describe("TaskChatComposer", () => {
+  it("submits over plain HTTP when browser crypto is unavailable", async () => {
+    vi.stubGlobal("crypto", undefined);
+    const onAdd = vi.fn().mockResolvedValue(undefined);
+
+    render(<TaskChatComposer onAdd={onAdd} workMode="standard" />);
+    typeText("Send from LAN HTTP");
+    pressKey("Enter", { metaKey: true });
+    await flushAsync();
+
+    expect(onAdd).toHaveBeenCalledTimes(1);
+    expect(onAdd.mock.calls[0]?.[4]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+  });
+
   it("settles an acknowledged submission after navigating away", async () => {
     const key = "navigate-before-save";
     let resolveSend!: () => void;
