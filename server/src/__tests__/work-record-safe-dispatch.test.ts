@@ -226,6 +226,39 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
     expect(await db.select().from(workRecordOutbox).where(eq(workRecordOutbox.companyId, context.company.id))).toHaveLength(0);
   });
 
+  it("FID-05 scopes iteration names to their version for both create and update", async () => {
+    const context = await seed();
+    const versionA = await context.service.createVersion(context.company.id, context.project.id, { name: "V1" });
+    const versionB = await context.service.createVersion(context.company.id, context.project.id, { name: "V2" });
+    const iterationA = await context.service.createIteration(context.company.id, context.project.id, {
+      versionId: versionA.id,
+      name: "Sprint 1",
+    });
+
+    await expect(context.service.createIteration(context.company.id, context.project.id, {
+      versionId: versionA.id,
+      name: "Sprint 1",
+    })).rejects.toMatchObject({ status: 409, message: "Iteration name already exists in this version" });
+
+    const iterationB = await context.service.createIteration(context.company.id, context.project.id, {
+      versionId: versionB.id,
+      name: "Sprint 1",
+    });
+    expect(iterationB.versionId).toBe(versionB.id);
+
+    await expect(context.service.updateIteration(context.company.id, context.project.id, iterationB.id, {
+      expectedRevision: iterationB.revision,
+      versionId: versionA.id,
+      name: iterationA.name,
+    })).rejects.toMatchObject({ status: 409, message: "Iteration name already exists in this version" });
+
+    await expect(context.service.updateIteration(context.company.id, context.project.id, iterationA.id, {
+      expectedRevision: iterationA.revision,
+      versionId: versionB.id,
+      name: "Sprint 2",
+    })).resolves.toMatchObject({ versionId: versionB.id, name: "Sprint 2" });
+  });
+
   it("G1 preserves every predecessor when unrelated fields change and conflicts stale concurrent edits", async () => {
     const context = await seed();
     const first = await createRecord(context, "A");

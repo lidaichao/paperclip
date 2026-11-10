@@ -13,6 +13,7 @@ const iterationsMock = vi.hoisted(() => vi.fn());
 const createVersionMock = vi.hoisted(() => vi.fn());
 const createIterationMock = vi.hoisted(() => vi.fn());
 const updateVersionMock = vi.hoisted(() => vi.fn());
+const updateIterationMock = vi.hoisted(() => vi.fn());
 const mutateVersionMock = vi.hoisted(() => vi.fn());
 const mutateIterationMock = vi.hoisted(() => vi.fn());
 const deleteVersionMock = vi.hoisted(() => vi.fn());
@@ -25,7 +26,7 @@ vi.mock("@/api/work-records", () => ({
     createVersion: createVersionMock,
     createIteration: createIterationMock,
     updateVersion: updateVersionMock,
-    updateIteration: vi.fn(),
+    updateIteration: updateIterationMock,
     mutateVersion: mutateVersionMock,
     mutateIteration: mutateIterationMock,
     deleteVersion: deleteVersionMock,
@@ -84,6 +85,7 @@ describe("WorkRecordContainerTree", () => {
     versionsMock.mockResolvedValue([version]);
     iterationsMock.mockResolvedValue([iteration]);
     updateVersionMock.mockResolvedValue({ ...version, revision: 2 });
+    updateIterationMock.mockResolvedValue({ ...iteration, revision: 2 });
     createVersionMock.mockResolvedValue({ ...version, id: "version-created", name: "V2" });
     createIterationMock.mockResolvedValue({ ...iteration, id: "iteration-created", name: "迭代二" });
     mutateVersionMock.mockResolvedValue({ ...version, revision: 2 });
@@ -221,6 +223,24 @@ describe("WorkRecordContainerTree", () => {
     await act(async () => button("复制我的修改后重试").click());
     await flush();
     expect(updateVersionMock).toHaveBeenLastCalledWith("company-1", "project-1", version.id, expect.objectContaining({ expectedRevision: 2, name: "V1 我的修改" }));
+  });
+
+  it("keeps the parent version in every iteration update request", async () => {
+    await render();
+    await act(async () => button("编辑迭代 迭代一").click());
+    const dialog = document.body.querySelector('[data-testid="container-edit-form"]') as HTMLElement;
+    const name = dialog.querySelector('input:not([type="date"])') as HTMLInputElement;
+    await act(async () => setNativeValue(name, "迭代一调整"));
+    await act(async () => button("保存").click());
+    await flush();
+
+    expect(updateIterationMock).toHaveBeenCalledWith("company-1", "project-1", iteration.id, {
+      expectedRevision: iteration.revision,
+      versionId: version.id,
+      name: "迭代一调整",
+      startsOn: iteration.startsOn,
+      endsOn: iteration.endsOn,
+    });
   });
 
   it("hides every write entry for a read-only user", async () => {

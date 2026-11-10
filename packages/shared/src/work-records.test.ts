@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   WORK_RECORD_ITERATION_ASSIGNMENT_MODES,
+  createProjectIterationSchema,
   createWorkRecordSchema,
   defaultWorkRecordViewConfig,
   workRecordIdentifier,
   updateWorkRecordSchema,
+  updateProjectIterationSchema,
   validateWorkRecordViewConfig,
 } from "./work-records.js";
 
@@ -142,5 +144,19 @@ describe("work-record iteration assignment contract", () => {
       iterationAssignmentMode: "inherit_parent",
       iterationId,
     }).success).toBe(false);
+  });
+});
+
+describe("FID-05 version-scoped iteration contract", () => {
+  const versionId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+
+  it("requires a non-null version for both iteration creation and updates", () => {
+    expect(createProjectIterationSchema.safeParse({ name: "Sprint 1" }).success).toBe(false);
+    expect(createProjectIterationSchema.safeParse({ versionId: null, name: "Sprint 1" }).success).toBe(false);
+    expect(createProjectIterationSchema.parse({ versionId, name: "Sprint 1" })).toMatchObject({ versionId });
+
+    expect(updateProjectIterationSchema.safeParse({ expectedRevision: 1, name: "Sprint 2" }).success).toBe(false);
+    expect(updateProjectIterationSchema.safeParse({ expectedRevision: 1, versionId: null, name: "Sprint 2" }).success).toBe(false);
+    expect(updateProjectIterationSchema.parse({ expectedRevision: 1, versionId, name: "Sprint 2" })).toMatchObject({ versionId });
   });
 });

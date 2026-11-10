@@ -55,7 +55,7 @@ export const projectIterations = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
     projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
-    versionId: uuid("version_id").references(() => projectVersions.id, { onDelete: "set null" }),
+    versionId: uuid("version_id").notNull().references(() => projectVersions.id, { onDelete: "no action" }),
     name: text("name").notNull(),
     startsOn: date("starts_on"),
     endsOn: date("ends_on"),
@@ -76,7 +76,7 @@ export const projectIterations = pgTable(
       foreignColumns: [projectVersions.companyId, projectVersions.projectId, projectVersions.id],
       name: "project_iterations_version_scope_fk",
     }),
-    projectNameUq: uniqueIndex("project_iterations_project_name_uq").on(table.companyId, table.projectId, table.name),
+    versionNameUq: uniqueIndex("project_iterations_version_name_uq").on(table.companyId, table.projectId, table.versionId, table.name),
     companyProjectIdx: index("project_iterations_company_project_idx").on(table.companyId, table.projectId),
   }),
 );

@@ -125,7 +125,7 @@ export interface ProjectIteration {
   id: string;
   companyId: string;
   projectId: string;
-  versionId: string | null;
+  versionId: string;
   name: string;
   startsOn: string | null;
   endsOn: string | null;
@@ -414,7 +414,7 @@ export const mutateProjectContainerSchema = z.object({
 });
 
 export const createProjectIterationSchema = z.object({
-  versionId: z.string().guid().optional().nullable(),
+  versionId: z.string().guid(),
   name: z.string().trim().min(1).max(255),
   startsOn: z.string().date().optional().nullable(),
   endsOn: z.string().date().optional().nullable(),
@@ -425,7 +425,7 @@ export const createProjectIterationSchema = z.object({
 
 export const updateProjectIterationSchema = z.object({
   expectedRevision: z.number().int().positive(),
-  versionId: z.string().guid().optional().nullable(),
+  versionId: z.string().guid(),
   name: z.string().trim().min(1).max(255).optional(),
   startsOn: z.string().date().optional().nullable(),
   endsOn: z.string().date().optional().nullable(),

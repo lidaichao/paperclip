@@ -322,11 +322,11 @@ describe("work-record route authorization", () => {
       .expect(403, { error: "只读成员只能查看，不能修改" });
     await request(app).delete(`/api/companies/company-1/projects/${projectId}/versions/${versionId}`).send({ expectedRevision: 1 })
       .expect(403, { error: "只读成员只能查看，不能修改" });
-    await request(app).patch(`/api/companies/company-1/projects/${projectId}/iterations/${iterationId}`).send({ expectedRevision: 1, name: "Iteration 2" })
+    await request(app).patch(`/api/companies/company-1/projects/${projectId}/iterations/${iterationId}`).send({ expectedRevision: 1, versionId, name: "Iteration 2" })
       .expect(403, { error: "只读成员只能查看，不能修改" });
     await request(app).delete(`/api/companies/company-1/projects/${projectId}/iterations/${iterationId}`).send({ expectedRevision: 1 })
       .expect(403, { error: "只读成员只能查看，不能修改" });
-    await request(app).post(`/api/companies/company-2/projects/${projectId}/iterations`).send({ name: "Iteration 1" })
+    await request(app).post(`/api/companies/company-2/projects/${projectId}/iterations`).send({ versionId, name: "Iteration 1" })
       .expect(403, { error: "用户无权访问此公司" });
     expect(service.createVersion).not.toHaveBeenCalled();
     expect(service.createIteration).not.toHaveBeenCalled();
@@ -334,6 +334,33 @@ describe("work-record route authorization", () => {
     expect(service.updateIteration).not.toHaveBeenCalled();
     expect(service.deleteVersion).not.toHaveBeenCalled();
     expect(service.deleteIteration).not.toHaveBeenCalled();
+  });
+
+  it("requires a version id before iteration create or update reaches the service", async () => {
+    const admin = {
+      ...viewer,
+      userId: "admin-1",
+      memberships: [{ companyId: "company-1", membershipRole: "admin", status: "active" }],
+      isInstanceAdmin: true,
+    } as Express.Request["actor"];
+    const projectId = "11111111-1111-4111-8111-111111111111";
+    const versionId = "22222222-2222-4222-8222-222222222222";
+    const iterationId = "33333333-3333-4333-8333-333333333333";
+    service.createIteration.mockResolvedValue({ id: iterationId, versionId, name: "Sprint 1" });
+    service.updateIteration.mockResolvedValue({ id: iterationId, versionId, name: "Sprint 2", revision: 2 });
+    const app = createApp(admin);
+
+    await request(app).post(`/api/companies/company-1/projects/${projectId}/iterations`).send({ name: "No version" }).expect(400);
+    await request(app).post(`/api/companies/company-1/projects/${projectId}/iterations`).send({ versionId: null, name: "Null version" }).expect(400);
+    await request(app).patch(`/api/companies/company-1/projects/${projectId}/iterations/${iterationId}`).send({ expectedRevision: 1, name: "No version" }).expect(400);
+    await request(app).patch(`/api/companies/company-1/projects/${projectId}/iterations/${iterationId}`).send({ expectedRevision: 1, versionId: null, name: "Null version" }).expect(400);
+    expect(service.createIteration).not.toHaveBeenCalled();
+    expect(service.updateIteration).not.toHaveBeenCalled();
+
+    await request(app).post(`/api/companies/company-1/projects/${projectId}/iterations`).send({ versionId, name: "Sprint 1" }).expect(201);
+    await request(app).patch(`/api/companies/company-1/projects/${projectId}/iterations/${iterationId}`).send({ expectedRevision: 1, versionId, name: "Sprint 2" }).expect(200);
+    expect(service.createIteration).toHaveBeenCalledWith("company-1", projectId, { versionId, name: "Sprint 1" });
+    expect(service.updateIteration).toHaveBeenCalledWith("company-1", projectId, iterationId, { expectedRevision: 1, versionId, name: "Sprint 2" });
   });
 
   it("validates G1 planned dates and defect-only fields before creating a record", async () => {

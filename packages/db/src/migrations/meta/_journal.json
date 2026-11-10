@@ -2290,6 +2290,13 @@
       "when": 1794308350934,
       "tag": "0328_work_record_business_numbers",
       "breakpoints": true
+    },
+    {
+      "idx": 329,
+      "version": "7",
+      "when": 1794312000000,
+      "tag": "0329_work_record_iteration_version_scope",
+      "breakpoints": true
     }
   ]
 }

@@ -207,7 +207,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     projectId: string,
     versionId?: string | null,
   ) {
-    if (!versionId) return;
+    if (!versionId) throw unprocessable("Iteration must belong to a version");
     const version = await tx.select().from(projectVersions).where(and(
       eq(projectVersions.companyId, companyId),
       eq(projectVersions.projectId, projectId),
@@ -215,6 +215,33 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     )).then((rows) => rows[0]);
     if (!version) throw unprocessable("Version must belong to the same company and project");
     if (version.archivedAt) throw conflict("Archived version cannot accept iterations");
+  }
+
+  async function assertIterationNameAvailable(
+    tx: DbTransaction,
+    companyId: string,
+    projectId: string,
+    versionId: string,
+    name: string,
+    excludeIterationId?: string,
+  ) {
+    const existing = await tx.select({ id: projectIterations.id }).from(projectIterations).where(
+      excludeIterationId
+        ? and(
+          eq(projectIterations.companyId, companyId),
+          eq(projectIterations.projectId, projectId),
+          eq(projectIterations.versionId, versionId),
+          eq(projectIterations.name, name),
+          ne(projectIterations.id, excludeIterationId),
+        )
+        : and(
+          eq(projectIterations.companyId, companyId),
+          eq(projectIterations.projectId, projectId),
+          eq(projectIterations.versionId, versionId),
+          eq(projectIterations.name, name),
+        ),
+    ).limit(1).then((rows) => rows[0]);
+    if (existing) throw conflict("Iteration name already exists in this version", { versionId, name });
   }
 
   async function assertActiveIteration(
@@ -360,8 +387,9 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     return db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
       await assertActiveVersion(tx, companyId, projectId, input.versionId);
+      await assertIterationNameAvailable(tx, companyId, projectId, input.versionId, input.name);
       return tx.insert(projectIterations).values({
-        companyId, projectId, versionId: input.versionId ?? null, name: input.name,
+        companyId, projectId, versionId: input.versionId, name: input.name,
         startsOn: input.startsOn ?? null, endsOn: input.endsOn ?? null,
       }).returning().then((rows) => rows[0]);
     });
@@ -376,11 +404,13 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       if (!current) throw notFound("Project iteration not found");
       if (current.revision !== input.expectedRevision) throw conflict("Project iteration changed", { iterationId, currentRevision: current.revision });
       await assertActiveVersion(tx, companyId, projectId, input.versionId);
+      const nextName = input.name ?? current.name;
+      await assertIterationNameAvailable(tx, companyId, projectId, input.versionId, nextName, iterationId);
       const startsOn = input.startsOn === undefined ? current.startsOn : input.startsOn;
       const endsOn = input.endsOn === undefined ? current.endsOn : input.endsOn;
       if (startsOn && endsOn && startsOn > endsOn) throw unprocessable("Iteration start date must not be after its end date");
       return tx.update(projectIterations).set({
-        ...(input.versionId !== undefined ? { versionId: input.versionId } : {}),
+        versionId: input.versionId,
         ...(input.name !== undefined ? { name: input.name } : {}),
         ...(input.startsOn !== undefined ? { startsOn: input.startsOn } : {}),
         ...(input.endsOn !== undefined ? { endsOn: input.endsOn } : {}),

@@ -139,6 +139,7 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
       }
       return workRecordsApi.updateIteration(companyId, projectId, editTarget.item.id, {
         expectedRevision,
+        versionId: editTarget.item.versionId,
         name: editDraft.name.trim(),
         startsOn: editDraft.startsOn || null,
         endsOn: editDraft.endsOn || null,
