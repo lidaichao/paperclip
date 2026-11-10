@@ -518,6 +518,19 @@
   padding-inline-start: calc(var(--work-record-tree-depth, 0) * var(--sz-work-record-tree-indent));
 }
 
+@container (max-width: 38rem) {
+  .work-record-workspace,
+  .work-record-workspace[data-rail-open="false"] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--gap-work-record-workspace);
+  }
+
+  .work-record-rail-shell {
+    height: 12rem;
+    overflow-y: auto;
+  }
+}
+
 @container (min-width: 43.75rem) {
   .work-record-workspace {
     --work-record-rail-expanded-width: var(--sz-work-record-rail-medium);

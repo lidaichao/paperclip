@@ -290,7 +290,7 @@ test("G3B3 validates real gantt drags, dependency rewires, undo and dirty-contai
   await expect(editVersion).toBeFocused();
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.getByRole("tab", { name: "甘特", exact: true }).click();
+  await page.getByRole("tab", { name: "甘特图", exact: true }).click();
   await screenshot(page, info, "g3b3-wide");
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(gantt).toBeVisible();

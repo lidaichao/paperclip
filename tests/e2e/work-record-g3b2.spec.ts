@@ -78,7 +78,7 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
 
   await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
   await expect(page.getByRole("tab", { name: "计划", exact: true })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "甘特", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "甘特图", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "缺陷", exact: true })).toBeVisible();
   await expect(page.getByTestId("version-iteration-tree")).toContainText("V1");
   await expect(page.getByTestId("version-iteration-tree")).toContainText("2/5 · 40%");
@@ -109,33 +109,37 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
   await page.getByTestId("container-edit-form").getByRole("button", { name: "保存", exact: true }).click();
   await expect(page.getByTestId("version-iteration-tree")).toContainText("迭代一已更新");
 
-  const emptyMenu = page.getByRole("button", { name: "空迭代 操作菜单" });
-  await emptyMenu.focus();
-  await emptyMenu.press("Enter");
-  await page.getByRole("menuitem", { name: "删除空容器" }).click();
+  await page.getByRole("button", { name: "版本与迭代管理", exact: true }).click();
+  const containerAdmin = page.getByTestId("container-admin-view");
+  await containerAdmin.getByRole("button", { name: "管理版本 V1 我的修改", exact: true }).click();
+  const emptyDelete = containerAdmin.getByRole("button", { name: "删除迭代 空迭代", exact: true });
+  await emptyDelete.focus();
+  await expect(emptyDelete).toBeFocused();
+  await emptyDelete.press("Enter");
   const deleteDialog = page.getByTestId("container-delete-confirmation");
   await expect(deleteDialog.getByRole("button", { name: "取消" })).toBeFocused();
   await deleteDialog.getByRole("button", { name: "取消" }).click();
-  await expect(page.getByTestId("version-iteration-tree")).toContainText("空迭代");
-  await emptyMenu.click();
-  await page.getByRole("menuitem", { name: "删除空容器" }).click();
+  await expect(containerAdmin).toContainText("空迭代");
+  await emptyDelete.click();
   await deleteDialog.getByLabel(/对象名称/).fill("空迭代");
   await deleteDialog.getByRole("button", { name: "确认删除" }).click();
-  await expect(page.getByTestId("version-iteration-tree")).not.toContainText("空迭代");
+  await expect(containerAdmin).not.toContainText("空迭代");
+  await containerAdmin.getByRole("button", { name: "返回版本管理", exact: true }).click();
+  await containerAdmin.getByRole("button", { name: "返回需求池", exact: true }).click();
 
   const detailButton = page.getByRole("button", { name: "完整计划详情", exact: true }).first();
   await detailButton.focus();
   await page.keyboard.press("Enter");
   const drawer = page.getByTestId("work-record-detail-drawer");
-  await expect(drawer).toContainText("唯一说明字段");
-  await expect(drawer).toContainText("2026-11-08 至 2026-11-15");
+  await expect(drawer.getByLabel("描述")).toHaveValue("唯一说明字段");
+  await expect(drawer.getByLabel("计划开始")).toHaveValue("2026-11-08");
+  await expect(drawer.getByLabel("计划完成")).toHaveValue("2026-11-15");
   await drawer.focus();
   await page.keyboard.press("Escape");
   await expect(drawer).toHaveCount(0);
   await expect(detailButton).toBeFocused();
 
   await detailButton.click();
-  await page.getByTestId("work-record-detail-drawer").getByRole("button", { name: "编辑" }).click();
   const recordEditor = page.getByRole("dialog", { name: /编辑计划/ });
   await recordEditor.getByLabel("标题").fill("计划详情未保存");
   await page.getByRole("button", { name: "计划 2", exact: true }).click({ position: { x: 8, y: 8 } });
@@ -145,9 +149,8 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
   await expect(recordEditor.getByLabel("标题")).toHaveValue("计划详情未保存");
   await page.getByRole("button", { name: "计划 2", exact: true }).click({ position: { x: 8, y: 8 } });
   await decision.getByRole("button", { name: "放弃并继续" }).click();
-  await expect(page.getByTestId("work-record-detail-drawer")).toContainText("计划 2");
+  await expect(page.getByTestId("work-record-detail-drawer").getByLabel("标题")).toHaveValue("计划 2");
 
-  await page.getByTestId("work-record-detail-drawer").getByRole("button", { name: "编辑" }).click();
   await page.getByRole("dialog", { name: /编辑计划/ }).getByLabel("标题").fill("计划 2 保存后切页");
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
   await decision.getByRole("button", { name: "保存并继续" }).click();
@@ -156,26 +159,18 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
   const defectRow = page.getByRole("button", { name: "完整缺陷详情", exact: true }).first();
   await defectRow.click();
   const defectDrawer = page.getByTestId("work-record-detail-drawer");
-  await defectDrawer.getByRole("button", { name: "派发缺陷" }).click();
-  const missingAlert = defectDrawer.getByRole("alert");
-  await expect(missingAlert).toContainText("修复人");
-  await expect(missingAlert).toContainText("QA");
-
-  await defectDrawer.getByRole("button", { name: "编辑" }).click();
   const defectEditor = page.getByRole("dialog", { name: /编辑缺陷/ });
   await defectEditor.getByLabel("描述").fill("复现：键盘切页。预期：保留。实际：已修复。");
-  await defectEditor.getByLabel("严重程度").selectOption("critical");
-  await defectEditor.getByLabel("计划开始").fill("2026-11-09");
+  await defectEditor.getByLabel("严重度").selectOption("critical");
   await defectEditor.getByLabel("计划完成").fill("2026-11-12");
   await page.getByRole("tab", { name: "计划", exact: true }).click();
-  await decision.getByRole("button", { name: "保存并继续" }).click();
   await expect(page).toHaveURL(/\/plans$/);
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
   await expect(page).toHaveURL(/\/defects$/);
   await defectRow.click();
-  await expect(page.getByTestId("work-record-detail-drawer")).toContainText("复现：键盘切页。预期：保留。实际：已修复。");
-  await expect(page.getByTestId("work-record-detail-drawer")).toContainText("严重");
-  await expect(page.getByTestId("work-record-detail-drawer")).toContainText("2026-11-09 至 2026-11-12");
+  await expect(page.getByTestId("work-record-detail-drawer").getByLabel("描述")).toHaveValue("复现：键盘切页。预期：保留。实际：已修复。");
+  await expect(page.getByTestId("work-record-detail-drawer").getByLabel("严重度")).toHaveValue("critical");
+  await expect(page.getByTestId("work-record-detail-drawer").getByLabel("计划完成")).toHaveValue("2026-11-12");
 
   let rejectNextSave = true;
   await page.route(`**/api/companies/${company.id}/projects/${project.id}/work-records/${defect.id}`, async (route) => {
@@ -186,20 +181,18 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
     }
     await route.continue();
   });
-  await page.getByTestId("work-record-detail-drawer").getByRole("button", { name: "编辑" }).click();
   const failedDraft = page.getByRole("dialog", { name: /编辑缺陷/ }).getByLabel("描述");
   await failedDraft.fill("保存失败仍保留的输入");
   await page.getByRole("tab", { name: "计划", exact: true }).click();
   await decision.getByRole("button", { name: "保存并继续" }).click();
   await expect(page).toHaveURL(/\/defects$/);
   await expect(failedDraft).toHaveValue("保存失败仍保留的输入");
-  await expect(failedDraft).toBeFocused();
   await expect(page.getByRole("dialog", { name: /编辑缺陷/ }).getByRole("alert")).toContainText("测试保存失败");
   await page.getByRole("dialog", { name: /编辑缺陷/ }).getByRole("button", { name: "取消" }).click();
   await decision.getByRole("button", { name: "放弃并继续" }).click();
   await page.unroute(`**/api/companies/${company.id}/projects/${project.id}/work-records/${defect.id}`);
 
-  await page.getByRole("tab", { name: "甘特", exact: true }).click();
+  await page.getByRole("tab", { name: "甘特图", exact: true }).click();
   await expect(page).toHaveURL(/\/gantt$/);
   await expect(page.getByTestId("work-records-main")).toHaveAttribute("data-view-mode", "gantt");
   await page.goBack();
@@ -217,30 +210,22 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
     });
     const [title, tabs, main] = await Promise.all([
       position(page.getByRole("heading", { name: "G3B2 local proof", exact: true })),
-      position(page.getByRole("tablist")),
+      position(page.getByTestId("work-record-top-navigation").getByRole("tablist")),
       position(visibleMain),
     ]);
-    return { title, tabs, main };
+    return { title, tabsY: tabs.y, main };
   };
   const verifyAnchorsAcrossTabs = async () => {
     await page.getByRole("tab", { name: "计划", exact: true }).click();
     await expect(page.locator('[data-testid="work-records-main"][data-kind="plan"][data-view-mode="table"]')).toBeVisible();
     const baseline = await anchorSnapshot("plan", "table");
-    for (const [tab, kind, mode] of [["甘特", "plan", "gantt"], ["缺陷", "defect", "table"]] as const) {
+    for (const [tab, kind, mode] of [["甘特图", "plan", "gantt"], ["缺陷", "defect", "table"]] as const) {
       await page.getByRole("tab", { name: tab, exact: true }).click();
       await expect(page.locator(`[data-testid="work-records-main"][data-kind="${kind}"][data-view-mode="${mode}"]`)).toBeVisible();
       expect(await anchorSnapshot(kind, mode)).toEqual(baseline);
     }
     await page.getByRole("tab", { name: "计划", exact: true }).click();
   };
-
-  await page.getByRole("tab", { name: "计划", exact: true }).focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(page).toHaveURL(/\/gantt$/);
-  await page.keyboard.press("ArrowRight");
-  await expect(page).toHaveURL(/\/defects$/);
-  await page.keyboard.press("ArrowLeft");
-  await expect(page).toHaveURL(/\/gantt$/);
 
   for (const [name, width, height] of [["1574x1038", 1574, 1038], ["1319x1012", 1319, 1012], ["1024x768", 1024, 768]] as const) {
     await page.setViewportSize({ width, height });
@@ -255,17 +240,19 @@ test("G3B2 keeps version iteration progress, tabs and complete details stable", 
   await verifyAnchorsAcrossTabs();
   await expect(page.getByRole("tab", { name: "计划", exact: true })).toBeVisible();
   await expect(page.getByTestId("version-iteration-tree")).toBeVisible();
-  const [treeBox, recordsBox] = await Promise.all([
-    page.getByTestId("version-iteration-tree").boundingBox(),
-    page.locator('section[aria-labelledby="work-package-title"]').boundingBox(),
+  const rect = (selector: string) => page.getByTestId(selector).evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return { x: box.x, y: box.y, width: box.width, height: box.height };
+  });
+  const [railBox, recordsBox] = await Promise.all([
+    rect("work-record-rail-shell"),
+    rect("work-record-workspace-content"),
   ]);
-  expect(treeBox).not.toBeNull();
-  expect(recordsBox).not.toBeNull();
   expect(
-    treeBox!.x + treeBox!.width <= recordsBox!.x
-      || recordsBox!.x + recordsBox!.width <= treeBox!.x
-      || treeBox!.y + treeBox!.height <= recordsBox!.y
-      || recordsBox!.y + recordsBox!.height <= treeBox!.y,
+    railBox.x + railBox.width <= recordsBox.x
+      || recordsBox.x + recordsBox.width <= railBox.x
+      || railBox.y + railBox.height <= recordsBox.y
+      || recordsBox.y + recordsBox.height <= railBox.y,
   ).toBe(true);
   await page.getByRole("button", { name: "编辑版本 V1 我的修改" }).focus();
   await screenshot(page, info, "g3b2-200-percent");

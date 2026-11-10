@@ -350,7 +350,7 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     await expect(railToggle).toHaveAttribute("aria-expanded", "false");
     const collapsedPlanContent = await box(page.getByTestId("work-record-workspace-content"), "收起后的计划内容区");
 
-    const ganttTab = page.getByRole("tab", { name: "甘特", exact: true });
+    const ganttTab = page.getByRole("tab", { name: "甘特图", exact: true });
     await ganttTab.focus();
     await expect(ganttTab).toBeFocused();
     await page.keyboard.press("Enter");
@@ -359,6 +359,7 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     await expect(page.getByTestId("work-record-workspace-grid")).toHaveAttribute("data-rail-open", "false");
     const ganttContent = await box(page.getByTestId("work-record-workspace-content"), "收起后的甘特内容区");
     expect(Math.abs(ganttContent.x - collapsedPlanContent.x), "计划切甘特时内容不应位移").toBeLessThanOrEqual(1);
+    await screenshot(page, info, `demo-fidelity-gantt-${viewport.label}`);
 
     await page.getByRole("tab", { name: "缺陷", exact: true }).click();
     await expect(page).toHaveURL(/\/defects$/);
@@ -366,6 +367,7 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     await expect(page.getByTestId("work-record-workspace-grid")).toHaveAttribute("data-rail-open", "false");
     const defectContent = await box(page.getByTestId("work-record-workspace-content"), "收起后的缺陷内容区");
     expect(Math.abs(defectContent.x - collapsedPlanContent.x), "甘特切缺陷时内容不应位移").toBeLessThanOrEqual(1);
+    await screenshot(page, info, `demo-fidelity-defect-${viewport.label}`);
     const defectRow = page.locator(`[data-record-id="${defectRecord.id}"]`);
     await expect(defectRow).toContainText("待规划");
     await expect(defectRow).toContainText("高");

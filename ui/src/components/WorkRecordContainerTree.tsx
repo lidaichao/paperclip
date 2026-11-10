@@ -41,9 +41,10 @@ function draftFromTarget(target: ContainerTarget): ContainerDraft {
     : { ...EMPTY_DRAFT, name: target.item.name, startsOn: target.item.startsOn ?? "", endsOn: target.item.endsOn ?? "" };
 }
 
-export function WorkRecordContainerTree({ companyId, projectId, writable = true, className, mode = "navigation", managementActive = false, selectedScope = "pool", onSelectScope, onManageContainers, onCloseManagement }: {
+export function WorkRecordContainerTree({ companyId, projectId, projectName, writable = true, className, mode = "navigation", managementActive = false, selectedScope = "pool", onSelectScope, onManageContainers, onCloseManagement }: {
   companyId: string;
   projectId: string;
+  projectName?: string;
   writable?: boolean;
   className?: string;
   mode?: "navigation" | "management";
@@ -233,8 +234,11 @@ export function WorkRecordContainerTree({ companyId, projectId, writable = true,
     : null;
 
   const navigation = (
-    <aside className={cn("px-3 py-2", className)} data-testid="version-iteration-tree" aria-label="版本与迭代">
-      <div className="mb-3 flex items-center gap-1 border-b pb-3" data-testid="container-toolbar">
+    <aside className={cn("px-3", className)} data-testid="version-iteration-tree" aria-label="版本与迭代">
+      {projectName ? <header className="flex min-h-12 items-center border-b">
+        <h2 className="truncate text-lg font-semibold" title={projectName}>{projectName}</h2>
+      </header> : null}
+      <div className="mb-3 flex items-center gap-1 border-b py-3" data-testid="container-toolbar">
         {writable ? <>
           <Button className="min-w-0 flex-1 px-1" size="sm" variant="outline" onClick={() => openCreate("version")}>+版本</Button>
           <Button className="min-w-0 flex-1 px-1" size="sm" variant="outline" disabled={activeVersionRows.length === 0} onClick={() => openCreate("iteration")}>+迭代</Button>

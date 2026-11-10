@@ -795,8 +795,30 @@ export function ProjectDetail() {
     void pending;
   };
 
+  const projectTabItems = [
+    { value: "list", label: l10n("local.tasks_b3a60e61") },
+    { value: "configuration", label: l10n("local.configuration_b332c349") },
+    { value: "budget", label: l10n("local.budget_1c6225ec") },
+    { value: "plans", label: "计划" },
+    { value: "gantt", label: "甘特图" },
+    { value: "defects", label: "缺陷" },
+    ...(project.managedByPlugin ? [{ value: "plugin-operations", label: l10n("local.plugin_operations_5d078940") }] : []),
+    ...(showWorkspacesTab ? [{ value: "workspaces", label: l10n("local.workspaces_1377264b") }] : []),
+    ...pluginTabItems.map((item) => ({ value: item.value, label: item.label })),
+  ];
+  const projectTabBar = (
+    <Tabs activationMode="manual" value={activeTab ?? "list"} onValueChange={(value) => handleTabChange(value as ProjectTab)}>
+      <PageTabBar
+        items={projectTabItems}
+        align="start"
+        value={activeTab ?? "list"}
+        onValueChange={(value) => handleTabChange(value as ProjectTab)}
+      />
+    </Tabs>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className={cn(workRecordRouteActive ? "space-y-3" : "space-y-6", workRecordRouteActive && "project-work-record-page")}>
       {showLeftProjectNotice ? (
         <div className="flex items-center gap-3 border border-yellow-300/35 bg-yellow-300/10 px-3 py-2 text-sm text-yellow-900 dark:text-yellow-100">
           <p className="min-w-0 flex-1">
@@ -830,7 +852,7 @@ export function ProjectDetail() {
           </button>
         </div>
       ) : null}
-      <div className="flex items-start gap-3">
+      {!workRecordRouteActive ? <div className="flex items-start gap-3">
         <div className="h-7 flex items-center">
           <ProjectTilePicker
             color={project.color ?? null}
@@ -872,17 +894,17 @@ export function ProjectDetail() {
             })}
           />
         </div>
-      </div>
+      </div> : null}
 
-      <SummarySlotCard
+      {!workRecordRouteActive ? <SummarySlotCard
         companyId={resolvedCompanyId}
         scopeKind="project"
         scopeId={project.id}
         title={l10n("local.project_summary_34c863b3")}
         description={l10n("local.summarizer_keeps_the_latest_project_status_ne_6420c795")}
-      />
+      /> : null}
 
-      <PluginSlotOutlet
+      {!workRecordRouteActive ? <PluginSlotOutlet
         slotTypes={["toolbarButton", "contextMenuItem"]}
         entityType="project"
         context={{
@@ -896,9 +918,9 @@ export function ProjectDetail() {
         className="flex flex-wrap gap-2"
         itemClassName="inline-flex"
         missingBehavior="placeholder"
-      />
+      /> : null}
 
-      <PluginLauncherOutlet
+      {!workRecordRouteActive ? <PluginLauncherOutlet
         placementZones={["toolbarButton"]}
         entityType="project"
         context={{
@@ -911,30 +933,9 @@ export function ProjectDetail() {
         }}
         className="flex flex-wrap gap-2"
         itemClassName="inline-flex"
-      />
+      /> : null}
 
-      <Tabs value={activeTab ?? "list"} onValueChange={(value) => handleTabChange(value as ProjectTab)}>
-        <PageTabBar
-          items={[
-            { value: "list", label: l10n("local.tasks_b3a60e61") },
-            { value: "plans", label: "计划" },
-            { value: "gantt", label: "甘特" },
-            { value: "defects", label: "缺陷" },
-
-            ...(project.managedByPlugin ? [{ value: "plugin-operations", label: l10n("local.plugin_operations_5d078940") }] : []),
-            ...(showWorkspacesTab ? [{ value: "workspaces", label: l10n("local.workspaces_1377264b") }] : []),
-            { value: "configuration", label: l10n("local.configuration_b332c349") },
-            { value: "budget", label: l10n("local.budget_1c6225ec") },
-            ...pluginTabItems.map((item) => ({
-              value: item.value,
-              label: item.label,
-            })),
-          ]}
-          align="start"
-          value={activeTab ?? "list"}
-          onValueChange={(value) => handleTabChange(value as ProjectTab)}
-        />
-      </Tabs>
+      {!workRecordRouteActive ? projectTabBar : null}
 
 
 
@@ -943,15 +944,15 @@ export function ProjectDetail() {
       )}
 
       {activeTab === "plans" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
+        <ProjectWorkRecords projectId={project.id} projectName={project.name} topNavigation={projectTabBar} companyId={resolvedCompanyId} kind="plan" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
       )}
 
       {activeTab === "gantt" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="plan" viewMode="gantt" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
+        <ProjectWorkRecords projectId={project.id} projectName={project.name} topNavigation={projectTabBar} companyId={resolvedCompanyId} kind="plan" viewMode="gantt" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
       )}
 
       {activeTab === "defects" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} companyId={resolvedCompanyId} kind="defect" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
+        <ProjectWorkRecords projectId={project.id} projectName={project.name} topNavigation={projectTabBar} companyId={resolvedCompanyId} kind="defect" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
       )}
 
       {activeTab === "plugin-operations" && project?.id && resolvedCompanyId && project.managedByPlugin && (

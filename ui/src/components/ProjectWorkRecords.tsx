@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { l10n } from "@/i18n";
 import { useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -71,9 +71,11 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
   return workRecordEditorDraftFromRecord(record);
 }
 
-export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "table", railOpen, onRailOpenChange, onNavigationGuardChange }: {
+export function ProjectWorkRecords({ companyId, projectId, projectName, topNavigation, kind, viewMode = "table", railOpen, onRailOpenChange, onNavigationGuardChange }: {
   companyId: string;
   projectId: string;
+  projectName?: string;
+  topNavigation?: ReactNode;
   kind: WorkRecordKind;
   viewMode?: "table" | "gantt";
   railOpen?: boolean;
@@ -148,6 +150,11 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     [allRecords, kind, visibleRecordIds],
   );
   const kindLabel = kind === "plan" ? l10n("local.work_record_plan") : l10n("local.work_record_defect");
+  const scopeTitle = containerScope === "pool"
+    ? kind === "plan" ? "需求池" : "缺陷池"
+    : (iterations.data ?? []).find((iteration) => iteration.id === containerScope)?.name
+      ?? (versions.data ?? []).find((version) => version.id === containerScope)?.name
+      ?? kindLabel;
   const editCapability = capabilities.data?.editRecords;
   const accountIdentity = useAccountIdentity();
   const autosavePrincipalId = accountIdentity.settled ? accountIdentity.userId : null;
@@ -403,6 +410,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
               className="h-full"
               companyId={companyId}
               projectId={projectId}
+              projectName={projectName}
               writable={capabilities.data?.manageContainers.allowed !== false}
               mode="navigation"
               managementActive={containerAdminOpen}
@@ -432,6 +440,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
           </Button>
         </div>
         <div className="min-w-0 overflow-hidden" data-testid="work-record-workspace-content">
+          {topNavigation ? <div className="mb-3 min-h-12 border-b" data-testid="work-record-top-navigation">{topNavigation}</div> : null}
           {containerAdminOpen ? (
             <WorkRecordContainerTree
               companyId={companyId}
@@ -446,8 +455,9 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
           ) : <>
             <div className="mb-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">{kindLabel}</h2>
+                <h2 className="text-lg font-semibold">{scopeTitle}</h2>
                 <p className="text-sm text-muted-foreground">
+                  {visibleRecords.length} 项{kind === "plan" ? "任务" : "缺陷"} · {" "}
                   {kind === "plan"
                     ? l10n("local.work_record_saving_editing_and_assigning_an_owne")
                     : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
