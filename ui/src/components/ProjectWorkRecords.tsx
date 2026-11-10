@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { l10n } from "@/i18n";
 import { useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordIterationAssignmentMode, WorkRecordKind, WorkRecordUserResponsibility, WorkRecordUserRole } from "@paperclipai/shared";
+import type { IssuePriority, WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordIterationAssignmentMode, WorkRecordKind, WorkRecordUserResponsibility, WorkRecordUserRole } from "@paperclipai/shared";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { agentsApi } from "@/api/agents";
 import { accessApi } from "@/api/access";
@@ -50,7 +50,9 @@ interface RecordDraft {
   iterationAssignmentMode: WorkRecordIterationAssignmentMode;
   plannedStartDate: string;
   plannedCompletionDate: string;
+  priority: IssuePriority;
   defectSeverity: WorkRecordDefectSeverity | "";
+  foundInVersionId: string;
 }
 
 function blankDraft(): RecordDraft {
@@ -69,7 +71,9 @@ function blankDraft(): RecordDraft {
     iterationAssignmentMode: "independent",
     plannedStartDate: "",
     plannedCompletionDate: "",
+    priority: "medium",
     defectSeverity: "",
+    foundInVersionId: "",
   };
 }
 
@@ -89,7 +93,9 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
     iterationAssignmentMode: record.iterationAssignmentMode ?? (record.parentRecordId ? "inherit_parent" : "independent"),
     plannedStartDate: record.plannedStartDate ?? "",
     plannedCompletionDate: record.plannedCompletionDate ?? "",
+    priority: record.priority,
     defectSeverity: record.defectSeverity ?? "",
+    foundInVersionId: record.foundInVersionId ?? "",
   };
 }
 
@@ -212,7 +218,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
         iterationId: draft.iterationAssignmentMode === "inherit_parent" ? null : draft.iterationId || null,
         plannedStartDate: draft.plannedStartDate || null,
         plannedCompletionDate: draft.plannedCompletionDate || null,
-        ...(kind === "defect" ? { defectSeverity: draft.defectSeverity || null } : {}),
+        priority: draft.priority,
+        ...(kind === "defect" ? { defectSeverity: draft.defectSeverity || null, foundInVersionId: draft.foundInVersionId || null } : {}),
         ...(kind === "plan" && draft.parentRecordId ? {
           packageQaRole: draft.packageQaRole,
           qaRetestExemptionReason: draft.packageQaRole === "execution" ? draft.qaRetestExemptionReason.trim() || null : null,
@@ -354,10 +361,9 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
   const selectableRecords = allRecords.filter((record) => record.id !== editingRecord?.id);
   const parentRecords = selectableRecords.filter((record) => record.kind === "plan");
-  const iterationLabels = useMemo(() => Object.fromEntries((iterations.data ?? []).map((iteration) => {
-    const versionName = (versions.data ?? []).find((version) => version.id === iteration.versionId)?.name;
-    return [iteration.id, versionName ? `${versionName} / ${iteration.name}` : iteration.name];
-  })), [iterations.data, versions.data]);
+  const iterationLabels = useMemo(() => Object.fromEntries((iterations.data ?? []).map((iteration) => [iteration.id, iteration.name])), [iterations.data]);
+  const versionLabels = useMemo(() => Object.fromEntries((versions.data ?? []).map((version) => [version.id, version.name])), [versions.data]);
+  const iterationVersionIds = useMemo(() => Object.fromEntries((iterations.data ?? []).map((iteration) => [iteration.id, iteration.versionId])), [iterations.data]);
   const selectedParent = parentRecords.find((record) => record.id === draft.parentRecordId) ?? null;
   const changeParent = (parentRecordId: string) => setDraft((current) => {
     if (!parentRecordId) {
@@ -466,6 +472,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
                 visibleKind={kind}
                 agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))}
                 iterationLabels={iterationLabels}
+                versionLabels={versionLabels}
+                iterationVersionIds={iterationVersionIds}
                 recordsLoading={records.isLoading}
                 recordsError={records.error}
                 onRetryRecords={() => records.refetch()}
@@ -537,15 +545,15 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
               </label>
             ) : null}
 
-            <label className="space-y-1 text-sm font-medium">
+            {kind === "plan" ? <label className="space-y-1 text-sm font-medium">
               <span>{l10n("local.work_record_parent_plan")}</span>
               <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.parentRecordId} onChange={(event) => changeParent(event.target.value)}>
                 <option value="">{l10n("local.work_record_no_parent_plan")}</option>
                 {parentRecords.map((record) => <option key={record.id} value={record.id}>{record.title}</option>)}
               </select>
-            </label>
+            </label> : null}
 
-            <label className="space-y-1 text-sm font-medium">
+            {kind === "plan" ? <label className="space-y-1 text-sm font-medium">
               <span>{l10n("local.work_record_iteration_assignment")}</span>
               <select
                 aria-label={l10n("local.work_record_iteration_assignment")}
@@ -557,7 +565,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
                 <option value="independent">{l10n("local.work_record_iteration_independent")}</option>
                 {draft.parentRecordId ? <option value="inherit_parent">{l10n("local.work_record_iteration_inherit_parent")}</option> : null}
               </select>
-            </label>
+            </label> : null}
 
             <label className="space-y-1 text-sm font-medium">
               <span>{l10n("local.work_record_iteration")}</span>
@@ -573,19 +581,35 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
               </select>
               {draft.iterationAssignmentMode === "inherit_parent" ? <span className="block text-xs font-normal text-muted-foreground" data-testid="work-record-inherited-iteration-help">
                 {l10n("local.work_record_iteration_inherited_help", {
-                  iteration: selectedParent?.iterationId ? iterationLabels[selectedParent.iterationId] ?? l10n("local.work_record_unassigned_iteration") : l10n("local.work_record_unassigned_iteration"),
+                  iteration: selectedParent?.iterationId ? [versionLabels[iterationVersionIds[selectedParent.iterationId]], iterationLabels[selectedParent.iterationId]].filter(Boolean).join(" / ") || l10n("local.work_record_unassigned_iteration") : l10n("local.work_record_unassigned_iteration"),
                 })}
               </span> : null}
             </label>
 
-            {kind === "defect" ? <label className="space-y-1 text-sm font-medium">
-              <span>{l10n("local.work_record_severity")}</span>
-              <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.defectSeverity} onChange={(event) => setDraft((current) => ({ ...current, defectSeverity: event.target.value as WorkRecordDefectSeverity | "" }))}>
-                <option value="">{l10n("local.work_record_severity_unspecified")}</option><option value="critical">{l10n("local.work_record_severity_critical")}</option><option value="high">{l10n("local.work_record_severity_high")}</option><option value="medium">{l10n("local.work_record_severity_medium")}</option><option value="low">{l10n("local.work_record_severity_low")}</option>
+            <label className="space-y-1 text-sm font-medium">
+              <span>优先级</span>
+              <select aria-label="优先级" className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.priority} onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value as IssuePriority }))}>
+                <option value="critical">最高</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option>
               </select>
-            </label> : null}
+            </label>
 
-            <label className="space-y-1 text-sm font-medium"><span>{l10n("local.work_record_planned_start")}</span><Input type="date" value={draft.plannedStartDate} onChange={(event) => setDraft((current) => ({ ...current, plannedStartDate: event.target.value }))} /></label>
+            {kind === "defect" ? <>
+              <label className="space-y-1 text-sm font-medium">
+                <span>严重度</span>
+                <select aria-label="严重度" className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.defectSeverity} onChange={(event) => setDraft((current) => ({ ...current, defectSeverity: event.target.value as WorkRecordDefectSeverity | "" }))}>
+                  <option value="">未指定</option><option value="critical">致命</option><option value="high">严重</option><option value="medium">一般</option><option value="low">轻微</option>
+                </select>
+              </label>
+              <label className="space-y-1 text-sm font-medium">
+                <span>发现版本</span>
+                <select aria-label="发现版本" className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.foundInVersionId} onChange={(event) => setDraft((current) => ({ ...current, foundInVersionId: event.target.value }))}>
+                  <option value="">未指定</option>
+                  {(versions.data ?? []).map((version) => <option key={version.id} value={version.id}>{version.name}{version.archivedAt ? "（已归档）" : ""}</option>)}
+                </select>
+              </label>
+            </> : null}
+
+            {kind === "plan" ? <label className="space-y-1 text-sm font-medium"><span>{l10n("local.work_record_planned_start")}</span><Input type="date" value={draft.plannedStartDate} onChange={(event) => setDraft((current) => ({ ...current, plannedStartDate: event.target.value }))} /></label> : null}
             <label className="space-y-1 text-sm font-medium"><span>{l10n("local.work_record_planned_completion")}</span><Input type="date" value={draft.plannedCompletionDate} onChange={(event) => setDraft((current) => ({ ...current, plannedCompletionDate: event.target.value }))} /></label>
 
             {kind === "plan" && draft.parentRecordId ? <label className="space-y-1 text-sm font-medium">
@@ -610,7 +634,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
             </label>
 
             <label className="space-y-1 text-sm font-medium">
-              <span>QA</span>
+              <span>{kind === "defect" ? "验收者" : "QA"}</span>
               <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.qaAssigneeAgentId} onChange={(event) => setDraft((current) => ({ ...current, qaAssigneeAgentId: event.target.value }))}>
                 <option value="">{l10n("local.work_record_defer_assignment")}</option>
                 {(agents.data ?? []).map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
@@ -633,7 +657,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
               </div>)}
             </fieldset>
 
-            <fieldset className="space-y-1 text-sm font-medium">
+            {kind === "plan" ? <fieldset className="space-y-1 text-sm font-medium">
               <legend>{l10n("local.work_record_predecessor_record")}</legend>
               <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border border-input p-2">
                 {selectableRecords.length === 0 ? <p className="text-muted-foreground">{l10n("local.work_record_no_predecessor")}</p> : null}
@@ -647,7 +671,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
                   <span className="truncate" title={record.title}>{record.title}</span>
                 </label>)}
               </div>
-            </fieldset>
+            </fieldset> : null}
 
             <label className="space-y-1 text-sm font-medium md:col-span-2">
               <span>{l10n("local.work_record_description")}</span>

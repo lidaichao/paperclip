@@ -52,6 +52,11 @@ function setNativeValue(input: HTMLInputElement, value: string) {
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+function setSelectValue(select: HTMLSelectElement, value: string) {
+  Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(select, value);
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
 describe("WorkRecordDenseTable WBS", () => {
   let root: Root;
   let container: HTMLDivElement;
@@ -77,6 +82,8 @@ describe("WorkRecordDenseTable WBS", () => {
 
   async function render(kind: WorkRecordViewKind, records: WorkRecord[], onChecked = vi.fn(), iterationLabels: Record<string, string> = {}, options: {
     checked?: string[];
+    versionLabels?: Record<string, string>;
+    iterationVersionIds?: Record<string, string>;
     batchActions?: {
       dispatch: { label: string; onInvoke: () => void; disabled: boolean; reason: string | null; pending: boolean };
       assignOwner: { label: string; onInvoke?: () => void; disabled: boolean; reason: string | null; pending: boolean };
@@ -84,7 +91,7 @@ describe("WorkRecordDenseTable WBS", () => {
   } = {}) {
     await act(async () => root.render(
       <QueryClientProvider client={client}>
-        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
+        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
       </QueryClientProvider>,
     ));
     await flush();
@@ -169,11 +176,111 @@ describe("WorkRecordDenseTable WBS", () => {
       iterationAssignmentMode: "inherit_parent",
     });
     const rootRecord = record("root", "工作包", { iterationId: "iteration-a" });
-    await render("plan", [rootRecord, inherited], vi.fn(), { "iteration-a": "V1 / 迭代 A" });
+    await render("plan", [rootRecord, inherited], vi.fn(), { "iteration-a": "迭代 A" }, {
+      versionLabels: { "version-1": "V1" },
+      iterationVersionIds: { "iteration-a": "version-1" },
+    });
 
     const childRow = container.querySelector('[data-record-id="child"]');
-    expect(childRow?.textContent).toContain("继承 · V1 / 迭代 A");
+    expect(childRow?.textContent).toContain("V1");
+    expect(childRow?.textContent).toContain("继承 · 迭代 A");
     expect(childRow?.textContent).not.toContain("程序开发 · V1");
+  });
+
+  it("shows defect fields and statuses in Chinese while keeping status filters stable", async () => {
+    const defect = record("defect", "登录失败提示", {
+      kind: "defect",
+      recordIdentifier: "PC-1",
+      businessStatus: "todo",
+      priority: "high",
+      defectSeverity: "critical",
+      foundInVersionId: "version-1",
+    });
+    await render("defect", [defect], vi.fn(), {}, { versionLabels: { "version-1": "V1" } });
+
+    const row = container.querySelector('[data-record-id="defect"]');
+    expect(container.textContent).toContain("验收者");
+    expect(container.textContent).toContain("发现版本");
+    expect(row?.textContent).toContain("待办");
+    expect(row?.textContent).toContain("高");
+    expect(row?.textContent).toContain("致命");
+    expect(row?.textContent).toContain("V1");
+
+    const completedTab = container.querySelector('[role="tab"]:not([aria-selected="true"])') as HTMLButtonElement;
+    expect(completedTab).not.toBeNull();
+    const doneTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "已完成") as HTMLButtonElement;
+    await act(async () => doneTab.click());
+    expect(container.querySelector('[data-record-id="defect"]')).toBeNull();
+    const todoTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "待办") as HTMLButtonElement;
+    await act(async () => todoTab.click());
+    expect(container.querySelector('[data-record-id="defect"]')).not.toBeNull();
+  });
+
+  it("adds new defect fields to old personal views without changing their visibility", async () => {
+    const legacy = defaultWorkRecordViewConfig("defect");
+    legacy.columnOrder = legacy.columnOrder.filter((field) => field !== "priority" && field !== "foundInVersion");
+    legacy.visibleFields = legacy.visibleFields.filter((field) => field !== "priority" && field !== "foundInVersion");
+    viewsMock.mockResolvedValueOnce([
+      { id: "builtin:defect", companyId: "company-1", projectId: "project-1", userId: "user-1", viewKind: "defect", name: "全部", isBuiltin: true, config: defaultWorkRecordViewConfig("defect"), revision: 0, updatedAt: null },
+      { id: "legacy-view", companyId: "company-1", projectId: "project-1", userId: "user-1", viewKind: "defect", name: "旧视图", isBuiltin: false, config: legacy, revision: 1, updatedAt: null },
+    ]);
+    await render("defect", [record("defect", "缺陷", { kind: "defect" })]);
+    await act(async () => setSelectValue(container.querySelector('[data-testid="work-record-view-toolbar"] select') as HTMLSelectElement, "legacy-view"));
+    await flush();
+    const columnsButton = [...container.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent?.trim() === "列") as HTMLButtonElement;
+    await act(async () => columnsButton.click());
+    await flush();
+
+    const priorityOption = [...document.querySelectorAll("label")].find((label) => label.textContent?.includes("优先级"));
+    const foundVersionOption = [...document.querySelectorAll("label")].find((label) => label.textContent?.includes("发现版本"));
+    expect(priorityOption).not.toBeUndefined();
+    expect(foundVersionOption).not.toBeUndefined();
+    expect((priorityOption?.querySelector('input[type="checkbox"]') as HTMLInputElement).checked).toBe(false);
+    expect((foundVersionOption?.querySelector('input[type="checkbox"]') as HTMLInputElement).checked).toBe(false);
+  });
+
+  it("keeps legacy combined version and iteration filters working after splitting the columns", async () => {
+    const legacy = defaultWorkRecordViewConfig("plan");
+    legacy.filters = [{ field: "iteration", operator: "is", value: "V1 / 迭代 A" }];
+    viewsMock.mockResolvedValueOnce([
+      { id: "builtin:plan", companyId: "company-1", projectId: "project-1", userId: "user-1", viewKind: "plan", name: "全部", isBuiltin: true, config: defaultWorkRecordViewConfig("plan"), revision: 0, updatedAt: null },
+      { id: "legacy-filter", companyId: "company-1", projectId: "project-1", userId: "user-1", viewKind: "plan", name: "旧迭代筛选", isBuiltin: false, config: legacy, revision: 1, updatedAt: null },
+    ]);
+    await render("plan", [record("match", "匹配任务", { iterationId: "iteration-a" }), record("miss", "其他任务")], vi.fn(), { "iteration-a": "迭代 A" }, {
+      versionLabels: { "version-1": "V1" },
+      iterationVersionIds: { "iteration-a": "version-1" },
+    });
+    await act(async () => setSelectValue(container.querySelector('[data-testid="work-record-view-toolbar"] select') as HTMLSelectElement, "legacy-filter"));
+    await flush();
+
+    expect(container.querySelector('[data-record-id="match"]')).not.toBeNull();
+    expect(container.querySelector('[data-record-id="miss"]')).toBeNull();
+  });
+
+  it("does not misrepresent a complex status filter as a simple status tab", async () => {
+    const complex = defaultWorkRecordViewConfig("defect");
+    complex.filters = [{ field: "businessStatus", operator: "is_not", value: "done" }];
+    viewsMock.mockResolvedValueOnce([
+      { id: "builtin:defect", companyId: "company-1", projectId: "project-1", userId: "user-1", viewKind: "defect", name: "全部", isBuiltin: true, config: defaultWorkRecordViewConfig("defect"), revision: 0, updatedAt: null },
+      { id: "complex-filter", companyId: "company-1", projectId: "project-1", userId: "user-1", viewKind: "defect", name: "未完成", isBuiltin: false, config: complex, revision: 1, updatedAt: null },
+    ]);
+    await render("defect", [
+      record("todo", "待办缺陷", { kind: "defect", businessStatus: "todo" }),
+      record("done", "完成缺陷", { kind: "defect", businessStatus: "done" }),
+    ]);
+    await act(async () => setSelectValue(container.querySelector('[data-testid="work-record-view-toolbar"] select') as HTMLSelectElement, "complex-filter"));
+    await flush();
+
+    expect([...container.querySelectorAll('[role="tab"]')].every((tab) => tab.getAttribute("aria-selected") === "false")).toBe(true);
+    expect((container.querySelector('select[aria-label="业务状态筛选"]') as HTMLSelectElement).value).toBe("");
+    expect(container.querySelector('[role="status"]')?.textContent).toContain("复杂状态筛选");
+    expect(container.querySelector('[data-record-id="todo"]')).not.toBeNull();
+    expect(container.querySelector('[data-record-id="done"]')).toBeNull();
+
+    const allTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "全部缺陷") as HTMLButtonElement;
+    await act(async () => allTab.click());
+    expect(container.querySelector('[data-record-id="todo"]')).not.toBeNull();
+    expect(container.querySelector('[data-record-id="done"]')).not.toBeNull();
   });
 
   it("keeps twenty plan records in compact rows without card-per-record chrome", async () => {
@@ -217,13 +324,13 @@ describe("WorkRecordDenseTable WBS", () => {
   it("hides a column from its own header menu", async () => {
     await render("defect", [record("defect", "缺陷", { kind: "defect" })]);
 
-    const menu = container.querySelector('button[aria-label="描述列菜单"]') as HTMLButtonElement;
+    const menu = container.querySelector('button[aria-label="优先级列菜单"]') as HTMLButtonElement;
     await act(async () => menu.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, button: 0 })));
     await flush();
-    const hide = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((item) => item.textContent?.includes("隐藏描述列"));
+    const hide = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((item) => item.textContent?.includes("隐藏优先级列"));
     expect(hide).not.toBeUndefined();
     await act(async () => hide?.click()); await flush();
-    expect([...container.querySelectorAll("th")].some((cell) => cell.textContent?.includes("描述"))).toBe(false);
+    expect([...container.querySelectorAll("th")].some((cell) => cell.textContent?.includes("优先级"))).toBe(false);
   });
 
   it("replaces the filter toolbar in place for selection and exposes honest action boundaries", async () => {

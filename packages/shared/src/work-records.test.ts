@@ -110,6 +110,17 @@ describe("dense work-record defaults", () => {
   it.each(["plan", "defect"] as const)("uses compact rows for the built-in %s view", (kind) => {
     expect(defaultWorkRecordViewConfig(kind).density).toBe("compact");
   });
+
+  it("keeps version and priority separate and exposes defect discovery fields", () => {
+    const plan = defaultWorkRecordViewConfig("plan");
+    const defect = defaultWorkRecordViewConfig("defect");
+
+    expect(plan.columnOrder).toEqual(expect.arrayContaining(["priority", "version", "iteration"]));
+    expect(plan.columnOrder.indexOf("version")).toBeLessThan(plan.columnOrder.indexOf("iteration"));
+    expect(defect.columnOrder).toEqual(expect.arrayContaining(["priority", "defectSeverity", "foundInVersion"]));
+    expect(defect.visibleFields).toContain("foundInVersion");
+    expect(defect.visibleFields).not.toEqual(expect.arrayContaining(["description", "plannedStartDate", "dependencies"]));
+  });
 });
 
 describe("work-record iteration assignment contract", () => {

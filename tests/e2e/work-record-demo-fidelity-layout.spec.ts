@@ -229,13 +229,17 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
       `create density record ${index + 1}`,
     );
   }
-  await json(
+  const defectRecord = await json<WorkRecord>(
     await request.post(`/api/companies/${company.id}/work-records`, {
       data: {
         projectId: project.id,
         kind: "defect",
         title: "布局基线缺陷",
         iterationId: iteration.id,
+        priority: "high",
+        defectSeverity: "critical",
+        foundInVersionId: version.id,
+        plannedCompletionDate: "2026-11-13",
         predecessorRecordIds: [],
       },
     }),
@@ -357,6 +361,27 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     await expect(page.getByTestId("work-record-workspace-grid")).toHaveAttribute("data-rail-open", "false");
     const defectContent = await box(page.getByTestId("work-record-workspace-content"), "收起后的缺陷内容区");
     expect(Math.abs(defectContent.x - collapsedPlanContent.x), "甘特切缺陷时内容不应位移").toBeLessThanOrEqual(1);
+    const defectRow = page.locator(`[data-record-id="${defectRecord.id}"]`);
+    await expect(defectRow).toContainText("待规划");
+    await expect(defectRow).toContainText("高");
+    await expect(defectRow).toContainText("致命");
+    await expect(defectRow).toContainText("V1");
+    await page.getByRole("tab", { name: "已完成", exact: true }).click();
+    await expect(defectRow).toHaveCount(0);
+    await page.getByRole("tab", { name: "待规划", exact: true }).click();
+    await expect(defectRow).toBeVisible();
+    await defectRow.getByRole("button", { name: "布局基线缺陷", exact: true }).click();
+    const defectDrawer = page.getByTestId("work-record-detail-drawer");
+    await expect(defectDrawer.getByLabel("优先级")).toHaveValue("high");
+    await expect(defectDrawer.getByLabel("严重度")).toHaveValue("critical");
+    await expect(defectDrawer.getByLabel("发现版本")).toHaveValue(version.id);
+    await expect(defectDrawer.getByText("上级计划", { exact: true })).toHaveCount(0);
+    await expect(defectDrawer.getByText("迭代归属", { exact: true })).toHaveCount(0);
+    await expect(defectDrawer.getByText("计划开始", { exact: true })).toHaveCount(0);
+    await expect(defectDrawer.getByText("前置记录", { exact: true })).toHaveCount(0);
+    await expect(defectDrawer.getByText("计划完成", { exact: true })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(defectDrawer).toHaveCount(0);
 
     await page.getByTestId("work-record-rail-toggle").click();
     await expect(page.getByTestId("work-record-workspace-grid")).toHaveAttribute("data-rail-open", "true");
@@ -432,7 +457,8 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
   await page.reload();
   await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toHaveAttribute("data-tree-depth", "0");
   await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toHaveAttribute("data-tree-depth", "1");
-  await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toContainText("继承 · V1 / 独立排期");
+  await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toContainText("V1");
+  await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toContainText("继承 · 独立排期");
   await screenshot(page, info, "demo-fidelity-iteration-inheritance-after-refresh");
 
   await expectNoNativeSideEffects("刷新页面后仍不得出现原生副作用");

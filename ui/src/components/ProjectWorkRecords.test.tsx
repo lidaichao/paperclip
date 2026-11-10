@@ -337,6 +337,32 @@ describe("ProjectWorkRecords", () => {
     expect(createMock).not.toHaveBeenCalled();
   });
 
+  it("keeps the defect editor focused on defect fields without losing hidden legacy data", async () => {
+    const predecessor = record("defect", { id: "defect-predecessor", title: "历史前置缺陷" });
+    const historical = record("defect", {
+      id: "defect-history",
+      title: "历史缺陷",
+      plannedStartDate: "2026-11-01",
+      plannedCompletionDate: "2026-11-12",
+      iterationId: "iteration-a",
+      dependencies: [{ predecessorRecordId: predecessor.id, title: predecessor.title, businessStatus: "done", dispatchState: "linked", holdReason: null }],
+    });
+    listMock.mockResolvedValue([historical, predecessor]);
+    await render("defect");
+    await act(async () => button("编辑测试").click());
+
+    expect(document.body.textContent).not.toContain("计划开始");
+    expect(document.body.textContent).not.toContain("前置记录");
+    expect(document.body.textContent).toContain("计划完成");
+    expect(document.body.querySelector('select[aria-label="迭代"]')).not.toBeNull();
+
+    await act(async () => button("保存缺陷").click());
+    await flush();
+    const payload = updateMock.mock.calls.at(-1)?.[3];
+    expect(payload.plannedStartDate).toBe("2026-11-01");
+    expect(payload).not.toHaveProperty("predecessorRecordIds");
+  });
+
   it("does not rewrite dependencies when editing another field", async () => {
     const first = record("plan", { id: "plan-a", title: "策划" });
     const second = record("plan", { id: "plan-b", title: "程序" });
@@ -416,6 +442,31 @@ describe("ProjectWorkRecords", () => {
     for (const legacyLabel of ["任务说明", "完成标准", "复现步骤", "预期结果", "实际结果", "环境信息"]) {
       expect(drawer.textContent).not.toContain(legacyLabel);
     }
+  });
+
+  it("edits defect-only fields without exposing plan hierarchy controls", async () => {
+    await render("defect");
+    await act(async () => button("编辑测试").click());
+
+    const drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
+    expect(drawer.textContent).not.toContain("上级计划");
+    expect(drawer.textContent).not.toContain("迭代归属");
+    const priority = drawer.querySelector('select[aria-label="优先级"]') as HTMLSelectElement;
+    const severity = drawer.querySelector('select[aria-label="严重度"]') as HTMLSelectElement;
+    const foundInVersion = drawer.querySelector('select[aria-label="发现版本"]') as HTMLSelectElement;
+    await act(async () => {
+      setSelectValue(priority, "high");
+      setSelectValue(severity, "critical");
+      setSelectValue(foundInVersion, "version-1");
+    });
+    await act(async () => button("保存缺陷").click());
+    await flush();
+
+    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", defect.id, expect.objectContaining({
+      priority: "high",
+      defectSeverity: "critical",
+      foundInVersionId: "version-1",
+    }));
   });
 
   it("opens records read-only for viewers and never exposes a save action", async () => {

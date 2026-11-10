@@ -145,12 +145,13 @@ export interface ProjectIteration {
 export const WORK_RECORD_VIEW_KINDS = ["plan", "defect", "gantt"] as const;
 export const WORK_RECORD_VIEW_DENSITIES = ["compact", "comfortable", "spacious"] as const;
 export const WORK_RECORD_PLAN_VIEW_FIELDS = [
-  "id", "title", "description", "iteration", "plannedStartDate", "plannedCompletionDate",
-  "assignee", "qaAssignee", "businessStatus", "dispatchState", "dependencies",
+  "id", "title", "businessStatus", "assignee", "priority", "plannedStartDate", "plannedCompletionDate",
+  "version", "iteration", "qaAssignee", "dispatchState", "dependencies", "description",
 ] as const;
 export const WORK_RECORD_DEFECT_VIEW_FIELDS = [
   ...WORK_RECORD_PLAN_VIEW_FIELDS,
   "defectSeverity",
+  "foundInVersion",
 ] as const;
 export const WORK_RECORD_GANTT_VIEW_FIELDS = [
   "title", "assignee", "businessStatus", "plannedStartDate", "plannedCompletionDate", "dependencies",
@@ -230,10 +231,14 @@ export const deleteWorkRecordViewSchema = z.object({ expectedRevision: z.coerce.
 export function defaultWorkRecordViewConfig(viewKind: WorkRecordViewKind): WorkRecordViewConfig {
   const fields = viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS
     : viewKind === "gantt" ? WORK_RECORD_GANTT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS;
+  const visibleFields = viewKind === "defect"
+    ? ["id", "title", "businessStatus", "assignee", "qaAssignee", "priority", "defectSeverity", "foundInVersion", "plannedCompletionDate", "version", "iteration", "dispatchState"] satisfies WorkRecordViewField[]
+    : viewKind === "gantt" ? ["title", "assignee", "businessStatus"] satisfies WorkRecordViewField[]
+      : [...fields];
   return {
     schemaVersion: 2,
     containerId: null,
-    visibleFields: viewKind === "gantt" ? ["title", "assignee", "businessStatus"] : [...fields],
+    visibleFields,
     columnOrder: [...fields],
     columnWidths: {},
     density: "compact",
