@@ -358,7 +358,9 @@ describe("NewIssueDialog", () => {
     ]);
     mockAgentsApi.list.mockResolvedValue([]);
     mockAgentsApi.adapterModels.mockResolvedValue([]);
-    mockAuthApi.getSession.mockResolvedValue({ user: { id: "user-1" } });
+    mockAuthApi.getSession.mockResolvedValue({
+      user: { id: "user-1", name: "Jack", email: "jack@example.com" },
+    });
     mockAssetsApi.uploadImage.mockResolvedValue({ contentPath: "/uploads/asset.png" });
     mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableIsolatedWorkspaces: false });
     mockMissingUserSecretsBannerRender.mockReset();
@@ -392,8 +394,39 @@ describe("NewIssueDialog", () => {
     const note = container.querySelector(
       '[data-testid="new-issue-creator-identity-note"]',
     );
-    expect(note?.textContent).toContain("signed-in account");
+    expect(note?.textContent).toContain("Jack");
+    expect(note?.textContent).toContain("browser account");
     expect(note?.textContent).toContain("agent authorship");
+
+    act(() => root.unmount());
+  });
+
+  it("keeps the browser account as creator when an agent is selected as assignee", async () => {
+    dialogState.newIssueDefaults = {
+      title: "Agent-owned task",
+      assigneeAgentId: "agent-1",
+    };
+    mockAgentsApi.list.mockResolvedValue([
+      {
+        id: "agent-1",
+        name: "Rabbit",
+        status: "active",
+        adapterType: "codex_local",
+        adapterConfig: {},
+        runtimeConfig: {},
+        permissions: {},
+      },
+    ]);
+
+    const { root } = renderDialog(container);
+    await waitForAssertion(() => {
+      const note = container.querySelector(
+        '[data-testid="new-issue-creator-identity-note"]',
+      );
+      expect(note?.textContent).toContain("Jack");
+      expect(note?.textContent).toContain("Rabbit");
+      expect(note?.textContent).toContain("does not change the creator");
+    });
 
     act(() => root.unmount());
   });

@@ -236,6 +236,7 @@ import {
   ThumbsDown,
   ThumbsUp,
   Trash2,
+  UserRound,
   X,
 } from "lucide-react";
 import { IssueBlockedNotice } from "./IssueBlockedNotice";
@@ -5740,6 +5741,9 @@ export function IssueChatThread({
   linkCaseReferences = false,
 }: IssueChatThreadProps) {
   const location = useLocation();
+  const currentBrowserSenderLabel = currentUserId
+    ? userLabelMap?.get(currentUserId) ?? l10n("local.you_08b04193")
+    : null;
   const lastScrolledHashRef = useRef<string | null>(null);
   const didInitialHashScrollDecisionRef = useRef(false);
   const virtualizedThreadRef =
@@ -6637,6 +6641,19 @@ export function IssueChatThread({
               data-testid="issue-chat-composer-dock"
               className="sticky bottom-(--sz-calc-8) z-20 space-y-2 bg-gradient-to-t from-background via-background/95 to-background/0 pt-6"
             >
+              {currentBrowserSenderLabel ? (
+                <div
+                  data-testid="issue-chat-sender-identity"
+                  className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground"
+                >
+                  <UserRound className="h-3.5 w-3.5" aria-hidden />
+                  <span>
+                    {l10n("local.task_chat_browser_sender_identity", {
+                      v0: currentBrowserSenderLabel,
+                    })}
+                  </span>
+                </div>
+              ) : null}
               <IssueChatComposer
                 ref={composerRef}
                 onSend={sendComposerComment}

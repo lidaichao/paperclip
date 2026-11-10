@@ -14215,6 +14215,9 @@
     "work_record_plan_dates": "计划日期",
     "work_record_date_range": "{{start}} 至 {{end}}",
     "work_record_date_unset": "未定",
-    "browser_task_creator_identity_note": "此网页会以当前登录账号创建任务；需要保留智能体本人署名时，请让该智能体通过 Paperclip 创建。"
+    "browser_task_creator_identity_note": "需要保留智能体本人署名时，请让该智能体通过 Paperclip 创建。",
+    "browser_task_creator_identity_account": "发起人：{{v0}}（网页账号）。",
+    "browser_task_creator_identity_agent_assignee_note": "负责人：{{v0}}。指定智能体负责人不会改变发起人；智能体本人署名必须由该智能体通过 Paperclip 创建。",
+    "task_chat_browser_sender_identity": "以 {{v0}}（网页账号）发送。"
   }
 }

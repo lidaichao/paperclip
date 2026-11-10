@@ -14215,6 +14215,9 @@
     "work_record_plan_dates": "Planned dates",
     "work_record_date_range": "{{start}} to {{end}}",
     "work_record_date_unset": "Not set",
-    "browser_task_creator_identity_note": "This browser creates the task as the signed-in account. To preserve agent authorship, ask the agent to create it through Paperclip."
+    "browser_task_creator_identity_note": "To preserve agent authorship, ask the agent to create it through Paperclip.",
+    "browser_task_creator_identity_account": "Creator: {{v0}} (browser account).",
+    "browser_task_creator_identity_agent_assignee_note": "Assignee: {{v0}}. Assigning an agent does not change the creator; agent authorship requires that agent to create the task through Paperclip.",
+    "task_chat_browser_sender_identity": "Sending as {{v0}} (browser account)."
   }
 }

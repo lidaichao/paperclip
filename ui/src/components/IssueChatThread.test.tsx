@@ -4546,6 +4546,39 @@ describe("IssueChatThread", () => {
       avatarUrl: "/avatars/alice.png",
     });
   });
+
+  it("shows the signed-in browser account used to send task messages", async () => {
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <MemoryRouter>
+          <IssueChatThread
+            comments={[]}
+            interactions={[]}
+            linkedRuns={[]}
+            timelineEvents={[]}
+            liveRuns={[]}
+            onAdd={async () => {}}
+            currentUserId="user-jack"
+            userLabelMap={new Map([["user-jack", "Jack"]])}
+            showComposer
+            enableLiveTranscriptPolling={false}
+          />
+        </MemoryRouter>,
+      );
+    });
+
+    const identity = container.querySelector(
+      '[data-testid="issue-chat-sender-identity"]',
+    );
+    expect(identity?.textContent).toContain("Jack");
+    expect(identity?.textContent).toContain("browser account");
+
+    act(() => {
+      root.unmount();
+    });
+  });
 });
 
 describe("IssueAssigneePausedNotice", () => {
@@ -4639,4 +4672,5 @@ describe("IssueAssigneePausedNotice", () => {
 
     act(() => root.unmount());
   });
+
 });

@@ -73,6 +73,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   ScanEye,
+  UserRound,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "../lib/utils";
@@ -572,6 +573,11 @@ export function NewIssueDialog() {
     retry: false,
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
+  const currentBrowserAccountLabel =
+    session?.user?.name?.trim() ||
+    session?.user?.email?.trim() ||
+    currentUserId ||
+    "—";
   const activeProjects = useMemo(
     () => projects ?? [],
     [projects],
@@ -2307,9 +2313,21 @@ export function NewIssueDialog() {
 
         <div
           data-testid="new-issue-creator-identity-note"
-          className="px-4 pb-1 text-(length:--text-nano) leading-snug text-muted-foreground"
+          className="mx-4 mb-2 flex items-start gap-2 rounded-md border border-border bg-muted/45 px-3 py-2 text-xs text-foreground"
         >
-          {l10n("local.browser_task_creator_identity_note")}
+          <UserRound className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="leading-snug">
+            <span className="font-medium">
+              {l10n("local.browser_task_creator_identity_account", {
+                v0: currentBrowserAccountLabel,
+              })}
+            </span>{" "}
+            {selectedAssigneeAgent
+              ? l10n("local.browser_task_creator_identity_agent_assignee_note", {
+                  v0: selectedAssigneeAgent.name,
+                })
+              : l10n("local.browser_task_creator_identity_note")}
+          </span>
         </div>
 
         {/* Footer */}
