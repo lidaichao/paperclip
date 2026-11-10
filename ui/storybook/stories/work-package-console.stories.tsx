@@ -16,7 +16,7 @@ function record(input: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title">): 
   const { id, title, ...overrides } = input;
   return {
     id, companyId: COMPANY_ID, projectId: PROJECT_ID, kind: "plan", title,
-    description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null,
+    description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     assigneeAgentId: "agent-developer", qaAssigneeAgentId: "agent-qa", userResponsibilities: [], businessStatus: "in_review",
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],

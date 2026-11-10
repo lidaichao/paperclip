@@ -1,4 +1,16 @@
+import path from "node:path";
+import { readFile } from "node:fs/promises";
 import { expect, test, type APIResponse, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { eq } from "../../server/node_modules/drizzle-orm/index.js";
+import {
+  agentWakeupRequests,
+  closeRegisteredClients,
+  createDb,
+  heartbeatRuns,
+  issueComments,
+  issues,
+} from "../../packages/db/src/index.ts";
+import type { WorkRecord } from "@paperclipai/shared";
 
 type Viewport = { width: number; height: number; label: string };
 
@@ -16,13 +28,12 @@ async function json<T>(response: APIResponse, label: string): Promise<T> {
 
 async function box(locator: Locator, label: string) {
   await expect(locator, label).toBeVisible();
-  await expect.poll(async () => locator.boundingBox(), {
-    message: `${label} 应有可测量的布局边界`,
-    timeout: 5_000,
-  }).not.toBeNull();
-  const value = await locator.boundingBox();
-  if (!value) throw new Error(`${label} 在读取布局边界时被重新渲染`);
-  return value;
+  return locator.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  }).catch((error) => {
+    throw new Error(`${label} 应有可测量的布局边界`, { cause: error });
+  });
 }
 
 async function readWorkspaceAnchors(page: Page, projectName: string) {
@@ -34,6 +45,21 @@ async function readWorkspaceAnchors(page: Page, projectName: string) {
     rail: await box(page.getByTestId("work-record-rail-shell"), "版本迭代栏容器"),
     content: await box(page.getByTestId("work-record-workspace-content"), "业务内容区"),
   };
+}
+
+async function waitForOuterShellToSettle(page: Page, projectName: string) {
+  const title = page.getByRole("heading", { name: projectName, exact: true });
+  let previousX: number | null = null;
+  await expect.poll(async () => {
+    const currentX = (await title.evaluate((element) => element.getBoundingClientRect().x));
+    const stable = previousX !== null && Math.abs(currentX - previousX) <= 1;
+    previousX = currentX;
+    return stable;
+  }, {
+    message: "Paperclip 外层侧栏完成响应式布局后再记录业务区锚点",
+    intervals: [100, 150, 200],
+    timeout: 3_000,
+  }).toBe(true);
 }
 
 function expectStableAnchors(
@@ -50,6 +76,22 @@ async function screenshot(page: Page, info: TestInfo, name: string) {
   const path = info.outputPath(`${name}.png`);
   await page.screenshot({ path, fullPage: true });
   await info.attach(name, { path, contentType: "image/png" });
+}
+
+async function connectToE2eDatabase() {
+  const config = JSON.parse(await readFile(process.env.PAPERCLIP_E2E_SERVER_CONFIG!, "utf8"));
+  const pid = await readFile(path.join(config.database.embeddedPostgresDataDir, "postmaster.pid"), "utf8");
+  const url = `postgres://paperclip:paperclip@127.0.0.1:${pid.split("\n")[3]}/paperclip`;
+  return { db: createDb(url), url };
+}
+
+async function nativeSideEffectCounts(db: ReturnType<typeof createDb>, companyId: string) {
+  return {
+    issues: (await db.select({ id: issues.id }).from(issues).where(eq(issues.companyId, companyId))).length,
+    comments: (await db.select({ id: issueComments.id }).from(issueComments).where(eq(issueComments.companyId, companyId))).length,
+    runs: (await db.select({ id: heartbeatRuns.id }).from(heartbeatRuns).where(eq(heartbeatRuns.companyId, companyId))).length,
+    wakes: (await db.select({ id: agentWakeupRequests.id }).from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, companyId))).length,
+  };
 }
 
 test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", async ({ page, request }, info) => {
@@ -73,12 +115,25 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     }),
     "create iteration",
   );
-  const planRecord = await json<{ id: string }>(
+  const independentIteration = await json<{ id: string }>(
+    await request.post(`/api/companies/${company.id}/projects/${project.id}/iterations`, {
+      data: { versionId: version.id, name: "独立排期" },
+    }),
+    "create independent iteration",
+  );
+  const changedIteration = await json<{ id: string }>(
+    await request.post(`/api/companies/${company.id}/projects/${project.id}/iterations`, {
+      data: { versionId: version.id, name: "父级调整后" },
+    }),
+    "create changed iteration",
+  );
+  const planRecord = await json<WorkRecord>(
     await request.post(`/api/companies/${company.id}/work-records`, {
       data: {
         projectId: project.id,
         kind: "plan",
         title: "布局基线任务",
+        iterationAssignmentMode: "independent",
         iterationId: iteration.id,
         plannedStartDate: "2026-11-10",
         plannedCompletionDate: "2026-11-12",
@@ -87,18 +142,71 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     }),
     "create plan record",
   );
-  const childPlanRecord = await json<{ id: string }>(
+  const childPlanRecord = await json<WorkRecord>(
     await request.post(`/api/companies/${company.id}/work-records`, {
       data: {
         projectId: project.id,
         kind: "plan",
         title: "布局子任务",
         parentRecordId: planRecord.id,
-        iterationId: iteration.id,
+        iterationAssignmentMode: "inherit_parent",
         predecessorRecordIds: [],
       },
     }),
     "create child plan record",
+  );
+  const grandchildPlanRecord = await json<WorkRecord>(
+    await request.post(`/api/companies/${company.id}/work-records`, {
+      data: {
+        projectId: project.id,
+        kind: "plan",
+        title: "布局孙任务",
+        parentRecordId: childPlanRecord.id,
+        iterationAssignmentMode: "inherit_parent",
+        predecessorRecordIds: [],
+      },
+    }),
+    "create grandchild plan record",
+  );
+  const independentChild = await json<WorkRecord>(
+    await request.post(`/api/companies/${company.id}/work-records`, {
+      data: {
+        projectId: project.id,
+        kind: "plan",
+        title: "独立排期子树",
+        parentRecordId: planRecord.id,
+        iterationAssignmentMode: "independent",
+        iterationId: independentIteration.id,
+        predecessorRecordIds: [],
+      },
+    }),
+    "create independent child",
+  );
+  const independentGrandchild = await json<WorkRecord>(
+    await request.post(`/api/companies/${company.id}/work-records`, {
+      data: {
+        projectId: project.id,
+        kind: "plan",
+        title: "独立边界内孙任务",
+        parentRecordId: independentChild.id,
+        iterationAssignmentMode: "inherit_parent",
+        predecessorRecordIds: [],
+      },
+    }),
+    "create independent grandchild",
+  );
+  const moveTarget = await json<WorkRecord>(
+    await request.post(`/api/companies/${company.id}/work-records`, {
+      data: {
+        projectId: project.id,
+        kind: "plan",
+        title: "换父目标",
+        iterationAssignmentMode: "independent",
+        iterationId: independentIteration.id,
+        predecessorRecordIds: [],
+      },
+    }),
+    "create move target",
   );
   await json(
     await request.post(`/api/companies/${company.id}/work-records`, {
@@ -117,14 +225,17 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
     await expect(page.getByTestId("work-records-main")).toHaveAttribute("data-kind", "plan");
+    await waitForOuterShellToSettle(page, projectName);
     const plan = await readWorkspaceAnchors(page, projectName);
     expect(Math.abs(plan.rail.width - 210), `${viewport.label} 展开侧栏应为 210px`).toBeLessThanOrEqual(1);
     await expect(page.locator(`[data-record-id="${planRecord.id}"]`)).toHaveAttribute("data-tree-depth", "0");
     await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toHaveAttribute("data-tree-depth", "1");
+    await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toHaveAttribute("data-tree-depth", "2");
     await page.getByRole("button", { name: "收起 布局基线任务", exact: true }).click();
     await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toHaveCount(0);
     await page.getByRole("button", { name: "展开 布局基线任务", exact: true }).click();
     await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toBeVisible();
+    await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toBeVisible();
     await screenshot(page, info, `demo-fidelity-plan-wbs-${viewport.label}`);
 
     const recordsBeforeDrawer = await json<unknown[]>(
@@ -170,5 +281,79 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await screenshot(page, info, `demo-fidelity-${viewport.label}`);
+  }
+
+  const { db, url } = await connectToE2eDatabase();
+  try {
+  const beforeNativeCounts = await nativeSideEffectCounts(db, company.id);
+  const expectNoNativeSideEffects = async (label: string) => {
+    expect(await nativeSideEffectCounts(db, company.id), label).toEqual(beforeNativeCounts);
+  };
+  const preserved = {
+    businessStatus: childPlanRecord.businessStatus,
+    assigneeAgentId: childPlanRecord.assigneeAgentId,
+    qaAssigneeAgentId: childPlanRecord.qaAssigneeAgentId,
+    plannedStartDate: childPlanRecord.plannedStartDate,
+    plannedCompletionDate: childPlanRecord.plannedCompletionDate,
+    dispatchState: childPlanRecord.dispatchState,
+    dependencies: childPlanRecord.dependencies,
+  };
+
+  await json<WorkRecord>(
+    await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${planRecord.id}`, {
+      data: { expectedRevision: planRecord.revision, iterationId: changedIteration.id },
+    }),
+    "change parent iteration",
+  );
+  let records = await json<WorkRecord[]>(
+    await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
+    "read records after parent iteration change",
+  );
+  let byId = new Map(records.map((record) => [record.id, record]));
+  expect(byId.get(childPlanRecord.id)).toMatchObject({ iterationAssignmentMode: "inherit_parent", iterationId: changedIteration.id });
+  expect(byId.get(grandchildPlanRecord.id)).toMatchObject({ iterationAssignmentMode: "inherit_parent", iterationId: changedIteration.id });
+  expect(byId.get(independentChild.id)?.iterationId).toBe(independentIteration.id);
+  expect(byId.get(independentGrandchild.id)?.iterationId).toBe(independentIteration.id);
+  await expectNoNativeSideEffects("调整父任务迭代不得创建原生任务、评论、运行或唤醒请求");
+
+  const moved = await json<WorkRecord>(
+    await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${childPlanRecord.id}`, {
+      data: { expectedRevision: byId.get(childPlanRecord.id)!.revision, parentRecordId: moveTarget.id },
+    }),
+    "move inherited child",
+  );
+  expect(moved).toMatchObject({ iterationAssignmentMode: "inherit_parent", iterationId: independentIteration.id });
+  await expectNoNativeSideEffects("移动继承任务不得创建原生任务、评论、运行或唤醒请求");
+  const detached = await json<WorkRecord>(
+    await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${childPlanRecord.id}`, {
+      data: { expectedRevision: moved.revision, parentRecordId: null },
+    }),
+    "detach inherited child",
+  );
+  expect(detached).toMatchObject({ parentRecordId: null, iterationAssignmentMode: "independent", iterationId: independentIteration.id });
+  expect(detached).toMatchObject(preserved);
+  await expectNoNativeSideEffects("解除父级不得创建原生任务、评论、运行或唤醒请求");
+
+  records = await json<WorkRecord[]>(
+    await request.get(`/api/companies/${company.id}/projects/${project.id}/work-records`),
+    "read records after detach",
+  );
+  byId = new Map(records.map((record) => [record.id, record]));
+  expect(byId.get(grandchildPlanRecord.id)).toMatchObject({
+    parentRecordId: childPlanRecord.id,
+    iterationAssignmentMode: "inherit_parent",
+    iterationId: independentIteration.id,
+  });
+
+  await page.goto(`/${company.issuePrefix}/projects/${project.id}/plans`);
+  await page.reload();
+  await expect(page.locator(`[data-record-id="${childPlanRecord.id}"]`)).toHaveAttribute("data-tree-depth", "0");
+  await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toHaveAttribute("data-tree-depth", "1");
+  await expect(page.locator(`[data-record-id="${grandchildPlanRecord.id}"]`)).toContainText("继承 · V1 / 独立排期");
+  await screenshot(page, info, "demo-fidelity-iteration-inheritance-after-refresh");
+
+  await expectNoNativeSideEffects("刷新页面后仍不得出现原生副作用");
+  } finally {
+    await closeRegisteredClients(url);
   }
 });

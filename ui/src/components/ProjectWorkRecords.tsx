@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { l10n } from "@/i18n";
 import { useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordKind, WorkRecordUserResponsibility, WorkRecordUserRole } from "@paperclipai/shared";
+import type { WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordIterationAssignmentMode, WorkRecordKind, WorkRecordUserResponsibility, WorkRecordUserRole } from "@paperclipai/shared";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { agentsApi } from "@/api/agents";
 import { accessApi } from "@/api/access";
@@ -47,6 +47,7 @@ interface RecordDraft {
   packageQaRole: "execution" | "qa";
   qaRetestExemptionReason: string;
   iterationId: string;
+  iterationAssignmentMode: WorkRecordIterationAssignmentMode;
   plannedStartDate: string;
   plannedCompletionDate: string;
   defectSeverity: WorkRecordDefectSeverity | "";
@@ -65,6 +66,7 @@ function blankDraft(): RecordDraft {
     packageQaRole: "execution",
     qaRetestExemptionReason: "",
     iterationId: "",
+    iterationAssignmentMode: "independent",
     plannedStartDate: "",
     plannedCompletionDate: "",
     defectSeverity: "",
@@ -84,6 +86,7 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
     packageQaRole: record.packageQaRole ?? "execution",
     qaRetestExemptionReason: record.qaRetestExemptionReason ?? "",
     iterationId: record.iterationId ?? "",
+    iterationAssignmentMode: record.iterationAssignmentMode ?? (record.parentRecordId ? "inherit_parent" : "independent"),
     plannedStartDate: record.plannedStartDate ?? "",
     plannedCompletionDate: record.plannedCompletionDate ?? "",
     defectSeverity: record.defectSeverity ?? "",
@@ -185,7 +188,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
         assigneeAgentId: draft.assigneeAgentId || null,
         qaAssigneeAgentId: draft.qaAssigneeAgentId || null,
         userResponsibilities: draft.userResponsibilities,
-        iterationId: draft.iterationId || null,
+        iterationAssignmentMode: draft.iterationAssignmentMode,
+        iterationId: draft.iterationAssignmentMode === "inherit_parent" ? null : draft.iterationId || null,
         plannedStartDate: draft.plannedStartDate || null,
         plannedCompletionDate: draft.plannedCompletionDate || null,
         ...(kind === "defect" ? { defectSeverity: draft.defectSeverity || null } : {}),
@@ -321,6 +325,33 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
   const selectableRecords = allRecords.filter((record) => record.id !== editingRecord?.id);
   const parentRecords = selectableRecords.filter((record) => record.kind === "plan");
+  const iterationLabels = useMemo(() => Object.fromEntries((iterations.data ?? []).map((iteration) => {
+    const versionName = (versions.data ?? []).find((version) => version.id === iteration.versionId)?.name;
+    return [iteration.id, versionName ? `${versionName} / ${iteration.name}` : iteration.name];
+  })), [iterations.data, versions.data]);
+  const selectedParent = parentRecords.find((record) => record.id === draft.parentRecordId) ?? null;
+  const changeParent = (parentRecordId: string) => setDraft((current) => {
+    if (!parentRecordId) {
+      return {
+        ...current,
+        parentRecordId: "",
+        iterationAssignmentMode: current.iterationAssignmentMode === "inherit_parent" ? "independent" : current.iterationAssignmentMode,
+      };
+    }
+    const parent = parentRecords.find((record) => record.id === parentRecordId) ?? null;
+    const shouldInherit = editingRecord ? current.iterationAssignmentMode === "inherit_parent" : true;
+    return {
+      ...current,
+      parentRecordId,
+      iterationAssignmentMode: shouldInherit ? "inherit_parent" : current.iterationAssignmentMode,
+      iterationId: shouldInherit ? parent?.iterationId ?? "" : current.iterationId,
+    };
+  });
+  const changeIterationAssignmentMode = (iterationAssignmentMode: WorkRecordIterationAssignmentMode) => setDraft((current) => ({
+    ...current,
+    iterationAssignmentMode,
+    iterationId: iterationAssignmentMode === "inherit_parent" ? selectedParent?.iterationId ?? "" : current.iterationId,
+  }));
   const userLabels = buildCompanyUserLabelMap(users.data?.users);
   const toggleUserRole = (userId: string, role: WorkRecordUserRole, checked: boolean) => setDraft((current) => ({
     ...current,
@@ -376,10 +407,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
               records={allRecords}
               visibleKind={kind}
               agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))}
-              iterationLabels={Object.fromEntries((iterations.data ?? []).map((iteration) => {
-                const versionName = (versions.data ?? []).find((version) => version.id === iteration.versionId)?.name;
-                return [iteration.id, versionName ? `${versionName} / ${iteration.name}` : iteration.name];
-              }))}
+              iterationLabels={iterationLabels}
               recordsLoading={records.isLoading}
               recordsError={records.error}
               onRetryRecords={() => records.refetch()}
@@ -425,18 +453,43 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
             <label className="space-y-1 text-sm font-medium">
               <span>{l10n("local.work_record_parent_plan")}</span>
-              <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.parentRecordId} onChange={(event) => setDraft((current) => ({ ...current, parentRecordId: event.target.value }))}>
+              <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.parentRecordId} onChange={(event) => changeParent(event.target.value)}>
                 <option value="">{l10n("local.work_record_no_parent_plan")}</option>
                 {parentRecords.map((record) => <option key={record.id} value={record.id}>{record.title}</option>)}
               </select>
             </label>
 
             <label className="space-y-1 text-sm font-medium">
+              <span>{l10n("local.work_record_iteration_assignment")}</span>
+              <select
+                aria-label={l10n("local.work_record_iteration_assignment")}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={draft.iterationAssignmentMode}
+                disabled={!draft.parentRecordId}
+                onChange={(event) => changeIterationAssignmentMode(event.target.value as WorkRecordIterationAssignmentMode)}
+              >
+                <option value="independent">{l10n("local.work_record_iteration_independent")}</option>
+                {draft.parentRecordId ? <option value="inherit_parent">{l10n("local.work_record_iteration_inherit_parent")}</option> : null}
+              </select>
+            </label>
+
+            <label className="space-y-1 text-sm font-medium">
               <span>{l10n("local.work_record_iteration")}</span>
-              <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={draft.iterationId} onChange={(event) => setDraft((current) => ({ ...current, iterationId: event.target.value }))}>
+              <select
+                aria-label={l10n("local.work_record_iteration")}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:bg-muted"
+                value={draft.iterationId}
+                disabled={draft.iterationAssignmentMode === "inherit_parent"}
+                onChange={(event) => setDraft((current) => ({ ...current, iterationId: event.target.value }))}
+              >
                 <option value="">{l10n("local.work_record_unassigned_iteration")}</option>
                 {(iterations.data ?? []).filter((iteration) => !iteration.archivedAt).map((iteration) => <option key={iteration.id} value={iteration.id}>{iteration.name}</option>)}
               </select>
+              {draft.iterationAssignmentMode === "inherit_parent" ? <span className="block text-xs font-normal text-muted-foreground" data-testid="work-record-inherited-iteration-help">
+                {l10n("local.work_record_iteration_inherited_help", {
+                  iteration: selectedParent?.iterationId ? iterationLabels[selectedParent.iterationId] ?? l10n("local.work_record_unassigned_iteration") : l10n("local.work_record_unassigned_iteration"),
+                })}
+              </span> : null}
             </label>
 
             {kind === "defect" ? <label className="space-y-1 text-sm font-medium">

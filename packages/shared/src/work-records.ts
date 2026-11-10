@@ -58,6 +58,10 @@ const workRecordUserResponsibilitySchema = z.object({
   role: z.enum(WORK_RECORD_USER_ROLES),
 }).strict();
 export const WORK_RECORD_DEFECT_SEVERITIES = ["critical", "high", "medium", "low"] as const;
+export const WORK_RECORD_ITERATION_ASSIGNMENT_MODES = [
+  "inherit_parent",
+  "independent",
+] as const;
 export const WORK_RECORD_BUSINESS_STATUSES = [
   "backlog",
   "todo",
@@ -91,6 +95,8 @@ export const WORK_RECORD_HOLD_REASONS = [
 
 export type WorkRecordKind = (typeof WORK_RECORD_KINDS)[number];
 export type WorkRecordDefectSeverity = (typeof WORK_RECORD_DEFECT_SEVERITIES)[number];
+export type WorkRecordIterationAssignmentMode =
+  (typeof WORK_RECORD_ITERATION_ASSIGNMENT_MODES)[number];
 export type WorkRecordBusinessStatus = (typeof WORK_RECORD_BUSINESS_STATUSES)[number];
 export type WorkRecordDispatchState = (typeof WORK_RECORD_DISPATCH_STATES)[number];
 export type WorkRecordHoldReason = (typeof WORK_RECORD_HOLD_REASONS)[number];
@@ -271,13 +277,14 @@ const workRecordDefectFields = {
   defectSeverity: z.enum(WORK_RECORD_DEFECT_SEVERITIES).optional().nullable(),
 };
 
-export const createWorkRecordSchema = z.object({
+const createWorkRecordObjectSchema = z.object({
   projectId: z.string().guid(),
   kind: z.enum(WORK_RECORD_KINDS),
   title: z.string().trim().min(1).max(500),
   description: z.string().max(100_000).optional().nullable(),
   parentRecordId: z.string().guid().optional().nullable(),
   iterationId: z.string().guid().optional().nullable(),
+  iterationAssignmentMode: z.enum(WORK_RECORD_ITERATION_ASSIGNMENT_MODES).optional(),
   assigneeAgentId: z.string().guid().optional().nullable(),
   qaAssigneeAgentId: z.string().guid().optional().nullable(),
   userResponsibilities: z.array(workRecordUserResponsibilitySchema).max(30).optional(),
@@ -293,7 +300,21 @@ export const createWorkRecordSchema = z.object({
   if (value.kind !== "defect" && Object.keys(workRecordDefectFields).some((field) => value[field as keyof typeof value] != null)) {
     context.addIssue({ code: "custom", message: "Defect fields require a defect record", path: ["kind"] });
   }
-});
+  const iterationAssignmentMode = value.iterationAssignmentMode ??
+    (value.parentRecordId ? "inherit_parent" : "independent");
+  if (iterationAssignmentMode === "inherit_parent" && !value.parentRecordId) {
+    context.addIssue({ code: "custom", message: "Iteration inheritance requires a parent record", path: ["parentRecordId"] });
+  }
+  if (iterationAssignmentMode === "inherit_parent" && value.iterationId != null) {
+    context.addIssue({ code: "custom", message: "Inherited records cannot set an iteration directly", path: ["iterationId"] });
+  }
+}).transform((value) => ({
+  ...value,
+  iterationAssignmentMode:
+    value.iterationAssignmentMode ?? (value.parentRecordId ? "inherit_parent" : "independent"),
+}));
+
+export const createWorkRecordSchema = createWorkRecordObjectSchema;
 
 export const updateWorkRecordSchema = z.object({
   expectedRevision: z.number().int().positive(),
@@ -303,6 +324,7 @@ export const updateWorkRecordSchema = z.object({
   businessStatus: z.enum(WORK_RECORD_BUSINESS_STATUSES).optional(),
   parentRecordId: z.string().guid().optional().nullable(),
   iterationId: z.string().guid().optional().nullable(),
+  iterationAssignmentMode: z.enum(WORK_RECORD_ITERATION_ASSIGNMENT_MODES).optional(),
   assigneeAgentId: z.string().guid().optional().nullable(),
   qaAssigneeAgentId: z.string().guid().optional().nullable(),
   userResponsibilities: z.array(workRecordUserResponsibilitySchema).max(30).optional(),
@@ -317,6 +339,13 @@ export const updateWorkRecordSchema = z.object({
 }).refine((value) => !value.plannedStartDate || !value.plannedCompletionDate || value.plannedStartDate <= value.plannedCompletionDate, {
   message: "Planned start date must not be after planned completion date",
   path: ["plannedCompletionDate"],
+}).superRefine((value, context) => {
+  if (value.iterationAssignmentMode === "inherit_parent" && value.parentRecordId === null) {
+    context.addIssue({ code: "custom", message: "Iteration inheritance requires a parent record", path: ["parentRecordId"] });
+  }
+  if (value.iterationAssignmentMode === "inherit_parent" && value.iterationId != null) {
+    context.addIssue({ code: "custom", message: "Inherited records cannot set an iteration directly", path: ["iterationId"] });
+  }
 });
 
 const workRecordDependencyVersionSchema = z.object({
@@ -399,7 +428,7 @@ export const updateProjectIterationSchema = z.object({
   path: ["endsOn"],
 });
 
-export type CreateWorkRecord = z.infer<typeof createWorkRecordSchema>;
+export type CreateWorkRecord = z.input<typeof createWorkRecordSchema>;
 export type UpdateWorkRecord = z.infer<typeof updateWorkRecordSchema>;
 export type MutateWorkRecordDependency = z.infer<typeof mutateWorkRecordDependencySchema>;
 export type DispatchWorkRecord = z.infer<typeof dispatchWorkRecordSchema>;
@@ -492,6 +521,7 @@ export interface WorkRecord {
   descriptionRevision: number;
   parentRecordId: string | null;
   iterationId: string | null;
+  iterationAssignmentMode: WorkRecordIterationAssignmentMode;
   plannedStartDate: string | null;
   plannedCompletionDate: string | null;
   defectSeverity: WorkRecordDefectSeverity | null;

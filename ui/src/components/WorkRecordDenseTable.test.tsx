@@ -24,7 +24,7 @@ function record(id: string, title: string, overrides: Partial<WorkRecord> = {}):
   const now = new Date("2026-11-10T00:00:00Z");
   return {
     id, companyId: "company-1", projectId: "project-1", kind: "plan", title,
-    description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null,
+    description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [], packageQaRole: null,
     qaRetestExemptionReason: null, qaCoverageRecordIds: [], businessStatus: "backlog",
@@ -74,10 +74,10 @@ describe("WorkRecordDenseTable WBS", () => {
     vi.clearAllMocks();
   });
 
-  async function render(kind: WorkRecordViewKind, records: WorkRecord[], onChecked = vi.fn()) {
+  async function render(kind: WorkRecordViewKind, records: WorkRecord[], onChecked = vi.fn(), iterationLabels: Record<string, string> = {}) {
     await act(async () => root.render(
       <QueryClientProvider client={client}>
-        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} selectedId={null} checked={[]} onSelect={vi.fn()} onChecked={onChecked} beforeViewSwitch={async () => true} />
+        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} selectedId={null} checked={[]} onSelect={vi.fn()} onChecked={onChecked} beforeViewSwitch={async () => true} />
       </QueryClientProvider>,
     ));
     await flush();
@@ -126,5 +126,19 @@ describe("WorkRecordDenseTable WBS", () => {
 
     expect(container.querySelector('[data-record-id="defect-child"]')?.getAttribute("data-tree-depth")).toBe("0");
     expect(container.querySelector('button[aria-label^="收起 "]')).toBeNull();
+  });
+
+  it("marks inherited iteration values without combining them with other fields", async () => {
+    const inherited = record("child", "程序开发", {
+      parentRecordId: "root",
+      iterationId: "iteration-a",
+      iterationAssignmentMode: "inherit_parent",
+    });
+    const rootRecord = record("root", "工作包", { iterationId: "iteration-a" });
+    await render("plan", [rootRecord, inherited], vi.fn(), { "iteration-a": "V1 / 迭代 A" });
+
+    const childRow = container.querySelector('[data-record-id="child"]');
+    expect(childRow?.textContent).toContain("继承 · V1 / 迭代 A");
+    expect(childRow?.textContent).not.toContain("程序开发 · V1");
   });
 });

@@ -31,7 +31,10 @@ function value(record: WorkRecord, field: WorkRecordViewField, agentNames: Recor
     case "id": return record.id;
     case "title": return record.title;
     case "description": return record.description ?? "";
-    case "iteration": return record.iterationId ? iterationLabels[record.iterationId] ?? "未知迭代" : "未分配";
+    case "iteration": {
+      const label = record.iterationId ? iterationLabels[record.iterationId] ?? "未知迭代" : "未分配";
+      return record.iterationAssignmentMode === "inherit_parent" ? `继承 · ${label}` : label;
+    }
     case "plannedStartDate": return record.plannedStartDate ?? "—";
     case "plannedCompletionDate": return record.plannedCompletionDate ?? "—";
     case "assignee": return record.assigneeAgentId ? agentNames[record.assigneeAgentId] ?? "未知" : "未分配";

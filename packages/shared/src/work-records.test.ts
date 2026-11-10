@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createWorkRecordSchema, defaultWorkRecordViewConfig, updateWorkRecordSchema, validateWorkRecordViewConfig } from "./work-records.js";
+import {
+  WORK_RECORD_ITERATION_ASSIGNMENT_MODES,
+  createWorkRecordSchema,
+  defaultWorkRecordViewConfig,
+  updateWorkRecordSchema,
+  validateWorkRecordViewConfig,
+} from "./work-records.js";
 
 describe("G1 work-record planning and defect fields", () => {
   const projectId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -59,5 +65,69 @@ describe("Gantt personal view configuration", () => {
 describe("dense work-record defaults", () => {
   it.each(["plan", "defect"] as const)("uses compact rows for the built-in %s view", (kind) => {
     expect(defaultWorkRecordViewConfig(kind).density).toBe("compact");
+  });
+});
+
+describe("work-record iteration assignment contract", () => {
+  const projectId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const parentRecordId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const iterationId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+  it("exposes only inherit-parent and independent modes", () => {
+    expect(WORK_RECORD_ITERATION_ASSIGNMENT_MODES).toEqual([
+      "inherit_parent",
+      "independent",
+    ]);
+  });
+
+  it("defaults top-level records to independent and child records to inherit-parent", () => {
+    expect(createWorkRecordSchema.parse({
+      projectId,
+      kind: "plan",
+      title: "Top-level work package",
+    }).iterationAssignmentMode).toBe("independent");
+
+    expect(createWorkRecordSchema.parse({
+      projectId,
+      kind: "plan",
+      title: "Inherited child",
+      parentRecordId,
+    }).iterationAssignmentMode).toBe("inherit_parent");
+  });
+
+  it("rejects inheritance without a parent and an explicit iteration on inherited records", () => {
+    expect(createWorkRecordSchema.safeParse({
+      projectId,
+      kind: "plan",
+      title: "Parentless inheritance",
+      iterationAssignmentMode: "inherit_parent",
+    }).success).toBe(false);
+    expect(createWorkRecordSchema.safeParse({
+      projectId,
+      kind: "plan",
+      title: "Conflicting inherited child",
+      parentRecordId,
+      iterationAssignmentMode: "inherit_parent",
+      iterationId,
+    }).success).toBe(false);
+  });
+
+  it("accepts switching an existing record to independent with an explicit iteration", () => {
+    expect(updateWorkRecordSchema.parse({
+      expectedRevision: 3,
+      iterationAssignmentMode: "independent",
+      iterationId,
+    })).toMatchObject({
+      iterationAssignmentMode: "independent",
+      iterationId,
+    });
+  });
+
+  it("rejects an explicit iteration while switching to inheritance", () => {
+    expect(updateWorkRecordSchema.safeParse({
+      expectedRevision: 3,
+      iterationAssignmentMode: "inherit_parent",
+      iterationId,
+    }).success).toBe(false);
   });
 });

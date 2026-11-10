@@ -88,6 +88,10 @@ export const workRecords = pgTable(
     projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
     parentRecordId: uuid("parent_record_id"),
     iterationId: uuid("iteration_id").references(() => projectIterations.id, { onDelete: "set null" }),
+    iterationAssignmentMode: text("iteration_assignment_mode")
+      .$type<"inherit_parent" | "independent">()
+      .notNull()
+      .default("independent"),
     kind: text("kind").$type<"plan" | "defect">().notNull(),
     title: text("title").notNull(),
     description: text("description"),
@@ -143,6 +147,14 @@ export const workRecords = pgTable(
     projectPlannedDatesIdx: index("work_records_project_planned_dates_idx").on(table.companyId, table.projectId, table.plannedStartDate, table.plannedCompletionDate),
     projectDefectSeverityIdx: index("work_records_project_defect_severity_idx").on(table.companyId, table.projectId, table.defectSeverity),
     parentCheck: check("work_records_parent_not_self", sql`${table.parentRecordId} IS NULL OR ${table.parentRecordId} <> ${table.id}`),
+    iterationAssignmentModeCheck: check(
+      "work_records_iteration_assignment_mode_check",
+      sql`${table.iterationAssignmentMode} IN ('inherit_parent', 'independent')`,
+    ),
+    iterationInheritanceParentCheck: check(
+      "work_records_iteration_inheritance_parent_check",
+      sql`${table.iterationAssignmentMode} <> 'inherit_parent' OR ${table.parentRecordId} IS NOT NULL`,
+    ),
     plannedDatesCheck: check("work_records_planned_dates_check", sql`${table.plannedStartDate} IS NULL OR ${table.plannedCompletionDate} IS NULL OR ${table.plannedStartDate} <= ${table.plannedCompletionDate}`),
     defectSeverityCheck: check("work_records_defect_severity_check", sql`${table.defectSeverity} IS NULL OR ${table.defectSeverity} IN ('critical', 'high', 'medium', 'low')`),
     defectFieldsCheck: check("work_records_defect_fields_check", sql`${table.kind} = 'defect' OR ${table.defectSeverity} IS NULL`),

@@ -13,9 +13,19 @@ const listMock = vi.hoisted(() => vi.fn());
 const createMock = vi.hoisted(() => vi.fn());
 const updateMock = vi.hoisted(() => vi.fn());
 const agentsMock = vi.hoisted(() => vi.fn());
+const iterationsMock = vi.hoisted(() => vi.fn());
+const versionsMock = vi.hoisted(() => vi.fn());
+const capabilitiesMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/api/work-records", () => ({
-  workRecordsApi: { list: listMock, create: createMock, update: updateMock },
+  workRecordsApi: {
+    list: listMock,
+    create: createMock,
+    update: updateMock,
+    iterations: iterationsMock,
+    versions: versionsMock,
+    capabilities: capabilitiesMock,
+  },
 }));
 vi.mock("@/api/agents", () => ({ agentsApi: { list: agentsMock } }));
 vi.mock("@/components/WorkPackageConsole", () => ({
@@ -52,7 +62,7 @@ function record(kind: "plan" | "defect", overrides: Partial<WorkRecord> = {}): W
   return {
     id: `${kind}-1`, companyId: "company-1", projectId: "project-1", kind,
     title: kind === "plan" ? "发布计划" : "窄屏缺陷", description: null,
-    descriptionRevision: 1, parentRecordId: null, iterationId: null,
+    descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [], packageQaRole: null,
     qaRetestExemptionReason: null, qaCoverageRecordIds: [],
@@ -81,6 +91,11 @@ function setNativeValue(element: HTMLInputElement | HTMLTextAreaElement, value: 
   element.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+function setSelectValue(element: HTMLSelectElement, value: string) {
+  Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(element, value);
+  element.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
 function button(text: string) {
   const match = [...document.body.querySelectorAll("button")].find((node) => node.textContent?.trim() === text);
   if (!match) throw new Error(`Button not found: ${text}`);
@@ -98,6 +113,12 @@ describe("ProjectWorkRecords", () => {
     await i18n.changeLanguage("zh-CN");
     listMock.mockResolvedValue([plan, defect]);
     agentsMock.mockResolvedValue([]);
+    iterationsMock.mockResolvedValue([
+      { id: "iteration-a", versionId: "version-1", name: "迭代 A", archivedAt: null },
+      { id: "iteration-b", versionId: "version-1", name: "迭代 B", archivedAt: null },
+    ]);
+    versionsMock.mockResolvedValue([{ id: "version-1", name: "V1" }]);
+    capabilitiesMock.mockResolvedValue({ editRecords: { allowed: true }, manageContainers: { allowed: true } });
     createMock.mockResolvedValue(plan);
     updateMock.mockResolvedValue(defect);
     container = document.createElement("div");
@@ -184,6 +205,63 @@ describe("ProjectWorkRecords", () => {
       projectId: "project-1", kind: "plan", title: "Demo 发布说明", description: "只保存，不派发",
     }));
     expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("defaults a new child to its parent iteration and submits inheritance explicitly", async () => {
+    const parent = record("plan", { id: "parent-a", title: "工作包 A", iterationId: "iteration-a" });
+    listMock.mockResolvedValue([parent]);
+    await render("plan");
+    await act(async () => button("新建计划").click());
+    const title = document.body.querySelector('input[placeholder="例如：完成发布说明"]') as HTMLInputElement;
+    const parentSelect = [...document.body.querySelectorAll("select")].find((node) => node.parentElement?.textContent?.includes("上级计划")) as HTMLSelectElement;
+    await act(async () => {
+      setNativeValue(title, "程序开发");
+      setSelectValue(parentSelect, parent.id);
+    });
+
+    const assignment = document.body.querySelector('select[aria-label="迭代归属"]') as HTMLSelectElement;
+    const iteration = document.body.querySelector('select[aria-label="迭代"]') as HTMLSelectElement;
+    expect(assignment.value).toBe("inherit_parent");
+    expect(iteration.disabled).toBe(true);
+    expect(iteration.value).toBe("iteration-a");
+    expect(document.body.textContent).toContain("跟随父任务：V1 / 迭代 A");
+
+    await act(async () => button("保存计划").click());
+    await flush();
+    expect(createMock).toHaveBeenCalledWith("company-1", expect.objectContaining({
+      parentRecordId: parent.id,
+      iterationAssignmentMode: "inherit_parent",
+      iterationId: null,
+    }));
+  });
+
+  it("previews a new parent iteration and freezes it when an inherited child detaches", async () => {
+    const firstParent = record("plan", { id: "parent-a", title: "工作包 A", iterationId: "iteration-a" });
+    const secondParent = record("plan", { id: "parent-b", title: "工作包 B", iterationId: "iteration-b" });
+    const child = record("plan", {
+      id: "child",
+      title: "程序开发",
+      parentRecordId: firstParent.id,
+      iterationId: "iteration-a",
+      iterationAssignmentMode: "inherit_parent",
+    });
+    listMock.mockResolvedValue([child, firstParent, secondParent]);
+    await render("plan");
+    await act(async () => button("编辑测试").click());
+    const parentSelect = [...document.body.querySelectorAll("select")].find((node) => node.parentElement?.textContent?.includes("上级计划")) as HTMLSelectElement;
+    const assignment = document.body.querySelector('select[aria-label="迭代归属"]') as HTMLSelectElement;
+    const iteration = document.body.querySelector('select[aria-label="迭代"]') as HTMLSelectElement;
+
+    await act(async () => setSelectValue(parentSelect, secondParent.id));
+    expect(assignment.value).toBe("inherit_parent");
+    expect(iteration.value).toBe("iteration-b");
+    expect(document.body.textContent).toContain("跟随父任务：V1 / 迭代 B");
+
+    await act(async () => setSelectValue(parentSelect, ""));
+    expect(assignment.value).toBe("independent");
+    expect(assignment.disabled).toBe(true);
+    expect(iteration.disabled).toBe(false);
+    expect(iteration.value).toBe("iteration-b");
   });
 
   it("reopens the same defect record in place", async () => {

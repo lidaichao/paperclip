@@ -109,6 +109,71 @@ function workRecordProjectLockKey(companyId: string, projectId: string) {
   return `work-record-project:${companyId}:${projectId}`;
 }
 
+type WorkRecordRow = typeof workRecords.$inferSelect;
+
+function validateWorkRecordParent(
+  projectRecords: WorkRecordRow[],
+  recordId: string,
+  parentRecordId: string | null,
+) {
+  if (!parentRecordId) return null;
+  const recordById = new Map(projectRecords.map((record) => [record.id, record]));
+  const parent = recordById.get(parentRecordId) ?? null;
+  if (!parent) throw unprocessable("Parent record must belong to the same company and project");
+  const seen = new Set<string>();
+  let cursor: string | null = parentRecordId;
+  while (cursor) {
+    if (cursor === recordId) throw unprocessable("Parent update would create a cycle");
+    if (seen.has(cursor)) throw unprocessable("Parent hierarchy already contains a cycle");
+    seen.add(cursor);
+    cursor = recordById.get(cursor)?.parentRecordId ?? null;
+  }
+  return parent;
+}
+
+async function cascadeInheritedIterations(
+  tx: DbTransaction,
+  companyId: string,
+  projectId: string,
+  projectRecords: WorkRecordRow[],
+  rootRecordId: string,
+  rootIterationId: string | null,
+) {
+  const childrenByParent = new Map<string, WorkRecordRow[]>();
+  for (const record of projectRecords) {
+    if (!record.parentRecordId || record.id === rootRecordId) continue;
+    childrenByParent.set(record.parentRecordId, [
+      ...(childrenByParent.get(record.parentRecordId) ?? []),
+      record,
+    ]);
+  }
+  const pending = [{ id: rootRecordId, iterationId: rootIterationId }];
+  while (pending.length > 0) {
+    const parent = pending.shift()!;
+    for (const child of childrenByParent.get(parent.id) ?? []) {
+      if (child.iterationAssignmentMode !== "inherit_parent") continue;
+      if (child.iterationId !== parent.iterationId) {
+        // Hierarchy changes are serialized by the project lock, while ordinary
+        // field edits only take the record lock. Take the same record lock here
+        // before changing a descendant so a concurrent title/description edit
+        // cannot collapse two successful writes into the same revision.
+        await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(child.id)}, 0))`);
+        await tx.update(workRecords).set({
+          iterationId: parent.iterationId,
+          revision: sql`${workRecords.revision} + 1`,
+          updatedAt: new Date(),
+        }).where(and(
+          eq(workRecords.companyId, companyId),
+          eq(workRecords.projectId, projectId),
+          eq(workRecords.id, child.id),
+        ));
+      }
+      child.iterationId = parent.iterationId;
+      pending.push({ id: child.id, iterationId: parent.iterationId });
+    }
+  }
+}
+
 function releasePayload(record: typeof workRecords.$inferSelect, issueId: string) {
   const payload = {
     issueId,
@@ -690,12 +755,35 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     await assertAssignee(companyId, input.qaAssigneeAgentId);
     const created = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, input.projectId)}, 0))`);
-      await assertActiveIteration(tx, companyId, input.projectId, input.iterationId);
+      const parent = input.parentRecordId
+        ? await tx.select().from(workRecords).where(and(
+            eq(workRecords.companyId, companyId),
+            eq(workRecords.projectId, input.projectId),
+            eq(workRecords.id, input.parentRecordId),
+          )).then((rows) => rows[0] ?? null)
+        : null;
+      if (input.parentRecordId && !parent) {
+        throw unprocessable("Parent record must belong to the same company and project");
+      }
+      const iterationAssignmentMode = input.iterationAssignmentMode
+        ?? (parent ? "inherit_parent" : "independent");
+      if (iterationAssignmentMode === "inherit_parent" && !parent) {
+        throw unprocessable("Iteration inheritance requires a parent record");
+      }
+      if (iterationAssignmentMode === "inherit_parent" && input.iterationId != null) {
+        throw unprocessable("Inherited records cannot set an iteration directly");
+      }
+      const iterationId = iterationAssignmentMode === "inherit_parent"
+        ? parent!.iterationId
+        : input.iterationId ?? null;
+      if (iterationAssignmentMode === "independent") {
+        await assertActiveIteration(tx, companyId, input.projectId, iterationId);
+      }
       await validateUserResponsibilities(tx, companyId, input.userResponsibilities ?? []);
-      const predecessorIds = await assertDependencies(tx, companyId, input.projectId, null, input.predecessorRecordIds);
+      const predecessorIds = await assertDependencies(tx, companyId, input.projectId, null, input.predecessorRecordIds ?? []);
       const [record] = await tx.insert(workRecords).values({
         companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
-        parentRecordId: input.parentRecordId ?? null, iterationId: input.iterationId ?? null,
+        parentRecordId: input.parentRecordId ?? null, iterationId, iterationAssignmentMode,
         plannedStartDate: input.plannedStartDate ?? null, plannedCompletionDate: input.plannedCompletionDate ?? null,
         defectSeverity: input.defectSeverity ?? null,
         assigneeAgentId: input.assigneeAgentId ?? null, qaAssigneeAgentId: input.qaAssigneeAgentId ?? null,
@@ -725,7 +813,10 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     if (input.assigneeAgentId !== undefined) await assertAssignee(companyId, input.assigneeAgentId);
     if (input.qaAssigneeAgentId !== undefined) await assertAssignee(companyId, input.qaAssigneeAgentId);
     const updated = await db.transaction(async (tx) => {
-      if (input.predecessorRecordIds !== undefined || input.qaCoverageRecordIds !== undefined) {
+      const updatesHierarchy = input.parentRecordId !== undefined
+        || input.iterationId !== undefined
+        || input.iterationAssignmentMode !== undefined;
+      if (input.predecessorRecordIds !== undefined || input.qaCoverageRecordIds !== undefined || updatesHierarchy) {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
       }
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordLockKey(recordId)}, 0))`);
@@ -749,7 +840,34 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       if (locked.kind !== "defect" && updatesDefectDetails && leavesDefectDetails) {
         throw unprocessable("Defect fields require a defect record");
       }
-      if (input.iterationId !== undefined) await assertActiveIteration(tx, companyId, projectId, input.iterationId);
+      let nextParentRecordId = locked.parentRecordId;
+      let nextIterationAssignmentMode = locked.iterationAssignmentMode;
+      let nextIterationId = locked.iterationId;
+      let projectRecords: Array<typeof workRecords.$inferSelect> | null = null;
+      if (updatesHierarchy) {
+        projectRecords = await tx.select().from(workRecords).where(and(
+          eq(workRecords.companyId, companyId),
+          eq(workRecords.projectId, projectId),
+        ));
+        nextParentRecordId = input.parentRecordId === undefined ? locked.parentRecordId : input.parentRecordId;
+        nextIterationAssignmentMode = input.iterationAssignmentMode ?? locked.iterationAssignmentMode;
+        if (input.parentRecordId === null
+          && input.iterationAssignmentMode === undefined
+          && locked.iterationAssignmentMode === "inherit_parent") {
+          nextIterationAssignmentMode = "independent";
+        }
+        const parent = validateWorkRecordParent(projectRecords, recordId, nextParentRecordId);
+        if (nextIterationAssignmentMode === "inherit_parent") {
+          if (!parent) throw unprocessable("Iteration inheritance requires a parent record");
+          if (input.iterationId != null) throw unprocessable("Inherited records cannot set an iteration directly");
+          nextIterationId = parent.iterationId;
+        } else {
+          nextIterationId = input.iterationId === undefined ? locked.iterationId : input.iterationId;
+          if (input.iterationId !== undefined) {
+            await assertActiveIteration(tx, companyId, projectId, nextIterationId);
+          }
+        }
+      }
       if (input.packageQaRole !== undefined || input.qaRetestExemptionReason !== undefined) {
         if (locked.kind !== "plan" || !locked.parentRecordId) throw unprocessable("Package QA settings require a plan child");
         if ((input.qaRetestExemptionReason ?? locked.qaRetestExemptionReason) &&
@@ -837,8 +955,11 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(input.title !== undefined ? { title: input.title } : {}),
         ...(input.description !== undefined ? { description: input.description, descriptionRevision: nextDescriptionRevision } : {}),
         ...(input.businessStatus !== undefined ? { businessStatus: input.businessStatus, statusVersion: locked.statusVersion + 1 } : {}),
-        ...(input.parentRecordId !== undefined ? { parentRecordId: input.parentRecordId } : {}),
-        ...(input.iterationId !== undefined ? { iterationId: input.iterationId } : {}),
+        ...(updatesHierarchy ? {
+          parentRecordId: nextParentRecordId,
+          iterationId: nextIterationId,
+          iterationAssignmentMode: nextIterationAssignmentMode,
+        } : {}),
         ...(input.plannedStartDate !== undefined ? { plannedStartDate: input.plannedStartDate } : {}),
         ...(input.plannedCompletionDate !== undefined ? { plannedCompletionDate: input.plannedCompletionDate } : {}),
         ...(input.defectSeverity !== undefined ? { defectSeverity: input.defectSeverity } : {}),
@@ -849,6 +970,16 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(predecessorIds ? { dependencySetRevision: locked.dependencySetRevision + 1 } : {}),
         revision: locked.revision + 1, updatedAt: new Date(),
       }).where(eq(workRecords.id, recordId)).returning();
+      if (updatesHierarchy && projectRecords) {
+        await cascadeInheritedIterations(
+          tx,
+          companyId,
+          projectId,
+          projectRecords,
+          recordId,
+          nextIterationId,
+        );
+      }
       if (input.userResponsibilities !== undefined) {
         await tx.delete(workRecordUserResponsibilities).where(and(
           eq(workRecordUserResponsibilities.companyId, companyId),
