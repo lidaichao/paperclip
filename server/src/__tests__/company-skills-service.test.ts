@@ -789,6 +789,45 @@ describeEmbeddedPostgres("companySkillService.list", () => {
     expect(materializedHashes).not.toHaveProperty("EDITS.md");
   });
 
+  it("keeps company skill reads available when a shipped release differs from its seeded snapshot", async () => {
+    const companyId = randomUUID();
+    await db.insert(companies).values({
+      id: companyId,
+      name: "Paperclip upgrade",
+      issuePrefix: `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
+      requireBoardApprovalForNewAgents: false,
+    });
+
+    const initialList = await svc.list(companyId);
+    const paperclipSkill = initialList.find(
+      (skill) => skill.key === "paperclipai/paperclip/paperclip",
+    );
+    expect(paperclipSkill).toBeDefined();
+    if (!paperclipSkill) throw new Error("Expected bundled Paperclip skill");
+
+    const v0 = (await svc.listVersions(companyId, paperclipSkill.id)).find(
+      (version) => version.releaseId === "v0",
+    );
+    expect(v0).toBeDefined();
+    if (!v0) throw new Error("Expected seeded v0 release");
+
+    const historicalSnapshot = [
+      { path: "SKILL.md", kind: "skill" as const, content: "# Historical v0 snapshot" },
+    ];
+    await db
+      .update(companySkillVersions)
+      .set({ fileInventory: historicalSnapshot })
+      .where(eq(companySkillVersions.id, v0.id));
+
+    await expect(svc.list(companyId)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: paperclipSkill.id })]),
+    );
+    const preserved = await svc.getVersion(companyId, paperclipSkill.id, v0.id);
+    expect(preserved).not.toBeNull();
+    if (!preserved) throw new Error("Expected the historical v0 release to remain available");
+    expect(preserved.fileInventory).toEqual(historicalSnapshot);
+  });
+
   it("repairs a squatted bundled root during bundled-skill list refresh", async () => {
     const companyId = randomUUID();
     await db.insert(companies).values({

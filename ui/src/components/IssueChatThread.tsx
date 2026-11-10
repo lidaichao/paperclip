@@ -119,16 +119,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -1022,10 +1012,6 @@ function shouldImplicitlyReopenComment(
     issueStatus === "cancelled" ||
     issueStatus === "blocked";
   return resumesToTodo && assigneeValue.startsWith("agent:");
-}
-
-function isUnassignedReassignValue(value: string): boolean {
-  return !value || value === "__none__";
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -4638,6 +4624,7 @@ const IssueChatComposer = forwardRef<
   // the stored draft. The effect below handles subsequent task-key changes.
   const [body, setBody] = useState(() => (draftKey ? loadDraft(draftKey) : ""));
   const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState(false);
   const [uncertainSubmission, setUncertainSubmission] =
     useState<ComposerDraftSubmission | null>(() =>
@@ -4663,6 +4650,7 @@ const IssueChatComposer = forwardRef<
     const value = typeof update === "function" ? update(bodyRef.current) : update;
     bodyRef.current = value;
     setBody(value);
+    if (submissionError) setSubmissionError(null);
     const pending = pendingDraftRef.current;
     if (!pending || pending.draftKey !== draftKey ||
         loadDraftSubmission(pending.draftKey)?.attemptId !== pending.attemptId) return;
@@ -4718,7 +4706,6 @@ const IssueChatComposer = forwardRef<
   const [reassignTarget, setReassignTarget] = useState(
     effectiveSuggestedAssigneeValue,
   );
-  const [noAssigneeDialogOpen, setNoAssigneeDialogOpen] = useState(false);
   const [dismissedCoachToken, setDismissedCoachToken] = useState<string | null>(
     null,
   );
@@ -4730,7 +4717,6 @@ const IssueChatComposer = forwardRef<
   const canToggleWorkMode = typeof onWorkModeChange === "function";
   const attachInputRef = useRef<HTMLInputElement | null>(null);
   const reassignTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const focusAssigneeOnDialogCloseRef = useRef(false);
   const editorRef = useRef<MarkdownEditorRef>(null);
   const composerContainerRef = useRef<HTMLDivElement | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -4879,16 +4865,6 @@ const IssueChatComposer = forwardRef<
     )
       return;
 
-    const composerHasAssigneePicker =
-      enableReassign && reassignOptions.length > 0;
-    if (
-      composerHasAssigneePicker &&
-      isUnassignedReassignValue(reassignTarget)
-    ) {
-      setNoAssigneeDialogOpen(true);
-      return;
-    }
-
     await submitComment();
   }
 
@@ -4944,6 +4920,7 @@ const IssueChatComposer = forwardRef<
     );
 
     const workModeChanged = pendingWorkMode !== resolvedIssueWorkMode;
+    setSubmissionError(null);
     if (draftKey) saveDraft(draftKey, trimmed);
     setSubmitting(true);
     bodyRef.current = "";
@@ -4997,6 +4974,13 @@ const IssueChatComposer = forwardRef<
           saveDraftSubmission(draftKey, uncertain);
       } else if (draftKey && attemptId)
         clearDraftSubmission(draftKey, attemptId);
+      if (!(error instanceof CommentSubmissionUnknownError)) {
+        setSubmissionError(
+          error instanceof Error
+            ? error.message
+            : l10n("local.unable_to_post_comment_181529d8"),
+        );
+      }
       const restoredBody = nextDraft ? `${trimmed}\n\n${nextDraft}` : trimmed;
       if (draftKey) saveDraft(draftKey, restoredBody, attemptId ?? undefined);
       setBody(restoredBody);
@@ -5644,44 +5628,15 @@ const IssueChatComposer = forwardRef<
           {stopControl.error}
         </p>
       ) : null}
-
-      {/* No-assignee warning modal (PAP-128 C): replaces the old press-Send-again toast. */}
-      <AlertDialog
-        open={noAssigneeDialogOpen}
-        onOpenChange={setNoAssigneeDialogOpen}
-      >
-        <AlertDialogContent
-          data-testid="issue-chat-no-assignee-dialog"
-          onCloseAutoFocus={(event) => {
-            if (!focusAssigneeOnDialogCloseRef.current) return;
-            event.preventDefault();
-            focusAssigneeOnDialogCloseRef.current = false;
-            reassignTriggerRef.current?.focus();
-          }}
+      {submissionError ? (
+        <p
+          role="alert"
+          data-testid="issue-chat-submission-error"
+          className="mt-2 text-xs text-destructive"
         >
-          <AlertDialogHeader>
-            <AlertDialogTitle>{l10n("local.no_responsible_selected_fd52c10c")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {l10n("local.this_comment_will_be_posted_without_an_assign_fd51a22d")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              data-testid="issue-chat-no-assignee-go-back"
-              onClick={() => {
-                focusAssigneeOnDialogCloseRef.current = true;
-              }}
-            >
-              {l10n("local.go_back_6aadac2f")}</AlertDialogCancel>
-            <AlertDialogAction
-              data-testid="issue-chat-no-assignee-send-anyway"
-              onClick={() => {
-                void submitComment();
-              }}
-            >
-              {l10n("local.send_anyway_3bdd9831")}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          {submissionError}
+        </p>
+      ) : null}
     </div>
   );
 });

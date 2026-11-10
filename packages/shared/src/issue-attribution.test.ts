@@ -53,14 +53,24 @@ describe("deriveOriginatingActor", () => {
     ).toEqual({ kind: "user", id: "user-creator" });
   });
 
-  it("attributes an agent-created issue to the transitive responsible user via the agent", () => {
+  it("attributes an agent-created issue to the agent even when a responsible user exists", () => {
     expect(
       deriveOriginatingActor({
         createdByUserId: null,
         createdByAgentId: "agent-claude",
         responsibleUserId: "user-responsible",
       }),
-    ).toEqual({ kind: "user", id: "user-responsible", viaAgentId: "agent-claude" });
+    ).toEqual({ kind: "agent", id: "agent-claude" });
+  });
+
+  it("prefers the actual agent creator when legacy data contains both creator fields", () => {
+    expect(
+      deriveOriginatingActor({
+        createdByUserId: "user-admin",
+        createdByAgentId: "agent-rabbit",
+        responsibleUserId: "user-admin",
+      }),
+    ).toEqual({ kind: "agent", id: "agent-rabbit" });
   });
 
   it("falls back to the creating agent when no responsible user is known", () => {

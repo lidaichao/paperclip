@@ -3574,6 +3574,10 @@ describe("IssueChatThread", () => {
     await act(async () => send().click());
     const expectedBody = `Inspect the file\n\n[fresh.txt](/api/attachments/${id}/content)`;
     expect(onAdd).toHaveBeenNthCalledWith(1, expectedBody, undefined, undefined, [id], expect.any(String));
+    expect(
+      container.querySelector('[data-testid="issue-chat-submission-error"]')
+        ?.textContent,
+    ).toContain("retry");
     expect(appendMock).not.toHaveBeenCalled();
     await act(async () => root.unmount());
     root = createRoot(container);
@@ -4020,7 +4024,7 @@ describe("IssueChatThread", () => {
     });
   });
 
-  it("opens a warning dialog before sending a reply with no assignee selected and posts on Send anyway", async () => {
+  it("posts a reply immediately when no assignee is selected", async () => {
     const root = createRoot(container);
     const onAdd = vi.fn().mockResolvedValue(undefined);
 
@@ -4068,102 +4072,8 @@ describe("IssueChatThread", () => {
       submitButton?.click();
     });
 
-    expect(onAdd).not.toHaveBeenCalled();
-    const dialog = document.querySelector(
-      '[data-testid="issue-chat-no-assignee-dialog"]',
-    );
-    expect(dialog).not.toBeNull();
-    expect(dialog?.textContent).toContain("No responsible selected");
-    expect(dialog?.textContent).toContain("no agent will be woken");
-
-    const sendAnyway = document.querySelector(
-      '[data-testid="issue-chat-no-assignee-send-anyway"]',
-    ) as HTMLButtonElement | null;
-    expect(sendAnyway).not.toBeNull();
-
-    await act(async () => {
-      sendAnyway?.click();
-    });
-
     expect(onAdd).toHaveBeenCalledTimes(1);
     expect(onAdd).toHaveBeenCalledWith("Reply without assignee", undefined, undefined, undefined, expect.any(String));
-    expect(
-      document.querySelector('[data-testid="issue-chat-no-assignee-dialog"]'),
-    ).toBeNull();
-
-    act(() => {
-      root.unmount();
-    });
-  });
-
-  it("does not post when choosing Go back in the no-assignee warning dialog", async () => {
-    const root = createRoot(container);
-    const onAdd = vi.fn().mockResolvedValue(undefined);
-
-    act(() => {
-      root.render(
-        <MemoryRouter>
-          <IssueChatThread
-            comments={[]}
-            linkedRuns={[]}
-            timelineEvents={[]}
-            liveRuns={[]}
-            onAdd={onAdd}
-            enableReassign
-            reassignOptions={[
-              { id: "", label: "No responsible" },
-              { id: "agent:agent-1", label: "Agent 1" },
-            ]}
-            currentAssigneeValue=""
-            suggestedAssigneeValue=""
-            enableLiveTranscriptPolling={false}
-          />
-        </MemoryRouter>,
-      );
-    });
-
-    const editor = container.querySelector(
-      'textarea[aria-label="Issue chat editor"]',
-    ) as HTMLTextAreaElement | null;
-    const submitButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Send",
-    ) as HTMLButtonElement | undefined;
-
-    act(() => {
-      const valueSetter = Object.getOwnPropertyDescriptor(
-        window.HTMLTextAreaElement.prototype,
-        "value",
-      )?.set;
-      valueSetter?.call(editor, "Reply without assignee");
-      editor?.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    await act(async () => {
-      submitButton?.click();
-    });
-
-    expect(
-      document.querySelector('[data-testid="issue-chat-no-assignee-dialog"]'),
-    ).not.toBeNull();
-
-    const goBack = document.querySelector(
-      '[data-testid="issue-chat-no-assignee-go-back"]',
-    ) as HTMLButtonElement | null;
-    expect(goBack).not.toBeNull();
-
-    await act(async () => {
-      goBack?.click();
-    });
-
-    expect(onAdd).not.toHaveBeenCalled();
-    expect(
-      document.querySelector('[data-testid="issue-chat-no-assignee-dialog"]'),
-    ).toBeNull();
-    // The composer keeps the draft so the user can pick a responsible and resend.
-    const editorAfter = container.querySelector(
-      'textarea[aria-label="Issue chat editor"]',
-    ) as HTMLTextAreaElement | null;
-    expect(editorAfter?.value).toBe("Reply without assignee");
 
     act(() => {
       root.unmount();

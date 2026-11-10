@@ -3046,7 +3046,22 @@ export function companySkillService(db: Db) {
           sha256: sha256Buffer(entry.content),
         })));
         if (existingHash !== registryHash) {
-          throw new Error(`Bundled skill release ${release.id} does not match its seeded snapshot.`);
+          // Releases already persisted in an instance are immutable historical
+          // records. A later application image may accidentally ship different
+          // bytes under the same release id; that packaging defect must be
+          // visible, but it must not make every company-skills read fail with
+          // HTTP 500. Keep serving the trusted database snapshot and warn so
+          // the release manifest can be corrected in a subsequent build.
+          logger.warn(
+            {
+              companyId,
+              skillId: paperclipSkill.id,
+              releaseId: release.id,
+              existingHash,
+              registryHash,
+            },
+            "Bundled skill release differs from its seeded snapshot; preserving the existing immutable release",
+          );
         }
         continue;
       }
