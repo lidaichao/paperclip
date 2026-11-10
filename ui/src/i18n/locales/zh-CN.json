@@ -14214,6 +14214,7 @@
     "work_record_no_iteration": "未归属",
     "work_record_plan_dates": "计划日期",
     "work_record_date_range": "{{start}} 至 {{end}}",
-    "work_record_date_unset": "未定"
+    "work_record_date_unset": "未定",
+    "browser_task_creator_identity_note": "此网页会以当前登录账号创建任务；需要保留智能体本人署名时，请让该智能体通过 Paperclip 创建。"
   }
 }

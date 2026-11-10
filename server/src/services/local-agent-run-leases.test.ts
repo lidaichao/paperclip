@@ -1086,7 +1086,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .set("Idempotency-Key", createKey)
       .send({ title: "Ordinary-session acceptance card", status: "backlog",
         assigneeAgentId: scope.agentId }).expect(201);
-    expect(created.body.createdByAgentId).toBe(scope.agentId);
+    expect(created.body).toMatchObject({
+      createdByAgentId: scope.agentId,
+      createdByUserId: null,
+    });
     expect(created.body.sessionWriteDispatchDeferred).toBe(true);
     const replay = await request(app).post(`/api/companies/${scope.companyId}/issues`)
       .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
@@ -1099,6 +1102,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
       .set("Idempotency-Key", randomUUID()).send({ body: "Acceptance comment" });
     expect(comment.status, JSON.stringify(comment.body)).toBe(201);
+    expect(comment.body).toMatchObject({
+      authorAgentId: scope.agentId,
+      authorUserId: null,
+    });
     await request(app).patch(`/api/issues/${created.body.id}`)
       .set(auth).set("X-Paperclip-Session-Write", grant.body.token)
       .set("Idempotency-Key", randomUUID()).send({ priority: "high" }).expect(200);
@@ -1108,8 +1115,13 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     ));
     expect(stored).toHaveLength(1);
     expect(stored[0]).toMatchObject({ priority: "high", createdByAgentId: scope.agentId });
-    expect(await db.select().from(issueComments).where(eq(issueComments.issueId, created.body.id)))
-      .toHaveLength(1);
+    const storedComments = await db.select().from(issueComments)
+      .where(eq(issueComments.issueId, created.body.id));
+    expect(storedComments).toHaveLength(1);
+    expect(storedComments[0]).toMatchObject({
+      authorAgentId: scope.agentId,
+      authorUserId: null,
+    });
 
     const assignedTodo = await request(app).post(`/api/companies/${scope.companyId}/issues`)
       .set(auth).set("X-Paperclip-Session-Write", grant.body.token)

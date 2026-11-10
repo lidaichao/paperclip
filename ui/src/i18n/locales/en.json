@@ -14214,6 +14214,7 @@
     "work_record_no_iteration": "No iteration",
     "work_record_plan_dates": "Planned dates",
     "work_record_date_range": "{{start}} to {{end}}",
-    "work_record_date_unset": "Not set"
+    "work_record_date_unset": "Not set",
+    "browser_task_creator_identity_note": "This browser creates the task as the signed-in account. To preserve agent authorship, ask the agent to create it through Paperclip."
   }
 }

@@ -385,6 +385,19 @@ describe("NewIssueDialog", () => {
     document.body.innerHTML = "";
   });
 
+  it("explains that browser-created tasks use the signed-in user identity", async () => {
+    const { root } = renderDialog(container);
+    await flush();
+
+    const note = container.querySelector(
+      '[data-testid="new-issue-creator-identity-note"]',
+    );
+    expect(note?.textContent).toContain("signed-in account");
+    expect(note?.textContent).toContain("agent authorship");
+
+    act(() => root.unmount());
+  });
+
   it("shows sub-issue context only when opened from a sub-issue action", async () => {
     dialogState.newIssueDefaults = {
       parentId: "issue-1",

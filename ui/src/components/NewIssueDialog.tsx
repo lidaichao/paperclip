@@ -2305,6 +2305,13 @@ export function NewIssueDialog() {
           </div>
         ) : null}
 
+        <div
+          data-testid="new-issue-creator-identity-note"
+          className="px-4 pb-1 text-(length:--text-nano) leading-snug text-muted-foreground"
+        >
+          {l10n("local.browser_task_creator_identity_note")}
+        </div>
+
         {/* Footer */}
         <div className="flex items-center justify-between px-4 py-2.5 border-t border-border shrink-0">
           <Button
