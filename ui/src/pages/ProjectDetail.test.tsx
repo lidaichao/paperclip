@@ -118,10 +118,11 @@ vi.mock("../components/ProjectWorkRecords", () => ({
     kind: "plan" | "defect";
     viewMode?: "table" | "gantt";
     railOpen?: boolean;
+    topNavigation?: ReactNode;
     onRailOpenChange?: (open: boolean) => void;
   }) => {
     mockProjectWorkRecords(props);
-    return <div data-testid="project-work-records" data-kind={props.kind} data-rail-open={String(props.railOpen)} />;
+    return <div data-testid="project-work-records" data-kind={props.kind} data-rail-open={String(props.railOpen)}>{props.topNavigation}</div>;
   },
 }));
 

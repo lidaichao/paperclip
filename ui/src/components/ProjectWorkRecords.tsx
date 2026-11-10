@@ -472,7 +472,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
             {reopen.error ? <p role="alert" className="mb-3 text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
 
             {viewMode === "gantt" ? (
-              <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} writable={recordWritable} onOpen={(record, source) => { void selectRecord(record, source); }} />
+              <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))} writable={recordWritable} onOpen={(record, source) => { void selectRecord(record, source); }} />
             ) : (
               <WorkPackageConsole
                 companyId={companyId}
