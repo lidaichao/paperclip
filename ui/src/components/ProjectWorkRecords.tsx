@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { l10n } from "@/i18n";
 import { useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { IssuePriority, WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordIterationAssignmentMode, WorkRecordKind, WorkRecordUserResponsibility, WorkRecordUserRole } from "@paperclipai/shared";
+import type { IssuePriority, WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordIterationAssignmentMode, WorkRecordKind, WorkRecordUserRole } from "@paperclipai/shared";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { agentsApi } from "@/api/agents";
 import { accessApi } from "@/api/access";
+import { useAccountIdentity } from "@/api/companies-query";
 import { buildCompanyUserLabelMap } from "@/lib/company-members";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
@@ -24,6 +25,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { WorkPackageConsole } from "@/components/WorkPackageConsole";
 import { WorkRecordContainerTree } from "@/components/WorkRecordContainerTree";
 import { WorkRecordGantt } from "@/components/WorkRecordGantt";
+import { useWorkRecordAutosave } from "@/hooks/use-work-record-autosave";
+import {
+  emptyWorkRecordDraft,
+  workRecordEditorDraftFromRecord,
+  type WorkRecordDraftField,
+  type WorkRecordEditorDraft,
+} from "@/lib/work-record-autosave";
 
 const BUSINESS_STATUS_OPTIONS: Array<{ value: WorkRecordBusinessStatus; labelKey: string }> = [
   { value: "backlog", labelKey: "local.backlog_bf986e9a" },
@@ -35,68 +43,32 @@ const BUSINESS_STATUS_OPTIONS: Array<{ value: WorkRecordBusinessStatus; labelKey
   { value: "cancelled", labelKey: "local.cancelled_d353a99e" },
 ];
 
-interface RecordDraft {
-  title: string;
-  description: string;
-  businessStatus: WorkRecordBusinessStatus;
-  assigneeAgentId: string;
-  qaAssigneeAgentId: string;
-  userResponsibilities: WorkRecordUserResponsibility[];
-  parentRecordId: string;
-  predecessorRecordIds: string[];
-  packageQaRole: "execution" | "qa";
-  qaRetestExemptionReason: string;
-  iterationId: string;
-  iterationAssignmentMode: WorkRecordIterationAssignmentMode;
-  plannedStartDate: string;
-  plannedCompletionDate: string;
-  priority: IssuePriority;
-  defectSeverity: WorkRecordDefectSeverity | "";
-  foundInVersionId: string;
+const DRAFT_FIELD_LABELS: Record<WorkRecordDraftField, string> = {
+  title: "标题", description: "描述", businessStatus: "状态", assigneeAgentId: "执行人", qaAssigneeAgentId: "QA / 验收者",
+  userResponsibilities: "人工责任", parentRecordId: "上级计划", predecessorRecordIds: "前置记录", packageQaRole: "工作包角色",
+  qaRetestExemptionReason: "QA 复测豁免原因", iterationId: "迭代", iterationAssignmentMode: "迭代归属",
+  plannedStartDate: "计划开始", plannedCompletionDate: "计划完成", priority: "优先级", defectSeverity: "严重度", foundInVersionId: "发现版本",
+};
+
+function summarizeConflictGroup(draft: RecordDraft, fields: WorkRecordDraftField[]) {
+  const summary = fields.map((field) => {
+    const value = draft[field];
+    const text = Array.isArray(value)
+      ? value.map((item) => typeof item === "string" ? item : `${item.userId}:${item.role}`).join(", ")
+      : String(value || "未设置");
+    return `${DRAFT_FIELD_LABELS[field]}：${text}`;
+  }).join("；");
+  return summary.length > 240 ? `${summary.slice(0, 240)}…` : summary;
 }
 
+type RecordDraft = WorkRecordEditorDraft;
+
 function blankDraft(): RecordDraft {
-  return {
-    title: "",
-    description: "",
-    businessStatus: "backlog",
-    assigneeAgentId: "",
-    qaAssigneeAgentId: "",
-    userResponsibilities: [],
-    parentRecordId: "",
-    predecessorRecordIds: [],
-    packageQaRole: "execution",
-    qaRetestExemptionReason: "",
-    iterationId: "",
-    iterationAssignmentMode: "independent",
-    plannedStartDate: "",
-    plannedCompletionDate: "",
-    priority: "medium",
-    defectSeverity: "",
-    foundInVersionId: "",
-  };
+  return emptyWorkRecordDraft();
 }
 
 function draftFromRecord(record: WorkRecord): RecordDraft {
-  return {
-    title: record.title,
-    description: record.description ?? "",
-    businessStatus: record.businessStatus,
-    assigneeAgentId: record.assigneeAgentId ?? "",
-    qaAssigneeAgentId: record.qaAssigneeAgentId ?? "",
-    userResponsibilities: record.userResponsibilities,
-    parentRecordId: record.parentRecordId ?? "",
-    predecessorRecordIds: record.dependencies.map((dependency) => dependency.predecessorRecordId),
-    packageQaRole: record.packageQaRole ?? "execution",
-    qaRetestExemptionReason: record.qaRetestExemptionReason ?? "",
-    iterationId: record.iterationId ?? "",
-    iterationAssignmentMode: record.iterationAssignmentMode ?? (record.parentRecordId ? "inherit_parent" : "independent"),
-    plannedStartDate: record.plannedStartDate ?? "",
-    plannedCompletionDate: record.plannedCompletionDate ?? "",
-    priority: record.priority,
-    defectSeverity: record.defectSeverity ?? "",
-    foundInVersionId: record.foundInVersionId ?? "",
-  };
+  return workRecordEditorDraftFromRecord(record);
 }
 
 export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "table", railOpen, onRailOpenChange, onNavigationGuardChange }: {
@@ -134,7 +106,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     if (onRailOpenChange) onRailOpenChange(open);
     else setInternalRailOpen(open);
   };
-  const recordsKey = queryKeys.workRecords.list(companyId, projectId);
+  const recordsKey = useMemo(() => queryKeys.workRecords.list(companyId, projectId), [companyId, projectId]);
   const records = useQuery({
     queryKey: recordsKey,
     queryFn: () => workRecordsApi.list(companyId, projectId),
@@ -176,9 +148,38 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
     [allRecords, kind, visibleRecordIds],
   );
   const kindLabel = kind === "plan" ? l10n("local.work_record_plan") : l10n("local.work_record_defect");
-  const businessDraftDirty = dialogOpen && JSON.stringify(draft) !== JSON.stringify(editingRecord ? draftFromRecord(editingRecord) : blankDraft());
   const editCapability = capabilities.data?.editRecords;
-  const recordWritable = editCapability?.allowed !== false;
+  const accountIdentity = useAccountIdentity();
+  const autosavePrincipalId = accountIdentity.settled ? accountIdentity.userId : null;
+  const recordWritable = editCapability?.allowed === true && Boolean(autosavePrincipalId);
+  const onAutosaveSaved = useCallback((saved: WorkRecord) => {
+    setEditingRecord((current) => current?.id === saved.id ? saved : current);
+    queryClient.setQueryData<WorkRecord[] | undefined>(recordsKey, (current) => current?.map((record) => record.id === saved.id ? saved : record));
+  }, [queryClient, recordsKey]);
+  const autosave = useWorkRecordAutosave({
+    companyId,
+    projectId,
+    kind,
+    principalId: autosavePrincipalId,
+    record: editingRecord,
+    draft,
+    setDraft,
+    enabled: dialogOpen && Boolean(editingRecord) && recordWritable,
+    onSaved: onAutosaveSaved,
+  });
+  const fallbackEditingDirty = Boolean(editingRecord) && JSON.stringify(draft) !== JSON.stringify(draftFromRecord(editingRecord!));
+  const businessDraftDirty = dialogOpen && (editingRecord
+    ? (autosavePrincipalId ? autosave.isDirty : fallbackEditingDirty)
+    : JSON.stringify(draft) !== JSON.stringify(blankDraft()));
+
+  useEffect(() => {
+    if (!editingRecord) return;
+    const latest = allRecords.find((record) => record.id === editingRecord.id);
+    if (!latest) return;
+    if (latest.revision > editingRecord.revision || latest.dependencySetRevision > editingRecord.dependencySetRevision) {
+      setEditingRecord(latest);
+    }
+  }, [allRecords, editingRecord?.dependencySetRevision, editingRecord?.id, editingRecord?.revision]);
 
   useEffect(() => {
     setContainerScope("pool");
@@ -207,9 +208,10 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
 
   const save = useMutation({
     mutationFn: async () => {
+      if (editingRecord) throw new Error("Existing records are saved through the revision-aware autosave queue");
       const shared = {
         title: draft.title.trim(),
-        description: draft.description.trim() || null,
+        description: draft.description === "" ? null : draft.description,
         parentRecordId: draft.parentRecordId || null,
         assigneeAgentId: draft.assigneeAgentId || null,
         qaAssigneeAgentId: draft.qaAssigneeAgentId || null,
@@ -225,20 +227,6 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
           qaRetestExemptionReason: draft.packageQaRole === "execution" ? draft.qaRetestExemptionReason.trim() || null : null,
         } : {}),
       };
-      if (editingRecord) {
-        const originalPredecessors = editingRecord.dependencies.map((dependency) => dependency.predecessorRecordId).sort();
-        const nextPredecessors = [...draft.predecessorRecordIds].sort();
-        const dependenciesChanged = JSON.stringify(originalPredecessors) !== JSON.stringify(nextPredecessors);
-        return workRecordsApi.update(companyId, projectId, editingRecord.id, {
-          expectedRevision: editingRecord.revision,
-          ...shared,
-          ...(dependenciesChanged ? {
-            predecessorRecordIds: draft.predecessorRecordIds,
-            dependencySetRevision: editingRecord.dependencySetRevision,
-          } : {}),
-          businessStatus: draft.businessStatus,
-        });
-      }
       return workRecordsApi.create(companyId, { projectId, kind, ...shared, predecessorRecordIds: draft.predecessorRecordIds });
     },
     onSuccess: async () => {
@@ -246,13 +234,24 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       await queryClient.invalidateQueries({ queryKey: recordsKey });
     },
   });
-  const recordSaveState = save.isPending
-    ? "saving"
-    : save.isError
-      ? "failed"
-      : businessDraftDirty || !editingRecord
-        ? "unsaved"
-        : "saved";
+  const saveCurrent = useCallback(async (closeAfterSave = true) => {
+    if (!editingRecord) {
+      await save.mutateAsync();
+      return true;
+    }
+    const saved = await autosave.flush();
+    if (!saved) return false;
+    if (closeAfterSave) closeDialog(true);
+    return true;
+  // `save` is a stable mutation object; draft/editing changes are intentionally captured.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autosave.flush, editingRecord, draft]);
+  const recordSaveState = editingRecord
+    ? autosave.status
+    : save.isPending ? "saving" : save.isError ? "failed" : "unsaved";
+  const recordSaving = save.isPending || autosave.status === "saving" || autosave.status === "queued";
+  const recordSaveError = editingRecord ? autosave.error : save.error;
+  const autosaveConflict = autosave.conflict;
 
   const restoreBusinessFieldFocus = () => window.setTimeout(() => lastBusinessFieldRef.current?.focus(), 0);
   const finishBusinessDecision = (allowed: boolean) => {
@@ -274,8 +273,8 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
   }, [businessDraftDirty]);
   const saveAndContinue = async () => {
     try {
-      await save.mutateAsync();
-      finishBusinessDecision(true);
+      const saved = await saveCurrent(true);
+      finishBusinessDecision(saved);
     } catch {
       finishBusinessDecision(false);
     }
@@ -286,7 +285,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
       .finally(() => { navigationGuardPromiseRef.current = null; });
     navigationGuardPromiseRef.current = pending;
     return pending;
-  }, [businessDraftDirty, draft, editingRecord, save]);
+  }, [beforeViewSwitch]);
   latestNavigationGuardRef.current = guardNavigation;
   useEffect(() => {
     if (!businessDraftDirty && !viewDraftDirty) return;
@@ -499,7 +498,7 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
           onKeyDown={(event) => {
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
               event.preventDefault();
-              if (recordWritable && draft.title.trim() && !save.isPending) save.mutate();
+              if (recordWritable && draft.title.trim() && !recordSaving) void saveCurrent(true);
               return;
             }
             if (event.key === "Escape") {
@@ -522,6 +521,24 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
             </p>
             {!recordWritable ? <p role="note" className="text-sm text-muted-foreground">{editCapability?.reason ?? l10n("local.work_record_read_only_editor")}</p> : null}
           </div>
+
+          {editingRecord && autosaveConflict ? <section className="space-y-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/30" data-testid="work-record-autosave-conflict">
+            <div>
+              <h3 className="font-semibold">{l10n("local.work_record_autosave_conflict_title")}</h3>
+              <p className="text-muted-foreground">{l10n("local.work_record_autosave_conflict_help")}</p>
+            </div>
+            {autosaveConflict.conflictGroups.map((fields, index) => <div key={fields.join(":")} className="space-y-2 rounded-md border bg-background p-3">
+              <p className="font-medium">{fields.map((field) => DRAFT_FIELD_LABELS[field]).join(" / ")}</p>
+              <div className="grid gap-1 text-xs text-muted-foreground">
+                <p><span className="font-medium text-foreground">我的：</span>{summarizeConflictGroup(autosaveConflict.local, fields)}</p>
+                <p><span className="font-medium text-foreground">服务器：</span>{summarizeConflictGroup(autosaveConflict.remote, fields)}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant={autosaveConflict.choices[index] === "local" ? "default" : "outline"} onClick={() => autosave.chooseConflictGroup(index, "local")}>{l10n("local.work_record_autosave_keep_mine")}</Button>
+                <Button type="button" size="sm" variant={autosaveConflict.choices[index] === "remote" ? "default" : "outline"} onClick={() => autosave.chooseConflictGroup(index, "remote")}>{l10n("local.work_record_autosave_use_remote")}</Button>
+              </div>
+            </div>)}
+          </section> : null}
 
           <fieldset disabled={!recordWritable} className="contents">
           <div className="grid gap-3 md:grid-cols-2">
@@ -680,12 +697,12 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
           </div>
           </fieldset>
 
-          {save.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_kind_save_failed", { kind: kindLabel })}{save.error.message}</p> : null}
+          {recordSaveError ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_kind_save_failed", { kind: kindLabel })}{recordSaveError.message}</p> : null}
 
           <DialogFooter className="items-center justify-between sm:justify-between">
             <Button variant="ghost" onClick={() => { if (!businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>{l10n("local.work_record_cancel")}</Button>
-            {recordWritable ? <Button disabled={!draft.title.trim() || save.isPending} onClick={() => save.mutate()}>
-              {save.isPending ? l10n("local.work_record_saving") : l10n("local.work_record_save_kind", { kind: kindLabel })}
+            {recordWritable ? <Button disabled={!draft.title.trim() || recordSaving || Boolean(autosave.conflict)} onClick={() => void saveCurrent(true)}>
+              {recordSaving ? l10n("local.work_record_saving") : l10n("local.work_record_save_kind", { kind: kindLabel })}
             </Button> : null}
           </DialogFooter>
         </DialogContent>
@@ -697,10 +714,10 @@ export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "tab
             <DialogTitle>{l10n("local.work_record_unsaved_record_title")}</DialogTitle>
             <DialogDescription>{l10n("local.work_record_unsaved_record_help")}</DialogDescription>
           </DialogHeader>
-          {save.error ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_unsaved_save_failed", { reason: save.error.message })}</p> : null}
+          {recordSaveError ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_unsaved_save_failed", { reason: recordSaveError.message })}</p> : null}
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button onClick={() => void saveAndContinue()} disabled={save.isPending}>{l10n(save.isPending ? "local.work_record_unsaved_saving" : "local.work_record_unsaved_save_continue")}</Button>
-            <Button variant="destructive" onClick={() => { closeDialog(true); finishBusinessDecision(true); }}>{l10n("local.work_record_unsaved_discard_continue")}</Button>
+            <Button onClick={() => void saveAndContinue()} disabled={recordSaving || Boolean(autosave.conflict)}>{l10n(recordSaving ? "local.work_record_unsaved_saving" : "local.work_record_unsaved_save_continue")}</Button>
+            <Button variant="destructive" disabled={recordSaving} onClick={() => { if (editingRecord) autosave.discardLocal(); closeDialog(true); finishBusinessDecision(true); }}>{l10n("local.work_record_unsaved_discard_continue")}</Button>
             <Button autoFocus variant="outline" onClick={() => finishBusinessDecision(false)}>{l10n("local.work_record_unsaved_stay")}</Button>
           </DialogFooter>
         </DialogContent>

@@ -6,6 +6,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "i18next";
+import { ApiError } from "@/api/client";
 import { MemoryRouter } from "@/lib/router";
 import { ProjectWorkRecords } from "./ProjectWorkRecords";
 
@@ -16,6 +17,7 @@ const agentsMock = vi.hoisted(() => vi.fn());
 const iterationsMock = vi.hoisted(() => vi.fn());
 const versionsMock = vi.hoisted(() => vi.fn());
 const capabilitiesMock = vi.hoisted(() => vi.fn());
+const accountIdentityMock = vi.hoisted(() => ({ value: { userId: "user-1" as string | null, settled: true, failed: false } }));
 
 vi.mock("@/api/work-records", () => ({
   workRecordsApi: {
@@ -28,6 +30,7 @@ vi.mock("@/api/work-records", () => ({
   },
 }));
 vi.mock("@/api/agents", () => ({ agentsApi: { list: agentsMock } }));
+vi.mock("@/api/companies-query", () => ({ useAccountIdentity: () => accountIdentityMock.value }));
 vi.mock("@/components/WorkPackageConsole", () => ({
   WorkPackageConsole: ({ visibleKind, records, onReopenRecord, onEditRecord, onEditCoverage }: {
     visibleKind: "plan" | "defect";
@@ -115,6 +118,13 @@ function setSelectValue(element: HTMLSelectElement, value: string) {
   element.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+
 function button(text: string) {
   const match = [...document.body.querySelectorAll("button")].find((node) => node.textContent?.trim() === text);
   if (!match) throw new Error(`Button not found: ${text}`);
@@ -130,6 +140,8 @@ describe("ProjectWorkRecords", () => {
 
   beforeEach(async () => {
     await i18n.changeLanguage("zh-CN");
+    localStorage.clear();
+    accountIdentityMock.value = { userId: "user-1", settled: true, failed: false };
     listMock.mockResolvedValue([plan, defect]);
     agentsMock.mockResolvedValue([]);
     iterationsMock.mockResolvedValue([
@@ -151,6 +163,7 @@ describe("ProjectWorkRecords", () => {
     client.clear();
     container.remove();
     vi.clearAllMocks();
+    localStorage.clear();
     await i18n.changeLanguage("zh-CN");
   });
 
@@ -303,6 +316,7 @@ describe("ProjectWorkRecords", () => {
       iterationAssignmentMode: "inherit_parent",
     });
     listMock.mockResolvedValue([child, firstParent, secondParent]);
+    updateMock.mockImplementation(async (_companyId, _projectId, _recordId, patch) => ({ ...child, ...patch, iterationId: patch.iterationAssignmentMode === "inherit_parent" ? "iteration-b" : patch.iterationId, revision: 2 }));
     await render("plan");
     await act(async () => button("编辑测试").click());
     const parentSelect = [...document.body.querySelectorAll("select")].find((node) => node.parentElement?.textContent?.includes("上级计划")) as HTMLSelectElement;
@@ -348,6 +362,7 @@ describe("ProjectWorkRecords", () => {
       dependencies: [{ predecessorRecordId: predecessor.id, title: predecessor.title, businessStatus: "done", dispatchState: "linked", holdReason: null }],
     });
     listMock.mockResolvedValue([historical, predecessor]);
+    updateMock.mockImplementation(async (_companyId, _projectId, _recordId, patch) => ({ ...historical, ...patch, revision: 2 }));
     await render("defect");
     await act(async () => button("编辑测试").click());
 
@@ -356,10 +371,13 @@ describe("ProjectWorkRecords", () => {
     expect(document.body.textContent).toContain("计划完成");
     expect(document.body.querySelector('select[aria-label="迭代"]')).not.toBeNull();
 
+    const title = document.body.querySelector('input[maxlength="500"]') as HTMLInputElement;
+    await act(async () => setNativeValue(title, "历史缺陷（已核对）"));
     await act(async () => button("保存缺陷").click());
     await flush();
     const payload = updateMock.mock.calls.at(-1)?.[3];
-    expect(payload.plannedStartDate).toBe("2026-11-01");
+    expect(payload.title).toBe("历史缺陷（已核对）");
+    expect(payload).not.toHaveProperty("plannedStartDate");
     expect(payload).not.toHaveProperty("predecessorRecordIds");
   });
 
@@ -371,11 +389,14 @@ describe("ProjectWorkRecords", () => {
       { predecessorRecordId: second.id, title: second.title, businessStatus: "done", dispatchState: "linked", holdReason: null },
     ] });
     listMock.mockResolvedValue([dependent, first, second]);
+    updateMock.mockImplementation(async (_companyId, _projectId, _recordId, patch) => ({ ...dependent, ...patch, revision: 2 }));
     await render("plan");
     await act(async () => button("编辑测试").click());
     const predecessorGroup = [...document.body.querySelectorAll("fieldset")].find((node) => node.textContent?.includes("前置"));
     expect(predecessorGroup).toBeTruthy();
     expect([...predecessorGroup!.querySelectorAll('input[type="checkbox"]')].map((node) => (node as HTMLInputElement).checked)).toEqual([true, true]);
+    const title = document.body.querySelector('input[maxlength="500"]') as HTMLInputElement;
+    await act(async () => setNativeValue(title, "验收（已核对）"));
     await act(async () => button("保存计划").click());
     await flush();
     const payload = updateMock.mock.calls.at(-1)?.[3];
@@ -492,7 +513,7 @@ describe("ProjectWorkRecords", () => {
 
     const title = drawer.querySelector('input[maxlength="500"]') as HTMLInputElement;
     await act(async () => setNativeValue(title, "未保存标题"));
-    expect(drawer.querySelector('[data-testid="work-record-save-state"]')?.textContent).toContain("未保存");
+    expect(drawer.querySelector('[data-testid="work-record-save-state"]')?.textContent).toContain("等待自动保存");
 
     const dirtyEscape = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
     await act(async () => drawer.dispatchEvent(dirtyEscape));
@@ -516,6 +537,89 @@ describe("ProjectWorkRecords", () => {
     await flush();
     expect(document.body.querySelector('[data-testid="work-record-detail-drawer"]')).toBeNull();
     expect(document.activeElement).toBe(source);
+  });
+
+  it("autosaves an edited record after the text debounce without closing the drawer", async () => {
+    updateMock.mockImplementation(async (_companyId, _projectId, _recordId, patch) => ({ ...plan, ...patch, revision: 2 }));
+    await render("plan");
+    await act(async () => button("编辑测试").click());
+    const drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
+    const title = drawer.querySelector('input[maxlength="500"]') as HTMLInputElement;
+    vi.useFakeTimers();
+    try {
+      await act(async () => setNativeValue(title, "自动保存标题"));
+      await act(async () => { await vi.advanceTimersByTimeAsync(899); });
+      expect(updateMock).not.toHaveBeenCalled();
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", plan.id, { expectedRevision: 1, title: "自动保存标题" });
+      expect(document.body.querySelector('[data-testid="work-record-detail-drawer"]')).not.toBeNull();
+      expect(document.body.querySelector('[data-testid="work-record-save-state"]')?.textContent).toContain("已保存");
+      expect(localStorage.length).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows an atomic conflict choice before retrying an overlapping edit", async () => {
+    const remote = record("plan", { priority: "critical", revision: 2 });
+    listMock.mockResolvedValueOnce([plan, defect]).mockResolvedValueOnce([remote, defect]);
+    updateMock
+      .mockRejectedValueOnce(new ApiError("conflict", 409, {}))
+      .mockResolvedValueOnce(record("plan", { priority: "high", revision: 3 }));
+    await render("plan");
+    await act(async () => button("编辑测试").click());
+    const priority = document.body.querySelector('select[aria-label="优先级"]') as HTMLSelectElement;
+    await act(async () => setSelectValue(priority, "high"));
+    await flush();
+
+    const conflict = document.body.querySelector('[data-testid="work-record-autosave-conflict"]') as HTMLElement;
+    expect(conflict).not.toBeNull();
+    expect(conflict.textContent).toContain("优先级");
+    await act(async () => button("保留我的").click());
+    await flush();
+    expect(updateMock).toHaveBeenLastCalledWith("company-1", "project-1", plan.id, { expectedRevision: 2, priority: "high" });
+  });
+
+  it("blocks discard while an immediate autosave request is in flight", async () => {
+    const pending = deferred<WorkRecord>();
+    updateMock.mockReturnValueOnce(pending.promise);
+    await render("plan");
+    await act(async () => button("编辑测试").click());
+    const priority = document.body.querySelector('select[aria-label="优先级"]') as HTMLSelectElement;
+    await act(async () => setSelectValue(priority, "high"));
+    await flush();
+    expect(updateMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => button("取消").click());
+    await flush();
+    const discard = button("放弃并继续");
+    expect(discard.disabled).toBe(true);
+    await act(async () => discard.click());
+    expect(document.body.querySelector('[data-testid="work-record-detail-drawer"]')).not.toBeNull();
+
+    await act(async () => { pending.resolve(record("plan", { priority: "high", revision: 2 })); await Promise.resolve(); });
+    await flush();
+    expect(updateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the editor read-only until both capability and account identity are confirmed", async () => {
+    const capability = deferred<{ editRecords: { allowed: boolean }; manageContainers: { allowed: boolean } }>();
+    capabilitiesMock.mockReturnValueOnce(capability.promise);
+    accountIdentityMock.value = { userId: null, settled: false, failed: false };
+    await render("plan");
+    expect(button("新建计划").disabled).toBe(true);
+    await act(async () => button("编辑测试").click());
+    const drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
+    expect([...drawer.querySelectorAll("input, select, textarea")].every((control) => control.matches(":disabled"))).toBe(true);
+    const title = drawer.querySelector('input[maxlength="500"]') as HTMLInputElement;
+    await act(async () => setNativeValue(title, "不应进入草稿"));
+    await flush();
+    expect(updateMock).not.toHaveBeenCalled();
+
+    accountIdentityMock.value = { userId: "user-1", settled: true, failed: false };
+    await act(async () => capability.resolve({ editRecords: { allowed: true }, manageContainers: { allowed: true } }));
+    await render("plan");
+    expect((document.body.querySelector('input[maxlength="500"]') as HTMLInputElement).value).toBe(plan.title);
   });
 
   it("switches fixed form and status copy to English while preserving record titles", async () => {
