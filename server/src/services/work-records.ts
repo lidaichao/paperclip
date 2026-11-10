@@ -12,6 +12,7 @@ import {
   projectIterations,
   projectVersions,
   projects,
+  workRecordCounters,
   workRecords,
   workRecordUserResponsibilities,
   workRecordAssignmentCommands,
@@ -50,6 +51,7 @@ import {
   WORK_RECORD_LIST_DEFAULT_LIMIT,
   WORK_RECORD_LIST_MAX_LIMIT,
   classifyWorkRecordCommandReplay,
+  workRecordIdentifier,
 } from "@paperclipai/shared";
 import { HttpError, conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { issueService, listUnfinalizedExecutionWorkspaceIds } from "./issues.js";
@@ -656,6 +658,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
               : { code: null, message: null, canReconcile: false, lastConfirmedAt: projection?.projectedAt ?? outbox?.updatedAt ?? command?.updatedAt ?? null };
       return {
         ...row,
+        recordIdentifier: workRecordIdentifier(row.kind as WorkRecord["kind"], row.recordNumber),
         kind: row.kind as WorkRecord["kind"],
         businessStatus: row.businessStatus as WorkRecord["businessStatus"],
         dispatchState: row.dispatchState as WorkRecord["dispatchState"],
@@ -781,8 +784,21 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       }
       await validateUserResponsibilities(tx, companyId, input.userResponsibilities ?? []);
       const predecessorIds = await assertDependencies(tx, companyId, input.projectId, null, input.predecessorRecordIds ?? []);
+      const [allocated] = await tx.insert(workRecordCounters).values({
+        companyId,
+        projectId: input.projectId,
+        kind: input.kind,
+        nextNumber: 2,
+      }).onConflictDoUpdate({
+        target: [workRecordCounters.companyId, workRecordCounters.projectId, workRecordCounters.kind],
+        set: {
+          nextNumber: sql`${workRecordCounters.nextNumber} + 1`,
+          updatedAt: new Date(),
+        },
+      }).returning({ recordNumber: sql<number>`${workRecordCounters.nextNumber} - 1` });
       const [record] = await tx.insert(workRecords).values({
-        companyId, projectId: input.projectId, kind: input.kind, title: input.title, description: input.description ?? null,
+        companyId, projectId: input.projectId, kind: input.kind, recordNumber: allocated.recordNumber,
+        title: input.title, description: input.description ?? null,
         parentRecordId: input.parentRecordId ?? null, iterationId, iterationAssignmentMode,
         plannedStartDate: input.plannedStartDate ?? null, plannedCompletionDate: input.plannedCompletionDate ?? null,
         defectSeverity: input.defectSeverity ?? null,

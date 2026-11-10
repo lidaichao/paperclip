@@ -3,9 +3,22 @@ import {
   WORK_RECORD_ITERATION_ASSIGNMENT_MODES,
   createWorkRecordSchema,
   defaultWorkRecordViewConfig,
+  workRecordIdentifier,
   updateWorkRecordSchema,
   validateWorkRecordViewConfig,
 } from "./work-records.js";
+
+describe("FID-03 work-record business identifiers", () => {
+  it("formats stable plan and defect identifiers without native issue prefixes", () => {
+    expect(workRecordIdentifier("plan", 1)).toBe("PT-1");
+    expect(workRecordIdentifier("defect", 42)).toBe("PC-42");
+  });
+
+  it("rejects non-positive and non-integer record numbers", () => {
+    expect(() => workRecordIdentifier("plan", 0)).toThrow(/positive integer/);
+    expect(() => workRecordIdentifier("defect", 1.5)).toThrow(/positive integer/);
+  });
+});
 
 describe("G1 work-record planning and defect fields", () => {
   const projectId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";

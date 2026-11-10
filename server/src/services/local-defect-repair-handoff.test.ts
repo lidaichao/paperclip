@@ -64,7 +64,7 @@ suite("independent defect repair local handoff (PostgreSQL)", () => {
       agentId: repairAgentId, issueId, deviceId, deviceKeyId: keyId,
       leaseId, idempotencyKey: randomUUID(),
       expiresAt: new Date(Date.now() + 60_000) });
-    await db.insert(workRecords).values({ id: recordId, companyId, projectId,
+    await db.insert(workRecords).values({ id: recordId, recordNumber: 1, companyId, projectId,
       kind: "defect", title: "Original defect", assigneeAgentId: repairAgentId,
       qaAssigneeAgentId: qaAgentId, dispatchState: "dispatched" });
     const [link] = await db.insert(workRecordIssueLinks).values({

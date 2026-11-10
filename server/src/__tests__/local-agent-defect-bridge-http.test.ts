@@ -129,6 +129,7 @@ suite("local independent-defect bridge HTTP chain (PostgreSQL)", () => {
     });
     await db.insert(workRecords).values({
       id: defectRecordId,
+      recordNumber: 1,
       companyId,
       projectId,
       kind: "defect",

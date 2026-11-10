@@ -49,7 +49,7 @@ suite("work-record description delivery through client-pull adapter", () => {
       status: "in_progress", assigneeAgentId: agentId, responsibleUserId: "description-owner" });
     await db.insert(heartbeatRuns).values({ id: runId, companyId, agentId, status: "queued",
       contextSnapshot: { issueId, wakeReason: "issue_assigned" } });
-    await db.insert(workRecords).values({ id: recordId, companyId, projectId, kind: "plan",
+    await db.insert(workRecords).values({ id: recordId, recordNumber: 1, companyId, projectId, kind: "plan",
       title: "Description revision", descriptionRevision: 2, assigneeAgentId: agentId,
       dispatchState: "dispatched" });
     await db.insert(workRecordDescriptionDeliveries).values({ companyId, projectId, recordId,

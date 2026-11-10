@@ -51,7 +51,8 @@ const BLOCKED_ID = "88888888-8888-4888-8888-888888888888";
 function record(overrides: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title">): WorkRecord {
   const { id, title, ...rest } = overrides;
   return {
-    id, title, companyId: "company-1", projectId: "project-1", kind: "plan", description: null,
+    id, recordNumber: 1, recordIdentifier: "PT-1", title,
+    companyId: "company-1", projectId: "project-1", kind: "plan", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent", assigneeAgentId: "agent-po", qaAssigneeAgentId: "agent-qa", userResponsibilities: [],
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     packageQaRole: null, qaRetestExemptionReason: null, qaCoverageRecordIds: [],

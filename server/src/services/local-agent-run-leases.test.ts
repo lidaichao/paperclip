@@ -243,7 +243,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       executionPolicy: policy as unknown as Record<string, unknown>,
       executionState: staged.patch.executionState as Record<string, unknown>,
     }).where(eq(issues.id, issue.id));
-    await db.insert(workRecords).values({ id: defectId,
+    await db.insert(workRecords).values({ id: defectId, recordNumber: 1,
       companyId: f.scope.companyId, projectId, kind: "defect",
       title: "QA must not close early", assigneeAgentId: f.scope.agentId,
       qaAssigneeAgentId: f.handoff.review.reviewerAgentId,
@@ -1796,9 +1796,9 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await db.insert(projects).values({ id: projectId, companyId: scope.companyId,
       name: "Package completion boundary" });
     await db.insert(workRecords).values([
-      { id: parentRecordId, companyId: scope.companyId, projectId,
+      { id: parentRecordId, recordNumber: 1, companyId: scope.companyId, projectId,
         kind: "plan", title: "Parent PO package" },
-      { id: childRecordId, companyId: scope.companyId, projectId,
+      { id: childRecordId, recordNumber: 2, companyId: scope.companyId, projectId,
         parentRecordId, kind: "plan", title: "Child delivery",
         dispatchState: "dispatched", dispatchRound: 1 },
     ]);
@@ -1840,10 +1840,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await db.insert(projects).values({ id: projectId, companyId: scope.companyId,
       name: "Child completion package" });
     await db.insert(workRecords).values([
-      { id: parentRecordId, companyId: scope.companyId, projectId,
+      { id: parentRecordId, recordNumber: 1, companyId: scope.companyId, projectId,
         kind: "plan", title: "PO package", assigneeAgentId: scope.agentId,
         dispatchState: "linked", dispatchRound: 1 },
-      { id: childRecordId, companyId: scope.companyId, projectId,
+      { id: childRecordId, recordNumber: 2, companyId: scope.companyId, projectId,
         parentRecordId, kind: "plan", title: "Child task",
         assigneeAgentId: scope.agentId, dispatchState: "linked", dispatchRound: 1 },
     ]);
@@ -1956,9 +1956,9 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     await db.insert(projects).values({ id: projectId, companyId: scope.companyId,
       name: "Failed child package" });
     await db.insert(workRecords).values([
-      { id: rootId, companyId: scope.companyId, projectId, kind: "plan",
+      { id: rootId, recordNumber: 1, companyId: scope.companyId, projectId, kind: "plan",
         title: "Package", assigneeAgentId: scope.agentId },
-      { id: childId, companyId: scope.companyId, projectId, parentRecordId: rootId,
+      { id: childId, recordNumber: 2, companyId: scope.companyId, projectId, parentRecordId: rootId,
         kind: "plan", title: "Child", assigneeAgentId: scope.agentId,
         dispatchState: "linked", dispatchRound: 1 },
     ]);

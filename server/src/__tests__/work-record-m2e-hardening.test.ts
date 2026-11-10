@@ -591,6 +591,7 @@ describeDb("M2-E workflow hardening", () => {
     const ids = Array.from({ length: 200 }, () => randomUUID());
     await db.insert(workRecords).values(ids.map((id, index) => ({
       id,
+      recordNumber: index + 1,
       companyId: context.company.id,
       projectId: context.project.id,
       parentRecordId: index === 0 ? null : index <= 8 ? ids[index - 1] : ids[0],
@@ -655,6 +656,7 @@ describeDb("M2-E workflow hardening", () => {
     const extraRecordId = randomUUID();
     await db.insert(workRecords).values({
       id: extraRecordId,
+      recordNumber: 201,
       companyId: context.company.id,
       projectId: context.project.id,
       parentRecordId: ids[0],

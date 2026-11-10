@@ -77,7 +77,7 @@ describeDb("explicit human work-record responsibility", () => {
       { id: projectB, companyId, name: "B" },
     ]);
     const rows = Array.from({ length: 24 }, (_, index) => ({
-      id: randomUUID(), companyId, projectId: index < 12 ? projectA : projectB,
+      id: randomUUID(), recordNumber: index + 1, companyId, projectId: index < 12 ? projectA : projectB,
       kind: (index === 23 ? "defect" : "plan") as "plan" | "defect",
       title: `Record ${index}`,
       businessStatus: index === 22 ? "done" : "todo",

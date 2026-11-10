@@ -10,11 +10,19 @@ import type {
 } from "./work-record-workflows.js";
 
 export const WORK_RECORD_KINDS = ["plan", "defect"] as const;
+export function workRecordIdentifier(kind: WorkRecordKind, recordNumber: number): string {
+  if (!Number.isInteger(recordNumber) || recordNumber < 1) {
+    throw new Error("Work-record number must be a positive integer");
+  }
+  return `${kind === "plan" ? "PT" : "PC"}-${recordNumber}`;
+}
 export const WORK_RECORD_USER_ROLES = ["execution", "qa", "po"] as const;
 export type WorkRecordUserRole = (typeof WORK_RECORD_USER_ROLES)[number];
 export interface WorkRecordUserResponsibility { userId: string; role: WorkRecordUserRole }
 export interface WorkRecordMyTodo {
   id: string;
+  recordNumber: number;
+  recordIdentifier: string;
   companyId: string;
   projectId: string;
   projectName: string;
@@ -513,6 +521,8 @@ export interface WorkRecordQualitySummaryView {
 
 export interface WorkRecord {
   id: string;
+  recordNumber: number;
+  recordIdentifier: string;
   companyId: string;
   projectId: string;
   kind: WorkRecordKind;

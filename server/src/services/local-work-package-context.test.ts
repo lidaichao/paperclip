@@ -70,10 +70,10 @@ suite("local PO package context (PostgreSQL)", () => {
       deviceKeyId: keyId, leaseId, idempotencyKey: randomUUID(),
       expiresAt: new Date(Date.now() + 60_000) });
     await db.insert(workRecords).values([
-      { id: parentRecordId, companyId, projectId, kind: "plan",
+      { id: parentRecordId, recordNumber: 1, companyId, projectId, kind: "plan",
         title: "PO package", description: "Acceptance objective",
         assigneeAgentId: poAgentId, dispatchState: "dispatched" },
-      { id: childRecordId, companyId, projectId, kind: "plan",
+      { id: childRecordId, recordNumber: 2, companyId, projectId, kind: "plan",
         parentRecordId, title: "Implementation", description: "Implement feature",
         assigneeAgentId: childAgentId, dispatchState: "dispatched" },
     ]);

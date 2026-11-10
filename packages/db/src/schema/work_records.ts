@@ -9,6 +9,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -80,6 +81,31 @@ export const projectIterations = pgTable(
   }),
 );
 
+export const workRecordCounters = pgTable(
+  "work_record_counters",
+  {
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"plan" | "defect">().notNull(),
+    nextNumber: integer("next_number").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.companyId, table.projectId, table.kind],
+      name: "work_record_counters_pkey",
+    }),
+    projectScopeFk: foreignKey({
+      columns: [table.companyId, table.projectId],
+      foreignColumns: [projects.companyId, projects.id],
+      name: "work_record_counters_project_scope_fk",
+    }).onDelete("cascade"),
+    kindCheck: check("work_record_counters_kind_check", sql`${table.kind} IN ('plan', 'defect')`),
+    nextNumberCheck: check("work_record_counters_next_number_positive_check", sql`${table.nextNumber} >= 1`),
+  }),
+);
+
 export const workRecords = pgTable(
   "work_records",
   {
@@ -93,6 +119,7 @@ export const workRecords = pgTable(
       .notNull()
       .default("independent"),
     kind: text("kind").$type<"plan" | "defect">().notNull(),
+    recordNumber: integer("record_number").notNull(),
     title: text("title").notNull(),
     description: text("description"),
     descriptionRevision: integer("description_revision").notNull().default(1),
@@ -118,6 +145,8 @@ export const workRecords = pgTable(
   },
   (table) => ({
     companyProjectIdUq: unique("work_records_company_project_id_uq").on(table.companyId, table.projectId, table.id),
+    businessNumberUq: unique("work_records_company_project_kind_record_number_unique")
+      .on(table.companyId, table.projectId, table.kind, table.recordNumber),
     projectScopeFk: foreignKey({
       columns: [table.companyId, table.projectId],
       foreignColumns: [projects.companyId, projects.id],
@@ -147,6 +176,7 @@ export const workRecords = pgTable(
     projectPlannedDatesIdx: index("work_records_project_planned_dates_idx").on(table.companyId, table.projectId, table.plannedStartDate, table.plannedCompletionDate),
     projectDefectSeverityIdx: index("work_records_project_defect_severity_idx").on(table.companyId, table.projectId, table.defectSeverity),
     parentCheck: check("work_records_parent_not_self", sql`${table.parentRecordId} IS NULL OR ${table.parentRecordId} <> ${table.id}`),
+    recordNumberPositiveCheck: check("work_records_record_number_positive_check", sql`${table.recordNumber} >= 1`),
     iterationAssignmentModeCheck: check(
       "work_records_iteration_assignment_mode_check",
       sql`${table.iterationAssignmentMode} IN ('inherit_parent', 'independent')`,

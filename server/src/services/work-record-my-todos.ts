@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gt, ilike, inArray, lt, lte, notInArray, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import { heartbeatRuns, projects, workRecords, workRecordExecutionProjections, workRecordUserResponsibilities } from "@paperclipai/db";
-import type { WorkRecordBusinessStatus, WorkRecordKind, WorkRecordMyTodo, WorkRecordUserRole } from "@paperclipai/shared";
+import { workRecordIdentifier, type WorkRecordBusinessStatus, type WorkRecordKind, type WorkRecordMyTodo, type WorkRecordUserRole } from "@paperclipai/shared";
 import { unprocessable } from "../errors.js";
 
 type Filter = {
@@ -47,6 +47,7 @@ export function workRecordMyTodoService(db: Db) {
         ));
       const rows = await db.select({
         id: workRecords.id,
+        recordNumber: workRecords.recordNumber,
         companyId: workRecords.companyId,
         projectId: workRecords.projectId,
         projectName: projects.name,
@@ -106,6 +107,7 @@ export function workRecordMyTodoService(db: Db) {
               ? "active" as const : "idle" as const;
         return {
           ...row,
+          recordIdentifier: workRecordIdentifier(row.kind as WorkRecordKind, row.recordNumber),
           kind: row.kind as WorkRecordKind,
           businessStatus: row.businessStatus as WorkRecordBusinessStatus,
           roles: (rolesById.get(row.id) ?? []).sort((a, b) => ["execution", "qa", "po"].indexOf(a) - ["execution", "qa", "po"].indexOf(b)),

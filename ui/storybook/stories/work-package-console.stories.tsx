@@ -15,7 +15,8 @@ const CYCLE_ID = "55555555-5555-4555-8555-555555555555";
 function record(input: Partial<WorkRecord> & Pick<WorkRecord, "id" | "title">): WorkRecord {
   const { id, title, ...overrides } = input;
   return {
-    id, companyId: COMPANY_ID, projectId: PROJECT_ID, kind: "plan", title,
+    id, recordNumber: 1, recordIdentifier: "PT-1",
+    companyId: COMPANY_ID, projectId: PROJECT_ID, kind: "plan", title,
     description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     assigneeAgentId: "agent-developer", qaAssigneeAgentId: "agent-qa", userResponsibilities: [], businessStatus: "in_review",

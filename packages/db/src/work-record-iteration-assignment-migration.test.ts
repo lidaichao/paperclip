@@ -93,10 +93,10 @@ describePostgres("work-record iteration assignment migration", () => {
         VALUES (${companyId}, 'Iteration assignment migration', ${`IA${Math.floor(Math.random() * 1_000_000)}`})`;
       await sql`INSERT INTO projects (id, company_id, name)
         VALUES (${projectId}, ${companyId}, 'Migration project')`;
-      await sql`INSERT INTO work_records (id, company_id, project_id, kind, title, parent_record_id)
+      await sql`INSERT INTO work_records (id, company_id, project_id, kind, record_number, title, parent_record_id)
         VALUES
-          (${parentId}, ${companyId}, ${projectId}, 'plan', 'Legacy parent', NULL),
-          (${childId}, ${companyId}, ${projectId}, 'plan', 'Legacy child', ${parentId})`;
+          (${parentId}, ${companyId}, ${projectId}, 'plan', 1, 'Legacy parent', NULL),
+          (${childId}, ${companyId}, ${projectId}, 'plan', 2, 'Legacy child', ${parentId})`;
 
       expect(await inspectMigrations(database.connectionString)).toMatchObject({
         status: "needsMigrations",

@@ -78,7 +78,8 @@ vi.mock("@/components/WorkRecordGantt", () => ({
 function record(kind: "plan" | "defect", overrides: Partial<WorkRecord> = {}): WorkRecord {
   const now = new Date("2026-11-02T00:00:00Z");
   return {
-    id: `${kind}-1`, companyId: "company-1", projectId: "project-1", kind,
+    id: `${kind}-1`, recordNumber: 1, recordIdentifier: kind === "plan" ? "PT-1" : "PC-1",
+    companyId: "company-1", projectId: "project-1", kind,
     title: kind === "plan" ? "发布计划" : "窄屏缺陷", description: null,
     descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,

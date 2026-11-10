@@ -226,6 +226,7 @@ export { announcementDismissals, announcementPublications } from "./announcement
 export {
   projectVersions,
   projectIterations,
+  workRecordCounters,
   workRecords,
   workRecordUserResponsibilities,
   workRecordDependencies,

@@ -23,7 +23,8 @@ vi.mock("@/api/work-records", () => ({
 function record(id: string, title: string, overrides: Partial<WorkRecord> = {}): WorkRecord {
   const now = new Date("2026-11-10T00:00:00Z");
   return {
-    id, companyId: "company-1", projectId: "project-1", kind: "plan", title,
+    id, companyId: "company-1", projectId: "project-1", kind: "plan", recordNumber: 1,
+    recordIdentifier: "PT-1", title,
     description: null, descriptionRevision: 1, parentRecordId: null, iterationId: null, iterationAssignmentMode: "independent",
     plannedStartDate: null, plannedCompletionDate: null, defectSeverity: null,
     assigneeAgentId: null, qaAssigneeAgentId: null, userResponsibilities: [], packageQaRole: null,
@@ -126,6 +127,33 @@ describe("WorkRecordDenseTable WBS", () => {
 
     expect(container.querySelector('[data-record-id="defect-child"]')?.getAttribute("data-tree-depth")).toBe("0");
     expect(container.querySelector('button[aria-label^="收起 "]')).toBeNull();
+  });
+
+  it("renders the stable work-record identifier instead of a dispatched native issue identifier", async () => {
+    const dispatched = record("record-uuid", "已派发任务", {
+      recordNumber: 42,
+      recordIdentifier: "PT-42",
+      execution: {
+        issueId: "issue-uuid",
+        issueIdentifier: "PAP-999",
+        issueStatus: "todo",
+        issueStatusVersion: 1,
+        lastRunId: null,
+        lastRunStatus: null,
+        lastRunAgentId: null,
+        lastRunStartedAt: null,
+        lastRunEndedAt: null,
+        projectionState: "current",
+        projectionError: null,
+        projectedAt: new Date("2026-11-10T00:00:00Z"),
+      },
+    });
+    await render("plan", [dispatched]);
+
+    const row = container.querySelector('[data-record-id="record-uuid"]');
+    expect(row?.textContent).toContain("PT-42");
+    expect(row?.textContent).not.toContain("PAP-999");
+    expect(row?.textContent).not.toContain("record-u");
   });
 
   it("marks inherited iteration values without combining them with other fields", async () => {

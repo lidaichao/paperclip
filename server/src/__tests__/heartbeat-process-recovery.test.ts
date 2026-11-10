@@ -8016,7 +8016,8 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     const projectId = await db.insert(projects).values({ companyId, name: "Description revision adapter test" })
       .returning({ id: projects.id }).then((rows) => rows[0]!.id);
     const recordId = await db.insert(workRecords).values({
-      companyId, projectId, kind: "plan", title: "Live description revision", descriptionRevision: 2,
+      companyId, projectId, kind: "plan", recordNumber: 1,
+      title: "Live description revision", descriptionRevision: 2,
       assigneeAgentId: agentId, dispatchState: "dispatched",
     }).returning({ id: workRecords.id }).then((rows) => rows[0]!.id);
     const { leaseId } = await seedEnvironmentLeaseFixture({ companyId, runId, issueId });
