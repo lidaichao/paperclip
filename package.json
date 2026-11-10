@@ -65,6 +65,7 @@
     "test:storybook-visual:update": "node scripts/storybook-visual-baseline.mjs download && pnpm build-storybook && npx playwright test --config tests/storybook-visual/playwright.config.ts --update-snapshots && node scripts/storybook-visual-baseline.mjs pack",
     "test:e2e": "npx playwright test --config tests/e2e/playwright.config.ts",
     "test:e2e:demo-fidelity": "npx playwright test --config tests/e2e/playwright.config.ts tests/e2e/work-record-demo-fidelity-layout.spec.ts",
+    "test:e2e:native-regression": "npx playwright test --config tests/e2e/playwright.config.ts tests/e2e/native-paperclip-regression.spec.ts",
     "test:e2e:runner": "node cli/node_modules/tsx/dist/cli.mjs tests/runner-e2e/launch.ts",
     "test:e2e:runner:image-id": "node cli/node_modules/tsx/dist/cli.mjs tests/runner-e2e/daytona-image-content.ts",
     "test:e2e:runner:judge-first-task": "node cli/node_modules/tsx/dist/cli.mjs tests/runner-e2e/first-task-judge.ts",
