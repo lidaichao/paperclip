@@ -64,6 +64,8 @@ type SidebarShellProps = {
   peeking?: boolean;
   resizable?: boolean;
   storageKey?: string;
+  /** Route-owned fixed width. Bypasses persisted resizing without overwriting it. */
+  fixedWidth?: number | string;
   className?: string;
   /** Forwarded to the overlay panel so Layout can wire peek triggers. */
   onPanelMouseEnter?: MouseEventHandler<HTMLDivElement>;
@@ -96,6 +98,7 @@ export function SidebarShell({
   peeking = false,
   resizable = false,
   storageKey = "paperclip.sidebar.width",
+  fixedWidth,
   className,
   onPanelMouseEnter,
   onPanelMouseLeave,
@@ -117,19 +120,25 @@ export function SidebarShell({
   const expandedWidth = open ? width : 0;
   const reservedWidth = !open ? 0 : collapsed ? SIDEBAR_RAIL_WIDTH : expandedWidth;
   const panelWidth = !open ? 0 : collapsed && !peeking ? SIDEBAR_RAIL_WIDTH : expandedWidth;
-  const isOverlay = panelWidth > reservedWidth;
+  const fixedWidthValue = fixedWidth == null
+    ? null
+    : typeof fixedWidth === "number"
+      ? `${fixedWidth}px`
+      : fixedWidth;
+  const appliedFixedWidthValue = fixedWidthValue != null && open && !collapsed ? fixedWidthValue : null;
+  const isOverlay = appliedFixedWidthValue == null && panelWidth > reservedWidth;
 
   // The drag handle can only resize the expanded width, so it is disabled while
   // collapsed (the rail width is a fixed constant, not user-resizable).
-  const canResize = resizable && open && !collapsed;
+  const canResize = fixedWidthValue == null && resizable && open && !collapsed;
 
   const reservedStyle = useMemo(
-    () => ({ width: `${reservedWidth}px` }),
-    [reservedWidth],
+    () => ({ width: appliedFixedWidthValue ?? `${reservedWidth}px` }),
+    [appliedFixedWidthValue, reservedWidth],
   );
   const panelStyle = useMemo(
-    () => ({ width: `${panelWidth}px` }),
-    [panelWidth],
+    () => ({ width: appliedFixedWidthValue ?? `${panelWidth}px` }),
+    [appliedFixedWidthValue, panelWidth],
   );
 
   const commitWidth = useCallback(

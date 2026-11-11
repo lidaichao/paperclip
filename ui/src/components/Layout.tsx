@@ -125,7 +125,7 @@ export function Layout({ sidebarSections }: { sidebarSections?: ReactNode }) {
   const rawPathSegments = location.pathname.split("/").filter(Boolean);
   const projectsSegmentIndex = rawPathSegments.findIndex((segment) => segment.toLowerCase() === "projects");
   const isWorkRecordRoute = projectsSegmentIndex >= 0
-    && ["plans", "defects"].includes(rawPathSegments[projectsSegmentIndex + 2]?.toLowerCase() ?? "");
+    && ["plans", "gantt", "defects"].includes(rawPathSegments[projectsSegmentIndex + 2]?.toLowerCase() ?? "");
   const useStreamlinedTaskDetailShell = streamlinedUiEnabled && isTaskDetailRoute;
   const isToolsRoute = companyPathSegments[0]?.toLowerCase() === "tools";
   const isAppsRoute = companyPathSegments[0]?.toLowerCase() === "apps";
@@ -678,6 +678,8 @@ export function Layout({ sidebarSections }: { sidebarSections?: ReactNode }) {
             collapsed={replacesPrimarySidebar ? false : collapsed}
             peeking={replacesPrimarySidebar ? false : peeking}
             resizable
+            fixedWidth={isWorkRecordRoute ? "var(--work-record-shell-sidebar-width)" : undefined}
+            className={isWorkRecordRoute ? "work-record-shell-sidebar" : undefined}
             onPanelMouseEnter={replacesPrimarySidebar ? undefined : handlePanelPointerEnter}
             onPanelMouseLeave={replacesPrimarySidebar ? undefined : handlePanelPointerLeave}
             onPanelFocusCapture={!replacesPrimarySidebar && collapsed ? handlePanelFocus : undefined}
@@ -711,7 +713,7 @@ export function Layout({ sidebarSections }: { sidebarSections?: ReactNode }) {
             )}
           >
             <StandaloneBrowserControls mobile={isMobile} />
-            <BreadcrumbBar />
+            <BreadcrumbBar compact={isWorkRecordRoute} />
             {isMobile && isCompanySettingsRoute ? (
               <div className="border-b border-border px-4 pb-3">
                 <CompanySettingsNav />
@@ -750,10 +752,13 @@ export function Layout({ sidebarSections }: { sidebarSections?: ReactNode }) {
                         ? "var(--sz-calc-14)"
                         : "var(--tc-composer-hidden-nav-offset)",
                     } as CSSProperties)
+                  : isWorkRecordRoute
+                    ? ({ scrollbarGutter: "auto" } as CSSProperties)
                   : undefined
               }
               className={cn(
                 "flex-1 p-4 outline-none md:p-6",
+                !isMobile && isWorkRecordRoute && "px-6 pb-0 pt-0 md:px-6 md:pb-0 md:pt-0",
                 // The task thread owns its scrollable top spacing. Leaving the
                 // page shell's top padding in place creates a stationary dark
                 // strip below the breadcrumb while messages scroll behind it.

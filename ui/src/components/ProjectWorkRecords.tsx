@@ -3,7 +3,7 @@ import { l10n } from "@/i18n";
 import { useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { IssuePriority, WorkRecord, WorkRecordBusinessStatus, WorkRecordDefectSeverity, WorkRecordIterationAssignmentMode, WorkRecordKind, WorkRecordUserRole } from "@paperclipai/shared";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { agentsApi } from "@/api/agents";
 import { accessApi } from "@/api/access";
 import { useAccountIdentity } from "@/api/companies-query";
@@ -207,7 +207,10 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
     setDialogOpen(false);
     setEditingRecord(null);
     setDraft(blankDraft());
-    window.setTimeout(() => { if (focusTarget?.isConnected) focusTarget.focus(); }, 0);
+    window.setTimeout(() => {
+      const activeElement = document.activeElement;
+      if (focusTarget?.isConnected && (!activeElement || activeElement === document.body)) focusTarget.focus();
+    }, 0);
   };
   useEffect(() => {
     if (!dialogOpen) confirmedDialogCloseRef.current = false;
@@ -402,7 +405,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
   }));
 
   return (
-    <section className="@container" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
+    <section className="@container h-[calc(100dvh-77px)]" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
       <div className="work-record-workspace" data-testid="work-record-workspace-grid" data-rail-open={resolvedRailOpen ? "true" : "false"}>
         <div className="work-record-rail-shell" data-testid="work-record-rail-shell">
           <div className="work-record-rail-panel" aria-hidden={!resolvedRailOpen}>
@@ -440,7 +443,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
           </Button>
         </div>
         <div className="min-w-0 overflow-hidden" data-testid="work-record-workspace-content">
-          {topNavigation ? <div className="mb-3 min-h-12 border-b" data-testid="work-record-top-navigation">{topNavigation}</div> : null}
+          {topNavigation ? <div className="h-14 min-h-14 border-b" data-testid="work-record-top-navigation">{topNavigation}</div> : null}
           {containerAdminOpen ? (
             <WorkRecordContainerTree
               companyId={companyId}
@@ -500,12 +503,11 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
         </div>
       </div>
 
-      <Dialog modal={false} open={dialogOpen} onOpenChange={(open) => { if (open) setDialogOpen(true); else if (confirmedDialogCloseRef.current || !businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>
-        <DialogContent
+      {dialogOpen ? <aside
+          role="complementary"
+          aria-labelledby="work-record-detail-title"
           data-testid="work-record-detail-drawer"
-          className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none sm:w-3/5 lg:w-2/5 md:top-0 md:translate-y-0"
-          overlayClassName="hidden"
-          onInteractOutside={(event) => event.preventDefault()}
+          className={`fixed bottom-0 right-0 z-40 w-full overflow-y-auto border-l bg-background p-6 shadow-xl sm:w-3/5 lg:w-2/5 ${topNavigation ? "top-[133px]" : "top-[77px]"}`}
           onKeyDown={(event) => {
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
               event.preventDefault();
@@ -521,10 +523,21 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
           }}
           onFocusCapture={(event) => { if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) lastBusinessFieldRef.current = event.target; }}
         >
-          <DialogHeader>
-            <DialogTitle>{editingRecord ? l10n("local.work_record_edit_kind", { kind: kindLabel }) : l10n("local.work_record_new_kind", { kind: kindLabel })}</DialogTitle>
-            <DialogDescription>{l10n("local.work_record_this_saves_a_business_record_only_it")}</DialogDescription>
-          </DialogHeader>
+          <header className="mb-4 flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <h2 id="work-record-detail-title" className="text-lg font-semibold leading-none tracking-tight">{editingRecord ? l10n("local.work_record_edit_kind", { kind: kindLabel }) : l10n("local.work_record_new_kind", { kind: kindLabel })}</h2>
+              <p className="text-sm text-muted-foreground">{l10n("local.work_record_this_saves_a_business_record_only_it")}</p>
+            </div>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label={l10n("local.close_7d9eb7ac")}
+              onClick={() => { if (confirmedDialogCloseRef.current || !businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}
+            >
+              <X className="size-4" />
+            </Button>
+          </header>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p role="status" aria-live="polite" data-testid="work-record-save-state" data-state={recordSaveState} className="text-sm text-muted-foreground">
@@ -710,14 +723,12 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
 
           {recordSaveError ? <p role="alert" className="text-sm text-destructive">{l10n("local.work_record_kind_save_failed", { kind: kindLabel })}{recordSaveError.message}</p> : null}
 
-          <DialogFooter className="items-center justify-between sm:justify-between">
-            <Button variant="ghost" onClick={() => { if (!businessDraftDirty) closeDialog(true); else void beforeViewSwitch(); }}>{l10n("local.work_record_cancel")}</Button>
-            {recordWritable ? <Button disabled={!draft.title.trim() || recordSaving || Boolean(autosave.conflict)} onClick={() => void saveCurrent(true)}>
+          {!editingRecord && recordWritable ? <footer className="mt-5 flex justify-end border-t pt-4">
+            <Button disabled={!draft.title.trim() || recordSaving || Boolean(autosave.conflict)} onClick={() => void saveCurrent(true)}>
               {recordSaving ? l10n("local.work_record_saving") : l10n("local.work_record_save_kind", { kind: kindLabel })}
-            </Button> : null}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </Button>
+          </footer> : null}
+        </aside> : null}
 
       <Dialog open={businessDecisionOpen} onOpenChange={(open) => { if (!open && businessDecisionOpen) finishBusinessDecision(false); }}>
         <DialogContent className="sm:max-w-lg" showCloseButton={false} data-testid="business-draft-decision" onCloseAutoFocus={(event) => event.preventDefault()}>

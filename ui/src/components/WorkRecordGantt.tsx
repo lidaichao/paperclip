@@ -124,6 +124,30 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
   const maxDay = rangeOverride?.maxDay ?? naturalMaxDay;
   const days = Math.max(14, maxDay - minDay + 1);
   const timelineCellWidth = timeScale === "day" ? 32 : timeScale === "week" ? 14 : 6;
+  const dependencyGeometries = displayedRecords.flatMap((successor, successorIndex) => successor.dependencies.flatMap((edge) => {
+    const predecessorIndex = displayedRecords.findIndex((item) => item.id === edge.predecessorRecordId);
+    const predecessor = displayedRecords[predecessorIndex];
+    if (!predecessor) return [];
+    const x1 = predecessor.plannedCompletionDate ? Math.max(0, Math.min(1000, ((ganttToDay(predecessor.plannedCompletionDate) - minDay + 1) / days) * 1000)) : 940;
+    const x2 = successor.plannedStartDate ? Math.max(0, Math.min(1000, ((ganttToDay(successor.plannedStartDate) - minDay) / days) * 1000)) : 60;
+    const y1 = predecessorIndex * rowHeight + rowHeight / 2;
+    const y2 = successorIndex * rowHeight + rowHeight / 2;
+    const bend = x1 + Math.max(20, (x2 - x1) / 2);
+    const clearanceY = successorIndex * rowHeight + 4;
+    const approachX = x2 - 12;
+    return [{
+      key: `${predecessor.id}:${successor.id}`,
+      predecessor,
+      successor,
+      x1,
+      x2,
+      y1,
+      y2,
+      path: `M ${x1} ${y1} H ${bend} V ${clearanceY} H ${approachX} V ${y2} H ${x2}`,
+      active: selectedEdge?.predecessorId === predecessor.id && selectedEdge.successorId === successor.id,
+    }];
+  }));
+  const activeDependencyGeometry = dependencyGeometries.find((geometry) => geometry.active) ?? null;
   const monthSegments = useMemo(() => {
     const segments: Array<{ key: string; label: string; count: number }> = [];
     for (let index = 0; index < days; index += 1) {
@@ -320,28 +344,16 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
         })}
         <svg aria-label="依赖连线层" className="pointer-events-none absolute right-0 top-14 z-30 overflow-visible" style={{ left: labelWidth, height: displayedRecords.length * rowHeight, width: `calc(100% - ${labelWidth}px)` }} viewBox={`0 0 1000 ${Math.max(1, displayedRecords.length * rowHeight)}`} preserveAspectRatio="none">
           <defs><marker id="gantt-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" className="fill-foreground" /></marker></defs>
-          {displayedRecords.flatMap((successor, successorIndex) => successor.dependencies.map((edge) => {
-            const predecessorIndex = displayedRecords.findIndex((item) => item.id === edge.predecessorRecordId);
-            const predecessor = displayedRecords[predecessorIndex];
-            if (!predecessor) return null;
-            const x1 = predecessor.plannedCompletionDate ? Math.max(0, Math.min(1000, ((ganttToDay(predecessor.plannedCompletionDate) - minDay + 1) / days) * 1000)) : 940;
-            const x2 = successor.plannedStartDate ? Math.max(0, Math.min(1000, ((ganttToDay(successor.plannedStartDate) - minDay) / days) * 1000)) : 60;
-            const y1 = predecessorIndex * rowHeight + rowHeight / 2;
-            const y2 = successorIndex * rowHeight + rowHeight / 2;
-            const bend = x1 + Math.max(20, (x2 - x1) / 2);
-            // Approach the target above its bar, then enter at the left edge.
-            // Backward dates can otherwise put the selectable stroke across the
-            // middle of the target bar and steal its drag gesture.
-            const clearanceY = successorIndex * rowHeight + 4;
-            const approachX = x2 - 12;
-            const active = selectedEdge?.predecessorId === predecessor.id && selectedEdge.successorId === successor.id;
-            const path = `M ${x1} ${y1} H ${bend} V ${clearanceY} H ${approachX} V ${y2} H ${x2}`;
-            return <g key={`${predecessor.id}:${successor.id}`}>
+          {dependencyGeometries.map(({ key, predecessor, successor, path, active }) => {
+            return <g key={key}>
               <path d={path} fill="none" stroke="transparent" pointerEvents="stroke" className="cursor-pointer" style={{ strokeWidth: 14 }} vectorEffect="non-scaling-stroke" tabIndex={0} role="button" aria-label={`${predecessor.title} 到 ${successor.title} 的依赖线`} onClick={() => { setSelectedEdge({ predecessorId: predecessor.id, successorId: successor.id }); setSelectedId(successor.id); }} onDoubleClick={(event) => onOpen(successor, event.currentTarget)} onKeyDown={(event) => { if (event.key === "Enter" && event.shiftKey) onOpen(successor, event.currentTarget); else if (event.key === "Enter") { setSelectedEdge({ predecessorId: predecessor.id, successorId: successor.id }); setSelectedId(successor.id); } if (event.key === "Delete") void removeDependency(predecessor, successor); }} />
               <path d={path} fill="none" markerEnd="url(#gantt-arrow)" className="pointer-events-none stroke-foreground" style={{ strokeWidth: active ? 3 : 2 }} vectorEffect="non-scaling-stroke" aria-hidden="true" />
-              {active ? <><circle cx={x1} cy={y1} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖源端改连" onPointerDown={() => beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "source" })} onKeyDown={(event) => { if (event.key === "Enter") beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "source" }); }} /><circle cx={x2} cy={y2} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖目标端改连" onPointerDown={() => beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "target" })} onKeyDown={(event) => { if (event.key === "Enter") beginDependencyDrag({ predecessorId: predecessor.id, successorId: successor.id, endpoint: "target" }); }} /></> : null}
             </g>;
-          }))}
+          })}
+          {activeDependencyGeometry ? <g data-testid="gantt-active-dependency-handles">
+            <circle cx={activeDependencyGeometry.x1} cy={activeDependencyGeometry.y1} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖源端改连" onPointerDown={() => beginDependencyDrag({ predecessorId: activeDependencyGeometry.predecessor.id, successorId: activeDependencyGeometry.successor.id, endpoint: "source" })} onKeyDown={(event) => { if (event.key === "Enter") beginDependencyDrag({ predecessorId: activeDependencyGeometry.predecessor.id, successorId: activeDependencyGeometry.successor.id, endpoint: "source" }); }} />
+            <circle cx={activeDependencyGeometry.x2} cy={activeDependencyGeometry.y2} r="8" className="pointer-events-auto cursor-ew-resize fill-background stroke-foreground" tabIndex={0} role="button" aria-label="拖动依赖目标端改连" onPointerDown={() => beginDependencyDrag({ predecessorId: activeDependencyGeometry.predecessor.id, successorId: activeDependencyGeometry.successor.id, endpoint: "target" })} onKeyDown={(event) => { if (event.key === "Enter") beginDependencyDrag({ predecessorId: activeDependencyGeometry.predecessor.id, successorId: activeDependencyGeometry.successor.id, endpoint: "target" }); }} />
+          </g> : null}
         </svg>
       </div>
     </div>

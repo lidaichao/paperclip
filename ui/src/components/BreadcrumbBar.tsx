@@ -53,7 +53,13 @@ function GlobalToolbar({
   );
 }
 
-export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?: boolean }) {
+export function BreadcrumbBar({
+  taskDetailLayout = false,
+  compact = false,
+}: {
+  taskDetailLayout?: boolean;
+  compact?: boolean;
+}) {
   const {
     breadcrumbs,
     breadcrumbToolbar,
@@ -80,10 +86,11 @@ export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?:
       pageToolbar={isMobile ? null : breadcrumbToolbar}
     />
   );
+  const shellHeightClass = compact ? "h-11" : "h-(--sz-60px)";
 
   if (isMobile && mobileToolbar) {
     return (
-      <div className="h-(--sz-60px) shrink-0 flex items-center border-b border-border px-2">
+      <div className={cn(shellHeightClass, "shrink-0 flex items-center border-b border-border px-2")}>
         {mobileToolbar}
       </div>
     );
@@ -91,7 +98,7 @@ export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?:
 
   if (breadcrumbs.length === 0) {
     return (
-      <div className="h-(--sz-60px) shrink-0 flex items-center justify-end border-b border-border px-4 md:px-6">
+      <div className={cn(shellHeightClass, "shrink-0 flex items-center justify-end border-b border-border px-4 md:px-6")}>
         {globalToolbarSlots}
       </div>
     );
@@ -116,7 +123,7 @@ export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?:
     currentCrumb.identifier
   ) {
     return (
-      <div className="h-(--sz-60px) shrink-0 flex items-center border-b border-border px-4">
+      <div className={cn(shellHeightClass, "shrink-0 flex items-center border-b border-border px-4")}>
         {menuButton}
         <h1 className="flex min-w-0 flex-1 items-baseline gap-1.5 text-sm">
           {currentCrumb.leading ? (
@@ -197,7 +204,7 @@ export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?:
   // Other single-crumb pages keep their existing page-title presentation.
   if (breadcrumbs.length === 1 && !taskDetailLayout) {
     return (
-      <div className="h-(--sz-60px) shrink-0 flex items-center border-b border-border px-4 md:px-6">
+      <div className={cn(shellHeightClass, "shrink-0 flex items-center border-b border-border px-4 md:px-6")}>
         {menuButton}
         <div className="min-w-0 overflow-hidden flex-1">
           {breadcrumbs[0].leading || breadcrumbs[0].identifier ? (
@@ -223,7 +230,8 @@ export function BreadcrumbBar({ taskDetailLayout = false }: { taskDetailLayout?:
   return (
     <div
       className={cn(
-        "relative h-(--sz-60px) shrink-0 flex items-center border-b border-border",
+        "relative shrink-0 flex items-center border-b border-border",
+        shellHeightClass,
         "px-4 md:px-6",
       )}
     >

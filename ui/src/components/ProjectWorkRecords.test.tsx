@@ -131,6 +131,12 @@ function button(text: string) {
   return match as HTMLButtonElement;
 }
 
+function buttonByLabel(label: string) {
+  const match = [...document.body.querySelectorAll("button")].find((node) => node.getAttribute("aria-label") === label);
+  if (!match) throw new Error(`Button not found by label: ${label}`);
+  return match as HTMLButtonElement;
+}
+
 describe("ProjectWorkRecords", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -372,9 +378,13 @@ describe("ProjectWorkRecords", () => {
     expect(document.body.querySelector('select[aria-label="迭代"]')).not.toBeNull();
 
     const title = document.body.querySelector('input[maxlength="500"]') as HTMLInputElement;
-    await act(async () => setNativeValue(title, "历史缺陷（已核对）"));
-    await act(async () => button("保存缺陷").click());
-    await flush();
+    vi.useFakeTimers();
+    try {
+      await act(async () => setNativeValue(title, "历史缺陷（已核对）"));
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+    } finally {
+      vi.useRealTimers();
+    }
     const payload = updateMock.mock.calls.at(-1)?.[3];
     expect(payload.title).toBe("历史缺陷（已核对）");
     expect(payload).not.toHaveProperty("plannedStartDate");
@@ -396,10 +406,15 @@ describe("ProjectWorkRecords", () => {
     expect(predecessorGroup).toBeTruthy();
     expect([...predecessorGroup!.querySelectorAll('input[type="checkbox"]')].map((node) => (node as HTMLInputElement).checked)).toEqual([true, true]);
     const title = document.body.querySelector('input[maxlength="500"]') as HTMLInputElement;
-    await act(async () => setNativeValue(title, "验收（已核对）"));
-    await act(async () => button("保存计划").click());
-    await flush();
+    vi.useFakeTimers();
+    try {
+      await act(async () => setNativeValue(title, "验收（已核对）"));
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+    } finally {
+      vi.useRealTimers();
+    }
     const payload = updateMock.mock.calls.at(-1)?.[3];
+    expect(payload.title).toBe("验收（已核对）");
     expect(payload).not.toHaveProperty("predecessorRecordIds");
     expect(payload).not.toHaveProperty("dependencySetRevision");
   });
@@ -428,7 +443,7 @@ describe("ProjectWorkRecords", () => {
     const title = document.body.querySelector('input[maxlength="500"]') as HTMLInputElement;
     await act(async () => setNativeValue(title, "未保存标题"));
 
-    await act(async () => button("取消").click());
+    await act(async () => buttonByLabel("关闭").click());
     await flush();
     expect(document.body.textContent).toContain("保存并继续");
     expect(document.body.textContent).toContain("放弃并继续");
@@ -439,14 +454,14 @@ describe("ProjectWorkRecords", () => {
     expect((document.body.querySelector('input[maxlength="500"]') as HTMLInputElement).value).toBe("未保存标题");
 
     updateMock.mockRejectedValueOnce(new Error("数据库暂不可用"));
-    await act(async () => button("取消").click());
+    await act(async () => buttonByLabel("关闭").click());
     await flush();
     await act(async () => button("保存并继续").click());
     await flush();
     expect((document.body.querySelector('input[maxlength="500"]') as HTMLInputElement).value).toBe("未保存标题");
     expect(document.body.textContent).toContain("数据库暂不可用");
 
-    await act(async () => button("取消").click());
+    await act(async () => buttonByLabel("关闭").click());
     await flush();
     await act(async () => button("放弃并继续").click());
     await flush();
@@ -480,7 +495,6 @@ describe("ProjectWorkRecords", () => {
       setSelectValue(severity, "critical");
       setSelectValue(foundInVersion, "version-1");
     });
-    await act(async () => button("保存缺陷").click());
     await flush();
 
     expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", defect.id, expect.objectContaining({
@@ -590,7 +604,7 @@ describe("ProjectWorkRecords", () => {
     await flush();
     expect(updateMock).toHaveBeenCalledTimes(1);
 
-    await act(async () => button("取消").click());
+    await act(async () => buttonByLabel("关闭").click());
     await flush();
     const discard = button("放弃并继续");
     expect(discard.disabled).toBe(true);
@@ -632,6 +646,12 @@ describe("ProjectWorkRecords", () => {
     const statusSelect = [...document.body.querySelectorAll("select")].find((node) => node.value === "backlog");
     expect(statusSelect?.textContent).toContain("Backlog");
     expect((document.body.querySelector('input[maxlength="500"]') as HTMLInputElement)?.value).toBe("发布计划");
+    expect(document.body.textContent).not.toContain("Save Plan");
+    expect(buttonByLabel("Close")).toBeTruthy();
+
+    await act(async () => buttonByLabel("Close").click());
+    await flush();
+    await act(async () => button("New Plan").click());
     expect(document.body.textContent).toContain("Save Plan");
   });
 });
