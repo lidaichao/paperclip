@@ -822,12 +822,12 @@ export function TaskChatComposer({
   // Sending mid-upload would silently drop the pending file from the comment;
   // sending past a failed chip would discard the file the user selected and
   // clear its error state, so both hold submission until resolved or removed.
+  // Keep Stop and Send as separate actions while a run is active. Replacing
+  // Send with Stop made the composer look unable to accept a message until
+  // the user started typing, and made queued/steered comments needlessly
+  // hard to discover.
   const showStop =
-    !queuedEdit &&
-    !submitting &&
-    body.trim().length === 0 &&
-    attachments.length === 0 &&
-    Boolean(onStop || stopControl.stopping);
+    !queuedEdit && Boolean(onStop || stopControl.stopping);
   const uploadPending = attachments.some((item) => item.status === "uploading");
   const uploadFailed = attachments.some((item) => item.status === "error");
   const takeoverVisible = Boolean(
@@ -1574,45 +1574,62 @@ export function TaskChatComposer({
                 {l10n("local.cancel_19766ed6")}</button>
             ) : null}
 
-            <button
-              type="button"
-              onClick={() => void (showStop ? stopControl.stop() : submit())}
-              disabled={
-                showStop
-                  ? disabled || stopControl.stopping
-                  : disabled ||
-                    (Boolean(pause) && !canResetPausedConversation) ||
-                    submitting ||
-                    !!uncertainSubmission ||
-                    uploadPending ||
-                    uploadFailed ||
-                    (body.trim().length === 0 && attachedRefs.length === 0)
-              }
-              title={
-                showStop
-                  ? stopControl.stopping
+            {showStop ? (
+              <button
+                type="button"
+                onClick={() => void stopControl.stop()}
+                disabled={disabled || stopControl.stopping}
+                title={
+                  stopControl.stopping
                     ? l10n("local.stopping_bbe85741")
                     : l10n("local.stop_response_d5ca579c")
-                  : queuedEdit
-                    ? queuedEdit.stale
-                      ? l10n("local.queue_as_new_message_c4284a66")
-                      : l10n("local.save_queued_message_3d52a0db")
-                    : uploadPending
-                      ? l10n("local.waiting_for_upload_to_finish_71fd6a43")
-                      : uploadFailed
-                        ? l10n("local.remove_the_failed_attachment_to_send_10d2ce8e")
-                        : l10n("local.send_enter_b5f7acc1")
-              }
-              aria-label={
-                showStop
-                  ? stopControl.stopping
+                }
+                aria-label={
+                  stopControl.stopping
                     ? l10n("local.stopping_bbe85741")
                     : l10n("local.stop_cae7d57b")
-                  : queuedEdit
-                    ? queuedEdit.stale
-                      ? l10n("local.queue_as_new_message_c4284a66")
-                      : l10n("local.save_queued_message_3d52a0db")
-                    : l10n("local.send_f6f4688f")
+                }
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground transition-transform hover:scale-105 hover:bg-accent disabled:scale-100 disabled:opacity-50"
+                data-testid="task-chat-composer-stop"
+                data-slot="icon-button"
+              >
+                {stopControl.stopping ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Square className="h-4 w-4 fill-current" aria-hidden />
+                )}
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => void submit()}
+              disabled={
+                disabled ||
+                (Boolean(pause) && !canResetPausedConversation) ||
+                submitting ||
+                !!uncertainSubmission ||
+                uploadPending ||
+                uploadFailed ||
+                (body.trim().length === 0 && attachedRefs.length === 0)
+              }
+              title={
+                queuedEdit
+                  ? queuedEdit.stale
+                    ? l10n("local.queue_as_new_message_c4284a66")
+                    : l10n("local.save_queued_message_3d52a0db")
+                  : uploadPending
+                    ? l10n("local.waiting_for_upload_to_finish_71fd6a43")
+                    : uploadFailed
+                      ? l10n("local.remove_the_failed_attachment_to_send_10d2ce8e")
+                      : l10n("local.send_enter_b5f7acc1")
+              }
+              aria-label={
+                queuedEdit
+                  ? queuedEdit.stale
+                    ? l10n("local.queue_as_new_message_c4284a66")
+                    : l10n("local.save_queued_message_3d52a0db")
+                  : l10n("local.send_f6f4688f")
               }
               className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-105 disabled:scale-100",
@@ -1620,15 +1637,11 @@ export function TaskChatComposer({
                   ? "bg-foreground text-background disabled:bg-foreground disabled:text-background disabled:opacity-100"
                   : "bg-primary text-primary-foreground disabled:bg-muted disabled:text-muted-foreground",
               )}
-              data-testid={
-                showStop ? "task-chat-composer-stop" : "task-chat-composer-send"
-              }
+              data-testid="task-chat-composer-send"
               data-slot="icon-button"
             >
-              {submitting || (showStop && stopControl.stopping) ? (
+              {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : showStop ? (
-                <Square className="h-4 w-4 fill-current" aria-hidden />
               ) : (
                 <ArrowUp className="h-4 w-4" aria-hidden />
               )}
