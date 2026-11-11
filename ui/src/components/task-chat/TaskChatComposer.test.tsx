@@ -993,6 +993,30 @@ describe("TaskChatComposer", () => {
     expect(onAdd).toHaveBeenCalledWith("wake up", true, undefined, undefined, expect.any(String));
   });
 
+  it("keeps blocked work blocked when a human posts an ordinary comment", async () => {
+    const onAdd = vi.fn().mockResolvedValue(undefined);
+    render(
+      <TaskChatComposer
+        onAdd={onAdd}
+        workMode="standard"
+        issueStatus="blocked"
+        currentAssigneeValue="agent:a1"
+      />,
+    );
+
+    typeText("share context without changing dependencies");
+    pressKey("Enter", { metaKey: true });
+    await flushAsync();
+
+    expect(onAdd).toHaveBeenCalledWith(
+      "share context without changing dependencies",
+      undefined,
+      undefined,
+      undefined,
+      expect.any(String),
+    );
+  });
+
   it("hides the attach button without an upload handler and shows it with one", () => {
     render(<TaskChatComposer onAdd={vi.fn()} workMode="standard" />);
     expect(

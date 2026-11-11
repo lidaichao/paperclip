@@ -1093,7 +1093,7 @@ describe.sequential("issue comment reopen routes", () => {
     );
   });
 
-  it("moves assigned blocked issues back to todo via POST comments", async () => {
+  it("keeps assigned blocked issues blocked when POST comments add context", async () => {
     mockIssueService.getById.mockResolvedValue(makeIssue("blocked"));
     mockIssueService.update.mockImplementation(
       async (_id: string, patch: Record<string, unknown>) => ({
@@ -1107,25 +1107,20 @@ describe.sequential("issue comment reopen routes", () => {
       .send({ body: "please continue" });
 
     expect(res.status).toBe(201);
-    expect(mockIssueService.update).toHaveBeenCalledWith(
-      "11111111-1111-4111-8111-111111111111",
-      { status: "todo" },
-    );
+    expect(mockIssueService.update).not.toHaveBeenCalled();
     await waitForWakeup(() =>
       expect(mockHeartbeatService.wakeup).toHaveBeenCalledWith(
         "22222222-2222-4222-8222-222222222222",
         expect.objectContaining({
-          reason: "issue_reopened_via_comment",
+          reason: "issue_commented",
           payload: expect.objectContaining({
             commentId: "comment-1",
-            reopenedFrom: "blocked",
             mutation: "comment",
           }),
           contextSnapshot: expect.objectContaining({
             issueId: "11111111-1111-4111-8111-111111111111",
             wakeCommentId: "comment-1",
-            wakeReason: "issue_reopened_via_comment",
-            reopenedFrom: "blocked",
+            wakeReason: "issue_commented",
           }),
         }),
       ),
@@ -1669,7 +1664,7 @@ describe.sequential("issue comment reopen routes", () => {
     ]);
   });
 
-  it("still implicitly reopens a blocked issue via PATCH when the same request clears blockers", async () => {
+  it("does not let a PATCH comment implicitly resume blocked work when it clears blockers", async () => {
     mockIssueService.getById.mockResolvedValue(makeIssue("blocked"));
     mockIssueService.getRelationSummaries.mockResolvedValue({
       blockedBy: [],
@@ -1703,7 +1698,8 @@ describe.sequential("issue comment reopen routes", () => {
       string,
       unknown
     >;
-    expect(patch.status).toBe("todo");
+    expect(patch.status).toBeUndefined();
+    expect(patch.blockedByIssueIds).toEqual([]);
   });
 
   it("does not implicitly reopen closed issues via POST comments when no agent is assigned", async () => {
@@ -1842,7 +1838,7 @@ describe.sequential("issue comment reopen routes", () => {
     );
   });
 
-  it("moves assigned blocked issues back to todo via the PATCH comment path", async () => {
+  it("keeps assigned blocked issues blocked via the PATCH comment path", async () => {
     const issue = makeIssue("blocked");
     mockIssueService.getById.mockResolvedValue(issue);
     mockIssueService.update.mockImplementation(
@@ -1858,19 +1854,21 @@ describe.sequential("issue comment reopen routes", () => {
     expect(mockIssueService.update).toHaveBeenCalledWith(
       "11111111-1111-4111-8111-111111111111",
       expect.objectContaining({
-        status: "todo",
         actorAgentId: null,
         actorUserId: "local-board",
       }),
+    );
+    expect(mockIssueService.update).not.toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      expect.objectContaining({ status: "todo" }),
     );
     await waitForWakeup(() =>
       expect(mockHeartbeatService.wakeup).toHaveBeenCalledWith(
         "22222222-2222-4222-8222-222222222222",
         expect.objectContaining({
-          reason: "issue_reopened_via_comment",
+          reason: "issue_commented",
           payload: expect.objectContaining({
             commentId: "comment-1",
-            reopenedFrom: "blocked",
             mutation: "comment",
           }),
         }),

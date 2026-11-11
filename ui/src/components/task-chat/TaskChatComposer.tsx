@@ -346,8 +346,7 @@ function shouldImplicitlyReopenComment(
 ) {
   const resumesToTodo =
     issueStatus === "done" ||
-    issueStatus === "cancelled" ||
-    issueStatus === "blocked";
+    issueStatus === "cancelled";
   return resumesToTodo && assigneeValue.startsWith("agent:");
 }
 

@@ -2276,11 +2276,11 @@ function shouldImplicitlyMoveCommentedIssueToTodo(input: {
   // Only human comments should implicitly reopen finished work.
   // Agent-authored comments remain communicative unless reopen was explicit.
   if (input.actorType !== "user") return false;
-  if (
-    !isClosedIssueStatus(input.issueStatus) &&
-    input.issueStatus !== "blocked"
-  )
-    return false;
+  // Blocked is a dependency/lifecycle state, not a conversational state.
+  // A plain comment may notify the assignee, but it must never bypass the
+  // blocker or parent/child readiness rules. Resuming blocked work requires an
+  // explicit lifecycle action after readiness has been checked.
+  if (!isClosedIssueStatus(input.issueStatus)) return false;
   if (
     typeof input.assigneeAgentId !== "string" ||
     input.assigneeAgentId.length === 0
