@@ -450,7 +450,10 @@ export function localAgentRunLeaseService(
             workspacePolicy: "agent_home" as const,
           };
         }
-        if (!issue || issue.assigneeAgentId !== input.agentId || !["todo", "in_progress"].includes(issue.status) ||
+        const resolvedDependencyWake = issue?.status === "blocked" &&
+          wakeReasonFromRun(run) === "issue_blockers_resolved";
+        if (!issue || issue.assigneeAgentId !== input.agentId ||
+          (!["todo", "in_progress"].includes(issue.status) && !resolvedDependencyWake) ||
           (issue.executionRunId && issue.executionRunId !== run.id) ||
           (issue.checkoutRunId && issue.checkoutRunId !== run.id)) continue;
         // Reuse the scheduler's own suppression, cutoff, org-chain, budget and
@@ -488,7 +491,7 @@ export function localAgentRunLeaseService(
         await tx.update(issues).set({
           executionRunId: run.id, executionLockedAt: sql`now()`, updatedAt: sql`now()`,
         }).where(eq(issues.id, issueId));
-        if (issue.status === "todo") {
+        if (issue.status === "todo" || resolvedDependencyWake) {
           const postCommitActions: IssuePostCommitAction[] = [];
           const started = await issueService(db).update(issue.id, {
             companyGuard: input.companyId, actorAgentId: input.agentId,

@@ -159,6 +159,53 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     });
   });
 
+  it("claims a dependency-ready blocked task and starts it locally", async () => {
+    const scope = await fixture();
+    const blockerId = randomUUID();
+    await db.insert(issues).values({
+      id: blockerId,
+      companyId: scope.companyId,
+      title: "Completed predecessor",
+      status: "done",
+    });
+    await db.insert(issueRelations).values({
+      companyId: scope.companyId,
+      issueId: blockerId,
+      relatedIssueId: scope.issueId,
+      type: "blocks",
+    });
+    await db.update(issues).set({
+      status: "blocked",
+      blockedTransitionAt: new Date(),
+    }).where(eq(issues.id, scope.issueId));
+    await db.update(heartbeatRuns).set({
+      contextSnapshot: {
+        issueId: scope.issueId,
+        wakeReason: "issue_blockers_resolved",
+        resolvedBlockerIssueId: blockerId,
+        blockerIssueIds: [blockerId],
+      },
+    }).where(eq(heartbeatRuns.id, scope.runId));
+
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope,
+      deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID(),
+    });
+
+    expect(claimed).toMatchObject({
+      runId: scope.runId,
+      issueId: scope.issueId,
+      wakeReason: "issue_blockers_resolved",
+    });
+    const [run] = await db.select().from(heartbeatRuns)
+      .where(eq(heartbeatRuns.id, scope.runId));
+    const [issue] = await db.select().from(issues)
+      .where(eq(issues.id, scope.issueId));
+    expect(run).toMatchObject({ status: "running", runtimeMode: "client_pull" });
+    expect(issue).toMatchObject({ status: "in_progress", executionRunId: scope.runId });
+  });
+
   it("creates one run-fenced child and rejects a changed retry or expired lease", async () => {
     const scope = await fixture();
     const projectId = randomUUID();
