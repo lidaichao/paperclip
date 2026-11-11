@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   agents,
+  agentWakeupRequests,
   companies,
   createDb,
   heartbeatRuns,
@@ -13,6 +14,7 @@ import {
   workRecordDependencies,
   workRecordExecutionProjections,
   workRecordIssueLinks,
+  workRecordOutbox,
   workRecords,
 } from "@paperclipai/db";
 import { getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase } from "./helpers/embedded-postgres.js";
@@ -97,7 +99,7 @@ describeDb("native issue work-record adoption", () => {
       businessStatus: "in_progress",
       priority: "high",
       assigneeAgentId: agent.id,
-      dispatchState: "linked",
+      dispatchState: "external",
       createdByAgentId: agent.id,
     });
     expect(childRecord).toMatchObject({
@@ -117,6 +119,25 @@ describeDb("native issue work-record adoption", () => {
     expect((await db.select().from(issues)).length).toBe(issueCountBefore);
     expect(await db.select().from(heartbeatRuns)).toHaveLength(0);
     expect(await db.select().from(issueComments)).toHaveLength(0);
+    expect(await db.select().from(workRecordOutbox)).toHaveLength(0);
+    expect(await service.reconcilePage()).toMatchObject({ processed: 0, succeeded: 0, failures: [] });
+    expect(await service.processOutbox(async () => { throw new Error("external records must never wake agents"); })).toBe(0);
+    expect(await db.select().from(agentWakeupRequests)).toHaveLength(0);
     expect(records.some((record) => record.title === routine.title || record.title === hidden.title)).toBe(false);
+
+    await db.update(issues).set({
+      title: "Native child renamed",
+      status: "in_review",
+      statusVersion: child.statusVersion + 1,
+      updatedAt: new Date(),
+    }).where(eq(issues.id, child.id));
+    expect(await service.syncAdoptedNativeIssuesPage()).toMatchObject({ processed: 2, updatedCount: 1 });
+    expect(await db.select().from(workRecords).where(eq(workRecords.id, childRecord!.id)).then((rows) => rows[0])).toMatchObject({
+      title: "Native child renamed",
+      businessStatus: "in_review",
+      dispatchState: "external",
+    });
+    expect(await db.select().from(workRecordOutbox)).toHaveLength(0);
+    expect(await db.select().from(agentWakeupRequests)).toHaveLength(0);
   });
 });

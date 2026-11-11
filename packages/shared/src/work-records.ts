@@ -86,6 +86,7 @@ export const WORK_RECORD_BUSINESS_STATUSES = [
 // execution intent, and heartbeat run state use separate contracts.
 export const WORK_RECORD_DISPATCH_STATES = [
   "not_dispatched",
+  "external",
   "preparing",
   "blocked",
   "linked",
@@ -841,7 +842,7 @@ export interface WorkRecordDispatchRequestResult {
 }
 
 export interface WorkRecordDisplayState {
-  state: "running" | "unknown" | "preparing" | "failed" | "blocked" | "queued" | "linked" | "not_dispatched" | "conflict" | "done" | "cancelled" | "ended" | "stale" | "error";
+  state: "running" | "unknown" | "preparing" | "failed" | "blocked" | "queued" | "linked" | "not_dispatched" | "external" | "conflict" | "done" | "cancelled" | "ended" | "stale" | "error";
   animated: boolean;
 }
 

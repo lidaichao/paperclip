@@ -1143,11 +1143,15 @@ export async function createApp(
     legacyOutbox: () => workRecords.processOutbox(connectionIntentHeartbeat.wakeup, 25),
     workflowV2Outbox: () => workPackages.processOutbox(connectionIntentHeartbeat.wakeup, 25),
   });
+  let nativeIssueProjectionCursor: string | null = null;
   const runWorkRecordTick = createNonOverlappingWorkRecordTick(async () => {
     const startedAt = Date.now();
     let nativeAdoption = { adoptedCount: 0, projectCount: 0 };
+    let nativeProjection = { processed: 0, updatedCount: 0, nextAfterIssueId: null as string | null };
     try {
       nativeAdoption = await workRecords.adoptUnlinkedNativeIssuesPage(100);
+      nativeProjection = await workRecords.syncAdoptedNativeIssuesPage(100, nativeIssueProjectionCursor);
+      nativeIssueProjectionCursor = nativeProjection.nextAfterIssueId;
     } catch (err) {
       logger.error({ err }, "Failed to adopt native issues into work records");
     }
@@ -1155,6 +1159,7 @@ export async function createApp(
     logger.debug({
       durationMs: Date.now() - startedAt,
       nativeAdoption,
+      nativeProjection,
       candidates: {
         records: { scanned: tick.candidates.records.processed, succeeded: tick.candidates.records.succeeded, failures: tick.candidates.records.failures },
         qualityCycles: { scanned: tick.candidates.qualityCycles.processed, succeeded: tick.candidates.qualityCycles.succeeded, failures: tick.candidates.qualityCycles.failures },

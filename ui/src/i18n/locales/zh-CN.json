@@ -13869,6 +13869,7 @@
     "work_record_ended_state": "已结束 · {{state}}",
     "work_record_defect_title": " · 缺陷 {{title}}",
     "work_record_not_dispatched": "未派发",
+    "work_record_native_task": "原生任务",
     "work_record_preparing": "准备中",
     "work_record_waiting_for_predecessor": "等待前置",
     "work_record_linked": "已关联",

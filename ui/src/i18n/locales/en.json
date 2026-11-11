@@ -13869,6 +13869,7 @@
     "work_record_ended_state": "Ended · {{state}}",
     "work_record_defect_title": " · Defect {{title}}",
     "work_record_not_dispatched": "Not dispatched",
+    "work_record_native_task": "Native task",
     "work_record_preparing": "Preparing",
     "work_record_waiting_for_predecessor": "Waiting for predecessor",
     "work_record_linked": "Linked",

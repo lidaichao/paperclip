@@ -95,6 +95,7 @@ const DEFECT_SEVERITY_LABELS: Record<
 };
 const DISPATCH_STATE_LABELS: Record<WorkRecord["dispatchState"], string> = {
   not_dispatched: "未派发",
+  external: "原生任务",
   preparing: "准备中",
   queued: "已排队",
   linked: "已关联",

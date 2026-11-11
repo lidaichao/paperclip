@@ -111,6 +111,10 @@ function workRecordProjectLockKey(companyId: string, projectId: string) {
   return `work-record-project:${companyId}:${projectId}`;
 }
 
+function isManagedDispatchState(state: string) {
+  return state !== "not_dispatched" && state !== "external";
+}
+
 type WorkRecordRow = typeof workRecords.$inferSelect;
 
 function validateWorkRecordParent(
@@ -841,7 +845,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
           assigneeAgentId: nativeIssue.assigneeAgentId,
           businessStatus: nativeIssue.status,
           statusVersion: nativeIssue.statusVersion,
-          dispatchState: "linked",
+          dispatchState: "external",
           dispatchRound: 0,
           createdByAgentId: nativeIssue.createdByAgentId,
           createdByUserId: nativeIssue.createdByUserId,
@@ -932,6 +936,86 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       adoptedCount += result.adoptedCount;
     }
     return { adoptedCount, projectCount: projectScopes.size };
+  }
+
+  async function syncAdoptedNativeIssuesPage(limit = 100, afterIssueId: string | null = null) {
+    const boundedLimit = Math.max(1, Math.min(limit, 500));
+    const rows = await db.select({
+      issueId: issues.id,
+      issueTitle: issues.title,
+      issueDescription: issues.description,
+      issuePriority: issues.priority,
+      issueAssigneeAgentId: issues.assigneeAgentId,
+      issueStatus: issues.status,
+      issueStatusVersion: issues.statusVersion,
+      issueRunId: issues.executionRunId,
+      recordId: workRecords.id,
+      recordTitle: workRecords.title,
+      recordDescription: workRecords.description,
+      recordPriority: workRecords.priority,
+      recordAssigneeAgentId: workRecords.assigneeAgentId,
+      recordStatus: workRecords.businessStatus,
+      recordStatusVersion: workRecords.statusVersion,
+    }).from(workRecordIssueLinks)
+      .innerJoin(workRecords, and(
+        eq(workRecords.companyId, workRecordIssueLinks.companyId),
+        eq(workRecords.projectId, workRecordIssueLinks.projectId),
+        eq(workRecords.id, workRecordIssueLinks.recordId),
+      ))
+      .innerJoin(issues, and(
+        eq(issues.companyId, workRecordIssueLinks.companyId),
+        eq(issues.id, workRecordIssueLinks.issueId),
+      ))
+      .where(and(
+        eq(workRecordIssueLinks.purpose, "primary"),
+        eq(workRecordIssueLinks.dispatchRound, 0),
+        eq(workRecords.dispatchState, "external"),
+        afterIssueId ? gt(issues.id, afterIssueId) : undefined,
+      ))
+      .orderBy(asc(issues.id))
+      .limit(boundedLimit + 1);
+    const hasMore = rows.length > boundedLimit;
+    const candidates = hasMore ? rows.slice(0, boundedLimit) : rows;
+    let updatedCount = 0;
+    await db.transaction(async (tx) => {
+      for (const row of candidates) {
+        const changed = row.recordTitle !== row.issueTitle
+          || row.recordDescription !== row.issueDescription
+          || row.recordPriority !== row.issuePriority
+          || row.recordAssigneeAgentId !== row.issueAssigneeAgentId
+          || row.recordStatus !== row.issueStatus
+          || row.recordStatusVersion !== row.issueStatusVersion;
+        if (changed) {
+          await tx.update(workRecords).set({
+            title: row.issueTitle,
+            description: row.issueDescription,
+            priority: row.issuePriority as WorkRecordRow["priority"],
+            assigneeAgentId: row.issueAssigneeAgentId,
+            businessStatus: row.issueStatus,
+            statusVersion: row.issueStatusVersion,
+            updatedAt: new Date(),
+          }).where(eq(workRecords.id, row.recordId));
+          updatedCount += 1;
+        }
+        await tx.update(workRecordExecutionProjections).set({
+          issueStatus: row.issueStatus,
+          issueStatusVersion: row.issueStatusVersion,
+          lastRunId: row.issueRunId,
+          syncState: "current",
+          syncError: null,
+          projectedAt: new Date(),
+          updatedAt: new Date(),
+        }).where(and(
+          eq(workRecordExecutionProjections.recordId, row.recordId),
+          eq(workRecordExecutionProjections.issueId, row.issueId),
+        ));
+      }
+    });
+    return {
+      processed: candidates.length,
+      updatedCount,
+      nextAfterIssueId: hasMore ? candidates.at(-1)?.issueId ?? null : null,
+    };
   }
 
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
@@ -1110,7 +1194,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         });
       }
       if (
-        locked.dispatchState !== "not_dispatched" &&
+        isManagedDispatchState(locked.dispatchState) &&
         ((!workflowV2WritesEnabled && predecessorIds !== null) || input.assigneeAgentId !== undefined || input.qaAssigneeAgentId !== undefined || input.businessStatus !== undefined || input.parentRecordId !== undefined || input.packageQaRole !== undefined || input.qaRetestExemptionReason !== undefined || input.qaCoverageRecordIds !== undefined)
       ) throw conflict("Dispatched record routing and business status are controlled by execution");
       if (input.qaCoverageRecordIds !== undefined) {
@@ -1159,7 +1243,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       }
       const descriptionChanged = input.description !== undefined && input.description !== locked.description;
       const nextDescriptionRevision = locked.descriptionRevision + (descriptionChanged ? 1 : 0);
-      const primaryLink = descriptionChanged && locked.dispatchState !== "not_dispatched"
+      const primaryLink = descriptionChanged && isManagedDispatchState(locked.dispatchState)
         ? await tx.select().from(workRecordIssueLinks).where(and(
             eq(workRecordIssueLinks.companyId, companyId),
             eq(workRecordIssueLinks.projectId, projectId),
@@ -1188,6 +1272,33 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         ...(predecessorIds ? { dependencySetRevision: locked.dependencySetRevision + 1 } : {}),
         revision: locked.revision + 1, updatedAt: new Date(),
       }).where(eq(workRecords.id, recordId)).returning();
+      if (locked.dispatchState === "external") {
+        const externalLink = await tx.select({ issueId: workRecordIssueLinks.issueId }).from(workRecordIssueLinks).where(and(
+          eq(workRecordIssueLinks.companyId, companyId),
+          eq(workRecordIssueLinks.projectId, projectId),
+          eq(workRecordIssueLinks.recordId, recordId),
+          eq(workRecordIssueLinks.purpose, "primary"),
+          eq(workRecordIssueLinks.dispatchRound, 0),
+        )).then((rows) => rows[0] ?? null);
+        if (!externalLink) throw conflict("External work record lost its native task link");
+        const parentIssueId = nextParentRecordId
+          ? await tx.select({ issueId: workRecordIssueLinks.issueId }).from(workRecordIssueLinks).where(and(
+              eq(workRecordIssueLinks.companyId, companyId),
+              eq(workRecordIssueLinks.projectId, projectId),
+              eq(workRecordIssueLinks.recordId, nextParentRecordId),
+              eq(workRecordIssueLinks.purpose, "primary"),
+            )).then((rows) => rows[0]?.issueId ?? null)
+          : null;
+        await issuesSvc.update(externalLink.issueId, {
+          companyGuard: companyId,
+          ...(input.title !== undefined ? { title: input.title } : {}),
+          ...(input.description !== undefined ? { description: input.description } : {}),
+          ...(input.priority !== undefined ? { priority: input.priority } : {}),
+          ...(input.businessStatus !== undefined ? { status: input.businessStatus } : {}),
+          ...(input.assigneeAgentId !== undefined ? { assigneeAgentId: input.assigneeAgentId } : {}),
+          ...(input.parentRecordId !== undefined ? { parentId: parentIssueId } : {}),
+        }, tx);
+      }
       if (updatesHierarchy && projectRecords) {
         await cascadeInheritedIterations(
           tx,
@@ -1241,7 +1352,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
           payloadDigest,
         });
       }
-      if (locked.dispatchState !== "not_dispatched" && workflowV2WritesEnabled && predecessorIds !== null) {
+      if (isManagedDispatchState(locked.dispatchState) && workflowV2WritesEnabled && predecessorIds !== null) {
         const activeIntents = await tx.select({ id: workRecordExecutionIntents.id }).from(workRecordExecutionIntents).where(and(
           eq(workRecordExecutionIntents.companyId, companyId),
           eq(workRecordExecutionIntents.projectId, projectId),
@@ -1333,7 +1444,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
             currentDependencySetRevision: record.dependencySetRevision,
           });
         }
-        if (record.dispatchState !== "not_dispatched" && !isWorkflowV2WritesEnabled(companyId, projectId)) {
+        if (isManagedDispatchState(record.dispatchState) && !isWorkflowV2WritesEnabled(companyId, projectId)) {
           throw conflict("Dispatched record dependencies are controlled by execution");
         }
       }
@@ -2222,7 +2333,10 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       }
       throw error;
     }
-    if (result.replayed) await reconcileRecord(companyId, projectId, recordId);
+    if (result.replayed) {
+      const replayedRecord = await raw(companyId, projectId, recordId);
+      if (isManagedDispatchState(replayedRecord.dispatchState)) await reconcileRecord(companyId, projectId, recordId);
+    }
     const record = await raw(companyId, projectId, recordId).then((row) => hydrate(companyId, [row])).then((rows) => rows[0]);
     return { ...result, record };
   }
@@ -2231,7 +2345,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     const rows = await db.select({ companyId: workRecords.companyId, projectId: workRecords.projectId, id: workRecords.id })
       .from(workRecords)
       .where(and(
-        ne(workRecords.dispatchState, "not_dispatched"),
+        inArray(workRecords.dispatchState, ["preparing", "blocked", "linked", "queued", "failed"]),
         afterId ? gt(workRecords.id, afterId) : undefined,
       ))
       .orderBy(asc(workRecords.id))
@@ -2372,6 +2486,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     listPage,
     adoptNativeIssues,
     adoptUnlinkedNativeIssuesPage,
+    syncAdoptedNativeIssuesPage,
     create,
     update,
     mutateDependency,
