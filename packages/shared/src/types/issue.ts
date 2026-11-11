@@ -33,6 +33,7 @@ import type {
   IssueThreadInteractionResolverPolicyProvenance,
   IssueThreadInteractionStatus,
   IssueStatus,
+  IssueWorkItemKind,
 } from "../constants.js";
 import type { Goal } from "./goal.js";
 import type { Project, ProjectWorkspace } from "./project.js";
@@ -789,6 +790,7 @@ export interface Issue {
   description: string | null;
   descriptionTruncated?: boolean;
   status: IssueStatus;
+  workItemKind: IssueWorkItemKind;
   workMode: IssueWorkMode;
   priority: IssuePriority;
   reviewPolicy: IssueReviewPolicy | null;

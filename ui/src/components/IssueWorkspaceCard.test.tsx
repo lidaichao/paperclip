@@ -94,6 +94,7 @@ function createIssue(overrides: Partial<Issue> = {}): Issue {
     title: "Sandboxing",
     description: null,
     status: "in_progress",
+    workItemKind: "plan",
     priority: "medium",
     reviewPolicy: null,
     assigneeAgentId: "agent-1",

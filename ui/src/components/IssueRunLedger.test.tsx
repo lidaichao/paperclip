@@ -90,6 +90,7 @@ function createIssue(overrides: Partial<Issue> = {}): Issue {
     title: "Child issue",
     description: null,
     status: "todo",
+    workItemKind: "plan",
     priority: "medium",
     reviewPolicy: null,
     assigneeAgentId: null,

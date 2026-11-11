@@ -1,5 +1,5 @@
 import { l10n } from "../i18n";
-import { useCallback, useEffect, useMemo, useState, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Link, useParams, useNavigate, useLocation, Navigate } from "@/lib/router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PROJECT_COLORS, PROJECT_ICON_NAMES, isUuidLike, type BudgetPolicySummary } from "@paperclipai/shared";
@@ -16,7 +16,7 @@ import { useCompany } from "../context/CompanyContext";
 import { useToastActions } from "../context/ToastContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { queryKeys } from "../lib/queryKeys";
-import { ProjectProperties, type ProjectConfigFieldKey, type ProjectFieldSaveState } from "../components/ProjectProperties";
+import { ProjectProperties, ProjectPropertiesContextRail, type ProjectConfigFieldKey, type ProjectFieldSaveState } from "../components/ProjectProperties";
 import { InlineEditor } from "../components/InlineEditor";
 import { StatusBadge } from "../components/StatusBadge";
 import { ProjectTile } from "../components/ProjectTile";
@@ -26,6 +26,7 @@ import { PageSkeleton } from "../components/PageSkeleton";
 import { PageTabBar } from "../components/PageTabBar";
 import { ProjectWorkspacesContent } from "../components/ProjectWorkspacesContent";
 import { ProjectWorkRecords } from "../components/ProjectWorkRecords";
+import { ProjectWorkspaceContextRail, ProjectWorkspaceShell } from "../components/ProjectWorkspaceShell";
 import { SummarySlotCard } from "../components/SummarySlotCard";
 import { MembershipAction } from "../components/MembershipAction";
 import { StarToggle } from "../components/StarToggle";
@@ -53,57 +54,6 @@ import {
 type ProjectBaseTab = "list" | "plans" | "gantt" | "defects" | "my-work" | "plugin-operations" | "workspaces" | "configuration" | "budget";
 type ProjectPluginTab = `plugin:${string}`;
 type ProjectTab = ProjectBaseTab | ProjectPluginTab;
-
-const PROJECT_CONTEXT_ITEMS: Record<"list" | "configuration" | "budget", string[]> = {
-  list: ["全部任务"],
-  configuration: ["基础信息", "代码库", "执行工作区", "危险区域"],
-  budget: ["预算策略"],
-};
-
-function ProjectStaticWorkspace({ projectName, activeTab, topNavigation, railOpen, onRailOpenChange, children }: {
-  projectName: string;
-  activeTab: "list" | "configuration" | "budget";
-  topNavigation: ReactNode;
-  railOpen: boolean;
-  onRailOpenChange: (open: boolean) => void;
-  children: ReactNode;
-}) {
-  return <section className="@container h-[calc(100dvh-77px)]" data-testid="project-workspace-main" data-project-tab={activeTab}>
-    <div className="work-record-workspace" data-testid="work-record-workspace-grid" data-rail-open={railOpen ? "true" : "false"}>
-      <div className="work-record-rail-shell" data-testid="work-record-rail-shell">
-        <div className="work-record-rail-panel" aria-hidden={!railOpen}>
-          <aside className="work-record-rail-navigation h-full" aria-label={`${projectName} 项目导航`}>
-            <header className="flex min-h-14 items-center border-b px-2">
-              <h2 className="truncate text-lg font-bold" title={projectName}>{projectName}</h2>
-            </header>
-            <nav className="py-3" aria-label={activeTab === "list" ? "任务视图" : activeTab === "configuration" ? "配置目录" : "预算目录"}>
-              {PROJECT_CONTEXT_ITEMS[activeTab].map((item, index) => <div key={item} className={cn("work-record-pool-nav", index === 0 && "work-record-rail-active")}>
-                <span>{item}</span>
-                {index === 0 ? <span>{activeTab === "list" ? "项目内全部任务" : activeTab === "configuration" ? "项目设置" : "项目成本控制"}</span> : null}
-              </div>)}
-            </nav>
-          </aside>
-        </div>
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="outline"
-          className="absolute right-0 top-[48%] z-10 h-11 w-5 translate-x-full rounded-l-none rounded-r-md bg-muted p-0 text-muted-foreground"
-          aria-label={railOpen ? "收起项目导航" : "展开项目导航"}
-          aria-expanded={railOpen}
-          onClick={() => onRailOpenChange(!railOpen)}
-          data-testid="work-record-rail-toggle"
-        >
-          <span aria-hidden="true">{railOpen ? "‹" : "›"}</span>
-        </Button>
-      </div>
-      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden" data-testid="work-record-workspace-content">
-        <div className="h-14 min-h-14 border-b" data-testid="work-record-top-navigation">{topNavigation}</div>
-        <div className="min-h-0 flex-1 overflow-auto py-4 pr-1" data-testid="project-workspace-tab-content">{children}</div>
-      </div>
-    </div>
-  </section>;
-}
 
 function isProjectPluginTab(value: string | null): value is ProjectPluginTab {
   return typeof value === "string" && value.startsWith("plugin:");
@@ -882,6 +832,19 @@ export function ProjectDetail() {
       />
     </Tabs>
   );
+  const staticContextRail = activeTab === "list" ? (
+    <ProjectWorkspaceContextRail
+      label="任务视图"
+      items={[{ href: `/projects/${canonicalProjectRef}/issues`, label: "全部任务", description: "项目内全部任务", current: true }]}
+    />
+  ) : activeTab === "configuration" ? (
+    <ProjectPropertiesContextRail project={project} showDangerZone />
+  ) : activeTab === "budget" ? (
+    <ProjectWorkspaceContextRail
+      label="预算目录"
+      items={[{ href: "#project-budget-policy", label: "预算策略", description: "项目成本控制", current: true }]}
+    />
+  ) : null;
 
   return (
     <div className={cn(projectWorkspaceRouteActive ? "space-y-3" : "space-y-6", projectWorkspaceRouteActive && "project-work-record-page")}>
@@ -1003,13 +966,13 @@ export function ProjectDetail() {
 
       {!projectWorkspaceRouteActive ? projectTabBar : null}
 
-      {(activeTab === "list" || activeTab === "configuration" || activeTab === "budget") && project?.id && resolvedCompanyId ? (
-        <ProjectStaticWorkspace
+      {projectWorkspaceRouteActive && activeTab && project?.id && resolvedCompanyId ? (
+        <ProjectWorkspaceShell
           projectName={project.name}
           activeTab={activeTab}
-          topNavigation={projectTabBar}
-          railOpen={workRecordRailOpen}
-          onRailOpenChange={setWorkRecordRailOpen}
+          navigation={projectTabBar}
+          contextRail={staticContextRail}
+          contentMode={workRecordRouteActive ? "fixed" : "scroll"}
         >
           {activeTab === "list" ? <ProjectIssuesList projectId={project.id} companyId={resolvedCompanyId} /> : null}
           {activeTab === "configuration" ? <ProjectProperties
@@ -1020,26 +983,39 @@ export function ProjectDetail() {
             onArchive={(archived) => archiveProject.mutate(archived)}
             archivePending={archiveProject.isPending}
           /> : null}
-          {activeTab === "budget" ? <BudgetPolicyCard
-            summary={projectBudgetSummary}
-            variant="plain"
-            isSaving={budgetMutation.isPending}
-            onSave={(amount) => budgetMutation.mutate(amount)}
+          {activeTab === "budget" ? <section id="project-budget-policy" className="scroll-mt-4"><BudgetPolicyCard
+              summary={projectBudgetSummary}
+              variant="plain"
+              isSaving={budgetMutation.isPending}
+              onSave={(amount) => budgetMutation.mutate(amount)}
+            /></section> : null}
+          {activeTab === "plans" ? <ProjectWorkRecords
+            projectId={project.id}
+            companyId={resolvedCompanyId}
+            kind="plan"
+            railOpen={workRecordRailOpen}
+            onRailOpenChange={setWorkRecordRailOpen}
+            onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }}
           /> : null}
-        </ProjectStaticWorkspace>
+          {activeTab === "gantt" ? <ProjectWorkRecords
+            projectId={project.id}
+            companyId={resolvedCompanyId}
+            kind="plan"
+            viewMode="gantt"
+            railOpen={workRecordRailOpen}
+            onRailOpenChange={setWorkRecordRailOpen}
+            onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }}
+          /> : null}
+          {activeTab === "defects" ? <ProjectWorkRecords
+            projectId={project.id}
+            companyId={resolvedCompanyId}
+            kind="defect"
+            railOpen={workRecordRailOpen}
+            onRailOpenChange={setWorkRecordRailOpen}
+            onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }}
+          /> : null}
+        </ProjectWorkspaceShell>
       ) : null}
-
-      {activeTab === "plans" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} projectName={project.name} topNavigation={projectTabBar} companyId={resolvedCompanyId} kind="plan" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
-      )}
-
-      {activeTab === "gantt" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} projectName={project.name} topNavigation={projectTabBar} companyId={resolvedCompanyId} kind="plan" viewMode="gantt" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
-      )}
-
-      {activeTab === "defects" && project?.id && resolvedCompanyId && (
-        <ProjectWorkRecords projectId={project.id} projectName={project.name} topNavigation={projectTabBar} companyId={resolvedCompanyId} kind="defect" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
-      )}
 
       {activeTab === "plugin-operations" && project?.id && resolvedCompanyId && project.managedByPlugin && (
         <ProjectPluginOperationsList

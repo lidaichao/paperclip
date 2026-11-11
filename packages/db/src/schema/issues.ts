@@ -21,7 +21,7 @@ import { companies } from "./companies.js";
 import { heartbeatRuns } from "./heartbeat_runs.js";
 import { projectWorkspaces } from "./project_workspaces.js";
 import { executionWorkspaces } from "./execution_workspaces.js";
-import type { IssueReviewPolicy, IssueUnblockDescriptor, SourceTrustMetadata } from "@paperclipai/shared";
+import type { IssueReviewPolicy, IssueUnblockDescriptor, IssueWorkItemKind, SourceTrustMetadata } from "@paperclipai/shared";
 
 export const issues = pgTable(
   "issues",
@@ -41,6 +41,7 @@ export const issues = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     status: text("status").notNull().default("backlog"),
+    workItemKind: text("work_item_kind").$type<IssueWorkItemKind>().notNull().default("plan"),
     // Ordinary-session record writes must never be promoted into execution by
     // the assigned-todo liveness backstop before an explicit dispatch.
     sessionWriteDispatchDeferred: boolean("session_write_dispatch_deferred").notNull().default(false),
@@ -106,6 +107,7 @@ export const issues = pgTable(
     )`),
     companyIdUq: unique("issues_company_id_uq").on(table.companyId, table.id),
     companyStatusIdx: index("issues_company_status_idx").on(table.companyId, table.status),
+    workItemKindCheck: check("issues_work_item_kind_check", sql`${table.workItemKind} IN ('plan', 'defect', 'system')`),
     companyHarnessKindIdx: index("issues_company_harness_kind_idx").on(table.companyId, table.harnessKind),
     assigneeStatusIdx: index("issues_company_assignee_status_idx").on(
       table.companyId,

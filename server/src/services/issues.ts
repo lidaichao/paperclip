@@ -4892,6 +4892,7 @@ const issueListSelect = {
     END
   `,
   status: issues.status,
+  workItemKind: issues.workItemKind,
   sessionWriteDispatchDeferred: issues.sessionWriteDispatchDeferred,
   statusVersion: issues.statusVersion,
   lastStatusDecisionId: issues.lastStatusDecisionId,

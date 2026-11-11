@@ -13,6 +13,7 @@ export function agentChatDraft(
     conversationUserId: "draft",
     conversationState: "waiting",
     status: "in_review",
+    workItemKind: "system",
     workMode,
     priority: "medium",
     reviewPolicy: null,

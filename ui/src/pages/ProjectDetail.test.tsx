@@ -83,7 +83,8 @@ vi.mock("@/plugins/slots", () => ({
 }));
 vi.mock("@/plugins/launchers", () => ({ PluginLauncherOutlet: () => null }));
 vi.mock("../components/ProjectProperties", () => ({
-  ProjectProperties: () => <div data-testid="project-properties" />,
+  ProjectProperties: () => <div data-testid="project-properties"><section id="project-settings-basic" /><section id="project-settings-danger" /></div>,
+  ProjectPropertiesContextRail: () => <nav aria-label="配置目录"><a href="#project-settings-basic">基础信息</a><a href="#project-settings-danger">危险区域</a></nav>,
 }));
 vi.mock("../components/BudgetPolicyCard", () => ({
   BudgetPolicyCard: () => <div data-testid="budget-policy-card" />,
@@ -118,11 +119,10 @@ vi.mock("../components/ProjectWorkRecords", () => ({
     kind: "plan" | "defect";
     viewMode?: "table" | "gantt";
     railOpen?: boolean;
-    topNavigation?: ReactNode;
     onRailOpenChange?: (open: boolean) => void;
   }) => {
     mockProjectWorkRecords(props);
-    return <div data-testid="project-work-records" data-kind={props.kind} data-rail-open={String(props.railOpen)}>{props.topNavigation}</div>;
+    return <div className="work-record-workspace" data-testid="work-record-workspace-grid" data-context-rail-width="280px" data-rail-open={String(props.railOpen)}><div /><div data-testid="project-work-records" data-kind={props.kind} /></div>;
   },
 }));
 
@@ -298,12 +298,32 @@ describe("ProjectDetail", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(container.querySelector('[data-testid="project-workspace-main"]')?.getAttribute("data-project-tab")).toBe(tab);
+    expect(container.querySelector('[data-testid="project-workspace-shell"]')?.getAttribute("data-project-tab")).toBe(tab);
+    expect(container.querySelector('[data-testid="project-workspace-header"]')?.textContent).toContain("Managed Project");
     expect(container.querySelectorAll('[data-testid="work-record-top-navigation"]')).toHaveLength(1);
-    expect(container.querySelector('[data-testid="work-record-workspace-grid"]')?.getAttribute("data-rail-open")).toBe("true");
+    expect(container.querySelector('[data-testid="project-workspace-content"]')?.getAttribute("data-scroll-boundary")).toBe("scroll");
+    expect(container.querySelector('[data-testid="work-record-workspace-grid"]')?.getAttribute("data-context-rail-width")).toBe("280px");
+    expect(container.querySelector('[data-testid="work-record-rail-toggle"]')).toBeNull();
   });
 
-  it("preserves the project rail state from tasks into plan", async () => {
+  it("renders configuration entries as real anchors with existing targets", async () => {
+    mockLocation.pathname = "/projects/project-1/configuration";
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    await act(async () => {
+      root = createRoot(container);
+      root.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const anchors = [...container.querySelectorAll('nav[aria-label="配置目录"] a')] as HTMLAnchorElement[];
+    expect(anchors.map((anchor) => anchor.getAttribute("href"))).toEqual(["#project-settings-basic", "#project-settings-danger"]);
+    for (const anchor of anchors) expect(container.querySelector(anchor.getAttribute("href")!)).not.toBeNull();
+  });
+
+  it("keeps the version rail inside the work view without replacing the shared shell", async () => {
     mockLocation.pathname = "/projects/project-1/issues";
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     await act(async () => {
@@ -315,12 +335,16 @@ describe("ProjectDetail", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    await act(async () => (container.querySelector('[data-testid="work-record-rail-toggle"]') as HTMLButtonElement).click());
-    expect(container.querySelector('[data-testid="work-record-workspace-grid"]')?.getAttribute("data-rail-open")).toBe("false");
+    const taskShell = container.querySelector('[data-testid="project-workspace-shell"]');
+    expect(taskShell).not.toBeNull();
+    expect(container.querySelector('[data-testid="work-record-rail-toggle"]')).toBeNull();
 
     mockLocation.pathname = "/projects/project-1/plans";
     await act(async () => root?.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>));
-    expect((mockProjectWorkRecords.mock.calls.at(-1)?.[0] as { railOpen: boolean }).railOpen).toBe(false);
+    expect(container.querySelector('[data-testid="project-workspace-shell"]')).toBe(taskShell);
+    expect(container.querySelector('[data-testid="project-workspace-content"]')?.getAttribute("data-scroll-boundary")).toBe("fixed");
+    expect(container.querySelector('[data-testid="work-record-workspace-grid"]')?.getAttribute("data-context-rail-width")).toBe("280px");
+    expect((mockProjectWorkRecords.mock.calls.at(-1)?.[0] as { railOpen: boolean }).railOpen).toBe(true);
   });
 
   it.each([

@@ -28,6 +28,7 @@ function createIssue(overrides: Partial<Issue> = {}): Issue {
     title: "Fast link target",
     description: null,
     status: "todo",
+    workItemKind: "plan",
     priority: "medium",
     reviewPolicy: null,
     assigneeAgentId: null,

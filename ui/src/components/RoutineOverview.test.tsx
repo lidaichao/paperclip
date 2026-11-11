@@ -179,6 +179,7 @@ describe("RoutineOverview", () => {
       companyId: "company-1",
       projectId: "project-1",
       status: "done",
+      workItemKind: "system",
       priority: "high",
       originKind: "routine_execution",
       originId: "routine-1",

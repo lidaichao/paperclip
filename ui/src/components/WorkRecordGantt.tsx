@@ -52,9 +52,12 @@ function dragDates(drag: Drag) {
   };
 }
 
-export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}, writable, onOpen }: {
+export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}, writable, loading = false, loadError = null, onRetry, onOpen }: {
   companyId: string; projectId: string; records: WorkRecord[]; writable: boolean;
   agentNames?: Record<string, string>;
+  loading?: boolean;
+  loadError?: Error | null;
+  onRetry?: () => void;
   onOpen: (record: WorkRecord, source: HTMLElement | SVGElement) => void;
 }) {
   const client = useQueryClient();
@@ -100,6 +103,9 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
       return !query || `${record.recordIdentifier} ${record.title}`.toLocaleLowerCase().includes(query);
     });
   }, [records, search, statusFilter]);
+  const scheduledRecords = records.filter((record) => record.plannedStartDate && record.plannedCompletionDate);
+  const unscheduledRecords = records.filter((record) => !record.plannedStartDate || !record.plannedCompletionDate);
+  const pageState = loading ? "loading" : loadError ? "error" : records.length === 0 ? "empty" : "ready";
   const treeRows = useMemo(() => buildWorkRecordTreeRows({
     records,
     directMatchIds: new Set(visibleRecords.map((record) => record.id)),
@@ -301,11 +307,24 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
     return () => window.removeEventListener("keydown", onEscape);
   });
 
-  return <section className={focus ? "work-record-gantt fixed inset-0 z-50 bg-background px-4" : "work-record-gantt"} data-testid="work-record-gantt" data-time-scale={timeScale} data-range-mode={rangeOverride ? "today" : "fit"}>
+  return <section className={focus ? "work-record-gantt fixed inset-0 z-50 bg-background px-4" : "work-record-gantt"} data-testid="work-record-gantt" data-state={pageState} data-time-scale={timeScale} data-range-mode={rangeOverride ? "today" : "fit"}>
     <div className="work-record-gantt-heading">
       <div><h3 className="font-semibold">甘特图</h3><p role="status" aria-live="polite">{dependencyDrag ? "拖动端点到另一项任务改连，按 Esc 取消。" : "悬停或点击已有连线，拖动端点到另一项任务改连；任务旁的依赖数量可打开关系列表。"}依赖不会自动顺延日期。</p></div>
       <button type="button" className="work-record-gantt-focus-toggle" aria-pressed={focus} onClick={toggleFocus}>{focus ? "退出专注" : "专注模式"}</button>
     </div>
+    {pageState === "loading" ? (
+      <div className="flex min-h-48 items-center justify-center border-b px-6 text-sm text-muted-foreground" role="status">正在加载甘特排期…</div>
+    ) : pageState === "error" ? (
+      <div className="flex min-h-48 flex-col items-center justify-center gap-3 border-b px-6 text-center" role="alert" data-testid="gantt-load-error">
+        <div><h4 className="font-semibold">甘特数据加载失败</h4><p className="mt-1 text-sm text-muted-foreground">{loadError?.message ?? "请检查连接后重试。"}</p></div>
+        <Button size="sm" variant="outline" onClick={onRetry}>重新加载</Button>
+      </div>
+    ) : pageState === "empty" ? (
+      <div className="flex min-h-48 flex-col items-center justify-center border-b px-6 text-center" data-testid="gantt-empty-state">
+        <h4 className="font-semibold">暂无计划任务</h4>
+        <p className="mt-1 text-sm text-muted-foreground">先在“计划”页创建任务，再回来安排日期。</p>
+      </div>
+    ) : <>
     <div className="work-record-gantt-toolbar">
       <label>搜索任务<Input className="h-8 shrink-0" aria-label="搜索甘特任务" placeholder="名称或编号" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
       <label>状态<select aria-label="甘特状态筛选" className="h-8 shrink-0 rounded-md border border-input bg-background px-2 text-sm" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as WorkRecordBusinessStatus | "all")}><option value="all">全部状态</option>{Object.entries(BUSINESS_STATUS_LABEL_KEYS).map(([status, key]) => <option key={status} value={status}>{l10n(key)}</option>)}</select></label>
@@ -314,8 +333,15 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
       <Button size="sm" variant="ghost" aria-label="适应排期范围" onClick={() => setRangeOverride(null)}>适应排期范围</Button>
       <Button size="sm" variant="ghost" aria-label="定位今天" onClick={locateToday}>定位今天</Button>
       {undo ? <Button size="sm" variant="ghost" disabled={mutation.isPending || !writable} onClick={() => { if (undo.kind === "dates") void mutation.mutateAsync({ record: records.find((item) => item.id === undo.record.id) ?? undo.record, start: undo.start, end: undo.end, predecessors: undo.predecessors }).then(() => setUndo(null)); else void workRecordsApi.mutateDependency(companyId, projectId, undo.input).then(async () => { setUndo(null); setError(null); await client.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }); }).catch((cause) => setError(cause instanceof Error ? cause.message : "撤销失败；请打开详情对比")); }}>撤销上次改连</Button> : null}
-      <span className="ml-auto shrink-0 text-xs text-muted-foreground">{visibleRecords.length} 项任务</span>
+      <span className="ml-auto shrink-0 text-xs text-muted-foreground" data-testid="gantt-schedule-counts">已排期 {scheduledRecords.length} · 未排期 {unscheduledRecords.length}</span>
     </div>
+    {unscheduledRecords.length > 0 ? <details className="border-b bg-muted/30 px-3 py-2" data-testid="gantt-unscheduled-records">
+      <summary className="cursor-pointer text-sm font-medium">{unscheduledRecords.length} 项工单尚未排期</summary>
+      <p className="mt-1 text-xs text-muted-foreground">打开工单补齐开始与完成日期，或直接在空日期轨道拖动创建排期。</p>
+      <div className="mt-2 flex max-h-24 flex-wrap gap-2 overflow-y-auto">
+        {unscheduledRecords.map((record) => <Button key={record.id} size="sm" variant="outline" onClick={(event) => { setSelectedId(record.id); onOpen(record, event.currentTarget); }}>{record.recordIdentifier} · {record.title}</Button>)}
+      </div>
+    </details> : null}
     {error ? <div role="alert" className="flex items-center gap-2 border-b bg-destructive/10 px-3 py-2 text-sm text-destructive"><span>{error}；候选修改已保留。</span><Button size="sm" variant="outline" disabled={(!candidate && !dependencyCandidate) || mutation.isPending} onClick={() => { if (candidate) void save(candidate); else if (dependencyCandidate) void workRecordsApi.mutateDependency(companyId, projectId, dependencyCandidate).then(async () => { setDependencyCandidate(null); setError(null); await client.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) }); }); }}>重试</Button></div> : null}
     <div ref={scrollRef} className="work-record-gantt-viewport">
       <div className="work-record-gantt-board relative grid" style={{ gridTemplateColumns: `${labelWidth}px ${days * timelineCellWidth}px`, width: labelWidth + days * timelineCellWidth }} onPointerMove={(event) => { if (!dragRef.current) return; const next = { ...dragRef.current, currentX: event.clientX }; suppressDragClickRef.current ||= Math.abs(next.currentX - next.originX) > 2; dragRef.current = next; setDrag(next); }} onPointerUp={finishDrag} onPointerCancel={() => { dragRef.current = null; dependencyDragRef.current = null; suppressDragClickRef.current = false; setDrag(null); setDependencyDrag(null); }}>
@@ -366,5 +392,6 @@ export function WorkRecordGantt({ companyId, projectId, records, agentNames = {}
       <Button size="sm" disabled={!dependencyTarget || !writable} onClick={() => { const predecessor = records.find((item) => item.id === dependencyTarget); if (predecessor) void addDependency(predecessor, selected).then(() => setDependencyTarget("")); }}>建立依赖</Button>
       {selected.dependencies.map((edge) => { const predecessor = records.find((item) => item.id === edge.predecessorRecordId); return <div key={edge.predecessorRecordId} className="flex items-end gap-1"><label className="text-xs">改连：{predecessor?.title ?? edge.predecessorRecordId}<select aria-label={`改连 ${edge.predecessorRecordId}`} disabled={!writable} className="mt-1 block h-9 rounded-md border bg-background px-2 text-sm" defaultValue="" onChange={(event) => { const target = records.find((item) => item.id === event.target.value); if (target && predecessor) void mutateDependency({ operation: "replace_source", predecessorRecordId: predecessor.id, successorRecordId: selected.id, replacementPredecessorRecordId: target.id, expectedRecords: [expected(selected)] }, (updated) => ({ operation: "replace_source", predecessorRecordId: target.id, successorRecordId: selected.id, replacementPredecessorRecordId: predecessor.id, expectedRecords: [expected(updated[0])] })); }}><option value="">选择新前置</option>{records.filter((item) => item.id !== selected.id && !predecessors.has(item.id)).map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label><Button disabled={!writable || !predecessor} size="sm" variant="outline" onClick={() => predecessor && void removeDependency(predecessor, selected)}>删除依赖</Button></div>; })}
     </div> : null}
+    </>}
   </section>;
 }

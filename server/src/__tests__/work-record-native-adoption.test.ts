@@ -39,7 +39,7 @@ describeDb("native issue work-record adoption", () => {
     const company = await db.insert(companies).values({ name: `Adopt ${suffix}`, issuePrefix: `A${suffix}` }).returning().then((rows) => rows[0]);
     const project = await db.insert(projects).values({ companyId: company.id, name: "Alice" }).returning().then((rows) => rows[0]);
     const agent = await db.insert(agents).values({ companyId: company.id, name: "Alice", status: "idle", adapterType: "process", adapterConfig: {}, runtimeConfig: {} }).returning().then((rows) => rows[0]);
-    const [parent, child, routine, hidden] = await db.insert(issues).values([
+    const [parent, child, system, routine, hidden] = await db.insert(issues).values([
       {
         companyId: company.id,
         projectId: project.id,
@@ -55,10 +55,19 @@ describeDb("native issue work-record adoption", () => {
         companyId: company.id,
         projectId: project.id,
         title: "Native child",
+        workItemKind: "defect",
         status: "blocked",
         priority: "medium",
         assigneeAgentId: agent.id,
         createdByUserId: "jack",
+        originKind: "manual",
+      },
+      {
+        companyId: company.id,
+        projectId: project.id,
+        title: "System maintenance",
+        workItemKind: "system",
+        status: "todo",
         originKind: "manual",
       },
       {
@@ -96,6 +105,8 @@ describeDb("native issue work-record adoption", () => {
     const childRecord = records.find((record) => record.title === child.title);
     expect(records).toHaveLength(2);
     expect(parentRecord).toMatchObject({
+      kind: "plan",
+      recordNumber: 1,
       businessStatus: "in_progress",
       priority: "high",
       assigneeAgentId: agent.id,
@@ -103,6 +114,8 @@ describeDb("native issue work-record adoption", () => {
       createdByAgentId: agent.id,
     });
     expect(childRecord).toMatchObject({
+      kind: "defect",
+      recordNumber: 1,
       businessStatus: "blocked",
       parentRecordId: parentRecord?.id,
       createdByUserId: "jack",
@@ -123,7 +136,9 @@ describeDb("native issue work-record adoption", () => {
     expect(await service.reconcilePage()).toMatchObject({ processed: 0, succeeded: 0, failures: [] });
     expect(await service.processOutbox(async () => { throw new Error("external records must never wake agents"); })).toBe(0);
     expect(await db.select().from(agentWakeupRequests)).toHaveLength(0);
-    expect(records.some((record) => record.title === routine.title || record.title === hidden.title)).toBe(false);
+    expect(records.some((record) =>
+      record.title === system.title || record.title === routine.title || record.title === hidden.title
+    )).toBe(false);
 
     await db.update(issues).set({
       title: "Native child renamed",

@@ -470,6 +470,23 @@ describe("issue validators", () => {
     ).toBe("backlog");
   });
 
+  it("defaults work item kind to plan and validates explicit business kinds", () => {
+    expect(createIssueSchema.parse({ title: "Historical-compatible plan" }).workItemKind).toBe(
+      "plan",
+    );
+    expect(
+      createIssueSchema.parse({ title: "Production defect", workItemKind: "defect" })
+        .workItemKind,
+    ).toBe("defect");
+    expect(updateIssueSchema.parse({ workItemKind: "system" }).workItemKind).toBe(
+      "system",
+    );
+    expect(
+      createIssueSchema.safeParse({ title: "Unknown kind", workItemKind: "task" })
+        .success,
+    ).toBe(false);
+  });
+
   it("defaults issue work mode to standard and accepts ask, planning, and skill_test", () => {
     expect(createIssueSchema.parse({ title: "Plan first" }).workMode).toBe(
       "standard",

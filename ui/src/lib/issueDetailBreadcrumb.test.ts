@@ -43,6 +43,7 @@ describe("issueDetailBreadcrumb", () => {
       title: "Prefilled issue title",
       description: null,
       status: "todo",
+      workItemKind: "plan",
       priority: "medium",
       reviewPolicy: null,
       assigneeAgentId: null,

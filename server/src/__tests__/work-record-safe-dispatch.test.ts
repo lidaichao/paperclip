@@ -169,8 +169,8 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       { clientRequestId: "fid-13-priority", expectedRevision: defect.revision },
       { actorType: "system", actorId: "test" },
     );
-    expect(await db.select({ priority: issues.priority }).from(issues).where(eq(issues.id, dispatched.issueId)).then((rows) => rows[0]))
-      .toEqual({ priority: "critical" });
+    expect(await db.select({ priority: issues.priority, workItemKind: issues.workItemKind }).from(issues).where(eq(issues.id, dispatched.issueId)).then((rows) => rows[0]))
+      .toEqual({ priority: "critical", workItemKind: "defect" });
   });
 
   it("G1 keeps version and iteration history, rejects stale writers, and only deletes empty containers", async () => {
@@ -392,6 +392,9 @@ describeDb("SD-01..SD-11 safe work-record dispatch contract", () => {
       context.service.dispatch(context.company.id, context.project.id, record.id, input, { actorType: "system", actorId: "test" }),
     ]);
     expect(first.issueId).toBe(second.issueId);
+    expect(await db.select({ workItemKind: issues.workItemKind }).from(issues).where(eq(issues.id, first.issueId)).then((rows) => rows[0]))
+      .toEqual({ workItemKind: "plan" });
+    expect(await db.select().from(issues).where(eq(issues.companyId, context.company.id))).toHaveLength(1);
     expect(await db.select().from(workRecordDispatchCommands).where(eq(workRecordDispatchCommands.recordId, record.id))).toHaveLength(1);
     expect(await db.select().from(workRecordIssueLinks).where(eq(workRecordIssueLinks.recordId, record.id))).toHaveLength(1);
   });

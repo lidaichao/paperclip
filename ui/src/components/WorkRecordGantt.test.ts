@@ -2,6 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { WorkRecord } from "@paperclipai/shared";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -60,6 +62,16 @@ describe("WorkRecordGantt date operations", () => {
   });
 });
 
+describe("WorkRecordGantt structural colors", () => {
+  it("uses Paperclip neutral tokens instead of the legacy green-tinted structure", () => {
+    const css = readFileSync(resolve(process.cwd(), "ui/src/index.css"), "utf8");
+    const ganttStructure = css.slice(css.indexOf(".work-record-gantt-viewport"), css.indexOf(".my-todo-group"));
+    expect(ganttStructure).not.toMatch(/#(?:e2e9e5|f5f8f6|5a6a64|edf1ee|596d62|172820|557064|b8d5c5|e7f3ec|145b43|465d53|74837d|adbbb0|63756a|fff)\b/i);
+    expect(ganttStructure).toContain("background: var(--card)");
+    expect(ganttStructure).toContain("border-color: var(--border)");
+  });
+});
+
 describe("WorkRecordGantt interactions", () => {
   let host: HTMLDivElement;
   let root: Root;
@@ -83,9 +95,39 @@ describe("WorkRecordGantt interactions", () => {
     vi.clearAllMocks();
   });
 
-  async function render(records: WorkRecord[], writable = true) {
-    await act(async () => root.render(createElement(QueryClientProvider, { client }, createElement(WorkRecordGantt, { companyId: "company-1", projectId: "project-1", records, writable, onOpen: open }))));
+  async function render(records: WorkRecord[], writable = true, state: { loading?: boolean; loadError?: Error | null; onRetry?: () => void } = {}) {
+    await act(async () => root.render(createElement(QueryClientProvider, { client }, createElement(WorkRecordGantt, { companyId: "company-1", projectId: "project-1", records, writable, onOpen: open, ...state }))));
   }
+
+  it("distinguishes loading, request failure and a real empty result", async () => {
+    await render([], true, { loading: true });
+    expect(host.querySelector('[data-testid="work-record-gantt"]')?.getAttribute("data-state")).toBe("loading");
+    expect(host.textContent).toContain("正在加载甘特排期");
+
+    const retry = vi.fn();
+    await render([], true, { loadError: new Error("网络不可用"), onRetry: retry });
+    expect(host.querySelector('[data-testid="work-record-gantt"]')?.getAttribute("data-state")).toBe("error");
+    expect(host.querySelector('[data-testid="gantt-load-error"]')?.textContent).toContain("网络不可用");
+    await act(async () => (host.querySelector('[data-testid="gantt-load-error"] button') as HTMLButtonElement).click());
+    expect(retry).toHaveBeenCalledTimes(1);
+
+    await render([]);
+    expect(host.querySelector('[data-testid="work-record-gantt"]')?.getAttribute("data-state")).toBe("empty");
+    expect(host.querySelector('[data-testid="gantt-empty-state"]')?.textContent).toContain("暂无计划任务");
+  });
+
+  it("counts scheduled and unscheduled tasks and opens an unscheduled task", async () => {
+    await render([
+      record("scheduled", "已排期", { plannedStartDate: "2026-11-10", plannedCompletionDate: "2026-11-12" }),
+      record("unscheduled", "待排期", { recordIdentifier: "PT-36" }),
+    ]);
+
+    expect(host.querySelector('[data-testid="gantt-schedule-counts"]')?.textContent).toBe("已排期 1 · 未排期 1");
+    const entry = [...host.querySelectorAll('[data-testid="gantt-unscheduled-records"] button')].find((button) => button.textContent?.includes("PT-36")) as HTMLButtonElement;
+    expect(entry).not.toBeNull();
+    await act(async () => entry.click());
+    expect(open).toHaveBeenCalledWith(expect.objectContaining({ id: "unscheduled" }), entry);
+  });
 
   it("opens exact date editing on an empty-track click without writing", async () => {
     await render([record("a", "无日期任务")]);

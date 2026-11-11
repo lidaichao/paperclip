@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { l10n } from "@/i18n";
 import { useLocation } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -71,11 +71,9 @@ function draftFromRecord(record: WorkRecord): RecordDraft {
   return workRecordEditorDraftFromRecord(record);
 }
 
-export function ProjectWorkRecords({ companyId, projectId, projectName, topNavigation, kind, viewMode = "table", railOpen, onRailOpenChange, onNavigationGuardChange }: {
+export function ProjectWorkRecords({ companyId, projectId, kind, viewMode = "table", railOpen, onRailOpenChange, onNavigationGuardChange }: {
   companyId: string;
   projectId: string;
-  projectName?: string;
-  topNavigation?: ReactNode;
   kind: WorkRecordKind;
   viewMode?: "table" | "gantt";
   railOpen?: boolean;
@@ -405,15 +403,14 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
   }));
 
   return (
-    <section className="@container h-[calc(100dvh-77px)]" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
-      <div className="work-record-workspace" data-testid="work-record-workspace-grid" data-rail-open={resolvedRailOpen ? "true" : "false"}>
+    <section className="@container h-full min-h-0" data-testid="work-records-main" data-kind={kind} data-view-mode={viewMode}>
+      <div className="work-record-workspace" data-testid="work-record-workspace-grid" data-context-rail-width="280px" data-rail-open={resolvedRailOpen ? "true" : "false"}>
         <div className="work-record-rail-shell" data-testid="work-record-rail-shell">
           <div className="work-record-rail-panel" aria-hidden={!resolvedRailOpen}>
             <WorkRecordContainerTree
               className="h-full"
               companyId={companyId}
               projectId={projectId}
-              projectName={projectName}
               writable={capabilities.data?.manageContainers.allowed !== false}
               mode="navigation"
               managementActive={containerAdminOpen}
@@ -443,7 +440,6 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
           </Button>
         </div>
         <div className="flex min-h-0 min-w-0 flex-col overflow-hidden" data-testid="work-record-workspace-content">
-          {topNavigation ? <div className="h-14 min-h-14 border-b" data-testid="work-record-top-navigation">{topNavigation}</div> : null}
           {containerAdminOpen ? (
             <WorkRecordContainerTree
               companyId={companyId}
@@ -471,7 +467,17 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
             {reopen.error ? <p role="alert" className="mb-3 text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
 
             {viewMode === "gantt" ? (
-              <WorkRecordGantt companyId={companyId} projectId={projectId} records={visibleRecords} agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))} writable={recordWritable} onOpen={(record, source) => { void selectRecord(record, source); }} />
+              <WorkRecordGantt
+                companyId={companyId}
+                projectId={projectId}
+                records={visibleRecords}
+                agentNames={Object.fromEntries((agents.data ?? []).map((agent) => [agent.id, agent.name]))}
+                writable={recordWritable}
+                loading={records.isLoading}
+                loadError={records.error}
+                onRetry={() => { void records.refetch(); }}
+                onOpen={(record, source) => { void selectRecord(record, source); }}
+              />
             ) : (
               <WorkPackageConsole
                 companyId={companyId}
@@ -507,7 +513,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
           role="complementary"
           aria-labelledby="work-record-detail-title"
           data-testid="work-record-detail-drawer"
-          className={`fixed bottom-0 right-0 z-40 w-full overflow-y-auto border-l bg-background p-6 shadow-xl sm:w-3/5 lg:w-2/5 ${topNavigation ? "top-[133px]" : "top-[77px]"}`}
+          className="project-workspace-detail-drawer fixed bottom-0 right-0 z-40 w-full overflow-y-auto border-l bg-background p-6 shadow-xl sm:w-3/5 lg:w-2/5"
           onKeyDown={(event) => {
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
               event.preventDefault();

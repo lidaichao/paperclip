@@ -333,6 +333,7 @@ function createIssue(overrides: Partial<Issue> = {}): Issue {
     title: "Routine execution issue",
     description: null,
     status: "todo",
+    workItemKind: "plan",
     priority: "medium",
     reviewPolicy: null,
     assigneeAgentId: "agent-1",

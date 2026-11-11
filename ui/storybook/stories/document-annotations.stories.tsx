@@ -234,6 +234,7 @@ function makeIntegratedIssue(): Issue {
     title: "Highlighting and comments on documents",
     description: null,
     status: "in_progress",
+    workItemKind: "plan",
     workMode: "standard",
     priority: "medium",
     reviewPolicy: null,

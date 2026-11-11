@@ -41,6 +41,7 @@ function createIssue(index: number, status: IssueStatus): Issue {
     title: `Issue ${index}`,
     description: null,
     status,
+    workItemKind: "plan",
     workMode: "standard",
     priority: "medium",
     reviewPolicy: null,

@@ -803,6 +803,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         eq(issues.companyId, companyId),
         eq(issues.projectId, projectId),
         eq(issues.originKind, "manual"),
+        inArray(issues.workItemKind, ["plan", "defect"]),
         isNull(issues.hiddenAt),
       )).orderBy(asc(issues.createdAt));
       if (!nativeIssues.length) return { adoptedCount: 0, existingCount: 0 };
@@ -822,10 +823,12 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
 
       for (const nativeIssue of nativeIssues) {
         if (recordIdByIssueId.has(nativeIssue.id)) continue;
+        if (nativeIssue.workItemKind === "system") continue;
+        const recordKind = nativeIssue.workItemKind;
         const [allocated] = await tx.insert(workRecordCounters).values({
           companyId,
           projectId,
-          kind: "plan",
+          kind: recordKind,
           nextNumber: 2,
         }).onConflictDoUpdate({
           target: [workRecordCounters.companyId, workRecordCounters.projectId, workRecordCounters.kind],
@@ -837,7 +840,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
         const [record] = await tx.insert(workRecords).values({
           companyId,
           projectId,
-          kind: "plan",
+          kind: recordKind,
           recordNumber: allocated.recordNumber,
           title: nativeIssue.title,
           description: nativeIssue.description,
@@ -918,6 +921,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       eq(workRecordIssueLinks.purpose, "primary"),
     )).where(and(
       eq(issues.originKind, "manual"),
+      inArray(issues.workItemKind, ["plan", "defect"]),
       isNull(issues.hiddenAt),
       isNotNull(issues.projectId),
       isNull(workRecordIssueLinks.id),
@@ -2261,6 +2265,7 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
       }).returning().then((rows) => rows[0]);
       const createdIssue = await issuesSvc.create(companyId, {
         projectId, title: record.title, description: record.description, status: "todo", priority: record.priority,
+        workItemKind: record.kind,
         assigneeAgentId: record.assigneeAgentId, createdByAgentId: actor.agentId ?? null, createdByUserId: actor.userId ?? null,
         originKind: "work_record", originId: record.id, idempotencyKey: `work-record:${record.id}`, allowDuplicate: true,
       }, tx);

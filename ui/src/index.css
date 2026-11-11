@@ -221,12 +221,14 @@
   --gtc-folder-row-actions: 1rem minmax(0, 1fr) auto auto;
   --sz-folder-rail: 13.25rem;
   --sz-folder-sheet-max: 80dvh;
-  --sz-work-record-rail-wide: 13.125rem;
+  --sz-work-record-rail-wide: 17.5rem;
   --sz-work-record-rail-medium: 10.625rem;
   --sz-work-record-rail-narrow: 9.375rem;
   --sz-work-record-rail-collapsed: 2.75rem;
   --sz-work-record-rail-collapsed-narrow: 2rem;
   --gap-work-record-workspace: 1.25rem;
+  --sz-project-workspace-height-offset: 4.8125rem;
+  --sz-project-workspace-drawer-top: 8.3125rem;
   --sz-work-record-tree-indent: 1.75rem;
   --work-record-grid-line: var(--border);
   --work-record-header-surface: var(--muted);
@@ -492,10 +494,22 @@
   background-color: var(--paperclip-doc-annotation-highlight-resolved);
 }
 
+.project-workspace-shell {
+  height: calc(100dvh - var(--sz-project-workspace-height-offset));
+}
+
+.project-workspace-header {
+  grid-template-columns: var(--sz-work-record-rail-wide) minmax(0, 1fr);
+}
+
+.project-workspace-detail-drawer {
+  top: var(--sz-project-workspace-drawer-top);
+}
+
 .work-record-workspace {
   --work-record-rail-expanded-width: var(--sz-work-record-rail-wide);
   --work-record-rail-collapsed-width: var(--sz-work-record-rail-collapsed-narrow);
-  --work-record-header-ink: #354047;
+  --work-record-header-ink: var(--foreground);
   --work-record-status-backlog-ink: #626b72;
   --work-record-status-backlog-surface: #f0f2f1;
   --work-record-status-todo-ink: #855710;
@@ -522,7 +536,7 @@
 }
 
 .work-record-workspace[data-rail-open="false"] {
-  grid-template-columns: var(--work-record-rail-collapsed-width) minmax(0, 1fr);
+  grid-template-columns: var(--work-record-rail-expanded-width) minmax(0, 1fr);
 }
 
 .work-record-workspace button,
@@ -631,7 +645,7 @@
   height: 1.75rem;
   margin: 0;
   padding: 0.1875rem 0;
-  color: #51655e;
+  color: var(--muted-foreground);
   font-size: 0.75rem;
   line-height: 1.2rem;
 }
@@ -651,7 +665,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.625rem 0 0.5rem;
-  border-bottom: 1px solid #e7ece9;
+  border-bottom: 1px solid var(--border);
 }
 
 .work-record-gantt-heading > div {
@@ -666,7 +680,7 @@
 
 .work-record-gantt-heading p {
   margin: 0;
-  color: #62766d;
+  color: var(--muted-foreground);
   font-size: 0.75rem;
   line-height: 1.45;
 }
@@ -676,7 +690,7 @@
   border: 0;
   background: transparent;
   padding: 0.375rem 0.5rem;
-  color: #566661;
+  color: var(--muted-foreground);
   font-size: 0.75rem;
 }
 
@@ -697,12 +711,12 @@
   flex: none;
   align-items: center;
   gap: 0.375rem;
-  color: #566661;
+  color: var(--muted-foreground);
   font-size: 0.75rem;
 }
 
 .work-record-gantt-fields > summary {
-  color: #566661;
+  color: var(--muted-foreground);
 }
 
 .work-record-gantt-toolbar input,
@@ -736,8 +750,8 @@
   min-height: 10rem;
   flex: 1;
   overflow: auto;
-  border: 1px solid #e2e9e5;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--card);
   overscroll-behavior: contain;
 }
 
@@ -748,23 +762,23 @@
 .work-record-gantt-list-header,
 .work-record-gantt-axis {
   height: 3.5625rem;
-  background: #f5f8f6;
-  color: #5a6a64;
+  background: var(--muted);
+  color: var(--muted-foreground);
 }
 
 .work-record-gantt-task {
-  border-color: #edf1ee;
-  color: #596d62;
+  border-color: var(--border);
+  color: var(--muted-foreground);
   font-size: 0.6875rem;
 }
 
 .work-record-gantt-list-cell {
-  border-color: #edf1ee;
+  border-color: var(--border);
 }
 
 .work-record-gantt-title-cell,
 .work-record-gantt-title-cell button {
-  color: #172820;
+  color: var(--foreground);
   font-size: 0.75rem;
 }
 
@@ -777,7 +791,7 @@
   border-radius: 0;
   background: transparent;
   padding: 0;
-  color: #557064;
+  color: var(--muted-foreground);
 }
 
 .work-record-gantt-fold svg {
@@ -789,7 +803,7 @@
   border: 0;
   background: transparent;
   padding: 0.125rem;
-  color: #172820;
+  color: var(--foreground);
   font-size: 0.75rem;
 }
 
@@ -801,28 +815,28 @@
   align-items: center;
   justify-content: center;
   margin-left: 0.25rem;
-  border: 1px solid #b8d5c5;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: #e7f3ec;
-  color: #145b43;
+  background: var(--muted);
+  color: var(--foreground);
   font-size: 0.6875rem;
 }
 
 .work-record-gantt [data-gantt-timeline] {
-  border-color: #edf1ee;
+  border-color: var(--border);
 }
 
 .work-record-gantt [data-gantt-timeline] > span {
-  border-color: #edf1ee;
+  border-color: var(--border);
 }
 
 .work-record-gantt-axis > div:first-child span {
-  color: #465d53;
+  color: var(--foreground);
   font-size: 0.75rem;
 }
 
 .work-record-gantt-axis > div:last-child span {
-  color: #74837d;
+  color: var(--muted-foreground);
   font-size: 0.6875rem;
 }
 
@@ -863,7 +877,7 @@
   box-sizing: border-box;
   border: 2px solid var(--foreground);
   border-radius: 999px;
-  background: #fff;
+  background: var(--background);
   content: "";
 }
 .work-record-gantt-empty-track {
@@ -884,15 +898,15 @@
   align-items: center;
   margin: 0.375rem 0 0 0.75rem;
   padding: 0.1875rem 0.4375rem;
-  border: 1px dashed #adbbb0;
+  border: 1px dashed var(--border);
   border-radius: 0.25rem;
-  background: #fff;
-  color: #63756a;
+  background: var(--card);
+  color: var(--muted-foreground);
   font-size: 0.6875rem;
   pointer-events: none;
 }
-.work-record-gantt-dependency { stroke: #729b87; opacity: 0.8; }
-.work-record-gantt-arrow { fill: #729b87; }
+.work-record-gantt-dependency { stroke: var(--muted-foreground); opacity: 0.8; }
+.work-record-gantt-arrow { fill: var(--muted-foreground); }
 
 .my-todo-group {
   min-width: 0;
@@ -1125,6 +1139,29 @@
   color: var(--foreground);
   font-size: 0.875rem;
   text-align: left;
+}
+
+.work-record-context-link {
+  display: flex;
+  min-height: 3.5625rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.3125rem;
+  border-radius: 0.4375rem;
+  padding: 0.5625rem 0.5rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.work-record-context-link:hover {
+  background: var(--muted);
+}
+
+.work-record-context-link small {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
 }
 
 .work-record-pool-nav > span:last-child {

@@ -24,6 +24,14 @@ import { DraftInput } from "./agent-config-primitives";
 import { InlineEditor } from "./InlineEditor";
 import { EnvironmentVariablesEditor } from "./environment-variables-editor";
 import { Badge } from "@/components/ui/badge";
+import { ProjectWorkspaceContextRail } from "./ProjectWorkspaceShell";
+
+export const PROJECT_SETTINGS_SECTION_IDS = {
+  basic: "project-settings-basic",
+  codebase: "project-settings-codebase",
+  executionWorkspace: "project-settings-execution-workspace",
+  danger: "project-settings-danger",
+} as const;
 
 interface ProjectPropertiesProps {
   project: Project;
@@ -52,6 +60,28 @@ export type ProjectConfigFieldKey =
   | "execution_workspace_provision_command"
   | "execution_workspace_runtime_provision_command"
   | "execution_workspace_teardown_command";
+
+export function ProjectPropertiesContextRail({ project, showDangerZone = false }: {
+  project: Project;
+  showDangerZone?: boolean;
+}) {
+  const { visible: workspaceIsolationControlsVisible } = useWorkspaceIsolationControls();
+  const { data: experimentalSettings } = useQuery({
+    queryKey: queryKeys.instance.experimentalSettings,
+    queryFn: () => instanceSettingsApi.getExperimental(),
+    retry: false,
+  });
+  const hideHostPaths = experimentalSettings === undefined || experimentalSettings.enableManagedSandboxOnly === true;
+  const showCodebase = !hideHostPaths || (project.primaryWorkspace?.runtimeServices?.length ?? 0) > 0;
+  const showExecutionWorkspace = experimentalSettings?.enableIsolatedWorkspaces === true && workspaceIsolationControlsVisible;
+  const items = [
+    { href: `#${PROJECT_SETTINGS_SECTION_IDS.basic}`, label: "基础信息", current: true },
+    ...(showCodebase ? [{ href: `#${PROJECT_SETTINGS_SECTION_IDS.codebase}`, label: "代码库" }] : []),
+    ...(showExecutionWorkspace ? [{ href: `#${PROJECT_SETTINGS_SECTION_IDS.executionWorkspace}`, label: "执行工作区" }] : []),
+    ...(showDangerZone ? [{ href: `#${PROJECT_SETTINGS_SECTION_IDS.danger}`, label: "危险区域" }] : []),
+  ];
+  return <ProjectWorkspaceContextRail label="配置目录" items={items} />;
+}
 
 const SHARED_WORKSPACE_CONCURRENCY_OPTIONS: {
   value: SharedWorkspaceConcurrency;
@@ -416,7 +446,7 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
 
   return (
     <div>
-      <div className="space-y-1 pb-4">
+      <section id={PROJECT_SETTINGS_SECTION_IDS.basic} className="scroll-mt-4 space-y-1 pb-4">
         <PropertyRow label={<FieldLabel label={l10n("local.name_dcd1d522")} state={fieldState("name")} />}>
           {onUpdate || onFieldUpdate ? (
             <DraftInput
@@ -480,12 +510,12 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
             <span className="text-sm">{formatDate(project.targetDate)}</span>
           </PropertyRow>
         )}
-      </div>
+      </section>
 
       <Separator className="my-4" />
 
       <div className="space-y-1 py-4">
-        {(!hideHostPaths || (primaryCodebaseWorkspace?.runtimeServices?.length ?? 0) > 0) && <div className="space-y-2">
+        {(!hideHostPaths || (primaryCodebaseWorkspace?.runtimeServices?.length ?? 0) > 0) && <section id={PROJECT_SETTINGS_SECTION_IDS.codebase} className="scroll-mt-4 space-y-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span>{l10n("local.codebase_75d4293d")}</span>
             <Tooltip>
@@ -667,13 +697,13 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
           {updateWorkspace.isError && (
             <p className="text-xs text-destructive">{l10n("local.failed_to_update_workspace_def40bab")}</p>
           )}
-        </div>}
+        </section>}
 
         {isolatedWorkspacesEnabled && workspaceIsolationControlsVisible ? (
           <>
             <Separator className="my-4" />
 
-            <div className="py-1.5 space-y-2">
+            <section id={PROJECT_SETTINGS_SECTION_IDS.executionWorkspace} className="scroll-mt-4 py-1.5 space-y-2">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span>{l10n("local.execution_workspaces_50070986")}</span>
                 <Tooltip>
@@ -980,7 +1010,7 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
                   </div>
                 ) : null}
               </div>
-            </div>
+            </section>
           </>
         ) : null}
 
@@ -989,7 +1019,7 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
       {onArchive && (
         <>
           <Separator className="my-4" />
-          <div className="space-y-4 py-4">
+          <section id={PROJECT_SETTINGS_SECTION_IDS.danger} className="scroll-mt-4 space-y-4 py-4">
             <div className="text-xs font-medium text-destructive uppercase tracking-wide">
               {l10n("local.danger_zone_3c1c01b4")}</div>
             <ArchiveDangerZone
@@ -997,7 +1027,7 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
               onArchive={onArchive}
               archivePending={archivePending}
             />
-          </div>
+          </section>
         </>
       )}
         <PropertyRow label={<FieldLabel label={l10n("local.created_d70b9e24")} state="idle" />}>

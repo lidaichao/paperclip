@@ -1,0 +1,2 @@
+ALTER TABLE "issues" ADD COLUMN "work_item_kind" text DEFAULT 'plan' NOT NULL;--> statement-breakpoint
+ALTER TABLE "issues" ADD CONSTRAINT "issues_work_item_kind_check" CHECK ("issues"."work_item_kind" IN ('plan', 'defect', 'system'));

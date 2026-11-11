@@ -31,6 +31,7 @@ function createIssue(overrides: Partial<Issue> = {}): Issue {
     title: "Quicklook title",
     description: "Quicklook description",
     status: "todo",
+    workItemKind: "plan",
     priority: "medium",
     reviewPolicy: null,
     assigneeAgentId: null,

@@ -250,6 +250,7 @@ function createIssue(): Issue {
     title: "Plan rendering",
     description: null,
     status: "in_progress",
+    workItemKind: "plan",
     workMode: "standard",
     priority: "medium",
     reviewPolicy: null,

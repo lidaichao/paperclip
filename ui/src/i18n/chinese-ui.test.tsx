@@ -99,6 +99,7 @@ describe("Chinese UI with the real locale catalog", () => {
     const issue: Issue = {
       id: "issue-English-1", identifier: "LUN-731", companyId: "company-1",
       title, description: "Do not translate my API paths", status: "todo", priority: "high",
+      workItemKind: "plan",
       workMode: "standard", parentId: null, assigneeAgentId: null, assigneeUserId: null,
       projectId: null, projectWorkspaceId: null, goalId: null, reviewPolicy: null,
       responsibleUserId: null, createdByAgentId: null, createdByUserId: null,

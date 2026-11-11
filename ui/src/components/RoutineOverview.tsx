@@ -89,6 +89,7 @@ export function routineRunIssue(
     parentId: null,
     description: null,
     status: normalizeIssueStatus(summary.status),
+    workItemKind: "system",
     workMode: "standard",
     priority: normalizeIssuePriority(summary.priority),
     reviewPolicy: null,
