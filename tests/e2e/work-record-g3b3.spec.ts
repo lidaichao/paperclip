@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type APIResponse, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { createDemo1Sandbox } from "./fixtures/demo1-regression-sandbox.js";
 
 type RecordView = {
   id: string;
@@ -119,18 +120,12 @@ test("G3B3 validates real gantt drags, dependency rewires, undo and dirty-contai
   test.setTimeout(180_000);
   page.setDefaultTimeout(12_000);
 
-  const company = await json<{ id: string; issuePrefix: string }>(
-    await request.post("/api/companies", { data: { name: `G3B3 browser ${Date.now()}` } }),
-    "create company",
-  );
-  const project = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects`, { data: { name: "G3B3 local proof" } }),
-    "create project",
-  );
-  const version = await json<{ id: string; revision: number }>(
-    await request.post(`/api/companies/${company.id}/projects/${project.id}/versions`, { data: { name: "V1" } }),
-    "create version",
-  );
+  const { company, project, version } = await createDemo1Sandbox(request, `g3b3-${Date.now()}`, {
+    seedRecords: false,
+    companyName: `G3B3 browser ${Date.now()}`,
+    projectName: "G3B3 local proof",
+    versionName: "V1",
+  });
   const create = async (title: string, start: string | null, end: string | null, predecessorRecordIds: string[] = []) =>
     json<RecordView>(await request.post(`/api/companies/${company.id}/work-records`, { data: {
       projectId: project.id,

@@ -1,16 +1,12 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { expect, test, type APIResponse, type Locator, type Page, type TestInfo } from "@playwright/test";
-import { eq } from "../../server/node_modules/drizzle-orm/index.js";
-import {
-  agentWakeupRequests,
-  closeRegisteredClients,
-  createDb,
-  heartbeatRuns,
-  issueComments,
-  issues,
-} from "../../packages/db/src/index.ts";
+import { closeRegisteredClients, createDb } from "../../packages/db/src/index.ts";
 import type { WorkRecord } from "@paperclipai/shared";
+import {
+  createDemo1Sandbox,
+  snapshotNativeSideEffects,
+} from "./fixtures/demo1-regression-sandbox.js";
 
 type Viewport = { width: number; height: number; label: string };
 
@@ -91,42 +87,20 @@ async function connectToE2eDatabase() {
   return { db: createDb(url), url };
 }
 
-async function nativeSideEffectCounts(db: ReturnType<typeof createDb>, companyId: string) {
-  return {
-    issues: (await db.select({ id: issues.id }).from(issues).where(eq(issues.companyId, companyId))).length,
-    comments: (await db.select({ id: issueComments.id }).from(issueComments).where(eq(issueComments.companyId, companyId))).length,
-    runs: (await db.select({ id: heartbeatRuns.id }).from(heartbeatRuns).where(eq(heartbeatRuns.companyId, companyId))).length,
-    wakes: (await db.select({ id: agentWakeupRequests.id }).from(agentWakeupRequests).where(eq(agentWakeupRequests.companyId, companyId))).length,
-  };
-}
-
 test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", async ({ page, request }, info) => {
   test.setTimeout(180_000);
   const projectName = "Demo 还原布局基线";
-  const company = await json<{ id: string; issuePrefix: string }>(
-    await request.post("/api/companies", { data: { name: `Demo fidelity ${Date.now()}` } }),
-    "create company",
-  );
-  const project = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects`, { data: { name: projectName } }),
-    "create project",
-  );
-  const version = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects/${project.id}/versions`, { data: { name: "V1" } }),
-    "create version",
-  );
-  const iteration = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects/${project.id}/iterations`, {
-      data: { versionId: version.id, name: "11月" },
-    }),
-    "create iteration",
-  );
-  const independentIteration = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects/${project.id}/iterations`, {
-      data: { versionId: version.id, name: "独立排期" },
-    }),
-    "create independent iteration",
-  );
+  const sandbox = await createDemo1Sandbox(request, `fidelity-${Date.now()}`, {
+    seedRecords: false,
+    companyName: `Demo fidelity ${Date.now()}`,
+    projectName,
+    versionName: "V1",
+    primaryIterationName: "11月",
+    independentIterationName: "独立排期",
+  });
+  const { company, project, version } = sandbox;
+  const iteration = sandbox.iterations.primary;
+  const independentIteration = sandbox.iterations.independent;
   const changedIteration = await json<{ id: string }>(
     await request.post(`/api/companies/${company.id}/projects/${project.id}/iterations`, {
       data: { versionId: version.id, name: "父级调整后" },
@@ -400,9 +374,9 @@ test("Demo fidelity keeps plan, gantt and defect workspace anchors stable", asyn
 
   const { db, url } = await connectToE2eDatabase();
   try {
-  const beforeNativeCounts = await nativeSideEffectCounts(db, company.id);
+  const beforeNativeCounts = await snapshotNativeSideEffects(db, company.id);
   const expectNoNativeSideEffects = async (label: string) => {
-    expect(await nativeSideEffectCounts(db, company.id), label).toEqual(beforeNativeCounts);
+    expect(await snapshotNativeSideEffects(db, company.id), label).toEqual(beforeNativeCounts);
   };
   const preserved = {
     businessStatus: childPlanRecord.businessStatus,
