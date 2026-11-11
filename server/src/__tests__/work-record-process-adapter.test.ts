@@ -201,4 +201,23 @@ describeDb("work-record real process adapter regression", () => {
       projectionState: record.execution.projectionState,
     });
   }, 20_000);
+
+  it("injects the dispatched issue id into a real process adapter run", async () => {
+    const context = await seed([
+      "if (!process.env.PAPERCLIP_TASK_ID) {",
+      "  console.error('missing PAPERCLIP_TASK_ID');",
+      "  process.exit(2);",
+      "}",
+      "console.log(process.env.PAPERCLIP_TASK_ID);",
+    ].join("\n"));
+    const queued = await persistReleaseRun(context);
+
+    activeHeartbeat = heartbeatService(db);
+    await activeHeartbeat.resumeQueuedRuns();
+    await activeHeartbeat.drainActiveRunExecutions();
+
+    const finished = await waitForStatus(queued.id, "succeeded");
+    expect(finished.status).toBe("succeeded");
+    expect(finished.stdoutExcerpt).toContain(context.dispatched.issueId);
+  }, 20_000);
 });

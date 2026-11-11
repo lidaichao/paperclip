@@ -15,7 +15,7 @@ import {
 } from "../utils.js";
 
 export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult> {
-  const { runId, agent, config, onLog, onMeta, authToken } = ctx;
+  const { runId, agent, config, context, onLog, onMeta, authToken } = ctx;
   const command = asString(config.command, "");
   if (!command) throw new Error("进程适配器缺少命令");
 
@@ -36,6 +36,11 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     env[k] = v;
   }
   env.PAPERCLIP_RUN_ID = runId;
+  const wakeTaskId =
+    (typeof context.taskId === "string" && context.taskId.trim().length > 0 && context.taskId.trim()) ||
+    (typeof context.issueId === "string" && context.issueId.trim().length > 0 && context.issueId.trim()) ||
+    null;
+  if (wakeTaskId) env.PAPERCLIP_TASK_ID = wakeTaskId;
   if (authToken) env.PAPERCLIP_API_KEY = authToken;
   // runtimeEnv is only used to resolve the command path and log HOME below;
   // the child env is built inside runChildProcess from
