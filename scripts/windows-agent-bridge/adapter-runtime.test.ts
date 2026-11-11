@@ -159,6 +159,37 @@ describe("runLocalAgent", () => {
     expect(prompt).not.toContain("child-complete");
   });
 
+  it("delivers the exact task wake message to the local adapter context", async () => {
+    let captured: AdapterExecutionContext | undefined;
+    await runLocalAgent({
+      runId: SERVER_RUN_ID,
+      wakeReason: "issue_commented",
+      wakeComments: [{
+        id: "c87e6722-9dca-4652-9d63-3dbec27a9e6b",
+        state: "available",
+        body: "请暂停旧方案，先按新的验收标准修改。",
+        authorType: "user",
+        authorId: "b72ccf24-c760-4ec6-87f7-bf93a5607340",
+        createdAt: "2026-11-11T07:51:02.528Z",
+      }],
+      apiBase: "http://127.0.0.1:43123",
+      remoteCompanyId: REMOTE_COMPANY_ID,
+      remoteAgentId: REMOTE_AGENT_ID,
+      remoteAgentName: "Luna",
+      issue: issue(),
+      token: "message-capability",
+      localAgent: localAgent(),
+      dependencies: { codexExecute: async (ctx) => {
+        captured = ctx;
+        return { exitCode: 0, signal: null, timedOut: false };
+      } },
+    });
+    const taskContext = String(captured?.context.paperclipTaskMarkdown);
+    expect(taskContext).toContain("Wake reason: issue_commented");
+    expect(taskContext).toContain("请暂停旧方案，先按新的验收标准修改。");
+    expect(taskContext).toContain("Author: user");
+  });
+
   it("never launches an adapter without a server-issued run id", async () => {
     let launched = false;
     await expect(runLocalAgent({

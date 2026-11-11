@@ -24,6 +24,14 @@ export interface LocalAgentRunInput {
   signal?: AbortSignal;
   runId: string;
   wakeReason?: string;
+  wakeComments?: Array<{
+    id: string;
+    state: "available" | "deleted" | "missing";
+    body: string;
+    authorType: string | null;
+    authorId: string | null;
+    createdAt: string | null;
+  }>;
   apiBase: string;
   remoteCompanyId: string;
   remoteAgentId: string;
@@ -115,6 +123,9 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
   const sourcePrompt = [
     "You are the source agent for this one locally claimed Paperclip task.",
     "Read its current details with GET /api/issues/$PAPERCLIP_TASK_ID on PAPERCLIP_API_URL.",
+    "When this run was triggered by a task message, the exact accepted wake message is included",
+    "in the task context below. Treat it as the user's current instruction and do not replace it",
+    "with guesses from the older task description.",
     "Do the assigned work in your local workspace. The API capability permits only",
     "this task's plain comments, one-at-a-time delegated child tasks when authorized,",
     "and the completion or handoff contract for its role.",
@@ -178,6 +189,22 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
       : defectQaRun ? defectQaPrompt : sourcePrompt]
       .filter(Boolean).join("\n\n"),
   };
+  const availableWakeComments = (input.wakeComments ?? [])
+    .filter((comment) => comment.state === "available")
+    .map((comment) => [
+      `## Wake message ${comment.id}`,
+      `Author: ${comment.authorType ?? "unknown"}${comment.authorId ? ` (${comment.authorId})` : ""}`,
+      comment.createdAt ? `Created: ${comment.createdAt}` : null,
+      "",
+      comment.body,
+    ].filter((line): line is string => line !== null).join("\n"));
+  const sourceTaskMarkdown = availableWakeComments.length > 0
+    ? [
+        `# ${input.issue.identifier} — ${input.issue.title}`,
+        `Wake reason: ${input.wakeReason ?? "assignment"}`,
+        ...availableWakeComments,
+      ].join("\n\n")
+    : undefined;
 
   let result: AdapterExecutionResult;
   try {
@@ -211,7 +238,7 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
           `Review request: ${input.reviewContext!.review.prompt}`,
           `Source handoff: ${input.reviewContext!.review.handoffSummary}`,
           `Original description: ${input.reviewContext!.issue.description ?? "(none)"}`,
-        ].join("\n\n") } : {}),
+        ].join("\n\n") } : sourceTaskMarkdown ? { paperclipTaskMarkdown: sourceTaskMarkdown } : {}),
         conversationMode: false,
         paperclipWorkspace: {
           cwd,

@@ -59,6 +59,8 @@ import { resolveWorkRecordWorkflowV2Rollout } from "./work-record-workflow-v2-ro
 import { recordPoQualityVerdictSchema, recordQaQualityVerdictSchema,
   type RecordPoQualityVerdict } from "@paperclipai/shared";
 import { resolveActorSourceTrustForIssue } from "./source-trust.js";
+import { sanitizeQuarantinedCommentForHigherTrust } from "./source-trust.js";
+import { createRunSecretRedactionRegistry } from "./run-secret-redaction.js";
 import { applyIssueExecutionPolicyTransition, normalizeIssueExecutionPolicy } from "./issue-execution-policy.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -105,6 +107,60 @@ function issueIdFromRun(run: typeof heartbeatRuns.$inferSelect) {
 function wakeReasonFromRun(run: typeof heartbeatRuns.$inferSelect) {
   const value = run.contextSnapshot?.wakeReason;
   return typeof value === "string" && value.trim() ? value : "assignment";
+}
+
+function wakeCommentIdsFromRun(run: typeof heartbeatRuns.$inferSelect) {
+  const context = run.contextSnapshot ?? {};
+  const candidates = [
+    ...(Array.isArray(context.wakeCommentIds) ? context.wakeCommentIds : []),
+    context.wakeCommentId,
+    context.commentId,
+  ];
+  return [...new Set(candidates.filter((value): value is string =>
+    typeof value === "string" && UUID.test(value)))];
+}
+
+async function wakeCommentsForRun(
+  tx: Db,
+  run: typeof heartbeatRuns.$inferSelect,
+  issueId: string,
+) {
+  const ids = wakeCommentIdsFromRun(run);
+  if (ids.length === 0) return [];
+  const rows = await tx.select({
+    id: issueComments.id,
+    body: issueComments.body,
+    authorType: issueComments.authorType,
+    authorAgentId: issueComments.authorAgentId,
+    authorUserId: issueComments.authorUserId,
+    sourceTrust: issueComments.sourceTrust,
+    createdAt: issueComments.createdAt,
+    deletedAt: issueComments.deletedAt,
+  }).from(issueComments).where(and(
+    eq(issueComments.companyId, run.companyId),
+    eq(issueComments.issueId, issueId),
+    inArray(issueComments.id, ids),
+  ));
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const comments = ids.map((id) => {
+    const row = byId.get(id);
+    if (!row || row.deletedAt) {
+      return { id, state: row?.deletedAt ? "deleted" as const : "missing" as const,
+        body: "", authorType: null, authorId: null, createdAt: row?.createdAt.toISOString() ?? null };
+    }
+    const safe = sanitizeQuarantinedCommentForHigherTrust({
+      ...row, presentation: null, metadata: null,
+    });
+    return {
+      id,
+      state: "available" as const,
+      body: safe.body,
+      authorType: row.authorType ?? (row.authorAgentId ? "agent" : row.authorUserId ? "user" : "system"),
+      authorId: row.authorAgentId ?? row.authorUserId ?? null,
+      createdAt: row.createdAt.toISOString(),
+    };
+  });
+  return createRunSecretRedactionRegistry(tx).redactForIssue(run.companyId, issueId, comments);
 }
 
 function localCommentIntentDigest(input: { runId: string; issueId: string;
@@ -237,6 +293,7 @@ export function localAgentRunLeaseService(
           leaseId: sameClaim.leaseId, generation: sameClaim.generation,
           leaseExpiresAt: sameClaim.expiresAt, wakeReason: wakeReasonFromRun(run),
           leaseTtlMs: await leaseTtlMs(tx as unknown as Db, run.id),
+          wakeComments: await wakeCommentsForRun(tx as unknown as Db, run, sameClaim.issueId),
           workspacePolicy: "agent_home" as const,
         };
       }
@@ -339,6 +396,7 @@ export function localAgentRunLeaseService(
             leaseId: lease.leaseId, generation: lease.generation,
             leaseExpiresAt: lease.expiresAt, wakeReason: CLIENT_PULL_DEFECT_QA_WAKE_REASON,
             leaseTtlMs: await leaseTtlMs(tx as unknown as Db, run.id),
+            wakeComments: await wakeCommentsForRun(tx as unknown as Db, run, issueId),
             workspacePolicy: "agent_home" as const };
         }
         const [issue] = await tx.select().from(issues).where(and(
@@ -388,6 +446,7 @@ export function localAgentRunLeaseService(
             leaseId: lease.leaseId, generation: lease.generation,
             leaseExpiresAt: lease.expiresAt, wakeReason: wakeReasonFromRun(run),
             leaseTtlMs: await leaseTtlMs(tx as unknown as Db, run.id),
+            wakeComments: await wakeCommentsForRun(tx as unknown as Db, run, issueId),
             workspacePolicy: "agent_home" as const,
           };
         }
@@ -457,6 +516,7 @@ export function localAgentRunLeaseService(
           leaseId: lease.leaseId, generation: lease.generation,
           leaseExpiresAt: lease.expiresAt, wakeReason: wakeReasonFromRun(run),
           leaseTtlMs: await leaseTtlMs(tx as unknown as Db, run.id),
+          wakeComments: await wakeCommentsForRun(tx as unknown as Db, run, issueId),
           workspacePolicy: "agent_home" as const,
         };
       }

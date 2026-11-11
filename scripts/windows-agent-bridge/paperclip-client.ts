@@ -46,7 +46,17 @@ export interface LocalRunClaim {
   leaseExpiresAt: string;
   leaseDeadlineMonotonicMs: number;
   wakeReason: string;
+  wakeComments?: LocalWakeComment[];
   workspacePolicy: "agent_home";
+}
+
+export interface LocalWakeComment {
+  id: string;
+  state: "available" | "deleted" | "missing";
+  body: string;
+  authorType: string | null;
+  authorId: string | null;
+  createdAt: string | null;
 }
 
 export interface LocalRunLease {
@@ -90,6 +100,26 @@ function parseClaim(value: unknown, expectedAgentId: string, requestStartedAt: n
   if (record.workspacePolicy !== "agent_home") throw new Error("local run claim.workspacePolicy is invalid");
   const leaseExpiresAt = requiredString(record, "leaseExpiresAt", "local run claim");
   if (Number.isNaN(Date.parse(leaseExpiresAt))) throw new Error("local run claim.leaseExpiresAt is invalid");
+  const rawWakeComments = record.wakeComments ?? [];
+  if (!Array.isArray(rawWakeComments)) throw new Error("local run claim.wakeComments is invalid");
+  const wakeComments = rawWakeComments.map((value, index): LocalWakeComment => {
+    const comment = asRecord(value, `local run claim.wakeComments[${index}]`);
+    if (!["available", "deleted", "missing"].includes(String(comment.state)) ||
+      typeof comment.body !== "string" ||
+      !(comment.authorType === null || typeof comment.authorType === "string") ||
+      !(comment.authorId === null || typeof comment.authorId === "string") ||
+      !(comment.createdAt === null || typeof comment.createdAt === "string")) {
+      throw new Error(`local run claim.wakeComments[${index}] is invalid`);
+    }
+    return {
+      id: requireUuid(comment.id, `local run claim.wakeComments[${index}].id`),
+      state: comment.state as LocalWakeComment["state"],
+      body: comment.body,
+      authorType: comment.authorType as string | null,
+      authorId: comment.authorId as string | null,
+      createdAt: comment.createdAt as string | null,
+    };
+  });
   return {
     runId: requireUuid(record.runId, "local run claim.runId"),
     issueId: requireUuid(record.issueId, "local run claim.issueId"),
@@ -99,6 +129,7 @@ function parseClaim(value: unknown, expectedAgentId: string, requestStartedAt: n
     leaseExpiresAt,
     leaseDeadlineMonotonicMs: requestStartedAt + leaseTtlMs(record, "local run claim"),
     wakeReason: requiredString(record, "wakeReason", "local run claim"),
+    wakeComments,
     workspacePolicy: "agent_home",
   };
 }

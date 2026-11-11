@@ -203,6 +203,7 @@ export async function executeClaimedRun(input: {
           signal,
           runId: input.claim.runId,
           wakeReason: input.claim.wakeReason,
+          wakeComments: input.claim.wakeComments ?? [],
           apiBase: proxy.apiBase,
           remoteCompanyId: input.companyId,
           remoteAgentId: input.agent.remoteAgentId,

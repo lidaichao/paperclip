@@ -121,6 +121,44 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     return { companyId, agentId, issueId, runId, keyId };
   }
 
+  it("delivers the exact accepted board comment with a client-pull claim", async () => {
+    const scope = await fixture();
+    const commentId = randomUUID();
+    await db.insert(issueComments).values({
+      id: commentId,
+      companyId: scope.companyId,
+      issueId: scope.issueId,
+      authorType: "user",
+      authorUserId: "jack",
+      body: "Please apply the latest requirement from this message.",
+    });
+    await db.update(heartbeatRuns).set({
+      contextSnapshot: {
+        issueId: scope.issueId,
+        wakeReason: "issue_commented",
+        wakeCommentId: commentId,
+        wakeCommentIds: [commentId],
+      },
+    }).where(eq(heartbeatRuns.id, scope.runId));
+
+    const claimed = await localAgentRunLeaseService(db).claim({
+      ...scope,
+      deviceId: "device-desktop-001",
+      idempotencyKey: randomUUID(),
+    });
+
+    expect(claimed).toMatchObject({
+      wakeReason: "issue_commented",
+      wakeComments: [{
+        id: commentId,
+        state: "available",
+        authorType: "user",
+        authorId: "jack",
+        body: "Please apply the latest requirement from this message.",
+      }],
+    });
+  });
+
   it("creates one run-fenced child and rejects a changed retry or expired lease", async () => {
     const scope = await fixture();
     const projectId = randomUUID();

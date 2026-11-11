@@ -228,12 +228,18 @@ describe("AliceClient", () => {
         calls.push({ url: String(url), init });
         if (String(url).endsWith("/api/agents/me")) return jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" });
         return jsonResponse({ runId: RUN_ID, issueId: ISSUE_ID, agentId: AGENT_ID, leaseId: LEASE_ID, generation: 1,
-          leaseExpiresAt: "2026-11-06T04:00:00Z", leaseTtlMs: 60_000, wakeReason: "assignment", workspacePolicy: "agent_home" });
+          leaseExpiresAt: "2026-11-06T04:00:00Z", leaseTtlMs: 60_000, wakeReason: "issue_commented",
+          wakeComments: [{ id: "c87e6722-9dca-4652-9d63-3dbec27a9e6b", state: "available",
+            body: "新的任务消息", authorType: "user", authorId: null,
+            createdAt: "2026-11-11T07:51:02.528Z" }], workspacePolicy: "agent_home" });
       },
     });
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
     const claim = await client.claimLocalRun(DEVICE_ID, KEY_ID);
     expect(claim?.runId).toBe(RUN_ID);
+    expect(claim?.wakeComments).toEqual([expect.objectContaining({
+      state: "available", body: "新的任务消息", authorType: "user",
+    })]);
     expect(new Headers(calls[1]?.init?.headers).get("idempotency-key")).toBe(KEY_ID);
     expect(JSON.parse(String(calls[1]?.init?.body))).toEqual({ deviceId: DEVICE_ID });
   });

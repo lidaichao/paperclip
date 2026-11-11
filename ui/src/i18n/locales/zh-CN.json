@@ -7827,7 +7827,7 @@
     "send_authorization_bearer_secret_with_each_re_fbfe388f": "发送授权：承载 <secret> 与每个请求。",
     "send_back_a7b87f68": "发回",
     "send_back_to_work_8009553b": "退回继续处理",
-    "send_enter_b5f7acc1": "发送（⌘+Enter）",
+    "send_enter_b5f7acc1": "发送（Ctrl/⌘+Enter）",
     "send_f6f4688f": "发送",
     "send_for_review_f7cb7531": "送审",
     "send_it_for_review_or_ask_for_input_fa883fca": "提交审核或征求意见。",
