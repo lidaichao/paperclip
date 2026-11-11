@@ -225,7 +225,7 @@ describeDb("M2-C PO, QA, rework, and defect quality cycles", () => {
     expect((await primaryIssue(context.company.id, root.id)).issue.status).toBe("done");
   }, 30_000);
 
-  it("returns original B, reruns original Q, and lets PO accept on the second cycle", async () => {
+  it("D1-PLAN-09-REWORK returns original B, reruns original Q, and lets PO accept on the second cycle", async () => {
     const context = await seed();
     const root = await createRecord(context, { title: "P", assigneeAgentId: context.po.id });
     const a = await context.records.create(context.company.id, {

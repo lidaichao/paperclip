@@ -712,7 +712,7 @@ describeDb("M2-B work-package dispatch and cancellation source barrier", () => {
     expect(prepared.batch.id).toBe(event.batchId);
   }, 120_000);
 
-  it("D01 releases a whole package in predecessor, successor, then PO order through real heartbeats", async () => {
+  it("D1-PLAN-09-WORKFLOW releases a whole package in predecessor, successor, then PO order through real heartbeats", async () => {
     const context = await seed();
     await isolatePendingV2Outbox(context.company.id);
     const root = await record(context, "Ordered package");
