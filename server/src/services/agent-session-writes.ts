@@ -46,10 +46,13 @@ export function agentSessionWriteService(db: Db) {
         isNull(localAgentRunLeases.releasedAt),
       )).limit(1).then((rows) => rows[0] ?? null);
     if (!active) return;
-    const detachedRecordCreation = method.toUpperCase() === "POST"
-      && /^\/api\/companies\/[0-9a-f-]{36}\/issues\/?$/i.test(path);
-    if (detachedRecordCreation) return;
-    throw conflict("Only detached task records can be created while an execution lease exists", {
+    const appendOnlyWrite = method.toUpperCase() === "POST"
+      && (
+        /^\/api\/companies\/[0-9a-f-]{36}\/issues\/?$/i.test(path)
+        || /^\/api\/issues\/[0-9a-f-]{36}\/comments\/?$/i.test(path)
+      );
+    if (appendOnlyWrite) return;
+    throw conflict("Only task records and comments can be created while an execution lease exists", {
       code: "SESSION_WRITE_EXECUTION_LEASE_ACTIVE",
     });
   }

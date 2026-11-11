@@ -55,7 +55,17 @@ export async function allocateHeartbeatRunEventSeq(
   const [updated] = await db
     .update(heartbeatRuns)
     .set({
-      nextEventSeq: sql`${heartbeatRuns.nextEventSeq} + 1`,
+      // Older builds could persist events without advancing next_event_seq.
+      // Repair that historical drift in the same atomic row update; otherwise
+      // every recovery tick retries the already occupied sequence forever.
+      nextEventSeq: sql`greatest(
+        ${heartbeatRuns.nextEventSeq},
+        coalesce((
+          select max(${heartbeatRunEvents.seq}) + 1
+          from ${heartbeatRunEvents}
+          where ${heartbeatRunEvents.runId} = ${runId}
+        ), 1)
+      ) + 1`,
       updatedAt: new Date(),
     })
     .where(eq(heartbeatRuns.id, runId))

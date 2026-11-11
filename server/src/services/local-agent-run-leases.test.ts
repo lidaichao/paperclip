@@ -1062,7 +1062,7 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       eq(agentSessionWriteReceipts.grantId, issued.body.grantId))).toHaveLength(1);
   });
 
-  it("rejects expired and cross-agent grants while allowing detached record creation during a lease", async () => {
+  it("rejects expired and cross-agent grants while allowing append-only records during a lease", async () => {
     const scope = await fixture();
     let actor = { type: "agent", source: "agent_key", companyId: scope.companyId,
       agentId: scope.agentId, keyId: scope.keyId } as const;
@@ -1074,6 +1074,10 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
     app.post("/api/companies/:companyId/issues", (req, res) => res.status(201).json({
       id: "record-created-during-lease",
       title: req.body.title,
+    }));
+    app.post("/api/issues/:id/comments", (req, res) => res.status(201).json({
+      id: "comment-created-during-lease",
+      body: req.body.body,
     }));
     app.patch("/api/issues/:id", (_req, res) => res.json({ ok: true }));
     app.use((err: { status?: number; message?: string; details?: unknown }, _req: Request,
@@ -1109,6 +1113,16 @@ suite("local client-pull run ownership (PostgreSQL)", () => {
       .set("Idempotency-Key", randomUUID())
       .send({ title: "Detached record while working" })
       .expect(201, { id: "record-created-during-lease", title: "Detached record while working" });
+    const duringLeaseCommentGrant = await request(app).post("/api/agents/me/session-writes")
+      .send({ ttlMinutes: 5 }).expect(201);
+    await request(app).post(`/api/issues/${scope.issueId}/comments`)
+      .set("X-Paperclip-Session-Write", duringLeaseCommentGrant.body.token)
+      .set("Idempotency-Key", randomUUID())
+      .send({ body: "Append-only progress note while working" })
+      .expect(201, {
+        id: "comment-created-during-lease",
+        body: "Append-only progress note while working",
+      });
     const leasedMutation = await request(app).patch(`/api/issues/${scope.issueId}`)
       .set("X-Paperclip-Session-Write", duringLease.body.token)
       .set("Idempotency-Key", randomUUID())

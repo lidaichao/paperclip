@@ -15,6 +15,41 @@ import {
 import { startEmbeddedPostgresTestDatabase } from "./helpers/embedded-postgres.js";
 
 describe("P6-11..13 / P6-17 canonical event allocator", () => {
+  it("repairs a historical event cursor that trails persisted rows", async () => {
+    const temporary = await startEmbeddedPostgresTestDatabase("paperclip-event-cursor-repair-");
+    const db = createDb(temporary.connectionString);
+    const companyId = "20000000-0000-4000-8000-000000000001";
+    const agentId = "20000000-0000-4000-8000-000000000002";
+    const runId = "20000000-0000-4000-8000-000000000003";
+    try {
+      await db.insert(companies).values({ id: companyId, name: "Cursor repair fixture", issuePrefix: "CUR" });
+      await db.insert(agents).values({ id: agentId, companyId, name: "Cursor repair agent" });
+      await db.insert(heartbeatRuns).values({ id: runId, companyId, agentId, status: "failed" });
+      await db.insert(heartbeatRunEvents).values({
+        companyId,
+        runId,
+        agentId,
+        seq: 1,
+        eventType: "legacy.lifecycle",
+        message: "Persisted by an older build",
+      });
+
+      const receipt = await appendHeartbeatRunEvent(db, {
+        companyId,
+        runId,
+        agentId,
+        eventType: "lifecycle",
+        message: "Recovery disposition recorded",
+      });
+
+      expect(receipt.row.seq).toBe(2);
+      expect((await db.select({ nextEventSeq: heartbeatRuns.nextEventSeq }).from(heartbeatRuns)
+        .where(eq(heartbeatRuns.id, runId)))[0]?.nextEventSeq).toBe(3);
+    } finally {
+      await temporary.cleanup();
+    }
+  }, 60_000);
+
   it.each([false, true])("deduplicates concurrent retry exhaustion (historical receipt: %s)", async (historical) => {
     const temporary = await startEmbeddedPostgresTestDatabase("paperclip-exhaustion-events-");
     const db = createDb(temporary.connectionString);
