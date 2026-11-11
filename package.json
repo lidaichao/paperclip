@@ -68,6 +68,7 @@
     "test:e2e:demo-contract": "npx playwright test --config tests/e2e/playwright.config.ts tests/e2e/work-record-demo-contract.spec.ts && vitest run server/src/__tests__/work-package-dispatch.test.ts server/src/__tests__/work-record-quality-cycle.test.ts -t D1-PLAN-09",
     "test:e2e:demo-fidelity": "npx playwright test --config tests/e2e/playwright.config.ts tests/e2e/work-record-demo-fidelity-layout.spec.ts",
     "test:e2e:demo-golden": "npx playwright test --config tests/e2e/playwright.config.ts tests/e2e/work-record-demo-golden.spec.ts",
+    "test:e2e:demo-visual-contract": "npx playwright test --config tests/e2e/playwright.config.ts tests/e2e/work-record-demo-golden.spec.ts",
     "test:unit:native-permissions": "vitest run server/src/__tests__/access-service.test.ts server/src/__tests__/authorization-service.test.ts -t \"allows owner and admin role-default grants|backfills pre-upgrade human memberships|same-company\"",
     "test:e2e:native-regression": "npx playwright test --config tests/e2e/playwright.config.ts tests/e2e/native-paperclip-regression.spec.ts tests/e2e/native-paperclip-project-regression.spec.ts tests/e2e/native-paperclip-permissions-regression.spec.ts && vitest run server/src/__tests__/access-service.test.ts server/src/__tests__/authorization-service.test.ts -t \"allows owner and admin role-default grants|backfills pre-upgrade human memberships|same-company\"",
     "test:e2e:runner": "node cli/node_modules/tsx/dist/cli.mjs tests/runner-e2e/launch.ts",

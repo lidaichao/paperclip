@@ -68,11 +68,7 @@ export async function screenshotDifference(page: Page, reference: Buffer, implem
     let changed = 0;
     for (let index = 0; index < a.length; index += 4) {
       const delta = Math.abs(a[index] - b[index]) + Math.abs(a[index + 1] - b[index + 1]) + Math.abs(a[index + 2] - b[index + 2]);
-      const pixel = index / 4;
-      const x = pixel % left.width;
-      const y = Math.floor(pixel / left.width);
-      const ignoreScrollbar = x >= left.width - 15 || y >= left.height - 15;
-      const differs = !ignoreScrollbar && delta > 30;
+      const differs = delta > 30;
       if (differs) changed += 1;
       output.data[index] = differs ? 230 : Math.round((a[index] + b[index]) / 8);
       output.data[index + 1] = differs ? 55 : Math.round((a[index + 1] + b[index + 1]) / 8);

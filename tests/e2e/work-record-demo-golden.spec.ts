@@ -1,25 +1,33 @@
 import { existsSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import { expect, test, type APIResponse, type Page, type TestInfo } from "@playwright/test";
+import { expect, test, type APIRequestContext, type APIResponse, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { DEMO_AUTHORITATIVE_FIXTURE as fixture } from "./fixtures/demo-authoritative-fixture.js";
 import {
-  DEMO_VIEWPORTS as viewports,
-  geometryRect as rect,
+  DEMO_VIEWPORTS,
+  expectGeometryWithin,
+  geometryRect,
   screenshotDifference,
   type DemoSurface as Surface,
   type DemoViewport as Viewport,
-  type GeometryRect as Rect,
+  type GeometrySnapshot,
 } from "./fixtures/demo-geometry-contract.js";
 
-const surfaces: Surface[] = ["plan", "gantt", "defect", "mine"];
-const approvedWorkspaceDifferenceRatio: Record<Surface, Record<string, number>> = {
-  plan: { "1024x768": 0.194, "1319x1012": 0.14, "1540x1117": 0.121, "1574x1038": 0.13 },
-  gantt: { "1024x768": 0.18, "1319x1012": 0.151, "1540x1117": 0.126, "1574x1038": 0.134 },
-  defect: { "1024x768": 0.132, "1319x1012": 0.081, "1540x1117": 0.066, "1574x1038": 0.07 },
-  mine: { "1024x768": 0.091, "1319x1012": 0.062, "1540x1117": 0.049, "1574x1038": 0.048 },
-};
-const allowedVisualRegression = 0.008;
+const requestedSurface = process.env.PAPERCLIP_DEMO_SURFACE as Surface | undefined;
+const requestedViewport = process.env.PAPERCLIP_DEMO_VIEWPORT;
+const surfaces: Surface[] = requestedSurface ? [requestedSurface] : ["plan", "gantt", "defect", "mine"];
+const viewports = requestedViewport
+  ? DEMO_VIEWPORTS.filter((viewport) => viewport.label === requestedViewport)
+  : DEMO_VIEWPORTS;
+const DEMO_VISUAL_MAX_DIFFERENCE_RATIO = 0.005;
 const demoUrl = pathToFileURL("H:/project/Papercilp/prototype/index.html").href;
 const windowsChrome = "C:/Program Files/Google/Chrome/Application/chrome.exe";
+
+if (requestedSurface && !["plan", "gantt", "defect", "mine"].includes(requestedSurface)) {
+  throw new Error(`PAPERCLIP_DEMO_SURFACE 不支持 ${requestedSurface}`);
+}
+if (requestedViewport && viewports.length === 0) {
+  throw new Error(`PAPERCLIP_DEMO_VIEWPORT 不支持 ${requestedViewport}`);
+}
 
 if (
   process.platform === "win32" &&
@@ -30,219 +38,362 @@ if (
   test.use({ launchOptions: { executablePath: windowsChrome } });
 }
 
+type SeededRecord = { id: string; revision: number };
+type SeededFixture = {
+  company: { id: string; issuePrefix: string };
+  project: { id: string };
+  records: Map<string, SeededRecord>;
+};
+
 async function json<T>(response: APIResponse, label: string): Promise<T> {
   const body = await response.text();
   expect(response.ok(), `${label}: ${response.status()} ${body}`).toBe(true);
   return JSON.parse(body) as T;
 }
 
-async function demoGeometry(page: Page, surface: Surface) {
-  if (surface === "mine") {
-    return {
-      groupHeading: await rect(page.locator(".my-work-group-heading").first(), "mine Demo 分组标题"),
-      row: await rect(page.locator("li.my-work-row").first(), "mine Demo 首条待办"),
-    };
+async function seedAuthoritativeFixture(request: APIRequestContext): Promise<SeededFixture> {
+  const company = await json<{ id: string; issuePrefix: string }>(
+    await request.post("/api/companies", { data: { name: `Demo visual contract ${Date.now()}` } }),
+    "create company",
+  );
+  const project = await json<{ id: string }>(
+    await request.post(`/api/companies/${company.id}/projects`, { data: { name: fixture.projectName } }),
+    "create project",
+  );
+  const agents = new Map<string, string>();
+  for (const name of fixture.agents) {
+    const agent = await json<{ id: string }>(
+      await request.post(`/api/companies/${company.id}/agents`, { data: {
+        name,
+        role: "engineer",
+        adapterType: "process",
+        adapterConfig: { command: process.execPath, args: ["-e", "process.exit(0)"] },
+        runtimeConfig: { heartbeat: { enabled: false, wakeOnDemand: false } },
+      } }),
+      `create ${name} fixture agent`,
+    );
+    agents.set(name, agent.id);
   }
-  const geometry: Record<string, Rect> = {
-    workspace: await rect(page.locator("#app .schedule-workspace"), `${surface} Demo 工作区`),
-    content: await rect(page.locator("#app .schedule-main"), `${surface} Demo 内容区`),
-  };
-  const rail = page.locator("#schedule-rail");
-  if (await rail.count()) geometry.rail = await rect(rail, `${surface} Demo 版本栏`);
-  return geometry;
-}
+  const version = await json<{ id: string }>(
+    await request.post(`/api/companies/${company.id}/projects/${project.id}/versions`, { data: fixture.version }),
+    "create authoritative version",
+  );
+  const iteration = await json<{ id: string }>(
+    await request.post(`/api/companies/${company.id}/projects/${project.id}/iterations`, {
+      data: { versionId: version.id, ...fixture.iteration },
+    }),
+    "create authoritative iteration",
+  );
+  const records = new Map<string, SeededRecord>();
 
-async function implementationGeometry(page: Page, surface: Surface) {
-  if (surface === "mine") {
-    const group = page.getByTestId("my-todos-plan");
-    return {
-      groupHeading: await rect(group.locator(":scope > div").first(), "实装仪表盘待办分组标题"),
-      row: await rect(group.locator("li").first(), "实装仪表盘首条待办"),
-    };
-  }
-  return {
-    workspace: await rect(page.locator('[data-testid="work-records-main"]:visible'), `${surface} 实装工作区`),
-    content: await rect(page.getByTestId("work-record-workspace-content"), `${surface} 实装内容区`),
-    rail: await rect(page.getByTestId("work-record-rail-shell"), `${surface} 实装版本栏`),
-  };
-}
-
-function compareGeometry(surface: Surface, viewport: Viewport, demo: Record<string, Rect>, implementation: Record<string, Rect>) {
-  for (const key of Object.keys(demo).filter((candidate) => implementation[candidate])) {
-    for (const field of ["x", "y", "width", "height"] as const) {
-      if (surface === "mine" && field !== "height") continue;
-      const delta = Math.abs(demo[key][field] - implementation[key][field]);
-      expect.soft(delta, `${surface} ${viewport.label} ${key}.${field} 与 Demo 的误差`).toBeLessThanOrEqual(1);
+  for (const seed of fixture.plan) {
+    const record = await json<SeededRecord>(
+      await request.post(`/api/companies/${company.id}/work-records`, { data: {
+        projectId: project.id,
+        kind: "plan",
+        title: seed.title,
+        description: seed.description,
+        parentRecordId: seed.parentKey ? records.get(seed.parentKey)?.id : null,
+        iterationAssignmentMode: "independent",
+        iterationId: seed.iteration ? iteration.id : null,
+        plannedStartDate: seed.plannedStartDate,
+        plannedCompletionDate: seed.plannedCompletionDate,
+        priority: seed.priority,
+        assigneeAgentId: agents.get(seed.assignee),
+        predecessorRecordIds: seed.predecessorKeys.map((key) => {
+          const predecessor = records.get(key);
+          if (!predecessor) throw new Error(`${seed.key} 缺少前置夹具 ${key}`);
+          return predecessor.id;
+        }),
+        userResponsibilities: seed.belongsToCurrentUser ? [{ userId: "local-board", role: "execution" }] : [],
+      } }),
+      `create authoritative plan ${seed.key}`,
+    );
+    records.set(seed.key, record);
+    if (seed.businessStatus !== "backlog") {
+      const updated = await json<SeededRecord>(
+        await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`, {
+          data: { expectedRevision: record.revision, businessStatus: seed.businessStatus },
+        }),
+        `set authoritative plan ${seed.key} status`,
+      );
+      records.set(seed.key, updated);
     }
   }
+
+  for (const seed of fixture.defects) {
+    const record = await json<SeededRecord>(
+      await request.post(`/api/companies/${company.id}/work-records`, { data: {
+        projectId: project.id,
+        kind: "defect",
+        title: seed.title,
+        description: seed.description,
+        priority: seed.priority,
+        defectSeverity: seed.defectSeverity,
+        plannedCompletionDate: seed.plannedCompletionDate,
+        assigneeAgentId: agents.get(seed.assignee),
+        qaAssigneeAgentId: agents.get(seed.qaAssignee),
+        predecessorRecordIds: [],
+        userResponsibilities: [],
+      } }),
+      `create authoritative defect ${seed.key}`,
+    );
+    records.set(seed.key, record);
+    if (seed.businessStatus !== "backlog") {
+      const updated = await json<SeededRecord>(
+        await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`, {
+          data: { expectedRevision: record.revision, businessStatus: seed.businessStatus },
+        }),
+        `set authoritative defect ${seed.key} status`,
+      );
+      records.set(seed.key, updated);
+    }
+  }
+
+  return { company, project, records };
 }
 
-async function attachPair(info: TestInfo, surface: Surface, viewport: Viewport, reference: Buffer, implementation: Buffer, heatmap: Buffer, geometry: object) {
+function internalAnchorLocators(page: Page, surface: Surface, implementation: boolean): Record<string, Locator> {
+  if (surface === "mine") {
+    const group = implementation ? page.getByTestId("my-todos-plan") : page.locator(".my-work-group").first();
+    return {
+      group,
+      groupHeading: implementation ? group.locator(":scope > div").first() : group.locator(".my-work-group-heading"),
+      firstRow: implementation ? group.locator("li").first() : group.locator("li.my-work-row").first(),
+    };
+  }
+  if (surface === "gantt") {
+    const gantt = page.getByTestId("work-record-gantt");
+    return implementation ? {
+      workspace: page.locator('[data-testid="work-records-main"]:visible'),
+      rail: page.getByTestId("work-record-rail-shell"),
+      content: page.getByTestId("work-record-workspace-content"),
+      heading: gantt.locator(":scope > div").nth(0),
+      toolbar: gantt.locator(":scope > div").nth(1),
+      timelineHeader: page.getByTestId("gantt-month-header"),
+      firstRow: page.locator("[data-gantt-record-id]").first(),
+    } : {
+      workspace: page.locator("#app .schedule-workspace"),
+      rail: page.locator("#schedule-rail"),
+      content: page.locator("#app .schedule-main"),
+      heading: page.locator(".gantt-heading"),
+      toolbar: page.locator(".gantt-toolbar"),
+      timelineHeader: page.locator(".gantt-axis"),
+      firstRow: page.locator(".gantt-row .gantt-task").first(),
+    };
+  }
+  return implementation ? {
+    workspace: page.locator('[data-testid="work-records-main"]:visible'),
+    rail: page.getByTestId("work-record-rail-shell"),
+    content: page.getByTestId("work-record-workspace-content"),
+    heading: page.getByTestId("work-record-workspace-content").getByRole("heading", { name: surface === "plan" ? "需求池" : "缺陷池", exact: true }),
+    viewToolbar: page.getByTestId("work-record-view-toolbar"),
+    filterToolbar: page.getByTestId("work-record-filter-toolbar"),
+    tableHeader: page.getByTestId("work-record-table-scroller").locator("thead"),
+    firstRow: page.getByTestId("work-record-table-row").first(),
+  } : {
+    workspace: page.locator("#app .schedule-workspace"),
+    rail: page.locator("#schedule-rail"),
+    content: page.locator("#app .schedule-main"),
+    heading: page.locator(".schedule-context h3"),
+    viewToolbar: page.locator(".plan-compact-top"),
+    filterToolbar: page.locator(".sheet-toolbar"),
+    tableHeader: page.locator(".plan-table thead"),
+    firstRow: page.locator(".plan-table tbody tr").first(),
+  };
+}
+
+async function readGeometry(page: Page, surface: Surface, implementation: boolean): Promise<GeometrySnapshot> {
+  const result: GeometrySnapshot = {};
+  for (const [key, locator] of Object.entries(internalAnchorLocators(page, surface, implementation))) {
+    result[key] = await geometryRect(locator, `${surface} ${implementation ? "实装" : "Demo"} ${key}`);
+  }
+  return result;
+}
+
+async function expectAuthoritativeStructure(page: Page, demo: Page, surface: Surface, records: Map<string, SeededRecord>) {
+  if (surface !== "mine") {
+    for (const value of [fixture.version.name, fixture.iteration.name]) {
+      await expect.soft(demo.locator("#schedule-rail").getByText(value, { exact: true }).first(), `Demo 侧栏包含 ${value}`).toBeVisible();
+      await expect.soft(page.getByTestId("version-iteration-tree").getByText(value, { exact: true }).first(), `实装侧栏包含 ${value}`).toBeVisible();
+    }
+  }
+  if (surface === "plan") {
+    await expect.soft(demo.locator("[data-plan-select]"), "Demo 计划记录数").toHaveCount(fixture.plan.length);
+    await expect.soft(page.getByTestId("work-record-table-row"), "实装计划记录数").toHaveCount(fixture.plan.length);
+    await expect.soft(demo.locator(".plan-table tbody tr.child-row"), "Demo 子任务层级数").toHaveCount(3);
+    for (const key of ["201", "202", "203"]) {
+      const id = records.get(key)?.id;
+      expect(id, `${key} 已被夹具创建`).toBeTruthy();
+      await expect.soft(page.locator(`[data-record-id="${id}"]`), `实装 ${key} 子任务层级`).toHaveAttribute("data-tree-depth", "1");
+    }
+  } else if (surface === "gantt") {
+    await expect.soft(demo.locator("[data-gantt-row]"), "Demo 甘特记录数").toHaveCount(fixture.plan.length);
+    await expect.soft(page.locator("[data-gantt-record-id]"), "实装甘特记录数").toHaveCount(fixture.plan.length);
+    for (const key of ["201", "202", "203"]) {
+      const id = records.get(key)?.id;
+      if (id) await expect.soft(page.locator(`[data-gantt-record-id="${id}"]`), `实装甘特 ${key} 子任务层级`).toHaveAttribute("data-tree-depth", "1");
+    }
+  } else if (surface === "defect") {
+    await expect.soft(demo.locator("[data-defect-select]"), "Demo 缺陷记录数").toHaveCount(fixture.defects.length);
+    await expect.soft(page.getByTestId("work-record-table-row"), "实装缺陷记录数").toHaveCount(fixture.defects.length);
+  } else {
+    const expectedMine = fixture.plan.filter((record) => record.belongsToCurrentUser);
+    await expect.soft(demo.locator('[data-work-row^="task:"]'), "Demo 我的任务数").toHaveCount(expectedMine.length);
+    await expect.soft(demo.locator('[data-work-row^="defect:"]'), "Demo 我的缺陷数").toHaveCount(0);
+    await expect.soft(page.getByTestId("my-todos-plan").locator("li"), "实装我的任务数").toHaveCount(expectedMine.length);
+    await expect.soft(page.getByTestId("my-todos-defect").locator("li"), "实装我的缺陷数").toHaveCount(0);
+  }
+
+  const expectedTitles = surface === "defect"
+    ? fixture.defects.map((record) => record.title)
+    : surface === "mine"
+      ? fixture.plan.filter((record) => record.belongsToCurrentUser).map((record) => record.title)
+      : fixture.plan.map((record) => record.title);
+  for (const title of expectedTitles) {
+    await expect.soft(demo.getByText(title, { exact: true }).first(), `Demo 包含「${title}」`).toBeVisible();
+    await expect.soft(page.getByText(title, { exact: true }).first(), `实装包含「${title}」`).toBeVisible();
+  }
+}
+
+async function waitForRows(page: Page, demo: Page, surface: Surface) {
+  if (surface === "plan") {
+    await expect(demo.locator("[data-plan-select]")).toHaveCount(fixture.plan.length);
+    await expect(page.getByTestId("work-record-table-row")).toHaveCount(fixture.plan.length);
+  } else if (surface === "gantt") {
+    await expect(demo.locator("[data-gantt-row]")).toHaveCount(fixture.plan.length);
+    await expect(page.locator("[data-gantt-record-id]")).toHaveCount(fixture.plan.length);
+  } else if (surface === "defect") {
+    await expect(demo.locator("[data-defect-select]")).toHaveCount(fixture.defects.length);
+    await expect(page.getByTestId("work-record-table-row")).toHaveCount(fixture.defects.length);
+  } else {
+    const count = fixture.plan.filter((record) => record.belongsToCurrentUser).length;
+    await expect(demo.locator('[data-work-row^="task:"]')).toHaveCount(count);
+    await expect(page.getByTestId("my-todos-plan").locator("li")).toHaveCount(count);
+  }
+}
+
+function comparisonLocator(page: Page, surface: Surface, implementation: boolean) {
+  if (surface !== "mine") {
+    return implementation
+      ? page.locator('[data-testid="work-records-main"]:visible')
+      : page.locator("#app .schedule-workspace");
+  }
+  return implementation ? page.getByTestId("my-todos-plan") : page.locator(".my-work-group").first();
+}
+
+function dynamicMasks(page: Page, surface: Surface, implementation: boolean): Locator[] {
+  if (surface === "plan") {
+    return [implementation
+      ? page.getByTestId("work-record-table-row").locator("td:nth-child(2)")
+      : page.locator(".plan-table tbody .task-id-col")];
+  }
+  if (surface === "defect") {
+    return [implementation
+      ? page.getByTestId("work-record-table-row").locator("td:nth-child(2)")
+      : page.locator(".defect-table tbody tr td:nth-child(2)")];
+  }
+  return [];
+}
+
+async function attachPair(
+  info: TestInfo,
+  surface: Surface,
+  viewport: Viewport,
+  reference: Buffer,
+  implementation: Buffer,
+  heatmap: Buffer,
+  geometry: object,
+) {
   writeFileSync(info.outputPath(`demo-${surface}-${viewport.label}.png`), reference);
   writeFileSync(info.outputPath(`implementation-${surface}-${viewport.label}.png`), implementation);
-  writeFileSync(info.outputPath(`difference-${surface}-${viewport.label}.png`), heatmap);
   writeFileSync(info.outputPath(`geometry-${surface}-${viewport.label}.json`), JSON.stringify(geometry, null, 2));
   await info.attach(`demo-${surface}-${viewport.label}`, { body: reference, contentType: "image/png" });
   await info.attach(`implementation-${surface}-${viewport.label}`, { body: implementation, contentType: "image/png" });
-  await info.attach(`difference-${surface}-${viewport.label}`, { body: heatmap, contentType: "image/png" });
+  if (heatmap.length > 0) {
+    writeFileSync(info.outputPath(`difference-${surface}-${viewport.label}.png`), heatmap);
+    await info.attach(`difference-${surface}-${viewport.label}`, { body: heatmap, contentType: "image/png" });
+  }
   await info.attach(`geometry-${surface}-${viewport.label}`, {
     body: Buffer.from(JSON.stringify(geometry, null, 2)),
     contentType: "application/json",
   });
 }
 
-async function comparisonRegion(page: Page, surface: Surface, implementation: boolean): Promise<Rect> {
-  if (surface !== "mine") {
-    const target = implementation
-      ? page.locator('[data-testid="work-records-main"]:visible')
-      : page.locator("#app .schedule-workspace");
-    return rect(target, `${surface} ${implementation ? "实装" : "Demo"} 比较区域`);
-  }
-  const heading = implementation
-    ? page.getByTestId("my-todos-plan").locator(":scope > div").first()
-    : page.locator(".my-work-group-heading").first();
-  const row = implementation
-    ? page.getByTestId("my-todos-plan").locator("li").first()
-    : page.locator("li.my-work-row").first();
-  const [headingBox, rowBox] = await Promise.all([rect(heading, "待办分组标题"), rect(row, "待办首行")]);
-  return {
-    x: Math.min(headingBox.x, rowBox.x),
-    y: headingBox.y,
-    width: Math.max(headingBox.x + headingBox.width, rowBox.x + rowBox.width) - Math.min(headingBox.x, rowBox.x),
-    height: rowBox.y + rowBox.height - headingBox.y,
-  };
-}
-
-test("Demo and implementation share one geometric and visual contract", async ({ page, request }, info) => {
-  test.setTimeout(240_000);
-  const company = await json<{ id: string; issuePrefix: string }>(
-    await request.post("/api/companies", { data: { name: `Demo golden ${Date.now()}` } }),
-    "create company",
-  );
-  const project = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects`, { data: { name: "星海计划" } }),
-    "create project",
-  );
-  await json(await request.post(`/api/companies/${company.id}/agents`, { data: {
-    name: "Golden fixture agent",
-    role: "engineer",
-    adapterType: "process",
-    adapterConfig: { command: process.execPath, args: ["-e", "process.exit(0)"] },
-    runtimeConfig: { heartbeat: { enabled: false, wakeOnDemand: false } },
-  } }), "create inert agent");
-  const version = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects/${project.id}/versions`, { data: { name: "首个可用版本" } }),
-    "create version",
-  );
-  const iteration = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects/${project.id}/iterations`, {
-      data: { versionId: version.id, name: "首局引导" },
-    }),
-    "create iteration",
-  );
-
-  const planSeeds = [
-    ["完成首局引导", "in_progress", "2026-09-24", "2026-09-30"],
-    ["整理首局引导交互方案", "done", "2026-09-24", "2026-09-25"],
-    ["实现首局引导页面", "backlog", "2026-09-26", "2026-09-28"],
-    ["验证首局引导完整流程", "backlog", "2026-09-29", "2026-09-30"],
-    ["编写活动奖励配置说明", "todo", "2026-09-24", "2026-09-27"],
-    ["适配活动页窄屏布局", "in_progress", "2026-09-25", "2026-09-28"],
-    ["整理版本回归验证清单", "in_review", "2026-09-25", "2026-09-27"],
-    ["验证低端设备加载表现", "blocked", "2026-09-26", "2026-09-29"],
-    ["制作旧版引导过渡页", "cancelled", null, null],
-  ] as const;
-  for (const [title, businessStatus, plannedStartDate, plannedCompletionDate] of planSeeds) {
-    const record = await json<{ id: string; revision: number }>(
-      await request.post(`/api/companies/${company.id}/work-records`, { data: {
-        projectId: project.id,
-        kind: "plan",
-        title,
-        iterationId: iteration.id,
-        plannedStartDate,
-        plannedCompletionDate,
-        predecessorRecordIds: [],
-        userResponsibilities: [{ userId: "local-board", role: "execution" }],
-      } }),
-      `create ${title}`,
-    );
-    if (businessStatus !== "backlog") {
-      await json(await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`, {
-        data: { expectedRevision: record.revision, businessStatus },
-      }), `set ${title} status`);
-    }
-  }
-  const defectSeeds = [
-    ["登录失败提示不明确", "critical", "todo"],
-    ["安卓设备偶发音效丢失", "high", "in_review"],
-    ["关卡入口加载异常", "high", "blocked"],
-  ] as const;
-  for (const [title, defectSeverity, businessStatus] of defectSeeds) {
-    const record = await json<{ id: string; revision: number }>(
-      await request.post(`/api/companies/${company.id}/work-records`, { data: {
-        projectId: project.id,
-        kind: "defect",
-        title,
-        iterationId: iteration.id,
-        defectSeverity,
-        foundInVersionId: version.id,
-        plannedCompletionDate: "2026-09-27",
-        predecessorRecordIds: [],
-        userResponsibilities: [{ userId: "local-board", role: "execution" }],
-      } }),
-      `create ${title}`,
-    );
-    await json(await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`, {
-      data: { expectedRevision: record.revision, businessStatus },
-    }), `set ${title} status`);
-  }
-
+test("Demo and implementation share one authoritative structural, geometric and visual contract", async ({ page, request }, info) => {
+  test.setTimeout(300_000);
+  const seeded = await seedAuthoritativeFixture(request);
   const demo = await page.context().newPage();
+  await demo.addInitScript((keys) => {
+    for (const key of keys) localStorage.removeItem(key);
+  }, fixture.prototypeStorageKeys);
+
   for (const viewport of viewports) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await demo.setViewportSize({ width: viewport.width, height: viewport.height });
     for (const surface of surfaces) {
       const demoRoute = surface === "defect" ? "defects" : surface;
-      await demo.goto(`${demoUrl}#project/${encodeURIComponent("星海计划")}/${demoRoute}`);
+      await demo.goto(`${demoUrl}#project/${encodeURIComponent(fixture.projectName)}/${demoRoute}`);
       await expect(demo.locator("#app .schedule-workspace"), `${surface} Demo 已渲染`).toBeVisible();
 
       if (surface === "mine") {
-        await page.goto(`/${company.issuePrefix}/dashboard`);
+        await page.goto(`/${seeded.company.issuePrefix}/dashboard`);
         await page.getByRole("tab", { name: "我的待办", exact: true }).click();
         await expect(page.getByTestId("dashboard-my-todos")).toBeVisible();
       } else {
         const route = surface === "defect" ? "defects" : surface === "plan" ? "plans" : "gantt";
-        await page.goto(`/${company.issuePrefix}/projects/${project.id}/${route}`);
+        await page.goto(`/${seeded.company.issuePrefix}/projects/${seeded.project.id}/${route}`);
         await expect(page.getByTestId("work-records-main")).toBeVisible();
       }
 
-      const demoRects = await demoGeometry(demo, surface);
-      const implementationRects = await implementationGeometry(page, surface);
-      const demoRegion = await comparisonRegion(demo, surface, false);
-      const implementationRegion = await comparisonRegion(page, surface, true);
-      const sharedWidth = Math.floor(Math.min(demoRegion.width, implementationRegion.width));
-      const sharedHeight = Math.floor(Math.min(demoRegion.height, implementationRegion.height));
+      await waitForRows(page, demo, surface);
+      await expectAuthoritativeStructure(page, demo, surface, seeded.records);
+      const demoGeometry = await readGeometry(demo, surface, false);
+      const implementationGeometry = await readGeometry(page, surface, true);
+      expectGeometryWithin(implementationGeometry, demoGeometry, `${surface} ${viewport.label} 内部锚点`, 1);
+
+      const demoRegion = await geometryRect(comparisonLocator(demo, surface, false), `${surface} Demo 比较区域`);
+      const implementationRegion = await geometryRect(comparisonLocator(page, surface, true), `${surface} 实装比较区域`);
+      expect.soft(Math.abs(demoRegion.width - implementationRegion.width), `${surface} ${viewport.label} 比较区域宽度`).toBeLessThanOrEqual(1);
+      expect.soft(Math.abs(demoRegion.height - implementationRegion.height), `${surface} ${viewport.label} 比较区域高度`).toBeLessThanOrEqual(1);
+
       const reference = await demo.screenshot({
         animations: "disabled",
-        clip: { x: demoRegion.x, y: demoRegion.y, width: sharedWidth, height: sharedHeight },
+        caret: "hide",
+        clip: {
+          x: demoRegion.x,
+          y: demoRegion.y,
+          width: Math.floor(demoRegion.width),
+          height: Math.floor(demoRegion.height),
+        },
+        mask: dynamicMasks(demo, surface, false),
+        maskColor: "#ff00ff",
       });
       const implementation = await page.screenshot({
         animations: "disabled",
-        clip: { x: implementationRegion.x, y: implementationRegion.y, width: sharedWidth, height: sharedHeight },
+        caret: "hide",
+        clip: {
+          x: implementationRegion.x,
+          y: implementationRegion.y,
+          width: Math.floor(implementationRegion.width),
+          height: Math.floor(implementationRegion.height),
+        },
+        mask: dynamicMasks(page, surface, true),
+        maskColor: "#ff00ff",
       });
       const pixels = await screenshotDifference(page, reference, implementation);
       await attachPair(info, surface, viewport, reference, implementation, pixels.heatmap, {
-        demo: demoRects,
-        implementation: implementationRects,
+        demo: demoGeometry,
+        implementation: implementationGeometry,
+        regions: { demo: demoRegion, implementation: implementationRegion },
         pixels: { dimensionsMatch: pixels.dimensionsMatch, differenceRatio: pixels.differenceRatio },
       });
 
-      compareGeometry(surface, viewport, demoRects, implementationRects);
       expect.soft(pixels.dimensionsMatch, `${surface} ${viewport.label} 两侧截图尺寸一致`).toBe(true);
       expect.soft(
         pixels.differenceRatio,
-        `${surface} ${viewport.label} 与已批准 Demo 基线相比不得新增超过 0.8% 差异像素`,
-      ).toBeLessThanOrEqual(approvedWorkspaceDifferenceRatio[surface][viewport.label] + allowedVisualRegression);
+        `${surface} ${viewport.label} 与权威 Demo 的差异像素必须不超过 0.5%`,
+      ).toBeLessThanOrEqual(DEMO_VISUAL_MAX_DIFFERENCE_RATIO);
     }
   }
   await demo.close();
