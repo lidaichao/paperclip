@@ -456,7 +456,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
               }}
             />
           ) : <>
-            <div className="mb-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
+            <div className="mb-1 flex min-h-11 flex-wrap items-center justify-between gap-3 xl:mb-3">
               <div>
                 <h2 className="text-lg font-semibold">{scopeTitle}</h2>
                 <p className="text-sm text-muted-foreground">

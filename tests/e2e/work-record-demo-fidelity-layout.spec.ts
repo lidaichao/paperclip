@@ -7,16 +7,10 @@ import {
   createDemo1Sandbox,
   snapshotNativeSideEffects,
 } from "./fixtures/demo1-regression-sandbox.js";
-
-type Viewport = { width: number; height: number; label: string };
-
-const viewports: Viewport[] = [
-  { width: 1319, height: 1012, label: "1319x1012" },
-  { width: 1540, height: 1117, label: "1540x1117" },
-  { width: 1574, height: 1038, label: "1574x1038" },
-];
+import { DEMO_VIEWPORTS as viewports } from "./fixtures/demo-geometry-contract.js";
 
 const minimumVisiblePlanRows: Record<string, number> = {
+  "1024x768": 10,
   "1319x1012": 16,
   "1540x1117": 19,
   "1574x1038": 17,

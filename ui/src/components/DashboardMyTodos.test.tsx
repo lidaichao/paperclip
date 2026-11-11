@@ -113,7 +113,8 @@ describe("DashboardMyTodos", () => {
     const taskGroup = container.querySelector('[data-testid="my-todos-plan"]');
     const rows = taskGroup?.querySelectorAll("li") ?? [];
     expect(rows).toHaveLength(20);
-    expect(rows[0]?.querySelector("a")?.className).toContain("min-h-10");
+    expect(rows[0]?.querySelector("a")?.className).toContain("min-h-9");
+    expect(container.querySelector('[data-testid="my-todo-groups"]')).not.toBeNull();
     expect(taskGroup?.querySelectorAll("article")).toHaveLength(0);
   });
 });

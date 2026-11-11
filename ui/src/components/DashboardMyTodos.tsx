@@ -41,7 +41,7 @@ function TodoGroup({ companyId, kind, projectId, q, dueBefore, sort, config }: {
   const fields = config.columnOrder.filter((field) => config.visibleFields.includes(field));
   const gridTemplateColumns = ["minmax(0,1fr)", ...fields.map((field) => FIELD_WIDTHS[field])].join(" ");
   return <section className="min-w-0 overflow-hidden rounded-lg border" data-testid={`my-todos-${kind}`}>
-    <div className="flex min-h-11 items-center justify-between gap-3 border-b bg-muted/30 px-3">
+    <div className="flex min-h-9 items-center justify-between gap-3 border-b bg-muted/30 px-3">
       <h3 className="font-semibold">{label} <span className="ml-1 text-xs font-normal text-muted-foreground">{items.length}{query.hasNextPage ? "+" : ""}</span></h3>
       <label className="flex items-center gap-2 text-xs text-muted-foreground">{l10n("local.my_todo_status")}
         <select aria-label={l10n("local.my_todo_status_filter", { kind: kind === "plan" ? l10n("local.my_todo_task") : l10n("local.my_todo_defect") })} className="h-8 rounded-md border bg-background px-2 text-sm text-foreground" value={status} onChange={(event) => setStatus(event.target.value as typeof status)}>
@@ -55,7 +55,7 @@ function TodoGroup({ companyId, kind, projectId, q, dueBefore, sort, config }: {
           : items.length === 0 ? <p className="px-3 py-4 text-sm text-muted-foreground">{l10n("local.my_todo_empty", { kind: label })}</p>
             : <ul className="divide-y">{items.map((item) => <li key={item.id}>
               <Link to={`/projects/${item.projectId}/${kind === "plan" ? "plans" : "defects"}?record=${encodeURIComponent(item.id)}`}
-                className={`flex flex-col justify-center gap-0.5 px-3 text-sm text-foreground no-underline hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary sm:grid sm:gap-x-3 ${config.density === "compact" ? "min-h-10 py-1" : "min-h-14 py-2"}`}
+                className={`flex flex-col justify-center gap-0.5 px-3 text-sm text-foreground no-underline hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary sm:grid sm:gap-x-3 ${config.density === "compact" ? "min-h-9 py-1" : "min-h-14 py-2"}`}
                 style={{ gridTemplateColumns }} aria-label={l10n("local.my_todo_open", { kind: label, title: item.title })}>
                 <span className="min-w-0 truncate font-medium" title={item.title}>{item.title}</span>
                 {fields.map((field) => <span key={field} className="hidden truncate text-xs text-muted-foreground sm:block">{fieldValue(item, field)}</span>)}
@@ -137,7 +137,9 @@ export function DashboardMyTodos({ companyId }: { companyId: string }) {
       <label className="flex items-center gap-1 text-xs text-muted-foreground">{l10n("local.my_todo_due_before")} <input aria-label={l10n("local.my_todo_due_filter")} type="date" className="h-9 rounded-md border bg-background px-2 text-sm text-foreground" value={dueBefore} onChange={(event) => setDueBefore(event.target.value)} /></label>
       <select aria-label={l10n("local.my_todo_sort_filter")} className="h-9 rounded-md border bg-background px-2 text-sm" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="due">{l10n("local.my_todo_sort_due")}</option><option value="updated">{l10n("local.my_todo_sort_updated")}</option></select>
     </div>
-    <TodoGroup companyId={companyId} kind="plan" projectId={projectId} q={q} dueBefore={dueBefore} sort={sort} config={config} />
-    <TodoGroup companyId={companyId} kind="defect" projectId={projectId} q={q} dueBefore={dueBefore} sort={sort} config={config} />
+    <div className="space-y-3" data-testid="my-todo-groups">
+      <TodoGroup companyId={companyId} kind="plan" projectId={projectId} q={q} dueBefore={dueBefore} sort={sort} config={config} />
+      <TodoGroup companyId={companyId} kind="defect" projectId={projectId} q={q} dueBefore={dueBefore} sort={sort} config={config} />
+    </div>
   </div>;
 }
