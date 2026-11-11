@@ -335,7 +335,11 @@ export async function reapSetupTokenLeases(
   let failed = 0;
   for (const record of records) {
     try {
-      await deps.leases.releaseById(record.leaseId);
+      // A terminal session may have failed before it acquired a provider lease.
+      // In that case the durable row is still reapable, but there is no sandbox
+      // to release. Treat the empty lease reference as an idempotent no-op and
+      // clear the row; retrying releaseById("") would otherwise fail forever.
+      if (record.leaseId) await deps.leases.releaseById(record.leaseId);
       await deps.store.remove({
         sessionId: record.sessionId,
         companyId: record.companyId,
