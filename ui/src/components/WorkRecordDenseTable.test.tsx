@@ -5,10 +5,12 @@ import { defaultWorkRecordViewConfig, type WorkRecord, type WorkRecordViewKind }
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/api/client";
 import { WorkRecordDenseTable } from "./WorkRecordDenseTable";
 
 const viewsMock = vi.hoisted(() => vi.fn());
 const mutateDependencyMock = vi.hoisted(() => vi.fn());
+const updateRecordMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/api/work-records", () => ({
   workRecordsApi: {
@@ -17,6 +19,7 @@ vi.mock("@/api/work-records", () => ({
     updateView: vi.fn(),
     deleteView: vi.fn(),
     mutateDependency: mutateDependencyMock,
+    update: updateRecordMock,
   },
 }));
 
@@ -94,10 +97,11 @@ describe("WorkRecordDenseTable WBS", () => {
     currentUserId?: string | null;
     liveRunStatusByIssue?: ReadonlyMap<string, "queued" | "running">;
     liveRunQueryFailed?: boolean;
+    agentNames?: Record<string, string>;
   } = {}) {
     await act(async () => root.render(
       <QueryClientProvider client={client}>
-        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={{}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} liveRunStatusByIssue={options.liveRunStatusByIssue} liveRunQueryFailed={options.liveRunQueryFailed} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} writable={options.writable} currentUserId={options.currentUserId} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
+        <WorkRecordDenseTable companyId="company-1" projectId="project-1" kind={kind} records={records} agentNames={options.agentNames ?? {}} iterationLabels={iterationLabels} versionLabels={options.versionLabels} iterationVersionIds={options.iterationVersionIds} liveRunStatusByIssue={options.liveRunStatusByIssue} liveRunQueryFailed={options.liveRunQueryFailed} selectedId={null} checked={options.checked ?? []} onSelect={vi.fn()} onChecked={onChecked} writable={options.writable} currentUserId={options.currentUserId} batchActions={options.batchActions} beforeViewSwitch={async () => true} />
       </QueryClientProvider>,
     ));
     await flush();
@@ -121,6 +125,78 @@ describe("WorkRecordDenseTable WBS", () => {
     expect(container.querySelector('[data-record-id="qa"]')).toBeNull();
   });
 
+  it("updates status, assignee, priority and dates inline without opening the record drawer", async () => {
+    const task = record("task", "行内编辑任务");
+    updateRecordMock.mockResolvedValue(task);
+    await render("plan", [task], vi.fn(), {}, { writable: true, agentNames: { "agent-1": "Rabbit" } });
+
+    const status = container.querySelector('select[aria-label="行内编辑任务 状态"]') as HTMLSelectElement;
+    await act(async () => setSelectValue(status, "in_progress"));
+    await flush();
+    expect(updateRecordMock).toHaveBeenCalledWith("company-1", "project-1", "task", { expectedRevision: 1, businessStatus: "in_progress" });
+
+    updateRecordMock.mockClear();
+    const assignee = container.querySelector('select[aria-label="行内编辑任务 负责人"]') as HTMLSelectElement;
+    await act(async () => setSelectValue(assignee, "agent-1"));
+    await flush();
+    expect(updateRecordMock).toHaveBeenCalledWith("company-1", "project-1", "task", { expectedRevision: 1, assigneeAgentId: "agent-1" });
+
+    updateRecordMock.mockClear();
+    const priority = container.querySelector('select[aria-label="行内编辑任务 优先级"]') as HTMLSelectElement;
+    await act(async () => setSelectValue(priority, "high"));
+    await flush();
+    expect(updateRecordMock).toHaveBeenCalledWith("company-1", "project-1", "task", { expectedRevision: 1, priority: "high" });
+
+    updateRecordMock.mockClear();
+    const plannedStart = container.querySelector('input[aria-label="行内编辑任务 开始日期"]') as HTMLInputElement;
+    await act(async () => setNativeValue(plannedStart, "2026-11-12"));
+    await flush();
+    expect(updateRecordMock).toHaveBeenCalledWith("company-1", "project-1", "task", { expectedRevision: 1, plannedStartDate: "2026-11-12" });
+
+    updateRecordMock.mockClear();
+    const plannedCompletion = container.querySelector('input[aria-label="行内编辑任务 完成日期"]') as HTMLInputElement;
+    await act(async () => setNativeValue(plannedCompletion, "2026-11-14"));
+    await flush();
+    expect(updateRecordMock).toHaveBeenCalledWith("company-1", "project-1", "task", { expectedRevision: 1, plannedCompletionDate: "2026-11-14" });
+  });
+
+  it("keeps a failed inline draft and offers recoverable conflict actions", async () => {
+    const task = record("task", "冲突任务");
+    updateRecordMock.mockRejectedValueOnce(new ApiError("revision conflict", 409, {}));
+    await render("plan", [task], vi.fn(), {}, { writable: true });
+
+    const priority = container.querySelector('select[aria-label="冲突任务 优先级"]') as HTMLSelectElement;
+    await act(async () => setSelectValue(priority, "high"));
+    await flush();
+
+    expect(priority.value).toBe("high");
+    const alert = container.querySelector('[role="alert"]') as HTMLElement;
+    expect(alert.textContent).toContain("记录已被其他人修改");
+    expect(alert.textContent).toContain("你的修改已保留");
+    expect([...alert.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["重试", "使用服务器值"]);
+
+    await act(async () => [...alert.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent === "使用服务器值")?.click());
+    expect(priority.value).toBe("medium");
+    expect(container.textContent).not.toContain("记录已被其他人修改");
+  });
+
+  it("keeps inline fields read-only when edit capability is denied", async () => {
+    const task = record("task", "只读任务");
+    await render("plan", [task], vi.fn(), {}, { writable: false, agentNames: { "agent-1": "Rabbit" } });
+
+    const controls = [
+      container.querySelector('select[aria-label="只读任务 状态"]'),
+      container.querySelector('select[aria-label="只读任务 负责人"]'),
+      container.querySelector('select[aria-label="只读任务 优先级"]'),
+      container.querySelector('input[aria-label="只读任务 开始日期"]'),
+      container.querySelector('input[aria-label="只读任务 完成日期"]'),
+    ] as Array<HTMLInputElement | HTMLSelectElement>;
+    expect(controls.every((control) => control.disabled)).toBe(true);
+
+    await act(async () => setSelectValue(controls[0] as HTMLSelectElement, "in_progress"));
+    expect(updateRecordMock).not.toHaveBeenCalled();
+  });
+
   it("shows unmatched ancestors as disabled context rows", async () => {
     const rootRecord = record("root", "工作包");
     const child = record("child", "程序开发", { parentRecordId: rootRecord.id });
@@ -136,7 +212,7 @@ describe("WorkRecordDenseTable WBS", () => {
     expect((container.querySelector('input[aria-label="选择 工作包"]') as HTMLInputElement).disabled).toBe(true);
     expect((container.querySelector('input[aria-label="选择 程序开发"]') as HTMLInputElement).disabled).toBe(true);
     expect((container.querySelector('input[aria-label="选择 唯一复测目标"]') as HTMLInputElement).disabled).toBe(false);
-    expect(container.textContent).toContain("另含 2 条父级上下文");
+    expect(container.textContent).toContain("2 条父级上下文");
   });
 
   it("keeps defect rows flat even when legacy data contains parent ids", async () => {
@@ -264,13 +340,12 @@ describe("WorkRecordDenseTable WBS", () => {
     expect(row?.textContent).toContain("致命");
     expect(row?.textContent).toContain("V1");
 
-    const completedTab = container.querySelector('[role="tab"]:not([aria-selected="true"])') as HTMLButtonElement;
-    expect(completedTab).not.toBeNull();
-    const doneTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "已完成") as HTMLButtonElement;
-    await act(async () => doneTab.click());
+    const reviewTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "审查中") as HTMLButtonElement;
+    expect(reviewTab).not.toBeNull();
+    await act(async () => reviewTab.click());
     expect(container.querySelector('[data-record-id="defect"]')).toBeNull();
-    const todoTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "待办") as HTMLButtonElement;
-    await act(async () => todoTab.click());
+    const allTab = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "全部缺陷") as HTMLButtonElement;
+    await act(async () => allTab.click());
     expect(container.querySelector('[data-record-id="defect"]')).not.toBeNull();
   });
 
@@ -283,7 +358,8 @@ describe("WorkRecordDenseTable WBS", () => {
       { id: "legacy-view", companyId: "company-1", projectId: "project-1", userId: "user-1", viewKind: "defect", name: "旧视图", isBuiltin: false, config: legacy, revision: 1, updatedAt: null },
     ]);
     await render("defect", [record("defect", "缺陷", { kind: "defect" })]);
-    await act(async () => setSelectValue(container.querySelector('[data-testid="work-record-view-toolbar"] select') as HTMLSelectElement, "legacy-view"));
+    const legacyView = [...container.querySelectorAll<HTMLButtonElement>('[data-testid="work-record-view-toolbar"] button')].find((button) => button.textContent === "旧视图")!;
+    await act(async () => legacyView.click());
     await flush();
     const columnsButton = [...container.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent?.trim() === "列") as HTMLButtonElement;
     await act(async () => columnsButton.click());
@@ -327,7 +403,8 @@ describe("WorkRecordDenseTable WBS", () => {
       record("todo", "待办缺陷", { kind: "defect", businessStatus: "todo" }),
       record("done", "完成缺陷", { kind: "defect", businessStatus: "done" }),
     ]);
-    await act(async () => setSelectValue(container.querySelector('[data-testid="work-record-view-toolbar"] select') as HTMLSelectElement, "complex-filter"));
+    const complexView = [...container.querySelectorAll<HTMLButtonElement>('[data-testid="work-record-view-toolbar"] button')].find((button) => button.textContent === "未完成")!;
+    await act(async () => complexView.click());
     await flush();
 
     expect([...container.querySelectorAll('[role="tab"]')].every((tab) => tab.getAttribute("aria-selected") === "false")).toBe(true);
@@ -346,7 +423,7 @@ describe("WorkRecordDenseTable WBS", () => {
 
     const rows = [...container.querySelectorAll('[data-testid="work-record-table-row"]')];
     expect(rows).toHaveLength(20);
-    expect(rows.every((row) => row.classList.contains("h-8"))).toBe(true);
+    expect(rows.every((row) => row.classList.contains("h-9"))).toBe(true);
     expect(container.querySelector('[data-testid="work-record-view-toolbar"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="work-record-filter-toolbar"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="work-record-table-scroller"]')).not.toBeNull();

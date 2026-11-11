@@ -227,7 +227,7 @@
   --sz-work-record-rail-collapsed: 2.75rem;
   --sz-work-record-rail-collapsed-narrow: 2rem;
   --gap-work-record-workspace: 1.25rem;
-  --sz-work-record-tree-indent: 1rem;
+  --sz-work-record-tree-indent: 1.75rem;
   --sz-tweak-panel-max: 70vh; /* Task Chat Redesign dev tweak panel scroll cap. */
 
   /* New-task dialog geometry inputs and gap tokens. The derived top/height

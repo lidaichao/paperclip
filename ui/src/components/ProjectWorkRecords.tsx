@@ -456,20 +456,14 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
               }}
             />
           ) : <>
-            <div className="mb-1 flex min-h-11 flex-wrap items-center justify-between gap-3 xl:mb-3">
-              <div>
-                <h2 className="text-lg font-semibold">{scopeTitle}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {visibleRecords.length} 项{kind === "plan" ? "任务" : "缺陷"} · {" "}
-                  {kind === "plan"
-                    ? l10n("local.work_record_saving_editing_and_assigning_an_owne")
-                    : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
-                </p>
-              </div>
-              <Button disabled={!recordWritable} onClick={(event) => beginCreate(event.currentTarget)}>
-                <Plus className="size-4" />
-                {l10n("local.work_record_new_kind", { kind: kindLabel })}
-              </Button>
+            <div className="work-record-scope-header mb-1 min-h-16 xl:mb-2">
+              <h2 className="text-base font-semibold">{scopeTitle}</h2>
+              <p className="mt-1 text-xs text-muted-foreground">{visibleRecords.length} 项{kind === "plan" ? "任务" : "缺陷"}</p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {kind === "plan"
+                  ? l10n("local.work_record_saving_editing_and_assigning_an_owne")
+                  : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
+              </p>
             </div>
 
             {reopen.error ? <p role="alert" className="mb-3 text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
@@ -497,6 +491,10 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
                 beforeViewSwitch={beforeViewSwitch}
                 onViewDraftDirtyChange={setViewDraftDirty}
                 registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
+                primaryAction={<Button size="sm" disabled={!recordWritable} onClick={(event) => beginCreate(event.currentTarget)}>
+                  <Plus className="size-4" />
+                  {kind === "plan" ? l10n("local.new_task_718e58cc") : l10n("local.work_record_new_kind", { kind: kindLabel })}
+                </Button>}
               />
             )}
           </>}

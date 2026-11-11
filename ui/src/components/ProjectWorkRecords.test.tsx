@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { WorkRecord } from "@paperclipai/shared";
-import { act } from "react";
+import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "i18next";
@@ -32,14 +32,16 @@ vi.mock("@/api/work-records", () => ({
 vi.mock("@/api/agents", () => ({ agentsApi: { list: agentsMock } }));
 vi.mock("@/api/companies-query", () => ({ useAccountIdentity: () => accountIdentityMock.value }));
 vi.mock("@/components/WorkPackageConsole", () => ({
-  WorkPackageConsole: ({ visibleKind, records, onReopenRecord, onEditRecord, onEditCoverage }: {
+  WorkPackageConsole: ({ visibleKind, records, onReopenRecord, onEditRecord, onEditCoverage, primaryAction }: {
     visibleKind: "plan" | "defect";
     records: WorkRecord[];
     onReopenRecord?: (record: WorkRecord) => void;
     onEditRecord?: (record: WorkRecord, source: HTMLElement) => void;
     onEditCoverage?: (record: WorkRecord) => void;
+    primaryAction?: ReactNode;
   }) => (
     <div data-testid="console" data-kind={visibleKind}>
+      <div data-testid="mock-view-toolbar">{primaryAction}</div>
       {records.filter((record) => record.kind === visibleKind).map((record) => (
         <div key={record.id}>
           {record.title}
@@ -267,7 +269,7 @@ describe("ProjectWorkRecords", () => {
     expect(container.textContent).toContain("发布计划");
     expect(container.textContent).not.toContain("窄屏缺陷");
 
-    await act(async () => button("新建计划").click());
+    await act(async () => button("新建任务").click());
     const title = document.body.querySelector('input[placeholder="例如：完成发布说明"]') as HTMLInputElement;
     const description = document.body.querySelector("textarea") as HTMLTextAreaElement;
     await act(async () => {
@@ -287,7 +289,7 @@ describe("ProjectWorkRecords", () => {
     const parent = record("plan", { id: "parent-a", title: "工作包 A", iterationId: "iteration-a" });
     listMock.mockResolvedValue([parent]);
     await render("plan");
-    await act(async () => button("新建计划").click());
+    await act(async () => button("新建任务").click());
     const title = document.body.querySelector('input[placeholder="例如：完成发布说明"]') as HTMLInputElement;
     const parentSelect = [...document.body.querySelectorAll("select")].find((node) => node.parentElement?.textContent?.includes("上级计划")) as HTMLSelectElement;
     await act(async () => {
@@ -621,7 +623,7 @@ describe("ProjectWorkRecords", () => {
     capabilitiesMock.mockReturnValueOnce(capability.promise);
     accountIdentityMock.value = { userId: null, settled: false, failed: false };
     await render("plan");
-    expect(button("新建计划").disabled).toBe(true);
+    expect(button("新建任务").disabled).toBe(true);
     await act(async () => button("编辑测试").click());
     const drawer = document.body.querySelector('[data-testid="work-record-detail-drawer"]') as HTMLElement;
     expect([...drawer.querySelectorAll("input, select, textarea")].every((control) => control.matches(":disabled"))).toBe(true);
@@ -651,7 +653,7 @@ describe("ProjectWorkRecords", () => {
 
     await act(async () => buttonByLabel("Close").click());
     await flush();
-    await act(async () => button("New Plan").click());
+    await act(async () => button("New Task").click());
     expect(document.body.textContent).toContain("Save Plan");
   });
 });

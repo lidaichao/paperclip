@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MutateWorkRecordDependency, WorkRecord, WorkRecordViewConfig, WorkRecordViewField, WorkRecordViewKind, WorkRecordViewPreference } from "@paperclipai/shared";
+import type { MutateWorkRecordDependency, UpdateWorkRecord, WorkRecord, WorkRecordViewConfig, WorkRecordViewField, WorkRecordViewKind, WorkRecordViewPreference } from "@paperclipai/shared";
 import { defaultWorkRecordViewConfig, deriveWorkRecordDisplayState } from "@paperclipai/shared";
+import { ApiError } from "@/api/client";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { statusBadge, statusBadgeDefault } from "@/lib/status-colors";
 import { ArrowUpDown, ChevronDown, ChevronRight, ChevronsUpDown, Columns3, Filter, MoreHorizontal } from "lucide-react";
 import { buildWorkRecordTreeRows, type WorkRecordTreeRow } from "@/lib/work-record-tree";
 
@@ -31,9 +33,14 @@ const DEFECT_SEVERITY_LABELS: Record<NonNullable<WorkRecord["defectSeverity"]>, 
 const DISPATCH_STATE_LABELS: Record<WorkRecord["dispatchState"], string> = {
   not_dispatched: "未派发", preparing: "准备中", queued: "已排队", linked: "已关联", blocked: "已阻塞", failed: "派发失败",
 };
-const DEFECT_STATUS_TABS: Array<{ value: WorkRecord["businessStatus"] | null; label: string }> = [
-  { value: null, label: "全部缺陷" },
-  ...Object.entries(BUSINESS_STATUS_LABELS).map(([value, label]) => ({ value: value as WorkRecord["businessStatus"], label })),
+type DefectPreset = "all" | "backlog" | "in_progress" | "in_review" | "blocked" | "mine" | "custom";
+const DEFECT_STATUS_TABS: Array<{ value: Exclude<DefectPreset, "custom">; label: string; status?: WorkRecord["businessStatus"] }> = [
+  { value: "all", label: "全部缺陷" },
+  { value: "backlog", label: "待规划", status: "backlog" },
+  { value: "in_progress", label: "进行中", status: "in_progress" },
+  { value: "in_review", label: "审查中", status: "in_review" },
+  { value: "blocked", label: "受阻", status: "blocked" },
+  { value: "mine", label: "我的缺陷" },
 ];
 type PlanPreset = "all" | "backlog" | "in_progress" | "in_review" | "mine" | "custom";
 const PLAN_PRESET_TABS: Array<{ value: Exclude<PlanPreset, "custom">; label: string; status?: WorkRecord["businessStatus"] }> = [
@@ -43,6 +50,30 @@ const PLAN_PRESET_TABS: Array<{ value: Exclude<PlanPreset, "custom">; label: str
   { value: "in_review", label: "待审查", status: "in_review" },
   { value: "mine", label: "我的任务" },
 ];
+
+type InlineEditableField = "businessStatus" | "assignee" | "priority" | "plannedStartDate" | "plannedCompletionDate";
+type InlineEditRequest = {
+  record: WorkRecord;
+  field: InlineEditableField;
+  value: string;
+  patch: Omit<UpdateWorkRecord, "expectedRevision">;
+};
+type InlineEditFailure = InlineEditRequest & {
+  conflict: boolean;
+  message: string;
+};
+
+const INLINE_FIELD_LABELS: Record<InlineEditableField, string> = {
+  businessStatus: "状态",
+  assignee: "负责人",
+  priority: "优先级",
+  plannedStartDate: "开始日期",
+  plannedCompletionDate: "完成日期",
+};
+
+function inlineEditKey(recordId: string, field: InlineEditableField) {
+  return `${recordId}:${field}`;
+}
 
 type WorkRecordBatchAction = {
   label: string;
@@ -125,7 +156,7 @@ function filterCandidates(record: WorkRecord, field: WorkRecordViewField, agentN
   return [...new Set(values)];
 }
 
-export function WorkRecordDenseTable({ companyId, projectId, kind, records, agentNames, iterationLabels = {}, versionLabels = {}, iterationVersionIds = {}, liveRunStatusByIssue = new Map(), liveRunQueryFailed = false, selectedId, checked, onSelect, onChecked, writable = false, currentUserId = null, batchActions, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard }: {
+export function WorkRecordDenseTable({ companyId, projectId, kind, records, agentNames, iterationLabels = {}, versionLabels = {}, iterationVersionIds = {}, liveRunStatusByIssue = new Map(), liveRunQueryFailed = false, selectedId, checked, onSelect, onChecked, writable = false, currentUserId = null, batchActions, beforeViewSwitch, onViewDraftDirtyChange, registerLeaveGuard, primaryAction }: {
   companyId: string;
   projectId: string;
   kind: WorkRecordViewKind;
@@ -146,6 +177,7 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
   beforeViewSwitch: () => Promise<boolean>;
   onViewDraftDirtyChange?: (dirty: boolean) => void;
   registerLeaveGuard?: (guard: (() => Promise<boolean>) | null) => void;
+  primaryAction?: ReactNode;
 }) {
   const queryClient = useQueryClient();
   const key = queryKeys.workRecords.views(companyId, projectId, kind);
@@ -155,6 +187,9 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
   const [draft, setDraft] = useState<WorkRecordViewConfig>(() => defaultWorkRecordViewConfig(kind));
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
   const [planPreset, setPlanPreset] = useState<PlanPreset>("all");
+  const [defectPreset, setDefectPreset] = useState<DefectPreset>("all");
+  const [inlineDrafts, setInlineDrafts] = useState<Record<string, string>>({});
+  const [inlineFailures, setInlineFailures] = useState<Record<string, InlineEditFailure>>({});
   const active = (views.data ?? []).find((view) => view.id === activeId) ?? null;
   const dirty = JSON.stringify(draft) !== JSON.stringify(baseline);
 
@@ -164,6 +199,9 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
     setBaseline(next); setDraft(cloneConfig(next));
     setCollapsedIds(new Set());
     setPlanPreset("all");
+    setDefectPreset("all");
+    setInlineDrafts({});
+    setInlineFailures({});
   }, [kind, projectId]);
 
   const refresh = async (next?: WorkRecordViewPreference) => {
@@ -173,6 +211,28 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
   const create = useMutation({ mutationFn: (input: { name: string; config: WorkRecordViewConfig }) => workRecordsApi.createView(companyId, projectId, kind, input), onSuccess: refresh });
   const update = useMutation({ mutationFn: (input: { view: WorkRecordViewPreference; name?: string; config?: WorkRecordViewConfig }) => workRecordsApi.updateView(companyId, projectId, kind, input.view.id, { expectedRevision: input.view.revision, name: input.name, config: input.config }), onSuccess: refresh });
   const remove = useMutation({ mutationFn: (view: WorkRecordViewPreference) => workRecordsApi.deleteView(companyId, projectId, kind, view.id, view.revision), onSuccess: async () => { const next = defaultWorkRecordViewConfig(kind); setActiveId(`builtin:${kind}`); setBaseline(next); setDraft(cloneConfig(next)); await queryClient.invalidateQueries({ queryKey: key }); } });
+  const inlineUpdate = useMutation({
+    mutationFn: ({ record, patch }: InlineEditRequest) => workRecordsApi.update(companyId, projectId, record.id, { expectedRevision: record.revision, ...patch }),
+    onSuccess: async (updated, request) => {
+      const key = inlineEditKey(request.record.id, request.field);
+      queryClient.setQueryData<WorkRecord[]>(queryKeys.workRecords.list(companyId, projectId), (current) => current?.map((record) => record.id === updated.id ? updated : record));
+      setInlineDrafts((current) => { const next = { ...current }; delete next[key]; return next; });
+      setInlineFailures((current) => { const next = { ...current }; delete next[key]; return next; });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) });
+    },
+    onError: async (error, request) => {
+      const key = inlineEditKey(request.record.id, request.field);
+      setInlineFailures((current) => ({
+        ...current,
+        [key]: {
+          ...request,
+          conflict: error instanceof ApiError && error.status === 409,
+          message: error instanceof Error ? error.message : "未知错误",
+        },
+      }));
+      await queryClient.invalidateQueries({ queryKey: queryKeys.workRecords.list(companyId, projectId) });
+    },
+  });
   const error = create.error ?? update.error ?? remove.error ?? views.error;
 
   const askName = (initial = "") => window.prompt("个人视图名称（项目、记录类型与本人范围内唯一）", initial)?.trim() ?? "";
@@ -218,6 +278,7 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
     const normalized = normalizeConfig(kind, next.config);
     setActiveId(id); setBaseline(normalized); setDraft(cloneConfig(normalized));
     setPlanPreset("custom");
+    setDefectPreset("custom");
     setCollapsedIds(new Set());
     onChecked([]);
   };
@@ -229,6 +290,19 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
     if (status) next.filters = [{ field: "businessStatus", operator: "is", value: status }];
     setActiveId("builtin:plan");
     setPlanPreset(preset);
+    setBaseline(next);
+    setDraft(cloneConfig(next));
+    setCollapsedIds(new Set());
+    onChecked([]);
+  };
+  const applyDefectPreset = async (preset: Exclude<DefectPreset, "custom">) => {
+    if (defectPreset === preset && !dirty) return;
+    if (!(await prepareToLeave())) return;
+    const next = defaultWorkRecordViewConfig("defect");
+    const status = DEFECT_STATUS_TABS.find((item) => item.value === preset)?.status;
+    if (status) next.filters = [{ field: "businessStatus", operator: "is", value: status }];
+    setActiveId("builtin:defect");
+    setDefectPreset(preset);
     setBaseline(next);
     setDraft(cloneConfig(next));
     setCollapsedIds(new Set());
@@ -267,7 +341,7 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
 
   const directMatches = useMemo(() => {
     const query = draft.search.trim().toLocaleLowerCase();
-    let result = kind === "plan" && planPreset === "mine"
+    let result = (kind === "plan" && planPreset === "mine") || (kind === "defect" && defectPreset === "mine")
       ? records.filter((record) => currentUserId !== null && record.userResponsibilities.some((item) => item.userId === currentUserId))
       : records;
     result = result.filter((record) => !query || `${record.recordIdentifier} ${record.title} ${record.description ?? ""}`.toLocaleLowerCase().includes(query));
@@ -282,7 +356,7 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
       return raw > expected;
     });
     return result;
-  }, [agentNames, currentUserId, draft.filters, draft.search, iterationLabels, iterationVersionIds, kind, planPreset, records, versionLabels]);
+  }, [agentNames, currentUserId, defectPreset, draft.filters, draft.search, iterationLabels, iterationVersionIds, kind, planPreset, records, versionLabels]);
   const compareRecords = useCallback((left: WorkRecord, right: WorkRecord) => {
     for (const item of draft.sort) {
       const compared = displayValue(left, item.field, agentNames, iterationLabels, versionLabels, iterationVersionIds).localeCompare(displayValue(right, item.field, agentNames, iterationLabels, versionLabels, iterationVersionIds), undefined, { numeric: true });
@@ -327,7 +401,7 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
   }, [agentNames, draft.groupBy, iterationLabels, iterationVersionIds, treeRows, versionLabels]);
   const selectableIds = treeRows.filter((row) => !row.contextOnly).map((row) => row.record.id);
   const selectedSelectableCount = selectableIds.filter((id) => checked.includes(id)).length;
-  const rowClass = draft.density === "compact" ? "h-8" : draft.density === "comfortable" ? "h-10" : "h-12";
+  const rowClass = draft.density === "compact" ? "h-9" : draft.density === "comfortable" ? "h-10" : "h-12";
   const toggleCollapsed = (recordId: string) => setCollapsedIds((current) => {
     const next = new Set(current);
     if (next.has(recordId)) next.delete(recordId);
@@ -340,13 +414,34 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
     ? businessStatusFilters[0].value
     : null;
   const hasComplexBusinessStatusFilter = businessStatusFilters.length > 0 && simpleBusinessStatus === null;
+  const submitInlineEdit = (request: InlineEditRequest) => {
+    if (!writable) return;
+    const key = inlineEditKey(request.record.id, request.field);
+    setInlineDrafts((current) => ({ ...current, [key]: request.value }));
+    setInlineFailures((current) => { const next = { ...current }; delete next[key]; return next; });
+    inlineUpdate.mutate(request);
+  };
+  const retryInlineEdit = (key: string) => {
+    const failure = inlineFailures[key];
+    const currentRecord = failure ? records.find((record) => record.id === failure.record.id) : null;
+    if (!failure || !currentRecord || !writable) return;
+    inlineUpdate.mutate({ ...failure, record: currentRecord });
+  };
+  const discardInlineEdit = (key: string) => {
+    setInlineDrafts((current) => { const next = { ...current }; delete next[key]; return next; });
+    setInlineFailures((current) => { const next = { ...current }; delete next[key]; return next; });
+  };
+  const inlineValue = (record: WorkRecord, field: InlineEditableField, serverValue: string) => inlineDrafts[inlineEditKey(record.id, field)] ?? serverValue;
 
-  return <div className="space-y-2" data-testid="work-record-dense-table" data-density={draft.density}>
-    <div className="flex min-h-9 items-center gap-2 overflow-x-auto" data-testid="work-record-view-toolbar">
-      {kind === "plan" ? <div className="flex min-w-0 items-center gap-1" role="tablist" aria-label="计划状态">
-        {PLAN_PRESET_TABS.map((tab) => <Button key={tab.value} role="tab" aria-selected={planPreset === tab.value} size="sm" variant={planPreset === tab.value ? "secondary" : "ghost"} className="shrink-0" onClick={() => void applyPlanPreset(tab.value)}>{tab.label}</Button>)}
-        {(views.data ?? []).filter((view) => !view.isBuiltin).map((view) => <Button key={view.id} size="sm" variant={activeId === view.id ? "secondary" : "ghost"} className="shrink-0" onClick={() => void switchView(view.id)}>{view.name}</Button>)}
-      </div> : <label className="flex shrink-0 items-center gap-2 text-sm font-medium">视图 <select className="h-9 rounded-md border border-input bg-background px-3" value={activeId} onChange={(event) => void switchView(event.target.value)}>{(views.data ?? []).map((view) => <option key={view.id} value={view.id}>{view.isBuiltin ? "内置 · " : "个人 · "}{view.name}</option>)}</select></label>}
+  return <div className="space-y-0" data-testid="work-record-dense-table" data-density={draft.density}>
+    <div className="flex min-h-10 items-center gap-2 overflow-x-auto border-b" data-testid="work-record-view-toolbar">
+      {kind === "plan" ? <div className="flex min-w-0 items-center gap-0" role="tablist" aria-label="计划状态">
+        {PLAN_PRESET_TABS.map((tab) => <Button key={tab.value} role="tab" aria-selected={planPreset === tab.value} size="sm" variant="ghost" className={cn("shrink-0 rounded-none border-b-2 border-transparent", planPreset === tab.value && "border-primary text-primary")} onClick={() => void applyPlanPreset(tab.value)}>{tab.label}</Button>)}
+        {(views.data ?? []).filter((view) => !view.isBuiltin).map((view) => <Button key={view.id} size="sm" variant="ghost" className={cn("shrink-0 rounded-none border-b-2 border-transparent", activeId === view.id && "border-primary text-primary")} onClick={() => void switchView(view.id)}>{view.name}</Button>)}
+      </div> : <div className="flex min-w-0 items-center gap-0" role="tablist" aria-label="缺陷状态">
+        {DEFECT_STATUS_TABS.map((tab) => <Button key={tab.value} role="tab" aria-selected={defectPreset === tab.value} size="sm" variant="ghost" className={cn("shrink-0 rounded-none border-b-2 border-transparent", defectPreset === tab.value && "border-primary text-primary")} onClick={() => void applyDefectPreset(tab.value)}>{tab.label}</Button>)}
+        {(views.data ?? []).filter((view) => !view.isBuiltin).map((view) => <Button key={view.id} size="sm" variant="ghost" className={cn("shrink-0 rounded-none border-b-2 border-transparent", activeId === view.id && "border-primary text-primary")} onClick={() => void switchView(view.id)}>{view.name}</Button>)}
+      </div>}
       {dirty ? <Button className="shrink-0" size="sm" onClick={save} disabled={create.isPending || update.isPending}>{active?.isBuiltin ? "另存为" : "保存修改"}</Button> : null}
       {dirty ? <span className="shrink-0 text-sm text-muted-foreground" role="status">未保存配置</span> : null}
       <DropdownMenu>
@@ -357,47 +452,62 @@ export function WorkRecordDenseTable({ companyId, projectId, kind, records, agen
           <DropdownMenuItem disabled={!active || active.isBuiltin} onSelect={deleteView}>删除</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      {primaryAction ? <div className="shrink-0">{primaryAction}</div> : null}
     </div>
-    {kind === "defect" ? <div className="flex min-h-9 items-center gap-1 overflow-x-auto" role="tablist" aria-label="缺陷状态">
-      {DEFECT_STATUS_TABS.map((tab) => {
-        const active = tab.value === null ? businessStatusFilters.length === 0 : simpleBusinessStatus === tab.value;
-        return <Button key={tab.value ?? "all"} role="tab" aria-selected={active} size="sm" variant={active ? "secondary" : "ghost"} className="shrink-0" onClick={() => mutate((next) => {
-          onChecked([]);
-          next.filters = next.filters.filter((item) => item.field !== "businessStatus");
-          if (tab.value) next.filters.push({ field: "businessStatus", operator: "is", value: tab.value });
-        })}>{tab.label}</Button>;
-      })}
-    </div> : null}
-    <div className="flex min-h-9 items-center gap-2 overflow-x-auto" data-testid="work-record-filter-toolbar" data-batch-active={checked.length > 0 ? "true" : "false"}>
+    <div className="flex min-h-10 items-center gap-2 overflow-x-auto border-b" data-testid="work-record-filter-toolbar" data-batch-active={checked.length > 0 ? "true" : "false"}>
       {checked.length > 0 ? <>
         <strong className="shrink-0 text-sm">已选 {checked.length} 项</strong>
         <span className="shrink-0" title={batchActions?.dispatch.reason ?? undefined}><Button size="sm" aria-label={batchActions?.dispatch.label ?? "派发"} title={batchActions?.dispatch.reason ?? undefined} disabled={!batchActions || batchActions.dispatch.disabled || batchActions.dispatch.pending} onClick={batchActions?.dispatch.onInvoke}>{batchActions?.dispatch.pending ? "校验中…" : batchActions?.dispatch.label ?? "派发"}</Button></span>
         <span className="shrink-0" title={batchActions?.assignOwner.reason ?? undefined}><Button size="sm" variant="outline" aria-label={batchActions?.assignOwner.label ?? "设置负责人"} title={batchActions?.assignOwner.reason ?? undefined} disabled={!batchActions || batchActions.assignOwner.disabled || batchActions.assignOwner.pending} onClick={batchActions?.assignOwner.onInvoke}>{batchActions?.assignOwner.pending ? "处理中…" : batchActions?.assignOwner.label ?? "设置负责人"}</Button></span>
         <Button className="shrink-0" size="sm" variant="ghost" aria-label="取消选择" onClick={() => onChecked([])}>取消选择</Button>
       </> : <>
-        <select aria-label="分组字段" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.groupBy ?? ""} onChange={(event) => { onChecked([]); mutate((next) => { next.groupBy = event.target.value as WorkRecordViewField || null; }); }}><option value="">{kind === "plan" ? "任务层级" : "不分组"}</option>{columns.map((field) => <option key={field} value={field}>按{fieldLabel(kind, field)}分组</option>)}</select>
+        <select aria-label="分组字段" className="h-8 rounded border border-input bg-background px-2 text-xs" value={draft.groupBy ?? ""} onChange={(event) => { onChecked([]); mutate((next) => { next.groupBy = event.target.value as WorkRecordViewField || null; }); }}><option value="">{kind === "plan" ? "任务层级" : "不分组"}</option>{columns.map((field) => <option key={field} value={field}>按{fieldLabel(kind, field)}分组</option>)}</select>
         {kind === "plan" ? <DropdownMenu><DropdownMenuTrigger asChild><Button size="icon-sm" variant="ghost" aria-label="展开或收起任务层级"><ChevronsUpDown className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="start"><DropdownMenuItem onSelect={() => setCollapsedIds(new Set())}>全部展开</DropdownMenuItem><DropdownMenuItem onSelect={() => setCollapsedIds(new Set(collapsibleIds))}>全部收起</DropdownMenuItem></DropdownMenuContent></DropdownMenu> : null}
         <Popover>
-          <PopoverTrigger asChild><Button className="shrink-0" size="sm" variant="outline"><Columns3 className="size-4" />列</Button></PopoverTrigger>
+          <PopoverTrigger asChild><Button className="h-8 shrink-0 px-2 text-xs" size="sm" variant="ghost"><Columns3 className="size-3.5" />列</Button></PopoverTrigger>
           <PopoverContent align="end" className="w-[min(48rem,calc(100vw-2rem))] p-3">
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{draft.columnOrder.map((field) => { const locked = field === "id" || field === "title"; const label = fieldLabel(kind, field); return <div key={field} draggable aria-label={`${label}列配置`} className="flex min-h-10 items-center gap-1 rounded-md border px-2" onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/work-record-field", field); }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={(event) => { event.preventDefault(); const dragged = event.dataTransfer.getData("text/work-record-field") as WorkRecordViewField; if (draft.columnOrder.includes(dragged)) moveBefore(dragged, field); }} onKeyDown={(event) => { if (!event.altKey) return; if (event.key === "ArrowUp") move(field, -1); if (event.key === "ArrowDown") move(field, 1); if (event.key === "ArrowLeft") resizeColumn(field, -16); if (event.key === "ArrowRight") resizeColumn(field, 16); }}><label className="flex flex-1 items-center gap-2 text-sm"><input type="checkbox" checked={draft.visibleFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.visibleFields = event.target.checked ? [...next.visibleFields, field] : next.visibleFields.filter((item) => item !== field); })} />{label}</label><Button size="sm" variant="ghost" aria-label={`${label}上移`} onClick={() => move(field, -1)}>↑</Button><Button size="sm" variant="ghost" aria-label={`${label}下移`} onClick={() => move(field, 1)}>↓</Button><Button size="sm" variant="ghost" aria-label={`${label}缩窄`} onClick={() => resizeColumn(field, -16)}>−</Button><Button size="sm" variant="ghost" aria-label={`${label}加宽`} onClick={() => resizeColumn(field, 16)}>＋</Button><label className="text-xs"><input type="checkbox" aria-label={`${label}冻结`} checked={draft.frozenFields.includes(field)} disabled={locked} onChange={(event) => mutate((next) => { next.frozenFields = event.target.checked ? [...next.frozenFields, field] : next.frozenFields.filter((item) => item !== field); })} />冻结</label></div>; })}</div>
           </PopoverContent>
         </Popover>
-        <select aria-label="密度" className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={draft.density} onChange={(event) => mutate((next) => { next.density = event.target.value as WorkRecordViewConfig["density"]; })}><option value="compact">紧凑</option><option value="comfortable">舒适</option>{draft.density === "spacious" ? <option value="spacious">宽松（旧视图）</option> : null}</select>
+        <select aria-label="密度" className="h-8 rounded border border-input bg-background px-2 text-xs" value={draft.density} onChange={(event) => mutate((next) => { next.density = event.target.value as WorkRecordViewConfig["density"]; })}><option value="compact">紧凑</option><option value="comfortable">舒适</option>{draft.density === "spacious" ? <option value="spacious">宽松（旧视图）</option> : null}</select>
         {hasComplexBusinessStatusFilter ? <span className="shrink-0 text-xs text-muted-foreground" role="status">已应用复杂状态筛选</span> : null}
         <span className="min-w-4 flex-1" />
-        <Input className="w-64 shrink-0" aria-label="搜索记录" placeholder="搜索名称或编号" value={draft.search} onChange={(event) => { onChecked([]); mutate((next) => { next.search = event.target.value; }); }} />
+        <Input className="h-8 w-64 shrink-0 text-xs" aria-label="搜索记录" placeholder="搜索名称或编号" value={draft.search} onChange={(event) => { onChecked([]); mutate((next) => { next.search = event.target.value; }); }} />
       </>}
     </div>
-    {error ? <p role="alert" className="text-sm text-destructive">视图操作失败：{error.message}</p> : null}
-    <div className="overflow-x-auto rounded-md border" tabIndex={0} aria-label={`${kind === "plan" ? "计划" : "缺陷"}密集表格`} data-testid="work-record-table-scroller">
-      <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: tableWidth }}><thead className="bg-muted/70"><tr><th className="w-10"><SelectAllCheckbox checked={selectableIds.length > 0 && selectedSelectableCount === selectableIds.length} indeterminate={selectedSelectableCount > 0 && selectedSelectableCount < selectableIds.length} disabled={selectableIds.length === 0} onChange={(nextChecked) => onChecked(nextChecked ? [...new Set([...checked, ...selectableIds])] : checked.filter((id) => !selectableIds.includes(id)))} /></th>{columns.map((field) => { const label = fieldLabel(kind, field); const sort = draft.sort.find((item) => item.field === field); const filter = draft.filters.find((item) => item.field === field); const locked = field === "id" || field === "title"; return <th key={field} scope="col" aria-sort={sort?.direction === "asc" ? "ascending" : sort?.direction === "desc" ? "descending" : "none"} className={cn("relative border-b px-1 text-left", draft.frozenFields.includes(field) && "sticky z-10 bg-muted")} style={{ width: draft.columnWidths[field] ?? (field === "title" ? 280 : 160), left: stickyLeft[field] }}><div className="flex min-w-0 items-center gap-1"><span className="min-w-0 flex-1 truncate px-1">{label}</span><button type="button" className="inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`按${label}排序`} title={sort ? `${sort.direction === "asc" ? "升序" : "降序"}；再次切换` : "排序"} onClick={() => mutate((next) => { const current = next.sort.find((item) => item.field === field); next.sort = !current ? [{ field, direction: "asc" }] : current.direction === "asc" ? [{ field, direction: "desc" }] : []; })}><ArrowUpDown className="size-3.5" /></button><Popover><PopoverTrigger asChild><button type="button" className={cn("inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", filter && "text-foreground")} aria-label={`筛选${label}`} title={filter ? `已筛选：${filter.value}` : "筛选"}><Filter className="size-3.5" /></button></PopoverTrigger><PopoverContent align="start" className="w-72 space-y-2 p-3"><p className="text-sm font-medium">筛选{label}</p><select aria-label={`${label}筛选条件`} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={filter?.operator ?? "contains"} onChange={(event) => mutate((next) => { const current = next.filters.find((item) => item.field === field); if (current) current.operator = event.target.value as WorkRecordViewConfig["filters"][number]["operator"]; else next.filters.push({ field, operator: event.target.value as WorkRecordViewConfig["filters"][number]["operator"], value: "" }); })}><option value="contains">包含</option><option value="is">等于</option><option value="is_not">不等于</option><option value="before">早于</option><option value="after">晚于</option></select><Input aria-label={`${label}筛选值`} value={filter?.value ?? ""} onChange={(event) => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== field); if (event.target.value) next.filters.push({ field, operator: filter?.operator ?? "contains", value: event.target.value }); })} /><Button size="sm" variant="ghost" disabled={!filter} onClick={() => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== field); })}>清除筛选</Button></PopoverContent></Popover><DropdownMenu><DropdownMenuTrigger asChild><button type="button" className="inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${label}列菜单`} title="列菜单"><MoreHorizontal className="size-3.5" /></button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem disabled={locked} onClick={() => mutate((next) => { next.visibleFields = next.visibleFields.filter((item) => item !== field); })}>隐藏{label}列</DropdownMenuItem><DropdownMenuItem onClick={() => mutate((next) => { next.frozenFields = next.frozenFields.includes(field) ? next.frozenFields.filter((item) => item !== field) : [...next.frozenFields, field]; })}>{draft.frozenFields.includes(field) ? "取消冻结" : "冻结此列"}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div><span role="separator" aria-orientation="vertical" aria-label={`${label}调整列宽`} tabIndex={0} className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none focus-visible:bg-ring" onPointerDown={(event) => startColumnResize(field, event)} onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); resizeColumn(field, -16); } if (event.key === "ArrowRight") { event.preventDefault(); resizeColumn(field, 16); } }} /></th>; })}</tr></thead>
+    {error ? <p role="alert" className="py-2 text-sm text-destructive">视图操作失败：{error.message}</p> : null}
+    {Object.entries(inlineFailures).map(([key, failure]) => <div key={key} role="alert" className="flex min-h-10 flex-wrap items-center gap-2 border-x border-b border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+      <span className="min-w-0 flex-1"><strong>{failure.record.title} · {INLINE_FIELD_LABELS[failure.field]}</strong>：{failure.conflict ? "记录已被其他人修改。你的修改已保留，可重试或使用服务器值。" : `修改失败，已保留输入：${failure.message}`}</span>
+      <Button size="sm" variant="outline" disabled={!writable || inlineUpdate.isPending} onClick={() => retryInlineEdit(key)}>重试</Button>
+      <Button size="sm" variant="ghost" onClick={() => discardInlineEdit(key)}>使用服务器值</Button>
+    </div>)}
+    <div className="overflow-x-auto border-x border-b" tabIndex={0} aria-label={`${kind === "plan" ? "计划" : "缺陷"}密集表格`} data-testid="work-record-table-scroller">
+      <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: tableWidth }}><thead className="h-9 bg-muted/70"><tr><th className="w-10"><SelectAllCheckbox checked={selectableIds.length > 0 && selectedSelectableCount === selectableIds.length} indeterminate={selectedSelectableCount > 0 && selectedSelectableCount < selectableIds.length} disabled={selectableIds.length === 0} onChange={(nextChecked) => onChecked(nextChecked ? [...new Set([...checked, ...selectableIds])] : checked.filter((id) => !selectableIds.includes(id)))} /></th>{columns.map((field) => { const label = fieldLabel(kind, field); const sort = draft.sort.find((item) => item.field === field); const filter = draft.filters.find((item) => item.field === field); const locked = field === "id" || field === "title"; const headerActionClass = "inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/column:opacity-100 group-focus-within/column:opacity-100"; return <th key={field} scope="col" aria-sort={sort?.direction === "asc" ? "ascending" : sort?.direction === "desc" ? "descending" : "none"} className={cn("group/column relative border-b px-1 text-left", draft.frozenFields.includes(field) && "sticky z-10 bg-muted")} style={{ width: draft.columnWidths[field] ?? (field === "title" ? 280 : 160), left: stickyLeft[field] }}><div className="flex min-w-0 items-center gap-1"><span className="min-w-0 flex-1 truncate px-1">{label}</span><button type="button" className={headerActionClass} aria-label={`按${label}排序`} title={sort ? `${sort.direction === "asc" ? "升序" : "降序"}；再次切换` : "排序"} onClick={() => mutate((next) => { const current = next.sort.find((item) => item.field === field); next.sort = !current ? [{ field, direction: "asc" }] : current.direction === "asc" ? [{ field, direction: "desc" }] : []; })}><ArrowUpDown className="size-3.5" /></button><Popover><PopoverTrigger asChild><button type="button" className={cn(headerActionClass, filter && "text-foreground opacity-100")} aria-label={`筛选${label}`} title={filter ? `已筛选：${filter.value}` : "筛选"}><Filter className="size-3.5" /></button></PopoverTrigger><PopoverContent align="start" className="w-72 space-y-2 p-3"><p className="text-sm font-medium">筛选{label}</p><select aria-label={`${label}筛选条件`} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={filter?.operator ?? "contains"} onChange={(event) => mutate((next) => { const current = next.filters.find((item) => item.field === field); if (current) current.operator = event.target.value as WorkRecordViewConfig["filters"][number]["operator"]; else next.filters.push({ field, operator: event.target.value as WorkRecordViewConfig["filters"][number]["operator"], value: "" }); })}><option value="contains">包含</option><option value="is">等于</option><option value="is_not">不等于</option><option value="before">早于</option><option value="after">晚于</option></select><Input aria-label={`${label}筛选值`} value={filter?.value ?? ""} onChange={(event) => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== field); if (event.target.value) next.filters.push({ field, operator: filter?.operator ?? "contains", value: event.target.value }); })} /><Button size="sm" variant="ghost" disabled={!filter} onClick={() => mutate((next) => { next.filters = next.filters.filter((item) => item.field !== field); })}>清除筛选</Button></PopoverContent></Popover><DropdownMenu><DropdownMenuTrigger asChild><button type="button" className={headerActionClass} aria-label={`${label}列菜单`} title="列菜单"><MoreHorizontal className="size-3.5" /></button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem disabled={locked} onClick={() => mutate((next) => { next.visibleFields = next.visibleFields.filter((item) => item !== field); })}>隐藏{label}列</DropdownMenuItem><DropdownMenuItem onClick={() => mutate((next) => { next.frozenFields = next.frozenFields.includes(field) ? next.frozenFields.filter((item) => item !== field) : [...next.frozenFields, field]; })}>{draft.frozenFields.includes(field) ? "取消冻结" : "冻结此列"}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div><span role="separator" aria-orientation="vertical" aria-label={`${label}调整列宽`} tabIndex={0} className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none focus-visible:bg-ring" onPointerDown={(event) => startColumnResize(field, event)} onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); resizeColumn(field, -16); } if (event.key === "ArrowRight") { event.preventDefault(); resizeColumn(field, 16); } }} /></th>; })}</tr></thead>
       <tbody>{groups.map(([group, rows]) => <FragmentGroup key={group} label={draft.groupBy ? group || "未分组" : null} columnCount={columns.length + 1}>{rows.map((row) => {
         const record = row.record;
-        return <tr key={record.id} className={cn(rowClass, row.hasChildren && "bg-muted/25 font-medium", row.contextOnly && "bg-muted/40 text-muted-foreground", checked.includes(record.id) && "bg-primary/5", record.id === selectedId && "bg-muted/50")} data-testid="work-record-table-row" data-record-id={record.id} data-tree-depth={row.depth} data-context-only={row.contextOnly ? "true" : "false"} aria-current={record.id === selectedId ? "true" : undefined}><td className="px-2 text-center"><input type="checkbox" aria-label={`选择 ${record.title}`} checked={checked.includes(record.id)} disabled={row.contextOnly} onChange={(event) => onChecked(event.target.checked ? [...new Set([...checked, record.id])] : checked.filter((id) => id !== record.id))} /></td>{columns.map((field) => { const cellValue = displayValue(record, field, agentNames, iterationLabels, versionLabels, iterationVersionIds); return <td key={field} className={cn("truncate border-b px-2", draft.frozenFields.includes(field) && "sticky bg-background")} style={{ left: stickyLeft[field] }} title={cellValue}>{field === "title" ? <div className="work-record-tree-cell flex min-w-0 items-center" style={{ "--work-record-tree-depth": Math.min(row.depth, 12) } as React.CSSProperties}>{row.hasChildren ? <button type="button" className="mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${row.expanded ? "收起" : "展开"} ${record.title}`} aria-expanded={row.expanded} onClick={() => toggleCollapsed(record.id)}>{row.expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</button> : <span className="mr-1 size-5 shrink-0" aria-hidden="true" />}<button className="min-w-0 flex-1 truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{cellValue}</button><WorkRecordLiveIndicator record={record} liveRunStatus={record.execution.issueId ? liveRunStatusByIssue.get(record.execution.issueId) : undefined} liveRunQueryFailed={liveRunQueryFailed} />{row.contextOnly ? <span className="ml-1 shrink-0 rounded-sm bg-muted px-1 text-xs font-normal">上下文</span> : null}{row.relationWarning ? <span className="ml-1 shrink-0 text-xs font-normal text-destructive" title={row.relationWarning === "cycle" ? "父子关系存在循环" : "父任务不存在"}>关系异常</span> : null}</div> : field === "dependencies" && kind === "plan" ? <DependencyCellEditor companyId={companyId} projectId={projectId} record={record} records={records} writable={writable && !row.contextOnly} /> : <button className="w-full truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{field === "id" ? record.recordIdentifier : cellValue}</button>}</td>; })}</tr>;
+        const editing = inlineUpdate.isPending && inlineUpdate.variables?.record.id === record.id;
+        return <tr key={record.id} className={cn(rowClass, row.hasChildren && "bg-primary/10 font-semibold text-primary", row.contextOnly && "bg-muted/40 text-muted-foreground", checked.includes(record.id) && "bg-primary/5", record.id === selectedId && "bg-muted/50")} data-testid="work-record-table-row" data-record-id={record.id} data-tree-depth={row.depth} data-context-only={row.contextOnly ? "true" : "false"} aria-current={record.id === selectedId ? "true" : undefined}>
+          <td className="border-b px-2 text-center"><input type="checkbox" aria-label={`选择 ${record.title}`} checked={checked.includes(record.id)} disabled={row.contextOnly} onChange={(event) => onChecked(event.target.checked ? [...new Set([...checked, record.id])] : checked.filter((id) => id !== record.id))} /></td>
+          {columns.map((field) => {
+            const cellValue = displayValue(record, field, agentNames, iterationLabels, versionLabels, iterationVersionIds);
+            const frozen = draft.frozenFields.includes(field);
+            const businessStatusValue = inlineValue(record, "businessStatus", record.businessStatus) as WorkRecord["businessStatus"];
+            const assigneeValue = inlineValue(record, "assignee", record.assigneeAgentId ?? "");
+            const priorityValue = inlineValue(record, "priority", record.priority) as WorkRecord["priority"];
+            return <td key={field} className={cn("truncate border-b px-2", frozen && (row.hasChildren ? "sticky bg-primary/10" : "sticky bg-background"))} style={{ left: stickyLeft[field] }} title={cellValue}>
+              {field === "title" ? <div className="work-record-tree-cell flex min-w-0 items-center" style={{ "--work-record-tree-depth": Math.min(row.depth, 12) } as React.CSSProperties}>
+                {row.hasChildren ? <button type="button" className="mr-1 inline-flex size-[22px] shrink-0 items-center justify-center rounded border bg-background/80 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${row.expanded ? "收起" : "展开"} ${record.title}`} aria-expanded={row.expanded} onClick={() => toggleCollapsed(record.id)}>{row.expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</button> : <span className="mr-1 size-[22px] shrink-0" aria-hidden="true" />}
+                <button className="min-w-0 flex-1 truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{cellValue}</button>
+                <WorkRecordLiveIndicator record={record} liveRunStatus={record.execution.issueId ? liveRunStatusByIssue.get(record.execution.issueId) : undefined} liveRunQueryFailed={liveRunQueryFailed} />
+                {row.contextOnly ? <span className="ml-1 shrink-0 rounded-sm bg-muted px-1 text-xs font-normal">上下文</span> : null}
+                {row.relationWarning ? <span className="ml-1 shrink-0 text-xs font-normal text-destructive" title={row.relationWarning === "cycle" ? "父子关系存在循环" : "父任务不存在"}>关系异常</span> : null}
+              </div> : field === "dependencies" && kind === "plan" ? <DependencyCellEditor companyId={companyId} projectId={projectId} record={record} records={records} writable={writable && !row.contextOnly} /> : field === "businessStatus" ? <select aria-label={`${record.title} 状态`} className={cn("h-7 w-full rounded border-0 px-1 text-xs font-normal", statusBadge[businessStatusValue] ?? statusBadgeDefault)} value={businessStatusValue} disabled={!writable || row.contextOnly || editing} onClick={(event) => event.stopPropagation()} onChange={(event) => { const value = event.target.value as WorkRecord["businessStatus"]; submitInlineEdit({ record, field: "businessStatus", value, patch: { businessStatus: value } }); }}>{Object.entries(BUSINESS_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select> : field === "assignee" ? <select aria-label={`${record.title} 负责人`} className="h-7 w-full rounded border-0 bg-transparent px-1 text-xs font-normal" value={assigneeValue} disabled={!writable || row.contextOnly || editing} onClick={(event) => event.stopPropagation()} onChange={(event) => { const value = event.target.value; submitInlineEdit({ record, field: "assignee", value, patch: { assigneeAgentId: value || null } }); }}><option value="">未分配</option>{Object.entries(agentNames).sort((left, right) => left[1].localeCompare(right[1])).map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select> : field === "priority" ? <select aria-label={`${record.title} 优先级`} className="h-7 w-full rounded border-0 bg-transparent px-1 text-xs font-normal" value={priorityValue} disabled={!writable || row.contextOnly || editing} onClick={(event) => event.stopPropagation()} onChange={(event) => { const value = event.target.value as WorkRecord["priority"]; submitInlineEdit({ record, field: "priority", value, patch: { priority: value } }); }}>{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select> : field === "plannedStartDate" || field === "plannedCompletionDate" ? <input aria-label={`${record.title} ${fieldLabel(kind, field)}`} type="date" className="h-7 w-full bg-transparent px-1 text-xs font-normal" value={inlineValue(record, field, field === "plannedStartDate" ? record.plannedStartDate ?? "" : record.plannedCompletionDate ?? "")} disabled={!writable || row.contextOnly || editing} onClick={(event) => event.stopPropagation()} onChange={(event) => { const value = event.target.value; submitInlineEdit({ record, field, value, patch: field === "plannedStartDate" ? { plannedStartDate: value || null } : { plannedCompletionDate: value || null } }); }} /> : <button className="w-full truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => onSelect(record.id, event.currentTarget)}>{field === "id" ? record.recordIdentifier : cellValue}</button>}
+            </td>;
+          })}
+        </tr>;
       })}</FragmentGroup>)}</tbody></table>
     </div>
-    <p className="text-xs text-muted-foreground" aria-live="polite">显示 {directMatches.length} 条{treeRows.length > directMatches.length ? `，另含 ${treeRows.length - directMatches.length} 条父级上下文` : ""}；保存视图只保存配置，不保存勾选、详情、滚动位置或业务草稿。</p>
+    <div className="flex min-h-8 items-center justify-between border-x border-b px-2 text-xs text-muted-foreground" aria-live="polite"><span>显示 {directMatches.length} / {records.length} 项{treeRows.length > directMatches.length ? ` · ${treeRows.length - directMatches.length} 条父级上下文` : ""}</span><span>列 · {draft.density === "compact" ? "紧凑" : draft.density === "comfortable" ? "舒适" : "宽松"}</span></div>
   </div>;
 }
 

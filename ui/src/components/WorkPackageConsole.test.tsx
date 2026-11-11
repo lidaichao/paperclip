@@ -134,8 +134,8 @@ describe("WorkPackageConsole", () => {
     await i18n.changeLanguage("zh-CN");
   });
 
-  async function render(currentRecords = records, visibleKind?: "plan" | "defect", onEditRecord?: (record: WorkRecord, source: HTMLElement) => void) {
-    await act(async () => root.render(<QueryClientProvider client={client}><WorkPackageConsole companyId="company-1" projectId="project-1" records={currentRecords} visibleKind={visibleKind} agentNames={{ "agent-po": "卡罗尔", "agent-qa": "Belle" }} recordsLoading={false} recordsError={null} onRetryRecords={() => undefined} onEditRecord={onEditRecord} /></QueryClientProvider>));
+  async function render(currentRecords = records, visibleKind?: "plan" | "defect", onEditRecord?: (record: WorkRecord, source: HTMLElement) => void, primaryAction?: ReactNode) {
+    await act(async () => root.render(<QueryClientProvider client={client}><WorkPackageConsole companyId="company-1" projectId="project-1" records={currentRecords} visibleKind={visibleKind} agentNames={{ "agent-po": "卡罗尔", "agent-qa": "Belle" }} recordsLoading={false} recordsError={null} onRetryRecords={() => undefined} onEditRecord={onEditRecord} primaryAction={primaryAction} /></QueryClientProvider>));
     await flush(); await flush();
   }
 
@@ -222,10 +222,12 @@ describe("WorkPackageConsole", () => {
 
   it("shows complete empty messages for each work record view", async () => {
     await i18n.changeLanguage("en");
-    await render([], "plan");
+    await render([], "plan", undefined, <button type="button">New task</button>);
     expect(container.textContent).toContain("No plans yet. Use New at the top right to add the first plan.");
-    await render([], "defect");
+    expect(container.textContent).toContain("New task");
+    await render([], "defect", undefined, <button type="button">New defect</button>);
     expect(container.textContent).toContain("No defects yet. Use New at the top right to add the first defect.");
+    expect(container.textContent).toContain("New defect");
     await render([]);
     expect(container.textContent).toContain("No business records yet. Use New at the top right to add the first record.");
   });
