@@ -50,7 +50,7 @@ import {
 
 /* ── Top-level tab types ── */
 
-type ProjectBaseTab = "list" | "plans" | "gantt" | "defects" | "plugin-operations" | "workspaces" | "configuration" | "budget";
+type ProjectBaseTab = "list" | "plans" | "gantt" | "defects" | "my-work" | "plugin-operations" | "workspaces" | "configuration" | "budget";
 type ProjectPluginTab = `plugin:${string}`;
 type ProjectTab = ProjectBaseTab | ProjectPluginTab;
 
@@ -747,6 +747,12 @@ export function ProjectDetail() {
   if (isLoading) return <PageSkeleton variant="detail" />;
   if (error) return <p className="text-sm text-destructive">{error.message}</p>;
   if (!project) return null;
+  if (
+    routeProjectRef !== canonicalProjectRef ||
+    location.pathname.endsWith("/overview")
+  ) {
+    return <PageSkeleton variant="detail" />;
+  }
   const showLeftProjectNotice =
     projectMembershipState === "left" && !dismissedLeftProjectIds.has(project.id);
   const projectMembershipPending =
@@ -758,38 +764,45 @@ export function ProjectDetail() {
   const projectJoinLeavePending = projectMembershipPending && membershipMutation.variables?.starred === undefined;
 
   const handleTabChange = (tab: ProjectTab) => {
-    if (tabNavigationPromiseRef.current) return;
-    const pending = (async () => {
-    if (tab !== activeTab && workRecordNavigationRef.current?.dirty) {
-      if (!(await workRecordNavigationRef.current.guard())) return;
-    }
-    // Cache the active tab per project
-    if (project?.id) {
-      try { localStorage.setItem(`paperclip:project-tab:${project.id}`, tab); } catch {}
-    }
-    if (isProjectPluginTab(tab)) {
-      navigate(`/projects/${canonicalProjectRef}?tab=${encodeURIComponent(tab)}`);
+    if (tab === activeTab) return;
+    const navigateToTab = () => {
+      if (project?.id) {
+        try { localStorage.setItem(`paperclip:project-tab:${project.id}`, tab); } catch {}
+      }
+      if (isProjectPluginTab(tab)) {
+        navigate(`/projects/${canonicalProjectRef}?tab=${encodeURIComponent(tab)}`);
+      } else if (tab === "workspaces") {
+        navigate(`/projects/${canonicalProjectRef}/workspaces`);
+      } else if (tab === "plans") {
+        navigate(`/projects/${canonicalProjectRef}/plans`);
+      } else if (tab === "gantt") {
+        navigate(`/projects/${canonicalProjectRef}/gantt`);
+      } else if (tab === "defects") {
+        navigate(`/projects/${canonicalProjectRef}/defects`);
+      } else if (tab === "my-work") {
+        navigate("/dashboard");
+      } else if (tab === "budget") {
+        navigate(`/projects/${canonicalProjectRef}/budget`);
+      } else if (tab === "plugin-operations") {
+        navigate(`/projects/${canonicalProjectRef}/plugin-operations`);
+      } else if (tab === "configuration") {
+        navigate(`/projects/${canonicalProjectRef}/configuration`);
+      } else {
+        navigate(`/projects/${canonicalProjectRef}/issues`);
+      }
+    };
+
+    const navigationGuard = workRecordNavigationRef.current;
+    if (!navigationGuard?.dirty) {
+      navigateToTab();
       return;
     }
-    if (tab === "workspaces") {
-      navigate(`/projects/${canonicalProjectRef}/workspaces`);
-    } else if (tab === "plans") {
-      navigate(`/projects/${canonicalProjectRef}/plans`);
-    } else if (tab === "gantt") {
-      navigate(`/projects/${canonicalProjectRef}/gantt`);
-    } else if (tab === "defects") {
-      navigate(`/projects/${canonicalProjectRef}/defects`);
-    } else if (tab === "budget") {
-      navigate(`/projects/${canonicalProjectRef}/budget`);
-    } else if (tab === "plugin-operations") {
-      navigate(`/projects/${canonicalProjectRef}/plugin-operations`);
-    } else if (tab === "configuration") {
-      navigate(`/projects/${canonicalProjectRef}/configuration`);
-    } else {
-      navigate(`/projects/${canonicalProjectRef}/issues`);
-    }
+    if (tabNavigationPromiseRef.current) return;
+    const pending = (async () => {
+      if (!(await navigationGuard.guard())) return;
+      navigateToTab();
     })().finally(() => {
-      window.setTimeout(() => { tabNavigationPromiseRef.current = null; }, 0);
+      tabNavigationPromiseRef.current = null;
     });
     tabNavigationPromiseRef.current = pending;
     void pending;
@@ -799,9 +812,10 @@ export function ProjectDetail() {
     { value: "list", label: l10n("local.tasks_b3a60e61") },
     { value: "configuration", label: l10n("local.configuration_b332c349") },
     { value: "budget", label: l10n("local.budget_1c6225ec") },
-    { value: "plans", label: "计划" },
-    { value: "gantt", label: "甘特图" },
-    { value: "defects", label: "缺陷" },
+    { value: "plans", label: "计划", badge: "新增" },
+    { value: "gantt", label: "甘特图", badge: "新增" },
+    { value: "defects", label: "缺陷", badge: "新增" },
+    { value: "my-work", label: "我的工作台", badge: "新增" },
     ...(project.managedByPlugin ? [{ value: "plugin-operations", label: l10n("local.plugin_operations_5d078940") }] : []),
     ...(showWorkspacesTab ? [{ value: "workspaces", label: l10n("local.workspaces_1377264b") }] : []),
     ...pluginTabItems.map((item) => ({ value: item.value, label: item.label })),

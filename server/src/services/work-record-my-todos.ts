@@ -53,6 +53,7 @@ export function workRecordMyTodoService(db: Db) {
         projectName: projects.name,
         kind: workRecords.kind,
         title: workRecords.title,
+        priority: workRecords.priority,
         businessStatus: workRecords.businessStatus,
         plannedCompletionDate: workRecords.plannedCompletionDate,
         updatedAt: workRecords.updatedAt,

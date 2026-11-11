@@ -102,7 +102,7 @@ describe("WorkRecordGantt interactions", () => {
     ]);
 
     expect((host.querySelector('input[aria-label="搜索甘特任务"]') as HTMLInputElement).placeholder).toBe("名称或编号");
-    expect([...host.querySelectorAll('select[aria-label="时间粒度"] option')].map((option) => option.textContent)).toEqual(["日", "周", "月"]);
+    expect([...host.querySelectorAll('select[aria-label="时间粒度"] option')].map((option) => option.textContent)).toEqual(["日", "周（紧凑）", "适应排期"]);
     expect(host.querySelector('button[aria-label="适应排期范围"]')).not.toBeNull();
     expect(host.querySelector('button[aria-label="定位今天"]')).not.toBeNull();
     expect(host.querySelector('[data-testid="gantt-month-header"]')).not.toBeNull();
@@ -171,9 +171,9 @@ describe("WorkRecordGantt interactions", () => {
     const track = timeline.querySelector('button') as HTMLButtonElement;
     await act(async () => pointer(track, "pointerdown", 244));
     await act(async () => pointer(timeline.parentElement!, "pointermove", 292));
-    expect(host.querySelector('[aria-label^="无日期任务，2026-11-14 至 2026-11-16"]')).not.toBeNull();
+    expect(host.querySelector('[aria-label^="无日期任务，"]')?.getAttribute("aria-label")).toBe("无日期任务，2026-11-13 至 2026-11-15");
     await act(async () => pointer(timeline.parentElement!, "pointerup", 292));
-    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", "a", expect.objectContaining({ plannedStartDate: "2026-11-14", plannedCompletionDate: "2026-11-16" }));
+    expect(updateMock).toHaveBeenCalledWith("company-1", "project-1", "a", expect.objectContaining({ plannedStartDate: "2026-11-13", plannedCompletionDate: "2026-11-15" }));
   });
 
   it("cancels drag with Escape and disables every mutation path for readers", async () => {

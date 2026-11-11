@@ -148,13 +148,13 @@ describe("WorkRecordDenseTable WBS", () => {
     expect(updateRecordMock).toHaveBeenCalledWith("company-1", "project-1", "task", { expectedRevision: 1, priority: "high" });
 
     updateRecordMock.mockClear();
-    const plannedStart = container.querySelector('input[aria-label="行内编辑任务 开始日期"]') as HTMLInputElement;
+    const plannedStart = container.querySelector('input[aria-label="行内编辑任务 计划开始"]') as HTMLInputElement;
     await act(async () => setNativeValue(plannedStart, "2026-11-12"));
     await flush();
     expect(updateRecordMock).toHaveBeenCalledWith("company-1", "project-1", "task", { expectedRevision: 1, plannedStartDate: "2026-11-12" });
 
     updateRecordMock.mockClear();
-    const plannedCompletion = container.querySelector('input[aria-label="行内编辑任务 完成日期"]') as HTMLInputElement;
+    const plannedCompletion = container.querySelector('input[aria-label="行内编辑任务 计划完成"]') as HTMLInputElement;
     await act(async () => setNativeValue(plannedCompletion, "2026-11-14"));
     await flush();
     expect(updateRecordMock).toHaveBeenCalledWith("company-1", "project-1", "task", { expectedRevision: 1, plannedCompletionDate: "2026-11-14" });
@@ -188,8 +188,8 @@ describe("WorkRecordDenseTable WBS", () => {
       container.querySelector('select[aria-label="只读任务 状态"]'),
       container.querySelector('select[aria-label="只读任务 负责人"]'),
       container.querySelector('select[aria-label="只读任务 优先级"]'),
-      container.querySelector('input[aria-label="只读任务 开始日期"]'),
-      container.querySelector('input[aria-label="只读任务 完成日期"]'),
+      container.querySelector('input[aria-label="只读任务 计划开始"]'),
+      container.querySelector('input[aria-label="只读任务 计划完成"]'),
     ] as Array<HTMLInputElement | HTMLSelectElement>;
     expect(controls.every((control) => control.disabled)).toBe(true);
 
@@ -483,10 +483,28 @@ describe("WorkRecordDenseTable WBS", () => {
       record("done", "完成缺陷", { kind: "defect", businessStatus: "done" }),
     ]);
 
-    await act(async () => (container.querySelector('button[aria-label="筛选业务状态"]') as HTMLButtonElement).click());
-    const filter = document.querySelector('input[aria-label="业务状态筛选值"]') as HTMLInputElement;
+    await act(async () => (container.querySelector('button[aria-label="筛选状态"]') as HTMLButtonElement).click());
+    const filter = document.querySelector('input[aria-label="状态筛选值"]') as HTMLInputElement;
     await act(async () => setNativeValue(filter, "done"));
     expect([...container.querySelectorAll('[data-testid="work-record-table-row"]')].map((row) => row.getAttribute("data-record-id"))).toEqual(["done"]);
+  });
+
+  it("clears one column filter without clearing the search query", async () => {
+    await render("plan", [
+      record("todo", "计划待办", { businessStatus: "todo" }),
+      record("done", "计划完成", { businessStatus: "done" }),
+    ]);
+
+    const search = container.querySelector('input[aria-label="搜索记录"]') as HTMLInputElement;
+    await act(async () => setNativeValue(search, "计划"));
+    await act(async () => (container.querySelector('button[aria-label="筛选状态"]') as HTMLButtonElement).click());
+    const filter = document.querySelector('input[aria-label="状态筛选值"]') as HTMLInputElement;
+    await act(async () => setNativeValue(filter, "done"));
+    const clear = document.querySelector<HTMLButtonElement>('button[aria-label="清除状态筛选"]')!;
+    await act(async () => clear.click());
+
+    expect(search.value).toBe("计划");
+    expect([...container.querySelectorAll('[data-testid="work-record-table-row"]')]).toHaveLength(2);
   });
 
   it("hides a column from its own header menu", async () => {

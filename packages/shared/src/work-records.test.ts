@@ -97,6 +97,7 @@ describe("Gantt personal view configuration", () => {
     expect(validateWorkRecordViewConfig("gantt", config)).toEqual(config);
     expect(config.frozenFields).toEqual(["title"]);
     expect(config.visibleFields).toEqual(["title", "assignee", "businessStatus"]);
+    expect(config.columnWidths).toEqual({ title: 200, assignee: 90, businessStatus: 90 });
   });
 
   it("rejects a Gantt view that hides the required title column", () => {
@@ -117,9 +118,22 @@ describe("dense work-record defaults", () => {
 
     expect(plan.columnOrder).toEqual(expect.arrayContaining(["priority", "version", "iteration"]));
     expect(plan.columnOrder.indexOf("version")).toBeLessThan(plan.columnOrder.indexOf("iteration"));
+    expect(plan.visibleFields).toEqual([
+      "id", "title", "businessStatus", "assignee", "priority", "plannedStartDate", "plannedCompletionDate",
+      "dependencies", "version", "iteration", "dispatchState",
+    ]);
+    expect(plan.columnWidths).toMatchObject({ id: 100, title: 370, dependencies: 280, dispatchState: 70 });
     expect(defect.columnOrder).toEqual(expect.arrayContaining(["priority", "defectSeverity", "foundInVersion"]));
-    expect(defect.visibleFields).toContain("foundInVersion");
-    expect(defect.visibleFields).not.toEqual(expect.arrayContaining(["description", "plannedStartDate", "dependencies"]));
+    expect(defect.visibleFields).toEqual([
+      "id", "title", "businessStatus", "assignee", "qaAssignee", "priority", "defectSeverity",
+      "foundInVersion", "plannedCompletionDate", "version", "iteration",
+    ]);
+    expect(defect.columnWidths).toEqual({
+      id: 100, title: 330, businessStatus: 110, assignee: 110, qaAssignee: 110,
+      priority: 90, defectSeverity: 100, foundInVersion: 150, plannedCompletionDate: 150,
+      version: 160, iteration: 180,
+    });
+    expect(defect.visibleFields).not.toEqual(expect.arrayContaining(["description", "plannedStartDate", "dependencies", "dispatchState"]));
   });
 });
 

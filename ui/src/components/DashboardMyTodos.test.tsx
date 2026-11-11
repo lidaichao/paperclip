@@ -50,6 +50,7 @@ function todo(kind: WorkRecordKind, index: number): WorkRecordMyTodo {
     projectName: "星海计划",
     kind,
     title: `${kind === "plan" ? "任务" : "缺陷"}-${index}`,
+    priority: "high",
     businessStatus: kind === "plan" ? "todo" : "in_progress",
     plannedCompletionDate: "2026-11-11",
     roles: kind === "plan" ? ["execution"] : ["qa"],
@@ -66,7 +67,7 @@ describe("DashboardMyTodos", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     myTodoPreferenceMock.mockResolvedValue({
-      config: { visibleFields: ["project", "roles", "status", "due"], columnOrder: ["project", "roles", "status", "due"], density: "compact", sort: "due", defaultProjectId: null },
+      config: { visibleFields: ["due", "status"], columnOrder: ["due", "status", "project", "roles"], density: "compact", sort: "due", defaultProjectId: null },
       revision: 0,
       updatedAt: null,
     });
@@ -113,7 +114,8 @@ describe("DashboardMyTodos", () => {
     const taskGroup = container.querySelector('[data-testid="my-todos-plan"]');
     const rows = taskGroup?.querySelectorAll("li") ?? [];
     expect(rows).toHaveLength(20);
-    expect(rows[0]?.querySelector("a")?.className).toContain("min-h-9");
+    expect(rows[0]?.querySelector("a")?.className).toContain("my-todo-row");
+    expect(taskGroup?.querySelector(".my-todo-columns")).not.toBeNull();
     expect(container.querySelector('[data-testid="my-todo-groups"]')).not.toBeNull();
     expect(taskGroup?.querySelectorAll("article")).toHaveLength(0);
   });

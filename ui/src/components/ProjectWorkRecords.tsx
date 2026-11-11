@@ -433,7 +433,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
             type="button"
             size="icon-sm"
             variant="outline"
-            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2 rounded-full bg-background"
+            className="absolute right-0 top-[48%] z-10 h-11 w-5 translate-x-full rounded-l-none rounded-r-md bg-muted p-0 text-muted-foreground"
             aria-label={resolvedRailOpen ? "收起版本与迭代导航" : "展开版本与迭代导航"}
             aria-expanded={resolvedRailOpen}
             onClick={() => setRailOpen(!resolvedRailOpen)}
@@ -442,7 +442,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
             {resolvedRailOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
           </Button>
         </div>
-        <div className="min-w-0 overflow-hidden" data-testid="work-record-workspace-content">
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden" data-testid="work-record-workspace-content">
           {topNavigation ? <div className="h-14 min-h-14 border-b" data-testid="work-record-top-navigation">{topNavigation}</div> : null}
           {containerAdminOpen ? (
             <WorkRecordContainerTree
@@ -456,15 +456,17 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
               }}
             />
           ) : <>
-            <div className="work-record-scope-header mb-1 min-h-16 xl:mb-2">
-              <h2 className="text-base font-semibold">{scopeTitle}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">{visibleRecords.length} 项{kind === "plan" ? "任务" : "缺陷"}</p>
-              <p className="mt-3 text-xs text-muted-foreground">
+            {viewMode !== "gantt" ? <div className="work-record-scope-header">
+              <div className="w-fit">
+                <h2>{scopeTitle}</h2>
+                <small>{visibleRecords.length} 项{kind === "plan" ? "任务" : "缺陷"}</small>
+              </div>
+              <div className="work-record-drag-feedback" role="status">
                 {kind === "plan"
-                  ? l10n("local.work_record_saving_editing_and_assigning_an_owne")
-                  : l10n("local.work_record_defects_use_the_same_statuses_and_de")}
-              </p>
-            </div>
+                  ? "拖动任务名称前的手柄到左侧迭代；勾选后可批量拖动。"
+                  : "拖动缺陷名称前的手柄到左侧迭代；勾选后可批量拖动。"}
+              </div>
+            </div> : null}
 
             {reopen.error ? <p role="alert" className="mb-3 text-sm text-destructive">{l10n("local.work_record_failed_to_reopen_defect")}{reopen.error.message}</p> : null}
 
@@ -491,7 +493,7 @@ export function ProjectWorkRecords({ companyId, projectId, projectName, topNavig
                 beforeViewSwitch={beforeViewSwitch}
                 onViewDraftDirtyChange={setViewDraftDirty}
                 registerLeaveGuard={(guard) => { viewLeaveGuardRef.current = guard; }}
-                primaryAction={<Button size="sm" disabled={!recordWritable} onClick={(event) => beginCreate(event.currentTarget)}>
+                primaryAction={<Button className="work-record-primary-action" size="sm" disabled={!recordWritable} onClick={(event) => beginCreate(event.currentTarget)}>
                   <Plus className="size-4" />
                   {kind === "plan" ? l10n("local.new_task_718e58cc") : l10n("local.work_record_new_kind", { kind: kindLabel })}
                 </Button>}

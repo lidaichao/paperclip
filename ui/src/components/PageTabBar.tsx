@@ -7,6 +7,7 @@ import { useSidebar } from "../context/SidebarContext";
 export interface PageTabItem {
   value: string;
   label: ReactNode;
+  badge?: string;
 }
 
 interface PageTabBarProps {
@@ -30,7 +31,7 @@ export function PageTabBar({ items, value, onValueChange, align = "center" }: Pa
         >
           {items.map((item) => (
             <option key={item.value} value={item.value}>
-              {typeof item.label === "string" ? item.label : item.value}
+              {typeof item.label === "string" ? item.label : item.value}{item.badge ? ` · ${item.badge}` : ""}
             </option>
           ))}
         </select>
@@ -44,6 +45,7 @@ export function PageTabBar({ items, value, onValueChange, align = "center" }: Pa
       {items.map((item) => (
         <TabsTrigger key={item.value} value={item.value}>
           {item.label}
+          {item.badge ? <small aria-hidden="true" className="work-record-new-badge">{item.badge}</small> : null}
         </TabsTrigger>
       ))}
     </TabsList>

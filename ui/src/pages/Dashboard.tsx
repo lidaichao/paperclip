@@ -319,7 +319,7 @@ export function Dashboard() {
   }
 
   if (dashboardTab === "mine") {
-    return <div className="space-y-6"><DashboardTabs value={dashboardTab} onChange={setDashboardTab} /><DashboardMyTodos key={selectedCompanyId} companyId={selectedCompanyId} /></div>;
+    return <div className="space-y-4"><DashboardTabs value={dashboardTab} onChange={setDashboardTab} /><DashboardMyTodos key={selectedCompanyId} companyId={selectedCompanyId} /></div>;
   }
 
   if (isLoading) {

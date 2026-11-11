@@ -278,12 +278,11 @@ test("pending confirmation lets the board return to comments without resolving t
   expect(interaction.status).toBe("pending");
 
   await page.goto(`/${company.issuePrefix}/issues/${issue.identifier}`, { waitUntil: "domcontentloaded" });
-  const returnToComment = page.getByTestId("task-chat-composer-return-to-comment");
-  await expect(returnToComment).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "批准原生结果", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "拒绝原生结果", exact: true })).toBeVisible();
+  await expect(page.getByTestId("task-chat-composer-input")).toBeVisible();
+  await expect(page.getByTestId("task-chat-composer-return-to-comment")).toHaveCount(0);
 
-  await returnToComment.click();
   const commentBody = `确认期间的普通评论 ${suffix}`;
   await sendComment(page, commentBody);
   await expect(page.getByText(commentBody, { exact: true })).toBeVisible();
@@ -296,7 +295,6 @@ test("pending confirmation lets the board return to comments without resolving t
     id: interaction.id,
     status: "pending",
   }));
-  await page.getByTestId("task-chat-pending-input-indicator").click();
   await expect(page.getByRole("button", { name: "批准原生结果", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "拒绝原生结果", exact: true })).toBeVisible();
 });

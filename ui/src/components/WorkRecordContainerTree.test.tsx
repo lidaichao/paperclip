@@ -135,8 +135,8 @@ describe("WorkRecordContainerTree", () => {
     expect(toolbar.className).toContain("flex");
     expect(toolbar.className).not.toContain("flex-wrap");
     expect(toolbar.querySelectorAll(":scope > button")).toHaveLength(3);
-    expect(button("+版本").className).toContain("flex-1");
-    expect(button("+迭代").className).toContain("flex-1");
+    expect(button("+版本").className).toContain("work-record-rail-create");
+    expect(button("+迭代").className).toContain("work-record-rail-create");
     expect(host.querySelector('input[aria-label="新版本名称"]')).toBeNull();
     expect(host.querySelector('select[aria-label="迭代所属版本"]')).toBeNull();
     expect(host.textContent).toContain("V1");

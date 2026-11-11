@@ -51,19 +51,20 @@ async function json<T>(response: APIResponse, label: string): Promise<T> {
   return JSON.parse(body) as T;
 }
 
-async function seedAuthoritativeFixture(request: APIRequestContext): Promise<SeededFixture> {
+async function seedAuthoritativeFixture(request: APIRequestContext, baseUrl: string): Promise<SeededFixture> {
+  const api = (pathname: string) => new URL(pathname, baseUrl).toString();
   const company = await json<{ id: string; issuePrefix: string }>(
-    await request.post("/api/companies", { data: { name: `Demo visual contract ${Date.now()}` } }),
+    await request.post(api("/api/companies"), { data: { name: `Demo visual contract ${Date.now()}` } }),
     "create company",
   );
   const project = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects`, { data: { name: fixture.projectName } }),
+    await request.post(api(`/api/companies/${company.id}/projects`), { data: { name: fixture.projectName } }),
     "create project",
   );
   const agents = new Map<string, string>();
   for (const name of fixture.agents) {
     const agent = await json<{ id: string }>(
-      await request.post(`/api/companies/${company.id}/agents`, { data: {
+      await request.post(api(`/api/companies/${company.id}/agents`), { data: {
         name,
         role: "engineer",
         adapterType: "process",
@@ -75,11 +76,11 @@ async function seedAuthoritativeFixture(request: APIRequestContext): Promise<See
     agents.set(name, agent.id);
   }
   const version = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects/${project.id}/versions`, { data: fixture.version }),
+    await request.post(api(`/api/companies/${company.id}/projects/${project.id}/versions`), { data: fixture.version }),
     "create authoritative version",
   );
   const iteration = await json<{ id: string }>(
-    await request.post(`/api/companies/${company.id}/projects/${project.id}/iterations`, {
+    await request.post(api(`/api/companies/${company.id}/projects/${project.id}/iterations`), {
       data: { versionId: version.id, ...fixture.iteration },
     }),
     "create authoritative iteration",
@@ -88,7 +89,7 @@ async function seedAuthoritativeFixture(request: APIRequestContext): Promise<See
 
   for (const seed of fixture.plan) {
     const record = await json<SeededRecord>(
-      await request.post(`/api/companies/${company.id}/work-records`, { data: {
+      await request.post(api(`/api/companies/${company.id}/work-records`), { data: {
         projectId: project.id,
         kind: "plan",
         title: seed.title,
@@ -112,7 +113,7 @@ async function seedAuthoritativeFixture(request: APIRequestContext): Promise<See
     records.set(seed.key, record);
     if (seed.businessStatus !== "backlog") {
       const updated = await json<SeededRecord>(
-        await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`, {
+        await request.patch(api(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`), {
           data: { expectedRevision: record.revision, businessStatus: seed.businessStatus },
         }),
         `set authoritative plan ${seed.key} status`,
@@ -123,7 +124,7 @@ async function seedAuthoritativeFixture(request: APIRequestContext): Promise<See
 
   for (const seed of fixture.defects) {
     const record = await json<SeededRecord>(
-      await request.post(`/api/companies/${company.id}/work-records`, { data: {
+      await request.post(api(`/api/companies/${company.id}/work-records`), { data: {
         projectId: project.id,
         kind: "defect",
         title: seed.title,
@@ -141,7 +142,7 @@ async function seedAuthoritativeFixture(request: APIRequestContext): Promise<See
     records.set(seed.key, record);
     if (seed.businessStatus !== "backlog") {
       const updated = await json<SeededRecord>(
-        await request.patch(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`, {
+        await request.patch(api(`/api/companies/${company.id}/projects/${project.id}/work-records/${record.id}`), {
           data: { expectedRevision: record.revision, businessStatus: seed.businessStatus },
         }),
         `set authoritative defect ${seed.key} status`,
@@ -156,10 +157,27 @@ async function seedAuthoritativeFixture(request: APIRequestContext): Promise<See
 function internalAnchorLocators(page: Page, surface: Surface, implementation: boolean): Record<string, Locator> {
   if (surface === "mine") {
     const group = implementation ? page.getByTestId("my-todos-plan") : page.locator(".my-work-group").first();
+    const heading = implementation ? group.locator(".my-todo-group-heading") : group.locator(".my-work-group-heading");
+    const columns = implementation ? group.locator(".my-todo-columns") : group.locator(".my-work-columns");
+    const firstRow = implementation ? group.locator(".my-todo-row").first() : group.locator("li.my-work-row").first();
     return {
       group,
-      groupHeading: implementation ? group.locator(":scope > div").first() : group.locator(".my-work-group-heading"),
-      firstRow: implementation ? group.locator("li").first() : group.locator("li.my-work-row").first(),
+      groupHeading: heading,
+      headingButton: heading.locator("button").first(),
+      headingCount: implementation ? heading.locator(".my-todo-count") : heading.locator(".my-work-count"),
+      headingFold: implementation ? heading.locator(".my-todo-fold-mark") : heading.locator(".my-work-fold-mark"),
+      headingLabel: heading.locator("label"),
+      headingSelect: heading.locator("select"),
+      columns,
+      columnTitle: columns.locator("span").nth(1),
+      columnPriority: columns.locator("span").nth(2),
+      columnDue: columns.locator("span").nth(3),
+      columnStatus: columns.locator("span").nth(4),
+      firstRow,
+      firstTitle: implementation ? firstRow.locator(".my-todo-title") : firstRow.locator(".my-work-title"),
+      firstPriority: implementation ? firstRow.locator(".my-todo-priority") : firstRow.locator(".my-work-priority"),
+      firstDue: implementation ? firstRow.locator(".my-todo-due") : firstRow.locator(".my-work-date"),
+      firstStatus: implementation ? firstRow.locator(".my-todo-status") : firstRow.locator("select"),
     };
   }
   if (surface === "gantt") {
@@ -170,16 +188,73 @@ function internalAnchorLocators(page: Page, surface: Surface, implementation: bo
       content: page.getByTestId("work-record-workspace-content"),
       heading: gantt.locator(":scope > div").nth(0),
       toolbar: gantt.locator(":scope > div").nth(1),
+      toolbarSearch: gantt.getByLabel("搜索甘特任务"),
+      toolbarStatus: gantt.getByLabel("甘特状态筛选"),
+      toolbarColumns: gantt.locator(".work-record-gantt-fields > summary"),
+      toolbarScale: gantt.getByLabel("时间粒度"),
+      toolbarFit: gantt.getByRole("button", { name: "适应排期范围" }),
+      toolbarToday: gantt.getByRole("button", { name: "定位今天" }),
       timelineHeader: page.getByTestId("gantt-month-header"),
+      firstMonth: page.getByTestId("gantt-month-header").locator(":scope > div").first().locator("span").first(),
+      secondMonth: page.getByTestId("gantt-month-header").locator(":scope > div").first().locator("span").nth(1),
+      firstDay: page.getByTestId("gantt-month-header").locator(":scope > div").nth(1).locator("span").first(),
       firstRow: page.locator("[data-gantt-record-id]").first(),
+      firstTitle: page.locator("[data-gantt-record-id]").first().locator(".work-record-gantt-title-cell button"),
+      firstBar: page.locator(".work-record-gantt-bar").first(),
+      parentBar: page.locator(".work-record-gantt-parent-bar").first(),
+      firstDependencyHandle: page.locator(".work-record-gantt-create-dependency").first(),
     } : {
       workspace: page.locator("#app .schedule-workspace"),
       rail: page.locator("#schedule-rail"),
       content: page.locator("#app .schedule-main"),
       heading: page.locator(".gantt-heading"),
       toolbar: page.locator(".gantt-toolbar"),
+      toolbarSearch: page.locator("#gantt-search"),
+      toolbarStatus: page.locator("#gantt-status"),
+      toolbarColumns: page.locator("#gantt-columns"),
+      toolbarScale: page.locator("#gantt-zoom"),
+      toolbarFit: page.locator("#gantt-fit"),
+      toolbarToday: page.locator("#gantt-today"),
       timelineHeader: page.locator(".gantt-axis"),
+      firstMonth: page.locator(".gantt-months span").first(),
+      secondMonth: page.locator(".gantt-months span").nth(1),
+      firstDay: page.locator(".gantt-day").first(),
       firstRow: page.locator(".gantt-row .gantt-task").first(),
+      firstTitle: page.locator(".gantt-row .gantt-task-title").first(),
+      firstBar: page.locator(".gantt-bar").first(),
+      parentBar: page.locator(".gantt-parent-bar").first(),
+      firstDependencyHandle: page.locator(".gantt-dep-handle").first(),
+    };
+  }
+  if (surface === "plan") {
+    const headers = implementation
+      ? page.getByTestId("work-record-table-scroller").locator("thead th")
+      : page.locator(".plan-table thead th");
+    return {
+      workspace: implementation ? page.locator('[data-testid="work-records-main"]:visible') : page.locator("#app .schedule-workspace"),
+      rail: implementation ? page.getByTestId("work-record-rail-shell") : page.locator("#schedule-rail"),
+      content: implementation ? page.getByTestId("work-record-workspace-content") : page.locator("#app .schedule-main"),
+      heading: implementation
+        ? page.getByTestId("work-record-workspace-content").getByRole("heading", { name: "需求池", exact: true })
+        : page.locator(".schedule-context h3"),
+      viewToolbar: implementation ? page.getByTestId("work-record-view-toolbar") : page.locator(".plan-compact-top"),
+      filterToolbar: implementation ? page.getByTestId("work-record-filter-toolbar") : page.locator(".sheet-toolbar"),
+      tableHeader: implementation ? page.getByTestId("work-record-table-scroller").locator("thead") : page.locator(".plan-table thead"),
+      firstRow: implementation ? page.getByTestId("work-record-table-row").first() : page.locator(".plan-table tbody tr").first(),
+      firstRowId: implementation
+        ? page.getByTestId("work-record-table-row").first().locator("td").nth(1)
+        : page.locator(".plan-table tbody tr").first().locator("td").nth(1),
+      firstRowTitle: implementation
+        ? page.getByTestId("work-record-table-row").first().locator("td").nth(2)
+        : page.locator(".plan-table tbody tr").first().locator("td").nth(2),
+      selectHeader: headers.nth(0),
+      idHeader: headers.nth(1),
+      titleHeader: headers.nth(2),
+      statusHeader: headers.nth(3),
+      assigneeHeader: headers.nth(4),
+      priorityHeader: headers.nth(5),
+      startHeader: headers.nth(6),
+      completionHeader: headers.nth(7),
     };
   }
   return implementation ? {
@@ -206,9 +281,85 @@ function internalAnchorLocators(page: Page, surface: Surface, implementation: bo
 async function readGeometry(page: Page, surface: Surface, implementation: boolean): Promise<GeometrySnapshot> {
   const result: GeometrySnapshot = {};
   for (const [key, locator] of Object.entries(internalAnchorLocators(page, surface, implementation))) {
-    result[key] = await geometryRect(locator, `${surface} ${implementation ? "实装" : "Demo"} ${key}`);
+    result[key] = await locator.isVisible()
+      ? await geometryRect(locator, `${surface} ${implementation ? "实装" : "Demo"} ${key}`)
+      : { x: 0, y: 0, width: 0, height: 0 };
   }
   return result;
+}
+
+async function readVisualStyle(locator: Locator) {
+  return locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      fontFamily: style.fontFamily,
+      fontSize: style.fontSize,
+      fontWeight: style.fontWeight,
+      lineHeight: style.lineHeight,
+      letterSpacing: style.letterSpacing,
+      textRendering: style.textRendering,
+      webkitFontSmoothing: style.getPropertyValue("-webkit-font-smoothing"),
+      color: style.color,
+      backgroundColor: style.backgroundColor,
+      padding: style.padding,
+      border: style.border,
+    };
+  });
+}
+
+async function readPlatformFonts(page: Page, selector: string) {
+  const session = await page.context().newCDPSession(page);
+  try {
+    await session.send("DOM.enable");
+    await session.send("CSS.enable");
+    const { root } = await session.send("DOM.getDocument");
+    const { nodeId } = await session.send("DOM.querySelector", { nodeId: root.nodeId, selector });
+    if (!nodeId) return [];
+    const result = await session.send("CSS.getPlatformFontsForNode", { nodeId });
+    return result.fonts;
+  } finally {
+    await session.detach();
+  }
+}
+
+async function readPlanVisualStyles(page: Page, implementation: boolean) {
+  const row = implementation
+    ? page.getByTestId("work-record-table-row").first()
+    : page.locator(".plan-table tbody tr").first();
+  return {
+    workspace: await readVisualStyle(implementation ? page.getByTestId("work-record-workspace-grid") : page.locator("#app .schedule-workspace")),
+    header: await readVisualStyle(implementation ? page.getByTestId("work-record-table-scroller").locator("thead th").nth(1) : page.locator(".plan-table thead th").nth(1)),
+    title: await readVisualStyle(row.locator("td").nth(2).getByRole("button").last()),
+    status: await readVisualStyle(row.locator("td").nth(3).locator("select")),
+    date: await readVisualStyle(row.locator("td").nth(6).locator('input[type="date"]')),
+  };
+}
+
+async function readMineVisualStyles(page: Page, implementation: boolean) {
+  const group = implementation ? page.getByTestId("my-todos-plan") : page.locator(".my-work-group").first();
+  const row = implementation ? group.locator(".my-todo-row").first() : group.locator("li.my-work-row").first();
+  return {
+    heading: await readVisualStyle(implementation ? group.locator(".my-todo-group-heading > button") : group.locator("[data-work-fold]") ),
+    columns: await readVisualStyle(implementation ? group.locator(".my-todo-columns") : group.locator(".my-work-columns")),
+    title: await readVisualStyle(implementation ? row.locator(".my-todo-title") : row.locator(".my-work-title")),
+    priority: await readVisualStyle(implementation ? row.locator(".my-todo-priority") : row.locator(".my-work-priority")),
+    due: await readVisualStyle(implementation ? row.locator(".my-todo-due") : row.locator(".my-work-date")),
+    status: await readVisualStyle(implementation ? row.locator(".my-todo-status") : row.locator("select")),
+  };
+}
+
+async function readGanttVisualStyles(page: Page, implementation: boolean) {
+  const title = implementation ? page.locator(".work-record-gantt-task-title").first() : page.locator(".gantt-task-title").first();
+  const toolbar = implementation ? page.locator(".work-record-gantt-toolbar") : page.locator(".gantt-toolbar");
+  const bar = implementation ? page.locator(".work-record-gantt-bar").first() : page.locator(".gantt-bar").first();
+  return {
+    workspace: await readVisualStyle(implementation ? page.getByTestId("work-record-workspace-grid") : page.locator("#app .schedule-workspace")),
+    toolbar: await readVisualStyle(toolbar),
+    title: await readVisualStyle(title),
+    bar: await readVisualStyle(bar),
+    titlePlatformFonts: await readPlatformFonts(page, implementation ? ".work-record-gantt-task-title" : ".gantt-task-title"),
+    toolbarPlatformFonts: await readPlatformFonts(page, implementation ? ".work-record-gantt-toolbar" : ".gantt-toolbar"),
+  };
 }
 
 async function expectAuthoritativeStructure(page: Page, demo: Page, surface: Surface, records: Map<string, SeededRecord>) {
@@ -293,6 +444,11 @@ function dynamicMasks(page: Page, surface: Surface, implementation: boolean): Lo
       ? page.getByTestId("work-record-table-row").locator("td:nth-child(2)")
       : page.locator(".defect-table tbody tr td:nth-child(2)")];
   }
+  if (surface === "mine") {
+    return [implementation
+      ? page.getByTestId("my-todos-plan").locator(".my-todo-id")
+      : page.locator(".my-work-group").first().locator(".my-work-id")];
+  }
   return [];
 }
 
@@ -322,7 +478,9 @@ async function attachPair(
 
 test("Demo and implementation share one authoritative structural, geometric and visual contract", async ({ page, request }, info) => {
   test.setTimeout(300_000);
-  const seeded = await seedAuthoritativeFixture(request);
+  const baseUrl = info.project.use.baseURL;
+  expect(baseUrl, "Playwright 项目必须配置 baseURL").toBeTruthy();
+  const seeded = await seedAuthoritativeFixture(request, String(baseUrl));
   const demo = await page.context().newPage();
   await demo.addInitScript((keys) => {
     for (const key of keys) localStorage.removeItem(key);
@@ -333,10 +491,12 @@ test("Demo and implementation share one authoritative structural, geometric and 
     await demo.setViewportSize({ width: viewport.width, height: viewport.height });
     for (const surface of surfaces) {
       const demoRoute = surface === "defect" ? "defects" : surface;
+      console.log(`[golden] ${surface} ${viewport.label}: open demo`);
       await demo.goto(`${demoUrl}#project/${encodeURIComponent(fixture.projectName)}/${demoRoute}`);
       await expect(demo.locator("#app .schedule-workspace"), `${surface} Demo 已渲染`).toBeVisible();
 
       if (surface === "mine") {
+        console.log(`[golden] ${surface} ${viewport.label}: open implementation`);
         await page.goto(`/${seeded.company.issuePrefix}/dashboard`);
         await page.getByRole("tab", { name: "我的待办", exact: true }).click();
         await expect(page.getByTestId("dashboard-my-todos")).toBeVisible();
@@ -346,8 +506,21 @@ test("Demo and implementation share one authoritative structural, geometric and 
         await expect(page.getByTestId("work-records-main")).toBeVisible();
       }
 
+      console.log(`[golden] ${surface} ${viewport.label}: wait rows`);
       await waitForRows(page, demo, surface);
+      console.log(`[golden] ${surface} ${viewport.label}: structure`);
       await expectAuthoritativeStructure(page, demo, surface, seeded.records);
+      console.log(`[golden] ${surface} ${viewport.label}: fonts`);
+      await Promise.all([
+        page.evaluate(async () => { await document.fonts.ready; }),
+        demo.evaluate(async () => { await document.fonts.ready; }),
+      ]);
+      await Promise.all([page.mouse.move(0, 0), demo.mouse.move(0, 0)]);
+      await Promise.all([
+        page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()),
+        demo.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()),
+      ]);
+      console.log(`[golden] ${surface} ${viewport.label}: geometry`);
       const demoGeometry = await readGeometry(demo, surface, false);
       const implementationGeometry = await readGeometry(page, surface, true);
       expectGeometryWithin(implementationGeometry, demoGeometry, `${surface} ${viewport.label} 内部锚点`, 1);
@@ -381,12 +554,34 @@ test("Demo and implementation share one authoritative structural, geometric and 
         mask: dynamicMasks(page, surface, true),
         maskColor: "#ff00ff",
       });
+      console.log(`[golden] ${surface} ${viewport.label}: diff`);
       const pixels = await screenshotDifference(page, reference, implementation);
+      const styles = surface === "plan" ? {
+        demo: await readPlanVisualStyles(demo, false),
+        implementation: await readPlanVisualStyles(page, true),
+      } : surface === "gantt" ? {
+        demo: await readGanttVisualStyles(demo, false),
+        implementation: await readGanttVisualStyles(page, true),
+      } : surface === "mine" ? {
+        demo: {
+          ...(await readMineVisualStyles(demo, false)),
+          platformFonts: await readPlatformFonts(demo, ".my-work-title"),
+        },
+        implementation: {
+          ...(await readMineVisualStyles(page, true)),
+          platformFonts: await readPlatformFonts(page, ".my-todo-title"),
+        },
+      } : undefined;
       await attachPair(info, surface, viewport, reference, implementation, pixels.heatmap, {
         demo: demoGeometry,
         implementation: implementationGeometry,
         regions: { demo: demoRegion, implementation: implementationRegion },
-        pixels: { dimensionsMatch: pixels.dimensionsMatch, differenceRatio: pixels.differenceRatio },
+        pixels: {
+          dimensionsMatch: pixels.dimensionsMatch,
+          rawDifferenceRatio: pixels.rawDifferenceRatio,
+          differenceRatio: pixels.differenceRatio,
+        },
+        styles,
       });
 
       expect.soft(pixels.dimensionsMatch, `${surface} ${viewport.label} 两侧截图尺寸一致`).toBe(true);

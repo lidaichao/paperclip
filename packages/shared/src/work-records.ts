@@ -30,6 +30,7 @@ export interface WorkRecordMyTodo {
   projectName: string;
   kind: WorkRecordKind;
   title: string;
+  priority: IssuePriority;
   businessStatus: WorkRecordBusinessStatus;
   plannedCompletionDate: string | null;
   roles: WorkRecordUserRole[];
@@ -47,7 +48,7 @@ export interface MyTodoViewConfig {
 }
 export interface MyTodoViewPreference { config: MyTodoViewConfig; revision: number; updatedAt: Date | null }
 export const DEFAULT_MY_TODO_VIEW_CONFIG: MyTodoViewConfig = {
-  visibleFields: [...MY_TODO_OPTIONAL_FIELDS], columnOrder: [...MY_TODO_OPTIONAL_FIELDS],
+  visibleFields: ["due", "status"], columnOrder: ["due", "status", "project", "roles"],
   density: "compact", sort: "due", defaultProjectId: null,
 };
 const myTodoFieldsSchema = z.array(z.enum(MY_TODO_OPTIONAL_FIELDS)).max(MY_TODO_OPTIONAL_FIELDS.length)
@@ -157,6 +158,50 @@ export const WORK_RECORD_GANTT_VIEW_FIELDS = [
   "title", "assignee", "businessStatus", "plannedStartDate", "plannedCompletionDate", "dependencies",
 ] as const;
 
+const WORK_RECORD_PLAN_DEFAULT_VISIBLE_FIELDS = [
+  "id", "title", "businessStatus", "assignee", "priority", "plannedStartDate", "plannedCompletionDate",
+  "dependencies", "version", "iteration", "dispatchState",
+] satisfies WorkRecordViewField[];
+
+const WORK_RECORD_PLAN_DEFAULT_COLUMN_WIDTHS = {
+  id: 100,
+  title: 370,
+  businessStatus: 100,
+  assignee: 115,
+  priority: 80,
+  plannedStartDate: 132,
+  plannedCompletionDate: 132,
+  dependencies: 280,
+  version: 160,
+  iteration: 190,
+  dispatchState: 70,
+} satisfies Partial<Record<WorkRecordViewField, number>>;
+
+const WORK_RECORD_DEFECT_DEFAULT_VISIBLE_FIELDS = [
+  "id", "title", "businessStatus", "assignee", "qaAssignee", "priority", "defectSeverity",
+  "foundInVersion", "plannedCompletionDate", "version", "iteration",
+] satisfies WorkRecordViewField[];
+
+const WORK_RECORD_DEFECT_DEFAULT_COLUMN_WIDTHS = {
+  id: 100,
+  title: 330,
+  businessStatus: 110,
+  assignee: 110,
+  qaAssignee: 110,
+  priority: 90,
+  defectSeverity: 100,
+  foundInVersion: 150,
+  plannedCompletionDate: 150,
+  version: 160,
+  iteration: 180,
+} satisfies Partial<Record<WorkRecordViewField, number>>;
+
+const WORK_RECORD_GANTT_DEFAULT_COLUMN_WIDTHS = {
+  title: 200,
+  assignee: 90,
+  businessStatus: 90,
+} satisfies Partial<Record<WorkRecordViewField, number>>;
+
 export type WorkRecordViewKind = (typeof WORK_RECORD_VIEW_KINDS)[number];
 export type WorkRecordViewDensity = (typeof WORK_RECORD_VIEW_DENSITIES)[number];
 export type WorkRecordViewField = (typeof WORK_RECORD_DEFECT_VIEW_FIELDS)[number];
@@ -232,15 +277,21 @@ export function defaultWorkRecordViewConfig(viewKind: WorkRecordViewKind): WorkR
   const fields = viewKind === "defect" ? WORK_RECORD_DEFECT_VIEW_FIELDS
     : viewKind === "gantt" ? WORK_RECORD_GANTT_VIEW_FIELDS : WORK_RECORD_PLAN_VIEW_FIELDS;
   const visibleFields = viewKind === "defect"
-    ? ["id", "title", "businessStatus", "assignee", "qaAssignee", "priority", "defectSeverity", "foundInVersion", "plannedCompletionDate", "version", "iteration", "dispatchState"] satisfies WorkRecordViewField[]
+    ? [...WORK_RECORD_DEFECT_DEFAULT_VISIBLE_FIELDS]
     : viewKind === "gantt" ? ["title", "assignee", "businessStatus"] satisfies WorkRecordViewField[]
-      : [...fields];
+      : [...WORK_RECORD_PLAN_DEFAULT_VISIBLE_FIELDS];
+  const visibleFieldSet = new Set<WorkRecordViewField>(visibleFields);
+  const columnOrder = viewKind === "defect"
+    ? [...visibleFields, ...fields.filter((field) => !visibleFieldSet.has(field))]
+    : [...fields];
   return {
     schemaVersion: 2,
     containerId: null,
     visibleFields,
-    columnOrder: [...fields],
-    columnWidths: {},
+    columnOrder,
+    columnWidths: viewKind === "plan" ? { ...WORK_RECORD_PLAN_DEFAULT_COLUMN_WIDTHS }
+      : viewKind === "defect" ? { ...WORK_RECORD_DEFECT_DEFAULT_COLUMN_WIDTHS }
+        : { ...WORK_RECORD_GANTT_DEFAULT_COLUMN_WIDTHS },
     density: "compact",
     filters: [],
     search: "",

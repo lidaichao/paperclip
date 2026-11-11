@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ProjectIteration, ProjectVersion } from "@paperclipai/shared";
-import { ChevronLeft, Pencil, Settings, Trash2 } from "lucide-react";
+import { ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { ApiError } from "@/api/client";
 import { workRecordsApi } from "@/api/work-records";
 import { queryKeys } from "@/lib/queryKeys";
@@ -156,10 +156,12 @@ export function WorkRecordContainerTree({ companyId, projectId, projectName, wri
     setEditTarget(target);
     setEditDraft(draftFromTarget(target));
   };
-  const openCreate = (kind: "version" | "iteration") => {
+  const openCreate = (kind: "version" | "iteration", parentVersionId?: string) => {
     createVersion.reset();
     createIteration.reset();
-    const preferredVersionId = activeVersionIds.has(selectedVersionId)
+    const preferredVersionId = parentVersionId && activeVersionIds.has(parentVersionId)
+      ? parentVersionId
+      : activeVersionIds.has(selectedVersionId)
       ? selectedVersionId
       : activeVersionRows[0]?.id ?? "";
     setCreateDraft({ ...EMPTY_CREATE_DRAFT, versionId: kind === "iteration" ? preferredVersionId : "" });
@@ -211,9 +213,9 @@ export function WorkRecordContainerTree({ companyId, projectId, projectName, wri
 
   const editAction = (target: ContainerTarget, row: "version" | "iteration") => {
     if (!writable) return null;
-    return <div className={row === "version"
-      ? "shrink-0 opacity-0 transition-opacity group-hover/version:opacity-100 group-focus-within/version:opacity-100"
-      : "shrink-0 opacity-0 transition-opacity group-hover/iteration:opacity-100 group-focus-within/iteration:opacity-100"}>
+    return <div className={cn("work-record-container-edit", row === "version"
+      ? "group-hover/version:opacity-100 group-focus-within/version:opacity-100"
+      : "group-hover/iteration:opacity-100 group-focus-within/iteration:opacity-100")}>
       <Button size="icon-sm" variant="ghost" aria-label={`编辑${target.kind === "version" ? "版本" : "迭代"} ${target.item.name}`} onClick={() => openEdit(target)}>
         <Pencil className="size-3.5" />
       </Button>
@@ -234,40 +236,46 @@ export function WorkRecordContainerTree({ companyId, projectId, projectName, wri
     : null;
 
   const navigation = (
-    <aside className={cn("px-3", className)} data-testid="version-iteration-tree" aria-label="版本与迭代">
-      {projectName ? <header className="flex min-h-12 items-center border-b">
-        <h2 className="truncate text-lg font-semibold" title={projectName}>{projectName}</h2>
+    <aside className={cn("work-record-rail-navigation", className)} data-testid="version-iteration-tree" aria-label="版本与迭代">
+      {projectName ? <header className="flex min-h-14 items-center border-b px-2">
+        <h2 className="truncate text-lg font-bold" title={projectName}>{projectName}</h2>
       </header> : null}
-      <div className="mb-3 flex items-center gap-1 border-b py-3" data-testid="container-toolbar">
+      <div className="work-record-container-toolbar flex items-center gap-1 border-b py-3" data-testid="container-toolbar">
         {writable ? <>
-          <Button className="min-w-0 flex-1 px-1" size="sm" variant="outline" onClick={() => openCreate("version")}>+版本</Button>
-          <Button className="min-w-0 flex-1 px-1" size="sm" variant="outline" disabled={activeVersionRows.length === 0} onClick={() => openCreate("iteration")}>+迭代</Button>
+          <Button className="work-record-rail-create" size="sm" variant="outline" aria-label="+版本" onClick={() => openCreate("version")}><Plus />版本</Button>
+          <Button className="work-record-rail-create" size="sm" variant="outline" aria-label="+迭代" disabled={activeVersionRows.length === 0} onClick={() => openCreate("iteration")}><Plus />迭代</Button>
         </> : <span className="mr-auto text-xs text-muted-foreground">只读</span>}
-        <Button className="ml-auto" size="icon-sm" variant={managementActive ? "secondary" : "ghost"} aria-label="版本与迭代管理" aria-pressed={managementActive} onClick={onManageContainers}>
-          <Settings className="size-4" />
+        <Button className="work-record-rail-manage ml-auto" size="icon-sm" variant={managementActive ? "secondary" : "outline"} aria-label="版本与迭代管理" aria-pressed={managementActive} onClick={onManageContainers}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 3-.6 2.4-2 .9-2.2-.7-2 3.4 1.6 1.8v2.4L2.2 15l2 3.4 2.2-.7 2 .9L9 21h4l.6-2.4 2-.9 2.2.7 2-3.4-1.6-1.8v-2.4L19.8 9l-2-3.4-2.2.7-2-.9L13 3Z" />
+            <circle cx="11" cy="12" r="3" />
+          </svg>
         </Button>
       </div>
       <div data-testid="container-navigation">
-        <button type="button" className={cn("mb-2 flex min-h-9 w-full items-center rounded px-2 text-left text-sm hover:bg-muted", selectedScope === "pool" && "bg-muted text-primary")} aria-current={selectedScope === "pool" ? "page" : undefined} onClick={() => onSelectScope?.("pool")}>需求池</button>
+        <button type="button" className={cn("work-record-pool-nav", selectedScope === "pool" && "work-record-rail-active")} aria-current={selectedScope === "pool" ? "page" : undefined} onClick={() => onSelectScope?.("pool")}><span>需求池</span><span>项目内全部任务</span></button>
         {activeVersionRows.map((version) => (
-          <section key={version.id} className="group/version border-t py-1 first:border-t-0" data-version-id={version.id}>
-            <div className="flex min-h-9 items-center justify-between gap-1">
-              <button type="button" className={cn("min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-sm font-medium hover:bg-muted hover:text-primary", selectedScope === version.id && "bg-muted text-primary")} aria-current={selectedScope === version.id ? "page" : undefined} onClick={() => { setSelectedVersionId(version.id); onSelectScope?.(version.id); }}>{version.name}</button>
+          <section key={version.id} className="group/version mt-2 border-t pt-[6px]" data-version-id={version.id}>
+            <div className="work-record-container-entry group/version relative">
+              <button type="button" className={cn("work-record-version-nav", selectedScope === version.id && "work-record-rail-active")} aria-current={selectedScope === version.id ? "page" : undefined} onClick={() => { setSelectedVersionId(version.id); onSelectScope?.(version.id); }}><span>{version.name}</span></button>
               {editAction({ kind: "version", item: version }, "version")}
             </div>
-            <div className="ml-3 border-l pl-2">
+            <div className="work-record-version-children">
               {activeIterationRows.filter((iteration) => iteration.versionId === version.id).map((iteration) => (
-                <div key={iteration.id} className="group/iteration py-1 text-xs" data-iteration-id={iteration.id}>
-                  <div className="flex min-h-8 items-center justify-between gap-1">
-                    <button type="button" className={cn("min-w-0 flex-1 truncate rounded px-2 py-1 text-left hover:bg-muted hover:text-primary", selectedScope === iteration.id && "bg-muted text-primary")} aria-current={selectedScope === iteration.id ? "page" : undefined} onClick={() => { setSelectedVersionId(version.id); onSelectScope?.(iteration.id); }}>{iteration.name}</button>
-                    {editAction({ kind: "iteration", item: iteration }, "iteration")}
-                  </div>
-                  <p className="px-2 text-muted-foreground">{iteration.startsOn ?? "未设开始"} — {iteration.endsOn ?? "未设结束"}</p>
-                  <div className="mx-2 mt-1 h-1.5 overflow-hidden rounded bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={iteration.progress.percent} aria-label={`${iteration.name} 进度 ${iteration.progress.percent}%`}><div className="h-full bg-primary" style={{ width: `${iteration.progress.percent}%` }} /></div>
-                  <p className="mt-1 px-2 text-muted-foreground">{iteration.progress.completed}/{iteration.progress.total} · {iteration.progress.percent}%</p>
+                <div key={iteration.id} className="work-record-container-entry group/iteration relative" data-iteration-id={iteration.id}>
+                  <button type="button" className={cn("work-record-iteration-nav", selectedScope === iteration.id && "work-record-rail-active")} aria-label={iteration.name} aria-current={selectedScope === iteration.id ? "page" : undefined} onClick={() => { setSelectedVersionId(version.id); onSelectScope?.(iteration.id); }}>
+                    <span>{iteration.name}</span>
+                    <small>{iteration.startsOn ?? "未设开始"} — {iteration.endsOn ?? "未设结束"}</small>
+                    <span className="work-record-iteration-progress">
+                      <span className="work-record-iteration-progress-caption"><span>{iteration.progress.percent}%</span><span>任务 {iteration.progress.completed}/{iteration.progress.total}</span></span>
+                      <span className="work-record-iteration-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={iteration.progress.percent} aria-label={`${iteration.name} 进度 ${iteration.progress.percent}%`}><span style={{ width: `${iteration.progress.percent}%` }} /></span>
+                    </span>
+                  </button>
+                  {editAction({ kind: "iteration", item: iteration }, "iteration")}
                 </div>
               ))}
               {activeIterationRows.every((iteration) => iteration.versionId !== version.id) ? <p className="px-2 py-2 text-xs text-muted-foreground">暂无迭代</p> : null}
+              {writable ? <button type="button" className="work-record-create-under" onClick={() => { setSelectedVersionId(version.id); openCreate("iteration", version.id); }}>＋ 迭代</button> : null}
             </div>
           </section>
         ))}

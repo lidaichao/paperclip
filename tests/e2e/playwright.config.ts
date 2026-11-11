@@ -21,6 +21,9 @@ const PAPERCLIP_TOOL_ACTION_SIGNING_SECRET =
   process.env.PAPERCLIP_TOOL_ACTION_SIGNING_SECRET ?? "playwright-e2e-tool-action-signing-secret";
 const PLAYWRIGHT_CHANNEL = process.env.PAPERCLIP_PLAYWRIGHT_CHANNEL;
 const PLAYWRIGHT_EXECUTABLE_PATH = process.env.PAPERCLIP_PLAYWRIGHT_EXECUTABLE_PATH;
+const WEB_SERVER_COMMAND = process.env.PAPERCLIP_E2E_SKIP_UI_BUILD === "true"
+  ? "node cli/node_modules/tsx/dist/cli.mjs cli/src/index.ts onboard --yes --run"
+  : "corepack pnpm --filter @paperclipai/ui build --outDir ../server/ui-dist --emptyOutDir && node cli/node_modules/tsx/dist/cli.mjs cli/src/index.ts onboard --yes --run";
 
 process.env.PAPERCLIP_HOME = PAPERCLIP_HOME;
 process.env.PAPERCLIP_CONFIG = PAPERCLIP_CONFIG;
@@ -73,7 +76,7 @@ export default defineConfig({
     // service-worker-intercepted requests, before React can even start.
     // Build the server's first-choice static directory so a prior package build
     // cannot shadow the UI under test with stale server/ui-dist assets.
-    command: "corepack pnpm --filter @paperclipai/ui build --outDir ../server/ui-dist --emptyOutDir && node cli/node_modules/tsx/dist/cli.mjs cli/src/index.ts onboard --yes --run",
+    command: WEB_SERVER_COMMAND,
     url: `${BASE_URL}/api/health`,
     // Always boot a dedicated throwaway instance for e2e so browser tests
     // never attach to the developer's active Paperclip home/server.

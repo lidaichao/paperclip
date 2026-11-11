@@ -42,7 +42,17 @@ async function expectKeyboardFocusVisible(locator: Locator) {
 
 async function expectRowValues(row: Locator, values: string[]) {
   await expect(row).toHaveCount(1);
-  for (const value of values) await expect(row).toContainText(value);
+  for (const value of values) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      await expect(row.locator(`input[type="date"][value="${value}"]`)).toHaveCount(1);
+      continue;
+    }
+    const selectedLabels = await row.locator("select").evaluateAll((selects) =>
+      selects.map((select) => (select as HTMLSelectElement).selectedOptions[0]?.textContent?.trim() ?? ""),
+    );
+    if (selectedLabels.includes(value)) continue;
+    await expect(row).toContainText(value);
+  }
 }
 
 async function readNarrowAnchors(page: Page, projectName: string) {
@@ -155,37 +165,44 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   await expect(page.getByText("缺陷 01", { exact: true })).toHaveCount(0);
   const searchInput = denseTable.getByLabel("搜索记录");
   await searchInput.fill("计划");
+  await expect(searchInput).toHaveValue("计划");
+  await expect(denseTable.getByText("未保存配置", { exact: true })).toBeVisible();
   await denseTable.getByLabel("密度").selectOption("compact");
+  await expect(searchInput).toHaveValue("计划");
   const taskSort = denseTable.getByRole("button", { name: "按任务排序", exact: true });
   const taskHeader = taskSort.locator("xpath=ancestor::th");
   await taskSort.focus();
   await taskSort.press("Enter");
   await expect(taskHeader).toHaveAttribute("aria-sort", "ascending");
+  await expect(searchInput).toHaveValue("计划");
   await expectKeyboardFocusVisible(taskSort);
   await expect(rows.first()).toContainText("计划 01");
   await taskSort.press("Enter");
   await expect(taskHeader).toHaveAttribute("aria-sort", "descending");
   await expectKeyboardFocusVisible(taskSort);
   await expect(rows.first()).toContainText("计划 20");
+  await expect(searchInput).toHaveValue("计划");
   await denseTable.getByLabel("分组字段").selectOption("businessStatus");
   await denseTable.getByLabel("分组字段").selectOption("");
-  await denseTable.getByRole("button", { name: "筛选业务状态", exact: true }).click();
-  await page.getByLabel("业务状态筛选条件", { exact: true }).selectOption("is");
-  await page.getByLabel("业务状态筛选值", { exact: true }).fill("done");
+  await expect(searchInput).toHaveValue("计划");
+  await denseTable.getByRole("button", { name: "筛选状态", exact: true }).click();
+  await page.getByLabel("状态筛选条件", { exact: true }).selectOption("is");
+  await page.getByLabel("状态筛选值", { exact: true }).fill("done");
+  await expect(searchInput).toHaveValue("计划");
   await expect(rows).toHaveCount(3);
   await expect(rows.nth(0)).toContainText("计划 20");
   await expect(rows.nth(1)).toContainText("计划 13");
   await expect(rows.nth(2)).toContainText("计划 06");
-  await page.getByRole("button", { name: "清除筛选", exact: true }).click();
+  await page.getByRole("button", { name: "清除状态筛选", exact: true }).click();
   await expect(searchInput).toHaveValue("计划");
   await page.keyboard.press("Escape");
   await expect(rows).toHaveCount(20);
   await expect(denseTable).toHaveAttribute("data-density", "compact");
-  expect((await rows.first().boundingBox())?.height).toBeLessThanOrEqual(32);
+  expect((await rows.first().boundingBox())?.height).toBeLessThanOrEqual(38);
   const columnSettings = denseTable.getByRole("button", { name: "列", exact: true });
   await columnSettings.focus();
   await columnSettings.press("Enter");
-  for (const column of ["描述", "迭代", "QA", "派发状态", "前置"]) {
+  for (const column of ["描述", "迭代", "QA", "派发状态", "前置任务"]) {
     await page.getByRole("checkbox", { name: column, exact: true }).uncheck();
   }
   await expect(denseTable.getByRole("button", { name: "按描述排序", exact: true })).toHaveCount(0);
@@ -197,12 +214,12 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   expect(ownerWidthAfter).toBeGreaterThan(ownerWidthBefore);
   await page.getByRole("button", { name: "负责人上移", exact: true }).focus();
   await page.keyboard.press("Alt+ArrowUp");
-  const statusFreeze = page.getByRole("checkbox", { name: "业务状态冻结", exact: true });
+  const statusFreeze = page.getByRole("checkbox", { name: "状态冻结", exact: true });
   await statusFreeze.focus();
   await statusFreeze.press("Space");
   await expect(statusFreeze).toBeChecked();
   await expectKeyboardFocusVisible(statusFreeze);
-  const businessStatusHeader = denseTable.getByRole("button", { name: "按业务状态排序", exact: true }).locator("xpath=ancestor::th");
+  const businessStatusHeader = denseTable.getByRole("button", { name: "按状态排序", exact: true }).locator("xpath=ancestor::th");
   await expect(businessStatusHeader).toHaveClass(/sticky/);
   await expect(searchInput).toHaveValue("计划");
 
@@ -223,7 +240,7 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
       containerId: null,
       visibleFields: ["id", "title", "businessStatus", "assignee", "priority", "plannedStartDate", "plannedCompletionDate", "version"],
       columnOrder: ["id", "title", "assignee", "businessStatus", "priority", "plannedStartDate", "plannedCompletionDate", "version", "iteration", "qaAssignee", "dispatchState", "dependencies", "description"],
-      columnWidths: { assignee: 176 },
+      columnWidths: { assignee: 131 },
       density: "compact",
       filters: [],
       search: "计划",
@@ -279,7 +296,7 @@ test("G3B1 keeps dense plan and defect views stable while saves remain non-execu
   await expectRowValues(rows.filter({ hasText: "计划 20" }), ["计划 20", "Belle 质检", "2026-11-20", "2026-11-25", "已完成"]);
   await denseTable.getByRole("tab", { name: "全部任务", exact: true }).click();
 
-  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await denseTable.getByRole("button", { name: "新建任务", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("浏览器安全保存");
   await page.getByPlaceholder("写明范围、约束和验收标准").fill("保存时不得产生执行对象");
   await page.getByRole("button", { name: "保存计划", exact: true }).click();
@@ -362,10 +379,12 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   // clean / clean: navigation has no decision dialog.
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
   await expect(page).toHaveURL(/\/defects$/);
+  await expect(page.getByRole("heading", { name: "缺陷池", exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "计划", exact: true }).click();
+  await expect(page).toHaveURL(/\/plans$/);
 
   // business dirty / view clean: save business, then continue without a view decision.
-  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await denseTable.getByRole("button", { name: "新建任务", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("只脏业务已保存");
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
   await resolveBusinessDraft(page, "save");
@@ -399,7 +418,7 @@ test("G3B1 resolves business and view drafts independently in all four states", 
 
   // both dirty: saving business leaves the view draft intact when view resolution is cancelled.
   await denseTable.getByLabel("密度").selectOption("compact");
-  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await denseTable.getByRole("button", { name: "新建任务", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("双脏先存业务");
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
   const bothSaveMessages = await answerDialogs(page, [false, false], () => resolveBusinessDraft(page, "save"));
@@ -412,7 +431,7 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   )).map((record) => record.title)).toContain("双脏先存业务");
 
   // both dirty: discarding business also leaves the view draft intact when view resolution is cancelled.
-  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await denseTable.getByRole("button", { name: "新建任务", exact: true }).click();
   await page.getByPlaceholder("例如：完成发布说明").fill("双脏放弃业务");
   await page.getByRole("tab", { name: "缺陷", exact: true }).click();
   const bothDiscardMessages = await answerDialogs(page, [false, false], () => resolveBusinessDraft(page, "discard"));
@@ -425,7 +444,7 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   )).map((record) => record.title)).not.toContain("双脏放弃业务");
 
   // Saving the view directly must not close or rewrite the business draft.
-  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await denseTable.getByRole("button", { name: "新建任务", exact: true }).click();
   const titleInput = page.getByPlaceholder("例如：完成发布说明");
   await titleInput.fill("保存视图后业务仍在");
   await page.getByRole("button", { name: "保存修改", exact: true }).evaluate((button) => (button as HTMLButtonElement).click());
@@ -447,7 +466,7 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   await page.getByRole("button", { name: "关闭", exact: true }).click();
 
   // Refresh protection keeps an unsaved business draft when the native leave is cancelled.
-  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await denseTable.getByRole("button", { name: "新建任务", exact: true }).click();
   await titleInput.fill("刷新仍保留");
   const reloadMessages = await answerDialogs(page, [false], () => {
     void page.reload().catch(() => null);
@@ -463,7 +482,7 @@ test("G3B1 resolves business and view drafts independently in all four states", 
   await expect(page).toHaveURL(/\/defects$/);
   await page.getByRole("tab", { name: "计划", exact: true }).click();
   await expect(page).toHaveURL(/\/plans$/);
-  await page.getByRole("button", { name: "新建计划", exact: true }).click();
+  await denseTable.getByRole("button", { name: "新建任务", exact: true }).click();
   await titleInput.fill("后退仍保留");
   void page.goBack();
   await resolveBusinessDraft(page, "stay");

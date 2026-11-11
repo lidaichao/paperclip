@@ -228,6 +228,17 @@
   --sz-work-record-rail-collapsed-narrow: 2rem;
   --gap-work-record-workspace: 1.25rem;
   --sz-work-record-tree-indent: 1.75rem;
+  --work-record-grid-line: #edf0f0;
+  --work-record-header-surface: #f4f6f6;
+  --work-record-summary-surface: #eef3f0;
+  --work-record-selected-surface: #eef6f0;
+  --work-record-statusbar-surface: #fafbfb;
+  --work-record-summary-ink: #273e36;
+  --work-record-tree-line: #98aea2;
+  --work-record-accent: #176c58;
+  --work-record-accent-soft: #e8f3ee;
+  --work-record-accent-ink: #176e5c;
+  --work-record-rail-active-surface: #e4f0eb;
   --sz-tweak-panel-max: 70vh; /* Task Chat Redesign dev tweak panel scroll cap. */
 
   /* New-task dialog geometry inputs and gap tokens. The derived top/height
@@ -484,15 +495,48 @@
 .work-record-workspace {
   --work-record-rail-expanded-width: var(--sz-work-record-rail-wide);
   --work-record-rail-collapsed-width: var(--sz-work-record-rail-collapsed-narrow);
+  --background: #fff;
+  --foreground: #252a2e;
+  --muted: #f1f4f3;
+  --muted-foreground: #626b72;
+  --border: #e3e7e7;
+  --input: #cfd6d3;
+  --primary: #176c58;
+  --primary-foreground: #fff;
+  --work-record-header-ink: #354047;
+  --work-record-status-backlog-ink: #626b72;
+  --work-record-status-backlog-surface: #f0f2f1;
+  --work-record-status-todo-ink: #855710;
+  --work-record-status-todo-surface: #fbf2df;
+  --work-record-status-progress-ink: #375d9a;
+  --work-record-status-progress-surface: #eaf1fc;
+  --work-record-status-review-ink: #70419b;
+  --work-record-status-review-surface: #f2eafb;
+  --work-record-status-done-ink: #176c58;
+  --work-record-status-done-surface: #e8f3ee;
+  --work-record-status-blocked-ink: #a33d35;
+  --work-record-status-blocked-surface: #fbeceb;
+  --work-record-status-cancelled-surface: #eceeee;
   display: grid;
   grid-template-columns: var(--work-record-rail-expanded-width) minmax(0, 1fr);
   column-gap: var(--gap-work-record-workspace);
   align-items: stretch;
   height: 100%;
+  color: var(--foreground);
+  font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-size: 0.875rem;
+  line-height: normal;
+  -webkit-font-smoothing: auto;
 }
 
 .work-record-workspace[data-rail-open="false"] {
   grid-template-columns: var(--work-record-rail-collapsed-width) minmax(0, 1fr);
+}
+
+.work-record-workspace button,
+.work-record-workspace input,
+.work-record-workspace select {
+  line-height: normal;
 }
 
 .work-record-rail-shell {
@@ -517,6 +561,1131 @@
 
 .work-record-tree-cell {
   padding-inline-start: calc(var(--work-record-tree-depth, 0) * var(--sz-work-record-tree-indent));
+}
+
+.work-record-view-toolbar [role="tablist"] {
+  height: 100%;
+  gap: 1rem;
+}
+
+[data-testid="work-record-top-navigation"] [role="tablist"] {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0;
+}
+
+[data-testid="work-record-top-navigation"] > [data-slot="tabs"] {
+  height: 100%;
+  justify-content: center;
+}
+
+[data-testid="work-record-top-navigation"] [role="tab"] {
+  height: 1.8125rem;
+  flex: none;
+  gap: 0.375rem;
+  appearance: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0 0 0.625rem;
+  border-radius: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: normal;
+  color: var(--muted-foreground);
+}
+
+[data-testid="work-record-top-navigation"] [role="tab"][data-state="active"] {
+  border-bottom-color: var(--foreground);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+[data-testid="work-record-top-navigation"] [role="tab"]::after {
+  display: none;
+}
+
+.work-record-scope-header {
+  position: relative;
+  height: 5.75rem;
+  flex-shrink: 0;
+  padding: 0.5rem 0 0.75rem;
+}
+
+.work-record-scope-header h2 {
+  width: fit-content;
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.work-record-scope-header small {
+  display: block;
+  width: fit-content;
+  margin-top: 0;
+  transform: translateY(0.125rem);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: normal;
+}
+
+.work-record-drag-feedback {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0.1875rem 0;
+  color: #51655e;
+  font-size: 0.75rem;
+  line-height: 1.2rem;
+}
+
+.work-record-gantt {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  background: var(--background);
+}
+
+.work-record-gantt-heading {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem 0 0.5rem;
+  border-bottom: 1px solid #e7ece9;
+}
+
+.work-record-gantt-heading > div {
+  min-width: 0;
+}
+
+.work-record-gantt-heading h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  line-height: normal;
+}
+
+.work-record-gantt-heading p {
+  margin: 0;
+  color: #62766d;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.work-record-gantt-focus-toggle {
+  flex: none;
+  border: 0;
+  background: transparent;
+  padding: 0.375rem 0.5rem;
+  color: #566661;
+  font-size: 0.75rem;
+}
+
+.work-record-gantt-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.625rem;
+  overflow-x: auto;
+  padding: 0.5625rem 0;
+  white-space: nowrap;
+  height: 3rem;
+  box-sizing: border-box;
+}
+
+.work-record-gantt-toolbar label {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.375rem;
+  color: #566661;
+  font-size: 0.75rem;
+}
+
+.work-record-gantt-fields > summary {
+  color: #566661;
+}
+
+.work-record-gantt-toolbar input,
+.work-record-gantt-toolbar select,
+.work-record-gantt-toolbar button {
+  height: 1.875rem !important;
+  min-height: 1.875rem !important;
+}
+
+.work-record-gantt-toolbar input[aria-label="搜索甘特任务"] {
+  width: 10.1875rem;
+}
+
+.work-record-gantt-toolbar select[aria-label="甘特状态筛选"] {
+  width: 5.375rem;
+}
+
+.work-record-gantt-toolbar select[aria-label="时间粒度"] {
+  width: 6.125rem;
+}
+
+.work-record-gantt-fields > summary {
+  width: 2.375rem;
+  height: 1.875rem !important;
+  min-height: 1.875rem !important;
+  justify-content: center;
+  padding: 0;
+}
+
+.work-record-gantt-viewport {
+  min-height: 10rem;
+  flex: 1;
+  overflow: auto;
+  border: 1px solid #e2e9e5;
+  background: #fff;
+  overscroll-behavior: contain;
+}
+
+.work-record-gantt-board {
+  min-width: max-content;
+}
+
+.work-record-gantt-list-header,
+.work-record-gantt-axis {
+  height: 3.5625rem;
+  background: #f5f8f6;
+  color: #5a6a64;
+}
+
+.work-record-gantt-task {
+  border-color: #edf1ee;
+  color: #596d62;
+  font-size: 0.6875rem;
+}
+
+.work-record-gantt-list-cell {
+  border-color: #edf1ee;
+}
+
+.work-record-gantt-title-cell,
+.work-record-gantt-title-cell button {
+  color: #172820;
+  font-size: 0.75rem;
+}
+
+.work-record-gantt-fold {
+  width: 0.9375rem;
+  min-width: 0.9375rem;
+  height: 1.125rem;
+  margin-right: 0.25rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: #557064;
+}
+
+.work-record-gantt-fold svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.work-record-gantt-task-title {
+  border: 0;
+  background: transparent;
+  padding: 0.125rem;
+  color: #172820;
+  font-size: 0.75rem;
+}
+
+.work-record-gantt-dependency-count {
+  display: inline-flex;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.25rem;
+  border: 1px solid #b8d5c5;
+  border-radius: 999px;
+  background: #e7f3ec;
+  color: #145b43;
+  font-size: 0.6875rem;
+}
+
+.work-record-gantt [data-gantt-timeline] {
+  border-color: #edf1ee;
+}
+
+.work-record-gantt [data-gantt-timeline] > span {
+  border-color: #edf1ee;
+}
+
+.work-record-gantt-axis > div:first-child span {
+  color: #465d53;
+  font-size: 0.75rem;
+}
+
+.work-record-gantt-axis > div:last-child span {
+  color: #74837d;
+  font-size: 0.6875rem;
+}
+
+.work-record-gantt-bar {
+  background: #168163;
+  color: #fff;
+  box-shadow: 0 1px 2px #123a262b;
+}
+
+.work-record-gantt-bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  pointer-events: none;
+}
+
+.work-record-gantt-bar[data-status="done"] { background: #4d806c; }
+.work-record-gantt-bar[data-status="blocked"] { background: #b37c60; }
+.work-record-gantt-bar[data-status="cancelled"] { background: #687a70; }
+.work-record-gantt-bar[data-status="in_review"] { background: #866aae; }
+.work-record-gantt-bar[data-status="backlog"] { background: #678e89; }
+.work-record-gantt-bar.work-record-gantt-parent-bar { background: #245d50; }
+.work-record-gantt-create-dependency {
+  top: 0;
+  right: -1.625rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  cursor: crosshair;
+}
+
+.work-record-gantt-create-dependency::before {
+  position: absolute;
+  top: 0.375rem;
+  left: 0.375rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  box-sizing: border-box;
+  border: 2px solid #176c58;
+  border-radius: 999px;
+  background: #fff;
+  content: "";
+}
+.work-record-gantt-empty-track {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.work-record-gantt-empty-track:focus-visible {
+  outline: 2px solid #176c58;
+  outline-offset: -3px;
+}
+
+.work-record-gantt-empty-hint {
+  position: sticky;
+  left: 0.75rem;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  margin: 0.375rem 0 0 0.75rem;
+  padding: 0.1875rem 0.4375rem;
+  border: 1px dashed #adbbb0;
+  border-radius: 0.25rem;
+  background: #fff;
+  color: #63756a;
+  font-size: 0.6875rem;
+  pointer-events: none;
+}
+.work-record-gantt-dependency { stroke: #729b87; opacity: 0.8; }
+.work-record-gantt-arrow { fill: #729b87; }
+
+.my-todo-group {
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.my-todo-group-heading {
+  position: relative;
+  display: flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid #e3e7e7;
+  background: #f3f6f4;
+  padding-right: 0.625rem;
+}
+
+.my-todo-group-heading > button {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.625rem;
+  border: 0;
+  background: none;
+  padding: 0.375rem 0.75rem;
+  color: #252a2e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: normal;
+  text-align: left;
+}
+
+.my-todo-group-heading > button > svg {
+  width: 18px;
+  height: 18px;
+}
+
+.my-todo-count {
+  color: #626b72;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.my-todo-fold-mark {
+  margin-left: auto;
+  display: inline-flex;
+}
+
+.my-todo-group-heading label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #626b72;
+  font-size: 0.6875rem;
+  white-space: nowrap;
+}
+
+.my-todo-group-heading select {
+  height: 1.625rem;
+  min-height: 1.625rem;
+  max-width: 7.25rem;
+  border: 1px solid #cfd6d3;
+  border-radius: 7px;
+  background: #fff;
+  padding: 0.125rem 0.3125rem;
+  color: #252a2e;
+  font-size: 0.75rem;
+  width: 5rem;
+}
+
+.my-todo-group-body {
+  max-height: min(62vh, 47.5rem);
+  overflow: auto;
+}
+
+.my-todo-group-body ul,
+.my-todo-group-body li,
+.my-todo-grid {
+  width: 100%;
+}
+
+.my-todo-grid {
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: var(--my-todo-grid-template);
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.my-todo-columns {
+  height: 1.75rem;
+  min-height: 1.75rem;
+  border-bottom: 1px solid #e3e7e7;
+  background: #fafbfa;
+  color: #626b72;
+  font-weight: 600;
+}
+
+.my-todo-columns > span:nth-child(3) {
+  font-size: 0.6875rem;
+}
+
+.my-todo-row {
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-bottom: 1px solid #e3e7e7;
+}
+
+.my-todo-row-comfortable {
+  height: 3.5rem;
+  min-height: 3.5rem;
+}
+
+.my-todo-id,
+.my-todo-field {
+  overflow: hidden;
+  color: #626b72;
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-todo-priority {
+  overflow: hidden;
+  color: #252a2e;
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-todo-title {
+  min-width: 0;
+  overflow: hidden;
+  color: #252a2e;
+  font-weight: 400;
+  line-height: 1.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.work-record-view-toolbar [role="tab"] {
+  height: 100%;
+  gap: 0.4375rem;
+  padding: 0.625rem 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.work-record-view-toolbar [role="tab"][aria-selected="true"] {
+  border-bottom-color: var(--work-record-accent);
+  color: var(--work-record-accent);
+  font-weight: 600;
+}
+
+.work-record-primary-action {
+  background: var(--work-record-accent);
+  color: var(--primary-foreground);
+}
+
+.work-record-primary-action:hover {
+  background: color-mix(in oklab, var(--work-record-accent) 90%, black);
+}
+
+.work-record-rail-active {
+  background: var(--work-record-rail-active-surface);
+  color: var(--work-record-accent-ink);
+}
+
+.work-record-rail-navigation {
+  height: 100%;
+  overflow: auto;
+  border-right: 1px solid var(--border);
+  padding: 0 0.75rem 0.75rem 0;
+}
+
+.work-record-container-toolbar > button {
+  transform: translateY(0.3125rem);
+}
+
+.work-record-rail-create {
+  width: 4.0625rem;
+  height: 1.875rem;
+  gap: 0.4375rem;
+  border-radius: 0.4375rem;
+  padding: 0.3125rem 0.4375rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.work-record-rail-create svg,
+.work-record-rail-manage svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.work-record-rail-manage {
+  width: 1.875rem;
+  height: 1.875rem;
+  gap: 0.4375rem;
+  border-radius: 0.4375rem;
+  padding: 0.3125rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.work-record-pool-nav {
+  display: flex;
+  width: 100%;
+  height: 3.5625rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3125rem;
+  margin: 0.25rem 0 0.5rem;
+  border: 0;
+  border-radius: 0.4375rem;
+  background: transparent;
+  padding: 0.5625rem 0.5rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.work-record-pool-nav > span:last-child {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.work-record-pool-nav.work-record-rail-active,
+.work-record-version-nav.work-record-rail-active,
+.work-record-iteration-nav.work-record-rail-active {
+  background: var(--work-record-rail-active-surface);
+  color: var(--work-record-accent-ink);
+}
+
+.work-record-container-entry {
+  min-width: 0;
+}
+
+.work-record-version-nav,
+.work-record-iteration-nav {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3125rem;
+  border: 0;
+  border-radius: 0.4375rem;
+  background: transparent;
+  padding: 0.5625rem 2.125rem 0.5625rem 0.5rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.work-record-version-nav:hover,
+.work-record-iteration-nav:hover {
+  background: #f0f5f3;
+}
+
+.work-record-version-children {
+  margin-left: 0.75rem;
+}
+
+.work-record-iteration-nav small {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.work-record-iteration-progress {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.3125rem;
+  margin-top: 0.1875rem;
+}
+
+.work-record-iteration-progress-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.375rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.work-record-iteration-progress-track {
+  display: block;
+  height: 0.25rem;
+  overflow: hidden;
+  border-radius: 0.125rem;
+  background: #dce5e1;
+}
+
+.work-record-iteration-progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 0.125rem;
+  background: #187461;
+}
+
+.work-record-container-edit {
+  position: absolute;
+  z-index: 3;
+  top: 0.3125rem;
+  right: 0.25rem;
+  opacity: 0;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.work-record-container-edit button {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0.25rem;
+  border: 0;
+  background: transparent;
+}
+
+.work-record-create-under {
+  margin-top: 0.25rem;
+  border: 0;
+  border-radius: 0.4375rem;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  gap: 0.4375rem;
+}
+
+.work-record-new-badge {
+  border-radius: 0.1875rem;
+  background: var(--work-record-accent-soft);
+  color: var(--work-record-accent-ink);
+  padding: 0.125rem 0.25rem;
+  font-size: 0.5625rem;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.work-record-filter-toolbar {
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.work-record-filter-toolbar > * {
+  transform: translateY(0.03125rem);
+}
+
+.work-record-group-select {
+  width: 9rem;
+  height: 2rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  background: transparent;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.work-record-tree-menu-icon,
+.work-record-column-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.work-record-filter-toolbar [aria-label="展开或收起任务层级"] {
+  width: 2rem;
+  height: 1.875rem;
+  gap: 0.375rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  padding: 0.3125rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.work-record-filter-toolbar button:has(.work-record-column-icon) {
+  width: 3.4375rem;
+  height: 2rem;
+  gap: 0.4375rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-left: 0.125rem;
+}
+
+.work-record-filter-toolbar select[aria-label="密度"] {
+  height: 2rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.work-record-search {
+  height: 1.875rem;
+}
+
+.work-record-search .lucide-search {
+  left: 0.6875rem;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.work-record-search .work-record-search-input {
+  height: 1.875rem;
+  border-radius: 0.25rem;
+  background: #fafbfb;
+  padding: 0.375rem 0.625rem 0.375rem 2.25rem;
+  font-size: 0.75rem;
+}
+
+.work-record-table-scroller table {
+  border-collapse: separate;
+  border-spacing: 0;
+  line-height: normal;
+}
+
+.work-record-table-scroller th,
+.work-record-table-scroller td {
+  height: 2.25rem;
+  overflow: hidden;
+  border-right: 1px solid var(--work-record-grid-line);
+  border-bottom: 1px solid var(--work-record-grid-line);
+  padding: 0.25rem 0.5625rem;
+  text-overflow: ellipsis;
+}
+
+[data-testid="work-record-dense-table"][data-density="compact"] .work-record-table-scroller td {
+  height: 2.25rem;
+  padding-block: 0.25rem;
+}
+
+[data-testid="work-record-dense-table"][data-kind="defect"][data-density="compact"] .work-record-table-scroller td {
+  height: 2.125rem !important;
+  padding-block: 0.1875rem;
+}
+
+.my-todo-due {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  color: #626b72;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.my-todo-due.is-overdue,
+.my-todo-due.is-overdue small {
+  color: #a33d35;
+}
+
+.my-todo-due small {
+  font-size: 0.625rem;
+}
+
+.my-todo-status {
+  display: flex;
+  width: 100%;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.3125rem;
+  color: var(--work-record-status-backlog-ink, #626b72);
+  font-size: 0.75rem;
+  line-height: normal;
+}
+
+.my-todo-status[data-business-status="todo"] { background: var(--work-record-status-todo-surface, #fbf2df); color: var(--work-record-status-todo-ink, #855710); }
+.my-todo-status[data-business-status="in_progress"] { background: var(--work-record-status-progress-surface, #eaf1fc); color: var(--work-record-status-progress-ink, #375d9a); }
+.my-todo-status[data-business-status="in_review"] { background: var(--work-record-status-review-surface, #f2eafb); color: var(--work-record-status-review-ink, #70419b); }
+.my-todo-status[data-business-status="done"] { background: var(--work-record-status-done-surface, #e8f3ee); color: var(--work-record-status-done-ink, #176c58); }
+.my-todo-status[data-business-status="blocked"] { background: var(--work-record-status-blocked-surface, #fbeceb); color: var(--work-record-status-blocked-ink, #a33d35); }
+.my-todo-status[data-business-status="backlog"] { background: var(--work-record-status-backlog-surface, #f0f2f1); }
+.my-todo-status[data-business-status="cancelled"] { background: var(--work-record-status-cancelled-surface, #eceeee); text-decoration: line-through; }
+
+.dashboard-my-todo-workspace {
+  --foreground: #252a2e;
+  --muted-foreground: #626b72;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  column-gap: 21px;
+  margin-left: -16px;
+  margin-right: -14px;
+  min-width: 0;
+  font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: normal;
+  -webkit-font-smoothing: auto;
+}
+
+.dashboard-my-todo-rail {
+  min-width: 0;
+  border-right: 1px solid var(--border);
+  padding: 12px 12px 20px;
+  color: var(--muted-foreground);
+}
+
+.dashboard-my-todo-rail h2 {
+  margin: 0 0 16px;
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.dashboard-my-todo-rail p,
+.dashboard-my-todo-rail span {
+  display: block;
+  margin: 0 0 18px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dashboard-my-todo-rail strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--foreground);
+  font-size: 13px;
+}
+
+.dashboard-my-todo-main {
+  min-width: 0;
+}
+
+.dashboard-my-todo-heading {
+  height: 41px;
+  overflow: hidden;
+}
+
+.dashboard-my-todo-filters {
+  height: 44px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 4px 0;
+}
+
+.dashboard-my-todo-filters > input,
+.dashboard-my-todo-filters > select,
+.dashboard-my-todo-filters > label > input {
+  height: 36px;
+}
+
+.dashboard-my-todo-groups {
+  margin-top: 0;
+}
+
+.dashboard-my-todo-groups > .my-todo-group + .my-todo-group {
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-my-todo-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    margin-inline: 0;
+  }
+
+  .dashboard-my-todo-rail {
+    display: none;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1050px) {
+  .dashboard-my-todo-workspace {
+    margin-left: -55px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .my-todo-grid {
+    grid-template-columns: var(--my-todo-grid-template-narrow);
+  }
+
+  .my-todo-columns > span:nth-child(3),
+  .my-todo-priority {
+    display: none;
+  }
+
+  .my-todo-group {
+    min-width: 465px;
+  }
+}
+
+.work-record-table-scroller th {
+  height: 2.25rem;
+  padding-block: 0;
+  background: var(--work-record-header-surface);
+  color: var(--work-record-header-ink);
+  font-weight: 700;
+}
+
+.work-record-table-scroller th > div {
+  position: relative;
+}
+
+/* Match the approved sheet's quiet default state without removing the column
+   actions: tools overlay the heading on hover/focus instead of taking width. */
+.work-record-table-scroller th > div > button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--work-record-header-surface);
+}
+
+.work-record-table-scroller th > div > button[aria-label^="按"] {
+  right: 3rem;
+}
+
+.work-record-table-scroller th > div > button[aria-label^="筛选"] {
+  right: 1.5rem;
+}
+
+.work-record-table-scroller th > div > button[aria-label$="列菜单"] {
+  right: 0;
+}
+
+.work-record-workspace input[type="checkbox"] {
+  width: 0.9375rem;
+  min-width: 0.9375rem;
+  height: 0.9375rem;
+  margin: 0 auto;
+  accent-color: var(--work-record-accent);
+}
+
+.work-record-drag-handle {
+  display: inline-flex;
+  width: 1.125rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  cursor: grab;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+.work-record-drag-handle svg {
+  width: 0.875rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2.5;
+}
+
+.work-record-workspace .work-record-title-button {
+  flex: 0 1 auto;
+  max-width: 100%;
+  border-radius: 0.4375rem;
+  line-height: 1.25rem;
+}
+
+.work-record-business-status {
+  width: 100%;
+  height: 1.4375rem;
+  border: 0;
+  border-radius: 0.25rem;
+  padding: 0.1875rem 0.125rem;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.work-record-business-status[data-business-status="backlog"] {
+  background: var(--work-record-status-backlog-surface);
+  color: var(--work-record-status-backlog-ink);
+}
+
+.work-record-business-status[data-business-status="todo"] {
+  background: var(--work-record-status-todo-surface);
+  color: var(--work-record-status-todo-ink);
+}
+
+.work-record-business-status[data-business-status="in_progress"] {
+  background: var(--work-record-status-progress-surface);
+  color: var(--work-record-status-progress-ink);
+}
+
+.work-record-business-status[data-business-status="in_review"] {
+  background: var(--work-record-status-review-surface);
+  color: var(--work-record-status-review-ink);
+}
+
+.work-record-business-status[data-business-status="done"] {
+  background: var(--work-record-status-done-surface);
+  color: var(--work-record-status-done-ink);
+}
+
+.work-record-business-status[data-business-status="blocked"] {
+  background: var(--work-record-status-blocked-surface);
+  color: var(--work-record-status-blocked-ink);
+}
+
+.work-record-business-status[data-business-status="cancelled"] {
+  background: var(--work-record-status-cancelled-surface);
+  color: var(--work-record-status-backlog-ink);
+  text-decoration: line-through;
+}
+
+.work-record-inline-select {
+  width: 100%;
+  height: 1.75rem;
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.work-record-workspace input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+
+.work-record-inline-date {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0.1875rem 0;
+  color: var(--foreground);
+  font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.work-record-workspace td:hover input[type="date"]::-webkit-calendar-picker-indicator,
+.work-record-workspace input[type="date"]:focus::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+.work-record-table-scroller th:first-child,
+.work-record-table-scroller td:first-child {
+  width: 2.5rem;
+  padding: 0;
+  text-align: center;
+}
+
+.work-record-table-scroller tr:last-child td {
+  border-bottom: 0;
+}
+
+.work-record-table-scroller th:last-child,
+.work-record-table-scroller td:last-child {
+  border-right: 0;
+}
+
+.work-record-table-scroller .work-record-summary-row > td {
+  background: var(--work-record-summary-surface);
+}
+
+.work-record-table-scroller .work-record-selected-row > td {
+  background: var(--work-record-selected-surface);
+}
+
+.work-record-table-scroller .work-record-tree-branch {
+  position: absolute;
+  top: -0.625rem;
+  left: -1.125rem;
+  width: 1.0625rem;
+  height: 1.4375rem;
+  border-bottom: 1px solid var(--work-record-tree-line);
+  border-left: 1px solid var(--work-record-tree-line);
+  pointer-events: none;
+}
+
+.work-record-statusbar {
+  background: var(--work-record-statusbar-surface);
 }
 
 @container (max-width: 38rem) {
