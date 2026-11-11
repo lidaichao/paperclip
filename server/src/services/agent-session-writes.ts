@@ -32,14 +32,24 @@ export function agentSessionWriteService(db: Db) {
     return agent;
   }
 
-  async function assertNoExecutionLease(database: Db, companyId: string, agentId: string) {
+  async function assertExecutionLeaseCompatible(
+    database: Db,
+    companyId: string,
+    agentId: string,
+    method: string,
+    path: string,
+  ) {
     const active = await database.select({ runId: localAgentRunLeases.runId })
       .from(localAgentRunLeases).where(and(
         eq(localAgentRunLeases.companyId, companyId),
         eq(localAgentRunLeases.agentId, agentId),
         isNull(localAgentRunLeases.releasedAt),
       )).limit(1).then((rows) => rows[0] ?? null);
-    if (active) throw conflict("Session writes are unavailable while an execution lease exists", {
+    if (!active) return;
+    const detachedRecordCreation = method.toUpperCase() === "POST"
+      && /^\/api\/companies\/[0-9a-f-]{36}\/issues\/?$/i.test(path);
+    if (detachedRecordCreation) return;
+    throw conflict("Only detached task records can be created while an execution lease exists", {
       code: "SESSION_WRITE_EXECUTION_LEASE_ACTIVE",
     });
   }
@@ -67,7 +77,6 @@ export function agentSessionWriteService(db: Db) {
             code: "SESSION_WRITE_NOT_CLIENT_PULL_FENCED",
           });
         }
-        await assertNoExecutionLease(scoped, input.companyId, input.agentId);
         if (deviceId) {
           const binding = await scoped.select({ id: localAgentDeviceBindings.id })
           .from(localAgentDeviceBindings).where(and(
@@ -118,7 +127,13 @@ export function agentSessionWriteService(db: Db) {
       return db.transaction(async (tx) => {
         const scoped = tx as unknown as Db;
         await lockAgent(scoped, input.companyId, input.agentId);
-        await assertNoExecutionLease(scoped, input.companyId, input.agentId);
+        await assertExecutionLeaseCompatible(
+          scoped,
+          input.companyId,
+          input.agentId,
+          input.method,
+          input.path,
+        );
         const grant = await scoped.select().from(agentSessionWriteGrants).where(and(
         eq(agentSessionWriteGrants.tokenHash, hashSessionWriteToken(input.token)),
         eq(agentSessionWriteGrants.companyId, input.companyId),

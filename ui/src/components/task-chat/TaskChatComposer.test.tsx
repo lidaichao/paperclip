@@ -2005,18 +2005,20 @@ describe("TaskChatComposer", () => {
   });
 
   describe("composer takeovers", () => {
-    it("replaces the editor with one action surface and exposes Skip", async () => {
+    it("keeps the comment editor available beside a pending decision and exposes Skip", async () => {
+      const onAdd = vi.fn().mockResolvedValue(undefined);
+      const onDismiss = vi.fn();
       const onSkip = vi.fn().mockResolvedValue(undefined);
       render(
         <TaskChatComposer
-          onAdd={vi.fn()}
+          onAdd={onAdd}
           workMode="standard"
           takeover={{
             id: "question-1",
             label: "Deployment target",
             pendingCount: 2,
             content: <p>Which environment should receive this?</p>,
-            onDismiss: vi.fn(),
+            onDismiss,
             onSkip,
             onShowNext: vi.fn(),
           }}
@@ -2027,9 +2029,22 @@ describe("TaskChatComposer", () => {
         container.querySelector('[data-testid="task-chat-composer-takeover"]')
           ?.textContent,
       ).toContain("Which environment should receive this?");
-      expect(container.querySelector('[data-testid="mdx-editor"]')).toBeNull();
+      expect(container.querySelector('[data-testid="mdx-editor"]')).not.toBeNull();
       expect(container.textContent).not.toContain("Input needed");
       expect(container.textContent).not.toContain("Write instead");
+
+      typeText("I need to add context before deciding.");
+      flushSync(() => sendButton().click());
+      await flushAsync();
+      expect(onAdd).toHaveBeenCalledWith(
+        "I need to add context before deciding.",
+        undefined,
+        undefined,
+        undefined,
+        expect.any(String),
+      );
+      expect(onDismiss).not.toHaveBeenCalled();
+
       const skip = Array.from(
         container.querySelectorAll<HTMLButtonElement>("button"),
       ).find((button) => button.textContent?.trim() === "Skip");
@@ -2799,7 +2814,7 @@ describe("TaskChatComposer", () => {
       expect(onSkip).not.toHaveBeenCalled();
     });
 
-    it("keeps an explicit path back to task comments while a decision takeover is open", async () => {
+    it("keeps task comments visible without dismissing an open decision", () => {
       const onDismiss = vi.fn();
       const onSkip = vi.fn();
       render(
@@ -2818,15 +2833,14 @@ describe("TaskChatComposer", () => {
         />,
       );
 
-      const returnToComment = container.querySelector<HTMLButtonElement>(
-        '[data-testid="task-chat-composer-return-to-comment"]',
-      );
-      expect(returnToComment?.textContent).toContain("Add a comment");
-
-      flushSync(() => returnToComment?.click());
-      await flushAsync();
-
-      expect(onDismiss).toHaveBeenCalledTimes(1);
+      expect(
+        container.querySelector('[data-testid="task-chat-composer-takeover"]'),
+      ).not.toBeNull();
+      expect(container.querySelector('[data-testid="mdx-editor"]')).not.toBeNull();
+      expect(
+        container.querySelector('[data-testid="task-chat-composer-return-to-comment"]'),
+      ).toBeNull();
+      expect(onDismiss).not.toHaveBeenCalled();
       expect(onSkip).not.toHaveBeenCalled();
     });
   });

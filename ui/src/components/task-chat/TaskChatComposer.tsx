@@ -1234,18 +1234,6 @@ export function TaskChatComposer({
               />
               <Button
                 type="button"
-                size="sm"
-                variant="ghost"
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                disabled={takeoverBusy}
-                onClick={takeover.onDismiss}
-                data-testid="task-chat-composer-return-to-comment"
-                title={l10n("local.focus_comment_composer_a0f6da74")}
-              >
-                {l10n("local.add_a_comment_23c5f331")}
-              </Button>
-              <Button
-                type="button"
                 size="icon-xs"
                 variant="ghost"
                 className="text-muted-foreground hover:text-foreground"
@@ -1293,9 +1281,9 @@ export function TaskChatComposer({
             </div>
           ) : null}
         </section>
-      ) : (
+      ) : null}
         <>
-          {pendingTakeover || takeover ? (
+          {!takeoverVisible && (pendingTakeover || takeover) ? (
             <button
               type="button"
               className="mb-2 flex w-full items-center gap-2 rounded-md bg-muted/50 px-2.5 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -1652,7 +1640,6 @@ export function TaskChatComposer({
             </p>
           ) : null}
         </>
-      )}
     </div>
   );
 }
