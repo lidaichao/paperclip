@@ -125,7 +125,7 @@ export function Layout({ sidebarSections }: { sidebarSections?: ReactNode }) {
   const rawPathSegments = location.pathname.split("/").filter(Boolean);
   const projectsSegmentIndex = rawPathSegments.findIndex((segment) => segment.toLowerCase() === "projects");
   const isWorkRecordRoute = projectsSegmentIndex >= 0
-    && ["plans", "gantt", "defects"].includes(rawPathSegments[projectsSegmentIndex + 2]?.toLowerCase() ?? "");
+    && ["issues", "configuration", "budget", "plans", "gantt", "defects"].includes(rawPathSegments[projectsSegmentIndex + 2]?.toLowerCase() ?? "");
   const useStreamlinedTaskDetailShell = streamlinedUiEnabled && isTaskDetailRoute;
   const isToolsRoute = companyPathSegments[0]?.toLowerCase() === "tools";
   const isAppsRoute = companyPathSegments[0]?.toLowerCase() === "apps";

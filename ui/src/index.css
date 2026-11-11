@@ -228,17 +228,17 @@
   --sz-work-record-rail-collapsed-narrow: 2rem;
   --gap-work-record-workspace: 1.25rem;
   --sz-work-record-tree-indent: 1.75rem;
-  --work-record-grid-line: #edf0f0;
-  --work-record-header-surface: #f4f6f6;
-  --work-record-summary-surface: #eef3f0;
-  --work-record-selected-surface: #eef6f0;
-  --work-record-statusbar-surface: #fafbfb;
-  --work-record-summary-ink: #273e36;
-  --work-record-tree-line: #98aea2;
-  --work-record-accent: #176c58;
-  --work-record-accent-soft: #e8f3ee;
-  --work-record-accent-ink: #176e5c;
-  --work-record-rail-active-surface: #e4f0eb;
+  --work-record-grid-line: var(--border);
+  --work-record-header-surface: var(--muted);
+  --work-record-summary-surface: var(--muted);
+  --work-record-selected-surface: var(--accent);
+  --work-record-statusbar-surface: var(--background);
+  --work-record-summary-ink: var(--foreground);
+  --work-record-tree-line: var(--border);
+  --work-record-accent: var(--foreground);
+  --work-record-accent-soft: var(--accent);
+  --work-record-accent-ink: var(--foreground);
+  --work-record-rail-active-surface: var(--accent);
   --sz-tweak-panel-max: 70vh; /* Task Chat Redesign dev tweak panel scroll cap. */
 
   /* New-task dialog geometry inputs and gap tokens. The derived top/height
@@ -495,14 +495,6 @@
 .work-record-workspace {
   --work-record-rail-expanded-width: var(--sz-work-record-rail-wide);
   --work-record-rail-collapsed-width: var(--sz-work-record-rail-collapsed-narrow);
-  --background: #fff;
-  --foreground: #252a2e;
-  --muted: #f1f4f3;
-  --muted-foreground: #626b72;
-  --border: #e3e7e7;
-  --input: #cfd6d3;
-  --primary: #176c58;
-  --primary-foreground: #fff;
   --work-record-header-ink: #354047;
   --work-record-status-backlog-ink: #626b72;
   --work-record-status-backlog-surface: #f0f2f1;
@@ -835,9 +827,9 @@
 }
 
 .work-record-gantt-bar {
-  background: #168163;
-  color: #fff;
-  box-shadow: 0 1px 2px #123a262b;
+  background: var(--foreground);
+  color: var(--background);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 18%, transparent);
 }
 
 .work-record-gantt-bar-label {
@@ -848,12 +840,12 @@
   pointer-events: none;
 }
 
-.work-record-gantt-bar[data-status="done"] { background: #4d806c; }
+.work-record-gantt-bar[data-status="done"] { background: var(--muted-foreground); }
 .work-record-gantt-bar[data-status="blocked"] { background: #b37c60; }
-.work-record-gantt-bar[data-status="cancelled"] { background: #687a70; }
+.work-record-gantt-bar[data-status="cancelled"] { background: var(--muted-foreground); }
 .work-record-gantt-bar[data-status="in_review"] { background: #866aae; }
-.work-record-gantt-bar[data-status="backlog"] { background: #678e89; }
-.work-record-gantt-bar.work-record-gantt-parent-bar { background: #245d50; }
+.work-record-gantt-bar[data-status="backlog"] { background: var(--muted-foreground); }
+.work-record-gantt-bar.work-record-gantt-parent-bar { background: var(--foreground); }
 .work-record-gantt-create-dependency {
   top: 0;
   right: -1.625rem;
@@ -869,7 +861,7 @@
   width: 0.75rem;
   height: 0.75rem;
   box-sizing: border-box;
-  border: 2px solid #176c58;
+  border: 2px solid var(--foreground);
   border-radius: 999px;
   background: #fff;
   content: "";
@@ -880,7 +872,7 @@
 }
 
 .work-record-gantt-empty-track:focus-visible {
-  outline: 2px solid #176c58;
+  outline: 2px solid var(--foreground);
   outline-offset: -3px;
 }
 
@@ -1211,7 +1203,7 @@
   display: block;
   height: 100%;
   border-radius: 0.125rem;
-  background: #187461;
+  background: var(--foreground);
 }
 
 .work-record-container-edit {

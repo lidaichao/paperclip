@@ -1,5 +1,5 @@
 import { l10n } from "../i18n";
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef, type ReactNode } from "react";
 import { Link, useParams, useNavigate, useLocation, Navigate } from "@/lib/router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PROJECT_COLORS, PROJECT_ICON_NAMES, isUuidLike, type BudgetPolicySummary } from "@paperclipai/shared";
@@ -53,6 +53,57 @@ import {
 type ProjectBaseTab = "list" | "plans" | "gantt" | "defects" | "my-work" | "plugin-operations" | "workspaces" | "configuration" | "budget";
 type ProjectPluginTab = `plugin:${string}`;
 type ProjectTab = ProjectBaseTab | ProjectPluginTab;
+
+const PROJECT_CONTEXT_ITEMS: Record<"list" | "configuration" | "budget", string[]> = {
+  list: ["全部任务"],
+  configuration: ["基础信息", "代码库", "执行工作区", "危险区域"],
+  budget: ["预算策略"],
+};
+
+function ProjectStaticWorkspace({ projectName, activeTab, topNavigation, railOpen, onRailOpenChange, children }: {
+  projectName: string;
+  activeTab: "list" | "configuration" | "budget";
+  topNavigation: ReactNode;
+  railOpen: boolean;
+  onRailOpenChange: (open: boolean) => void;
+  children: ReactNode;
+}) {
+  return <section className="@container h-[calc(100dvh-77px)]" data-testid="project-workspace-main" data-project-tab={activeTab}>
+    <div className="work-record-workspace" data-testid="work-record-workspace-grid" data-rail-open={railOpen ? "true" : "false"}>
+      <div className="work-record-rail-shell" data-testid="work-record-rail-shell">
+        <div className="work-record-rail-panel" aria-hidden={!railOpen}>
+          <aside className="work-record-rail-navigation h-full" aria-label={`${projectName} 项目导航`}>
+            <header className="flex min-h-14 items-center border-b px-2">
+              <h2 className="truncate text-lg font-bold" title={projectName}>{projectName}</h2>
+            </header>
+            <nav className="py-3" aria-label={activeTab === "list" ? "任务视图" : activeTab === "configuration" ? "配置目录" : "预算目录"}>
+              {PROJECT_CONTEXT_ITEMS[activeTab].map((item, index) => <div key={item} className={cn("work-record-pool-nav", index === 0 && "work-record-rail-active")}>
+                <span>{item}</span>
+                {index === 0 ? <span>{activeTab === "list" ? "项目内全部任务" : activeTab === "configuration" ? "项目设置" : "项目成本控制"}</span> : null}
+              </div>)}
+            </nav>
+          </aside>
+        </div>
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="outline"
+          className="absolute right-0 top-[48%] z-10 h-11 w-5 translate-x-full rounded-l-none rounded-r-md bg-muted p-0 text-muted-foreground"
+          aria-label={railOpen ? "收起项目导航" : "展开项目导航"}
+          aria-expanded={railOpen}
+          onClick={() => onRailOpenChange(!railOpen)}
+          data-testid="work-record-rail-toggle"
+        >
+          <span aria-hidden="true">{railOpen ? "‹" : "›"}</span>
+        </Button>
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden" data-testid="work-record-workspace-content">
+        <div className="h-14 min-h-14 border-b" data-testid="work-record-top-navigation">{topNavigation}</div>
+        <div className="min-h-0 flex-1 overflow-auto py-4 pr-1" data-testid="project-workspace-tab-content">{children}</div>
+      </div>
+    </div>
+  </section>;
+}
 
 function isProjectPluginTab(value: string | null): value is ProjectPluginTab {
   return typeof value === "string" && value.startsWith("plugin:");
@@ -361,6 +412,7 @@ export function ProjectDetail() {
   }, [location.search]);
   const activeTab = activeRouteTab ?? pluginTabFromSearch;
   const workRecordRouteActive = activeTab === "plans" || activeTab === "gantt" || activeTab === "defects";
+  const projectWorkspaceRouteActive = workRecordRouteActive || activeTab === "list" || activeTab === "configuration" || activeTab === "budget";
 
   useEffect(() => {
     setWorkRecordRailOpen(true);
@@ -832,7 +884,7 @@ export function ProjectDetail() {
   );
 
   return (
-    <div className={cn(workRecordRouteActive ? "space-y-3" : "space-y-6", workRecordRouteActive && "project-work-record-page")}>
+    <div className={cn(projectWorkspaceRouteActive ? "space-y-3" : "space-y-6", projectWorkspaceRouteActive && "project-work-record-page")}>
       {showLeftProjectNotice ? (
         <div className="flex items-center gap-3 border border-yellow-300/35 bg-yellow-300/10 px-3 py-2 text-sm text-yellow-900 dark:text-yellow-100">
           <p className="min-w-0 flex-1">
@@ -866,7 +918,7 @@ export function ProjectDetail() {
           </button>
         </div>
       ) : null}
-      {!workRecordRouteActive ? <div className="flex items-start gap-3">
+      {!projectWorkspaceRouteActive ? <div className="flex items-start gap-3">
         <div className="h-7 flex items-center">
           <ProjectTilePicker
             color={project.color ?? null}
@@ -910,7 +962,7 @@ export function ProjectDetail() {
         </div>
       </div> : null}
 
-      {!workRecordRouteActive ? <SummarySlotCard
+      {!projectWorkspaceRouteActive ? <SummarySlotCard
         companyId={resolvedCompanyId}
         scopeKind="project"
         scopeId={project.id}
@@ -918,7 +970,7 @@ export function ProjectDetail() {
         description={l10n("local.summarizer_keeps_the_latest_project_status_ne_6420c795")}
       /> : null}
 
-      {!workRecordRouteActive ? <PluginSlotOutlet
+      {!projectWorkspaceRouteActive ? <PluginSlotOutlet
         slotTypes={["toolbarButton", "contextMenuItem"]}
         entityType="project"
         context={{
@@ -934,7 +986,7 @@ export function ProjectDetail() {
         missingBehavior="placeholder"
       /> : null}
 
-      {!workRecordRouteActive ? <PluginLauncherOutlet
+      {!projectWorkspaceRouteActive ? <PluginLauncherOutlet
         placementZones={["toolbarButton"]}
         entityType="project"
         context={{
@@ -949,13 +1001,33 @@ export function ProjectDetail() {
         itemClassName="inline-flex"
       /> : null}
 
-      {!workRecordRouteActive ? projectTabBar : null}
+      {!projectWorkspaceRouteActive ? projectTabBar : null}
 
-
-
-      {activeTab === "list" && project?.id && resolvedCompanyId && (
-        <ProjectIssuesList projectId={project.id} companyId={resolvedCompanyId} />
-      )}
+      {(activeTab === "list" || activeTab === "configuration" || activeTab === "budget") && project?.id && resolvedCompanyId ? (
+        <ProjectStaticWorkspace
+          projectName={project.name}
+          activeTab={activeTab}
+          topNavigation={projectTabBar}
+          railOpen={workRecordRailOpen}
+          onRailOpenChange={setWorkRecordRailOpen}
+        >
+          {activeTab === "list" ? <ProjectIssuesList projectId={project.id} companyId={resolvedCompanyId} /> : null}
+          {activeTab === "configuration" ? <ProjectProperties
+            project={project}
+            onUpdate={(data) => updateProject.mutate(data)}
+            onFieldUpdate={updateProjectField}
+            getFieldSaveState={(field) => fieldSaveStates[field] ?? "idle"}
+            onArchive={(archived) => archiveProject.mutate(archived)}
+            archivePending={archiveProject.isPending}
+          /> : null}
+          {activeTab === "budget" ? <BudgetPolicyCard
+            summary={projectBudgetSummary}
+            variant="plain"
+            isSaving={budgetMutation.isPending}
+            onSave={(amount) => budgetMutation.mutate(amount)}
+          /> : null}
+        </ProjectStaticWorkspace>
+      ) : null}
 
       {activeTab === "plans" && project?.id && resolvedCompanyId && (
         <ProjectWorkRecords projectId={project.id} projectName={project.name} topNavigation={projectTabBar} companyId={resolvedCompanyId} kind="plan" railOpen={workRecordRailOpen} onRailOpenChange={setWorkRecordRailOpen} onNavigationGuardChange={(state) => { workRecordNavigationRef.current = state; }} />
@@ -992,30 +1064,6 @@ export function ProjectDetail() {
         ) : (
           <p className="text-sm text-muted-foreground">{l10n("local.loading_workspaces_3f9adb0f")}</p>
         )
-      ) : null}
-
-      {activeTab === "configuration" && (
-        <div className="max-w-4xl">
-          <ProjectProperties
-            project={project}
-            onUpdate={(data) => updateProject.mutate(data)}
-            onFieldUpdate={updateProjectField}
-            getFieldSaveState={(field) => fieldSaveStates[field] ?? "idle"}
-            onArchive={(archived) => archiveProject.mutate(archived)}
-            archivePending={archiveProject.isPending}
-          />
-        </div>
-      )}
-
-      {activeTab === "budget" && resolvedCompanyId ? (
-        <div className="max-w-3xl">
-          <BudgetPolicyCard
-            summary={projectBudgetSummary}
-            variant="plain"
-            isSaving={budgetMutation.isPending}
-            onSave={(amount) => budgetMutation.mutate(amount)}
-          />
-        </div>
       ) : null}
 
       {activePluginTab && (

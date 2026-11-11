@@ -282,6 +282,48 @@ describe("ProjectDetail", () => {
   });
 
   it.each([
+    ["/projects/project-1/issues", "list"],
+    ["/projects/project-1/configuration", "configuration"],
+    ["/projects/project-1/budget", "budget"],
+  ] as const)("renders the shared project workspace shell for %s", async (pathname, tab) => {
+    mockLocation.pathname = pathname;
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    await act(async () => {
+      root = createRoot(container);
+      root.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.querySelector('[data-testid="project-workspace-main"]')?.getAttribute("data-project-tab")).toBe(tab);
+    expect(container.querySelectorAll('[data-testid="work-record-top-navigation"]')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="work-record-workspace-grid"]')?.getAttribute("data-rail-open")).toBe("true");
+  });
+
+  it("preserves the project rail state from tasks into plan", async () => {
+    mockLocation.pathname = "/projects/project-1/issues";
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    await act(async () => {
+      root = createRoot(container);
+      root.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await act(async () => (container.querySelector('[data-testid="work-record-rail-toggle"]') as HTMLButtonElement).click());
+    expect(container.querySelector('[data-testid="work-record-workspace-grid"]')?.getAttribute("data-rail-open")).toBe("false");
+
+    mockLocation.pathname = "/projects/project-1/plans";
+    await act(async () => root?.render(<QueryClientProvider client={queryClient}><ProjectDetail /></QueryClientProvider>));
+    expect((mockProjectWorkRecords.mock.calls.at(-1)?.[0] as { railOpen: boolean }).railOpen).toBe(false);
+  });
+
+  it.each([
     ["/projects/project-1/plans", "plan"],
     ["/projects/project-1/defects", "defect"],
   ] as const)("renders stable plan and defect entries for %s", async (pathname, kind) => {
