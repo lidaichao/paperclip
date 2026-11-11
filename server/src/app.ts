@@ -1145,9 +1145,16 @@ export async function createApp(
   });
   const runWorkRecordTick = createNonOverlappingWorkRecordTick(async () => {
     const startedAt = Date.now();
+    let nativeAdoption = { adoptedCount: 0, projectCount: 0 };
+    try {
+      nativeAdoption = await workRecords.adoptUnlinkedNativeIssuesPage(100);
+    } catch (err) {
+      logger.error({ err }, "Failed to adopt native issues into work records");
+    }
     const tick = await runWorkflowTick();
     logger.debug({
       durationMs: Date.now() - startedAt,
+      nativeAdoption,
       candidates: {
         records: { scanned: tick.candidates.records.processed, succeeded: tick.candidates.records.succeeded, failures: tick.candidates.records.failures },
         qualityCycles: { scanned: tick.candidates.qualityCycles.processed, succeeded: tick.candidates.qualityCycles.succeeded, failures: tick.candidates.qualityCycles.failures },

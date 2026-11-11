@@ -10,6 +10,9 @@ export const HTTP_LOG_REDACT_PATHS = [
   'req.headers["x-csrf-token"]',
   'req.headers["x-xsrf-token"]',
   'req.headers["x-api-key"]',
+  // Short-lived ordinary-session write capability. It authorizes task and
+  // comment mutations and must never be emitted by request logging.
+  'req.headers["x-paperclip-session-write"]',
   // Runtime GitHub capabilities authorize credential acquisition for a live run.
   'req.headers["x-paperclip-github-capability"]',
   // Telegram's optional webhook verification header is a reusable bearer

@@ -790,6 +790,150 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     };
   }
 
+  async function adoptNativeIssues(companyId: string, projectId: string) {
+    await assertProject(companyId, projectId);
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${workRecordProjectLockKey(companyId, projectId)}, 0))`);
+
+      const nativeIssues = await tx.select().from(issues).where(and(
+        eq(issues.companyId, companyId),
+        eq(issues.projectId, projectId),
+        eq(issues.originKind, "manual"),
+        isNull(issues.hiddenAt),
+      )).orderBy(asc(issues.createdAt));
+      if (!nativeIssues.length) return { adoptedCount: 0, existingCount: 0 };
+
+      const issueIds = nativeIssues.map((issue) => issue.id);
+      const existingLinks = await tx.select({
+        issueId: workRecordIssueLinks.issueId,
+        recordId: workRecordIssueLinks.recordId,
+      }).from(workRecordIssueLinks).where(and(
+        eq(workRecordIssueLinks.companyId, companyId),
+        eq(workRecordIssueLinks.projectId, projectId),
+        eq(workRecordIssueLinks.purpose, "primary"),
+        inArray(workRecordIssueLinks.issueId, issueIds),
+      ));
+      const recordIdByIssueId = new Map(existingLinks.map((link) => [link.issueId, link.recordId]));
+      const adoptedIssueIds = new Set<string>();
+
+      for (const nativeIssue of nativeIssues) {
+        if (recordIdByIssueId.has(nativeIssue.id)) continue;
+        const [allocated] = await tx.insert(workRecordCounters).values({
+          companyId,
+          projectId,
+          kind: "plan",
+          nextNumber: 2,
+        }).onConflictDoUpdate({
+          target: [workRecordCounters.companyId, workRecordCounters.projectId, workRecordCounters.kind],
+          set: {
+            nextNumber: sql`${workRecordCounters.nextNumber} + 1`,
+            updatedAt: new Date(),
+          },
+        }).returning({ recordNumber: sql<number>`${workRecordCounters.nextNumber} - 1` });
+        const [record] = await tx.insert(workRecords).values({
+          companyId,
+          projectId,
+          kind: "plan",
+          recordNumber: allocated.recordNumber,
+          title: nativeIssue.title,
+          description: nativeIssue.description,
+          priority: nativeIssue.priority as WorkRecordRow["priority"],
+          assigneeAgentId: nativeIssue.assigneeAgentId,
+          businessStatus: nativeIssue.status,
+          statusVersion: nativeIssue.statusVersion,
+          dispatchState: "linked",
+          dispatchRound: 0,
+          createdByAgentId: nativeIssue.createdByAgentId,
+          createdByUserId: nativeIssue.createdByUserId,
+        }).returning();
+        await tx.insert(workRecordIssueLinks).values({
+          companyId,
+          projectId,
+          recordId: record.id,
+          issueId: nativeIssue.id,
+          purpose: "primary",
+          dispatchRound: 0,
+        });
+        await tx.insert(workRecordExecutionProjections).values({
+          companyId,
+          projectId,
+          recordId: record.id,
+          issueId: nativeIssue.id,
+          issueStatus: nativeIssue.status,
+          issueStatusVersion: nativeIssue.statusVersion,
+          lastRunId: nativeIssue.executionRunId,
+          syncState: "current",
+        });
+        recordIdByIssueId.set(nativeIssue.id, record.id);
+        adoptedIssueIds.add(nativeIssue.id);
+      }
+
+      for (const nativeIssue of nativeIssues) {
+        if (!adoptedIssueIds.has(nativeIssue.id) || !nativeIssue.parentId) continue;
+        const recordId = recordIdByIssueId.get(nativeIssue.id);
+        const parentRecordId = recordIdByIssueId.get(nativeIssue.parentId);
+        if (!recordId || !parentRecordId || recordId === parentRecordId) continue;
+        await tx.update(workRecords).set({ parentRecordId, updatedAt: new Date() }).where(and(
+          eq(workRecords.companyId, companyId),
+          eq(workRecords.projectId, projectId),
+          eq(workRecords.id, recordId),
+        ));
+      }
+
+      const relations = await tx.select().from(issueRelations).where(and(
+        eq(issueRelations.companyId, companyId),
+        eq(issueRelations.type, "blocks"),
+        inArray(issueRelations.issueId, issueIds),
+        inArray(issueRelations.relatedIssueId, issueIds),
+      ));
+      const dependencyRows = relations.flatMap((relation) => {
+        const predecessorRecordId = recordIdByIssueId.get(relation.issueId);
+        const successorRecordId = recordIdByIssueId.get(relation.relatedIssueId);
+        return predecessorRecordId && successorRecordId && predecessorRecordId !== successorRecordId
+          ? [{ companyId, projectId, predecessorRecordId, successorRecordId }]
+          : [];
+      });
+      if (dependencyRows.length) {
+        await tx.insert(workRecordDependencies).values(dependencyRows).onConflictDoNothing();
+      }
+
+      return {
+        adoptedCount: adoptedIssueIds.size,
+        existingCount: existingLinks.length,
+      };
+    });
+  }
+
+  async function adoptUnlinkedNativeIssuesPage(limit = 100) {
+    const candidates = await db.select({
+      companyId: issues.companyId,
+      projectId: issues.projectId,
+    }).from(issues).leftJoin(workRecordIssueLinks, and(
+      eq(workRecordIssueLinks.companyId, issues.companyId),
+      eq(workRecordIssueLinks.issueId, issues.id),
+      eq(workRecordIssueLinks.purpose, "primary"),
+    )).where(and(
+      eq(issues.originKind, "manual"),
+      isNull(issues.hiddenAt),
+      isNotNull(issues.projectId),
+      isNull(workRecordIssueLinks.id),
+    )).orderBy(asc(issues.createdAt)).limit(Math.max(1, Math.min(limit, 500)));
+    const projectScopes = new Map<string, { companyId: string; projectId: string }>();
+    for (const candidate of candidates) {
+      if (!candidate.projectId) continue;
+      projectScopes.set(`${candidate.companyId}:${candidate.projectId}`, {
+        companyId: candidate.companyId,
+        projectId: candidate.projectId,
+      });
+    }
+    let adoptedCount = 0;
+    for (const scope of projectScopes.values()) {
+      const result = await adoptNativeIssues(scope.companyId, scope.projectId);
+      adoptedCount += result.adoptedCount;
+    }
+    return { adoptedCount, projectCount: projectScopes.size };
+  }
+
   async function create(companyId: string, input: CreateWorkRecord, actor: Actor) {
     const hasDefectDetails = input.defectSeverity != null || input.foundInVersionId != null;
     if (input.kind !== "defect" && hasDefectDetails) {
@@ -2226,6 +2370,8 @@ export function workRecordService(db: Db, options: WorkRecordServiceOptions = {}
     deleteIteration,
     list,
     listPage,
+    adoptNativeIssues,
+    adoptUnlinkedNativeIssuesPage,
     create,
     update,
     mutateDependency,

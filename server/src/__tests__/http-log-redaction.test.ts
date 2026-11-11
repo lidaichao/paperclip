@@ -318,6 +318,7 @@ describe("HTTP logger redaction", () => {
     expect(HTTP_LOG_REDACT_PATHS).toContain('req.headers["x-csrf-token"]');
     expect(HTTP_LOG_REDACT_PATHS).toContain('req.headers["x-xsrf-token"]');
     expect(HTTP_LOG_REDACT_PATHS).toContain('req.headers["x-api-key"]');
+    expect(HTTP_LOG_REDACT_PATHS).toContain('req.headers["x-paperclip-session-write"]');
     expect(HTTP_LOG_REDACT_PATHS).toContain(
       'req.headers["x-telegram-bot-api-secret-token"]',
     );
