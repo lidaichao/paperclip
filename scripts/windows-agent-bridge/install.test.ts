@@ -32,6 +32,8 @@ describe("installation safety", () => {
   it("installs a self-contained hashed runtime instead of pointing startup at a worktree", async () => {
     const install = await readFile(path.join(root, "install.ps1"), "utf8");
     expect(install).toContain("Get-FileHash");
+    expect(install).toContain("$bridgeHash");
+    expect(install).toContain("$launcherHash-$bridgeHash-$supervisorHash");
     expect(install).toContain("runtime-config.json");
     expect(install).toContain("runtime");
     expect(install).toContain("Copy-Item");

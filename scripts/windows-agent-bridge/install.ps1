@@ -44,8 +44,9 @@ foreach ($required in @($launcherSource, $bridgeSource, $supervisorSource) + ($r
 }
 
 $launcherHash = (Get-FileHash -LiteralPath $launcherSource -Algorithm SHA256).Hash.Substring(0, 12).ToLowerInvariant()
+$bridgeHash = (Get-FileHash -LiteralPath $bridgeSource -Algorithm SHA256).Hash.Substring(0, 12).ToLowerInvariant()
 $supervisorHash = (Get-FileHash -LiteralPath $supervisorSource -Algorithm SHA256).Hash.Substring(0, 12).ToLowerInvariant()
-$runtimeDir = Join-Path (Join-Path $bridgeConfig.workerHome 'runtime') "$launcherHash-$supervisorHash"
+$runtimeDir = Join-Path (Join-Path $bridgeConfig.workerHome 'runtime') "$launcherHash-$bridgeHash-$supervisorHash"
 $runtimeDist = Join-Path $runtimeDir 'dist'
 New-Item -ItemType Directory -Path $runtimeDist -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run-hidden.ps1') -Destination (Join-Path $runtimeDir 'run-hidden.ps1') -Force
