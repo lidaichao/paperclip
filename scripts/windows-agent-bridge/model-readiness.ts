@@ -10,12 +10,24 @@ export async function assertPrivateModelAuthReady(config: BridgeConfig, agent: B
   if (!(await lstat(config.workerHome)).isDirectory()) throw new Error("private worker home is invalid");
   const sharedCodex = config.modelAuthMode === "shared_user_codex";
   const sharedCursor = config.modelAuthMode === "shared_user_cursor";
+  const sharedHermes = config.modelAuthMode === "shared_user_hermes";
   if (sharedCodex && agent.adapterType !== "codex_local") throw new Error("shared user model login is Codex only");
   if (sharedCursor && agent.adapterType !== "cursor") throw new Error("shared user model login is Cursor only");
+  if (sharedHermes && agent.adapterType !== "hermes_local") throw new Error("shared user model login is Hermes only");
+  if (agent.adapterType === "hermes_local") {
+    if (!sharedHermes || !config.hermesHome) throw new Error("Hermes member profile is not configured");
+    const profile = await lstat(config.hermesHome).catch(() => null);
+    if (!profile?.isDirectory() || profile.isSymbolicLink()) throw new Error("Hermes member profile is missing or linked");
+    for (const name of ["config.yaml", ".env"]) {
+      const file = await lstat(path.join(config.hermesHome, name)).catch(() => null);
+      if (!file?.isFile() || file.isSymbolicLink()) throw new Error(`Hermes member profile ${name} is missing or linked`);
+    }
+    return;
+  }
   const privateDirectory = sharedCodex ? path.join(userHome, ".codex") : sharedCursor
     ? path.join(userHome, ".cursor") : agent.adapterType === "codex_local"
     ? path.join(config.workerHome, "codex-home")
-    : path.join(config.workerHome, "home", ".cursor");
+    : path.join(config.workerHome, "cursor-config");
   const privateFile = agent.adapterType === "codex_local"
     ? path.join(privateDirectory, "auth.json")
     : path.join(privateDirectory, "cli-config.json");
@@ -51,6 +63,23 @@ export async function assertPrivateModelAuthReady(config: BridgeConfig, agent: B
       typeof auth[key] === "string" && Boolean((auth[key] as string).trim()) ||
       key === "userId" && typeof auth[key] === "number")) {
       throw new Error("member Cursor login is missing from private worker home");
+    }
+    if (!sharedCursor) {
+      const credentialFile = path.join(config.workerHome, "appdata", "Cursor", "auth.json");
+      const credentialStat = await lstat(credentialFile).catch(() => null);
+      if (!credentialStat?.isFile() || credentialStat.isSymbolicLink() ||
+        !(await realpath(credentialFile)).startsWith(`${home}${path.sep}`)) {
+        throw new Error("member Cursor credential is missing from private worker home");
+      }
+      let credential: unknown;
+      try { credential = JSON.parse(await readFile(credentialFile, "utf8")); }
+      catch { throw new Error("member Cursor credential is invalid"); }
+      const credentialRecord = credential && typeof credential === "object" && !Array.isArray(credential)
+        ? credential as Record<string, unknown> : null;
+      if (!credentialRecord || !["accessToken", "refreshToken"].some((key) =>
+        typeof credentialRecord[key] === "string" && Boolean((credentialRecord[key] as string).trim()))) {
+        throw new Error("member Cursor credential is invalid");
+      }
     }
   }
 }

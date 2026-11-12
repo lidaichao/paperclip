@@ -23,6 +23,13 @@ export interface AliceClientLogger {
   warn(message: string): void;
 }
 
+/** A received 4xx response is a definite rejection, unlike a lost response or timeout. */
+export class PaperclipHttpResponseError extends Error {
+  constructor(readonly status: number, readonly code?: string) {
+    super(`Paperclip API rejected the write (HTTP ${status}${code ? `, ${code}` : ""})`);
+  }
+}
+
 export interface AliceClientOptions {
   apiBase: string;
   token: string;
@@ -264,12 +271,18 @@ export class AliceClient {
       });
       if (!response.ok) {
         this.#logger.warn(`Alice API ${pathname} returned HTTP ${response.status}`);
+        const errorBody = await response.json().catch(() => null);
         if (response.status === 409 && pathname.endsWith("/finish")) {
-          const body = await response.json().catch(() => null);
-          if (body && typeof body === "object" && "error" in body &&
-            body.error === "Cancelled or expired run cannot report success") {
+          if (errorBody && typeof errorBody === "object" && "error" in errorBody &&
+            errorBody.error === "Cancelled or expired run cannot report success") {
             throw new Error("Alice API finish rejected: Cancelled or expired run cannot report success (HTTP 409)");
           }
+        }
+        if (response.status >= 400 && response.status < 500) {
+          const code = errorBody && typeof errorBody === "object" && "code" in errorBody &&
+            typeof errorBody.code === "string" && /^[A-Z][A-Z0-9_]{0,79}$/.test(errorBody.code)
+            ? errorBody.code : undefined;
+          throw new PaperclipHttpResponseError(response.status, code);
         }
         throw new Error(`Alice API request failed with HTTP ${response.status}`);
       }

@@ -1,4 +1,4 @@
-export type BridgeAdapterType = "codex_local" | "cursor";
+export type BridgeAdapterType = "codex_local" | "cursor" | "hermes_local";
 
 export interface BridgeAgentConfig {
   remoteAgentId: string;
@@ -15,7 +15,8 @@ export interface BridgeConfig {
   schemaVersion: 3;
   deviceId: string;
   workerHome: string;
-  modelAuthMode?: "private" | "shared_user_codex" | "shared_user_cursor";
+  modelAuthMode?: "private" | "shared_user_codex" | "shared_user_cursor" | "shared_user_hermes";
+  hermesHome?: string;
   apiBase: string;
   localProxyUrl?: string;
   gbrainMcpUrl?: string;

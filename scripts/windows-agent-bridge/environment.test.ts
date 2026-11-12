@@ -1,6 +1,8 @@
 import path from "node:path";
+import os from "node:os";
+import { mkdtemp, readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { assertWorkerEnvironment, buildLocalAdapterConfig, buildWorkerEnvironment } from "./environment.js";
+import { assertWorkerEnvironment, buildLocalAdapterConfig, buildWorkerEnvironment, writeHermesManagedCredential } from "./environment.js";
 import { resolveCursorSkillsHome } from "../../packages/adapters/cursor-local/src/server/skills.js";
 import type { BridgeConfig } from "./types.js";
 
@@ -98,6 +100,38 @@ describe("single-member worker environment", () => {
     expect(resolveCursorSkillsHome(localConfig)).toBe(path.join(workerHome, "home", ".cursor", "skills"));
     expect(() => assertWorkerEnvironment({ ...worker, CURSOR_CONFIG_DIR: path.join(workerHome, "home") }, shared))
       .toThrow("Cursor config directory is mismatched");
+  });
+  it("exposes only the selected Hermes profile while retaining the member Paperclip identity", () => {
+    const profile = path.join(path.resolve("."), "hermes", "profiles", "luna");
+    const hermesAgent = { ...config.agents[0], adapterType: "hermes_local" as const,
+      localAdapterConfig: { cwd: "H:/AIagent/Luna", command: "C:/tools/hermes.exe",
+        model: "tencent-deepseek-v4.1-flash" } };
+    const shared: BridgeConfig = { ...config, modelAuthMode: "shared_user_hermes",
+      hermesHome: profile, agents: [hermesAgent] };
+    const worker = buildWorkerEnvironment({ GBRAIN_LUNA_TOKEN: "own-only",
+      GBRAIN_RABBIT_TOKEN: "other", HERMES_HOME: "C:/other-profile" }, shared);
+    expect(worker.HERMES_HOME).toBe(profile);
+    expect(worker.GBRAIN_RABBIT_TOKEN).toBeUndefined();
+    expect(() => assertWorkerEnvironment(worker, shared)).not.toThrow();
+    expect(() => assertWorkerEnvironment({ ...worker, HERMES_HOME: "C:/other-profile" }, shared))
+      .toThrow("Hermes profile identity is mismatched");
+    expect(worker.HERMES_MANAGED_DIR).toBe(path.join(workerHome, "hermes-managed"));
+    expect(buildLocalAdapterConfig(hermesAgent, shared, worker).env).toEqual({
+      HERMES_HOME: profile, HERMES_MANAGED_DIR: path.join(workerHome, "hermes-managed"),
+    });
+    expect(() => assertWorkerEnvironment({ ...worker, HERMES_MANAGED_DIR: profile }, shared))
+      .toThrow("Hermes managed identity is mismatched");
+  });
+  it("overlays only the current member GBrain token for Hermes and rotates it on restart", async () => {
+    const home = await mkdtemp(path.join(os.tmpdir(), "ada-hermes-managed-"));
+    const hermesAgent = { ...config.agents[0], adapterType: "hermes_local" as const };
+    const shared: BridgeConfig = { ...config, workerHome: home, agents: [hermesAgent],
+      modelAuthMode: "shared_user_hermes", hermesHome: path.join(home, "profiles", "luna") };
+    await writeHermesManagedCredential(shared, "ada-test-one");
+    await writeHermesManagedCredential(shared, "ada-test-two");
+    expect(await readFile(path.join(home, "hermes-managed", ".env"), "utf8"))
+      .toBe("GBRAIN_AGENT_TOKEN=ada-test-two\n");
+    await expect(writeHermesManagedCredential(shared, "bad\nvalue")).rejects.toThrow("invalid");
   });
 
   it("keeps a privately logged-in Cursor agent's auth and session data inside its worker home", () => {

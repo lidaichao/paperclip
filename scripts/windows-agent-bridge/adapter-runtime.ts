@@ -6,6 +6,7 @@ import type {
 } from "../../packages/adapter-utils/src/types.js";
 import { execute as executeCodex } from "../../packages/adapters/codex-local/src/server/index.js";
 import { execute as executeCursor } from "../../packages/adapters/cursor-local/src/server/index.js";
+import { execute as executeHermes } from "../../packages/adapters/hermes/src/server/index.js";
 import type {
   BridgeInboxItem,
   LocalAgentRuntimeConfig,
@@ -18,6 +19,7 @@ export type LocalAdapterExecute = (ctx: AdapterExecutionContext) => Promise<Adap
 export interface AdapterRuntimeDependencies {
   codexExecute?: LocalAdapterExecute;
   cursorExecute?: LocalAdapterExecute;
+  hermesExecute?: LocalAdapterExecute;
 }
 
 export interface LocalAgentRunInput {
@@ -89,7 +91,7 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
       : input.reviewContext !== undefined || input.issue.assigneeAgentId !== input.remoteAgentId)) {
     throw new Error("refusing to run a task assigned to a different Alice identity or review lease");
   }
-  if (input.localAgent.adapterType !== "codex_local" && input.localAgent.adapterType !== "cursor") {
+  if (input.localAgent.adapterType !== "codex_local" && input.localAgent.adapterType !== "cursor" && input.localAgent.adapterType !== "hermes_local") {
     throw new Error("unsupported local adapter type");
   }
 
@@ -106,7 +108,9 @@ export async function runLocalAgent(input: LocalAgentRunInput): Promise<LocalAge
 
   const execute = input.localAgent.adapterType === "codex_local"
     ? input.dependencies?.codexExecute ?? executeCodex
-    : input.dependencies?.cursorExecute ?? executeCursor;
+    : input.localAgent.adapterType === "cursor"
+      ? input.dependencies?.cursorExecute ?? executeCursor
+      : input.dependencies?.hermesExecute ?? executeHermes;
   const onLog = async (stream: "stdout" | "stderr", chunk: string) => {
     await input.onLog?.(stream, redactToken(chunk, input.token));
   };

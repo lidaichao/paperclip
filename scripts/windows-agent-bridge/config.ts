@@ -8,6 +8,7 @@ const ROOT_KEYS = new Set([
   "deviceId",
   "workerHome",
   "modelAuthMode",
+  "hermesHome",
   "apiBase",
   "localProxyUrl",
   "gbrainMcpUrl",
@@ -35,6 +36,7 @@ const LOCAL_ADAPTER_KEYS = new Set([
   "instructionsFilePath", "instructionsRootPath", "instructionsEntryFile",
   "instructionsBundleMode", "modelReasoningEffort",
   "dangerouslyBypassApprovalsAndSandbox",
+  "provider", "toolsets", "maxTurnsPerRun", "persistSession", "quiet",
   "extraArgs",
 ]);
 
@@ -134,11 +136,15 @@ function parseLocalAdapterConfig(value: unknown, adapterType: BridgeAdapterType,
       throw new Error(`${label}.${key} must be an absolute local path`);
     }
   }
-  if (adapterType === "cursor") requiredString(config, "model", label);
+  if (adapterType === "cursor" || adapterType === "hermes_local") requiredString(config, "model", label);
+  if (adapterType === "cursor" && config.mode !== undefined &&
+    !["ask", "plan"].includes(String(config.mode))) {
+    throw new Error(`${label}.mode must be ask or plan; omit it for Cursor agent mode`);
+  }
   const extraArgs = config.extraArgs;
   const permittedArgs = adapterType === "cursor"
     ? ["--trust", "--trust,--auto-review"]
-    : ["--ignore-user-config,--ephemeral"];
+    : adapterType === "codex_local" ? ["--ignore-user-config,--ephemeral"] : [];
   if (extraArgs !== undefined &&
     (!Array.isArray(extraArgs) || !permittedArgs.includes(extraArgs.join(",")))) {
     throw new Error(`${label}.extraArgs must match the approved ${adapterType} arguments`);
@@ -151,8 +157,8 @@ function parseAgent(value: unknown, index: number): BridgeAgentConfig {
   const record = asRecord(value, label);
   assertKnownKeys(record, AGENT_KEYS, label);
   const adapterType = requiredString(record, "adapterType", label);
-  if (adapterType !== "codex_local" && adapterType !== "cursor") {
-    throw new Error(`${label}.adapterType must be codex_local or cursor`);
+  if (adapterType !== "codex_local" && adapterType !== "cursor" && adapterType !== "hermes_local") {
+    throw new Error(`${label}.adapterType must be codex_local, cursor or hermes_local`);
   }
   if (record.maxConcurrentRuns !== 1) {
     throw new Error(`${label}.maxConcurrentRuns must be exactly 1`);
@@ -230,8 +236,8 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
     throw new Error("gbrainEnvRef must name one member-specific GBRAIN_*_TOKEN variable");
   }
   const modelAuthMode = record.modelAuthMode ?? "private";
-  if (modelAuthMode !== "private" && modelAuthMode !== "shared_user_codex" && modelAuthMode !== "shared_user_cursor") {
-    throw new Error("modelAuthMode must be private, shared_user_codex or shared_user_cursor");
+  if (modelAuthMode !== "private" && modelAuthMode !== "shared_user_codex" && modelAuthMode !== "shared_user_cursor" && modelAuthMode !== "shared_user_hermes") {
+    throw new Error("modelAuthMode must be private, shared_user_codex, shared_user_cursor or shared_user_hermes");
   }
   if (modelAuthMode === "shared_user_codex" && agents[0].adapterType !== "codex_local") {
     throw new Error("shared_user_codex is only supported for codex_local agents");
@@ -239,12 +245,35 @@ export async function loadBridgeConfig(configPath: string): Promise<BridgeConfig
   if (modelAuthMode === "shared_user_cursor" && agents[0].adapterType !== "cursor") {
     throw new Error("shared_user_cursor is only supported for cursor agents");
   }
+  if (agents[0].adapterType === "hermes_local" && modelAuthMode !== "shared_user_hermes") {
+    throw new Error("hermes_local requires shared_user_hermes with a member profile");
+  }
+  if (modelAuthMode === "shared_user_hermes" && agents[0].adapterType !== "hermes_local") {
+    throw new Error("shared_user_hermes is only supported for hermes_local agents");
+  }
+  let hermesHome: string | undefined;
+  if (modelAuthMode === "shared_user_hermes") {
+    const candidate = requiredString(record, "hermesHome", "config");
+    if (!path.isAbsolute(candidate) && !path.win32.isAbsolute(candidate)) {
+      throw new Error("hermesHome must be an absolute member profile path");
+    }
+    hermesHome = path.resolve(candidate);
+    const profileName = agents[0].localAgentName === "卡罗尔"
+      ? "carroll" : agents[0].localAgentName.toLowerCase();
+    if (path.basename(path.dirname(hermesHome)).toLowerCase() !== "profiles" ||
+      path.basename(hermesHome).toLowerCase() !== profileName) {
+      throw new Error("hermesHome must point to this member's Hermes profile");
+    }
+  } else if (record.hermesHome !== undefined) {
+    throw new Error("hermesHome is only allowed for shared_user_hermes");
+  }
 
   return {
     schemaVersion: 3,
     deviceId: requiredUuid(record, "deviceId", "config"),
     workerHome,
     modelAuthMode,
+    ...(hermesHome ? { hermesHome } : {}),
     apiBase,
     localProxyUrl: record.localProxyUrl === undefined ? undefined :
       normalizeLocalProxyUrl(requiredString(record, "localProxyUrl", "config")),

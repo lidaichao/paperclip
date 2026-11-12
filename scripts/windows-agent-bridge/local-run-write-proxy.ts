@@ -3,7 +3,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { mkdir, open, readFile, rename } from "node:fs/promises";
 import path from "node:path";
 import type { AddressInfo } from "node:net";
-import type { AliceClient, LocalReviewContext, LocalRunClaim, LocalRunLease } from "./paperclip-client.js";
+import { PaperclipHttpResponseError, type AliceClient, type LocalReviewContext,
+  type LocalRunClaim, type LocalRunLease } from "./paperclip-client.js";
 
 type LocalWriteKind = "comment" | "child_complete" | "defect_repair_handoff" | "defect_qa_verdict" | "po_verdict" |
   "completion_review_handoff" | "review_decision" | "subtask_create";
@@ -149,6 +150,21 @@ export class LocalCommentIntentStore {
     if (!saved.confirmed) { saved.confirmed = true; await this.save(current); }
   }
 
+  /** A received 4xx response proves this write was rejected; do not leave a false ambiguous intent. */
+  async rejected(intent: PendingLocalWriteIntent): Promise<void> {
+    const current = await this.read();
+    if (!current || !("schemaVersion" in current)) throw new Error("local write intent changed before rejection");
+    const saved = current.intents.find((entry) => entry.clientRequestId === intent.clientRequestId);
+    if (!saved || saved.confirmed || current.runId !== intent.runId || current.issueId !== intent.issueId ||
+      current.agentId !== intent.agentId || current.deviceId !== intent.deviceId ||
+      saved.kind !== intent.kind || saved.requestDigest !== intent.requestDigest ||
+      saved.canonicalContent !== intent.canonicalContent) {
+      throw new Error("local write intent changed before rejection");
+    }
+    current.intents = current.intents.filter((entry) => entry.clientRequestId !== intent.clientRequestId);
+    await this.save(current);
+  }
+
   async assertNoPending(): Promise<void> {
     const saved = await this.read();
     if (!saved) return;
@@ -218,6 +234,13 @@ export async function startLocalRunWriteProxy(input: {
   const pending = (kind: LocalWriteKind, canonicalContent: string, requestId?: string) =>
     input.intentStore.pending({ kind, runId: input.claim.runId, issueId: input.claim.issueId,
       agentId: input.claim.agentId, deviceId: input.deviceId, canonicalContent, requestId });
+  const reportWriteFailure = async (error: unknown, intent: PendingLocalWriteIntent): Promise<never> => {
+    if (error instanceof PaperclipHttpResponseError) {
+      await input.intentStore.rejected(intent);
+      throw error;
+    }
+    throw new UnresolvedCommentIntentError(intent.clientRequestId);
+  };
   const server = createServer(async (req, res) => {
     const bearer = req.headers.authorization?.replace(/^Bearer /i, "") ?? "";
     const supplied = Buffer.from(bearer);
@@ -279,8 +302,8 @@ export async function startLocalRunWriteProxy(input: {
             saved = decision.outcome === "accepted"
               ? await input.client.acceptLocalCompletionReview!(lease, command, input.signal)
               : await input.client.rejectLocalCompletionReview!(lease, command, input.signal);
-          } catch {
-            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          } catch (error) {
+            await reportWriteFailure(error, intent);
           }
           await input.intentStore.confirmed(intent);
           reviewDecisionConfirmed = true;
@@ -342,8 +365,8 @@ export async function startLocalRunWriteProxy(input: {
               evidenceRefs: decision.evidenceRefs as string[],
               clientRequestId: intent.clientRequestId,
             }, input.signal);
-          } catch {
-            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          } catch (error) {
+            await reportWriteFailure(error, intent);
           }
           await input.intentStore.confirmed(intent);
           defectQaDecisionConfirmed = true;
@@ -400,8 +423,8 @@ export async function startLocalRunWriteProxy(input: {
               targetRecordIds: decision.targetRecordIds as string[],
               clientRequestId: intent.clientRequestId,
             }, input.signal);
-          } catch {
-            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          } catch (error) {
+            await reportWriteFailure(error, intent);
           }
           await input.intentStore.confirmed(intent);
           sourceDispositionConfirmed = true;
@@ -443,8 +466,8 @@ export async function startLocalRunWriteProxy(input: {
               summary: completion.summary as string,
               clientRequestId: intent.clientRequestId,
             }, input.signal);
-          } catch {
-            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          } catch (error) {
+            await reportWriteFailure(error, intent);
           }
           await input.intentStore.confirmed(intent);
           sourceDispositionConfirmed = true;
@@ -486,8 +509,8 @@ export async function startLocalRunWriteProxy(input: {
               summary: handoff.summary as string,
               clientRequestId: intent.clientRequestId,
             }, input.signal);
-          } catch {
-            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          } catch (error) {
+            await reportWriteFailure(error, intent);
           }
           await input.intentStore.confirmed(intent);
           sourceDispositionConfirmed = true;
@@ -526,8 +549,8 @@ export async function startLocalRunWriteProxy(input: {
               prompt: handoff.prompt as string, body: handoff.body as string,
               clientRequestId: intent.clientRequestId,
             }, input.signal);
-          } catch {
-            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          } catch (error) {
+            await reportWriteFailure(error, intent);
           }
           await input.intentStore.confirmed(intent);
           sourceDispositionConfirmed = true;
@@ -560,8 +583,8 @@ export async function startLocalRunWriteProxy(input: {
           try {
             saved = await input.client.addLocalRunComment(lease, input.claim.issueId, intent.canonicalContent,
               intent.clientRequestId, input.signal);
-          } catch {
-            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          } catch (error) {
+            await reportWriteFailure(error, intent);
           }
           await input.intentStore.confirmed(intent);
           return saved;
@@ -599,8 +622,8 @@ export async function startLocalRunWriteProxy(input: {
               issueId: input.claim.issueId, ...command,
               clientRequestId: intent.clientRequestId,
             }, input.signal);
-          } catch {
-            throw new UnresolvedCommentIntentError(intent.clientRequestId);
+          } catch (error) {
+            await reportWriteFailure(error, intent);
           }
           await input.intentStore.confirmed(intent);
           return saved;
@@ -616,6 +639,9 @@ export async function startLocalRunWriteProxy(input: {
     } catch (error) {
       if (error instanceof UnresolvedCommentIntentError) {
         json(res, 409, { error: error.message, clientRequestId: error.clientRequestId }); return;
+      }
+      if (error instanceof PaperclipHttpResponseError) {
+        json(res, error.status, { error: error.message, ...(error.code ? { code: error.code } : {}) }); return;
       }
       json(res, 409, { error: "local run write unavailable" });
     }

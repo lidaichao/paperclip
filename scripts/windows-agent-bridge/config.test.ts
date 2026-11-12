@@ -54,12 +54,43 @@ describe("loadBridgeConfig", () => {
     const cursor = validConfig();
     cursor.agents[0].adapterType = "cursor";
     cursor.agents[0].localAdapterConfig.model = "test";
+    cursor.agents[0].localAdapterConfig.mode = "agent";
+    await expect(loadBridgeConfig(await fixture(cursor))).rejects.toThrow("omit it for Cursor agent mode");
+    delete cursor.agents[0].localAdapterConfig.mode;
     await expect(loadBridgeConfig(await fixture({ ...cursor, modelAuthMode: "shared_user_codex" })))
       .rejects.toThrow("codex_local");
     expect((await loadBridgeConfig(await fixture({ ...cursor, modelAuthMode: "shared_user_cursor" }))).modelAuthMode)
       .toBe("shared_user_cursor");
     await expect(loadBridgeConfig(await fixture({ ...validConfig(), modelAuthMode: "shared_user_cursor" })))
       .rejects.toThrow("cursor agents");
+  });
+  it("admits Hermes only with its own named profile and explicit model", async () => {
+    const hermes = validConfig();
+    hermes.agents[0] = { ...agent(AGENT_A, "Ada"), adapterType: "hermes_local",
+      localAdapterConfig: { cwd: "H:/AIagent/Ada", command: "C:/tools/hermes.exe",
+        model: "tencent-deepseek-v4.1-flash", provider: "custom:aihub", quiet: true } };
+    const profile = path.join(os.tmpdir(), "hermes", "profiles", "ada");
+    const accepted = await loadBridgeConfig(await fixture({ ...hermes,
+      modelAuthMode: "shared_user_hermes", hermesHome: profile }));
+    expect(accepted.agents[0].adapterType).toBe("hermes_local");
+    expect(accepted.hermesHome).toBe(profile);
+    await expect(loadBridgeConfig(await fixture({ ...hermes, modelAuthMode: "shared_user_hermes",
+      hermesHome: path.join(os.tmpdir(), "hermes", "profiles", "luna") })))
+      .rejects.toThrow("this member's Hermes profile");
+    await expect(loadBridgeConfig(await fixture({ ...hermes, modelAuthMode: "shared_user_codex" })))
+      .rejects.toThrow("codex_local");
+    const carroll = structuredClone(hermes);
+    carroll.agents[0].remoteAgentName = "卡罗尔";
+    carroll.agents[0].localAgentName = "卡罗尔";
+    carroll.agents[0].gbrainEnvRef = "GBRAIN_CARROLL_TOKEN";
+    expect((await loadBridgeConfig(await fixture({ ...carroll,
+      modelAuthMode: "shared_user_hermes",
+      hermesHome: path.join(os.tmpdir(), "hermes", "profiles", "carroll") })))
+      .agents[0].localAgentName).toBe("卡罗尔");
+    await expect(loadBridgeConfig(await fixture({ ...carroll,
+      modelAuthMode: "shared_user_hermes",
+      hermesHome: path.join(os.tmpdir(), "hermes", "profiles", "ada") })))
+      .rejects.toThrow("this member's Hermes profile");
   });
   it("normalizes the Alice origin and resolves local file paths", async () => {
     const file = await fixture(validConfig());

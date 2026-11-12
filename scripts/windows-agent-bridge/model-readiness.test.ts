@@ -5,7 +5,7 @@ import path from "node:path";
 import { assertPrivateModelAuthReady } from "./model-readiness.js";
 import type { BridgeConfig } from "./types.js";
 
-function fixture(workerHome: string, adapterType: "codex_local" | "cursor"): BridgeConfig {
+function fixture(workerHome: string, adapterType: "codex_local" | "cursor" | "hermes_local"): BridgeConfig {
   return { schemaVersion: 3, deviceId: "8da47d3b-0a6e-49d4-9c26-17bc76de470f",
     workerHome, apiBase: "http://alice.test", companyId: "af8e9089-b0bb-43ac-ade3-c029c73b96e6",
     credentialsFile: path.join(workerHome, "credentials.dpapi"), stateFile: path.join(workerHome, "state.json"),
@@ -16,6 +16,20 @@ function fixture(workerHome: string, adapterType: "codex_local" | "cursor"): Bri
 }
 
 describe("private member model login preflight", () => {
+  it("requires an existing member Hermes profile without copying its credentials", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hermes-auth-shared-"));
+    const workerHome = path.join(root, "worker");
+    const hermesHome = path.join(root, "profiles", "luna");
+    const config: BridgeConfig = { ...fixture(workerHome, "hermes_local"),
+      modelAuthMode: "shared_user_hermes", hermesHome };
+    await mkdir(workerHome);
+    await expect(assertPrivateModelAuthReady(config, config.agents[0])).rejects.toThrow("profile is missing");
+    await mkdir(hermesHome, { recursive: true });
+    await writeFile(path.join(hermesHome, "config.yaml"), "model:\n  default: test\n");
+    await expect(assertPrivateModelAuthReady(config, config.agents[0])).rejects.toThrow(".env is missing");
+    await writeFile(path.join(hermesHome, ".env"), "TEST_ONLY=placeholder\n");
+    await expect(assertPrivateModelAuthReady(config, config.agents[0])).resolves.toBeUndefined();
+  });
   it("requires Codex login in the isolated CODEX_HOME", async () => {
     const home = await mkdtemp(path.join(os.tmpdir(), "model-auth-"));
     const config = fixture(home, "codex_local");
@@ -27,13 +41,18 @@ describe("private member model login preflight", () => {
     await expect(assertPrivateModelAuthReady(config, config.agents[0])).resolves.toBeUndefined();
   });
 
-  it("requires Cursor login in the isolated HOME", async () => {
+  it("requires Cursor login in the isolated CURSOR_CONFIG_DIR", async () => {
     const home = await mkdtemp(path.join(os.tmpdir(), "model-auth-"));
     const config = fixture(home, "cursor");
-    await mkdir(path.join(home, "home", ".cursor"), { recursive: true });
-    await writeFile(path.join(home, "home", ".cursor", "cli-config.json"), "{}");
+    await mkdir(path.join(home, "cursor-config"), { recursive: true });
+    await writeFile(path.join(home, "cursor-config", "cli-config.json"), "{}");
     await expect(assertPrivateModelAuthReady(config, config.agents[0])).rejects.toThrow("Cursor login");
-    await writeFile(path.join(home, "home", ".cursor", "cli-config.json"), '{"authInfo":{"email":"example.test"}}');
+    await writeFile(path.join(home, "cursor-config", "cli-config.json"), '{"authInfo":{"email":"example.test"}}');
+    await expect(assertPrivateModelAuthReady(config, config.agents[0])).rejects.toThrow("Cursor credential is missing");
+    await mkdir(path.join(home, "appdata", "Cursor"), { recursive: true });
+    await writeFile(path.join(home, "appdata", "Cursor", "auth.json"), '{}');
+    await expect(assertPrivateModelAuthReady(config, config.agents[0])).rejects.toThrow("Cursor credential is invalid");
+    await writeFile(path.join(home, "appdata", "Cursor", "auth.json"), '{"refreshToken":"test-only"}');
     await expect(assertPrivateModelAuthReady(config, config.agents[0])).resolves.toBeUndefined();
   });
 

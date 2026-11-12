@@ -1,5 +1,6 @@
 import path from "node:path";
 import os from "node:os";
+import { mkdir, rename, writeFile } from "node:fs/promises";
 import type { BridgeAgentConfig, BridgeConfig } from "./types.js";
 import { expectedGbrainIdentity } from "./gbrain-identity.js";
 import { normalizeLocalProxyUrl } from "./config.js";
@@ -35,6 +36,14 @@ function cursorConfigDir(config: BridgeConfig): string {
 /** The parser never accepts adapter env from private JSON; inject only this trusted path. */
 export function buildLocalAdapterConfig(agent: BridgeAgentConfig, config: BridgeConfig,
   env: NodeJS.ProcessEnv): Record<string, unknown> {
+  if (agent.adapterType === "hermes_local") {
+    if (config.modelAuthMode !== "shared_user_hermes" || !config.hermesHome || env.HERMES_HOME !== config.hermesHome) {
+      throw new Error("Hermes profile identity is mismatched");
+    }
+    return { ...agent.localAdapterConfig, env: {
+      HERMES_HOME: env.HERMES_HOME, HERMES_MANAGED_DIR: env.HERMES_MANAGED_DIR,
+    } };
+  }
   if (agent.adapterType === "cursor") {
     if (env.HOME !== path.join(config.workerHome, "home") || env.CURSOR_HOME !== cursorConfigDir(config) ||
       env.CURSOR_CONFIG_DIR !== env.CURSOR_HOME ||
@@ -69,6 +78,10 @@ export function buildWorkerEnvironment(source: NodeJS.ProcessEnv, config: Bridge
   env.HOMEPATH = env.HOME.slice(env.HOMEDRIVE.length);
   env.CODEX_HOME = codexHome(config);
   env.CURSOR_HOME = cursorConfigDir(config);
+  if (config.modelAuthMode === "shared_user_hermes" && config.hermesHome) {
+    env.HERMES_HOME = config.hermesHome;
+    env.HERMES_MANAGED_DIR = path.join(config.workerHome, "hermes-managed");
+  }
   if (config.agents[0].adapterType === "cursor") {
     env.CURSOR_CONFIG_DIR = env.CURSOR_HOME;
     env.CURSOR_DATA_DIR = path.join(config.workerHome, "cursor-data");
@@ -94,7 +107,7 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
   const ref = config.agents[0]?.gbrainEnvRef;
   if (config.agents.length !== 1) throw new Error("one worker requires exactly one agent");
   expectedGbrainIdentity(config.agents[0]);
-  const allowed = new Set([...OS_KEYS, "GBRAIN_AGENT_TOKEN", ref, "HOME", "USERPROFILE", "CODEX_HOME", "CURSOR_HOME", "PAPERCLIP_HOME",
+  const allowed = new Set([...OS_KEYS, "GBRAIN_AGENT_TOKEN", ref, "HOME", "USERPROFILE", "CODEX_HOME", "CURSOR_HOME", "HERMES_HOME", "HERMES_MANAGED_DIR", "PAPERCLIP_HOME",
     "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "XDG_CONFIG_HOME", "CURSOR_CONFIG_DIR", "CURSOR_DATA_DIR",
     "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"]);
   if (!ref || !nonEmpty(env, ref) || nonEmpty(env, ref) !== nonEmpty(env, "GBRAIN_AGENT_TOKEN")) {
@@ -118,6 +131,13 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
     nonEmpty(env, "CURSOR_DATA_DIR") !== (config.agents[0].adapterType === "cursor" ? path.join(config.workerHome, "cursor-data") : null)) {
     throw new Error("Cursor config directory is mismatched");
   }
+  if (nonEmpty(env, "HERMES_HOME") !== (config.modelAuthMode === "shared_user_hermes" ? config.hermesHome ?? null : null)) {
+    throw new Error("Hermes profile identity is mismatched");
+  }
+  if (nonEmpty(env, "HERMES_MANAGED_DIR") !== (config.modelAuthMode === "shared_user_hermes"
+    ? path.join(config.workerHome, "hermes-managed") : null)) {
+    throw new Error("Hermes managed identity is mismatched");
+  }
   if (nonEmpty(env, "CODEX_HOME") !== codexHome(config) ||
     nonEmpty(env, "CURSOR_HOME") !== cursorConfigDir(config) ||
     nonEmpty(env, "PAPERCLIP_HOME") !== path.join(config.workerHome, "paperclip-home") ||
@@ -135,4 +155,15 @@ export function assertWorkerEnvironment(env: NodeJS.ProcessEnv, config: BridgeCo
     nonEmpty(env, "HOMEPATH") !== path.join(config.workerHome, "home").slice(homeRoot.replace(/[\\/]$/, "").length)) {
     throw new Error("worker Windows home identity is mismatched");
   }
+}
+
+/** Hermes loads the user's .env with override=true; a worker-only managed layer restores this member's current GBrain token last. */
+export async function writeHermesManagedCredential(config: BridgeConfig, token: string): Promise<void> {
+  if (config.modelAuthMode !== "shared_user_hermes" || config.agents[0]?.adapterType !== "hermes_local") return;
+  if (!token || /[\r\n]/.test(token)) throw new Error("Hermes managed credential is invalid");
+  const directory = path.join(config.workerHome, "hermes-managed");
+  await mkdir(directory, { recursive: true });
+  const temporary = path.join(directory, `.env.tmp-${process.pid}`);
+  await writeFile(temporary, `GBRAIN_AGENT_TOKEN=${token}\n`, { encoding: "utf8", mode: 0o600 });
+  await rename(temporary, path.join(directory, ".env"));
 }

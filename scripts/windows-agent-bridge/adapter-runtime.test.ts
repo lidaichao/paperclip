@@ -38,6 +38,27 @@ function localAgent(): LocalAgentRuntimeConfig {
 }
 
 describe("runLocalAgent", () => {
+  it("routes a server-issued Ada run through Hermes with only Ada's run capability", async () => {
+    const task = issue();
+    const hermesAgent = { ...localAgent(), name: "Ada", adapterType: "hermes_local" as const,
+      adapterConfig: { cwd: "H:/AIagent/Ada", command: "C:/tools/hermes.exe",
+        model: "tencent-deepseek-v4.1-flash", env: { HERMES_HOME: "C:/hermes/profiles/ada" } } };
+    let captured: AdapterExecutionContext | null = null;
+    const result = await runLocalAgent({
+      runId: SERVER_RUN_ID, apiBase: "http://127.0.0.1:43123",
+      remoteCompanyId: REMOTE_COMPANY_ID, remoteAgentId: REMOTE_AGENT_ID,
+      remoteAgentName: "Ada", issue: task, token: "ada-run-capability",
+      localAgent: hermesAgent,
+      dependencies: { hermesExecute: async (ctx) => {
+        captured = ctx;
+        return { exitCode: 0, signal: null, timedOut: false, summary: "Ada replied" };
+      } },
+    });
+    expect(result.succeeded).toBe(true);
+    expect(captured?.agent?.adapterType).toBe("hermes_local");
+    expect(captured?.authToken).toBe("ada-run-capability");
+    expect(captured?.config?.env).toEqual({ HERMES_HOME: "C:/hermes/profiles/ada" });
+  });
   it("passes the token only through authToken and redacts adapter logs", async () => {
     const previousApiBase = process.env.PAPERCLIP_API_URL;
     delete process.env.PAPERCLIP_API_URL;

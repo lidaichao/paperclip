@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { LocalCommentIntentStore, startLocalRunWriteProxy } from "./local-run-write-proxy.js";
-import type { LocalRunClaim } from "./paperclip-client.js";
+import { PaperclipHttpResponseError, type LocalRunClaim } from "./paperclip-client.js";
 
 const agentId = "38a5808c-47f3-4029-bdfe-0d84504bdc8a";
 const issueId = "1b9c2019-b811-40a0-bd21-0365977a0001";
@@ -241,6 +241,22 @@ describe("fenced local run write capability", () => {
       expect((await f.request(`/api/issues/${issueId}/completion-review-handoff`, "POST", {
         reviewerAgentId, prompt: "Another", body: "Later",
       })).status).toBe(409);
+    } finally { await f.proxy.close(); }
+  });
+  it("releases a rejected review intent and returns the server error", async () => {
+    const f = await fixture();
+    f.createLocalCompletionReviewHandoff.mockRejectedValueOnce(
+      new PaperclipHttpResponseError(422, "WORK_RECORD_COMPLETION_CONTRACT_REQUIRED"));
+    try {
+      const payload = { reviewerAgentId: "420ed639-455c-4617-9a36-18b46dfbb141",
+        prompt: "Verify acceptance criteria", body: "Ready for review" };
+      const rejected = await f.request(`/api/issues/${issueId}/completion-review-handoff`, "POST", payload);
+      expect(rejected.status).toBe(422);
+      expect(await rejected.json()).toMatchObject({ code: "WORK_RECORD_COMPLETION_CONTRACT_REQUIRED" });
+      expect(JSON.parse(await readFile(f.intentFile, "utf8")).intents).toHaveLength(0);
+      const accepted = await f.request(`/api/issues/${issueId}/completion-review-handoff`, "POST", payload);
+      expect(accepted.status).toBe(201);
+      expect(JSON.parse(await readFile(f.intentFile, "utf8")).intents).toHaveLength(1);
     } finally { await f.proxy.close(); }
   });
   it("gives a reviewer only the redacted review and one fenced decision", async () => {

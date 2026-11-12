@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
-import { AliceClient } from "./paperclip-client.js";
+import { AliceClient, PaperclipHttpResponseError } from "./paperclip-client.js";
 
 const AGENT_ID = "38a5808c-47f3-4029-bdfe-0d84504bdc8a";
 const COMPANY_ID = "af8e9089-b0bb-43ac-ade3-c029c73b96e6";
@@ -281,6 +281,19 @@ describe("AliceClient", () => {
     await client.verifyIdentity(AGENT_ID, COMPANY_ID);
     await expect(client.renewLocalRun({ deviceId: DEVICE_ID, runId: RUN_ID, leaseId: LEASE_ID, generation: 1 }))
       .rejects.toThrow("HTTP 409");
+  });
+
+  it("preserves a definite server rejection without exposing its response body", async () => {
+    const client = new AliceClient({ apiBase: "http://alice.test", token: "secret",
+      fetch: async (url) => String(url).endsWith("/api/agents/me")
+        ? jsonResponse({ id: AGENT_ID, companyId: COMPANY_ID, name: "Luna" })
+        : jsonResponse({ code: "REVIEWER_UNAVAILABLE", error: "private details" }, 422),
+    });
+    await client.verifyIdentity(AGENT_ID, COMPANY_ID);
+    await expect(client.renewLocalRun({ deviceId: DEVICE_ID, runId: RUN_ID,
+      leaseId: LEASE_ID, generation: 1 })).rejects.toMatchObject({
+        status: 422, code: "REVIEWER_UNAVAILABLE",
+      } satisfies Partial<PaperclipHttpResponseError>);
   });
 
   it("loads only the claimed issue and refuses a changed assignee", async () => {
